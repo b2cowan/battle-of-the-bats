@@ -4,6 +4,42 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-05 — Dashboard: metric strip replaces stat cards; game-day board is card-free
+
+**Decision:** The four stat cards (Teams / Scheduled / Completed / Days Away) are replaced by:
+1. **A compact inline metric strip** (`renderMetricStrip`) on active pre/post-event and completed states: lime tabular numerals + tiny uppercase labels, separated by faint mid-dots, underscored by a single blueprint hairline. Pre-event: Teams · Scheduled · Days Away (hidden when ≤0). Completed: Teams · Scheduled · Completed.
+2. **No strip at all on game day** (`isGameDay`). The game-day board (Games Progress, Team Check-in, Schedule Health, By Division) provides full operational context — a stat strip would be redundant noise.
+3. The Customize button is gated to `(isActive && !isGameDay) || isCompleted` — hidden entirely on game day (nothing to customize in the fixed game-day layout).
+4. **7-day registration sparkline** added to the Registration panel header (72×22px SVG polyline, lime stroke, no library). Derived from existing `acceptedTeams.registered_at` in the dashboard API — no additional DB query. Only renders when at least one non-zero day exists. Hidden ≤640px.
+
+**Rationale:** Three large card boxes for three numbers was a disproportionately heavy container — ~130px of vertical space for minimal information. Game-day operators need the board immediately on load; pre-event admins need the registration and payment panels; the metric strip gives orientation context in one line. The sparkline adds trend intelligence that a raw count doesn't provide, answering "is registration picking up or stalling?"
+
+**Applies to:** `app/[orgSlug]/admin/tournaments/dashboard/page.tsx`, `dashboard.module.css`, `app/api/admin/tournament-dashboard/route.ts`. Stat card drag/sort/icon code left in place (panel zone customization still uses the same `isCustomizing` flow).
+
+---
+
+### 2026-06-05 — Shared admin chrome: density toggle removed from UI; sidebar LIVE indicator uses `isWithinEventDates`
+
+**Decision:** (1) **Density toggle removed** from both the desktop sidebar footer and the mobile More sheet "Display" section. The auto-detection (`pointer: coarse` → comfortable default on touch, compact on desktop) does the right thing for most users; exposing a manual override produced a toggle whose effect was imperceptible (8px row height, 10px control height) and confused users who clicked it and saw nothing obvious change. The density tokens and `useAdminDensity` context remain — auto-detection still fires — only the two UI toggle blocks were removed. (2) **Sidebar "● Live" now gated on `isWithinEventDates()`** — previously any `status === 'active'` tournament showed "● Live" in the sidebar even if it was 40 days away. Now: within dates → "● Live"; active but pre-event → "● Open"; draft/completed/archived unchanged. Matches the resolved-phase logic the mobile top app-bar already used.
+
+**Rationale:** The density toggle was discovered to be "barely noticeable" in browser testing — a toggle that produces no perceived change has negative UX value (confusion > benefit). The LIVE sidebar mislabel was flagged visually: "Battle of the Bats 2026" (40 days out) showed LIVE alongside "Live Demo — Game Day" (actually live today) — identical labels for different states.
+
+**Applies to:** `components/admin/AdminSidebar.tsx`, `components/admin/AdminBottomNav.tsx` (Display section removed, `useAdminDensity` import removed from both). `AdminSidebar.tsx` now imports `isWithinEventDates` from `@/lib/tournament-phase`.
+
+---
+
+### 2026-06-05 — Dashboard mobile: in-header status chip removed; Customize button hidden on mobile
+
+**Decision:** The `.statusChipMobile` block (status dot + colored status text + sub-label row, mobile-only, rendered in the page header below the tournament name) was removed from the dashboard JSX. The mobile top app-bar pill (`AdminMobileTopBar`) already communicates the phase; the in-header chip duplicated it with a different label ("PRE-EVENT" vs "OPEN") creating both redundancy and inconsistency. The `statusBlockDesktop` hide breakpoint was extended from `max-width: 640px` to `max-width: 900px` to match the full shell mobile threshold (both representations were showing between 641–900px). The Customize button is now `display: none` at ≤900px — on mobile the Customize action is deprioritized (game-day operators, the primary mobile use case, should reach operational content without navigating edit mode).
+
+**Rationale:** Two status indicators on the same screen with different labels is worse than one. The Customize button on mobile game day was occupying ~36px of precious above-fold space for an admin utility that mobile operators don't need mid-event.
+
+**Applies to:** `app/[orgSlug]/admin/tournaments/dashboard/page.tsx` (statusChipMobile JSX removed), `dashboard.module.css` (new `max-width: 900px` block).
+
+---
+
+---
+
 ### 2026-06-03 — Venue/facility select: full label in closed state
 **Decision:** Facility `<option>` elements inside a venue `<optgroup>` must include the parent venue name in their text: `{venue.name} — {facility.name}` (e.g. "Milton Diamond — diamond #1"). The `<optgroup label>` is invisible when the `<select>` is closed; facility names alone (e.g. "diamond #1") are not self-identifying. When open, the optgroup still groups by venue name — minor redundancy, standard grouped-select pattern.
 **Rationale:** User-reported: "diamond #1" with no venue name is not specific enough and wastes the available width.

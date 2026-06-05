@@ -103,8 +103,9 @@ export async function proxy(request: NextRequest) {
   const isOrgAdmin = segments.length >= 2 && segments[1] === 'admin';
   const isLegacyAdmin = segments[0] === 'admin';
   const isOrgScorekeeper = segments.length >= 2 && segments[0] !== 'api' && segments[1] === 'scorekeeper';
+  const isOrgCheckIn = segments.length >= 2 && segments[0] !== 'api' && segments[1] === 'check-in';
 
-  if ((isOrgAdmin || isLegacyAdmin || isOrgScorekeeper) && !user) {
+  if ((isOrgAdmin || isLegacyAdmin || isOrgScorekeeper || isOrgCheckIn) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
     url.searchParams.set('next', isLegacyAdmin ? '/admin' : pathname);
@@ -171,6 +172,7 @@ export const config = {
     '/:slug/admin',
     '/:slug/admin/:path*',
     '/:slug/scorekeeper/:path*',
+    '/:slug/check-in/:path*',
     '/admin',
     '/admin/:path*',
     '/auth/:path*',

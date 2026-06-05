@@ -173,6 +173,8 @@ interface GeneratorProps {
   tournament: Tournament;
   orgSlug?: string;
   divisions: Division[];
+  /** Division to open on; falls back to the first division. */
+  defaultDivisionId?: string;
   teams: Team[];
   venues: Venue[];
   existingGames?: Game[];
@@ -180,8 +182,8 @@ interface GeneratorProps {
   onCancel: () => void;
 }
 
-export default function ScheduleGenerator({ tournament, orgSlug, divisions, teams, venues, existingGames = [], onComplete, onCancel }: GeneratorProps) {
-  const [selectedGroupId, setSelectedGroupId] = useState(divisions[0]?.id || '');
+export default function ScheduleGenerator({ tournament, orgSlug, divisions, defaultDivisionId, teams, venues, existingGames = [], onComplete, onCancel }: GeneratorProps) {
+  const [selectedGroupId, setSelectedGroupId] = useState(defaultDivisionId || divisions[0]?.id || '');
   // Initialize from tournament settings so generator matches event-level defaults.
   const [gameLength, setGameLength] = useState(tournament.settings?.game_duration_minutes ?? 90);
   const [breakLength, setBreakLength] = useState(tournament.settings?.buffer_minutes ?? 15);
@@ -656,7 +658,6 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, team
           divisionId: selectedGroupId,
           coach: '',
           email: '',
-          players: [],
           status: 'accepted',
           paymentStatus: 'paid',
           registeredAt: '',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Search, X } from 'lucide-react';
 import type { HelpFaq, HelpSection } from '@/lib/help-content';
@@ -51,26 +51,6 @@ function matchesQuery(haystack: string, query: string) {
   return haystack.includes(query);
 }
 
-function initialSectionId(sections: HelpSection[]) {
-  const fallback = sections[0] ? sectionId(sections[0], 0) : '';
-  if (typeof window === 'undefined') return fallback;
-
-  const hash = decodeURIComponent(window.location.hash.replace(/^#/, ''));
-  if (!hash) return fallback;
-
-  const directMatch = sections.find((section, index) => sectionId(section, index) === hash);
-  if (directMatch) return hash;
-
-  const faqSection = sections.find((section, sectionIndex) => {
-    const resolvedSectionId = sectionId(section, sectionIndex);
-    return (section.faqs ?? []).some((faq, faqIndex) => (
-      (faq.id ?? `${resolvedSectionId}-faq-${faqIndex + 1}`) === hash
-    ));
-  });
-
-  return faqSection ? sectionId(faqSection, sections.indexOf(faqSection)) : fallback;
-}
-
 export default function HelpPageLayout({
   title,
   role,
@@ -80,11 +60,12 @@ export default function HelpPageLayout({
   faqs = [],
 }: HelpPageLayoutProps) {
   const [query, setQuery] = useState('');
-  const [activeSectionId, setActiveSectionId] = useState(() => initialSectionId(sections));
-  const [focusedFaqId, setFocusedFaqId] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null;
-    return decodeURIComponent(window.location.hash.replace(/^#/, '')) || null;
-  });
+  // SSR-safe initial state: always start on the first topic so the server and the first
+  // client render agree. The deep-link hash is applied after mount in the effect below.
+  const [activeSectionId, setActiveSectionId] = useState(() => (
+    sections[0] ? sectionId(sections[0], 0) : ''
+  ));
+  const [focusedFaqId, setFocusedFaqId] = useState<string | null>(null);
 
   const normalizedQuery = query.trim().toLowerCase();
 
@@ -114,6 +95,42 @@ export default function HelpPageLayout({
 
     return [...sectionFaqs, ...pageFaqs];
   }, [faqs, indexedSections]);
+
+  // Resolve a deep-link hash (e.g. #data-tools-imports) to the matching topic or question
+  // after mount. Reading window.location.hash during render/SSR is unreliable and causes a
+  // hydration mismatch, so we apply it here and also respond to in-browser hash navigation.
+  // In-page topic switches use history.replaceState (no hashchange event), so this does not
+  // fight the on-page navigation.
+  useEffect(() => {
+    function applyHash() {
+      const hash = decodeURIComponent(window.location.hash.replace(/^#/, ''));
+      if (!hash) return;
+
+      const targetSection = indexedSections.find(item => item.id === hash);
+      if (targetSection) {
+        setActiveSectionId(targetSection.id);
+        setFocusedFaqId(null);
+        requestAnimationFrame(() => {
+          document.getElementById('help-article')?.scrollIntoView({ block: 'start' });
+        });
+        return;
+      }
+
+      const targetFaq = indexedFaqs.find(faq => faq.resolvedId === hash);
+      if (targetFaq) {
+        if (targetFaq.sectionId) setActiveSectionId(targetFaq.sectionId);
+        setFocusedFaqId(targetFaq.resolvedId);
+        const scrollTargetId = targetFaq.sectionId ? 'help-article' : 'help-article-faqs';
+        requestAnimationFrame(() => {
+          document.getElementById(scrollTargetId)?.scrollIntoView({ block: 'start' });
+        });
+      }
+    }
+
+    applyHash();
+    window.addEventListener('hashchange', applyHash);
+    return () => window.removeEventListener('hashchange', applyHash);
+  }, [indexedSections, indexedFaqs]);
 
   const faqMatches = useMemo(() => {
     return indexedFaqs.filter(faq => matchesQuery(searchable([

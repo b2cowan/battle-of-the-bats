@@ -24,7 +24,7 @@
   letter-spacing: 0.12em;
   color: var(--data-gray);
   background: var(--surface-2);
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.18);
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   user-select: none;
 }
 
@@ -64,45 +64,13 @@
 .bulkButtons .btn { border-color: rgba(255, 255, 255, 0.2); }
 .bulkButtons .btn:hover { background: rgba(255, 255, 255, 0.1); }
 
-/* ─── Summary Dashboard Modal ─────────────────────────────────────────────── */
-.summaryGridModal {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.5rem;
-}
-
-.summaryCardModal {
-  background: var(--black-30);
-  border: 1px solid var(--white-10);
-  border-radius: 16px;
-  padding: 1.5rem;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.summaryCardModal:hover {
-  background: var(--black-40);
-  border-color: var(--logic-lime);
-  transform: translateY(-4px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.summaryHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-.summaryHeader strong { font-size: 0.9rem; color: var(--white); }
-
-.capacityBadge, .fullBadge { font-family: var(--font-data); font-size: 0.58rem; padding: 0.15rem 0.45rem; border-radius: 2px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
-.capacityBadge { background: var(--white-10); color: var(--white-60); }
-.fullBadge { background: var(--danger-faint); color: var(--danger-light); border: 1px solid var(--danger-faint); }
-
-.summaryStats { font-size: 0.8rem; color: var(--white-30); }
-
 /* ─── Payment Readiness ───────────────────────────────────────────────────── */
 .paymentPanel {
   margin: 0 2rem 1rem;
   padding: 0.9rem 1rem;
   border: 1px solid var(--border-2);
-  border-radius: 8px;
-  background: var(--black-30);
+  border-radius: 0;
+  background: rgba(var(--blueprint-blue-rgb), 0.04);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -131,7 +99,7 @@
 
 .paymentMetric {
   border: 1px solid var(--border-2);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 0.65rem 0.75rem;
   background: var(--hud-surface);
   min-height: 64px;
@@ -153,12 +121,12 @@
 }
 
 .paymentMetric[data-variant="danger"] {
-  border-color: rgba(239, 68, 68, 0.35);
-  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(var(--danger-rgb), 0.35);
+  background: rgba(var(--danger-rgb), 0.08);
 }
 
 .paymentMetric[data-variant="danger"] strong {
-  color: var(--danger-light);
+  color: var(--danger);
 }
 
 .paymentFilters {
@@ -190,7 +158,7 @@
 
 .paymentFilterActive {
   border-color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.08);
+  background: rgba(var(--logic-lime-rgb), 0.08);
   color: var(--logic-lime);
 }
 
@@ -802,13 +770,23 @@
   font-size: 0.72rem;
 }
 
-.registrationSelectionBar :global(.btn-primary) {
-  box-shadow: none;
-}
-
 .registrationSelectionBar :global(.btn-outline),
 .registrationSelectionBar :global(.btn-ghost) {
   background: rgba(0, 0, 0, 0.12);
+}
+
+/* ─── Mobile: triage-only bulk action bar ─────────────────────────────────── */
+/* Deposit / Paid / Reminder are bookkeeping tasks (desktop). On mobile the    */
+/* sticky docked bar shows Accept + Waitlist + Reject only.                    */
+@media (max-width: 900px) {
+  .bulkPaymentAction {
+    display: none !important;
+  }
+
+  /* 3 triage buttons fill one row in the docked bar */
+  .registrationSelectionBar :global(.btn) {
+    flex: 1 1 calc(33.333% - 0.22rem);
+  }
 }
 
 /* ─── Compact Toolbar Additions ──────────────────────────────────────────── */
@@ -1423,14 +1401,14 @@
   }
 
   .mobileStatusMarker[data-status="pending"] {
-    border-color: rgba(245, 158, 11, 0.48);
-    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(var(--warning-rgb), 0.48);
+    background: rgba(var(--warning-rgb), 0.08);
     color: var(--warning);
   }
 
   .mobileStatusMarker[data-status="accepted"] {
-    border-color: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.45);
-    background: rgba(var(--logic-lime-rgb, 194, 255, 74), 0.08);
+    border-color: rgba(var(--logic-lime-rgb), 0.45);
+    background: rgba(var(--logic-lime-rgb), 0.08);
     color: var(--logic-lime);
   }
 
@@ -1936,61 +1914,55 @@
   }
 }
 
-/* ── Registrations card view (C6) — reuses renderFlatRow + its expand panel ──
-   Drives a card layout from a class on .flatList; overrides the compact-row /
-   mobile-marker rules with higher specificity. */
-.cardView {
-  border: none;
-  border-radius: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
+/* ── Mobile auto-card layout ─────────────────────────────────────────────────
+   On mobile (≤768px) the flat list automatically renders as cards — no toggle.
+   Coach is visible; compact A/$$ markers stay (full text badges already hidden
+   by the 768px block above). Desktop is always the flat list view. */
+@media (max-width: 768px) {
+  .flatList {
+    border: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
 
-.cardView .colHeader { display: none; }
+  .flatList .regRow {
+    border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+    border-radius: 0;
+    background: rgba(var(--blueprint-blue-rgb), 0.03);
+    overflow: hidden;
+  }
 
-.cardView .regRow {
-  background: var(--surface);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  border-radius: 4px;
-  overflow: hidden;
-}
+  /* Override the mobile grid → flex-wrap so name + coach stack vertically */
+  .flatList .teamRowMain {
+    position: relative;
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.55rem;
+    padding: 0.6rem 0.75rem;
+  }
 
-.cardView .teamRowMain {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 0.7rem;
-  padding: 0.7rem 0.8rem;
-}
+  /* Name takes the full top line; right-pad clears the absolute checkbox */
+  .flatList .registrationNameCell {
+    flex: 1 1 100%;
+    padding-right: 2.25rem;
+    font-size: 0.92rem;
+  }
 
-/* Team name spans the top line of the card */
-.cardView .registrationNameCell {
-  flex: 1 1 100%;
-  font-size: 0.95rem;
-}
+  /* Checkbox floats to top-right of the card in selection mode */
+  .flatList .selectionCell {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.75rem;
+    width: auto;
+  }
 
-/* Coach stays visible (even on mobile, where the row view hides it) */
-.cardView .registrationCoachCell {
-  display: block !important;
-  flex: 1 1 auto;
-  color: var(--data-gray);
-  font-size: 0.8rem;
-}
-
-/* Show the full status/payment badges; hide the compact row markers */
-.cardView .desktopStatusBadge,
-.cardView .desktopPaymentBadge { display: inline-flex !important; }
-.cardView .mobileStatusMarker,
-.cardView .paymentSymbolGroup { display: none !important; }
-
-.cardView .registrationStatusCell,
-.cardView .registrationPaymentCell {
-  width: auto;
-  padding-left: 0;
-}
-
-.cardView .registrationExpandCell {
-  width: auto;
-  margin-left: auto;
+  /* Coach visible below the name */
+  .flatList .registrationCoachCell {
+    display: block;
+    flex: 1 1 auto;
+    color: var(--data-gray);
+    font-size: 0.78rem;
+  }
 }

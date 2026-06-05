@@ -1,14 +1,21 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Calendar, Clock, ExternalLink, Info, MapPin, Trophy } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, ExternalLink, Info, MapPin, Navigation, Trophy } from 'lucide-react';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import type { Division, Game, Team, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
+import { bracketRoundInfo } from '@/lib/playoff-bracket';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import GameDetailLiveRefresher from '@/components/public/GameDetailLiveRefresher';
 import ShareScoreButton from '@/components/public/ShareScoreButton';
 import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
+
+const outcomeColors: Record<string, string> = {
+  W: 'var(--success)',
+  L: 'rgba(var(--danger-rgb), 0.72)',
+  T: 'var(--warning)',
+};
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
@@ -57,6 +64,31 @@ function getWinner(game: Game): 'home' | 'away' | 'tie' | null {
   if (game.homeScore > game.awayScore) return 'home';
   if (game.awayScore > game.homeScore) return 'away';
   return 'tie';
+}
+
+/**
+ * Plain-language stakes line for a playoff game. Finds the downstream game the
+ * winner feeds into (a game whose placeholder references `Winner <thisCode>`)
+ * and names that round; falls back to fixed labels for deciding games.
+ */
+function getPlayoffStakes(game: Game, allGames: Game[]): string | null {
+  if (!game.isPlayoff || !game.bracketCode) return null;
+  const code = game.bracketCode.toUpperCase();
+  const ref = `Winner ${game.bracketCode}`;
+  const myKey = bracketRoundInfo(game.bracketCode).key;
+  const next = allGames.find(other =>
+    other.isPlayoff && other.id !== game.id && other.bracketCode &&
+    (other.homePlaceholder?.includes(ref) || other.awayPlaceholder?.includes(ref)) &&
+    bracketRoundInfo(other.bracketCode).key !== myKey,
+  );
+  if (next?.bracketCode) {
+    return `Winner advances to the ${bracketRoundInfo(next.bracketCode).title}`;
+  }
+  // No downstream game references this winner — it's a deciding game.
+  if (code === 'FIN' || code === 'GF' || code === 'GF2') return 'Championship — winner takes the title';
+  if (code === 'P3' || code === '3RD') return 'Battling for 3rd place';
+  if (code.startsWith('CON')) return 'Consolation final';
+  return null;
 }
 
 function getStatusBadge(game: Game, requireFinalization: boolean) {
@@ -202,6 +234,7 @@ export default async function PublicGameDetailsPage({
     gameType = game.bracketCode ? `Playoff - ${game.bracketCode}` : 'Playoff';
   }
   const venue = getVenueDisplay(game, data.venues);
+  const stakes = getPlayoffStakes(game, data.games);
 
   // Live refresh on game day — re-render this server page when the score changes.
   const liveSignature = `${game.homeScore ?? ''}:${game.awayScore ?? ''}:${game.status}`;
@@ -210,11 +243,12 @@ export default async function PublicGameDetailsPage({
   const liveEnabled = Boolean(
     t.status === 'active' && t.startDate && t.endDate && today >= t.startDate && today <= t.endDate,
   );
-
   const isLiveGame = game.status === 'submitted' && game.date === today;
-  const shareStatusLabel = game.status === 'completed'
-    ? 'FINAL'
-    : isLiveGame ? 'LIVE' : requireFinalization ? 'PENDING' : 'FINAL';
+
+  const shareStatusLabel = isLiveGame ? 'LIVE'
+    : game.status === 'completed' ? 'FINAL'
+    : (game.status === 'submitted' && !requireFinalization) ? 'FINAL'
+    : 'PENDING';
 
   return (
     <div className="page-content">
@@ -248,57 +282,71 @@ export default async function PublicGameDetailsPage({
                 </div>
                 <div className={styles.detailRail}>
                   <span className="badge badge-primary">{gameType}</span>
-                  {getStatusBadge(game, requireFinalization)}
+                  {isLiveGame
+                    ? <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
+                    : getStatusBadge(game, requireFinalization)}
                   {hasScore && (
                     <ShareScoreButton
-                      className="btn btn-outline btn-sm"
-                      menuAlign="right"
-                      menuPlacement="down"
-                      gameHref={`/${orgSlug}/${tournamentSlug}/schedule/${gameId}`}
                       tournamentName={data.tournament.name}
                       awayName={awayName}
                       homeName={homeName}
-                      awayScore={game.awayScore as number}
-                      homeScore={game.homeScore as number}
+                      awayScore={game.awayScore ?? 0}
+                      homeScore={game.homeScore ?? 0}
                       statusLabel={shareStatusLabel}
                       live={isLiveGame}
                       dateLabel={formatFullDate(game.date)}
                       venueLabel={venue?.venueLabel ?? null}
                       gameType={gameType}
+                      gameHref={`/${orgSlug}/${tournamentSlug}/schedule/${gameId}`}
+                      menuAlign="right"
+                      menuPlacement="down"
                     />
                   )}
                 </div>
               </div>
 
               <div className={styles.detailMatchup}>
-                <div className={`${styles.detailTeam} ${styles.detailAway}`}>
-                  <span className={styles.detailTeamSide}>Away</span>
-                  <strong className={styles.detailTeamName}>{awayName}</strong>
-                  {hasScore ? (
-                    <span className={styles.detailScoreLine}>
-                      {awayOutcome && <span data-outcome={awayOutcome}>{awayOutcome}</span>}
-                      <strong>{game.awayScore}</strong>
-                    </span>
-                  ) : (
-                    <span className={styles.detailScorePending}>Score TBD</span>
-                  )}
+                <div className={styles.detailTeams}>
+                  <div className={`${styles.detailTeam} ${styles.detailAway} ${winner === 'home' ? styles.detailTeamLost : ''}`}>
+                    <span className={styles.detailTeamSide}>Away</span>
+                    <strong className={styles.detailTeamName}>{awayName}</strong>
+                  </div>
+
+                  <span className={styles.detailVs}>VS</span>
+
+                  <div className={`${styles.detailTeam} ${styles.detailHome} ${winner === 'away' ? styles.detailTeamLost : ''}`}>
+                    <span className={styles.detailTeamSide}>Home</span>
+                    <strong className={styles.detailTeamName}>{homeName}</strong>
+                  </div>
                 </div>
 
-                <span className={styles.detailVs}>VS</span>
-
-                <div className={`${styles.detailTeam} ${styles.detailHome}`}>
-                  <span className={styles.detailTeamSide}>Home</span>
-                  <strong className={styles.detailTeamName}>{homeName}</strong>
-                  {hasScore ? (
-                    <span className={styles.detailScoreLine}>
-                      <strong>{game.homeScore}</strong>
-                      {homeOutcome && <span data-outcome={homeOutcome}>{homeOutcome}</span>}
-                    </span>
-                  ) : (
-                    <span className={styles.detailScorePending}>Score TBD</span>
-                  )}
-                </div>
+                {hasScore ? (
+                  <div className={styles.detailScoreWrap}>
+                    {isLiveGame && (
+                      <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
+                    )}
+                    <div className={styles.detailScoreBand}>
+                      <div className={styles.detailScoreCol}>
+                        <strong style={awayOutcome ? { color: outcomeColors[awayOutcome] } : undefined}>{game.awayScore}</strong>
+                        {awayOutcome && <span data-outcome={awayOutcome}>{awayOutcome}</span>}
+                      </div>
+                      <span className={styles.detailScoreDash}>–</span>
+                      <div className={styles.detailScoreCol}>
+                        <strong style={homeOutcome ? { color: outcomeColors[homeOutcome] } : undefined}>{game.homeScore}</strong>
+                        {homeOutcome && <span data-outcome={homeOutcome}>{homeOutcome}</span>}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.detailScorePending}>Score TBD</div>
+                )}
               </div>
+
+              {stakes && (
+                <div className={styles.detailStakes}>
+                  <Trophy size={14} /> {stakes}
+                </div>
+              )}
 
               <div className={styles.detailPanelGrid}>
                 <section className={styles.detailPanel}>
@@ -314,9 +362,10 @@ export default async function PublicGameDetailsPage({
                           target="_blank"
                           rel="noopener noreferrer"
                           title={venue.mapsTitle ?? undefined}
-                          className={styles.detailMapLink}
+                          className={styles.detailDirectionsBtn}
                         >
-                          <ExternalLink size={14} /> Google Maps
+                          <Navigation size={15} /> Get Directions
+                          <ExternalLink size={13} className={styles.detailDirectionsExt} />
                         </a>
                       )}
                     </div>

@@ -50,6 +50,7 @@ type TeamPaymentRow = {
   slot_id: string | null;
   waitlist_position: number | null;
   registered_at: string | null;
+  check_in_status: string | null;
 };
 
 type DivPayCounts = { paid: number; depositPaid: number; pending: number; pastDue: number; total: number };
@@ -140,7 +141,7 @@ export async function GET(req: Request) {
       .is('deleted_at', null),
     supabaseAdmin
       .from('teams')
-      .select('id, name, division_id, status, deposit_paid, total_paid, slot_id, waitlist_position, registered_at')
+      .select('id, name, division_id, status, deposit_paid, total_paid, slot_id, waitlist_position, registered_at, check_in_status')
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('pool_slots')
@@ -310,6 +311,14 @@ export async function GET(req: Request) {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const acceptedTeams = teamPayments.filter(tm => tm.status === 'accepted');
   const registrationVelocity = acceptedTeams.filter(tm => tm.registered_at != null && tm.registered_at >= sevenDaysAgo).length;
+
+  // 7-day daily registration counts (oldest → newest) — derived from existing data, no extra query
+  const weeklyTrend = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const dayStr = d.toISOString().split('T')[0];
+    return acceptedTeams.filter(tm => tm.registered_at != null && tm.registered_at.startsWith(dayStr)).length;
+  });
   const feeMode = t.fee_schedule_mode ?? 'tournament';
   const scheduleMetricGames: ScheduleMetricGame[] = activeGames
     .filter(game => game.game_date && game.game_time)
@@ -518,6 +527,12 @@ export async function GET(req: Request) {
       totalWaitlist,
       byDivision,
       velocity: registrationVelocity,
+      weeklyTrend,
+    },
+    checkIn: {
+      accepted: acceptedTeams.length,
+      checkedIn: acceptedTeams.filter(tm => tm.check_in_status === 'checked_in').length,
+      noShow: acceptedTeams.filter(tm => tm.check_in_status === 'no_show').length,
     },
     payment: {
       hasFeeSchedule: acceptedTeams.length > 0 && paymentCounts.noSchedule < acceptedTeams.length,

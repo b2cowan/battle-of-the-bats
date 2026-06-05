@@ -1,12 +1,12 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import CountUp from '@/components/admin/CountUp';
 import { useRouter } from 'next/navigation';
 import {
   AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Copy, Info,
   Users, Calendar, Trophy, DollarSign, TrendingUp, Zap, Flag,
   Clock, Activity, Star, Shield, BarChart2, Target, Bell,
-  Settings, RotateCcw, Megaphone, GripVertical, X, Plus, Pencil,
+  Settings, RotateCcw, Megaphone, GripVertical, X, Plus, Pencil, UserCheck,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor, KeyboardSensor,
@@ -127,6 +127,12 @@ type DashboardStats = {
     totalWaitlist: number;
     byDivision: DivisionStat[];
     velocity: number;
+    weeklyTrend: number[];
+  };
+  checkIn: {
+    accepted: number;
+    checkedIn: number;
+    noShow: number;
   };
   payment: {
     hasFeeSchedule: boolean;
@@ -258,7 +264,8 @@ const EMPTY_STATS: DashboardStats = {
     hasBranding: false, hasVenues: false, hasRules: false, hasFees: false,
     hasGameTiming: false, hasTieBreakers: false, ready: false,
   },
-  registration: { totalCapacity: 0, totalAccepted: 0, totalPending: 0, totalWaitlist: 0, byDivision: [], velocity: 0 },
+  registration: { totalCapacity: 0, totalAccepted: 0, totalPending: 0, totalWaitlist: 0, byDivision: [], velocity: 0, weeklyTrend: [] },
+  checkIn: { accepted: 0, checkedIn: 0, noShow: 0 },
   payment: { hasFeeSchedule: false, totalExpected: 0, totalCollected: 0, counts: { paid: 0, depositPaid: 0, pending: 0, pastDue: 0, noSchedule: 0 }, byDivision: [] },
   registrationAttention: { total: 0, buckets: [] },
 };
@@ -316,6 +323,20 @@ function computeDaysUntil(startDate: string | null | undefined): number | null {
   return Math.ceil((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+function Sparkline({ data }: { data: number[] }) {
+  if (data.length < 2 || data.every(v => v === 0)) return null;
+  const w = 72, h = 22;
+  const max = Math.max(...data, 1);
+  const pts = data
+    .map((v, i) => `${(i / (data.length - 1)) * w},${h - (v / max) * (h - 3) - 1}`)
+    .join(' ');
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className={styles.sparkline} aria-hidden>
+      <polyline points={pts} fill="none" stroke="var(--logic-lime)" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function GaugeBar({ value, max, danger }: { value: number; max: number; danger?: boolean }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   const color = danger ? 'var(--danger)' : pct >= 100 ? 'var(--success)' : pct >= 75 ? 'var(--warning)' : 'var(--blueprint-blue)';
@@ -352,7 +373,7 @@ function getCardDisplay(id: StatCardId, stats: DashboardStats, daysUntil: number
       if (daysUntil <= 0)    return { value: '—', subValue: 'underway', href: null };
       return {
         value: daysUntil,
-        subValue: daysUntil === 1 ? 'day to go' : 'days to go',
+        subValue: null,
         href: null,
       };
   }
@@ -594,7 +615,9 @@ export default function AdminDashboard() {
           registration: {
             ...(data?.registration ?? EMPTY_STATS.registration),
             velocity: data?.registration?.velocity ?? 0,
+            weeklyTrend: data?.registration?.weeklyTrend ?? [],
           },
+          checkIn: data?.checkIn ?? EMPTY_STATS.checkIn,
           payment: {
             ...(data?.payment ?? EMPTY_STATS.payment),
             byDivision: data?.payment?.byDivision ?? [],
@@ -710,6 +733,7 @@ export default function AdminDashboard() {
   const visibleStats  = currentTournament?.id ? stats : EMPTY_STATS;
   const checklist     = visibleStats.publishChecklist;
   const reg           = visibleStats.registration;
+  const checkIn       = visibleStats.checkIn;
   const pay           = visibleStats.payment;
   const registrationAttention = visibleStats.registrationAttention;
   const gd            = visibleStats.gameDay;
@@ -763,6 +787,33 @@ export default function AdminDashboard() {
     { key: 'branding',     done: checklist.hasBranding,      label: 'Public page',       desc: checklist.hasBranding      ? 'Your public tournament page is live and customized.' : 'Control visibility and public presentation of your tournament page.',                        href: `${base}/branding`,       action: 'Manage page →'      },
   ];
   const optionalDoneCount = optionalItems.filter(i => i.done).length;
+
+  // ── Compact metric strip (replaces stat cards on active/completed) ──────
+  function renderMetricStrip() {
+    const items: Array<{ value: number; label: string }> = [
+      { value: visibleStats.teams, label: 'Teams' },
+      { value: visibleStats.scheduled, label: 'Scheduled' },
+    ];
+    if (isActive && daysUntil !== null && daysUntil > 0) {
+      items.push({ value: daysUntil, label: 'Days Away' });
+    }
+    if (isCompleted) {
+      items.push({ value: visibleStats.completed, label: 'Completed' });
+    }
+    return (
+      <div className={styles.metricStrip}>
+        {items.map((item, i) => (
+          <Fragment key={item.label}>
+            {i > 0 && <span className={styles.metricSep} aria-hidden>·</span>}
+            <span className={styles.metricItem}>
+              <span className={styles.metricValue}><CountUp value={item.value} /></span>
+              <span className={styles.metricLabel}>{item.label}</span>
+            </span>
+          </Fragment>
+        ))}
+      </div>
+    );
+  }
 
   // ── Panel renderers ───────────────────────────────────────────────────────
   function fmtShortDate(iso: string): string {
@@ -924,6 +975,7 @@ export default function AdminDashboard() {
               +{reg.velocity} this week
             </span>
           )}
+          <Sparkline data={reg.weeklyTrend} />
           <Link href={`${base}/registrations`} className={styles.panelLink}>View teams →</Link>
         </div>
         <div className={styles.mainGauge}>
@@ -1183,16 +1235,9 @@ export default function AdminDashboard() {
               {fmtDateRange(currentTournament?.startDate, currentTournament?.endDate)}
             </div>
           )}
-          {currentTournament?.id && (
-            <div className={styles.statusChipMobile}>
-              <span className={styles.statusDot} style={{ background: statusColor }} />
-              <span style={{ color: statusColor }}>{status.toUpperCase()}</span>
-              {isActive && <span className={styles.statusChipSub}>· {statusLabel.toUpperCase()}</span>}
-            </div>
-          )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
-          {(isActive || isCompleted) && currentTournament?.id && !isCustomizing && (
+          {((isActive && !isGameDay) || isCompleted) && currentTournament?.id && !isCustomizing && (
             <button
               type="button"
               className={`btn btn-ghost btn-data ${styles.customizeToggleBtn}`}
@@ -1333,8 +1378,8 @@ export default function AdminDashboard() {
       {/* ── LIVE DASHBOARD (active) ──────────────────────── */}
       {isActive && currentTournament?.id && (
         <>
-          {/* Stat cards — layout-driven, context-filtered */}
-          {(renderedCards.length > 0 || isCustomizing) && renderStatZone(renderedCards)}
+          {/* Compact metric strip — absent on game day where the board gives richer context */}
+          {!isGameDay && renderMetricStrip()}
 
           {/* ── GAME DAY: game-by-game metrics (within dates OR first game started) ── */}
           {isGameDay ? (
@@ -1368,6 +1413,29 @@ export default function AdminDashboard() {
                   </div>
                 )}
               </section>
+
+              {checkIn.accepted > 0 && (
+                <section className={styles.analyticsPanel}>
+                  <div className={styles.panelHeader}>
+                    <UserCheck size={16} style={{ color: 'var(--logic-lime)' }} />
+                    <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Team Check-in</h2>
+                    <Link href={`${base}/check-in`} className={styles.panelLink}>Open board →</Link>
+                  </div>
+                  <div className={styles.mainGauge}>
+                    <div className={styles.gaugeFigures}>
+                      <span className={styles.gaugeMain}><CountUp value={checkIn.checkedIn} /></span>
+                      <span className={styles.gaugeOf}>/ {checkIn.accepted}</span>
+                      <span className={styles.gaugeLabel}>teams arrived</span>
+                    </div>
+                    <GaugeBar value={checkIn.checkedIn} max={checkIn.accepted} />
+                  </div>
+                  {checkIn.noShow > 0 && (
+                    <div className={styles.subStats}>
+                      <span className={styles.subStat}><span className="badge badge-danger">{checkIn.noShow}</span> No-show{checkIn.noShow !== 1 ? 's' : ''}</span>
+                    </div>
+                  )}
+                </section>
+              )}
 
               {renderScheduleHealthPanel()}
 
@@ -1428,7 +1496,7 @@ export default function AdminDashboard() {
       {/* ── COMPLETED DASHBOARD ──────────────────────────── */}
       {isCompleted && currentTournament?.id && (
         <>
-          {renderStatZone(visibleCards.filter(c => c.id !== 'days'))}
+          {renderMetricStrip()}
 
           <div className={styles.analyticsGrid}>
             <section className={styles.analyticsPanel}>

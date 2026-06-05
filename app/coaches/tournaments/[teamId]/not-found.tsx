@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
-import styles from '../../../my/registrations/[teamId]/detail.module.css';
+import styles from './detail.module.css';
 
 export default function CoachTournamentRecordNotFound() {
   return (

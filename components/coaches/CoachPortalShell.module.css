@@ -1,0 +1,301 @@
+/* ── Coaches Portal shell ──────────────────────────────────────────────────────
+   Desktop (≥1024px): fixed full-height left rail + content offset.
+   Mobile  (≤1023px): fixed frosted top bar + bottom nav.
+   The global marketing nav/footer are suppressed on these routes
+   (isCoachPortalShellPath), so the shell owns the chrome. */
+
+.shell {
+  --coach-rail-w: 248px;
+  --coach-topbar-h: 56px;
+  --coach-bottomnav-h: 64px;
+}
+
+/* ── Brand lockup (shared by rail header + mobile top bar) ── */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: var(--white);
+}
+
+.brandMark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: var(--on-primary, #fff);
+  font-family: var(--font-data, monospace);
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+}
+
+.brandText {
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+
+/* ── Desktop rail ─────────────────────────────────────────────────────────── */
+.rail {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .rail {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--coach-rail-w);
+    z-index: 110;
+    padding: 1.25rem 0.85rem;
+    background: var(--surface);
+    border-right: 1px solid var(--border-2);
+    box-shadow: var(--highlight-top);
+    overflow-y: auto;
+  }
+}
+
+.railHeader {
+  padding: 0.25rem 0.5rem 1rem;
+  border-bottom: 1px solid var(--border-2);
+  margin-bottom: 0.85rem;
+}
+
+.railEmail {
+  margin: 0.6rem 0 0;
+  font-size: 0.72rem;
+  color: var(--white-45);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.railNav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.railLink {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius);
+  color: var(--white-70);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  position: relative;
+  transition: background 0.15s, color 0.15s;
+}
+
+.railLink:hover {
+  background: var(--white-05);
+  color: var(--white);
+}
+
+.railLinkActive {
+  color: var(--white);
+  background: var(--white-05);
+}
+
+.railLinkActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 1.1rem;
+  border-radius: 2px;
+  background: var(--primary);
+}
+
+.railTeams {
+  margin-top: 1.1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-2);
+}
+
+.railTeamsLabel {
+  margin: 0 0 0.5rem;
+  padding: 0 0.75rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--white-40);
+}
+
+.railTeam {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius);
+  color: var(--white-70);
+  text-decoration: none;
+  font-size: 0.82rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.railTeam:hover {
+  background: var(--white-05);
+  color: var(--white);
+}
+
+.railTeamDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.railTeamName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.railFooter {
+  margin-top: auto;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.railSignOut {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--white-60);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.railSignOut:hover {
+  background: var(--white-05);
+  color: var(--white);
+  border-color: var(--border);
+}
+
+.railLive {
+  padding: 0 0.75rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-35);
+}
+
+/* ── Mobile top bar ───────────────────────────────────────────────────────── */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: var(--coach-topbar-h);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  background: var(--nav-mobile-bg, var(--surface));
+  border-bottom: 1px solid var(--border-2);
+  backdrop-filter: blur(var(--blur-bar));
+  -webkit-backdrop-filter: blur(var(--blur-bar));
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .topbar {
+    background: var(--bg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .topbar {
+    display: none;
+  }
+}
+
+/* ── Content region ───────────────────────────────────────────────────────── */
+.content {
+  padding-top: var(--coach-topbar-h);
+  padding-bottom: calc(var(--coach-bottomnav-h) + env(safe-area-inset-bottom, 0px));
+  min-height: 100vh;
+}
+
+@media (min-width: 1024px) {
+  .content {
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: var(--coach-rail-w);
+  }
+}
+
+/* ── Mobile bottom nav ────────────────────────────────────────────────────── */
+.bottomNav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  height: calc(var(--coach-bottomnav-h) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  background: var(--nav-mobile-bg, var(--surface));
+  border-top: 1px solid var(--border-2);
+  backdrop-filter: blur(var(--blur-bar));
+  -webkit-backdrop-filter: blur(var(--blur-bar));
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .bottomNav {
+    background: var(--bg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .bottomNav {
+    display: none;
+  }
+}
+
+.bottomTab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  color: var(--white-50);
+  text-decoration: none;
+  font-size: 0.68rem;
+  font-weight: 600;
+  transition: color 0.15s, transform 0.12s;
+}
+
+.bottomTab:active {
+  transform: scale(0.94);
+}
+
+.bottomTabActive {
+  color: var(--primary-light, var(--primary));
+}

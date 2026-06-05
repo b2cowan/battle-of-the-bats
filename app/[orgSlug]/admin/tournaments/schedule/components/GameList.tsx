@@ -82,7 +82,7 @@ export default function GameList({
       const start = parseGameStart(g.date, g.time);
       if (Number.isNaN(start)) continue;
       const division = divisions.find(dv => dv.id === g.divisionId);
-      const { durationMinutes } = resolveGameTiming(division, tournament);
+      const { durationMinutes } = resolveGameTiming(division, tournament, g.isPlayoff);
       const end = start + durationMinutes * 60_000;
       if (now < start) {
         if (g.date === todayStr && start < nextStart) { nextStart = start; nextId = g.id; }
@@ -107,6 +107,7 @@ export default function GameList({
 
   const getTeamName = (id: string) => teams.find(t => t.id === id)?.name ?? null;
   const resolveTeam = (id: string, placeholder?: string) => getTeamName(id) ?? placeholder ?? 'TBD';
+  const isNoShow = (id?: string) => !!id && teams.find(t => t.id === id)?.checkInStatus === 'no_show';
   const getVenueName = (venueId?: string, facilityId?: string) => {
     const venue = venueId ? venues.find(d => d.id === venueId) : null;
     if (!venue) return '';
@@ -225,6 +226,7 @@ export default function GameList({
         venueFacilityId: g.venueFacilityId ?? null,
         scheduleFacilityLaneId: g.scheduleFacilityLaneId ?? null,
         divisionId: g.divisionId ?? null,
+        isPlayoff: g.isPlayoff ?? false,
       })),
       divisions,
       tournament,
@@ -266,6 +268,7 @@ export default function GameList({
           venueId: edit.venueId || null,
           venueFacilityId: edit.venueFacilityId || null,
           divisionId: game.divisionId || null,
+          isPlayoff: game.isPlayoff ?? false,
         },
         allGames: games.map(g => ({
           id: g.id,
@@ -276,6 +279,7 @@ export default function GameList({
           venueFacilityId: g.venueFacilityId ?? null,
           scheduleFacilityLaneId: g.scheduleFacilityLaneId ?? null,
           divisionId: g.divisionId ?? null,
+          isPlayoff: g.isPlayoff ?? false,
         })),
         divisions,
         tournament: tournament ?? null,
@@ -415,6 +419,7 @@ export default function GameList({
                   </span>
                 ) : null}
                 {/* Team name */}
+                {isNoShow(g.awayTeamId) && <span className={styles.noShowTag}>No-show</span>}
                 <span className={styles.scoringTeamName} style={{ textAlign: 'right' }} title={resolveTeam(g.awayTeamId, g.awayPlaceholder)}>
                   {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
                 </span>
@@ -428,6 +433,7 @@ export default function GameList({
                 <span className={styles.scoringTeamName} title={resolveTeam(g.homeTeamId, g.homePlaceholder)}>
                   {resolveTeam(g.homeTeamId, g.homePlaceholder)}
                 </span>
+                {isNoShow(g.homeTeamId) && <span className={styles.noShowTag}>No-show</span>}
                 {/* Score or input */}
                 {isExpanded ? (
                   <span className={styles.scoreStepper}>
@@ -616,11 +622,13 @@ export default function GameList({
           {/* Matchup */}
           <div className={`${s.gameColMatchup} ${styles.planningMatchup}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
             <div className={styles.planningTeamAway} title={resolveTeam(g.awayTeamId, g.awayPlaceholder)}>
+              {isNoShow(g.awayTeamId) && <span className={styles.noShowTag}>No-show</span>}
               {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
             </div>
             <div className={styles.planningVs} style={{ fontFamily: 'var(--font-data)', fontSize: '0.58rem', fontWeight: 900, color: 'var(--white-25)', letterSpacing: '0.1em', flexShrink: 0 }}>VS</div>
             <div className={styles.planningTeamHome} title={resolveTeam(g.homeTeamId, g.homePlaceholder)}>
               {resolveTeam(g.homeTeamId, g.homePlaceholder)}
+              {isNoShow(g.homeTeamId) && <span className={styles.noShowTag}>No-show</span>}
             </div>
           </div>
 

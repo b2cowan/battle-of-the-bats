@@ -204,6 +204,7 @@ export function ToolbarMenu({
   icon,
   align = 'end',
   disabled = false,
+  keepLabel = false,
   children,
   className,
 }: {
@@ -211,6 +212,8 @@ export function ToolbarMenu({
   icon?: React.ReactNode;
   align?: 'start' | 'end';
   disabled?: boolean;
+  /** Keep the text label visible on mobile (for primary actions, not toolbar tools). */
+  keepLabel?: boolean;
   children: React.ReactNode;
   className?: string;
 }) {
@@ -301,7 +304,7 @@ export function ToolbarMenu({
   }, [open, align]);
 
   return (
-    <div ref={rootRef} className={clsx(styles.menuRoot, className)}>
+    <div ref={rootRef} className={clsx(styles.menuRoot, className)} data-keep-label={keepLabel || undefined}>
       <button
         type="button"
         className={clsx(styles.menuButton, open && styles.menuButtonOpen)}

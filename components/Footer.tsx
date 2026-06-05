@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { isCoachPortalShellPath } from '@/lib/coaches-portal-routes';
 
 // Static top-level routes that live outside the org-slug space and should show the footer.
 const STATIC_ROOTS = new Set(['discover', 'pricing', 'auth', 'coaches', 'status', 'docs', 'contact', 'blog']);
@@ -9,12 +10,14 @@ export default function Footer() {
   const pathname = usePathname();
   const firstSegment = pathname.split('/')[1] ?? '';
 
-  // Always hide on admin shells, platform-admin, and the /home context-switcher.
+  // Always hide on admin shells, platform-admin, the /home context-switcher, and the
+  // authenticated coach-portal routes (which render their own shell chrome).
   if (
     /^\/[^/]+\/admin(\/|$)/.test(pathname) ||
     pathname.startsWith('/admin') ||
     pathname.startsWith('/platform-admin') ||
-    pathname.startsWith('/home')
+    pathname.startsWith('/home') ||
+    isCoachPortalShellPath(pathname)
   ) return null;
 
   // Hide on all org-slug pages (/{orgSlug}/...) — public tournament pages, coaches portal,

@@ -3079,6 +3079,23 @@
   gap: 0.4rem;
 }
 
+/* Gate check-in: a team marked no-show, flagged on its games. */
+.noShowTag {
+  display: inline-block;
+  flex-shrink: 0;
+  margin: 0 0.3rem;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  background: rgba(var(--danger-rgb), 0.14);
+  color: var(--danger);
+  font-family: var(--font-data);
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
 @media (max-width: 768px) {
   .mobileIconButton {
     width: 32px;
@@ -3441,6 +3458,126 @@
     width: 86vw;
     flex: 0 0 86vw;
     scroll-snap-align: center;
+  }
+}
+
+/* ── Double-elim fork read bracket ──────────────────────────────
+   Seed Round (round 1) sits as a shared column on the left, then the
+   bracket forks into the Winners bracket (top) and Losers bracket
+   (bottom), with the Grand Final on the far right — seed + grand final
+   are vertically centred between the two branches. This keeps every
+   downstream feed flowing forward (rightward). Both branches share the
+   canvas's horizontal scroll on desktop, so the SVG connectors (which
+   measure live card positions) stay aligned. */
+.readBracketWrap {
+  width: 100%;
+  max-width: 100%;
+}
+
+.readBracketCanvasTiered {
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.bracketSplit {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.bracketSeedColumn,
+.bracketGfSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+/* Grand Final + its "if necessary" reset sit side by side. */
+.bracketGfRow {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.bracketTier {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.bracketTierLabel {
+  position: sticky;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: max-content;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--white-40);
+}
+
+.bracketTierRow {
+  display: flex;
+  gap: 2.5rem;
+  width: max-content;
+  min-width: 100%;
+}
+
+/* Winner/loser path legend above the bracket. */
+.bracketLegend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  margin: 0 0 1rem;
+  font-size: 0.72rem;
+  color: var(--white-40);
+}
+
+.bracketLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.bracketLegend i {
+  display: inline-block;
+  width: 20px;
+  height: 0;
+  border-top: 2.5px solid transparent;
+  border-radius: 2px;
+}
+
+.legendWin {
+  border-top-color: rgba(var(--logic-lime-rgb), 0.7);
+}
+
+.legendLoss {
+  border-top-style: dashed;
+  border-top-color: rgba(var(--warning-rgb), 0.8);
+}
+
+@media (max-width: 768px) {
+  /* Connectors are hidden on mobile, so the fork stacks vertically
+     (Seed → Winners → Losers → Grand Final) and each round row
+     scroll-snaps on its own. */
+  .readBracketCanvasTiered {
+    flex-direction: column;
+    align-items: stretch;
+    overflow-x: visible;
+    gap: 1.75rem;
+  }
+
+  .bracketTierRow {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-left: 1rem;
+    min-width: 0;
   }
 }
 

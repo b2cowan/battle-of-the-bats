@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getAuthContext } from '@/lib/api-auth';
 import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams } from '@/lib/db';
 import { getRegistrationState } from '@/lib/registration-state';
+import { isPlayoffOnly } from '@/lib/tournament-phase';
 import { resolveTheme } from '@/lib/themes';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { OrgNavSync } from '@/components/OrgNavSync';
@@ -13,6 +14,7 @@ import InstallAppPrompt from '@/components/InstallAppPrompt';
 import MyTeamDock from '@/components/public/MyTeamDock';
 import TournamentSideRail from '@/components/public/TournamentSideRail';
 import railStyles from '@/components/public/TournamentSideRail.module.css';
+import ScoreTicker from '@/components/public/ScoreTicker';
 
 export const dynamic = 'force-dynamic';
 
@@ -120,6 +122,11 @@ export default async function TournamentLayout({
   // Public Register CTA — only when registration is genuinely open/waitlisting
   // (lifecycle + capacity aware). Skip the capacity queries entirely when the
   // register page is hidden, since there's no CTA to show then.
+  // Bracket-only tournaments have no round-robin standings — hide that nav tab.
+  const navHiddenPages = isPlayoffOnly(tournament)
+    ? Array.from(new Set([...(tournament.publicHiddenPages ?? []), 'standings' as const]))
+    : (tournament.publicHiddenPages ?? []);
+
   const registerHidden = (tournament.publicHiddenPages ?? []).includes('register');
   let registerCta: 'register' | 'waitlist' | null = null;
   if (!registerHidden) {
@@ -176,7 +183,7 @@ export default async function TournamentLayout({
         slug={tournament.slug}
         tournamentName={tournament.name}
         colorMode={effectiveColorMode}
-        hiddenPages={tournament.publicHiddenPages ?? []}
+        hiddenPages={navHiddenPages}
         registerCta={registerCta}
         startDate={tournament.startDate ?? null}
         endDate={tournament.endDate ?? null}
@@ -204,6 +211,8 @@ export default async function TournamentLayout({
       )}
       {/* Desktop-only (≥1024px) persistent left nav rail — self-hides below that. */}
       <TournamentSideRail />
+      {/* Broadcast score ticker — self-gates to game day (reserves --ticker-h). */}
+      <ScoreTicker />
       <div className={railStyles.shell} data-card-style={cardStyle} data-color-mode={effectiveColorMode}>
         {children}
       </div>
@@ -219,6 +228,7 @@ export default async function TournamentLayout({
         appName={tournament.name}
         subtitle="Live scores, schedule &amp; alerts — add to your home screen."
         dismissKey={`flhq-install-fan-${tournament.slug}`}
+        iconUrl={canUseAdvancedBranding ? tournament.logoUrl ?? org.logoUrl ?? null : null}
       />
     </>
   );

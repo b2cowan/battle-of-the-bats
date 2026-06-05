@@ -15,7 +15,23 @@
  * edge-case difference.
  */
 
+import type { TournamentFormat } from './types';
+
 export type TournamentPhase = 'draft' | 'open' | 'gameday' | 'completed' | 'archived';
+
+/** Structural format of a tournament; defaults to the standard round robin → playoffs flow. */
+export function getTournamentFormat(
+  tournament?: { settings?: { format?: TournamentFormat | null } | null } | null,
+): TournamentFormat {
+  return tournament?.settings?.format ?? 'round_robin_playoffs';
+}
+
+/** True when a tournament skips round robin and seeds its bracket directly. */
+export function isPlayoffOnly(
+  tournament?: { settings?: { format?: TournamentFormat | null } | null } | null,
+): boolean {
+  return getTournamentFormat(tournament) === 'playoff_only';
+}
 
 /** Date-only game-day signal: today falls within the tournament's start–end window. */
 export function isWithinEventDates(

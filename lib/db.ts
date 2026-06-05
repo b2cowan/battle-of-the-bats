@@ -1278,7 +1278,6 @@ export async function saveTeam(t: Omit<Team, 'id'> & { id?: string }): Promise<v
     name: t.name,
     coach: t.coach,
     email: t.email,
-    players: t.players || [],
     status: t.status || 'accepted',
     payment_status: t.paymentStatus || 'paid',
     registered_at: t.registeredAt || new Date().toISOString(),
@@ -1299,7 +1298,6 @@ export async function updateTeam(id: string, t: Partial<Team>): Promise<void> {
   if (t.name !== undefined)         updates.name = t.name;
   if (t.coach !== undefined)        updates.coach = t.coach;
   if (t.email !== undefined)        updates.email = t.email;
-  if (t.players !== undefined)      updates.players = t.players;
   if (t.status !== undefined)       updates.status = t.status;
   if (t.paymentStatus !== undefined) updates.payment_status = t.paymentStatus;
   if (t.registeredAt !== undefined) updates.registered_at = t.registeredAt;
@@ -1903,6 +1901,24 @@ export async function advancePlayoffs(game: Game, options: ReadOptions = {}) {
 
       if (Object.keys(updates).length > 0) {
         await updateGame(pg.id, updates, options);
+      }
+    }
+
+    // Double-elimination grand final: the "if necessary" reset (bracketCode GF2)
+    // is only played when the losers-bracket team wins the first grand final.
+    // The generator always sets GF.home = winners-bracket champion and
+    // GF.away = losers-bracket champion, so if the home side wins, the reset is
+    // unnecessary (cancel it); otherwise keep it scheduled. Re-runs on re-scoring.
+    if (game.bracketCode === 'GF') {
+      const winnersBracketWon = winnerId === game.homeTeamId;
+      const nextStatus = winnersBracketWon ? 'cancelled' : 'scheduled';
+      for (const pg of playoffGames) {
+        if (pg.bracketCode !== 'GF2') continue;
+        if (game.bracketId && pg.bracketId && pg.bracketId !== game.bracketId) continue;
+        if (pg.status === 'completed' || pg.status === 'submitted') continue;
+        if (pg.status !== nextStatus) {
+          await updateGame(pg.id, { status: nextStatus }, options);
+        }
       }
     }
   }

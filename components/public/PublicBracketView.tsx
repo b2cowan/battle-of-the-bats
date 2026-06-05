@@ -3,6 +3,7 @@ import { Trophy } from 'lucide-react';
 import { Game, Team } from '@/lib/types';
 import { teamInitials, teamColorFromName } from '@/lib/teamBadge';
 import { formatTime } from '@/lib/utils';
+import { bracketRoundInfo } from '@/lib/playoff-bracket';
 import styles from '@/app/[orgSlug]/standings/standings.module.css';
 
 interface Props {
@@ -18,26 +19,21 @@ type BracketRound = {
   games: Game[];
 };
 
-function getRoundMeta(code: string): { label: string; order: number } {
-  const upper = (code || '').toUpperCase();
-  if (upper.startsWith('QF')) return { label: 'Quarterfinal', order: 0 };
-  if (upper.startsWith('SF')) return { label: 'Semifinal', order: 1 };
-  if (upper === '3RD')        return { label: '3rd Place',  order: 3 };
-  if (upper === 'FIN')        return { label: 'Championship', order: 2 };
-  return { label: 'Playoff', order: 1 };
-}
-
 function buildRounds(playoffGames: Game[]): BracketRound[] {
   const map = new Map<string, BracketRound>();
   for (const g of playoffGames) {
-    const code = g.bracketCode || 'PLAYOFF';
-    const { label, order } = getRoundMeta(code);
-    // Group by round label so QF1/QF2/QF3/QF4 all land in one round
-    const prefix = code.replace(/\d+$/, '') || code;
-    if (!map.has(prefix)) {
-      map.set(prefix, { key: prefix, label, order, games: [] });
+    const raw = (g.bracketCode || 'PLAYOFF').toUpperCase();
+    // Keep 3rd place as its own key — the tree renders it as a separate sub-section.
+    const info = (raw === '3RD' || raw === 'P3')
+      ? { key: '3RD', title: '3rd Place', rank: 2.5 }
+      : bracketRoundInfo(g.bracketCode || 'PLAYOFF');
+    if (!map.has(info.key)) {
+      map.set(info.key, { key: info.key, label: info.title, order: info.rank, games: [] });
     }
-    map.get(prefix)!.games.push(g);
+    map.get(info.key)!.games.push(g);
+  }
+  for (const round of map.values()) {
+    round.games.sort((a, b) => (a.bracketCode || '').localeCompare(b.bracketCode || ''));
   }
   return Array.from(map.values()).sort((a, b) => a.order - b.order);
 }
@@ -235,9 +231,13 @@ function BracketList({ rounds, teams, requireFinalization }: {
 // ─── Champion spotlight — the decided final's winner ─────────────────────────
 
 function getChampionName(playoffGames: Game[], teams: Team[]): string | null {
-  const finalGame = playoffGames.find(g => (g.bracketCode || '').toUpperCase() === 'FIN');
+  // The decided final's winner — for double elimination that is the grand-final
+  // reset (if played), then the grand final, otherwise the single-elim final.
+  const decided = (g?: Game) =>
+    !!g && (g.status === 'completed' || g.status === 'submitted') && !!getOutcome(g) && getOutcome(g) !== 'tie';
+  const byCode = (code: string) => playoffGames.find(g => (g.bracketCode || '').toUpperCase() === code);
+  const finalGame = [byCode('GF2'), byCode('GF'), byCode('FIN')].find(decided);
   if (!finalGame) return null;
-  if (finalGame.status !== 'completed' && finalGame.status !== 'submitted') return null;
   const outcome = getOutcome(finalGame);
   if (!outcome || outcome === 'tie') return null;
   const winnerId = outcome === 'home' ? finalGame.homeTeamId : finalGame.awayTeamId;

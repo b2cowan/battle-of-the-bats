@@ -67,14 +67,15 @@
 
 .orgName {
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 900;
   color: var(--white);
-  letter-spacing: 0.05em;
-  max-width: 200px;
-  line-height: 1.25;
+  letter-spacing: 0.04em;
+  max-width: 15rem;
+  line-height: 1.2;
+  /* Show the full name (up to 3 lines within the nav height) — no hard cut. */
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -143,11 +144,14 @@
   min-width: 0;
 }
 
-/* Desktop app-shell top-bar additions (status/ticker on the left, Share by
-   Register on the right) — shown only ≥1024px (see the media block below). */
-.navStatusSlot,
-.navShareSlot {
+/* Top-bar additions. Status/ticker is desktop-only (see the ≥1024 block).
+   Share is a single icon — persistent + consistent on every page and size. */
+.navStatusSlot {
   display: none;
+}
+.navShare {
+  display: inline-flex;
+  align-items: center;
 }
 
 /* Bottom nav (marketing pages, mobile only) */
@@ -197,6 +201,12 @@
 @media (max-width: 900px) {
   .links { display: none; }
   .bottomNav { display: flex; }
+  /* Links are hidden on mobile (bottom nav), so the logo no longer needs an equal
+     flex share to centre them — give the name the real available width, and let
+     the actions (just a small share icon) shrink to content. */
+  .logo { flex: 1 1 auto; }
+  .actions { flex: 0 0 auto; }
+  .orgName { max-width: none; }
 }
 
 /* Desktop app shell: the persistent left rail (TournamentSideRail) replaces the
@@ -218,5 +228,4 @@
     flex: 1 1 0;
     min-width: 0;
   }
-  .navShareSlot { display: inline-flex; }
 }

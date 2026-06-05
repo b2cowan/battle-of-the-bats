@@ -70,6 +70,14 @@
   margin-bottom: 0.75rem;
 }
 
+/* Stack of collapsible settings cards — spacing handled here so the cards
+   themselves carry no outer margin (keeps them reusable in grid layouts too). */
+.cardStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .sectionTitle {
   font-size: 0.72rem;
   font-weight: 700;

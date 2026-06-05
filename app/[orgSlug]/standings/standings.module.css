@@ -576,13 +576,14 @@
   font-family: var(--font-data);
   font-size: 2rem;
   line-height: 1;
-  color: var(--white-70);
+  /* Name + score follow the team's win/lose/neutral colour set on .scoreTeam. */
+  color: inherit;
 }
 
-.scoreWinner .scoreTeamName,
-.scoreWinner strong {
-  color: var(--primary-light);
-}
+/* Winner emphasis — winner stays bright, loser dims back. Consistent with the
+   schedule rows and game-detail scoreboard (one "dim-the-loser" language). */
+.scoreWinner { color: var(--white); }
+.scoreLoser  { color: var(--white-40); }
 
 .scoreVs {
   color: var(--white-35);
@@ -638,6 +639,18 @@
 
 .topRow td:first-child {
   border-left: 3px solid rgba(var(--warning-rgb), 0.5);
+}
+
+/* Followed team row — primary accent, same pattern as topRow so sticky cols stay opaque. */
+.followedTeamRow .stickyCol { background: var(--surface); }
+.followedTeamRow .ptsCol    { background: var(--surface); }
+
+.followedTeamRow td {
+  background: rgba(var(--primary-rgb), 0.06);
+}
+
+.followedTeamRow td:first-child {
+  border-left: 3px solid rgba(var(--primary-rgb), 0.5);
 }
 
 /* ── Mobile: keep the table, freeze Team (left) + PTS (right) ──────────────────
@@ -1487,7 +1500,7 @@
 }
 
 .bracketTeamTbd {
-  color: var(--white-30);
+  color: var(--white-50);
   font-style: italic;
 }
 
@@ -1677,6 +1690,7 @@
     text-align: center;
     font-size: 0.72rem;
     padding: 0.38rem 0.5rem;
+    min-height: 40px;
   }
 
   /* Race header */

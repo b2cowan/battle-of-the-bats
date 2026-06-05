@@ -512,10 +512,13 @@ export async function POST(req: Request) {
 
       // Whitelist known settings keys so arbitrary data can't be injected.
       const ALLOWED_SETTINGS_KEYS = new Set([
+        'format',
         'rulesLayout',
         'resourcesLayout',
         'game_duration_minutes',
         'buffer_minutes',
+        'playoff_game_duration_minutes',
+        'playoff_buffer_minutes',
         'schedule_travel_venue_buffer_minutes',
         'schedule_travel_facility_buffer_minutes',
         // Scope controls (Phase 2 — Divisions UX Rework)
@@ -524,6 +527,7 @@ export async function POST(req: Request) {
         'tie_breaker_scope',
         'fee_scope',
       ]);
+      const FORMAT_VALUES           = new Set(['round_robin_playoffs', 'playoff_only']);
       const RULES_LAYOUT_VALUES     = new Set(['columns', 'single']);
       const RESOURCES_LAYOUT_VALUES = new Set(['list', 'grid']);
       const GAME_TIMING_SCOPE_VALUES  = new Set(['tournament', 'allow_override', 'per_division']);
@@ -534,6 +538,7 @@ export async function POST(req: Request) {
       const sanitized: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(data.settings as Record<string, unknown>)) {
         if (!ALLOWED_SETTINGS_KEYS.has(k)) continue;
+        if (k === 'format'          && !FORMAT_VALUES.has(String(v))) continue;
         if (k === 'rulesLayout'     && !RULES_LAYOUT_VALUES.has(String(v))) continue;
         if (k === 'resourcesLayout' && !RESOURCES_LAYOUT_VALUES.has(String(v))) continue;
         if (k === 'game_duration_minutes') {
@@ -542,9 +547,15 @@ export async function POST(req: Request) {
           sanitized[k] = n;
           continue;
         }
-        if (k === 'buffer_minutes') {
+        if (k === 'buffer_minutes' || k === 'playoff_buffer_minutes') {
           const n = Number(v);
           if (!Number.isInteger(n) || n < 0 || n > 120) continue;
+          sanitized[k] = n;
+          continue;
+        }
+        if (k === 'playoff_game_duration_minutes') {
+          const n = Number(v);
+          if (!Number.isInteger(n) || n < 1 || n > 600) continue;
           sanitized[k] = n;
           continue;
         }

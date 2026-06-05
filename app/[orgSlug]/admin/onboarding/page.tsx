@@ -14,7 +14,7 @@ import {
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
-import type { OrgPlan } from '@/lib/types';
+import type { OrgPlan, TournamentFormat } from '@/lib/types';
 import PricingSection from '@/components/PricingSection';
 import styles from './onboarding.module.css';
 
@@ -150,6 +150,7 @@ function getDefaultTournamentForm() {
     slug: generateSlug(defaultName),
     startDate: '',
     endDate: '',
+    format: 'round_robin_playoffs' as TournamentFormat,
   };
 }
 
@@ -1219,6 +1220,15 @@ export default function OnboardingPage() {
         }),
       })));
 
+      // Bracket-only is stored as a tournament setting (default round-robin needs no write).
+      if (tournamentForm.format === 'playoff_only') {
+        await requestJson<{ success: boolean }>('/api/admin/tournaments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'patch-settings', id: created.id, data: { settings: { format: 'playoff_only' } } }),
+        }).catch(() => { /* non-fatal: format can still be set in Event Settings */ });
+      }
+
       await requestJson<{ ok: boolean }>('/api/admin/org/complete-onboarding', { method: 'POST' });
       await refreshTournamentContext();
       await refreshOrgContext();
@@ -1837,6 +1847,34 @@ export default function OnboardingPage() {
             <p className={styles.fieldHint}>
               Start and end dates are required. You can change them later if they are still being finalized.
             </p>
+
+            <div className={styles.fieldLabel}>
+              Tournament style
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginTop: '0.35rem' }}>
+                {([
+                  { value: 'round_robin_playoffs', title: 'Round robin + playoffs', desc: 'Teams play a round robin, then a bracket seeded from the standings.' },
+                  { value: 'playoff_only', title: 'Bracket only', desc: 'No round robin — seed teams straight into a playoff bracket.' },
+                ] as const).map(opt => {
+                  const selected = (tournamentForm.format ?? 'round_robin_playoffs') === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setTournamentForm(form => ({ ...form, format: opt.value }))}
+                      style={{
+                        textAlign: 'left', padding: '0.7rem 0.8rem', borderRadius: 6, cursor: 'pointer',
+                        background: selected ? 'rgba(var(--logic-lime-rgb), 0.1)' : 'var(--surface)',
+                        border: `1px solid ${selected ? 'var(--logic-lime)' : 'var(--border)'}`,
+                        color: 'var(--white)',
+                      }}
+                    >
+                      <span style={{ display: 'block', fontWeight: 700, fontSize: '0.85rem' }}>{opt.title}</span>
+                      <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--white-60)', marginTop: '0.2rem', lineHeight: 1.35 }}>{opt.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <label className={styles.fieldLabel}>
               Public link

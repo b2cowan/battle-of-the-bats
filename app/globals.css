@@ -196,8 +196,12 @@
   min-height: 100vh;
 }
 
-/* Light-mode: card glass variants */
+/* Light-mode: card glass variants.
+   NOTE: the tournament layout sets BOTH data-card-style + data-color-mode on the
+   SAME wrapper, so the same-element selector (no space) is the one that matches;
+   the descendant variant is kept for any nested arrangement. */
 [data-color-mode="light"] .card-glass,
+[data-color-mode="light"][data-card-style="glass"] .card,
 [data-color-mode="light"] [data-card-style="glass"] .card {
   background: rgba(255, 255, 255, 0.75);
   border-color: rgba(15, 17, 35, 0.1);
@@ -413,7 +417,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .page-content {
   min-height: calc(100vh - var(--nav-height));
-  padding-top: var(--nav-height);
+  /* --ticker-h is set by the score ticker only on game day; 0 otherwise. */
+  padding-top: calc(var(--nav-height) + var(--ticker-h, 0px));
 }
 
 .section { padding: 1.5rem 0 3rem; }
@@ -424,6 +429,7 @@ h1, h2, h3, h4, h5, h6 {
 .public-page-header {
   background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
   border-bottom: 1px solid var(--border);
+  box-shadow: var(--highlight-top);
   padding: 1.25rem 0;
 }
 .public-page-header h1 {
@@ -434,6 +440,13 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0.25rem 0;
 }
 .public-page-header p { color: var(--white-60); max-width: 640px; }
+
+@media (max-width: 640px) {
+  .public-page-header { padding: 0.55rem 0; }
+  .public-page-header h1 { font-size: 1.25rem; margin: 0.15rem 0; }
+  /* Description adds no navigation value on mobile — eyebrow + title is enough. */
+  .public-page-header p { display: none; }
+}
 
 /* ─── Cards ─────────────────────────────────────────────────────────────────── */
 .card {

@@ -12,7 +12,7 @@ import {
   COACHES_START_PATH,
   COACHES_TOURNAMENTS_PATH,
 } from '@/lib/coaches-portal-routes';
-import styles from '../../my/registrations/registrations.module.css';
+import styles from './tournaments.module.css';
 
 export const metadata = { title: 'Coaches Portal - Tournament Records' };
 
@@ -250,21 +250,21 @@ function CtaCards({ hasPremiumAccess }: { hasPremiumAccess: boolean }) {
     <div className={styles.ctaGrid}>
       {!hasPremiumAccess && (
         <div className={styles.ctaCard}>
-          <div className={styles.ctaLabel}>Take your season further</div>
-          <div className={styles.ctaTitle}>Coaches Portal Premium</div>
+          <div className={styles.ctaLabel}>For your team</div>
+          <div className={styles.ctaTitle}>Take your team further</div>
           <p className={styles.ctaDesc}>
-            Manage your team year-round with roster, schedule, dues, budget, documents, and lineups in one place.
+            Run your team year-round — roster, lineups, schedule, dues, budget, and documents in one place. It carries over automatically if your organization joins FieldLogicHQ.
           </p>
-          <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Explore Premium</Link>
+          <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Express interest</Link>
         </div>
       )}
       <div className={styles.ctaCard}>
-        <div className={styles.ctaLabel}>Ready to run your own event?</div>
-        <div className={styles.ctaTitle}>Host a Tournament</div>
+        <div className={styles.ctaLabel}>For your organization</div>
+        <div className={styles.ctaTitle}>Run your own tournament</div>
         <p className={styles.ctaDesc}>
-          FieldLogicHQ makes it easy to run divisions, pools, schedules, and registration all from one dashboard.
+          FieldLogicHQ runs divisions, pools, schedules, and registration from one dashboard.
         </p>
-        <Link href="/pricing" className="btn btn-ghost btn-sm">See Tournament Plans</Link>
+        <Link href="/pricing" className="btn btn-ghost btn-sm">See tournament plans</Link>
       </div>
     </div>
   );

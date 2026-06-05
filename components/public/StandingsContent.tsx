@@ -1,23 +1,20 @@
 'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { Calendar, CalendarPlus, CheckCircle, ChevronDown, Clock, Star, Trophy, X } from 'lucide-react';
+import { Calendar, CheckCircle, ChevronDown, Clock, Star, Trophy } from 'lucide-react';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { Division, Game, Team, Tournament, Venue } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
 import LocationLink from '@/components/LocationLink';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
-import RaceToPlayoffsView from '@/components/public/RaceToPlayoffsView';
-import PublicBracketView from '@/components/public/PublicBracketView';
+import { LogicSyncBracket } from '@/components/bracket/LogicSyncBracket';
 import { formatPoolName, formatTime } from '@/lib/utils';
 import styles from '@/app/[orgSlug]/standings/standings.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
-import { readFollowedTeamId, clearFollowedTeam, isTournamentInProgress } from '@/lib/follow';
+import { readFollowedTeamId, isTournamentInProgress } from '@/lib/follow';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
-import { downloadTeamScheduleICS } from '@/lib/team-calendar';
-import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
 
 type StandingResult = {
   teamId: string;
@@ -36,35 +33,11 @@ type StandingResult = {
 
 type StandingRow = StandingResult & { id: string; name: string };
 
-type ViewMode = 'standard' | 'race';
-
 interface Props {
   orgSlug: string;
   tournamentSlug: string;
   isPreview?: boolean;
   initialData?: PublicTournamentPageData;
-}
-
-function viewModeKey(orgSlug: string, tournamentSlug: string, divisionId: string) {
-  return `fl_standings_view_${orgSlug}_${tournamentSlug}_${divisionId}`;
-}
-
-function readViewMode(orgSlug: string, tournamentSlug: string, divisionId: string): ViewMode {
-  if (typeof window === 'undefined') return 'standard';
-  try {
-    const raw = window.localStorage.getItem(viewModeKey(orgSlug, tournamentSlug, divisionId));
-    if (raw === 'race') return 'race';
-    return 'standard';
-  } catch {
-    return 'standard';
-  }
-}
-
-function saveViewMode(orgSlug: string, tournamentSlug: string, divisionId: string, mode: ViewMode) {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(viewModeKey(orgSlug, tournamentSlug, divisionId), mode);
-  } catch { /* ignore */ }
 }
 
 function formatShortDate(date: string) {
@@ -107,8 +80,6 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
     return (preferred ?? groups[0]).id;
   });
   const [followedTeamId, setFollowedTeamId] = useState<string | null>(null);
-  const [fanAlertsEnabled, setFanAlertsEnabled] = useState<boolean>(() => initialData?.fanAlertsEnabled ?? false);
-  const [viewMode, setViewMode]             = useState<ViewMode>('standard');
   const [standingsByDivision, setStandingsByDivision] = useState<Record<string, StandingResult[]>>(
     () => (initialData?.standingsByDivision as Record<string, StandingResult[]>) ?? {}
   );
@@ -147,12 +118,6 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
     setFollowedTeamId(readFollowedTeamId(orgSlug, tournamentSlug));
   }, [orgSlug, tournamentSlug]);
 
-  // Restore per-division view mode preference after hydration
-  useEffect(() => {
-    if (!activeGroup) return;
-    setViewMode(readViewMode(orgSlug, tournamentSlug, activeGroup));
-  }, [orgSlug, tournamentSlug, activeGroup]);
-
   useEffect(() => {
     if (initialData) return;
     async function init() {
@@ -163,7 +128,6 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
       setSelectedTournament(current);
       setContactEmail(current?.contactEmail ?? data?.organization?.contactEmail ?? null);
       setRequireFinalization(data?.organization.requireScoreFinalization ?? current?.requireScoreFinalization ?? true);
-      setFanAlertsEnabled(data?.fanAlertsEnabled ?? false);
       setDivisions(groups);
       setGames(data?.games ?? []);
       setTeams(data?.teams ?? []);
@@ -198,8 +162,6 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
     ? (standingsByDivision[activeGroup] ?? []).map(s => ({ ...s, id: s.teamId, name: s.teamName }))
     : [];
   const pools = currentGroup?.pools || [];
-  const teamsQualifying = currentGroup?.playoffConfig?.teamsQualifying ?? 0;
-  const showViewToggle = teamsQualifying > 0 && !isPreview;
 
   const homeHref = `/${orgSlug}/${tournamentSlug}`;
   const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
@@ -228,11 +190,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
     })
     .slice(0, 8);
 
-  // Bracket logic
-  const playoffGames = activeGames.filter(g => g.isPlayoff);
-  const hasPlayoffGames = playoffGames.length > 0;
-  const unscoredPoolPlayGames = activeGames.filter(g => !g.isPlayoff && g.status === 'scheduled');
-  const playoffPhase = hasPlayoffGames && unscoredPoolPlayGames.length === 0;
+  const hasPlayoffGames = activeGames.some(g => g.isPlayoff);
   const gamesStarted = standings.some(s => s.gp > 0);
 
   const followedTeam = followedTeamId ? teams.find(team => team.id === followedTeamId) ?? null : null;
@@ -270,34 +228,9 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
       return (b.time || '').localeCompare(a.time || '');
     })[0] ?? null;
 
-  function stopFollowing() {
-    clearFollowedTeam(orgSlug, tournamentSlug);
-    setFollowedTeamId(null);
-  }
-
-  function handleAddToCalendar() {
-    if (!followedTeam || !selectedTournament) return;
-    void downloadTeamScheduleICS({
-      team: followedTeam,
-      games,
-      teams,
-      divisions,
-      tournamentName: selectedTournament.name,
-      orgSlug,
-      tournamentSlug,
-    });
-  }
-
-  function handleViewMode(mode: ViewMode) {
-    setViewMode(mode);
-    if (activeGroup) saveViewMode(orgSlug, tournamentSlug, activeGroup, mode);
-  }
-
   function handleDivisionChange(id: string) {
     setActiveGroup(id);
     setDivisionPref(orgSlug, divisions.find(g => g.id === id)?.name ?? '');
-    // Load saved view preference for the new division
-    setViewMode(readViewMode(orgSlug, tournamentSlug, id));
   }
 
   function getResultStatusLabel(game: Game) {
@@ -340,12 +273,12 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
         </div>
 
         <div className={styles.scoreMatchup}>
-          <div className={`${styles.scoreTeam} ${winner === 'away' ? styles.scoreWinner : ''}`}>
+          <div className={`${styles.scoreTeam} ${winner === 'away' ? styles.scoreWinner : winner === 'home' ? styles.scoreLoser : ''}`}>
             <span className={styles.scoreTeamName}>{getTeamName(game.awayTeamId)}</span>
             <strong>{game.awayScore}</strong>
           </div>
           <span className={styles.scoreVs}>at</span>
-          <div className={`${styles.scoreTeam} ${styles.scoreTeamHome} ${winner === 'home' ? styles.scoreWinner : ''}`}>
+          <div className={`${styles.scoreTeam} ${styles.scoreTeamHome} ${winner === 'home' ? styles.scoreWinner : winner === 'away' ? styles.scoreLoser : ''}`}>
             <span className={styles.scoreTeamName}>{getTeamName(game.homeTeamId)}</span>
             <strong>{game.homeScore}</strong>
           </div>
@@ -384,9 +317,11 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
         <Trophy size={16} className={styles.bracketSectionIcon} />
         <span className={styles.bracketSectionTitle}>PLAYOFF BRACKET</span>
       </div>
-      <PublicBracketView
-        games={activeGames}
+      <LogicSyncBracket
+        games={activeGames.filter(g => g.isPlayoff)}
         teams={teams}
+        tournamentId={selectedTournament!.id}
+        highlightTeamId={undefined}
         requireFinalization={requireFinalization}
       />
     </div>
@@ -432,24 +367,6 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                 <ChevronDown size={16} className="select-icon" />
               </div>
 
-              {showViewToggle && (
-                <div className={styles.viewToggle}>
-                  <button
-                    type="button"
-                    className={`${styles.viewToggleBtn} ${viewMode === 'standard' ? styles.viewToggleBtnActive : ''}`}
-                    onClick={() => handleViewMode('standard')}
-                  >
-                    Standard
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.viewToggleBtn} ${viewMode === 'race' ? styles.viewToggleBtnActive : ''}`}
-                    onClick={() => handleViewMode('race')}
-                  >
-                    Race to Playoffs
-                  </button>
-                </div>
-              )}
             </div>
           )}
 
@@ -478,104 +395,9 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
           {activeGroup && (
             <div className={styles.standingsStack}>
 
-              {/* ── Race to Playoffs view ──────────────────────────────────── */}
-              {viewMode === 'race' && (
-                <div className={styles.summarySection}>
-                  <RaceToPlayoffsView
-                    standings={standings}
-                    pools={pools}
-                    playoffConfig={currentGroup?.playoffConfig}
-                    followedTeamId={followedTeamId}
-                    teams={teams}
-                    gamesStarted={gamesStarted}
-                  />
-                </div>
-              )}
-
-              {/* ── Standard view ─────────────────────────────────────────── */}
-              {viewMode === 'standard' && (
-                <>
-                  {/* Bracket floats above standings when pool play is done */}
-                  {playoffPhase && bracketSection}
-
-                  {/* Follow bar */}
-                  {!isPreview && followedTeam && (
-                    <div className={styles.followBar}>
-                      <div className={styles.followBarLeft}>
-                        <div className={styles.followMain}>
-                          <Star size={16} fill="currentColor" />
-                          <span className={styles.followLabel}>My Team</span>
-                          <strong className={styles.followTeamName}>{followedTeam.name}</strong>
-                          {followedRank && (
-                            <span className={styles.followRankBadge}>{followedRank}{['st','nd','rd'][followedRank - 1] ?? 'th'}</span>
-                          )}
-                        </div>
-                        {followedStanding && (
-                          <div className={styles.followRecord}>
-                            {followedStanding.w}-{followedStanding.l}-{followedStanding.t}
-                            &nbsp;·&nbsp;{followedStanding.pts} pts
-                            &nbsp;·&nbsp;RD {followedStanding.rd > 0 ? `+${followedStanding.rd}` : followedStanding.rd}
-                          </div>
-                        )}
-                      </div>
-                      <div className={styles.followBarRight}>
-                        {followedRank && (
-                          <div className={styles.followFinalPos}>
-                            <span className={styles.followFinalLabel}>
-                              {isCompletedTournament || standingsFinal ? 'Final' : 'Current'}
-                            </span>
-                            <span className={styles.followFinalRank}>
-                              {followedRank}{['st','nd','rd'][followedRank - 1] ?? 'th'}
-                            </span>
-                          </div>
-                        )}
-                        <div className={styles.followStats}>
-                          {latestFollowedScore ? (
-                            <div className={styles.followResult}>
-                              <span>{getResultStatusLabel(latestFollowedScore)}</span>
-                              <strong>
-                                {latestFollowedScore.homeTeamId === followedTeam.id ? latestFollowedScore.homeScore : latestFollowedScore.awayScore}
-                                {' - '}
-                                {latestFollowedScore.homeTeamId === followedTeam.id ? latestFollowedScore.awayScore : latestFollowedScore.homeScore}
-                              </strong>
-                              <span>vs {getOpponentName(latestFollowedScore, followedTeam)}</span>
-                            </div>
-                          ) : nextFollowedGame ? (
-                            <div className={styles.followResult}>
-                              <span>Next game</span>
-                              <strong>{formatShortDate(nextFollowedGame.date)} {formatTime(nextFollowedGame.time)}</strong>
-                              <span>vs {getOpponentName(nextFollowedGame, followedTeam)}</span>
-                            </div>
-                          ) : null}
-                        </div>
-                        <div className={styles.followActions}>
-                          {followedDivision && followedDivision.id !== activeGroup && (
-                            <button type="button" className="btn btn-lime btn-sm" onClick={showFollowedDivision}>
-                              Show Division
-                            </button>
-                          )}
-                          {showSchedulePage && <Link href={scheduleHref} className="btn btn-ghost btn-sm">Schedule</Link>}
-                          {showTeamsPage && <Link href={`${teamProfileBaseHref}/${followedTeam.id}`} className="btn btn-ghost btn-sm">Profile</Link>}
-                          {fanAlertsEnabled && selectedTournament && (
-                            <FollowAlertsToggle
-                              orgSlug={orgSlug}
-                              tournamentSlug={tournamentSlug}
-                              tournamentId={selectedTournament.id}
-                              team={{ id: followedTeam.id, name: followedTeam.name }}
-                            />
-                          )}
-                          <button type="button" className="btn btn-ghost btn-sm" onClick={handleAddToCalendar}>
-                            <CalendarPlus size={14} /> Calendar
-                          </button>
-                          <button type="button" className="btn btn-ghost btn-sm" onClick={stopFollowing}>
-                            <X size={14} /> Clear
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Standings table */}
+              {/* ── Standings table ───────────────────────────────────────── */}
+              <>
+                {/* Standings table */}
                   {(pools.length >= 2 ? pools : [{ id: 'default', name: 'All Teams' }]).map(pool => {
                     const poolStandings = pools.length >= 2
                       ? standings.filter(s => s.poolId === pool.id)
@@ -618,13 +440,19 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                             </thead>
                             <tbody>
                               {poolStandings.map((team, idx) => {
-                                const gStarted = poolStandings.some(s => s.gp > 0);
-                                const isFirst  = idx === 0 && gStarted;
+                                const gStarted  = poolStandings.some(s => s.gp > 0);
+                                const isFirst   = idx === 0 && gStarted;
+                                const isFollowed = !isPreview && team.id === followedTeamId;
+                                const rowClass = [
+                                  isFirst ? styles.topRow : '',
+                                  isFollowed ? styles.followedTeamRow : '',
+                                ].filter(Boolean).join(' ');
                                 return (
-                                  <tr key={team.id} className={isFirst ? styles.topRow : ''}>
+                                  <tr key={team.id} className={rowClass}>
                                     <td className={styles.stickyCol}>
                                       <div className={`${styles.teamCell} ${rankChanges.get(team.id) ? styles.teamCellMoved : ''}`}>
                                         {isFirst && <Trophy size={14} className={styles.topIcon} />}
+                                        {isFollowed && <Star size={12} fill="currentColor" style={{ color: 'var(--primary-light)', flexShrink: 0 }} aria-label="My team" />}
                                         {rankChanges.get(team.id) && (
                                           <span className={styles.rankArrow} data-dir={rankChanges.get(team.id)} aria-label={rankChanges.get(team.id) === 'up' ? 'Moved up' : 'Moved down'}>
                                             {rankChanges.get(team.id) === 'up' ? '▲' : '▼'}
@@ -646,13 +474,17 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                                       <span className={team.rd > 0 ? styles.rdPositive : team.rd < 0 ? styles.rdNegative : ''}>
                                         {team.rd > 0 ? `+${team.rd}` : team.rd}
                                       </span>
-                                      <span className={`${styles.rdBar} ${styles.desktopOnly}`} aria-hidden="true">
-                                        <span
-                                          className={styles.rdBarFill}
-                                          data-dir={team.rd >= 0 ? 'pos' : 'neg'}
-                                          style={{ width: `${(Math.abs(team.rd) / maxAbsRd) * 50}%` }}
-                                        />
-                                      </span>
+                                      {/* The diverging bar only means something once a game's been played —
+                                         hide the empty track on a not-yet-started pool. */}
+                                      {gStarted && (
+                                        <span className={`${styles.rdBar} ${styles.desktopOnly}`} aria-hidden="true">
+                                          <span
+                                            className={styles.rdBarFill}
+                                            data-dir={team.rd >= 0 ? 'pos' : 'neg'}
+                                            style={{ width: `${(Math.abs(team.rd) / maxAbsRd) * 50}%` }}
+                                          />
+                                        </span>
+                                      )}
                                     </td>
                                     <td className={`${styles.ptsCol} ${styles.statCenter}`}>
                                       <span className="badge badge-primary">{team.pts}</span>
@@ -687,10 +519,9 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                     );
                   })}
 
-                  {/* Bracket below standings while pool play is ongoing */}
-                  {!playoffPhase && bracketSection}
-                </>
-              )}
+                  {/* Playoff bracket — always below standings */}
+                  {bracketSection}
+              </>
 
               {standings.length === 0 && (
                 <PublicTournamentState
@@ -709,8 +540,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
               )}
 
               {/* Recent scores — always below everything */}
-              {viewMode === 'standard' && (
-                <div className={styles.scoreSection}>
+              <div className={styles.scoreSection}>
                   <div className={styles.scoreSectionHeader}>
                     <div>
                       <span className="eyebrow"><CheckCircle size={12} /> Recent Scores</span>
@@ -747,8 +577,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                       {recentScores.map(game => renderScoreCard(game))}
                     </div>
                   )}
-                </div>
-              )}
+              </div>
             </div>
           )}
         </div>

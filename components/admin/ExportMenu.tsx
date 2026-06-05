@@ -34,6 +34,10 @@ export interface ExportMenuProps {
   onExportICS?: () => void | Promise<void>;
   /** Called when user selects PDF report. Required when formats includes 'pdf'. */
   onExportPDF?: () => void | Promise<void>;
+  /** Override the PDF item label (e.g. "Bracket PDF" when the bracket is on screen). Default: 'PDF report'. */
+  pdfLabel?: string;
+  /** Override the PDF item helper text. Default: 'Formatted, print-ready document'. */
+  pdfHint?: string;
   /**
    * When true, a second opt-in export item appears:
    * "Excel with contact details" (or "Excel with internal notes" if both are set).
@@ -94,6 +98,8 @@ export default function ExportMenu({
   onExportCSV,
   onExportICS,
   onExportPDF,
+  pdfLabel = 'PDF report',
+  pdfHint = 'Formatted, print-ready document',
   hasSensitiveOption = false,
   sensitiveOptionLabel = 'Excel with contact details',
   onExportXLSXWithSensitive,
@@ -334,13 +340,13 @@ export default function ExportMenu({
                 <Lock size={12} className={styles.lockIcon} aria-hidden />
               )}
               <span>
-                <span className={styles.menuItemLabel}>PDF report</span>
+                <span className={styles.menuItemLabel}>{pdfLabel}</span>
                 <span className={styles.menuItemHint}>
                   {!pdfAccessible
                     ? pdfUpgradeCopy
                     : exportDisabled
                       ? 'No rows available to export'
-                      : 'Formatted, print-ready document'}
+                      : pdfHint}
                 </span>
               </span>
             </button>

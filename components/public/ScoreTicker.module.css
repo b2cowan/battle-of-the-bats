@@ -1,0 +1,182 @@
+.ticker {
+  position: fixed;
+  top: var(--nav-height);
+  left: 0;
+  right: 0;
+  height: 40px;
+  z-index: 90; /* under the nav (100); rail (110) sits to its left on desktop */
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border-bottom: 1px solid var(--border-2);
+  backdrop-filter: blur(var(--blur-bar));
+  -webkit-backdrop-filter: blur(var(--blur-bar));
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ticker { background: var(--surface); }
+}
+
+@media (min-width: 1024px) {
+  .ticker { left: 248px; } /* clear the left rail */
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: tickerScroll 48s linear infinite;
+  will-change: transform;
+}
+
+/* Pause on hover, and on keyboard focus only — `:focus-visible` (not
+   `:focus-within`) so a mouse click on a game doesn't leave the marquee frozen
+   after navigation (the clicked link keeps DOM focus, but not focus-visible). */
+.ticker:hover .track,
+.ticker:has(:focus-visible) .track {
+  animation-play-state: paused;
+}
+
+@keyframes tickerScroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track { animation: none; }
+  .ticker { overflow-x: auto; }
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 40px;
+  padding: 0 1.15rem;
+  border-right: 1px solid var(--border-2);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--white-70);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.item:hover { background: var(--white-5); color: var(--white); }
+
+.team { color: var(--white-85); }
+.score { color: var(--white); font-weight: 800; font-variant-numeric: tabular-nums; }
+.dash { color: var(--white-40); }
+.vs { color: var(--white-40); font-weight: 600; font-size: 0.72rem; }
+.time { color: var(--primary-light); font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.live,
+.final {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.live { color: var(--danger); background: rgba(var(--danger-rgb), 0.15); border: 1px solid rgba(var(--danger-rgb), 0.4); }
+.final { color: var(--white-50); background: var(--white-8); }
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: tickerPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes tickerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot { animation: none; }
+}
+
+/* ── Dismiss (minimize) button — anchored at the right edge, masks the scrolling
+   track behind it so it stays legible. ─────────────────────────────────────── */
+.dismissBtn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-left: 1px solid var(--border-2);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  color: var(--white-45);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.dismissBtn:hover {
+  color: var(--white);
+  background: var(--surface);
+}
+
+/* ── Minimized restore bar — slim, static, same position as the full ticker. ── */
+.tickerMin {
+  position: fixed;
+  top: var(--nav-height);
+  left: 0;
+  right: 0;
+  height: 24px;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 0.85rem;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border-bottom: 1px solid var(--border-2);
+  backdrop-filter: blur(var(--blur-bar));
+  -webkit-backdrop-filter: blur(var(--blur-bar));
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tickerMin { background: var(--surface); }
+}
+
+@media (min-width: 1024px) {
+  .tickerMin { left: 248px; } /* clear the left rail */
+}
+
+.restoreBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--white-55);
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.restoreBtn:hover { color: var(--white); }
+
+.restoreDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  flex-shrink: 0;
+}

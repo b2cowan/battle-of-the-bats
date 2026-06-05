@@ -13,7 +13,6 @@ import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
-import { useAdminDensity } from '@/lib/admin-density';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { TOUR_GROUPS, type TourNavItem } from './admin-nav-config';
 import AdminContextStrip from './AdminContextStrip';
@@ -39,7 +38,6 @@ export default function AdminBottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
-  const { density, setDensity } = useAdminDensity();
   const worklist = useAdminWorklist();
   const tournamentIsLive = currentTournament?.status === 'active' || currentTournament?.status === 'completed';
   const tournamentPreviewLabel = tournamentIsLive ? 'View Site' : 'Preview Site';
@@ -265,28 +263,6 @@ export default function AdminBottomNav() {
 
             <div className={styles.dropSectionLabel}>Admin</div>
             {dropNavItems(adminMore)}
-
-            <div className={styles.dropDivider} />
-
-            <div className={styles.dropSectionLabel}>Display</div>
-            <div className={styles.densityRow}>
-              <button
-                type="button"
-                className={`${styles.densityBtn} ${density === 'comfortable' ? styles.densityBtnActive : ''}`}
-                onClick={() => setDensity('comfortable')}
-                aria-pressed={density === 'comfortable'}
-              >
-                Comfortable
-              </button>
-              <button
-                type="button"
-                className={`${styles.densityBtn} ${density === 'compact' ? styles.densityBtnActive : ''}`}
-                onClick={() => setDensity('compact')}
-                aria-pressed={density === 'compact'}
-              >
-                Compact
-              </button>
-            </div>
 
             <div className={styles.dropDivider} />
 

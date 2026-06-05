@@ -12,13 +12,13 @@
 .scorebugNextTime,
 .railScoreNum,
 .railNextTime,
-.detailScoreLine strong {
+.detailScoreCol strong {
   font-variant-numeric: tabular-nums;
 }
 
 /* Offset for the fixed nav when auto-scrolling to today's games on load. */
 .todayGroup {
-  scroll-margin-top: calc(var(--nav-height) + 1rem);
+  scroll-margin-top: calc(var(--nav-height) + var(--ticker-h, 0px) + 1rem);
   border-color: rgba(var(--primary-rgb), 0.45);
   box-shadow: var(--glow-sm);
 }
@@ -38,7 +38,7 @@
    with a done/total progress count on the right. */
 .dateLabel {
   position: sticky;
-  top: var(--nav-height);
+  top: calc(var(--nav-height) + var(--ticker-h, 0px));
   z-index: 5;
   display: flex;
   align-items: center;
@@ -303,7 +303,9 @@ a.gameRow { cursor: pointer; }
 
 @media (max-width: 768px) {
   .dateGroup:last-child {
-    margin-bottom: calc(5.75rem + env(safe-area-inset-bottom));
+    /* Clear the bottom nav + MyTeamDock (game day) stack. Dock is ~50px parked
+       above the nav, so we budget for both: nav-height var + dock + breathing room. */
+    margin-bottom: calc(var(--bottom-nav-height, 72px) + 3.5rem + env(safe-area-inset-bottom));
   }
 
   .dateLabel {
@@ -455,11 +457,19 @@ a.gameRow { cursor: pointer; }
 }
 
 .detailMatchup {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  padding: 1.5rem 1rem;
+}
+
+/* Team identities — names sit on their own row so uneven name lengths never
+   push the scores out of vertical alignment. */
+.detailTeams {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
+  align-items: start;
   gap: 1rem;
-  padding: 1.25rem 1rem;
 }
 
 .detailTeam {
@@ -497,39 +507,74 @@ a.gameRow { cursor: pointer; }
   overflow-wrap: anywhere;
 }
 
-.detailScoreLine {
-  display: inline-flex;
+/* Scoreboard band — big centered scores with a dash separator and an outcome
+   pill under each number. A single flex row guarantees the two scores stay
+   aligned with each other no matter how long the team names above them are. */
+.detailScoreBand {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.detailScoreCol {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.45rem;
-  color: var(--white-80);
+  gap: 0.4rem;
+  min-width: 2.5rem;
   font-family: var(--font-data);
 }
 
-.detailScoreLine strong {
-  color: var(--white);
-  font-size: 1.8rem;
+.detailScoreCol strong {
+  font-size: 2.75rem;
   font-weight: 950;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  /* Colour set inline per outcome (success / danger / warning). */
+}
+
+.detailScoreDash {
+  align-self: flex-start;
+  color: var(--white-25);
+  font-family: var(--font-data);
+  font-size: 2rem;
+  font-weight: 900;
   line-height: 1;
 }
 
-.detailScoreLine span {
-  font-size: 0.95rem;
-  font-weight: 950;
+/* Outcome pill — compact badge below the score number. */
+.detailScoreCol span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
 }
 
-.detailScoreLine span[data-outcome="W"] {
+.detailScoreCol span[data-outcome="W"] {
+  background: rgba(var(--success-rgb), 0.12);
+  border: 1px solid rgba(var(--success-rgb), 0.3);
   color: var(--success);
 }
 
-.detailScoreLine span[data-outcome="T"] {
+.detailScoreCol span[data-outcome="T"] {
+  background: rgba(var(--warning-rgb), 0.1);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
   color: var(--warning);
 }
 
-.detailScoreLine span[data-outcome="L"] {
+.detailScoreCol span[data-outcome="L"] {
+  background: rgba(var(--danger-rgb), 0.08);
+  border: 1px solid rgba(var(--danger-rgb), 0.25);
   color: rgba(var(--danger-rgb), 0.72);
 }
 
 .detailScorePending {
+  text-align: center;
   color: var(--white-45);
   font-family: var(--font-data);
   font-size: 0.74rem;
@@ -537,11 +582,50 @@ a.gameRow { cursor: pointer; }
 }
 
 .detailVs {
+  align-self: center;
   color: var(--white-35);
   font-family: var(--font-data);
   font-size: 0.7rem;
   font-weight: 950;
   letter-spacing: 0.1em;
+}
+
+/* Winner emphasis — the loser's name dims back so the result reads at a glance.
+   The winner keeps full --white; scores are already colour-coded by outcome. */
+.detailTeamLost .detailTeamName {
+  color: var(--white-45);
+}
+
+/* Stacks a LIVE badge above the scoreboard band, centered. */
+.detailScoreWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Playoff stakes strip — what the winner plays for (advances to / championship). */
+.detailStakes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: -0.35rem 1rem 1.25rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid rgba(var(--primary-rgb), 0.25);
+  border-radius: var(--radius-sm);
+  background: rgba(var(--primary-rgb), 0.07);
+  color: var(--primary-light);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.detailStakes svg {
+  flex-shrink: 0;
+  color: var(--primary-light);
 }
 
 .detailPanelGrid {
@@ -581,8 +665,9 @@ a.gameRow { cursor: pointer; }
 .detailVenueBlock strong {
   color: var(--white);
   font-family: var(--font-data);
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   font-weight: 900;
+  line-height: 1.2;
   overflow-wrap: anywhere;
 }
 
@@ -595,20 +680,32 @@ a.gameRow { cursor: pointer; }
   line-height: 1.4;
 }
 
-.detailMapLink {
+/* "Get Directions" — the single most useful action for a parent en route, so
+   it's a filled primary button rather than a quiet text link. */
+.detailDirectionsBtn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.45rem;
   width: fit-content;
-  margin-top: 0.45rem;
-  color: var(--primary-light);
+  margin-top: 0.7rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: var(--font-data);
   font-size: 0.82rem;
   font-weight: 850;
   text-decoration: none;
+  transition: var(--transition);
 }
 
-.detailMapLink:hover {
-  color: var(--white);
+.detailDirectionsBtn:hover {
+  filter: brightness(1.08);
+  box-shadow: var(--glow-sm);
+}
+
+.detailDirectionsExt {
+  opacity: 0.7;
 }
 
 .detailFacts {
@@ -666,16 +763,28 @@ a.gameRow { cursor: pointer; }
   }
 
   .detailMatchup {
-    gap: 0.45rem;
-    padding: 0.95rem 0.78rem;
+    gap: 1rem;
+    padding: 1.1rem 0.78rem;
   }
 
   .detailTeamName {
-    font-size: 0.88rem;
+    font-size: 0.92rem;
   }
 
-  .detailScoreLine strong {
-    font-size: 1.35rem;
+  .detailScoreBand {
+    gap: 1.1rem;
+  }
+
+  .detailScoreCol strong {
+    font-size: 2.1rem;
+  }
+
+  .detailScoreDash {
+    font-size: 1.5rem;
+  }
+
+  .detailStakes {
+    margin: 0 0.78rem 1rem;
   }
 
   .detailPanelGrid {
@@ -996,6 +1105,17 @@ a.gameRow { cursor: pointer; }
 
 .secondaryControls {
   justify-content: space-between;
+}
+
+/* Search expands to fill the secondary row; the bracket toggle (when present
+   in playoff mode) sits at the right edge via space-between. */
+.desktopScheduleControls .teamFilter {
+  flex: 1;
+}
+
+.desktopScheduleControls .teamFilter input {
+  flex: 1;
+  min-width: 0;
 }
 
 .divisionSelect {
@@ -2455,7 +2575,10 @@ a.broadcastCard { cursor: pointer; }
     display: none;
   }
 
-  .myGamesLink {
+  /* myGamesLink, Add to Calendar, and FollowAlertsToggle all live in the
+     right rail on desktop — hide the entire mobile strip. */
+  .myGamesLink,
+  .followQuickActions {
     display: none;
   }
 

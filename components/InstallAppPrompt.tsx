@@ -47,12 +47,15 @@ interface Props {
   subtitle?: string;
   /** localStorage key so different contexts dismiss independently. */
   dismissKey?: string;
+  /** Branded icon for the prompt (e.g. the tournament logo); falls back to the FLHQ PWA icon. */
+  iconUrl?: string | null;
 }
 
 export default function InstallAppPrompt({
   appName = 'FieldLogicHQ',
   subtitle = 'Add it to your home screen for one-tap access.',
   dismissKey = 'flhq-install-dismissed',
+  iconUrl = null,
 }: Props) {
   const [mode, setMode] = useState<Mode>('hidden');
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
@@ -100,7 +103,7 @@ export default function InstallAppPrompt({
 
   return (
     <div className={styles.banner} role="complementary" aria-label="Install app prompt">
-      <img src="/icons/pwa-192.png" alt={appName} className={styles.icon} />
+      <img src={iconUrl || '/icons/pwa-192.png'} alt={appName} className={styles.icon} />
 
       <div className={styles.body}>
         <p className={styles.title}>Install {appName}</p>
@@ -116,7 +119,7 @@ export default function InstallAppPrompt({
       </div>
 
       {mode === 'android' && (
-        <button className="btn btn-lime btn-sm" onClick={install} style={{ marginRight: '0.4rem' }}>
+        <button className="btn btn-primary btn-sm" onClick={install} style={{ marginRight: '0.4rem' }}>
           <Download size={14} /> Install
         </button>
       )}

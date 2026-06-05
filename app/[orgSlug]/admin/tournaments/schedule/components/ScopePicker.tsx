@@ -1,14 +1,18 @@
 'use client';
 
 /**
- * ScopePicker — division multi-select for the schedule (replaces the single
- * Division dropdown). Pick "All", any subset of divisions, or — in `singleSelect`
- * mode (bracket view) — exactly one. `value === null` means all. Pools are not
- * selectable here; they're conveyed via color on the timeline cards.
+ * ScopePicker — single-select division dropdown for the schedule. Pick "All
+ * divisions" or exactly one division (one click). In `singleSelect` mode (the
+ * bracket view, which is per-division) the "All" option is hidden. Pools are not
+ * selectable here; on the timeline they're conveyed via color on the cards and
+ * non-selected divisions appear as faded ghost blocks.
+ *
+ * Contract is kept as `Set<string> | null` (null = all) so the page's existing
+ * `filterGroup` / scope logic is unchanged; the set only ever holds one id.
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Check, Minus } from 'lucide-react';
+import { ChevronDown, Check } from 'lucide-react';
 import styles from './ScopePicker.module.css';
 
 export type ScopeDivision = { id: string; name: string };
@@ -22,7 +26,7 @@ export default function ScopePicker({
   divisions: ScopeDivision[];
   value: Set<string> | null; // division ids; null = all
   onChange: (next: Set<string> | null) => void;
-  /** Bracket view is per-division → radio-style: pick exactly one, no "all". */
+  /** Bracket view is per-division → hide "All"; one division must be chosen. */
   singleSelect?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -39,53 +43,37 @@ export default function ScopePicker({
     return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
   }, [open]);
 
-  const ids = divisions.map(d => d.id);
-  const effective = value ?? new Set(ids);
-  const isAll = value === null || (ids.length > 0 && ids.every(id => effective.has(id)));
+  const isAll = value === null;
+  const selectedId = value && value.size >= 1 ? [...value][0] : null;
+  const selectedName = selectedId ? (divisions.find(d => d.id === selectedId)?.name ?? null) : null;
 
-  function emit(next: Set<string>) {
-    if (ids.length > 0 && ids.every(id => next.has(id))) onChange(null);
-    else onChange(next);
-  }
-  function toggleDivision(id: string) {
-    if (singleSelect) { onChange(new Set([id])); setOpen(false); return; }
-    const next = new Set(effective);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    emit(next);
-  }
-  function toggleAll() { onChange(isAll ? new Set() : null); }
+  function pickDivision(id: string) { onChange(new Set([id])); setOpen(false); }
+  function pickAll() { onChange(null); setOpen(false); }
 
-  const selected = divisions.filter(d => effective.has(d.id));
-  // In single-select (bracket) mode the label is always the chosen division — never
-  // "All divisions", even when that division is the only one in scope.
   const label = singleSelect
-    ? (selected[0]?.name ?? 'Select division')
+    ? (selectedName ?? divisions[0]?.name ?? 'Select division')
     : isAll ? 'All divisions'
-    : selected.length === 0 ? 'None selected'
-    : selected.length === 1 ? selected[0].name
-    : `${selected.length} divisions`;
+    : (selectedName ?? 'All divisions');
 
   return (
     <div className={styles.wrap} ref={wrapRef}>
-      <button type="button" className={styles.trigger} onClick={() => setOpen(o => !o)} aria-expanded={open} aria-label="Divisions">
+      <button type="button" className={styles.trigger} onClick={() => setOpen(o => !o)} aria-expanded={open} aria-label="Division">
         <span className={styles.triggerLabel}>{label}</span>
         <ChevronDown size={14} className={styles.caret} aria-hidden />
       </button>
 
       {open && (
-        <div className={styles.popover} role="dialog" aria-label="Choose divisions">
+        <div className={styles.popover} role="menu" aria-label="Choose division">
           {!singleSelect && (
-            <button type="button" className={styles.row} data-level="all" onClick={toggleAll}>
-              <span className={styles.box} data-state={isAll ? 'on' : selected.length > 0 ? 'some' : 'off'}>
-                {isAll ? <Check size={11} /> : selected.length > 0 ? <Minus size={11} /> : null}
-              </span>
+            <button type="button" className={styles.row} data-level="all" onClick={pickAll}>
+              <span className={styles.box} data-state={isAll ? 'on' : 'off'}>{isAll ? <Check size={11} /> : null}</span>
               <span className={styles.rowLabel}>All divisions</span>
             </button>
           )}
           {divisions.map(d => {
-            const on = effective.has(d.id);
+            const on = selectedId === d.id && (singleSelect || !isAll);
             return (
-              <button key={d.id} type="button" className={styles.row} data-level="div" onClick={() => toggleDivision(d.id)}>
+              <button key={d.id} type="button" className={styles.row} data-level="div" onClick={() => pickDivision(d.id)}>
                 <span className={styles.box} data-state={on ? 'on' : 'off'}>{on ? <Check size={11} /> : null}</span>
                 <span className={styles.rowLabel}>{d.name}</span>
               </button>

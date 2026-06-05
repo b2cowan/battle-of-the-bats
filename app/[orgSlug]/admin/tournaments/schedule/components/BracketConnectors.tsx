@@ -25,7 +25,7 @@ export default function BracketConnectors({
   matchups: ConnMatchup[];
   finalIds: Set<string>;
 }) {
-  const [paths, setPaths] = useState<Array<{ d: string; final: boolean }>>([]);
+  const [paths, setPaths] = useState<Array<{ d: string; final: boolean; kind: 'winner' | 'loser' }>>([]);
   const [size, setSize] = useState({ w: 0, h: 0 });
 
   const version = useMemo(
@@ -35,7 +35,7 @@ export default function BracketConnectors({
 
   // Latest data for the observer callback without re-subscribing every render.
   const dataRef = useRef({ matchups, finalIds });
-  dataRef.current = { matchups, finalIds };
+  useEffect(() => { dataRef.current = { matchups, finalIds }; });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -47,13 +47,17 @@ export default function BracketConnectors({
       const byCode = new Map<string, string>();
       ms.forEach(m => { if (m.code) byCode.set(m.code.trim().toLowerCase(), m.id); });
 
-      const links: Array<{ from: string; to: string }> = [];
+      // Capture whether each link carries the WINNER (advance) or the LOSER
+      // (drop to the losers bracket) of the source game, so the line can be
+      // coloured by path. "Winner QF1" → winner path, "Loser SF2" → loser path.
+      const links: Array<{ from: string; to: string; kind: 'winner' | 'loser' }> = [];
       ms.forEach(target => {
         [target.home.label, target.away.label].forEach(label => {
-          const matched = /^(?:winner|loser)\s+(.+)$/i.exec((label ?? '').trim());
+          const matched = /^(winner|loser)\s+(.+)$/i.exec((label ?? '').trim());
           if (!matched) return;
-          const fromId = byCode.get(matched[1].trim().toLowerCase());
-          if (fromId && fromId !== target.id) links.push({ from: fromId, to: target.id });
+          const kind = matched[1].toLowerCase() as 'winner' | 'loser';
+          const fromId = byCode.get(matched[2].trim().toLowerCase());
+          if (fromId && fromId !== target.id) links.push({ from: fromId, to: target.id, kind });
         });
       });
 
@@ -66,8 +70,8 @@ export default function BracketConnectors({
         pos.set(id, { l: r.left - cRect.left, t: r.top - cRect.top, w: r.width, h: r.height });
       });
 
-      const next: Array<{ d: string; final: boolean }> = [];
-      links.forEach(({ from, to }) => {
+      const next: Array<{ d: string; final: boolean; kind: 'winner' | 'loser' }> = [];
+      links.forEach(({ from, to, kind }) => {
         const s = pos.get(from);
         const t = pos.get(to);
         if (!s || !t) return;
@@ -76,7 +80,7 @@ export default function BracketConnectors({
         const tx = t.l;
         const ty = t.t + t.h / 2;
         const dx = Math.max(14, (tx - sx) / 2);
-        next.push({ d: `M ${sx} ${sy} C ${sx + dx} ${sy}, ${tx - dx} ${ty}, ${tx} ${ty}`, final: fids.has(to) });
+        next.push({ d: `M ${sx} ${sy} C ${sx + dx} ${sy}, ${tx - dx} ${ty}, ${tx} ${ty}`, final: fids.has(to), kind });
       });
 
       setPaths(next);
@@ -99,7 +103,12 @@ export default function BracketConnectors({
   return (
     <svg className={styles.connectors} width={size.w} height={size.h} aria-hidden>
       {paths.map((p, i) => (
-        <path key={i} d={p.d} fill="none" className={p.final ? styles.connectorFinal : styles.connector} />
+        <path
+          key={i}
+          d={p.d}
+          fill="none"
+          className={`${p.kind === 'loser' ? styles.connectorLoss : styles.connectorWin}${p.final ? ` ${styles.connectorFinal}` : ''}`}
+        />
       ))}
     </svg>
   );

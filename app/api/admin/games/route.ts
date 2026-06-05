@@ -182,8 +182,9 @@ export async function POST(req: Request) {
           notes:            g.notes        || null,
         };
         if (usesFacilityLanes) {
+          // The lane label lives on schedule_facility_lanes (resolved via the id);
+          // there is no schedule_facility_lane_label column on games.
           row.schedule_facility_lane_id = g.scheduleFacilityLaneId || null;
-          row.schedule_facility_lane_label = g.scheduleFacilityLaneLabel || null;
         }
         if (g.generatorLocked !== undefined) {
           row.generator_locked = Boolean(g.generatorLocked);
@@ -337,6 +338,29 @@ export async function POST(req: Request) {
       }
 
       const { error } = await supabase.from('games').delete().eq('division_id', divisionId).eq('is_playoff', true);
+      if (error) throw error;
+    }
+
+    else if (action === 'delete-tournament-games' && tournamentId) {
+      // Clears the entire schedule for a tournament. Used when switching the
+      // tournament format (round robin ↔ bracket-only). Scope + org are already
+      // checked above; only allowed while the tournament is in Draft.
+      if (await isTournamentLocked(tournamentId)) return tournamentLockedResponse();
+
+      const { data: trow, error: statusErr } = await supabaseAdmin
+        .from('tournaments')
+        .select('status')
+        .eq('id', tournamentId)
+        .single();
+      if (statusErr) throw statusErr;
+      if (trow?.status !== 'draft') {
+        return new Response(JSON.stringify({ error: 'The schedule can only be cleared while the tournament is in Draft.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { error } = await supabase.from('games').delete().eq('tournament_id', tournamentId);
       if (error) throw error;
     }
 

@@ -17,6 +17,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   score_disputed:                    'Score disputed',
   registration_deadline_approaching: 'Registration deadline approaching',
   waitlist_opened:                   'Waitlist opened',
+  team_no_show:                      'Team marked no-show',
   coach_access_requested:            'Coach access requested',
   house_league_registration_new:     'House league registration',
 };
@@ -31,6 +32,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   score_disputed:                    'A submitted score is flagged as disputed by a coach.',
   registration_deadline_approaching: 'A tournament registration deadline is within 48 hours.',
   waitlist_opened:                   'A tournament waitlist is opened to allow additional registrations.',
+  team_no_show:                      'A team is marked as a no-show during gate check-in.',
   coach_access_requested:            'A coach requests access to the coaches portal.',
   house_league_registration_new:     'A player submits a house league season registration.',
 };
@@ -55,6 +57,7 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
       'score_disputed',
       'registration_deadline_approaching',
       'waitlist_opened',
+      'team_no_show',
     ],
   },
   {
@@ -95,4 +98,5 @@ export const TOURNAMENT_EVENT_TYPES: NotificationEventType[] = [
   'payment_received',
   'payment_failed',
   'score_submitted',
+  'team_no_show',
 ];

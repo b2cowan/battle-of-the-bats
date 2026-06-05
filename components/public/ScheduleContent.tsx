@@ -10,6 +10,9 @@ import YearSelector from '@/components/YearSelector';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
 import { LogicSyncBracket } from '@/components/bracket/LogicSyncBracket';
+import { bracketRoundInfo } from '@/lib/playoff-bracket';
+import { computePlacementStandings } from '@/lib/playoff-standings';
+import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { readFollowedTeamId, clearFollowedTeam, isTournamentInProgress } from '@/lib/follow';
@@ -22,11 +25,18 @@ import { teamAvatarHue, teamInitials } from '@/lib/team-color';
 // ── bracket helpers ───────────────────────────────────────────────────────────
 
 function bracketPriority(code?: string) {
-  if (!code) return 99;
-  if (/^QF/i.test(code)) return 1;
-  if (/^SF/i.test(code)) return 2;
-  if (/^(FIN|IF|3RD)$/i.test(code)) return 3;
-  return 4;
+  // Shared round ordering: single-elim rounds first, then double-elim
+  // winners → losers → grand final, then consolation.
+  return code ? bracketRoundInfo(code).rank : 99;
+}
+
+/** Plain-language label for a division's bracket elimination format. */
+function playoffFormatLabel(format?: string): string | null {
+  if (format === 'double') return 'Double Elimination';
+  if (format === 'consolation') return '2-Game Guarantee';
+  if (format === 'placement') return 'Full Placement';
+  if (format === 'single') return 'Single Elimination';
+  return null;
 }
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
@@ -100,8 +110,8 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     const preferred = pref ? groups.find(g => g.name === pref) : null;
     return (preferred ?? groups[0]).id;
   });
-  const [viewMode, setViewMode]           = useState<ScheduleStage>('pool');
-  const [bracketLayout, setBracketLayout] = useState<BracketLayout>('list');
+  const [viewMode, setViewMode]           = useState<ScheduleStage>(() => resolveIsPlayoffOnly(initialData?.tournament) ? 'playoff' : 'pool');
+  const [bracketLayout, setBracketLayout] = useState<BracketLayout>(() => resolveIsPlayoffOnly(initialData?.tournament) ? 'bracket' : 'list');
   const [loading, setLoading]             = useState(!initialData);
   const [requireFinalization, setRequireFinalization] = useState(
     initialData?.organization.requireScoreFinalization ?? initialData?.tournament?.requireScoreFinalization ?? true
@@ -113,6 +123,13 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   const [fanAlertsEnabled, setFanAlertsEnabled] = useState<boolean>(() => initialData?.fanAlertsEnabled ?? false);
   const [followedTeamId, setFollowedTeamId] = useState<string | null>(null);
   const [followedFilterApplied, setFollowedFilterApplied] = useState(false);
+
+  // Bracket-only tournaments have no round-robin stage — never sit on the empty
+  // pool stage, and the pool/playoff toggle is hidden below.
+  const isPlayoffOnly = resolveIsPlayoffOnly(selectedTournament);
+  useEffect(() => {
+    if (isPlayoffOnly && viewMode === 'pool') setViewMode('playoff');
+  }, [isPlayoffOnly, viewMode]);
 
   useEffect(() => {
     // Browser-local preference hydrates after the public page renders.
@@ -864,6 +881,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
               ) : (
                 <div className={styles.mobileDivisionPill}>{activeG?.name ?? 'Division'}</div>
               )}
+              {!isPlayoffOnly && (
               <div className={styles.mobileStageControl} role="group" aria-label="Schedule stage">
                 <button
                   type="button"
@@ -882,6 +900,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                   Playoffs
                 </button>
               </div>
+              )}
             </div>
             {/* Search + List/Bracket on the same row */}
             {activeVisibility !== 'unpublished' && (
@@ -948,6 +967,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                   <ChevronDown size={16} className="select-icon" />
                 </div>
               )}
+              {!isPlayoffOnly && (
               <div className={styles.segmentedControl} role="group" aria-label="Schedule stage">
                 <button
                   type="button"
@@ -966,6 +986,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                   Playoffs
                 </button>
               </div>
+              )}
             </div>
 
             <div className={styles.secondaryControls}>
@@ -1032,6 +1053,70 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
               Filtering by: <strong>&ldquo;{teamSearch}&rdquo;</strong>
             </p>
           )}
+
+          {/* Bracket format badge — per-division, shown on the Playoffs stage. */}
+          {viewMode === 'playoff' && activeVisibility !== 'unpublished' && (() => {
+            const label = playoffFormatLabel(activeG?.playoffConfig?.format);
+            if (!label) return null;
+            return (
+              <div style={{ marginBottom: '0.85rem' }}>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                  padding: '0.32rem 0.7rem', borderRadius: '999px',
+                  background: 'rgba(var(--primary-rgb), 0.12)',
+                  border: '1px solid rgba(var(--primary-rgb), 0.3)',
+                  color: 'var(--primary-light)', fontSize: '0.72rem', fontWeight: 700,
+                  letterSpacing: '0.03em', textTransform: 'uppercase',
+                }}>
+                  <Trophy size={12} /> {label}
+                </span>
+              </div>
+            );
+          })()}
+
+          {/* Full-placement final standings — every team ranked 1..N once decided. */}
+          {viewMode === 'playoff' && activeVisibility !== 'unpublished' && activeG?.playoffConfig?.format === 'placement' && (() => {
+            const standings = computePlacementStandings(
+              games.filter(g => g.divisionId === activeG.id && g.isPlayoff),
+              teams,
+            );
+            if (!standings.some(r => r.teamName)) return null;
+            return (
+              <div style={{
+                marginBottom: '1.25rem', borderRadius: 'var(--radius-md)',
+                border: '1px solid rgba(var(--primary-rgb), 0.25)', background: 'var(--surface)',
+                boxShadow: 'var(--highlight-top)', overflow: 'hidden',
+              }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '0.5rem',
+                  padding: '0.65rem 1rem', background: 'rgba(var(--primary-rgb), 0.08)',
+                  borderBottom: '1px solid rgba(var(--primary-rgb), 0.18)',
+                  fontFamily: 'var(--font-data)', fontWeight: 800, fontSize: '0.72rem',
+                  letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--primary-light)',
+                }}>
+                  <Trophy size={14} /> Final Standings
+                </div>
+                <ol style={{ margin: 0, padding: '0.4rem 0', listStyle: 'none' }}>
+                  {standings.map(r => (
+                    <li key={r.place} style={{
+                      display: 'flex', alignItems: 'center', gap: '0.75rem',
+                      padding: '0.4rem 1rem',
+                      borderTop: r.place > 1 ? '1px solid var(--white-10)' : undefined,
+                    }}>
+                      <span style={{
+                        minWidth: '2.2rem', fontFamily: 'var(--font-data)', fontWeight: 800,
+                        fontSize: '0.85rem', color: r.place <= 3 ? 'var(--primary-light)' : 'var(--white-50)',
+                      }}>{ordinal(r.place)}</span>
+                      <span style={{ fontWeight: r.place === 1 ? 800 : 600, color: r.teamName ? 'var(--white)' : 'var(--white-40)' }}>
+                        {r.teamName ?? 'TBD'}
+                      </span>
+                      {r.place === 1 && r.teamName && <Trophy size={13} style={{ color: 'var(--warning)' }} />}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            );
+          })()}
 
           {/* Placeholder-published: times/fields are committed, matchups are not.
              Set expectations so a TBD grid isn't read as a finalized schedule. */}

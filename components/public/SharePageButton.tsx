@@ -20,9 +20,11 @@ type Props = {
   text: string;
   label?: string;
   className?: string;
+  /** Icon-only (no visible label) — for tight spots like the mobile header. */
+  compact?: boolean;
 };
 
-export default function SharePageButton({ url, title, text, label = 'Share', className }: Props) {
+export default function SharePageButton({ url, title, text, label = 'Share', className, compact = false }: Props) {
   const [state, setState] = useState<'idle' | 'busy' | 'shared' | 'copied'>('idle');
 
   async function handle() {
@@ -48,7 +50,7 @@ export default function SharePageButton({ url, title, text, label = 'Share', cla
       aria-label={`Share ${title}`}
     >
       {state === 'copied' || state === 'shared' ? <Check size={16} /> : <Share2 size={16} />}
-      {txt}
+      {!compact && txt}
     </button>
   );
 }

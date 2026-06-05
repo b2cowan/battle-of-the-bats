@@ -127,3 +127,7 @@
     flex-shrink: 0;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .liveDot { animation: none; }
+}

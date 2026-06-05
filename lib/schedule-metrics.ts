@@ -556,6 +556,11 @@ function resolveDuration(
   if (typeof options.gameDurationMinutes === 'number' && options.gameDurationMinutes > 0) {
     return options.gameDurationMinutes;
   }
+  // Playoff games may use a playoff-specific length — an explicit override wins for them.
+  if (game.isPlayoff) {
+    const playoffDuration = tournament?.settings?.playoff_game_duration_minutes;
+    if (typeof playoffDuration === 'number' && playoffDuration > 0) return playoffDuration;
+  }
   const division = divisions.find(item => item.id === game.divisionId);
   const divDuration = division?.settings?.game_duration_minutes;
   if (typeof divDuration === 'number' && divDuration > 0) return divDuration;

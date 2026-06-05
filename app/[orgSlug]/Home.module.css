@@ -23,15 +23,14 @@
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
-  min-height: 100vh;
+  min-height: 70vh;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  /* Reserve the fixed navbar so centered content is centred BELOW it and the
-     badge always clears the nav with a consistent gap (instead of the tall
-     full-viewport content being pulled up under the navbar). */
-  padding-top: var(--nav-height);
+  /* Reserve the fixed navbar (+ score ticker on game day) so centered content is
+     centred BELOW it and the badge always clears the chrome with a consistent gap. */
+  padding-top: calc(var(--nav-height) + var(--ticker-h, 0px));
 }
 
 .heroBg {
@@ -165,12 +164,21 @@
 .heroTitle {
   color: var(--white);
   margin-bottom: 0.5rem;
-  /* Condensed, broadcast-style title: tighter tracking + line-height. */
+  /* Condensed, broadcast-style title: tighter tracking + line-height.
+     Responsive clamp so long tournament names scale down instead of wrapping to
+     three lines / overflowing on big screens. */
+  font-size: clamp(2.5rem, 5.5vw, 4.25rem);
   letter-spacing: -0.02em;
-  line-height: 0.95;
+  line-height: 0.98;
   text-wrap: balance;
   animation: fadeInUp 0.7s ease 0.1s both;
   text-shadow: 0 0 80px rgba(var(--primary-rgb),0.5);
+}
+
+/* The desktop top bar already shows the date + countdown status, so the in-hero
+   badge is redundant there — keep it only on mobile/tablet (which have no top bar). */
+@media (min-width: 1024px) {
+  .heroBadge { display: none; }
 }
 
 /* On a banner photo the title always sits on a darkened image — keep it light
@@ -255,9 +263,8 @@
 
 .heroCta {
   display: flex;
-  gap: 1rem;
   justify-content: center;
-  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
   animation: fadeInUp 0.7s ease 0.3s both;
 }
 
@@ -914,38 +921,6 @@
   line-height: 1.7;
 }
 
-/* CTA */
-.ctaSection {
-  position: relative;
-  padding: 6rem 0;
-  text-align: center;
-  overflow: hidden;
-}
-
-.ctaBg {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at center, rgba(var(--primary-rgb),0.2) 0%, transparent 70%);
-}
-
-.ctaContent {
-  position: relative;
-  z-index: 1;
-  max-width: 560px;
-  margin: 0 auto;
-}
-
-.ctaIcon {
-  color: var(--primary-light);
-  margin: 0 auto 1.5rem;
-  filter: drop-shadow(0 0 16px var(--primary));
-}
-
-.ctaContent h2 { color: var(--white); margin-bottom: 1rem; }
-.ctaContent p { color: var(--white-60); margin-bottom: 2rem; font-size: 1.0625rem; }
-
-.ctaButtons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-
 /* Light mode needs explicit hero surfaces because the original tournament
    hero uses dark-only decorative layers while global text tokens flip dark. */
 [data-color-mode="light"] .hero {
@@ -981,8 +956,7 @@
 [data-color-mode="light"] .heroBadge,
 [data-color-mode="light"] .previewBanner,
 [data-color-mode="light"] .countdown,
-[data-color-mode="light"] .vs,
-[data-color-mode="light"] .ctaIcon {
+[data-color-mode="light"] .vs {
   color: var(--primary);
 }
 
@@ -1000,10 +974,6 @@
 
 [data-color-mode="light"] .announcementsSection {
   background: var(--bg-2);
-}
-
-[data-color-mode="light"] .ctaSection {
-  background: var(--bg);
 }
 
 /* Animations */

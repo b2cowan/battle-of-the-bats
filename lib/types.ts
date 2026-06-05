@@ -13,12 +13,25 @@ export type OrgRole = 'owner' | 'admin' | 'staff' | 'official' | 'league_admin' 
 export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
 export type TournamentStatus = 'draft' | 'active' | 'completed' | 'archived';
 export type PublicPageKey = 'news' | 'schedule' | 'standings' | 'teams' | 'rules' | 'register';
+/**
+ * Tournament structure. 'round_robin_playoffs' (default) = the standard round
+ * robin → playoffs flow (bracket seeds from standings). 'playoff_only' =
+ * bracket-only: no round robin, the organizer seeds teams directly into the
+ * first round (resolved at bracket creation).
+ */
+export type TournamentFormat = 'round_robin_playoffs' | 'playoff_only';
 
 /**
  * Per-tournament display/behaviour preferences stored as JSONB in tournaments.settings.
  * Add new optional keys here as features require them — no migration needed for new keys.
  */
 export interface TournamentSettings {
+  /**
+   * Tournament structure. Absent/`'round_robin_playoffs'` = standard round robin →
+   * playoffs; `'playoff_only'` = bracket-only (no round robin; organizer seeds the
+   * bracket directly). See lib/playoff-bracket.ts + lib/tournament-phase.ts helpers.
+   */
+  format?: TournamentFormat;
   /** Public rules page layout for the rule-section grid. Default: 'columns' (2-col). */
   rulesLayout?: 'columns' | 'single';
   /** Public rules page layout for the resources list. Default: 'list' (stacked). */
@@ -33,6 +46,15 @@ export interface TournamentSettings {
    * Buffer-zone violations are soft warnings; true overlap is a hard block. Default: 15.
    */
   buffer_minutes?: number;
+  /**
+   * Playoff-specific game duration (minutes). When set, PLAYOFF games use this instead of
+   * game_duration_minutes — for scheduling AND conflict checks — so playoffs can run longer
+   * (or shorter) than round-robin games. Set from the Playoff Bracket Builder. Absent = use
+   * game_duration_minutes.
+   */
+  playoff_game_duration_minutes?: number;
+  /** Playoff-specific buffer (minutes) between games at a facility. Absent = use buffer_minutes. */
+  playoff_buffer_minutes?: number;
   /**
    * Organizer-entered estimate for how much rest a team should have when it changes parent venues.
    * This is a no-cost manual buffer; it is not calculated from maps or drive-time APIs.
@@ -236,6 +258,15 @@ export interface OrgVenue {
 
 export interface PlayoffConfig {
   type: 'single';
+  /**
+   * Bracket elimination format (unified bracket engine — see lib/playoff-bracket.ts).
+   * 'single' = single elimination (default), 'consolation' = single elim + a
+   * consolation bracket so no team is eliminated after one game (2-game
+   * guarantee), 'double' = double elimination. Absent = 'single' (legacy).
+   */
+  format?: 'single' | 'consolation' | 'double' | 'placement';
+  /** Double elimination only: include the if-necessary grand-final reset game. Default true. */
+  grandFinalReset?: boolean;
   crossover: 'standard' | 'reseed' | 'none';
   hasThirdPlace: boolean;
   teamsQualifying: number;
@@ -322,6 +353,30 @@ export interface Player {
   position: string;
 }
 
+/** Game-day arrival state for a tournament team (migration 110). */
+export type CheckInStatus = 'not_arrived' | 'checked_in' | 'no_show';
+
+/**
+ * A tournament team's roster player (migration 110, `tournament_roster_players`).
+ * Coach-submitted ahead of game day or captured at the gate. Replaces the vestigial
+ * `teams.players` jsonb / `Player[]` for tournaments.
+ */
+export interface RosterPlayer {
+  id: string;
+  teamId: string;
+  tournamentId: string;
+  orgId: string;
+  name: string;
+  jerseyNumber?: string | null;
+  dateOfBirth?: string | null; // YYYY-MM-DD
+  position?: string | null;
+  notes?: string | null;
+  source: 'coach' | 'gate' | 'admin';
+  createdByUserId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Team {
   id: string;
   tournamentId: string;
@@ -329,7 +384,6 @@ export interface Team {
   name: string;
   coach: string;
   email: string;
-  players: Player[];
   status: 'pending' | 'accepted' | 'waitlist' | 'rejected';
   paymentStatus: 'pending' | 'paid';
   registeredAt: string;
@@ -337,6 +391,15 @@ export interface Team {
   poolId?: string; // The new way (link to pools table)
   waitlistPosition?: number | null;
   slotId?: string | null;
+  // ── Game-day check-in (migration 110) — optional; populated by the check-in API ──
+  checkInStatus?: CheckInStatus;
+  checkedInAt?: string | null;
+  checkedInByUserId?: string | null;
+  checkedInByName?: string | null;
+  rosterSubmittedAt?: string | null;
+  rosterConfirmedAt?: string | null;
+  paymentCollectedAt?: string | null;
+  checkInNotes?: string | null;
 }
 
 export type TournamentRegistrationFieldType =
@@ -1195,6 +1258,7 @@ export type NotificationEventType =
   | 'score_disputed'
   | 'registration_deadline_approaching'
   | 'waitlist_opened'
+  | 'team_no_show'
   | 'coach_access_requested'
   | 'house_league_registration_new';
 

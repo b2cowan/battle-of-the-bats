@@ -53,13 +53,11 @@
 .railName {
   font-family: var(--font-data);
   font-weight: 800;
-  font-size: 0.9rem;
-  line-height: 1.18;
+  font-size: 0.88rem;
+  line-height: 1.22;
   color: var(--white);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  /* Show the full name — the header (min-height: --nav-height) grows to fit. */
+  word-break: break-word;
 }
 
 .nav {

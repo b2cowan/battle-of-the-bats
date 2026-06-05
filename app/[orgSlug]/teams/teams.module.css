@@ -21,51 +21,6 @@
   font-weight: 700;
 }
 
-/* ── Following banner ──────────────────────────────────────────────────────── */
-
-.followBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid rgba(var(--primary-rgb), 0.4);
-  border-radius: var(--radius-sm);
-  background: rgba(var(--primary-rgb), 0.08);
-  flex-wrap: wrap;
-}
-
-.followMain {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--primary-light);
-  min-width: 0;
-}
-
-.followLabel {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--white-50);
-  font-weight: 700;
-}
-
-.followName {
-  color: var(--white);
-  font-size: 0.95rem;
-  font-weight: 800;
-  overflow-wrap: anywhere;
-}
-
-.followActions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
 /* ── Filter row ────────────────────────────────────────────────────────────── */
 
 .filterRow {
@@ -77,7 +32,7 @@
 }
 
 .divisionSelect {
-  min-width: 160px;
+  min-width: 220px;
 }
 
 .searchWrap {
@@ -160,6 +115,7 @@
 /* ── Team card ─────────────────────────────────────────────────────────────── */
 
 .teamCard {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -168,6 +124,20 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   transition: var(--transition);
+}
+
+/* Stretched link — covers the whole card so clicking anywhere opens the team
+   page. The Follow button sits above it via .cardActions z-index. */
+.cardLink {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.cardLink:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: -2px;
 }
 
 .teamCard:hover {
@@ -232,6 +202,13 @@
   overflow-wrap: anywhere;
 }
 
+.cardNameRight {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
 .cardRecord {
   font-family: var(--font-data, var(--font-display));
   font-size: 0.85rem;
@@ -241,11 +218,33 @@
   flex-shrink: 0;
 }
 
+/* Faint "go" chevron — signals the whole card is a link; brightens on hover. */
+.cardChevron {
+  color: var(--white-25);
+  font-size: 1rem;
+  line-height: 1;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.teamCard:hover .cardChevron {
+  color: var(--primary-light);
+  transform: translateX(2px);
+}
+
 .cardSubRow {
   display: flex;
   align-items: center;
   gap: 0.4rem;
   flex-wrap: wrap;
+}
+
+.cardCoach {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--white-45);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .cardPool {
@@ -311,12 +310,14 @@
 
 .poolDone {
   font-size: 0.72rem;
-  color: var(--white-30);
+  color: var(--white-45);
   font-style: italic;
 }
 
-/* Card action buttons */
+/* Card action buttons — above the stretched card link so Follow stays clickable. */
 .cardActions {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -351,38 +352,46 @@
   color: var(--primary-light);
 }
 
-.teamLink {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--primary-light);
-  white-space: nowrap;
-  opacity: 0.8;
-  transition: opacity 0.15s;
+/* LIVE status line — compact red LIVE pill + full opponent name (ellipsis if long). */
+.liveLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
 }
 
-.teamLink:hover {
-  opacity: 1;
+.liveOpp {
+  min-width: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--white-60);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Mobile tweaks ─────────────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
-  .followBar {
-    flex-direction: column;
-    align-items: stretch;
+  /* Division dropdown + search each take a full row — no orphaned empty space. */
+  .divisionSelect {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
   }
 
-  .followActions {
-    justify-content: stretch;
-  }
-
-  .followActions > * {
-    flex: 1;
-    justify-content: center;
+  .searchWrap {
+    flex: 1 1 100%;
+    min-width: 0;
   }
 
   .divisionLayout {
     gap: 2rem;
+  }
+
+  .followBtn {
+    min-height: 40px;
+    padding: 0.4rem 0.75rem;
   }
 }
 

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { formatPoolName, formatTime } from '@/lib/utils';
 import type { Game, Team } from '@/lib/types';
 import type { BracketNode } from '@/lib/types/bracket';
+import { bracketRoundInfo, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
 
 // ── layout constants ───────────────────────────────────────────────────────────
 
@@ -22,13 +23,10 @@ const HOME_TEXT_Y = 38;   // baseline of home team text
 const DIVIDER_Y   = 60;   // center divider line y
 const AWAY_TEXT_Y = 82;   // baseline of away team text
 
-// ── column builder (mirrors schedule/page.tsx bracketPriority + buildBracketColumns) ──
-
-const ROUND_DEFS = [
-  { title: 'Quarterfinals', pattern: /^QF/i },
-  { title: 'Semifinals',    pattern: /^SF/i },
-  { title: 'Finals',        pattern: /^(FIN|IF|3RD)$/i },
-];
+// ── column builder ───────────────────────────────────────────────────────────
+// Groups games into round columns via the shared bracketRoundInfo() so single
+// elimination, double elimination (winners/losers/grand final), and consolation
+// all render as ordered round columns.
 
 function sortByCode(a: Game, b: Game): number {
   if (/^FIN/i.test(a.bracketCode ?? '') && /^3RD/i.test(b.bracketCode ?? '')) return -1;
@@ -37,26 +35,20 @@ function sortByCode(a: Game, b: Game): number {
 }
 
 function buildColumns(games: Game[]): { title: string; games: Game[] }[] {
-  const cols = ROUND_DEFS
-    .map(r => ({
-      title: r.title,
-      games: games.filter(g => r.pattern.test(g.bracketCode ?? '')).sort(sortByCode),
-    }))
-    .filter(c => c.games.length > 0);
-
-  const matchedIds = new Set(cols.flatMap(c => c.games.map(g => g.id)));
-  const custom = games.filter(g => !matchedIds.has(g.id));
-  if (custom.length > 0) {
-    const byCode: Record<string, Game[]> = {};
-    custom.forEach(g => {
-      const k = g.bracketCode ?? 'EXTRA';
-      (byCode[k] = byCode[k] ?? []).push(g);
-    });
-    Object.entries(byCode).forEach(([code, gs]) =>
-      cols.push({ title: code, games: gs.sort(sortByCode) })
-    );
+  const groups = new Map<string, { title: string; rank: number; games: Game[] }>();
+  for (const g of games) {
+    let info = bracketRoundInfo(g.bracketCode ?? '');
+    // The "if necessary" reset is its own column just right of the Grand Final.
+    if ((g.bracketCode ?? '').toUpperCase() === 'GF2') {
+      info = { key: 'GF2', title: 'Grand Final Game 2 (If Necessary)', rank: 501 };
+    }
+    let grp = groups.get(info.key);
+    if (!grp) { grp = { title: info.title, rank: info.rank, games: [] }; groups.set(info.key, grp); }
+    grp.games.push(g);
   }
-  return cols;
+  return [...groups.values()]
+    .sort((a, b) => a.rank - b.rank)
+    .map(grp => ({ title: grp.title, games: grp.games.sort(sortByCode) }));
 }
 
 // ── node factory ──────────────────────────────────────────────────────────────
@@ -76,8 +68,8 @@ function cleanPlaceholder(text: string): string {
 function makeNode(game: Game, round: number, position: number, teams: Team[]): BracketNode {
   const resolveName = (id: string, placeholder: string | undefined) =>
     isReal(id)
-      ? (teams.find(t => t.id === id)?.name ?? placeholder ?? 'TBD')
-      : cleanPlaceholder(placeholder ?? 'TBD');
+      ? (teams.find(t => t.id === id)?.name ?? (displayBracketRefs(placeholder) || 'TBD'))
+      : cleanPlaceholder(displayBracketRefs(placeholder ?? 'TBD'));
 
   const homeName = resolveName(game.homeTeamId, game.homePlaceholder);
   const awayName = resolveName(game.awayTeamId, game.awayPlaceholder);
@@ -151,10 +143,10 @@ function MatchNode({
   const isAwayWin = node.winnerId !== null && node.winnerId === node.awayTeam?.id;
 
   const homeScoreColor = node.winnerId
-    ? (isHomeWin ? 'var(--primary-light)' : 'rgba(255,255,255,0.35)')
+    ? (isHomeWin ? 'var(--primary-light)' : 'var(--white-35)')
     : 'var(--primary-light)';
   const awayScoreColor = node.winnerId
-    ? (isAwayWin ? 'var(--primary-light)' : 'rgba(255,255,255,0.35)')
+    ? (isAwayWin ? 'var(--primary-light)' : 'var(--white-35)')
     : 'var(--primary-light)';
 
   // date/time meta
@@ -171,9 +163,9 @@ function MatchNode({
     : node.status === 'cancelled' ? 'Cancelled'
     : null;
   const statusColor =
-    statusLabel === 'Final'     ? '#4ade80'
-    : statusLabel === 'Pending'   ? '#fbbf24'
-    : statusLabel === 'Cancelled' ? 'rgba(255,255,255,0.35)'
+    statusLabel === 'Final'     ? 'var(--success)'
+    : statusLabel === 'Pending'   ? 'var(--warning)'
+    : statusLabel === 'Cancelled' ? 'var(--white-35)'
     : null;
 
   // team name truncation (shorter when trophy icon precedes)
@@ -209,7 +201,7 @@ function MatchNode({
       {/* meta: date · time */}
       {metaText && (
         <text x="9" y={META_H - 4} fontSize="8.5"
-          style={{ fill: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-sans)' }}>
+          style={{ fill: 'var(--white-45)', fontFamily: 'var(--font-sans)' }}>
           {metaText}
         </text>
       )}
@@ -241,7 +233,7 @@ function MatchNode({
       {isHomeWin && <TrophyIcon x={9} y={HOME_TEXT_Y - 10} size={12} />}
       <text x={isHomeWin ? 9 + TROPHY_W : 10} y={HOME_TEXT_Y} fontSize="11" fontWeight="700"
         style={{
-          fill:       isHomeWin ? 'var(--primary-light)' : 'rgba(255,255,255,0.9)',
+          fill:       isHomeWin ? 'var(--primary-light)' : 'var(--white-90)',
           fontFamily: 'var(--font-sans)',
         }}>
         {homeName}
@@ -258,7 +250,7 @@ function MatchNode({
       {isAwayWin && <TrophyIcon x={9} y={AWAY_TEXT_Y - 10} size={12} />}
       <text x={isAwayWin ? 9 + TROPHY_W : 10} y={AWAY_TEXT_Y} fontSize="11" fontWeight="700"
         style={{
-          fill:       isAwayWin ? 'var(--primary-light)' : 'rgba(255,255,255,0.9)',
+          fill:       isAwayWin ? 'var(--primary-light)' : 'var(--white-90)',
           fontFamily: 'var(--font-sans)',
         }}>
         {awayName}
@@ -280,30 +272,41 @@ function MatchNode({
         }} />
       <text x="24" y={DIVIDER_Y + 3.5}
         fontSize="6.5" fontWeight="700" textAnchor="middle"
-        style={{ fill: 'rgba(255,255,255,0.45)', fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}>
-        {node.bracketCode.toUpperCase()}
+        style={{ fill: 'var(--white-45)', fontFamily: 'var(--font-sans)', letterSpacing: '0.06em' }}>
+        {displayBracketRefs(node.bracketCode.toUpperCase())}
       </text>
     </g>
   );
 }
 
 function ConnectorPath({
-  fromX, fromY, toX, toY, active,
+  fromX, fromY, toX, toY, active, kind,
 }: {
   fromX: number; fromY: number;
   toX: number; toY: number;
   active: boolean;
+  kind?: 'winner' | 'loser';
 }) {
   const midX = fromX + CONNECTOR_STUB;
   const d    = `M ${fromX} ${fromY} H ${midX} V ${toY} H ${toX}`;
+  // Winner advances → green; loser drops to the losers bracket → amber (dashed).
+  // Falls back to the org primary when the path direction is unknown (single elim).
+  const baseStroke =
+    kind === 'loser'  ? 'rgba(var(--warning-rgb), 0.4)'
+    : kind === 'winner' ? 'rgba(var(--success-rgb), 0.4)'
+    : 'rgba(var(--primary-rgb), 0.3)';
+  const activeStroke =
+    kind === 'loser'  ? 'rgba(var(--warning-rgb), 0.95)'
+    : kind === 'winner' ? 'var(--success)'
+    : 'var(--primary)';
   return (
     <g>
-      <path d={d} fill="none"
-        style={{ stroke: 'rgba(var(--primary-rgb), 0.3)', strokeWidth: '1' }} />
+      <path d={d} fill="none" strokeDasharray={kind === 'loser' ? '5 4' : undefined}
+        style={{ stroke: baseStroke, strokeWidth: '1' }} />
       {active && (
-        <path d={d} fill="none" strokeDasharray="8 4"
+        <path d={d} fill="none" strokeDasharray={kind === 'loser' ? '5 4' : '8 4'}
           className="animate-data-flow"
-          style={{ stroke: 'var(--primary)', strokeWidth: '1.5' }} />
+          style={{ stroke: activeStroke, strokeWidth: '1.5' }} />
       )}
     </g>
   );
@@ -402,19 +405,100 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
 
   if (nodes.length === 0) return null;
 
-  // Champion — the decided final's winner drives the spotlight banner.
-  const finalNode = nodes.find(n => /^FIN/i.test(n.bracketCode) && n.winnerId);
+  // Champion — the decided final's winner drives the spotlight banner. For double
+  // elimination that is the grand-final reset (if played) or the grand final.
+  const hasMultiBracket = nodes.some(n => /^(WB|LB|GF|CON|PL)/i.test(n.bracketCode));
+  const finalNode =
+    nodes.find(n => n.bracketCode.toUpperCase() === 'GF2' && n.winnerId) ||
+    nodes.find(n => n.bracketCode.toUpperCase() === 'GF' && n.winnerId) ||
+    nodes.find(n => /^FIN/i.test(n.bracketCode) && n.winnerId);
   const championName = finalNode
     ? ((finalNode.winnerId === finalNode.homeTeam?.id ? finalNode.homeTeam?.name : finalNode.awayTeam?.name) ?? null)
     : null;
 
-  // ── SVG layout dimensions ─────────────────────────────────────────────────
+  // ── SVG layout ────────────────────────────────────────────────────────────
+  // Single elimination is one row of round columns. Double elimination uses a
+  // FORK layout: a shared Seed round (round 1) on the left, then winners bracket
+  // on top / losers bracket on the bottom, with the grand final (+ its "if
+  // necessary" reset) on the far right — so every feed flows forward. Each node
+  // gets an absolute {x,y}; connectors then follow the actual Winner/Loser
+  // references (format-agnostic) and are coloured by which path they carry.
+  const isDoubleElim = nodes.some(n => /^(WB|LB|GF)/i.test(n.bracketCode));
+  const nodeByCode = new Map(nodes.map(n => [n.bracketCode.toUpperCase(), n]));
+  const positions = new Map<string, { x: number; y: number }>();
+  const columnLabels: { key: string; title: string; x: number; y: number }[] = [];
 
-  const maxFirstCol = columns.length > 0 ? columns[0].games.length : 1;
-  const totalH      = maxFirstCol * (NODE_HEIGHT + NODE_GAP);
-  const svgHeight   = totalH + V_PAD * 2;
-  // last node ends at (cols-1)*ROUND_WIDTH + 20 (left pad) + NODE_WIDTH; add 20px right pad
-  const svgWidth    = (columns.length - 1) * ROUND_WIDTH + NODE_WIDTH + 40;
+  const tierY = (pos: number, count: number, top: number, bandH: number) =>
+    top + (bandH / count) * pos + (bandH / count) / 2 - NODE_HEIGHT / 2;
+
+  let svgWidth = NODE_WIDTH + 40;
+  let svgHeight = NODE_HEIGHT + V_PAD * 2;
+
+  if (isDoubleElim) {
+    const sectionOf = (col: { games: Game[] }) => {
+      const code = (col.games[0]?.bracketCode || '').toUpperCase();
+      if (code.startsWith('LB')) return 'L';
+      if (code.startsWith('GF')) return 'GF';
+      return 'W';
+    };
+    const wbRoundOf = (col: { games: Game[] }) => {
+      const m = (col.games[0]?.bracketCode || '').toUpperCase().match(/^WB(\d+)/);
+      return m ? parseInt(m[1], 10) : 0;
+    };
+    const wbAllCols = columns.filter(c => sectionOf(c) === 'W');
+    const lbCols = columns.filter(c => sectionOf(c) === 'L');
+    const gfCols = columns.filter(c => sectionOf(c) === 'GF');
+    // Winners round 1 is the shared SEED column; everything else forks off it.
+    const seedCols = wbAllCols.filter(c => wbRoundOf(c) === 1);
+    const wbCols = wbAllCols.filter(c => wbRoundOf(c) !== 1);
+
+    const wbBandH = Math.max(1, wbCols[0]?.games.length ?? 1) * (NODE_HEIGHT + NODE_GAP);
+    const lbBandH = Math.max(1, lbCols[0]?.games.length ?? 1) * (NODE_HEIGHT + NODE_GAP);
+    const TIER_GAP = NODE_HEIGHT;
+    const wbTop = V_PAD;
+    const lbTop = V_PAD + wbBandH + TIER_GAP;
+    const forkBottom = lbTop + lbBandH;
+    const forkMid = (wbTop + forkBottom) / 2;
+    const colOffset = seedCols.length;                 // shift the fork right past the seed column
+    const mainColCount = colOffset + Math.max(wbCols.length, lbCols.length);
+
+    // Seed column — spread across the full fork height, vertically centred.
+    seedCols.forEach((col) => {
+      const x = 20;
+      columnLabels.push({ key: 'seed', title: 'Seed Round', x: x + NODE_WIDTH / 2, y: wbTop - 12 });
+      col.games.forEach((g, pi) => positions.set(g.id, { x, y: tierY(pi, col.games.length, wbTop, forkBottom - wbTop) }));
+    });
+
+    const placeCols = (cols: typeof columns, top: number, bandH: number) => cols.forEach((col, i) => {
+      const x = (colOffset + i) * ROUND_WIDTH + 20;
+      columnLabels.push({ key: `${top}-${i}`, title: displayRoundTitle(col.title), x: x + NODE_WIDTH / 2, y: top - 12 });
+      col.games.forEach((g, pi) => positions.set(g.id, { x, y: tierY(pi, col.games.length, top, bandH) }));
+    });
+    placeCols(wbCols, wbTop, wbBandH);
+    placeCols(lbCols, lbTop, lbBandH);
+
+    const gfMid = forkMid;
+    gfCols.forEach((col, gi) => {
+      const x = (mainColCount + gi) * ROUND_WIDTH + 20;
+      columnLabels.push({ key: `gf-${gi}`, title: displayRoundTitle(col.title), x: x + NODE_WIDTH / 2, y: wbTop - 12 });
+      col.games.forEach((g, pi) => positions.set(g.id, { x, y: gfMid - NODE_HEIGHT / 2 + pi * (NODE_HEIGHT + NODE_GAP) }));
+    });
+
+    let maxX = 0; let maxY = 0;
+    positions.forEach(p => { maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
+    svgWidth = maxX + NODE_WIDTH + 40;
+    svgHeight = maxY + NODE_HEIGHT + V_PAD;
+  } else {
+    const maxFirstCol = columns.length > 0 ? columns[0].games.length : 1;
+    const totalH = maxFirstCol * (NODE_HEIGHT + NODE_GAP);
+    columns.forEach((col, ci) => {
+      const x = ci * ROUND_WIDTH + 20;
+      columnLabels.push({ key: `c-${ci}`, title: displayRoundTitle(col.title), x: x + NODE_WIDTH / 2, y: V_PAD - 12 });
+      col.games.forEach((g, pi) => positions.set(g.id, { x, y: nodeY(pi, col.games.length, totalH) }));
+    });
+    svgWidth = (columns.length - 1) * ROUND_WIDTH + NODE_WIDTH + 40;
+    svgHeight = totalH + V_PAD * 2;
+  }
 
   // ── render ────────────────────────────────────────────────────────────────
 
@@ -470,52 +554,82 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
         </defs>
 
         {/* ── round header labels ── */}
-        {columns.map((col, ci) => (
+        {columnLabels.map(l => (
           <text
-            key={`lbl-${ci}`}
-            x={ci * ROUND_WIDTH + NODE_WIDTH / 2 + 20}
-            y={V_PAD - 12}
+            key={`lbl-${l.key}`}
+            x={l.x}
+            y={l.y}
             fontSize="10"
             fontWeight="700"
             textAnchor="middle"
             style={{
-              fill:        'rgba(255,255,255,0.45)',
+              fill:        'var(--white-45)',
               fontFamily:  'var(--font-display)',
               letterSpacing: '0.1em',
             }}
           >
-            {col.title.toUpperCase()}
+            {l.title.toUpperCase()}
           </text>
         ))}
 
-        {/* ── connectors (behind nodes) ── */}
-        {columns.map((col, ci) => {
-          const nextCol = columns[ci + 1];
-          if (!nextCol) return null;
-          return col.games.map((_, pi) => {
-            const targetPos = Math.floor(pi / 2);
-            if (targetPos >= nextCol.games.length) return null;
-            const src = nodes.find(n => n.round === ci     && n.position === pi);
-            const tgt = nodes.find(n => n.round === ci + 1 && n.position === targetPos);
-            if (!src || !tgt) return null;
-            return (
-              <ConnectorPath
-                key={`c-${ci}-${pi}`}
-                fromX={ci * ROUND_WIDTH + 20 + NODE_WIDTH}
-                fromY={nodeY(pi, col.games.length, totalH) + NODE_HEIGHT / 2}
-                toX={(ci + 1) * ROUND_WIDTH + 20}
-                toY={nodeY(targetPos, nextCol.games.length, totalH) + NODE_HEIGHT / 2}
-                active={src.winnerId !== null}
-              />
-            );
-          });
-        })}
+        {/* ── connectors (behind nodes) ──
+              Double elimination / placement / consolation follow the actual
+              Winner/Loser references (a game's loser-drop line is correct by data);
+              single elimination uses simple round-to-round halving. ── */}
+        {isDoubleElim
+          ? columns.flatMap(col => col.games.flatMap(g => {
+              const tgt = positions.get(g.id);
+              if (!tgt) return [];
+              return [g.homePlaceholder, g.awayPlaceholder].flatMap((ph, side) => {
+                const m = (ph || '').match(/^(Winner|Loser)\s+(.+)$/);
+                if (!m) return [];
+                const kind = m[1].toLowerCase() as 'winner' | 'loser';
+                const srcNode = nodeByCode.get(m[2].toUpperCase());
+                const sp = srcNode ? positions.get(srcNode.id) : undefined;
+                if (!srcNode || !sp) return [];
+                return [(
+                  <ConnectorPath
+                    key={`dc-${g.id}-${side}`}
+                    fromX={sp.x + NODE_WIDTH}
+                    fromY={sp.y + NODE_HEIGHT / 2}
+                    toX={tgt.x}
+                    toY={tgt.y + NODE_HEIGHT / 2}
+                    active={srcNode.winnerId !== null}
+                    kind={kind}
+                  />
+                )];
+              });
+            }))
+          : !hasMultiBracket && columns.map((col, ci) => {
+              const nextCol = columns[ci + 1];
+              if (!nextCol) return null;
+              return col.games.map((g, pi) => {
+                const targetPos = Math.floor(pi / 2);
+                const tg = nextCol.games[targetPos];
+                if (!tg) return null;
+                const sp = positions.get(g.id);
+                const tp = positions.get(tg.id);
+                if (!sp || !tp) return null;
+                const srcNode = nodeByCode.get((g.bracketCode || '').toUpperCase());
+                return (
+                  <ConnectorPath
+                    key={`c-${ci}-${pi}`}
+                    fromX={sp.x + NODE_WIDTH}
+                    fromY={sp.y + NODE_HEIGHT / 2}
+                    toX={tp.x}
+                    toY={tp.y + NODE_HEIGHT / 2}
+                    active={srcNode?.winnerId != null}
+                  />
+                );
+              });
+            })}
 
         {/* ── match nodes ── */}
-        {columns.map((col, ci) =>
-          col.games.map((_, pi) => {
-            const node = nodes.find(n => n.round === ci && n.position === pi);
-            if (!node) return null;
+        {columns.flatMap(col =>
+          col.games.map(g => {
+            const node = nodes.find(n => n.id === g.id);
+            const pos = positions.get(g.id);
+            if (!node || !pos) return null;
             const nodeMatchesTeam = !!highlightTeamId && (
               node.homeTeam?.id === highlightTeamId || node.awayTeam?.id === highlightTeamId
             );
@@ -523,8 +637,8 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
               <MatchNode
                 key={node.id}
                 node={node}
-                x={ci * ROUND_WIDTH + 20}
-                y={nodeY(pi, col.games.length, totalH)}
+                x={pos.x}
+                y={pos.y}
                 isHighlighted={!highlightTeamId || nodeMatchesTeam}
                 showHighlightRing={nodeMatchesTeam}
                 requireFinalization={requireFinalization}

@@ -5,49 +5,33 @@ import { getGames, getTeams, getDivisions, getVenues, getTournaments } from '@/l
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
+import { bracketRoundInfo } from '@/lib/playoff-bracket';
 import styles from './schedule.module.css';
 
 // ── bracket helpers ───────────────────────────────────────────────────────────
 
 function bracketPriority(code?: string) {
-  if (!code) return 99;
-  if (/^QF/i.test(code)) return 1;
-  if (/^SF/i.test(code)) return 2;
-  if (/^(FIN|IF|3RD)$/i.test(code)) return 3;
-  return 4;
+  return code ? bracketRoundInfo(code).rank : 99;
 }
 
 function buildBracketColumns(games: Game[]) {
-  const standardRounds = [
-    { title: 'Quarterfinals', pattern: /^QF/i },
-    { title: 'Semifinals',    pattern: /^SF/i },
-    { title: 'Finals',        pattern: /^(FIN|IF|3RD)$/i },
-  ];
-  const columns = standardRounds.map(r => ({
-    ...r,
-    games: games
-      .filter(g => r.pattern.test(g.bracketCode || ''))
-      .sort((a, b) => {
-        if (/^FIN/i.test(a.bracketCode || '') && /^3RD/i.test(b.bracketCode || '')) return -1;
-        if (/^3RD/i.test(a.bracketCode || '') && /^FIN/i.test(b.bracketCode || '')) return 1;
-        return (a.bracketCode || '').localeCompare(b.bracketCode || '');
-      }),
-  })).filter(c => c.games.length > 0);
-
-  const matchedIds = new Set(columns.flatMap(c => c.games.map(g => g.id)));
-  const custom = games.filter(g => !matchedIds.has(g.id));
-  if (custom.length > 0) {
-    const byCode: Record<string, Game[]> = {};
-    custom.forEach(g => {
-      const key = g.bracketCode || 'EXTRA';
-      if (!byCode[key]) byCode[key] = [];
-      byCode[key].push(g);
-    });
-    Object.entries(byCode).forEach(([code, cGames]) => {
-      columns.push({ title: code, pattern: new RegExp(`^${code}$`, 'i'), games: cGames });
-    });
+  // Group games into round columns via the shared bracketRoundInfo() so single
+  // elimination, double elimination, and consolation all render as ordered rounds.
+  const sortByCode = (a: Game, b: Game) => {
+    if (/^FIN/i.test(a.bracketCode || '') && /^3RD/i.test(b.bracketCode || '')) return -1;
+    if (/^3RD/i.test(a.bracketCode || '') && /^FIN/i.test(b.bracketCode || '')) return 1;
+    return (a.bracketCode || '').localeCompare(b.bracketCode || '');
+  };
+  const groups = new Map<string, { title: string; rank: number; games: Game[] }>();
+  for (const g of games) {
+    const info = bracketRoundInfo(g.bracketCode || '');
+    let grp = groups.get(info.key);
+    if (!grp) { grp = { title: info.title, rank: info.rank, games: [] }; groups.set(info.key, grp); }
+    grp.games.push(g);
   }
-  return columns;
+  return [...groups.values()]
+    .sort((a, b) => a.rank - b.rank)
+    .map(grp => ({ title: grp.title, games: grp.games.sort(sortByCode) }));
 }
 
 interface BracketColumnsProps {

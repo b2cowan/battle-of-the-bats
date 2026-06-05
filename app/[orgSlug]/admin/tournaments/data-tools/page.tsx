@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   Calendar,
@@ -15,10 +15,7 @@ import {
   HelpCircle,
   History,
   Lock,
-  MapPin,
   RefreshCw,
-  Tag,
-  Trophy,
   Upload,
   Users,
   XCircle,
@@ -31,8 +28,11 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { useTournament } from '@/lib/tournament-context';
 import TournamentTeamsImportDialog from '@/components/admin/import/TournamentTeamsImportDialog';
 import TournamentScheduleImportDialog from '@/components/admin/import/TournamentScheduleImportDialog';
+import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import {
   ToolbarGroup,
+  ToolbarMenu,
+  ToolbarMenuItem,
   ToolbarSelect,
   TournamentAdminHeader,
   TournamentAdminToolbar,
@@ -72,26 +72,14 @@ type ImportHistoryItem = {
   };
 };
 
-type ActionButtonProps = {
-  children: ReactNode;
-  icon?: ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost';
-  disabled?: boolean;
-  title?: string;
-  onClick?: () => void;
-};
-
-type ActionLinkProps = {
-  children: ReactNode;
-  href: string;
-  icon?: ReactNode;
-  variant?: 'primary' | 'secondary' | 'ghost';
-  disabled?: boolean;
-  title?: string;
-};
-
 function cx(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(' ');
+}
+
+/** Navigate to a file-download endpoint (no-op when blocked or no URL). */
+function downloadFile(url: string, blocked = false) {
+  if (blocked || !url || url === '#') return;
+  window.location.href = url;
 }
 
 function buildTemplateUrl(
@@ -170,89 +158,6 @@ function historyCountItems(item: ImportHistoryItem) {
   ].filter(count => count.value > 0 || count.label === 'rows');
 }
 
-function actionClass(variant: ActionButtonProps['variant'] = 'secondary') {
-  return cx(
-    styles.actionButton,
-    variant === 'primary' && styles.actionPrimary,
-    variant === 'ghost' && styles.actionGhost,
-  );
-}
-
-function ActionButton({
-  children,
-  icon,
-  variant = 'secondary',
-  disabled,
-  title,
-  onClick,
-}: ActionButtonProps) {
-  return (
-    <button
-      type="button"
-      className={actionClass(variant)}
-      disabled={disabled}
-      title={title}
-      onClick={onClick}
-    >
-      {icon}
-      <span>{children}</span>
-    </button>
-  );
-}
-
-function ActionLink({
-  children,
-  href,
-  icon,
-  variant = 'secondary',
-  disabled,
-  title,
-}: ActionLinkProps) {
-  if (disabled) {
-    return (
-      <button type="button" className={actionClass(variant)} disabled title={title}>
-        {icon}
-        <span>{children}</span>
-      </button>
-    );
-  }
-
-  return (
-    <a className={actionClass(variant)} href={href} title={title}>
-      {icon}
-      <span>{children}</span>
-    </a>
-  );
-}
-
-function PageLink({
-  children,
-  href,
-  icon,
-  disabled,
-}: {
-  children: ReactNode;
-  href: string;
-  icon: ReactNode;
-  disabled?: boolean;
-}) {
-  if (disabled) {
-    return (
-      <button type="button" className={actionClass('secondary')} disabled>
-        {icon}
-        <span>{children}</span>
-      </button>
-    );
-  }
-
-  return (
-    <Link className={actionClass('secondary')} href={href}>
-      {icon}
-      <span>{children}</span>
-    </Link>
-  );
-}
-
 export default function TournamentDataToolsPage() {
   const { currentOrg, userRole, userCapabilities, loading: orgLoading } = useOrg();
   const {
@@ -263,6 +168,7 @@ export default function TournamentDataToolsPage() {
     setCurrentTournament,
   } = useTournament();
   const [importOpen, setImportOpen] = useState(false);
+  const [templateFormat, setTemplateFormat] = useState<'xlsx' | 'csv'>('xlsx');
   const [scheduleImportOpen, setScheduleImportOpen] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [importHistory, setImportHistory] = useState<ImportHistoryItem[]>([]);
@@ -281,10 +187,6 @@ export default function TournamentDataToolsPage() {
 
   const orgSlug = currentOrg?.slug;
   const tournamentId = currentTournament?.id ?? '';
-  const scheduleHref = orgSlug ? `/${orgSlug}/admin/tournaments/schedule` : '#';
-  const resultsHref = orgSlug ? `/${orgSlug}/admin/tournaments/results` : '#';
-  const divisionsHref = orgSlug ? `/${orgSlug}/admin/tournaments/divisions` : '#';
-  const venuesHref = orgSlug ? `/${orgSlug}/admin/tournaments/venues` : '#';
   const helpHref = orgSlug ? `/${orgSlug}/admin/help/tournaments#data-tools-imports` : '#';
   const billingHref = currentOrg ? getBillingHref(currentOrg.slug, currentOrg.planId) : '#';
   const canUseBulkImports = currentOrg ? hasPlanFeature(currentOrg.planId, 'bulk_data_imports') : false;
@@ -441,7 +343,13 @@ export default function TournamentDataToolsPage() {
               <p>Uploads create a preview first. Tournament data changes only after an admin applies a clean preview.</p>
             </div>
             {orgSlug ? (
-              <Link className={styles.guidanceLink} href={helpHref}>
+              <Link
+                className={styles.guidanceLink}
+                href={helpHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Import guide (opens in a new tab)"
+              >
                 <HelpCircle size={15} aria-hidden />
                 <span>Import guide</span>
               </Link>
@@ -494,247 +402,99 @@ export default function TournamentDataToolsPage() {
         </section>
       ) : (
         <>
-          <section className={styles.section} aria-labelledby="live-tools-heading">
-            <div className={styles.sectionHeader}>
-              <div>
-                <h2 id="live-tools-heading">Available Now</h2>
-                <p>Bulk workflows connected to existing tournament data.</p>
-              </div>
+          <CollapsibleCard
+            title="Import & Export"
+            icon={<Database size={18} aria-hidden />}
+            defaultOpen
+          >
+            <p className={styles.cardLede}>
+              Download a template, fill it in, then import. Imports preview first — nothing changes until you apply a clean preview.
+            </p>
+            <div className={styles.toolMenus}>
+              <ToolbarMenu label="Import" icon={<Upload size={15} aria-hidden />} align="start" keepLabel>
+                <ToolbarMenuItem
+                  icon={<Users size={16} aria-hidden />}
+                  label="Teams"
+                  hint="Add or update team rows"
+                  locked={importDisabled}
+                  lockTitle={importUnavailableReason ?? undefined}
+                  onSelect={openTeamsImport}
+                />
+                <ToolbarMenuItem
+                  icon={<Calendar size={16} aria-hidden />}
+                  label="Schedule"
+                  hint="Add or update game rows"
+                  locked={scheduleImportDisabled}
+                  lockTitle={scheduleImportUnavailableReason ?? undefined}
+                  onSelect={openScheduleImport}
+                />
+              </ToolbarMenu>
+
+              <ToolbarMenu label="Export" icon={<Download size={15} aria-hidden />} align="start" keepLabel>
+                <ToolbarMenuItem
+                  icon={<FileSpreadsheet size={16} aria-hidden />}
+                  label="Registration workbook (XLSX)"
+                  locked={registrationExportDisabled}
+                  lockTitle={registrationExportUnavailableReason ?? undefined}
+                  onSelect={() => downloadFile(buildRegistrationExportUrl(tournamentId, 'xlsx', orgSlug), registrationExportDisabled)}
+                />
+                <ToolbarMenuItem
+                  icon={<FileText size={16} aria-hidden />}
+                  label="Registration workbook (CSV)"
+                  locked={registrationExportDisabled}
+                  lockTitle={registrationExportUnavailableReason ?? undefined}
+                  onSelect={() => downloadFile(buildRegistrationExportUrl(tournamentId, 'csv', orgSlug), registrationExportDisabled)}
+                />
+              </ToolbarMenu>
+
             </div>
 
-            <div className={styles.toolGrid}>
-              <article className={styles.toolCard}>
-                <div className={styles.cardHeader}>
-                  <div className={styles.cardIcon}>
-                    <Users size={20} aria-hidden />
-                  </div>
-                  <div>
-                    <h3>Teams & Registrations</h3>
-                    <p>Add/update team rows, download import templates, or export the registration workbook.</p>
-                  </div>
-                </div>
-
-                <div className={styles.cardBody}>
-                  <div className={styles.actionGroup}>
-                    <div className={styles.actionLabel}>
-                      <Upload size={14} aria-hidden />
-                      <span>Import</span>
-                    </div>
-                    <ActionButton
-                      variant="primary"
-                      icon={<Upload size={15} aria-hidden />}
-                      onClick={openTeamsImport}
-                      disabled={importDisabled}
-                      title={importUnavailableReason ?? undefined}
+            <div className={styles.templatesBlock}>
+              <div className={styles.templatesHead}>
+                <span className={styles.templatesLabel}>Templates</span>
+                <div className={styles.formatToggle} role="group" aria-label="Template file format">
+                  {(['xlsx', 'csv'] as const).map(f => (
+                    <button
+                      key={f}
+                      type="button"
+                      data-active={templateFormat === f || undefined}
+                      onClick={() => setTemplateFormat(f)}
                     >
-                      Add/update teams
-                    </ActionButton>
-                    {importUnavailableReason && (
-                      <p className={styles.lockedNote}>
-                        <Lock size={13} aria-hidden />
-                        <span>{importUnavailableReason}</span>
-                      </p>
-                    )}
-                  </div>
-
-                  <div className={styles.actionGroup}>
-                    <div className={styles.actionLabel}>
-                      <FileSpreadsheet size={14} aria-hidden />
-                      <span>Templates</span>
-                    </div>
-                    <div className={styles.buttonGrid}>
-                      <ActionLink
-                        href={tournamentId ? buildTemplateUrl(tournamentId, 'current', 'xlsx', orgSlug) : '#'}
-                        icon={<FileSpreadsheet size={15} aria-hidden />}
-                        disabled={templateDisabled}
-                        title={templateUnavailableReason ?? undefined}
-                      >
-                        Current XLSX
-                      </ActionLink>
-                      <ActionLink
-                        href={tournamentId ? buildTemplateUrl(tournamentId, 'current', 'csv', orgSlug) : '#'}
-                        icon={<FileText size={15} aria-hidden />}
-                        disabled={templateDisabled}
-                        title={templateUnavailableReason ?? undefined}
-                      >
-                        Current CSV
-                      </ActionLink>
-                      <ActionLink
-                        href={tournamentId ? buildTemplateUrl(tournamentId, 'empty', 'xlsx', orgSlug) : '#'}
-                        icon={<FileSpreadsheet size={15} aria-hidden />}
-                        disabled={templateDisabled}
-                        title={templateUnavailableReason ?? undefined}
-                      >
-                        Empty XLSX
-                      </ActionLink>
-                      <ActionLink
-                        href={tournamentId ? buildTemplateUrl(tournamentId, 'empty', 'csv', orgSlug) : '#'}
-                        icon={<FileText size={15} aria-hidden />}
-                        disabled={templateDisabled}
-                        title={templateUnavailableReason ?? undefined}
-                      >
-                        Empty CSV
-                      </ActionLink>
-                    </div>
-                    <p className={styles.subtleNote}>
-                      Current templates include existing team IDs for updates. Empty templates are blank rows for new teams.
-                    </p>
-                  </div>
-
-                  <div className={styles.actionGroup}>
-                    <div className={styles.actionLabel}>
-                      <Download size={14} aria-hidden />
-                      <span>Export</span>
-                    </div>
-                    <div className={styles.buttonGrid}>
-                      <ActionLink
-                        href={tournamentId ? buildRegistrationExportUrl(tournamentId, 'xlsx', orgSlug) : '#'}
-                        icon={<FileSpreadsheet size={15} aria-hidden />}
-                        disabled={registrationExportDisabled}
-                        title={registrationExportUnavailableReason ?? undefined}
-                      >
-                        XLSX workbook
-                      </ActionLink>
-                      <ActionLink
-                        href={tournamentId ? buildRegistrationExportUrl(tournamentId, 'csv', orgSlug) : '#'}
-                        icon={<FileText size={15} aria-hidden />}
-                        disabled={registrationExportDisabled}
-                        title={registrationExportUnavailableReason ?? undefined}
-                      >
-                        CSV file
-                      </ActionLink>
-                    </div>
-                    {registrationExportUnavailableReason && (
-                      <p className={styles.lockedNote}>
-                        <Lock size={13} aria-hidden />
-                        <span>{registrationExportUnavailableReason}</span>
-                      </p>
-                    )}
-                  </div>
+                      {f.toUpperCase()}
+                    </button>
+                  ))}
                 </div>
-              </article>
-
-              <article className={styles.toolCard}>
-                <div className={styles.cardHeader}>
-                  <div className={styles.cardIcon}>
-                    <Calendar size={20} aria-hidden />
-                  </div>
-                  <div>
-                    <h3>Schedule</h3>
-                    <p>Add/update schedule rows, download schedule templates, or open the schedule workspace for exports.</p>
-                  </div>
-                </div>
-                <div className={styles.cardBody}>
-                  <div className={styles.actionGroup}>
-                    <div className={styles.actionLabel}>
-                      <Upload size={14} aria-hidden />
-                      <span>Import</span>
-                    </div>
-                    <ActionButton
-                      variant="primary"
-                      icon={<Upload size={15} aria-hidden />}
-                      onClick={openScheduleImport}
-                      disabled={scheduleImportDisabled}
-                      title={scheduleImportUnavailableReason ?? undefined}
-                    >
-                      Add/update schedule
-                    </ActionButton>
-                    {scheduleImportUnavailableReason && (
-                      <p className={styles.lockedNote}>
-                        <Lock size={13} aria-hidden />
-                        <span>{scheduleImportUnavailableReason}</span>
-                      </p>
-                    )}
-                    <p className={styles.subtleNote}>Add/update only. Games missing from the file stay unchanged.</p>
-                  </div>
-
-                  <div className={styles.actionGroup}>
-                    <div className={styles.actionLabel}>
-                      <FileSpreadsheet size={14} aria-hidden />
-                      <span>Templates</span>
-                    </div>
-                    <div className={styles.buttonGrid}>
-                      <ActionLink
-                        href={tournamentId ? buildScheduleTemplateUrl(tournamentId, 'current', 'xlsx', orgSlug) : '#'}
-                        icon={<FileSpreadsheet size={15} aria-hidden />}
-                        disabled={scheduleTemplateDisabled}
-                        title={scheduleTemplateUnavailableReason ?? undefined}
-                      >
-                        Current XLSX
-                      </ActionLink>
-                      <ActionLink
-                        href={tournamentId ? buildScheduleTemplateUrl(tournamentId, 'current', 'csv', orgSlug) : '#'}
-                        icon={<FileText size={15} aria-hidden />}
-                        disabled={scheduleTemplateDisabled}
-                        title={scheduleTemplateUnavailableReason ?? undefined}
-                      >
-                        Current CSV
-                      </ActionLink>
-                      <ActionLink
-                        href={tournamentId ? buildScheduleTemplateUrl(tournamentId, 'empty', 'xlsx', orgSlug) : '#'}
-                        icon={<FileSpreadsheet size={15} aria-hidden />}
-                        disabled={scheduleTemplateDisabled}
-                        title={scheduleTemplateUnavailableReason ?? undefined}
-                      >
-                        Empty XLSX
-                      </ActionLink>
-                      <ActionLink
-                        href={tournamentId ? buildScheduleTemplateUrl(tournamentId, 'empty', 'csv', orgSlug) : '#'}
-                        icon={<FileText size={15} aria-hidden />}
-                        disabled={scheduleTemplateDisabled}
-                        title={scheduleTemplateUnavailableReason ?? undefined}
-                      >
-                        Empty CSV
-                      </ActionLink>
-                    </div>
-                  </div>
-
-                  <div className={styles.actionGroup}>
-                    <div className={styles.actionLabel}>
-                      <Download size={14} aria-hidden />
-                      <span>Export</span>
-                    </div>
-                    <p className={styles.subtleNote}>Open the schedule workspace to export XLSX, CSV, PDF, or iCal from the active schedule view.</p>
-                  </div>
-                  <PageLink href={scheduleHref} icon={<ExternalLink size={15} aria-hidden />} disabled={!orgSlug}>
-                    Open schedule exports
-                  </PageLink>
-                </div>
-              </article>
-
-              <article className={styles.toolCard}>
-                <div className={styles.cardHeader}>
-                  <div className={styles.cardIcon}>
-                    <Trophy size={20} aria-hidden />
-                  </div>
-                  <div>
-                    <h3>Results</h3>
-                    <p>Open the results workspace to export standings, scores, and PDF-ready result views.</p>
-                  </div>
-                </div>
-                <div className={styles.cardBody}>
-                  <PageLink href={resultsHref} icon={<ExternalLink size={15} aria-hidden />} disabled={!orgSlug}>
-                    Open results exports
-                  </PageLink>
-                </div>
-              </article>
-            </div>
-          </section>
-
-          <section className={styles.section} aria-labelledby="recent-imports-heading">
-            <div className={styles.sectionHeader}>
-              <div>
-                <h2 id="recent-imports-heading">Recent Imports</h2>
-                <p>Latest import previews and applies for the selected tournament.</p>
               </div>
-              <ActionButton
-                variant="ghost"
-                icon={<RefreshCw size={15} aria-hidden />}
+              <div className={styles.templateGrid}>
+                <span className={styles.templateRowLabel}><Users size={14} aria-hidden /> Teams</span>
+                <button type="button" className="btn btn-outline btn-data" disabled={templateDisabled} title={templateUnavailableReason ?? undefined} onClick={() => downloadFile(buildTemplateUrl(tournamentId, 'current', templateFormat, orgSlug), templateDisabled)}>Current</button>
+                <button type="button" className="btn btn-outline btn-data" disabled={templateDisabled} title={templateUnavailableReason ?? undefined} onClick={() => downloadFile(buildTemplateUrl(tournamentId, 'empty', templateFormat, orgSlug), templateDisabled)}>Empty</button>
+
+                <span className={styles.templateRowLabel}><Calendar size={14} aria-hidden /> Schedule</span>
+                <button type="button" className="btn btn-outline btn-data" disabled={scheduleTemplateDisabled} title={scheduleTemplateUnavailableReason ?? undefined} onClick={() => downloadFile(buildScheduleTemplateUrl(tournamentId, 'current', templateFormat, orgSlug), scheduleTemplateDisabled)}>Current</button>
+                <button type="button" className="btn btn-outline btn-data" disabled={scheduleTemplateDisabled} title={scheduleTemplateUnavailableReason ?? undefined} onClick={() => downloadFile(buildScheduleTemplateUrl(tournamentId, 'empty', templateFormat, orgSlug), scheduleTemplateDisabled)}>Empty</button>
+              </div>
+              <p className={styles.subtleNote} style={{ marginTop: '0.55rem' }}>
+                <strong style={{ color: 'var(--white-70)' }}>Current</strong> includes existing IDs for safe updates · <strong style={{ color: 'var(--white-70)' }}>Empty</strong> is a blank template for new rows.
+              </p>
+            </div>
+            <p className={styles.cardHint}>Schedule &amp; results spreadsheet exports live in their own workspaces.</p>
+          </CollapsibleCard>
+
+          <CollapsibleCard
+            title="Recent Imports"
+            icon={<History size={18} aria-hidden />}
+            defaultOpen={false}
+          >
+            <div className={styles.historyToolbar}>
+              <button
+                type="button"
+                className="btn btn-ghost btn-data"
                 onClick={() => { void loadImportHistory(); }}
                 disabled={historyLoading || Boolean(historyUnavailableReason)}
               >
-                Refresh
-              </ActionButton>
+                <RefreshCw size={13} aria-hidden /> Refresh
+              </button>
             </div>
 
             {contextLoading || historyLoading ? (
@@ -796,40 +556,7 @@ export default function TournamentDataToolsPage() {
                 })}
               </div>
             )}
-          </section>
-
-          <section className={styles.section} aria-labelledby="setup-tools-heading">
-            <div className={styles.sectionHeader}>
-              <div>
-                <h2 id="setup-tools-heading">Reference Data</h2>
-                <p>Setup datasets that will become bulk-edit targets after the team importer settles.</p>
-              </div>
-            </div>
-
-            <div className={styles.referenceGrid}>
-              <article className={styles.referenceItem}>
-                <Tag size={17} aria-hidden />
-                <div>
-                  <h3>Divisions</h3>
-                  <p>Use divisions as the reference source for team templates.</p>
-                </div>
-                <PageLink href={divisionsHref} icon={<ExternalLink size={15} aria-hidden />} disabled={!orgSlug}>
-                  Open
-                </PageLink>
-              </article>
-
-              <article className={styles.referenceItem}>
-                <MapPin size={17} aria-hidden />
-                <div>
-                  <h3>Venues & Facilities</h3>
-                  <p>Venue exports and import templates are a later Data Tools expansion.</p>
-                </div>
-                <PageLink href={venuesHref} icon={<ExternalLink size={15} aria-hidden />} disabled={!orgSlug}>
-                  Open
-                </PageLink>
-              </article>
-            </div>
-          </section>
+          </CollapsibleCard>
         </>
       )}
 

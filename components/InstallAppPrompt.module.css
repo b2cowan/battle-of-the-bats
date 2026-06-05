@@ -10,9 +10,10 @@
   padding: 0.875rem 1rem;
   /* push content above iPhone home indicator */
   padding-bottom: calc(0.875rem + env(safe-area-inset-bottom));
-  background: #13151f;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6);
+  /* Theme-aware surface + a branded (org-colour) top accent. */
+  background: var(--surface);
+  border-top: 2px solid var(--primary);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
 }
 
 .icon {
@@ -31,7 +32,7 @@
   margin: 0 0 0.15rem;
   font-size: 0.88rem;
   font-weight: 700;
-  color: var(--white, #fff);
+  color: var(--white);
   font-family: var(--font-data, monospace);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -40,12 +41,12 @@
 .instructions {
   margin: 0;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55);
   line-height: 1.45;
 }
 
 .instructions strong {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
   font-weight: 600;
 }
 
@@ -58,13 +59,13 @@
   height: 28px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.5);
+  background: var(--white-8);
+  color: var(--white-50);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
 
 .dismiss:hover {
-  background: rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.85);
+  background: var(--white-10);
+  color: var(--white-85);
 }

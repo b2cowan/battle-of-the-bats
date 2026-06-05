@@ -8,7 +8,7 @@ import {
   COACHES_START_PATH,
   COACHES_TOURNAMENTS_PATH,
 } from '@/lib/coaches-portal-routes';
-import styles from '../../../my/registrations/[teamId]/detail.module.css';
+import styles from './detail.module.css';
 
 type RouteParams = { params: Promise<{ teamId: string }> };
 
@@ -271,17 +271,17 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
       <div className={styles.ctaSection}>
         {team.status === 'accepted' && !hasPremiumAccess && (
           <div className={styles.ctaCard}>
-            <div className={styles.ctaLabel}>Take your season further</div>
-            <div className={styles.ctaTitle}>Coaches Portal Premium</div>
+            <div className={styles.ctaLabel}>For your team</div>
+            <div className={styles.ctaTitle}>Take your team further</div>
             <p className={styles.ctaDesc}>
-              Manage your team year-round with roster, schedule, dues, budget, documents, and lineups in one place.
+              Run your team year-round — roster, lineups, schedule, dues, budget, and documents in one place. It carries over automatically if your organization joins FieldLogicHQ.
             </p>
-            <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Explore Premium</Link>
+            <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Express interest</Link>
           </div>
         )}
         <div className={styles.ctaCardSecondary}>
-          <span className={styles.ctaSecondaryText}>Ready to run your own tournament?</span>
-          <Link href="/pricing" className="btn btn-ghost btn-sm">See Tournament Plans</Link>
+          <span className={styles.ctaSecondaryText}>Run your own tournament with FieldLogicHQ.</span>
+          <Link href="/pricing" className="btn btn-ghost btn-sm">See tournament plans</Link>
         </div>
       </div>
     </div>

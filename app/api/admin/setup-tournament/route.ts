@@ -344,7 +344,6 @@ export async function POST(req: Request) {
                 name: `${name} ${group.name}`,
                 coach: coaches[i],
                 email: `coach${i}@example.com`,
-                players: [],
                 pool_id: poolObj?.id
               };
             });

@@ -19,7 +19,7 @@ import { useTournament } from '@/lib/tournament-context';
 import { hasCapability, type Capability } from '@/lib/roles';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
-import { useAdminDensity } from '@/lib/admin-density';
+import { isWithinEventDates } from '@/lib/tournament-phase';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { TOUR_GROUPS, type TourNavItem, type TourGroup } from './admin-nav-config';
 import styles from './AdminSidebar.module.css';
@@ -44,8 +44,8 @@ export default function AdminSidebar() {
   const currentOrgSlug = currentOrg?.slug;
   const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
   const { tournaments, currentTournament, setCurrentTournament, refresh: refreshTournaments } = useTournament();
-  const { density, setDensity } = useAdminDensity();
   const worklist = useAdminWorklist();
+  const sidebarIsLive = currentTournament?.status === 'active' && isWithinEventDates(currentTournament?.startDate, currentTournament?.endDate);
 
   // Tournament / Tournament Plus tiers have no org-admin concept — never treat them as
   // being "in org admin" even if a URL slips through (proxy.ts + the org layout redirect them).
@@ -500,7 +500,8 @@ export default function AdminSidebar() {
                   )}
                 </div>
               )}
-              {currentTournament?.status === 'active'    && <span className={styles.activePill}>● Live</span>}
+              {currentTournament?.status === 'active' && sidebarIsLive  && <span className={styles.activePill}>● Live</span>}
+              {currentTournament?.status === 'active' && !sidebarIsLive && <span className={styles.activePill} style={{ opacity: 0.65 }}>● Open</span>}
               {currentTournament?.status === 'draft'     && <span className={styles.activePill} style={{ opacity: 0.5 }}>Draft</span>}
               {currentTournament?.status === 'completed' && <span className={styles.activePill} style={{ opacity: 0.5 }}>Completed</span>}
               {currentTournament?.status === 'archived'  && <span className={styles.activePill} style={{ opacity: 0.4 }}>Archived</span>}
@@ -571,26 +572,6 @@ export default function AdminSidebar() {
 
         {/* Footer */}
         <div className={styles.footer}>
-          <div className={styles.densityToggle} role="group" aria-label="Display density">
-            <button
-              type="button"
-              className={`${styles.densityBtn} ${density === 'comfortable' ? styles.densityBtnActive : ''}`}
-              onClick={() => setDensity('comfortable')}
-              aria-pressed={density === 'comfortable'}
-              title="Comfortable density — larger rows and controls"
-            >
-              Comfortable
-            </button>
-            <button
-              type="button"
-              className={`${styles.densityBtn} ${density === 'compact' ? styles.densityBtnActive : ''}`}
-              onClick={() => setDensity('compact')}
-              aria-pressed={density === 'compact'}
-              title="Compact density — dense desktop layout"
-            >
-              Compact
-            </button>
-          </div>
           {isTournaments ? (
             tournamentPreviewHref ? (
               <Link

@@ -7,6 +7,7 @@ export type Capability =
   | 'manage_schedule_structure'
   | 'update_schedule'
   | 'submit_scores'
+  | 'check_in_teams'
   | 'manage_contacts'
   | 'post_announcements'
   | 'post_rules'
@@ -29,7 +30,7 @@ export type Capability =
 export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
   owner: new Set<Capability>([
     'create_tournaments', 'manage_registrations', 'manage_schedule_structure',
-    'update_schedule', 'submit_scores', 'manage_contacts', 'post_announcements',
+    'update_schedule', 'submit_scores', 'check_in_teams', 'manage_contacts', 'post_announcements',
     'post_rules', 'send_communications', 'seal_tournaments', 'manage_members',
     'org_settings', 'billing',
     // default-on module caps
@@ -37,17 +38,17 @@ export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
   ]),
   admin: new Set<Capability>([
     'create_tournaments', 'manage_registrations', 'manage_schedule_structure',
-    'update_schedule', 'submit_scores', 'manage_contacts', 'post_announcements',
+    'update_schedule', 'submit_scores', 'check_in_teams', 'manage_contacts', 'post_announcements',
     'post_rules', 'send_communications', 'seal_tournaments', 'manage_members',
     // default-on module caps
     'module_tournaments', 'module_communications', 'module_members',
   ]),
   staff: new Set<Capability>([
-    'update_schedule', 'submit_scores', 'post_announcements',
+    'update_schedule', 'submit_scores', 'check_in_teams', 'post_announcements',
     // default-on module cap
     'module_tournaments',
   ]),
-  official: new Set<Capability>(['submit_scores']),
+  official: new Set<Capability>(['submit_scores', 'check_in_teams']),
   league_admin: new Set<Capability>([
     'module_house_league',
     'module_members',
@@ -66,7 +67,7 @@ export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
 
 export const ALL_CAPABILITY_KEYS: Capability[] = [
   'create_tournaments', 'manage_registrations', 'manage_schedule_structure',
-  'update_schedule', 'submit_scores', 'manage_contacts', 'post_announcements',
+  'update_schedule', 'submit_scores', 'check_in_teams', 'manage_contacts', 'post_announcements',
   'post_rules', 'send_communications', 'seal_tournaments', 'manage_members',
   'org_settings', 'billing',
   'module_tournaments', 'module_communications', 'module_members',

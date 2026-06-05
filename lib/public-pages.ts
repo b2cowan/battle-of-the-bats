@@ -1,4 +1,5 @@
 import type { Tournament } from '@/lib/types';
+import { isPlayoffOnly } from '@/lib/tournament-phase';
 
 export const PUBLIC_PAGE_OPTIONS = [
   { key: 'news', label: 'News' },
@@ -19,11 +20,14 @@ export function normalizeHiddenPublicPages(value: unknown): PublicPageKey[] {
   return PUBLIC_PAGE_OPTIONS.map(page => page.key).filter(key => hidden.has(key));
 }
 
-export function isPublicPageEnabled(tournament: Pick<Tournament, 'publicHiddenPages'> | null | undefined, key: PublicPageKey): boolean {
+export function isPublicPageEnabled(tournament: Pick<Tournament, 'publicHiddenPages' | 'settings'> | null | undefined, key: PublicPageKey): boolean {
+  // Bracket-only tournaments have no round-robin standings.
+  if (key === 'standings' && isPlayoffOnly(tournament)) return false;
   return !normalizeHiddenPublicPages(tournament?.publicHiddenPages).includes(key);
 }
 
-export function visiblePublicPages(tournament: Pick<Tournament, 'publicHiddenPages'> | null | undefined) {
+export function visiblePublicPages(tournament: Pick<Tournament, 'publicHiddenPages' | 'settings'> | null | undefined) {
   const hidden = normalizeHiddenPublicPages(tournament?.publicHiddenPages);
-  return PUBLIC_PAGE_OPTIONS.filter(page => !hidden.includes(page.key));
+  const playoffOnly = isPlayoffOnly(tournament);
+  return PUBLIC_PAGE_OPTIONS.filter(page => !hidden.includes(page.key) && !(playoffOnly && page.key === 'standings'));
 }

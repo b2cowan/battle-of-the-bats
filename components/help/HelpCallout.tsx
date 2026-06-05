@@ -44,6 +44,8 @@ export default function HelpCallout({ variant, title, body, cta, dismissible, lo
   if (dismissed) return null;
 
   const Icon = ICONS[variant];
+  // Help-guide links open in a new tab so the reader keeps their current work in view.
+  const ctaOpensHelpGuide = cta ? /\/help(\/|#|$)/.test(cta.href) : false;
 
   function handleDismiss() {
     localStorage.setItem(resolvedKey, '1');
@@ -57,7 +59,12 @@ export default function HelpCallout({ variant, title, body, cta, dismissible, lo
         <p className={styles.calloutTitle}>{title}</p>
         <div className={styles.calloutText}>{body}</div>
         {cta && (
-          <Link href={cta.href} className={styles.calloutCta}>
+          <Link
+            href={cta.href}
+            className={styles.calloutCta}
+            {...(ctaOpensHelpGuide ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            aria-label={ctaOpensHelpGuide ? `${cta.label} (opens in a new tab)` : undefined}
+          >
             {cta.label} →
           </Link>
         )}

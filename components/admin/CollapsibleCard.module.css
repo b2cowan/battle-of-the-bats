@@ -1,0 +1,76 @@
+.card {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  border-radius: 2px;
+  background: var(--surface);
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 48px;
+  padding: 0.7rem 1.25rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Hide the native disclosure triangle (we render our own chevron) */
+.summary::-webkit-details-marker { display: none; }
+.summary::marker { content: ''; }
+
+.summary:hover .title {
+  color: var(--logic-lime);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--logic-lime);
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-data);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: rgba(var(--logic-lime-rgb), 0.85);
+}
+
+.meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--white-40);
+  transition: transform 0.2s ease;
+}
+
+.card[open] > .summary .chevron {
+  transform: rotate(180deg);
+}
+
+.body {
+  padding: 0.1rem 1.25rem 1.15rem;
+}
+
+@media (max-width: 600px) {
+  .summary,
+  .body {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}

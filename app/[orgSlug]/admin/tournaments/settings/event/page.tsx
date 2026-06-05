@@ -6,8 +6,9 @@ import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import FeedbackModal from '@/components/FeedbackModal';
+import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
-import type { GameTimingScope, TieBreakerScope, FeeScope, TournamentStatus } from '@/lib/types';
+import type { GameTimingScope, TieBreakerScope, FeeScope, TournamentStatus, TournamentFormat } from '@/lib/types';
 import styles from '../../branding/branding.module.css';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
@@ -61,6 +62,7 @@ export default function TournamentEventSettingsPage() {
 
   // Fee scope
   const [feeScope, setFeeScope] = useState<FeeScope | null>(null);
+  const [tournamentFormat, setTournamentFormat] = useState<TournamentFormat>('round_robin_playoffs');
   const [depositAmount, setDepositAmount] = useState('');
   const [depositDueDate, setDepositDueDate] = useState('');
   const [totalFeeAmount, setTotalFeeAmount] = useState('');
@@ -93,6 +95,7 @@ export default function TournamentEventSettingsPage() {
   const [saved, setSaved] = useState({
     name: '', year: new Date().getFullYear(), slug: '', status: 'draft' as TournamentStatus,
     startDate: '', endDate: '',
+    format: 'round_robin_playoffs' as TournamentFormat,
     feeScope: null as FeeScope | null,
     depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
     gameTimingScope: 'tournament' as GameTimingScope | null,
@@ -115,6 +118,12 @@ export default function TournamentEventSettingsPage() {
   // Status confirm modal
   const [pendingStatusChange, setPendingStatusChange] = useState<TournamentStatus | null>(null);
   const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
+
+  // Format change confirm (wipes the existing schedule)
+  const [pendingFormat, setPendingFormat] = useState<TournamentFormat | null>(null);
+  const [formatConfirmOpen, setFormatConfirmOpen] = useState(false);
+  const [existingGameCount, setExistingGameCount] = useState(0);
+  const [formatBusy, setFormatBusy] = useState(false);
 
   // Slug confirm modal
   const [slugConfirmOpen, setSlugConfirmOpen] = useState(false);
@@ -163,6 +172,8 @@ export default function TournamentEventSettingsPage() {
         const venueMoveBuf = typeof t.settings?.schedule_travel_venue_buffer_minutes === 'number' ? t.settings.schedule_travel_venue_buffer_minutes : 0;
         const facilityMoveBuf = typeof t.settings?.schedule_travel_facility_buffer_minutes === 'number' ? t.settings.schedule_travel_facility_buffer_minutes : 0;
 
+        const fmt: TournamentFormat = t.settings?.format === 'playoff_only' ? 'playoff_only' : 'round_robin_playoffs';
+
         const rawFeeScope = t.settings?.fee_scope;
         const validFeeScopes = new Set<string>(['tournament', 'allow_override', 'per_division', 'free']);
         const fs: FeeScope | null = validFeeScopes.has(rawFeeScope)
@@ -191,6 +202,7 @@ export default function TournamentEventSettingsPage() {
         setResultsNotifiedAt(t.results_notified_at ?? null);
         setResultsNotificationSentCount(t.results_notification_sent_count ?? 0);
         setStartDate(sd); setEndDate(ed);
+        setTournamentFormat(fmt);
         setFeeScope(fs);
         setDepositAmount(da); setDepositDueDate(dd);
         setTotalFeeAmount(tf); setTotalFeeDueDate(td);
@@ -208,6 +220,7 @@ export default function TournamentEventSettingsPage() {
           ...s,
           name, year, slug, status,
           startDate: sd, endDate: ed,
+          format: fmt,
           feeScope: fs,
           depositAmount: da, depositDueDate: dd, totalFeeAmount: tf, totalFeeDueDate: td,
           gameTimingScope: gts, gameDurationMinutes: gd, bufferMinutes: buf,
@@ -275,13 +288,14 @@ export default function TournamentEventSettingsPage() {
 
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const performSaveRef = useRef<((opts?: { slugOverride?: string; statusOverride?: TournamentStatus }) => Promise<void>) | null>(null);
+  const performSaveRef = useRef<((opts?: { slugOverride?: string; statusOverride?: TournamentStatus; formatOverride?: TournamentFormat }) => Promise<void>) | null>(null);
 
   useEffect(() => {
     performSaveRef.current = async (opts) => {
       if (!tournamentId || !currentTournament) return;
       const slugToSave = opts?.slugOverride ?? saved.slug;
       const newStatus = opts?.statusOverride;
+      const formatToSave = opts?.formatOverride ?? tournamentFormat;
 
       setSaveStatus('saving');
       try {
@@ -293,7 +307,8 @@ export default function TournamentEventSettingsPage() {
               action: 'update',
               id: tournamentId,
               data: {
-                year: tournamentYear,
+                // Year is derived from the (required) start date — no manual field.
+                year: startDate ? Number(startDate.slice(0, 4)) : tournamentYear,
                 name: tournamentName,
                 slug: slugToSave,
                 startDate: startDate || undefined,
@@ -322,6 +337,7 @@ export default function TournamentEventSettingsPage() {
               id: tournamentId,
               data: {
                 settings: {
+                  format: formatToSave,
                   game_duration_minutes: gameDurationMinutes,
                   buffer_minutes: bufferMinutes,
                   schedule_travel_venue_buffer_minutes: venueMoveBufferMinutes,
@@ -370,7 +386,7 @@ export default function TournamentEventSettingsPage() {
           year: tournamentYear,
           slug: slugToSave,
           status: newStatus ?? prev.status,
-          startDate, endDate, feeScope,
+          startDate, endDate, format: formatToSave, feeScope,
           depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate,
           gameTimingScope, gameDurationMinutes, bufferMinutes,
           venueMoveBufferMinutes, facilityMoveBufferMinutes,
@@ -391,7 +407,7 @@ export default function TournamentEventSettingsPage() {
     depositDueDate, endDate, feeScope, gameDurationMinutes, gameTimingScope,
     facilityMoveBufferMinutes, notifyMode, notifyTeamsOnComplete, orgParam, orgQuery, refreshTournaments,
     saved.slug, scorePolicyMode, startDate, tieBreakerScope, tieBreakers,
-    totalFeeAmount, totalFeeDueDate, tournamentId, tournamentName,
+    totalFeeAmount, totalFeeDueDate, tournamentId, tournamentName, tournamentFormat,
     tournamentYear, venueMoveBufferMinutes,
   ]);
 
@@ -442,6 +458,63 @@ export default function TournamentEventSettingsPage() {
     performSaveRef.current?.({ statusOverride: newStatus });
   }
 
+  // Tournament format can only change while in Draft (round robin and bracket-only
+  // schedules are structurally different).
+  const formatLocked = tournamentStatus !== 'draft';
+
+  function applyFormatChange(fmt: TournamentFormat) {
+    setTournamentFormat(fmt);
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    performSaveRef.current?.({ formatOverride: fmt });
+  }
+
+  async function requestFormatChange(fmt: TournamentFormat) {
+    if (fmt === tournamentFormat || formatLocked || formatBusy || !tournamentId) return;
+    setFormatBusy(true);
+    try {
+      const res = await fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`);
+      const games = res.ok ? await res.json() : [];
+      const count = Array.isArray(games) ? games.length : 0;
+      if (count > 0) {
+        setPendingFormat(fmt);
+        setExistingGameCount(count);
+        setFormatConfirmOpen(true);
+      } else {
+        applyFormatChange(fmt);
+      }
+    } catch {
+      // If we can't check, fall back to confirming so we never silently orphan a schedule.
+      setPendingFormat(fmt);
+      setExistingGameCount(0);
+      setFormatConfirmOpen(true);
+    } finally {
+      setFormatBusy(false);
+    }
+  }
+
+  async function confirmFormatChange() {
+    if (!pendingFormat || !tournamentId) return;
+    const fmt = pendingFormat;
+    setFormatConfirmOpen(false);
+    try {
+      const delRes = await fetch(`/api/admin/games${orgQuery}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete-tournament-games', tournamentId }),
+      });
+      if (!delRes.ok) {
+        const d = await delRes.json().catch(() => ({}));
+        throw new Error(d.error ?? 'Failed to clear the existing schedule');
+      }
+      applyFormatChange(fmt);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to switch tournament format');
+      setErrorOpen(true);
+    } finally {
+      setPendingFormat(null);
+    }
+  }
+
   function handleSlugConfirm() {
     const newSlug = tournamentSlug;
     setSlugConfirmOpen(false);
@@ -487,33 +560,21 @@ export default function TournamentEventSettingsPage() {
           </div>
         </div>
 
-        {/* ── Card 1: Tournament Overview ── */}
-        <div className={styles.card}>
-          <h2 className={styles.sectionTitle}>Tournament Overview</h2>
+        <div className={styles.cardStack}>
 
-          <div className="form-row form-row-2">
-            <div className="form-group">
-              <label className="form-label">Tournament Name</label>
-              <input
-                className="form-input"
-                type="text"
-                maxLength={80}
-                value={tournamentName}
-                onChange={e => setTournamentName(e.target.value)}
-                placeholder="e.g. Spring Invitational 2026"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Year</label>
-              <input
-                className="form-input"
-                type="number"
-                min="2000"
-                max="2099"
-                value={tournamentYear}
-                onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n)) setTournamentYear(n); }}
-              />
-            </div>
+        {/* ── Card 1: Tournament Overview ── */}
+        <CollapsibleCard title="Tournament Overview" defaultOpen={false}>
+
+          <div className="form-group">
+            <label className="form-label">Tournament Name</label>
+            <input
+              className="form-input"
+              type="text"
+              maxLength={80}
+              value={tournamentName}
+              onChange={e => setTournamentName(e.target.value)}
+              placeholder="e.g. Spring Invitational 2026"
+            />
           </div>
 
           <hr className={styles.cardDivider} />
@@ -629,11 +690,41 @@ export default function TournamentEventSettingsPage() {
               </div>
             </>
           )}
-        </div>
+        </CollapsibleCard>
 
-        {/* ── Card 2: Competition Rules ── */}
-        <div className={styles.card}>
-          <h2 className={styles.sectionTitle}>Competition Rules</h2>
+        {/* ── Card 2: Schedule Rules ── */}
+        <CollapsibleCard title="Schedule Rules" defaultOpen={false}>
+
+          {/* Tournament Format */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
+              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Tournament Format</p>
+              <div className={styles.segmentedControl}>
+                {(['round_robin_playoffs', 'playoff_only'] as const).map(fmt => (
+                  <button
+                    key={fmt}
+                    type="button"
+                    disabled={formatLocked || formatBusy}
+                    onClick={() => requestFormatChange(fmt)}
+                    className={`${styles.segmentButton} ${tournamentFormat === fmt ? styles.segmentButtonActive : ''}`}
+                    style={formatLocked ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
+                  >
+                    {fmt === 'round_robin_playoffs' ? 'Round robin + playoffs' : 'Bracket only'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className={styles.descriptionText} style={{ marginTop: '0.5rem' }}>
+              {tournamentFormat === 'round_robin_playoffs'
+                ? 'Teams play a round robin, then the top teams advance to a playoff bracket seeded from the standings.'
+                : 'No round robin — the event starts straight with a playoff bracket. You seed teams into the first round yourself (manually or randomized) in the Playoff Bracket Builder.'}
+            </p>
+            {formatLocked && (
+              <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
+                The tournament format is locked once the event leaves Draft. Set the status back to Draft to change it.
+              </p>
+            )}
+          </div>
 
           {/* Game Timing */}
           <div>
@@ -784,58 +875,27 @@ export default function TournamentEventSettingsPage() {
             )}
           </div>
 
-          <hr className={styles.cardDivider} />
-
-          {/* Score Finalization */}
-          <div>
-            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Score Finalization</p>
-              <div className={styles.segmentedControl} role="radiogroup" aria-label="Score finalization policy">
-                {([
-                  ['review', 'Admin Review'],
-                  ['final',  'Final Immediately'],
-                ] as const).map(([mode, label]) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    role="radio"
-                    aria-checked={scorePolicyMode === mode}
-                    onClick={() => setScorePolicyMode(mode)}
-                    className={`${styles.segmentButton} ${scorePolicyMode === mode ? styles.segmentButtonActive : ''}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className={styles.descriptionText}>
-              Admin review sends scorekeeper submissions to Pending Review until an admin finalizes them in Results.
-              Final immediately makes scorekeeper submissions final as soon as they are saved.
-            </p>
-          </div>
-        </div>
+        </CollapsibleCard>
 
         {/* ── Card 3: Fee Schedule ── */}
-        <div className={styles.card}>
-          <div className={styles.cardHeaderRow}>
-            <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Fee Schedule</h2>
-            <div className={styles.segmentedControl}>
-              {([
-                ['tournament',    'Tournament-wide'],
-                ['allow_override','Allow override'],
-                ['per_division',  'Per division'],
-                ['free',          'Free'],
-              ] as const).map(([scope, label]) => (
-                <button
-                  key={scope}
-                  type="button"
-                  onClick={() => setFeeScope(scope)}
-                  className={`${styles.segmentButton} ${feeScope === scope ? styles.segmentButtonActive : ''}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+        <CollapsibleCard title="Fee Schedule" defaultOpen={false}>
+          <p className={styles.subSectionLabel}>Fee model</p>
+          <div className={styles.segmentedControl} style={{ marginBottom: '1rem' }}>
+            {([
+              ['tournament',    'Tournament-wide'],
+              ['allow_override','Allow override'],
+              ['per_division',  'Per division'],
+              ['free',          'Free'],
+            ] as const).map(([scope, label]) => (
+              <button
+                key={scope}
+                type="button"
+                onClick={() => setFeeScope(scope)}
+                className={`${styles.segmentButton} ${feeScope === scope ? styles.segmentButtonActive : ''}`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
           {feeScope === 'free' ? (
             <p className={styles.descriptionText}>
@@ -877,11 +937,10 @@ export default function TournamentEventSettingsPage() {
               Choose a payment configuration above to confirm how fees are handled for this tournament.
             </p>
           )}
-        </div>
+        </CollapsibleCard>
 
         {/* ── Card 4: Notifications & Contact ── */}
-        <div className={styles.card}>
-          <h2 className={styles.sectionTitle}>Notifications &amp; Contact</h2>
+        <CollapsibleCard title="Notifications & Contact" defaultOpen={false}>
 
           {/* Public Contact */}
           <div>
@@ -962,6 +1021,37 @@ export default function TournamentEventSettingsPage() {
 
           <hr className={styles.cardDivider} />
 
+          {/* Score Finalization — moved here from Schedule Rules: it's a results-management
+              decision (who approves scores) not a scheduling rule. */}
+          <div>
+            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
+              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Score Finalization</p>
+              <div className={styles.segmentedControl} role="radiogroup" aria-label="Score finalization policy">
+                {([
+                  ['review', 'Admin Review'],
+                  ['final',  'Final Immediately'],
+                ] as const).map(([mode, label]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    role="radio"
+                    aria-checked={scorePolicyMode === mode}
+                    onClick={() => setScorePolicyMode(mode)}
+                    className={`${styles.segmentButton} ${scorePolicyMode === mode ? styles.segmentButtonActive : ''}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className={styles.descriptionText}>
+              Admin review sends scorekeeper submissions to Pending Review until an admin finalizes them in Results.
+              Final immediately makes scorekeeper submissions final as soon as they are saved.
+            </p>
+          </div>
+
+          <hr className={styles.cardDivider} />
+
           {/* Post-Event Results */}
           <div>
             <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
@@ -1001,11 +1091,10 @@ export default function TournamentEventSettingsPage() {
               )}
             </div>
           </div>
-        </div>
+        </CollapsibleCard>
 
         {/* Registration Questions */}
-        <div className={styles.card}>
-          <h2 className={styles.sectionTitle}>Registration Questions</h2>
+        <CollapsibleCard title="Registration Questions" defaultOpen={false}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             <p className={styles.descriptionText}>
               Add custom questions to the team registration form — collect confirmations, dropdowns, text answers, and file uploads from coaches during sign-up.
@@ -1021,7 +1110,9 @@ export default function TournamentEventSettingsPage() {
               </div>
             )}
           </div>
-        </div>
+        </CollapsibleCard>
+
+        </div>{/* .cardStack */}
 
         {/* ── Save status footer ── */}
         <div className={styles.formFooter}>
@@ -1052,6 +1143,17 @@ export default function TournamentEventSettingsPage() {
         message={statusModalProps.message}
         type={statusModalProps.type}
         confirmText={statusModalProps.confirmText}
+      />
+
+      {/* ── Format change confirm modal ── */}
+      <FeedbackModal
+        isOpen={formatConfirmOpen}
+        onClose={() => { setFormatConfirmOpen(false); setPendingFormat(null); }}
+        onConfirm={confirmFormatChange}
+        title="Clear the existing schedule?"
+        message={`Switching to ${pendingFormat === 'playoff_only' ? '“Bracket only”' : '“Round robin + playoffs”'} will permanently delete this tournament’s existing schedule (${existingGameCount} game${existingGameCount === 1 ? '' : 's'}), because round-robin and bracket schedules are built differently. This cannot be undone.`}
+        type="warning"
+        confirmText="Clear schedule & switch"
       />
 
       {/* ── Slug confirm modal ── */}

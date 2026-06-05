@@ -94,7 +94,7 @@ export default function FeedbackModal({
           </button>
           {onConfirm && (
             <button
-              className={`btn btn-${type === 'danger' ? 'danger' : 'primary'} btn-data`}
+              className={`btn btn-${type === 'danger' ? 'danger' : 'lime'} btn-data`}
               onClick={() => {
                 onConfirm();
                 onClose();

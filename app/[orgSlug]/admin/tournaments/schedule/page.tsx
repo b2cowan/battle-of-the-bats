@@ -3,16 +3,19 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Calendar, ChevronRight, ChevronDown, Plus, Pencil, Trash2, X, Check, Sparkles, SlidersHorizontal, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw, AlertTriangle, AlertCircle, Lock, Wrench } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { saveGame, updateGame, deleteGame } from '@/lib/db';
+import { bracketRoundInfo, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
+import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import {
-  downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
+  downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
   downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
+import { downloadBracketPDF } from '@/lib/export/bracket-pdf';
 import ExportMenu from '@/components/admin/ExportMenu';
 import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
@@ -20,7 +23,6 @@ import GameList from './components/GameList';
 import ScheduleHealthPanel from './components/ScheduleHealthPanel';
 import BracketConnectors from './components/BracketConnectors';
 import ScheduleTimeline from './components/ScheduleTimeline';
-import ScopePicker from './components/ScopePicker';
 import { Game, Team, Division, Venue, PoolSlot, ScheduleFacilityLane } from '@/lib/types';
 import { checkVenueConflict, type ConflictResult } from '@/lib/schedule-conflict';
 import { buildScheduleMetrics } from '@/lib/schedule-metrics';
@@ -35,6 +37,7 @@ import {
   ToolbarGroup,
   ToolbarSearch,
   ToolbarSegmentedControl,
+  ToolbarSelect,
 } from '@/components/admin/tournament/TournamentAdminUI';
 
 type ModalMode = 'add' | 'edit' | null;
@@ -168,6 +171,7 @@ export default function AdminSchedulePage() {
   }
 
   function openGenerator() {
+    if (resolveIsPlayoffOnly(currentTournament)) return; // no round robin in bracket-only events
     if (!canAutoGenerateSchedule) {
       showScheduleUpgrade('Round-Robin Generator Requires Tournament Plus', 'auto_schedule');
       return;
@@ -180,15 +184,8 @@ export default function AdminSchedulePage() {
       showScheduleUpgrade('Playoff Bracket Builder Requires Tournament Plus', 'playoff_generator');
       return;
     }
-    if (filterGroup === 'all') {
-      setFeedback({
-        isOpen: true,
-        title: 'Choose a Division First',
-        message: 'Select a single division before opening the Playoff Bracket Builder.',
-        type: 'info',
-      });
-      return;
-    }
+    // Opens like the round-robin generator — defaults to a division and lets the
+    // user switch inside the modal (no "choose a division first" gate).
     setShowPlayoffWizard(true);
   }
 
@@ -267,10 +264,21 @@ export default function AdminSchedulePage() {
     } catch {}
   }, [tournamentId, viewMode, layout, selectedStatuses, selectedVenueKeys, divisions.length]);
 
-  // Scope is stage-specific (pools belong to round robin) — reset it when the stage flips.
-  useEffect(() => { setSelection(null); }, [viewMode]);
+  // The schedule scopes to a single division at a time (matches Teams/Results).
+  // Default to the first division and keep the selection valid as divisions load.
+  useEffect(() => {
+    if (divisions.length === 0) return;
+    setSelection(prev => {
+      if (prev && prev.size === 1 && divisions.some(d => d.id === [...prev][0])) return prev;
+      return new Set([divisions[0].id]);
+    });
+  }, [divisions]);
   // Bracket only exists under Playoffs — fall back to List if the stage flips to round robin.
   useEffect(() => { if (viewMode === 'pool' && layout === 'bracket') setLayout('list'); }, [viewMode, layout]);
+
+  // Bracket-only tournaments have no round-robin stage — keep the stage on Playoffs.
+  const isPlayoffOnly = resolveIsPlayoffOnly(currentTournament);
+  useEffect(() => { if (isPlayoffOnly && viewMode === 'pool') setViewMode('playoff'); }, [isPlayoffOnly, viewMode]);
 
   const groupTeams   = (id: string) => teams.filter(t => t.divisionId === id);
   const getTeamName  = (id: string) => teams.find(t => t.id === id)?.name ?? null;
@@ -558,10 +566,13 @@ export default function AdminSchedulePage() {
     () => scheduled.filter(g => (viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff)),
     [scheduled, viewMode],
   );
-  const scopeDivisions = useMemo(() => {
-    const present = new Set(stageGames.map(g => g.divisionId));
-    return divisions.filter(d => present.has(d.id)).map(d => ({ id: d.id, name: d.name }));
-  }, [divisions, stageGames]);
+  // Show every division in the picker (not just ones that already have games in
+  // this stage), so a new/empty division can be selected to start building games
+  // or to preview its bracket before any games are scheduled.
+  const scopeDivisions = useMemo(
+    () => divisions.map(d => ({ id: d.id, name: d.name })),
+    [divisions],
+  );
   const isGameInScope = (g: Game) => selection === null || selection.has(g.divisionId || '');
   const selectedDivisionIds = selection === null ? new Set(divisions.map(d => d.id)) : selection;
   const filterGroup = selectedDivisionIds.size === 1 ? Array.from(selectedDivisionIds)[0] : 'all';
@@ -688,25 +699,6 @@ export default function AdminSchedulePage() {
     );
   }
 
-  async function handleExportICS() {
-    const events = filtered
-      .filter(g => g.date)
-      .map(g => ({
-        gameId:   g.id,
-        title:    `${resolveTeam(g.homeTeamId, g.homePlaceholder)} vs ${resolveTeam(g.awayTeamId, g.awayPlaceholder)} — ${getGroupName(g.divisionId)}`,
-        date:     g.date,
-        time:     g.time || undefined,
-        location: (() => {
-          const display = getGameVenueDisplay(g);
-          return display.sublabel ? `${display.name} - ${display.sublabel}` : display.name;
-        })(),
-        cancelled: g.status === 'cancelled',
-      }));
-    await downloadICS(
-      buildFilename({ org: currentOrg?.slug, dataset: 'schedule', scope: String(currentTournament?.year ?? '') }, 'ics'),
-      events,
-    );
-  }
 
   async function doPdfExport() {
     const settings: OrgPdfSettings = {
@@ -726,6 +718,12 @@ export default function AdminSchedulePage() {
   }
 
   async function handleExportPDF() {
+    // Context-aware: when the bracket is on screen, export the visual bracket;
+    // List/Timeline export the schedule game table.
+    if (layout === 'bracket') {
+      await handleExportBracketPDF();
+      return;
+    }
     if (
       canUsePDF &&
       pdfSettings !== null &&
@@ -736,6 +734,27 @@ export default function AdminSchedulePage() {
       return;
     }
     await doPdfExport();
+  }
+
+  async function handleExportBracketPDF() {
+    const settings: OrgPdfSettings = {
+      ...DEFAULT_PDF_SETTINGS,
+      ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
+      orientation: 'landscape',
+    };
+    const bracketGames = divisionGames.filter(g => g.isPlayoff);
+    const filename = buildFilename(
+      { org: currentOrg?.slug, dataset: 'bracket', scope: activeDivision?.name ?? String(currentTournament?.year ?? '') },
+      'pdf',
+    );
+    await downloadBracketPDF(
+      filename,
+      `${activeDivision?.name ?? 'Division'} — Playoff Bracket`,
+      currentTournament?.name,
+      bracketGames,
+      teams,
+      settings,
+    );
   }
 
   function statusBadge(status: string) {
@@ -804,6 +823,12 @@ export default function AdminSchedulePage() {
   }
 
   const activeDivision = divisions.find(g => g.id === filterGroup);
+  // Default each generator to the selected division (if exactly one), otherwise to
+  // the first division that still lacks that stage's schedule (round robin vs playoffs).
+  const firstWithoutRoundRobin = divisions.find(d => !games.some(g => !g.isPlayoff && g.divisionId === d.id));
+  const firstWithoutPlayoffs = divisions.find(d => !games.some(g => g.isPlayoff && g.divisionId === d.id));
+  const roundRobinDefaultDivisionId = (filterGroup !== 'all' ? filterGroup : (firstWithoutRoundRobin?.id ?? divisions[0]?.id ?? ''));
+  const playoffDefaultDivisionId = (filterGroup !== 'all' ? filterGroup : (firstWithoutPlayoffs?.id ?? divisions[0]?.id ?? ''));
   const publishedDivisionCount = divisions.filter(g => g.scheduleVisibility && g.scheduleVisibility !== 'unpublished').length;
   const activeDivisionPublished = (activeDivision?.scheduleVisibility ?? 'unpublished') !== 'unpublished';
 
@@ -854,11 +879,12 @@ export default function AdminSchedulePage() {
             })()}
             <ExportMenu
               className={styles.scheduleExportButton}
-              formats={['xlsx', 'csv', 'ics', 'pdf']}
+              formats={['xlsx', 'csv', 'pdf']}
               onExportXLSX={handleExportXLSX}
               onExportCSV={handleExportCSV}
-              onExportICS={handleExportICS}
               onExportPDF={handleExportPDF}
+              pdfLabel={layout === 'bracket' ? 'Bracket PDF' : 'PDF report'}
+              pdfHint={layout === 'bracket' ? 'Printable visual bracket sheet' : 'Formatted, print-ready document'}
               planId={currentOrg?.planId}
               disabled={filtered.length === 0}
             />
@@ -881,14 +907,15 @@ export default function AdminSchedulePage() {
         {/* ── Row 1 left: Division + view mode controls (grow) ── */}
         <ToolbarGroup grow className={`${styles.scheduleDivisionGroup} ${styles.scheduleStartGroup}`}>
           {divisions.length > 0 && (
-            <ScopePicker
-              divisions={scopeDivisions}
-              value={selection}
-              onChange={setSelection}
-              singleSelect={layout === 'bracket'}
+            <ToolbarSelect<string>
+              label="Division"
+              value={filterGroup !== 'all' ? filterGroup : (divisions[0]?.id ?? '')}
+              options={divisions.map(d => ({ value: d.id, label: d.name }))}
+              onChange={(id) => setSelection(new Set([id]))}
             />
           )}
           {/* Mobile: prominent stage toggle (desktop keeps the segmented control below) */}
+          {!isPlayoffOnly && (
           <div className={styles.mobileStageToggle} role="group" aria-label="Stage">
             {(['pool', 'playoff'] as const).map(v => (
               <button
@@ -902,7 +929,9 @@ export default function AdminSchedulePage() {
               </button>
             ))}
           </div>
+          )}
           {/* Stage: Round Robin | Playoffs */}
+          {!isPlayoffOnly && (
           <ToolbarSegmentedControl<'pool' | 'playoff'>
             className={styles.desktopModeControl}
             value={viewMode}
@@ -913,6 +942,7 @@ export default function AdminSchedulePage() {
             onChange={value => { setViewMode(value); }}
             ariaLabel="Stage"
           />
+          )}
           {/* View: stage-dependent (Round Robin → List/Timeline, Playoffs → List/Bracket/Timeline) */}
           <ToolbarSegmentedControl<'list' | 'bracket' | 'timeline'>
             className={styles.desktopModeControl}
@@ -965,7 +995,7 @@ export default function AdminSchedulePage() {
           <ScheduleToolsMenu
             className={styles.scheduleToolsMenu}
             disabled={!currentTournament}
-            canAutoGenerate={canAutoGenerateSchedule}
+            canAutoGenerate={canAutoGenerateSchedule && !isPlayoffOnly}
             canPlayoffWizard={canGeneratePlayoffs}
             onAutoGenerate={openGenerator}
             onPlayoffWizard={openPlayoffWizard}
@@ -989,7 +1019,7 @@ export default function AdminSchedulePage() {
             onPublish={() => setPublishModal({ divisionId: filterGroup })}
             onUnpublishOne={() => handleUnpublish(filterGroup)}
             onUnpublishAll={handleUnpublishAll}
-            canAutoGenerate={canAutoGenerateSchedule}
+            canAutoGenerate={canAutoGenerateSchedule && !isPlayoffOnly}
             canPlayoffWizard={canGeneratePlayoffs}
             onAutoGenerate={openGenerator}
             onPlayoffWizard={openPlayoffWizard}
@@ -1186,7 +1216,9 @@ export default function AdminSchedulePage() {
         <HelpCallout
           variant="info"
           title="No games scheduled yet"
-          body={canAutoGenerateSchedule
+          body={isPlayoffOnly
+            ? 'This is a bracket-only tournament. Open the Playoff Bracket Builder to seed your teams and generate the bracket.'
+            : canAutoGenerateSchedule
             ? 'Build your schedule by adding games manually, or use the Round-Robin Generator to auto-build games from your teams. For playoffs, use the Playoff Bracket Builder.'
             : 'Build your schedule by adding games manually. The Round-Robin Generator and Playoff Bracket Builder are available with Tournament Plus or higher.'}
         />
@@ -1661,10 +1693,11 @@ export default function AdminSchedulePage() {
       )}
 
       {showGenerator && currentTournament && canAutoGenerateSchedule && (
-        <ScheduleGenerator 
+        <ScheduleGenerator
           tournament={currentTournament}
           orgSlug={orgSlug ?? ''}
           divisions={divisions}
+          defaultDivisionId={roundRobinDefaultDivisionId}
           teams={teams}
           venues={venues}
           existingGames={games}
@@ -1676,10 +1709,11 @@ export default function AdminSchedulePage() {
         />
       )}
 
-      {showPlayoffWizard && filterGroup !== 'all' && canGeneratePlayoffs && (
+      {showPlayoffWizard && currentTournament && canGeneratePlayoffs && divisions.length > 0 && (
         <PlayoffWizard
-          division={activeDivision!}
-          tournamentId={currentTournament?.id || ''}
+          divisions={divisions}
+          defaultDivisionId={playoffDefaultDivisionId}
+          tournamentId={currentTournament.id}
           tournament={currentTournament}
           orgSlug={orgSlug ?? ''}
           onClose={() => setShowPlayoffWizard(false)}
@@ -2575,50 +2609,32 @@ function hasSplitPoolGames(games: any[], pools: any[]): boolean {
 }
 
 function buildBracketColumns(games: any[]) {
-  const standardRounds = [
-    { title: 'Quarterfinals', pattern: /^QF/i },
-    { title: 'Semifinals', pattern: /^SF/i },
-    { title: 'Finals', pattern: /^(FIN|IF|3RD)$/i }
-  ];
-
-  const columns = standardRounds.map(r => ({
-    ...r,
-    games: games
-      .filter((g: any) => r.pattern.test(g.bracketCode || ''))
-      .sort((a: any, b: any) => {
-        if (/^FIN/i.test(a.bracketCode) && /^3RD/i.test(b.bracketCode)) return -1;
-        if (/^3RD/i.test(a.bracketCode) && /^FIN/i.test(b.bracketCode)) return 1;
-        return (a.bracketCode || '').localeCompare(b.bracketCode || '');
-      })
-  })).filter(c => c.games.length > 0);
-
-  // Group non-standard codes into individual columns, one per unique round
-  // (identified by shared bracketCode prefix). Maintains wizard round order
-  // and shows the bracketCode as the column title.
-  const matchedIds = new Set(columns.flatMap(c => c.games.map((g: any) => g.id)));
-  const custom = games.filter((g: any) => !matchedIds.has(g.id));
-  if (custom.length > 0) {
-    const byCode: Record<string, any[]> = {};
-    custom.forEach((g: any) => {
-      const key = g.bracketCode || 'EXTRA';
-      if (!byCode[key]) byCode[key] = [];
-      byCode[key].push(g);
-    });
-    Object.entries(byCode).forEach(([code, cGames]) => {
-      columns.push({
-        title: code,
-        pattern: new RegExp(`^${code}$`, 'i'),
-        games: cGames
-      });
-    });
+  // Group games into round columns via the shared bracketRoundInfo() so single
+  // elimination, double elimination (winners/losers/grand final), and consolation
+  // all render as ordered round columns. Connectors are inferred from the
+  // Winner/Loser placeholders by BracketConnectors, so they follow any format.
+  const sortByCode = (a: any, b: any) => {
+    if (/^FIN/i.test(a.bracketCode || '') && /^3RD/i.test(b.bracketCode || '')) return -1;
+    if (/^3RD/i.test(a.bracketCode || '') && /^FIN/i.test(b.bracketCode || '')) return 1;
+    return (a.bracketCode || '').localeCompare(b.bracketCode || '');
+  };
+  const groups = new Map<string, { key: string; title: string; rank: number; games: any[] }>();
+  for (const g of games) {
+    let info = bracketRoundInfo(g.bracketCode || '');
+    // The "if necessary" reset is its own column just right of the Grand Final.
+    if ((g.bracketCode || '').toUpperCase() === 'GF2') {
+      info = { key: 'GF2', title: 'Grand Final Game 2 (If Necessary)', rank: 501 };
+    }
+    let grp = groups.get(info.key);
+    if (!grp) { grp = { key: info.key, title: info.title, rank: info.rank, games: [] }; groups.set(info.key, grp); }
+    grp.games.push(g);
   }
-  return columns;
+  return [...groups.values()]
+    .sort((a, b) => a.rank - b.rank)
+    .map(grp => ({ key: grp.key, title: grp.title, games: grp.games.sort(sortByCode) }));
 }
 
 function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
-  const [titles, setTitles] = React.useState<Record<number, string>>(() =>
-    Object.fromEntries(columns.map((c: any, i: number) => [i, c.title]))
-  );
   const canvasRef = useRef<HTMLDivElement>(null);
   const connectorMatchups = columns.flatMap((c: any) => c.games).map((g: any) => ({
     id: g.id,
@@ -2626,45 +2642,50 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
     home: { label: g.homePlaceholder || '' },
     away: { label: g.awayPlaceholder || '' },
   }));
+  const gfFinalCols = columns.filter((c: any) => c.key === 'GF' || c.key === 'GF2');
   const finalCol = columns.find((c: any) => c.title === 'Finals') ?? columns[columns.length - 1];
-  const finalGameIds = new Set<string>((finalCol?.games ?? []).map((g: any) => g.id));
+  const finalGameIds = new Set<string>(
+    (gfFinalCols.length ? gfFinalCols.flatMap((c: any) => c.games) : (finalCol?.games ?? [])).map((g: any) => g.id),
+  );
 
-  return (
-    <div ref={canvasRef} className={styles.readBracketCanvas}>
-      <BracketConnectors canvasRef={canvasRef} matchups={connectorMatchups} finalIds={finalGameIds} />
-      {columns.map((col: any, idx: number) => (
+  // Double elimination → a shared SEED round (round 1) first, then the bracket
+  // FORKS into the winners bracket (top) and losers bracket (bottom), with the
+  // grand final on the far right. Keeping round 1 shared (instead of inside the
+  // winners tier) means every downstream feed flows forward (rightward), never
+  // back under the seed games. Other formats stay flat.
+  const isDoubleElim = columns.some((c: any) => /^LB\d/.test(c.key || ''));
+  const indexed = columns.map((col: any, idx: number) => ({ col, idx }));
+  const wbRound = (key: string) => { const m = /^WB(\d+)$/.exec(key || ''); return m ? parseInt(m[1], 10) : null; };
+  const seedCols = indexed.filter(({ col }: any) => wbRound(col.key) === 1);
+  const winnersCols = indexed.filter(({ col }: any) => (wbRound(col.key) ?? 0) >= 2);
+  const losersCols = indexed.filter(({ col }: any) => /^LB\d/.test(col.key || ''));
+  const gfCols = indexed.filter(({ col }: any) => col.key === 'GF' || col.key === 'GF2');
+  const hasLoserPath = connectorMatchups.some((m: any) =>
+    /^loser\s/i.test(m.home.label) || /^loser\s/i.test(m.away.label));
+
+  const renderColumn = ({ col, idx }: any) => (
         <div key={idx} className={styles.readBracketColumn}>
-          <input
-            value={titles[idx] ?? col.title}
-            onChange={e => setTitles(prev => ({ ...prev, [idx]: e.target.value }))}
-            style={{
-              textAlign: 'center',
-              color: 'var(--logic-lime)',
-              fontFamily: 'var(--font-data)',
-              fontSize: '0.8rem',
-              fontWeight: 900,
-              textTransform: 'uppercase',
-              letterSpacing: '0.12em',
-              marginBottom: '1.5rem',
-              opacity: 0.7,
-              background: 'transparent',
-              border: 'none',
-              borderBottom: '1px dashed transparent',
-              outline: 'none',
-              width: '100%',
-              cursor: 'text',
-              padding: '2px 4px',
-            }}
-            onFocus={e => { e.target.style.borderBottomColor = 'rgba(var(--blueprint-blue-rgb),0.4)'; e.target.style.opacity = '1'; }}
-            onBlur={e => { e.target.style.borderBottomColor = 'transparent'; e.target.style.opacity = '0.7'; }}
-          />
+          <div style={{
+            textAlign: 'center',
+            color: 'var(--logic-lime)',
+            fontFamily: 'var(--font-data)',
+            fontSize: '0.8rem',
+            fontWeight: 900,
+            textTransform: 'uppercase',
+            letterSpacing: '0.12em',
+            marginBottom: '1.5rem',
+            opacity: 0.7,
+            padding: '2px 4px',
+          }}>
+            {displayRoundTitle(col.title)}
+          </div>
 
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: col.title === 'Finals' ? 'center' : 'space-around',
+            justifyContent: (col.title === 'Finals' || col.key === 'GF') ? 'center' : 'space-around',
             flex: 1,
-            gap: col.title === 'Finals' ? '2.5rem' : '1.5rem'
+            gap: (col.title === 'Finals' || col.key === 'GF') ? '2.5rem' : '1.5rem'
           }}>
             {col.games.map((g: any) => {
               const isFinalGame = finalGameIds.has(g.id);
@@ -2687,7 +2708,7 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
                       fontSize: '0.6rem', fontWeight: 900, color: 'var(--logic-lime)',
                       background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '2px 8px',
                       borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em'
-                    }}>{g.bracketCode}</div>
+                    }}>{displayBracketRefs(g.bracketCode)}</div>
                     <div className="flex gap-1.5">
                       <button className="btn btn-ghost btn-sm" onClick={() => onEdit(g)} title="Edit" style={{
                         height: '24px', width: '24px', padding: 0,
@@ -2713,7 +2734,7 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
                         fontWeight: '700', fontSize: '0.85rem', color: 'var(--white)',
                         flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                       }}>
-                        {g.awayPlaceholder || 'TBD'}
+                        {displayBracketRefs(g.awayPlaceholder) || 'TBD'}
                       </div>
                     </div>
                     <div style={{ height: '1px', background: 'var(--white-03)' }} />
@@ -2727,7 +2748,7 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
                         fontWeight: '700', fontSize: '0.85rem', color: 'var(--white)',
                         flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
                       }}>
-                        {g.homePlaceholder || 'TBD'}
+                        {displayBracketRefs(g.homePlaceholder) || 'TBD'}
                       </div>
                     </div>
                   </div>
@@ -2747,7 +2768,47 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
             })}
           </div>
         </div>
-      ))}
+  );
+
+  return (
+    <div className={styles.readBracketWrap}>
+      {hasLoserPath && (
+        <div className={styles.bracketLegend}>
+          <span><i className={styles.legendWin} /> Winner advances</span>
+          <span><i className={styles.legendLoss} /> Loser drops down</span>
+        </div>
+      )}
+      <div ref={canvasRef} className={`${styles.readBracketCanvas}${isDoubleElim ? ` ${styles.readBracketCanvasTiered}` : ''}`}>
+        <BracketConnectors canvasRef={canvasRef} matchups={connectorMatchups} finalIds={finalGameIds} />
+        {isDoubleElim ? (
+          <>
+            {seedCols.length > 0 && (
+              <div className={styles.bracketSeedColumn}>
+                {seedCols.map(renderColumn)}
+              </div>
+            )}
+            <div className={styles.bracketSplit}>
+              {winnersCols.length > 0 && (
+                <div className={styles.bracketTier}>
+                  <div className={styles.bracketTierLabel}><Trophy size={11} /> Winners Bracket</div>
+                  <div className={styles.bracketTierRow}>{winnersCols.map(renderColumn)}</div>
+                </div>
+              )}
+              <div className={styles.bracketTier}>
+                <div className={styles.bracketTierLabel}>Losers Bracket</div>
+                <div className={styles.bracketTierRow}>{losersCols.map(renderColumn)}</div>
+              </div>
+            </div>
+            {gfCols.length > 0 && (
+              <div className={styles.bracketGfSection}>
+                <div className={styles.bracketGfRow}>{gfCols.map(renderColumn)}</div>
+              </div>
+            )}
+          </>
+        ) : (
+          columns.map((col: any, idx: number) => renderColumn({ col, idx }))
+        )}
+      </div>
     </div>
   );
 }

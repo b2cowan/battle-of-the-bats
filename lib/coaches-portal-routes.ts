@@ -1,10 +1,27 @@
+export const COACHES_HOME_PATH = '/coaches';
 export const COACHES_JOIN_PATH = '/coaches/join';
 export const COACHES_START_PATH = '/coaches/start';
 export const COACHES_TOURNAMENTS_PATH = '/coaches/tournaments';
+export const COACHES_TEAMS_PATH = '/coaches/teams';
 export const COACHES_CLAIM_PATH = '/coaches/claim';
 export const COACHES_CHECKOUT_COMPLETE_PATH = '/coaches/checkout/complete';
 
 export type SearchParamsRecord = Record<string, string | string[] | undefined>;
+
+/**
+ * Authenticated tournament coach-portal routes that render inside `CoachPortalShell`
+ * (and therefore suppress the global marketing top nav + footer). The signup /
+ * marketing surfaces — `/coaches/join`, `/coaches/start`, `/coaches/claim`,
+ * `/coaches/checkout` — are intentionally excluded: they keep the marketing chrome
+ * and the shell passes their children through untouched.
+ */
+export function isCoachPortalShellPath(pathname: string): boolean {
+  return (
+    pathname === COACHES_HOME_PATH ||
+    pathname.startsWith(`${COACHES_TOURNAMENTS_PATH}`) ||
+    pathname.startsWith(COACHES_TEAMS_PATH)
+  );
+}
 
 function formatUrl(pathname: string, search: string, hash: string) {
   return `${pathname}${search}${hash}`;

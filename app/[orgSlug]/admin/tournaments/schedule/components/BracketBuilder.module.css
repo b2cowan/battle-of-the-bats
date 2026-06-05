@@ -338,9 +338,22 @@
   stroke-width: 1.5;
 }
 
+/* Winner advances → lime; loser drops to the losers bracket → amber (dashed). */
+.connectorWin {
+  stroke: rgba(var(--logic-lime-rgb), 0.6);
+  stroke-width: 1.6;
+}
+
+.connectorLoss {
+  stroke: rgba(var(--warning-rgb), 0.75);
+  stroke-width: 1.6;
+  stroke-dasharray: 5 4;
+}
+
+/* Feeds into the championship game — emphasise width only so the
+   winner/loser path colour above still reads. */
 .connectorFinal {
-  stroke: rgba(var(--logic-lime-rgb), 0.7);
-  stroke-width: 2;
+  stroke-width: 2.6;
 }
 
 /* Mobile round-carousel (C1) — swipe one round at a time, peek the next. */

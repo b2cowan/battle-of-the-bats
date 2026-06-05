@@ -12,7 +12,6 @@ import MyTournamentCard from '@/components/public/MyTournamentCard';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import CountUp from '@/components/public/CountUp';
 import Countdown from '@/components/public/Countdown';
-import SharePageButton from '@/components/public/SharePageButton';
 import styles from '@/app/[orgSlug]/Home.module.css';
 
 export default async function TournamentHomeContent({
@@ -54,11 +53,9 @@ export default async function TournamentHomeContent({
   const adminTournamentBase = `/${orgSlug}/admin/tournaments`;
   const previewBase = `${adminTournamentBase}/preview/${tournamentSlug}`;
   const usePreviewLinks = isPreview;
-  const useAdminLinks = isPreview && tournament.status === 'draft';
   const showNewsPage = isPublicPageEnabled(tournament, 'news');
   const showSchedulePage = isPublicPageEnabled(tournament, 'schedule');
   const showStandingsPage = isPublicPageEnabled(tournament, 'standings');
-  const showRulesPage = isPublicPageEnabled(tournament, 'rules');
   const contactEmail = tournament.contactEmail ?? org.contactEmail ?? null;
   const standingsEntries = showStandingsPage
     ? await Promise.all(
@@ -74,21 +71,7 @@ export default async function TournamentHomeContent({
     : 'Admin preview. You are viewing this tournament page from inside the admin workspace.';
   const scheduleHref = usePreviewLinks ? `${previewBase}/schedule` : `${publicBase}/schedule`;
   const newsHref = usePreviewLinks ? `${previewBase}/news` : `${publicBase}/news`;
-  const rulesHref = usePreviewLinks ? `${previewBase}/rules` : `${publicBase}/rules`;
   const primaryBase = usePreviewLinks ? previewBase : publicBase;
-  const primaryCta = (() => {
-    if (registration.state === 'completed' && showStandingsPage) {
-      return { href: `${primaryBase}/standings`, label: 'Final Standings' };
-    }
-    if (registration.state === 'completed' && showSchedulePage) {
-      return { href: `${primaryBase}/schedule`, label: 'Game Log' };
-    }
-    if (showSchedulePage) return { href: `${primaryBase}/schedule`, label: 'View Schedule' };
-    if (showStandingsPage) return { href: `${primaryBase}/standings`, label: 'View Standings' };
-    if (showNewsPage) return { href: `${primaryBase}/news`, label: 'View News' };
-    return null;
-  })();
-  const showPrimaryCta = !useAdminLinks && !!primaryCta;
 
   const startDate = tournament.startDate;
   const endDate   = tournament.endDate;
@@ -557,32 +540,15 @@ export default async function TournamentHomeContent({
             <span>{registration.detail}</span>
           </div>
 
-          <div className={styles.heroCta}>
-            {isCompletedTournament && showStandingsPage && (
-              <Link href={`${primaryBase}/standings`} className="btn btn-primary btn-lg" id="hero-standings-btn">
-                <Trophy size={18} /> Final Standings
+          {/* The one conversion CTA lives on the hero (not in the persistent
+              header, which stays logo + name + share). Lifecycle-gated. */}
+          {!isPreview && registration.cta && (
+            <div className={styles.heroCta}>
+              <Link href={`${primaryBase}/register`} className="btn btn-primary btn-lg" id="hero-register-btn">
+                {registration.cta === 'waitlist' ? 'Join Waitlist' : 'Register'}
               </Link>
-            )}
-            {showSchedulePage && (
-              <Link href={scheduleHref} className="btn btn-outline btn-lg" id="hero-schedule-btn">
-                <Calendar size={18} /> {isCompletedTournament ? 'Game Log' : 'View Schedule'}
-              </Link>
-            )}
-            {showNewsPage && (
-              <Link href={newsHref} className="btn btn-outline btn-lg" id="hero-news-btn">
-                <Megaphone size={18} /> Announcements
-              </Link>
-            )}
-            {!isPreview && (
-              <SharePageButton
-                url={publicBase}
-                title={tournament.name}
-                text={`Hosted by ${org.name} · Live on FieldLogicHQ`}
-                label="Share event"
-                className="btn btn-outline btn-lg"
-              />
-            )}
-          </div>
+            </div>
+          )}
 
           <div className={styles.stats}>
             <div className={styles.stat}>
@@ -657,43 +623,18 @@ export default async function TournamentHomeContent({
             </div>
           )}
 
-          <div className="text-center mt-3">
-            <Link href={newsHref} className="btn btn-outline" id="home-all-news-btn">
-              All Announcements <ChevronRight size={16} />
-            </Link>
-          </div>
+          {announcements.length > 0 && (
+            <div className="text-center mt-3">
+              <Link href={newsHref} className="btn btn-outline" id="home-all-news-btn">
+                All Announcements <ChevronRight size={16} />
+              </Link>
+            </div>
+          )}
         </div>
       </section>
       )}
 
       {!isInProgress && !isCompletedTournament && scheduleBlock}
-
-      <section className={styles.ctaSection}>
-        <div className={styles.ctaBg} />
-        <div className="container">
-          <div className={styles.ctaContent}>
-            <Trophy size={40} className={styles.ctaIcon} />
-            <h2 className="display-md">{isCompletedTournament ? 'Tournament Record' : 'Follow the Tournament'}</h2>
-            <p>
-              {isCompletedTournament
-                ? 'Review the final public record from the available tournament pages.'
-                : 'Follow tournament updates from the available public pages.'}
-            </p>
-            <div className={styles.ctaButtons}>
-              {showPrimaryCta && (
-                <Link href={primaryCta!.href} className="btn btn-primary btn-lg" id="cta-primary-btn">
-                  {primaryCta!.label}
-                </Link>
-              )}
-              {showRulesPage && (
-                <Link href={rulesHref} className="btn btn-ghost btn-lg" id="cta-rules-btn">
-                  Tournament Rules
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

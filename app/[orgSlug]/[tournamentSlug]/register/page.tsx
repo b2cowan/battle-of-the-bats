@@ -370,7 +370,7 @@ export default function RegisterPage() {
                 <AlertCircle size={40} style={{ color: 'var(--danger)', margin: '0 auto 1rem', display: 'block' }} />
                 <h3>Registration Failed</h3>
                 <p>{errorMsg}</p>
-                <button className="btn btn-lime" onClick={() => setStep('form')}>Try Again</button>
+                <button className="btn btn-primary" onClick={() => setStep('form')}>Try Again</button>
               </div>
             )}
 
@@ -479,7 +479,7 @@ export default function RegisterPage() {
                   </button>
                   <button
                     type="button"
-                    className="btn btn-lime"
+                    className="btn btn-primary"
                     onClick={submitRegistration}
                     disabled={step === 'submitting' || isClosed}
                   >
@@ -521,7 +521,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className={styles.successActions}>
-                  <Link href={confirmation.joinHref} className="btn btn-lime">
+                  <Link href={confirmation.joinHref} className="btn btn-primary">
                     {signedInCoachEmail ? 'Open Coaches Portal' : 'Create Coaches Portal Account'}
                   </Link>
                   {showSchedulePage && <Link href={scheduleHref} className="btn btn-outline">View Schedule</Link>}
@@ -783,7 +783,7 @@ export default function RegisterPage() {
 
                   <button
                     type="submit"
-                    className="btn btn-lime"
+                    className="btn btn-primary"
                     disabled={isClosed}
                     style={{ width: '100%', padding: '0.875rem' }}
                   >

@@ -145,7 +145,7 @@ export default function AdminHubClient() {
             We could not confirm your setup status, so choose where to continue.
           </p>
           <div style={{ display: 'grid', gap: '0.65rem' }}>
-            <Link className="btn btn-primary" href={`${base}/tournaments/dashboard`}>
+            <Link className="btn btn-lime" href={`${base}/tournaments/dashboard`}>
               Open tournament dashboard
             </Link>
             <Link className="btn btn-ghost" href={`${base}/tournaments`}>

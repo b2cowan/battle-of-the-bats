@@ -6,9 +6,9 @@ import { getUserAccessContexts, type UserAccessContext } from '@/lib/user-contex
 import {
   COACHES_START_PATH,
   COACHES_TOURNAMENTS_PATH,
+  COACHES_TEAMS_PATH,
 } from '@/lib/coaches-portal-routes';
 import styles from './coaches-portal.module.css';
-import { pluralize } from '@/lib/utils';
 
 export const metadata = { title: 'Coaches Portal' };
 
@@ -16,7 +16,7 @@ function getBasicContext(contexts: UserAccessContext[]) {
   return contexts.find(context => context.kind === 'coaches_basic') ?? null;
 }
 
-function getPremiumContexts(contexts: UserAccessContext[]) {
+function getWorkspaceContexts(contexts: UserAccessContext[]) {
   return contexts.filter(context => context.kind === 'coaches_premium');
 }
 
@@ -30,72 +30,57 @@ export default async function CoachesPortalPage() {
 
   const contexts = await getUserAccessContexts({ id: user.id, email: user.email });
   const basicContext = getBasicContext(contexts);
-  const premiumContexts = getPremiumContexts(contexts);
-  const hasCoachAccess = Boolean(basicContext || premiumContexts.length > 0);
+  const workspaceContexts = getWorkspaceContexts(contexts);
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Coaches Portal</h1>
+          <h1 className={styles.title}>Your Coaches Portal</h1>
           <p className={styles.sub}>
-            Tournament records and Premium team workspaces for <strong>{user.email}</strong>.
+            Everything for the teams you bring to tournaments — <strong>{user.email}</strong>.
           </p>
         </div>
-        <nav className={styles.nav} aria-label="Coaches Portal navigation">
-          <Link href={COACHES_TOURNAMENTS_PATH} className="btn btn-outline btn-sm">Tournaments</Link>
-          <Link href="/coaches/teams" className="btn btn-outline btn-sm">Premium Teams</Link>
-        </nav>
       </div>
 
-      {!hasCoachAccess && (
-        <div className={styles.empty}>
-          <p>No Coaches Portal access is linked to this account yet.</p>
-          <Link href={COACHES_START_PATH} className="btn btn-primary btn-sm">Explore Coaches Portal</Link>
+      {/* Teams & tournaments — the coach's home base */}
+      <section className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Teams &amp; tournaments</h2>
         </div>
-      )}
-
-      {basicContext && (
-        <section className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Basic tournament records</h2>
-            <Link href={COACHES_TOURNAMENTS_PATH} className="btn btn-ghost btn-sm">View History</Link>
-          </div>
+        {basicContext ? (
           <div className={styles.grid}>
             <Link href={COACHES_TOURNAMENTS_PATH} className={styles.card}>
               <div className={styles.cardTop}>
                 <div className={styles.cardIcon}><Trophy size={18} /></div>
-                <span className="badge badge-info">Basic</span>
               </div>
               <div>
-                <h3 className={styles.cardTitle}>Tournament history</h3>
+                <h3 className={styles.cardTitle}>Your teams &amp; history</h3>
                 <p className={styles.cardText}>{basicContext.detail}</p>
               </div>
               <span className={styles.cardAction}>Open tournament records</span>
             </Link>
           </div>
-        </section>
-      )}
-
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Premium team workspaces</h2>
-          {premiumContexts.length === 0 && (
-            <Link href={COACHES_START_PATH} className="btn btn-ghost btn-sm">Explore Premium</Link>
-          )}
-        </div>
-
-        {premiumContexts.length === 0 ? (
-          <div className={styles.empty}>
-            <p>Premium tools appear here after a direct subscription, org-paid access, or Club coach assignment is active.</p>
-          </div>
         ) : (
+          <div className={styles.empty}>
+            <p>Your teams and tournament history appear here automatically when you register for a tournament.</p>
+            <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Explore the Coaches Portal</Link>
+          </div>
+        )}
+      </section>
+
+      {/* Team workspaces — only when the coach actually has one */}
+      {workspaceContexts.length > 0 && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Team workspaces</h2>
+            <Link href={COACHES_TEAMS_PATH} className="btn btn-ghost btn-sm">View all</Link>
+          </div>
           <div className={styles.grid}>
-            {premiumContexts.map(context => (
+            {workspaceContexts.map(context => (
               <Link key={context.id} href={context.destination} className={styles.card}>
                 <div className={styles.cardTop}>
                   <div className={styles.cardIcon}><ShieldCheck size={18} /></div>
-                  <span className="badge badge-success">Premium</span>
                 </div>
                 <div>
                   <h3 className={styles.cardTitle}>{context.title}</h3>
@@ -108,32 +93,41 @@ export default async function CoachesPortalPage() {
               </Link>
             ))}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {hasCoachAccess && (
+      {/* Value-first, never a tier pitch: only shown when there's no workspace yet */}
+      {workspaceContexts.length === 0 && (
         <section className={styles.section}>
           <div className={styles.grid}>
-            <Link href={COACHES_TOURNAMENTS_PATH} className={styles.card}>
-              <div className={styles.cardTop}>
-                <div className={styles.cardIcon}><CalendarDays size={18} /></div>
-              </div>
-              <div>
-                <h3 className={styles.cardTitle}>Tournament schedule</h3>
-                <p className={styles.cardText}>Schedules and announcements remain available through each linked tournament record.</p>
-              </div>
-              <span className={styles.cardAction}>Review records</span>
-            </Link>
-            <Link href="/coaches/teams" className={styles.card}>
+            <div className={styles.card}>
               <div className={styles.cardTop}>
                 <div className={styles.cardIcon}><Users size={18} /></div>
               </div>
               <div>
-                <h3 className={styles.cardTitle}>Premium teams</h3>
-                <p className={styles.cardText}>{pluralize(premiumContexts.length, 'workspace')} linked to this coach account.</p>
+                <h3 className={styles.cardTitle}>Take your team further</h3>
+                <p className={styles.cardText}>
+                  Run your team year-round — roster, lineups, schedule, dues, budget, and documents in one place. It carries over automatically if your organization joins FieldLogicHQ.
+                </p>
               </div>
-              <span className={styles.cardAction}>View premium teams</span>
-            </Link>
+              <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm" style={{ marginTop: 'auto' }}>
+                Express interest
+              </Link>
+            </div>
+            <div className={styles.card}>
+              <div className={styles.cardTop}>
+                <div className={styles.cardIcon}><CalendarDays size={18} /></div>
+              </div>
+              <div>
+                <h3 className={styles.cardTitle}>Run your own tournament</h3>
+                <p className={styles.cardText}>
+                  FieldLogicHQ runs divisions, pools, schedules, and registration from one dashboard.
+                </p>
+              </div>
+              <Link href="/pricing" className="btn btn-ghost btn-sm" style={{ marginTop: 'auto' }}>
+                See tournament plans
+              </Link>
+            </div>
           </div>
         </section>
       )}

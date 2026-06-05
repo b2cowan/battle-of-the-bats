@@ -12,7 +12,6 @@ function team(id: string, name: string): Team {
     divisionId: 'd1',
     coach: '',
     email: '',
-    players: [],
     status: 'accepted',
     paymentStatus: 'paid',
     registeredAt: '2026-01-01',

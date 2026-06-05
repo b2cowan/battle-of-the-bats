@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, SlidersHorizontal, Trash2, ArrowLeftRight, Mail, Pencil, ClipboardList, ExternalLink, ListChecks, Check, Lock, Unlock } from 'lucide-react';
+import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, SlidersHorizontal, Trash2, ArrowLeftRight, Mail, Pencil, ClipboardList, ListChecks, Check, Lock, Unlock } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -267,14 +267,6 @@ export default function UnifiedTeamsPage() {
   const [stableSortedIds, setStableSortedIds] = useState<string[]>([]);
   const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
   const [viewMode, setViewMode] = useState<'flat' | 'pools'>('pools');
-  const [regView, setRegView] = useState<'list' | 'cards'>('list');
-  useEffect(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('fl_reg_view') : null;
-    if (saved === 'cards' || saved === 'list') setRegView(saved);
-  }, []);
-  useEffect(() => {
-    if (typeof window !== 'undefined') localStorage.setItem('fl_reg_view', regView);
-  }, [regView]);
   const [feeMode, setFeeMode] = useState<FeeMode>('tournament');
   const [feeSchedule, setFeeSchedule] = useState<FeeSchedule>({ depositAmount: null, depositDueDate: null, totalFeeAmount: null, totalFeeDueDate: null });
   const [poolSlots, setPoolSlots] = useState<PoolSlot[]>([]);
@@ -1168,7 +1160,7 @@ export default function UnifiedTeamsPage() {
             </div>
             <div className={styles.teamQuickActions}>
               {team.status !== 'accepted' && (
-                <button className="btn btn-primary btn-data" onClick={() => patch(team.id, { status: 'accepted' }, `Accept "${team.name}"? An automated email will be sent.`)} disabled={busy}>Accept</button>
+                <button className="btn btn-lime btn-data" onClick={() => patch(team.id, { status: 'accepted' }, `Accept "${team.name}"? An automated email will be sent.`)} disabled={busy}>Accept</button>
               )}
               {team.status !== 'rejected' && (
                 <button className="btn btn-ghost btn-data" style={{ color: 'rgba(var(--danger-rgb), 0.65)', borderColor: 'transparent', background: 'transparent' }} onClick={() => patch(team.id, { status: 'rejected' }, `Reject "${team.name}"? An automated email will be sent.`)} disabled={busy}>Reject</button>
@@ -1179,8 +1171,8 @@ export default function UnifiedTeamsPage() {
                 </button>
               ) : null}
               {team.email?.trim() && (
-                <button className="btn btn-ghost btn-data" onClick={() => resendAccessLink(team)} disabled={busy || working === 'resend-access'} style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Resend dashboard access link to ${team.name}`} title="Resend access link">
-                  <ExternalLink size={12} />
+                <button className="btn btn-ghost btn-data" onClick={() => resendAccessLink(team)} disabled={busy || working === 'resend-access'} style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Resend dashboard access link to ${team.name}`} title="Resend coach access link">
+                  <Mail size={12} />
                 </button>
               )}
               <button className="btn btn-ghost btn-data" onClick={() => openEditModal(team)} disabled={busy} style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Edit ${team.name}`}>
@@ -1587,15 +1579,6 @@ export default function UnifiedTeamsPage() {
               />
             </div>
           )}
-          <ToolbarSegmentedControl
-            ariaLabel="Registration layout"
-            value={regView}
-            options={[
-              { value: 'list', label: 'List' },
-              { value: 'cards', label: 'Cards' },
-            ]}
-            onChange={setRegView}
-          />
         </ToolbarGroup>
 
         <ToolbarGroup align="end" className={`${styles.registrationActionGroup} ${styles.teamsActionGroup}`}>
@@ -1882,22 +1865,22 @@ export default function UnifiedTeamsPage() {
           onClear={clearRegistrationSelection}
           className={styles.registrationSelectionBar}
         >
-          <button type="button" className="btn btn-primary btn-data" onClick={() => runBulkAction('accept')} disabled={working === 'bulk'}>
+          <button type="button" className="btn btn-lime btn-data" onClick={() => runBulkAction('accept')} disabled={working === 'bulk'}>
             Accept
           </button>
           <button type="button" className="btn btn-outline btn-data" onClick={() => runBulkAction('waitlist')} disabled={working === 'bulk'}>
             Waitlist
           </button>
-          <button type="button" className="btn btn-outline btn-data" onClick={() => runBulkAction('mark_deposit_paid')} disabled={working === 'bulk'}>
+          <button type="button" className={`btn btn-outline btn-data ${styles.bulkPaymentAction}`} onClick={() => runBulkAction('mark_deposit_paid')} disabled={working === 'bulk'}>
             Deposit
           </button>
-          <button type="button" className="btn btn-outline btn-data" onClick={() => runBulkAction('mark_paid')} disabled={working === 'bulk'}>
+          <button type="button" className={`btn btn-outline btn-data ${styles.bulkPaymentAction}`} onClick={() => runBulkAction('mark_paid')} disabled={working === 'bulk'}>
             Paid
           </button>
           {paymentToolsAvailable && (
             <button
               type="button"
-              className="btn btn-outline btn-data"
+              className={`btn btn-outline btn-data ${styles.bulkPaymentAction}`}
               onClick={() => setShowReminderModal(true)}
               disabled={working === 'payment-reminders'}
             >
@@ -2015,7 +1998,7 @@ export default function UnifiedTeamsPage() {
                   <span className={styles.slotTeamName}>{team.name}</span>
                   <span className={styles.slotCoach}>{team.coach}</span>
                   <button
-                    className="btn btn-primary btn-xs"
+                    className="btn btn-lime btn-data"
                     onClick={() => waitlistAutomationAvailable
                       ? handlePromote(team.id, team.name)
                       : setFeedback({
@@ -2041,14 +2024,43 @@ export default function UnifiedTeamsPage() {
             <div className="empty-state"><RefreshCw size={32} className="spin" style={{ opacity: 0.4 }} /><p>Loading…</p></div>
           ) : flatDisplay.length === 0 ? (
             <div className="empty-state">
-              <Users size={40} style={{ opacity: 0.2 }} />
-              <p>{!currentTournament ? 'No tournament selected.' : divisions.length === 0 ? 'No divisions configured yet.' : 'No teams matching filters.'}</p>
+              <Users size={40} />
+              {!currentTournament ? (
+                <p>No tournament selected.</p>
+              ) : divisions.length === 0 ? (
+                <>
+                  <p>No divisions configured yet.</p>
+                  {!isLocked && currentOrg && (
+                    <Link href={`/${currentOrg.slug}/admin/tournaments/divisions`} className="btn btn-lime" style={{ marginTop: '1rem' }}>
+                      Configure Divisions
+                    </Link>
+                  )}
+                </>
+              ) : divRegs.length === 0 ? (
+                <>
+                  <p>No teams have registered yet.</p>
+                  {!isLocked && (
+                    <button className="btn btn-lime" onClick={openAddTeamModal} style={{ marginTop: '1rem' }}>
+                      Add Team
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p>No teams match the current filters.</p>
+                  {(hasNonDefaultFilters || search) && (
+                    <button className="btn btn-lime" onClick={() => { clearAttentionFocus(); setSearch(''); }} style={{ marginTop: '1rem' }}>
+                      Clear Filters
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           ) : (
             <div className={s.compactList}>
               {/* Column header + rows wrapped in flatList so compactList's
                   gap:2.5rem applies to the whole table block, not each row */}
-              <div className={`${styles.flatList} ${regView === 'cards' ? styles.cardView : ''}`}>
+              <div className={styles.flatList}>
                 {/* ── Column headers ── */}
                 <div className={styles.colHeader}>
                   {selectionModeActive && <div className={styles.selectionCell} />}
@@ -2134,7 +2146,7 @@ export default function UnifiedTeamsPage() {
               </label>
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost btn-data" onClick={closeAddTeamModal}>Cancel</button>
-                <button type="submit" className="btn btn-primary btn-data" disabled={!!working}>Save Team</button>
+                <button type="submit" className="btn btn-lime btn-data" disabled={!!working}>Save Team</button>
               </div>
             </form>
           </div>
@@ -2170,7 +2182,7 @@ export default function UnifiedTeamsPage() {
               <button type="button" className="btn btn-ghost btn-data" onClick={() => setShowReminderModal(false)}>Cancel</button>
               <button
                 type="button"
-                className="btn btn-primary btn-data"
+                className="btn btn-lime btn-data"
                 onClick={sendPaymentReminders}
                 disabled={working === 'payment-reminders' || paymentInstructions.trim().length === 0}
               >
@@ -2223,7 +2235,7 @@ export default function UnifiedTeamsPage() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost btn-data" onClick={closeEditModal}>Cancel</button>
-                <button type="submit" className="btn btn-primary btn-data" disabled={!!working}>Save Changes</button>
+                <button type="submit" className="btn btn-lime btn-data" disabled={!!working}>Save Changes</button>
               </div>
             </form>
           </div>

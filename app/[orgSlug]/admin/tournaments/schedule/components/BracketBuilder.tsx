@@ -47,18 +47,22 @@ interface BracketBuilderProps {
   baseOptions: string[];
   onPreviewChange: (preview: any[]) => void;
   crossover?: string;
+  /** Optional display mapping for participant labels (e.g. "Seed #1" → team name). */
+  labelFor?: (raw: string) => string;
 }
 
-function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, onUpdateCode, onUpdate, onDelete }: {
+function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, labelFor, onUpdateCode, onUpdate, onDelete }: {
   matchup: Matchup,
   options: string[],
   usedOptions: Set<string>,
   venues: Venue[],
   isFinal?: boolean,
+  labelFor?: (raw: string) => string,
   onUpdateCode: (newCode: string) => void,
   onUpdate: (m: Matchup) => void,
   onDelete: () => void
 }) {
+  const display = labelFor ?? ((s: string) => s);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: matchup.id });
 
   const style = {
@@ -98,26 +102,26 @@ function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, onUpd
       <div className={styles.matchupBody}>
         <div className={styles.teamRow}>
           <span className={styles.teamLabel}>Home</span>
-          {homeIsTeam && <span className={styles.teamColorDot} style={{ background: teamColor(matchup.home.label) }} aria-hidden />}
+          {homeIsTeam && <span className={styles.teamColorDot} style={{ background: teamColor(display(matchup.home.label)) }} aria-hidden />}
           <select
             value={matchup.home.label}
             onChange={e => onUpdate({ ...matchup, home: { label: e.target.value } })}
             className={styles.teamInput}
           >
             <option value="">Select Team...</option>
-            {homeOptions.map((opt, i) => <option key={`${opt}-${i}`} value={opt}>{opt}</option>)}
+            {homeOptions.map((opt, i) => <option key={`${opt}-${i}`} value={opt}>{display(opt)}</option>)}
           </select>
         </div>
         <div className={styles.teamRow}>
           <span className={styles.teamLabel}>Away</span>
-          {awayIsTeam && <span className={styles.teamColorDot} style={{ background: teamColor(matchup.away.label) }} aria-hidden />}
+          {awayIsTeam && <span className={styles.teamColorDot} style={{ background: teamColor(display(matchup.away.label)) }} aria-hidden />}
           <select
             value={matchup.away.label}
             onChange={e => onUpdate({ ...matchup, away: { label: e.target.value } })}
             className={styles.teamInput}
           >
             <option value="">Select Team...</option>
-            {awayOptions.map((opt, i) => <option key={`${opt}-${i}`} value={opt}>{opt}</option>)}
+            {awayOptions.map((opt, i) => <option key={`${opt}-${i}`} value={opt}>{display(opt)}</option>)}
           </select>
         </div>
       </div>
@@ -173,7 +177,7 @@ function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, onUpd
   );
 }
 
-export default function BracketBuilder({ division, teams, venues, defaultDate, templatePreview, baseOptions, onPreviewChange, crossover }: BracketBuilderProps) {
+export default function BracketBuilder({ division, teams, venues, defaultDate, templatePreview, baseOptions, onPreviewChange, crossover, labelFor }: BracketBuilderProps) {
   const [rounds, setRounds] = useState<Round[]>([]);
 
   // Convert templatePreview to rounds when templatePreview changes
@@ -439,6 +443,7 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
                                   options={roundOptions}
                                   usedOptions={allUsedOptions}
                                   venues={venues}
+                                  labelFor={labelFor}
                                   onUpdateCode={(newCode) => updateMatchupCode(m.id, m.code, newCode)}
                                   onUpdate={(newM) => updateMatchup(round.id, newM)}
                                   onDelete={() => deleteMatchup(round.id, m.id)}
@@ -502,6 +507,7 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
                           options={roundOptions}
                           usedOptions={allUsedOptions}
                           venues={venues}
+                          labelFor={labelFor}
                           isFinal={isFinalRound}
                           onUpdateCode={(newCode) => updateMatchupCode(m.id, m.code, newCode)}
                           onUpdate={(newM) => updateMatchup(round.id, newM)}

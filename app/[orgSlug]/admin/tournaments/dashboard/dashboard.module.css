@@ -1,7 +1,8 @@
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 220px));
+  justify-content: start;
   gap: 1rem;
   margin-bottom: 2.5rem;
 }
@@ -1099,6 +1100,59 @@
   box-shadow: var(--glow-blue);
 }
 
+/* ── Compact metric strip (active/completed, replaces stat cards) ── */
+.metricStrip {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+}
+
+.metricItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.metricValue {
+  font-family: var(--font-data);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.metricLabel {
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+.metricSep {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  color: var(--white-20);
+  user-select: none;
+}
+
+/* ── Registration trend sparkline ─────────────────────── */
+.sparkline {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+@media (max-width: 640px) {
+  .sparkline { display: none; }
+}
+
 /* ── Registration velocity chip ──────────────────────── */
 .velocityChip {
   display: inline-flex;
@@ -1843,6 +1897,12 @@
   }
 }
 
+/* Shell mobile threshold — top app-bar takes over status + context */
+@media (max-width: 900px) {
+  .statusBlockDesktop { display: none; }
+  .customizeToggleBtn { display: none; }
+}
+
 @media (max-width: 640px) {
   .reuseSetupPrompt {
     flex-direction: column;
@@ -1869,22 +1929,6 @@
   .page header {
     padding-bottom: 0.75rem !important;
     margin-bottom: 1rem !important;
-  }
-
-  .statusBlockDesktop {
-    display: none;
-  }
-
-  .statusChipMobile {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-top: 0.5rem;
-    font-family: var(--font-data);
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
   }
 
   .checklistHeader {

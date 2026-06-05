@@ -1,6 +1,10 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
-import { Trophy, Check, X, Calendar, AlertCircle, Sparkles, Plus, Trash2, SlidersHorizontal, RefreshCw, Info } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Trophy, Check, X, Calendar, AlertCircle, Sparkles, Plus, Trash2, SlidersHorizontal, RefreshCw, Info, Shuffle, GripVertical } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { teamColor } from '@/lib/team-color';
 import { Division, Team, Venue, PlayoffConfig, Tournament, Game } from '@/lib/types';
 import { formatPoolName } from '@/lib/utils';
 import { buildScheduleMetrics, resolveManualTravelBuffers } from '@/lib/schedule-metrics';
@@ -20,18 +24,39 @@ import {
   type ScheduleDraftSlot,
   type SchedulePrioritySettings,
 } from '@/lib/schedule-generator';
+import { generateBracket, nextPow2 } from '@/lib/playoff-bracket';
+import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import BracketBuilder from './components/BracketBuilder';
 import ScheduleHealthPanel from './components/ScheduleHealthPanel';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './schedule-admin.module.css';
 
 interface Props {
-  division: Division;
+  divisions: Division[];
+  /** Division to open on; falls back to the first division. */
+  defaultDivisionId?: string;
   tournamentId: string;
   tournament?: Tournament | null;
   orgSlug?: string;
   onClose: () => void;
   onComplete: () => void;
+}
+
+function initialPlayoffConfig(division: Division): PlayoffConfig {
+  const defaults: PlayoffConfig = {
+    type: 'single',
+    format: 'single',
+    grandFinalReset: true,
+    crossover: 'standard',
+    hasThirdPlace: false,
+    teamsQualifying: 4,
+    tieBreakers: ['h2h', 'rd', 'rf', 'ra'],
+  };
+  const merged = { ...defaults, ...(division.playoffConfig || {}) };
+  // Standard crossover requires exactly 2 pools; otherwise fall back to reseed.
+  return merged.crossover === 'standard' && (division.pools?.length || 0) !== 2
+    ? { ...merged, crossover: 'reseed' }
+    : merged;
 }
 
 interface DateSlot {
@@ -98,23 +123,80 @@ function getVenueResourceKeys(venue: Venue): string[] {
     : [venueResourceKey(venue.id)];
 }
 
-export default function PlayoffWizard({ division, tournamentId, tournament = null, orgSlug, onClose, onComplete }: Props) {
+const SEED_ORDINALS = ['st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th'];
+function ordinalLabel(rank: number) {
+  return `${rank}${SEED_ORDINALS[rank - 1] || 'th'}`;
+}
+
+/**
+ * Ordered seed labels for a single-bracket seeding mode (length = teamsQualifying).
+ * Standard crossover (2 pools) interleaves pools by rank so pool winners are the
+ * top, separated seeds ([1A, 1B, 2A, 2B, …]); everything else is a global reseed
+ * ([Seed #1 … Seed #N]). The unified bracket engine maps `Seed #k` -> labels[k-1].
+ */
+function buildSeedLabels(config: PlayoffConfig, pools: { name: string }[]): string[] {
+  const n = config.teamsQualifying;
+  if (config.crossover === 'standard' && pools.length === 2) {
+    const perPool = Math.ceil(n / pools.length);
+    const labels: string[] = [];
+    for (let r = 1; r <= perPool; r++) {
+      for (const pool of pools) labels.push(`${ordinalLabel(r)} Pool ${pool.name}`);
+    }
+    return labels.slice(0, n);
+  }
+  return Array.from({ length: n }, (_, i) => `Seed #${i + 1}`);
+}
+
+/** Replace a `Seed #k` reference with its seeding-mode label; pass other refs through. */
+function remapSeedRef(ref: string, labels: string[]): string {
+  const m = ref.match(/^Seed #(\d+)$/);
+  if (!m) return ref;
+  return labels[Number(m[1]) - 1] ?? ref;
+}
+
+/** A draggable seed row (playoff-only manual seeding). */
+function SortableSeed({ id, seed, teamName, isBye }: { id: string; seed: number; teamName: string; isBye: boolean }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.6rem',
+    padding: '0.5rem 0.65rem',
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: '2px',
+    ...(isDragging ? { zIndex: 50, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' } : {}),
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--white-40)', display: 'flex', touchAction: 'none' }}>
+        <GripVertical size={14} />
+      </div>
+      <span style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '0.8rem', color: 'var(--logic-lime)', minWidth: '1.5rem', textAlign: 'center' }}>
+        {seed}
+      </span>
+      <span aria-hidden style={{ width: 10, height: 10, borderRadius: '50%', background: teamColor(teamName), flexShrink: 0 }} />
+      <span style={{ flex: 1, fontWeight: 600, fontSize: '0.9rem' }}>{teamName}</span>
+      {isBye && (
+        <span className="badge badge-neutral" style={{ fontSize: '0.6rem', letterSpacing: '0.06em' }}>BYE R1</span>
+      )}
+    </div>
+  );
+}
+
+export default function PlayoffWizard({ divisions, defaultDivisionId, tournamentId, tournament = null, orgSlug, onClose, onComplete }: Props) {
+  const [selectedDivisionId, setSelectedDivisionId] = useState(() => defaultDivisionId ?? divisions[0]?.id ?? '');
+  const division = useMemo(
+    () => (divisions.find(d => d.id === selectedDivisionId) ?? divisions[0]) as Division,
+    [divisions, selectedDivisionId],
+  );
   const [loading, setLoading] = useState(false);
   const [teams, setTeams] = useState<Team[]>([]);
   const [feedback, setFeedback] = useState<{isOpen: boolean; title: string; message: string; type: 'primary'|'danger'|'warning'|'success'|'info'}>({isOpen: false, title: '', message: '', type: 'primary'});
-  const [config, setConfig] = useState<PlayoffConfig>(() => {
-    const defaults: PlayoffConfig = {
-      type: 'single',
-      crossover: 'standard',
-      hasThirdPlace: false,
-      teamsQualifying: 4,
-      tieBreakers: ['h2h', 'rd', 'rf', 'ra']
-    };
-    const merged = { ...defaults, ...(division.playoffConfig || {}) };
-    return merged.crossover === 'standard' && (division.pools?.length || 0) !== 2
-      ? { ...merged, crossover: 'reseed' }
-      : merged;
-  });
+  const [config, setConfig] = useState<PlayoffConfig>(() => initialPlayoffConfig(division));
+  const lastDivisionId = useRef(selectedDivisionId);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [existingGames, setExistingGames] = useState<Game[]>([]);
   const [preview, setPreview] = useState<PlayoffPreviewRow[]>([]);
@@ -123,8 +205,8 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
   const [showWarning, setShowWarning] = useState(false);
   const [autoSchedule, setAutoSchedule] = useState(true);
   const [generationScope, setGenerationScope] = useState<GenerationScope>('replace');
-  const [gameLength, setGameLength] = useState(tournament?.settings?.game_duration_minutes ?? 90);
-  const [breakLength, setBreakLength] = useState(tournament?.settings?.buffer_minutes ?? 15);
+  const [gameLength, setGameLength] = useState(tournament?.settings?.playoff_game_duration_minutes ?? tournament?.settings?.game_duration_minutes ?? 90);
+  const [breakLength, setBreakLength] = useState(tournament?.settings?.playoff_buffer_minutes ?? tournament?.settings?.buffer_minutes ?? 15);
   const [dateSlots, setDateSlots] = useState<DateSlot[]>([
     { date: tournament?.endDate || tournament?.startDate || '', startTime: '09:00', endTime: '20:30' },
   ]);
@@ -150,6 +232,102 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
       setExistingGames((games as Game[]).filter(game => game.divisionId === division.id));
     });
   }, [tournamentId, division.id, orgParam]);
+
+  // Switching the division resets the bracket config to that division's defaults
+  // and clears any in-progress preview. Only fires on a real division change.
+  useEffect(() => {
+    if (lastDivisionId.current === selectedDivisionId) return;
+    lastDivisionId.current = selectedDivisionId;
+    const next = divisions.find(d => d.id === selectedDivisionId) ?? divisions[0];
+    if (!next) return;
+    setConfig(initialPlayoffConfig(next));
+    setPreview([]);
+    setTemplatePreview([]);
+    setDraftSummary(null);
+  }, [selectedDivisionId, divisions]);
+
+  // ── Playoff-only (bracket-first) seeding ───────────────────────────────────
+  const isPlayoffOnly = useMemo(() => resolveIsPlayoffOnly(tournament), [tournament]);
+  const [seededTeams, setSeededTeams] = useState<Team[]>([]);
+  const [protectTopSeeds, setProtectTopSeeds] = useState(0);
+  const seedSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const seedByeCount = Math.max(0, nextPow2(seededTeams.length) - seededTeams.length);
+
+  // Show real team names (not "Seed #N") in the bracket canvas for playoff-only.
+  const seedLabelFor = useMemo<((raw: string) => string) | undefined>(() => {
+    if (!isPlayoffOnly) return undefined;
+    return (raw: string) => {
+      const m = raw.match(/^Seed #(\d+)$/);
+      if (!m) return raw;
+      return seededTeams[Number(m[1]) - 1]?.name ?? raw;
+    };
+  }, [isPlayoffOnly, seededTeams]);
+
+  // The seed list mirrors the division's accepted teams. Preserve the admin's
+  // manual order while the team set is unchanged; reset it when the set changes
+  // (e.g. switching divisions or new accepted teams).
+  useEffect(() => {
+    setSeededTeams(prev => {
+      const prevIds = new Set(prev.map(t => t.id));
+      const sameSet = prev.length === teams.length && teams.every(t => prevIds.has(t.id));
+      return sameSet ? prev : teams;
+    });
+  }, [teams]);
+
+  // Playoff-only brackets seed directly from the ordered team list (no pools):
+  // bracket size = number of seeded teams, seeded as a global reseed.
+  useEffect(() => {
+    if (!isPlayoffOnly) return;
+    setConfig(c => (
+      c.crossover === 'reseed' && c.teamsQualifying === seededTeams.length
+        ? c
+        : { ...c, crossover: 'reseed', teamsQualifying: seededTeams.length }
+    ));
+  }, [isPlayoffOnly, seededTeams.length]);
+
+  function clearSeedPreview() {
+    setTemplatePreview([]);
+    setPreview([]);
+    setDraftSummary(null);
+  }
+
+  function randomizeSeeds() {
+    setSeededTeams(prev => {
+      const keep = Math.max(0, Math.min(protectTopSeeds, prev.length));
+      const fixed = prev.slice(0, keep);
+      const pool = prev.slice(keep);
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      return [...fixed, ...pool];
+    });
+    clearSeedPreview();
+  }
+
+  function onSeedDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setSeededTeams(prev => {
+        const oldIndex = prev.findIndex(t => t.id === active.id);
+        const newIndex = prev.findIndex(t => t.id === over.id);
+        if (oldIndex < 0 || newIndex < 0) return prev;
+        return arrayMove(prev, oldIndex, newIndex);
+      });
+      clearSeedPreview();
+    }
+  }
+
+  /** Playoff-only: resolve a "Seed #N" placeholder to the seeded team's id. */
+  function resolveSeedTeamId(label: string): string | null {
+    const m = label.match(/^Seed #(\d+)$/);
+    if (!m) return null;
+    return seededTeams[Number(m[1]) - 1]?.id ?? null;
+  }
 
   const availableDates = useMemo(() => {
     if (!tournament?.startDate || !tournament?.endDate) return [];
@@ -600,48 +778,25 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
         }
       });
     } 
-    // 2. Standard Crossover (A vs B) - Only works for 2 pools
-    else if (crossover === 'standard' && pools.length === 2) {
-      const p1 = pools[0].name;
-      const p2 = pools[1].name;
-      
-      if (teamsQualifying === 4) {
-        games.push({ round: 'Semifinal', home: `1st Pool ${p1}`, away: `2nd Pool ${p2}`, code: 'SF1' });
-        games.push({ round: 'Semifinal', home: `1st Pool ${p2}`, away: `2nd Pool ${p1}`, code: 'SF2' });
-        games.push({ round: 'Championship', home: 'Winner SF1', away: 'Winner SF2', code: 'FIN' });
-        if (hasThirdPlace) games.push({ round: '3rd Place', home: 'Loser SF1', away: 'Loser SF2', code: '3RD' });
-      } else if (teamsQualifying === 8) {
-        games.push({ round: 'Quarterfinal', home: `1st Pool ${p1}`, away: `4th Pool ${p2}`, code: 'QF1' });
-        games.push({ round: 'Quarterfinal', home: `2nd Pool ${p1}`, away: `3rd Pool ${p2}`, code: 'QF2' });
-        games.push({ round: 'Quarterfinal', home: `2nd Pool ${p2}`, away: `3rd Pool ${p1}`, code: 'QF3' });
-        games.push({ round: 'Quarterfinal', home: `1st Pool ${p2}`, away: `4th Pool ${p1}`, code: 'QF4' });
-        games.push({ round: 'Semifinal', home: 'Winner QF1', away: 'Winner QF3', code: 'SF1' });
-        games.push({ round: 'Semifinal', home: 'Winner QF2', away: 'Winner QF4', code: 'SF2' });
-        games.push({ round: 'Championship', home: 'Winner SF1', away: 'Winner SF2', code: 'FIN' });
-        if (hasThirdPlace) games.push({ round: '3rd Place', home: 'Loser SF1', away: 'Loser SF2', code: '3RD' });
-      } else {
-        // 2 Teams
-        games.push({ round: 'Championship', home: `1st Pool ${p1}`, away: `1st Pool ${p2}`, code: 'FIN' });
-      }
-    }
-    // 3. Reseed (Global Seeding 1 vs Last) - Default for > 2 pools or 'reseed' logic
+    // 2 & 3. Single-bracket seeding — standard crossover (interleaved pool
+    // labels) or global reseed (Seed #1..N). Both feed the unified bracket
+    // engine, which handles any team count (byes) and the single / consolation
+    // (2-game guarantee) / double-elimination formats. `Seed #k` placeholders
+    // are remapped to the seeding-mode labels.
     else {
-      if (teamsQualifying === 4) {
-        games.push({ round: 'Semifinal', home: 'Seed #1', away: 'Seed #4', code: 'SF1' });
-        games.push({ round: 'Semifinal', home: 'Seed #2', away: 'Seed #3', code: 'SF2' });
-        games.push({ round: 'Championship', home: 'Winner SF1', away: 'Winner SF2', code: 'FIN' });
-        if (hasThirdPlace) games.push({ round: '3rd Place', home: 'Loser SF1', away: 'Loser SF2', code: '3RD' });
-      } else if (teamsQualifying === 8) {
-        for (let i = 1; i <= 4; i++) {
-          games.push({ round: 'Quarterfinal', home: `Seed #${i}`, away: `Seed #${9-i}`, code: `QF${i}` });
-        }
-        games.push({ round: 'Semifinal', home: 'Winner QF1', away: 'Winner QF4', code: 'SF1' });
-        games.push({ round: 'Semifinal', home: 'Winner QF2', away: 'Winner QF3', code: 'SF2' });
-        games.push({ round: 'Championship', home: 'Winner SF1', away: 'Winner SF2', code: 'FIN' });
-        if (hasThirdPlace) games.push({ round: '3rd Place', home: 'Loser SF1', away: 'Loser SF2', code: '3RD' });
-      } else {
-        // 2 Teams
-        games.push({ round: 'Championship', home: 'Seed #1', away: 'Seed #2', code: 'FIN' });
+      const labels = buildSeedLabels(config, pools);
+      const generated = generateBracket(teamsQualifying, {
+        format: config.format ?? 'single',
+        thirdPlace: hasThirdPlace,
+        grandFinalReset: config.grandFinalReset ?? true,
+      });
+      for (const m of generated) {
+        games.push({
+          round: m.round,
+          code: m.code,
+          home: remapSeedRef(m.home, labels),
+          away: remapSeedRef(m.away, labels),
+        });
       }
     }
 
@@ -744,7 +899,7 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
       });
       return options;
     }
-    const numSeeds = division.capacity || teams.length || 16;
+    const numSeeds = config.teamsQualifying || division.capacity || teams.length || 16;
     return Array.from({length: numSeeds}, (_, i) => `Seed #${i + 1}`);
   }, [config.crossover, config.teamsQualifying, config.hasThirdPlace, config.splitConfigs, division.pools, division.capacity, teams.length]);
 
@@ -817,8 +972,11 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
         return {
           tournamentId,
           divisionId: division.id,
-          homeTeamId: null,
-          awayTeamId: null,
+          // Playoff-only: seeds are known up front, so resolve them to real teams
+          // at creation (round-robin tournaments leave these null until standings
+          // resolve them via advancePlayoffs).
+          homeTeamId: isPlayoffOnly ? resolveSeedTeamId(p.home) : null,
+          awayTeamId: isPlayoffOnly ? resolveSeedTeamId(p.away) : null,
           date: p.date || null,
           time: p.time || null,
           location: (() => {
@@ -872,6 +1030,15 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
         const saveData = await saveRes.json();
         if (!saveRes.ok) throw new Error(saveData.error || 'Failed to save playoff bracket');
       }
+      // Remember the playoff game length/buffer so conflict checks (and the timeline)
+      // validate playoff games against it instead of the round-robin default.
+      try {
+        await fetch(`/api/admin/tournaments${orgQuery}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'patch-settings', id: tournamentId, data: { settings: { playoff_game_duration_minutes: gameLength, playoff_buffer_minutes: breakLength } } }),
+        });
+      } catch { /* non-fatal: timing still falls back to the tournament default */ }
       onComplete();
     } catch (err) {
       console.error(err);
@@ -911,6 +1078,15 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
             <section>
               <h4 className="text-label" style={{ marginBottom: '1rem', color: 'rgba(var(--logic-lime-rgb), 0.65)' }}>1. Bracket Configuration</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
+                {divisions.length > 1 && (
+                  <div className="form-group">
+                    <label className="form-label">Division</label>
+                    <select className="form-select" value={selectedDivisionId} onChange={e => setSelectedDivisionId(e.target.value)}>
+                      {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </div>
+                )}
+                {!isPlayoffOnly && (
                 <div className="form-group">
                   <label className="form-label">Crossover Rules</label>
                   <select className="form-select" value={config.crossover} onChange={e => setConfig({...config, crossover: e.target.value as PlayoffConfig['crossover']})}>
@@ -924,9 +1100,26 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
                     {config.crossover === 'none' && 'Each pool runs its own independent championship bracket with no cross-pool matchups.'}
                   </small>
                 </div>
-                
+                )}
+
                 {config.crossover !== 'none' ? (
                   <>
+                    <div className="form-group">
+                      <label className="form-label">Bracket Format</label>
+                      <select className="form-select" value={config.format ?? 'single'} onChange={e => setConfig({...config, format: e.target.value as PlayoffConfig['format']})}>
+                        <option value="single">Single Elimination (1-game guarantee)</option>
+                        <option value="consolation">Consolation (2-game guarantee)</option>
+                        <option value="double">Double Elimination</option>
+                        <option value="placement">Full Placement (every team ranked)</option>
+                      </select>
+                      <small className={styles.crossoverHint}>
+                        {(config.format ?? 'single') === 'single' && 'Lose once and you are out. Top seeds receive a bye when the team count is uneven.'}
+                        {config.format === 'consolation' && 'First-round losers drop into a consolation bracket, so no team is eliminated after a single game.'}
+                        {config.format === 'double' && 'A losers bracket gives every team a second life — a team must lose twice to be eliminated.'}
+                        {config.format === 'placement' && 'Every team keeps playing to a final position (5th, 7th, …) — no one is eliminated, everyone finishes ranked.'}
+                      </small>
+                    </div>
+                    {!isPlayoffOnly && (
                     <div className="form-group">
                       <label className="form-label">Qualified Teams</label>
                       <select className="form-select" value={config.teamsQualifying} onChange={e => setConfig({...config, teamsQualifying: Number(e.target.value)})}>
@@ -935,12 +1128,22 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
                         <option value={8}>Top 8 Teams (QF + SF + Final)</option>
                       </select>
                     </div>
-                    <div className="form-group" style={{ justifyContent: 'center' }}>
-                       <label className="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" checked={config.hasThirdPlace} onChange={e => setConfig({...config, hasThirdPlace: e.target.checked})} />
-                        <span className="text-sm font-bold">Include 3rd Place / Consolidation Game</span>
-                      </label>
-                    </div>
+                    )}
+                    {config.format === 'double' ? (
+                      <div className="form-group" style={{ justifyContent: 'center' }}>
+                         <label className="flex items-center gap-3 cursor-pointer">
+                          <input type="checkbox" checked={config.grandFinalReset ?? true} onChange={e => setConfig({...config, grandFinalReset: e.target.checked})} />
+                          <span className="text-sm font-bold">Play if-necessary grand final (reset)</span>
+                        </label>
+                      </div>
+                    ) : config.format === 'placement' ? null : (
+                      <div className="form-group" style={{ justifyContent: 'center' }}>
+                         <label className="flex items-center gap-3 cursor-pointer">
+                          <input type="checkbox" checked={config.hasThirdPlace} onChange={e => setConfig({...config, hasThirdPlace: e.target.checked})} />
+                          <span className="text-sm font-bold">Include 3rd Place / Consolidation Game</span>
+                        </label>
+                      </div>
+                    )}
                   </>
                 ) : null}
               </div>
@@ -993,6 +1196,49 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
                 </div>
               )}
             </section>
+
+            {isPlayoffOnly && (
+              <section>
+                <div className="flex-between" style={{ marginBottom: '1rem' }}>
+                  <h4 className="text-label" style={{ margin: 0, color: 'rgba(var(--logic-lime-rgb), 0.65)' }}>Seed Teams</h4>
+                  <div className="flex items-center gap-3">
+                    {seededTeams.length >= 3 && (
+                      <label className="flex items-center gap-2" title="Keep the top N seeds fixed when randomizing the rest.">
+                        <span className="text-muted text-xs" style={{ whiteSpace: 'nowrap' }}>Protect top</span>
+                        <NumberStepper value={protectTopSeeds} min={0} max={seededTeams.length} onChange={setProtectTopSeeds} ariaLabel="Protect top seeds when randomizing" />
+                      </label>
+                    )}
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={randomizeSeeds} disabled={seededTeams.length < 2} style={{ color: 'var(--logic-lime)' }}>
+                      <Shuffle size={13} /> Randomize
+                    </button>
+                  </div>
+                </div>
+                {seededTeams.length < 2 ? (
+                  <div className="empty-state" style={{ padding: '1.5rem' }}>
+                    <p className="text-muted" style={{ fontSize: '0.9rem' }}>
+                      Add at least two accepted teams to <strong>{division.name}</strong> to build a bracket. Teams appear here once they are registered and accepted.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-muted text-xs" style={{ marginBottom: '0.75rem' }}>
+                      Drag to set the seeding, or hit Randomize. {seedByeCount > 0
+                        ? `Top ${seedByeCount} seed${seedByeCount === 1 ? '' : 's'} get a first-round bye (${seededTeams.length} teams).`
+                        : `No byes — ${seededTeams.length} teams is a power of two.`}
+                    </p>
+                    <DndContext sensors={seedSensors} collisionDetection={closestCenter} onDragEnd={onSeedDragEnd}>
+                      <SortableContext items={seededTeams.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                          {seededTeams.map((t, i) => (
+                            <SortableSeed key={t.id} id={t.id} seed={i + 1} teamName={t.name} isBye={i < seedByeCount} />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  </>
+                )}
+              </section>
+            )}
 
             <section>
               <h4 className="text-label" style={{ marginBottom: '1rem', color: 'rgba(var(--logic-lime-rgb), 0.65)' }}>2. Scheduling Options</h4>
@@ -1089,6 +1335,7 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
                     <div className="form-group">
                       <label className="form-label">Game Duration (min)</label>
                       <NumberStepper value={gameLength} min={1} max={480} step={5} onChange={setGameLength} ariaLabel="Game duration in minutes" />
+                      <small className={styles.fieldHint}>Playoff game length — used for scheduling and conflict checks (overrides the tournament default).</small>
                     </div>
                     <div className="form-group">
                       <label className="form-label">Turnover Time (min)</label>
@@ -1332,6 +1579,7 @@ export default function PlayoffWizard({ division, tournamentId, tournament = nul
                     baseOptions={baseOptions}
                     onPreviewChange={setPreview}
                     crossover={config.crossover}
+                    labelFor={seedLabelFor}
                   />
                 </>
               )}

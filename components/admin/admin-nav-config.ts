@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Users, Calendar, Trophy, Mail,
   Settings2, MapPin, Tag, BookOpen, Paintbrush,
-  Settings, Archive, Database,
+  Settings, Archive, Database, UserCheck,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -29,6 +29,7 @@ export const TOUR_GROUPS: TourGroup[] = [
       { key: 'registrations', icon: Users,           label: 'Teams'          },
       { key: 'schedule',      icon: Calendar,        label: 'Schedule'       },
       { key: 'results',       icon: Trophy,          label: 'Results'        },
+      { key: 'check-in',      icon: UserCheck,       label: 'Check-in'       },
       { key: 'communication', icon: Mail,            label: 'Communications' },
     ],
   },

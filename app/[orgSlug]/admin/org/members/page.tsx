@@ -30,6 +30,7 @@ const ROLE_MATRIX: { label: string; owner: boolean; admin: boolean; staff: boole
   { label: 'Manage schedule & brackets',        owner: true,  admin: true,  staff: false, official: false },
   { label: 'Update game times & venues',         owner: true,  admin: true,  staff: true,  official: false },
   { label: 'Submit scores',                     owner: true,  admin: true,  staff: true,  official: true  },
+  { label: 'Check teams in at the gate',        owner: true,  admin: true,  staff: true,  official: true  },
   { label: 'Manage contacts & venues',           owner: true,  admin: true,  staff: false, official: false },
   { label: 'Post announcements',                owner: true,  admin: true,  staff: true,  official: false },
   { label: 'Post / edit rules documents',       owner: true,  admin: true,  staff: false, official: false },
@@ -140,6 +141,7 @@ const CAPABILITY_LABELS: Record<Capability, string> = {
   manage_schedule_structure: 'Manage schedule & brackets',
   update_schedule:           'Update game times & venues',
   submit_scores:             'Submit scores',
+  check_in_teams:            'Check teams in at the gate',
   manage_contacts:           'Manage contacts & venues',
   post_announcements:        'Post announcements',
   post_rules:                'Post / edit rules documents',
@@ -156,7 +158,7 @@ const MODULE_CAP_KEYS: Capability[] = [
 ];
 const ACTION_CAP_KEYS: Capability[] = [
   'create_tournaments', 'manage_registrations', 'manage_schedule_structure',
-  'update_schedule', 'submit_scores', 'manage_contacts', 'post_announcements',
+  'update_schedule', 'submit_scores', 'check_in_teams', 'manage_contacts', 'post_announcements',
   'post_rules', 'send_communications', 'seal_tournaments', 'manage_members',
   'org_settings', 'billing',
 ];

@@ -1,0 +1,21 @@
+/* Page-level states for the admin Check-in wrapper. The board UI lives in
+   components/admin/CheckInBoard.module.css. */
+
+.empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--data-gray);
+  font-size: 0.85rem;
+  border: 1px dashed rgba(var(--blueprint-blue-rgb), 0.22);
+  border-radius: 0;
+  margin-top: 0.9rem;
+}
+
+/* Gate view link — text hidden on mobile, icon only */
+.gateViewLabel {
+  display: inline;
+}
+
+@media (max-width: 900px) {
+  .gateViewLabel { display: none; }
+}
