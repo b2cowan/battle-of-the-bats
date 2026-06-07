@@ -35,7 +35,7 @@ files where possible.
 | --- | --- |
 | `Documents\tournament-website\.env.local` | Dev secrets (Supabase, Stripe test, Resend, VAPID, UAT logins). **Gitignored — does not travel via git.** |
 | `Documents\tournament-website\.env.production.local` | Prod Supabase service-role + live Stripe key. **Gitignored.** |
-| `C:\Users\<you>\.aws\` (whole folder) | AWS CLI credentials + config |
+| `C:\Users\<you>\.aws\` (whole folder) | AWS CLI credentials + config — **may not exist.** On this setup the creds live in **User-level env vars** (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_DEFAULT_REGION=us-east-2`), not a file. If `.aws\` is absent there is nothing to copy — re-auth on the new machine (Stage 3). |
 | `C:\Users\<you>\.claude\projects\c--Users-Robert-Cowan-Documents-tournament-website\` | Claude chat history + project memory for this repo |
 | `C:\Users\<you>\.claude\settings.json`, `commands\`, `plans\` | Claude global settings, custom slash-commands, saved plans |
 
@@ -110,10 +110,12 @@ Hand these to Claude in the VS Code terminal:
    `PLATFORM_ADMIN_EMAILS`, `UNSUBSCRIBE_SECRET`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`,
    `VAPID_PRIVATE_KEY`, `VAPID_EMAIL`, the `NEXT_PUBLIC_*` feature toggles, and
    the `UAT_*` set.
-2. **AWS** — drop the copied `.aws\` folder into `C:\Users\<you>\.aws\`, or run
-   `aws configure`. Amplify lives in **us-east-2** (`/release` commands pass the
-   region explicitly; app ID `d3ld0l2bgmmlga`). Verify:
-   `aws sts get-caller-identity`
+2. **AWS** — run `aws configure` fresh on the new machine (creates the standard
+   `.aws\credentials` file — preferred over re-creating env vars). Region
+   `us-east-2`, output `json` (Amplify app `d3ld0l2bgmmlga`; `/release` passes
+   the region explicitly anyway). If you can't retrieve the existing secret key,
+   **rotate it**: create a new access key in the IAM console, configure with it,
+   then deactivate the old one. Verify: `aws sts get-caller-identity`.
 3. **GitHub CLI auth** (for PR/gh ops): `gh auth login` → HTTPS → browser.
 4. **Git identity** (if not carried over):
    ```powershell
