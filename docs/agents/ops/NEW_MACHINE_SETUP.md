@@ -13,6 +13,15 @@ drive the remaining installs.
 > username and same repo location** on the new machine and history/memory map
 > automatically. If the username differs, rename that one folder to match the
 > new path (see Stage 1.5).
+>
+> **Microsoft-account caveat.** Signing into a new PC with the *same* Microsoft
+> account does **not** reproduce the `C:\Users\<name>` folder — Windows derives
+> it from the email (often the first ~5 characters), so a profile that was
+> `Robert Cowan` (a local-account name, with a space) will likely come back as
+> something like `rober`. MS accounts also frequently redirect `Documents` into
+> OneDrive. So expect the repo's absolute path to differ, plan on the Stage 1.5
+> rename as the normal case, and **do not clone into a OneDrive-synced folder**
+> (syncing `node_modules`/`.next`/`.git` causes file-lock corruption).
 
 ---
 
@@ -46,13 +55,16 @@ The only part done entirely by hand. Goal: Claude Code live inside the repo.
 2. **Node.js LTS** — `winget install OpenJS.NodeJS.LTS` (target Node 24.x to
    match the known-good toolchain). Reopen the terminal so PATH refreshes.
 3. **Git** — `winget install Git.Git`
-4. **Clone to the same path:**
+4. **Clone to a non-OneDrive path.** A dedicated dev directory avoids OneDrive
+   sync corruption:
    ```powershell
-   cd "$HOME\Documents"
+   mkdir C:\dev -Force; cd C:\dev
    git clone https://github.com/b2cowan/battle-of-the-bats.git tournament-website
    ```
    The first git auth opens a browser login (Git Credential Manager) — sign in
-   as `b2cowan`. That alone is enough to clone.
+   as `b2cowan`. That alone is enough to clone. Note the resulting absolute path
+   (e.g. `C:\dev\tournament-website` → hash `c--dev-tournament-website`); you'll
+   match the `.claude\projects` folder to it in Stage 1.5.
 5. **Claude Code** — open the cloned folder in VS Code, install the **Claude
    Code** extension from the marketplace (or `npm i -g @anthropic-ai/claude-code`).
 6. **Log in** — launch Claude, run `/login`, complete in the browser. (Cleaner
