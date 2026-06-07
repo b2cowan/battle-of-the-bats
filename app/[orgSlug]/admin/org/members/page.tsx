@@ -584,7 +584,7 @@ export default function MembersPage() {
                   {isSelf && m.role === 'owner' && (
                     <div className={styles.actionGroup}>
                       <button
-                        className={`btn btn-outline btn-sm ${styles.manageBtn}`}
+                        className={`btn btn-outline btn-data ${styles.manageBtn}`}
                         onClick={() => openManage(m)}
                       >
                         Manage
@@ -616,7 +616,7 @@ export default function MembersPage() {
                           )}
                           <span className={styles.inlineConfirmRow} style={{ marginTop: '0.5rem' }}>
                             <button
-                              className="btn btn-danger btn-sm"
+                              className="btn btn-danger btn-data"
                               style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
                               onClick={() => handleRemove(m)}
                               disabled={removingId === m.id}
@@ -624,7 +624,7 @@ export default function MembersPage() {
                               {removingId === m.id ? '…' : 'Remove'}
                             </button>
                             <button
-                              className="btn btn-outline btn-sm"
+                              className="btn btn-outline btn-data"
                               style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
                               onClick={() => { setConfirmRemoveId(null); setRemoveImpact(null); }}
                             >
@@ -650,7 +650,7 @@ export default function MembersPage() {
                         </button>
                       )}
                       <button
-                        className={`btn btn-outline btn-sm ${styles.manageBtn}`}
+                        className={`btn btn-outline btn-data ${styles.manageBtn}`}
                         onClick={() => openManage(m)}
                       >
                         Manage
@@ -683,7 +683,7 @@ export default function MembersPage() {
           {userRole === 'owner' && (
             <Link
               href={auditHref}
-              className="btn btn-outline btn-sm"
+              className="btn btn-outline btn-data"
               style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
             >
               <ScrollText size={14} />
@@ -876,7 +876,7 @@ export default function MembersPage() {
                 <button type="button" className="btn btn-outline" onClick={() => setInviteOpen(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={inviting} id="invite-submit-btn">
+                <button type="submit" className="btn btn-lime btn-data" disabled={inviting} id="invite-submit-btn">
                   {inviting ? 'Sending…' : 'Send Invite'}
                 </button>
               </div>
@@ -1123,7 +1123,7 @@ export default function MembersPage() {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
                     <button
                       type="button"
-                      className="btn btn-outline btn-sm"
+                      className="btn btn-outline btn-data"
                       onClick={handleSaveCapabilities}
                       disabled={capSaving}
                     >
@@ -1140,7 +1140,7 @@ export default function MembersPage() {
                   {manageTarget.status === 'suspended' ? (
                     <button
                       type="button"
-                      className="btn btn-outline btn-sm"
+                      className="btn btn-outline btn-data"
                       onClick={handleSuspend}
                       disabled={manageSuspending}
                     >
@@ -1149,7 +1149,7 @@ export default function MembersPage() {
                   ) : (
                     <button
                       type="button"
-                      className={`btn btn-sm ${styles.suspendBtn}`}
+                      className={`btn btn-data ${styles.suspendBtn}`}
                       onClick={handleSuspend}
                       disabled={manageSuspending}
                     >
@@ -1167,7 +1167,7 @@ export default function MembersPage() {
               </button>
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-lime btn-data"
                 onClick={handleManageSave}
                 disabled={manageSaving}
               >

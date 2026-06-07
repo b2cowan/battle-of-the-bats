@@ -53,7 +53,7 @@
   width: fit-content;
   max-width: 100%;
   overflow-x: auto;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 2px;
   background: var(--bg-inset);
 }
@@ -120,9 +120,9 @@
   padding: 1rem;
   color: inherit;
   text-decoration: none;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 2px;
-  background: var(--bg-surface);
+  background: var(--surface);
   transition: border-color 0.16s ease, background 0.16s ease;
 }
 

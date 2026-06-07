@@ -123,6 +123,7 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 1rem;
+  min-height: 44px;
   border-radius: 999px;
   border: 1px solid var(--border-2);
   background: var(--white-10);
@@ -180,7 +181,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--white-35, var(--white-30));
+  color: var(--white-40);
 }
 
 .heroStatDivider {
@@ -460,7 +461,7 @@
 
 .location {
   font-size: 0.75rem;
-  color: var(--white-30);
+  color: var(--white-40);
 }
 
 .gameResult {
@@ -540,6 +541,10 @@
 /* ── Mobile ──────────────────────────────────────────────────────────────────── */
 
 @media (max-width: 640px) {
+  .profile {
+    padding-bottom: calc(var(--bottom-nav-height, 72px) + 3.5rem + env(safe-area-inset-bottom));
+  }
+
   .heroCard {
     padding: 1.25rem 1.25rem 0;
   }

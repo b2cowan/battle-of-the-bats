@@ -245,7 +245,7 @@ export default function RegistrationFieldsSettingsPage() {
       <div className={styles.card}>
         <div className={styles.cardHeaderRow}>
           <h2 className={styles.sectionTitle} style={{ marginBottom: 0 }}>Active Questions</h2>
-          <a href="#add-question-form" className="btn btn-outline btn-sm"><Plus size={14} /> Add Question</a>
+          <a href="#add-question-form" className="btn btn-outline btn-data"><Plus size={14} /> Add Question</a>
         </div>
         {loading ? (
           <p style={{ color: 'var(--white-40)' }}>Loading...</p>
@@ -281,10 +281,10 @@ export default function RegistrationFieldsSettingsPage() {
                       Required
                     </label>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => moveField(index, -1)} disabled={index === 0 || working === 'reorder'} title="Move up"><ArrowUp size={14} /></button>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => moveField(index, 1)} disabled={index === fields.length - 1 || working === 'reorder'} title="Move down"><ArrowDown size={14} /></button>
-                      <button type="button" className="btn btn-outline btn-sm" onClick={() => saveField(field)} disabled={working === field.id}><Save size={14} /> Save</button>
-                      <button type="button" className="btn btn-danger btn-sm" onClick={() => archiveField(field)} disabled={working === field.id} title="Archive question"><Trash2 size={14} /></button>
+                      <button type="button" className="btn btn-ghost btn-data" onClick={() => moveField(index, -1)} disabled={index === 0 || working === 'reorder'} title="Move up"><ArrowUp size={14} /></button>
+                      <button type="button" className="btn btn-ghost btn-data" onClick={() => moveField(index, 1)} disabled={index === fields.length - 1 || working === 'reorder'} title="Move down"><ArrowDown size={14} /></button>
+                      <button type="button" className="btn btn-outline btn-data" onClick={() => saveField(field)} disabled={working === field.id}><Save size={14} /> Save</button>
+                      <button type="button" className="btn btn-danger btn-data" onClick={() => archiveField(field)} disabled={working === field.id} title="Archive question"><Trash2 size={14} /></button>
                     </div>
                   </div>
                 </div>
@@ -319,7 +319,7 @@ export default function RegistrationFieldsSettingsPage() {
           Required on public registration
         </label>
         <div className={styles.formFooter}>
-          <button type="submit" className="btn btn-primary" disabled={working === 'new'}>
+          <button type="submit" className="btn btn-lime btn-data" disabled={working === 'new'}>
             <Plus size={14} /> {working === 'new' ? 'Adding...' : 'Add Question'}
           </button>
         </div>

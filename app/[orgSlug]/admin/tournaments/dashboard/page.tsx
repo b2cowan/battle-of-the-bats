@@ -108,6 +108,12 @@ type ScheduleHealthDashboardStats = {
   averageGamesPerParticipant: number;
 };
 
+type DivisionChampion = {
+  divisionId: string;
+  divisionName: string;
+  championTeamName: string;
+};
+
 type DashboardStats = {
   divisions: number;
   teams: number;
@@ -119,6 +125,7 @@ type DashboardStats = {
   isTournamentDay: boolean;
   isGameDay: boolean;
   gameDay: GameDayStats;
+  champions: DivisionChampion[];
   publishChecklist: PublishChecklist;
   registration: {
     totalCapacity: number;
@@ -259,6 +266,7 @@ const EMPTY_STATS: DashboardStats = {
   isTournamentDay: false,
   isGameDay: false,
   gameDay: EMPTY_GAME_DAY,
+  champions: [],
   publishChecklist: {
     hasDates: false, hasDivisions: false, hasPublicContact: false, hasOpenDivision: false,
     hasBranding: false, hasVenues: false, hasRules: false, hasFees: false,
@@ -599,6 +607,7 @@ export default function AdminDashboard() {
           isTournamentDay: data?.isTournamentDay ?? false,
           isGameDay:       data?.isGameDay       ?? false,
           gameDay:         data?.gameDay         ?? EMPTY_GAME_DAY,
+          champions:       data?.champions       ?? [],
           publishChecklist: {
             hasDates:         data?.publishChecklist?.hasDates         ?? false,
             hasDivisions:     data?.publishChecklist?.hasDivisions     ?? false,
@@ -741,6 +750,8 @@ export default function AdminDashboard() {
   const isGameDay = visibleStats.isGameDay;
   const populateCopiedSummary = copiedSummary(populateCopied);
   const commandCenterAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'payment_readiness_tools') : false;
+  const hasSummary = currentOrg ? hasPlanFeature(currentOrg.planId, 'post_tournament_summary') : false;
+  const champions = visibleStats.champions;
   const registrationFollowUpBuckets = registrationAttention.buckets
     .filter(bucket => bucket.count > 0 && bucket.key !== 'pending_review' && bucket.key !== 'waitlist')
     .slice(0, 3);
@@ -1496,77 +1507,107 @@ export default function AdminDashboard() {
       {/* ── COMPLETED DASHBOARD ──────────────────────────── */}
       {isCompleted && currentTournament?.id && (
         <>
-          {renderMetricStrip()}
-
-          <div className={styles.analyticsGrid}>
-            <section className={styles.analyticsPanel}>
-              <div className={styles.panelHeader}>
-                <Users size={16} style={{ color: 'var(--logic-lime)' }} />
-                <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Final Registration</h2>
-                <Link href={`${base}/registrations`} className={styles.panelLink}>View teams →</Link>
-              </div>
-              <div className={styles.mainGauge}>
-                <div className={styles.gaugeFigures}>
-                  <span className={styles.gaugeMain}><CountUp value={reg.totalAccepted} /></span>
-                  {reg.totalCapacity > 0 && <><span className={styles.gaugeOf}>/ {reg.totalCapacity}</span></>}
-                  <span className={styles.gaugeLabel}>teams</span>
-                </div>
-                {reg.totalCapacity > 0 && <GaugeBar value={reg.totalAccepted} max={reg.totalCapacity} />}
-              </div>
-              {reg.byDivision.length > 1 && (
-                <div className={styles.divisionTable}>
-                  {reg.byDivision.map(d => (
-                    <div key={d.id} className={styles.divisionRow}>
-                      <span className={styles.divisionName}>{d.name}</span>
-                      <span className={styles.divisionCount}>{d.accepted}{d.capacity ? `/${d.capacity}` : ''}</span>
-                      {d.capacity && <GaugeBar value={d.accepted} max={d.capacity} danger={false} />}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <section className={styles.analyticsPanel}>
-              <div className={styles.panelHeader}>
-                <DollarSign size={16} style={{ color: 'var(--warning)' }} />
-                <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Final Payments</h2>
-                <Link href={`${base}/registrations`} className={styles.panelLink}>View teams →</Link>
-              </div>
-              {pay.hasFeeSchedule ? (
-                <>
-                  <div className={styles.mainGauge}>
-                    <div className={styles.gaugeFigures}>
-                      <span className={styles.gaugeMain}>{fmt(pay.totalCollected)}</span>
-                      <span className={styles.gaugeOf}>/ {fmt(pay.totalExpected)}</span>
-                      <span className={styles.gaugeLabel}>collected</span>
-                    </div>
-                    <GaugeBar value={pay.totalCollected} max={pay.totalExpected} />
-                  </div>
-                  {(pay.totalExpected - pay.totalCollected) > 0 && (
-                    <div className={styles.outstandingRow}>
-                      <TrendingUp size={13} />
-                      <span>{fmt(pay.totalExpected - pay.totalCollected)} still outstanding</span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className={styles.emptyPanel}><span>No fee schedule was configured.</span></div>
-              )}
-            </section>
-          </div>
-
+          {/* Wrap-up banner — headline + champion(s) + hand-off (Plus = summary, Free = results) */}
           <div className={styles.wrapUpCard}>
             <div className={styles.wrapUpIcon}><Trophy size={22} /></div>
             <div className={styles.wrapUpBody}>
               <h2>Tournament Complete</h2>
+              {champions.length > 0 && (
+                <div className={styles.wrapUpChampions}>
+                  {champions.map(c => (
+                    <span key={c.divisionId} className={styles.wrapUpChampion}>
+                      <Trophy size={11} aria-hidden />
+                      <strong>{c.championTeamName}</strong>
+                      <span className={styles.wrapUpChampionDiv}>{c.divisionName}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
               <p>
                 {visibleStats.teams} team{visibleStats.teams !== 1 ? 's' : ''} registered
                 {visibleStats.completed > 0 ? ` · ${visibleStats.completed} games completed` : ''}
                 {pay.hasFeeSchedule && pay.totalExpected > 0 ? ` · ${fmt(pay.totalCollected)} collected` : ''}
               </p>
             </div>
-            <Link href={`${base}/results`} className={styles.panelLink} style={{ flexShrink: 0 }}>View results →</Link>
+            {hasSummary ? (
+              <Link href={`${base}/summary`} className="btn btn-lime btn-data" style={{ flexShrink: 0 }}>Review event summary →</Link>
+            ) : (
+              <Link href={`${base}/results`} className={styles.panelLink} style={{ flexShrink: 0 }}>View results →</Link>
+            )}
           </div>
+
+          {/* Free orgs: Summary is locked, so keep the recap here + one compact upsell. */}
+          {!hasSummary && (
+            <>
+              <div className={styles.analyticsGrid}>
+                <section className={styles.analyticsPanel}>
+                  <div className={styles.panelHeader}>
+                    <Users size={16} style={{ color: 'var(--logic-lime)' }} />
+                    <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Final Registration</h2>
+                    <Link href={`${base}/registrations`} className={styles.panelLink}>View teams →</Link>
+                  </div>
+                  <div className={styles.mainGauge}>
+                    <div className={styles.gaugeFigures}>
+                      <span className={styles.gaugeMain}><CountUp value={reg.totalAccepted} /></span>
+                      {reg.totalCapacity > 0 && <><span className={styles.gaugeOf}>/ {reg.totalCapacity}</span></>}
+                      <span className={styles.gaugeLabel}>teams</span>
+                    </div>
+                    {reg.totalCapacity > 0 && <GaugeBar value={reg.totalAccepted} max={reg.totalCapacity} />}
+                  </div>
+                  {reg.byDivision.length > 1 && (
+                    <div className={styles.divisionTable}>
+                      {reg.byDivision.map(d => (
+                        <div key={d.id} className={styles.divisionRow}>
+                          <span className={styles.divisionName}>{d.name}</span>
+                          <span className={styles.divisionCount}>{d.accepted}{d.capacity ? `/${d.capacity}` : ''}</span>
+                          {d.capacity && <GaugeBar value={d.accepted} max={d.capacity} danger={false} />}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                <section className={styles.analyticsPanel}>
+                  <div className={styles.panelHeader}>
+                    <DollarSign size={16} style={{ color: 'var(--warning)' }} />
+                    <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Final Payments</h2>
+                    <Link href={`${base}/registrations`} className={styles.panelLink}>View teams →</Link>
+                  </div>
+                  {pay.hasFeeSchedule ? (
+                    <>
+                      <div className={styles.mainGauge}>
+                        <div className={styles.gaugeFigures}>
+                          <span className={styles.gaugeMain}>{fmt(pay.totalCollected)}</span>
+                          <span className={styles.gaugeOf}>/ {fmt(pay.totalExpected)}</span>
+                          <span className={styles.gaugeLabel}>collected</span>
+                        </div>
+                        <GaugeBar value={pay.totalCollected} max={pay.totalExpected} />
+                      </div>
+                      {(pay.totalExpected - pay.totalCollected) > 0 && (
+                        <div className={styles.outstandingRow}>
+                          <TrendingUp size={13} />
+                          <span>{fmt(pay.totalExpected - pay.totalCollected)} still outstanding</span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className={styles.emptyPanel}><span>No fee schedule was configured.</span></div>
+                  )}
+                </section>
+              </div>
+
+              <div className={styles.completedUpsell}>
+                <div className={styles.completedUpsellBody}>
+                  <Star size={16} className={styles.completedUpsellIcon} aria-hidden />
+                  <div>
+                    <strong>Your post-event summary</strong>
+                    <p>A shareable division recap, public results links, and reusing this setup to start next year — available on Tournament Plus.</p>
+                  </div>
+                </div>
+                <Link href={subscriptionHref} className="btn btn-lime btn-data">Review Tournament Plus</Link>
+              </div>
+            </>
+          )}
 
           {userRole === 'owner' && (
             <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>

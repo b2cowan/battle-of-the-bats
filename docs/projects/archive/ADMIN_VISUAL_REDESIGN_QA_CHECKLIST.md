@@ -51,24 +51,24 @@ Walk in **dark + light**, **mobile + desktop**, **compact + comfortable**, **bra
 - [x] **Mobile top app-bar** (≤900px) — OPEN/LIVE/COMPLETED pill correct by phase (`isWithinEventDates`); switcher accessible; bell reachable; `liveDot` reduced-motion gated; no conflict with page headers (status chip removed from dashboard header)
 - [x] **Desktop sidebar** — worklist badge on Results ✅; "● Open" for pre-event active (not "● Live") ✅; density toggle removed ✅; Preview Site + Help + Logout in footer ✅
 - [x] **Bottom nav** (≤900px, 5 tabs) — worklist badge on Results ✅; context strip docked above nav ✅; More dropdown: Operations/Setup/Admin sections present ✅; Display/density section removed ✅; View Site + Logout in footer ✅
-- [ ] **AdminContextStrip** — 2026-06-05 code review PASS: `position:absolute; bottom:100%` inside nav; `--admin-strip-h` set/cleared via `useEffect`; phase/count logic correct; `--hud-surface` + blueprint-border ✓. **Needs browser verify**: strip shows on Teams/Results pages with pending items; dismisses; re-shows when count rises; doesn't overlap selectionBar (fixed: selectionBar bottom now includes `var(--admin-strip-h,0px)`)
-- [ ] **Density toggle** — needs browser verify: compact ↔ comfortable live; persists; no flash; visible in sidebar footer + More sheet
-- [ ] **Notification panel** — needs browser verify: mobile positioning (not clamped to sidebar); z-index; mark-read
-- [ ] **Blueprint grid** — needs browser verify: mobile 28px cell + lower alpha
+- [x] **AdminContextStrip** — ✅ signed off 2026-06-05 (strip shows/dismisses/re-shows by count; no nav/selectionBar overlap)
+- [x] **Density toggle** — **REMOVED from UI** (no density toggle exists; confirmed 2026-06-05). N/A — see possible dead-code cleanup note below.
+- [x] **Notification panel** — ✅ signed off 2026-06-05 (mobile not clamped; z-index ok; mark-read works)
+- [x] **Blueprint grid** — ✅ signed off 2026-06-05 (mobile smaller cell + lower alpha; recedes behind content)
 
 ### Shared UI components
 
 - [x] **TournamentAdminHeader** — 2026-06-05: `.headerMain` → `align-items: flex-start` (icon top-aligns on long subtitles). 30px icon ✓, lime title ✓, 0.5rem bottom margin ✓, `mobileActionsInline` inline-row CSS rules present ✓. Needs browser verify: icon alignment with subtitle, inline actions at mobile width.
-- [ ] **TournamentAdminToolbar** — code review PASS: density-driven `--admin-control-h` ✓; mobile column layout ✓; sticky blur ✓. Needs browser verify: sticky positioning below mobile top bar; no horizontal overflow.
-- [ ] **Filter chips** — needs browser verify: lime active state; `--admin-chip-h` height; ≥44px comfortable tap target
-- [ ] **GameList rows** — needs browser verify: density tokens; live-state stripes; conflict stripe priority; status markers vs badges; no team-name truncation
-- [x] **FeedbackModal** — 2026-06-05: confirm button `btn-primary` → `btn-lime` (non-danger types). Global `.modal` CSS: `border-radius:0` ✓, `--hud-surface` ✓, blueprint border ✓, `h3` 0.75rem mono uppercase ✓. Items list `borderRadius:0` inline ✓, `--white-05` token valid ✓. Needs browser verify: warning/success confirm button colour.
-- [ ] **BottomSheet primitive** — needs browser verify: spring slide, drag handle, focus trap, Esc, scroll-lock
-- [ ] **Empty states** — teams page fixed (3 states + CTAs). Needs sweep of other pages during per-page review.
-- [ ] **CountUp animations** — needs browser verify on dashboard stat cards
-- [x] **btn-primary audit** (tournaments scope) — 2026-06-05: AdminHubClient CTA → `btn-lime`. Schedule page 5× inside modal footers (exempt; will fix during Schedule review). PlayoffWizard 2× — review during Schedule. Out-of-scope pages (accounting/rep-teams/house-league) deferred.
-- [ ] **Tabular numerals** — needs sweep during per-page review
-- [ ] **Reduced motion** — global `animation-duration: 0.001ms` ✓ in globals.css. Needs verify: CountUp snaps, stripe no animation, strip no animation
+- [x] **TournamentAdminToolbar** — ✅ signed off 2026-06-05 (sticky under top bar; no overflow; mobile column layout). Re-exercised on Schedule/Results per-page rows.
+- [x] **Filter chips** — ✅ signed off 2026-06-05 (lime active; chip height; comfortable tap target). Re-exercised on Schedule/Results.
+- [x] **GameList rows** — ✅ signed off 2026-06-05 (live stripes; conflict priority; status markers vs badges; no truncation). Final per-page look during Schedule/Results.
+- [x] **FeedbackModal** — ✅ signed off 2026-06-05 (confirm button `btn-primary` → `btn-lime`; sharp HUD modal; items list).
+- [x] **BottomSheet primitive** — ✅ signed off 2026-06-05 (spring slide, drag handle, focus trap, Esc, scroll-lock).
+- [x] **Empty states** — ✅ signed off 2026-06-05 (icon + title + desc + `btn-lime` CTA; per-page specifics ticked in their rows).
+- [x] **CountUp animations** — ✅ signed off 2026-06-05 (0→N first load; re-animates on poll; snaps under reduced motion).
+- [x] **btn-primary audit** (tournaments scope) — 2026-06-05: AdminHubClient CTA → `btn-lime`. Schedule page 5× + PlayoffWizard 2× inside modal footers (exempt; confirm during Schedule review).
+- [x] **Tabular numerals** — ✅ signed off 2026-06-05 (scores/stats use tabular-nums; no jiggle on live tick).
+- [x] **Reduced motion** — ✅ signed off 2026-06-05 (global `animation-duration: 0.001ms`; count-up snaps; stripes/strip render without animation).
 
 ---
 
@@ -104,7 +104,7 @@ For each: **M** = mobile, **D** = desktop, **C** = compact, **K** = comfortable.
 |---|:---:|:---:|---|
 | Dashboard — Draft state | ⬜ | ⬜ | Launch checklist; ACTIVATE chip; `isGameDay=false` → registration board |
 | Dashboard — Active / Live state | ✅ | ✅ | Metric strip (pre-event) · game-day board (game day) · context strip · no stat cards · no Customize on game day · sparkline wired (renders when trend data > 0) |
-| Dashboard — Completed state | ⬜ | ⬜ | Wrap-up view; archive button (owner-only) |
+| Dashboard — Completed state | 🔄 | 🔄 | **IA redesign BUILT 2026-06-07 (awaiting browser verification).** Plan-aware hand-off: **Plus** = thin wrap-up banner (champion chips + headline + "Review event summary →" `btn-lime`) with Final Reg/Pay panels + metric strip removed; **Free** = banner + kept Final Reg/Pay panels + one compact "Review Tournament Plus" upsell. Champion chips on the banner (lime), driven by new dashboard-API `champions`. Archive owner-only unchanged. Verify Free vs Plus org on `/dev-test-org/completed-demo`. See DASHBOARD_SUMMARY_IA_PLAN.md |
 
 ---
 
@@ -211,7 +211,7 @@ For each: **M** = mobile, **D** = desktop, **C** = compact, **K** = comfortable.
 
 | Page | M | D | Notes |
 |---|:---:|:---:|---|
-| Summary | ⬜ | ⬜ | Review in both Free (locked/upsell) and Plus (full) states |
+| Summary | 🔄 | 🔄 | **IA redesign BUILT 2026-06-07 (awaiting browser verification).** Now the single canonical recap in 3 zones: **Recap** (champions band → metric cards w/ completion% folded in → division recap), **Share the results** (compact: copy link / public standings / print — `btn-data`), **What's next** (`CollapsibleCard`, collapsed: Reuse this setup `btn-lime` + visible value-reflection line + opt-in League/Club discovery → `/pricing`). Killed the 2nd hero; renewal CTA removed (auto-renew). All `btn-sm`→`btn-data`. Verify Free (locked/upsell) + Plus (full) + clone-success states. See DASHBOARD_SUMMARY_IA_PLAN.md |
 
 ---
 
@@ -219,12 +219,12 @@ For each: **M** = mobile, **D** = desktop, **C** = compact, **K** = comfortable.
 
 | Page | M | D | Notes |
 |---|:---:|:---:|---|
-| Settings hub | ⬜ | ⬜ | Flat 3-card grid (Reg Questions / Staff / Billing); locked cards as links; League/Club redirect |
-| Event Settings | 🔄 | 🔄 | 2026-06-05: "Competition Rules" → "Schedule Rules"; Score Finalization moved → Notifications & Contact card. **Cards now collapsible** (new shared `CollapsibleCard` primitive, native `<details>`, bigger lime header; **all 5 start collapsed** per user — clean stack of labelled header bars). **Year field dropped** (derived from start date in save payload). Auto-save footer unchanged. Needs browser verify: collapse toggles persist, auto-save still fires when a collapsed card's field changes. |
-| Data Tools (`/admin/tournaments/data-tools`) | 🔄 | 🔄 | 2026-06-05: collapsed the 3 duplicated tool cards into **one "Import & Export" CollapsibleCard**. **Import** + **Export** are dropdown menus (Teams/Schedule · registration XLSX/CSV). **Templates** reworked from an 8-item dropdown → inline **XLSX\|CSV format toggle + 2×2 matrix** (Teams/Schedule × Current/Empty = 4 buttons, no duplication). Removed all page-nav clutter ("Open schedule/results workspace" links + "Reference Data" Divisions/Venues section). **Recent Imports** collapsed-by-default. `ToolbarMenu` got `keepLabel` (mobile labels for primary menus). Removed dead `ActionButton`/`ActionLink`/`PageLink`. Needs browser verify: menus open/position, format toggle switches all 4 template buttons, locked tooltips, mobile reflow. |
-| Registration Fields | ⬜ | ⬜ | Field list; add/remove/reorder; drag; density |
-| Members & Access | ⬜ | ⬜ | Staff table; `overflow: visible` on `.tableWrap` (tooltip clipping fix); role tooltips; invite flow |
-| Subscription / Billing | ⬜ | ⬜ | Plan display; upgrade path; token compliance |
+| Settings hub | ✅ | ✅ | 2026-06-05: Link-card grid (Staff & access / Plan & subscription / Notification prefs); locked cards preventDefault; no btn violations. Fixed undefined tokens in `settings-access.module.css` (`--border-subtle` → blueprint-blue 0.2, `--bg-surface` → `--surface`). |
+| Event Settings | ✅ | ✅ | **Signed off 2026-06-05.** "Competition Rules" → "Schedule Rules"; Score Finalization moved → Notifications & Contact. Cards collapsible (`CollapsibleCard`, all 5 start collapsed). Year field dropped (derived from start date). |
+| Data Tools (`/admin/tournaments/data-tools`) | ✅ | ✅ | **Signed off 2026-06-05.** One "Import & Export" card: Import + Export dropdowns; Templates = XLSX\|CSV toggle + 2×2 matrix. Removed page-nav clutter + Reference Data. Recent Imports collapsed-by-default. `ToolbarMenu` `keepLabel`. Dead Action* components removed. |
+| Registration Fields | ✅ | ✅ | 2026-06-05: `btn-sm` ×5 → `btn-data`; "Add Question" `btn-primary` → `btn-lime btn-data` (form, not modal). Borrows `branding.module.css`. |
+| Members & Access | ✅ | ✅ | 2026-06-05: re-exports `org/members`. `btn-sm` ×8 → `btn-data`; modal `btn-primary` ×2 (invite + manage save) → `btn-lime btn-data`. `.tableWrap` already `overflow:visible` ✓. Same fixes cover Org Members row. |
+| Subscription / Billing | ✅ | ✅ | 2026-06-05: re-exports `org/billing`. `btn-sm` ×1 → `btn-data`. No `btn-primary`. Same file as org billing. |
 
 ---
 
@@ -240,8 +240,8 @@ For each: **M** = mobile, **D** = desktop, **C** = compact, **K** = comfortable.
 
 | Page | M | D | Notes |
 |---|:---:|:---:|---|
-| Org Members | ⬜ | ⬜ | `overflow: visible` on `.tableWrap`; role tooltips; invite; status chips |
-| Org Settings | ⬜ | ⬜ | Token compliance; button audit; layout |
+| Org Members | ✅ | ✅ | 2026-06-05: same file as Members & Access (`org/members`). `btn-sm`→`btn-data`, modal `btn-primary`→`btn-lime btn-data`, `.tableWrap` overflow ✓. |
+| Org Settings | ⏭️ | ⏭️ | **OUT OF SCOPE for this project** (deferred to a separate org-level/League-Club pass). `org/settings` has `btn-primary` ×3 + `btn-sm`/`btn-danger` to fix there, not here. |
 
 ---
 
@@ -270,6 +270,8 @@ Assign a tag (e.g. `[CHROME-1]`) so per-page notes can reference it.
 
 ## Progress summary
 
+> _Superseded — see the **Sign-off close-out** below. Per-page rows carry their own ✅ / 🔄 / ⏭️ status inline in the sections above; this count was not maintained._
+
 | Section | Pages | ✅ Done |
 |---|---|---|
 | Shared chrome | 17 items | 0 |
@@ -295,12 +297,23 @@ Assign a tag (e.g. `[CHROME-1]`) so per-page notes can reference it.
 
 ---
 
-## Sign-off
+## Sign-off — close-out
 
-- [ ] All shared chrome items pass: dark + light, mobile + desktop, compact + comfortable, branded + default
-- [ ] All per-page rows: both M + D columns checked
-- [ ] Token/class compliance checklist clean
-- [ ] No `btn-primary` outside modals
-- [ ] `agent_TOURNAMENT_DESIGN_REVIEW.md` updated with any new binding findings
-- [ ] `memory/design_decisions.md` updated with any new binding decisions
-- [ ] Move `ADMIN_VISUAL_REDESIGN_PLAN.md` + `ADMIN_VISUAL_REDESIGN_PHASE_A.md` + this checklist to `docs/projects/archive/` when complete
+**PROJECT CLOSED 2026-06-06** at owner direction ("we're good now; I'll review remaining items with `/design` ad hoc as I find them"). Not every row was individually walked — this is a deliberate close, not a 100% completion.
+
+**Signed off in this project:**
+- **Shared chrome** — all 17 items (density toggle was *removed from the UI*, so its row is N/A).
+- **Teams / Registrations** (4) · **Check-in** (2) · **Dashboard — Active/Live**.
+- **Settings cluster** — hub, Event Settings, Registration Fields, Members & Access, Subscription · plus **Org Members** (same shared file).
+
+**Handed off to a dedicated project:**
+- **Dashboard — Completed** + **Post-Event Summary** → "Dashboard Completed + Summary IA" (TODO.md; plan + PM brief in `docs/projects/active/DASHBOARD_SUMMARY_IA_*`). The overlap/noise is resolved there, not here.
+
+**Deferred (review with `/design` as issues surface):**
+- **Schedule** (7 rows) — not reviewed; playoff-bracket work was in flight at close.
+- Not individually walked: Admin hub, Onboarding, Tournament list + wizard, Dashboard Draft, Results, Communication, Rules, Branding, Contacts, Divisions, Venues, Archives, Preview. These inherit the **already-signed-off shared chrome + token/button conventions**, so they start from a compliant baseline.
+- **Org Settings** — ⏭️ out of scope (separate org-level / League-Club pass).
+
+**Standing conventions established (apply to all future admin work):** `btn-lime` / `btn-ghost` / `btn-danger` / `btn-data` only — no `btn-primary` outside modals, no `btn-sm`; `--logic-lime` accents; `CollapsibleCard` primitive for multi-group surfaces; status = label vs action = button; status colour = row colour.
+
+- [x] Archived to `docs/projects/archive/` on 2026-06-06 (PLAN + PHASE_A + PM_BRIEF + this checklist).

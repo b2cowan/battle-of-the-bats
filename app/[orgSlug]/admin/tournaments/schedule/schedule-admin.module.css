@@ -2451,16 +2451,33 @@
 /* ─── Venue sub-line inside the date cell (planning + scoring) ───────────── */
 /* Row 1 = venue name, row 2 = facility name (when set). Each line is short   */
 /* enough to fit in 155px without wrapping.                                   */
+/* Date/time + live chip share one line; the chip is inline (no own row). */
+.dateLine {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  row-gap: 0.1rem;
+}
+
 .venueInDate {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 3px;
   font-family: var(--font-data);
   font-size: 0.65rem;
   color: var(--data-gray);
   opacity: 0.75;
-  margin-top: 3px;
+  margin-top: 2px;
   line-height: 1.3;
+}
+
+/* Venue + facility on a single line (e.g. "lions park · diamond #1"). */
+.venueLine {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .venueInDate > div {
@@ -3320,7 +3337,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.22rem;
-  margin-top: 0.18rem;
+  flex-shrink: 0;
   padding: 0.04rem 0.32rem;
   border: 1px solid currentColor;
   border-radius: 2px;

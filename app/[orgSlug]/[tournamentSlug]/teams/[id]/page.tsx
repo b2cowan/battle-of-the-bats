@@ -246,6 +246,7 @@ export default function TeamProfilePage({
                   url={`/${orgSlug}/${tournamentSlug}/teams/${id}`}
                   title={cleanedName}
                   text={`Follow ${cleanedName} on FieldLogicHQ`}
+                  label="Share team"
                   className={styles.followHeroBtn}
                 />
               </div>

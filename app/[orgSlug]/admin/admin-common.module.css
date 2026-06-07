@@ -365,7 +365,7 @@
 /* Venue is now stacked inside the date cell — no separate venue column.       */
 /* flex-shrink hierarchy: date (0, never yields) → matchup (1, last to shrink) */
 .gameColDate {
-  flex: 0 0 155px;   /* widened from 130px to give venue sub-line room */
+  flex: 0 0 205px;   /* room for date · time + an inline live chip (Now/Next/Overdue) on one line */
   min-width: 0;
   overflow: hidden;
 }

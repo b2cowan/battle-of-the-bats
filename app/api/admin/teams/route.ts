@@ -72,6 +72,7 @@ export async function GET(req: Request) {
     poolId: t.pool_id,
     waitlistPosition: t.waitlist_position ?? null,
     slotId: t.slot_id ?? null,
+    seed: t.seed ?? null,
   }));
 
   const [fields, answers] = await Promise.all([
@@ -410,6 +411,10 @@ export async function POST(req: Request) {
       if (dbUpdates.adminNotes !== undefined) {
         dbUpdates.admin_notes = dbUpdates.adminNotes;
         delete dbUpdates.adminNotes;
+      }
+      if (dbUpdates.seed !== undefined) {
+        const n = Number(dbUpdates.seed);
+        dbUpdates.seed = Number.isInteger(n) && n > 0 && n <= 999 ? n : null;
       }
       return { id: item.id, updates: dbUpdates };
     });

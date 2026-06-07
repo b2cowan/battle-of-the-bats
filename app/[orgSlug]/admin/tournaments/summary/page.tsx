@@ -9,6 +9,7 @@ import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features'
 import { useTournament } from '@/lib/tournament-context';
 import type { Tournament, CloneCopiedCounts } from '@/lib/types';
 import { copiedSummary } from '@/lib/utils';
+import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import styles from './summary.module.css';
 
 type SummaryData = {
@@ -365,7 +366,7 @@ export default function TournamentSummaryPage() {
           <div className={styles.headerIcon}><FileText size={21} /></div>
           <div>
             <h1 className={styles.pageTitle}>Post-Event Summary</h1>
-            <p className={styles.pageSub}>{currentTournament.name} recap and renewal planning</p>
+            <p className={styles.pageSub}>{currentTournament.name} recap</p>
           </div>
         </div>
 
@@ -433,18 +434,8 @@ export default function TournamentSummaryPage() {
         <div className={styles.headerIcon}><FileText size={21} /></div>
         <div>
           <h1 className={styles.pageTitle}>Post-Event Summary</h1>
-          <p className={styles.pageSub}>{currentTournament.name} recap and renewal planning</p>
+          <p className={styles.pageSub}>{currentTournament.name} · {dateRange(summary)}</p>
         </div>
-        <button
-          type="button"
-          className={`btn btn-outline btn-sm ${styles.printBtn}`}
-          onClick={() => {
-            void trackSummaryAction('print');
-            window.print();
-          }}
-        >
-          <Printer size={14} /> Print
-        </button>
       </div>
 
       {state === 'loading' && (
@@ -457,17 +448,20 @@ export default function TournamentSummaryPage() {
 
       {state === 'ready' && summary && (
         <>
-          <section className={styles.hero}>
-            <div>
-              <span className={styles.eyebrow}>Tournament recap</span>
-              <h2>{summary.tournament.name}</h2>
-              <p>{dateRange(summary)} - {summary.tournament.status ?? 'status unknown'}</p>
-            </div>
-            <div className={styles.heroStats}>
-              <strong>{completionRatio}</strong>
-              <span>games completed</span>
-            </div>
-          </section>
+          {/* ── ZONE 1 · RECAP ─────────────────────────────────── */}
+          {summary.divisions.some(division => division.champion) && (
+            <section className={styles.championBand}>
+              <span className={styles.championBandLabel}><Trophy size={14} /> Champions</span>
+              <div className={styles.championBandList}>
+                {summary.divisions.filter(division => division.champion).map(division => (
+                  <span key={division.id} className={styles.championChip}>
+                    <strong>{division.champion!.championTeamName}</strong>
+                    <span className={styles.championChipDiv}>{division.name}</span>
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className={styles.metricGrid}>
             <div className={styles.metricCard}>
@@ -480,7 +474,7 @@ export default function TournamentSummaryPage() {
               <CalendarDays size={18} />
               <span>Schedule progress</span>
               <strong>{summary.scheduleTotals.completed}/{summary.scheduleTotals.total}</strong>
-              <small>{summary.scheduleTotals.playoffGames} playoff games</small>
+              <small>{completionRatio} complete - {summary.scheduleTotals.playoffGames} playoff games</small>
             </div>
             <div className={styles.metricCard}>
               <Trophy size={18} />
@@ -493,34 +487,6 @@ export default function TournamentSummaryPage() {
               <span>Payment readiness</span>
               <strong>{formatMoney(summary.paymentTotals.collected)}</strong>
               <small>{formatMoney(summary.paymentTotals.outstanding)} outstanding - {summary.paymentTotals.pastDue} past due</small>
-            </div>
-          </section>
-
-          <section className={styles.actionsPanel}>
-            <div>
-              <h2>Turn this event into the next starting point</h2>
-              <p>Share the public record, then reuse the setup that worked when it is time to build the next tournament.</p>
-            </div>
-            <div className={styles.actionButtons}>
-              <button type="button" className="btn btn-outline btn-sm" onClick={() => copyPublicLink(summary.publicLinks.standings, 'Standings link')}>
-                <Copy size={14} /> {copied === 'Standings link' ? 'Copied' : 'Copy standings link'}
-              </button>
-              <Link className="btn btn-outline btn-sm" href={summary.publicLinks.standings} target="_blank">
-                <ExternalLink size={14} /> Public standings
-              </Link>
-              <Link className="btn btn-outline btn-sm" href={subscriptionHref} onClick={() => void trackSummaryAction('renewal_cta_clicked')}>
-                <ArrowRight size={14} /> Keep Plus active
-              </Link>
-              {canClone ? (
-                <button type="button" className="btn btn-lime btn-sm" onClick={openRepeatSetup} disabled={cloneWorking}>
-                  <RefreshCw size={14} /> {cloneWorking ? 'Creating draft...' : 'Reuse this setup'}
-                </button>
-              ) : (
-                <Link className="btn btn-outline btn-sm" href={subscriptionHref}>
-                  <ArrowRight size={14} /> Review repeat-event setup
-                </Link>
-              )}
-              {!canClone && <span className={styles.actionNote}>{requiresTournamentPlusCopy('tournament_cloning')}</span>}
             </div>
           </section>
 
@@ -554,6 +520,51 @@ export default function TournamentSummaryPage() {
               ))}
             </div>
           </section>
+
+          {/* ── ZONE 2 · SHARE THE RESULTS ─────────────────────── */}
+          <section className={styles.sharePanel}>
+            <h2 className={styles.zoneTitle}>Share the results</h2>
+            <div className={styles.shareActions}>
+              <button type="button" className="btn btn-outline btn-data" onClick={() => copyPublicLink(summary.publicLinks.standings, 'Standings link')}>
+                <Copy size={14} /> {copied === 'Standings link' ? 'Copied' : 'Copy standings link'}
+              </button>
+              <Link className="btn btn-outline btn-data" href={summary.publicLinks.standings} target="_blank">
+                <ExternalLink size={14} /> Public standings
+              </Link>
+              <button type="button" className="btn btn-ghost btn-data" onClick={() => { void trackSummaryAction('print'); window.print(); }}>
+                <Printer size={14} /> Print
+              </button>
+            </div>
+          </section>
+
+          {/* Value reflection — visible, no ask (the real anti-churn line) */}
+          <p className={styles.valueReflection}>
+            Your saved summary, shareable public results, and reusing this setup next year all come with Tournament Plus.
+          </p>
+
+          {/* ── ZONE 3 · WHAT'S NEXT (opt-in) ──────────────────── */}
+          <CollapsibleCard title="What's next" icon={<ArrowRight size={15} />} defaultOpen={false} className={styles.whatsNextCard}>
+            <div className={styles.whatsNextPrimary}>
+              <div>
+                <strong>Start next year from this setup</strong>
+                <p>Create a clean draft with your divisions, venues, fees, and public settings carried forward. Teams, scores, and payments stay behind.</p>
+              </div>
+              {canClone ? (
+                <button type="button" className="btn btn-lime btn-data" onClick={openRepeatSetup} disabled={cloneWorking}>
+                  <RefreshCw size={14} /> {cloneWorking ? 'Creating draft...' : 'Reuse this setup'}
+                </button>
+              ) : (
+                <Link className="btn btn-outline btn-data" href={subscriptionHref}>
+                  <ArrowRight size={14} /> Review repeat-event setup
+                </Link>
+              )}
+            </div>
+            {!canClone && <p className={styles.whatsNextNote}>{requiresTournamentPlusCopy('tournament_cloning')}</p>}
+            <p className={styles.discoveryLine}>
+              FieldLogicHQ also runs season-long leagues and full club operations — registrations, house league, rep teams, and accounting.{' '}
+              <Link href="/pricing" target="_blank" className={styles.discoveryLink}>See what League and Club include →</Link>
+            </p>
+          </CollapsibleCard>
         </>
       )}
 

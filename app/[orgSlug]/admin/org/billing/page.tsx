@@ -573,7 +573,7 @@ export default function BillingPage() {
                 Tournament registrations linked to your Basic coach team profile remain in Coaches Portal while Premium tools are inactive.
               </p>
             </div>
-            <Link className="btn btn-outline btn-sm" href="/coaches/tournaments">
+            <Link className="btn btn-outline btn-data" href="/coaches/tournaments">
               Open Tournament Records
             </Link>
           </div>

@@ -70,7 +70,7 @@ const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
 const emptyForm = {
   divisionId: '', homeTeamId: '', awayTeamId: '',
   homeSlotId: '', awaySlotId: '',
-  date: '', time: '09:00', location: '', venueId: '', venueFacilityId: '', notes: null as string | null,
+  date: '', time: '09:00', durationMinutes: '' as number | '', location: '', venueId: '', venueFacilityId: '', notes: null as string | null,
   bracketCode: '',
 };
 
@@ -397,6 +397,7 @@ export default function AdminSchedulePage() {
       awaySlotId: g.awaySlotId ?? '',
       date: g.date ?? '',
       time: g.time ?? '09:00',
+      durationMinutes: typeof g.durationMinutes === 'number' ? g.durationMinutes : '',
       location: g.location ?? '',
       venueId: g.venueId ?? '',
       venueFacilityId: g.venueFacilityId ?? '',
@@ -432,6 +433,7 @@ export default function AdminSchedulePage() {
       awayPlaceholder: awaySlot?.displayName,
       date:              form.date,
       time:              form.time,
+      durationMinutes:   form.durationMinutes === '' ? null : form.durationMinutes,
       location:          form.location,
       venueId:           form.venueId           || undefined,
       venueFacilityId:   form.venueFacilityId   || undefined,
@@ -1446,6 +1448,20 @@ export default function AdminSchedulePage() {
                   <label className="form-label">Time</label>
                   <input className="form-input" type="time" value={form.time}
                     onChange={e => setForm(f => ({ ...f, time: e.target.value }))} />
+                </div>
+              </div>
+              <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Game Length (min)</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="1" max="600" step="5"
+                    placeholder="Default"
+                    value={form.durationMinutes === '' ? '' : form.durationMinutes}
+                    onChange={e => { const v = e.target.value; setForm(f => ({ ...f, durationMinutes: v === '' ? '' : (parseInt(v, 10) || '') })); }}
+                  />
+                  <small style={{ color: 'var(--white-40)', fontSize: '0.75rem' }}>Leave blank to use the division/event default. Set a value for a longer game (e.g. a final).</small>
                 </div>
               </div>
               {(() => {
@@ -2570,7 +2586,7 @@ function inferGamePool(game: any, allGames: any[], pools: any[]): string | null 
   // Transitive: "Winner SF1" → find that game's pool.
   // Match by bracketId (set per-pool in executeCreate) to avoid code collisions.
   const ph = game.homePlaceholder || game.awayPlaceholder || '';
-  const winnerCode = ph.match(/Winner (\w+)/)?.[1];
+  const winnerCode = ph.match(/(?:Winner|Loser) ([\w-]+)/)?.[1];
   if (winnerCode) {
     const source = allGames.find((g: any) =>
       g.bracketCode === winnerCode &&

@@ -517,8 +517,6 @@ export async function POST(req: Request) {
         'resourcesLayout',
         'game_duration_minutes',
         'buffer_minutes',
-        'playoff_game_duration_minutes',
-        'playoff_buffer_minutes',
         'schedule_travel_venue_buffer_minutes',
         'schedule_travel_facility_buffer_minutes',
         // Scope controls (Phase 2 — Divisions UX Rework)
@@ -547,15 +545,9 @@ export async function POST(req: Request) {
           sanitized[k] = n;
           continue;
         }
-        if (k === 'buffer_minutes' || k === 'playoff_buffer_minutes') {
+        if (k === 'buffer_minutes') {
           const n = Number(v);
           if (!Number.isInteger(n) || n < 0 || n > 120) continue;
-          sanitized[k] = n;
-          continue;
-        }
-        if (k === 'playoff_game_duration_minutes') {
-          const n = Number(v);
-          if (!Number.isInteger(n) || n < 1 || n > 600) continue;
           sanitized[k] = n;
           continue;
         }

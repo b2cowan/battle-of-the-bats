@@ -47,15 +47,6 @@ export interface TournamentSettings {
    */
   buffer_minutes?: number;
   /**
-   * Playoff-specific game duration (minutes). When set, PLAYOFF games use this instead of
-   * game_duration_minutes — for scheduling AND conflict checks — so playoffs can run longer
-   * (or shorter) than round-robin games. Set from the Playoff Bracket Builder. Absent = use
-   * game_duration_minutes.
-   */
-  playoff_game_duration_minutes?: number;
-  /** Playoff-specific buffer (minutes) between games at a facility. Absent = use buffer_minutes. */
-  playoff_buffer_minutes?: number;
-  /**
    * Organizer-entered estimate for how much rest a team should have when it changes parent venues.
    * This is a no-cost manual buffer; it is not calculated from maps or drive-time APIs.
    */
@@ -391,6 +382,8 @@ export interface Team {
   poolId?: string; // The new way (link to pools table)
   waitlistPosition?: number | null;
   slotId?: string | null;
+  /** Optional organizer-assigned seed number within the division (1 = top seed). Null = unseeded. */
+  seed?: number | null;
   // ── Game-day check-in (migration 110) — optional; populated by the check-in API ──
   checkInStatus?: CheckInStatus;
   checkedInAt?: string | null;
@@ -445,6 +438,8 @@ export interface Game {
   awayTeamId: string;
   date: string; // ISO date string YYYY-MM-DD
   time: string; // HH:MM
+  /** Optional per-game length (minutes). Null/undefined = resolved default (division → tournament → 90). */
+  durationMinutes?: number | null;
   location: string;          // display name (kept for backward compat)
   venueId?: string;          // links to a managed Venue record (diamonds.id)
   venueFacilityId?: string;  // links to a venue_facilities record

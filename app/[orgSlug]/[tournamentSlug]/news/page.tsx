@@ -28,11 +28,6 @@ export default async function NewsPage({
   if (!tournament) notFound();
 
   const contactEmail = tournament.contactEmail ?? org?.contactEmail ?? null;
-  const homeHref = `/${orgSlug}/${tournamentSlug}`;
-  const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
-  const rulesHref = `/${orgSlug}/${tournamentSlug}/rules`;
-  const showSchedulePage = isPublicPageEnabled(tournament, 'schedule');
-  const showRulesPage = isPublicPageEnabled(tournament, 'rules');
 
   if (!isPublicPageEnabled(tournament, 'news')) {
     return (
@@ -45,11 +40,6 @@ export default async function NewsPage({
               title="News unavailable"
               description="The organizer has hidden public announcements for this tournament."
               contactEmail={contactEmail}
-              actions={[
-                { href: homeHref, label: 'Tournament Home', variant: 'ghost' as const },
-                ...(showSchedulePage ? [{ href: scheduleHref, label: 'View Schedule', variant: 'ghost' as const }] : []),
-                ...(showRulesPage ? [{ href: rulesHref, label: 'Tournament Rules', variant: 'ghost' as const }] : []),
-              ]}
             />
           </div>
         </div>
@@ -114,13 +104,7 @@ export default async function NewsPage({
                   : 'Tournament announcements will appear here when the organizer posts them.'
               }
               contactEmail={contactEmail}
-              actions={[
-                isFiltering
-                  ? { href: `/${orgSlug}/${tournamentSlug}/news?view=all`, label: 'View All News', variant: 'ghost' as const }
-                  : { href: homeHref, label: 'Tournament Home', variant: 'ghost' as const },
-                ...(showSchedulePage ? [{ href: scheduleHref, label: 'View Schedule', variant: 'ghost' as const }] : []),
-                ...(showRulesPage ? [{ href: rulesHref, label: 'Tournament Rules', variant: 'ghost' as const }] : []),
-              ]}
+              actions={isFiltering ? [{ href: `/${orgSlug}/${tournamentSlug}/news?view=all`, label: 'View All News', variant: 'ghost' as const }] : []}
             />
           ) : (
             <>

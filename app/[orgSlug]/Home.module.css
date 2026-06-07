@@ -989,8 +989,9 @@
 
 @media (max-width: 600px) {
   .stats {
-    grid-template-columns: 1fr 1fr 1fr;
     display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    width: 100%;
     gap: 1rem;
     padding: 1rem;
   }
@@ -1001,6 +1002,9 @@
   .stats { gap: 1.5rem; padding: 1.25rem 1.5rem; }
   .annGrid { grid-template-columns: 1fr; }
   .annFeatured { grid-column: 1; }
+  .page {
+    padding-bottom: calc(var(--bottom-nav-height, 72px) + 3.5rem + env(safe-area-inset-bottom));
+  }
 }
 
 /* ── Public Site module styles ──────────────────────────────────────────────── */

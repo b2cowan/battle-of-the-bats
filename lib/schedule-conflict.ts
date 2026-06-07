@@ -33,16 +33,17 @@ export const SYSTEM_TIMING_DEFAULTS: GameTiming = {
 };
 
 /**
- * Resolves effective game timing for a division by cascading:
- *   division.settings → tournament.settings → SYSTEM_TIMING_DEFAULTS
+ * Resolves effective game timing by cascading the DURATION:
+ *   per-game override → division.settings → tournament.settings → SYSTEM_TIMING_DEFAULTS
  *
- * Both fields are resolved independently so a division can override just one.
+ * `gameDurationOverride` is a single game's own length (`game.durationMinutes`),
+ * so playoff games, finals, etc. can run their own length and are validated
+ * against it. Buffer cascades division → tournament → default (no per-game buffer).
  */
 export function resolveGameTiming(
   division: Division | undefined | null,
   tournament: Tournament | undefined | null,
-  /** Playoff games may run on their own length — an explicit playoff override wins for them. */
-  isPlayoff = false,
+  gameDurationOverride?: number | null,
 ): GameTiming {
   const divS = division?.settings;
   const tourS = tournament?.settings;
@@ -50,13 +51,12 @@ export function resolveGameTiming(
   const nonNeg = (v: unknown) => (typeof v === 'number' && v >= 0 ? v : undefined);
 
   const durationMinutes =
-    (isPlayoff ? pos(tourS?.playoff_game_duration_minutes) : undefined) ??
+    pos(gameDurationOverride) ??
     pos(divS?.game_duration_minutes) ??
     pos(tourS?.game_duration_minutes) ??
     SYSTEM_TIMING_DEFAULTS.durationMinutes;
 
   const bufferMinutes =
-    (isPlayoff ? nonNeg(tourS?.playoff_buffer_minutes) : undefined) ??
     nonNeg(divS?.buffer_minutes) ??
     nonNeg(tourS?.buffer_minutes) ??
     SYSTEM_TIMING_DEFAULTS.bufferMinutes;
@@ -111,8 +111,8 @@ export interface ConflictGame {
   scheduleFacilityLaneId?: string | null;
   /** Which division this game belongs to (for resolving timing). */
   divisionId?: string | null;
-  /** Playoff games may use a playoff-specific game length when resolving timing. */
-  isPlayoff?: boolean;
+  /** This game's own length (minutes), if set — wins over the division/tournament default. */
+  durationMinutes?: number | null;
 }
 
 export interface ConflictResult {
@@ -160,7 +160,7 @@ export function checkVenueConflict(params: CheckConflictParams): ConflictResult 
 
   // Resolve the proposed game's own timing (based on its division).
   const proposedDivision = divisions.find(d => d.id === proposedGame.divisionId);
-  const proposedTiming = resolveGameTiming(proposedDivision, tournament, proposedGame.isPlayoff);
+  const proposedTiming = resolveGameTiming(proposedDivision, tournament, proposedGame.durationMinutes);
   const proposedEnd = proposedStart + proposedTiming.durationMinutes;
 
   // Find all games at the same venue/facility on the same date, excluding:
@@ -194,7 +194,7 @@ export function checkVenueConflict(params: CheckConflictParams): ConflictResult 
 
     // Resolve the existing game's timing (from its own division).
     const exDivision = divisions.find(d => d.id === existing.divisionId);
-    const exTiming = resolveGameTiming(exDivision, tournament, existing.isPlayoff);
+    const exTiming = resolveGameTiming(exDivision, tournament, existing.durationMinutes);
     const exEnd = exStart + exTiming.durationMinutes;
 
     // Hard overlap: windows physically intersect.
@@ -230,7 +230,7 @@ export function checkVenueConflict(params: CheckConflictParams): ConflictResult 
     const gStart = timeToMinutes(g.startTime);
     if (isNaN(gStart)) return max;
     const gDiv = divisions.find(d => d.id === g.divisionId);
-    const gTiming = resolveGameTiming(gDiv, tournament, g.isPlayoff);
+    const gTiming = resolveGameTiming(gDiv, tournament, g.durationMinutes);
     return Math.max(max, gStart + gTiming.durationMinutes + gTiming.bufferMinutes);
   }, 0);
 

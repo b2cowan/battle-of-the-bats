@@ -40,9 +40,6 @@ export default async function RulesPage({
   if (!tournament) notFound();
 
   const contactEmail = tournament.contactEmail ?? org?.contactEmail ?? null;
-  const homeHref = `/${orgSlug}/${tournamentSlug}`;
-  const newsHref = `/${orgSlug}/${tournamentSlug}/news`;
-  const showNewsPage = isPublicPageEnabled(tournament, 'news');
 
   if (!isPublicPageEnabled(tournament, 'rules')) {
     return (
@@ -55,10 +52,6 @@ export default async function RulesPage({
               title="Rules unavailable"
               description="The organizer has hidden public rules and resources for this tournament."
               contactEmail={contactEmail}
-              actions={[
-                { href: homeHref, label: 'Tournament Home', variant: 'ghost' as const },
-                ...(showNewsPage ? [{ href: newsHref, label: 'News', variant: 'ghost' as const }] : []),
-              ]}
             />
           </div>
         </div>
@@ -115,10 +108,6 @@ export default async function RulesPage({
               title="Rules coming soon"
               description="Rules and resources have not been published yet. Check back before game day."
               contactEmail={contactEmail}
-              actions={[
-                { href: homeHref, label: 'Tournament Home', variant: 'ghost' as const },
-                ...(showNewsPage ? [{ href: newsHref, label: 'News', variant: 'ghost' as const }] : []),
-              ]}
             />
           )}
 

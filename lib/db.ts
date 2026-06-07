@@ -1267,7 +1267,8 @@ export async function getTeams(tournamentId?: string, options: ReadOptions = {})
     adminNotes: t.admin_notes,
     poolId: t.pool_id,
     waitlistPosition: t.waitlist_position ?? null,
-    slotId: t.slot_id ?? null
+    slotId: t.slot_id ?? null,
+    seed: t.seed ?? null,
   }));
 }
 
@@ -1500,6 +1501,7 @@ export async function getGames(tournamentId?: string, options: ReadOptions = {})
     awayTeamId: g.away_team_id,
     date: g.game_date,
     time: g.game_time,
+    durationMinutes: g.duration_minutes ?? null,
     location: g.location,
     venueId: g.diamond_id,
     venueFacilityId: g.venue_facility_id,
@@ -1527,6 +1529,7 @@ export async function saveGame(g: Omit<Game, 'id'>): Promise<void> {
     away_team_id: g.awayTeamId,
     game_date: g.date,
     game_time: g.time,
+    duration_minutes: g.durationMinutes ?? null,
     location: g.location,
     diamond_id: g.venueId,
     venue_facility_id: g.venueFacilityId ?? null,
@@ -1555,6 +1558,7 @@ export async function updateGame(id: string, g: Partial<Game>, options: ReadOpti
   if (g.awayTeamId !== undefined) updates.away_team_id = g.awayTeamId;
   if (g.date !== undefined) updates.game_date = g.date;
   if (g.time !== undefined) updates.game_time = g.time;
+  if (g.durationMinutes !== undefined) updates.duration_minutes = g.durationMinutes ?? null;
   if (g.location !== undefined) updates.location = g.location;
   if (g.venueId          !== undefined) updates.diamond_id        = g.venueId;
   if (g.venueFacilityId !== undefined) updates.venue_facility_id = g.venueFacilityId ?? null;
@@ -1893,6 +1897,12 @@ export async function advancePlayoffs(game: Game, options: ReadOptions = {}) {
     const loserId = (game.homeScore || 0) > (game.awayScore || 0) ? game.awayTeamId : game.homeTeamId;
 
     for (const pg of playoffGames) {
+      // Scope advancement to the same bracket. Split-pool (no-crossover) gives each
+      // pool its own bracketId, so pools reusing identical round codes (SF1/FIN, or
+      // double-elim WB1-1/GF) don't cross-fill each other's games. Single-bracket
+      // events share one bracketId (match all); legacy games with null bracketId
+      // fall back to global matching.
+      if (game.bracketId && pg.bracketId && pg.bracketId !== game.bracketId) continue;
       const updates: Partial<Game> = {};
       if (pg.homePlaceholder === 'Winner ' + game.bracketCode) updates.homeTeamId = winnerId;
       if (pg.awayPlaceholder === 'Winner ' + game.bracketCode) updates.awayTeamId = winnerId;
