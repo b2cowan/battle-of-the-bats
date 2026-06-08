@@ -23,7 +23,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       .select(`
         *,
         divisions (name),
-        tournaments!teams_tournament_id_fkey (name, contact_email, org_id)
+        tournaments!teams_tournament_id_fkey (name, contact_email, org_id, settings)
       `)
       .eq('id', id)
       .single();
@@ -55,6 +55,10 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       || (orgOwnerId ? await getOrgOwnerEmail(orgOwnerId) : undefined)
       || undefined;
 
+    const paymentInstructions = typeof tournamentData?.settings?.payment_instructions === 'string'
+      ? tournamentData.settings.payment_instructions
+      : undefined;
+
     const p = {
       teamName:       current.name,
       coachName:      current.coach,
@@ -65,7 +69,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     };
 
     if (status === 'accepted' && current.status !== 'accepted') {
-      await sendEmail(current.email, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml(p));
+      await sendEmail(current.email, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions }));
     }
     if (status === 'rejected' && current.status !== 'rejected') {
       await sendEmail(current.email, `Registration Update — ${current.name}`, rejectionHtml(p));

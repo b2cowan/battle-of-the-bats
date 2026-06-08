@@ -50,6 +50,44 @@
   font-weight: 600;
 }
 
+/* Install CTA — solid brand-primary fill (NO gradient: gradients are banned on
+   functional buttons). Matches the public-page solid-primary convention
+   (design_decisions 2026-06-01 segmented toggles) and the banner's own
+   `border-top: 2px solid var(--primary)` accent. Self-contained so it never
+   inherits the global `.btn-primary` gradient regardless of color-mode. */
+.install {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-right: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #ffffff;
+  font-family: var(--font-data, monospace);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.35);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.install:hover {
+  background: color-mix(in srgb, var(--primary) 88%, #000 12%);
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.42);
+  transform: translateY(-1px);
+}
+
+.install:active {
+  transform: translateY(0);
+}
+
 .dismiss {
   flex-shrink: 0;
   display: flex;

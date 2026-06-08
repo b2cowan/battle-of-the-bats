@@ -381,6 +381,18 @@ export async function POST(req: Request) {
     const bulkTournamentId = (currents[0] as any)?.tournament_id;
     if (bulkTournamentId && await isTournamentLocked(bulkTournamentId)) return tournamentLockedResponse();
 
+    // Organizer-authored payment instructions (tournament-wide) for the acceptance email.
+    let bulkPaymentInstructions: string | undefined;
+    if (bulkTournamentId) {
+      const { data: bulkTournament } = await supabaseAdmin
+        .from('tournaments')
+        .select('settings')
+        .eq('id', bulkTournamentId)
+        .single();
+      const raw = (bulkTournament?.settings as { payment_instructions?: unknown } | null)?.payment_instructions;
+      if (typeof raw === 'string') bulkPaymentInstructions = raw;
+    }
+
     const updateData = items.map(item => {
       const dbUpdates: any = { ...item.updates };
       if (dbUpdates.poolId !== undefined) {
@@ -446,7 +458,7 @@ export async function POST(req: Request) {
 
       const updates = item.updates;
       if (updates.status === 'accepted' && current.status !== 'accepted') {
-        await sendEmail(current.email, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml(p));
+        await sendEmail(current.email, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions }));
         // Notify other org admins of the status change (fire-and-forget)
         notify({
           orgId: ctx.org.id,

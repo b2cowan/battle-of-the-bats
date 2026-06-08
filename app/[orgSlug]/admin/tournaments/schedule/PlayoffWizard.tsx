@@ -7,7 +7,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { teamColor } from '@/lib/team-color';
 import { Division, Team, Venue, PlayoffConfig, Tournament, Game } from '@/lib/types';
 import { formatPoolName } from '@/lib/utils';
-import { buildScheduleMetrics, resolveManualTravelBuffers } from '@/lib/schedule-metrics';
+import { resolveManualTravelBuffers } from '@/lib/schedule-metrics';
+import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
 import { resolveGameTiming } from '@/lib/schedule-conflict';
 import NumberStepper from '@/components/admin/NumberStepper';
 import {
@@ -24,10 +25,10 @@ import {
   type ScheduleDraftSlot,
   type SchedulePrioritySettings,
 } from '@/lib/schedule-generator';
-import { generateBracket, nextPow2 } from '@/lib/playoff-bracket';
+import { generateBracket, nextPow2, ordinal } from '@/lib/playoff-bracket';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import BracketBuilder from './components/BracketBuilder';
-import ScheduleHealthPanel from './components/ScheduleHealthPanel';
+import BracketHealthPanel from './components/BracketHealthPanel';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './schedule-admin.module.css';
 
@@ -202,6 +203,11 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
   const [preview, setPreview] = useState<PlayoffPreviewRow[]>([]);
   const [templatePreview, setTemplatePreview] = useState<PlayoffPreviewRow[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
+  // Backdrop-close guard: only close when a click both STARTS and ENDS on the
+  // overlay itself. Native <input type="date|time"> picker popups render outside
+  // the modal DOM, so selecting a value used to land a click on the overlay and
+  // close the whole wizard mid-edit. Tracking the mousedown target prevents that.
+  const overlayMouseDownRef = useRef(false);
   const [showWarning, setShowWarning] = useState(false);
   const [autoSchedule, setAutoSchedule] = useState(true);
   const [generationScope, setGenerationScope] = useState<GenerationScope>('replace');
@@ -415,38 +421,25 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
     .map(gameToFixedAssignment);
   const activeGenerationScope: GenerationScope = canBuildFromCurrent ? generationScope : 'replace';
 
-  const previewMetrics = useMemo(() => {
+  // Bracket-aware health (NOT round-robin per-team rest). A bracket's seeds flow
+  // through the tree, so rest is a property of advancement edges, not of the
+  // "Winner X"/"Loser X" placeholders. buildBracketScheduleMetrics measures the
+  // edges (tightest turnaround, feasibility, worst-case games/day, longest run)
+  // and scopes codes by pool so split-pool brackets don't cross-resolve.
+  const bracketMetrics = useMemo(() => {
     if (preview.length === 0) return null;
-    if (preview.some((p: PlayoffPreviewRow) => !p.date || !p.time)) return null;
-    return buildScheduleMetrics({
-      games: preview.map((p: PlayoffPreviewRow, index) => ({
-        id: `playoff-preview-${index}`,
-        tournamentId,
-        divisionId: division.id,
-        homePlaceholder: p.home,
-        awayPlaceholder: p.away,
+    return buildBracketScheduleMetrics(
+      preview.map((p: PlayoffPreviewRow) => ({
+        code: p.code,
+        home: p.home,
+        away: p.away,
         date: p.date || null,
         time: p.time || null,
-        venueId: p.venueId || null,
-        venueFacilityId: p.venueFacilityId || null,
-        scheduleFacilityLaneId: p.scheduleFacilityLaneId ?? null,
-        scheduleFacilityLaneLabel: p.scheduleFacilityLaneLabel ?? null,
-        location: p.location ?? null,
-        status: 'scheduled',
-        isPlayoff: true,
+        pool: p.pool ?? null,
       })),
-      teams,
-      divisions: [division],
-      venues,
-      tournament,
-      divisionId: division.id,
-      gameDurationMinutes: gameLength,
-      bufferMinutes: breakLength,
-      manualTravelBuffers,
-      maxGamesPerDay: priorities.maxGamesPerDay,
-      includePlayoffs: true,
-    });
-  }, [preview, tournamentId, division, teams, venues, tournament, gameLength, breakLength, manualTravelBuffers, priorities.maxGamesPerDay]);
+      { gameDurationMinutes: gameLength, minRestMinutes: priorities.minRestMinutes },
+    );
+  }, [preview, gameLength, priorities.minRestMinutes]);
 
 
 
@@ -750,34 +743,37 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
     const { crossover, hasThirdPlace, teamsQualifying } = config;
     const pools = division.pools || [];
     
-    // 1. No Crossover (Split Pool Championships)
+    // 1. No Crossover (Split Pool Championships) — each pool runs its OWN bracket
+    //    through the same unified engine as single-bracket play, so every format
+    //    (single / consolation / double / placement) is available per pool. The
+    //    chosen `config.format` applies to all pools; qualifying count + (for the
+    //    formats that have one) the 3rd-place game stay per-pool via splitConfigs.
+    //    `Seed #k` references are remapped to this pool's ranked labels
+    //    ("1st Pool A", "2nd Pool A", …); Winner/Loser references pass through.
+    //    Each pool gets its own bracketId at save (see poolBracketIds below), and
+    //    advancePlayoffs scopes Winner/Loser routing by bracketId so identical
+    //    codes (e.g. WB1-1) never cross between pools.
     if (crossover === 'none' && pools.length >= 2) {
       pools.forEach(pool => {
         const poolConfig = config.splitConfigs?.[pool.id] || { teamsQualifying: config.teamsQualifying, hasThirdPlace: config.hasThirdPlace };
         const qTeams = poolConfig.teamsQualifying;
-        const pHasThird = poolConfig.hasThirdPlace;
-
-        if (qTeams === 2) {
-          games.push({ round: 'Championship', pool: pool.name, home: `1st Pool ${pool.name}`, away: `2nd Pool ${pool.name}`, code: `FIN` });
-        } else if (qTeams === 8) {
-          for (let i = 1; i <= 4; i++) {
-            games.push({ round: 'Quarterfinal', pool: pool.name, home: `${i}${['st','nd','rd','th'][i-1] || 'th'} Pool ${pool.name}`, away: `${9-i}${['st','nd','rd','th'][8-i] || 'th'} Pool ${pool.name}`, code: `QF${i}` });
-          }
-          games.push({ round: 'Semifinal', pool: pool.name, home: `Winner QF1`, away: `Winner QF4`, code: `SF1` });
-          games.push({ round: 'Semifinal', pool: pool.name, home: `Winner QF2`, away: `Winner QF3`, code: `SF2` });
-          games.push({ round: 'Championship', pool: pool.name, home: `Winner SF1`, away: `Winner SF2`, code: `FIN` });
-          if (pHasThird) games.push({ round: '3rd Place', pool: pool.name, home: `Loser SF1`, away: `Loser SF2`, code: `3RD` });
-        } else {
-          // Default to 4 teams
-          games.push({ round: 'Semifinal', pool: pool.name, home: `1st Pool ${pool.name}`, away: `4th Pool ${pool.name}`, code: `SF1` });
-          games.push({ round: 'Semifinal', pool: pool.name, home: `2nd Pool ${pool.name}`, away: `3rd Pool ${pool.name}`, code: `SF2` });
-          games.push({ round: 'Championship', pool: pool.name, home: `Winner SF1`, away: `Winner SF2`, code: `FIN` });
-          if (pHasThird) {
-            games.push({ round: '3rd Place', pool: pool.name, home: `Loser SF1`, away: `Loser SF2`, code: `3RD` });
-          }
+        const poolLabels = Array.from({ length: qTeams }, (_, i) => `${ordinal(i + 1)} Pool ${pool.name}`);
+        const generated = generateBracket(qTeams, {
+          format: config.format ?? 'single',
+          thirdPlace: poolConfig.hasThirdPlace,
+          grandFinalReset: config.grandFinalReset ?? true,
+        });
+        for (const m of generated) {
+          games.push({
+            round: m.round,
+            code: m.code,
+            pool: pool.name,
+            home: remapSeedRef(m.home, poolLabels),
+            away: remapSeedRef(m.away, poolLabels),
+          });
         }
       });
-    } 
+    }
     // 2 & 3. Single-bracket seeding — standard crossover (interleaved pool
     // labels) or global reseed (Seed #1..N). Both feed the unified bracket
     // engine, which handles any team count (byes) and the single / consolation
@@ -1049,8 +1045,15 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ padding: 0, display: 'flex', flexDirection: 'column', maxHeight: '95vh', width: '100%', maxWidth: templatePreview.length > 0 && config.teamsQualifying >= 8 ? 'min(90%, 1080px)' : '700px' }}>
+    <div
+      className="modal-overlay"
+      onMouseDown={e => { overlayMouseDownRef.current = e.target === e.currentTarget; }}
+      onClick={e => {
+        if (overlayMouseDownRef.current && e.target === e.currentTarget) onClose();
+        overlayMouseDownRef.current = false;
+      }}
+    >
+      <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ padding: 0, display: 'flex', flexDirection: 'column', maxHeight: '95vh', width: '100%', maxWidth: templatePreview.length > 0 ? 'min(95vw, 1360px)' : '700px' }}>
         
         {/* Header */}
         <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
@@ -1102,50 +1105,59 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                 </div>
                 )}
 
-                {config.crossover !== 'none' ? (
-                  <>
-                    <div className="form-group">
-                      <label className="form-label">Bracket Format</label>
-                      <select className="form-select" value={config.format ?? 'single'} onChange={e => setConfig({...config, format: e.target.value as PlayoffConfig['format']})}>
-                        <option value="single">Single Elimination (1-game guarantee)</option>
-                        <option value="consolation">Consolation (2-game guarantee)</option>
-                        <option value="double">Double Elimination</option>
-                        <option value="placement">Full Placement (every team ranked)</option>
-                      </select>
-                      <small className={styles.crossoverHint}>
-                        {(config.format ?? 'single') === 'single' && 'Lose once and you are out. Top seeds receive a bye when the team count is uneven.'}
-                        {config.format === 'consolation' && 'First-round losers drop into a consolation bracket, so no team is eliminated after a single game.'}
-                        {config.format === 'double' && 'A losers bracket gives every team a second life — a team must lose twice to be eliminated.'}
-                        {config.format === 'placement' && 'Every team keeps playing to a final position (5th, 7th, …) — no one is eliminated, everyone finishes ranked.'}
-                      </small>
-                    </div>
-                    {!isPlayoffOnly && (
-                    <div className="form-group">
-                      <label className="form-label">Qualified Teams</label>
-                      <select className="form-select" value={config.teamsQualifying} onChange={e => setConfig({...config, teamsQualifying: Number(e.target.value)})}>
-                        <option value={2}>Top 2 Teams (Final Only)</option>
-                        <option value={4}>Top 4 Teams (SF + Final)</option>
-                        <option value={8}>Top 8 Teams (QF + SF + Final)</option>
-                      </select>
-                    </div>
-                    )}
-                    {config.format === 'double' ? (
-                      <div className="form-group" style={{ justifyContent: 'center' }}>
-                         <label className="flex items-center gap-3 cursor-pointer">
-                          <input type="checkbox" checked={config.grandFinalReset ?? true} onChange={e => setConfig({...config, grandFinalReset: e.target.checked})} />
-                          <span className="text-sm font-bold">Play if-necessary grand final (reset)</span>
-                        </label>
-                      </div>
-                    ) : config.format === 'placement' ? null : (
-                      <div className="form-group" style={{ justifyContent: 'center' }}>
-                         <label className="flex items-center gap-3 cursor-pointer">
-                          <input type="checkbox" checked={config.hasThirdPlace} onChange={e => setConfig({...config, hasThirdPlace: e.target.checked})} />
-                          <span className="text-sm font-bold">Include 3rd Place / Consolidation Game</span>
-                        </label>
-                      </div>
-                    )}
-                  </>
-                ) : null}
+                {/* Bracket Format — applies to all pools when each pool runs its own bracket. */}
+                <div className="form-group">
+                  <label className="form-label">Bracket Format</label>
+                  <select className="form-select" value={config.format ?? 'single'} onChange={e => setConfig({...config, format: e.target.value as PlayoffConfig['format']})}>
+                    <option value="single">Single Elimination (1-game guarantee)</option>
+                    <option value="consolation">Consolation (2-game guarantee)</option>
+                    <option value="double">Double Elimination</option>
+                    <option value="placement">Full Placement (every team ranked)</option>
+                  </select>
+                  <small className={styles.crossoverHint}>
+                    {(config.format ?? 'single') === 'single' && 'Lose once and you are out. Top seeds receive a bye when the team count is uneven.'}
+                    {config.format === 'consolation' && 'First-round losers drop into a consolation bracket, so no team is eliminated after a single game.'}
+                    {config.format === 'double' && 'A losers bracket gives every team a second life — a team must lose twice to be eliminated.'}
+                    {config.format === 'placement' && 'Every team keeps playing to a final position (5th, 7th, …) — no one is eliminated, everyone finishes ranked.'}
+                    {config.crossover === 'none' && ' Applied to every pool’s bracket.'}
+                  </small>
+                </div>
+                {/* Qualified Teams — single-bracket only (split-pool sets it per pool below). */}
+                {config.crossover !== 'none' && !isPlayoffOnly && (
+                  <div className="form-group">
+                    <label className="form-label">Teams advancing</label>
+                    <NumberStepper
+                      value={Math.min(config.teamsQualifying, Math.max(2, teams.length))}
+                      min={2}
+                      max={Math.max(2, teams.length)}
+                      step={config.crossover === 'standard' ? 2 : 1}
+                      onChange={v => setConfig({ ...config, teamsQualifying: v })}
+                      ariaLabel="Number of teams advancing to the bracket"
+                    />
+                    <small className={styles.crossoverHint}>
+                      Top {config.teamsQualifying} of {teams.length} advance{config.crossover === 'standard' ? ', split across the two pools' : ''}.
+                      {(() => { const b = nextPow2(config.teamsQualifying) - config.teamsQualifying; return b > 0 ? ` ${b} bye${b === 1 ? '' : 's'} to the top seed${b === 1 ? '' : 's'}.` : ''; })()}
+                    </small>
+                  </div>
+                )}
+                {/* If-necessary grand final — double elimination, applies to all pools. */}
+                {config.format === 'double' && (
+                  <div className="form-group" style={{ justifyContent: 'center' }}>
+                     <label className="flex items-center gap-3 cursor-pointer">
+                      <input type="checkbox" checked={config.grandFinalReset ?? true} onChange={e => setConfig({...config, grandFinalReset: e.target.checked})} />
+                      <span className="text-sm font-bold">Play if-necessary grand final (reset)</span>
+                    </label>
+                  </div>
+                )}
+                {/* 3rd-place game — single-bracket single/consolation only (split-pool sets it per pool). */}
+                {config.crossover !== 'none' && config.format !== 'double' && config.format !== 'placement' && (
+                  <div className="form-group" style={{ justifyContent: 'center' }}>
+                     <label className="flex items-center gap-3 cursor-pointer">
+                      <input type="checkbox" checked={config.hasThirdPlace} onChange={e => setConfig({...config, hasThirdPlace: e.target.checked})} />
+                      <span className="text-sm font-bold">Include 3rd Place / Consolidation Game</span>
+                    </label>
+                  </div>
+                )}
               </div>
 
               {config.crossover === 'none' && division.pools && (
@@ -1154,41 +1166,43 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {division.pools.map(pool => {
                       const pConfig = config.splitConfigs?.[pool.id] || { teamsQualifying: 4, hasThirdPlace: false };
+                      const poolTeamCount = teams.filter(t => t.poolId === pool.id).length;
                       return (
                         <div key={pool.id} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '2rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: '2px', border: '1px solid var(--border)' }}>
                           <span className="font-bold">{formatPoolName(pool.name)}</span>
-                          <div className="flex gap-4 items-center">
-                            <span className="text-xs text-muted">Qualifying:</span>
-                            <select 
-                              className="form-select form-select-sm" 
-                              value={pConfig.teamsQualifying} 
-                              onChange={e => setConfig({
-                                ...config, 
-                                splitConfigs: { 
-                                  ...(config.splitConfigs || {}), 
-                                  [pool.id]: { ...pConfig, teamsQualifying: Number(e.target.value) } 
+                          <div className="flex gap-3 items-center">
+                            <span className="text-xs text-muted" style={{ whiteSpace: 'nowrap' }}>Advancing:</span>
+                            <NumberStepper
+                              value={Math.min(pConfig.teamsQualifying, Math.max(2, poolTeamCount))}
+                              min={2}
+                              max={Math.max(2, poolTeamCount)}
+                              step={1}
+                              onChange={v => setConfig({
+                                ...config,
+                                splitConfigs: {
+                                  ...(config.splitConfigs || {}),
+                                  [pool.id]: { ...pConfig, teamsQualifying: v }
                                 }
                               })}
-                            >
-                              <option value={2}>Top 2 Teams</option>
-                              <option value={4}>Top 4 Teams</option>
-                              <option value={8}>Top 8 Teams</option>
-                            </select>
+                              ariaLabel={`Teams advancing in ${formatPoolName(pool.name)}`}
+                            />
                           </div>
+                          {config.format !== 'double' && config.format !== 'placement' ? (
                           <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={pConfig.hasThirdPlace} 
+                            <input
+                              type="checkbox"
+                              checked={pConfig.hasThirdPlace}
                               onChange={e => setConfig({
-                                ...config, 
-                                splitConfigs: { 
-                                  ...(config.splitConfigs || {}), 
-                                  [pool.id]: { ...pConfig, hasThirdPlace: e.target.checked } 
+                                ...config,
+                                splitConfigs: {
+                                  ...(config.splitConfigs || {}),
+                                  [pool.id]: { ...pConfig, hasThirdPlace: e.target.checked }
                                 }
                               })}
                             />
                             <span className="text-xs font-bold">3rd Place</span>
                           </label>
+                          ) : <span />}
                         </div>
                       );
                     })}
@@ -1554,12 +1568,11 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                     </div>
                   )}
 
-                  {previewMetrics && (
-                    <ScheduleHealthPanel
-                      metrics={previewMetrics}
+                  {bracketMetrics && (
+                    <BracketHealthPanel
+                      metrics={bracketMetrics}
                       title="Playoff Draft Health"
                       subtitle={`${division.name} · ${autoSchedule ? 'Scheduled playoff windows' : 'Bracket only'}`}
-                      showTeamTable
                     />
                   )}
 

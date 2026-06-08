@@ -31,15 +31,22 @@
   border: 1px solid transparent;
   color: var(--logic-lime);
   font-family: var(--font-data);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
   width: 100%;
   padding: 0.25rem;
   border-radius: 2px;
   text-align: center;
   transition: border-color 0.2s ease;
+  /* Editable round title is a textarea so long names (e.g. "Grand Final (If
+     Necessary)") wrap instead of clipping; JS sets height to fit content. */
+  display: block;
+  resize: none;
+  overflow: hidden;
+  white-space: normal;
 }
 
 .roundTitleInput:hover, .roundTitleInput:focus {
@@ -388,4 +395,192 @@
     min-width: 0;
     padding: 1rem;
   }
+
+  /* Fork collapses to stacked, each band scrolls horizontally. */
+  .fork { display: flex; flex-direction: column; gap: 1.25rem; width: auto; }
+  .forkMiddle { gap: 1.25rem; }
+  .forkSeed, .forkFinals, .band {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.4rem;
+  }
+  .compactCard { width: 72vw; flex: 0 0 72vw; }
+}
+
+/* ── Fork layout (double elimination): seed left · winners top / losers bottom · finals right ── */
+.fork {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  gap: 2rem;
+  width: max-content;
+  margin: 0 auto;
+  position: relative;
+}
+.forkSeed {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  justify-content: center;
+}
+/* Finals lay out left→right (Grand Final, then the if-necessary reset that
+   depends on it) — NOT stacked, since GF2 follows GF. */
+.forkFinals {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  align-items: center;
+}
+.forkMiddle { display: flex; flex-direction: column; gap: 2.5rem; }
+.band { display: flex; gap: 2rem; align-items: flex-start; }
+.bandTag {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+  padding-left: 0.1rem;
+}
+.bandTagWin { color: rgba(var(--success-rgb), 0.85); }
+.bandTagLoss { color: rgba(var(--warning-rgb), 0.85); }
+
+/* ── Compact game card (click to edit) ── */
+.compactCard {
+  background: var(--surface);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  width: 188px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.compactCard:hover {
+  border-color: var(--logic-lime);
+  box-shadow: 0 0 0 1px rgba(var(--logic-lime-rgb), 0.5), 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+.compactCard:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 1px; }
+.compactHead {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.45rem;
+  background: var(--bg-2);
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  border-radius: 3px 3px 0 0;
+}
+.compactCode {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--white-60);
+}
+.compactTeams { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.45rem 0.5rem; }
+.compactTeamRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--white-90);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.compactMeta { padding: 0 0.5rem 0.45rem; font-size: 0.62rem; color: var(--white-45); }
+.compactMetaEmpty { color: rgba(var(--logic-lime-rgb), 0.7); }
+
+.matchupCardEditing {
+  border-color: var(--logic-lime);
+  box-shadow: 0 0 0 1px var(--logic-lime), 0 10px 28px rgba(0, 0, 0, 0.4);
+}
+.doneBtn {
+  margin: 0 0.5rem 0.5rem;
+  padding: 0.35rem;
+  background: rgba(var(--logic-lime-rgb), 0.14);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.5);
+  color: var(--logic-lime);
+  border-radius: 2px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.doneBtn:hover { background: rgba(var(--logic-lime-rgb), 0.22); }
+
+/* ── Pan + scroll ergonomics ── */
+.builderContainerPan { cursor: grab; }
+.builderContainerPanning { cursor: grabbing; }
+.builderContainerPan::-webkit-scrollbar { height: 12px; }
+.builderContainerPan::-webkit-scrollbar-track { background: var(--bg-2); border-radius: 6px; }
+.builderContainerPan::-webkit-scrollbar-thumb {
+  background: rgba(var(--blueprint-blue-rgb), 0.55);
+  border-radius: 6px;
+  border: 2px solid var(--bg-2);
+}
+.builderContainerPan::-webkit-scrollbar-thumb:hover { background: rgba(var(--logic-lime-rgb), 0.6); }
+.builderWrap { width: 100%; }
+
+/* Pinned toolbar above the canvas — does NOT scroll with the bracket. */
+.canvasToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.1rem 0.1rem 0.6rem;
+  flex-wrap: wrap;
+}
+.panHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  color: var(--white-40);
+}
+
+/* Zoom HUD — terminal-HUD control group (2px radius, square buttons, mono %). */
+.zoomHud {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0.15rem;
+}
+.zoomBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  color: var(--white-60);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 0.12s ease, background 0.12s ease, transform 0.1s ease;
+}
+.zoomBtn:hover { color: var(--logic-lime); background: rgba(var(--logic-lime-rgb), 0.1); }
+.zoomBtn:active { transform: scale(0.94); }
+.zoomPct {
+  min-width: 46px;
+  text-align: center;
+  background: transparent;
+  border: none;
+  color: var(--white-80);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 0 0.2rem;
+}
+.zoomPct:hover { color: var(--logic-lime); }
+
+@media (max-width: 768px) {
+  .zoomHud { display: none; }
 }

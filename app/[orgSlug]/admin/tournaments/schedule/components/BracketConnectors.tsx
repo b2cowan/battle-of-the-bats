@@ -20,10 +20,15 @@ export default function BracketConnectors({
   canvasRef,
   matchups,
   finalIds,
+  scale = 1,
 }: {
   canvasRef: React.RefObject<HTMLDivElement | null>;
   matchups: ConnMatchup[];
   finalIds: Set<string>;
+  /** Current zoom factor of an ancestor (CSS `zoom`). Measurements are divided by
+   *  it so connector coords stay in the bracket's NATURAL space — the SVG then
+   *  scales with the zoomed wrapper exactly like the cards, staying aligned. */
+  scale?: number;
 }) {
   const [paths, setPaths] = useState<Array<{ d: string; final: boolean; kind: 'winner' | 'loser' }>>([]);
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -34,15 +39,16 @@ export default function BracketConnectors({
   );
 
   // Latest data for the observer callback without re-subscribing every render.
-  const dataRef = useRef({ matchups, finalIds });
-  useEffect(() => { dataRef.current = { matchups, finalIds }; });
+  const dataRef = useRef({ matchups, finalIds, scale });
+  useEffect(() => { dataRef.current = { matchups, finalIds, scale }; });
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const recompute = () => {
-      const { matchups: ms, finalIds: fids } = dataRef.current;
+      const { matchups: ms, finalIds: fids, scale } = dataRef.current;
+      const sc = scale || 1;
 
       const byCode = new Map<string, string>();
       ms.forEach(m => { if (m.code) byCode.set(m.code.trim().toLowerCase(), m.id); });
@@ -67,7 +73,7 @@ export default function BracketConnectors({
         const id = el.dataset.matchupId;
         if (!id) return;
         const r = el.getBoundingClientRect();
-        pos.set(id, { l: r.left - cRect.left, t: r.top - cRect.top, w: r.width, h: r.height });
+        pos.set(id, { l: (r.left - cRect.left) / sc, t: (r.top - cRect.top) / sc, w: r.width / sc, h: r.height / sc });
       });
 
       const next: Array<{ d: string; final: boolean; kind: 'winner' | 'loser' }> = [];
@@ -84,7 +90,7 @@ export default function BracketConnectors({
       });
 
       setPaths(next);
-      setSize({ w: canvas.scrollWidth, h: canvas.scrollHeight });
+      setSize({ w: cRect.width / sc, h: cRect.height / sc });
     };
 
     recompute();
@@ -95,8 +101,7 @@ export default function BracketConnectors({
       observer.disconnect();
       window.removeEventListener('resize', recompute);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvasRef, version]);
+  }, [canvasRef, version, scale]);
 
   if (paths.length === 0) return null;
 

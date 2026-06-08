@@ -111,7 +111,7 @@ function SignupForm() {
             </svg>
           </div>
           <h1 className={styles.title}>Create Your Organization</h1>
-          <p className={styles.sub}>FieldLogicHQ — Sports Organization Management</p>
+          <p className={styles.sub}>FieldLogicHQ — run your tournament, league, or club</p>
         </div>
 
         {verificationEmail ? (

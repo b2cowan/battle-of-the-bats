@@ -10,7 +10,7 @@ export default function CoachTournamentRecordNotFound() {
         <p className={styles.statusDesc}>
           This record is not linked to your signed-in coach account, or it no longer exists.
         </p>
-        <Link href={COACHES_TOURNAMENTS_PATH} className="btn btn-primary btn-sm">
+        <Link href={COACHES_TOURNAMENTS_PATH} className="btn btn-outline btn-sm">
           Back to Coaches Portal
         </Link>
       </div>

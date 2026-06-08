@@ -1,21 +1,27 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Trophy } from 'lucide-react';
+import { Trophy, Minus, Plus, Maximize } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
 import { formatPoolName, formatTime } from '@/lib/utils';
 import type { Game, Team } from '@/lib/types';
 import type { BracketNode } from '@/lib/types/bracket';
 import { bracketRoundInfo, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
+import styles from './LogicSyncBracket.module.css';
+
+// draw-day reveal timing
+const REVEAL_COL_STEP = 120;  // ms added per round column, left to right
+const REVEAL_ROW_STEP = 50;   // ms added per node down a column
+const REVEAL_MAX_DELAY = 900;  // cap so large brackets don't drag
+const REVEAL_TOTAL_MS = REVEAL_MAX_DELAY + 600; // last node delay + its anim + buffer
 
 // ── layout constants ───────────────────────────────────────────────────────────
 
-const ROUND_WIDTH    = 260;
-const NODE_HEIGHT    = 104;
-const NODE_GAP       = 24;
-const NODE_WIDTH     = 220;
-const CONNECTOR_STUB = 40;
-const V_PAD          = 32;
+const ROUND_WIDTH = 260;
+const NODE_HEIGHT = 104;
+const NODE_GAP    = 24;
+const NODE_WIDTH  = 220;
+const V_PAD       = 32;
 
 // ── meta strip layout constants ────────────────────────────────────────────────
 const META_H      = 18;   // height of the top date/status strip
@@ -280,35 +286,162 @@ function MatchNode({
 }
 
 function ConnectorPath({
-  fromX, fromY, toX, toY, active, kind,
+  fromX, fromY, toX, toY, active, kind, dropDown = false, revealDelay,
 }: {
   fromX: number; fromY: number;
   toX: number; toY: number;
   active: boolean;
   kind?: 'winner' | 'loser';
+  /** True for WB-loser→LB cross-band connectors: exits the source going downward
+   *  first (the curve reads as "falls to the losers bracket") rather than the
+   *  standard horizontal-first S-curve used for within-band progression. */
+  dropDown?: boolean;
+  /** When set (draw-day reveal playing), the connector fades in after this delay. */
+  revealDelay?: number;
 }) {
-  const midX = fromX + CONNECTOR_STUB;
-  const d    = `M ${fromX} ${fromY} H ${midX} V ${toY} H ${toX}`;
+  let d: string;
+  if (dropDown) {
+    // Vertical-first bezier: exit straight down from the bottom of the WB node,
+    // then sweep right to arrive horizontally at the LB node. This makes the
+    // "loser drops down" topology immediately readable.
+    const vy = Math.max(24, Math.abs(toY - fromY) / 2);
+    const hx = Math.max(16, Math.abs(toX - fromX) / 3);
+    d = `M ${fromX} ${fromY} C ${fromX} ${fromY + vy}, ${toX - hx} ${toY}, ${toX} ${toY}`;
+  } else {
+    // Horizontal S-curve: the standard bracket connector — exits horizontally
+    // from the right edge of the source and arrives horizontally at the target.
+    const dx = Math.max(20, Math.abs(toX - fromX) / 2);
+    d = `M ${fromX} ${fromY} C ${fromX + dx} ${fromY}, ${toX - dx} ${toY}, ${toX} ${toY}`;
+  }
   // Winner advances → green; loser drops to the losers bracket → amber (dashed).
   // Falls back to the org primary when the path direction is unknown (single elim).
   const baseStroke =
-    kind === 'loser'  ? 'rgba(var(--warning-rgb), 0.4)'
-    : kind === 'winner' ? 'rgba(var(--success-rgb), 0.4)'
-    : 'rgba(var(--primary-rgb), 0.3)';
+    kind === 'loser'  ? 'rgba(var(--warning-rgb), 0.35)'
+    : kind === 'winner' ? 'rgba(var(--success-rgb), 0.35)'
+    : 'rgba(var(--primary-rgb), 0.25)';
   const activeStroke =
-    kind === 'loser'  ? 'rgba(var(--warning-rgb), 0.95)'
+    kind === 'loser'  ? 'rgba(var(--warning-rgb), 0.9)'
     : kind === 'winner' ? 'var(--success)'
     : 'var(--primary)';
   return (
-    <g>
+    <g
+      className={revealDelay != null ? styles.revealConnector : undefined}
+      style={revealDelay != null ? ({ ['--d']: `${revealDelay}ms` } as React.CSSProperties) : undefined}
+    >
       <path d={d} fill="none" strokeDasharray={kind === 'loser' ? '5 4' : undefined}
-        style={{ stroke: baseStroke, strokeWidth: '1' }} />
+        style={{ stroke: baseStroke, strokeWidth: '1.5' }} />
       {active && (
         <path d={d} fill="none" strokeDasharray={kind === 'loser' ? '5 4' : '8 4'}
           className="animate-data-flow"
-          style={{ stroke: activeStroke, strokeWidth: '1.5' }} />
+          style={{ stroke: activeStroke, strokeWidth: '2' }} />
       )}
     </g>
+  );
+}
+
+// ── horizontal pan / scroll affordance ─────────────────────────────────────────
+// A bracket is frequently wider than the viewport, and a tall double-elim fork
+// pushes the native horizontal scrollbar below the fold (unreachable without
+// scrolling the page past the bracket). So mouse users get click-drag-to-pan
+// (grab cursor) and soft edge fades cue the hidden content; touch/trackpad keep
+// their native momentum scrolling untouched.
+function BracketScroller({ children }: { children: React.ReactNode }) {
+  const ref      = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const drag     = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
+  const [overflow, setOverflow] = useState(false);
+  const [atStart, setAtStart]   = useState(true);
+  const [atEnd, setAtEnd]       = useState(false);
+  const [grabbing, setGrabbing] = useState(false);
+
+  function measure() {
+    const el = ref.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setOverflow(max > 1);
+    setAtStart(el.scrollLeft <= 1);
+    setAtEnd(el.scrollLeft >= max - 1);
+  }
+
+  useEffect(() => {
+    measure();
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    if (innerRef.current) ro.observe(innerRef.current); // catch late data widening the bracket
+    return () => ro.disconnect();
+  }, []);
+
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    const el = ref.current;
+    if (!el || !overflow || e.pointerType !== 'mouse' || e.button !== 0) return;
+    drag.current = { active: true, startX: e.clientX, startScroll: el.scrollLeft, moved: false };
+    setGrabbing(true);
+  }
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    const el = ref.current;
+    if (!el || !drag.current.active) return;
+    const dx = e.clientX - drag.current.startX;
+    if (!drag.current.moved && Math.abs(dx) > 3) {
+      drag.current.moved = true;
+      try { el.setPointerCapture(e.pointerId); } catch { /* capture is best-effort */ }
+    }
+    if (drag.current.moved) el.scrollLeft = drag.current.startScroll - dx;
+  }
+  function endDrag() {
+    drag.current.active = false;
+    setGrabbing(false);
+  }
+  // Swallow the click that ends a pan so a drag-pan never reads as a tap.
+  function onClickCapture(e: React.MouseEvent<HTMLDivElement>) {
+    if (drag.current.moved) { e.stopPropagation(); drag.current.moved = false; }
+  }
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <div
+        ref={ref}
+        onScroll={measure}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onClickCapture={onClickCapture}
+        style={{
+          overflowX: 'auto',
+          overscrollBehaviorX: 'contain',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'thin',
+          cursor: overflow ? (grabbing ? 'grabbing' : 'grab') : undefined,
+        }}
+      >
+        <div ref={innerRef} style={{ width: 'fit-content', margin: '0 auto' }}>
+          {children}
+        </div>
+      </div>
+      {overflow && !atStart && <ScrollEdge side="left" />}
+      {overflow && !atEnd   && <ScrollEdge side="right" />}
+    </div>
+  );
+}
+
+function ScrollEdge({ side }: { side: 'left' | 'right' }) {
+  const isLeft = side === 'left';
+  return (
+    <span
+      aria-hidden
+      style={{
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left:  isLeft ? 0 : 'auto',
+        right: isLeft ? 'auto' : 0,
+        width: 44,
+        pointerEvents: 'none',
+        background: `linear-gradient(to ${side}, transparent, var(--surface) 88%)`,
+      }}
+    />
   );
 }
 
@@ -331,6 +464,92 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
 
   const [columns, setColumns] = useState<{ title: string; games: Game[] }[]>([]);
   const [nodes, setNodes]     = useState<BracketNode[]>([]);
+
+  // Draw-day reveal — plays a one-time staggered entrance the first time a fan
+  // opens a SEEDED, PRE-PLAY bracket this browser session. Evaluated once on the
+  // first node build (revealEvaluated guard) so realtime score updates can never
+  // re-trigger it; gated per-tournament via sessionStorage so it plays once even
+  // across the Schedule and Standings surfaces (both render this component).
+  const revealEvaluated     = useRef(false);
+  const [revealPlaying, setRevealPlaying] = useState(false);
+
+  // Zoom — SVG-native: scale the rendered size, keep the viewBox (crisp vectors).
+  // Defaults to Fit so fans see the whole bracket; the control / pinch zooms in.
+  const zoomContainerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const zoomRef = useRef(1);
+  const [zoom, setZoom] = useState(1);
+  const didFitRef = useRef(false);
+  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
+  const computeFitZoom = (): number | null => {
+    const c = zoomContainerRef.current;
+    const s = svgRef.current;
+    if (!c || !s) return null;
+    const naturalW = s.getBoundingClientRect().width / (zoomRef.current || 1);
+    const avail = c.clientWidth - 8;
+    if (naturalW <= 4 || avail <= 0) return null;
+    return Math.max(0.4, Math.min(1, avail / naturalW));
+  };
+  const stepZoom = (dir: 1 | -1) => setZoom(z => {
+    const steps = [0.4, 0.5, 0.65, 0.8, 1, 1.25, 1.5];
+    if (dir === 1) return steps.find(s => s > z + 0.001) ?? z;
+    const below = steps.filter(s => s < z - 0.001);
+    return below.length ? below[below.length - 1] : z;
+  });
+  // Default to Fit once the bracket (re)builds; never re-fits on score polls
+  // (keyed on node COUNT, which is stable across live updates).
+  useEffect(() => {
+    if (nodes.length === 0) return;
+    didFitRef.current = false;
+    const measure = () => {
+      if (didFitRef.current) return;
+      const f = computeFitZoom();
+      if (f == null) return;
+      didFitRef.current = true;
+      setZoom(f);
+    };
+    const id = requestAnimationFrame(measure);
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    if (ro && zoomContainerRef.current) ro.observe(zoomContainerRef.current);
+    return () => { cancelAnimationFrame(id); ro?.disconnect(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes.length]);
+
+  useEffect(() => {
+    if (revealEvaluated.current || nodes.length === 0) return;
+    revealEvaluated.current = true;
+
+    // reduced motion → no entrance, bracket is simply present
+    if (typeof window !== 'undefined'
+      && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+    // pre-play: nothing started or scored yet (otherwise it isn't "draw day")
+    const prePlay = nodes.every(n =>
+      n.homeScore === null && n.awayScore === null
+      && (n.status === 'scheduled' || n.status === 'cancelled'));
+    if (!prePlay) return;
+
+    // seeded: at least one real team placed (don't animate an all-TBD shell)
+    const seeded = nodes.some(n => isReal(n.homeTeam?.id ?? '') || isReal(n.awayTeam?.id ?? ''));
+    if (!seeded) return;
+
+    // once per session per tournament
+    try {
+      const key = `bracket-reveal-${tournamentId}`;
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch { /* sessionStorage unavailable — still play once this mount */ }
+
+    setRevealPlaying(true);
+  }, [nodes, tournamentId]);
+
+  // End the reveal after it finishes. Keyed on revealPlaying (not nodes) so a
+  // realtime update mid-animation can't clear the timer.
+  useEffect(() => {
+    if (!revealPlaying) return;
+    const t = setTimeout(() => setRevealPlaying(false), REVEAL_TOTAL_MS);
+    return () => clearTimeout(t);
+  }, [revealPlaying]);
 
   // rebuild from props whenever upstream data changes
   useEffect(() => {
@@ -500,13 +719,56 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
     svgHeight = totalH + V_PAD * 2;
   }
 
+  // ── draw-day reveal stagger ─────────────────────────────────────────────────
+  // Per-node entrance delay, ordered by visual position: bucket nodes by their x
+  // (round column), rank columns left→right, then stagger top→bottom within each.
+  // Only populated while the reveal is playing — empty map = no animation.
+  const revealDelay = new Map<string, number>();
+  const colRankByX = new Map<number, number>();
+  if (revealPlaying) {
+    const xs = [...new Set([...positions.values()].map(p => p.x))].sort((a, b) => a - b);
+    xs.forEach((x, i) => colRankByX.set(x, i));
+    const byX = new Map<number, { id: string; y: number }[]>();
+    positions.forEach((p, id) => {
+      const arr = byX.get(p.x) ?? [];
+      arr.push({ id, y: p.y });
+      byX.set(p.x, arr);
+    });
+    byX.forEach((arr, x) => {
+      const colRank = colRankByX.get(x) ?? 0;
+      arr.sort((a, b) => a.y - b.y).forEach(({ id }, i) => {
+        revealDelay.set(id, Math.min(colRank * REVEAL_COL_STEP + i * REVEAL_ROW_STEP, REVEAL_MAX_DELAY));
+      });
+    });
+  }
+  // A connector fades in just after both its endpoint cards have landed.
+  const connectorDelay = (fromId?: string, toId?: string): number | undefined => {
+    if (!revealPlaying) return undefined;
+    const a = fromId ? revealDelay.get(fromId) : undefined;
+    const b = toId ? revealDelay.get(toId) : undefined;
+    return Math.max(a ?? 0, b ?? 0) + 150;
+  };
+  // A round header sits just ahead of its column's cards (label.x = colX + NODE_WIDTH/2).
+  const labelDelay = (labelX: number): number | undefined => {
+    if (!revealPlaying) return undefined;
+    return Math.min((colRankByX.get(labelX - NODE_WIDTH / 2) ?? 0) * REVEAL_COL_STEP, REVEAL_MAX_DELAY);
+  };
+
   // ── render ────────────────────────────────────────────────────────────────
 
   return (
     // outer: clips overflow and enables horizontal scroll
     // inner: width:fit-content + margin:auto centers when it fits the viewport,
     //        and naturally left-aligns when the scroll kicks in
-    <div className="py-4">
+    <div className="py-4" ref={zoomContainerRef}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm, 6px)', padding: 2 }}>
+          <button type="button" onClick={() => stepZoom(-1)} aria-label="Zoom out" title="Zoom out" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 26, background: 'transparent', border: 'none', color: 'var(--white-60)', borderRadius: 4, cursor: 'pointer' }}><Minus size={15} /></button>
+          <button type="button" onClick={() => setZoom(1)} title="Reset to 100%" style={{ minWidth: 46, textAlign: 'center', background: 'transparent', border: 'none', color: 'var(--white-80)', fontFamily: 'var(--font-data)', fontSize: '0.72rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums', cursor: 'pointer' }}>{Math.round(zoom * 100)}%</button>
+          <button type="button" onClick={() => stepZoom(1)} aria-label="Zoom in" title="Zoom in" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 26, background: 'transparent', border: 'none', color: 'var(--white-60)', borderRadius: 4, cursor: 'pointer' }}><Plus size={15} /></button>
+          <button type="button" onClick={() => { const f = computeFitZoom(); if (f != null) setZoom(f); }} aria-label="Fit bracket" title="Fit bracket" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 26, background: 'transparent', border: 'none', color: 'var(--white-60)', borderRadius: 4, cursor: 'pointer' }}><Maximize size={15} /></button>
+        </div>
+      </div>
       {championName && (
         <div
           style={{
@@ -534,11 +796,11 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
           </span>
         </div>
       )}
-      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-      <div style={{ width: 'fit-content', margin: '0 auto' }}>
+      <BracketScroller>
       <svg
-        width={svgWidth}
-        height={svgHeight}
+        ref={svgRef}
+        width={svgWidth * zoom}
+        height={svgHeight * zoom}
         viewBox={`0 0 ${svgWidth} ${svgHeight}`}
         style={{ display: 'block' }}
       >
@@ -554,7 +816,9 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
         </defs>
 
         {/* ── round header labels ── */}
-        {columnLabels.map(l => (
+        {columnLabels.map(l => {
+          const d = labelDelay(l.x);
+          return (
           <text
             key={`lbl-${l.key}`}
             x={l.x}
@@ -562,20 +826,27 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
             fontSize="10"
             fontWeight="700"
             textAnchor="middle"
+            className={d != null ? styles.revealLabel : undefined}
             style={{
               fill:        'var(--white-45)',
               fontFamily:  'var(--font-display)',
               letterSpacing: '0.1em',
+              ...(d != null ? { ['--d']: `${d}ms` } as React.CSSProperties : {}),
             }}
           >
             {l.title.toUpperCase()}
           </text>
-        ))}
+          );
+        })}
 
         {/* ── connectors (behind nodes) ──
               Double elimination / placement / consolation follow the actual
               Winner/Loser references (a game's loser-drop line is correct by data);
-              single elimination uses simple round-to-round halving. ── */}
+              single elimination uses simple round-to-round halving.
+              All connectors use cubic bezier curves.  Cross-band WB-loser→LB
+              connectors exit from the node's bottom-center (dropDown=true) so the
+              path reads as "loser falls to the losers bracket"; within-band
+              connections use the standard horizontal S-curve. ── */}
         {isDoubleElim
           ? columns.flatMap(col => col.games.flatMap(g => {
               const tgt = positions.get(g.id);
@@ -583,19 +854,28 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
               return [g.homePlaceholder, g.awayPlaceholder].flatMap((ph, side) => {
                 const m = (ph || '').match(/^(Winner|Loser)\s+(.+)$/);
                 if (!m) return [];
-                const kind = m[1].toLowerCase() as 'winner' | 'loser';
-                const srcNode = nodeByCode.get(m[2].toUpperCase());
-                const sp = srcNode ? positions.get(srcNode.id) : undefined;
+                const kind    = m[1].toLowerCase() as 'winner' | 'loser';
+                const srcCode = m[2].toUpperCase();
+                const srcNode = nodeByCode.get(srcCode);
+                const sp      = srcNode ? positions.get(srcNode.id) : undefined;
                 if (!srcNode || !sp) return [];
+                // A WB-loser reference (Loser WB…) is a cross-band drop from the
+                // winners tier into the losers tier.  Exit from the bottom-center
+                // of the source node so the curve reads as a downward drop.
+                const isCrossBand = kind === 'loser' && /^WB\d/i.test(srcCode);
+                const fromX = isCrossBand ? sp.x + NODE_WIDTH / 2 : sp.x + NODE_WIDTH;
+                const fromY = isCrossBand ? sp.y + NODE_HEIGHT     : sp.y + NODE_HEIGHT / 2;
                 return [(
                   <ConnectorPath
                     key={`dc-${g.id}-${side}`}
-                    fromX={sp.x + NODE_WIDTH}
-                    fromY={sp.y + NODE_HEIGHT / 2}
+                    fromX={fromX}
+                    fromY={fromY}
                     toX={tgt.x}
                     toY={tgt.y + NODE_HEIGHT / 2}
                     active={srcNode.winnerId !== null}
                     kind={kind}
+                    dropDown={isCrossBand}
+                    revealDelay={connectorDelay(srcNode.id, g.id)}
                   />
                 )];
               });
@@ -619,6 +899,7 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
                     toX={tp.x}
                     toY={tp.y + NODE_HEIGHT / 2}
                     active={srcNode?.winnerId != null}
+                    revealDelay={connectorDelay(g.id, tg.id)}
                   />
                 );
               });
@@ -633,9 +914,9 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
             const nodeMatchesTeam = !!highlightTeamId && (
               node.homeTeam?.id === highlightTeamId || node.awayTeam?.id === highlightTeamId
             );
-            return (
+            const d = revealDelay.get(g.id);
+            const matchNode = (
               <MatchNode
-                key={node.id}
                 node={node}
                 x={pos.x}
                 y={pos.y}
@@ -644,11 +925,24 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
                 requireFinalization={requireFinalization}
               />
             );
+            // While the draw-day reveal plays, wrap each card in a group that
+            // animates its staggered entrance (the wrapper's transform/opacity
+            // composes with MatchNode's positioning transform).
+            return d != null ? (
+              <g
+                key={node.id}
+                className={styles.revealNode}
+                style={{ ['--d']: `${d}ms` } as React.CSSProperties}
+              >
+                {matchNode}
+              </g>
+            ) : (
+              <g key={node.id}>{matchNode}</g>
+            );
           })
         )}
       </svg>
-      </div>
-      </div>
+      </BracketScroller>
     </div>
   );
 }

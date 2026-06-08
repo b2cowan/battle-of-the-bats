@@ -1893,6 +1893,14 @@ export async function advancePlayoffs(game: Game, options: ReadOptions = {}) {
     const loserId = (game.homeScore || 0) > (game.awayScore || 0) ? game.awayTeamId : game.homeTeamId;
 
     for (const pg of playoffGames) {
+      // Scope advancement to the SAME bracket. Split-pool (crossover='none')
+      // tournaments run an independent bracket per pool, so identical bracket
+      // codes (e.g. WB1-1, SF1) exist in every pool — without this guard, one
+      // pool's result would leak into another pool's "Winner <code>" slot. The
+      // guard only skips when both games carry a bracketId and they differ, so
+      // single-bracket and legacy (null bracketId) play are unaffected.
+      if (game.bracketId && pg.bracketId && pg.bracketId !== game.bracketId) continue;
+
       const updates: Partial<Game> = {};
       if (pg.homePlaceholder === 'Winner ' + game.bracketCode) updates.homeTeamId = winnerId;
       if (pg.awayPlaceholder === 'Winner ' + game.bracketCode) updates.awayTeamId = winnerId;

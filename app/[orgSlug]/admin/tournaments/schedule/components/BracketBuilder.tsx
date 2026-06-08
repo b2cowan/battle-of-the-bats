@@ -9,6 +9,7 @@ import { Plus, Trash2, GripVertical, Trophy } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { teamColor } from '@/lib/team-color';
 import BracketConnectors from './BracketConnectors';
+import BracketZoomFrame from './BracketZoomFrame';
 import styles from './BracketBuilder.module.css';
 
 interface Slot {
@@ -51,13 +52,16 @@ interface BracketBuilderProps {
   labelFor?: (raw: string) => string;
 }
 
-function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, labelFor, onUpdateCode, onUpdate, onDelete }: {
+function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, labelFor, editing, onSelect, onClose, onUpdateCode, onUpdate, onDelete }: {
   matchup: Matchup,
   options: string[],
   usedOptions: Set<string>,
   venues: Venue[],
   isFinal?: boolean,
   labelFor?: (raw: string) => string,
+  editing: boolean,
+  onSelect: () => void,
+  onClose: () => void,
   onUpdateCode: (newCode: string) => void,
   onUpdate: (m: Matchup) => void,
   onDelete: () => void
@@ -76,12 +80,62 @@ function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, label
   const homeIsTeam = !!matchup.home.label && !/^(?:winner|loser)\s/i.test(matchup.home.label);
   const awayIsTeam = !!matchup.away.label && !/^(?:winner|loser)\s/i.test(matchup.away.label);
 
+  // Resolve a short field label for the compact card meta line.
+  const fieldLabel = (() => {
+    if (matchup.scheduleFacilityLaneId) return matchup.scheduleFacilityLaneLabel || matchup.location || 'TBD';
+    if (matchup.venueFacilityId) {
+      for (const v of venues) {
+        const f = v.facilities?.find(f => f.id === matchup.venueFacilityId);
+        if (f) return f.name;
+      }
+    }
+    return venues.find(v => v.id === matchup.venueId)?.name ?? '';
+  })();
+
+  // ── Compact card (default): click anywhere to open the editor ──
+  if (!editing) {
+    const meta = [matchup.time, fieldLabel].filter(Boolean).join(' · ');
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        data-matchup-id={matchup.id}
+        className={`${styles.compactCard} ${isFinal ? styles.matchupCardFinal : ''} ${isDragging ? styles.matchupCardDragging : ''}`}
+        role="button"
+        tabIndex={0}
+        onClick={onSelect}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } }}
+      >
+        <div className={styles.compactHead}>
+          <span {...attributes} {...listeners} className={styles.dragHandle} onClick={e => e.stopPropagation()} title="Drag to reorder">
+            <GripVertical size={12} />
+          </span>
+          <span className={styles.compactCode}>{matchup.code}</span>
+        </div>
+        <div className={styles.compactTeams}>
+          <span className={styles.compactTeamRow}>
+            {homeIsTeam && <span className={styles.teamColorDot} style={{ background: teamColor(display(matchup.home.label)) }} aria-hidden />}
+            {display(matchup.home.label) || 'TBD'}
+          </span>
+          <span className={styles.compactTeamRow}>
+            {awayIsTeam && <span className={styles.teamColorDot} style={{ background: teamColor(display(matchup.away.label)) }} aria-hidden />}
+            {display(matchup.away.label) || 'TBD'}
+          </span>
+        </div>
+        <div className={`${styles.compactMeta} ${meta ? '' : styles.compactMetaEmpty}`}>
+          {meta || 'Tap to schedule'}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Expanded editor (when this card is selected) ──
   return (
     <div
       ref={setNodeRef}
       style={style}
       data-matchup-id={matchup.id}
-      className={`${styles.matchupCard} ${isDragging ? styles.matchupCardDragging : ''} ${isFinal ? styles.matchupCardFinal : ''}`}
+      className={`${styles.matchupCard} ${styles.matchupCardEditing} ${isDragging ? styles.matchupCardDragging : ''} ${isFinal ? styles.matchupCardFinal : ''}`}
     >
       <div className={styles.matchupHeader}>
         <div className="flex items-center gap-2">
@@ -173,15 +227,39 @@ function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, label
           ))}
         </select>
       </div>
+      <button className={styles.doneBtn} onClick={onClose}>Done</button>
+    </div>
+  );
+}
+
+// Wraps a single bracket (the whole non-split tree, or one pool's tree in split
+// mode) with its own measured connector overlay. Each instance has its own ref so
+// split-pool brackets each draw their own lines (codes repeat across pools, but
+// only this bracket's matchups are passed in, so refs resolve within the pool).
+function ConnectedBracket({ matchups, finalIds, scale, children }: {
+  matchups: Matchup[];
+  finalIds: Set<string>;
+  scale: number;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  return (
+    <div ref={ref} style={{ position: 'relative', width: 'max-content', margin: '0 auto' }}>
+      <BracketConnectors canvasRef={ref} matchups={matchups} finalIds={finalIds} scale={scale} />
+      {children}
     </div>
   );
 }
 
 export default function BracketBuilder({ division, teams, venues, defaultDate, templatePreview, baseOptions, onPreviewChange, crossover, labelFor }: BracketBuilderProps) {
   const [rounds, setRounds] = useState<Round[]>([]);
+  // Which game's editor is open (compact-card → click to edit). Zoom + drag-pan
+  // live in the shared BracketZoomFrame that wraps the render.
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Convert templatePreview to rounds when templatePreview changes
   useEffect(() => {
+    setEditingId(null);
     if (!templatePreview || templatePreview.length === 0) {
       setRounds([]);
       return;
@@ -380,21 +458,113 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
   const isSplitMode = crossover === 'none' && (division.pools?.length || 0) > 0;
   const poolNames = division.pools?.map(p => p.name) || [];
 
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const allMatchups = rounds.flatMap(r => r.matchups);
-  const finalRoundIds = new Set((rounds[rounds.length - 1]?.matchups ?? []).map(m => m.id));
+  // ── Layout helpers: fork double-elim (seed · winners/losers · finals), flat otherwise ──
+  const bandOf = (round: Round): 'seed' | 'winners' | 'losers' | 'finals' | 'flat' => {
+    const code = (round.matchups[0]?.code || '').toUpperCase();
+    if (/^GF/.test(code)) return 'finals';
+    if (/^LB/.test(code)) return 'losers';
+    const wb = code.match(/^WB(\d+)/);
+    if (wb) return parseInt(wb[1], 10) === 1 ? 'seed' : 'winners';
+    return 'flat';
+  };
+  const isForkRounds = (rs: Round[]) => rs.some(r => /^(WB|LB|GF)/i.test(r.matchups[0]?.code || ''));
+
+  const optionsForRound = (round: Round, poolName?: string) => {
+    const bare = poolName ? poolName.replace(/^Pool\s+/i, '').trim() : '';
+    const base = poolName ? baseOptions.filter(o => o.includes(`Pool ${bare}`)) : baseOptions;
+    const refs = rounds
+      .flatMap(r => r.matchups)
+      .filter(m => m.code && !round.matchups.some(rm => rm.id === m.id) && (!poolName || m.pool === poolName))
+      .flatMap(m => [`Winner ${m.code}`, `Loser ${m.code}`]);
+    return Array.from(new Set([...base, ...refs]));
+  };
+
+  const renderColumn = (round: Round, roundOptions: string[], isFinal: boolean, onAdd: () => void, onDel: () => void) => (
+    <div key={round.id} className={styles.roundColumn}>
+      <div className={styles.roundHeader}>
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '0.5rem' }}>
+          <textarea
+            value={round.name}
+            onChange={e => setRounds(rounds.map(r => r.id === round.id ? { ...r, name: e.target.value } : r))}
+            className={styles.roundTitleInput}
+            rows={1}
+            ref={el => { if (el) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; } }}
+          />
+          <button className={styles.deleteBtn} onClick={onDel} title="Delete Round" style={{ padding: '0.25rem', opacity: 0.3 }}>
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </div>
+      <div className={styles.matchupList}>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, round.id)}>
+          <SortableContext items={round.matchups} strategy={verticalListSortingStrategy}>
+            {round.matchups.map(m => (
+              <SortableMatchup
+                key={m.id}
+                matchup={m}
+                options={roundOptions}
+                usedOptions={allUsedOptions}
+                venues={venues}
+                labelFor={labelFor}
+                isFinal={isFinal}
+                editing={editingId === m.id}
+                onSelect={() => setEditingId(m.id)}
+                onClose={() => setEditingId(null)}
+                onUpdateCode={(newCode) => updateMatchupCode(m.id, m.code, newCode)}
+                onUpdate={(newM) => updateMatchup(round.id, newM)}
+                onDelete={() => deleteMatchup(round.id, m.id)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+        <button className={styles.addBtn} onClick={onAdd}><Plus size={16} /> Add Matchup</button>
+      </div>
+    </div>
+  );
+
+  const colFor = (round: Round, poolName: string | undefined, isFinal: boolean) => renderColumn(
+    round,
+    optionsForRound(round, poolName),
+    isFinal,
+    () => (poolName ? addMatchupForPool(round.id, poolName) : addMatchup(round.id)),
+    () => (poolName ? deleteRoundForPool(round.id, poolName) : deleteRound(round.id)),
+  );
+
+  const renderBands = (rs: Round[], poolName?: string) => (
+    <div className={styles.fork}>
+      <div className={styles.forkSeed}>{rs.filter(r => bandOf(r) === 'seed').map(r => colFor(r, poolName, false))}</div>
+      <div className={styles.forkMiddle}>
+        <div>
+          <div className={`${styles.bandTag} ${styles.bandTagWin}`}>Winners</div>
+          <div className={styles.band}>{rs.filter(r => bandOf(r) === 'winners').map(r => colFor(r, poolName, false))}</div>
+        </div>
+        <div>
+          <div className={`${styles.bandTag} ${styles.bandTagLoss}`}>Losers</div>
+          <div className={styles.band}>{rs.filter(r => bandOf(r) === 'losers').map(r => colFor(r, poolName, false))}</div>
+        </div>
+      </div>
+      <div className={styles.forkFinals}>{rs.filter(r => bandOf(r) === 'finals').map(r => colFor(r, poolName, true))}</div>
+    </div>
+  );
+
+  const finalIdsOf = (rs: Round[]) => new Set(
+    (isForkRounds(rs)
+      ? rs.filter(r => bandOf(r) === 'finals').flatMap(r => r.matchups)
+      : (rs[rs.length - 1]?.matchups ?? [])
+    ).map(m => m.id)
+  );
 
   return (
-    <div className={styles.builderContainer}>
-      {isSplitMode ? (
+    <BracketZoomFrame fitKey={rounds.map(r => r.id).join('|')} hint="Drag empty space to scroll · click a game to edit">
+      {(zoom) => (
+      isSplitMode ? (
         <div className={styles.splitBrackets}>
           {poolNames.map(poolName => {
             const poolRounds = rounds.map(r => ({
               ...r,
               matchups: r.matchups.filter(m => m.pool === poolName)
             })).filter(r => r.matchups.length > 0);
-
-            const bareName = poolName.replace(/^Pool\s+/i, '').trim();
+            const poolMatchups = poolRounds.flatMap(r => r.matchups);
 
             return (
               <div key={poolName} className={styles.poolSection}>
@@ -403,63 +573,13 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
                   <span>{formatPoolName(poolName)} Playoffs</span>
                 </div>
 
-                <div className={styles.canvas}>
-                  {poolRounds.map((round) => {
-                    const previousMatchups = poolRounds.slice(0, poolRounds.indexOf(round)).flatMap(r => r.matchups);
-                    const previousOptions = previousMatchups.flatMap(m => m.code ? [`Winner ${m.code}`, `Loser ${m.code}`] : []);
-                    const roundOptions = Array.from(new Set([
-                      ...baseOptions.filter(opt => opt.includes(`Pool ${bareName}`)),
-                      ...previousOptions
-                    ]));
-
-                    return (
-                      <div key={round.id} className={styles.roundColumn}>
-                        <div className={styles.roundHeader}>
-                          <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '0.5rem' }}>
-                            <input
-                              type="text"
-                              value={round.name}
-                              onChange={e => setRounds(rounds.map(r => r.id === round.id ? { ...r, name: e.target.value } : r))}
-                              className={styles.roundTitleInput}
-                            />
-                            <button
-                              className={styles.deleteBtn}
-                              onClick={() => deleteRoundForPool(round.id, poolName)}
-                              title="Delete Round"
-                              style={{ padding: '0.25rem', opacity: 0.3 }}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className={styles.matchupList}>
-                          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, round.id)}>
-                            <SortableContext items={round.matchups} strategy={verticalListSortingStrategy}>
-                              {round.matchups.map(m => (
-                                <SortableMatchup
-                                  key={m.id}
-                                  matchup={m}
-                                  options={roundOptions}
-                                  usedOptions={allUsedOptions}
-                                  venues={venues}
-                                  labelFor={labelFor}
-                                  onUpdateCode={(newCode) => updateMatchupCode(m.id, m.code, newCode)}
-                                  onUpdate={(newM) => updateMatchup(round.id, newM)}
-                                  onDelete={() => deleteMatchup(round.id, m.id)}
-                                />
-                              ))}
-                            </SortableContext>
-                          </DndContext>
-
-                          <button className={styles.addBtn} onClick={() => addMatchupForPool(round.id, poolName)}>
-                            <Plus size={16} /> Add Matchup
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <ConnectedBracket matchups={poolMatchups} finalIds={finalIdsOf(poolRounds)} scale={zoom}>
+                  {isForkRounds(poolRounds) ? renderBands(poolRounds, poolName) : (
+                    <div className={styles.canvas}>
+                      {poolRounds.map((round, i) => colFor(round, poolName, i === poolRounds.length - 1))}
+                    </div>
+                  )}
+                </ConnectedBracket>
 
                 <button
                   className={styles.addBtn}
@@ -472,65 +592,23 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
             );
           })}
         </div>
+      ) : isForkRounds(rounds) ? (
+        <ConnectedBracket matchups={rounds.flatMap(r => r.matchups)} finalIds={finalIdsOf(rounds)} scale={zoom}>
+          {renderBands(rounds)}
+        </ConnectedBracket>
       ) : (
-        <div ref={canvasRef} className={styles.canvas}>
-          <BracketConnectors canvasRef={canvasRef} matchups={allMatchups} finalIds={finalRoundIds} />
-          {rounds.map((round, index) => {
-            const previousMatchups = rounds.slice(0, index).flatMap(r => r.matchups);
-            const previousOptions = previousMatchups.flatMap(m => m.code ? [`Winner ${m.code}`, `Loser ${m.code}`] : []);
-            const roundOptions = Array.from(new Set([...baseOptions, ...previousOptions]));
-            const isFinalRound = index === rounds.length - 1;
-
-            return (
-              <div key={round.id} className={styles.roundColumn}>
-                <div className={styles.roundHeader}>
-                  <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '0.5rem' }}>
-                    <input
-                      type="text"
-                      value={round.name}
-                      onChange={e => setRounds(rounds.map(r => r.id === round.id ? { ...r, name: e.target.value } : r))}
-                      className={styles.roundTitleInput}
-                    />
-                    <button className={styles.deleteBtn} onClick={() => deleteRound(round.id)} title="Delete Round" style={{ padding: '0.25rem', opacity: 0.3 }}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className={styles.matchupList}>
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, round.id)}>
-                    <SortableContext items={round.matchups} strategy={verticalListSortingStrategy}>
-                      {round.matchups.map(m => (
-                        <SortableMatchup
-                          key={m.id}
-                          matchup={m}
-                          options={roundOptions}
-                          usedOptions={allUsedOptions}
-                          venues={venues}
-                          labelFor={labelFor}
-                          isFinal={isFinalRound}
-                          onUpdateCode={(newCode) => updateMatchupCode(m.id, m.code, newCode)}
-                          onUpdate={(newM) => updateMatchup(round.id, newM)}
-                          onDelete={() => deleteMatchup(round.id, m.id)}
-                        />
-                      ))}
-                    </SortableContext>
-                  </DndContext>
-
-                  <button className={styles.addBtn} onClick={() => addMatchup(round.id)}>
-                    <Plus size={16} /> Add Matchup
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-          <div className={styles.addRoundColLeft}>
-            <button className={styles.addRoundBtnSimple} onClick={addRound} title="Add Round">
-              <Plus size={20} />
-            </button>
+        <ConnectedBracket matchups={rounds.flatMap(r => r.matchups)} finalIds={finalIdsOf(rounds)} scale={zoom}>
+          <div className={styles.canvas}>
+            {rounds.map((round, index) => colFor(round, undefined, index === rounds.length - 1))}
+            <div className={styles.addRoundColLeft}>
+              <button className={styles.addRoundBtnSimple} onClick={addRound} title="Add Round">
+                <Plus size={20} />
+              </button>
+            </div>
           </div>
-        </div>
+        </ConnectedBracket>
+      )
       )}
-    </div>
+    </BracketZoomFrame>
   );
 }

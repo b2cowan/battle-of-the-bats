@@ -1,0 +1,41 @@
+/* Draw-day reveal — one-time entrance played when a fan first opens a seeded,
+ * pre-play bracket (Tier 3 #3). Each element's --d sets its stagger delay; the
+ * component computes delays left→right, top→bottom and only attaches these
+ * classes while the reveal is playing. backwards fill keeps elements hidden
+ * until their turn; nothing persists after the animation ends. */
+
+@keyframes lsbNodeReveal {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lsbLabelReveal {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lsbConnectorReveal {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.revealNode {
+  animation: lsbNodeReveal 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) var(--d, 0ms) backwards;
+}
+
+.revealLabel {
+  animation: lsbLabelReveal 0.4s ease-out var(--d, 0ms) backwards;
+}
+
+.revealConnector {
+  animation: lsbConnectorReveal 0.4s ease-out var(--d, 0ms) backwards;
+}
+
+/* Honour reduced-motion: no entrance, bracket is simply present. */
+@media (prefers-reduced-motion: reduce) {
+  .revealNode,
+  .revealLabel,
+  .revealConnector {
+    animation: none;
+  }
+}

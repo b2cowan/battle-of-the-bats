@@ -1,11 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard, CheckCircle } from 'lucide-react';
+import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard, CheckCircle, Calendar, Mail } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { Division, Tournament, TournamentRegistrationField } from '@/lib/types';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
+import Countdown from '@/components/public/Countdown';
 import styles from '../../register/register.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 
@@ -81,6 +82,98 @@ function resolveFeeSchedule(tournament: Tournament | null, group: Division | und
   };
 }
 
+/**
+ * Shared "Payment handled by organizer" panel — rendered identically on the form
+ * step and the review step. `instructions` is only passed when the organizer chose
+ * to surface their how-to-pay text on the public form (default: email-only).
+ */
+function PaymentPanel({ feeSchedule, instructions, style }: {
+  feeSchedule: FeeSchedule | null;
+  instructions: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div className={styles.paymentNotice} style={style}>
+      <div className={styles.paymentNoticeHeader}>
+        <CreditCard size={18} />
+        <span>Payment handled by organizer</span>
+      </div>
+      {feeSchedule?.totalFeeAmount ? (
+        <div className={styles.paymentDetails}>
+          <div>
+            <span>Total fee</span>
+            <strong>{formatMoney(feeSchedule.totalFeeAmount)}</strong>
+            {formatDate(feeSchedule.totalFeeDueDate) && (
+              <em>Due {formatDate(feeSchedule.totalFeeDueDate)}</em>
+            )}
+          </div>
+          {feeSchedule.depositAmount ? (
+            <div>
+              <span>Deposit</span>
+              <strong>{formatMoney(feeSchedule.depositAmount)}</strong>
+              {formatDate(feeSchedule.depositDueDate) && (
+                <em>Due {formatDate(feeSchedule.depositDueDate)}</em>
+              )}
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <p>The organizer has not published a fee schedule for this division yet.</p>
+      )}
+      {instructions && (
+        <div className={styles.paymentInstructions}>
+          <span className={styles.paymentInstructionsLabel}>How to pay</span>
+          <p>{instructions}</p>
+        </div>
+      )}
+      <p>Payments are made directly to the organizer, outside the platform.</p>
+    </div>
+  );
+}
+
+/** YYYY-MM-DD → YYYYMMDD, offset by `addDays` (used for all-day ICS DTEND, which is exclusive). */
+function toIcsDate(date: string, addDays = 0): string {
+  const d = new Date(`${date}T00:00:00`);
+  d.setDate(d.getDate() + addDays);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}${m}${day}`;
+}
+
+/** Build + download a universal .ics all-day event covering the tournament dates. */
+function downloadTournamentCalendar(tournament: Tournament, url: string) {
+  if (!tournament.startDate) return;
+  const end = tournament.endDate || tournament.startDate;
+  const escape = (s: string) => s.replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n');
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//FieldLogicHQ//Tournament//EN',
+    'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    `UID:tournament-${tournament.id}@fieldlogichq`,
+    `DTSTAMP:${stamp}`,
+    `DTSTART;VALUE=DATE:${toIcsDate(tournament.startDate)}`,
+    `DTEND;VALUE=DATE:${toIcsDate(end, 1)}`,
+    `SUMMARY:${escape(tournament.name)}`,
+    `URL:${escape(url)}`,
+    `DESCRIPTION:${escape(`${tournament.name} — see schedule, scores, and updates at ${url}`)}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ];
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+  const href = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = href;
+  a.download = `${tournament.slug || 'tournament'}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(href);
+}
+
 export default function RegisterPage() {
   const params         = useParams();
   const orgSlug        = params.orgSlug as string;
@@ -103,6 +196,8 @@ export default function RegisterPage() {
   const [coachTeamMode, setCoachTeamMode] = useState<'new' | 'existing'>('new');
   const [selectedBasicTeamId, setSelectedBasicTeamId] = useState('');
   const [confirmation, setConfirmation] = useState<RegistrationConfirmation | null>(null);
+  // Captured once (lazy init keeps render pure) — gates the success-screen countdown banner.
+  const [mountedAtMs] = useState(() => Date.now());
 
   useEffect(() => {
     async function init() {
@@ -268,6 +363,14 @@ export default function RegisterPage() {
   const count = selectedGroup ? stats[selectedGroup.id] || 0 : 0;
   const isWaitlist = Boolean(selectedGroup?.capacity && count >= selectedGroup.capacity);
   const selectedFeeSchedule = resolveFeeSchedule(tournament, selectedGroup);
+  // Organizer payment-display controls (settings JSONB; no migration). Default = show.
+  const showFees = tournament?.settings?.show_fees_on_register !== false;
+  const paymentInstructions = (tournament?.settings?.payment_instructions ?? '').trim();
+  const formInstructions =
+    paymentInstructions && tournament?.settings?.payment_instructions_on_form ? paymentInstructions : '';
+  // Success-screen momentum ticker — only when the event hasn't started yet.
+  const firstGameTarget = tournament?.startDate ? `${tournament.startDate}T09:00:00` : null;
+  const showCountdown = firstGameTarget != null && Date.parse(firstGameTarget) > mountedAtMs;
   const homeHref = `/${orgSlug}/${tournamentSlug}`;
   const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
   const rulesHref = `/${orgSlug}/${tournamentSlug}/rules`;
@@ -316,17 +419,9 @@ export default function RegisterPage() {
 
   return (
     <div className="page-content">
-      <div className="public-page-header">
-        <div className="container">
-          <span className="eyebrow"><UserPlus size={12} /> Register</span>
-          <h1>Team Registration</h1>
-          <p className="text-muted">
-            Register your team for {tournament?.name ?? 'the upcoming tournament'}.
-            A confirmation email will be sent once your registration is reviewed. Payment is handled directly by the tournament organizer.
-          </p>
-        </div>
-      </div>
-
+      {/* No page-level header here: the tournament identity is carried by the shell's
+          top context bar (desktop) and the card header below (all breakpoints), so a
+          "Team Registration" h1 + paragraph would be the third redundant identity block. */}
       <div className="section">
         <div className="container">
           <div className={styles.formWrap}>
@@ -405,12 +500,8 @@ export default function RegisterPage() {
                     <span>Status after submit</span>
                     <strong>{isWaitlist ? 'Waitlist' : 'Pending organizer review'}</strong>
                   </div>
-                  {selectedFeeSchedule?.totalFeeAmount ? (
-                    <div>
-                      <span>Fee</span>
-                      <strong>{formatMoney(selectedFeeSchedule.totalFeeAmount)}</strong>
-                    </div>
-                  ) : null}
+                  {/* Fee lives in the richer payment panel below (deposit + due dates +
+                      organizer context) — no duplicate summary card. */}
                   {contactEmail ? (
                     <div>
                       <span>Organizer Contact</span>
@@ -438,35 +529,13 @@ export default function RegisterPage() {
                   </div>
                 )}
 
-                <div className={styles.paymentNotice} style={{ marginTop: '1.5rem' }}>
-                  <div className={styles.paymentNoticeHeader}>
-                    <CreditCard size={18} />
-                    <span>Payment handled by organizer</span>
-                  </div>
-                  {selectedFeeSchedule?.totalFeeAmount ? (
-                    <div className={styles.paymentDetails}>
-                      <div>
-                        <span>Total fee</span>
-                        <strong>{formatMoney(selectedFeeSchedule.totalFeeAmount)}</strong>
-                        {formatDate(selectedFeeSchedule.totalFeeDueDate) && (
-                          <em>Due {formatDate(selectedFeeSchedule.totalFeeDueDate)}</em>
-                        )}
-                      </div>
-                      {selectedFeeSchedule.depositAmount ? (
-                        <div>
-                          <span>Deposit</span>
-                          <strong>{formatMoney(selectedFeeSchedule.depositAmount)}</strong>
-                          {formatDate(selectedFeeSchedule.depositDueDate) && (
-                            <em>Due {formatDate(selectedFeeSchedule.depositDueDate)}</em>
-                          )}
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <p>The organizer has not published a fee schedule for this division yet.</p>
-                  )}
-                  <p>FieldLogicHQ records registration and payment status for the organizer, but payments are made outside the platform.</p>
-                </div>
+                {showFees && (
+                  <PaymentPanel
+                    feeSchedule={selectedFeeSchedule}
+                    instructions={formInstructions}
+                    style={{ marginTop: '1.5rem' }}
+                  />
+                )}
 
                 <div className={styles.reviewActions}>
                   <button
@@ -495,27 +564,65 @@ export default function RegisterPage() {
               <div className={`card ${styles.successCard}`}>
                 <CheckCircle size={44} style={{ color: 'var(--success)', margin: '0 auto 1rem', display: 'block' }} />
                 <h3 className={styles.successTitle}>
-                  {confirmation.status === 'waitlist' ? 'Waitlist Request Received' : 'Registration Submitted'}
+                  {confirmation.status === 'waitlist' ? 'Waitlist Request Received' : "You're In Motion"}
                 </h3>
                 <p className={styles.successText}>
                   {confirmation.status === 'waitlist'
                     ? `${form.teamName} has been added to the waitlist for ${selectedGroup?.name ?? 'this division'}.`
-                    : `${form.teamName} has been sent to the organizer for review.`}
+                    : `${form.teamName} is registered for ${tournament?.name ?? 'the tournament'} and sent to the organizer for review.`}
                 </p>
 
+                {showCountdown && firstGameTarget && (
+                  <div className={styles.motionBanner}>
+                    <Calendar size={16} />
+                    <Countdown target={firstGameTarget} prefix="First game in " />
+                  </div>
+                )}
+
                 <div className={styles.successSteps}>
+                  {tournament?.startDate && (
+                    <div className={styles.successItem}>
+                      <Calendar size={18} className={styles.successIcon} />
+                      <div>
+                        <span className={styles.successTitleInner}>Save the dates</span>
+                        <span className={styles.successDescInner}>
+                          {`Add ${tournament?.name ?? 'the tournament'} to your calendar so you don't miss a game.`}
+                        </span>
+                        <div style={{ marginTop: '0.6rem' }}>
+                          <button
+                            type="button"
+                            className="btn btn-outline btn-sm"
+                            onClick={() => tournament && downloadTournamentCalendar(tournament, `${window.location.origin}${homeHref}`)}
+                          >
+                            <Calendar size={15} /> Add to calendar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div className={styles.successItem}>
-                    <CheckCircle size={18} className={styles.successIcon} />
+                    <Mail size={18} className={styles.successIcon} />
                     <div>
                       <span className={styles.successTitleInner}>Watch your email</span>
-                      <span className={styles.successDescInner}>The organizer will follow up with approval, waitlist, and payment details.</span>
+                      <span className={styles.successDescInner}>
+                        {confirmation.status === 'waitlist'
+                          ? 'Check your inbox for your waitlist confirmation. The organizer will reach out if a spot opens'
+                          : 'Check your inbox for your confirmation. The organizer follows up with approval and how to pay'}
+                        {contactEmail ? <> — reach them anytime at <a href={`mailto:${contactEmail}`}>{contactEmail}</a> with questions.</> : '.'}
+                      </span>
                     </div>
                   </div>
                   <div className={styles.successItem}>
                     <CheckCircle size={18} className={styles.successIcon} />
                     <div>
-                      <span className={styles.successTitleInner}>Track the tournament</span>
-                      <span className={styles.successDescInner}>Use the public tournament pages for schedule, rules, and results updates.</span>
+                      <span className={styles.successTitleInner}>
+                        {signedInCoachEmail ? 'Track your team' : 'Create your Coaches Portal'}
+                      </span>
+                      <span className={styles.successDescInner}>
+                        {signedInCoachEmail
+                          ? `Follow your team's status, schedule, and updates for ${tournament?.name ?? 'this tournament'}.`
+                          : `Set a password to track your team's status, schedule, and updates for ${tournament?.name ?? 'this tournament'}.`}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -524,7 +631,7 @@ export default function RegisterPage() {
                   <Link href={confirmation.joinHref} className="btn btn-primary">
                     {signedInCoachEmail ? 'Open Coaches Portal' : 'Create Coaches Portal Account'}
                   </Link>
-                  {showSchedulePage && <Link href={scheduleHref} className="btn btn-outline">View Schedule</Link>}
+                  {showSchedulePage && <Link href={scheduleHref} className="btn btn-outline">Follow the Schedule</Link>}
                   {showRulesPage && <Link href={rulesHref} className="btn btn-ghost">Tournament Rules</Link>}
                   <Link href={homeHref} className="btn btn-ghost">Tournament Home</Link>
                 </div>
@@ -660,7 +767,13 @@ export default function RegisterPage() {
                           className={styles.progressFill}
                           style={{
                             width: `${Math.min(100, (count / selectedGroup.capacity) * 100)}%`,
-                            background: isWaitlist ? 'var(--warning)' : (count / selectedGroup.capacity > 0.8 ? 'var(--danger)' : 'linear-gradient(to right, var(--primary), var(--primary-light))')
+                            // Solid, semantic capacity escalation (matches the success/warning/danger
+                            // status tones used elsewhere): room → green, filling up → amber, full → red.
+                            background: isWaitlist
+                              ? 'var(--danger)'
+                              : count / selectedGroup.capacity > 0.8
+                                ? 'var(--warning)'
+                                : 'var(--success)',
                           }}
                         />
                       </div>
@@ -681,40 +794,8 @@ export default function RegisterPage() {
                     </div>
                   )}
 
-                  {selectedGroup && (
-                    <div className={styles.paymentNotice}>
-                      <div className={styles.paymentNoticeHeader}>
-                        <CreditCard size={18} />
-                        <span>Payment handled by organizer</span>
-                      </div>
-                      {selectedFeeSchedule?.totalFeeAmount ? (
-                        <div className={styles.paymentDetails}>
-                          <div>
-                            <span>Total fee</span>
-                            <strong>{formatMoney(selectedFeeSchedule.totalFeeAmount)}</strong>
-                            {formatDate(selectedFeeSchedule.totalFeeDueDate) && (
-                              <em>Due {formatDate(selectedFeeSchedule.totalFeeDueDate)}</em>
-                            )}
-                          </div>
-                          {selectedFeeSchedule.depositAmount ? (
-                            <div>
-                              <span>Deposit</span>
-                              <strong>{formatMoney(selectedFeeSchedule.depositAmount)}</strong>
-                              {formatDate(selectedFeeSchedule.depositDueDate) && (
-                                <em>Due {formatDate(selectedFeeSchedule.depositDueDate)}</em>
-                              )}
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : (
-                        <p>
-                          The organizer has not published a fee schedule for this division yet.
-                        </p>
-                      )}
-                      <p>
-                        FieldLogicHQ records registration and payment status for the organizer, but payments are made outside the platform.
-                      </p>
-                    </div>
+                  {selectedGroup && showFees && (
+                    <PaymentPanel feeSchedule={selectedFeeSchedule} instructions={formInstructions} />
                   )}
 
                   {registrationFields.length > 0 && (

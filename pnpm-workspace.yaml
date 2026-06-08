@@ -1,0 +1,7 @@
+# pnpm build-script allowlist (pnpm 11.x `allowBuilds` map: package -> boolean).
+# Lets a fresh `pnpm install` build native deps without a manual `pnpm approve-builds`.
+# core-js is false on purpose — its postinstall is only a funding banner.
+allowBuilds:
+  core-js: false
+  sharp: true
+  unrs-resolver: true

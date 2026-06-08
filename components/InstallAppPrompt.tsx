@@ -119,7 +119,7 @@ export default function InstallAppPrompt({
       </div>
 
       {mode === 'android' && (
-        <button className="btn btn-primary btn-sm" onClick={install} style={{ marginRight: '0.4rem' }}>
+        <button className={styles.install} onClick={install}>
           <Download size={14} /> Install
         </button>
       )}

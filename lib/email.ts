@@ -20,6 +20,16 @@ function htmlToText(html: string): string {
     .trim();
 }
 
+/** Escape user/organizer-authored text before interpolating into an HTML email body. */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/\n/g, '<br>');
+}
+
 export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
@@ -61,7 +71,7 @@ export function registrationConfirmationHtml(p: {
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
-    <p>We've received your registration for <strong>${p.teamName}</strong> in the <strong>${p.divisionName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
+    <p>Thanks for registering <strong>${p.teamName}</strong> for <strong>${p.tournamentName}</strong>! 🎉 We've got your entry for the <strong>${p.divisionName}</strong> division.</p>
     <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Registration Details</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.85);">
@@ -128,16 +138,22 @@ export function acceptanceHtml(p: {
   teamName: string; coachName: string; divisionName: string; tournamentName: string; teamId: string;
   contactEmail?: string;
   dashboardUrl?: string;
+  /** Organizer-authored "how to pay" text (from tournament settings). Shown verbatim when set. */
+  paymentInstructions?: string;
 }) {
   const dashboardUrl = p.dashboardUrl ?? `${SITE_URL}/coaches/tournaments`;
   const contact = p.contactEmail ?? ADMIN_EMAIL;
+  const instructions = p.paymentInstructions?.trim();
+  const paymentBody = instructions
+    ? escapeHtml(instructions)
+    : 'If payment is required, the tournament organizer will follow up with instructions for paying outside FieldLogicHQ.';
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">🎉 Team Accepted!</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>Great news! <strong>${p.teamName}</strong> has been accepted into the <strong>${p.divisionName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
     <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.35);border-left:3px solid rgba(34,197,94,0.6);padding:1.5rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Payment Instructions</p>
-      <p style="margin:0 0 0.75rem;color:rgba(241,245,249,0.8);">If payment is required, the tournament organizer will follow up with instructions for paying outside FieldLogicHQ.</p>
+      <p style="margin:0 0 0.75rem;color:rgba(241,245,249,0.8);">${paymentBody}</p>
       <p style="margin:1rem 0 0;color:rgba(241,245,249,0.45);font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>
     </div>
     <a href="${dashboardUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">View Your Registration Dashboard →</a>

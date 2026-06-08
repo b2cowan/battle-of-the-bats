@@ -2,22 +2,21 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { CalendarDays, ShieldCheck, Trophy, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
-import { getUserAccessContexts, type UserAccessContext } from '@/lib/user-contexts';
+import { getUserAccessContexts } from '@/lib/user-contexts';
+import { getBasicCoachTeamsForUser, type BasicCoachTeam } from '@/lib/basic-coach-teams';
 import {
   COACHES_START_PATH,
   COACHES_TOURNAMENTS_PATH,
   COACHES_TEAMS_PATH,
+  coachTeamPath,
 } from '@/lib/coaches-portal-routes';
 import styles from './coaches-portal.module.css';
 
 export const metadata = { title: 'Coaches Portal' };
 
-function getBasicContext(contexts: UserAccessContext[]) {
-  return contexts.find(context => context.kind === 'coaches_basic') ?? null;
-}
-
-function getWorkspaceContexts(contexts: UserAccessContext[]) {
-  return contexts.filter(context => context.kind === 'coaches_premium');
+function teamMeta(team: BasicCoachTeam): string {
+  const parts = [team.primaryCoachName, team.sport, team.ageGroup].filter(Boolean) as string[];
+  return parts.length > 0 ? parts.join(' · ') : 'Your team home';
 }
 
 export default async function CoachesPortalPage() {
@@ -28,9 +27,14 @@ export default async function CoachesPortalPage() {
     redirect(`/auth/login?next=/coaches`);
   }
 
-  const contexts = await getUserAccessContexts({ id: user.id, email: user.email });
-  const basicContext = getBasicContext(contexts);
-  const workspaceContexts = getWorkspaceContexts(contexts);
+  const [contexts, basicTeams] = await Promise.all([
+    getUserAccessContexts({ id: user.id, email: user.email }),
+    getBasicCoachTeamsForUser(user.id),
+  ]);
+
+  const workspaceContexts = contexts.filter(context => context.kind === 'coaches_premium');
+  const hasTournamentRecords = contexts.some(context => context.id === 'coaches-basic:tournament-records');
+  const isEmpty = basicTeams.length === 0 && workspaceContexts.length === 0 && !hasTournamentRecords;
 
   return (
     <div className={styles.page}>
@@ -38,38 +42,66 @@ export default async function CoachesPortalPage() {
         <div>
           <h1 className={styles.title}>Your Coaches Portal</h1>
           <p className={styles.sub}>
-            Everything for the teams you bring to tournaments — <strong>{user.email}</strong>.
+            Everything for the teams you coach — <strong>{user.email}</strong>.
           </p>
         </div>
       </div>
 
-      {/* Teams & tournaments — the coach's home base */}
-      <section className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Teams &amp; tournaments</h2>
-        </div>
-        {basicContext ? (
+      {/* Your teams — the org-less team homes (the coach's home base) */}
+      {basicTeams.length > 0 && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Your teams</h2>
+          </div>
+          <div className={styles.grid}>
+            {basicTeams.map(team => (
+              <Link key={team.id} href={coachTeamPath(team.id)} className={styles.card}>
+                <div className={styles.cardTop}>
+                  <div className={styles.cardIcon}><Users size={18} /></div>
+                </div>
+                <div>
+                  <h3 className={styles.cardTitle}>{team.name}</h3>
+                  <p className={styles.cardText}>{teamMeta(team)}</p>
+                </div>
+                <span className={styles.cardAction}>Open team home</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Tournament records — only when the coach has registered for a tournament */}
+      {hasTournamentRecords && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Tournaments</h2>
+          </div>
           <div className={styles.grid}>
             <Link href={COACHES_TOURNAMENTS_PATH} className={styles.card}>
               <div className={styles.cardTop}>
                 <div className={styles.cardIcon}><Trophy size={18} /></div>
               </div>
               <div>
-                <h3 className={styles.cardTitle}>Your teams &amp; history</h3>
-                <p className={styles.cardText}>{basicContext.detail}</p>
+                <h3 className={styles.cardTitle}>Tournament records &amp; history</h3>
+                <p className={styles.cardText}>Your registrations, schedules, and statuses across every tournament.</p>
               </div>
               <span className={styles.cardAction}>Open tournament records</span>
             </Link>
           </div>
-        ) : (
+        </section>
+      )}
+
+      {/* Honest empty state — never presupposes a tournament registration */}
+      {isEmpty && (
+        <section className={styles.section}>
           <div className={styles.empty}>
-            <p>Your teams and tournament history appear here automatically when you register for a tournament.</p>
+            <p>Your teams show up here. Register a team for a tournament, or start a free team home to manage your season.</p>
             <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Explore the Coaches Portal</Link>
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* Team workspaces — only when the coach actually has one */}
+      {/* Team workspaces — only when the coach actually has a Premium workspace */}
       {workspaceContexts.length > 0 && (
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
@@ -96,7 +128,7 @@ export default async function CoachesPortalPage() {
         </section>
       )}
 
-      {/* Value-first, never a tier pitch: only shown when there's no workspace yet */}
+      {/* Premium upgrade — additive, availability-aware; only when no workspace yet */}
       {workspaceContexts.length === 0 && (
         <section className={styles.section}>
           <div className={styles.grid}>
@@ -107,7 +139,7 @@ export default async function CoachesPortalPage() {
               <div>
                 <h3 className={styles.cardTitle}>Take your team further</h3>
                 <p className={styles.cardText}>
-                  Run your team year-round — roster, lineups, schedule, dues, budget, and documents in one place. It carries over automatically if your organization joins FieldLogicHQ.
+                  Premium adds the serious-operator tools — a lineup builder, dues automation, team budget, and document storage. It carries over automatically if your organization joins FieldLogicHQ.
                 </p>
               </div>
               <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm" style={{ marginTop: 'auto' }}>

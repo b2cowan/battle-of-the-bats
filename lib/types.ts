@@ -88,6 +88,27 @@ export interface TournamentSettings {
    * 'free' = organizer explicitly chose no payment tracking (valid confirmed state).
    */
   fee_scope?: FeeScope | null;
+
+  // ── Public registration payment display ────────────────────────────────────
+  /**
+   * Public registration form: when `false`, the fee/payment panel is hidden on the
+   * public register page even if a fee schedule is set (the organizer still tracks
+   * fees in admin). Absent/`true` = show (preserves legacy behaviour). Set from
+   * Event Settings → Fee Schedule.
+   */
+  show_fees_on_register?: boolean;
+  /**
+   * Organizer-authored "how to pay" instructions (e.g. e-transfer details, cheque
+   * payable-to, deadline mechanics). Included in the acceptance email when set; also
+   * rendered on the public register form when `payment_instructions_on_form` is true.
+   */
+  payment_instructions?: string;
+  /**
+   * When `true`, `payment_instructions` also render on the public register form.
+   * Absent/`false` = instructions appear only in the acceptance email (the default
+   * delivery channel — how these are typically sent).
+   */
+  payment_instructions_on_form?: boolean;
 }
 
 /**

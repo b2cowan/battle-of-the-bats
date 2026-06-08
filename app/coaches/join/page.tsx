@@ -306,7 +306,7 @@ function JoinForm() {
               {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
-          <p style={{ margin: '0.3rem 0 0', fontSize: '0.72rem', color: 'var(--text-3, rgba(241,245,249,0.45))' }}>
+          <p style={{ margin: '0.3rem 0 0', fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
             Minimum 8 characters
           </p>
         </div>

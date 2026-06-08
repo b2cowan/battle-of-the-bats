@@ -1,6 +1,7 @@
 import { getCoachingAssignmentsForUser, type CoachingAssignment } from './db';
 import { supabaseAdmin } from './supabase-admin';
 import { getBasicCoachTournamentSummary } from './basic-coach-teams';
+import { COACHES_HOME_PATH, COACHES_TOURNAMENTS_PATH, coachTeamPath } from './coaches-portal-routes';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import type { OrgAccountKind, OrgPlan } from './types';
 
@@ -48,6 +49,8 @@ export type TournamentRegistrationSummary = {
   teamCount: number;
   registrationCount?: number;
   tournamentCount: number;
+  /** Per-team info so a bare (no-tournament) team resolves to its org-less home. */
+  teams?: { id: string; name: string; registrationCount: number }[];
 };
 
 type ActiveMemberRow = MemberRow & {
@@ -274,6 +277,27 @@ function buildCoachAssignmentContext(params: {
 function buildTournamentRegistrationContext(summary: TournamentRegistrationSummary): UserAccessContext | null {
   if (summary.teamCount === 0) return null;
 
+  const hasAnyRegistration = (summary.registrationCount ?? 0) > 0;
+  const teams = summary.teams ?? [];
+
+  // A coach whose teams have no tournament registration should land on a real team
+  // home, not the empty tournament-records archive. One bare team → that team's
+  // org-less home; multiple bare teams → the portal hub which lists them.
+  if (!hasAnyRegistration) {
+    const teamLabel = summary.teamCount === 1 ? '1 team' : `${summary.teamCount} teams`;
+    const destination = teams.length === 1 ? coachTeamPath(teams[0].id) : COACHES_HOME_PATH;
+    return {
+      id: 'coaches-basic:teams',
+      kind: 'coaches_basic',
+      title: teams.length === 1 ? teams[0].name : 'Your teams',
+      subtitle: 'Coaches Portal',
+      detail: teams.length === 1 ? 'Team home' : teamLabel,
+      badgeLabel: 'Coach',
+      destination,
+      sortOrder: 40,
+    };
+  }
+
   const tournamentLabel = summary.tournamentCount === 1 ? '1 tournament' : `${summary.tournamentCount} tournaments`;
   const teamLabel = summary.teamCount === 1 ? '1 team' : `${summary.teamCount} teams`;
 
@@ -284,7 +308,7 @@ function buildTournamentRegistrationContext(summary: TournamentRegistrationSumma
     subtitle: 'Tournament records',
     detail: `${teamLabel} across ${tournamentLabel}`,
     badgeLabel: 'Coach',
-    destination: '/coaches/tournaments',
+    destination: COACHES_TOURNAMENTS_PATH,
     sortOrder: 40,
   };
 }

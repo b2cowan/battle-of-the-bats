@@ -67,6 +67,10 @@ export default function TournamentEventSettingsPage() {
   const [depositDueDate, setDepositDueDate] = useState('');
   const [totalFeeAmount, setTotalFeeAmount] = useState('');
   const [totalFeeDueDate, setTotalFeeDueDate] = useState('');
+  // Public registration payment display
+  const [showFeesOnRegister, setShowFeesOnRegister] = useState(true);
+  const [paymentInstructions, setPaymentInstructions] = useState('');
+  const [paymentInstructionsOnForm, setPaymentInstructionsOnForm] = useState(false);
 
   // Game timing
   const [gameTimingScope, setGameTimingScope] = useState<GameTimingScope | null>('tournament');
@@ -98,6 +102,7 @@ export default function TournamentEventSettingsPage() {
     format: 'round_robin_playoffs' as TournamentFormat,
     feeScope: null as FeeScope | null,
     depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
+    showFeesOnRegister: true, paymentInstructions: '', paymentInstructionsOnForm: false,
     gameTimingScope: 'tournament' as GameTimingScope | null,
     gameDurationMinutes: 90,
     bufferMinutes: 15,
@@ -182,6 +187,10 @@ export default function TournamentEventSettingsPage() {
           : t.fee_schedule_mode === 'tournament' ? 'tournament'
           : null;
 
+        const showFees = t.settings?.show_fees_on_register !== false;
+        const payInstr = typeof t.settings?.payment_instructions === 'string' ? t.settings.payment_instructions : '';
+        const payInstrOnForm = t.settings?.payment_instructions_on_form === true;
+
         const rawGTS = t.settings?.game_timing_scope;
         const validTimingScopes = new Set<string>(['tournament', 'allow_override', 'per_division']);
         const gts: GameTimingScope = validTimingScopes.has(rawGTS) ? rawGTS as GameTimingScope : 'tournament';
@@ -206,6 +215,9 @@ export default function TournamentEventSettingsPage() {
         setFeeScope(fs);
         setDepositAmount(da); setDepositDueDate(dd);
         setTotalFeeAmount(tf); setTotalFeeDueDate(td);
+        setShowFeesOnRegister(showFees);
+        setPaymentInstructions(payInstr);
+        setPaymentInstructionsOnForm(payInstrOnForm);
         setGameTimingScope(gts);
         setGameDurationMinutes(gd);
         setBufferMinutes(buf);
@@ -223,6 +235,7 @@ export default function TournamentEventSettingsPage() {
           format: fmt,
           feeScope: fs,
           depositAmount: da, depositDueDate: dd, totalFeeAmount: tf, totalFeeDueDate: td,
+          showFeesOnRegister: showFees, paymentInstructions: payInstr, paymentInstructionsOnForm: payInstrOnForm,
           gameTimingScope: gts, gameDurationMinutes: gd, bufferMinutes: buf,
           venueMoveBufferMinutes: venueMoveBuf, facilityMoveBufferMinutes: facilityMoveBuf,
           tieBreakerScope: tbs, tieBreakers: safeTb,
@@ -346,6 +359,9 @@ export default function TournamentEventSettingsPage() {
                   tie_breakers: tieBreakers,
                   tie_breaker_scope: tieBreakerScope,
                   fee_scope: feeScope,
+                  show_fees_on_register: showFeesOnRegister,
+                  payment_instructions: paymentInstructions.trim(),
+                  payment_instructions_on_form: paymentInstructionsOnForm,
                 },
               },
             }),
@@ -388,6 +404,7 @@ export default function TournamentEventSettingsPage() {
           status: newStatus ?? prev.status,
           startDate, endDate, format: formatToSave, feeScope,
           depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate,
+          showFeesOnRegister, paymentInstructions, paymentInstructionsOnForm,
           gameTimingScope, gameDurationMinutes, bufferMinutes,
           venueMoveBufferMinutes, facilityMoveBufferMinutes,
           tieBreakerScope, tieBreakers: [...tieBreakers],
@@ -409,6 +426,7 @@ export default function TournamentEventSettingsPage() {
     saved.slug, scorePolicyMode, startDate, tieBreakerScope, tieBreakers,
     totalFeeAmount, totalFeeDueDate, tournamentId, tournamentName, tournamentFormat,
     tournamentYear, venueMoveBufferMinutes,
+    showFeesOnRegister, paymentInstructions, paymentInstructionsOnForm,
   ]);
 
   // ── Auto-save effect — fires 1.2 s after any non-status, non-slug change ──
@@ -424,6 +442,7 @@ export default function TournamentEventSettingsPage() {
     isInitialized, tournamentId,
     tournamentName, tournamentYear, startDate, endDate,
     feeScope, depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate,
+    showFeesOnRegister, paymentInstructions, paymentInstructionsOnForm,
     gameTimingScope, gameDurationMinutes, bufferMinutes,
     venueMoveBufferMinutes, facilityMoveBufferMinutes,
     tieBreakers, tieBreakerScope,
@@ -936,6 +955,66 @@ export default function TournamentEventSettingsPage() {
             <p className={styles.descriptionText}>
               Choose a payment configuration above to confirm how fees are handled for this tournament.
             </p>
+          )}
+
+          {feeScope && feeScope !== 'free' && (
+            <>
+              <hr className={styles.cardDivider} />
+
+              {/* Public registration form — fee display + how-to-pay instructions */}
+              <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
+                <p className={styles.subSectionLabel} style={{ margin: 0 }}>Fee details on registration form</p>
+                <div className={styles.segmentedControl}>
+                  {([
+                    [true,  'Show'],
+                    [false, 'Hide'],
+                  ] as const).map(([val, label]) => (
+                    <button
+                      key={String(val)}
+                      type="button"
+                      onClick={() => setShowFeesOnRegister(val)}
+                      className={`${styles.segmentButton} ${showFeesOnRegister === val ? styles.segmentButtonActive : ''}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className={styles.descriptionText}>
+                When hidden, fee amounts and due dates stay in admin only — coaches won&apos;t see a payment panel on the public registration form.
+              </p>
+
+              <p className={styles.subSectionLabel} style={{ marginTop: '1rem' }}>Payment instructions</p>
+              <textarea
+                className="form-textarea"
+                rows={3}
+                maxLength={1000}
+                placeholder="e.g. E-transfer to treasurer@club.ca with your team name in the memo. Balance due by the date above."
+                value={paymentInstructions}
+                onChange={e => setPaymentInstructions(e.target.value)}
+              />
+              <div className={styles.cardHeaderRow} style={{ marginTop: '0.75rem' }}>
+                <p className={styles.descriptionText} style={{ margin: 0 }}>Where these appear</p>
+                <div className={styles.segmentedControl}>
+                  {([
+                    [false, 'Email only'],
+                    [true,  'Form & email'],
+                  ] as const).map(([val, label]) => (
+                    <button
+                      key={String(val)}
+                      type="button"
+                      onClick={() => setPaymentInstructionsOnForm(val)}
+                      className={`${styles.segmentButton} ${paymentInstructionsOnForm === val ? styles.segmentButtonActive : ''}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className={styles.descriptionText} style={{ marginTop: '0.4rem' }}>
+                Payment instructions are always included in the acceptance email. Choose &ldquo;Form &amp; email&rdquo; to also show them on the public registration form.
+              </p>
+            </>
           )}
         </CollapsibleCard>
 

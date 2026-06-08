@@ -11,6 +11,13 @@
 
 The sections below document all copy changes applied to the live pages after the brand strategy audit. Where original draft copy in this document conflicts with an amendment, the amendment wins. The live page files are always the authoritative state; this document records the approved intent.
 
+> ### ⛔ SUPERSEDED — all "Free Trial" copy in this document (added 2026-06-08)
+> Every "14-Day Free Trial" / "Start Free Trial" badge, CTA, FAQ answer, and trial-length row in the body sections below (Section 4 cards, Section 9 FAQ, the Comparison/Availability tables, etc.) is **superseded and must not be used.** Two changes overrode the original trial model:
+> 1. **Founding Season comp** — paid tiers are **free through Dec 31, 2026, no credit card** (no clock, no card-at-signup). Use "Free through Dec 31, 2026 · no credit card required" framing.
+> 2. **Free-floor model** — each operator type starts on a **free-forever scoped floor** (Free Tournament / Free League Starter / Free Basic Coaches Portal), not a time-limited trial. Conversion is driven by scope/scale walls, not a trial expiry. See `docs/projects/active/FREE_TIER_COACHES_UNIFIED_PLAN.md`.
+>
+> Do **not** reintroduce trial-length language (14/30/90-day) anywhere in live copy. The body trial sections are retained below only as historical record.
+
 ### Phase 1 amendments (applied 2026-05-27)
 - `/for-tournament-organizers` planNote → "Free through Dec 31, 2026 — Founding Season · $390/year from Jan 2027"; CTA → "Start Free — No Credit Card →"
 - `/pricing` Bridge 1 CTA → "Start Free — No Credit Card" (not "Start Free Trial")

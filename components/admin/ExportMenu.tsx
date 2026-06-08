@@ -38,6 +38,11 @@ export interface ExportMenuProps {
   pdfLabel?: string;
   /** Override the PDF item helper text. Default: 'Formatted, print-ready document'. */
   pdfHint?: string;
+  /** Optional second PDF item — a blank / fill-in variant (e.g. an empty bracket).
+   *  Shown under the PDF item, gated the same way. */
+  onExportBlankPDF?: () => void | Promise<void>;
+  blankPdfLabel?: string;
+  blankPdfHint?: string;
   /**
    * When true, a second opt-in export item appears:
    * "Excel with contact details" (or "Excel with internal notes" if both are set).
@@ -100,6 +105,9 @@ export default function ExportMenu({
   onExportPDF,
   pdfLabel = 'PDF report',
   pdfHint = 'Formatted, print-ready document',
+  onExportBlankPDF,
+  blankPdfLabel = 'Blank PDF',
+  blankPdfHint = 'Empty template to print and fill in',
   hasSensitiveOption = false,
   sensitiveOptionLabel = 'Excel with contact details',
   onExportXLSXWithSensitive,
@@ -347,6 +355,35 @@ export default function ExportMenu({
                     : exportDisabled
                       ? 'No rows available to export'
                       : pdfHint}
+                </span>
+              </span>
+            </button>
+          )}
+
+          {/* Blank / fill-in PDF variant (same gate as PDF) */}
+          {includesPDF && onExportBlankPDF && (
+            <button
+              role="menuitem"
+              className={`${styles.menuItem}${!pdfAccessible ? ` ${styles.menuItemGated}` : ''}${exportDisabled ? ` ${styles.menuItemDisabled}` : ''}`}
+              onClick={() => {
+                if (!pdfAccessible || exportDisabled) return;
+                runExport(onExportBlankPDF);
+              }}
+              aria-disabled={!pdfAccessible || exportDisabled}
+              title={pdfAccessible ? (exportDisabled ? 'No rows available to export' : blankPdfHint) : pdfUpgradeCopy}
+            >
+              <FileText size={14} className={styles.menuIcon} aria-hidden />
+              {!pdfAccessible && (
+                <Lock size={12} className={styles.lockIcon} aria-hidden />
+              )}
+              <span>
+                <span className={styles.menuItemLabel}>{blankPdfLabel}</span>
+                <span className={styles.menuItemHint}>
+                  {!pdfAccessible
+                    ? pdfUpgradeCopy
+                    : exportDisabled
+                      ? 'No rows available to export'
+                      : blankPdfHint}
                 </span>
               </span>
             </button>

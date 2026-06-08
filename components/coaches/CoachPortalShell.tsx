@@ -9,6 +9,7 @@ import {
   COACHES_HOME_PATH,
   COACHES_TOURNAMENTS_PATH,
   COACHES_TEAMS_PATH,
+  coachTeamPath,
   isCoachPortalShellPath,
 } from '@/lib/coaches-portal-routes';
 import styles from './CoachPortalShell.module.css';
@@ -97,7 +98,7 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
           <div className={styles.railTeams}>
             <p className={styles.railTeamsLabel}>My Teams</p>
             {teams.map(team => (
-              <Link key={team.id} href={COACHES_TOURNAMENTS_PATH} className={styles.railTeam}>
+              <Link key={team.id} href={coachTeamPath(team.id)} className={styles.railTeam}>
                 <span className={styles.railTeamDot} style={{ background: teamColor(team.name) }} aria-hidden />
                 <span className={styles.railTeamName}>{team.name}</span>
               </Link>

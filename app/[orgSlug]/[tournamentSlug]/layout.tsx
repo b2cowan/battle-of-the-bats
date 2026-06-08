@@ -153,9 +153,13 @@ export default async function TournamentLayout({
     '--white-80:        rgba(15,17,35,0.8)',
     '--white-70:        rgba(15,17,35,0.7)',
     '--white-60:        rgba(15,17,35,0.6)',
-    '--white-50:        rgba(15,17,35,0.5)',
-    '--white-45:        rgba(15,17,35,0.45)',
-    '--white-40:        rgba(15,17,35,0.4)',
+    // Muted-text tokens run darker in light mode than a literal alpha port of the
+    // dark scale: on bright (white) surfaces 40–50% black washes out, so secondary
+    // text (round labels, dates, metadata) is lifted ~0.12 for a readable contrast
+    // floor without losing the "muted" read. Structural faints (-35/-30/-10) unchanged.
+    '--white-50:        rgba(15,17,35,0.62)',
+    '--white-45:        rgba(15,17,35,0.58)',
+    '--white-40:        rgba(15,17,35,0.52)',
     '--white-35:        rgba(15,17,35,0.35)',
     '--white-30:        rgba(15,17,35,0.3)',
     '--white-10:        rgba(15,17,35,0.07)',

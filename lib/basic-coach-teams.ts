@@ -6,7 +6,7 @@ export type BasicCoachTeam = {
   primaryCoachName: string | null;
   primaryCoachEmail: string;
   sport: string | null;
-  division: string | null;
+  ageGroup: string | null;
   teamWorkspaceId: string | null;
   createdAt: string;
 };
@@ -60,7 +60,7 @@ type BasicCoachTeamRow = {
   primary_coach_name: string | null;
   primary_coach_email: string;
   sport: string | null;
-  division: string | null;
+  age_group: string | null;
   team_workspace_id: string | null;
   created_at: string;
 };
@@ -113,7 +113,7 @@ function mapBasicCoachTeam(row: BasicCoachTeamRow): BasicCoachTeam {
     primaryCoachName: row.primary_coach_name,
     primaryCoachEmail: row.primary_coach_email,
     sport: row.sport,
-    division: row.division,
+    ageGroup: row.age_group,
     teamWorkspaceId: row.team_workspace_id,
     createdAt: row.created_at,
   };
@@ -158,7 +158,7 @@ export async function getBasicCoachTeamsForUser(userId: string): Promise<BasicCo
 
   const { data: teams, error: teamsError } = await supabaseAdmin
     .from('basic_coach_teams')
-    .select('id, name, primary_coach_name, primary_coach_email, sport, division, team_workspace_id, created_at')
+    .select('id, name, primary_coach_name, primary_coach_email, sport, age_group, team_workspace_id, created_at')
     .in('id', teamIds)
     .order('created_at', { ascending: true });
 
@@ -166,7 +166,7 @@ export async function getBasicCoachTeamsForUser(userId: string): Promise<BasicCo
   return ((teams ?? []) as BasicCoachTeamRow[]).map(mapBasicCoachTeam);
 }
 
-async function userOwnsBasicCoachTeam(userId: string, basicCoachTeamId: string): Promise<boolean> {
+export async function userOwnsBasicCoachTeam(userId: string, basicCoachTeamId: string): Promise<boolean> {
   const { data, error } = await supabaseAdmin
     .from('basic_coach_team_users')
     .select('id')
@@ -177,6 +177,29 @@ async function userOwnsBasicCoachTeam(userId: string, basicCoachTeamId: string):
 
   if (error) throw error;
   return !!data;
+}
+
+/**
+ * Resolve a single org-less Basic coach team for the signed-in coach, ownership-checked
+ * via `basic_coach_team_users`. Returns null when the team does not exist or the user is
+ * not an active member — the org-less team-profile route (`/coaches/team/[basicTeamId]`)
+ * uses this as its access gate (the standalone-floor analogue of
+ * `canUserAccessTournamentRegistration`, which is keyed on a tournament registration).
+ */
+export async function getBasicCoachTeamForUser(params: {
+  userId: string;
+  basicCoachTeamId: string;
+}): Promise<BasicCoachTeam | null> {
+  if (!(await userOwnsBasicCoachTeam(params.userId, params.basicCoachTeamId))) return null;
+
+  const { data, error } = await supabaseAdmin
+    .from('basic_coach_teams')
+    .select('id, name, primary_coach_name, primary_coach_email, sport, age_group, team_workspace_id, created_at')
+    .eq('id', params.basicCoachTeamId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? mapBasicCoachTeam(data as BasicCoachTeamRow) : null;
 }
 
 export async function getPendingTournamentRegistrationForUser(
@@ -452,6 +475,13 @@ export async function getBasicCoachTournamentSummary(params: {
     teamCount: teams.length,
     registrationCount: registrationIds.size,
     tournamentCount: tournamentIds.size,
+    // Per-team shape lets the access-context resolver route a bare (no-tournament)
+    // team to its org-less home instead of the empty tournament-records archive.
+    teams: teams.map(team => ({
+      id: team.id,
+      name: team.name,
+      registrationCount: team.registrations.length,
+    })),
   };
 }
 

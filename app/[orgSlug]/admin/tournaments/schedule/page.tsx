@@ -22,6 +22,7 @@ import PlayoffWizard from './PlayoffWizard';
 import GameList from './components/GameList';
 import ScheduleHealthPanel from './components/ScheduleHealthPanel';
 import BracketConnectors from './components/BracketConnectors';
+import BracketZoomFrame from './components/BracketZoomFrame';
 import ScheduleTimeline from './components/ScheduleTimeline';
 import { Game, Team, Division, Venue, PoolSlot, ScheduleFacilityLane } from '@/lib/types';
 import { checkVenueConflict, type ConflictResult } from '@/lib/schedule-conflict';
@@ -736,7 +737,7 @@ export default function AdminSchedulePage() {
     await doPdfExport();
   }
 
-  async function handleExportBracketPDF() {
+  async function handleExportBracketPDF(blank: boolean = false) {
     const settings: OrgPdfSettings = {
       ...DEFAULT_PDF_SETTINGS,
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
@@ -744,16 +745,17 @@ export default function AdminSchedulePage() {
     };
     const bracketGames = divisionGames.filter(g => g.isPlayoff);
     const filename = buildFilename(
-      { org: currentOrg?.slug, dataset: 'bracket', scope: activeDivision?.name ?? String(currentTournament?.year ?? '') },
+      { org: currentOrg?.slug, dataset: blank ? 'bracket-blank' : 'bracket', scope: activeDivision?.name ?? String(currentTournament?.year ?? '') },
       'pdf',
     );
     await downloadBracketPDF(
       filename,
-      `${activeDivision?.name ?? 'Division'} — Playoff Bracket`,
+      `${activeDivision?.name ?? 'Division'} — Playoff Bracket${blank ? ' (Blank)' : ''}`,
       currentTournament?.name,
       bracketGames,
       teams,
       settings,
+      blank,
     );
   }
 
@@ -885,6 +887,9 @@ export default function AdminSchedulePage() {
               onExportPDF={handleExportPDF}
               pdfLabel={layout === 'bracket' ? 'Bracket PDF' : 'PDF report'}
               pdfHint={layout === 'bracket' ? 'Printable visual bracket sheet' : 'Formatted, print-ready document'}
+              onExportBlankPDF={layout === 'bracket' ? () => handleExportBracketPDF(true) : undefined}
+              blankPdfLabel="Blank bracket PDF"
+              blankPdfHint="Empty bracket to print and fill in by hand"
               planId={currentOrg?.planId}
               disabled={filtered.length === 0}
             />
@@ -2778,8 +2783,10 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
           <span><i className={styles.legendLoss} /> Loser drops down</span>
         </div>
       )}
-      <div ref={canvasRef} className={`${styles.readBracketCanvas}${isDoubleElim ? ` ${styles.readBracketCanvasTiered}` : ''}`}>
-        <BracketConnectors canvasRef={canvasRef} matchups={connectorMatchups} finalIds={finalGameIds} />
+      <BracketZoomFrame fitKey={columns.map((c: any) => `${c.key}:${c.games.length}`).join('|')}>
+        {(zoom: number) => (
+        <div ref={canvasRef} className={`${styles.readBracketCanvas}${isDoubleElim ? ` ${styles.readBracketCanvasTiered}` : ''}`}>
+          <BracketConnectors canvasRef={canvasRef} matchups={connectorMatchups} finalIds={finalGameIds} scale={zoom} />
         {isDoubleElim ? (
           <>
             {seedCols.length > 0 && (
@@ -2808,7 +2815,9 @@ function BracketColumns({ columns, onEdit, onDelete, formatDate }: any) {
         ) : (
           columns.map((col: any, idx: number) => renderColumn({ col, idx }))
         )}
-      </div>
+        </div>
+        )}
+      </BracketZoomFrame>
     </div>
   );
 }

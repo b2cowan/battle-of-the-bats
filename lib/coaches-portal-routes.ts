@@ -3,8 +3,16 @@ export const COACHES_JOIN_PATH = '/coaches/join';
 export const COACHES_START_PATH = '/coaches/start';
 export const COACHES_TOURNAMENTS_PATH = '/coaches/tournaments';
 export const COACHES_TEAMS_PATH = '/coaches/teams';
+/** Org-less Basic coach team home (identity-resolved by `basic_coach_teams.id`).
+ *  Distinct from the Premium workspace list at COACHES_TEAMS_PATH (`/coaches/teams`). */
+export const COACHES_TEAM_PATH = '/coaches/team';
 export const COACHES_CLAIM_PATH = '/coaches/claim';
 export const COACHES_CHECKOUT_COMPLETE_PATH = '/coaches/checkout/complete';
+
+/** Build the path to a single org-less Basic coach team home. */
+export function coachTeamPath(basicCoachTeamId: string): string {
+  return `${COACHES_TEAM_PATH}/${basicCoachTeamId}`;
+}
 
 export type SearchParamsRecord = Record<string, string | string[] | undefined>;
 
@@ -19,7 +27,9 @@ export function isCoachPortalShellPath(pathname: string): boolean {
   return (
     pathname === COACHES_HOME_PATH ||
     pathname.startsWith(`${COACHES_TOURNAMENTS_PATH}`) ||
-    pathname.startsWith(COACHES_TEAMS_PATH)
+    pathname.startsWith(COACHES_TEAMS_PATH) ||
+    pathname === COACHES_TEAM_PATH ||
+    pathname.startsWith(`${COACHES_TEAM_PATH}/`)
   );
 }
 

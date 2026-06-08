@@ -7,6 +7,7 @@ import { getTournamentRegistrationFields, saveTournamentRegistrationFieldAnswers
 import { hasPlanFeature } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { linkTournamentRegistrationToBasicCoachTeam } from '@/lib/basic-coach-teams';
+import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { notify } from '@/lib/notify';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
 import {
@@ -44,14 +45,12 @@ type DivisionRow = {
   capacity: number | null;
   is_closed: boolean | null;
   tournament_id: string;
-  contact_id: string | null;           // legacy — still selected for fallback safety
-  contact_member_id: string | null;    // new
+  contact_member_id: string | null;
 };
 
 type OrganizationRow = {
   id: string;
   slug: string;
-  contact_email: string | null;
   is_public: boolean | null;
   plan_id: OrgPlan;
   subscription_status: string | null;
@@ -209,6 +208,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required registration details.' }, { status: 400 });
     }
 
+    // FieldLogicHQ staff emails must never become a public team contact.
+    if (await isPlatformAdminEmail(email)) {
+      return NextResponse.json({ error: 'This email address cannot be used to register a team.' }, { status: 403 });
+    }
+
     let signedInCoach: { id: string; email: string } | null = null;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -226,7 +230,7 @@ export async function POST(req: NextRequest) {
     ] = await Promise.all([
       supabaseAdmin
         .from('divisions')
-        .select('id, name, capacity, is_closed, tournament_id, contact_id, contact_member_id')
+        .select('id, name, capacity, is_closed, tournament_id, contact_member_id')
         .eq('id', divisionId)
         .maybeSingle<DivisionRow>(),
       supabaseAdmin
@@ -272,7 +276,7 @@ export async function POST(req: NextRequest) {
     if (tournament.org_id) {
       const { data: orgData, error: orgError } = await supabaseAdmin
         .from('organizations')
-        .select('id, slug, contact_email, is_public, plan_id, subscription_status')
+        .select('id, slug, is_public, plan_id, subscription_status')
         .eq('id', tournament.org_id)
         .maybeSingle<OrganizationRow>();
 
@@ -284,7 +288,11 @@ export async function POST(req: NextRequest) {
       organization = orgData;
     }
 
-    if (!organization?.is_public || organization.subscription_status === 'canceled') {
+    // Registration does NOT depend on the org's public-profile (is_public) flag — that gates only
+    // the org home/league pages (League/Club). Tournament Plus orgs have no org profile
+    // (is_public=false) yet their tournaments + registration must work. Mirror the read-path gate
+    // in lib/public-tournament-data.ts getPublicContext: org must exist and not be canceled.
+    if (!organization || organization.subscription_status === 'canceled') {
       return NextResponse.json({ error: 'Tournament registration is not open.' }, { status: 403 });
     }
 
@@ -461,10 +469,11 @@ export async function POST(req: NextRequest) {
     const tournamentName = tournament.name;
 
     // Footer contact shown in team-facing emails — prefer new member system, fall back to legacy chain.
+    // (organizations has no contact_email column — that field lives on org_public_site_content;
+    // the tournament contact + org-owner email cover the fallback.)
     const footerContactEmail = tournamentDefaultMemberEmail
       || tournament.contact_email
       || (tournament.org_id ? await getOrgOwnerEmail(tournament.org_id) : undefined)
-      || organization?.contact_email
       || undefined;
 
     // Admin notification routing respects notify_mode:

@@ -35,8 +35,8 @@ export default async function CoachesTeamWorkspacesPage() {
           <div style={{ marginBottom: '1rem', color: 'var(--logic-lime)' }}>
             <Users size={28} />
           </div>
-          <p>Run your team year-round — roster, lineups, schedule, dues, budget, and documents in one place. It carries over automatically if your organization joins FieldLogicHQ.</p>
-          <Link href={COACHES_START_PATH} className="btn btn-primary btn-sm">Express interest</Link>
+          <p>Premium adds the serious-operator tools — a lineup builder, dues automation, team budget, and document storage. It carries over automatically if your organization joins FieldLogicHQ.</p>
+          <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Express interest</Link>
         </div>
       ) : (
         <section className={styles.section}>

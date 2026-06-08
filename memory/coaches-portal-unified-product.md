@@ -5,6 +5,7 @@ As of 2026-05-25, the tournament coach portal and the standalone Team workspace 
 Product decision:
 
 - Basic Coaches Portal is included for tournament team contacts. It shows tournament registrations, status, schedules, announcements, and historical tournament records.
+- **AMENDMENT (2026-06-08, per Free Tier Strategy):** Basic's boundary is intentionally widened from the original "no roster management." Basic now also includes a **lightweight master roster (identity only)** — player name / jersey / contact, optional & purpose-driven DOB — for roster continuity, plus (option C) a **basic team schedule** and **basic team comms** so a standalone team has a real reason to exist. **Premium remains the home for team operations:** attendance, lineups, documents, dues / budget / accounting, the full power-calendar (recurring / export / multi-view), and online collection. See docs/projects/active/FREE_TIER_STRATEGY_PLAN.md (§10–§11) + COACHES_EXPERIENCE_EVAL_PLAN.md.
 - Premium Coaches Portal is the paid one-team workspace previously called Team, plus org-billed and Club-included coach access.
 - Upgrading adds premium tools inside the same portal. Canceling paid access returns the coach to Basic tournament access, stops active premium tools, and archives premium data for 90 days so it can be restored on reactivation where possible.
 - Public copy should use Coaches Portal, not Team. Internal technical names like `team_workspaces`, `team_entitlements`, `team_org_links`, and `team_workspace_claims` can remain until a deliberate technical rename is planned.

@@ -38,7 +38,7 @@ Each organization gets its own isolated space at `/{orgSlug}/`. Within that spac
 
 ## Pricing
 
-Four bundled SaaS tiers — no à la carte modules:
+Four bundled SaaS paid tiers — no à la carte modules:
 
 | Plan | Monthly | Modules |
 |---|---|---|
@@ -48,6 +48,8 @@ Four bundled SaaS tiers — no à la carte modules:
 | Club | $179/mo | All modules |
 
 Annual billing saves ~2 months. CAD pricing.
+
+**Free floors layer over the paid tiers.** Each operator type can start free in their natural unit — a Free Tournament (org on the `tournament` plan), a Free League Starter (capped house-league entitlement profile), and a Free Basic Coaches Portal (`basic_coach_teams`, no org, no subscription). Free is delivered as scoped per-operator floors unified under one login via `/home`, not as one mega-subscription. See `docs/projects/active/FREE_TIER_COACHES_UNIFIED_PLAN.md`.
 
 ---
 

@@ -64,7 +64,7 @@ aws configure
 
 You'll need:
 - **Access Key ID** and **Secret Access Key** — from IAM console
-- **Default region** — `ca-central-1`
+- **Default region** — `us-east-2`
 - **Output format** — `json`
 
 **Minimum IAM permissions** (attach to your IAM user):

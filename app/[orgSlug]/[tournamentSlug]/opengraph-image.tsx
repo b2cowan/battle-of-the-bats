@@ -1,11 +1,15 @@
 import { ImageResponse } from 'next/og';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { resolveTheme } from '@/lib/themes';
+import type { Game } from '@/lib/types';
 
 export const alt = 'Tournament';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
+const GOLD = '#EFC44D';
+
+interface ChampionInfo { division: string; champion: string; runnerUp: string | null; }
 interface CardData {
   name: string;
   orgName: string;
@@ -14,6 +18,8 @@ interface CardData {
   divisionCount: number;
   primary: string;
   rgb: string;
+  /** Decided division champions (one per division whose final is settled). */
+  champions: ChampionInfo[];
 }
 
 function fmtRange(start?: string, end?: string): string {
@@ -30,6 +36,14 @@ function fmtRange(start?: string, end?: string): string {
   return `${s.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} – ${e.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 }
 
+// A bracket final is "decided" once it's scored with a winner and both sides resolved.
+function isDecided(g?: Game): boolean {
+  return !!g
+    && (g.status === 'completed' || g.status === 'submitted')
+    && g.homeScore != null && g.awayScore != null && g.homeScore !== g.awayScore
+    && !!g.homeTeamId && !!g.awayTeamId;
+}
+
 async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: string }>): Promise<CardData | null> {
   try {
     const { orgSlug, tournamentSlug } = await params;
@@ -37,14 +51,35 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     if (!data?.tournament) return null;
     const t = data.tournament;
     const theme = resolveTheme(t.themePreset, t.themePrimary, t.themeAccent);
+
+    const teams = data.teams ?? [];
+    const games = data.games ?? [];
+    const divisions = data.divisions ?? [];
+    const teamName = (id?: string | null) => (id ? teams.find(x => x.id === id)?.name ?? null : null);
+
+    // Champion per division = the winner of the decided final (grand-final reset,
+    // grand final, or single-elim/placement final, in that priority).
+    const champions: ChampionInfo[] = [];
+    for (const div of divisions) {
+      const pg = games.filter(g => g.isPlayoff && g.divisionId === div.id);
+      const byCode = (code: string) => pg.find(g => (g.bracketCode || '').toUpperCase() === code);
+      const finalG = [byCode('GF2'), byCode('GF'), byCode('FIN')].find(isDecided);
+      if (!finalG) continue;
+      const champId = (finalG.homeScore ?? 0) > (finalG.awayScore ?? 0) ? finalG.homeTeamId : finalG.awayTeamId;
+      const loserId = champId === finalG.homeTeamId ? finalG.awayTeamId : finalG.homeTeamId;
+      const champion = teamName(champId);
+      if (champion) champions.push({ division: div.name, champion, runnerUp: teamName(loserId) });
+    }
+
     return {
       name: t.name,
       orgName: data.organization?.name ?? '',
       dateLabel: fmtRange(t.startDate, t.endDate),
-      teamCount: data.teams?.length ?? 0,
-      divisionCount: data.divisions?.length ?? 0,
+      teamCount: teams.length,
+      divisionCount: divisions.length,
       primary: theme.primary,
       rgb: theme.primaryRgb,
+      champions,
     };
   } catch {
     return null;
@@ -65,6 +100,64 @@ export default async function Image({ params }: { params: Promise<{ orgSlug: str
     );
   }
 
+  // ── Champion / podium card (when a final is decided) ──────────────────────────
+  if (c.champions.length > 0) {
+    const single = c.champions.length === 1;
+    return new ImageResponse(
+      (
+        <div style={{
+          width: '100%', height: '100%', display: 'flex', flexDirection: 'column', padding: 72,
+          backgroundColor: '#0A0A12',
+          backgroundImage: `linear-gradient(135deg, rgba(239,196,77,0.32) 0%, rgba(239,196,77,0.08) 50%, rgba(10,10,18,0) 82%)`,
+          fontFamily: 'sans-serif',
+        }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 12, background: GOLD }} />
+
+          {c.orgName
+            ? <div style={{ display: 'flex', color: 'rgba(255,255,255,0.7)', fontSize: 28, fontWeight: 700, letterSpacing: 1 }}>{c.orgName.toUpperCase()}</div>
+            : <div style={{ display: 'flex' }} />}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, flex: 1, justifyContent: 'center' }}>
+            <div style={{ display: 'flex', color: GOLD, fontSize: 30, fontWeight: 800, letterSpacing: 6 }}>
+              {single ? '★ CHAMPION' : '★ CHAMPIONS'}
+            </div>
+
+            {single ? (
+              <>
+                <div style={{ display: 'flex', fontSize: 92, fontWeight: 800, color: '#fff', lineHeight: 1.02 }}>{c.champions[0].champion}</div>
+                {c.divisionCount > 1 && (
+                  <div style={{ display: 'flex', fontSize: 30, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>{c.champions[0].division}</div>
+                )}
+                {c.champions[0].runnerUp && (
+                  <div style={{ display: 'flex', fontSize: 30, fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>Runner-up · {c.champions[0].runnerUp}</div>
+                )}
+              </>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {c.champions.slice(0, 4).map((ch, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
+                    <div style={{ display: 'flex', fontSize: 26, fontWeight: 700, color: 'rgba(255,255,255,0.55)', width: 220 }}>{ch.division}</div>
+                    <div style={{ display: 'flex', fontSize: 44, fontWeight: 800, color: '#fff' }}>{ch.champion}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', fontSize: 30, fontWeight: 800, color: 'rgba(255,255,255,0.92)' }}>{c.name}</div>
+              {c.dateLabel && <div style={{ display: 'flex', fontSize: 24, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>{c.dateLabel}</div>}
+            </div>
+            <div style={{ display: 'flex', color: 'rgba(255,255,255,0.62)', fontSize: 26, fontWeight: 700 }}>Live on FieldLogicHQ</div>
+          </div>
+        </div>
+      ),
+      { ...size },
+    );
+  }
+
+  // ── Event card (default, incl. pre-play / in-progress) ────────────────────────
   const stat = (n: number, label: string) => (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <div style={{ display: 'flex', fontSize: 64, fontWeight: 800, color: '#fff' }}>{n || '—'}</div>

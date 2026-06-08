@@ -526,6 +526,10 @@ export async function POST(req: Request) {
         'tie_breakers',
         'tie_breaker_scope',
         'fee_scope',
+        // Public registration payment display
+        'show_fees_on_register',
+        'payment_instructions',
+        'payment_instructions_on_form',
       ]);
       const FORMAT_VALUES           = new Set(['round_robin_playoffs', 'playoff_only']);
       const RULES_LAYOUT_VALUES     = new Set(['columns', 'single']);
@@ -585,6 +589,17 @@ export async function POST(req: Request) {
           const validated = (v as unknown[]).filter(b => TIE_BREAKER_VALID_VALUES.has(String(b))).map(String);
           if (validated.length === 0) continue;
           sanitized[k] = validated;
+          continue;
+        }
+        if (k === 'show_fees_on_register' || k === 'payment_instructions_on_form') {
+          if (typeof v !== 'boolean') continue;
+          sanitized[k] = v;
+          continue;
+        }
+        if (k === 'payment_instructions') {
+          if (v === null || v === '') { sanitized[k] = ''; continue; }
+          if (typeof v !== 'string') continue;
+          sanitized[k] = v.slice(0, 1000);
           continue;
         }
         sanitized[k] = v;

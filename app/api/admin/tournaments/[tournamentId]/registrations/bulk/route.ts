@@ -42,6 +42,7 @@ type TournamentRow = {
   fee_schedule_mode: string | null;
   deposit_amount: number | null;
   total_fee_amount: number | null;
+  settings: { payment_instructions?: unknown } | null;
 };
 
 type DivisionFeeRow = {
@@ -126,7 +127,7 @@ async function releaseTeamSlot(team: TeamRow) {
   await supabaseAdmin.from('pool_slots').update({ team_id: null }).eq('id', team.slot_id);
 }
 
-async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournamentName: string, divisions: Map<string, DivisionFeeRow>) {
+async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournamentName: string, divisions: Map<string, DivisionFeeRow>, paymentInstructions?: string) {
   if (action !== 'accept' && action !== 'reject' && action !== 'mark_paid') return;
 
   for (const team of teams) {
@@ -141,7 +142,7 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
     };
 
     if (action === 'accept' && team.status !== 'accepted') {
-      await sendEmail(team.email, `Your Team Has Been Accepted - ${team.name}`, acceptanceHtml(payload));
+      await sendEmail(team.email, `Your Team Has Been Accepted - ${team.name}`, acceptanceHtml({ ...payload, paymentInstructions }));
     }
     if (action === 'reject' && team.status !== 'rejected') {
       await sendEmail(team.email, `Registration Update - ${team.name}`, rejectionHtml(payload));
@@ -189,7 +190,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const [{ data: tournament, error: tournamentError }, { data: teams, error: teamsError }, { data: divisionRows, error: divisionError }] = await Promise.all([
     supabaseAdmin
       .from('tournaments')
-      .select('id, name, org_id, fee_schedule_mode, deposit_amount, total_fee_amount')
+      .select('id, name, org_id, fee_schedule_mode, deposit_amount, total_fee_amount, settings')
       .eq('id', tournamentId)
       .maybeSingle<TournamentRow>(),
     supabaseAdmin
@@ -256,7 +257,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (error) return json({ error: error.message }, 500);
   }
 
-  await sendStatusEmails(selectedTeams, bulkAction, tournament.name, divisions);
+  const paymentInstructions = typeof tournament.settings?.payment_instructions === 'string'
+    ? tournament.settings.payment_instructions
+    : undefined;
+  await sendStatusEmails(selectedTeams, bulkAction, tournament.name, divisions, paymentInstructions);
 
   // Notify org admins of bulk status / payment changes (fire-and-forget, one notification per operation)
   const count = selectedTeams.length;

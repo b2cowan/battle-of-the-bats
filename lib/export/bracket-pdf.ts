@@ -81,6 +81,9 @@ export async function downloadBracketPDF(
   games: Game[],
   teams: Team[],
   settings: OrgPdfSettings = DEFAULT_PDF_SETTINGS,
+  /** Blank fill-in bracket: empty name + score lines on every slot (print & fill
+   *  in by hand). Structure still reads from round titles, codes, and connectors. */
+  blank: boolean = false,
 ): Promise<void> {
   const { default: jsPDF } = await import('jspdf');
 
@@ -97,7 +100,7 @@ export async function downloadBracketPDF(
   // Champion (decisive final → grand-final reset, grand final, or single-elim final)
   const byCode = (c: string) => playoffGames.find(g => (g.bracketCode || '').toUpperCase() === c);
   const finalG = [byCode('GF2'), byCode('GF'), byCode('FIN')].find(isDecided);
-  const championName = finalG
+  const championName = !blank && finalG
     ? sideName(
         (finalG.homeScore ?? 0) > (finalG.awayScore ?? 0) ? finalG.homeTeamId : finalG.awayTeamId,
         (finalG.homeScore ?? 0) > (finalG.awayScore ?? 0) ? finalG.homePlaceholder : finalG.awayPlaceholder,
@@ -291,7 +294,7 @@ export async function downloadBracketPDF(
 
     // ── Boxes ──
     const drawBox = (g: Game, x: number, y: number) => {
-      const played = (g.status === 'completed' || g.status === 'submitted') && g.homeScore != null && g.awayScore != null;
+      const played = !blank && (g.status === 'completed' || g.status === 'submitted') && g.homeScore != null && g.awayScore != null;
       const homeWin = played && (g.homeScore ?? 0) > (g.awayScore ?? 0);
       const awayWin = played && (g.awayScore ?? 0) > (g.homeScore ?? 0);
 
@@ -311,6 +314,13 @@ export async function downloadBracketPDF(
       const scoreW = 7;
       const nameMaxW = colW - 4 - scoreW;
       const drawSide = (name: string, win: boolean, rowTop: number, score: number | null | undefined) => {
+        if (blank) {
+          // Empty fill-in lines for the team name and the score.
+          doc.setDrawColor(205, 205, 216); doc.setLineWidth(0.3);
+          doc.line(x + 2, rowTop + rowH / 2 + 1.4, x + colW - scoreW - 2, rowTop + rowH / 2 + 1.4);
+          doc.line(x + colW - scoreW, rowTop + rowH / 2 + 1.4, x + colW - 2, rowTop + rowH / 2 + 1.4);
+          return;
+        }
         doc.setFont('helvetica', win ? 'bold' : 'normal');
         doc.setFontSize(7.5);
         doc.setTextColor(win ? 20 : 64, win ? 20 : 64, win ? 35 : 78);

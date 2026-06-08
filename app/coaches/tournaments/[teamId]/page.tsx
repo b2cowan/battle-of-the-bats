@@ -210,11 +210,11 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Schedule</h2>
           {!scheduleVisible ? (
-            <div className="card" style={{ padding: '1.5rem', color: 'var(--text-2)', textAlign: 'center', fontSize: '0.88rem' }}>
+            <div className="card" style={{ padding: '1.5rem', color: 'var(--text-secondary)', textAlign: 'center', fontSize: '0.88rem' }}>
               The schedule for this division has not been published yet. Check back after the organizer publishes it.
             </div>
           ) : teamGames.length === 0 ? (
-            <div className="card" style={{ padding: '1.5rem', color: 'var(--text-2)', textAlign: 'center', fontSize: '0.88rem' }}>
+            <div className="card" style={{ padding: '1.5rem', color: 'var(--text-secondary)', textAlign: 'center', fontSize: '0.88rem' }}>
               No games scheduled for your team yet.
             </div>
           ) : (
@@ -250,7 +250,7 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Announcements</h2>
         {relevantAnnouncements.length === 0 ? (
-          <div className="card" style={{ padding: '1.5rem', color: 'var(--text-2)', textAlign: 'center', fontSize: '0.88rem' }}>
+          <div className="card" style={{ padding: '1.5rem', color: 'var(--text-secondary)', textAlign: 'center', fontSize: '0.88rem' }}>
             No announcements yet from the organizer.
           </div>
         ) : (
@@ -274,7 +274,7 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
             <div className={styles.ctaLabel}>For your team</div>
             <div className={styles.ctaTitle}>Take your team further</div>
             <p className={styles.ctaDesc}>
-              Run your team year-round — roster, lineups, schedule, dues, budget, and documents in one place. It carries over automatically if your organization joins FieldLogicHQ.
+              Premium adds the serious-operator tools — a lineup builder, dues automation, team budget, and document storage. It carries over automatically if your organization joins FieldLogicHQ.
             </p>
             <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Express interest</Link>
           </div>

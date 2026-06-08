@@ -9,6 +9,7 @@ import {
 } from '@/lib/basic-coach-teams';
 import { getUserAccessContexts } from '@/lib/user-contexts';
 import {
+  COACHES_HOME_PATH,
   COACHES_START_PATH,
   COACHES_TOURNAMENTS_PATH,
 } from '@/lib/coaches-portal-routes';
@@ -91,7 +92,7 @@ export default async function CoachTournamentRecordsPage() {
         <div className={styles.header}>
           <h1 className={styles.title}>Coaches Portal</h1>
         </div>
-        <div className="card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-2)' }}>
+        <div className="card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
           <p>Could not load your tournament records. Please try refreshing the page.</p>
         </div>
       </div>
@@ -108,9 +109,10 @@ export default async function CoachTournamentRecordsPage() {
           <p className={styles.sub}>Basic team profiles and tournament history for <strong>{email}</strong></p>
         </div>
         <div className="card" style={{ padding: '2.5rem', textAlign: 'center' }}>
-          <p style={{ color: 'var(--text-2)', marginBottom: '0.5rem' }}>No tournament records found for your account.</p>
-          <p style={{ color: 'var(--text-3)', fontSize: '0.85rem' }}>
-            When you register for a tournament, it will appear here automatically.
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>No tournament registrations yet.</p>
+          <p style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
+            Register a team for a tournament and it appears here. You can manage your teams from your{' '}
+            <Link href={COACHES_HOME_PATH} style={{ color: 'var(--logic-lime)' }}>Coaches Portal home</Link>.
           </p>
         </div>
         <div className={styles.ctaSection}>
@@ -253,7 +255,7 @@ function CtaCards({ hasPremiumAccess }: { hasPremiumAccess: boolean }) {
           <div className={styles.ctaLabel}>For your team</div>
           <div className={styles.ctaTitle}>Take your team further</div>
           <p className={styles.ctaDesc}>
-            Run your team year-round — roster, lineups, schedule, dues, budget, and documents in one place. It carries over automatically if your organization joins FieldLogicHQ.
+            Premium adds the serious-operator tools — a lineup builder, dues automation, team budget, and document storage. It carries over automatically if your organization joins FieldLogicHQ.
           </p>
           <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Express interest</Link>
         </div>

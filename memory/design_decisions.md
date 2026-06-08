@@ -4,6 +4,52 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-08 — Public registration form: de-duplicated header + inline payment panel (height reduction)
+
+**Decision:** The public tournament registration form (`app/[orgSlug]/[tournamentSlug]/register/page.tsx` + `app/[orgSlug]/register/register.module.css`) was compacted to fit one screen:
+1. **Removed the page-level `.public-page-header`** (eyebrow "Register" + h1 "Team Registration" + paragraph). Tournament identity is already carried by the shell's desktop top-context bar **and** the card `.formHeader` ("Register Your Team" + tournament sub-line — that sub-line stays, it's the only on-form identity at mobile widths). The removed paragraph's two claims (confirmation email; organizer-handled payment) are already stated in the payment panel + success screen, so no information is lost.
+2. **Fee/deposit render as inline data rows, not boxed cards** (`.paymentDetails`): label (uppercase `--white-40`, fixed `5.5rem` min-width) · value (`--font-data` `1rem` `--white`) · due (`--white-50`); flex-column, no inner `border`/`background`/box padding. Direct application of the 2026-06-05 dashboard metric-strip decision — two numbers don't warrant bordered-box weight.
+3. **Tightened chrome:** `.steps margin-bottom 2.5rem → 1.5rem`; `.formHeader margin-bottom 1.75rem → 1rem` + `padding-bottom 1.25rem → 0.85rem`; `.formIcon 48px → 40px`.
+4. **Footer copy trimmed:** *"FieldLogicHQ records registration and payment status for the organizer, but payments are made outside the platform."* → *"Payments are made directly to the organizer, outside the platform."*
+
+Net ≈230px recovered (fits a 1366×768 laptop viewport). **Field spacing deliberately left alone** — the bloat was redundant chrome, not the inputs. The green→amber→red availability bar is unchanged.
+
+**Rationale:** The form announced the tournament/intent three times (shell top bar + page header + card header) before the first input, and the payment panel repeated the "heavy box for a small number" anti-pattern the dashboard already retired. User reported the form exceeded one viewport for very little information.
+
+**Applies to:** `app/[orgSlug]/[tournamentSlug]/register/page.tsx`, `app/[orgSlug]/register/register.module.css`. Establishes: on transactional public forms inside the tournament shell, don't repeat the identity header the shell + card already provide; render small numeric summaries as inline data rows, not boxed cards.
+
+---
+
+### 2026-06-07 — Public bracket: mouse drag-to-pan + edge fades for horizontal scroll
+
+**Decision:** `LogicSyncBracket` now wraps its SVG in a `BracketScroller` (in-file) instead of a bare `<div style={{ overflowX: 'auto' }}>`. It adds: (1) **mouse click-drag-to-pan** with a `grab`/`grabbing` cursor (pointer events, mouse-only via `e.pointerType === 'mouse'`; a >3px move sets pointer capture and a capture-phase click-swallow so a pan never reads as a tap); (2) **soft left/right edge fades** (`ScrollEdge`, `linear-gradient(... var(--surface) 88%)`) shown only when there's hidden content that way; (3) `overscroll-behavior-x: contain` + `scrollbar-width: thin`. A `ResizeObserver` on both the viewport and the inner content tracks overflow/scroll position. Touch/trackpad keep native momentum scrolling (drag-pan is mouse-only). The inner `width: fit-content; margin: 0 auto` (centers when it fits, left-aligns when it overflows) is preserved.
+
+**Rationale:** On a tall double-elim fork the native horizontal scrollbar sits **below the fold** — unreachable without scrolling the whole page past the bracket — and a mouse wheel only scrolls vertically, so mouse users had no way to reach the Losers bracket / Grand Final (user-reported "can't scroll horizontally"). Nothing was clipping; the affordance was just undiscoverable. Drag-to-pan (Figma/Trello/maps pattern) + a visible edge fade makes the hidden content reachable and obvious without hijacking page scroll. Bracket nodes have no click/navigation behaviour, so drag-pan is safe.
+
+**Applies to:** `components/bracket/LogicSyncBracket.tsx` (`BracketScroller`, `ScrollEdge`). The bracket renders only on public Schedule (Playoffs → Bracket) and Standings. Pattern is the standard for any future wide, scroll-region visualization.
+
+---
+
+### 2026-06-07 — Light mode: lift muted-text tokens (-40/-45/-50) for contrast on bright displays
+
+**Decision:** In the tournament light-mode token override (`app/[orgSlug]/[tournamentSlug]/layout.tsx` `lightModeVars`), the mid muted-text tokens were darkened ~0.12: `--white-50` 0.5→0.62, `--white-45` 0.45→0.58, `--white-40` 0.4→0.52 (alpha of `#0F1123` on white). The brighter structural faints (`--white-35/-30/-10`, used for dividers/placeholders) are unchanged, as are the already-strong `--white-60`→`-90`. A literal alpha port of the dark scale washes out on white surfaces; these tokens drive secondary text (bracket round labels, dates, metadata) which was low-contrast (~3.6:1) on bright laptop panels.
+
+**Rationale:** User on a new (bright/vivid) laptop reported the light theme "very bright and hard to read." Body text was already fine (near-black `--white: #0F1123` on white ≈ 18:1) — the genuine issue was washed-out *muted* text. This is a targeted contrast-floor lift, not a surface change: the raw glare of pure-white surfaces is a monitor-brightness matter (Night Light / lower brightness / the platform's dark-first default), deliberately not "fixed" by dimming surfaces. Scoped to light mode only (dark mode untouched). Pairs with the 2026-06-01 accent-contrast-floor decision.
+
+**Applies to:** `app/[orgSlug]/[tournamentSlug]/layout.tsx` (`lightModeVars`). Any future light-mode token tuning lifts muted *text* alphas rather than dimming `--surface`/`--bg`.
+
+---
+
+### 2026-06-07 — Install app prompt: solid-primary Install button replaces blue→lime gradient
+
+**Decision:** The `InstallAppPrompt` "Install" CTA (the dismissible add-to-home-screen banner on public/fan tournament pages) no longer uses the global `btn btn-primary btn-sm`, which rendered the banned `linear-gradient(135deg, var(--primary), var(--primary-light))` blue→lime gradient. It now uses a self-contained module class `.install`: **solid `var(--primary)` fill, `#FFFFFF` text, `box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.35)`**, uppercase `--font-data` (matching the banner's `.title` treatment), `var(--radius-sm)`. Hover = `color-mix(in srgb, var(--primary) 88%, #000 12%)` + slightly lifted shadow + `translateY(-1px)`. The class is fully self-contained (does not rely on `.btn`) so it can never inherit the global `.btn-primary` gradient regardless of whether `[data-color-mode]` is present on the surface.
+
+**Rationale:** Same blue→lime gradient the user rejected on the schedule segmented toggles (2026-06-01). Violates the binding principle *"gradients on functional UI elements (decorative use only; never on buttons or form inputs)"* and the *"btn-primary is banned outside overlay modals"* audit rule. Solid `var(--primary)` is the established **public-page** primary-CTA convention and matches the banner's existing `border-top: 2px solid var(--primary)` accent, so the banner reads as one cohesive branded unit. Using `var(--primary)` (not lime) keeps the button branded per-tournament for Plus orgs with custom accents; the theming layer's accent contrast floor (2026-06-01 #4) keeps white-on-primary legible.
+
+**Applies to:** `components/InstallAppPrompt.tsx`, `components/InstallAppPrompt.module.css` (`.install`). This is the fan-app/member-app install banner used on public tournament pages and authenticated shells. Any future install/PWA prompt CTA follows the same solid-primary pattern.
+
+---
+
 ### 2026-06-05 — Dashboard: metric strip replaces stat cards; game-day board is card-free
 
 **Decision:** The four stat cards (Teams / Scheduled / Completed / Days Away) are replaced by:

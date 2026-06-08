@@ -1,5 +1,7 @@
 # PM Brief — Coaches Experience End-to-End + "Wow" Pass
 
+> ⚠️ **Superseded for execution by [FREE_TIER_COACHES_UNIFIED_PM_BRIEF.md](FREE_TIER_COACHES_UNIFIED_PM_BRIEF.md)** + the [unified plan](FREE_TIER_COACHES_UNIFIED_PLAN.md). Retained as a detail reference.
+
 **Status:** Audit complete + plan written 2026-06-05 · awaiting sign-off to build
 **Plan:** [COACHES_EXPERIENCE_EVAL_PLAN.md](COACHES_EXPERIENCE_EVAL_PLAN.md)
 

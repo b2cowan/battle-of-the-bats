@@ -1,6 +1,6 @@
 # PM Brief — Timed Entitlement Grants (Comps & Trials)
 
-**Status:** Planned, not started (2026-06-04). Plan: [TIMED_ENTITLEMENTS_PLAN.md](TIMED_ENTITLEMENTS_PLAN.md). Origin: H8 of the [Platform Admin UX Evaluation](PLATFORM_ADMIN_UX_EVAL.md).
+**Status:** First slice built, not yet rolled out (updated 2026-06-08; planned 2026-06-04). The grant engine (`lib/entitlement-grants.ts`) is merged but gated OFF behind the `ENTITLEMENT_GRANTS_ENABLED` env flag (default off) so enforcement does not yet affect any account; the `plan_tier` (effective-rank) grant type and the admin UX remain to build. Plan: [TIMED_ENTITLEMENTS_PLAN.md](TIMED_ENTITLEMENTS_PLAN.md). Origin: H8 of the [Platform Admin UX Evaluation](PLATFORM_ADMIN_UX_EVAL.md).
 
 ## What this is
 A way for FieldLogicHQ staff to grant an organization **temporary access that turns itself off** — either a free comp period or a trial of a higher tier / add-on — without permanently changing the customer's plan, and **without anyone having to remember to undo it**.
