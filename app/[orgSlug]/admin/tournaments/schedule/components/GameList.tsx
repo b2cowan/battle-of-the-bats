@@ -82,7 +82,7 @@ export default function GameList({
       const start = parseGameStart(g.date, g.time);
       if (Number.isNaN(start)) continue;
       const division = divisions.find(dv => dv.id === g.divisionId);
-      const { durationMinutes } = resolveGameTiming(division, tournament, g.isPlayoff);
+      const { durationMinutes } = resolveGameTiming(division, tournament, g.durationMinutes);
       const end = start + durationMinutes * 60_000;
       if (now < start) {
         if (g.date === todayStr && start < nextStart) { nextStart = start; nextId = g.id; }
@@ -226,7 +226,7 @@ export default function GameList({
         venueFacilityId: g.venueFacilityId ?? null,
         scheduleFacilityLaneId: g.scheduleFacilityLaneId ?? null,
         divisionId: g.divisionId ?? null,
-        isPlayoff: g.isPlayoff ?? false,
+        durationMinutes: g.durationMinutes ?? null,
       })),
       divisions,
       tournament,
@@ -268,7 +268,7 @@ export default function GameList({
           venueId: edit.venueId || null,
           venueFacilityId: edit.venueFacilityId || null,
           divisionId: game.divisionId || null,
-          isPlayoff: game.isPlayoff ?? false,
+          durationMinutes: game.durationMinutes ?? null,
         },
         allGames: games.map(g => ({
           id: g.id,
@@ -279,7 +279,7 @@ export default function GameList({
           venueFacilityId: g.venueFacilityId ?? null,
           scheduleFacilityLaneId: g.scheduleFacilityLaneId ?? null,
           divisionId: g.divisionId ?? null,
-          isPlayoff: g.isPlayoff ?? false,
+          durationMinutes: g.durationMinutes ?? null,
         })),
         divisions,
         tournament: tournament ?? null,
@@ -357,31 +357,32 @@ export default function GameList({
           <div className={`${s.rowMain} ${styles.gameRowMain} ${styles.scoringGameRow}`} style={{ gap: '1rem' }}>
             {/* Date · Time · status + venue sub-line */}
             <div className={`${s.gameColDate} ${styles.scoringDateCell}`} style={{ fontFamily: 'var(--font-data)' }}>
-              <div style={{ whiteSpace: 'nowrap' }}>
-                <span style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--fl-text)', letterSpacing: '0.01em' }}>
-                  {g.date ? formatShortDate(g.date) : 'TBD'}
-                </span>
-                <span style={{ fontSize: '0.72rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }}>
-                  {g.time ? `· ${formatTime(g.time)}` : '· —'}
-                </span>
-                {!isExpanded && (g.status === 'completed' || g.status === 'submitted') && (
-                  <span className={styles.scoringMobileStatus} data-status={g.status}>
-                    {g.status === 'completed' ? '· ✓ FINAL' : '· ⚠ REVIEWING'}
+              <div className={styles.dateLine}>
+                <span style={{ whiteSpace: 'nowrap' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--fl-text)', letterSpacing: '0.01em' }}>
+                    {g.date ? formatShortDate(g.date) : 'TBD'}
                   </span>
-                )}
+                  <span style={{ fontSize: '0.72rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }}>
+                    {g.time ? `· ${formatTime(g.time)}` : '· —'}
+                  </span>
+                  {!isExpanded && (g.status === 'completed' || g.status === 'submitted') && (
+                    <span className={styles.scoringMobileStatus} data-status={g.status}>
+                      {g.status === 'completed' ? '· ✓ FINAL' : '· ⚠ REVIEWING'}
+                    </span>
+                  )}
+                </span>
+                {renderLiveChip(g.id)}
               </div>
-              {renderLiveChip(g.id)}
               {(g.venueId || g.location) && (() => {
                 const vp = g.venueId
                   ? getVenueParts(g.venueId, g.venueFacilityId)
                   : { name: g.location || '', facility: '' };
                 return vp.name ? (
                   <div className={styles.venueInDate}>
-                    <MapPin size={10} style={{ flexShrink: 0, marginTop: '2px' }} />
-                    <div>
-                      <div>{vp.name}</div>
-                      {vp.facility && <div className={styles.facilityLine}>{vp.facility}</div>}
-                    </div>
+                    <MapPin size={10} style={{ flexShrink: 0, opacity: 0.55 }} />
+                    <span className={styles.venueLine}>
+                      {vp.name}{vp.facility ? ` · ${vp.facility}` : ''}
+                    </span>
                   </div>
                 ) : null;
               })()}
@@ -589,32 +590,33 @@ export default function GameList({
         >
           {/* Date + Time + venue sub-line */}
           <div className={`${s.gameColDate} ${styles.planningDateCell}`} style={{ fontFamily: 'var(--font-data)' }}>
-            <div style={{ whiteSpace: 'nowrap' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--fl-text)' }}>
-                {g.date ? formatShortDate(g.date) : 'TBD'}
-              </span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }}>
-                {g.time ? `· ${formatTime(g.time)}` : '· —'}
-              </span>
-              {g.status !== 'scheduled' && (
-                <span className={styles.mobileStatusTag} data-status={g.status}>
-                  {g.status === 'completed' ? '· ✓ Final' : g.status === 'submitted' ? '· ⚠ Pending' : '· ✕ Cancelled'}
+            <div className={styles.dateLine}>
+              <span style={{ whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--fl-text)' }}>
+                  {g.date ? formatShortDate(g.date) : 'TBD'}
                 </span>
-              )}
-              {!isExpanded && conflictMap.has(g.id) && (
-                <span className={styles.mobileConflictTag} data-kind={conflictMap.get(g.id)!.kind}>
-                  {conflictMap.get(g.id)!.kind === 'overlap' ? '· ⚠ Conflict' : '· ⚠ Buffer'}
+                <span style={{ fontSize: '0.75rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }}>
+                  {g.time ? `· ${formatTime(g.time)}` : '· —'}
                 </span>
-              )}
+                {g.status !== 'scheduled' && (
+                  <span className={styles.mobileStatusTag} data-status={g.status}>
+                    {g.status === 'completed' ? '· ✓ Final' : g.status === 'submitted' ? '· ⚠ Pending' : '· ✕ Cancelled'}
+                  </span>
+                )}
+                {!isExpanded && conflictMap.has(g.id) && (
+                  <span className={styles.mobileConflictTag} data-kind={conflictMap.get(g.id)!.kind}>
+                    {conflictMap.get(g.id)!.kind === 'overlap' ? '· ⚠ Conflict' : '· ⚠ Buffer'}
+                  </span>
+                )}
+              </span>
+              {renderLiveChip(g.id)}
             </div>
-            {renderLiveChip(g.id)}
             {venueParts.name && (
               <div className={styles.venueInDate}>
-                <MapPin size={10} style={{ flexShrink: 0, marginTop: '2px', opacity: 0.55 }} />
-                <div>
-                  <div>{venueParts.name}</div>
-                  {venueParts.facility && <div className={styles.facilityLine}>{venueParts.facility}</div>}
-                </div>
+                <MapPin size={10} style={{ flexShrink: 0, opacity: 0.55 }} />
+                <span className={styles.venueLine}>
+                  {venueParts.name}{venueParts.facility ? ` · ${venueParts.facility}` : ''}
+                </span>
               </div>
             )}
           </div>

@@ -50,6 +50,7 @@ interface TeamRecord {
   adminNotes?: string;
   slotId?: string | null;
   waitlistPosition?: number | null;
+  seed?: number | null;
   customAnswers?: Array<{
     fieldId: string;
     label: string;
@@ -284,7 +285,7 @@ export default function UnifiedTeamsPage() {
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [paymentInstructions, setPaymentInstructions] = useState('');
   const [editingTeam, setEditingTeam] = useState<TeamRecord | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', coach: '', email: '' });
+  const [editForm, setEditForm] = useState({ name: '', coach: '', email: '', seed: '' as number | '' });
   const [feedback, setFeedback] = useState<{
     isOpen: boolean; title: string; message: string;
     items?: Array<{ label: string; note?: string }>;
@@ -354,6 +355,7 @@ export default function UnifiedTeamsPage() {
           adminNotes: r.admin_notes,
           slotId: admin.slotId ?? null,
           waitlistPosition: admin.waitlistPosition ?? null,
+          seed: r.seed ?? null,
           customAnswers: admin.customAnswers ?? [],
         };
       });
@@ -483,12 +485,12 @@ export default function UnifiedTeamsPage() {
 
   function openEditModal(team: TeamRecord) {
     setEditingTeam(team);
-    setEditForm({ name: team.name, coach: team.coach, email: team.email ?? '' });
+    setEditForm({ name: team.name, coach: team.coach, email: team.email ?? '', seed: typeof team.seed === 'number' ? team.seed : '' });
   }
 
   function closeEditModal() {
     setEditingTeam(null);
-    setEditForm({ name: '', coach: '', email: '' });
+    setEditForm({ name: '', coach: '', email: '', seed: '' });
   }
 
   async function handleSaveEdit(e: React.FormEvent) {
@@ -498,6 +500,7 @@ export default function UnifiedTeamsPage() {
       name: editForm.name.trim(),
       coach: editForm.coach.trim(),
       email: editForm.email.trim(),
+      seed: editForm.seed === '' ? null : editForm.seed,
     };
     if (!updates.name) return; // guarded by required attr but just in case
     closeEditModal();
@@ -2230,6 +2233,20 @@ export default function UnifiedTeamsPage() {
                       onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
                       placeholder="coach@example.com"
                     />
+                  </div>
+                </div>
+                <div className="form-row form-row-2">
+                  <div className="form-group">
+                    <label className="form-label">Seed</label>
+                    <input
+                      className="form-input"
+                      type="number"
+                      min="1" max="999" step="1"
+                      placeholder="Unseeded"
+                      value={editForm.seed === '' ? '' : editForm.seed}
+                      onChange={e => { const v = e.target.value; setEditForm(f => ({ ...f, seed: v === '' ? '' : (parseInt(v, 10) || '') })); }}
+                    />
+                    <small style={{ color: 'var(--white-40)', fontSize: '0.75rem' }}>Optional ranking (1 = top seed) used by the Playoff Bracket Builder&apos;s “By seed number” option.</small>
                   </div>
                 </div>
               </div>

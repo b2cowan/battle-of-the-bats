@@ -17,6 +17,8 @@ type GameRow = {
   division_id: string | null;
   home_team_id: string | null;
   away_team_id: string | null;
+  home_score: number | null;
+  away_score: number | null;
   game_date: string | null;
   game_time: string | null;
   location: string | null;
@@ -271,6 +273,23 @@ export async function GET(req: Request) {
     };
   });
 
+  // ── Champions (resolved playoff finals) ───────────────────────────
+  // Mirrors the post-event Summary's championFromFinal: the latest completed
+  // FIN game per division decides that division's champion. No extra query —
+  // games + team names are already loaded above.
+  const teamNameById = new Map(teamPayments.map(tm => [tm.id, tm.name ?? 'Team'] as const));
+  const champions = divisions
+    .map(div => {
+      const final = playoffGames
+        .filter(g => g.division_id === div.id && g.status === 'completed' && g.bracket_code === 'FIN')
+        .sort((a, b) => String(b.game_date ?? '').localeCompare(String(a.game_date ?? '')))[0];
+      if (!final || final.home_score == null || final.away_score == null || final.home_score === final.away_score) return null;
+      const winnerId = final.home_score > final.away_score ? final.home_team_id : final.away_team_id;
+      if (!winnerId) return null;
+      return { divisionId: div.id, divisionName: div.name, championTeamName: teamNameById.get(winnerId) ?? 'Champion' };
+    })
+    .filter((c): c is { divisionId: string; divisionName: string; championTeamName: string } => c !== null);
+
   const totalGames     = activeGames.length;
   const completedGames = activeGames.filter(g => g.status === 'completed').length;
   const inProgressGames = activeGames.filter(g => g.status === 'submitted').length;
@@ -507,6 +526,7 @@ export async function GET(req: Request) {
     isTournamentDay,
     isGameDay,
     gameDay,
+    champions,
     publishChecklist: {
       hasDates,
       hasDivisions,

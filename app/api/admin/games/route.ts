@@ -80,6 +80,7 @@ export async function GET(req: Request) {
     awayTeamId: g.away_team_id,
     date: g.game_date,
     time: g.game_time,
+    durationMinutes: g.duration_minutes ?? null,
     location: g.location,
     venueId: g.diamond_id,
     venueFacilityId: g.venue_facility_id ?? null,
@@ -168,6 +169,7 @@ export async function POST(req: Request) {
           away_team_id:     g.awayTeamId   || null,
           game_date:        g.date,
           game_time:        g.time,
+          duration_minutes: typeof g.durationMinutes === 'number' ? g.durationMinutes : null,
           location:         g.location,
           diamond_id:       g.venueId      || null,
           venue_facility_id: g.venueFacilityId || null,
@@ -422,6 +424,10 @@ export async function PATCH(req: Request) {
       const updates: Record<string, unknown> = {};
       if (body.date             !== undefined) updates.game_date          = body.date;
       if (body.time             !== undefined) updates.game_time          = body.time;
+      if (body.durationMinutes  !== undefined) {
+        const n = Number(body.durationMinutes);
+        updates.duration_minutes = Number.isInteger(n) && n > 0 && n <= 600 ? n : null;
+      }
       if (body.location         !== undefined) updates.location           = body.location;
       if (body.venueId          !== undefined) updates.diamond_id         = body.venueId;
       if (body.venueFacilityId  !== undefined) updates.venue_facility_id  = body.venueFacilityId || null;

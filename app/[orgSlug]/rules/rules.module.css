@@ -102,4 +102,7 @@
 @media (max-width: 768px) {
   .rulesGrid { grid-template-columns: 1fr; }
   .resourcesGrid { grid-template-columns: 1fr; }
+  .disclaimerCard {
+    margin-bottom: calc(var(--bottom-nav-height, 72px) + 2rem + env(safe-area-inset-bottom));
+  }
 }

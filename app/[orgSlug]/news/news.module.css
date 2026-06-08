@@ -17,6 +17,12 @@
 
 .annList { display: flex; flex-direction: column; gap: 1.25rem; }
 
+@media (max-width: 768px) {
+  .annCard:last-child {
+    margin-bottom: calc(var(--bottom-nav-height, 72px) + 2rem + env(safe-area-inset-bottom));
+  }
+}
+
 .annCard { display: flex; flex-direction: column; gap: 0.875rem; max-width: 800px; }
 
 .pinnedCard {

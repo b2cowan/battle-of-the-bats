@@ -22,6 +22,8 @@ export interface ScheduleMetricGame {
   location?: string | null;
   status?: string | null;
   isPlayoff?: boolean | null;
+  /** This game's own length (minutes), if set — wins over the division/tournament default. */
+  durationMinutes?: number | null;
 }
 
 export interface ScheduleMetricTeam {
@@ -556,10 +558,9 @@ function resolveDuration(
   if (typeof options.gameDurationMinutes === 'number' && options.gameDurationMinutes > 0) {
     return options.gameDurationMinutes;
   }
-  // Playoff games may use a playoff-specific length — an explicit override wins for them.
-  if (game.isPlayoff) {
-    const playoffDuration = tournament?.settings?.playoff_game_duration_minutes;
-    if (typeof playoffDuration === 'number' && playoffDuration > 0) return playoffDuration;
+  // A game's own length wins (playoff games, a longer final, etc.).
+  if (typeof game.durationMinutes === 'number' && game.durationMinutes > 0) {
+    return game.durationMinutes;
   }
   const division = divisions.find(item => item.id === game.divisionId);
   const divDuration = division?.settings?.game_duration_minutes;

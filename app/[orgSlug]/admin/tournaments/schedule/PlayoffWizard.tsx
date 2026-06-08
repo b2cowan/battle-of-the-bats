@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Trophy, Check, X, Calendar, AlertCircle, Sparkles, Plus, Trash2, SlidersHorizontal, RefreshCw, Info, Shuffle, GripVertical } from 'lucide-react';
+import { Trophy, Check, X, Calendar, AlertCircle, Sparkles, Plus, Trash2, SlidersHorizontal, RefreshCw, Info, Shuffle, GripVertical, ListOrdered } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -155,6 +155,16 @@ function remapSeedRef(ref: string, labels: string[]): string {
   return labels[Number(m[1]) - 1] ?? ref;
 }
 
+/** Order teams by the seed numbers assigned in the Teams admin (1 = top seed);
+ *  unseeded teams sort last, by name. */
+function orderBySeed(list: Team[]): Team[] {
+  return [...list].sort((a, b) => {
+    const as = typeof a.seed === 'number' ? a.seed : Number.POSITIVE_INFINITY;
+    const bs = typeof b.seed === 'number' ? b.seed : Number.POSITIVE_INFINITY;
+    return as - bs || (a.name || '').localeCompare(b.name || '');
+  });
+}
+
 /** A draggable seed row (playoff-only manual seeding). */
 function SortableSeed({ id, seed, teamName, isBye }: { id: string; seed: number; teamName: string; isBye: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
@@ -211,8 +221,8 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
   const [showWarning, setShowWarning] = useState(false);
   const [autoSchedule, setAutoSchedule] = useState(true);
   const [generationScope, setGenerationScope] = useState<GenerationScope>('replace');
-  const [gameLength, setGameLength] = useState(tournament?.settings?.playoff_game_duration_minutes ?? tournament?.settings?.game_duration_minutes ?? 90);
-  const [breakLength, setBreakLength] = useState(tournament?.settings?.playoff_buffer_minutes ?? tournament?.settings?.buffer_minutes ?? 15);
+  const [gameLength, setGameLength] = useState(tournament?.settings?.game_duration_minutes ?? 90);
+  const [breakLength, setBreakLength] = useState(tournament?.settings?.buffer_minutes ?? 15);
   const [dateSlots, setDateSlots] = useState<DateSlot[]>([
     { date: tournament?.endDate || tournament?.startDate || '', startTime: '09:00', endTime: '20:30' },
   ]);
@@ -280,7 +290,10 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
     setSeededTeams(prev => {
       const prevIds = new Set(prev.map(t => t.id));
       const sameSet = prev.length === teams.length && teams.every(t => prevIds.has(t.id));
-      return sameSet ? prev : teams;
+      if (sameSet) return prev;
+      // If the organizer has assigned seed numbers in the Teams admin, start in
+      // that order; otherwise keep the incoming (name) order.
+      return teams.some(t => typeof t.seed === 'number') ? orderBySeed(teams) : teams;
     });
   }, [teams]);
 
@@ -312,6 +325,11 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
       }
       return [...fixed, ...pool];
     });
+    clearSeedPreview();
+  }
+
+  function seedByNumber() {
+    setSeededTeams(prev => orderBySeed(prev));
     clearSeedPreview();
   }
 
@@ -975,6 +993,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
           awayTeamId: isPlayoffOnly ? resolveSeedTeamId(p.away) : null,
           date: p.date || null,
           time: p.time || null,
+          durationMinutes: gameLength,
           location: (() => {
             if (p.scheduleFacilityLaneId) return p.scheduleFacilityLaneLabel || p.location || 'TBD';
             const v = venues.find(d => d.id === p.venueId);
@@ -1026,15 +1045,9 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
         const saveData = await saveRes.json();
         if (!saveRes.ok) throw new Error(saveData.error || 'Failed to save playoff bracket');
       }
-      // Remember the playoff game length/buffer so conflict checks (and the timeline)
-      // validate playoff games against it instead of the round-robin default.
-      try {
-        await fetch(`/api/admin/tournaments${orgQuery}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'patch-settings', id: tournamentId, data: { settings: { playoff_game_duration_minutes: gameLength, playoff_buffer_minutes: breakLength } } }),
-        });
-      } catch { /* non-fatal: timing still falls back to the tournament default */ }
+      // Each playoff game now carries its own `durationMinutes` (set above), so
+      // conflict checks and Schedule Health validate it against its own length —
+      // no tournament-level playoff override needed.
       onComplete();
     } catch (err) {
       console.error(err);
@@ -1222,6 +1235,11 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                         <NumberStepper value={protectTopSeeds} min={0} max={seededTeams.length} onChange={setProtectTopSeeds} ariaLabel="Protect top seeds when randomizing" />
                       </label>
                     )}
+                    {seededTeams.some(t => typeof t.seed === 'number') && (
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={seedByNumber} disabled={seededTeams.length < 2} style={{ color: 'var(--logic-lime)' }} title="Order by the seed numbers set in the Teams admin (1 = top seed).">
+                        <ListOrdered size={13} /> By Seed #
+                      </button>
+                    )}
                     <button type="button" className="btn btn-ghost btn-sm" onClick={randomizeSeeds} disabled={seededTeams.length < 2} style={{ color: 'var(--logic-lime)' }}>
                       <Shuffle size={13} /> Randomize
                     </button>
@@ -1236,7 +1254,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                 ) : (
                   <>
                     <p className="text-muted text-xs" style={{ marginBottom: '0.75rem' }}>
-                      Drag to set the seeding, or hit Randomize. {seedByeCount > 0
+                      Drag to set the seeding, use By Seed # (from the Teams admin), or hit Randomize. {seedByeCount > 0
                         ? `Top ${seedByeCount} seed${seedByeCount === 1 ? '' : 's'} get a first-round bye (${seededTeams.length} teams).`
                         : `No byes — ${seededTeams.length} teams is a power of two.`}
                     </p>
@@ -1349,7 +1367,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                     <div className="form-group">
                       <label className="form-label">Game Duration (min)</label>
                       <NumberStepper value={gameLength} min={1} max={480} step={5} onChange={setGameLength} ariaLabel="Game duration in minutes" />
-                      <small className={styles.fieldHint}>Playoff game length — used for scheduling and conflict checks (overrides the tournament default).</small>
+                      <small className={styles.fieldHint}>Length for the games this builder creates (defaults to the event length). Each game is saved with this length; you can change an individual game afterward.</small>
                     </div>
                     <div className="form-group">
                       <label className="form-label">Turnover Time (min)</label>

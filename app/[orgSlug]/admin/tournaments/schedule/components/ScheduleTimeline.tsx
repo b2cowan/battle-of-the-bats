@@ -392,7 +392,7 @@ export default function ScheduleTimeline({
     venueFacilityId: g.venueFacilityId ?? null,
     scheduleFacilityLaneId: g.scheduleFacilityLaneId ?? null,
     divisionId: g.divisionId ?? null,
-    isPlayoff: g.isPlayoff ?? false,
+    durationMinutes: g.durationMinutes ?? null,
   })), [games]);
 
   // Conflict map over ALL games (global) — always on, even in single-division scope.
@@ -482,7 +482,7 @@ export default function ScheduleTimeline({
     [...focusedGames, ...ghostGames].forEach(g => {
       const s = toMin(g.time);
       if (s == null) return;
-      const t = resolveGameTiming(divById.get(g.divisionId || ''), tournament, g.isPlayoff);
+      const t = resolveGameTiming(divById.get(g.divisionId || ''), tournament, g.durationMinutes);
       minStart = Math.min(minStart, s);
       maxEnd = Math.max(maxEnd, s + t.durationMinutes + t.bufferMinutes);
     });
@@ -525,7 +525,7 @@ export default function ScheduleTimeline({
   const blockDisplay = (g: Game, ghost: boolean): BlockDisplay | null => {
     const s = toMin(g.time);
     if (s == null) return null;
-    const t = resolveGameTiming(divById.get(g.divisionId || ''), tournament, g.isPlayoff);
+    const t = resolveGameTiming(divById.get(g.divisionId || ''), tournament, g.durationMinutes);
     const top = (s - axis.start) * PX_PER_MIN;
     const height = Math.max(30, t.durationMinutes * PX_PER_MIN);
     const div = divById.get(g.divisionId || '');
@@ -567,12 +567,12 @@ export default function ScheduleTimeline({
       : (toMin(g.time) ?? axis.start);
     newStart = Math.round(newStart / SNAP) * SNAP;
     newStart = Math.max(0, Math.min(24 * 60 - SNAP, newStart));
-    const t = resolveGameTiming(divById.get(g.divisionId || ''), tournament, g.isPlayoff);
+    const t = resolveGameTiming(divById.get(g.divisionId || ''), tournament, g.durationMinutes);
     const result = checkVenueConflict({
       proposedGame: {
         id: g.id, gameDate: day, startTime: minToTime(newStart), status: g.status ?? null,
         venueId: targetCol.venueId || null, venueFacilityId: targetCol.facilityId || null,
-        scheduleFacilityLaneId: null, divisionId: g.divisionId ?? null, isPlayoff: g.isPlayoff ?? false,
+        scheduleFacilityLaneId: null, divisionId: g.divisionId ?? null, durationMinutes: g.durationMinutes ?? null,
       },
       allGames: conflictGames, divisions, tournament,
     });

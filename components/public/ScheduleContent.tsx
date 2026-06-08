@@ -452,7 +452,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       if (game.homePlaceholder?.includes(tag) || game.awayPlaceholder?.includes(tag)) return pool.name;
     }
     const ph = game.homePlaceholder || game.awayPlaceholder || '';
-    const winnerCode = ph.match(/Winner (\w+)/)?.[1];
+    const winnerCode = ph.match(/(?:Winner|Loser) ([\w-]+)/)?.[1];
     if (winnerCode) {
       const source = allGames.find(g =>
         g.bracketCode === winnerCode && g.isPlayoff && g.id !== game.id &&
