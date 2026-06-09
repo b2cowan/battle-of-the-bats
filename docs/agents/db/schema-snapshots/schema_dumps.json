@@ -16267,6 +16267,456 @@
         "column_default": null
       },
       {
+        "table_name": "basic_coach_team_announcements",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "basic_coach_team_announcements",
+        "pos": 2,
+        "column_name": "basic_coach_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_announcements",
+        "pos": 3,
+        "column_name": "subject",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_announcements",
+        "pos": 4,
+        "column_name": "body",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_announcements",
+        "pos": 5,
+        "column_name": "recipient_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "basic_coach_team_announcements",
+        "pos": 6,
+        "column_name": "sent_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "basic_coach_team_announcements",
+        "pos": 7,
+        "column_name": "failed_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "basic_coach_team_announcements",
+        "pos": 8,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'sent'::text"
+      },
+      {
+        "table_name": "basic_coach_team_announcements",
+        "pos": 9,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "basic_coach_team_announcements",
+        "pos": 10,
+        "column_name": "created_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_announcements",
+        "pos": 11,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "basic_coach_team_announcements",
+        "pos": 12,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "pos": 2,
+        "column_name": "basic_coach_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "pos": 3,
+        "column_name": "event_type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'practice'::text"
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "pos": 4,
+        "column_name": "title",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "pos": 5,
+        "column_name": "opponent",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "pos": 6,
+        "column_name": "location",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "pos": 7,
+        "column_name": "starts_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "pos": 8,
+        "column_name": "ends_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "pos": 9,
+        "column_name": "notes",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "pos": 10,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'scheduled'::text"
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "pos": 11,
+        "column_name": "created_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "pos": 12,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "pos": 13,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "pos": 2,
+        "column_name": "basic_coach_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "pos": 3,
+        "column_name": "player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "pos": 4,
+        "column_name": "label",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "pos": 5,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "pos": 6,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'unpaid'::text"
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "pos": 7,
+        "column_name": "marked_paid_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "pos": 8,
+        "column_name": "notes",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "pos": 9,
+        "column_name": "display_order",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "pos": 10,
+        "column_name": "created_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "pos": 11,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "pos": 12,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 2,
+        "column_name": "basic_coach_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 3,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 4,
+        "column_name": "jersey_number",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 5,
+        "column_name": "date_of_birth",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 6,
+        "column_name": "guardian_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 7,
+        "column_name": "contact_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 8,
+        "column_name": "contact_phone",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 9,
+        "column_name": "notes",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 10,
+        "column_name": "display_order",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 11,
+        "column_name": "created_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 12,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 13,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "basic_coach_team_registrations",
         "pos": 1,
         "column_name": "id",
@@ -26697,6 +27147,41 @@
         "constraint_name": "fk_announcements_tournament"
       },
       {
+        "table_name": "basic_coach_team_announcements",
+        "column_name": "basic_coach_team_id",
+        "foreign_table": "basic_coach_teams",
+        "foreign_column": "id",
+        "constraint_name": "basic_coach_team_announcements_basic_coach_team_id_fkey"
+      },
+      {
+        "table_name": "basic_coach_team_events",
+        "column_name": "basic_coach_team_id",
+        "foreign_table": "basic_coach_teams",
+        "foreign_column": "id",
+        "constraint_name": "basic_coach_team_events_basic_coach_team_id_fkey"
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "column_name": "basic_coach_team_id",
+        "foreign_table": "basic_coach_teams",
+        "foreign_column": "id",
+        "constraint_name": "basic_coach_team_fees_basic_coach_team_id_fkey"
+      },
+      {
+        "table_name": "basic_coach_team_fees",
+        "column_name": "player_id",
+        "foreign_table": "basic_coach_team_players",
+        "foreign_column": "id",
+        "constraint_name": "basic_coach_team_fees_player_id_fkey"
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "column_name": "basic_coach_team_id",
+        "foreign_table": "basic_coach_teams",
+        "foreign_column": "id",
+        "constraint_name": "basic_coach_team_players_basic_coach_team_id_fkey"
+      },
+      {
         "table_name": "basic_coach_team_registrations",
         "column_name": "basic_coach_team_id",
         "foreign_table": "basic_coach_teams",
@@ -28424,6 +28909,51 @@
         "indexdef": "CREATE UNIQUE INDEX announcements_pkey ON public.announcements USING btree (id)"
       },
       {
+        "tablename": "basic_coach_team_announcements",
+        "indexname": "basic_coach_team_announcements_pkey",
+        "indexdef": "CREATE UNIQUE INDEX basic_coach_team_announcements_pkey ON public.basic_coach_team_announcements USING btree (id)"
+      },
+      {
+        "tablename": "basic_coach_team_announcements",
+        "indexname": "basic_coach_team_announcements_team_idx",
+        "indexdef": "CREATE INDEX basic_coach_team_announcements_team_idx ON public.basic_coach_team_announcements USING btree (basic_coach_team_id, sent_at DESC, created_at DESC)"
+      },
+      {
+        "tablename": "basic_coach_team_events",
+        "indexname": "basic_coach_team_events_pkey",
+        "indexdef": "CREATE UNIQUE INDEX basic_coach_team_events_pkey ON public.basic_coach_team_events USING btree (id)"
+      },
+      {
+        "tablename": "basic_coach_team_events",
+        "indexname": "basic_coach_team_events_team_idx",
+        "indexdef": "CREATE INDEX basic_coach_team_events_team_idx ON public.basic_coach_team_events USING btree (basic_coach_team_id, starts_at)"
+      },
+      {
+        "tablename": "basic_coach_team_fees",
+        "indexname": "basic_coach_team_fees_pkey",
+        "indexdef": "CREATE UNIQUE INDEX basic_coach_team_fees_pkey ON public.basic_coach_team_fees USING btree (id)"
+      },
+      {
+        "tablename": "basic_coach_team_fees",
+        "indexname": "basic_coach_team_fees_player_idx",
+        "indexdef": "CREATE INDEX basic_coach_team_fees_player_idx ON public.basic_coach_team_fees USING btree (player_id) WHERE (player_id IS NOT NULL)"
+      },
+      {
+        "tablename": "basic_coach_team_fees",
+        "indexname": "basic_coach_team_fees_team_idx",
+        "indexdef": "CREATE INDEX basic_coach_team_fees_team_idx ON public.basic_coach_team_fees USING btree (basic_coach_team_id, display_order, created_at)"
+      },
+      {
+        "tablename": "basic_coach_team_players",
+        "indexname": "basic_coach_team_players_pkey",
+        "indexdef": "CREATE UNIQUE INDEX basic_coach_team_players_pkey ON public.basic_coach_team_players USING btree (id)"
+      },
+      {
+        "tablename": "basic_coach_team_players",
+        "indexname": "basic_coach_team_players_team_idx",
+        "indexdef": "CREATE INDEX basic_coach_team_players_team_idx ON public.basic_coach_team_players USING btree (basic_coach_team_id)"
+      },
+      {
         "tablename": "basic_coach_team_registrations",
         "indexname": "basic_coach_team_registrations_basic_team_idx",
         "indexdef": "CREATE INDEX basic_coach_team_registrations_basic_team_idx ON public.basic_coach_team_registrations USING btree (basic_coach_team_id)"
@@ -29954,6 +30484,96 @@
       {
         "kind": "RLS",
         "table_name": "announcements",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "basic_coach_team_announcements",
+        "detail": "basic_coach_team_announcements_body_check",
+        "check_clause": "((char_length(btrim(body)) > 0) AND (char_length(body) <= 4000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "basic_coach_team_announcements",
+        "detail": "basic_coach_team_announcements_counts_check",
+        "check_clause": "((recipient_count >= 0) AND (sent_count >= 0) AND (failed_count >= 0) AND ((sent_count + failed_count) <= recipient_count))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "basic_coach_team_announcements",
+        "detail": "basic_coach_team_announcements_status_check",
+        "check_clause": "(status = ANY (ARRAY['sent'::text, 'partial'::text, 'failed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "basic_coach_team_announcements",
+        "detail": "basic_coach_team_announcements_status_counts_check",
+        "check_clause": "(((status = 'sent'::text) AND (failed_count = 0)) OR ((status = 'partial'::text) AND (sent_count > 0) AND (failed_count > 0)) OR ((status = 'failed'::text) AND (sent_count = 0) AND (failed_count > 0)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "basic_coach_team_announcements",
+        "detail": "basic_coach_team_announcements_subject_check",
+        "check_clause": "((char_length(btrim(subject)) > 0) AND (char_length(subject) <= 160))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "basic_coach_team_announcements",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "basic_coach_team_events",
+        "detail": "basic_coach_team_events_status_check",
+        "check_clause": "(status = ANY (ARRAY['scheduled'::text, 'cancelled'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "basic_coach_team_events",
+        "detail": "basic_coach_team_events_time_check",
+        "check_clause": "((ends_at IS NULL) OR (ends_at >= starts_at))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "basic_coach_team_events",
+        "detail": "basic_coach_team_events_type_check",
+        "check_clause": "(event_type = ANY (ARRAY['practice'::text, 'game'::text, 'event'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "basic_coach_team_events",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "basic_coach_team_fees",
+        "detail": "basic_coach_team_fees_amount_check",
+        "check_clause": "(amount >= (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "basic_coach_team_fees",
+        "detail": "basic_coach_team_fees_paid_at_check",
+        "check_clause": "(((status = 'paid'::text) AND (marked_paid_at IS NOT NULL)) OR ((status = 'unpaid'::text) AND (marked_paid_at IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "basic_coach_team_fees",
+        "detail": "basic_coach_team_fees_status_check",
+        "check_clause": "(status = ANY (ARRAY['unpaid'::text, 'paid'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "basic_coach_team_fees",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "basic_coach_team_players",
         "detail": "ENABLED",
         "check_clause": null
       },

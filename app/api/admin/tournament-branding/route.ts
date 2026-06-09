@@ -24,7 +24,9 @@ export async function GET(req: Request) {
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
-  if (ctx.role !== 'owner') return forbidden();
+  // Admins may read tournament branding + score policy for their own org's tournaments
+  // (scopeGuard below still restricts which tournaments). Owner-only enforcement on
+  // *writes* is handled per-field in PATCH.
 
   const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return NextResponse.json({ error: 'Missing tournamentId' }, { status: 400 });
@@ -68,7 +70,6 @@ export async function PATCH(req: Request) {
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
-  if (ctx.role !== 'owner') return forbidden();
 
   const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return NextResponse.json({ error: 'Missing tournamentId' }, { status: 400 });
@@ -86,6 +87,13 @@ export async function PATCH(req: Request) {
     publicHiddenPages?: PublicPageKey[] | null;
     requireScoreFinalization?: boolean | null;
   };
+
+  // Owner-only fields: the org's public visual identity + which public pages show.
+  // Admins may update operational settings (e.g. requireScoreFinalization) but not these.
+  const OWNER_ONLY_FIELDS = [...PLUS_VISUAL_FIELDS, 'publicHiddenPages'] as const;
+  if (ctx.role !== 'owner' && OWNER_ONLY_FIELDS.some(field => field in body)) {
+    return forbidden();
+  }
 
   const updates: Record<string, unknown> = {};
   const canUseAdvancedBranding = hasPlanFeature(ctx.org.planId, 'advanced_tournament_branding');

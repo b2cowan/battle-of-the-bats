@@ -114,7 +114,6 @@ export async function POST(request: Request) {
         name: `${name} ${ag.name}`,
         coach: `Coach Dev`,
         email: `coach@dev.local`,
-        players: [],
         status: 'accepted',
         payment_status: 'paid',
         registered_at: now,

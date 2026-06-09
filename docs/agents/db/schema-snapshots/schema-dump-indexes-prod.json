@@ -45,6 +45,51 @@
     "indexdef": "CREATE UNIQUE INDEX announcements_pkey ON public.announcements USING btree (id)"
   },
   {
+    "tablename": "basic_coach_team_announcements",
+    "indexname": "basic_coach_team_announcements_pkey",
+    "indexdef": "CREATE UNIQUE INDEX basic_coach_team_announcements_pkey ON public.basic_coach_team_announcements USING btree (id)"
+  },
+  {
+    "tablename": "basic_coach_team_announcements",
+    "indexname": "basic_coach_team_announcements_team_idx",
+    "indexdef": "CREATE INDEX basic_coach_team_announcements_team_idx ON public.basic_coach_team_announcements USING btree (basic_coach_team_id, sent_at DESC, created_at DESC)"
+  },
+  {
+    "tablename": "basic_coach_team_events",
+    "indexname": "basic_coach_team_events_pkey",
+    "indexdef": "CREATE UNIQUE INDEX basic_coach_team_events_pkey ON public.basic_coach_team_events USING btree (id)"
+  },
+  {
+    "tablename": "basic_coach_team_events",
+    "indexname": "basic_coach_team_events_team_idx",
+    "indexdef": "CREATE INDEX basic_coach_team_events_team_idx ON public.basic_coach_team_events USING btree (basic_coach_team_id, starts_at)"
+  },
+  {
+    "tablename": "basic_coach_team_fees",
+    "indexname": "basic_coach_team_fees_pkey",
+    "indexdef": "CREATE UNIQUE INDEX basic_coach_team_fees_pkey ON public.basic_coach_team_fees USING btree (id)"
+  },
+  {
+    "tablename": "basic_coach_team_fees",
+    "indexname": "basic_coach_team_fees_player_idx",
+    "indexdef": "CREATE INDEX basic_coach_team_fees_player_idx ON public.basic_coach_team_fees USING btree (player_id) WHERE (player_id IS NOT NULL)"
+  },
+  {
+    "tablename": "basic_coach_team_fees",
+    "indexname": "basic_coach_team_fees_team_idx",
+    "indexdef": "CREATE INDEX basic_coach_team_fees_team_idx ON public.basic_coach_team_fees USING btree (basic_coach_team_id, display_order, created_at)"
+  },
+  {
+    "tablename": "basic_coach_team_players",
+    "indexname": "basic_coach_team_players_pkey",
+    "indexdef": "CREATE UNIQUE INDEX basic_coach_team_players_pkey ON public.basic_coach_team_players USING btree (id)"
+  },
+  {
+    "tablename": "basic_coach_team_players",
+    "indexname": "basic_coach_team_players_team_idx",
+    "indexdef": "CREATE INDEX basic_coach_team_players_team_idx ON public.basic_coach_team_players USING btree (basic_coach_team_id)"
+  },
+  {
     "tablename": "basic_coach_team_registrations",
     "indexname": "basic_coach_team_registrations_basic_team_idx",
     "indexdef": "CREATE INDEX basic_coach_team_registrations_basic_team_idx ON public.basic_coach_team_registrations USING btree (basic_coach_team_id)"

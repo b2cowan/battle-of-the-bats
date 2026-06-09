@@ -248,7 +248,6 @@ async function createSmokeState(): Promise<SmokeState> {
     name,
     coach: `Coach ${index + 1}`,
     email: `data-tools-${index + 1}-${suffix}@example.test`,
-    players: [],
     status: 'accepted',
     payment_status: 'paid',
   }));

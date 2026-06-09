@@ -305,7 +305,6 @@ export async function POST(req: Request) {
         name: team.name.trim(),
         coach: team.coach?.trim() ?? '',
         email: team.email?.trim() ?? '',
-        players: [],
         status: team.status ?? 'accepted',
         payment_status: paymentStatus,
         registered_at: new Date().toISOString(),

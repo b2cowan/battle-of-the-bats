@@ -96,6 +96,78 @@
     "foreign_column": "id"
   },
   {
+    "table_name": "basic_coach_team_announcements",
+    "constraint_name": "basic_coach_team_announcements_basic_coach_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "basic_coach_team_id",
+    "foreign_table": "basic_coach_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "basic_coach_team_announcements",
+    "constraint_name": "basic_coach_team_announcements_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "basic_coach_team_events",
+    "constraint_name": "basic_coach_team_events_basic_coach_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "basic_coach_team_id",
+    "foreign_table": "basic_coach_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "basic_coach_team_events",
+    "constraint_name": "basic_coach_team_events_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "basic_coach_team_fees",
+    "constraint_name": "basic_coach_team_fees_basic_coach_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "basic_coach_team_id",
+    "foreign_table": "basic_coach_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "basic_coach_team_fees",
+    "constraint_name": "basic_coach_team_fees_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "basic_coach_team_fees",
+    "constraint_name": "basic_coach_team_fees_player_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "player_id",
+    "foreign_table": "basic_coach_team_players",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "basic_coach_team_players",
+    "constraint_name": "basic_coach_team_players_basic_coach_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "basic_coach_team_id",
+    "foreign_table": "basic_coach_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "basic_coach_team_players",
+    "constraint_name": "basic_coach_team_players_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
     "table_name": "basic_coach_team_registrations",
     "constraint_name": "basic_coach_team_registrations_basic_coach_team_id_fkey",
     "constraint_type": "FOREIGN KEY",

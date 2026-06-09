@@ -203,7 +203,6 @@ async function createHardeningState(orgSlug: string): Promise<HardeningState> {
     name,
     coach: `Coach ${index + 1}`,
     email: `schedule-import-hardening-${index + 1}-${suffix}@example.test`,
-    players: [],
     status: 'accepted',
     payment_status: 'paid',
   }));

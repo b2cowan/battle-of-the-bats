@@ -214,7 +214,6 @@ async function createHardeningState(orgSlug: string): Promise<HardeningState> {
     name,
     coach: `Coach ${index + 1}`,
     email: `team-import-hardening-${index + 1}-${suffix}@example.test`,
-    players: [],
     status: 'accepted',
     payment_status: 'paid',
     deposit_paid: 25,
@@ -591,7 +590,6 @@ test.describe.serial('Tournament team import route hardening', () => {
         name: duplicateName,
         coach: 'Duplicate Coach',
         email: `duplicate-after-preview-${Date.now()}@example.test`,
-        players: [],
         status: 'accepted',
         payment_status: 'paid',
       });

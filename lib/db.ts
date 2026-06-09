@@ -1815,7 +1815,6 @@ export async function seedTournamentData(tid: string, options: {
           name: `${nameBase} ${group.name} ${i + 1}`,
           coach: coachBase,
           email: `coach${i}@example.com`,
-          players: [],
           status: 'accepted',
           payment_status: 'paid',
           registered_at: new Date().toISOString()
@@ -1830,7 +1829,6 @@ export async function seedTournamentData(tid: string, options: {
           name: `Waitlist Team ${i + 1} ${group.name}`,
           coach: `Waitlist Coach ${i + 1}`,
           email: `waitlist${i + 1}@example.com`,
-          players: [],
           status: 'waitlist',
           payment_status: 'pending',
           registered_at: new Date().toISOString()
