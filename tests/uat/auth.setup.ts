@@ -38,10 +38,9 @@ async function loginOrgUser(
   await page.locator('#login-submit').click();
 
   // Multi-org users can land on the workspace picker while the URL transition is
-  // still settling, so wait for either authenticated page evidence or navigation.
+  // still settling, so wait for navigation away from the login path.
   await expect.poll(async () => {
-    if (!new URL(page.url()).pathname.startsWith('/auth/login')) return true;
-    return page.getByText(`Logged in as ${email}`).isVisible();
+    return !new URL(page.url()).pathname.startsWith('/auth/login');
   }, { timeout: 45_000 }).toBe(true);
 
   await page.context().storageState({ path: savePath });
@@ -62,7 +61,7 @@ async function loginPlatformAdmin(
   // The layout does a Supabase query before redirecting, so this can take several seconds.
   await expect.poll(async () => {
     if (!new URL(page.url()).pathname.startsWith('/platform-admin/login')) return true;
-    return page.getByRole('heading', { name: /Platform Admin|Dashboard|Organizations/ }).isVisible();
+    return page.getByRole('heading', { name: /Overview|Action Queue/ }).isVisible();
   }, { timeout: 45_000 }).toBe(true);
 
   await page.context().storageState({ path: savePath });

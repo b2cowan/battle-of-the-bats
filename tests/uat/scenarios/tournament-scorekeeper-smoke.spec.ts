@@ -344,8 +344,11 @@ test.describe.serial('Tournament scorekeeper UAT smoke', () => {
     await ownerPage.goto(`/${smoke.orgSlug}/admin/tournaments/results`)
     await expect(ownerPage.getByRole('heading', { name: 'Results & Scoring' })).toBeVisible({ timeout: 30_000 })
     await expect(ownerPage.getByText(smoke.review.homeTeamName)).toBeVisible({ timeout: 20_000 })
-    await ownerPage.getByText(smoke.review.homeTeamName).first().click()
-    await expect(ownerPage.getByText('Score submission')).toBeVisible({ timeout: 10_000 })
+    // Scoring rows expand via the Edit/Enter-score pencil button (the team name is now a plain span).
+    await ownerPage.getByRole('button', { name: /Edit score|Enter score/ }).first().click()
+    // The audit summary ("Scorekeeper - <email> - <date>") renders only inside the expanded action bar;
+    // the legacy "Score submission" label no longer exists.
+    await expect(ownerPage.getByText(/Scorekeeper - /)).toBeVisible({ timeout: 10_000 })
     await expect(ownerPage.getByText(smoke.scorekeeperEmail)).toBeVisible()
 
     await ownerPage.getByLabel('More export formats').click()
@@ -361,6 +364,9 @@ test.describe.serial('Tournament scorekeeper UAT smoke', () => {
     expect(csv).toContain(smoke.scorekeeperEmail)
     expect(csv).toContain('Scorekeeper')
 
+    // Finalize is hidden while the scoring row is expanded — collapse the editor first
+    // (Discard removes the row from the expanded set, re-revealing the Finalize button).
+    await ownerPage.getByRole('button', { name: /Discard/ }).click()
     await ownerPage.getByRole('button', { name: /Finalize/ }).click()
     await expect.poll(async () => (await readGame(smoke.review.gameId)).status, { timeout: 10_000 })
       .toBe('completed')

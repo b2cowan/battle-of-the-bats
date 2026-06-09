@@ -239,7 +239,8 @@ test.describe.serial('Tournament scorekeeper invite UAT', () => {
     await expect(page.getByRole('heading', { name: 'Set Up Scorekeeper Access' })).toBeVisible({ timeout: 45_000 })
     await expect(page.getByText('Create a password to open the scorekeeper workspace')).toBeVisible()
 
-    await page.locator('#accept-name').fill('Invite Smoke Scorekeeper')
+    await page.locator('#accept-first-name').fill('Invite Smoke')
+    await page.locator('#accept-last-name').fill('Scorekeeper')
     await page.locator('#accept-password').fill(SCOREKEEPER_PASSWORD)
     await page.getByRole('button', { name: 'Create Password & Open Scorekeeper' }).click()
 

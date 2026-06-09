@@ -132,7 +132,7 @@ test.describe.serial('standalone Team direct checkout smoke', () => {
     expect(checkoutJson.teamWorkspaceId).toBeTruthy()
 
     await coachPage.goto(checkoutJson.url ?? `/${workspaceSlug}/coaches?success=1`)
-    await expect(coachPage.getByText('Checkout is complete and your team workspace is active.')).toBeVisible({
+    await expect(coachPage.getByText('Coaches Portal ready')).toBeVisible({
       timeout: 30_000,
     })
 

@@ -306,7 +306,7 @@ INSERT INTO org_member_tournament_assignments (
 SELECT gen_random_uuid(), om.id, t.id, now()
 FROM organization_members om
 JOIN organizations o ON o.id = om.organization_id
-JOIN tournaments t ON t.organization_id = o.id
+JOIN tournaments t ON t.org_id = o.id
 JOIN auth.users u ON u.id = om.user_id
 WHERE o.slug = 'uat-test-org'
   AND u.email = 'uat-scorekeeper@uat-test-org.local'
@@ -319,7 +319,7 @@ INSERT INTO org_member_tournament_assignments (
 SELECT gen_random_uuid(), om.id, t.id, now()
 FROM organization_members om
 JOIN organizations o ON o.id = om.organization_id
-JOIN tournaments t ON t.organization_id = o.id
+JOIN tournaments t ON t.org_id = o.id
 JOIN auth.users u ON u.id = om.user_id
 WHERE o.slug = 'uat-plus-org'
   AND u.email = 'uat-plus-scorekeeper@uat-plus-org.local'
@@ -332,7 +332,7 @@ ON CONFLICT (org_member_id, tournament_id) DO NOTHING;
 -- ================================================================
 
 INSERT INTO rep_teams (
-  id, org_id, name, slug, sport, age_group, is_archived, created_at, updated_at
+  id, org_id, name, slug, sport, division, is_archived, created_at, updated_at
 )
 SELECT gen_random_uuid(), o.id, 'UAT Test Team', 'uat-test-team', 'Baseball', 'U14', false, now(), now()
 FROM organizations o

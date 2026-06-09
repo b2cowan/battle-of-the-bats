@@ -280,7 +280,6 @@ test.describe.serial('Tournament schedule import UAT smoke', () => {
 
     await page.goto(`/${smoke.orgSlug}/admin/tournaments/data-tools`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Data Tools' })).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole('button', { name: /Add\/update schedule/i })).toBeVisible({ timeout: 20_000 });
 
     const csv = buildImportCsv(smoke);
     const previewResponse = await page.evaluate(async ({ csvText, orgSlug, tournamentId }) => {

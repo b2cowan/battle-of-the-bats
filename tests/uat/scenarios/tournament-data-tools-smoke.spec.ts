@@ -385,8 +385,16 @@ test.describe.serial('Tournament Data Tools combined UAT smoke', () => {
 
     await page.goto(`/${smoke.orgSlug}/admin/tournaments/data-tools`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: 'Data Tools' })).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole('button', { name: /Add\/update teams/i })).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByRole('button', { name: /Add\/update schedule/i })).toBeVisible({ timeout: 20_000 });
+    // The standalone "Add/update teams" / "Add/update schedule" buttons were
+    // replaced by a single "Import" ToolbarMenu whose Teams/Schedule menuitems
+    // render only while the menu is open.
+    const importMenuTrigger = page.getByRole('button', { name: 'Import' });
+    await expect(importMenuTrigger).toBeVisible({ timeout: 20_000 });
+    await importMenuTrigger.click();
+    await expect(page.getByRole('menuitem', { name: 'Teams' })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('menuitem', { name: 'Schedule' })).toBeVisible({ timeout: 20_000 });
+    // Close the menu so its overlay/menuitems don't interfere with later assertions.
+    await page.keyboard.press('Escape');
 
     const templateChecks = await page.evaluate(async ({ orgSlug, tournamentId }) => {
       const urls = [
@@ -545,8 +553,14 @@ test.describe.serial('Tournament Data Tools combined UAT smoke', () => {
     ]));
 
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.getByText('Teams & Registrations').first()).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText('Schedule').first()).toBeVisible({ timeout: 20_000 });
+    // History rows now live inside the "Recent Imports" CollapsibleCard, which is
+    // collapsed by default (native <details>), so expand it before asserting.
+    const recentImportsCard = page.locator('details', { has: page.locator('summary', { hasText: 'Recent Imports' }) });
+    await recentImportsCard.locator('summary', { hasText: 'Recent Imports' }).click();
+    await expect(recentImportsCard.getByText('Teams & Registrations').first()).toBeVisible({ timeout: 20_000 });
+    // Scope the "Schedule" assertion inside the Recent Imports card so it doesn't
+    // match the "Schedule" template-row label in the open "Import & Export" card.
+    await expect(recentImportsCard.getByText('Schedule').first()).toBeVisible({ timeout: 20_000 });
 
     const { error: downgradeError } = await supabaseAdmin
       .from('organizations')

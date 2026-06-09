@@ -174,8 +174,8 @@ test.describe.serial('standalone Team org billing Stripe smoke', () => {
     const ownerContext = await browser.newContext({ storageState: OWNER_STORAGE })
     const ownerPage = await ownerContext.newPage()
 
-    await ownerPage.goto(`/${state.linkedOrgSlug}/admin/org/team-links`)
-    await expect(ownerPage.getByRole('heading', { name: 'Team Links' })).toBeVisible({
+    await ownerPage.goto(`/${state.linkedOrgSlug}/admin/org/coaches-portal-links`)
+    await expect(ownerPage.getByRole('heading', { name: 'Coaches Portal Links' })).toBeVisible({
       timeout: 30_000,
     })
 
@@ -203,7 +203,7 @@ test.describe.serial('standalone Team org billing Stripe smoke', () => {
     }
 
     await ownerPage.locator('[data-testid="hosted-payment-submit-button"]').click()
-    await ownerPage.waitForURL(new RegExp(`/${state.linkedOrgSlug}/admin/org/team-links`), {
+    await ownerPage.waitForURL(new RegExp(`/${state.linkedOrgSlug}/admin/org/coaches-portal-links`), {
       timeout: 90_000,
     })
 

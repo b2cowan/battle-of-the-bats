@@ -167,15 +167,15 @@ test.describe.serial('standalone Team org-link smoke', () => {
     const ownerContext = await browser.newContext({ storageState: OWNER_STORAGE })
     const ownerPage = await ownerContext.newPage()
 
-    await ownerPage.goto(`/${state.linkedOrgSlug}/admin/org/team-links`)
-    await expect(ownerPage.getByRole('heading', { name: 'Team Links' })).toBeVisible({
+    await ownerPage.goto(`/${state.linkedOrgSlug}/admin/org/coaches-portal-links`)
+    await expect(ownerPage.getByRole('heading', { name: 'Coaches Portal Links' })).toBeVisible({
       timeout: 30_000,
     })
     await expect(ownerPage.getByText(state.teamName, { exact: true })).toBeVisible({
       timeout: 30_000,
     })
     await ownerPage.getByRole('button', { name: 'Approve Link' }).click()
-    await expect(ownerPage.getByText('Team link approved.')).toBeVisible({ timeout: 15_000 })
+    await expect(ownerPage.getByText('Coaches Portal link approved.')).toBeVisible({ timeout: 15_000 })
 
     await ownerContext.close()
 
@@ -243,13 +243,13 @@ test.describe.serial('standalone Team org-link smoke', () => {
     const ownerContext = await browser.newContext({ storageState: OWNER_STORAGE })
     const ownerPage = await ownerContext.newPage()
 
-    await ownerPage.goto(`/${inviteState.linkedOrgSlug}/admin/org/team-links`)
-    await expect(ownerPage.getByRole('heading', { name: 'Team Links' })).toBeVisible({
+    await ownerPage.goto(`/${inviteState.linkedOrgSlug}/admin/org/coaches-portal-links`)
+    await expect(ownerPage.getByRole('heading', { name: 'Coaches Portal Links' })).toBeVisible({
       timeout: 30_000,
     })
-    await ownerPage.getByLabel('Team workspace slug or primary coach email').fill(inviteState.workspaceSlug)
+    await ownerPage.getByLabel('Coaches Portal slug or primary coach email').fill(inviteState.workspaceSlug)
     await ownerPage.getByRole('button', { name: 'Send Invite' }).click()
-    await expect(ownerPage.getByText('Team link invitation sent.')).toBeVisible({ timeout: 15_000 })
+    await expect(ownerPage.getByText('Coaches Portal link invitation sent.')).toBeVisible({ timeout: 15_000 })
 
     await ownerContext.close()
 
@@ -288,11 +288,11 @@ test.describe.serial('standalone Team org-link smoke', () => {
     await expect(coachPage.getByRole('heading', { name: 'Link Organization' })).toBeVisible({
       timeout: 30_000,
     })
-    await expect(coachPage.getByText('This organization invited your Team workspace to connect.')).toBeVisible({
+    await expect(coachPage.getByText('This organization invited your Coaches Portal to connect.')).toBeVisible({
       timeout: 30_000,
     })
     await coachPage.getByRole('button', { name: 'Accept Invitation' }).click()
-    await expect(coachPage.getByText('Team invitation accepted.')).toBeVisible({ timeout: 15_000 })
+    await expect(coachPage.getByText('Organization invitation accepted.')).toBeVisible({ timeout: 15_000 })
 
     await coachContext.close()
 
@@ -367,7 +367,9 @@ test.describe.serial('standalone Team org-link smoke', () => {
       timeout: 30_000,
     })
     await coachPage.getByRole('button', { name: 'Request Org Billing' }).click()
-    await expect(coachPage.getByText('Org billing request sent.')).toBeVisible({ timeout: 15_000 })
+    await expect(
+      coachPage.getByText('Org billing request sent. The organization owner can review it from Coaches Portal Links.'),
+    ).toBeVisible({ timeout: 15_000 })
 
     await coachContext.close()
 
@@ -390,15 +392,15 @@ test.describe.serial('standalone Team org-link smoke', () => {
     const ownerContext = await browser.newContext({ storageState: OWNER_STORAGE })
     const ownerPage = await ownerContext.newPage()
 
-    await ownerPage.goto(`/${state.linkedOrgSlug}/admin/org/team-links`)
-    await expect(ownerPage.getByRole('heading', { name: 'Team Links' })).toBeVisible({
+    await ownerPage.goto(`/${state.linkedOrgSlug}/admin/org/coaches-portal-links`)
+    await expect(ownerPage.getByRole('heading', { name: 'Coaches Portal Links' })).toBeVisible({
       timeout: 30_000,
     })
     await expect(ownerPage.getByText('Coach requested org billing')).toBeVisible({
       timeout: 30_000,
     })
     await ownerPage.getByRole('button', { name: 'Approve Annual' }).click()
-    await expect(ownerPage.getByText('Org billing is now active for this Team.')).toBeVisible({
+    await expect(ownerPage.getByText('Org billing is now active for this Coaches Portal.')).toBeVisible({
       timeout: 15_000,
     })
 
