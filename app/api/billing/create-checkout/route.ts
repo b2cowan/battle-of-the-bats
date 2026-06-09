@@ -1,4 +1,4 @@
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { getAuthContext, requireCapability, unauthorized } from '@/lib/api-auth';
 import { restoreRetainedDowngradeTournaments } from '@/lib/billing-retention';
 import { getBillingHref } from '@/lib/billing-urls';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
@@ -92,6 +92,9 @@ export async function POST(req: Request) {
   const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
   const auth = await getAuthContext(orgSlug ? { orgSlug } : {});
   if (!auth) return unauthorized();
+  // Billing is owner-only — enforce server-side (the UI also hides these controls).
+  const denied = await requireCapability(auth, 'billing');
+  if (denied) return denied;
 
   const planKey = typeof body.planKey === 'string' ? body.planKey : undefined;
   const returnTo = typeof body.returnTo === 'string' ? body.returnTo : undefined;

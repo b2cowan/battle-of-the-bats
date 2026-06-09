@@ -13,6 +13,7 @@ export type Capability =
   | 'post_rules'
   | 'send_communications'
   | 'seal_tournaments'
+  | 'manage_branding'
   | 'manage_members'
   | 'org_settings'
   | 'billing'
@@ -31,7 +32,7 @@ export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
   owner: new Set<Capability>([
     'create_tournaments', 'manage_registrations', 'manage_schedule_structure',
     'update_schedule', 'submit_scores', 'check_in_teams', 'manage_contacts', 'post_announcements',
-    'post_rules', 'send_communications', 'seal_tournaments', 'manage_members',
+    'post_rules', 'send_communications', 'seal_tournaments', 'manage_branding', 'manage_members',
     'org_settings', 'billing',
     // default-on module caps
     'module_tournaments', 'module_communications', 'module_members',
@@ -39,7 +40,7 @@ export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
   admin: new Set<Capability>([
     'create_tournaments', 'manage_registrations', 'manage_schedule_structure',
     'update_schedule', 'submit_scores', 'check_in_teams', 'manage_contacts', 'post_announcements',
-    'post_rules', 'send_communications', 'seal_tournaments', 'manage_members',
+    'post_rules', 'send_communications', 'seal_tournaments', 'manage_branding', 'manage_members',
     // default-on module caps
     'module_tournaments', 'module_communications', 'module_members',
   ]),
@@ -68,7 +69,7 @@ export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
 export const ALL_CAPABILITY_KEYS: Capability[] = [
   'create_tournaments', 'manage_registrations', 'manage_schedule_structure',
   'update_schedule', 'submit_scores', 'check_in_teams', 'manage_contacts', 'post_announcements',
-  'post_rules', 'send_communications', 'seal_tournaments', 'manage_members',
+  'post_rules', 'send_communications', 'seal_tournaments', 'manage_branding', 'manage_members',
   'org_settings', 'billing',
   'module_tournaments', 'module_communications', 'module_members',
   'module_public_site', 'module_accounting', 'module_house_league', 'module_rep_teams',

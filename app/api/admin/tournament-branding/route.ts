@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { forbidden, getAuthContextWithScope, scopeGuard, unauthorized } from '@/lib/api-auth';
+import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { CARD_STYLE_OPTIONS, FONT_OPTIONS, PRESETS } from '@/lib/themes';
 import { normalizeHiddenPublicPages } from '@/lib/public-pages';
@@ -88,10 +89,11 @@ export async function PATCH(req: Request) {
     requireScoreFinalization?: boolean | null;
   };
 
-  // Owner-only fields: the org's public visual identity + which public pages show.
-  // Admins may update operational settings (e.g. requireScoreFinalization) but not these.
-  const OWNER_ONLY_FIELDS = [...PLUS_VISUAL_FIELDS, 'publicHiddenPages'] as const;
-  if (ctx.role !== 'owner' && OWNER_ONLY_FIELDS.some(field => field in body)) {
+  // Branding fields: the tournament's public visual identity + which public pages show.
+  // Gated on the manage_branding capability (owner + admin by default; tunable per-member).
+  // Operational settings like requireScoreFinalization are not branding and stay as-is.
+  const BRANDING_FIELDS = [...PLUS_VISUAL_FIELDS, 'publicHiddenPages'] as const;
+  if (!hasCapability(ctx.role, ctx.capabilities, 'manage_branding') && BRANDING_FIELDS.some(field => field in body)) {
     return forbidden();
   }
 

@@ -11,6 +11,7 @@ import { TournamentAdminHeader, CompactUpsell } from '@/components/admin/tournam
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/themes';
 import { PUBLIC_PAGE_OPTIONS, normalizeHiddenPublicPages, type PublicPageKey } from '@/lib/public-pages';
 import { hasPlanFeature } from '@/lib/plan-features';
+import { hasCapability } from '@/lib/roles';
 import styles from './branding.module.css';
 
 interface BrandingSettings {
@@ -33,7 +34,7 @@ type SectionKey = 'publicPages' | 'logo' | 'theme' | 'heroBanner' | 'fontFamily'
 
 export default function TournamentBrandingPage() {
   const { currentTournament } = useTournament();
-  const { currentOrg, userRole } = useOrg();
+  const { currentOrg, userRole, userCapabilities } = useOrg();
   usePageTitle('Public Site');
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
 
@@ -282,10 +283,10 @@ export default function TournamentBrandingPage() {
     }
   }
 
-  if (userRole !== 'owner') {
+  if (!hasCapability(userRole ?? 'official', userCapabilities, 'manage_branding')) {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>Only organization owners can manage tournament branding.</p>
+        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>You don&apos;t have access to manage tournament branding.</p>
       </div>
     );
   }

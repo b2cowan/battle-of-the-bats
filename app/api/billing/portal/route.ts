@@ -1,9 +1,12 @@
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { getAuthContext, requireCapability, unauthorized } from '@/lib/api-auth';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 
 export async function POST() {
   const auth = await getAuthContext();
   if (!auth) return unauthorized();
+  // Billing is owner-only — enforce server-side (the UI also hides these controls).
+  const denied = await requireCapability(auth, 'billing');
+  if (denied) return denied;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
 

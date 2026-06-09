@@ -147,6 +147,7 @@ const CAPABILITY_LABELS: Record<Capability, string> = {
   post_rules:                'Post / edit rules documents',
   send_communications:       'Send email communications',
   seal_tournaments:          'Seal tournament (archive)',
+  manage_branding:           'Manage tournament branding & public site',
   manage_members:            'Manage members',
   org_settings:              'Org settings & branding',
   billing:                   'Subscription management',
@@ -159,7 +160,7 @@ const MODULE_CAP_KEYS: Capability[] = [
 const ACTION_CAP_KEYS: Capability[] = [
   'create_tournaments', 'manage_registrations', 'manage_schedule_structure',
   'update_schedule', 'submit_scores', 'check_in_teams', 'manage_contacts', 'post_announcements',
-  'post_rules', 'send_communications', 'seal_tournaments', 'manage_members',
+  'post_rules', 'send_communications', 'seal_tournaments', 'manage_branding', 'manage_members',
   'org_settings', 'billing',
 ];
 

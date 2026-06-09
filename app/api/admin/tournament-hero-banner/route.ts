@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { forbidden, getAuthContextWithScope, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature } from '@/lib/plan-features';
+import { hasCapability } from '@/lib/roles';
 
 const BUCKET    = 'org-assets';
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
-  if (ctx.role !== 'owner') return forbidden();
+  if (!hasCapability(ctx.role, ctx.capabilities, 'manage_branding')) return forbidden();
 
   const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return NextResponse.json({ error: 'Missing tournamentId' }, { status: 400 });
@@ -79,7 +80,7 @@ export async function DELETE(req: Request) {
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
-  if (ctx.role !== 'owner') return forbidden();
+  if (!hasCapability(ctx.role, ctx.capabilities, 'manage_branding')) return forbidden();
 
   const tournamentId = url.searchParams.get('tournamentId');
   if (!tournamentId) return NextResponse.json({ error: 'Missing tournamentId' }, { status: 400 });

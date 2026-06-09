@@ -20,6 +20,7 @@ import { CSS } from '@dnd-kit/utilities';
 import Link from 'next/link';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { hasCapability } from '@/lib/roles';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import type { RegistrationAttentionSummary } from '@/lib/registration-attention';
@@ -503,7 +504,7 @@ function AddTile({ kind, items, open, onToggle, onAdd }: {
 
 export default function AdminDashboard() {
   const { currentTournament, refresh: refreshTournaments } = useTournament();
-  const { currentOrg, userRole } = useOrg();
+  const { currentOrg, userRole, userCapabilities } = useOrg();
   usePageTitle('Dashboard');
   const router = useRouter();
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
@@ -1609,7 +1610,7 @@ export default function AdminDashboard() {
             </>
           )}
 
-          {userRole === 'owner' && (
+          {hasCapability(userRole ?? 'official', userCapabilities, 'create_tournaments') && (
             <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
               {archiveError && <span style={{ fontSize: '0.8rem', color: 'var(--danger)', marginRight: '0.75rem', alignSelf: 'center' }}>{archiveError}</span>}
               <button type="button" className="btn btn-ghost btn-data" style={{ color: 'var(--white-40)', borderColor: 'var(--border-2)' }} onClick={() => { setArchiveError(''); setShowArchiveConfirm(true); }} disabled={archiving}>
