@@ -1,0 +1,7 @@
+/* The admin preview has no desktop side rail and no mobile bottom nav, so its
+   section links must stay visible at every width — unlike the public Navbar,
+   which hides .links at ≥1024px (rail) and ≤900px (bottom nav). */
+.links {
+  display: flex !important;
+  flex-wrap: wrap;
+}

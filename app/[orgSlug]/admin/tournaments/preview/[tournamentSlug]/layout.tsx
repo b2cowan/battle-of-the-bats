@@ -23,7 +23,9 @@ export default async function TournamentPreviewLayout({
   const colorMode = getPreviewColorMode(org, tournament);
   const lightModeVars = colorMode === 'light' ? buildPublicLightModeCssVars() : null;
   const cardStyle = getPreviewCardStyle(org, tournament);
-  const navOrg = canUseAdvancedTournamentBranding(org) ? org : { ...org, logoUrl: undefined, heroBannerUrl: undefined };
+  const navOrg = canUseAdvancedTournamentBranding(org)
+    ? { ...org, logoUrl: tournament.logoUrl ?? org.logoUrl }
+    : { ...org, logoUrl: undefined, heroBannerUrl: undefined };
 
   return (
     <>

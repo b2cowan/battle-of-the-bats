@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Organization } from '@/lib/types';
 import { visiblePublicPages, type PublicPageKey } from '@/lib/public-pages';
 import styles from '@/components/Navbar.module.css';
+import previewStyles from './TournamentPreviewNav.module.css';
 
 type TournamentPreviewNavProps = {
   org: Organization;
@@ -46,7 +47,7 @@ export default function TournamentPreviewNav({
           <span className={styles.orgName}>{tournamentName}</span>
         </Link>
 
-        <div className={styles.links}>
+        <div className={`${styles.links} ${previewStyles.links}`}>
           {links.map(link => (
             <Link key={link.label} href={link.href} className={styles.link}>
               {link.label}
