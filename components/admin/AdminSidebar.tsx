@@ -7,7 +7,7 @@ import {
   ChevronRight, CreditCard, Settings,
   Users2, ArrowLeft, Globe, DollarSign,
   CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
-  Link2, Plus, MapPin, Mail, Archive, Users, Calendar,
+  Link2, Plus, MapPin, Mail, Archive, Users, Calendar, LayoutGrid,
 } from 'lucide-react';
 import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
@@ -591,6 +591,9 @@ export default function AdminSidebar() {
               <Home size={15} /> Back to Site
             </Link>
           )}
+          <Link href="/home" className={styles.footerLink} id="admin-all-workspaces">
+            <LayoutGrid size={15} /> All Workspaces
+          </Link>
           <Link
             href={helpHref}
             className={styles.footerLink}

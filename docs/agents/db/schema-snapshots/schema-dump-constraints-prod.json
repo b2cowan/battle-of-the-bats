@@ -41,25 +41,9 @@
   },
   {
     "table_name": "accounting_ledgers",
-    "constraint_name": "accounting_ledgers_org_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "org_id",
-    "foreign_table": "organizations",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "accounting_ledgers",
-    "constraint_name": "accounting_ledgers_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "accounting_ledgers",
     "constraint_name": "accounting_ledgers_org_id_entity_type_entity_id_key",
     "constraint_type": "UNIQUE",
-    "column_name": "entity_id",
+    "column_name": "org_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -75,37 +59,29 @@
     "table_name": "accounting_ledgers",
     "constraint_name": "accounting_ledgers_org_id_entity_type_entity_id_key",
     "constraint_type": "UNIQUE",
-    "column_name": "org_id",
+    "column_name": "entity_id",
     "foreign_table": null,
     "foreign_column": null
   },
   {
-    "table_name": "age_groups",
-    "constraint_name": "age_groups_contact_id_fkey",
+    "table_name": "accounting_ledgers",
+    "constraint_name": "accounting_ledgers_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "contact_id",
-    "foreign_table": "contacts",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
     "foreign_column": "id"
   },
   {
-    "table_name": "age_groups",
-    "constraint_name": "age_groups_tournament_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
-    "foreign_column": "id"
+    "table_name": "accounting_ledgers",
+    "constraint_name": "accounting_ledgers_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
-    "table_name": "age_groups",
-    "constraint_name": "fk_age_groups_tournament",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "age_groups",
-    "constraint_name": "age_groups_pkey",
+    "table_name": "announcements",
+    "constraint_name": "announcements_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
@@ -120,20 +96,76 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "announcements",
-    "constraint_name": "announcements_tournament_id_fkey",
+    "table_name": "basic_coach_team_registrations",
+    "constraint_name": "basic_coach_team_registrations_basic_coach_team_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
+    "column_name": "basic_coach_team_id",
+    "foreign_table": "basic_coach_teams",
     "foreign_column": "id"
   },
   {
-    "table_name": "announcements",
-    "constraint_name": "announcements_pkey",
+    "table_name": "basic_coach_team_registrations",
+    "constraint_name": "basic_coach_team_registrations_linked_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "linked_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "basic_coach_team_registrations",
+    "constraint_name": "basic_coach_team_registrations_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
+  },
+  {
+    "table_name": "basic_coach_team_registrations",
+    "constraint_name": "basic_coach_team_registrations_tournament_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_team_id",
+    "foreign_table": "teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "basic_coach_team_users",
+    "constraint_name": "basic_coach_team_users_basic_coach_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "basic_coach_team_id",
+    "foreign_table": "basic_coach_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "basic_coach_team_users",
+    "constraint_name": "basic_coach_team_users_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "basic_coach_team_users",
+    "constraint_name": "basic_coach_team_users_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "basic_coach_teams",
+    "constraint_name": "basic_coach_teams_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "basic_coach_teams",
+    "constraint_name": "basic_coach_teams_team_workspace_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_workspace_id",
+    "foreign_table": "team_workspaces",
+    "foreign_column": "id"
   },
   {
     "table_name": "billing_retained_records",
@@ -224,28 +256,20 @@
     "foreign_column": null
   },
   {
-    "table_name": "contacts",
-    "constraint_name": "contacts_tournament_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "contacts",
-    "constraint_name": "fk_contacts_tournament",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "contacts",
-    "constraint_name": "contacts_pkey",
+    "table_name": "diamonds",
+    "constraint_name": "diamonds_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
+  },
+  {
+    "table_name": "diamonds",
+    "constraint_name": "diamonds_source_org_venue_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "source_org_venue_id",
+    "foreign_table": "org_venues",
+    "foreign_column": "id"
   },
   {
     "table_name": "diamonds",
@@ -256,20 +280,28 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "diamonds",
-    "constraint_name": "diamonds_tournament_id_fkey",
+    "table_name": "divisions",
+    "constraint_name": "age_groups_contact_member_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
+    "column_name": "contact_member_id",
+    "foreign_table": "organization_members",
     "foreign_column": "id"
   },
   {
-    "table_name": "diamonds",
-    "constraint_name": "diamonds_pkey",
+    "table_name": "divisions",
+    "constraint_name": "age_groups_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
+  },
+  {
+    "table_name": "divisions",
+    "constraint_name": "fk_age_groups_tournament",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id"
   },
   {
     "table_name": "early_access_leads",
@@ -281,14 +313,6 @@
   },
   {
     "table_name": "early_access_leads",
-    "constraint_name": "early_access_leads_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "early_access_leads",
     "constraint_name": "early_access_leads_email_normalized_key",
     "constraint_type": "UNIQUE",
     "column_name": "email_normalized",
@@ -296,35 +320,83 @@
     "foreign_column": null
   },
   {
-    "table_name": "games",
-    "constraint_name": "fk_games_age_group",
+    "table_name": "early_access_leads",
+    "constraint_name": "early_access_leads_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "email_batches",
+    "constraint_name": "email_batches_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "email_sends",
+    "constraint_name": "email_sends_batch_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "age_group_id",
-    "foreign_table": "age_groups",
+    "column_name": "batch_id",
+    "foreign_table": "email_batches",
     "foreign_column": "id"
   },
   {
-    "table_name": "games",
-    "constraint_name": "games_age_group_id_fkey",
+    "table_name": "email_sends",
+    "constraint_name": "email_sends_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "email_sends",
+    "constraint_name": "email_sends_recipient_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "age_group_id",
-    "foreign_table": "age_groups",
+    "column_name": "recipient_org_id",
+    "foreign_table": "organizations",
     "foreign_column": "id"
   },
   {
-    "table_name": "games",
-    "constraint_name": "games_away_slot_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "away_slot_id",
-    "foreign_table": "pool_slots",
-    "foreign_column": "id"
+    "table_name": "fan_push_subscriptions",
+    "constraint_name": "fan_push_subscriptions_endpoint_tournament_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "endpoint",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
-    "table_name": "games",
-    "constraint_name": "games_away_team_id_fkey",
+    "table_name": "fan_push_subscriptions",
+    "constraint_name": "fan_push_subscriptions_endpoint_tournament_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "tournament_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "fan_push_subscriptions",
+    "constraint_name": "fan_push_subscriptions_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "fan_push_subscriptions",
+    "constraint_name": "fan_push_subscriptions_team_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "away_team_id",
+    "column_name": "team_id",
     "foreign_table": "teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "fan_push_subscriptions",
+    "constraint_name": "fan_push_subscriptions_tournament_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
     "foreign_column": "id"
   },
   {
@@ -341,6 +413,30 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "diamond_id",
     "foreign_table": "diamonds",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "games",
+    "constraint_name": "fk_games_home_team",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "home_team_id",
+    "foreign_table": "teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "games",
+    "constraint_name": "fk_games_tournament",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "games",
+    "constraint_name": "games_away_slot_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "away_slot_id",
+    "foreign_table": "pool_slots",
     "foreign_column": "id"
   },
   {
@@ -369,10 +465,18 @@
   },
   {
     "table_name": "games",
-    "constraint_name": "fk_games_home_team",
+    "constraint_name": "games_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "games",
+    "constraint_name": "games_schedule_facility_lane_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "home_team_id",
-    "foreign_table": "teams",
+    "column_name": "schedule_facility_lane_id",
+    "foreign_table": "schedule_facility_lanes",
     "foreign_column": "id"
   },
   {
@@ -385,23 +489,47 @@
   },
   {
     "table_name": "games",
-    "constraint_name": "games_tournament_id_fkey",
+    "constraint_name": "games_venue_facility_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
+    "column_name": "venue_facility_id",
+    "foreign_table": "venue_facilities",
     "foreign_column": "id"
   },
   {
-    "table_name": "games",
-    "constraint_name": "fk_games_tournament",
+    "table_name": "import_batch_rows",
+    "constraint_name": "import_batch_rows_batch_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
+    "column_name": "batch_id",
+    "foreign_table": "import_batches",
     "foreign_column": "id"
   },
   {
-    "table_name": "games",
-    "constraint_name": "games_pkey",
+    "table_name": "import_batch_rows",
+    "constraint_name": "import_batch_rows_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "import_batches",
+    "constraint_name": "import_batches_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "import_batches",
+    "constraint_name": "import_batches_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "league_divisions",
+    "constraint_name": "league_divisions_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
@@ -416,20 +544,20 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "league_divisions",
-    "constraint_name": "league_divisions_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "league_email_log",
     "constraint_name": "league_email_log_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
     "foreign_table": "organizations",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "league_email_log",
+    "constraint_name": "league_email_log_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "league_email_log",
@@ -444,14 +572,6 @@
     "constraint_name": "league_email_log_sent_by_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "sent_by",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "league_email_log",
-    "constraint_name": "league_email_log_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -481,6 +601,22 @@
   },
   {
     "table_name": "league_games",
+    "constraint_name": "league_games_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "league_games",
+    "constraint_name": "league_games_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "league_games",
     "constraint_name": "league_games_season_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "season_id",
@@ -488,8 +624,8 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "league_games",
-    "constraint_name": "league_games_pkey",
+    "table_name": "league_notification_log",
+    "constraint_name": "league_notification_log_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
@@ -512,20 +648,28 @@
     "foreign_column": null
   },
   {
-    "table_name": "league_notification_log",
-    "constraint_name": "league_notification_log_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "league_practices",
     "constraint_name": "league_practices_division_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "division_id",
     "foreign_table": "league_divisions",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "league_practices",
+    "constraint_name": "league_practices_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "league_practices",
+    "constraint_name": "league_practices_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "league_practices",
@@ -544,20 +688,20 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "league_practices",
-    "constraint_name": "league_practices_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "league_registrations",
     "constraint_name": "league_registrations_division_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "division_id",
     "foreign_table": "league_divisions",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "league_registrations",
+    "constraint_name": "league_registrations_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "league_registrations",
@@ -576,28 +720,12 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "league_registrations",
-    "constraint_name": "league_registrations_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "league_seasons",
     "constraint_name": "league_seasons_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
     "foreign_table": "organizations",
     "foreign_column": "id"
-  },
-  {
-    "table_name": "league_seasons",
-    "constraint_name": "league_seasons_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
   },
   {
     "table_name": "league_seasons",
@@ -616,12 +744,28 @@
     "foreign_column": null
   },
   {
+    "table_name": "league_seasons",
+    "constraint_name": "league_seasons_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
     "table_name": "league_teams",
     "constraint_name": "league_teams_division_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "division_id",
     "foreign_table": "league_divisions",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "league_teams",
+    "constraint_name": "league_teams_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "league_teams",
@@ -632,10 +776,66 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "league_teams",
-    "constraint_name": "league_teams_pkey",
+    "table_name": "notification_preferences",
+    "constraint_name": "notification_preferences_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "notification_preferences",
+    "constraint_name": "notification_preferences_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "notification_preferences",
+    "constraint_name": "notification_preferences_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "org_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "notification_preferences",
+    "constraint_name": "notification_preferences_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "event_type",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "notification_preferences",
+    "constraint_name": "notification_preferences_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "notifications",
+    "constraint_name": "notifications_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "notifications",
+    "constraint_name": "notifications_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "notifications",
+    "constraint_name": "notifications_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -739,7 +939,7 @@
     "table_name": "org_member_rep_group_scopes",
     "constraint_name": "org_member_rep_group_scopes_pkey",
     "constraint_type": "PRIMARY KEY",
-    "column_name": "group_id",
+    "column_name": "member_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -747,7 +947,23 @@
     "table_name": "org_member_rep_group_scopes",
     "constraint_name": "org_member_rep_group_scopes_pkey",
     "constraint_type": "PRIMARY KEY",
-    "column_name": "member_id",
+    "column_name": "group_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "org_member_tournament_assignments",
+    "constraint_name": "org_member_tournament_assignmen_org_member_id_tournament_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "org_member_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "org_member_tournament_assignments",
+    "constraint_name": "org_member_tournament_assignmen_org_member_id_tournament_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "tournament_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -761,14 +977,6 @@
   },
   {
     "table_name": "org_member_tournament_assignments",
-    "constraint_name": "org_member_tournament_assignments_tournament_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "org_member_tournament_assignments",
     "constraint_name": "org_member_tournament_assignments_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
@@ -777,19 +985,11 @@
   },
   {
     "table_name": "org_member_tournament_assignments",
-    "constraint_name": "org_member_tournament_assignmen_org_member_id_tournament_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "org_member_id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "org_member_tournament_assignments",
-    "constraint_name": "org_member_tournament_assignmen_org_member_id_tournament_id_key",
-    "constraint_type": "UNIQUE",
+    "constraint_name": "org_member_tournament_assignments_tournament_id_fkey",
+    "constraint_type": "FOREIGN KEY",
     "column_name": "tournament_id",
-    "foreign_table": null,
-    "foreign_column": null
+    "foreign_table": "tournaments",
+    "foreign_column": "id"
   },
   {
     "table_name": "org_overrides",
@@ -825,19 +1025,19 @@
   },
   {
     "table_name": "org_payees",
-    "constraint_name": "org_payees_team_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "rep_teams",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "org_payees",
     "constraint_name": "org_payees_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
+  },
+  {
+    "table_name": "org_payees",
+    "constraint_name": "org_payees_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
   },
   {
     "table_name": "org_public_site_content",
@@ -856,6 +1056,46 @@
     "foreign_column": null
   },
   {
+    "table_name": "org_venue_facilities",
+    "constraint_name": "org_venue_facilities_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "org_venue_facilities",
+    "constraint_name": "org_venue_facilities_org_venue_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_venue_id",
+    "foreign_table": "org_venues",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "org_venue_facilities",
+    "constraint_name": "org_venue_facilities_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "org_venues",
+    "constraint_name": "org_venues_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "org_venues",
+    "constraint_name": "org_venues_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
     "table_name": "organization_members",
     "constraint_name": "organization_members_organization_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -865,8 +1105,16 @@
   },
   {
     "table_name": "organization_members",
-    "constraint_name": "organization_members_user_id_fkey",
-    "constraint_type": "FOREIGN KEY",
+    "constraint_name": "organization_members_organization_id_user_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "organization_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "organization_members",
+    "constraint_name": "organization_members_organization_id_user_id_key",
+    "constraint_type": "UNIQUE",
     "column_name": "user_id",
     "foreign_table": null,
     "foreign_column": null
@@ -881,16 +1129,8 @@
   },
   {
     "table_name": "organization_members",
-    "constraint_name": "organization_members_organization_id_user_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "organization_id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "organization_members",
-    "constraint_name": "organization_members_organization_id_user_id_key",
-    "constraint_type": "UNIQUE",
+    "constraint_name": "organization_members_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
     "column_name": "user_id",
     "foreign_table": null,
     "foreign_column": null
@@ -937,17 +1177,17 @@
   },
   {
     "table_name": "platform_addon_catalog",
-    "constraint_name": "platform_addon_catalog_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
+    "constraint_name": "platform_addon_catalog_addon_key_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "addon_key",
     "foreign_table": null,
     "foreign_column": null
   },
   {
     "table_name": "platform_addon_catalog",
-    "constraint_name": "platform_addon_catalog_addon_key_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "addon_key",
+    "constraint_name": "platform_addon_catalog_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -985,17 +1225,17 @@
   },
   {
     "table_name": "platform_catalog_campaigns",
-    "constraint_name": "platform_catalog_campaigns_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
+    "constraint_name": "platform_catalog_campaigns_campaign_key_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "campaign_key",
     "foreign_table": null,
     "foreign_column": null
   },
   {
     "table_name": "platform_catalog_campaigns",
-    "constraint_name": "platform_catalog_campaigns_campaign_key_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "campaign_key",
+    "constraint_name": "platform_catalog_campaigns_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -1017,6 +1257,14 @@
   },
   {
     "table_name": "platform_catalog_change_requests",
+    "constraint_name": "platform_catalog_change_requests_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "platform_catalog_change_requests",
     "constraint_name": "platform_catalog_change_requests_target_version_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "target_version_id",
@@ -1024,10 +1272,10 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "platform_catalog_change_requests",
-    "constraint_name": "platform_catalog_change_requests_pkey",
+    "table_name": "platform_email_templates",
+    "constraint_name": "platform_email_templates_pkey",
     "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
+    "column_name": "key",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -1067,7 +1315,7 @@
     "table_name": "platform_plan_module_entitlements",
     "constraint_name": "platform_plan_module_entitlements_pkey",
     "constraint_type": "PRIMARY KEY",
-    "column_name": "module_key",
+    "column_name": "plan_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -1075,7 +1323,7 @@
     "table_name": "platform_plan_module_entitlements",
     "constraint_name": "platform_plan_module_entitlements_pkey",
     "constraint_type": "PRIMARY KEY",
-    "column_name": "plan_id",
+    "column_name": "module_key",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -1096,10 +1344,18 @@
     "foreign_column": null
   },
   {
-    "table_name": "platform_users",
-    "constraint_name": "platform_users_pkey",
+    "table_name": "platform_user_notes",
+    "constraint_name": "platform_user_notes_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "platform_user_notes",
+    "constraint_name": "platform_user_notes_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -1112,35 +1368,19 @@
     "foreign_column": null
   },
   {
+    "table_name": "platform_users",
+    "constraint_name": "platform_users_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
     "table_name": "pool_slots",
     "constraint_name": "pool_slots_age_group_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "age_group_id",
-    "foreign_table": "age_groups",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "pool_slots",
-    "constraint_name": "pool_slots_pool_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "pool_id",
-    "foreign_table": "pools",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "pool_slots",
-    "constraint_name": "pool_slots_team_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "teams",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "pool_slots",
-    "constraint_name": "pool_slots_tournament_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
+    "column_name": "division_id",
+    "foreign_table": "divisions",
     "foreign_column": "id"
   },
   {
@@ -1150,6 +1390,14 @@
     "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
+  },
+  {
+    "table_name": "pool_slots",
+    "constraint_name": "pool_slots_pool_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "pool_id",
+    "foreign_table": "pools",
+    "foreign_column": "id"
   },
   {
     "table_name": "pool_slots",
@@ -1168,11 +1416,27 @@
     "foreign_column": null
   },
   {
+    "table_name": "pool_slots",
+    "constraint_name": "pool_slots_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "pool_slots",
+    "constraint_name": "pool_slots_tournament_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id"
+  },
+  {
     "table_name": "pools",
     "constraint_name": "pools_age_group_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "age_group_id",
-    "foreign_table": "age_groups",
+    "column_name": "division_id",
+    "foreign_table": "divisions",
     "foreign_column": "id"
   },
   {
@@ -1180,6 +1444,30 @@
     "constraint_name": "pools_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "push_subscriptions",
+    "constraint_name": "push_subscriptions_endpoint_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "endpoint",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "push_subscriptions",
+    "constraint_name": "push_subscriptions_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "push_subscriptions",
+    "constraint_name": "push_subscriptions_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -1193,9 +1481,25 @@
   },
   {
     "table_name": "rep_allocation_installments",
+    "constraint_name": "rep_allocation_installments_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_allocation_installments",
     "constraint_name": "rep_allocation_installments_paid_by_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "paid_by",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_allocation_installments",
+    "constraint_name": "rep_allocation_installments_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -1209,9 +1513,9 @@
   },
   {
     "table_name": "rep_allocation_installments",
-    "constraint_name": "rep_allocation_installments_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
+    "constraint_name": "rep_allocation_installments_split_id_installment_number_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "split_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -1225,11 +1529,11 @@
   },
   {
     "table_name": "rep_allocation_installments",
-    "constraint_name": "rep_allocation_installments_split_id_installment_number_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "split_id",
-    "foreign_table": null,
-    "foreign_column": null
+    "constraint_name": "rep_allocation_installments_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_allocation_splits",
@@ -1241,11 +1545,35 @@
   },
   {
     "table_name": "rep_allocation_splits",
+    "constraint_name": "rep_allocation_splits_allocation_id_team_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "allocation_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_allocation_splits",
+    "constraint_name": "rep_allocation_splits_allocation_id_team_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "team_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_allocation_splits",
     "constraint_name": "rep_allocation_splits_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
     "foreign_table": "organizations",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_allocation_splits",
+    "constraint_name": "rep_allocation_splits_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "rep_allocation_splits",
@@ -1262,30 +1590,6 @@
     "column_name": "team_id",
     "foreign_table": "rep_teams",
     "foreign_column": "id"
-  },
-  {
-    "table_name": "rep_allocation_splits",
-    "constraint_name": "rep_allocation_splits_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "rep_allocation_splits",
-    "constraint_name": "rep_allocation_splits_allocation_id_team_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "allocation_id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "rep_allocation_splits",
-    "constraint_name": "rep_allocation_splits_allocation_id_team_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "team_id",
-    "foreign_table": null,
-    "foreign_column": null
   },
   {
     "table_name": "rep_budget_lines",
@@ -1313,6 +1617,14 @@
   },
   {
     "table_name": "rep_budget_lines",
+    "constraint_name": "rep_budget_lines_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_budget_lines",
     "constraint_name": "rep_budget_lines_program_year_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "program_year_id",
@@ -1326,14 +1638,6 @@
     "column_name": "team_id",
     "foreign_table": "rep_teams",
     "foreign_column": "id"
-  },
-  {
-    "table_name": "rep_budget_lines",
-    "constraint_name": "rep_budget_lines_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
   },
   {
     "table_name": "rep_budget_periods",
@@ -1369,6 +1673,14 @@
   },
   {
     "table_name": "rep_cost_allocations",
+    "constraint_name": "rep_cost_allocations_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_cost_allocations",
     "constraint_name": "rep_cost_allocations_source_budget_line_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "source_budget_line_id",
@@ -1384,20 +1696,20 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "rep_cost_allocations",
-    "constraint_name": "rep_cost_allocations_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "rep_document_templates",
     "constraint_name": "rep_document_templates_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
     "foreign_table": "organizations",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_document_templates",
+    "constraint_name": "rep_document_templates_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "rep_document_templates",
@@ -1414,14 +1726,6 @@
     "column_name": "team_id",
     "foreign_table": "rep_teams",
     "foreign_column": "id"
-  },
-  {
-    "table_name": "rep_document_templates",
-    "constraint_name": "rep_document_templates_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
   },
   {
     "table_name": "rep_dues_credits",
@@ -1441,6 +1745,14 @@
   },
   {
     "table_name": "rep_dues_credits",
+    "constraint_name": "rep_dues_credits_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_dues_credits",
     "constraint_name": "rep_dues_credits_player_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "player_id",
@@ -1456,12 +1768,12 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "rep_dues_credits",
-    "constraint_name": "rep_dues_credits_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
+    "table_name": "rep_fundraiser_entries",
+    "constraint_name": "fk_fundraiser_entry_credit",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "credit_id",
+    "foreign_table": "rep_dues_credits",
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_fundraiser_entries",
@@ -1469,14 +1781,6 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "accounting_entry_id",
     "foreign_table": "accounting_entries",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "rep_fundraiser_entries",
-    "constraint_name": "fk_fundraiser_entry_credit",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "credit_id",
-    "foreign_table": "rep_dues_credits",
     "foreign_column": "id"
   },
   {
@@ -1489,11 +1793,35 @@
   },
   {
     "table_name": "rep_fundraiser_entries",
+    "constraint_name": "rep_fundraiser_entries_fundraiser_id_player_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "fundraiser_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_fundraiser_entries",
+    "constraint_name": "rep_fundraiser_entries_fundraiser_id_player_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "player_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_fundraiser_entries",
     "constraint_name": "rep_fundraiser_entries_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
     "foreign_table": "organizations",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_fundraiser_entries",
+    "constraint_name": "rep_fundraiser_entries_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "rep_fundraiser_entries",
@@ -1512,36 +1840,20 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "rep_fundraiser_entries",
-    "constraint_name": "rep_fundraiser_entries_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "rep_fundraiser_entries",
-    "constraint_name": "rep_fundraiser_entries_fundraiser_id_player_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "fundraiser_id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "rep_fundraiser_entries",
-    "constraint_name": "rep_fundraiser_entries_fundraiser_id_player_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "player_id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "rep_fundraisers",
     "constraint_name": "rep_fundraisers_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
     "foreign_table": "organizations",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_fundraisers",
+    "constraint_name": "rep_fundraisers_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "rep_fundraisers",
@@ -1560,20 +1872,20 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "rep_fundraisers",
-    "constraint_name": "rep_fundraisers_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "rep_player_documents",
     "constraint_name": "rep_player_documents_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
     "foreign_table": "organizations",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_documents",
+    "constraint_name": "rep_player_documents_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "rep_player_documents",
@@ -1608,20 +1920,28 @@
     "foreign_column": null
   },
   {
-    "table_name": "rep_player_documents",
-    "constraint_name": "rep_player_documents_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "rep_player_dues_installments",
     "constraint_name": "rep_player_dues_installments_accounting_entry_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "accounting_entry_id",
     "foreign_table": "accounting_entries",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_dues_installments",
+    "constraint_name": "rep_player_dues_installments_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_dues_installments",
+    "constraint_name": "rep_player_dues_installments_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "rep_player_dues_installments",
@@ -1641,9 +1961,9 @@
   },
   {
     "table_name": "rep_player_dues_installments",
-    "constraint_name": "rep_player_dues_installments_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
+    "constraint_name": "rep_player_dues_installments_schedule_id_installment_number_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "schedule_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -1657,11 +1977,11 @@
   },
   {
     "table_name": "rep_player_dues_installments",
-    "constraint_name": "rep_player_dues_installments_schedule_id_installment_number_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "schedule_id",
-    "foreign_table": null,
-    "foreign_column": null
+    "constraint_name": "rep_player_dues_installments_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_player_dues_schedules",
@@ -1681,6 +2001,14 @@
   },
   {
     "table_name": "rep_player_dues_schedules",
+    "constraint_name": "rep_player_dues_schedules_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_player_dues_schedules",
     "constraint_name": "rep_player_dues_schedules_player_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "player_id",
@@ -1697,17 +2025,9 @@
   },
   {
     "table_name": "rep_player_dues_schedules",
-    "constraint_name": "rep_player_dues_schedules_team_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "rep_teams",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "rep_player_dues_schedules",
-    "constraint_name": "rep_player_dues_schedules_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
+    "constraint_name": "rep_player_dues_schedules_program_year_id_player_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "program_year_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -1721,11 +2041,11 @@
   },
   {
     "table_name": "rep_player_dues_schedules",
-    "constraint_name": "rep_player_dues_schedules_program_year_id_player_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "program_year_id",
-    "foreign_table": null,
-    "foreign_column": null
+    "constraint_name": "rep_player_dues_schedules_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_program_years",
@@ -1737,19 +2057,19 @@
   },
   {
     "table_name": "rep_program_years",
-    "constraint_name": "rep_program_years_team_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "rep_teams",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "rep_program_years",
     "constraint_name": "rep_program_years_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
+  },
+  {
+    "table_name": "rep_program_years",
+    "constraint_name": "rep_program_years_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_program_years",
@@ -1777,6 +2097,14 @@
   },
   {
     "table_name": "rep_roster_players",
+    "constraint_name": "rep_roster_players_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_roster_players",
     "constraint_name": "rep_roster_players_program_year_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "program_year_id",
@@ -1800,18 +2128,18 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "rep_roster_players",
-    "constraint_name": "rep_roster_players_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
+    "table_name": "rep_season_surplus",
+    "constraint_name": "rep_season_surplus_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
     "foreign_table": null,
     "foreign_column": null
   },
   {
     "table_name": "rep_season_surplus",
-    "constraint_name": "rep_season_surplus_created_by_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "created_by",
+    "constraint_name": "rep_season_surplus_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -1822,14 +2150,6 @@
     "column_name": "program_year_id",
     "foreign_table": "rep_program_years",
     "foreign_column": "id"
-  },
-  {
-    "table_name": "rep_season_surplus",
-    "constraint_name": "rep_season_surplus_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
   },
   {
     "table_name": "rep_season_surplus",
@@ -1849,11 +2169,35 @@
   },
   {
     "table_name": "rep_team_coaches",
+    "constraint_name": "rep_team_coaches_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_coaches",
     "constraint_name": "rep_team_coaches_program_year_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "program_year_id",
     "foreign_table": "rep_program_years",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_coaches",
+    "constraint_name": "rep_team_coaches_program_year_id_user_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "program_year_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_coaches",
+    "constraint_name": "rep_team_coaches_program_year_id_user_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "rep_team_coaches",
@@ -1872,30 +2216,6 @@
     "foreign_column": null
   },
   {
-    "table_name": "rep_team_coaches",
-    "constraint_name": "rep_team_coaches_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "rep_team_coaches",
-    "constraint_name": "rep_team_coaches_program_year_id_user_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "program_year_id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "rep_team_coaches",
-    "constraint_name": "rep_team_coaches_program_year_id_user_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "user_id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "rep_team_event_attendance",
     "constraint_name": "rep_team_event_attendance_event_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -1905,11 +2225,35 @@
   },
   {
     "table_name": "rep_team_event_attendance",
+    "constraint_name": "rep_team_event_attendance_event_id_player_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "event_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "constraint_name": "rep_team_event_attendance_event_id_player_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "player_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_event_attendance",
     "constraint_name": "rep_team_event_attendance_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
     "foreign_table": "organizations",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_event_attendance",
+    "constraint_name": "rep_team_event_attendance_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "rep_team_event_attendance",
@@ -1944,30 +2288,6 @@
     "foreign_column": null
   },
   {
-    "table_name": "rep_team_event_attendance",
-    "constraint_name": "rep_team_event_attendance_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "rep_team_event_attendance",
-    "constraint_name": "rep_team_event_attendance_event_id_player_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "event_id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "rep_team_event_attendance",
-    "constraint_name": "rep_team_event_attendance_event_id_player_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "player_id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "rep_team_events",
     "constraint_name": "rep_team_events_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -1982,6 +2302,14 @@
     "column_name": "parent_event_id",
     "foreign_table": "rep_team_events",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_events",
+    "constraint_name": "rep_team_events_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "rep_team_events",
@@ -2006,14 +2334,6 @@
     "column_name": "team_id",
     "foreign_table": "rep_teams",
     "foreign_column": "id"
-  },
-  {
-    "table_name": "rep_team_events",
-    "constraint_name": "rep_team_events_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
   },
   {
     "table_name": "rep_team_expenses",
@@ -2057,6 +2377,14 @@
   },
   {
     "table_name": "rep_team_expenses",
+    "constraint_name": "rep_team_expenses_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_expenses",
     "constraint_name": "rep_team_expenses_program_year_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "program_year_id",
@@ -2072,14 +2400,6 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "rep_team_expenses",
-    "constraint_name": "rep_team_expenses_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "rep_team_groups",
     "constraint_name": "rep_team_groups_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -2092,6 +2412,102 @@
     "constraint_name": "rep_team_groups_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_lineup_entries",
+    "constraint_name": "rep_team_lineup_entries_lineup_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "lineup_id",
+    "foreign_table": "rep_team_lineups",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_lineup_entries",
+    "constraint_name": "rep_team_lineup_entries_lineup_id_player_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "lineup_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_lineup_entries",
+    "constraint_name": "rep_team_lineup_entries_lineup_id_player_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "player_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_lineup_entries",
+    "constraint_name": "rep_team_lineup_entries_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_lineup_entries",
+    "constraint_name": "rep_team_lineup_entries_player_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "player_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "constraint_name": "rep_team_lineups_event_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "event_id",
+    "foreign_table": "rep_team_events",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "constraint_name": "rep_team_lineups_event_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "event_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "constraint_name": "rep_team_lineups_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "constraint_name": "rep_team_lineups_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "constraint_name": "rep_team_lineups_program_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "program_year_id",
+    "foreign_table": "rep_program_years",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "constraint_name": "rep_team_lineups_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "constraint_name": "rep_team_lineups_updated_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "updated_by",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -2129,6 +2545,14 @@
   },
   {
     "table_name": "rep_team_payment_requests",
+    "constraint_name": "rep_team_payment_requests_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_payment_requests",
     "constraint_name": "rep_team_payment_requests_reviewed_by_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "reviewed_by",
@@ -2142,14 +2566,6 @@
     "column_name": "team_id",
     "foreign_table": "rep_teams",
     "foreign_column": "id"
-  },
-  {
-    "table_name": "rep_team_payment_requests",
-    "constraint_name": "rep_team_payment_requests_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
   },
   {
     "table_name": "rep_teams",
@@ -2169,14 +2585,6 @@
   },
   {
     "table_name": "rep_teams",
-    "constraint_name": "rep_teams_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "rep_teams",
     "constraint_name": "rep_teams_org_id_slug_key",
     "constraint_type": "UNIQUE",
     "column_name": "org_id",
@@ -2192,12 +2600,28 @@
     "foreign_column": null
   },
   {
+    "table_name": "rep_teams",
+    "constraint_name": "rep_teams_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
     "table_name": "rep_tryout_registrations",
     "constraint_name": "rep_tryout_registrations_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
     "foreign_table": "organizations",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_registrations",
+    "constraint_name": "rep_tryout_registrations_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "rep_tryout_registrations",
@@ -2216,8 +2640,8 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "rep_tryout_registrations",
-    "constraint_name": "rep_tryout_registrations_pkey",
+    "table_name": "resources",
+    "constraint_name": "resources_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
@@ -2232,8 +2656,8 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "resources",
-    "constraint_name": "resources_pkey",
+    "table_name": "rule_items",
+    "constraint_name": "rule_items_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
@@ -2248,8 +2672,8 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "rule_items",
-    "constraint_name": "rule_items_pkey",
+    "table_name": "rules",
+    "constraint_name": "rules_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,
@@ -2264,10 +2688,66 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "rules",
-    "constraint_name": "rules_pkey",
+    "table_name": "schedule_facility_lanes",
+    "constraint_name": "schedule_facility_lanes_division_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "division_id",
+    "foreign_table": "divisions",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "constraint_name": "schedule_facility_lanes_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "constraint_name": "schedule_facility_lanes_resolved_venue_facility_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "resolved_venue_facility_id",
+    "foreign_table": "venue_facilities",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "constraint_name": "schedule_facility_lanes_resolved_venue_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "resolved_venue_id",
+    "foreign_table": "diamonds",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "constraint_name": "schedule_facility_lanes_tournament_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "constraint_name": "schedule_facility_lanes_unique_label",
+    "constraint_type": "UNIQUE",
+    "column_name": "tournament_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "constraint_name": "schedule_facility_lanes_unique_label",
+    "constraint_type": "UNIQUE",
+    "column_name": "division_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "constraint_name": "schedule_facility_lanes_unique_label",
+    "constraint_type": "UNIQUE",
+    "column_name": "label",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -2276,6 +2756,14 @@
     "constraint_name": "stripe_prices_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "stripe_prices",
+    "constraint_name": "stripe_prices_plan_id_billing_cycle_environment_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "plan_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -2296,20 +2784,20 @@
     "foreign_column": null
   },
   {
-    "table_name": "stripe_prices",
-    "constraint_name": "stripe_prices_plan_id_billing_cycle_environment_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "plan_id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "team_entitlements",
     "constraint_name": "team_entitlements_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
     "foreign_table": "organizations",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "team_entitlements",
+    "constraint_name": "team_entitlements_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "team_entitlements",
@@ -2326,14 +2814,6 @@
     "column_name": "team_workspace_id",
     "foreign_table": "team_workspaces",
     "foreign_column": "id"
-  },
-  {
-    "table_name": "team_entitlements",
-    "constraint_name": "team_entitlements_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
   },
   {
     "table_name": "team_org_links",
@@ -2361,6 +2841,14 @@
   },
   {
     "table_name": "team_org_links",
+    "constraint_name": "team_org_links_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "team_org_links",
     "constraint_name": "team_org_links_rep_team_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "rep_team_id",
@@ -2384,18 +2872,18 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "team_org_links",
-    "constraint_name": "team_org_links_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
+    "table_name": "team_workspace_claims",
+    "constraint_name": "team_workspace_claims_claimed_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "claimed_by_user_id",
     "foreign_table": null,
     "foreign_column": null
   },
   {
     "table_name": "team_workspace_claims",
-    "constraint_name": "team_workspace_claims_claimed_by_user_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "claimed_by_user_id",
+    "constraint_name": "team_workspace_claims_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -2416,19 +2904,19 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "team_workspace_claims",
-    "constraint_name": "team_workspace_claims_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "team_workspaces",
     "constraint_name": "team_workspaces_active_program_year_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "active_program_year_id",
     "foreign_table": "rep_program_years",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "team_workspaces",
+    "constraint_name": "team_workspaces_basic_coach_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "basic_coach_team_id",
+    "foreign_table": "basic_coach_teams",
     "foreign_column": "id"
   },
   {
@@ -2444,6 +2932,14 @@
     "constraint_name": "team_workspaces_billing_owner_user_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "billing_owner_user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "team_workspaces",
+    "constraint_name": "team_workspaces_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -2480,28 +2976,36 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "team_workspaces",
-    "constraint_name": "team_workspaces_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
+    "table_name": "teams",
+    "constraint_name": "fk_teams_age_group",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "division_id",
+    "foreign_table": "divisions",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "teams",
+    "constraint_name": "fk_teams_tournament",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id"
   },
   {
     "table_name": "teams",
     "constraint_name": "teams_age_group_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "age_group_id",
-    "foreign_table": "age_groups",
+    "column_name": "division_id",
+    "foreign_table": "divisions",
     "foreign_column": "id"
   },
   {
     "table_name": "teams",
-    "constraint_name": "fk_teams_age_group",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "age_group_id",
-    "foreign_table": "age_groups",
-    "foreign_column": "id"
+    "constraint_name": "teams_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "teams",
@@ -2520,36 +3024,20 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "teams",
-    "constraint_name": "fk_teams_tournament",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "teams",
-    "constraint_name": "teams_tournament_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "teams",
-    "constraint_name": "teams_pkey",
-    "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
     "table_name": "tournament_archives",
     "constraint_name": "tournament_archives_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "org_id",
     "foreign_table": "organizations",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "tournament_archives",
+    "constraint_name": "tournament_archives_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "tournament_archives",
@@ -2576,10 +3064,58 @@
     "foreign_column": "id"
   },
   {
-    "table_name": "tournament_archives",
-    "constraint_name": "tournament_archives_pkey",
+    "table_name": "tournament_notification_preferences",
+    "constraint_name": "tournament_notification_preferences_pkey",
     "constraint_type": "PRIMARY KEY",
-    "column_name": "id",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "tournament_notification_preferences",
+    "constraint_name": "tournament_notification_preferences_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "tournament_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "tournament_notification_preferences",
+    "constraint_name": "tournament_notification_preferences_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "event_type",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "tournament_notification_preferences",
+    "constraint_name": "tournament_notification_preferences_tournament_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "tournament_notification_preferences",
+    "constraint_name": "tournament_notification_preferences_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "tournament_registration_field_answers",
+    "constraint_name": "tournament_registration_field_answ_registration_id_field_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "registration_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "tournament_registration_field_answers",
+    "constraint_name": "tournament_registration_field_answ_registration_id_field_id_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "field_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -2593,14 +3129,6 @@
   },
   {
     "table_name": "tournament_registration_field_answers",
-    "constraint_name": "tournament_registration_field_answers_registration_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "registration_id",
-    "foreign_table": "teams",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "tournament_registration_field_answers",
     "constraint_name": "tournament_registration_field_answers_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
@@ -2609,19 +3137,11 @@
   },
   {
     "table_name": "tournament_registration_field_answers",
-    "constraint_name": "tournament_registration_field_answ_registration_id_field_id_key",
-    "constraint_type": "UNIQUE",
-    "column_name": "field_id",
-    "foreign_table": null,
-    "foreign_column": null
-  },
-  {
-    "table_name": "tournament_registration_field_answers",
-    "constraint_name": "tournament_registration_field_answ_registration_id_field_id_key",
-    "constraint_type": "UNIQUE",
+    "constraint_name": "tournament_registration_field_answers_registration_id_fkey",
+    "constraint_type": "FOREIGN KEY",
     "column_name": "registration_id",
-    "foreign_table": null,
-    "foreign_column": null
+    "foreign_table": "teams",
+    "foreign_column": "id"
   },
   {
     "table_name": "tournament_registration_fields",
@@ -2633,14 +3153,6 @@
   },
   {
     "table_name": "tournament_registration_fields",
-    "constraint_name": "tournament_registration_fields_tournament_id_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "tournament_registration_fields",
     "constraint_name": "tournament_registration_fields_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
@@ -2648,10 +3160,58 @@
     "foreign_column": null
   },
   {
-    "table_name": "tournaments",
-    "constraint_name": "tournaments_organization_id_fkey",
+    "table_name": "tournament_registration_fields",
+    "constraint_name": "tournament_registration_fields_tournament_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "organization_id",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "constraint_name": "tournament_roster_players_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "constraint_name": "tournament_roster_players_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "constraint_name": "tournament_roster_players_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "constraint_name": "tournament_roster_players_tournament_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "tournaments",
+    "constraint_name": "tournaments_default_contact_member_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "default_contact_member_id",
+    "foreign_table": "organization_members",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "tournaments",
+    "constraint_name": "tournaments_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
     "foreign_table": "organizations",
     "foreign_column": "id"
   },
@@ -2662,5 +3222,37 @@
     "column_name": "id",
     "foreign_table": null,
     "foreign_column": null
+  },
+  {
+    "table_name": "venue_facilities",
+    "constraint_name": "venue_facilities_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "venue_facilities",
+    "constraint_name": "venue_facilities_source_org_facility_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "source_org_facility_id",
+    "foreign_table": "org_venue_facilities",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "venue_facilities",
+    "constraint_name": "venue_facilities_tournament_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "venue_facilities",
+    "constraint_name": "venue_facilities_venue_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "venue_id",
+    "foreign_table": "diamonds",
+    "foreign_column": "id"
   }
 ]

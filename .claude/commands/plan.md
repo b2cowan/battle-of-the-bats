@@ -52,7 +52,7 @@ Format:
 - **PM briefs are blocking** — no implementation details until the PM brief is written and presented
 - **Doc structure is strict** — project plan files go in `docs/projects/active/`; completed plans move to `docs/projects/archive/`; agent reference docs go in `docs/agents/`; nothing in repo root
 - **Phases over monoliths** — break large features into numbered phases with clear handoff points
-- **Migration-first for DB changes** — any plan touching the DB must list the migration file as the first task
+- **Migration-first for DB changes** — any plan touching the DB must list the migration file as the first task, **plus an explicit "update `docs/agents/db/DATA_DICTIONARY.md` + run `npm run refresh:snapshots` (dev+prod)" task** (schema change ⇒ dictionary change in the same unit of work; `npm run check:dictionary` enforces it)
 - **Gate features by plan** — note which billing plan tier unlocks each feature (Tournament / Tournament Plus / League / Club)
 
 ---

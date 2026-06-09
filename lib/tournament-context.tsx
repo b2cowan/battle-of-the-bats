@@ -82,10 +82,23 @@ export function TournamentProvider({ children, orgSlug }: { children: ReactNode;
       const ts = rows.map(mapRow).filter(t => t.status !== 'archived');
 
       setTournaments(ts);
+      // Deep-link support: a ?tournamentId= in the URL (notifications, emails)
+      // takes priority over the saved/active tournament so links land correctly.
+      const urlId   = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('tournamentId')
+        : null;
+      const fromUrl = urlId ? ts.find(t => t.id === urlId) : null;
+
       const savedId = typeof window !== 'undefined' ? localStorage.getItem(storageKey(orgSlug)) : null;
       const saved   = savedId ? ts.find(t => t.id === savedId) : null;
       const active  = ts.find(t => t.status === 'active');
-      setCurrentState(saved ?? active ?? ts[0] ?? null);
+      const resolved = fromUrl ?? saved ?? active ?? ts[0] ?? null;
+      setCurrentState(resolved);
+
+      // Persist the deep-linked choice so the switcher + later navigation agree.
+      if (fromUrl && typeof window !== 'undefined') {
+        localStorage.setItem(storageKey(orgSlug), fromUrl.id);
+      }
     } catch (error) {
       console.error('[tournament-context] Failed to load tournaments', error);
       setTournaments([]);

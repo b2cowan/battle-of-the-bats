@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Trophy, Users, LogOut } from 'lucide-react';
+import { Home, Trophy, Users, LogOut, LayoutGrid } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { teamColor } from '@/lib/team-color';
 import {
@@ -107,6 +107,10 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
         )}
 
         <div className={styles.railFooter}>
+          <Link href="/home" className={styles.railSignOut}>
+            <LayoutGrid size={14} aria-hidden />
+            <span>All workspaces</span>
+          </Link>
           <button type="button" className={styles.railSignOut} onClick={handleSignOut}>
             <LogOut size={14} aria-hidden />
             <span>Sign out</span>
@@ -118,6 +122,9 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
       {/* Mobile top bar (≤1023px) */}
       <header className={styles.topbar}>
         {brand}
+        <Link href="/home" className={styles.railSignOut} style={{ marginLeft: 'auto', padding: '0.4rem 0.6rem' }} aria-label="All workspaces">
+          <LayoutGrid size={16} aria-hidden />
+        </Link>
       </header>
 
       <div className={styles.content}>{children}</div>

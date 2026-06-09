@@ -118,6 +118,13 @@ Build `scripts/refresh-db-snapshots.mjs` (design fully scoped by the grounding p
   diff noise.
 - Emit a new `docs/agents/db/schema-snapshots/DRIFT_dev_vs_prod.md` structural diff (tables / columns /
   indexes / constraints / RLS), with a non-zero exit under `--fail-on-drift` for a post-migration gate.
+  *(Note: this measures **dev vs prod**, a different axis from **schema vs dictionary** — the latter is
+  handled by the coverage ratchet below.)*
+- **Build the staleness-prevention harness (§11):** `scripts/check-dictionary-coverage.mjs` +
+  `scripts/.dictionary-coverage-baseline.json`, wired into `npm run verify:changed` and a new
+  `npm run check:dictionary`. From day one it enforces at **table granularity** (a new table must be
+  documented or explicitly waived in the baseline); it tightens to **column granularity per domain** as
+  each phase "seals" that domain. This is the mechanism that makes §3 rule 2 self-enforcing.
 - **Run it once** to regenerate dev+prod to live state; confirm `public_hidden_pages` (and the other 23
   missing tables/columns) now appear; commit the refreshed snapshots.
 - **Run `/dba` to review** the new script before it merges (per the trigger checklist).
@@ -130,6 +137,15 @@ routine command.)
 
 **DoD:** one command refreshes dev+prod JSON + memory markdown + drift report; snapshots reflect ~103
 tables; `/dba`-reviewed; drift report generated and any dev≠prod noted.
+
+> **✅ Phase 0 DONE — 2026-06-08.** `scripts/refresh-db-snapshots.mjs` (dev+prod, structure-only,
+> idempotent/byte-stable, `--probe`/`--fail-on-drift`/`--no-markdown`) regenerated all snapshots to
+> **103 tables** both envs and emits `schema-snapshots/DRIFT_dev_vs_prod.md` (**50 dev/prod divergences**
+> catalogued — see `/dba` Finding #25). `scripts/check-dictionary-coverage.mjs` + baseline (103 tables
+> acknowledged) wired into `npm run verify:changed` (+ `check:dictionary`, `refresh:snapshots`). Two
+> independent `/dba` reviews passed; both merge-blockers (anchor-in-code false-negative; sealed-domain
+> typo false-negative) fixed and adversarially re-verified. `.gitattributes` pins snapshots to LF.
+> **Not yet committed** (awaiting go-ahead).
 
 ### Phase 1 — Tournaments & Registration domain (first content domain)
 
@@ -185,24 +201,24 @@ snapshot at Phase 0 close (don't trust the stale counts for final phasing).
 
 ## 7. Verified seed-list corrections (the grounding pass caught these)
 
-These were checked against the live-fresh memory doc + code (file:line), and the three most surprising were
-re-read directly. **They are documentation traps to fix, and they validate the whole project.** Each becomes
-an early, prominent dictionary entry:
+These were checked against code (file:line). **They validate the whole project.**
 
-1. **`resolveGameTiming` signature — seed & memory are WRONG for this branch.** Actual:
-   `resolveGameTiming(division, tournament, isPlayoff = false)` at
-   [lib/schedule-conflict.ts:41](../../../lib/schedule-conflict.ts#L41-L46). The 3rd arg is a **boolean
-   `isPlayoff`**, not a per-game duration override, and the function does **not** read
-   `games.duration_minutes`. The kickoff's `resolveGameTiming(div, tour, override?)` and the
-   `project_per_game_length` memory ("takes a per-game duration, not `isPlayoff`") do not match
-   `feat/free-tier-coaches`. The `games.duration_minutes` **column** does exist live (mig 112), but the
-   per-game-length code wiring is not on this branch → a textbook "column exists but the branch doesn't use
-   it" gotcha. **Action:** document the column + the branch-dependent function contract; reconcile
-   `memory/project_per_game_length.md`.
-2. **`tournaments.settings.playoff_game_duration_minutes` is NOT removed.** Still defined at
-   [lib/types.ts:55](../../../lib/types.ts#L55) and actively read by `lib/schedule-conflict.ts:53`,
-   `lib/schedule-metrics.ts:561`, `app/api/admin/tournaments/route.ts:518-560`. Memory's "REMOVED — don't
-   reintroduce" is refuted on this branch. All 17 documented `TournamentSettings` keys are present.
+> **⚠️ Items 1–2 FLIPPED mid-project — a live demonstration of the branch-relative rule.** When these were
+> first written (pre-merge), the branch carried the *old* tournament-level timing model, so the kickoff
+> looked wrong. Then an `origin/dev` merge (`1f61801`, observed 2026-06-08) brought in the **per-game-length
+> refactor (mig 112)** — which restored exactly what the kickoff/memory described. So as of `ad9dc66`, items
+> 1–2 are **no longer errors**: the kickoff was right. The dictionary documents the **current** per-game
+> state. Items 3–5 still stand. This is precisely why `DATA_DICTIONARY.md` pins a commit and rule 6 exists.
+
+1. **`resolveGameTiming` — now per-game (kickoff is CORRECT on `ad9dc66`).** Actual:
+   `resolveGameTiming(division, tournament, gameDurationOverride?)` at
+   [lib/schedule-conflict.ts:43](../../../lib/schedule-conflict.ts#L43-L46) — the 3rd arg **is** the per-game
+   override (`games.duration_minutes`, mig 112), cascading override → `division.settings` → `tournament.settings`
+   → 90. Documented as such. *(My earlier "seed is wrong" finding was true pre-merge; the merge superseded it.)*
+2. **`tournaments.settings.playoff_game_duration_minutes` IS removed (again).** Grep finds it nowhere in
+   `lib/`/`app/`; `lib/types.ts:54` is now `schedule_travel_venue_buffer_minutes`. The `project_per_game_length`
+   memory is **accurate** on this branch — no reconciliation needed (it was momentarily out of sync only
+   because the branch lagged the merge). The dictionary's `tournaments.settings` catalog omits the key.
 3. **`teams.email ILIKE auth user email` identity key appears stale.** No such `ILIKE` query was found;
    the register route matches `signedInCoach.email === email` (exact, lowercased) and coach↔team linkage
    now flows through `basic_coach_teams` (email-keyed). The only relevant `ILIKE` is on
@@ -232,6 +248,21 @@ pass confirmed this is workable **once snapshots are fresh** — today the stale
 dead lookup, which Phase 0 eliminates. We document only **non-obvious** fields (skip `id`/`created_at`
 boilerplate) to keep the cost bounded.
 
+### Per-phase execution pipeline (binding DoD step)
+
+Each domain phase runs: **verified extraction** (parallel agents, every claim grounded in the fresh
+snapshot + code `file:line`) → **author** (synthesize into the doc with anchors) → **adversarial verify**
+(independent agents fact-check every gotcha + a sample of `file:line` refs against the live tree) →
+**fix** → **seal** (only after verify passes). The **adversarial verify is a required step before sealing**
+— it has repeatedly caught *blocking* errors in extracted material (e.g. Phase 2: 2 wrong `team_workspaces`
+claims). Cost ≈ **+20–25%** of a phase's all-in tokens.
+
+> **User decision (2026-06-08):** keep the **full** adversarial pass by default. **Pre-approved fallback**
+> if token usage gets heavy: lighten to a **risk-targeted single verifier** (one agent, only the
+> complex/billing/dual-FK tables — the error class that actually shows up; ~10–12% overhead vs ~25%). Do
+> **not** drop verification entirely. The agent should remind the user of this option when usage is a
+> concern and let them call it. See `memory/feedback_dictionary_adversarial_verify.md`.
+
 ---
 
 ## 9. Open decisions for sign-off
@@ -256,6 +287,67 @@ boilerplate) to keep the cost bounded.
 - **Cross-link** `DB_ARCHITECTURE_REVIEW.md` ↔ `DATA_DICTIONARY.md` (design ↔ meaning).
 - Dev-server restart is **not** required by this project (docs + a standalone script only; running the
   script needs network access for the Management API, like `refresh-db-schema.mjs`).
+
+---
+
+## 11. Maintenance & staleness prevention — how future changes get captured *(the namesake concern)*
+
+§3 states the *rules*; this section is the *mechanism* that makes them self-enforcing, so a future project
+cannot quietly drift the dictionary. Four layers, defense-in-depth, all built on patterns already in this
+repo (the public-token ratchet + baseline; agent on-activation reads; AGENCY_RULES obligations):
+
+### Layer 1 — Automated detection (a coverage ratchet)
+`scripts/check-dictionary-coverage.mjs` (modeled on `scripts/check-public-tokens.mjs`) compares the
+**refreshed snapshot** against what `DATA_DICTIONARY.md` documents and fails if live schema surface is
+neither documented nor on an explicit waiver list (`scripts/.dictionary-coverage-baseline.json`). New
+schema **must be triaged** — documented or consciously waived — never silently absorbed.
+- **Wired into `npm run verify:changed`** (the routine static check agents already run) + a standalone
+  `npm run check:dictionary`. This is the catch-net.
+- **Progressive strictness (avoids demanding the whole schema be documented on day one):** from Phase 0 it
+  enforces **new *tables*** must be acknowledged. As each domain phase completes it is **"sealed"**, after
+  which **new *columns* in that domain** must also be triaged. Unsealed domains stay table-granular until
+  their phase lands. The baseline records intentionally-undocumented (obvious/boilerplate) fields with a
+  one-line reason, exactly like the token baseline.
+
+### Layer 2 — Workflow chokepoint (catch it the moment schema changes land)
+The dictionary update is prompted at the exact moment a migration is applied, because the two mandatory
+post-migration steps already converge there:
+- The **Phase-0 refresh command** (run after every migration per §3 rule 3) also runs the coverage check
+  and prints `⚠ N new tables/columns since last dictionary update in <domains> — document or waive`.
+- The migration helper (`scripts/apply-migration-api.mjs`) prints the same reminder on apply.
+So "I added a column" and "the dictionary asks to be updated" happen in the same breath, not weeks later.
+
+### Layer 3 — Agent & process contract (make it an obligation, not a hope)
+Because agents do most of the work here, the obligation is embedded in their contracts:
+- **`/dba` + `/db` skills:** add `DATA_DICTIONARY.md` to their *on-activation read* list, and add to the
+  `/dba` *trigger checklist* + *"what you never do"*: **never land a migration (or change a field's
+  meaning) without updating the dictionary in the same unit of work.**
+- **`/plan` skill + AGENCY_RULES:** any plan that touches schema must include an explicit
+  *"update DATA_DICTIONARY.md"* task — same footing as the existing PM-brief/TODO/memory obligations. A
+  one-line rule is added to AGENCY_RULES so it's workspace-wide, not buried in this plan.
+
+### Layer 4 — Periodic backstop (catch what slipped the live gates)
+- **Per-field/per-domain stamp:** each domain section carries `Last verified: <date> @ snapshot <date>` so
+  staleness is visible at a glance.
+- **`/dba` quarterly health check** (already on its trigger checklist) gains a line: *re-run
+  `check:dictionary` against a fresh snapshot; promote any long-standing waivers to real documentation;
+  confirm each domain's "last verified" stamp isn't stale.*
+
+**Net:** Layer 1 makes drift *fail a check*, Layer 2 makes the prompt *fire at apply time*, Layer 3 makes
+updating it *a required task*, and Layer 4 *sweeps the remainder* — so the document stays current as future
+projects ship, rather than depending on anyone remembering rule 2.
+
+**Build status (2026-06-08):**
+- **Layer 1 — DONE.** `scripts/check-dictionary-coverage.mjs` + `scripts/.dictionary-coverage-baseline.json`,
+  wired into `npm run verify:changed`. Table-granular today; column-granular per sealed domain.
+- **Layer 2 — DONE.** `refresh-db-snapshots.mjs` runs the coverage check at the end; `apply-migration-api.mjs`
+  prints the refresh+document reminder on a successful apply.
+- **Layer 3 — pending Phase 1** (edit `/dba`/`/db`/`/plan` skill prompts + an AGENCY_RULES line once
+  `DATA_DICTIONARY.md` exists to point at).
+- **Layer 4 — ongoing** (`/dba` quarterly check; per-domain "Last verified" stamps added as domains land).
+- **Deferred follow-up (tracked):** a CI **snapshot-freshness gate** that fails when the committed snapshot
+  is older than the newest `supabase/migrations/` file — closes the residual "author forgot to refresh+commit
+  the snapshot" hole that Layers 1–2 can't catch on their own (raised in `/dba` review). Not built in Phase 0.
 
 ---
 

@@ -8,8 +8,11 @@ const VALID_PRESETS     = new Set(Object.keys(PRESETS));
 const VALID_FONTS       = new Set(Object.keys(FONT_OPTIONS));
 const VALID_CARD_STYLES = new Set(Object.keys(CARD_STYLE_OPTIONS));
 
-export async function GET() {
-  const ctx = await getAuthContext();
+export async function GET(req: Request) {
+  // Resolve the org from the visited slug — a user may now own several workspaces, so
+  // the default "first membership" is ambiguous (Phase 2 add-workspace).
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContext({ orgSlug });
   if (!ctx) return unauthorized();
 
   const { org } = ctx;
@@ -40,7 +43,8 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const ctx = await getAuthContext();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContext({ orgSlug });
   if (!ctx) return unauthorized();
 
   const { user, org } = ctx;

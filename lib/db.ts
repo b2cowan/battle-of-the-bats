@@ -2364,6 +2364,43 @@ export async function getPublicTournamentBySlug(orgId: string, slug: string): Pr
 
 // Server-side only (uses service role key) ────────────────────────────────────
 
+/**
+ * Generate a URL-safe, globally-unique organization slug from a display name.
+ * Slugifies the name, then appends -2/-3/… on collision; falls back to a short
+ * random suffix if the name yields an empty base (e.g. non-Latin names). Lets the
+ * signup + add-workspace flows skip asking the user for a URL up front — they refine
+ * it later in settings (Event Settings for Tournament tiers; Org Settings for League/Club).
+ */
+export async function generateUniqueOrgSlug(name: string): Promise<string> {
+  const base = (name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')) || 'org';
+
+  const isTaken = async (slug: string) => {
+    const { data, error } = await supabaseAdmin
+      .from('organizations')
+      .select('id')
+      .eq('slug', slug)
+      .maybeSingle();
+    if (error) throw error;
+    return !!data;
+  };
+
+  if (!(await isTaken(base))) return base;
+  for (let n = 2; n <= 50; n++) {
+    const candidate = `${base}-${n}`;
+    if (!(await isTaken(candidate))) return candidate;
+  }
+  // Extremely unlikely fallback — guarantee uniqueness with a short token.
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const candidate = `${base}-${Math.random().toString(36).slice(2, 7)}`;
+    if (!(await isTaken(candidate))) return candidate;
+  }
+  throw new Error('Could not generate a unique organization URL.');
+}
+
 export async function createOrganization(
   name: string,
   slug: string,

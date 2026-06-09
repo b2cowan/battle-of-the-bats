@@ -19,8 +19,6 @@ function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [orgName, setOrgName]   = useState('');
-  const [publicSlug, setPublicSlug] = useState('');
-  const [slugEdited, setSlugEdited] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName]   = useState('');
   const [email, setEmail]       = useState('');
@@ -30,24 +28,17 @@ function SignupForm() {
   const [loading, setLoading]   = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
 
-  const previewSlug = publicSlug || 'your-org';
-
-  function handleOrgNameChange(value: string) {
-    setOrgName(value);
-    if (!slugEdited) {
-      setPublicSlug(slugify(value));
-    }
-  }
-
-  function handlePublicSlugChange(value: string) {
-    setSlugEdited(true);
-    setPublicSlug(slugify(value));
-  }
+  // The public URL is auto-generated server-side from the org name; this is just a
+  // friendly preview (the final slug may get a number suffix if the name is taken).
+  const previewSlug = slugify(orgName) || 'your-org';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const orgSlug = slugify(publicSlug);
 
+    if (!orgName.trim()) {
+      setError('Enter an organization name.');
+      return;
+    }
     if (!firstName.trim() || !lastName.trim()) {
       setError('Enter your first and last name.');
       return;
@@ -56,19 +47,14 @@ function SignupForm() {
       setError('Password must be at least 8 characters.');
       return;
     }
-    if (!orgSlug) {
-      setError('Enter a public URL for your organization.');
-      return;
-    }
 
     setError('');
     setLoading(true);
-    setPublicSlug(orgSlug);
 
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, orgName, orgSlug, firstName: firstName.trim(), lastName: lastName.trim() }),
+      body: JSON.stringify({ email, password, orgName, firstName: firstName.trim(), lastName: lastName.trim() }),
     });
 
     const json = await res.json();
@@ -148,29 +134,13 @@ function SignupForm() {
               type="text"
               className="form-input"
               value={orgName}
-              onChange={e => handleOrgNameChange(e.target.value)}
+              onChange={e => setOrgName(e.target.value)}
               placeholder="e.g. Milton Softball Association"
               required
               autoComplete="organization"
             />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="signup-slug">Public URL</label>
-            <input
-              id="signup-slug"
-              type="text"
-              className="form-input"
-              value={publicSlug}
-              onChange={e => handlePublicSlugChange(e.target.value)}
-              placeholder="milton-softball"
-              required
-              autoComplete="off"
-              inputMode="url"
-              pattern="[a-z0-9]+(-[a-z0-9]+)*"
-            />
             <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', marginTop: '0.35rem' }}>
-              Site address: <span style={{ color: 'var(--logic-lime)' }}>fieldlogichq.ca/{previewSlug}</span>
+              Your public address: <span style={{ color: 'var(--logic-lime)' }}>fieldlogichq.ca/{previewSlug}</span> — you can change this later.
             </p>
           </div>
 

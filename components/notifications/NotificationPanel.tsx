@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckCheck, BellOff } from 'lucide-react';
 import type { AppNotification } from '@/lib/types';
 import styles from './notifications.module.css';
@@ -62,21 +63,22 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange }: Pr
   useEffect(() => { load(); }, [load]);
 
   async function handleMarkRead(notification: AppNotification) {
-    if (notification.readAt) return; // already read
+    // Mark read only if it isn't already (don't let this block navigation)
+    if (!notification.readAt) {
+      // Optimistic update
+      setNotifications(prev =>
+        prev.map(n => n.id === notification.id ? { ...n, readAt: new Date().toISOString() } : n)
+      );
+      onUnreadChange(notifications.filter(n => !n.readAt && n.id !== notification.id).length);
 
-    // Optimistic update
-    setNotifications(prev =>
-      prev.map(n => n.id === notification.id ? { ...n, readAt: new Date().toISOString() } : n)
-    );
-    onUnreadChange(notifications.filter(n => !n.readAt && n.id !== notification.id).length);
+      await fetch('/api/notifications', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ action: 'mark-read', id: notification.id }),
+      }).catch(console.error);
+    }
 
-    await fetch('/api/notifications', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ action: 'mark-read', id: notification.id }),
-    }).catch(console.error);
-
-    // Navigate if there's a link
+    // Navigate if there's a link — regardless of read state
     if (notification.link) {
       onClose();
       window.location.href = notification.link;
@@ -101,8 +103,8 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange }: Pr
 
   const unreadCount = notifications.filter(n => !n.readAt).length;
 
-  return (
-    <div className={styles.panel} role="dialog" aria-label="Notifications">
+  const panel = (
+    <div className={styles.panel} role="dialog" aria-label="Notifications" data-notification-panel>
       <div className={styles.panelHeader}>
         <p className={styles.panelTitle}>Notifications</p>
         {unreadCount > 0 && (
@@ -153,4 +155,7 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange }: Pr
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(panel, document.body);
 }

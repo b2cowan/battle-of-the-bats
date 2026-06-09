@@ -9,8 +9,10 @@
     "lint": "eslint",
     "lint:focused": "eslint",
     "typecheck": "tsc --noEmit --pretty false",
-    "verify:changed": "node scripts/verify-changed.mjs && node scripts/check-public-tokens.mjs",
-    "check:tokens": "node scripts/check-public-tokens.mjs"
+    "verify:changed": "node scripts/verify-changed.mjs && node scripts/check-public-tokens.mjs && node scripts/check-dictionary-coverage.mjs",
+    "check:tokens": "node scripts/check-public-tokens.mjs",
+    "check:dictionary": "node scripts/check-dictionary-coverage.mjs",
+    "refresh:snapshots": "node scripts/refresh-db-snapshots.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

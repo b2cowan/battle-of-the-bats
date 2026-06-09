@@ -55,6 +55,10 @@ database.
 
 - A single command refreshes dev **and** prod snapshots after any migration and flags any dev/prod
   divergence.
+- **The doc can't quietly go stale:** an automated coverage check (in our routine pre-merge checks) fails
+  when a schema change isn't reflected in the dictionary, the refresh/migration tools nudge for an update
+  at the moment a column changes, and updating the dictionary is a required task in any schema-touching plan
+  — so future projects keep it current instead of relying on memory.
 - `DATA_DICTIONARY.md` exists with the binding maintenance rules in its header and the **Tournaments &
   Registration** domain fully written, every claim verified against the live schema **and** the code that
   uses it.

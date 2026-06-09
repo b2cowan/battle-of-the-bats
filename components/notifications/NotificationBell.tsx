@@ -75,9 +75,13 @@ export default function NotificationBell({ orgId }: Props) {
   useEffect(() => {
     if (!open) return;
     function handleMouseDown(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as Element | null;
+      if (!target) return;
+      // Bell button / wrapper
+      if (wrapRef.current && wrapRef.current.contains(target)) return;
+      // Panel is portaled to <body>, so it's outside wrapRef — check it explicitly
+      if (target.closest('[data-notification-panel]')) return;
+      setOpen(false);
     }
     document.addEventListener('mousedown', handleMouseDown);
     return () => document.removeEventListener('mousedown', handleMouseDown);

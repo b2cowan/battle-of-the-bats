@@ -65,7 +65,7 @@
   border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.35);
   border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-  z-index: 200;
+  z-index: 1100;
   display: flex;
   flex-direction: column;
 }
@@ -86,7 +86,7 @@
     width: auto;
     max-width: none;
     max-height: calc(100dvh - 48px - env(safe-area-inset-top) - 96px);
-    z-index: 260;
+    z-index: 1100;
   }
 }
 

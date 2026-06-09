@@ -19,7 +19,22 @@ async function requireCoachUser() {
   // coach identity: this endpoint feeds the public register form's email prefill, the
   // portal shell, and the join flow — a staff email must not leak into any of them.
   if (await isPlatformAdminEmail(user.email)) return null;
-  return { id: user.id, email: user.email };
+  // Account name (post name-parity) — the register form prefills/locks the registrant's
+  // First/Last from this so a logged-in coach registers as themselves.
+  const md = (user.user_metadata ?? {}) as Record<string, unknown>;
+  const pick = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : '');
+  let firstName = pick(md.first_name);
+  let lastName = pick(md.last_name);
+  const name = pick(md.full_name) || pick(md.display_name) || `${firstName} ${lastName}`.trim();
+  // Legacy/partial metadata may carry only a full name — split it so callers always get
+  // first/last components (first token = first name, remainder = last name). Prevents a
+  // register-form lock+empty deadlock for full_name-only accounts.
+  if (!firstName && !lastName && name) {
+    const parts = name.split(/\s+/).filter(Boolean);
+    firstName = parts[0] ?? '';
+    lastName = parts.slice(1).join(' ');
+  }
+  return { id: user.id, email: user.email, firstName, lastName, name };
 }
 
 export async function GET(req: NextRequest) {
@@ -38,7 +53,7 @@ export async function GET(req: NextRequest) {
     ]);
 
     return json({
-      user: { id: user.id, email: user.email },
+      user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, name: user.name },
       teams,
       pendingRegistration,
     });

@@ -1,8 +1,8 @@
 # FieldLogicHQ — Database Architecture Review
 
 > **Maintained by:** `/dba` agent  
-> **Last reviewed:** 2026-06-04 (H8 Timed Entitlement Grants pre-implementation review — Findings #22–24: extend `org_overrides` not a new table, embed-not-flag for the hot path, reuse existing billing-suspension columns. Schema now 102 tables.)  
-> **Schema source:** `memory/reference_db_schema.md` — rebuilt 2026-05-24 from `docs/schema-snapshots/schema_dumps.json` (live dev + prod queries)  
+> **Last reviewed:** 2026-06-08 (Finding #25: full dev+prod re-snapshot via new `scripts/refresh-db-snapshots.mjs`; 50 dev/prod divergences catalogued in `schema-snapshots/DRIFT_dev_vs_prod.md`. Schema now **103 tables** both envs.) — prev 2026-06-04 (H8 Findings #22–24: extend `org_overrides` not a new table, embed-not-flag hot path, reuse billing-suspension columns).  
+> **Schema source (authoritative):** `docs/agents/db/schema-snapshots/*.json` — regenerated for **dev AND prod** by `node scripts/refresh-db-snapshots.mjs` (run after every migration). It also emits `DRIFT_dev_vs_prod.md` and refreshes `memory/reference_db_schema.md`. **Decide column existence from these snapshots / live `information_schema`, never from migrations** (see `docs/agents/db/DATA_DICTIONARY.md` rules).  
 > **Tables reviewed:** 85 across 9 modules (tournament, league, rep teams, standalone team workspace, accounting, stripe, org/platform core, platform admin, CRM)  
 > **Validation:** `docs/validate_db_state.sql` — checks 17–18 added (pools); check 19 added (games FK duplicates). Will FAIL on prod until migrations 081 Part B and 082 applied.
 
@@ -21,6 +21,22 @@
 ---
 
 ## Open Findings
+
+---
+
+### [2026-06-08] — Finding #25: Dev/prod structural drift re-baselined (50 divergences); snapshots now regenerable for BOTH envs
+
+**Severity:** Low (drift is mostly legacy/cosmetic) + Advisory (tooling)
+**Finding:** The committed `schema-snapshots/*.json` were badly stale (82–85 vs 103 live tables — they predated the `age_groups→divisions` rename, the `org_id` rename, `tournaments.settings`, the contact refactor, per-game length (112), `teams.seed` (113), the `teams.players` drop, the roster split, and the `basic_coach_*` tables). New `scripts/refresh-db-snapshots.mjs` regenerated **dev + prod** from live `information_schema`/`pg_catalog` (structure only). Both envs are now **103 tables**, but `DRIFT_dev_vs_prod.md` catalogues **50 structural divergences**. Material items:
+- **Dev MISSING `created_at`** on `resources`, `rule_items`, `rules` (present in prod) — same dev-behind-prod class as Finding #20 (`pools.created_at`).
+- **`tournaments.status`** — dev: default `'draft'`, **no** CHECK; prod: default `'completed'` **with** `tournaments_status_check`. Prod constrains the enum and defaults differently. (App code always sets `status` explicitly on insert, so the default rarely bites — but the missing dev CHECK + default mismatch is real.)
+- **Legacy tournament tables** (`announcements`, `diamonds`, `games`, `teams`, `rules`, `rule_items`, `resources`) carry widespread nullability/default drift, plus `id` default-fn drift (`gen_random_uuid()` dev vs `uuid_generate_v4()` prod). These predate the migration system — same accepted-risk basis as Findings #17/#18.
+- **`league_practices` index-NAME drift** (`*_season_idx` dev vs `*_season_id_idx` prod, etc.) — functionally equivalent, cosmetic.
+- **FK naming** (`*_tournament_id_fkey` dev vs `fk_*_tournament` prod) — **known/intentional** per Findings #11/#21, not new.
+
+**Tables affected:** `resources`, `rule_items`, `rules`, `tournaments`, `announcements`, `diamonds`, `games`, `teams`, `league_practices`
+**Recommendation:** Low priority. (1) If any code reads `created_at` on `resources`/`rules`/`rule_items`, add the column to dev (dev-only migration) to match prod. (2) Consider a parity migration adding `tournaments_status_check` + aligning the default to dev. (3) Treat the legacy nullability/default drift as accepted risk unless a write path depends on it. (4) **Re-run `node scripts/refresh-db-snapshots.mjs` after every migration (dev + prod)** to keep `DRIFT_dev_vs_prod.md` current — this is now the standing drift-watch. Cross-reference the field-level meaning in `DATA_DICTIONARY.md` (Phase 1+).
+**Status:** Open (informational) — drift catalogued 2026-06-08; no corrective migration written yet. Tooling established (`scripts/refresh-db-snapshots.mjs` + `check-dictionary-coverage.mjs`).
 
 ---
 

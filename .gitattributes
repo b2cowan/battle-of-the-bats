@@ -1,0 +1,7 @@
+# Pin generated DB snapshots + drift report to LF so they stay byte-stable across machines
+# (the repo otherwise runs core.autocrlf=true). The snapshot generator
+# (scripts/refresh-db-snapshots.mjs) writes LF; without this, a Windows checkout round-trip
+# would rewrite them to CRLF and produce spurious whole-file diffs on the next refresh.
+docs/agents/db/schema-snapshots/*.json   text eol=lf
+docs/agents/db/schema-snapshots/*.md     text eol=lf
+scripts/.dictionary-coverage-baseline.json text eol=lf

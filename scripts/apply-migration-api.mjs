@@ -79,6 +79,11 @@ const res = await apiQuery(sql);
 if (res.status >= 200 && res.status < 300) {
   console.log('✅ Migration applied successfully.');
   console.log(res.body && res.body !== '[]' ? `   Response: ${res.body.slice(0, 300)}` : '');
+  // Data Dictionary maintenance (see docs/agents/db/DATA_DICTIONARY.md header rules):
+  console.log('\n📌 Next: refresh snapshots + update the Data Dictionary for this schema change:');
+  console.log('     • apply to PROD too (this script targets dev only), then');
+  console.log('     • node scripts/refresh-db-snapshots.mjs   (regenerates dev+prod snapshots + drift + coverage check)');
+  console.log('     • update docs/agents/db/DATA_DICTIONARY.md for any new/changed field (same unit of work).');
 } else {
   console.error(`❌ Migration failed (HTTP ${res.status}):`);
   console.error(`   ${res.body.slice(0, 600)}`);

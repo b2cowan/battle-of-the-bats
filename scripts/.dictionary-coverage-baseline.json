@@ -1,0 +1,212 @@
+{
+  "_comment": "Coverage ratchet for docs/agents/db/DATA_DICTIONARY.md. See DATA_DICTIONARY_PLAN.md §11. Every live table must be documented in the dictionary (<!-- dict:table:NAME --> anchor) OR listed in acknowledgedTables. A future migration that adds a table absent from BOTH fails `npm run check:dictionary`. When a domain phase completes, add it to sealedDomains and the check tightens to column granularity for that domain (each live column must have a <!-- dict:col:TABLE.COLUMN --> anchor or be listed in acknowledgedColumns). As tables get documented, remove them from acknowledgedTables.",
+  "generated": "2026-06-08",
+  "sealedDomains": [],
+  "sealedTables": [
+    "announcements",
+    "basic_coach_team_registrations",
+    "basic_coach_team_users",
+    "basic_coach_teams",
+    "diamonds",
+    "divisions",
+    "games",
+    "org_venue_facilities",
+    "org_venues",
+    "pool_slots",
+    "pools",
+    "resources",
+    "rule_items",
+    "rules",
+    "schedule_facility_lanes",
+    "team_entitlements",
+    "team_org_links",
+    "team_workspace_claims",
+    "team_workspaces",
+    "teams",
+    "tournament_archives",
+    "tournament_registration_field_answers",
+    "tournament_registration_fields",
+    "tournaments",
+    "venue_facilities"
+  ],
+  "acknowledgedTables": {
+    "accounting_entries": "pending-documentation (Accounting)",
+    "accounting_ledgers": "pending-documentation (Accounting)",
+    "billing_retained_records": "pending-documentation (Accounting)",
+    "billing_retention_intents": "pending-documentation (Accounting)",
+    "budget_categories": "pending-documentation (Accounting)",
+    "budget_items": "pending-documentation (Accounting)",
+    "early_access_leads": "pending-documentation (CRM)",
+    "email_batches": "pending-documentation (Notifications & Push)",
+    "email_sends": "pending-documentation (Notifications & Push)",
+    "fan_push_subscriptions": "pending-documentation (Notifications & Push)",
+    "import_batch_rows": "pending-documentation (Platform admin)",
+    "import_batches": "pending-documentation (Platform admin)",
+    "league_divisions": "pending-documentation (League / house-league)",
+    "league_email_log": "pending-documentation (League / house-league)",
+    "league_games": "pending-documentation (League / house-league)",
+    "league_notification_log": "pending-documentation (League / house-league)",
+    "league_practices": "pending-documentation (League / house-league)",
+    "league_registrations": "pending-documentation (League / house-league)",
+    "league_seasons": "pending-documentation (League / house-league)",
+    "league_teams": "pending-documentation (League / house-league)",
+    "notification_preferences": "pending-documentation (Notifications & Push)",
+    "notifications": "pending-documentation (Notifications & Push)",
+    "org_audit_log": "pending-documentation (Org / Platform core)",
+    "org_budget_lines": "pending-documentation (Accounting)",
+    "org_budget_periods": "pending-documentation (Accounting)",
+    "org_internal_notes": "pending-documentation (Org / Platform core)",
+    "org_member_rep_group_scopes": "pending-documentation (Org / Platform core)",
+    "org_member_tournament_assignments": "pending-documentation (Org / Platform core)",
+    "org_overrides": "pending-documentation (Org / Platform core)",
+    "org_payees": "pending-documentation (Accounting)",
+    "org_public_site_content": "pending-documentation (Org / Platform core)",
+    "organization_members": "pending-documentation (Org / Platform core)",
+    "organizations": "pending-documentation (Org / Platform core)",
+    "plan_config_overrides": "pending-documentation (Platform admin)",
+    "plan_gating": "pending-documentation (Platform admin)",
+    "platform_addon_catalog": "pending-documentation (Platform admin)",
+    "platform_admin_visits": "pending-documentation (Platform admin)",
+    "platform_audit_log": "pending-documentation (Platform admin)",
+    "platform_bulk_operations": "pending-documentation (Platform admin)",
+    "platform_catalog_campaigns": "pending-documentation (Platform admin)",
+    "platform_catalog_change_applications": "pending-documentation (Platform admin)",
+    "platform_catalog_change_requests": "pending-documentation (Platform admin)",
+    "platform_email_templates": "pending-documentation (Notifications & Push)",
+    "platform_events": "pending-documentation (Platform admin)",
+    "platform_metric_snapshots": "pending-documentation (Platform admin)",
+    "platform_plan_module_entitlements": "pending-documentation (Platform admin)",
+    "platform_plan_versions": "pending-documentation (Platform admin)",
+    "platform_user_notes": "pending-documentation (Platform admin)",
+    "platform_users": "pending-documentation (Platform admin)",
+    "push_subscriptions": "pending-documentation (Notifications & Push)",
+    "rep_allocation_installments": "pending-documentation (Rep teams / team workspaces)",
+    "rep_allocation_splits": "pending-documentation (Rep teams / team workspaces)",
+    "rep_budget_lines": "pending-documentation (Rep teams / team workspaces)",
+    "rep_budget_periods": "pending-documentation (Rep teams / team workspaces)",
+    "rep_cost_allocations": "pending-documentation (Rep teams / team workspaces)",
+    "rep_document_templates": "pending-documentation (Rep teams / team workspaces)",
+    "rep_dues_credits": "pending-documentation (Rep teams / team workspaces)",
+    "rep_fundraiser_entries": "pending-documentation (Rep teams / team workspaces)",
+    "rep_fundraisers": "pending-documentation (Rep teams / team workspaces)",
+    "rep_player_documents": "pending-documentation (Rep teams / team workspaces)",
+    "rep_player_dues_installments": "pending-documentation (Rep teams / team workspaces)",
+    "rep_player_dues_schedules": "pending-documentation (Rep teams / team workspaces)",
+    "rep_program_years": "pending-documentation (Rep teams / team workspaces)",
+    "rep_roster_players": "pending-documentation (Rep teams / team workspaces)",
+    "rep_season_surplus": "pending-documentation (Rep teams / team workspaces)",
+    "rep_team_coaches": "pending-documentation (Rep teams / team workspaces)",
+    "rep_team_event_attendance": "pending-documentation (Rep teams / team workspaces)",
+    "rep_team_events": "pending-documentation (Rep teams / team workspaces)",
+    "rep_team_expenses": "pending-documentation (Rep teams / team workspaces)",
+    "rep_team_groups": "pending-documentation (Rep teams / team workspaces)",
+    "rep_team_lineup_entries": "pending-documentation (Rep teams / team workspaces)",
+    "rep_team_lineups": "pending-documentation (Rep teams / team workspaces)",
+    "rep_team_payment_requests": "pending-documentation (Rep teams / team workspaces)",
+    "rep_teams": "pending-documentation (Rep teams / team workspaces)",
+    "rep_tryout_registrations": "pending-documentation (Rep teams / team workspaces)",
+    "stripe_prices": "pending-documentation (Stripe / Billing)",
+    "tournament_notification_preferences": "pending-documentation (Notifications & Push)",
+    "tournament_roster_players": "pending-documentation (Tournaments & Registration)"
+  },
+  "acknowledgedColumns": {
+    "announcements": [
+      "id"
+    ],
+    "basic_coach_team_registrations": [
+      "id",
+      "created_at"
+    ],
+    "basic_coach_team_users": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "basic_coach_teams": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "diamonds": [
+      "id"
+    ],
+    "divisions": [
+      "id"
+    ],
+    "games": [
+      "id"
+    ],
+    "org_venue_facilities": [
+      "id",
+      "created_at"
+    ],
+    "org_venues": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "pool_slots": [
+      "id",
+      "created_at"
+    ],
+    "pools": [
+      "id",
+      "created_at"
+    ],
+    "resources": [
+      "id"
+    ],
+    "rule_items": [
+      "id"
+    ],
+    "rules": [
+      "id"
+    ],
+    "schedule_facility_lanes": [
+      "id",
+      "created_at"
+    ],
+    "team_entitlements": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "team_org_links": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "team_workspace_claims": [
+      "id",
+      "created_at"
+    ],
+    "team_workspaces": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "teams": [
+      "id"
+    ],
+    "tournament_archives": [
+      "id"
+    ],
+    "tournament_registration_field_answers": [
+      "id",
+      "created_at"
+    ],
+    "tournament_registration_fields": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "tournaments": [
+      "id",
+      "created_at"
+    ],
+    "venue_facilities": [
+      "id",
+      "created_at"
+    ]
+  }
+}

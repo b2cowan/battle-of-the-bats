@@ -70,7 +70,7 @@ export default function OrgSettingsPage() {
 
   useEffect(() => {
     if (!currentOrg) return;
-    fetch('/api/admin/org-settings')
+    fetch(`/api/admin/org-settings?orgSlug=${encodeURIComponent(currentOrg.slug)}`)
       .then(r => r.json())
       .then((data: OrgSettings) => {
         setSettings(data);
@@ -178,7 +178,7 @@ export default function OrgSettingsPage() {
         ? { themePreset: 'platform', themePrimary: customPrimary, themeAccent: customAccent }
         : { themePreset: presetKey, themePrimary: null, themeAccent: null };
 
-      const res = await fetch('/api/admin/org-settings', {
+      const res = await fetch(`/api/admin/org-settings?orgSlug=${encodeURIComponent(currentOrg.slug)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

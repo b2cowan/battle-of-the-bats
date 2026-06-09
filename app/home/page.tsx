@@ -5,6 +5,7 @@ import {
   Building2,
   ClipboardCheck,
   LayoutGrid,
+  Plus,
   Trophy,
   Users,
   type LucideIcon,
@@ -58,12 +59,13 @@ export default async function UserHomePage() {
   });
 
   if (contexts.length === 0) {
-    redirect('/auth/signup');
+    redirect('/start');
   }
 
-  if (contexts.length === 1) {
-    redirect(contexts[0].destination);
-  }
+  // Note: single-context users are intentionally NOT auto-redirected here. Landing on
+  // /home (on a base-URL login) lets them see the switcher + "Start something new" so
+  // they can add a second workspace. Deep links skip /home entirely (login honours an
+  // explicit `next` before ever calling getAuthDestination).
 
   return (
     <div className={styles.page}>
@@ -74,7 +76,7 @@ export default async function UserHomePage() {
           </div>
           <h1 className={styles.title}>Home</h1>
           <p className={styles.sub}>
-            {contexts.length} access areas for {user.email}
+            {contexts.length} access {contexts.length === 1 ? 'area' : 'areas'} for {user.email}
           </p>
         </header>
 
@@ -82,6 +84,7 @@ export default async function UserHomePage() {
           {contexts.map(context => (
             <ContextCard key={context.id} context={context} />
           ))}
+          <StartNewCard />
         </div>
 
         <footer className={styles.footer}>
@@ -116,6 +119,28 @@ function ContextCard({ context }: { context: UserAccessContext }) {
         </div>
       </div>
       <span className={styles.enterBtn} aria-label={`Open ${context.title}`}>
+        <ArrowRight size={16} strokeWidth={2.4} aria-hidden />
+      </span>
+    </Link>
+  );
+}
+
+function StartNewCard() {
+  return (
+    <Link href="/start" className={`${styles.contextItem} ${styles.startNewItem}`}>
+      <div className={`${styles.contextIcon} ${styles.startNewIcon}`}>
+        <Plus size={20} strokeWidth={2} aria-hidden />
+      </div>
+      <div className={styles.contextInfo}>
+        <div className={styles.contextTop}>
+          <span className={styles.contextType}>New workspace</span>
+        </div>
+        <div className={styles.contextTitle}>Start something new</div>
+        <div className={styles.contextMeta}>
+          <span>Run a tournament, coach a team, or explore league &amp; club</span>
+        </div>
+      </div>
+      <span className={styles.enterBtn} aria-label="Start something new">
         <ArrowRight size={16} strokeWidth={2.4} aria-hidden />
       </span>
     </Link>

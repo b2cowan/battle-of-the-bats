@@ -234,168 +234,6 @@
     "ordinal_position": 8
   },
   {
-    "table_name": "age_groups",
-    "column_name": "id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
-    "ordinal_position": 1
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "tournament_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 2
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "name",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 3
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "min_age",
-    "data_type": "integer",
-    "udt_name": "int4",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 4
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "max_age",
-    "data_type": "integer",
-    "udt_name": "int4",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 5
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "display_order",
-    "data_type": "integer",
-    "udt_name": "int4",
-    "is_nullable": "NO",
-    "column_default": "0",
-    "ordinal_position": 6
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "contact_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 7
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "is_closed",
-    "data_type": "boolean",
-    "udt_name": "bool",
-    "is_nullable": "NO",
-    "column_default": "false",
-    "ordinal_position": 8
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "capacity",
-    "data_type": "integer",
-    "udt_name": "int4",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 9
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "pool_count",
-    "data_type": "integer",
-    "udt_name": "int4",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 10
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "pool_names",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 11
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "requires_pool_selection",
-    "data_type": "boolean",
-    "udt_name": "bool",
-    "is_nullable": "NO",
-    "column_default": "false",
-    "ordinal_position": 12
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "playoff_config",
-    "data_type": "jsonb",
-    "udt_name": "jsonb",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 13
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "deposit_amount",
-    "data_type": "numeric",
-    "udt_name": "numeric",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 14
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "deposit_due_date",
-    "data_type": "date",
-    "udt_name": "date",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 15
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "total_fee_amount",
-    "data_type": "numeric",
-    "udt_name": "numeric",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 16
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "total_fee_due_date",
-    "data_type": "date",
-    "udt_name": "date",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 17
-  },
-  {
-    "table_name": "age_groups",
-    "column_name": "schedule_visibility",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": "'unpublished'::text",
-    "ordinal_position": 18
-  },
-  {
     "table_name": "announcements",
     "column_name": "id",
     "data_type": "uuid",
@@ -451,12 +289,318 @@
   },
   {
     "table_name": "announcements",
-    "column_name": "age_group_ids",
+    "column_name": "division_ids",
     "data_type": "ARRAY",
     "udt_name": "_uuid",
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 7
+  },
+  {
+    "table_name": "announcements",
+    "column_name": "channel_site",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "announcements",
+    "column_name": "channel_email",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "announcements",
+    "column_name": "email_targeting",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "announcements",
+    "column_name": "email_recipient_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "announcements",
+    "column_name": "email_success_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "announcements",
+    "column_name": "email_failed_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "announcements",
+    "column_name": "email_failed_addresses",
+    "data_type": "ARRAY",
+    "udt_name": "_text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "announcements",
+    "column_name": "email_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "announcements",
+    "column_name": "sent_by_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "announcements",
+    "column_name": "deleted_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "basic_coach_team_registrations",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "basic_coach_team_registrations",
+    "column_name": "basic_coach_team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "basic_coach_team_registrations",
+    "column_name": "tournament_team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "basic_coach_team_registrations",
+    "column_name": "linked_by_user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "basic_coach_team_registrations",
+    "column_name": "link_source",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'explicit'::text",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "basic_coach_team_registrations",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "basic_coach_team_users",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "basic_coach_team_users",
+    "column_name": "basic_coach_team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "basic_coach_team_users",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "basic_coach_team_users",
+    "column_name": "role",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'owner'::text",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "basic_coach_team_users",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'active'::text",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "basic_coach_team_users",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "basic_coach_team_users",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "basic_coach_teams",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "basic_coach_teams",
+    "column_name": "name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "basic_coach_teams",
+    "column_name": "normalized_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "basic_coach_teams",
+    "column_name": "primary_coach_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "basic_coach_teams",
+    "column_name": "primary_coach_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "basic_coach_teams",
+    "column_name": "sport",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "basic_coach_teams",
+    "column_name": "age_group",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "basic_coach_teams",
+    "column_name": "source",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'tournament_registration'::text",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "basic_coach_teams",
+    "column_name": "team_workspace_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "basic_coach_teams",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "basic_coach_teams",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 11
   },
   {
     "table_name": "billing_retained_records",
@@ -891,69 +1035,6 @@
     "ordinal_position": 9
   },
   {
-    "table_name": "contacts",
-    "column_name": "id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "NO",
-    "column_default": "gen_random_uuid()",
-    "ordinal_position": 1
-  },
-  {
-    "table_name": "contacts",
-    "column_name": "tournament_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 2
-  },
-  {
-    "table_name": "contacts",
-    "column_name": "name",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "NO",
-    "column_default": null,
-    "ordinal_position": 3
-  },
-  {
-    "table_name": "contacts",
-    "column_name": "email",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 4
-  },
-  {
-    "table_name": "contacts",
-    "column_name": "phone",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 5
-  },
-  {
-    "table_name": "contacts",
-    "column_name": "role",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 6
-  },
-  {
-    "table_name": "contacts",
-    "column_name": "is_notification_contact",
-    "data_type": "boolean",
-    "udt_name": "bool",
-    "is_nullable": "NO",
-    "column_default": "false",
-    "ordinal_position": 7
-  },
-  {
     "table_name": "diamonds",
     "column_name": "id",
     "data_type": "uuid",
@@ -997,6 +1078,186 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 5
+  },
+  {
+    "table_name": "diamonds",
+    "column_name": "source_org_venue_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "tournament_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "min_age",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "max_age",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "display_order",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "is_closed",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "capacity",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "pool_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "pool_names",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "requires_pool_selection",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "playoff_config",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "deposit_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "deposit_due_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "total_fee_amount",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "total_fee_due_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "schedule_visibility",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'unpublished'::text",
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "contact_member_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "divisions",
+    "column_name": "settings",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 20
   },
   {
     "table_name": "early_access_leads",
@@ -1242,6 +1503,303 @@
     "ordinal_position": 27
   },
   {
+    "table_name": "email_batches",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "email_batches",
+    "column_name": "email_key",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "email_batches",
+    "column_name": "subject",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "email_batches",
+    "column_name": "triggered_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "email_batches",
+    "column_name": "recipient_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "email_batches",
+    "column_name": "suppressed_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "email_batches",
+    "column_name": "sent_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "email_batches",
+    "column_name": "failed_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "email_batches",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'pending'::text",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "email_batches",
+    "column_name": "started_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "email_batches",
+    "column_name": "completed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "email_batches",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "email_sends",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "email_sends",
+    "column_name": "email_key",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "email_sends",
+    "column_name": "subject",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "email_sends",
+    "column_name": "recipient_org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "email_sends",
+    "column_name": "recipient_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "email_sends",
+    "column_name": "recipient_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "email_sends",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'queued'::text",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "email_sends",
+    "column_name": "suppression_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "email_sends",
+    "column_name": "resend_message_id",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "email_sends",
+    "column_name": "batch_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "email_sends",
+    "column_name": "sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "email_sends",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "fan_push_subscriptions",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "fan_push_subscriptions",
+    "column_name": "endpoint",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "fan_push_subscriptions",
+    "column_name": "keys_p256dh",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "fan_push_subscriptions",
+    "column_name": "keys_auth",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "fan_push_subscriptions",
+    "column_name": "tournament_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "fan_push_subscriptions",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "fan_push_subscriptions",
+    "column_name": "device_label",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "fan_push_subscriptions",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "fan_push_subscriptions",
+    "column_name": "last_used_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
     "table_name": "games",
     "column_name": "id",
     "data_type": "uuid",
@@ -1261,7 +1819,7 @@
   },
   {
     "table_name": "games",
-    "column_name": "age_group_id",
+    "column_name": "division_id",
     "data_type": "uuid",
     "udt_name": "uuid",
     "is_nullable": "YES",
@@ -1298,8 +1856,8 @@
   {
     "table_name": "games",
     "column_name": "game_time",
-    "data_type": "text",
-    "udt_name": "text",
+    "data_type": "time without time zone",
+    "udt_name": "time",
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 7
@@ -1361,8 +1919,8 @@
   {
     "table_name": "games",
     "column_name": "bracket_id",
-    "data_type": "text",
-    "udt_name": "text",
+    "data_type": "uuid",
+    "udt_name": "uuid",
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 14
@@ -1456,6 +2014,267 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 24
+  },
+  {
+    "table_name": "games",
+    "column_name": "venue_facility_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 25
+  },
+  {
+    "table_name": "games",
+    "column_name": "schedule_facility_lane_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 26
+  },
+  {
+    "table_name": "games",
+    "column_name": "generator_locked",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 27
+  },
+  {
+    "table_name": "games",
+    "column_name": "duration_minutes",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 28
+  },
+  {
+    "table_name": "import_batch_rows",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "import_batch_rows",
+    "column_name": "batch_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "import_batch_rows",
+    "column_name": "row_number",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "import_batch_rows",
+    "column_name": "operation",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "import_batch_rows",
+    "column_name": "target_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "import_batch_rows",
+    "column_name": "raw_json",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "import_batch_rows",
+    "column_name": "normalized_json",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "import_batch_rows",
+    "column_name": "before_json",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "import_batch_rows",
+    "column_name": "after_json",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "import_batch_rows",
+    "column_name": "warnings_json",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "import_batch_rows",
+    "column_name": "errors_json",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "import_batch_rows",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'previewed'::text",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "import_batch_rows",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "import_batches",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "import_batches",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "import_batches",
+    "column_name": "actor_user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "import_batches",
+    "column_name": "actor_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "import_batches",
+    "column_name": "import_type",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "import_batches",
+    "column_name": "scope_json",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "import_batches",
+    "column_name": "source_filename",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "import_batches",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'previewed'::text",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "import_batches",
+    "column_name": "summary_json",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "import_batches",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "import_batches",
+    "column_name": "committed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "import_batches",
+    "column_name": "expires_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "(now() + '24:00:00'::interval)",
+    "ordinal_position": 12
   },
   {
     "table_name": "league_divisions",
@@ -1719,6 +2538,15 @@
     "ordinal_position": 13
   },
   {
+    "table_name": "league_games",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
     "table_name": "league_notification_log",
     "column_name": "id",
     "data_type": "uuid",
@@ -1789,6 +2617,123 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 8
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "season_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "division_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "scheduled_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "ends_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "location",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'scheduled'::text",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "recurrence_group_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 13
   },
   {
     "table_name": "league_registrations",
@@ -2035,7 +2980,7 @@
   },
   {
     "table_name": "league_seasons",
-    "column_name": "age_group",
+    "column_name": "division",
     "data_type": "text",
     "udt_name": "text",
     "is_nullable": "YES",
@@ -2160,6 +3105,15 @@
     "ordinal_position": 19
   },
   {
+    "table_name": "league_seasons",
+    "column_name": "draft_state",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
     "table_name": "league_teams",
     "column_name": "id",
     "data_type": "uuid",
@@ -2230,6 +3184,159 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 8
+  },
+  {
+    "table_name": "notification_preferences",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "notification_preferences",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "notification_preferences",
+    "column_name": "event_type",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "notification_preferences",
+    "column_name": "channel_bell",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "notification_preferences",
+    "column_name": "channel_push",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "notification_preferences",
+    "column_name": "channel_email",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "notification_preferences",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "notifications",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "notifications",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "notifications",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "notifications",
+    "column_name": "event_type",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "notifications",
+    "column_name": "title",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "notifications",
+    "column_name": "body",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "notifications",
+    "column_name": "link",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "notifications",
+    "column_name": "read_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "notifications",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "notifications",
+    "column_name": "metadata",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 10
   },
   {
     "table_name": "org_audit_log",
@@ -2682,6 +3789,33 @@
     "ordinal_position": 10
   },
   {
+    "table_name": "org_overrides",
+    "column_name": "target",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "org_overrides",
+    "column_name": "starts_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "org_overrides",
+    "column_name": "suppress_billing",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 13
+  },
+  {
     "table_name": "org_payees",
     "column_name": "id",
     "data_type": "uuid",
@@ -2871,6 +4005,150 @@
     "ordinal_position": 13
   },
   {
+    "table_name": "org_venue_facilities",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "org_venue_facilities",
+    "column_name": "org_venue_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "org_venue_facilities",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "org_venue_facilities",
+    "column_name": "name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "org_venue_facilities",
+    "column_name": "facility_type",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'other'::text",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "org_venue_facilities",
+    "column_name": "display_order",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "org_venue_facilities",
+    "column_name": "notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "org_venue_facilities",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "org_venues",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "org_venues",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "org_venues",
+    "column_name": "name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "org_venues",
+    "column_name": "address",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "org_venues",
+    "column_name": "notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "org_venues",
+    "column_name": "is_active",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "org_venues",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "org_venues",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 8
+  },
+  {
     "table_name": "organization_members",
     "column_name": "id",
     "data_type": "uuid",
@@ -2950,6 +4228,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 9
+  },
+  {
+    "table_name": "organization_members",
+    "column_name": "title",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
   },
   {
     "table_name": "organizations",
@@ -3220,6 +4507,24 @@
     "is_nullable": "NO",
     "column_default": "true",
     "ordinal_position": 30
+  },
+  {
+    "table_name": "organizations",
+    "column_name": "email_marketing_opt_out",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 31
+  },
+  {
+    "table_name": "organizations",
+    "column_name": "email_opt_out_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 32
   },
   {
     "table_name": "plan_config_overrides",
@@ -4086,6 +5391,123 @@
     "ordinal_position": 21
   },
   {
+    "table_name": "platform_email_templates",
+    "column_name": "key",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "platform_email_templates",
+    "column_name": "label",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "platform_email_templates",
+    "column_name": "description",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "platform_email_templates",
+    "column_name": "subject",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "platform_email_templates",
+    "column_name": "heading",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "platform_email_templates",
+    "column_name": "body",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "platform_email_templates",
+    "column_name": "cta_label",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "platform_email_templates",
+    "column_name": "cta_url_pattern",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "platform_email_templates",
+    "column_name": "variables",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "platform_email_templates",
+    "column_name": "category",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'system'::text",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "platform_email_templates",
+    "column_name": "is_customised",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "platform_email_templates",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "platform_email_templates",
+    "column_name": "updated_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
     "table_name": "platform_events",
     "column_name": "id",
     "data_type": "uuid",
@@ -4419,6 +5841,51 @@
     "ordinal_position": 12
   },
   {
+    "table_name": "platform_user_notes",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "platform_user_notes",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "platform_user_notes",
+    "column_name": "body",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "platform_user_notes",
+    "column_name": "created_by_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "platform_user_notes",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 5
+  },
+  {
     "table_name": "platform_users",
     "column_name": "id",
     "data_type": "uuid",
@@ -4519,7 +5986,7 @@
   },
   {
     "table_name": "pool_slots",
-    "column_name": "age_group_id",
+    "column_name": "division_id",
     "data_type": "uuid",
     "udt_name": "uuid",
     "is_nullable": "NO",
@@ -4573,7 +6040,7 @@
   },
   {
     "table_name": "pools",
-    "column_name": "age_group_id",
+    "column_name": "division_id",
     "data_type": "uuid",
     "udt_name": "uuid",
     "is_nullable": "NO",
@@ -4597,6 +6064,96 @@
     "is_nullable": "NO",
     "column_default": "0",
     "ordinal_position": 4
+  },
+  {
+    "table_name": "pools",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "pools",
+    "column_name": "settings",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "push_subscriptions",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "push_subscriptions",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "push_subscriptions",
+    "column_name": "endpoint",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "push_subscriptions",
+    "column_name": "keys_p256dh",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "push_subscriptions",
+    "column_name": "keys_auth",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "push_subscriptions",
+    "column_name": "device_label",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "push_subscriptions",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "push_subscriptions",
+    "column_name": "last_used_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
   },
   {
     "table_name": "rep_allocation_installments",
@@ -4687,6 +6244,24 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 10
+  },
+  {
+    "table_name": "rep_allocation_installments",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "rep_allocation_installments",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
   },
   {
     "table_name": "rep_allocation_splits",
@@ -5670,6 +7245,24 @@
     "ordinal_position": 13
   },
   {
+    "table_name": "rep_player_dues_installments",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "rep_player_dues_installments",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
     "table_name": "rep_player_dues_schedules",
     "column_name": "id",
     "data_type": "uuid",
@@ -6037,6 +7630,24 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 19
+  },
+  {
+    "table_name": "rep_roster_players",
+    "column_name": "primary_position",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "rep_roster_players",
+    "column_name": "secondary_position",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
   },
   {
     "table_name": "rep_season_surplus",
@@ -6705,6 +8316,186 @@
     "ordinal_position": 5
   },
   {
+    "table_name": "rep_team_lineup_entries",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_team_lineup_entries",
+    "column_name": "lineup_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_team_lineup_entries",
+    "column_name": "player_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "rep_team_lineup_entries",
+    "column_name": "batting_order",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "rep_team_lineup_entries",
+    "column_name": "starter",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "rep_team_lineup_entries",
+    "column_name": "inning_positions",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "rep_team_lineup_entries",
+    "column_name": "notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "rep_team_lineup_entries",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "rep_team_lineup_entries",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "event_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "program_year_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "lineup_mode",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'everyone_bats'::text",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "inning_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "7",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "updated_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 11
+  },
+  {
     "table_name": "rep_team_payment_requests",
     "column_name": "id",
     "data_type": "uuid",
@@ -6904,7 +8695,7 @@
   },
   {
     "table_name": "rep_teams",
-    "column_name": "age_group",
+    "column_name": "division",
     "data_type": "text",
     "udt_name": "text",
     "is_nullable": "YES",
@@ -7237,12 +9028,93 @@
   },
   {
     "table_name": "rules",
-    "column_name": "age_group_ids",
+    "column_name": "division_ids",
     "data_type": "ARRAY",
     "udt_name": "_uuid",
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 6
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "column_name": "tournament_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "column_name": "division_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "column_name": "label",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "column_name": "sort_order",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "column_name": "resolved_venue_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "column_name": "resolved_venue_facility_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "schedule_facility_lanes",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 9
   },
   {
     "table_name": "stripe_prices",
@@ -7812,6 +9684,15 @@
     "ordinal_position": 18
   },
   {
+    "table_name": "team_workspaces",
+    "column_name": "basic_coach_team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
     "table_name": "teams",
     "column_name": "id",
     "data_type": "uuid",
@@ -7831,7 +9712,7 @@
   },
   {
     "table_name": "teams",
-    "column_name": "age_group_id",
+    "column_name": "division_id",
     "data_type": "uuid",
     "udt_name": "uuid",
     "is_nullable": "YES",
@@ -7864,15 +9745,6 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 6
-  },
-  {
-    "table_name": "teams",
-    "column_name": "players",
-    "data_type": "jsonb",
-    "udt_name": "jsonb",
-    "is_nullable": "NO",
-    "column_default": "'[]'::jsonb",
-    "ordinal_position": 7
   },
   {
     "table_name": "teams",
@@ -7954,6 +9826,87 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 16
+  },
+  {
+    "table_name": "teams",
+    "column_name": "check_in_status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'not_arrived'::text",
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "teams",
+    "column_name": "checked_in_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
+    "table_name": "teams",
+    "column_name": "checked_in_by_user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 19
+  },
+  {
+    "table_name": "teams",
+    "column_name": "checked_in_by_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
+    "table_name": "teams",
+    "column_name": "roster_submitted_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 21
+  },
+  {
+    "table_name": "teams",
+    "column_name": "roster_confirmed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 22
+  },
+  {
+    "table_name": "teams",
+    "column_name": "payment_collected_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 23
+  },
+  {
+    "table_name": "teams",
+    "column_name": "check_in_notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
+    "table_name": "teams",
+    "column_name": "seed",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 25
   },
   {
     "table_name": "tournament_archives",
@@ -8089,6 +10042,51 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 15
+  },
+  {
+    "table_name": "tournament_notification_preferences",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "tournament_notification_preferences",
+    "column_name": "tournament_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "tournament_notification_preferences",
+    "column_name": "event_type",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "tournament_notification_preferences",
+    "column_name": "opted_out",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "tournament_notification_preferences",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 5
   },
   {
     "table_name": "tournament_registration_field_answers",
@@ -8253,6 +10251,123 @@
     "ordinal_position": 11
   },
   {
+    "table_name": "tournament_roster_players",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "column_name": "tournament_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "column_name": "name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "column_name": "jersey_number",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "column_name": "date_of_birth",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "column_name": "position",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "column_name": "notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "column_name": "source",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'coach'::text",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "column_name": "created_by_user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 13
+  },
+  {
     "table_name": "tournaments",
     "column_name": "id",
     "data_type": "uuid",
@@ -8332,15 +10447,6 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 9
-  },
-  {
-    "table_name": "tournaments",
-    "column_name": "organization_id",
-    "data_type": "uuid",
-    "udt_name": "uuid",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 10
   },
   {
     "table_name": "tournaments",
@@ -8503,5 +10609,140 @@
     "is_nullable": "NO",
     "column_default": "0",
     "ordinal_position": 28
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 29
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "settings",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 30
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "default_contact_member_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 31
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "notify_mode",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'all'::text",
+    "ordinal_position": 32
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "public_hidden_pages",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "ordinal_position": 33
+  },
+  {
+    "table_name": "venue_facilities",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "venue_facilities",
+    "column_name": "venue_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "venue_facilities",
+    "column_name": "tournament_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "venue_facilities",
+    "column_name": "name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "venue_facilities",
+    "column_name": "facility_type",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'other'::text",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "venue_facilities",
+    "column_name": "display_order",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "venue_facilities",
+    "column_name": "notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "venue_facilities",
+    "column_name": "source_org_facility_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "venue_facilities",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "venue_facilities",
+    "column_name": "settings",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 10
   }
 ]

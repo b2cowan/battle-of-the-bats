@@ -280,6 +280,61 @@ async function createBasicCoachTeamForRegistration(
   return team.id;
 }
 
+/**
+ * Create a standalone, org-less Basic coach team with NO tournament registration
+ * attached — the Phase-2 `/start/team` on-ramp. This is the deliberate new entry
+ * path (source `coach_created`), distinct from `createBasicCoachTeamForRegistration`
+ * (source `tournament_registration`) which only fires inside the registration-link
+ * flow. The free Basic floor — NOT the Premium `team_workspaces` flip — so
+ * `team_workspace_id` stays null. The caller resolves the signed-in user/email and
+ * must have already gated out platform-admin sessions (see `requireCoachUser`).
+ */
+export async function createBasicCoachTeam(params: {
+  userId: string;
+  email: string;
+  name: string;
+  primaryCoachName?: string | null;
+  sport?: string | null;
+  ageGroup?: string | null;
+}): Promise<string> {
+  const name = params.name.trim();
+  if (!name) throw new Error('A team name is required.');
+
+  const email = normalizeEmail(params.email);
+  if (!email) throw new Error('A signed-in coach email is required.');
+
+  const now = new Date().toISOString();
+  const { data: team, error: teamError } = await supabaseAdmin
+    .from('basic_coach_teams')
+    .insert({
+      name,
+      normalized_name: normalizeName(name),
+      primary_coach_name: params.primaryCoachName?.trim() || null,
+      primary_coach_email: email,
+      sport: params.sport?.trim() || null,
+      age_group: params.ageGroup?.trim() || null,
+      source: 'coach_created',
+      created_at: now,
+      updated_at: now,
+    })
+    .select('id')
+    .single<{ id: string }>();
+
+  if (teamError) throw teamError;
+
+  const { error: membershipError } = await supabaseAdmin
+    .from('basic_coach_team_users')
+    .insert({
+      basic_coach_team_id: team.id,
+      user_id: params.userId,
+      role: 'owner',
+      status: 'active',
+    });
+
+  if (membershipError) throw membershipError;
+  return team.id;
+}
+
 export async function linkTournamentRegistrationToBasicCoachTeam(params: {
   userId: string;
   userEmail?: string | null;

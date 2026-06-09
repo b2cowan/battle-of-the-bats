@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { createOrganization, createOrganizationMember } from '@/lib/db';
+import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { sendEmail, signupVerificationHtml } from '@/lib/email';
 
 function slugify(name: string) {
@@ -55,7 +55,6 @@ export async function POST(req: Request) {
     const normalizedFirstName = String(firstName).trim();
     const normalizedLastName = String(lastName).trim();
     const fullName = `${normalizedFirstName} ${normalizedLastName}`.trim();
-    const slug = slugify(typeof orgSlug === 'string' && orgSlug.trim() ? orgSlug : normalizedOrgName);
 
     if (!normalizedEmail || !normalizedOrgName || !normalizedFirstName || !normalizedLastName) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
@@ -73,11 +72,21 @@ export async function POST(req: Request) {
     if (normalizedPassword.length < 8) {
       return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 });
     }
-    if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-      return NextResponse.json({ error: 'Public URL must contain lowercase letters, numbers, and hyphens.' }, { status: 400 });
-    }
-    if (!(await isSlugAvailable(slug))) {
-      return NextResponse.json({ error: 'That public URL is already taken. Try a different one.' }, { status: 409 });
+
+    // The public URL is no longer collected at signup — auto-generate a unique slug from
+    // the org name (the user refines it later in settings). A caller MAY still pass an
+    // explicit orgSlug (e.g. a future custom flow); honor + validate it when present.
+    let slug: string;
+    if (typeof orgSlug === 'string' && orgSlug.trim()) {
+      slug = slugify(orgSlug);
+      if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+        return NextResponse.json({ error: 'Public URL must contain lowercase letters, numbers, and hyphens.' }, { status: 400 });
+      }
+      if (!(await isSlugAvailable(slug))) {
+        return NextResponse.json({ error: 'That public URL is already taken. Try a different one.' }, { status: 409 });
+      }
+    } else {
+      slug = await generateUniqueOrgSlug(normalizedOrgName);
     }
 
     const requireVerification = shouldRequireEmailVerification();

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Settings2, ChevronUp, ChevronDown, AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -46,6 +47,7 @@ function feeScopeToScheduleMode(scope: FeeScope | null): 'tournament' | 'divisio
 export default function TournamentEventSettingsPage() {
   const { currentTournament, refresh: refreshTournaments } = useTournament();
   const { currentOrg, userRole } = useOrg();
+  const router = useRouter();
   usePageTitle('Event Settings');
 
   // Tournament identity
@@ -55,6 +57,14 @@ export default function TournamentEventSettingsPage() {
   const [tournamentStatus, setTournamentStatus] = useState<TournamentStatus>('draft');
   const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
   const slugCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Organization public address (org slug) — the account-wide URL prefix shared by all
+  // of this org's tournaments. Tournament tiers can't reach Org Settings (standalone-tier
+  // rule), so the owner reviews/edits it here. Separate from the per-tournament slug above.
+  const [orgSlugInput, setOrgSlugInput] = useState('');
+  const [orgSlugSaving, setOrgSlugSaving] = useState(false);
+  const [orgSlugError, setOrgSlugError] = useState('');
+  const [orgSlugConfirmOpen, setOrgSlugConfirmOpen] = useState(false);
 
   // Dates
   const [startDate, setStartDate] = useState('');
@@ -297,6 +307,11 @@ export default function TournamentEventSettingsPage() {
     return () => { if (slugCheckRef.current) clearTimeout(slugCheckRef.current); };
   }, [tournamentSlug, tournamentId, orgQuery, saved.slug]);
 
+  // Keep the org-address input in sync with the loaded org (only fires when it changes).
+  useEffect(() => {
+    setOrgSlugInput(currentOrg?.slug ?? '');
+  }, [currentOrg?.slug]);
+
   // ── Core save — ref-based so auto-save always closes over latest state ────
 
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -534,6 +549,37 @@ export default function TournamentEventSettingsPage() {
     }
   }
 
+  async function handleOrgSlugUpdate() {
+    setOrgSlugConfirmOpen(false);
+    if (!currentOrg) return;
+    const newSlug = orgSlugInput.trim().toLowerCase();
+    if (!newSlug || !/^[a-z0-9-]+$/.test(newSlug)) {
+      setOrgSlugError('Lowercase letters, numbers, and hyphens only.');
+      return;
+    }
+    setOrgSlugSaving(true);
+    setOrgSlugError('');
+    try {
+      const res = await fetch(`/api/admin/org-settings?orgSlug=${encodeURIComponent(currentOrg.slug)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: newSlug }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setOrgSlugError(data.error ?? 'Could not update the address.');
+        setOrgSlugSaving(false);
+        return;
+      }
+      // The current URL contains the old org slug — move to the new one.
+      router.push(`/${data.slug}/admin/tournaments/settings/event`);
+      router.refresh();
+    } catch {
+      setOrgSlugError('Could not update the address.');
+      setOrgSlugSaving(false);
+    }
+  }
+
   function handleSlugConfirm() {
     const newSlug = tournamentSlug;
     setSlugConfirmOpen(false);
@@ -704,6 +750,53 @@ export default function TournamentEventSettingsPage() {
                     onClick={() => setSlugConfirmOpen(true)}
                   >
                     Update URL
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Organization public address (org slug) — account-wide URL prefix, owner only.
+              Single-product orgs can't reach Org Settings, so it's editable here. */}
+          {userRole === 'owner' && (
+            <>
+              <hr className={styles.cardDivider} />
+              <div className="form-group">
+                <label className="form-label">Organization Address</label>
+                <input
+                  className="form-input"
+                  type="text"
+                  value={orgSlugInput}
+                  onChange={e => setOrgSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                  placeholder="e.g. milton-softball"
+                />
+                <p className={styles.urlPreview}>
+                  fieldlogichq.ca/<span className={styles.urlSlug}>{orgSlugInput || '…'}</span>/{tournamentSlug || 'your-tournament'}
+                </p>
+                <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
+                  Your account-wide address — the start of every tournament link. Shared across all your tournaments.
+                </p>
+                {orgSlugInput.length > 0 && !/^[a-z0-9-]+$/.test(orgSlugInput) && (
+                  <p style={{ fontSize: '0.72rem', fontFamily: 'var(--font-data)', color: 'var(--danger)', margin: '0.25rem 0 0' }}>Lowercase letters, numbers, and hyphens only</p>
+                )}
+                {orgSlugError && (
+                  <p style={{ fontSize: '0.72rem', fontFamily: 'var(--font-data)', color: 'var(--danger)', margin: '0.25rem 0 0' }}>{orgSlugError}</p>
+                )}
+                {orgSlugInput !== (currentOrg?.slug ?? '') && (
+                  <div className={styles.warningBanner} style={{ marginTop: '0.5rem' }}>
+                    <AlertTriangle size={14} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: '0.1rem' }} />
+                    <p>Changing your organization address breaks every existing link across all your tournaments — registration pages, coach emails, and bookmarks.</p>
+                  </div>
+                )}
+                {orgSlugInput !== (currentOrg?.slug ?? '') && (
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-data"
+                    style={{ marginTop: '0.65rem' }}
+                    disabled={orgSlugSaving || !orgSlugInput || !/^[a-z0-9-]+$/.test(orgSlugInput)}
+                    onClick={() => setOrgSlugConfirmOpen(true)}
+                  >
+                    {orgSlugSaving ? 'Updating…' : 'Update Address'}
                   </button>
                 )}
               </div>
@@ -1244,6 +1337,17 @@ export default function TournamentEventSettingsPage() {
         message="Changing the URL breaks all existing registration links, coach emails, and bookmarked pages. This cannot be undone."
         type="warning"
         confirmText="Update URL"
+      />
+
+      {/* ── Organization address confirm modal ── */}
+      <FeedbackModal
+        isOpen={orgSlugConfirmOpen}
+        onClose={() => setOrgSlugConfirmOpen(false)}
+        onConfirm={handleOrgSlugUpdate}
+        title="Update Organization Address?"
+        message="This changes the address for your whole account — every tournament link, registration page, coach email, and bookmark that uses the old address will break. This cannot be undone."
+        type="warning"
+        confirmText="Update Address"
       />
 
       {/* ── Error modal ── */}

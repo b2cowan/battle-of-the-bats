@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard, CheckCircle, Calendar, Mail } from 'lucide-react';
 import { useParams } from 'next/navigation';
@@ -186,12 +186,17 @@ export default function RegisterPage() {
   const [stats, setStats]           = useState<Record<string, number>>({});
   const [step, setStep]             = useState<Step>('form');
   const [errorMsg, setErrorMsg]     = useState('');
+  // Inline notice on the form (e.g. a returning coach who just got signed in mid-register).
+  const [noticeMsg, setNoticeMsg]   = useState('');
   const [form, setForm] = useState({
-    teamName: '', coachName: '', email: '', divisionId: '',
+    teamName: '', firstName: '', lastName: '', email: '', password: '', divisionId: '',
   });
   const [customAnswers, setCustomAnswers] = useState<CustomAnswerState>({});
   const [customFiles, setCustomFiles] = useState<CustomFileState>({});
   const [signedInCoachEmail, setSignedInCoachEmail] = useState<string | null>(null);
+  // True only when the account has BOTH a first and last name — gates the registrant
+  // name lock. Stable (set at load), so typing never flips the inputs to disabled.
+  const [accountHasName, setAccountHasName] = useState(false);
   const [basicCoachTeams, setBasicCoachTeams] = useState<BasicCoachTeamOption[]>([]);
   const [coachTeamMode, setCoachTeamMode] = useState<'new' | 'existing'>('new');
   const [selectedBasicTeamId, setSelectedBasicTeamId] = useState('');
@@ -223,41 +228,58 @@ export default function RegisterPage() {
     }
   }, [orgSlug, tournamentSlug]);
 
-  useEffect(() => {
-    async function loadCoachTeams() {
-      try {
-        const res = await fetch('/api/coaches/basic-teams', { cache: 'no-store' });
-        if (res.status === 401) return;
-        if (!res.ok) return;
-        const data = await res.json() as {
-          user?: { email?: string };
-          teams?: BasicCoachTeamOption[];
-        };
-        const userEmail = data.user?.email?.toLowerCase() ?? null;
-        setSignedInCoachEmail(userEmail);
-        setBasicCoachTeams(data.teams ?? []);
-        if (userEmail) {
-          setForm(f => ({ ...f, email: f.email || userEmail }));
-        }
-        if ((data.teams ?? []).length > 0) {
-          setCoachTeamMode('existing');
-        }
-      } catch (e) {
-        console.error(e);
+  // Loads the signed-in coach's account + teams. Reused on mount AND after a returning
+  // coach is signed in mid-registration, so they can attach to an existing team instead
+  // of silently creating a duplicate. Returns the team list.
+  const loadCoachTeams = useCallback(async (): Promise<BasicCoachTeamOption[]> => {
+    try {
+      const res = await fetch('/api/coaches/basic-teams', { cache: 'no-store' });
+      if (res.status === 401 || !res.ok) return [];
+      const data = await res.json() as {
+        user?: { email?: string; firstName?: string; lastName?: string; name?: string };
+        teams?: BasicCoachTeamOption[];
+      };
+      const userEmail = data.user?.email?.toLowerCase() ?? null;
+      const apiFirst = (data.user?.firstName ?? '').trim();
+      const apiLast = (data.user?.lastName ?? '').trim();
+      const teams = data.teams ?? [];
+      setSignedInCoachEmail(userEmail);
+      // Lock the registrant name only when the account carries BOTH parts — otherwise
+      // keep the inputs editable so the coach can complete their name.
+      setAccountHasName(!!(apiFirst && apiLast));
+      setBasicCoachTeams(teams);
+      if (userEmail) {
+        setForm(f => ({
+          ...f,
+          email: f.email || userEmail,
+          firstName: f.firstName || apiFirst,
+          lastName: f.lastName || apiLast,
+        }));
       }
+      if (teams.length > 0) setCoachTeamMode('existing');
+      return teams;
+    } catch (e) {
+      console.error(e);
+      return [];
     }
-
-    loadCoachTeams();
   }, []);
+
+  useEffect(() => {
+    // Async wrapper: state updates happen after the fetch resolves, not synchronously
+    // in the effect (loadCoachTeams is reused by the returning-coach sign-in path).
+    async function run() { await loadCoachTeams(); }
+    run();
+  }, [loadCoachTeams]);
 
   function selectExistingCoachTeam(teamId: string) {
     setSelectedBasicTeamId(teamId);
     const team = basicCoachTeams.find(item => item.id === teamId);
     if (!team) return;
+    // Reuse the saved team's name + the account email; the registrant's identity
+    // (first/last) stays the account user — the head coach is assigned separately (portal).
     setForm(f => ({
       ...f,
       teamName: team.name,
-      coachName: team.primaryCoachName || f.coachName,
       email: signedInCoachEmail || f.email,
     }));
   }
@@ -267,6 +289,17 @@ export default function RegisterPage() {
     if (!selectedGroup) throw new Error('Select a division before reviewing your registration.');
     if (coachTeamMode === 'existing' && basicCoachTeams.length > 0 && !selectedBasicTeamId) {
       throw new Error('Select a Coaches Portal team, or choose to create a new team profile.');
+    }
+    if (!form.teamName.trim()) {
+      throw new Error('Enter a team name.');
+    }
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      throw new Error('Enter your first and last name.');
+    }
+    // Logged-out registrants create their Coaches Portal account inline — a password is
+    // required (a returning email is handled as a sign-in at submit time).
+    if (!signedInCoachEmail && form.password.length < 8) {
+      throw new Error('Create a password (at least 8 characters) to set up your Coaches Portal.');
     }
 
     const count = stats[selectedGroup.id] || 0;
@@ -287,6 +320,7 @@ export default function RegisterPage() {
     try {
       validateRegistrationDetails();
       setErrorMsg('');
+      setNoticeMsg('');
       setStep('review');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: unknown) {
@@ -299,9 +333,68 @@ export default function RegisterPage() {
     try {
       const { selectedGroup, isWaitlist } = validateRegistrationDetails();
 
+      // Merge account creation into registration: a logged-out registrant becomes a
+      // Coaches Portal account holder in this same step. /api/register then auto-links
+      // the registration to their portal (it links when a signed-in coach's email matches).
+      if (!signedInCoachEmail) {
+        const emailNorm = form.email.trim().toLowerCase();
+        setErrorMsg('');
+        setNoticeMsg('');
+        setStep('submitting');
+        const { signIn } = await import('@/lib/auth');
+
+        const signupRes = await fetch('/api/auth/coach-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: emailNorm,
+            password: form.password,
+            firstName: form.firstName.trim(),
+            lastName: form.lastName.trim(),
+          }),
+        });
+
+        if (signupRes.status === 409) {
+          // Returning coach — treat the password as a sign-in to their existing account.
+          const { error: signInErr } = await signIn(emailNorm, form.password);
+          if (signInErr) {
+            setErrorMsg("This email already has a FieldLogicHQ account, and that password didn't match. Enter your existing password, or reset it from the sign-in page.");
+            setStep('error');
+            return;
+          }
+          // Signed in — load their teams so they attach this registration to an existing
+          // team instead of silently creating a duplicate (loadCoachTeams flips on the
+          // existing-team selector + signed-in state).
+          const teams = await loadCoachTeams();
+          if (teams.length > 0) {
+            setNoticeMsg("You already have an account — you're now signed in. Choose which team this registration is for below (or create a new one), then submit again.");
+            setStep('form');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+          }
+          // No existing teams — fall through and create one via /api/register.
+        } else if (!signupRes.ok) {
+          const data = await signupRes.json().catch(() => ({})) as { error?: string };
+          setErrorMsg(data.error ?? 'Your account could not be created. Please try again.');
+          setStep('error');
+          return;
+        } else {
+          const { error: signInErr } = await signIn(emailNorm, form.password);
+          if (signInErr) {
+            setErrorMsg('Account created, but sign-in failed. Please sign in from the login page to finish.');
+            setStep('error');
+            return;
+          }
+        }
+        // Now signed in — downstream /api/register sees the session and auto-links.
+        setSignedInCoachEmail(emailNorm);
+      }
+
       const payload = new FormData();
       payload.append('teamName', form.teamName.trim());
-      payload.append('coachName', form.coachName.trim());
+      // The registrant's name is the team's default head coach (reassignable later in
+      // the portal). teams.coach storage is unchanged — we send the combined name.
+      payload.append('coachName', `${form.firstName} ${form.lastName}`.trim());
       payload.append('email', (signedInCoachEmail || form.email).trim().toLowerCase());
       payload.append('divisionId', form.divisionId);
       payload.append('divisionName', selectedGroup.name);
@@ -335,18 +428,9 @@ export default function RegisterPage() {
 
       const result = await res.json() as { id?: string; status?: 'pending' | 'waitlist' };
       const status = result.status === 'waitlist' ? 'waitlist' : isWaitlist ? 'waitlist' : 'pending';
-      const joinUrl = signedInCoachEmail
-        ? new URL('/coaches/tournaments', window.location.origin)
-        : new URL('/coaches/join', window.location.origin);
-
-      if (!signedInCoachEmail) {
-        joinUrl.searchParams.set('email', form.email);
-        joinUrl.searchParams.set('next', '/coaches/tournaments');
-        joinUrl.searchParams.set('registered', '1');
-        if (result.id) joinUrl.searchParams.set('registrationId', result.id);
-      }
-
-      setConfirmation({ id: result.id, status, joinHref: joinUrl.toString() });
+      // After the merge the registrant is always signed in by this point (account created
+      // inline or already logged in), so their portal is ready and the registration linked.
+      setConfirmation({ id: result.id, status, joinHref: '/coaches/tournaments' });
       setStep('success');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: unknown) {
@@ -357,6 +441,9 @@ export default function RegisterPage() {
 
   const isRegistrationOpen = tournament?.status === 'active' && divisions.length > 0;
   const notOpen = !isRegistrationOpen;
+  // A logged-in coach registers as themselves — lock the registrant name to their account,
+  // but only when the account actually has both name parts (else stay editable).
+  const lockRegistrantName = !!signedInCoachEmail && accountHasName;
 
   const selectedGroup = divisions.find(g => g.id === form.divisionId);
   const isClosed = selectedGroup?.isClosed;
@@ -485,8 +572,8 @@ export default function RegisterPage() {
                     <strong>{form.teamName}</strong>
                   </div>
                   <div>
-                    <span>Coach / Contact</span>
-                    <strong>{form.coachName}</strong>
+                    <span>Registered by</span>
+                    <strong>{`${form.firstName} ${form.lastName}`.trim()}</strong>
                   </div>
                   <div>
                     <span>Email</span>
@@ -648,6 +735,23 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
+                {noticeMsg && (
+                  <div
+                    role="status"
+                    style={{
+                      margin: '0 0 1rem',
+                      padding: '0.7rem 0.9rem',
+                      border: '1px solid rgba(217,249,157,0.35)',
+                      background: 'rgba(217,249,157,0.08)',
+                      color: 'var(--fl-text)',
+                      fontSize: '0.8rem',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {noticeMsg}
+                  </div>
+                )}
+
                 <form onSubmit={handleReview}>
                   {signedInCoachEmail && basicCoachTeams.length > 0 && (
                     <div className="form-group" style={{ marginBottom: '1rem' }}>
@@ -690,32 +794,54 @@ export default function RegisterPage() {
                     </div>
                   )}
 
-                  <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
+                  <div className="form-group" style={{ marginBottom: '1rem' }}>
+                    <label className="form-label">Team Name *</label>
+                    <input
+                      className="form-input"
+                      placeholder="e.g. Milton Thunder"
+                      value={form.teamName}
+                      onChange={e => setForm(f => ({ ...f, teamName: e.target.value }))}
+                      required
+                      disabled={coachTeamMode === 'existing'}
+                      id="reg-team-name"
+                    />
+                  </div>
+
+                  {/* Registrant — the account user. Their name defaults the team's head
+                      coach (reassignable later in the portal). Locked for logged-in coaches. */}
+                  <div className="form-row form-row-2" style={{ marginBottom: signedInCoachEmail ? '0.4rem' : '1rem' }}>
                     <div className="form-group">
-                      <label className="form-label">Team Name *</label>
+                      <label className="form-label">First Name *</label>
                       <input
                         className="form-input"
-                        placeholder="e.g. Milton Thunder"
-                        value={form.teamName}
-                        onChange={e => setForm(f => ({ ...f, teamName: e.target.value }))}
+                        placeholder="First name"
+                        value={form.firstName}
+                        onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))}
                         required
-                        disabled={coachTeamMode === 'existing'}
-                        id="reg-team-name"
+                        disabled={lockRegistrantName}
+                        autoComplete="given-name"
+                        id="reg-first-name"
                       />
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Coach / Contact Name *</label>
+                      <label className="form-label">Last Name *</label>
                       <input
                         className="form-input"
-                        placeholder="Full name"
-                        value={form.coachName}
-                        onChange={e => setForm(f => ({ ...f, coachName: e.target.value }))}
+                        placeholder="Last name"
+                        value={form.lastName}
+                        onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))}
                         required
-                        disabled={coachTeamMode === 'existing'}
-                        id="reg-coach-name"
+                        disabled={lockRegistrantName}
+                        autoComplete="family-name"
+                        id="reg-last-name"
                       />
                     </div>
                   </div>
+                  {signedInCoachEmail && (
+                    <p style={{ fontSize: '0.72rem', color: 'var(--data-gray)', margin: '0 0 1rem', lineHeight: 1.5 }}>
+                      You&apos;re registering as yourself — you can set the team&apos;s head coach anytime from your Coaches Portal.
+                    </p>
+                  )}
 
                   <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
                     <div className="form-group">
@@ -753,6 +879,28 @@ export default function RegisterPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Inline account creation — registering sets up the coach's free portal.
+                      Hidden when already signed in. Returning emails are handled as sign-in. */}
+                  {!signedInCoachEmail && (
+                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                      <label className="form-label">Create a Password *</label>
+                      <input
+                        className="form-input"
+                        type="password"
+                        placeholder="At least 8 characters"
+                        value={form.password}
+                        onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                        required
+                        minLength={8}
+                        autoComplete="new-password"
+                        id="reg-password"
+                      />
+                      <p style={{ fontSize: '0.72rem', color: 'var(--data-gray)', margin: '0.35rem 0 0', lineHeight: 1.5 }}>
+                        This sets up your free Coaches Portal so you can track your team — you&apos;ll go straight there after registering. Already have an account? Enter your existing password.
+                      </p>
+                    </div>
+                  )}
 
                   {selectedGroup && selectedGroup.capacity && !selectedGroup.isClosed && (
                     <div className={styles.spotsCard}>

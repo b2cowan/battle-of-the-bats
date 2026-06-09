@@ -53,3 +53,4 @@ When an agent is asked to write up an implementation plan, it must create a new 
 ## Technical Context
 - Refer to `AGENTS.md` for Next.js specific version rules.
 - Refer to `memory/MEMORY.md` (index) and per-topic files in `memory/` for current project state and data models.
+- **Schema = dictionary, same unit of work.** Any migration or field-meaning change must update `docs/agents/db/DATA_DICTIONARY.md` and refresh the dev+prod snapshots (`npm run refresh:snapshots`). Decide whether a column exists from those snapshots / live `information_schema` — **never** from migration files (they mislead in a drifted DB). `npm run check:dictionary` (part of `npm run verify:changed`) fails when a schema change isn't reflected in the dictionary.

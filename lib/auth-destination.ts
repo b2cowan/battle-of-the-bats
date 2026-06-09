@@ -23,12 +23,14 @@ export async function getAuthDestination() {
   });
 
   if (contexts.length === 0) {
-    return '/auth/signup';
+    // No workspace yet — send to the account-first front door, not straight into
+    // org-creation (Phase 2: /start asks the user their job first).
+    return '/start';
   }
 
-  if (contexts.length === 1) {
-    return contexts[0].destination;
-  }
-
+  // Single-context users land on /home too, so the switcher (and "Start something
+  // new") is reachable. This is only hit on a base-URL login: the login page honours
+  // an explicit `next` BEFORE calling getAuthDestination, so deep links still go
+  // straight to their target and skip /home.
   return '/home';
 }

@@ -22,6 +22,19 @@ type PendingRegistration = {
   coach: string | null;
 };
 
+/**
+ * Best-effort split of a single contact name into first / last for account-creation
+ * prefill ONLY. The public register form keeps one flexible "Coach / Contact Name"
+ * field (teams.coach) — this never writes back to it; it just seeds the name fields a
+ * coach can edit. First token → first name, remainder → last name.
+ */
+function splitFullName(full: string): [string, string] {
+  const parts = full.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return ['', ''];
+  if (parts.length === 1) return [parts[0], ''];
+  return [parts[0], parts.slice(1).join(' ')];
+}
+
 function JoinForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
@@ -30,9 +43,12 @@ function JoinForm() {
   const nextParam  = normalizeCoachPortalNext(searchParams.get('next'), COACHES_TOURNAMENTS_PATH);
   const fromReg    = searchParams.get('registered') === '1';
   const registrationId = searchParams.get('registrationId') ?? '';
+  const [firstNameInit, lastNameInit] = splitFullName(searchParams.get('coach') ?? '');
 
   const [email, setEmail]       = useState(emailParam);
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState(firstNameInit);
+  const [lastName, setLastName]   = useState(lastNameInit);
   const [showPw, setShowPw]     = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
@@ -104,12 +120,23 @@ function JoinForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    if (!firstName.trim() || !lastName.trim()) {
+      setError('Enter your first and last name.');
+      return;
+    }
+
     setLoading(true);
 
     const res = await fetch('/api/auth/coach-signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        password,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+      }),
     });
 
     if (res.status === 409) {
@@ -274,6 +301,35 @@ function JoinForm() {
       )}
 
       <form onSubmit={handleSubmit} className={styles.form}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="form-group">
+            <label className="form-label" htmlFor="join-first-name">First Name</label>
+            <input
+              id="join-first-name"
+              type="text"
+              className="form-input"
+              value={firstName}
+              onChange={e => setFirstName(e.target.value)}
+              placeholder="Jordan"
+              required
+              autoComplete="given-name"
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="join-last-name">Last Name</label>
+            <input
+              id="join-last-name"
+              type="text"
+              className="form-input"
+              value={lastName}
+              onChange={e => setLastName(e.target.value)}
+              placeholder="Lee"
+              required
+              autoComplete="family-name"
+            />
+          </div>
+        </div>
+
         <div className="form-group">
           <label className="form-label" htmlFor="join-email">Email</label>
           <input

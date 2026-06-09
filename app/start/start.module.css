@@ -19,7 +19,6 @@
   max-width: 760px;
   background: var(--hud-surface);
   border: 1px solid rgba(30, 58, 138, 0.5);
-  border-radius: 0;
   padding: 2.25rem;
   box-shadow: 0 0 0 1px rgba(30, 58, 138, 0.15), 0 0 24px rgba(30, 58, 138, 0.08);
 }
@@ -34,7 +33,6 @@
 .iconWrap {
   width: 48px;
   height: 48px;
-  border-radius: 0;
   background: rgba(30, 58, 138, 0.1);
   border: 1px solid rgba(30, 58, 138, 0.5);
   display: flex;
@@ -62,33 +60,32 @@
   text-transform: uppercase;
 }
 
-.contextList {
+.grid {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
 }
 
-.contextItem {
+.card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 1rem;
-  min-height: 88px;
+  min-height: 92px;
   padding: 1rem 1.1rem;
   color: inherit;
   text-decoration: none;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0;
   transition: border-color 0.15s, background 0.15s;
 }
 
-.contextItem:hover {
+.card:hover {
   border-color: rgba(30, 58, 138, 0.7);
   background: rgba(30, 58, 138, 0.08);
 }
 
-.contextIcon {
+.cardIcon {
   width: 42px;
   height: 42px;
   border: 1px solid rgba(147, 197, 253, 0.24);
@@ -100,29 +97,23 @@
   flex-shrink: 0;
 }
 
-.contextIcon[data-kind='coaches_basic'] {
+.cardIcon[data-accent='coach'] {
   color: #67e8f9;
   border-color: rgba(103, 232, 249, 0.3);
   background: rgba(103, 232, 249, 0.07);
 }
 
-.contextIcon[data-kind='coaches_premium'] {
+.cardIcon[data-accent='free'] {
   color: var(--logic-lime);
-  border-color: rgba(217, 249, 157, 0.28);
+  border-color: rgba(217, 249, 157, 0.3);
   background: rgba(217, 249, 157, 0.07);
 }
 
-.contextIcon[data-kind='tournament_official'] {
-  color: #fbbf24;
-  border-color: rgba(251, 191, 36, 0.28);
-  background: rgba(251, 191, 36, 0.07);
-}
-
-.contextInfo {
+.cardInfo {
   min-width: 0;
 }
 
-.contextTop {
+.cardTop {
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -130,7 +121,7 @@
   margin-bottom: 0.3rem;
 }
 
-.contextType {
+.cardLabel {
   font-family: var(--font-data);
   font-size: 0.58rem;
   font-weight: 800;
@@ -139,7 +130,7 @@
   color: var(--data-gray);
 }
 
-.badge {
+.tag {
   font-family: var(--font-data);
   font-size: 0.55rem;
   font-weight: 800;
@@ -147,31 +138,19 @@
   text-transform: uppercase;
   border-radius: 2px;
   padding: 0.14rem 0.45rem;
-  border: 1px solid rgba(147, 197, 253, 0.45);
-  color: #93c5fd;
-  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(217, 249, 157, 0.4);
+  color: var(--logic-lime);
+  background: rgba(217, 249, 157, 0.08);
   white-space: nowrap;
 }
 
-.badge[data-kind='coaches_basic'] {
-  color: #67e8f9;
-  border-color: rgba(103, 232, 249, 0.35);
-  background: rgba(103, 232, 249, 0.08);
+.tag[data-tone='soon'] {
+  border-color: rgba(147, 197, 253, 0.4);
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.08);
 }
 
-.badge[data-kind='coaches_premium'] {
-  color: var(--logic-lime);
-  border-color: rgba(217, 249, 157, 0.35);
-  background: rgba(217, 249, 157, 0.08);
-}
-
-.badge[data-kind='tournament_official'] {
-  color: #fbbf24;
-  border-color: rgba(251, 191, 36, 0.35);
-  background: rgba(251, 191, 36, 0.08);
-}
-
-.contextTitle {
+.cardTitle {
   font-family: var(--font-data);
   font-size: 0.95rem;
   font-weight: 800;
@@ -181,19 +160,16 @@
   overflow-wrap: anywhere;
 }
 
-.contextMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem 0.75rem;
-  margin-top: 0.45rem;
+.cardBody {
+  margin-top: 0.4rem;
   font-family: var(--font-data);
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
   color: var(--data-gray);
 }
 
-.enterBtn {
+.cardArrow {
   width: 38px;
   height: 38px;
   display: inline-flex;
@@ -203,29 +179,11 @@
   color: #0f1123;
   border-radius: 2px;
   flex-shrink: 0;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s;
 }
 
-.contextItem:hover .enterBtn {
+.card:hover .cardArrow {
   background: #fff;
-}
-
-/* "Start something new" — a deliberately quieter, dashed affordance so it reads as
-   an action, not another workspace. Sits at the end of the context list. */
-.startNewItem {
-  background: transparent;
-  border: 1px dashed rgba(217, 249, 157, 0.32);
-}
-
-.startNewItem:hover {
-  border-color: var(--logic-lime);
-  background: rgba(217, 249, 157, 0.06);
-}
-
-.startNewIcon {
-  color: var(--logic-lime);
-  border-color: rgba(217, 249, 157, 0.3);
-  background: rgba(217, 249, 157, 0.07);
 }
 
 .footer {
@@ -234,11 +192,79 @@
   border-top: 1px solid rgba(30, 58, 138, 0.2);
   text-align: center;
   font-family: var(--font-data);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   letter-spacing: 0.06em;
   color: var(--data-gray);
-  opacity: 0.66;
   text-transform: uppercase;
+}
+
+.footerLink {
+  color: var(--logic-lime);
+  text-decoration: none;
+}
+
+.footerLink:hover {
+  text-decoration: underline;
+}
+
+/* Sub-route lead text (wrapper pages) */
+.lead {
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--fl-text);
+  margin-bottom: 1.25rem;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ctaPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0f1123;
+  background: var(--logic-lime);
+  border: 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.ctaPrimary:hover {
+  background: #fff;
+}
+
+.ctaSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  background: transparent;
+  border: 1px solid rgba(147, 197, 253, 0.4);
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.ctaSecondary:hover {
+  color: var(--fl-text);
+  border-color: #93c5fd;
 }
 
 @media (max-width: 640px) {
@@ -251,12 +277,12 @@
     padding: 1.4rem;
   }
 
-  .contextItem {
+  .card {
     grid-template-columns: auto minmax(0, 1fr);
     align-items: flex-start;
   }
 
-  .enterBtn {
+  .cardArrow {
     grid-column: 1 / -1;
     width: 100%;
     height: 40px;

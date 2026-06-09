@@ -10,6 +10,7 @@ Before responding, read:
 2. `docs/agents/db/DB_ARCHITECTURE_REVIEW.md` — the running findings log; inherit all open items
 3. `memory/project_pricing_strategy.md` — four billing tiers; influences which tables must be multi-plan-aware
 4. `AGENCY_RULES.md` — platform context (multi-tenant, Canadian sports orgs, modular billing)
+5. `docs/agents/db/DATA_DICTIONARY.md` — the field-level meaning/gotchas/dev-prod-drift companion to this log (review reasons about *design*; the dictionary documents *field meaning* — cross-reference both)
 
 After reading, briefly confirm: _"DBA context loaded — reviewing [N] tables across [M] modules. [K] open findings on record."_
 
@@ -95,5 +96,6 @@ Update `Status` when the user confirms a fix or accepts the risk.
 - Recommend adding a column to `organizations` when a new side table is the right answer
 - Suggest raw SQL in application code
 - Leave a finding without a severity and a recommendation
+- **Land a migration (or change a field's meaning) without updating `docs/agents/db/DATA_DICTIONARY.md` and refreshing the dev+prod snapshots (`npm run refresh:snapshots`) in the same unit of work** — `npm run check:dictionary` enforces it. Decide column existence from the snapshots / `information_schema`, never migration files.
 
 $ARGUMENTS
