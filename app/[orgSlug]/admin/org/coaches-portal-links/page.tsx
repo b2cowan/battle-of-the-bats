@@ -4,6 +4,7 @@ import { FormEvent, use, useCallback, useEffect, useState } from 'react';
 import { Clock, CreditCard, Link2, RefreshCw, Send, ShieldCheck, UsersRound } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { useOrg } from '@/lib/org-context';
+import { hasCapability } from '@/lib/roles';
 
 type LinkSummary = {
   id: string;
@@ -66,7 +67,7 @@ function billingModeLabel(mode: string | null | undefined) {
 
 export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = use(params);
-  const { userRole, loading: orgLoading } = useOrg();
+  const { userRole, userCapabilities, loading: orgLoading } = useOrg();
   const [links, setLinks] = useState<LinkSummary[]>([]);
   const [inviteTarget, setInviteTarget] = useState('');
   const [loading, setLoading] = useState(true);
@@ -77,6 +78,10 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
   const [message, setMessage] = useState<string | null>(null);
 
   const canReview = userRole === 'owner' || userRole === 'admin';
+  // Admins coordinate links + can decline requests, but starting org billing (a recurring
+  // charge) and transferring ownership are owner-reserved — mirror the team-links API gate.
+  const canManageBilling = hasCapability(userRole ?? 'official', userCapabilities, 'billing');
+  const canTransferOwnership = userRole === 'owner';
 
   const loadLinks = useCallback(async () => {
     setLoading(true);
@@ -486,7 +491,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                     Org billing keeps Basic sharing only. It does not transfer ownership, roster, documents, accounting, or org-wide rep-team admin access.
                   </p>
                   <div className="flex gap-2 mt-5 flex-wrap">
-                    {canInviteBilling && (
+                    {canManageBilling && canInviteBilling && (
                       <button
                         type="button"
                         className="btn btn-primary btn-sm"
@@ -496,7 +501,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                         Invite Billing Transfer
                       </button>
                     )}
-                    {(coachRequestedBilling || readyForCheckout) && (
+                    {canManageBilling && (coachRequestedBilling || readyForCheckout) && (
                       <>
                         <button
                           type="button"
@@ -596,7 +601,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                     Ownership transfer will move the team into this organization for roster, schedule, documents, and accounting access. Phase 5A records mutual approval; final data reassignment is platform-assisted.
                   </p>
                   <div className="flex gap-2 mt-5 flex-wrap">
-                    {canInviteOwnership && (
+                    {canTransferOwnership && canInviteOwnership && (
                       <button
                         type="button"
                         className="btn btn-ghost btn-sm"
@@ -608,14 +613,16 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                     )}
                     {coachRequestedOwnership && (
                       <>
-                        <button
-                          type="button"
-                          className="btn btn-primary btn-sm"
-                          onClick={() => ownershipAction(link.id, 'invite_ownership')}
-                          disabled={workingId === link.id}
-                        >
-                          Approve Ownership
-                        </button>
+                        {canTransferOwnership && (
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            onClick={() => ownershipAction(link.id, 'invite_ownership')}
+                            disabled={workingId === link.id}
+                          >
+                            Approve Ownership
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="btn btn-danger btn-sm"

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { forbidden, getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
+import { hasCapability } from '@/lib/roles';
 import {
   getActiveTeamEntitlementsForOrg,
   isTeamWorkspaceOrg,
@@ -82,6 +83,16 @@ export async function POST(req: NextRequest) {
 
   if (!linkId || !action) {
     return NextResponse.json({ error: 'linkId and action are required.' }, { status: 400 });
+  }
+
+  // Money + ownership actions are owner-reserved: admins coordinate links and may decline
+  // requests, but they cannot start org billing (a recurring charge) or initiate/approve an
+  // ownership transfer. The coarse owner+admin gate above still covers the operational actions.
+  if ((action === 'invite_billing' || action === 'approve_billing') && !hasCapability(ctx.role, ctx.capabilities, 'billing')) {
+    return forbidden();
+  }
+  if (action === 'invite_ownership' && ctx.role !== 'owner') {
+    return forbidden();
   }
 
   if (action === 'invite_billing') {

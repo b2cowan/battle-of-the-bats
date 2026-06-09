@@ -1,6 +1,6 @@
 # Admin Role Parity — "Admin = Owner minus Billing & User Management"
 
-**Status:** Phase 1 BUILT (2026-06-09) on branch `feat/free-tier-coaches`; awaiting browser verification.
+**Status:** Phase 1 + Phase 2 BUILT (2026-06-09) on branch `feat/free-tier-coaches`; awaiting browser verification. (Phase 1 = commit `ec64b17`; Phase 2 = follow-up commit.)
 **Owner decision (2026-06-09):** Tournament `admin` should do basically everything `owner` can **except billing and user/member management.**
 
 ---
@@ -54,12 +54,15 @@ Findings came from a multi-agent audit (49 agents) that mapped **95 authorizatio
 
 ---
 
-## Deferred follow-ups (NOT built — billing/ownership leaking to admin)
+## Phase 2 — billing/ownership leaking to admin (BUILT 2026-06-09)
 
-These let **admins** perform billing or ownership actions, which contradicts the policy. Left out of Phase 1 to keep it focused; recommend a Phase 2:
+These let **admins** perform billing or ownership actions, contradicting the policy. Now fixed at both layers (API is the boundary; page mirrors it):
 
-1. **`app/api/admin/org/team-links/route.ts`** (POST) — single owner+admin gate fronts `invite_billing`/`approve_billing` (org-billed Premium → real Stripe checkout) and `invite_ownership`/ownership-transfer. Split those sub-actions behind owner / `billing` capability while leaving plain link approve/decline at admin.
-2. **`app/[orgSlug]/admin/org/coaches-portal-links/page.tsx`** + backing API — same pattern (org-billed Premium transfer + ownership transfer reachable by admin).
+1. ✅ **`app/api/admin/org/team-links/route.ts`** (POST) — the single owner+admin gate fronted `invite_billing`/`approve_billing` (org-billed Premium → real Stripe checkout) and `invite_ownership`/ownership-transfer. Added an owner-reserved guard after action parsing: `invite_billing`/`approve_billing` require `hasCapability(ctx.role, ctx.capabilities, 'billing')`; `invite_ownership` requires `ctx.role === 'owner'`. Operational actions (target invite, `approve`/`decline` of a basic link, `decline_billing`, `decline_ownership`) stay owner+admin.
+2. ✅ **`app/[orgSlug]/admin/org/coaches-portal-links/page.tsx`** — added `canManageBilling = hasCapability(userRole, userCapabilities, 'billing')` and `canTransferOwnership = userRole === 'owner'`; gated the Invite/Approve Billing buttons and the Invite/Approve Ownership buttons on those, leaving Decline buttons open to admins (mirrors the API).
+
+## Deferred follow-ups (NOT built)
+
 3. **Consistency (low priority):** org-level routes (`org-settings`, `org-logo`, `org-logo-stock`, `org-hero-banner`) gate on a raw `membership.role !== 'owner'` lookup that bypasses the capability system — they stay owner-only (per decision), but migrating them to `hasCapability(role, caps, 'org_settings')` would let per-member overrides actually work.
 4. **Tournament public URL slug** (Event Settings) — page hides the field from admins, but the `action:'update'` API accepts it from anyone with `create_tournaments` (admins). Reconcile: either show the field to admins, or add a server-side owner check on the `slug` field.
 
