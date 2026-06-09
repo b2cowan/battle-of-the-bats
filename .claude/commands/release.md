@@ -96,7 +96,25 @@ npx tsc --noEmit --skipLibCheck 2>&1 | Select-Object -First 40
 ```
 Stop if there are errors. Do not push with TypeScript failures.
 
-### 1d — Release summary
+### 1d — Migration drift (master / promote targets only)
+
+Migrations are plain `.sql` files applied to each Supabase project **by hand** — neither the Amplify build (`amplify.yml` = `pnpm run build`) nor this agent runs them. So promoting code that reads a table/column which exists in **dev** but was never applied to **prod** ships a guaranteed 500 (this is the migration-040 / register-500 incident). Before any **master** or **promote** release, verify prod isn't behind dev:
+
+```powershell
+npm run check:migrations
+```
+- ✅ pass → continue.
+- ✖ fail → **STOP.** The output lists the tables/columns prod is missing. Apply the matching migration(s) to **prod** first, then re-run the check:
+  ```powershell
+  node scripts/apply-migration-api.mjs supabase/migrations/<file>.sql --prod
+  node scripts/refresh-db-snapshots.mjs
+  npm run check:migrations
+  ```
+  Only proceed once it passes, or the user **explicitly confirms** the dev/prod drift is intentional and not a pending migration.
+
+**Skip this step for `dev` releases** (the check compares dev↔prod; it's a production gate).
+
+### 1e — Release summary
 
 After all checks pass:
 
@@ -107,6 +125,7 @@ Target:   [dev (staging) / master (PRODUCTION)]
 Push:     current branch → [TARGET]
 Commits:  [N commits ahead of target, not counting the pending commit if dirty]
 TS check: ✅ clean
+Migrations: [master/promote only: ✅ prod in sync / ✖ prod BEHIND dev — see check:migrations | dev: n/a]
 AWS CLI:  [✅ available / ⚠️  not configured — log fetching unavailable]
 
 [If working tree was dirty, include this block:]
@@ -194,6 +213,8 @@ git log origin/master..origin/dev --oneline
 ```
 
 If there are **no commits ahead**, report: "origin/dev and origin/master are already in sync — nothing to promote." and stop.
+
+**Migration drift gate (required):** before showing the summary, run `npm run check:migrations`. If prod is behind dev, **STOP** and report the missing tables/columns — the matching migration(s) must be applied to prod (`node scripts/apply-migration-api.mjs <file> --prod` → `node scripts/refresh-db-snapshots.mjs`) before promoting, unless the user explicitly confirms the drift is intentional.
 
 Show the promote summary:
 
@@ -366,6 +387,7 @@ Option B — Force reset to previous commit (destructive):
 - **Never push without the user explicitly typing "push"** after seeing the release summary
 - **Never call Edit, Write, or any file-modifying tool before fix approval**
 - **Never push with TypeScript errors** — preflight must be clean
+- **Never release to master / promote when `npm run check:migrations` fails** — prod being behind dev means a migration wasn't applied to prod and the new code will 500. Apply it to prod first (`apply-migration-api.mjs <file> --prod`), or get the user's explicit confirmation the drift is intentional.
 - **Always show the Amplify console URL** after a successful push
 - **Always use `--force-with-lease`** if a force push is ever needed — never bare `--force`
 - **Extra confirmation for master** — always show the PRODUCTION warning prominently in the summary

@@ -4,16 +4,53 @@
   "sealedDomains": [],
   "sealedTables": [
     "announcements",
+    "basic_coach_team_announcements",
+    "basic_coach_team_events",
+    "basic_coach_team_fees",
+    "basic_coach_team_players",
     "basic_coach_team_registrations",
     "basic_coach_team_users",
     "basic_coach_teams",
     "diamonds",
     "divisions",
     "games",
+    "org_audit_log",
+    "org_internal_notes",
+    "org_member_rep_group_scopes",
+    "org_member_tournament_assignments",
+    "org_overrides",
+    "org_public_site_content",
     "org_venue_facilities",
     "org_venues",
+    "organization_members",
+    "organizations",
     "pool_slots",
     "pools",
+    "rep_allocation_installments",
+    "rep_allocation_splits",
+    "rep_budget_lines",
+    "rep_budget_periods",
+    "rep_cost_allocations",
+    "rep_document_templates",
+    "rep_dues_credits",
+    "rep_fundraiser_entries",
+    "rep_fundraisers",
+    "rep_player_documents",
+    "rep_player_dues_installments",
+    "rep_player_dues_schedules",
+    "rep_program_years",
+    "rep_roster_players",
+    "rep_season_surplus",
+    "rep_team_coaches",
+    "rep_team_event_attendance",
+    "rep_team_events",
+    "rep_team_expenses",
+    "rep_team_groups",
+    "rep_team_lineup_entries",
+    "rep_team_lineups",
+    "rep_team_payment_requests",
+    "rep_teams",
+    "rep_tryout_registrations",
     "resources",
     "rule_items",
     "rules",
@@ -52,17 +89,9 @@
     "league_teams": "pending-documentation (League / house-league)",
     "notification_preferences": "pending-documentation (Notifications & Push)",
     "notifications": "pending-documentation (Notifications & Push)",
-    "org_audit_log": "pending-documentation (Org / Platform core)",
     "org_budget_lines": "pending-documentation (Accounting)",
     "org_budget_periods": "pending-documentation (Accounting)",
-    "org_internal_notes": "pending-documentation (Org / Platform core)",
-    "org_member_rep_group_scopes": "pending-documentation (Org / Platform core)",
-    "org_member_tournament_assignments": "pending-documentation (Org / Platform core)",
-    "org_overrides": "pending-documentation (Org / Platform core)",
     "org_payees": "pending-documentation (Accounting)",
-    "org_public_site_content": "pending-documentation (Org / Platform core)",
-    "organization_members": "pending-documentation (Org / Platform core)",
-    "organizations": "pending-documentation (Org / Platform core)",
     "plan_config_overrides": "pending-documentation (Platform admin)",
     "plan_gating": "pending-documentation (Platform admin)",
     "platform_addon_catalog": "pending-documentation (Platform admin)",
@@ -80,31 +109,6 @@
     "platform_user_notes": "pending-documentation (Platform admin)",
     "platform_users": "pending-documentation (Platform admin)",
     "push_subscriptions": "pending-documentation (Notifications & Push)",
-    "rep_allocation_installments": "pending-documentation (Rep teams / team workspaces)",
-    "rep_allocation_splits": "pending-documentation (Rep teams / team workspaces)",
-    "rep_budget_lines": "pending-documentation (Rep teams / team workspaces)",
-    "rep_budget_periods": "pending-documentation (Rep teams / team workspaces)",
-    "rep_cost_allocations": "pending-documentation (Rep teams / team workspaces)",
-    "rep_document_templates": "pending-documentation (Rep teams / team workspaces)",
-    "rep_dues_credits": "pending-documentation (Rep teams / team workspaces)",
-    "rep_fundraiser_entries": "pending-documentation (Rep teams / team workspaces)",
-    "rep_fundraisers": "pending-documentation (Rep teams / team workspaces)",
-    "rep_player_documents": "pending-documentation (Rep teams / team workspaces)",
-    "rep_player_dues_installments": "pending-documentation (Rep teams / team workspaces)",
-    "rep_player_dues_schedules": "pending-documentation (Rep teams / team workspaces)",
-    "rep_program_years": "pending-documentation (Rep teams / team workspaces)",
-    "rep_roster_players": "pending-documentation (Rep teams / team workspaces)",
-    "rep_season_surplus": "pending-documentation (Rep teams / team workspaces)",
-    "rep_team_coaches": "pending-documentation (Rep teams / team workspaces)",
-    "rep_team_event_attendance": "pending-documentation (Rep teams / team workspaces)",
-    "rep_team_events": "pending-documentation (Rep teams / team workspaces)",
-    "rep_team_expenses": "pending-documentation (Rep teams / team workspaces)",
-    "rep_team_groups": "pending-documentation (Rep teams / team workspaces)",
-    "rep_team_lineup_entries": "pending-documentation (Rep teams / team workspaces)",
-    "rep_team_lineups": "pending-documentation (Rep teams / team workspaces)",
-    "rep_team_payment_requests": "pending-documentation (Rep teams / team workspaces)",
-    "rep_teams": "pending-documentation (Rep teams / team workspaces)",
-    "rep_tryout_registrations": "pending-documentation (Rep teams / team workspaces)",
     "stripe_prices": "pending-documentation (Stripe / Billing)",
     "tournament_notification_preferences": "pending-documentation (Notifications & Push)",
     "tournament_roster_players": "pending-documentation (Tournaments & Registration)"
@@ -112,6 +116,26 @@
   "acknowledgedColumns": {
     "announcements": [
       "id"
+    ],
+    "basic_coach_team_announcements": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "basic_coach_team_events": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "basic_coach_team_fees": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "basic_coach_team_players": [
+      "id",
+      "created_at",
+      "updated_at"
     ],
     "basic_coach_team_registrations": [
       "id",
@@ -136,6 +160,28 @@
     "games": [
       "id"
     ],
+    "org_audit_log": [
+      "id",
+      "created_at"
+    ],
+    "org_internal_notes": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "org_member_tournament_assignments": [
+      "id",
+      "created_at"
+    ],
+    "org_overrides": [
+      "id",
+      "created_at"
+    ],
+    "org_public_site_content": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
     "org_venue_facilities": [
       "id",
       "created_at"
@@ -145,6 +191,13 @@
       "created_at",
       "updated_at"
     ],
+    "organization_members": [
+      "id"
+    ],
+    "organizations": [
+      "id",
+      "created_at"
+    ],
     "pool_slots": [
       "id",
       "created_at"
@@ -152,6 +205,61 @@
     "pools": [
       "id",
       "created_at"
+    ],
+    "rep_document_templates": [
+      "id",
+      "created_at"
+    ],
+    "rep_player_documents": [
+      "id",
+      "created_at"
+    ],
+    "rep_program_years": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "rep_roster_players": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "rep_team_coaches": [
+      "id",
+      "created_at"
+    ],
+    "rep_team_event_attendance": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "rep_team_events": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "rep_team_groups": [
+      "id",
+      "created_at"
+    ],
+    "rep_team_lineup_entries": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "rep_team_lineups": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "rep_teams": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "rep_tryout_registrations": [
+      "id",
+      "updated_at"
     ],
     "resources": [
       "id"
@@ -207,6 +315,65 @@
     "venue_facilities": [
       "id",
       "created_at"
+    ],
+    "rep_budget_lines": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "rep_budget_periods": [
+      "id",
+      "created_at"
+    ],
+    "rep_cost_allocations": [
+      "id",
+      "created_at"
+    ],
+    "rep_allocation_splits": [
+      "id",
+      "created_at"
+    ],
+    "rep_allocation_installments": [
+      "id",
+      "created_at"
+    ],
+    "rep_player_dues_schedules": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "rep_player_dues_installments": [
+      "id",
+      "created_at"
+    ],
+    "rep_dues_credits": [
+      "id",
+      "created_at"
+    ],
+    "rep_fundraisers": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "rep_fundraiser_entries": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "rep_team_expenses": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "rep_team_payment_requests": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "rep_season_surplus": [
+      "id",
+      "created_at",
+      "updated_at"
     ]
   }
 }

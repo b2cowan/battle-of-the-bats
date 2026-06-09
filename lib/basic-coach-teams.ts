@@ -106,6 +106,11 @@ function normalizeName(name: string) {
   return name.trim().toLowerCase();
 }
 
+function cleanText(value: string | null | undefined, maxLength: number): string | null {
+  const trimmed = value?.trim() ?? '';
+  return trimmed ? trimmed.slice(0, maxLength) : null;
+}
+
 function mapBasicCoachTeam(row: BasicCoachTeamRow): BasicCoachTeam {
   return {
     id: row.id,
@@ -297,7 +302,7 @@ export async function createBasicCoachTeam(params: {
   sport?: string | null;
   ageGroup?: string | null;
 }): Promise<string> {
-  const name = params.name.trim();
+  const name = cleanText(params.name, 120);
   if (!name) throw new Error('A team name is required.');
 
   const email = normalizeEmail(params.email);
@@ -309,10 +314,10 @@ export async function createBasicCoachTeam(params: {
     .insert({
       name,
       normalized_name: normalizeName(name),
-      primary_coach_name: params.primaryCoachName?.trim() || null,
+      primary_coach_name: cleanText(params.primaryCoachName, 120),
       primary_coach_email: email,
-      sport: params.sport?.trim() || null,
-      age_group: params.ageGroup?.trim() || null,
+      sport: cleanText(params.sport, 80),
+      age_group: cleanText(params.ageGroup, 80),
       source: 'coach_created',
       created_at: now,
       updated_at: now,

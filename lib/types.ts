@@ -100,6 +100,21 @@ export interface TournamentSettings {
    * delivery channel — how these are typically sent).
    */
   payment_instructions_on_form?: boolean;
+
+  // ── Automatic coach emails ─────────────────────────────────────────────────
+  // Per-tournament on/off switches for the transactional emails sent automatically
+  // to a team's coach/contact. Absent/`true` = enabled (legacy behaviour); only an
+  // explicit `false` disables. Read via `coachEmailEnabled()` (lib/email.ts), set
+  // from Event Settings → Notifications & Contact. Do not gate the org-admin
+  // notifications or the manual send tools — these only govern the auto coach emails.
+  /** Registration confirmation / waitlist receipt sent when a coach submits a registration. */
+  coach_email_confirmation?: boolean;
+  /** "Team accepted" email sent when a team's status changes to accepted. */
+  coach_email_acceptance?: boolean;
+  /** "Registration declined" email sent when a team's status changes to rejected. */
+  coach_email_rejection?: boolean;
+  /** "Payment recorded" email sent when a team's payment_status changes to paid. */
+  coach_email_payment?: boolean;
 }
 
 /**

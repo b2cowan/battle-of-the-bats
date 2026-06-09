@@ -36,6 +36,11 @@ export const EARLY_ACCESS_FEATURE_LABELS: Record<string, string> = {
   rep_teams: 'Rep Teams',
   coach_portal: 'Coach portal',
   communications: 'Communications',
+  team_lineups: 'Team lineups',
+  team_attendance: 'Team attendance',
+  team_documents: 'Team documents',
+  team_budget: 'Team budget',
+  team_dues_automation: 'Team dues automation',
 };
 
 export const EARLY_ACCESS_SELECT = [

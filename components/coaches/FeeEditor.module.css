@@ -1,0 +1,458 @@
+/* Basic coach team manual fee ledger (free-tier Phase 4b). Mirrors the roster/schedule editors:
+   mobile-first, touch-friendly, serviceable for repeated coach use. */
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.error {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.82rem;
+  color: var(--danger);
+  background: rgba(var(--danger-rgb), 0.1);
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
+  border-radius: var(--radius-sm);
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.summaryItem {
+  min-width: 0;
+  padding: 0.7rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--highlight-top);
+}
+
+.summaryItem span {
+  display: block;
+  margin-bottom: 0.15rem;
+  font-size: 0.72rem;
+  color: var(--white-40);
+}
+
+.summaryItem strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: var(--white);
+  font-size: 1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryItem[data-tone='ok'] strong {
+  color: var(--logic-lime);
+}
+
+.summaryItem[data-tone='warn'] strong {
+  color: var(--warning);
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.blockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.blockTitle {
+  margin: 0;
+  color: var(--white);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.blockMeta {
+  color: var(--white-40);
+  font-size: 0.78rem;
+}
+
+.empty {
+  padding: 1rem;
+  text-align: center;
+  color: var(--white-60);
+  background: var(--surface);
+  border: 1px dashed var(--border-2);
+  border-radius: var(--radius);
+}
+
+.empty p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.playerList,
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.playerGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.65rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--highlight-top);
+}
+
+.playerHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.playerName {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  color: var(--white);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.playerName span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playerMeta {
+  flex-shrink: 0;
+  color: var(--logic-lime);
+  font-family: var(--font-data, monospace);
+  font-size: 0.78rem;
+}
+
+.playerTotals {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  text-align: right;
+  color: var(--white-40);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.noFees {
+  margin: 0;
+  color: var(--white-40);
+  font-size: 0.78rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.6rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.statusPaid,
+.statusUnpaid {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s, opacity 0.15s;
+}
+
+.statusPaid {
+  color: #0f1123;
+  background: var(--logic-lime);
+  border: 1px solid var(--logic-lime);
+}
+
+.statusUnpaid {
+  color: var(--white-60);
+  background: transparent;
+  border: 1px dashed var(--border-2);
+}
+
+.statusUnpaid:hover:not(:disabled) {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+}
+
+.statusPaid:disabled,
+.statusUnpaid:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.name {
+  color: var(--white);
+  font-size: 0.9rem;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  color: var(--white-40);
+  font-size: 0.73rem;
+  overflow-wrap: anywhere;
+}
+
+.rowActions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.iconBtn,
+.iconBtnDanger {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  color: var(--white-60);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.iconBtn:hover:not(:disabled) {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+}
+
+.iconBtnDanger:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: rgba(var(--danger-rgb), 0.4);
+  background: rgba(var(--danger-rgb), 0.08);
+}
+
+.iconBtn:disabled,
+.iconBtnDanger:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.addBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  border: 1px dashed rgba(var(--logic-lime-rgb), 0.4);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.addBtn:hover:not(:disabled) {
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  border-color: rgba(var(--logic-lime-rgb), 0.6);
+}
+
+.addBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.formRow {
+  list-style: none;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.9rem;
+  background: var(--surface);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  border-radius: var(--radius);
+  box-shadow: var(--glow-sm), var(--highlight-top);
+}
+
+.formTopRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.input,
+.nameInput,
+.amountInput,
+.textarea {
+  font: inherit;
+  color: var(--white);
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 0 0.7rem;
+  height: 40px;
+}
+
+.textarea {
+  padding: 0.5rem 0.7rem;
+  height: auto;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.input {
+  width: 100%;
+}
+
+.nameInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.amountInput {
+  width: 112px;
+  flex-shrink: 0;
+  font-family: var(--font-data, monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.input:focus,
+.nameInput:focus,
+.amountInput:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--logic-lime);
+  box-shadow: 0 0 0 2px rgba(var(--logic-lime-rgb), 0.2);
+}
+
+.input::placeholder,
+.nameInput::placeholder,
+.amountInput::placeholder,
+.textarea::placeholder {
+  color: var(--white-40);
+}
+
+.panelToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  align-self: flex-start;
+  padding: 0.2rem 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--logic-lime);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.panelToggle:hover {
+  text-decoration: underline;
+}
+
+.formActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.1rem;
+}
+
+.cancelBtn,
+.saveBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex: 1;
+  height: 42px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.cancelBtn {
+  color: var(--white-60);
+  background: transparent;
+  border: 1px solid var(--border-2);
+}
+
+.cancelBtn:hover:not(:disabled) {
+  color: var(--white);
+  border-color: var(--border);
+}
+
+.saveBtn {
+  color: #0f1123;
+  background: var(--logic-lime);
+  border: 1px solid var(--logic-lime);
+}
+
+.saveBtn:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.cancelBtn:disabled,
+.saveBtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (max-width: 700px) {
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
+  .playerHeader {
+    align-items: flex-start;
+  }
+
+  .playerTotals {
+    min-width: 96px;
+  }
+
+  .formTopRow {
+    flex-direction: column;
+  }
+
+  .amountInput {
+    width: 100%;
+  }
+}

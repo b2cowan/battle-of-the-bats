@@ -2,6 +2,7 @@
 
 # local dev logs
 .next-dev.log
+.next-dev.err.log
 .dev-server*.log
 
 # dependencies

@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   sendEmail,
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml,
+  coachEmailEnabled,
 } from '@/lib/email';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { getOrgOwnerEmail } from '@/lib/supabase-admin';
@@ -68,13 +69,14 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       teamId:         id,
     };
 
-    if (status === 'accepted' && current.status !== 'accepted') {
+    const coachSettings = tournamentData?.settings;
+    if (status === 'accepted' && current.status !== 'accepted' && coachEmailEnabled(coachSettings, 'acceptance')) {
       await sendEmail(current.email, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions }));
     }
-    if (status === 'rejected' && current.status !== 'rejected') {
+    if (status === 'rejected' && current.status !== 'rejected' && coachEmailEnabled(coachSettings, 'rejection')) {
       await sendEmail(current.email, `Registration Update — ${current.name}`, rejectionHtml(p));
     }
-    if (payment_status === 'paid' && current.payment_status !== 'paid') {
+    if (payment_status === 'paid' && current.payment_status !== 'paid' && coachEmailEnabled(coachSettings, 'payment')) {
       await sendEmail(current.email, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
     }
 

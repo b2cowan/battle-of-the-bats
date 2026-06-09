@@ -1,6 +1,7 @@
 import {
   sendEmail,
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml, manualTeamRegistrationHtml,
+  coachEmailEnabled,
 } from '@/lib/email';
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
@@ -382,14 +383,17 @@ export async function POST(req: Request) {
     const bulkTournamentId = (currents[0] as any)?.tournament_id;
     if (bulkTournamentId && await isTournamentLocked(bulkTournamentId)) return tournamentLockedResponse();
 
-    // Organizer-authored payment instructions (tournament-wide) for the acceptance email.
+    // Organizer-authored payment instructions (tournament-wide) for the acceptance email,
+    // plus the per-tournament automatic coach-email switches.
     let bulkPaymentInstructions: string | undefined;
+    let bulkCoachSettings: unknown = null;
     if (bulkTournamentId) {
       const { data: bulkTournament } = await supabaseAdmin
         .from('tournaments')
         .select('settings')
         .eq('id', bulkTournamentId)
         .single();
+      bulkCoachSettings = bulkTournament?.settings ?? null;
       const raw = (bulkTournament?.settings as { payment_instructions?: unknown } | null)?.payment_instructions;
       if (typeof raw === 'string') bulkPaymentInstructions = raw;
     }
@@ -463,7 +467,9 @@ export async function POST(req: Request) {
 
       const updates = item.updates;
       if (updates.status === 'accepted' && current.status !== 'accepted') {
-        await sendEmail(current.email, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions }));
+        if (coachEmailEnabled(bulkCoachSettings, 'acceptance')) {
+          await sendEmail(current.email, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions }));
+        }
         // Notify other org admins of the status change (fire-and-forget)
         notify({
           orgId: ctx.org.id,
@@ -476,7 +482,9 @@ export async function POST(req: Request) {
         }).catch(console.error);
       }
       if (updates.status === 'rejected' && current.status !== 'rejected') {
-        await sendEmail(current.email, `Registration Update — ${current.name}`, rejectionHtml(p));
+        if (coachEmailEnabled(bulkCoachSettings, 'rejection')) {
+          await sendEmail(current.email, `Registration Update — ${current.name}`, rejectionHtml(p));
+        }
         // Notify other org admins of the status change (fire-and-forget)
         notify({
           orgId: ctx.org.id,
@@ -500,7 +508,9 @@ export async function POST(req: Request) {
         }).catch(console.error);
       }
       if ((updates.payment_status === 'paid' || updates.paymentStatus === 'paid') && current.payment_status !== 'paid') {
-        await sendEmail(current.email, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
+        if (coachEmailEnabled(bulkCoachSettings, 'payment')) {
+          await sendEmail(current.email, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
+        }
         // Notify org admins of received payment (fire-and-forget)
         notify({
           orgId: ctx.org.id,

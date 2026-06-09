@@ -528,6 +528,11 @@ export async function POST(req: Request) {
         'show_fees_on_register',
         'payment_instructions',
         'payment_instructions_on_form',
+        // Automatic coach-email on/off switches
+        'coach_email_confirmation',
+        'coach_email_acceptance',
+        'coach_email_rejection',
+        'coach_email_payment',
       ]);
       const FORMAT_VALUES           = new Set(['round_robin_playoffs', 'playoff_only']);
       const RULES_LAYOUT_VALUES     = new Set(['columns', 'single']);
@@ -583,7 +588,11 @@ export async function POST(req: Request) {
           sanitized[k] = validated;
           continue;
         }
-        if (k === 'show_fees_on_register' || k === 'payment_instructions_on_form') {
+        if (
+          k === 'show_fees_on_register' || k === 'payment_instructions_on_form' ||
+          k === 'coach_email_confirmation' || k === 'coach_email_acceptance' ||
+          k === 'coach_email_rejection' || k === 'coach_email_payment'
+        ) {
           if (typeof v !== 'boolean') continue;
           sanitized[k] = v;
           continue;

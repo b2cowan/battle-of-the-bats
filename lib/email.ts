@@ -30,12 +30,13 @@ function escapeHtml(value: string): string {
     .replace(/\n/g, '<br>');
 }
 
-export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+export type SendEmailResult = { status: 'sent' | 'skipped' | 'provider_error' };
+
+export async function sendEmail(to: string, subject: string, html: string): Promise<SendEmailResult> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
-    console.warn('[email] RESEND_API_KEY not set — skipping send');
-    console.log(`[email] TO: ${to} | SUBJECT: ${subject}`);
-    return;
+    console.warn('[email] RESEND_API_KEY not set - skipping send');
+    return { status: 'skipped' };
   }
   const res = await fetch(RESEND_API, {
     method: 'POST',
@@ -45,10 +46,31 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
   if (!res.ok) {
     const err = await res.text();
     console.error('[email] Resend error:', err);
+    return { status: 'provider_error' };
   }
+  return { status: 'sent' };
 }
 
 export { ADMIN_EMAIL, SITE_URL };
+
+// ── Automatic coach-email preferences ───────────────────────────────────────────
+// Per-tournament on/off switches for the transactional emails sent to a team's
+// coach/contact. Stored as booleans under tournaments.settings (keys below).
+// Absent key === enabled, so tournaments created before this feature keep the
+// historical behavior (all automatic coach emails on).
+
+export type CoachEmailType = 'confirmation' | 'acceptance' | 'rejection' | 'payment';
+
+/**
+ * Whether a given automatic coach email is enabled for a tournament.
+ * Pass the tournament's `settings` JSONB. Defaults to true when the key is
+ * missing or `settings` is null/undefined — only an explicit `false` disables.
+ */
+export function coachEmailEnabled(settings: unknown, type: CoachEmailType): boolean {
+  const key = `coach_email_${type}`;
+  const value = (settings as Record<string, unknown> | null | undefined)?.[key];
+  return value !== false;
+}
 
 // ── Email templates ────────────────────────────────────────────────────────────
 
@@ -246,6 +268,30 @@ export function paymentReminderHtml(p: {
     </div>
     <div style="color:rgba(241,245,249,0.75);">${instructions}</div>
     <p style="color:rgba(241,245,249,0.45);font-size:0.86rem;">FieldLogicHQ records payment status for the organizer but does not process tournament payments online.</p>
+  `);
+}
+
+export function basicCoachTeamWelcomeHtml(p: {
+  teamName: string;
+  coachName?: string | null;
+  teamUrl: string;
+}) {
+  const coachName = p.coachName?.trim() || 'Coach';
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your team home is ready</h2>
+    <p>Hi <strong>${escapeEmailHtml(coachName)}</strong>,</p>
+    <p><strong>${escapeEmailHtml(p.teamName)}</strong> now has a free FieldLogicHQ team home.</p>
+    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Start with the basics</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.82);">
+        Build your roster<br>
+        Add practices and games<br>
+        Track manual team fees<br>
+        Send announcements to roster contacts
+      </p>
+    </div>
+    <a href="${escapeEmailHtml(p.teamUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Open Team Home</a>
+    <p style="color:rgba(241,245,249,0.45);font-size:0.86rem;margin-top:1.5rem;">Advanced tools like lineups, attendance, documents, budget, and dues automation can be requested from your team home.</p>
   `);
 }
 
@@ -498,7 +544,6 @@ export function leagueBroadcastHtml(p: {
   message: string;
   contactEmail?: string;
 }) {
-  const contact = p.contactEmail ?? ADMIN_EMAIL;
   const bodyLines = p.message
     .split('\n')
     .map(l => l.trim() ? `<p style="margin:0 0 0.75rem;line-height:1.6;">${l}</p>` : '<br>')
@@ -552,7 +597,6 @@ export function tryoutOfferHtml(p: {
   yearName: string;
   contactEmail?: string;
 }) {
-  const contact = p.contactEmail ?? ADMIN_EMAIL;
   return wrap(`
     <h2 style="color:#D9F99D;font-size:1.4rem;margin:0 0 1rem;">Offer Extended</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>

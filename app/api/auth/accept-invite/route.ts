@@ -59,10 +59,19 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const displayName: string | null =
-    typeof body.displayName === 'string' && body.displayName.trim()
-      ? body.displayName.trim().slice(0, 60)
-      : null;
+  const firstName = typeof body.firstName === 'string' ? body.firstName.trim().slice(0, 60) : '';
+  const lastName  = typeof body.lastName  === 'string' ? body.lastName.trim().slice(0, 60)  : '';
+  const fullName  = `${firstName} ${lastName}`.trim();
+  const displayName: string | null = fullName || null;
+
+  // Name parity with org + coach signup: persist the real name on the auth user so
+  // platform-admin support views (display_name / full_name) and email greetings
+  // (first_name) aren't blank for invited members.
+  if (firstName || lastName) {
+    await supabaseAdmin.auth.admin.updateUserById(user.id, {
+      user_metadata: { first_name: firstName, last_name: lastName, full_name: fullName, display_name: fullName },
+    });
+  }
 
   // Find the pending member row for this user.
   // Use supabaseAdmin to bypass RLS — the user's session may not yet have

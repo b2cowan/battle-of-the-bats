@@ -1,12 +1,20 @@
 /**
  * apply-migration-api.mjs
  *
- * Applies a SQL migration file to the Supabase dev project via the Management API
+ * Applies a SQL migration file to a Supabase project via the Management API
  * (/v1/projects/{ref}/database/query) — no local `pg` dependency required.
  *
- * Usage: node scripts/apply-migration-api.mjs <path-to-migration.sql>
- * Requires SUPABASE_ACCESS_TOKEN in .env.local (or the environment).
- * Targets the dev project: npgnrxaitgbtbtvvykto
+ * Usage:
+ *   node scripts/apply-migration-api.mjs <path-to-migration.sql>            # dev (default)
+ *   node scripts/apply-migration-api.mjs <path-to-migration.sql> --prod     # PRODUCTION
+ *
+ * Requires SUPABASE_ACCESS_TOKEN in .env.local (one account PAT reaches BOTH projects).
+ * Targets:  dev = npgnrxaitgbtbtvvykto   |   prod = qcttcboqysynwcdyghil
+ *
+ * NOTE: nothing runs migrations automatically — not the Amplify build, not the /release agent.
+ * After applying to EITHER env, run `node scripts/refresh-db-snapshots.mjs` so the committed
+ * snapshots + `check-prod-migration-drift.mjs` stay accurate. Apply to prod BEFORE promoting
+ * code that reads the new schema to master (else prod 500s — see the migration-040 incident).
  */
 
 import https from 'https';
@@ -32,16 +40,35 @@ function loadEnv() {
 }
 loadEnv();
 
-const PROJECT_REF = 'npgnrxaitgbtbtvvykto';
+const PROJECT_REFS = { dev: 'npgnrxaitgbtbtvvykto', prod: 'qcttcboqysynwcdyghil' };
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 if (!TOKEN) {
   console.error('SUPABASE_ACCESS_TOKEN not set in .env.local');
   process.exit(1);
 }
 
-const [, , migrationFile] = process.argv;
+// Parse args: an optional target flag (--prod | --dev | --target <env> | --env <env>) plus the
+// single positional .sql path. Default target is dev (backward-compatible with existing usage).
+let target = 'dev';
+const positionals = [];
+const argv = process.argv.slice(2);
+for (let i = 0; i < argv.length; i++) {
+  const a = argv[i];
+  if (a === '--prod' || a === '--production') target = 'prod';
+  else if (a === '--dev') target = 'dev';
+  else if (a === '--target' || a === '--env') target = (argv[++i] || '').toLowerCase();
+  else if (a.startsWith('--target=') || a.startsWith('--env=')) target = a.slice(a.indexOf('=') + 1).toLowerCase();
+  else if (a.startsWith('-')) { console.error(`Unknown flag: ${a}`); process.exit(1); }
+  else positionals.push(a);
+}
+const PROJECT_REF = PROJECT_REFS[target];
+if (!PROJECT_REF) {
+  console.error(`Invalid target "${target}" — use --dev (default) or --prod.`);
+  process.exit(1);
+}
+const migrationFile = positionals[0];
 if (!migrationFile) {
-  console.error('Usage: node scripts/apply-migration-api.mjs <path-to-migration.sql>');
+  console.error('Usage: node scripts/apply-migration-api.mjs <path-to-migration.sql> [--prod]');
   process.exit(1);
 }
 const sqlPath = path.resolve(migrationFile);
@@ -74,15 +101,21 @@ function apiQuery(query) {
   });
 }
 
-console.log(`\n📄 Applying ${path.basename(sqlPath)} to dev (${PROJECT_REF})…\n`);
+if (target === 'prod') {
+  console.log('\n⚠️  ============ APPLYING TO PRODUCTION ============ ⚠️');
+}
+console.log(`\n📄 Applying ${path.basename(sqlPath)} to ${target} (${PROJECT_REF})…\n`);
 const res = await apiQuery(sql);
 if (res.status >= 200 && res.status < 300) {
-  console.log('✅ Migration applied successfully.');
+  console.log(`✅ Migration applied successfully to ${target}.`);
   console.log(res.body && res.body !== '[]' ? `   Response: ${res.body.slice(0, 300)}` : '');
   // Data Dictionary maintenance (see docs/agents/db/DATA_DICTIONARY.md header rules):
-  console.log('\n📌 Next: refresh snapshots + update the Data Dictionary for this schema change:');
-  console.log('     • apply to PROD too (this script targets dev only), then');
+  console.log('\n📌 Next: refresh snapshots + keep the Data Dictionary in sync for this schema change:');
+  if (target === 'dev') {
+    console.log('     • apply to PROD before promoting code to master:  node scripts/apply-migration-api.mjs <file> --prod');
+  }
   console.log('     • node scripts/refresh-db-snapshots.mjs   (regenerates dev+prod snapshots + drift + coverage check)');
+  console.log('     • node scripts/check-prod-migration-drift.mjs   (verifies prod is not behind dev before a master release)');
   console.log('     • update docs/agents/db/DATA_DICTIONARY.md for any new/changed field (same unit of work).');
 } else {
   console.error(`❌ Migration failed (HTTP ${res.status}):`);

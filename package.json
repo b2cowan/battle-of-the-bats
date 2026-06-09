@@ -12,6 +12,7 @@
     "verify:changed": "node scripts/verify-changed.mjs && node scripts/check-public-tokens.mjs && node scripts/check-dictionary-coverage.mjs",
     "check:tokens": "node scripts/check-public-tokens.mjs",
     "check:dictionary": "node scripts/check-dictionary-coverage.mjs",
+    "check:migrations": "node scripts/check-prod-migration-drift.mjs",
     "refresh:snapshots": "node scripts/refresh-db-snapshots.mjs"
   },
   "dependencies": {

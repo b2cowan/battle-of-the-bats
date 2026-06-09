@@ -1,20 +1,67 @@
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarClock, ClipboardList, MessageSquare, Wallet } from 'lucide-react';
+import { CalendarClock, CircleDollarSign, Megaphone, Trophy, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
+import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import {
   getBasicCoachTeamForUser,
   getBasicCoachTournamentHistoryForTeam,
 } from '@/lib/basic-coach-teams';
+import { getBasicCoachTeamPlayers } from '@/lib/basic-coach-roster';
+import { getBasicCoachTeamEvents } from '@/lib/basic-coach-schedule';
+import { getBasicCoachTeamFees } from '@/lib/basic-coach-fees';
+import {
+  getBasicCoachTeamAnnouncementRecipientSummary,
+  getBasicCoachTeamAnnouncements,
+} from '@/lib/basic-coach-announcements';
 import {
   COACHES_HOME_PATH,
   COACHES_TOURNAMENTS_PATH,
   coachTeamPath,
 } from '@/lib/coaches-portal-routes';
+import RosterEditor from '@/components/coaches/RosterEditor';
+import ScheduleEditor from '@/components/coaches/ScheduleEditor';
+import FeeEditor from '@/components/coaches/FeeEditor';
+import AnnouncementEditor from '@/components/coaches/AnnouncementEditor';
+import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
+import LocalDateTime from '@/components/coaches/LocalDateTime';
 import shared from '../../coaches-portal.module.css';
 import styles from './team.module.css';
 
 type RouteParams = { params: Promise<{ basicTeamId: string }> };
+
+function formatCalendarDate(value: string, options: Intl.DateTimeFormatOptions): string {
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  const date = dateOnly
+    ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+    : new Date(value);
+  return date.toLocaleDateString('en-CA', options);
+}
+
+function formatMoney(amount: number): string {
+  return new Intl.NumberFormat('en-CA', {
+    style: 'currency',
+    currency: 'CAD',
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+type TeamEventSummary = {
+  startsAt: string;
+  status: string;
+};
+
+function eventStartMs(event: TeamEventSummary): number {
+  const ms = new Date(event.startsAt).getTime();
+  return Number.isFinite(ms) ? ms : Number.POSITIVE_INFINITY;
+}
+
+function findNextEvent<T extends TeamEventSummary>(events: T[]): T | null {
+  const now = Date.now();
+  return events
+    .filter(event => event.status !== 'cancelled' && eventStartMs(event) >= now)
+    .sort((a, b) => eventStartMs(a) - eventStartMs(b))[0] ?? null;
+}
 
 const STATUS_LABEL: Record<string, string> = {
   accepted: 'Accepted',
@@ -30,17 +77,6 @@ const STATUS_BADGE: Record<string, string> = {
   rejected: 'badge-danger',
 };
 
-// Free-floor (opt-C) team-management capabilities. Built in later phases — listed
-// here as honest "coming soon" so the bare-team home isn't a dead end and never
-// over-promises. These are FREE (not a Premium pitch); the pressure ladder keeps
-// pre-event surfaces pitch-free.
-const COMING_SOON: Array<{ icon: typeof ClipboardList; label: string; detail: string }> = [
-  { icon: ClipboardList, label: 'Master roster',  detail: 'Build your roster once and reuse it everywhere.' },
-  { icon: CalendarClock,  label: 'Team schedule',  detail: 'Add practices and games your parents can see.' },
-  { icon: MessageSquare,  label: 'Team messaging', detail: 'Send announcements to your roster contacts.' },
-  { icon: Wallet,         label: 'Fee tracking',   detail: 'Track who has paid against your roster.' },
-];
-
 export async function generateMetadata({ params }: RouteParams) {
   const { basicTeamId } = await params;
   // Ownership-gated: never emit a team name in <title> for a non-owner / signed-out
@@ -48,6 +84,9 @@ export async function generateMetadata({ params }: RouteParams) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.id) return { title: 'Your Team' };
+  // Staff/platform-admins are not coaches — never resolve a team name for them (mirrors the
+  // roster API guard so the page and APIs can't drift on who counts as an owner).
+  if (user.email && (await isPlatformAdminEmail(user.email))) return { title: 'Your Team' };
   const team = await getBasicCoachTeamForUser({ userId: user.id, basicCoachTeamId: basicTeamId });
   return { title: team?.name ?? 'Your Team' };
 }
@@ -62,14 +101,34 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
     redirect(`/auth/login?next=${coachTeamPath(basicTeamId)}`);
   }
 
+  // Staff/platform-admins are not coaches — exclude them here too (this is the surface that
+  // renders roster DOB / guardian contact), keeping the page consistent with the roster APIs.
+  if (await isPlatformAdminEmail(user.email)) {
+    notFound();
+  }
+
   const team = await getBasicCoachTeamForUser({ userId: user.id, basicCoachTeamId: basicTeamId });
   if (!team) {
     notFound();
   }
 
-  const history = await getBasicCoachTournamentHistoryForTeam(basicTeamId);
+  const [history, players, events, fees, announcements, announcementRecipientSummary] = await Promise.all([
+    getBasicCoachTournamentHistoryForTeam(basicTeamId),
+    getBasicCoachTeamPlayers(basicTeamId),
+    getBasicCoachTeamEvents(basicTeamId),
+    getBasicCoachTeamFees(basicTeamId),
+    getBasicCoachTeamAnnouncements(basicTeamId),
+    getBasicCoachTeamAnnouncementRecipientSummary(basicTeamId),
+  ]);
 
   const metaParts = [team.primaryCoachName, team.sport, team.ageGroup].filter(Boolean) as string[];
+  const nextEvent = findNextEvent(events);
+  const unpaidFees = fees.filter(fee => fee.status === 'unpaid');
+  const unpaidTotal = unpaidFees.reduce((total, fee) => total + fee.amount, 0);
+  const latestHistory = history[0] ?? null;
+  const latestHistoryLabel = latestHistory
+    ? `${STATUS_LABEL[latestHistory.registration.status] ?? latestHistory.registration.status} - ${latestHistory.tournament?.name ?? latestHistory.registration.name}`
+    : 'No tournaments yet';
 
   return (
     <div className={shared.page}>
@@ -85,6 +144,112 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
           </p>
         </div>
       </div>
+
+      <section className={styles.hqStrip} aria-label="Team HQ">
+        <div className={styles.hqItem}>
+          <div className={styles.hqIcon}><Users size={17} aria-hidden /></div>
+          <div>
+            <span className={styles.hqLabel}>Roster</span>
+            <strong>{players.length}</strong>
+            <p>{players.length === 1 ? '1 player' : `${players.length} players`}</p>
+          </div>
+        </div>
+        <div className={styles.hqItem}>
+          <div className={styles.hqIcon}><CalendarClock size={17} aria-hidden /></div>
+          <div>
+            <span className={styles.hqLabel}>Schedule</span>
+            <strong>{nextEvent ? 'Next' : 'None'}</strong>
+            <p>
+              {nextEvent ? (
+                <>
+                  {nextEvent.title} - <LocalDateTime value={nextEvent.startsAt} />
+                </>
+              ) : 'No upcoming events'}
+            </p>
+          </div>
+        </div>
+        <div className={styles.hqItem}>
+          <div className={styles.hqIcon}><CircleDollarSign size={17} aria-hidden /></div>
+          <div>
+            <span className={styles.hqLabel}>Fees</span>
+            <strong>{formatMoney(unpaidTotal)}</strong>
+            <p>{unpaidFees.length === 1 ? '1 unpaid fee' : `${unpaidFees.length} unpaid fees`}</p>
+          </div>
+        </div>
+        <div className={styles.hqItem}>
+          <div className={styles.hqIcon}><Megaphone size={17} aria-hidden /></div>
+          <div>
+            <span className={styles.hqLabel}>Announcements</span>
+            <strong>{announcementRecipientSummary.recipientCount}</strong>
+            <p>{announcementRecipientSummary.recipientCount === 1 ? 'contact ready' : 'contacts ready'}</p>
+          </div>
+        </div>
+        <div className={styles.hqItem}>
+          <div className={styles.hqIcon}><Trophy size={17} aria-hidden /></div>
+          <div>
+            <span className={styles.hqLabel}>Tournaments</span>
+            <strong>{history.length}</strong>
+            <p>{latestHistoryLabel}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Master roster — the coach's primary owned data; leads the page. Identity only
+          (name / jersey / optional contact / consent-gated DOB) — attendance, lineups, and
+          positions stay Premium. The per-tournament roster submission is a later phase. */}
+      <section className={shared.section}>
+        <div className={shared.sectionHeader}>
+          <h2 className={shared.sectionTitle}>Roster</h2>
+          <span className={styles.rosterCount}>
+            {players.length} {players.length === 1 ? 'player' : 'players'}
+          </span>
+        </div>
+        <RosterEditor basicTeamId={basicTeamId} initialPlayers={players} />
+      </section>
+
+      {/* Schedule — the coach's practices/games; parents are reached via comms (later slice).
+          Basic schedule only (no recurrence/scores/attendance — those stay Premium). */}
+      <section className={shared.section}>
+        <div className={shared.sectionHeader}>
+          <h2 className={shared.sectionTitle}>Schedule</h2>
+          <span className={styles.rosterCount}>
+            {events.length} {events.length === 1 ? 'event' : 'events'}
+          </span>
+        </div>
+        <ScheduleEditor basicTeamId={basicTeamId} initialEvents={events} />
+      </section>
+
+      {/* Fees - manual tracking only. No payment processing, Stripe, dues automation, or partials. */}
+      <section className={shared.section}>
+        <div className={shared.sectionHeader}>
+          <h2 className={shared.sectionTitle}>Fees</h2>
+          <span className={styles.rosterCount}>
+            {fees.filter(fee => fee.status === 'unpaid').length} unpaid
+          </span>
+        </div>
+        <FeeEditor basicTeamId={basicTeamId} initialFees={fees} players={players} />
+      </section>
+
+      {/* Announcements - one-way email to roster contact_email values only.
+          No parent accounts, chat, replies inbox, SMS/push, reminders, or Premium pitch. */}
+      <section className={shared.section}>
+        <div className={shared.sectionHeader}>
+          <h2 className={shared.sectionTitle}>Announcements</h2>
+          <span className={styles.rosterCount}>
+            {announcementRecipientSummary.recipientCount} {announcementRecipientSummary.recipientCount === 1 ? 'recipient' : 'recipients'}
+          </span>
+        </div>
+        <AnnouncementEditor
+          basicTeamId={basicTeamId}
+          initialAnnouncements={announcements}
+          initialRecipientSummary={announcementRecipientSummary}
+        />
+      </section>
+
+      {/* Scope ceiling - no checkout or unlock. Coaches can flag interest in tools that stay outside Basic. */}
+      <section className={shared.section}>
+        <ScopeCeilingInterest basicTeamId={basicTeamId} />
+      </section>
 
       {/* Tournament history — empty for a no-tournament team; never leads the page. */}
       <section className={shared.section}>
@@ -102,8 +267,8 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
               const label = STATUS_LABEL[entry.registration.status] ?? entry.registration.status;
               const dateRange = entry.tournament?.startDate
                 ? entry.tournament.endDate
-                  ? `${new Date(entry.tournament.startDate).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} - ${new Date(entry.tournament.endDate).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`
-                  : new Date(entry.tournament.startDate).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
+                  ? `${formatCalendarDate(entry.tournament.startDate, { month: 'short', day: 'numeric' })} - ${formatCalendarDate(entry.tournament.endDate, { month: 'short', day: 'numeric', year: 'numeric' })}`
+                  : formatCalendarDate(entry.tournament.startDate, { month: 'long', day: 'numeric', year: 'numeric' })
                 : null;
               return (
                 <Link
@@ -124,24 +289,6 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
             })}
           </div>
         )}
-      </section>
-
-      {/* Honest "coming soon" — the free-floor team-management tools, not a pitch. */}
-      <section className={shared.section}>
-        <div className={shared.sectionHeader}>
-          <h2 className={shared.sectionTitle}>Coming to your team home</h2>
-        </div>
-        <div className={styles.comingGrid}>
-          {COMING_SOON.map(({ icon: Icon, label, detail }) => (
-            <div key={label} className={styles.comingItem}>
-              <div className={styles.comingIcon}><Icon size={16} aria-hidden /></div>
-              <div>
-                <div className={styles.comingLabel}>{label}</div>
-                <p className={styles.comingDetail}>{detail}</p>
-              </div>
-            </div>
-          ))}
-        </div>
       </section>
     </div>
   );

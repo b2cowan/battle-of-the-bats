@@ -99,6 +99,12 @@ export default function TournamentEventSettingsPage() {
   const [resultsNotifiedAt, setResultsNotifiedAt] = useState<string | null>(null);
   const [resultsNotificationSentCount, setResultsNotificationSentCount] = useState(0);
 
+  // Automatic coach emails (per-tournament; default on so existing events are unchanged)
+  const [coachEmailConfirmation, setCoachEmailConfirmation] = useState(true);
+  const [coachEmailAcceptance, setCoachEmailAcceptance] = useState(true);
+  const [coachEmailRejection, setCoachEmailRejection] = useState(true);
+  const [coachEmailPayment, setCoachEmailPayment] = useState(true);
+
   // Contact
   const [defaultContactMemberId, setDefaultContactMemberId] = useState<string | null>(null);
   const [notifyMode, setNotifyMode] = useState<'all' | 'assigned'>('all');
@@ -122,6 +128,10 @@ export default function TournamentEventSettingsPage() {
     tieBreakers: ['h2h', 'rd', 'rf', 'ra'] as TieBreaker[],
     scorePolicyMode: 'review' as ScorePolicyMode,
     notifyTeamsOnComplete: false,
+    coachEmailConfirmation: true,
+    coachEmailAcceptance: true,
+    coachEmailRejection: true,
+    coachEmailPayment: true,
     defaultContactMemberId: null as string | null,
     notifyMode: 'all' as 'all' | 'assigned',
   });
@@ -201,6 +211,12 @@ export default function TournamentEventSettingsPage() {
         const payInstr = typeof t.settings?.payment_instructions === 'string' ? t.settings.payment_instructions : '';
         const payInstrOnForm = t.settings?.payment_instructions_on_form === true;
 
+        // Automatic coach emails — absent key means enabled (legacy behavior).
+        const ceConfirm = t.settings?.coach_email_confirmation !== false;
+        const ceAccept  = t.settings?.coach_email_acceptance !== false;
+        const ceReject  = t.settings?.coach_email_rejection !== false;
+        const cePay     = t.settings?.coach_email_payment !== false;
+
         const rawGTS = t.settings?.game_timing_scope;
         const validTimingScopes = new Set<string>(['tournament', 'allow_override', 'per_division']);
         const gts: GameTimingScope = validTimingScopes.has(rawGTS) ? rawGTS as GameTimingScope : 'tournament';
@@ -236,6 +252,10 @@ export default function TournamentEventSettingsPage() {
         setTieBreakerScope(tbs);
         setTieBreakers(safeTb);
         setNotifyTeamsOnComplete(notify);
+        setCoachEmailConfirmation(ceConfirm);
+        setCoachEmailAcceptance(ceAccept);
+        setCoachEmailRejection(ceReject);
+        setCoachEmailPayment(cePay);
         setDefaultContactMemberId(contactId);
         setNotifyMode(nm);
         setSaved(s => ({
@@ -250,6 +270,8 @@ export default function TournamentEventSettingsPage() {
           venueMoveBufferMinutes: venueMoveBuf, facilityMoveBufferMinutes: facilityMoveBuf,
           tieBreakerScope: tbs, tieBreakers: safeTb,
           notifyTeamsOnComplete: notify, defaultContactMemberId: contactId, notifyMode: nm,
+          coachEmailConfirmation: ceConfirm, coachEmailAcceptance: ceAccept,
+          coachEmailRejection: ceReject, coachEmailPayment: cePay,
         }));
       }
       const policyMode = scorePolicyModeFromValue((branding as { requireScoreFinalization?: boolean | null }).requireScoreFinalization);
@@ -377,6 +399,10 @@ export default function TournamentEventSettingsPage() {
                   show_fees_on_register: showFeesOnRegister,
                   payment_instructions: paymentInstructions.trim(),
                   payment_instructions_on_form: paymentInstructionsOnForm,
+                  coach_email_confirmation: coachEmailConfirmation,
+                  coach_email_acceptance: coachEmailAcceptance,
+                  coach_email_rejection: coachEmailRejection,
+                  coach_email_payment: coachEmailPayment,
                 },
               },
             }),
@@ -424,6 +450,7 @@ export default function TournamentEventSettingsPage() {
           venueMoveBufferMinutes, facilityMoveBufferMinutes,
           tieBreakerScope, tieBreakers: [...tieBreakers],
           scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
+          coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
         }));
         refreshTournaments();
         setSaveStatus('saved');
@@ -442,6 +469,7 @@ export default function TournamentEventSettingsPage() {
     totalFeeAmount, totalFeeDueDate, tournamentId, tournamentName, tournamentFormat,
     tournamentYear, venueMoveBufferMinutes,
     showFeesOnRegister, paymentInstructions, paymentInstructionsOnForm,
+    coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
   ]);
 
   // ── Auto-save effect — fires 1.2 s after any non-status, non-slug change ──
@@ -462,6 +490,7 @@ export default function TournamentEventSettingsPage() {
     venueMoveBufferMinutes, facilityMoveBufferMinutes,
     tieBreakers, tieBreakerScope,
     scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
+    coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
   ]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -1188,6 +1217,46 @@ export default function TournamentEventSettingsPage() {
               <p className={styles.inheritNote}>
                 Divisions without an assigned contact always notify tournament admins regardless of this setting.
               </p>
+            </div>
+          </div>
+
+          <hr className={styles.cardDivider} />
+
+          {/* Automatic Coach Emails */}
+          <div>
+            <p className={styles.subSectionLabel}>Automatic Coach Emails</p>
+            <p className={styles.descriptionText} style={{ marginBottom: '0.85rem' }}>
+              These transactional emails are sent automatically to a team&apos;s coach/contact. Turn any off to manage that
+              communication yourself — your manual tools (announcements, payment reminders, resend access) are unaffected.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              {([
+                ['Registration received', 'Sent to the coach when they submit a registration (confirmation or waitlist receipt).', coachEmailConfirmation, setCoachEmailConfirmation] as const,
+                ['Team accepted', 'Sent when a team is accepted into the tournament.', coachEmailAcceptance, setCoachEmailAcceptance] as const,
+                ['Registration declined', 'Sent when a registration is declined.', coachEmailRejection, setCoachEmailRejection] as const,
+                ['Payment recorded', 'Sent when a team is marked as paid.', coachEmailPayment, setCoachEmailPayment] as const,
+              ]).map(([label, desc, value, setValue]) => (
+                <div key={label} className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className={styles.subSectionLabel} style={{ margin: 0 }}>{label}</p>
+                    <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>{desc}</p>
+                  </div>
+                  <div className={styles.segmentedControl} role="radiogroup" aria-label={`${label} email`}>
+                    {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
+                      <button
+                        key={String(val)}
+                        type="button"
+                        role="radio"
+                        aria-checked={value === val}
+                        onClick={() => setValue(val)}
+                        className={`${styles.segmentButton} ${value === val ? styles.segmentButtonActive : ''}`}
+                      >
+                        {lbl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

@@ -22,7 +22,8 @@ function AcceptInviteForm() {
 
   const [pageState, setPageState] = useState<PageState>('waiting');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [inviteContext, setInviteContext] = useState<InviteContext | null>(null);
@@ -62,6 +63,10 @@ function AcceptInviteForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!firstName.trim() || !lastName.trim()) {
+      setErrorMsg('Enter your first and last name.');
+      return;
+    }
     if (password.length < 8) {
       setErrorMsg('Password must be at least 8 characters.');
       return;
@@ -81,7 +86,7 @@ function AcceptInviteForm() {
     const res = await fetch('/api/auth/accept-invite', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ displayName: displayName.trim() || null }),
+      body: JSON.stringify({ firstName: firstName.trim(), lastName: lastName.trim() }),
     });
     const data = await res.json();
 
@@ -157,19 +162,36 @@ function AcceptInviteForm() {
             {introCopy}
           </p>
           <form onSubmit={handleSubmit} className={styles.form}>
-            <div className="form-group">
-              <label className="form-label" htmlFor="accept-name">Your Name <span style={{ fontWeight: 400, color: 'var(--data-gray)', fontSize: '0.75em' }}>(optional)</span></label>
-              <input
-                id="accept-name"
-                type="text"
-                className="form-input"
-                value={displayName}
-                onChange={e => setDisplayName(e.target.value)}
-                placeholder="e.g. Alex Smith"
-                maxLength={60}
-                autoComplete="name"
-                autoFocus
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="accept-first-name">First Name</label>
+                <input
+                  id="accept-first-name"
+                  type="text"
+                  className="form-input"
+                  value={firstName}
+                  onChange={e => setFirstName(e.target.value)}
+                  placeholder="Jordan"
+                  maxLength={60}
+                  autoComplete="given-name"
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="accept-last-name">Last Name</label>
+                <input
+                  id="accept-last-name"
+                  type="text"
+                  className="form-input"
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                  placeholder="Lee"
+                  maxLength={60}
+                  autoComplete="family-name"
+                  required
+                />
+              </div>
             </div>
             <div className="form-group">
               <label className="form-label" htmlFor="accept-password">Password</label>

@@ -406,6 +406,22 @@ id (uuid), email_key NOT NULL, subject NOT NULL, recipient_org_id (uuid) → org
 
 ## Module: Other
 
+### basic_coach_team_announcements
+id (uuid), basic_coach_team_id (uuid) → basic_coach_teams.id NOT NULL, subject NOT NULL, body NOT NULL, recipient_count (integer), sent_count (integer), failed_count (integer), status, sent_at, created_by_user_id (uuid), created_at, updated_at
+- Indexes: basic_coach_team_announcements_team_idx
+
+### basic_coach_team_events
+id (uuid), basic_coach_team_id (uuid) → basic_coach_teams.id NOT NULL, event_type, title NOT NULL, opponent, location, starts_at NOT NULL, ends_at, notes, status, created_by_user_id (uuid), created_at, updated_at
+- Indexes: basic_coach_team_events_team_idx
+
+### basic_coach_team_fees
+id (uuid), basic_coach_team_id (uuid) → basic_coach_teams.id NOT NULL, player_id (uuid) → basic_coach_team_players.id, label NOT NULL, amount (numeric), status, marked_paid_at, notes, display_order (integer), created_by_user_id (uuid), created_at, updated_at
+- Indexes: basic_coach_team_fees_player_idx, basic_coach_team_fees_team_idx
+
+### basic_coach_team_players
+id (uuid), basic_coach_team_id (uuid) → basic_coach_teams.id NOT NULL, name NOT NULL, jersey_number, date_of_birth, guardian_name, contact_email, contact_phone, notes, display_order (integer), created_by_user_id (uuid), created_at, updated_at
+- Indexes: basic_coach_team_players_team_idx
+
 ### basic_coach_teams
 id (uuid), name NOT NULL, normalized_name NOT NULL, primary_coach_name, primary_coach_email NOT NULL, sport, age_group, source, team_workspace_id (uuid) → team_workspaces.id, created_at, updated_at
 - Indexes: basic_coach_teams_primary_email_idx, basic_coach_teams_workspace_idx
@@ -434,7 +450,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) →
 
 ## Tables by count
 
-Total: **103 tables** across 10 modules.
+Total: **107 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -445,4 +461,4 @@ Total: **103 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 6 tables
+- Other: 10 tables

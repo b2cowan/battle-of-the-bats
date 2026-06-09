@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createBasicCoachTeam } from '@/lib/basic-coach-teams';
+import { coachTeamPath } from '@/lib/coaches-portal-routes';
+import { basicCoachTeamWelcomeHtml, sendEmail, SITE_URL } from '@/lib/email';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
+}
+
+function cleanText(value: unknown, maxLength: number): string {
+  return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
 }
 
 async function requireCoachUser() {
@@ -19,8 +25,10 @@ async function requireCoachUser() {
   // un-selectable in the tournament register form).
   const md = (user.user_metadata ?? {}) as Record<string, unknown>;
   const pick = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : '');
-  const name = pick(md.full_name) || pick(md.display_name)
-    || `${pick(md.first_name)} ${pick(md.last_name)}`.trim() || null;
+  const name = cleanText(
+    pick(md.full_name) || pick(md.display_name) || `${pick(md.first_name)} ${pick(md.last_name)}`.trim(),
+    120,
+  ) || null;
   return { id: user.id, email: user.email, name };
 }
 
@@ -42,14 +50,12 @@ export async function POST(req: NextRequest) {
       ageGroup?: unknown;
     };
 
-    const name = typeof body.name === 'string' ? body.name.trim() : '';
+    const name = cleanText(body.name, 120);
     if (!name) return json({ error: 'A team name is required.' }, 400);
 
-    const primaryCoachName = typeof body.primaryCoachName === 'string' && body.primaryCoachName.trim()
-      ? body.primaryCoachName.trim()
-      : null;
-    const sport = typeof body.sport === 'string' && body.sport.trim() ? body.sport.trim() : null;
-    const ageGroup = typeof body.ageGroup === 'string' && body.ageGroup.trim() ? body.ageGroup.trim() : null;
+    const primaryCoachName = cleanText(body.primaryCoachName, 120) || null;
+    const sport = cleanText(body.sport, 80) || null;
+    const ageGroup = cleanText(body.ageGroup, 80) || null;
 
     const id = await createBasicCoachTeam({
       userId: user.id,
@@ -60,6 +66,20 @@ export async function POST(req: NextRequest) {
       sport,
       ageGroup,
     });
+
+    try {
+      await sendEmail(
+        user.email,
+        `Your team home is ready - ${name}`,
+        basicCoachTeamWelcomeHtml({
+          teamName: name,
+          coachName: primaryCoachName ?? user.name,
+          teamUrl: `${SITE_URL}${coachTeamPath(id)}`,
+        }),
+      );
+    } catch (emailError) {
+      console.error('[coaches teams POST] welcome email error:', emailError);
+    }
 
     return json({ ok: true, id });
   } catch (error) {

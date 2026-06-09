@@ -4,6 +4,7 @@ import {
   paymentConfirmationHtml,
   rejectionHtml,
   sendEmail,
+  coachEmailEnabled,
 } from '@/lib/email';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
@@ -42,7 +43,7 @@ type TournamentRow = {
   fee_schedule_mode: string | null;
   deposit_amount: number | null;
   total_fee_amount: number | null;
-  settings: { payment_instructions?: unknown } | null;
+  settings: Record<string, unknown> | null;
 };
 
 type DivisionFeeRow = {
@@ -127,7 +128,7 @@ async function releaseTeamSlot(team: TeamRow) {
   await supabaseAdmin.from('pool_slots').update({ team_id: null }).eq('id', team.slot_id);
 }
 
-async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournamentName: string, divisions: Map<string, DivisionFeeRow>, paymentInstructions?: string) {
+async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournamentName: string, divisions: Map<string, DivisionFeeRow>, paymentInstructions?: string, coachSettings?: unknown) {
   if (action !== 'accept' && action !== 'reject' && action !== 'mark_paid') return;
 
   for (const team of teams) {
@@ -141,13 +142,13 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
       teamId: team.id,
     };
 
-    if (action === 'accept' && team.status !== 'accepted') {
+    if (action === 'accept' && team.status !== 'accepted' && coachEmailEnabled(coachSettings, 'acceptance')) {
       await sendEmail(team.email, `Your Team Has Been Accepted - ${team.name}`, acceptanceHtml({ ...payload, paymentInstructions }));
     }
-    if (action === 'reject' && team.status !== 'rejected') {
+    if (action === 'reject' && team.status !== 'rejected' && coachEmailEnabled(coachSettings, 'rejection')) {
       await sendEmail(team.email, `Registration Update - ${team.name}`, rejectionHtml(payload));
     }
-    if (action === 'mark_paid' && team.payment_status !== 'paid') {
+    if (action === 'mark_paid' && team.payment_status !== 'paid' && coachEmailEnabled(coachSettings, 'payment')) {
       await sendEmail(team.email, `Payment Recorded - ${team.name}`, paymentConfirmationHtml(payload));
     }
   }
@@ -260,7 +261,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const paymentInstructions = typeof tournament.settings?.payment_instructions === 'string'
     ? tournament.settings.payment_instructions
     : undefined;
-  await sendStatusEmails(selectedTeams, bulkAction, tournament.name, divisions, paymentInstructions);
+  await sendStatusEmails(selectedTeams, bulkAction, tournament.name, divisions, paymentInstructions, tournament.settings);
 
   // Notify org admins of bulk status / payment changes (fire-and-forget, one notification per operation)
   const count = selectedTeams.length;

@@ -378,8 +378,15 @@ gate becomes a confirm, and the roster is upgrade-ready (decision 1).
 - **How much rep-portal pattern transfers?** The *public* app-shell pattern transfers better than the
   rep `/[orgSlug]/coaches/` admin-style shell; reuse public primitives.
 - **Roster required vs optional / eligibility validation / edit-lock timing?** Edit-lock = until
-  `roster_confirmed_at` (recommended); DOB→age validation deferred (Gate plan). Required-vs-optional
-  to confirm at Phase C kickoff.
+  `roster_confirmed_at` (recommended); DOB→age validation deferred (Gate plan). **RESOLVED 2026-06-09
+  (owner-approved):** required-vs-optional is **organizer-controlled at tournament level** via a new
+  roster-requirements set in the tournament settings JSONB (`require roster/DOB/jersey/waiver`,
+  min/max players) authored in Event Settings — it drives (and hides) the coach Team-HQ checklist +
+  the C-snapshot submit fields + the gate confirm. Applies **only at the per-event submission**; the
+  free master roster (`basic_coach_team_players`, built Phase 3) stays identity-only + DOB
+  optional/consent-gated regardless. Tournament-level for V1; **per-division override deferred**
+  (would follow the Divisions-UX inheritance model). Scheduled in unified-plan **Phase 5** beside
+  C-snapshot.
 - **Light↔paid data continuity?** RESOLVED (decision 1) — persistent master roster on the team
   profile, snapshot per event, upgrade-ready via `team_workspace_id`.
 - **Coach on multiple teams?** RESOLVED (decision 2) — multi-team-first shell + Team HQ; team switcher.

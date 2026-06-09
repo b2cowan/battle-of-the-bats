@@ -19,3 +19,4 @@
 - [Help documentation planning rule](help-documentation-planning.md)
 - [Standalone Team workspace](standalone-team-workspace.md)
 - [Coaches Portal unified product](coaches-portal-unified-product.md)
+- [Free Tier strategy project](project_free_tier_strategy.md)

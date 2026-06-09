@@ -129,6 +129,7 @@ export default function StartTeamForm({ isLoggedIn, email }: { isLoggedIn: boole
               onChange={e => setTeamName(e.target.value)}
               placeholder="e.g. Milton U13 Mavericks"
               required
+              maxLength={120}
               autoComplete="off"
             />
           </div>

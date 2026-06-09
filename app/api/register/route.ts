@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { sendEmail, registrationConfirmationHtml, waitlistConfirmationHtml, adminNotificationHtml, ADMIN_EMAIL } from '@/lib/email';
+import { sendEmail, registrationConfirmationHtml, waitlistConfirmationHtml, adminNotificationHtml, ADMIN_EMAIL, coachEmailEnabled } from '@/lib/email';
 import { getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { getTournamentRegistrationFields, saveTournamentRegistrationFieldAnswers } from '@/lib/db';
 import { hasPlanFeature } from '@/lib/plan-features';
@@ -37,6 +37,7 @@ type TournamentRow = {
   public_hidden_pages: unknown;
   default_contact_member_id: string | null;
   notify_mode: string | null;
+  settings: Record<string, unknown> | null;
 };
 
 type DivisionRow = {
@@ -235,7 +236,7 @@ export async function POST(req: NextRequest) {
         .maybeSingle<DivisionRow>(),
       supabaseAdmin
         .from('tournaments')
-        .select('id, name, contact_email, org_id, status, public_hidden_pages, default_contact_member_id, notify_mode')
+        .select('id, name, contact_email, org_id, status, public_hidden_pages, default_contact_member_id, notify_mode, settings')
         .eq('id', tournamentId)
         .maybeSingle<TournamentRow>(),
     ]);
@@ -484,20 +485,27 @@ export async function POST(req: NextRequest) {
       ? divisionMemberEmail
       : (tournamentDefaultMemberEmail || tournament.contact_email || footerContactEmail || ADMIN_EMAIL);
 
-    await Promise.allSettled([
-      sendEmail(
-        email,
-        isWaitlist ? `Waitlist Confirmation - ${teamName}` : `Registration Received - ${teamName}`,
-        isWaitlist
-          ? waitlistConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail })
-          : registrationConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, coachEmail: email })
-      ),
+    // The admin notification always fires; the coach confirmation respects the
+    // per-tournament "automatic coach emails" switch (Settings → Notifications & Contact).
+    const emailSends = [
       sendEmail(
         adminEmailToUse,
         `New Registration: ${teamName} (${divisionName})${isWaitlist ? ' - Waitlist' : ''}`,
         adminNotificationHtml({ teamName, coachName, email, divisionName, tournamentName })
       ),
-    ]);
+    ];
+    if (coachEmailEnabled(tournament.settings, 'confirmation')) {
+      emailSends.push(
+        sendEmail(
+          email,
+          isWaitlist ? `Waitlist Confirmation - ${teamName}` : `Registration Received - ${teamName}`,
+          isWaitlist
+            ? waitlistConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail })
+            : registrationConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, coachEmail: email })
+        )
+      );
+    }
+    await Promise.allSettled(emailSends);
 
     // Notify org admins via bell / push / email per their preferences (fire-and-forget)
     if (tournament.org_id && organization?.slug) {

@@ -1,0 +1,126 @@
+/* Basic coach scope-ceiling interest panel (free-tier Phase 4d).
+   No checkout or unlock; just a light signal for beyond-Basic team tools. */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--highlight-top);
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.copy h3 {
+  margin: 0;
+  color: var(--white);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.copy p {
+  margin: 0;
+  max-width: 54rem;
+  color: var(--white-60);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  min-height: 38px;
+  padding: 0 0.7rem;
+  color: var(--white-60);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.option input {
+  accent-color: var(--logic-lime);
+}
+
+.option:has(input:checked) {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.42);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+}
+
+.error,
+.success {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+}
+
+.error {
+  color: var(--danger);
+  background: rgba(var(--danger-rgb), 0.1);
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
+}
+
+.success {
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  min-height: 42px;
+  padding: 0 0.95rem;
+  color: #0f1123;
+  background: var(--logic-lime);
+  border: 1px solid var(--logic-lime);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter 0.15s, opacity 0.15s;
+}
+
+.button:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (max-width: 700px) {
+  .options {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .button {
+    width: 100%;
+  }
+}

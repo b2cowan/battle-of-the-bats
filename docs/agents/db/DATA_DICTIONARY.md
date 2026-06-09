@@ -2,7 +2,7 @@
 
 > **Owned by:** `/db` (field lookups, operational queries) + `/dba` (architecture, migrations, snapshots). **Never archived** — this is a living agent reference.
 > **What this is:** the *semantic* layer — for each meaningful column, **what it means, what reads/writes it (file:line), how it relates to other fields, and its gotchas**. Structure (types/constraints) is owned by the JSON snapshots; this doc does **not** restate it.
-> **Current as of:** code commit `ad9dc66` (branch `feat/free-tier-coaches`) · schema snapshot **2026-06-08** (103 tables, dev+prod). `file:line` refs are relative to that commit — re-verify if the tree has moved (see the branch-drift note below).
+> **Current as of:** code commit `5479605` (branch `feat/free-tier-coaches`) · schema snapshot **2026-06-09** (dev 104 / prod 103 tables). `file:line` refs are relative to that commit — re-verify if the tree has moved (see the branch-drift note below). _(Tournaments & Registration + Coaches domains were originally authored at `ad9dc66`; the Org / Platform core and Rep teams / team workspaces — operations half — domains were verified at `5479605`.)_
 > **Companions:** [schema-snapshots/](schema-snapshots/) (structure — the authoritative source) · [DB_ARCHITECTURE_REVIEW.md](DB_ARCHITECTURE_REVIEW.md) (design-level findings) · [DRIFT_dev_vs_prod.md](schema-snapshots/DRIFT_dev_vs_prod.md) (dev≠prod catalogue).
 
 ---
@@ -28,6 +28,328 @@ This doc is kept non-stale by `scripts/check-dictionary-coverage.mjs` (wired int
 ```
 
 (Anchors inside code fences like this one are ignored — only real anchors on their own line count.) A table is **sealed** once every one of its live columns is documented or waived; after that, a future migration adding a column to it fails the check until triaged.
+
+---
+
+# Domain: Org / Platform core
+
+The **tenant backbone**: an **organization** is the root every other domain FKs into. **organization_members** is the RBAC layer (role + per-member capability overrides), narrowed by two scope join tables (**org_member_tournament_assignments**, **org_member_rep_group_scopes**). **org_overrides** holds timed entitlement grants (comps/trials/addons). **org_audit_log** records org-member changes; **org_internal_notes** and **org_public_site_content** carry platform-admin CRM notes and the public-facing org-home content. The recurring trap: the org's **public contact email is NOT on `organizations`** — it lives on `org_public_site_content`.
+
+### Gotchas first (the cross-cutting traps)
+
+- **`organizations` has NO `contact_email` — and the code reads it anyway.** All three org mappers read `r.contact_email` off a `select('*')` of a column that doesn't exist (`mapOrg` [lib/db.ts:2497](../../../lib/db.ts#L2497), plus `lib/server-organizations.ts` / `lib/api-auth.ts`), so `Organization.contactEmail` is **always `null`** on the normal org paths. The real public contact email is `org_public_site_content.contact_email`, injected onto the org row only on the `team-org-links` path.
+- **Two "internal notes" stores.** The scalar `organizations.internal_notes` (text) is **legacy + a UAT sentinel** (`[UAT_PROTECTED]`); the real platform-admin notes feature is the separate `org_internal_notes` **table** (soft-deletable, audited).
+- **`account_kind='team_workspace'` (or `plan_id='team'`) = a shadow org** backing a standalone Team workspace — filtered out of normal org listings, link discovery, and pickers. See the Coaches domain (`team_workspaces.workspace_org_id → organizations.id`).
+- **RBAC role enum lives in code, not the DB.** `organization_members.role` has **no CHECK**; the 8-value domain is the `OrgRole` TS union ([lib/types.ts:12](../../../lib/types.ts#L12)). `role='owner'` is a hard super-user bypass; `capabilities` (jsonb) is an additive **and subtractive** per-member override layer.
+- **Member "scoping" is absence-means-unrestricted.** Both scope tables (tournament assignments, rep-group scopes) *narrow* a member; a member with **zero** scope rows is unrestricted, and owners/admins skip scoping entirely.
+- **`org_member_tournament_assignments` is NOT wired to `tournaments.notify_mode`.** It scopes **`staff`-role** notification recipients ([lib/notify.ts:124-141](../../../lib/notify.ts#L124)) and `/api/admin/*` tournament access — a different mechanism from the Phase-1 `notify_mode='assigned'` contact-member routing.
+- **`org_overrides` (timed grants) is INERT by default.** Enforcement (`applyEntitlementGrants`) is a no-op unless `ENTITLEMENT_GRANTS_ENABLED==='true'` (default off). When on, only `module_addon` + `subscription_status` take effect (start/expiry/revoke **are** enforced — superseding DBA Findings #22–24's pre-mig-109 state); `comp_period`/`plan_tier` carry no access effect, and `suppress_billing` has **zero readers**.
+- **Two audit logs, two scopes.** `org_audit_log` (this domain) records org-member changes, owner-readable. Platform-admin mutations (overrides, internal notes, …) log to `platform_audit_log` (a later phase) — *not* here.
+- **Dev/prod:** all 8 Org/Platform-core tables are **zero-drift** (snapshot 2026-06-09) — column-, constraint-, and RLS-identical across dev+prod.
+
+---
+
+## `organizations`
+<!-- dict:table:organizations -->
+
+**Purpose:** the **tenant root** — one row per workspace at `/{slug}/`, and the FK target the entire schema hangs off. Carries identity, the plan/billing/Stripe state, module entitlements, branding defaults, visibility flags, and the org-vs-team-workspace discriminator. Hydrated to the `Organization` type by `mapOrg` ([lib/db.ts:2472](../../../lib/db.ts#L2472)) and two near-duplicate mappers (`lib/server-organizations.ts`, `lib/api-auth.ts`).
+
+**Gotchas (read first):**
+1. **No `contact_email` column** — `mapOrg` reads `r.contact_email` ([lib/db.ts:2497](../../../lib/db.ts#L2497)) off a column that doesn't exist, so `Organization.contactEmail` is always `null`. Real value lives on `org_public_site_content.contact_email`.
+2. **`plan_id` default `'starter'` is LEGACY** — not a valid `OrgPlan` (`tournament|team|tournament_plus|league|club`, [lib/types.ts:1](../../../lib/types.ts#L1)). `createOrganization` always writes a real key (default `'tournament'`, [lib/db.ts:2407](../../../lib/db.ts#L2407)); a row left at `'starter'` misses `PLAN_CONFIG` and falls back to a tournament limit of 1. Treat `'starter'` as a dead default.
+3. **`internal_notes` (scalar) ≠ `org_internal_notes` (table).** The scalar is legacy + the `[UAT_PROTECTED]` seed-protection sentinel; no live UI writes it.
+4. **`account_kind='team_workspace'` = a shadow org.** The predicate `account_kind==='team_workspace' || plan_id==='team'` is `isTeamWorkspaceOrgRow` ([lib/team-org-links.ts:345](../../../lib/team-org-links.ts#L345)); its negation `isNormalLinkableOrg` ([:341](../../../lib/team-org-links.ts#L341), which *also* requires `is_discoverable !== false`) is the actual org-link **discovery** gate. The same shadow-org test also gates coaching-assignment, ownership-transfer targets, and dev pickers. `team_workspace_status` is set only for these rows.
+5. **Six columns are NOT on the `Organization` type** (subsystem-only — read/written directly, never via `mapOrg`): `billing_suspended_at`, `billing_suspension_reason`, `internal_notes`, `pdf_settings`, `email_marketing_opt_out`, `email_opt_out_at`.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:organizations.name -->
+**`name`** (text, NOT NULL) — display name. _Writes:_ `createOrganization` ([lib/db.ts:2418](../../../lib/db.ts#L2418)), org-settings PATCH.
+
+<!-- dict:col:organizations.slug -->
+**`slug`** (text, NOT NULL, UNIQUE) — the `/{slug}/` URL segment + primary org lookup key (`getOrganizationBySlug`, [lib/db.ts:2288](../../../lib/db.ts#L2288)). Generated collision-safe by `generateUniqueOrgSlug`; rename is uniqueness-guarded on save.
+
+<!-- dict:col:organizations.logo_url -->
+**`logo_url`** (text, nullable) — org logo; per-event `tournaments.logo_url` overrides it. _Writes:_ [app/api/admin/org-logo/route.ts](../../../app/api/admin/org-logo/route.ts).
+
+<!-- dict:col:organizations.plan_id -->
+**`plan_id`** (text, NOT NULL, default `'starter'`) — billing tier (`OrgPlan`). Feeds `getEffectiveTournamentLimit` + `hasModuleEntitlement`. Default `'starter'` is legacy (gotcha 2); `'team'` is the standalone Coaches/Team tier. _Writes:_ `updateOrgSubscription` ([lib/db.ts:2457-2464](../../../lib/db.ts#L2457)), onboarding-plan route.
+
+<!-- dict:col:organizations.stripe_customer_id -->
+<!-- dict:col:organizations.stripe_subscription_id -->
+<!-- dict:col:organizations.subscription_status -->
+<!-- dict:col:organizations.subscription_period -->
+<!-- dict:col:organizations.current_period_end -->
+<!-- dict:col:organizations.rep_team_subscription_item_id -->
+**Stripe / subscription block** (`stripe_customer_id`, `stripe_subscription_id`, `subscription_status`, `subscription_period`, `current_period_end`, `rep_team_subscription_item_id`) — Stripe linkage + subscription state. `subscription_status` (no DB CHECK; code domain `active|trialing|past_due|canceled`, [lib/types.ts:13](../../../lib/types.ts#L13)) defaults `'active'`; `subscriptionStatus==='canceled'` hard-disables module entitlements ([lib/module-entitlements.ts:15](../../../lib/module-entitlements.ts#L15)) and blocks public tournament context ([lib/public-tournament-data.ts:60](../../../lib/public-tournament-data.ts#L60)). **Main writer = the Stripe webhook** ([app/api/billing/webhook/route.ts](../../../app/api/billing/webhook/route.ts): `subscription.updated/created` ~:233, `payment_succeeded`→active ~:528, `payment_failed`→`past_due` ~:557, `subscription.deleted`→`canceled`+null ~:466); also `updateOrgSubscription` ([lib/db.ts:2457-2464](../../../lib/db.ts#L2457)). *(Billing-flow narrative + the `stripe_prices` table → the Stripe/Billing phase; these columns are documented here.)*
+
+<!-- dict:col:organizations.billing_suspended_at -->
+<!-- dict:col:organizations.billing_suspension_reason -->
+**`billing_suspended_at` / `billing_suspension_reason`** (timestamptz / text, nullable) — suspension audit stamp; set on subscription deletion, cancel-confirm, and platform-admin cancel; cleared on team-workspace reactivation. **Not on the `Organization` type** (subsystem-only).
+
+<!-- dict:col:organizations.tournament_limit -->
+**`tournament_limit`** (int, NOT NULL, default 1) — stored cap. The hydrated `Organization.tournamentLimit` is **never the raw column** — it's always clamped through `getEffectiveTournamentLimit(plan_id, tournament_limit)` in all three mappers ([lib/db.ts:2485](../../../lib/db.ts#L2485), [lib/plan-config.ts](../../../lib/plan-config.ts)). (Platform-admin bulk-ops reads the raw column directly.) _Writes:_ `createOrganization`, `updateOrgSubscription`, onboarding-plan.
+
+<!-- dict:col:organizations.is_public -->
+**`is_public`** (bool, NOT NULL, default true) — gates the **org-home/league** landing pages ([app/[orgSlug]/page.tsx:17](../../../app/[orgSlug]/page.tsx#L17)) and the public tournaments feed; **does NOT gate tournament pages or registration** ([lib/public-tournament-data.ts:57](../../../lib/public-tournament-data.ts#L57)). Force-cleared to `false` on cancel/suspend. _Writes:_ org-settings PATCH.
+
+<!-- dict:col:organizations.is_discoverable -->
+**`is_discoverable`** (bool, NOT NULL, default true; partial index `WHERE email_marketing_opt_out=true` is a *different* column — this one is unindexed) — gates whether the org appears in the **team→org link directory/search** ([lib/team-org-links.ts:341](../../../lib/team-org-links.ts#L341)); shadow orgs are provisioned `false`. **Not** editable via org-settings (distinct from `is_public`).
+
+<!-- dict:col:organizations.require_score_finalization -->
+**`require_score_finalization`** (bool, NOT NULL, default false) — org default for the score-lock workflow; `tournaments.require_score_finalization` overrides per-event ([lib/public-tournament-data.ts:51](../../../lib/public-tournament-data.ts#L51)). _Writes:_ org-settings PATCH.
+
+<!-- dict:col:organizations.onboarding_completed_at -->
+**`onboarding_completed_at`** (timestamptz, nullable) — first-run onboarding gate; set once (idempotent on null) by `complete-onboarding`.
+
+<!-- dict:col:organizations.theme_preset -->
+<!-- dict:col:organizations.theme_primary -->
+<!-- dict:col:organizations.theme_accent -->
+<!-- dict:col:organizations.theme_font -->
+<!-- dict:col:organizations.theme_card_style -->
+<!-- dict:col:organizations.hero_banner_url -->
+**Branding block** (`theme_preset` default `'platform'`, `theme_primary`, `theme_accent`, `theme_font` default `'system'`, `theme_card_style` default `'default'`, `hero_banner_url`) — org-level branding **defaults that each `tournament` overrides per-event** (the same-named Phase-1 block). Custom hex + non-system font require a **paid plan** (org-settings PATCH gates on plan ≠ `tournament`). _Writes:_ [app/api/admin/org-settings/route.ts](../../../app/api/admin/org-settings/route.ts), `org-hero-banner`.
+
+<!-- dict:col:organizations.enabled_addons -->
+**`enabled_addons`** (jsonb, NOT NULL, default `'[]'`) — granted **module capabilities**, OR'd with the plan tier: `hasModuleEntitlement` is true if the cap is in `PLAN_CONFIG[plan].moduleEntitlements` **or** `enabledAddons.includes(cap)` ([lib/module-entitlements.ts:14-20](../../../lib/module-entitlements.ts#L14)). **Key catalog** = `Capability` module keys ([lib/roles.ts:21-28](../../../lib/roles.ts#L21)): `module_tournaments`, `module_communications`, `module_members` (core/default-on), `module_public_site`, `module_accounting`, `module_house_league`, `module_rep_teams` (premium/default-off). _Writes:_ platform-admin addons PATCH + bulk-ops. (No separate `AddonId` type — addon keys *are* the module capability strings.)
+
+<!-- dict:col:organizations.internal_notes -->
+**`internal_notes`** (text, nullable) — **legacy** scalar note + the `[UAT_PROTECTED]` seed-protection sentinel (`app/api/dev/seed/*`). Superseded by the `org_internal_notes` table (gotcha 3); no live UI writer found. **Not on the `Organization` type.**
+
+<!-- dict:col:organizations.pdf_settings -->
+**`pdf_settings`** (jsonb, nullable, default `'{}'`) — org-level PDF report template config. **Key catalog** (`OrgPdfSettings`, [lib/export/pdf.ts:19-46](../../../lib/export/pdf.ts#L19)): `headerLine1`/`headerLine2`, `footerText`, `showDateStamp`/`showPageNumbers`/`showBranding` (free plan forces branding on), `orientation`, `accentColor`, `logoDataUrl`, `reportDensity`, `includeGuardianContacts`/`includePlayerNotes`/`includeInternalNotes`. _Reads/writes:_ [app/api/admin/org/pdf-settings/route.ts](../../../app/api/admin/org/pdf-settings/route.ts). **Not on the `Organization` type.**
+
+<!-- dict:col:organizations.account_kind -->
+**`account_kind`** (text, NOT NULL, default `'organization'`; CHECK `organization|team_workspace`) — real org vs team-workspace shadow org (gotcha 4). _Writes:_ `createOrganization` ([lib/db.ts:2422](../../../lib/db.ts#L2422)).
+
+<!-- dict:col:organizations.team_workspace_status -->
+**`team_workspace_status`** (text, nullable; CHECK NULL or `active|linked|org_owned|archived`) — lifecycle of a shadow org; set only when `account_kind='team_workspace'`. _Writes:_ team-checkout (`active`), org-link (`linked`), ownership-transfer (`org_owned`).
+
+<!-- dict:col:organizations.email_marketing_opt_out -->
+<!-- dict:col:organizations.email_opt_out_at -->
+**`email_marketing_opt_out` / `email_opt_out_at`** (bool default false, partial-indexed `idx_organizations_email_opt_out WHERE true` / timestamptz) — marketing-email suppression; `email-sender.ts` skips sends when true. _Writes:_ `/unsubscribe` route (set), `email/resubscribe` (clear). **Not on the `Organization` type** (email subsystem only).
+
+---
+
+## `organization_members`
+<!-- dict:table:organization_members -->
+
+**Purpose:** the **org membership + RBAC row** — one per `(organization_id, user_id)`. Identity key is `user_id` (NOT email). Drives the entire admin authorization model: `role` → default capability set, `capabilities` jsonb → per-member overrides, narrowed by the two scope join tables.
+
+**Gotchas (read first):**
+1. **`role` has no DB CHECK — the enum is `OrgRole` in code** (8 values: `owner|admin|staff|official|league_admin|league_registrar|treasurer|coach`, [lib/types.ts:12](../../../lib/types.ts#L12)). DB default `'admin'` is effectively dead (every insert passes an explicit role). The **invitable** subset is narrower (`admin|staff|official|league_admin|league_registrar|treasurer`); `owner`/`coach` are set by other flows.
+2. **`role='owner'` short-circuits authorization before capabilities are read** — `hasCapability` returns true unconditionally ([lib/roles.ts:82](../../../lib/roles.ts#L82)), and owners skip both scope tables (unrestricted).
+3. **`capabilities` is additive *and subtractive*.** An explicit `capabilities[cap]` (true OR false) **wins** over the role default; absent → role default ([lib/roles.ts:83-85](../../../lib/roles.ts#L83)). Owner-only to edit.
+4. **`mapMember` maps only 6 of 10 columns** ([lib/db.ts:2504](../../../lib/db.ts#L2504)) — it drops `capabilities`, `status`, `display_name`, `title`; the `OrganizationMember` type lacks them too. The members admin API reads them via its own select.
+5. **Suspended = unauthenticated platform-wide.** `getAuthContext` filters `.neq('status','suspended')` ([lib/api-auth.ts:87](../../../lib/api-auth.ts#L87)) → a suspended member gets 401 (not 403) on every `/api/admin/*` route. **Last-owner protection** blocks deleting/demoting/suspending the final owner.
+6. **One-org-per-user is enforced in app code, not schema** — invite rejects a user already in any other org. The DB UNIQUE is only `(organization_id, user_id)`.
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:organization_members.organization_id -->
+**`organization_id`** (FK → organizations.id, NOT NULL) — owning org; every membership query scopes on it.
+
+<!-- dict:col:organization_members.user_id -->
+**`user_id`** (FK → auth.users, NOT NULL, ON DELETE CASCADE) — the identity key (NOT email); email resolved via `auth.admin.getUserById` (auth.users isn't PostgREST-joinable). Deleting the auth user cascades the member row + its scope rows.
+
+<!-- dict:col:organization_members.role -->
+**`role`** (text, NOT NULL, default `'admin'`, **no CHECK**) — `OrgRole` (gotcha 1). Capability defaults per role in `ROLE_DEFAULTS` ([lib/roles.ts:30-66](../../../lib/roles.ts#L30)). `coach` routes the user to the premium Coaches Portal; PATCH role-change is limited to `admin|staff|official` and can never promote to owner.
+
+<!-- dict:col:organization_members.capabilities -->
+**`capabilities`** (jsonb, nullable) — per-member capability overrides (gotcha 3); `Record<Capability, boolean> | null`, sanitized to `ALL_CAPABILITY_KEYS`, empty→null. **Key catalog** = the `Capability` union ([lib/roles.ts:3-28](../../../lib/roles.ts#L3)): action caps (`create_tournaments`, `manage_registrations`, `manage_schedule_structure`, `update_schedule`, `submit_scores`, `check_in_teams`, `manage_contacts`, `post_announcements`, `post_rules`, `send_communications`, `seal_tournaments`, `manage_members`, `org_settings`, `billing`) + module gates (`module_tournaments`/`_communications`/`_members` default-on; `module_public_site`/`_accounting`/`_house_league`/`_rep_teams` default-off). Owner-only PATCH; **not written at invite time** (new members run on role defaults).
+
+<!-- dict:col:organization_members.status -->
+**`status`** (text, NOT NULL, default `'active'`; CHECK `invited|active|suspended`) — lifecycle: `invited` (pending-invite insert) → `active` (accept, or direct-add of an existing auth user) → `suspended`/`active` (owner-only toggle). Auth filters non-suspended; notification recipients filter `'active'` ([lib/notify.ts:122](../../../lib/notify.ts#L122)); owners can't be suspended.
+
+<!-- dict:col:organization_members.invited_at -->
+<!-- dict:col:organization_members.accepted_at -->
+**`invited_at`** (timestamptz, NOT NULL, default now()) / **`accepted_at`** (timestamptz, nullable) — invite-sent (refreshed on re-invite) / invite-accepted (NULL = pending; set on accept or immediate direct-add).
+
+<!-- dict:col:organization_members.display_name -->
+<!-- dict:col:organization_members.title -->
+**`display_name`** (text, nullable, CHECK len≤60) / **`title`** (text, nullable, CHECK len≤80) — member-facing name + role/title labels (UI only — members table). **Not used for registration contact routing** (that resolves the member's *auth* email via `getMemberEmail`).
+
+---
+
+## `org_member_rep_group_scopes`
+<!-- dict:table:org_member_rep_group_scopes -->
+
+**Purpose:** a **many-to-many join** restricting a non-privileged member to specific **rep-team groups**. Composite PK `(member_id, group_id)` — no surrogate id. **Absence of any row = unrestricted.**
+
+**Gotchas (read first):**
+1. **Scoping applies only to non-owner/admin/treasurer** — `getAuthContextWithRole` returns `repGroupIds:null` (unrestricted) for those roles and skips the query; for everyone else, rows → `repGroupIds` array, **zero rows → null (still unrestricted)** ([lib/api-auth.ts:145-154](../../../lib/api-auth.ts#L145)).
+2. **A scope grants both visibility AND edit** to those groups' rep teams: `repGroupScopeGuard` 403s on out-of-scope teams (and blocks scoped members from **ungrouped** teams), and list routes filter `.in('group_id', repGroupIds)`.
+3. **Edits are owner+admin only** — replace-all (delete+insert), validated against the caller's org's groups, audited as `rep_group_scope_changed` in `org_audit_log`.
+
+**Fields:**
+
+<!-- dict:col:org_member_rep_group_scopes.member_id -->
+**`member_id`** (FK → organization_members.id, PK part, indexed) — the scoped member.
+
+<!-- dict:col:org_member_rep_group_scopes.group_id -->
+**`group_id`** (FK → rep_team_groups.id, PK part) — the granted rep-team group (**forward-link to the Rep domain**, documented later).
+
+---
+
+## `org_member_tournament_assignments`
+<!-- dict:table:org_member_tournament_assignments -->
+
+**Purpose:** scopes a non-owner member to specific **tournaments** — UNIQUE `(org_member_id, tournament_id)`. Same **absence-means-unrestricted** semantics as rep-group scopes.
+
+**Gotchas (read first):**
+1. **NOT the `notify_mode='assigned'` mechanism.** Phase-1 `notify_mode` resolves the division-vs-tournament *contact-member* email and never touches this table. This table's notify consumer is `lib/notify.ts`, which scopes **`staff`-role** recipients to their assigned tournaments ([lib/notify.ts:124-141](../../../lib/notify.ts#L124)) — owners/admins unrestricted, zero rows → unrestricted.
+2. **Also gates `/api/admin/*` tournament access** — `getAuthContextWithScope` returns `assignedTournamentIds` (null for owner / for zero rows), and `scopeGuard` 403s when the list is non-null and excludes the tournament ([lib/api-auth.ts:192-250](../../../lib/api-auth.ts#L192)).
+3. **Owners can't be assigned**; write requires `manage_members`, replace-all semantics, IDs validated to the caller's org. CASCADE-cleaned when the member's auth user is deleted.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:org_member_tournament_assignments.org_member_id -->
+**`org_member_id`** (FK → organization_members.id, NOT NULL, indexed) — the scoped member.
+
+<!-- dict:col:org_member_tournament_assignments.tournament_id -->
+**`tournament_id`** (FK → tournaments.id, NOT NULL, indexed) — the assigned tournament.
+
+---
+
+## `org_overrides`
+<!-- dict:table:org_overrides -->
+
+**Purpose:** **timed entitlement grants** — a platform admin grants an org a time-boxed access change (comp / trial / addon / status). Extended for timed grants in migration 109 (added `target`, `starts_at`, `suppress_billing`; CHECK widened to add `module_addon` + `plan_tier`).
+
+**Gotchas (read first):**
+1. **Enforcement is INERT by default.** `applyEntitlementGrants` is a no-op unless `ENTITLEMENT_GRANTS_ENABLED==='true'` ([lib/entitlement-grants.ts:23](../../../lib/entitlement-grants.ts#L23), [:95](../../../lib/entitlement-grants.ts#L95)). Wired into the org-build paths (`api-auth`, `db.ts`, `server-organizations`) but with the flag off (default) **no override has any access effect**.
+2. **Start/expiry/revoke ARE enforced when on** — `isOverrideActive` requires `revoked_at IS NULL && starts_at<=now && expires_at>now` ([lib/entitlement-grants.ts:41-49](../../../lib/entitlement-grants.ts#L41)); revert is implicit (fall back to base plan, no cron). This **supersedes DBA Findings #22–24** (which described the pre-mig-109 state).
+3. **Only 2 of 4 types have access effect.** `computeEffectiveEntitlements` handles `module_addon` (union `target.addons` into `enabledAddons`, [:71](../../../lib/entitlement-grants.ts#L71)) and `subscription_status` (force status, [:78](../../../lib/entitlement-grants.ts#L78)); `comp_period` is billing/founding-season-only, `plan_tier` is deferred (the write route even **rejects** creating a `plan_tier` override).
+4. **`target.status`/`target.plan` are never written** — only `target.addons`. So the `subscription_status` reader always falls back to the legacy **`value`** column ([:80](../../../lib/entitlement-grants.ts#L80)).
+5. **`suppress_billing` has NO reader** — written + echoed to the audit payload, never consumed. Inert.
+6. **Mutations log to `platform_audit_log`, not `org_audit_log`** (POST `create_override`, DELETE `revoke_override`). `created_by`/`revoked_by` are free-text identity strings — a platform-admin email, or the literal `'system'` for the founding-season auto-grant ([app/api/auth/signup/route.ts:166](../../../app/api/auth/signup/route.ts#L166), [app/api/org/create/route.ts:92](../../../app/api/org/create/route.ts#L92)) — not FKs. (Those `'system'` grants are `comp_period`, so they're inert for access per gotcha 3 — founding-season free access isn't delivered through this enforcement path.)
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:org_overrides.org_id -->
+**`org_id`** (FK → organizations.id ON DELETE CASCADE, NOT NULL) — the granted org; every query filters on it (partial index `idx_org_overrides_org_active` covers `WHERE revoked_at IS NULL`).
+
+<!-- dict:col:org_overrides.type -->
+**`type`** (text, NOT NULL; CHECK `subscription_status|comp_period|module_addon|plan_tier`) — grant discriminant (gotcha 3).
+
+<!-- dict:col:org_overrides.value -->
+**`value`** (text, nullable) — scalar grant value: the status string for `subscription_status` (the live reader path, gotcha 4); `null`/`'granted'` for `comp_period`; `null` for `module_addon` (data is in `target`).
+
+<!-- dict:col:org_overrides.target -->
+**`target`** (jsonb, nullable) — structured params. **Only key ever written: `addons: string[]`** (validated against `module_public_site|module_house_league|module_accounting|module_rep_teams`). `{status}`/`{plan}` exist in the `OverrideTarget` TS type but are never persisted.
+
+<!-- dict:col:org_overrides.reason -->
+**`reason`** (text, NOT NULL) — required human justification (blank rejected); shown in the admin UI.
+
+<!-- dict:col:org_overrides.created_by -->
+<!-- dict:col:org_overrides.revoked_by -->
+**`created_by`** (text, NOT NULL) / **`revoked_by`** (text, nullable) — free-text actor strings (admin email, or `'system'` for founding-season auto-grants), not FKs (gotcha 6).
+
+<!-- dict:col:org_overrides.starts_at -->
+<!-- dict:col:org_overrides.expires_at -->
+<!-- dict:col:org_overrides.revoked_at -->
+**`starts_at`** (timestamptz, NOT NULL, default now()) / **`expires_at`** (timestamptz, nullable) / **`revoked_at`** (timestamptz, nullable) — the active window (gotcha 2). `starts_at` is never set explicitly (always now() — no future-dating); `revoked_at` is set on manual early termination (active-grant queries filter `.is('revoked_at', null)`). Founding-season grants use a fixed `expires_at` of `2027-01-01`.
+
+<!-- dict:col:org_overrides.suppress_billing -->
+**`suppress_billing`** (bool, NOT NULL, default false) — intended to suppress Stripe billing during a comp; **currently has no reader** (gotcha 5).
+
+---
+
+## `org_audit_log`
+<!-- dict:table:org_audit_log -->
+
+**Purpose:** the **org-scoped audit trail** of organization-member changes (role/capability/status/scope/membership). Distinct from `platform_audit_log` (platform-admin-wide, later phase). Owner-readable via `/api/admin/members/audit`.
+
+**Gotchas (read first):**
+1. **Written from exactly 3 org-member routes** (`invite`, member `[memberId]` PATCH/DELETE), all as fire-and-forget un-awaited inserts (failures silently ignored). No central audit helper — each call site inlines the insert.
+2. **`actor_id`/`target_id` are uuids → `auth.users` but UNCONSTRAINED (no FK)** — resolved to emails at read time (`'Deleted user'` for purged accounts; null actor → `'System'`). `member_removed` is logged *after* the auth user is hard-deleted, so the email is captured into `payload.email` first.
+3. **Append-only** — no revoke/soft-delete; rows vanish only via org-delete cascade.
+
+**Action catalog (verified write sites, `app/api/admin/members/{invite,[memberId]}/route.ts`):** `member_invited` `{email,role}` · `member_removed` `{email,role}` · `role_changed` `{before,after}` · `capabilities_changed` `{before,after}` · `member_suspended`/`member_reinstated` `{}` · `rep_group_scope_changed` `{groupIds}`.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:org_audit_log.org_id -->
+**`org_id`** (FK → organizations.id, NOT NULL, indexed `(org_id, created_at DESC)`) — owning org; reads filter on it.
+
+<!-- dict:col:org_audit_log.actor_id -->
+<!-- dict:col:org_audit_log.target_id -->
+**`actor_id`** (uuid, nullable, no FK) / **`target_id`** (uuid, nullable, no FK) — the acting user / the affected member's `user_id` (gotcha 2).
+
+<!-- dict:col:org_audit_log.action -->
+**`action`** (text, NOT NULL) — the event type (see catalog).
+
+<!-- dict:col:org_audit_log.payload -->
+**`payload`** (jsonb, nullable) — per-action detail (shapes in the catalog); read raw + summarized in the audit UI.
+
+---
+
+## `org_internal_notes`
+<!-- dict:table:org_internal_notes -->
+
+**Purpose:** **platform-admin CRM notes about an org** — structured, timestamped, soft-deletable support notes. The real notes feature (vs. the legacy scalar `organizations.internal_notes`); backfilled from that scalar in migration 054.
+
+**Gotchas (read first):**
+1. **Distinct from `organizations.internal_notes`** (the scalar is legacy + UAT sentinel). The org list page counts table rows and only falls back to the scalar when there are zero.
+2. **Created/updated/deleted-by are EMAIL strings, not FKs** (admin email, fallback `'platform-admin'`; `'migration_054'` on backfilled rows).
+3. **Soft-delete** — DELETE is an UPDATE setting `deleted_at` + `deleted_by_email`; all reads filter `.is('deleted_at', null)` (two partial indexes split live vs. deleted rows).
+4. **Mutations log to `platform_audit_log`.** Read = any platform admin; write = `manage_support` permission. Body ≤ 4000 chars.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:org_internal_notes.org_id -->
+**`org_id`** (FK → organizations.id ON DELETE CASCADE, NOT NULL) — owning org; the partial indexes lead on it.
+
+<!-- dict:col:org_internal_notes.body -->
+**`body`** (text, NOT NULL) — the note text (≤4000, trimmed, non-empty).
+
+<!-- dict:col:org_internal_notes.created_by_email -->
+<!-- dict:col:org_internal_notes.updated_by_email -->
+<!-- dict:col:org_internal_notes.deleted_at -->
+<!-- dict:col:org_internal_notes.deleted_by_email -->
+**`created_by_email`** (NOT NULL) / **`updated_by_email`** (nullable) / **`deleted_at`** (timestamptz, nullable — soft-delete tombstone) / **`deleted_by_email`** (nullable) — authorship + soft-delete audit, all email strings (gotcha 2).
+
+---
+
+## `org_public_site_content`
+<!-- dict:table:org_public_site_content -->
+
+**Purpose:** the editable copy + display toggles for an org's **public home page** (the Public Site module) — one row per org (UNIQUE `org_id`, strict 1:1). **Holds the org's public `contact_email`** that `organizations` lacks. Mapped by `getOrgPublicSiteContent` / `upsertOrgPublicSiteContent` ([lib/db.ts:2046-2092](../../../lib/db.ts#L2046)).
+
+**Gotchas (read first):**
+1. **This is where the org public contact email lives** — `organizations` has no `contact_email` (domain gotcha). Surfaced as the public "Contact Us" `mailto:`. The general `Organization.contactEmail` is *not* hydrated from here (it's a dead read on the org row, always null); only the `team-org-links` path injects this value onto an org row.
+2. **The `contact_email` ILIKE is a reverse lookup** — `findLinkableOrg` does `.ilike('contact_email', value)` against this table to find the owning org by a coach/team's contact email ([lib/team-org-links.ts:311-318](../../../lib/team-org-links.ts#L311)). Orgs with no row / null email are unreachable; duplicates resolve arbitrarily (`.limit(1)`).
+3. **Missing row = soft defaults, never an error** — `getOrgPublicSiteContent` returns null, and consumers treat null as "sections on" (`!== false`). An org with no row still renders a public home.
+4. **Upsert wipes unsupplied fields to null** — it's a full-row upsert (`onConflict: 'org_id'`), not a partial patch; the PATCH route always sends the complete form.
+5. **League/Club only** — both GET and PATCH gate on `module_public_site` (capability + entitlement), granted only to League and Club plans. Tournament/Tournament-Plus get the generic FieldLogicHQ-branded fallback home; the editor is invisible.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:org_public_site_content.org_id -->
+**`org_id`** (FK → organizations.id ON DELETE CASCADE, NOT NULL, UNIQUE) — owning org; the real access/lookup key (1:1).
+
+<!-- dict:col:org_public_site_content.tagline -->
+**`tagline`** (text, nullable) — short hero headline below the org name (≤100 chars, server-clamped).
+
+<!-- dict:col:org_public_site_content.description -->
+**`description`** (text, nullable) — the longer "About" hero paragraph (≤1000 chars).
+
+<!-- dict:col:org_public_site_content.contact_email -->
+**`contact_email`** (text, nullable) — the org's **public** contact email (gotchas 1–2); ≤254 chars, no server-side format validation (HTML `type=email` only).
+
+<!-- dict:col:org_public_site_content.social_instagram -->
+<!-- dict:col:org_public_site_content.social_facebook -->
+<!-- dict:col:org_public_site_content.social_x -->
+<!-- dict:col:org_public_site_content.social_website -->
+**Social block** (`social_instagram`, `social_facebook`, `social_x` [Twitter/X], `social_website`) — outbound links rendered in the public hero; **https-only**, sanitized server-side (`/^https:\/\/.+/`, ≤500 chars, else stored null).
+
+<!-- dict:col:org_public_site_content.show_upcoming_tournaments -->
+<!-- dict:col:org_public_site_content.show_archives_link -->
+**`show_upcoming_tournaments`** / **`show_archives_link`** (bool, NOT NULL, default true) — public-home section toggles (gated `!== false`, so null = shown); the archives link additionally requires archives to exist.
+
+---
+
+*End of Org / Platform core domain. `organizations` carries the Stripe/billing **columns** documented here; the Stripe/Billing phase adds the `stripe_prices` table + the billing-flow narrative. `platform_audit_log` (where override + internal-note mutations are logged) and the `platform_*`/`plan_*` control plane are the Platform-admin phase. `rep_team_groups` (FK target of `org_member_rep_group_scopes.group_id`) is the Rep domain.*
 
 ---
 
@@ -105,7 +427,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`public_hidden_pages`** (jsonb, NOT NULL, default `'[]'`) — array of **hidden** `PublicPageKey` (`news|schedule|standings|teams|rules|register`, [lib/public-pages.ts:4](../../../lib/public-pages.ts#L4)). **Dual purpose** — nav visibility (`isPublicPageEnabled`) **and** registration gate (gotcha 1). `normalizeHiddenPublicPages` filters to known keys. _Dev/prod:_ identical (both default `'[]'`).
 
 <!-- dict:col:tournaments.settings -->
-**`settings`** (jsonb, NOT NULL, default `'{}'`) — schema-less per-tournament prefs; new keys need no migration (add to `TournamentSettings`, [lib/types.ts:28](../../../lib/types.ts#L28)). Merge-patched via `updateTournamentSettings` (read-merge-write). **Key catalog:** `format` (`round_robin_playoffs|playoff_only`), `rulesLayout` (`columns|single`), `resourcesLayout` (`list|grid`), `game_duration_minutes` (default 90, read in `resolveGameTiming`), `buffer_minutes` (default 15), `schedule_travel_venue_buffer_minutes`, `schedule_travel_facility_buffer_minutes`, `game_timing_scope`, `tie_breakers`, `tie_breaker_scope`, `fee_scope` (incl. `'free'`; shadows `fee_schedule_mode`), `show_fees_on_register`, `payment_instructions`, `payment_instructions_on_form`. **Gotcha:** `playoff_game_duration_minutes` is **NOT** here anymore — removed by mig 112 in favor of per-game `games.duration_minutes`.
+**`settings`** (jsonb, NOT NULL, default `'{}'`) — schema-less per-tournament prefs; new keys need no migration (add to `TournamentSettings`, [lib/types.ts:28](../../../lib/types.ts#L28)). Merge-patched via `updateTournamentSettings` (read-merge-write). **Key catalog:** `format` (`round_robin_playoffs|playoff_only`), `rulesLayout` (`columns|single`), `resourcesLayout` (`list|grid`), `game_duration_minutes` (default 90, read in `resolveGameTiming`), `buffer_minutes` (default 15), `schedule_travel_venue_buffer_minutes`, `schedule_travel_facility_buffer_minutes`, `game_timing_scope`, `tie_breakers`, `tie_breaker_scope`, `fee_scope` (incl. `'free'`; shadows `fee_schedule_mode`), `show_fees_on_register`, `payment_instructions`, `payment_instructions_on_form`, `coach_email_confirmation`, `coach_email_acceptance`, `coach_email_rejection`, `coach_email_payment` (per-tournament on/off for the automatic transactional coach emails — absent/`true` = enabled; only explicit `false` disables; read via `coachEmailEnabled` [lib/email.ts], set in Event Settings → Notifications & Contact). **Gotcha:** `playoff_game_duration_minutes` is **NOT** here anymore — removed by mig 112 in favor of per-game `games.duration_minutes`.
 
 <!-- dict:col:tournaments.logo_url -->
 <!-- dict:col:tournaments.hero_banner_url -->
@@ -769,7 +1091,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 
 ---
 
-*End of Tournaments & Registration domain. Deferred (active free-tier work): `tournament_roster_players` + the not-yet-built `basic_coach_team_players` (the master-roster ↔ per-event-snapshot pair lands with free-tier Phase 3). Remaining domains (Org/Platform core, Rep teams, League, Accounting, Stripe/Billing, Platform admin, CRM, Notifications & Push) are enumerated in [DATA_DICTIONARY_PLAN.md](../../projects/active/DATA_DICTIONARY_PLAN.md) §5.*
+*End of Tournaments & Registration domain. Deferred (active free-tier work): `tournament_roster_players` (the per-event snapshot — documented when the Phase 5 submit/snapshot lands); its persistent master `basic_coach_team_players` is now built + documented in the Coaches / basic-teams domain (free-tier Phase 3, mig 114). Remaining domains (Org/Platform core, Rep teams, League, Accounting, Stripe/Billing, Platform admin, CRM, Notifications & Push) are enumerated in [DATA_DICTIONARY_PLAN.md](../../projects/active/DATA_DICTIONARY_PLAN.md) §5.*
 
 ---
 
@@ -783,7 +1105,7 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 - **One surviving exact-email path** — `getPendingTournamentRegistrationForUser` matches `teams.email` by **exact normalized equality** (`normalizeEmail(...) === email`, [lib/basic-coach-teams.ts:220](../../../lib/basic-coach-teams.ts#L220)), **not `ILIKE`**. This is the "claim my tournament registration" flow; it then creates an explicit link row.
 - **Coach↔tournament linkage is a ROW**, keyed on `teams.id` — `basic_coach_team_registrations` (`tournament_team_id` UNIQUE). Never an email match. (Migration 092 removed the old `'email_fallback'` access path entirely.)
 - **The 4 workspace tables (`team_workspaces`, `team_org_links`, `team_workspace_claims`, `team_entitlements`) are RLS-enabled but have NO client policies** — service-role (`supabaseAdmin`) only. `workspace_org_id` is the **required RLS tenancy anchor** for all four ([DB_ARCHITECTURE_REVIEW.md:316](DB_ARCHITECTURE_REVIEW.md)).
-- **Dev/prod: zero drift** across all 7 tables (snapshot 2026-06-08).
+- **Dev/prod drift:** the original 3 `basic_coach_*` + 4 workspace tables are zero-drift (snapshot 2026-06-08). The free-tier branch's new Basic-floor tables are **dev-only until the branch deploys** — `basic_coach_team_players` (mig 114), `basic_coach_team_events` (115), `basic_coach_team_fees` (116), and `basic_coach_team_announcements` (117). This is intentional, not a bug.
 
 ---
 
@@ -874,6 +1196,183 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 
 <!-- dict:col:basic_coach_team_registrations.link_source -->
 **`link_source`** (text, NOT NULL, CHECK `explicit|registration_flow|backfill`) — provenance. **Default-vs-code mismatch:** column default is `'explicit'`, but every call site passes `'registration_flow'` (the default is effectively dead). `'email_fallback'` was removed in mig 092.
+
+---
+
+## `basic_coach_team_players`
+<!-- dict:table:basic_coach_team_players -->
+
+**Purpose:** the **persistent master roster** for a free Basic team (free-tier Phase 3, mig 114). The coach enters players **once** on the org-less team home (`/coaches/team/[basicTeamId]`) and reuses them across events. **Identity only** — name / jersey # / optional guardian contact / optional DOB / note + a display order. The free coach floor's substance.
+
+**Gotchas (read first):**
+1. **Dev-only until deploy.** Mig 114 is applied to **dev**; prod does not have this table yet (it lands when `feat/free-tier-coaches` merges to master). Expect it in `DRIFT_dev_vs_prod.md` as a dev-only table — that drift is **intentional**, not a bug.
+2. **Identity-only, by policy.** NO attendance, lineups, positions, dues, or documents columns — those are **Premium** and must never be added here (FT strategy §10; "roster fields scoped to Basic", §12). `display_order` is list ordering, **not** a lineup/batting order.
+3. **`date_of_birth` is privacy-gated minor PII.** Optional + purpose-driven (division eligibility). The editor never shows it by default — it's behind an explicit opt-in with a guardian-consent acknowledgment (FT §5/§14). A *persisted* consent audit trail is deferred to Phase 8; today the gate is UI-enforced only.
+4. **Ownership = `basic_coach_team_users` membership**, same as the rest of the family — there is no `org_id` and no per-row owner column beyond the team FK. RLS-enabled with **no policies** = `supabaseAdmin` only; the API gates on `userOwnsBasicCoachTeam` ([lib/basic-coach-roster.ts](../../../lib/basic-coach-roster.ts)).
+5. **Snapshot source for Phase 5.** Column shape (single `name`, `jersey_number` text, `date_of_birth` date) deliberately mirrors `tournament_roster_players` (mig 110) so the per-event submit/snapshot is a clean copy; the back-link (`source_player_id` on the snapshot table) lands in Phase 5, not here.
+6. **Upgrade-ready.** When a Basic team upgrades, the master seeds the paid workspace roster via `basic_coach_teams.team_workspace_id` (a per-program-year shape-translation, wired in a later phase) — no rebuild required.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:basic_coach_team_players.basic_coach_team_id -->
+**`basic_coach_team_id`** (FK → `basic_coach_teams.id` ON DELETE CASCADE, NOT NULL) — the team; the only structural anchor (no `org_id`).
+
+<!-- dict:col:basic_coach_team_players.name -->
+**`name`** (text, NOT NULL) — player display name, single field (NOT split first/last — matches the `tournament_roster_players` snapshot target).
+
+<!-- dict:col:basic_coach_team_players.jersey_number -->
+**`jersey_number`** (text, nullable) — jersey #; **text** so leading zeros / non-numeric are allowed (mirrors `tournament_roster_players`).
+
+<!-- dict:col:basic_coach_team_players.date_of_birth -->
+**`date_of_birth`** (date, nullable) — **privacy-gated minor PII** (gotcha 3). Optional, purpose-driven; never a default editor field.
+
+<!-- dict:col:basic_coach_team_players.guardian_name -->
+<!-- dict:col:basic_coach_team_players.contact_email -->
+<!-- dict:col:basic_coach_team_players.contact_phone -->
+**`guardian_name` / `contact_email` / `contact_phone`** (text, nullable) — optional guardian/parent contact. Powers Phase 4 basic team comms (announce to parents; parents are contacts, not accounts). All optional.
+
+<!-- dict:col:basic_coach_team_players.notes -->
+**`notes`** (text, nullable) — coach free-text note (e.g. "left-handed", allergy reminder — coach-discretion, not a structured medical field).
+
+<!-- dict:col:basic_coach_team_players.display_order -->
+**`display_order`** (int, NOT NULL, default `0`) — coach-controlled list order (gotcha 2); lower sorts first. Written by the reorder endpoint.
+
+<!-- dict:col:basic_coach_team_players.created_by_user_id -->
+**`created_by_user_id`** (uuid, nullable, **no FK** — mirrors `tournament_roster_players`) — audit of who added the player.
+
+---
+
+## `basic_coach_team_events`
+<!-- dict:table:basic_coach_team_events -->
+
+**Purpose:** the **lightweight schedule** for a free Basic team (free-tier Phase 4, mig 115). A coach adds practices/games on the org-less team home; parents (roster contacts) are reached via comms (Phase 4c), not by logging in. The flattened, org-less cousin of the Premium `rep_team_events` power-calendar.
+
+**Gotchas (read first):**
+1. **Dev-only until deploy** (mig 115, applied to dev). Expect it in `DRIFT_dev_vs_prod.md` until `feat/free-tier-coaches` merges to master.
+2. **Basic-grade by policy.** NO scores, attendance, lineups, recurrence engine, or tournament-game nesting — all Premium (`rep_team_events` carries `recurrence_rule` jsonb, `home_score`/`away_score`/`result`, a `rep_team_event_attendance` child, and org/program-year scoping; **none** of that here).
+3. **`opponent` is free text, no FK.** A basic team only knows itself — unlike `league_games` (home/away team FKs). Structured matchups are Premium.
+4. **No recurrence.** Each session is its own row. If "weekly practice" is wanted cheaply later, add a no-FK `recurrence_group_id uuid` like `league_practices` — not rep's jsonb engine.
+5. **Ownership = `basic_coach_team_users` membership** (same as the rest of the family); no `org_id`. RLS-enabled, no policies = `supabaseAdmin` only; the API gates on `userOwnsBasicCoachTeam` ([lib/basic-coach-schedule.ts](../../../lib/basic-coach-schedule.ts)).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:basic_coach_team_events.basic_coach_team_id -->
+**`basic_coach_team_id`** (FK → `basic_coach_teams.id` ON DELETE CASCADE, NOT NULL) — the team; the only structural anchor (no `org_id`).
+
+<!-- dict:col:basic_coach_team_events.event_type -->
+**`event_type`** (text, NOT NULL, default `'practice'`; CHECK `practice|game|event`) — collapses rep's 6 event types to 3. `game` surfaces the `opponent` field in the editor.
+
+<!-- dict:col:basic_coach_team_events.title -->
+**`title`** (text, NOT NULL) — event label (e.g. "Practice", "vs Rivals").
+
+<!-- dict:col:basic_coach_team_events.opponent -->
+**`opponent`** (text, nullable) — free-text opponent for game-type events (gotcha 3).
+
+<!-- dict:col:basic_coach_team_events.location -->
+**`location`** (text, nullable) — free-text venue/address.
+
+<!-- dict:col:basic_coach_team_events.starts_at -->
+**`starts_at`** (timestamptz, NOT NULL) — event start; the primary list/sort key (`ORDER BY starts_at`). No recurrence (gotcha 4).
+
+<!-- dict:col:basic_coach_team_events.ends_at -->
+**`ends_at`** (timestamptz, nullable) — optional end time. CHECK `basic_coach_team_events_time_check` enforces `ends_at is null or ends_at >= starts_at` (an event can't end before it starts).
+
+<!-- dict:col:basic_coach_team_events.notes -->
+**`notes`** (text, nullable) — coach free-text note (bring water, arrive early, etc.).
+
+<!-- dict:col:basic_coach_team_events.status -->
+**`status`** (text, NOT NULL, default `'scheduled'`; CHECK `scheduled|cancelled`) — Phase 4a removes events via DELETE; `cancelled` is reserved for a future "tell parents it's off" flow.
+
+<!-- dict:col:basic_coach_team_events.created_by_user_id -->
+**`created_by_user_id`** (uuid, nullable, **no FK** — mirrors the rest of the family) — who added the event.
+
+---
+
+## `basic_coach_team_fees`
+<!-- dict:table:basic_coach_team_fees -->
+
+**Purpose:** the **manual fee ledger** for a free Basic team (free-tier Phase 4b, mig 116). A coach records what a roster player, or the team as a whole, owes and manually marks each entry paid/unpaid. **Tracking only** - no Stripe, no online collection, no partial payments, no installments, no dues automation, no accounting integration.
+
+**Gotchas (read first):**
+1. **Dev-only until deploy** (mig 116, applied to dev). Expect it in `DRIFT_dev_vs_prod.md` until `feat/free-tier-coaches` merges to master.
+2. **Manual ledger by policy.** `status` is binary (`unpaid|paid`) and `marked_paid_at` is just the coach's manual stamp. Do not add processor ids, payment links, installment state, reminder state, or "partial" here - those belong to Premium/future payment-processing work.
+3. **`player_id` is optional and lossy by design.** NULL means team-wide/unassigned. The FK is `ON DELETE SET NULL`, so deleting a player keeps the ledger row as an unassigned historical/team charge instead of deleting money history.
+4. **Same-team player validation is app-layer.** The DB FK proves `player_id` exists, but not that it belongs to the same `basic_coach_team_id`. `lib/basic-coach-fees.ts` validates the selected player against the team before create/update, and every mutation also scopes by `basic_coach_team_id`.
+5. **Money convention follows the rest of the app.** Amount is `numeric(10,2)` dollars (not integer cents), matching tournament fee fields, league registration fees, accounting entries, and rep dues. Stripe cents exist only in Stripe-facing code, not manual ledgers.
+6. **Ownership = `basic_coach_team_users` membership** (same as roster/schedule); no `org_id`. RLS-enabled, no policies = `supabaseAdmin` only; the API gates on `userOwnsBasicCoachTeam` via `requireBasicCoachTeamOwner`.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:basic_coach_team_fees.basic_coach_team_id -->
+**`basic_coach_team_id`** (FK to `basic_coach_teams.id` ON DELETE CASCADE, NOT NULL) - the team; the only structural anchor (no `org_id`).
+
+<!-- dict:col:basic_coach_team_fees.player_id -->
+**`player_id`** (FK to `basic_coach_team_players.id` ON DELETE SET NULL, nullable) - optional roster-player link; NULL means team-wide/unassigned (gotchas 3-4).
+
+<!-- dict:col:basic_coach_team_fees.label -->
+**`label`** (text, NOT NULL) - coach-entered fee label (e.g. tournament fee, jersey deposit, pizza night).
+
+<!-- dict:col:basic_coach_team_fees.amount -->
+**`amount`** (numeric(10,2), NOT NULL, default `0`, CHECK `>= 0`) - manual dollar amount (gotcha 5). Server accepts only up to two decimals and stores a normalized decimal string.
+
+<!-- dict:col:basic_coach_team_fees.status -->
+**`status`** (text, NOT NULL, default `'unpaid'`; CHECK `unpaid|paid`) - binary V1 state only (gotcha 2).
+
+<!-- dict:col:basic_coach_team_fees.marked_paid_at -->
+**`marked_paid_at`** (timestamptz, nullable) - manual paid timestamp. CHECK `basic_coach_team_fees_paid_at_check` keeps paid rows stamped and unpaid rows null; toggled in app code.
+
+<!-- dict:col:basic_coach_team_fees.notes -->
+**`notes`** (text, nullable) - coach free-text note.
+
+<!-- dict:col:basic_coach_team_fees.display_order -->
+**`display_order`** (int, NOT NULL, default `0`) - coach ledger ordering within the team; lower sorts first. Create appends to the current max; no reorder UI yet.
+
+<!-- dict:col:basic_coach_team_fees.created_by_user_id -->
+**`created_by_user_id`** (uuid, nullable, **no FK** - mirrors the rest of the family) - who added the fee.
+
+---
+
+## `basic_coach_team_announcements`
+<!-- dict:table:basic_coach_team_announcements -->
+
+**Purpose:** the **one-way team-announcement email log** for a free Basic team (free-tier Phase 4c, mig 117). A coach writes a subject/body and the app sends it to the team's deduped roster `contact_email` values, then records counts and status. **Roster-contact email only** - no parent accounts, arbitrary recipients, chat, replies inbox, SMS/push, payment reminders, dues automation, or Premium pitch surface.
+
+**Gotchas (read first):**
+1. **Dev-only until deploy** (mig 117, applied to dev). Expect it in `DRIFT_dev_vs_prod.md` until `feat/free-tier-coaches` merges to master.
+2. **Recipient emails are intentionally not stored.** The log stores `recipient_count`, `sent_count`, and `failed_count`, not the actual email addresses. Runtime recomputes/dedupes valid emails from `basic_coach_team_players.contact_email` at send time.
+3. **Not a messaging system.** There are no threads, replies, read receipts, parent accounts, SMS/push, or reminder jobs. If code needs any of that, it belongs in a future comms design, not this Basic log.
+4. **Free-floor abuse caps live in app code.** 4c caps a send at 100 deduped contacts and 10 announcement logs per team per rolling 24h. This table stores the logs used by the throttle; there is no DB constraint for those policy numbers.
+5. **Email result semantics follow provider acceptance.** `sent_count` increments only when `sendEmail` reports a real provider send; missing API key / provider rejection / thrown errors increment `failed_count`.
+6. **Ownership = `basic_coach_team_users` membership** (same as roster/schedule/fees); no `org_id`. RLS-enabled, no policies = `supabaseAdmin` only; the API gates on `userOwnsBasicCoachTeam` via `requireBasicCoachTeamOwner`.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:basic_coach_team_announcements.basic_coach_team_id -->
+**`basic_coach_team_id`** (FK to `basic_coach_teams.id` ON DELETE CASCADE, NOT NULL) - the team; the only structural anchor (no `org_id`).
+
+<!-- dict:col:basic_coach_team_announcements.subject -->
+**`subject`** (text, NOT NULL, CHECK non-empty and `<= 160`) - coach-entered email subject, trimmed in app code.
+
+<!-- dict:col:basic_coach_team_announcements.body -->
+**`body`** (text, NOT NULL, CHECK non-empty and `<= 4000`) - coach-entered plain-text message. The app HTML-escapes it before email send.
+
+<!-- dict:col:basic_coach_team_announcements.recipient_count -->
+**`recipient_count`** (int, NOT NULL, default `0`, CHECK `>= 0`) - deduped valid roster-contact email count targeted at send time (gotcha 2).
+
+<!-- dict:col:basic_coach_team_announcements.sent_count -->
+**`sent_count`** (int, NOT NULL, default `0`, CHECK `>= 0`) - number of provider-accepted email sends (gotcha 5).
+
+<!-- dict:col:basic_coach_team_announcements.failed_count -->
+**`failed_count`** (int, NOT NULL, default `0`, CHECK `>= 0`) - number of skipped/rejected/thrown send attempts. CHECK `basic_coach_team_announcements_counts_check` keeps `sent_count + failed_count <= recipient_count`.
+
+<!-- dict:col:basic_coach_team_announcements.status -->
+**`status`** (text, NOT NULL, default `'sent'`; CHECK `sent|partial|failed`) - derived from `sent_count`/`failed_count` after the send loop.
+
+<!-- dict:col:basic_coach_team_announcements.sent_at -->
+**`sent_at`** (timestamptz, NOT NULL, default `now()`) - send-log display/sort timestamp. App sets it when the send loop completes.
+
+<!-- dict:col:basic_coach_team_announcements.created_by_user_id -->
+**`created_by_user_id`** (uuid, nullable, **no FK** - mirrors the rest of the family) - who initiated the announcement send.
 
 ---
 
@@ -1023,4 +1522,1016 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 
 ---
 
-*End of Coaches / basic-teams domain. Deferred: `basic_coach_team_players` (free-tier Phase 3, not yet built).*
+*End of Coaches / basic-teams domain. `basic_coach_team_players` (free-tier Phase 3, mig 114) is documented above. Deferred: the per-event snapshot back-link `tournament_roster_players.source_player_id` (free-tier Phase 5).*
+
+---
+
+# Domain: Rep teams / team workspaces
+
+The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, each run by its own coaches season-by-season. `rep_teams` is the hub; everything operational hangs off a **program year** (`rep_program_years` — one row per team per year, the season-scoping spine). This domain splits into two halves under one heading: **Rep operations** (teams, seasons, roster, coaches, events, attendance, lineups, tryouts, documents — first subsection) and **Rep finance** (budgets, player dues, fundraisers, cost allocations, expenses, payment requests, season surplus — `## Rep finance` subsection below). The **4 `team_workspace_*` tables that the coverage classifier also files under this domain are documented in the Coaches / basic-teams domain** (Standalone team workspaces) — their forward-links (`team_workspaces.rep_team_id`, `.active_program_year_id`, `team_entitlements.rep_team_id`, `team_org_links.rep_team_id`) land here.
+
+### Gotchas first (the cross-cutting traps)
+
+- **`program_year_id` is the season spine — and "the active program year" is `draft` OR `active`, newest-wins.** Almost every rep-ops table denormalizes `(program_year_id, team_id, org_id)`. The coach-side resolver `getActiveRepProgramYear` returns the newest row with status **`draft` or `active`** ([lib/db.ts:4205](../../../lib/db.ts#L4205)) — **not** just `active`. So a brand-new `draft` season is already "active" for coach operations *and* already billable (`getActiveRepTeamCount` counts `draft`+`active`, [lib/db.ts:3858](../../../lib/db.ts#L3858)). Public tryouts are the exception — they require `status='active' AND tryout_open=true` ([lib/db.ts:3762](../../../lib/db.ts#L3762)).
+- **RLS is enabled on all 25 tables (12 operations + 13 finance) but is NOT the enforcement layer.** Every reader/writer goes through `supabaseAdmin` (service-role, bypasses RLS); the only RLS policies are `SELECT`-only defense-in-depth. Authorization is entirely app-layer.
+- **Rep finance is the team's books; the org's books are the separate Accounting domain.** The 13 `## Rep finance` tables are TEAM-scoped. They meet the ORG-scoped **Accounting** domain (`accounting_entries`, `accounting_ledgers`, `org_budget_lines`/`_periods`, `budget_categories`, `budget_items`, `org_payees` — a later phase) only at a few catalogued FK edges, and there is **no Stripe surface here** (settlement is internal double-entry; see the `## Rep finance` gotchas). **Watch the dual-budget-line trap:** a `budget_line_id`/`source_budget_line_id` FK points at the team `rep_budget_lines` on the dues/period side but at the org `org_budget_lines` on the allocation/payment-request side.
+- **Two access surfaces, two gates (the franchise model).** Org-admin side (`app/api/admin/rep-teams/*`): `getAuthContextWithRole` + `module_rep_teams` capability + `hasModuleEntitlement` + `repGroupScopeGuard`; **mutations additionally require `role` ∈ `owner|admin`**. Coach-operator side (`app/api/coaches/[orgSlug]/teams/[teamId]/*`): `resolveCoachContext` — **a membership row in `rep_team_coaches` IS the gate** (no capability/entitlement check on most coach routes). Coaches own the operational writes; admins set up + read.
+- **`rep_team_groups` is the staff-scoping anchor.** `org_member_rep_group_scopes.group_id → rep_team_groups.id` (Org / Platform core domain). A scoped member only sees teams whose `group_id` is in their list — **and an ungrouped team (`group_id IS NULL`) is invisible to every scoped member** ([lib/api-auth.ts:164](../../../lib/api-auth.ts#L164)). (Owners/admins/treasurers are unrestricted.)
+- **`auth.users` FK introspection gap.** Several columns (`rep_team_coaches.user_id`, `*.updated_by`, `*.published_by`, `*.uploaded_by`) FK to `auth.users(id)`, but the snapshot's constraints dump shows `foreign_table: null` for them — it only introspects the `public` schema. They are **constrained**, not loose.
+- **Denormalization is pervasive and intentional** — `team_id`/`org_id` are copied onto child rows reachable via parent FKs (index/query convenience); one `SECURITY DEFINER` trigger keeps `rep_team_event_attendance`'s scope columns synced to its event.
+- **Dev/prod:** all 25 Rep tables (12 operations + 13 finance) are **zero-drift** (snapshot 2026-06-09) — column-, constraint-, and CHECK-identical across dev+prod.
+
+---
+
+## Rep operations
+
+> The franchise module's **operational** tables. `rep_teams` (hub) → `rep_program_years` (season spine) → roster / coaches / events / attendance / lineups / tryouts / documents. The **13 `rep_*` finance tables** (`rep_team_expenses`, `rep_player_dues_*`, `rep_budget_*`, `rep_fundraisers`/`_entries`, `rep_cost_allocations`, `rep_allocation_*`, `rep_dues_credits`, `rep_season_surplus`, `rep_team_payment_requests`) are **Phase 4b** — appended under this same heading later.
+
+### `rep_teams`
+<!-- dict:table:rep_teams -->
+
+**Purpose:** the **hub** of the module — one canonical rep/franchise team per org (e.g. "U13 Tier 1 Wildcats"). Identity + presentation only; all season-scoped data hangs off `rep_program_years`, never here. Hydrated to `RepTeam` ([lib/db.ts:3643](../../../lib/db.ts#L3643)).
+
+**Gotchas (read first):**
+1. **No season or billing state on this table.** Whether a team is "billable/active" is computed from its program-year statuses — `getActiveRepTeamCount` counts distinct `team_id`s in `rep_program_years` with status `draft`|`active` ([lib/db.ts:3858](../../../lib/db.ts#L3858)). A team whose only years are `completed`/`archived` is not billable even with `is_archived=false`.
+2. **`is_archived` is a soft-hide for the admin list only** — independent of billing and of program-year status. Archiving does **not** complete/archive program years and does **not** trigger a Stripe sync.
+3. **No hard-delete from the UI.** `deleteRepTeam` ([lib/db.ts:3848](../../../lib/db.ts#L3848)) does a hard `DELETE` but is wired to **no HTTP route**; the only user-facing removal is `is_archived=true` via PATCH. Rows otherwise die only by FK CASCADE.
+4. **`slug` is the PUBLIC URL key, addressed internally by UUID `teamId`.** Public team + tryout pages resolve `getRepTeamBySlug` ([lib/db.ts:3785](../../../lib/db.ts#L3785)); the coach portal never uses it. Create slugifies the name with **no min length**, but `bulkRenameTeamSlugs` enforces 3–80 chars, lowercase alphanumeric with internal hyphens (no leading/trailing hyphen) — so existing slugs can violate the bulk-rename rule.
+5. **Create triggers `syncRepTeamBilling` ONLY when `org.planId==='club'`** (fire-and-forget). Non-Club orgs never sync on team create.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_teams.org_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL) — tenant scope; part of `UNIQUE(org_id, slug)`. Routes re-check `team.orgId !== ctx.org.id` → 404.
+
+<!-- dict:col:rep_teams.name -->
+**`name`** (text, NOT NULL) — display name; max 100 chars on create.
+
+<!-- dict:col:rep_teams.slug -->
+**`slug`** (text, NOT NULL, `UNIQUE(org_id, slug)`) — the public URL segment (gotcha 4). **Not editable via the team PATCH** (`updateRepTeam` has no slug field) — only via `bulkRenameTeamSlugs`; 23505 → 409.
+
+<!-- dict:col:rep_teams.sport -->
+**`sport`** (text, NOT NULL, default `'softball'`) — free text, no enum.
+
+<!-- dict:col:rep_teams.division -->
+**`division`** (text, nullable) — display label (e.g. "U13 Tier 1"); **not** a FK to any divisions table.
+
+<!-- dict:col:rep_teams.description -->
+**`description`** (text, nullable) — free text.
+
+<!-- dict:col:rep_teams.color -->
+**`color`** (text, nullable) — team accent (hex); stored verbatim, no validation; drives team theming.
+
+<!-- dict:col:rep_teams.group_id -->
+**`group_id`** (FK → `rep_team_groups.id`, nullable) — the grouping/folder link **and the member-scoping key** (see domain gotchas + `rep_team_groups`). Set on create or via `setRepTeamGroup` ([lib/db.ts:3742](../../../lib/db.ts#L3742)); **not** in `updateRepTeam`. Read denormalizes the group name via join → `RepTeam.groupName`.
+
+<!-- dict:col:rep_teams.is_archived -->
+**`is_archived`** (bool, NOT NULL, default false) — soft-hide for the admin team list (gotchas 2–3); the only PATCH-able boolean.
+
+### `rep_team_groups`
+<!-- dict:table:rep_team_groups -->
+
+**Purpose:** named folders within an org used both to organize rep teams in the admin UI **and** to scope which teams a restricted staff member may see.
+
+**Gotchas (read first):**
+1. **This table is the access-control anchor for restricted org members.** `org_member_rep_group_scopes.group_id → rep_team_groups.id`. `getAuthContextWithRole` reads those scope rows ([lib/api-auth.ts:149](../../../lib/api-auth.ts#L149)): owners/admins/treasurers → `repGroupIds=null` (unrestricted); any other role with scope rows → the restricted id list. `repGroupScopeGuard` then 403s if a team's `groupId` isn't in the list — **and 403s on ungrouped teams** ([lib/api-auth.ts:164](../../../lib/api-auth.ts#L164)). (The Org / Platform core domain's note that staff-notify scoping is a *separate* mechanism still holds — that's `org_member_tournament_assignments` via `lib/notify.ts`, not this table.)
+2. **Delete is guarded in app code, not by FK** — `deleteRepTeamGroup` counts teams with that `group_id`; >0 → `GROUP_HAS_TEAMS` 409 ([lib/db.ts:3729](../../../lib/db.ts#L3729)). Reassign teams first.
+3. **Uniqueness is case-insensitive** via `UNIQUE INDEX (org_id, lower(name))`; the app trims but does **not** lowercase before insert, so display casing is preserved while collisions are case-insensitive (23505 → 409).
+4. **No `updated_at`** (only `created_at`).
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:rep_team_groups.org_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL) — tenant scope.
+
+<!-- dict:col:rep_team_groups.name -->
+**`name`** (text, NOT NULL; CHECK `1 ≤ char_length(trim(name)) ≤ 50`; `UNIQUE(org_id, lower(name))`) — folder name; denormalized onto `RepTeam.groupName` via join.
+
+<!-- dict:col:rep_team_groups.display_order -->
+**`display_order`** (int, NOT NULL, default 0) — sort key (list orders by `display_order` then `name`); no uniqueness.
+
+### `rep_program_years`
+<!-- dict:table:rep_program_years -->
+
+**Purpose:** the **per-season scoping spine** — one row per team per calendar year (`UNIQUE(team_id, year)`); the season container nearly every other rep-ops table denormalizes a `program_year_id` onto. `team_workspaces.active_program_year_id → rep_program_years.id` (set at provisioning [lib/team-workspace-provisioning.ts:282](../../../lib/team-workspace-provisioning.ts#L282), read in `lib/team-workspace-entitlements.ts`).
+
+**Gotchas (read first):**
+1. **"Active program year" = newest `draft` OR `active`** ([lib/db.ts:4205](../../../lib/db.ts#L4205)) — a `draft` year is already live for coach ops and already billable (domain gotcha 1).
+2. **The "one active program year per team" rule is APP-enforced, not a DB constraint** — the DB only has `UNIQUE(team_id, year)`; the activate transition (and the create route) guard against a second `active` year.
+3. **Status transitions are forward-only — `draft→active→completed→archived`, enforced ONLY on the admin route** (`VALID_TRANSITIONS`; invalid → 422). **Provisioning bypasses it** — a self-serve team-workspace inserts `status:'active'` directly ([lib/team-workspace-provisioning.ts:184](../../../lib/team-workspace-provisioning.ts#L184)), skipping the guard.
+4. **`budget_amount` + `auto_reminders_enabled` are COACH-side fields** — the org-admin program-year PATCH deliberately omits `budgetAmount` even though `updateRepProgramYear` supports it ([lib/db.ts:3987](../../../lib/db.ts#L3987)). An org admin editing a program year cannot touch the budget or the reminder toggle.
+5. **Completing/archiving triggers a Club-only billing sync** (fire-and-forget).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_program_years.team_id -->
+**`team_id`** (FK → `rep_teams.id`, NOT NULL; part of `UNIQUE(team_id, year)`) — the team.
+
+<!-- dict:col:rep_program_years.org_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL) — **denormalized** (derivable via team); used directly for org-wide queries (`getOpenTryoutsByOrg` [lib/db.ts:3762](../../../lib/db.ts#L3762), `getActiveRepTeamCount`) to skip the team join.
+
+<!-- dict:col:rep_program_years.name -->
+**`name`** (text, NOT NULL) — season label (e.g. "2025 Season").
+
+<!-- dict:col:rep_program_years.year -->
+**`year`** (int, NOT NULL; part of `UNIQUE(team_id, year)`) — route validates `2000 ≤ year ≤ 2100`; 23505 → 409.
+
+<!-- dict:col:rep_program_years.status -->
+**`status`** (text, NOT NULL, default `'draft'`; CHECK `draft|active|completed|archived`) — drives active-year resolution, open-tryout listing, the billable-team count, and the forward-only transition machine (gotchas 1, 3).
+
+<!-- dict:col:rep_program_years.tryout_open -->
+**`tryout_open`** (bool, NOT NULL, default false) — gates the public tryout-registration page (`status='active' AND tryout_open=true`).
+
+<!-- dict:col:rep_program_years.tryout_description -->
+**`tryout_description`** (text, nullable) — the public-facing blurb on the tryout landing page.
+
+<!-- dict:col:rep_program_years.budget_amount -->
+**`budget_amount`** (numeric, nullable) — **coach-only** ([app/api/coaches/.../budget/route.ts:80](../../../app/api/coaches/%5BorgSlug%5D/teams/%5BteamId%5D/budget/route.ts#L80)); the coach accounting summary computes `net = budget + duesCollected − totalExpenses`. No org-admin reader/writer (gotcha 4).
+
+<!-- dict:col:rep_program_years.auto_reminders_enabled -->
+**`auto_reminders_enabled`** (bool, NOT NULL, default true) — coach-toggled (accounting settings); the dues-reminder cron **skips teams whose active year has it false**.
+
+### `rep_roster_players`
+<!-- dict:table:rep_roster_players -->
+
+**Purpose:** the **rep-team season roster** — one row per player per program year. The rep equivalent of `basic_coach_team_players` (free Basic master roster) and a sibling of `tournament_roster_players`, but a richer shape: split first/last name, dedicated guardian fields, and positions.
+
+**Gotchas (read first):**
+1. **Never hard-deleted via the app.** `deleteRepRosterPlayer` ([lib/db.ts:4471](../../../lib/db.ts#L4471)) has **no caller**; removal is modeled as `status='inactive'`. Rows die only by FK CASCADE (program-year/team/org delete).
+2. **No `source_player_id` snapshot link** — the only inbound provenance is `tryout_registration_id`. The cross-module Phase-5 back-link (re: `tournament_roster_players`/`basic_coach_team_players`) is genuinely **absent here** — don't invent it.
+3. **`notes` vs `admin_notes` are BOTH coach-readable AND coach-writable.** `admin_notes` means "staff-side, not shown to families" (UI label "Admin Notes (private)") — a family-visibility *intent*, **not** a role boundary. (It's kept out of the intended roster-export column set, though the rep roster export itself is a not-yet-implemented catalog stub.)
+4. **DOB is NOT consent-gated here** (contrast `basic_coach_team_players`, whose editor requires a guardian-consent checkbox) — the rep pages use a plain date input; DOB is flagged `sensitive` only to drive opt-in export redaction.
+5. **Tryout→roster conversion drops most fields.** `acceptTryoutAndAddToRoster` ([lib/db.ts:4313](../../../lib/db.ts#L4313)) copies only identity + DOB + guardian and sets `source='tryout'` + `tryout_registration_id`; it does **not** carry over the tryout's `player_notes`, positions, number, or admin notes.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_roster_players.program_year_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL) — season anchor + primary query key (indexed `year_idx`).
+
+<!-- dict:col:rep_roster_players.team_id -->
+<!-- dict:col:rep_roster_players.org_id -->
+**`team_id`** (FK → `rep_teams.id`) / **`org_id`** (FK → `organizations.id`) — denormalized team + tenant scope.
+
+<!-- dict:col:rep_roster_players.player_first_name -->
+<!-- dict:col:rep_roster_players.player_last_name -->
+**`player_first_name` / `player_last_name`** (text, NOT NULL) — required on every write; list ordered by last name. (Split, unlike `basic_coach_team_players.name`.)
+
+<!-- dict:col:rep_roster_players.player_date_of_birth -->
+**`player_date_of_birth`** (date, nullable) — optional; **not** consent-gated (gotcha 4).
+
+<!-- dict:col:rep_roster_players.player_number -->
+**`player_number`** (text, nullable) — jersey #, free text.
+
+<!-- dict:col:rep_roster_players.primary_position -->
+<!-- dict:col:rep_roster_players.secondary_position -->
+**`primary_position` / `secondary_position`** (text, nullable; mig 070) — **free text, no CHECK** (any string accepted). Not populated by tryout conversion.
+
+<!-- dict:col:rep_roster_players.guardian_first_name -->
+<!-- dict:col:rep_roster_players.guardian_last_name -->
+<!-- dict:col:rep_roster_players.guardian_email -->
+<!-- dict:col:rep_roster_players.guardian_phone -->
+**`guardian_first_name` / `guardian_last_name` / `guardian_email` / `guardian_phone`** — guardian contact; first/last/email are **NOT NULL** in the DB (the route guarantees non-null even though `createRepRosterPlayer`'s TS types them optional); `guardian_email` indexed (`email_idx`). `guardian_phone` nullable.
+
+<!-- dict:col:rep_roster_players.status -->
+**`status`** (text, NOT NULL, default `'active'`; CHECK `active|inactive`) — `inactive` is the de-facto delete (gotcha 1).
+
+<!-- dict:col:rep_roster_players.source -->
+**`source`** (text, NOT NULL, default `'admin_manual'`; CHECK `tryout|admin_manual`) — `'tryout'` set only by the conversion path.
+
+<!-- dict:col:rep_roster_players.tryout_registration_id -->
+**`tryout_registration_id`** (FK → `rep_tryout_registrations.id` ON DELETE SET NULL, nullable) — the only back-link to the originating tryout (set during conversion).
+
+<!-- dict:col:rep_roster_players.notes -->
+<!-- dict:col:rep_roster_players.admin_notes -->
+**`notes`** (general/coach-visible) / **`admin_notes`** (staff-internal, intended family-hidden) — both coach-writable (gotcha 3).
+
+### `rep_team_coaches`
+<!-- dict:table:rep_team_coaches -->
+
+**Purpose:** the **coach-assignment join** — maps an `auth.users` account to a `(team, program_year)` with a role, per season. Membership here is the **single gate** into the coach-operator portal for a team.
+
+**Gotchas (read first):**
+1. **This is the coach-portal access gate.** `getCoachingAssignmentsForUser(orgId, userId)` ([lib/db.ts:4160](../../../lib/db.ts#L4160)) is the membership check inside `resolveCoachContext` for every coach route; no row → no access.
+2. **Assignments are filtered to `draft`/`active` seasons** ([lib/db.ts:4175](../../../lib/db.ts#L4175)) — a coach assigned only to a `completed`/`archived` year is effectively locked out via this helper even though the row persists.
+3. **Team-workspace plans add an entitlement filter.** For a `team_workspace`/`plan_id='team'` org, assignments are further intersected with `getActiveTeamEntitledRepTeamIds` ([lib/db.ts:4180](../../../lib/db.ts#L4180)) — an active billing entitlement is required on top of the assignment row.
+4. **Insert/delete only — NO `updated_at`, no update path.** Changing a coach's role = delete + re-add (`addRepTeamCoach`/`removeRepTeamCoach` [lib/db.ts:4034](../../../lib/db.ts#L4034)). Team-workspace provisioning seeds the owner as `head_coach`.
+5. **`coach_role` is display-only** — no capability differs head vs assistant; all coach write routes authorize on *presence* of any assignment.
+6. **Adding a coach requires an existing active `organization_members` row** ([app/api/admin/rep-teams/.../coaches/route.ts:96](../../../app/api/admin/rep-teams/teams/%5BteamId%5D/program-years/%5ByearId%5D/coaches/route.ts#L96)) → 422 otherwise. This table references, never creates, the membership.
+7. **`UNIQUE(program_year_id, user_id)`** — dup → 23505 → 409.
+
+**Fields** (boilerplate `id`, `created_at` omitted; no `updated_at`):
+
+<!-- dict:col:rep_team_coaches.program_year_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL; part of `UNIQUE(program_year_id, user_id)`) — season scope.
+
+<!-- dict:col:rep_team_coaches.team_id -->
+<!-- dict:col:rep_team_coaches.org_id -->
+**`team_id`** (FK → `rep_teams.id`) / **`org_id`** (FK → `organizations.id`) — the team being coached (matched in `resolveCoachContext`) + tenant scope (indexed `(org_id, user_id)`).
+
+<!-- dict:col:rep_team_coaches.user_id -->
+**`user_id`** (FK → `auth.users.id` ON DELETE CASCADE, NOT NULL) — the coach account (snapshot shows `foreign_table: null` — auth-schema introspection gap). A *narrowing* of org membership: being an org member doesn't grant team access; this row does.
+
+<!-- dict:col:rep_team_coaches.coach_role -->
+**`coach_role`** (text, NOT NULL, default `'head_coach'`; CHECK `head_coach|assistant_coach`) — display-only label (gotcha 5).
+
+### `rep_team_events`
+<!-- dict:table:rep_team_events -->
+
+**Purpose:** the unified per-team, per-season calendar — practices, games (`league_game`/`tournament_game`/`scrimmage`), multi-day `external_tournament`s, and generic `team_event`s.
+
+**Gotchas (read first):**
+1. **TWO self-FKs, opposite meaning AND cascade:** `parent_event_id` (ON DELETE **CASCADE**) links a `tournament_game` child to its `external_tournament` parent (deleting the parent cascade-deletes child game slots); `recurrence_parent_id` (ON DELETE **SET NULL**) links generated recurring-practice instances to a series anchor. Easy to confuse.
+2. **⚠️ The recurring-practice series anchor is broken.** `createRepTeamEvents` mints `parentId = randomUUID()` and stamps every child's `recurrence_parent_id` with it (the first occurrence stays NULL); the promised "back-fill the anchor to point to itself" never executes ([events/route.ts:132,145,149](../../../app/api/coaches/%5BorgSlug%5D/teams/%5BteamId%5D/events/route.ts#L132)). So children point at a UUID that is **no row's `id`**, and the anchor's own `recurrence_parent_id` is NULL. The **delete-"this & future"** path (`anchorId = recurrenceParentId ?? eventId`, [events/[eventId]/route.ts:94](../../../app/api/coaches/%5BorgSlug%5D/teams/%5BteamId%5D/events/%5BeventId%5D/route.ts#L94)) deletes the *other* children but **never the anchor occurrence** — and the matching *edit*-future helper (`updateRepTeamEventsByRecurrenceParent`, [lib/db.ts:4635](../../../lib/db.ts#L4635)) is **dead code with no caller**, so no edit-this-&-future path is actually wired.
+3. **`result` is never auto-derived server-side** — stored exactly as sent; the only auto-fill (`hs>as?'win':…`) is **client-side** ([schedule/page.tsx:471](../../../app/%5BorgSlug%5D/coaches/teams/%5BteamId%5D/schedule/page.tsx#L471)). API callers that set scores without `result` leave it NULL.
+4. **Recurrence is practice-only and timezone-naive** — `isRecurring` on any non-`practice` type is silently ignored; occurrence dates are built from local-time strings with no offset (can shift across a UTC boundary).
+5. **A `SECURITY DEFINER` trigger** rewrites `rep_team_event_attendance`'s scope columns when this event's `org_id`/`team_id`/`program_year_id` change (mig 069) — dormant in practice (app never updates those).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_events.program_year_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL) — season spine; every list filters it (`year_idx (program_year_id, starts_at)`).
+
+<!-- dict:col:rep_team_events.team_id -->
+<!-- dict:col:rep_team_events.org_id -->
+**`team_id`** (FK → `rep_teams.id`) / **`org_id`** (FK → `organizations.id`) — owning team + tenant scope.
+
+<!-- dict:col:rep_team_events.event_type -->
+**`event_type`** (text, NOT NULL; CHECK `external_tournament|tournament_game|scrimmage|league_game|practice|team_event`) — validated app-side against the same list.
+
+<!-- dict:col:rep_team_events.name -->
+<!-- dict:col:rep_team_events.description -->
+**`name`** (NOT NULL, trimmed) / **`description`** (nullable).
+
+<!-- dict:col:rep_team_events.starts_at -->
+<!-- dict:col:rep_team_events.ends_at -->
+**`starts_at`** (timestamptz, NOT NULL) — sort + range-filter key; generated per occurrence for recurring practices. **`ends_at`** (nullable).
+
+<!-- dict:col:rep_team_events.location -->
+**`location`** (text, nullable) — one of two columns eligible for a "this & future" bulk edit (with `ends_at`).
+
+<!-- dict:col:rep_team_events.opponent -->
+**`opponent`** (text, nullable) — **game-types only** (UI-gated).
+
+<!-- dict:col:rep_team_events.home_away -->
+**`home_away`** (text, nullable; CHECK `home|away|neutral`) — game context only.
+
+<!-- dict:col:rep_team_events.home_score -->
+<!-- dict:col:rep_team_events.away_score -->
+**`home_score` / `away_score`** (int, nullable) — game scores; written via PATCH only. (The coach UI labels them "Home"/"Away"; no code binds `home_score` to the rep team specifically.)
+
+<!-- dict:col:rep_team_events.result -->
+**`result`** (text, nullable; CHECK `win|loss|tie`) — manual (gotcha 3).
+
+<!-- dict:col:rep_team_events.parent_event_id -->
+**`parent_event_id`** (FK → self, ON DELETE CASCADE, nullable) — `tournament_game` → its `external_tournament` parent (gotcha 1); indexed.
+
+<!-- dict:col:rep_team_events.is_recurring -->
+**`is_recurring`** (bool, NOT NULL, default false) — true on every row of a recurring series.
+
+<!-- dict:col:rep_team_events.recurrence_rule -->
+**`recurrence_rule`** (jsonb, nullable) — recurring practices only; stored as a record, not re-evaluated. **Key catalog** (untyped TS `Record<string,unknown>`, [lib/types.ts:922](../../../lib/types.ts#L922); shape from the builder [schedule/page.tsx:410](../../../app/%5BorgSlug%5D/coaches/teams/%5BteamId%5D/schedule/page.tsx#L410) + validation in [events/route.ts:116](../../../app/api/coaches/%5BorgSlug%5D/teams/%5BteamId%5D/events/route.ts#L116)): `dayOfWeek` (int 0–6, Sun..Sat) · `startDate` / `endDate` (`YYYY-MM-DD`) · `startTime` (`HH:MM`) · `endTime` (`HH:MM`|null). Required: `dayOfWeek`, `startDate`, `endDate`, `startTime` (else 400).
+
+<!-- dict:col:rep_team_events.recurrence_parent_id -->
+**`recurrence_parent_id`** (FK → self, ON DELETE SET NULL, nullable) — series-grouping pointer (gotchas 1–2).
+
+### `rep_team_event_attendance`
+<!-- dict:table:rep_team_event_attendance -->
+
+**Purpose:** one attendance/availability row per **active** roster player per event (`UNIQUE(event_id, player_id)`), set by coaches.
+
+**Gotchas (read first):**
+1. **Coach-set only — there is NO player/guardian self-RSVP.** The only writer is the coach attendance PATCH; `updated_by` is always the acting coach.
+2. **Writes are an upsert on `(event_id, player_id)`** (`onConflict: 'event_id,player_id'`, [lib/db.ts:4708](../../../lib/db.ts#L4708)); a batch re-save overwrites in place.
+3. **Restricted to ACTIVE roster players, per-row** — the route rejects the **entire batch** (400) if any `playerId` isn't `status='active'`. Attendance for a since-deactivated player can persist but can't be re-saved.
+4. **Three denormalized scope columns** (`program_year_id`, `team_id`, `org_id`) duplicate values reachable via `event_id` — for the `team_idx (team_id, program_year_id)` rollup; a `SECURITY DEFINER` trigger keeps them synced to the event (mig 069).
+5. **`note` is capped at 500 chars in the API only** (no DB CHECK).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_event_attendance.event_id -->
+<!-- dict:col:rep_team_event_attendance.player_id -->
+**`event_id`** (FK → `rep_team_events.id` CASCADE) / **`player_id`** (FK → `rep_roster_players.id` CASCADE) — the unique pair; `player_id` must be active to write.
+
+<!-- dict:col:rep_team_event_attendance.program_year_id -->
+<!-- dict:col:rep_team_event_attendance.team_id -->
+<!-- dict:col:rep_team_event_attendance.org_id -->
+**`program_year_id` / `team_id` / `org_id`** — denormalized scope (gotcha 4).
+
+<!-- dict:col:rep_team_event_attendance.status -->
+**`status`** (text, NOT NULL, default `'unknown'`; CHECK `unknown|attending|absent|late`).
+
+<!-- dict:col:rep_team_event_attendance.note -->
+**`note`** (text, nullable; ≤500 chars app-enforced).
+
+<!-- dict:col:rep_team_event_attendance.updated_by -->
+**`updated_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — always the acting coach (auth-schema introspection gap).
+
+### `rep_team_lineups`
+<!-- dict:table:rep_team_lineups -->
+
+**Purpose:** the per-event lineup **header** (format/mode, inning count, notes) for a rep-team game — exactly one row per event; per-player detail lives in `rep_team_lineup_entries`.
+
+**Gotchas (read first):**
+1. **One lineup per event (`UNIQUE(event_id)`) + upsert** (`onConflict: 'event_id'`, [lib/db.ts:4793](../../../lib/db.ts#L4793)) — a second save replaces the header in place.
+2. **Coach-only single endpoint** (`events/[eventId]/lineup`); lineups are allowed only for game event types (`league_game|tournament_game|scrimmage`).
+3. **`updated_by` = last writer, not creator** (overwritten every save; there is no `created_by`).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_lineups.event_id -->
+**`event_id`** (FK → `rep_team_events.id` CASCADE; **`UNIQUE(event_id)`**) — the upsert conflict key.
+
+<!-- dict:col:rep_team_lineups.program_year_id -->
+<!-- dict:col:rep_team_lineups.team_id -->
+<!-- dict:col:rep_team_lineups.org_id -->
+**`program_year_id` / `team_id` / `org_id`** — scope; sourced from the active program year + URL/context, **not** the request body (can't be spoofed).
+
+<!-- dict:col:rep_team_lineups.lineup_mode -->
+**`lineup_mode`** (text, NOT NULL, default `'everyone_bats'`; CHECK `nine_player|everyone_bats`) — drives the batting-order/starter logic (see `rep_team_lineup_entries` gotcha 4).
+
+<!-- dict:col:rep_team_lineups.inning_count -->
+**`inning_count`** (int, NOT NULL, default 7; CHECK `1 ≤ n ≤ 12`) — the column count of the fielding-position grid; positions for innings beyond it are **dropped on save**.
+
+<!-- dict:col:rep_team_lineups.notes -->
+**`notes`** (text, nullable; ≤1000 chars app-enforced).
+
+<!-- dict:col:rep_team_lineups.updated_by -->
+**`updated_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — last writer (gotcha 3; auth-schema introspection gap).
+
+### `rep_team_lineup_entries`
+<!-- dict:table:rep_team_lineup_entries -->
+
+**Purpose:** one row per player in a lineup — batting slot, starter/bench flag, and per-inning fielding-position assignments.
+
+**Gotchas (read first):**
+1. **Full replace-on-save** — `replaceRepTeamLineupEntries` deletes ALL rows for the lineup then bulk-inserts ([lib/db.ts:4822](../../../lib/db.ts#L4822)); entry `id`/`created_at` are **not stable** across saves.
+2. **`UNIQUE(lineup_id, player_id)`** + **partial-unique `(lineup_id, batting_order) WHERE batting_order IS NOT NULL`** — a player appears once per lineup, and no two players share a non-null batting slot (NULL slots exempt).
+3. **Only active roster players accepted** (400 otherwise).
+4. **Mode interaction:** `everyone_bats` forces `starter=true` for every entry and **requires a non-null `batting_order` each**; `nine_player` caps starters at 9 (starter slots must be 1–9) — non-starters are bench (the UI builder leaves their `batting_order` null; the save path validates but does not itself force it).
+5. **`batting_order` NULL = not in the batting order (bench).** Read ordered by `batting_order ASC`, NULLs last.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_lineup_entries.lineup_id -->
+**`lineup_id`** (FK → `rep_team_lineups.id` CASCADE; part of both uniques).
+
+<!-- dict:col:rep_team_lineup_entries.player_id -->
+**`player_id`** (FK → `rep_roster_players.id` CASCADE; `UNIQUE(lineup_id, player_id)`) — must be an active roster player.
+
+<!-- dict:col:rep_team_lineup_entries.batting_order -->
+**`batting_order`** (int, nullable; CHECK `NULL OR > 0`; partial-unique slot) — route allows NULL or 1–99 (stricter than the DB CHECK); NULL = bench (gotcha 5).
+
+<!-- dict:col:rep_team_lineup_entries.starter -->
+**`starter`** (bool, NOT NULL, default true) — only meaningful in `nine_player` (forced true in `everyone_bats`; 9-starter cap).
+
+<!-- dict:col:rep_team_lineup_entries.inning_positions -->
+**`inning_positions`** (jsonb, NOT NULL, default `'{}'`) — **key catalog:** `Record<string,string>` ([lib/types.ts:962](../../../lib/types.ts#L962)) mapping **inning number (as string, `"1"`..`"<inning_count>"`) → position code**. Innings beyond `inning_count` are dropped on save; unassigned innings are absent (no empty keys). **Value domain** (`VALID_POSITIONS`): `P, C, 1B, 2B, 3B, SS, LF, CF, RF, OF, DH, EH, Bench` (UI adds `''` = unassigned, not persisted). Invalid value → 400. Example: `{"1":"P","2":"SS","3":"Bench"}`.
+
+<!-- dict:col:rep_team_lineup_entries.notes -->
+**`notes`** (text, nullable; ≤500 chars app-enforced).
+
+### `rep_tryout_registrations`
+<!-- dict:table:rep_tryout_registrations -->
+
+**Purpose:** **public** tryout sign-ups (guardian-submitted) for a team's program year; they flow through an admin-reviewed status machine and, on acceptance, convert into a `rep_roster_players` row (`source='tryout'`). The public on-ramp from prospect to rostered player.
+
+**Gotchas (read first):**
+1. **Public, UNAUTHENTICATED insert via service role.** The public register route has no auth context; `createRepTryoutRegistration` uses `supabaseAdmin` ([lib/db.ts:4275](../../../lib/db.ts#L4275)) — RLS is dormant on this path.
+2. **The `tryout_open` gate is on the PARENT** (`rep_program_years`), not this table — the public route 409s if `!programYear.tryoutOpen` ([register/route.ts:40](../../../app/api/rep-teams/%5BorgSlug%5D/%5BteamSlug%5D/tryouts/%5ByearId%5D/register/route.ts#L40)); `rep_program_years.tryout_description` is the public blurb.
+3. **The status machine is enforced in CODE, not the DB** — `VALID_TRANSITIONS`: `pending_review→offered|declined|withdrawn`; `offered→accepted|declined|withdrawn`; `accepted→withdrawn`; `declined`/`withdrawn` terminal; illegal → 422. (You can decline straight from `pending_review` but cannot accept without offering first.)
+4. **⚠️ Roster conversion fires on `accepted` only and is NOT transactional** — `acceptTryoutAndAddToRoster` ([lib/db.ts:4313](../../../lib/db.ts#L4313)) inserts the roster player **then** sets status in two separate awaits; if the second fails you get a roster player with the tryout still `offered` (orphan/dup risk).
+5. **⚠️ `attention-summary` counts the wrong value** — it queries `status='pending'` but the real value is `'pending_review'` ([app/api/admin/attention-summary/route.ts:90](../../../app/api/admin/attention-summary/route.ts#L90)), so the "tryouts needing review" badge is **always 0**.
+6. **No dedup** — nothing prevents duplicate submissions; the `guardian_email` index is lookup-only.
+7. **DOB is nullable in the DB but REQUIRED on the public form** ([register/route.ts:67](../../../app/api/rep-teams/%5BorgSlug%5D/%5BteamSlug%5D/tryouts/%5ByearId%5D/register/route.ts#L67)) — minor PII collected via an unauthenticated endpoint with RLS dormant.
+8. **`guardian_email` is lowercased on the admin-create path but NOT the public path** — casing is inconsistent across sources.
+
+**Fields** (boilerplate `id` omitted; **no `created_at` — `submitted_at` is the create stamp**):
+
+<!-- dict:col:rep_tryout_registrations.program_year_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL) — season spine; holds the `tryout_open`/`tryout_description` gate; `status_idx (program_year_id, status)`.
+
+<!-- dict:col:rep_tryout_registrations.team_id -->
+<!-- dict:col:rep_tryout_registrations.org_id -->
+**`team_id`** (FK → `rep_teams.id`) / **`org_id`** (FK → `organizations.id`) — carried into the roster on conversion; public path takes `org_id` from the resolved slug.
+
+<!-- dict:col:rep_tryout_registrations.player_first_name -->
+<!-- dict:col:rep_tryout_registrations.player_last_name -->
+**`player_first_name` / `player_last_name`** (text, NOT NULL) — capped 80 publicly; copied to the roster on accept.
+
+<!-- dict:col:rep_tryout_registrations.player_date_of_birth -->
+**`player_date_of_birth`** (date, nullable in DB; required on the public form — gotcha 7).
+
+<!-- dict:col:rep_tryout_registrations.player_notes -->
+**`player_notes`** (text, nullable) — **guardian-submitted** free text (≤500); **not** carried to the roster (distinct from `admin_notes`).
+
+<!-- dict:col:rep_tryout_registrations.guardian_first_name -->
+<!-- dict:col:rep_tryout_registrations.guardian_last_name -->
+<!-- dict:col:rep_tryout_registrations.guardian_email -->
+<!-- dict:col:rep_tryout_registrations.guardian_phone -->
+**`guardian_first_name` / `guardian_last_name` / `guardian_email` / `guardian_phone`** — first/last/email NOT NULL; `guardian_email` targets all transactional emails + is indexed (gotcha 8); all copied to the roster on accept.
+
+<!-- dict:col:rep_tryout_registrations.status -->
+**`status`** (text, NOT NULL, default `'pending_review'`; CHECK `pending_review|offered|accepted|declined|withdrawn`) — transitions in code (gotchas 3–5).
+
+<!-- dict:col:rep_tryout_registrations.admin_notes -->
+**`admin_notes`** (text, nullable) — internal reviewer notes (vs guardian `player_notes`).
+
+<!-- dict:col:rep_tryout_registrations.submitted_at -->
+**`submitted_at`** (timestamptz, NOT NULL, default now()) — **the create stamp** (this table has no `created_at`); admin list orders `submitted_at DESC`.
+
+### `rep_document_templates`
+<!-- dict:table:rep_document_templates -->
+
+**Purpose:** blank, downloadable document forms (waivers, medical-consent, etc.) an org admin or team coach publishes for download.
+
+**Gotchas (read first):**
+1. **Single private Supabase Storage bucket `rep-team-documents`** (`public:false`, 10 MB, MIME allow-list; created in the dashboard, not a migration) — the bucket name is a **literal hard-coded across ~6 routes** (no shared constant). All DB access is `supabaseAdmin`; **RLS = defense-in-depth only** (the policies are dead in the request path). Downloads are short-lived **signed URLs** (`createSignedUrl`, 3600 s). `storage_path` is **never returned to clients** (stripped).
+2. **`team_id` NULL = org-wide template; set = team-specific.** `getRepDocumentTemplates` returns org-wide **plus** team-specific via `.or('team_id.is.null,team_id.eq.<id>')` ([lib/db.ts:4885](../../../lib/db.ts#L4885)).
+3. **`is_active` is the unpublish/soft-delete flag but is filtered ONLY on the coaches list** — the admin list returns inactive templates too. A separate hard `DELETE` removes the row + storage object.
+4. **No `program_year_id`** — templates are org/team-scoped, persisting across seasons.
+5. **`ON DELETE CASCADE` on `org_id`/`team_id` drops the row but NOT the storage object** — cascade orphans the file in the bucket (only the explicit DELETE route cleans storage).
+
+**Fields** (boilerplate `id`, `created_at` omitted; no `updated_at`):
+
+<!-- dict:col:rep_document_templates.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — `org_idx (org_id, team_id)`.
+
+<!-- dict:col:rep_document_templates.team_id -->
+**`team_id`** (FK → `rep_teams.id` ON DELETE CASCADE, nullable) — NULL = org-wide (gotcha 2).
+
+<!-- dict:col:rep_document_templates.name -->
+**`name`** (text, NOT NULL) — form label.
+
+<!-- dict:col:rep_document_templates.document_type -->
+**`document_type`** (text, NOT NULL; CHECK `waiver|medical_consent|code_of_conduct|other`).
+
+<!-- dict:col:rep_document_templates.storage_path -->
+**`storage_path`** (text, NOT NULL) — bucket object key, layout `${orgId}/templates/(teams/${teamId}|org-wide)/${uuid}-${fileName}`; **never exposed to clients**.
+
+<!-- dict:col:rep_document_templates.file_name -->
+<!-- dict:col:rep_document_templates.file_size -->
+**`file_name`** (text, NOT NULL) / **`file_size`** (bigint, NOT NULL; ≤10 MB enforced pre-insert).
+
+<!-- dict:col:rep_document_templates.is_active -->
+**`is_active`** (bool, NOT NULL, default true) — soft unpublish (gotcha 3).
+
+<!-- dict:col:rep_document_templates.published_by -->
+**`published_by`** (FK → `auth.users.id`, nullable) — uploader (auth-schema introspection gap).
+
+### `rep_player_documents`
+<!-- dict:table:rep_player_documents -->
+
+**Purpose:** completed/returned documents uploaded against a specific roster player (e.g. a signed waiver), optionally linked to the template they fulfill.
+
+**Gotchas (read first):**
+1. **Same bucket / signed-URL / `supabaseAdmin` pattern** as `rep_document_templates`; `storage_path` never exposed; **no guardian self-serve path exists** — uploaders are coaches/admins (`uploaded_by` is always the acting staff user).
+2. **`template_id` links a completed upload to the blank template it fulfills** (ON DELETE SET NULL; NULL = ad-hoc) — but it is **unvalidated** (accepts any form-supplied string).
+3. **No `program_year_id`** — docs are player/team-scoped. Because `rep_roster_players` rows ARE per-program-year and `player_id` is `ON DELETE CASCADE`, a player's docs **follow `player_id` and cascade away on roster teardown** — they do not survive being re-rostered under a new `player_id`.
+4. **`org_id`/`team_id` are denormalized from the player row** (`createRepPlayerDocument` reads `player.teamId/orgId`), not the request; no trigger re-syncs them if a player is moved.
+5. **No soft-delete — hard `DELETE` only**; cascade orphans the storage object (only the DELETE route cleans storage).
+
+**Fields** (boilerplate `id`, `created_at` omitted; no `updated_at`):
+
+<!-- dict:col:rep_player_documents.player_id -->
+**`player_id`** (FK → `rep_roster_players.id` ON DELETE CASCADE, NOT NULL) — the sole list filter (`player_idx`); tenant safety via the route resolving the player within the org/team first.
+
+<!-- dict:col:rep_player_documents.team_id -->
+<!-- dict:col:rep_player_documents.org_id -->
+**`team_id`** (FK → `rep_teams.id` CASCADE) / **`org_id`** (FK → `organizations.id` CASCADE) — denormalized from the player (gotcha 4); `team_idx (team_id, org_id)`.
+
+<!-- dict:col:rep_player_documents.document_type -->
+**`document_type`** (text, NOT NULL; CHECK `waiver|medical_consent|code_of_conduct|other`).
+
+<!-- dict:col:rep_player_documents.storage_path -->
+**`storage_path`** (text, NOT NULL) — bucket key, layout `${orgId}/teams/${teamId}/players/${playerId}/${uuid}-${fileName}`; never exposed.
+
+<!-- dict:col:rep_player_documents.file_name -->
+<!-- dict:col:rep_player_documents.file_size -->
+**`file_name`** (text, NOT NULL) / **`file_size`** (bigint, NOT NULL; ≤10 MB).
+
+<!-- dict:col:rep_player_documents.template_id -->
+**`template_id`** (FK → `rep_document_templates.id` ON DELETE SET NULL, nullable) — the fulfilled template (gotcha 2).
+
+<!-- dict:col:rep_player_documents.uploaded_by -->
+**`uploaded_by`** (FK → `auth.users.id`, nullable) — the acting staff user (auth-schema introspection gap).
+
+---
+
+*End of Rep operations (Phase 4a — 12 tables). The 4 `team_workspace_*` tables that the coverage classifier files under this domain live in the Coaches / basic-teams domain.*
+
+---
+
+## Rep finance
+
+> The franchise module's **money** tables — the team coach's books. Five sub-systems: **budgeting** (`rep_budget_lines` → `rep_budget_periods`; `rep_season_surplus`), **player dues** (`rep_player_dues_schedules` → `rep_player_dues_installments`; `rep_dues_credits`), **fundraisers** (`rep_fundraisers` → `rep_fundraiser_entries`), **cost allocations** (`rep_cost_allocations` → `rep_allocation_splits` → `rep_allocation_installments`), and **expenses / payment requests** (`rep_team_expenses`; `rep_team_payment_requests`). All TEAM-scoped; the org's ledger is the separate Accounting domain.
+>
+> _Last verified: 2026-06-09 @ snapshot 2026-06-09, commit `5479605` (branch `feat/free-tier-coaches`). Code is branch-relative — re-verify file:line at author time._
+
+### Gotchas first (the money traps)
+
+- **Money is dollars (decimal `numeric`), never integer cents.** Every amount/total column stores dollars-and-cents; readers do `Number(x)`, aggregation rounds with `Math.round(x*100)/100`, and reconciliation uses ±$0.01–$0.02 float tolerances — there is **no `*100`/`/100` cents conversion** anywhere in the domain (the lone `/100` in `allocations/new/page.tsx` is a *percentage* divisor). Positivity is DB-enforced per table — mostly `amount > 0`; **two are `>= 0`** (`rep_fundraiser_entries.amount_raised`, `rep_season_surplus.total_surplus`).
+- **No Stripe / payment-processor columns in the entire domain.** None of the 13 tables carry `stripe_*`, `payment_intent_id`, or subscription columns (verified against the live snapshot, dev+prod). Settlement is **internal double-entry**: a row's `accounting_entry_id` (when populated) links to the org `accounting_entries` ledger, and `rep_team_payment_requests` approval posts via the `create_accounting_transfer` RPC between the team and org ledgers. The Stripe billing surface (`stripe_prices` + org/workspace billing columns) is the **Stripe / Billing phase** — cross-referenced, documented there, not here.
+- **THE DUAL BUDGET-LINE TRAP — check the FK target before every join.** Two unrelated "budget line" tables coexist: `rep_budget_lines` (TEAM, this domain, keyed by UUID `program_year_id`) and `org_budget_lines` (ORG Accounting, keyed by integer `season_year`). The `budget_line_id`-shaped FKs point at **different** ones — `rep_budget_periods.budget_line_id` and `rep_player_dues_schedules.budget_line_id` → **`rep_budget_lines`** (team), but `rep_cost_allocations.source_budget_line_id` and `rep_team_payment_requests.budget_line_id` → **`org_budget_lines`** (org). Joining the wrong one returns nothing.
+- **Status/method enums are CHECK-enforced — copy the values verbatim.** `rep_allocation_splits.split_method` `percentage|sessions|fixed`; `.payment_schedule` `standard|custom`; `rep_player_dues_installments.source` `manual|budget_generated`; `rep_dues_credits.credit_type` `contribution|fundraiser|overpayment|other`; `rep_team_expenses.expense_type` `expense|tournament_payable`; `rep_team_payment_requests.request_type` `payment_to_org|charge_to_org`; `rep_team_payment_requests.status` `pending|approved|denied`. **Unlike `team_entitlements.status`, none of these carry a US/UK spelling variant** — there is no `cancelled`/`canceled` doublet to guard; match the single spelling exactly.
+- **Reconciliation is mostly APP-enforced, not DB-enforced.** The only DB guarantees are the per-row positivity CHECKs and the UNIQUE keys. Sum relationships are enforced only in route code, and only on some paths: allocation splits must sum **≤** `allocation.total_amount` (under-allocation allowed, +$0.001 tol); a split's installments must sum **=** `split.amount` (±$0.01); budget periods must sum **=** `line.total_amount` (±$0.02); a dues schedule's `total_amount` is checked against its installments **only on the manual POST path**. Editing children later can silently desync the parent total.
+- **`accounting_entry_id` ≠ "paid", and is unpopulated on several tables.** It is a back-link to the org ledger, written **only** by the dues-installment and fundraiser-entry pay paths. On `rep_allocation_installments`, `rep_team_expenses`, and `rep_team_payment_requests` it exists but **no code writes it** — the org-ledger entry is authoritative with no back-reference. Use `paid_at` / `*_paid_at` / `status` for payment state, never the presence of `accounting_entry_id`.
+- **Three verified schema/code-drift bugs live in this domain (the exact class this dictionary exists to surface — all confirmed against live dev+prod via `information_schema`, 2026-06-09):**
+  1. **`rep_team_expenses` has no `notes` column**, yet `createRepTeamExpense`/`updateRepTeamExpense` write `notes` ([lib/db.ts:5457](../../../lib/db.ts#L5457), [:5480](../../../lib/db.ts#L5480)) → any insert/update through these helpers errors `column "notes" does not exist`.
+  2. **`org_id` is `NOT NULL` with no default and no trigger** on both `rep_allocation_installments` and `rep_player_dues_installments`, yet the only insert helpers omit it (`createRepCostAllocationWithSplits` [lib/db.ts:5172](../../../lib/db.ts#L5172), `replaceRepDuesInstallments` [lib/db.ts:5574](../../../lib/db.ts#L5574)) → new-installment inserts via these paths violate the NN constraint.
+  3. **`getRepAllocationSplitsForTeam` queries the non-existent column `allocation_split_id`** ([lib/db.ts:5663](../../../lib/db.ts#L5663)); the real FK column is `split_id` → the coach allocations GET errors.
+  These are code-vs-live-schema mismatches, not documentation gaps — carry them to `/dba`.
+- **`auth.users` FKs show `foreign_table: null`** in the snapshot for `created_by`/`paid_by`/`reviewed_by` (cross-schema introspection gap, same as Rep operations) — they are constrained, not loose.
+- **Dev/prod:** all 13 finance tables are **zero-drift** (none appear in `DRIFT_dev_vs_prod.md`).
+
+### `rep_budget_lines`
+<!-- dict:table:rep_budget_lines -->
+
+**Purpose:** a TEAM's season budget plan — one row per planned line item (e.g. "Tournament fees", $4,000) for a `(team_id, program_year_id)`. The estimated side of budget-vs-actual; read/written only by the coach budget-plan routes.
+
+**Gotchas (read first):**
+1. **The team one, not `org_budget_lines`** (dual-budget-line trap). Keyed by UUID `program_year_id`; `org_budget_lines` is the org-scoped Accounting table keyed by integer `season_year`. Independent rows, not views of each other.
+2. **`budget-vs-actual` matches actual expenses to a line by category NAME (case-insensitive string), NOT by `category_id`** — it joins `budget_categories(name)`, lowercases, and string-matches `rep_team_expenses.category` text. A line with `category_id IS NULL` ("Uncategorized") never matches any actual, and renaming a category silently breaks matching.
+3. **Drives per-player dues generation** — `generate-installments` divides Σ`total_amount` across the roster (see `rep_player_dues_installments`). The line-delete route 409s when `source='budget_generated'` dues installments exist — though note that guard's schedule lookup is undermined by the dead `rep_player_dues_schedules.budget_line_id` (see that table).
+4. **CHECK `total_amount > 0`** (`rep_budget_lines_total_amount_check`).
+5. **`sort_order` is never set on insert** — both create paths rely on the DB default `0` and there is no reorder route, so every line shares `sort_order = 0` (display order is effectively `created_at`).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_budget_lines.org_id -->
+<!-- dict:col:rep_budget_lines.team_id -->
+<!-- dict:col:rep_budget_lines.program_year_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) / **`program_year_id`** (FK → `rep_program_years.id`, NOT NULL) — the scope key; `program_year_id` is the primary read filter, index `(team_id, program_year_id)`.
+
+<!-- dict:col:rep_budget_lines.category_id -->
+<!-- dict:col:rep_budget_lines.item_id -->
+**`category_id`** (FK → `budget_categories.id`, nullable) / **`item_id`** (FK → `budget_items.id`, nullable) — categorize the line against the **org Accounting chart of accounts** (cross-domain; shared with `org_budget_lines`). Both null = uncategorized. `category_id` feeds the display name and the (name-based) actual-matching; `item_id` is display-only.
+
+<!-- dict:col:rep_budget_lines.description -->
+**`description`** (text, NOT NULL) — line label (1–200 chars).
+
+<!-- dict:col:rep_budget_lines.total_amount -->
+**`total_amount`** (numeric, NOT NULL, CHECK `> 0`) — estimated dollars; if periods exist they must sum to it (±$0.02, see `rep_budget_periods`).
+
+<!-- dict:col:rep_budget_lines.notes -->
+**`notes`** (text, nullable) — free text.
+
+<!-- dict:col:rep_budget_lines.sort_order -->
+**`sort_order`** (int, NOT NULL, default 0) — display order; effectively always 0 (gotcha 5).
+
+### `rep_budget_periods`
+<!-- dict:table:rep_budget_periods -->
+
+**Purpose:** an optional time-phasing of a single budget line's total into dated chunks (e.g. split "$4,000 tournament fees" across Sept/Oct/Nov). Pure breakdown of one `rep_budget_lines` row.
+
+**Gotchas (read first):**
+1. **Hangs purely off `budget_line_id`** — it has **no `org_id`, `team_id`, `program_year_id`, or `updated_at`** (7 columns). Scope/ownership is inherited through the parent line; the route verifies the line belongs to the coach's program year before touching periods.
+2. **Full-replace write** — POST deletes ALL periods for the line, then re-inserts the supplied array (`sort_order` = array index). No single-period PATCH/DELETE; an empty array clears periods (reverts the line to lump-sum).
+3. **Periods must reconcile to the parent** — the route enforces Σ`amount` == `line.total_amount` within **±$0.02**; periods are not independent.
+4. **`period_label` is free text** (no CHECK; client-supplied, e.g. "Sept"/"Q1"); **`period_date`** (nullable date) buckets actuals in budget-vs-actual (null dates fall to the last bucket).
+5. **CHECK `amount > 0`** (`rep_budget_periods_amount_check`). No `created_by`.
+
+**Fields** (boilerplate `id`, `created_at` omitted; no `updated_at`):
+
+<!-- dict:col:rep_budget_periods.budget_line_id -->
+**`budget_line_id`** (FK → `rep_budget_lines.id`, NOT NULL) — the sole scope/parent link; index `rep_budget_periods_line_idx`.
+
+<!-- dict:col:rep_budget_periods.period_label -->
+**`period_label`** (text, NOT NULL) — free-form period name (gotcha 4).
+
+<!-- dict:col:rep_budget_periods.period_date -->
+**`period_date`** (date, nullable) — drives time-bucketing of actuals (gotcha 4).
+
+<!-- dict:col:rep_budget_periods.amount -->
+**`amount`** (numeric, NOT NULL, CHECK `> 0`) — the period's dollar portion; sums to parent ±$0.02.
+
+<!-- dict:col:rep_budget_periods.sort_order -->
+**`sort_order`** (int, NOT NULL, default 0) — set to array index on the full-replace insert.
+
+### `rep_season_surplus`
+<!-- dict:table:rep_season_surplus -->
+
+**Purpose:** the end-of-season surplus figure for a program year — the input to a refund/distribution breakdown. One row per season.
+
+**Gotchas (read first):**
+1. **`total_surplus` is a coach-ENTERED number, not a computed rollup** — written verbatim (rounded to 2dp) from the request; no code derives it from budget-vs-actual or expenses. (The downstream refund **breakdown** is recomputed live from this number + roster/credits/dues, but the surplus itself is manual input.)
+2. **CHECK `total_surplus >= 0`** (`rep_season_surplus_total_surplus_check`) — **a deficit cannot be stored** (a team that ran a loss stores 0). Note this is `>= 0`, not `> 0`.
+3. **UNIQUE on `program_year_id`** (`rep_season_surplus_program_year_id_key`) — one row per season; writes `upsert(onConflict: 'program_year_id')`, so PUT is idempotent.
+4. **No `team_id`/`org_id`** — scoped only via `program_year_id` → `rep_program_years` (which carries the team); the route gates by resolving the team's active program year first.
+5. **`created_at` AND `updated_at` are NULLABLE** here (unusual vs the rest of the domain; both default `now()`). `created_by` is set on every upsert, so it reflects the **last editor**, not strictly the creator.
+
+**Fields** (boilerplate `id` omitted; `created_at`/`updated_at` nullable — gotcha 5):
+
+<!-- dict:col:rep_season_surplus.program_year_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL, UNIQUE) — the season key; the only scope column.
+
+<!-- dict:col:rep_season_surplus.total_surplus -->
+**`total_surplus`** (numeric, NOT NULL, default 0, CHECK `>= 0`) — coach-entered season surplus in dollars (gotchas 1–2).
+
+<!-- dict:col:rep_season_surplus.notes -->
+**`notes`** (text, nullable) — free text.
+
+<!-- dict:col:rep_season_surplus.created_by -->
+**`created_by`** (FK → `auth.users.id`, nullable; snapshot shows `foreign_table: null` — cross-schema gap) — last editor (gotcha 5).
+
+### `rep_player_dues_schedules`
+<!-- dict:table:rep_player_dues_schedules -->
+
+**Purpose:** one dues plan per roster player per season — the headline amount a player owes (`total_amount`), broken into dated `rep_player_dues_installments`.
+
+**Gotchas (read first):**
+1. **UNIQUE `(program_year_id, player_id)`** (`..._program_year_id_player_id_key`) — exactly one schedule per player per season; both writers rely on it (`upsert(onConflict: 'program_year_id,player_id')` for the budget-generated path, read-then-update/insert for the manual path).
+2. **`budget_line_id` → `rep_budget_lines` (the TEAM one — OPPOSITE side of the dual-budget-line trap) — but it is NEVER WRITTEN.** No insert path sets it and no mapper reads it; it is **always NULL** (verified: nullable, no default, live dev+prod). ⚠️ Consequence: the budget-line DELETE guard that selects schedules `WHERE budget_line_id = lineId` always finds zero, so the intended "block delete of a line with generated dues" trace is broken.
+3. **`total_amount` is reconciled to the installments ONLY on the manual dues POST path** (±$0.01); the budget generator sets it = Σ(player installments) by construction. Nothing keeps them in sync afterward — editing installments can desync the total (no DB CHECK beyond `> 0`).
+4. **CHECK `total_amount > 0`**.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_player_dues_schedules.program_year_id -->
+<!-- dict:col:rep_player_dues_schedules.player_id -->
+<!-- dict:col:rep_player_dues_schedules.team_id -->
+<!-- dict:col:rep_player_dues_schedules.org_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL) / **`player_id`** (FK → `rep_roster_players.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) / **`org_id`** (FK → `organizations.id`, NOT NULL) — scope + the player who owes; `(program_year_id, player_id)` UNIQUE.
+
+<!-- dict:col:rep_player_dues_schedules.total_amount -->
+**`total_amount`** (numeric, NOT NULL, CHECK `> 0`) — total dues owed for the season (gotcha 3).
+
+<!-- dict:col:rep_player_dues_schedules.notes -->
+**`notes`** (text, nullable) — free text; the generator hardcodes "Generated from budget plan".
+
+<!-- dict:col:rep_player_dues_schedules.budget_line_id -->
+**`budget_line_id`** (FK → `rep_budget_lines.id` ON DELETE SET NULL, nullable) — intended trace to the originating team budget line; **dead — never written** (gotcha 2).
+
+### `rep_player_dues_installments`
+<!-- dict:table:rep_player_dues_installments -->
+
+**Purpose:** the dated payment chunks of a dues schedule — what a player pays and when. The index `(due_date) WHERE paid_at IS NULL` powers the "upcoming/overdue unpaid" scans.
+
+**Gotchas (read first):**
+1. **`paid_at` is the source of truth for "paid", not `accounting_entry_id`.** Mark-paid sets `paid_at` (and links `accounting_entry_id` to the team-ledger income entry created at the same time); all balance/unpaid logic keys on `paid_at`.
+2. **THREE reminder columns — all live, different cadences:** `reminder_sent_at` = original/ad-hoc "send reminders now" (no window); `reminder_30_sent_at` = the 30-day wave; `reminder_7_sent_at` = the 7-day wave. The candidate query checks the window-specific column (falls back to `reminder_sent_at`) and treats a reminder as "already sent" only within the last 7 days. (Contrast: `rep_allocation_installments` has only ONE `reminder_sent_at`.)
+3. **`source` CHECK `manual|budget_generated`** (default `manual`). Regeneration is **all-or-nothing per season**: the generator 409s if ANY `budget_generated` installment already exists for the year (the coach must delete them first) — no selective preserve-manual/replace-generated merge, so the two sources don't coexist on the happy path.
+4. **⚠️ `org_id` is NOT NULL with no default and no trigger (verified live), yet both insert paths omit it** (`replaceRepDuesInstallments` [lib/db.ts:5574](../../../lib/db.ts#L5574); the generator route) → inserts via these paths violate the NN constraint. `team_id` is nullable and also unset (the `team_idx` index exists but the column is effectively always NULL). Flag for /dba.
+5. **CHECK `amount > 0`**; UNIQUE `(schedule_id, installment_number)`.
+
+**Fields** (boilerplate `id`, `created_at` omitted; no `updated_at`):
+
+<!-- dict:col:rep_player_dues_installments.schedule_id -->
+<!-- dict:col:rep_player_dues_installments.player_id -->
+**`schedule_id`** (FK → `rep_player_dues_schedules.id`, NOT NULL) / **`player_id`** (FK → `rep_roster_players.id`, NOT NULL) — parent schedule + denormalized player; `(schedule_id, installment_number)` UNIQUE.
+
+<!-- dict:col:rep_player_dues_installments.installment_number -->
+**`installment_number`** (int, NOT NULL) — 1-based sequence within the schedule.
+
+<!-- dict:col:rep_player_dues_installments.amount -->
+**`amount`** (numeric, NOT NULL, CHECK `> 0`) — the chunk's dollars; the schedule's installments are app-reconciled to `total_amount` (manual path).
+
+<!-- dict:col:rep_player_dues_installments.due_date -->
+**`due_date`** (date, NOT NULL) — drives overdue/upcoming; compared as `YYYY-MM-DD` strings.
+
+<!-- dict:col:rep_player_dues_installments.paid_at -->
+**`paid_at`** (timestamptz, nullable) — the authoritative paid flag (gotcha 1).
+
+<!-- dict:col:rep_player_dues_installments.accounting_entry_id -->
+**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting domain**) — back-link to the team-ledger income entry created on mark-paid; not the paid flag.
+
+<!-- dict:col:rep_player_dues_installments.source -->
+**`source`** (text, NOT NULL, default `manual`; CHECK `manual|budget_generated`) — origin (gotcha 3).
+
+<!-- dict:col:rep_player_dues_installments.reminder_sent_at -->
+<!-- dict:col:rep_player_dues_installments.reminder_30_sent_at -->
+<!-- dict:col:rep_player_dues_installments.reminder_7_sent_at -->
+**`reminder_sent_at`** / **`reminder_30_sent_at`** / **`reminder_7_sent_at`** (timestamptz, nullable) — ad-hoc / 30-day / 7-day reminder stamps (gotcha 2).
+
+<!-- dict:col:rep_player_dues_installments.org_id -->
+<!-- dict:col:rep_player_dues_installments.team_id -->
+**`org_id`** (FK → `organizations.id`, **NOT NULL — but unwritten**, gotcha 4; index `org_idx`) / **`team_id`** (FK → `rep_teams.id`, nullable, also unset; index `team_idx`) — denormalized scope.
+
+### `rep_dues_credits`
+<!-- dict:table:rep_dues_credits -->
+
+**Purpose:** non-payment reductions to a player's dues owing — contributions, fundraiser rebates, overpayments, misc. Standalone positive amounts subtracted from the balance (no `paid_at`).
+
+**Gotchas (read first):**
+1. **CIRCULAR FK with `rep_fundraiser_entries`; the authoritative direction is `fundraiser_entry_id → rep_fundraiser_entries.id`.** Both FKs exist (`rep_dues_credits.fundraiser_entry_id` and `rep_fundraiser_entries.credit_id`). On a fundraiser entry the credit is inserted **with `fundraiser_entry_id` set first**, then the entry's `credit_id` is back-filled — so `fundraiser_entry_id` is the durable link, `credit_id` the convenience reverse pointer. Only `credit_type='fundraiser'` credits have it set; manual credits leave it NULL.
+2. **`credit_type` CHECK `contribution|fundraiser|overpayment|other`** (default `contribution`). Only `fundraiser` is system-generated (by the fundraiser flow); the other three come from the manual dues-credits POST.
+3. **Balance formula & a clamping inconsistency:** a player's balance = `schedule.total_amount − Σ(paid installments) − Σ(credits)`. Whether negatives (overpaid/over-credited) surface depends on the reader — the dues GET and season-surplus do **not** clamp (can go negative); the fundraiser-entries GET clamps at 0. ⚠️ Worth normalizing.
+4. **`created_at` is NULLABLE** (default `now()`) — asymmetric vs the schedule/installment `created_at` (NN). No `org_id`/`team_id`/`schedule_id` — scoped by `program_year_id` + `player_id` only.
+5. **CHECK `amount > 0`**; `credit_date` defaults `CURRENT_DATE`.
+
+**Fields** (boilerplate `id` omitted; `created_at` nullable — gotcha 4):
+
+<!-- dict:col:rep_dues_credits.program_year_id -->
+<!-- dict:col:rep_dues_credits.player_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL) / **`player_id`** (FK → `rep_roster_players.id`, NOT NULL) — scope + whose owing is reduced.
+
+<!-- dict:col:rep_dues_credits.amount -->
+**`amount`** (numeric, NOT NULL, CHECK `> 0`) — credit dollars (2dp).
+
+<!-- dict:col:rep_dues_credits.description -->
+**`description`** (text, NOT NULL) — required on manual POST; fundraiser path auto-fills "Fundraiser rebate — {name}".
+
+<!-- dict:col:rep_dues_credits.credit_date -->
+**`credit_date`** (date, NOT NULL, default `CURRENT_DATE`).
+
+<!-- dict:col:rep_dues_credits.credit_type -->
+**`credit_type`** (text, NOT NULL, default `contribution`; CHECK 4-value — gotcha 2).
+
+<!-- dict:col:rep_dues_credits.notes -->
+**`notes`** (text, nullable) — free text.
+
+<!-- dict:col:rep_dues_credits.created_by -->
+**`created_by`** (FK → `auth.users.id`, nullable; snapshot `foreign_table: null` — cross-schema gap).
+
+<!-- dict:col:rep_dues_credits.fundraiser_entry_id -->
+**`fundraiser_entry_id`** (FK → `rep_fundraiser_entries.id`, nullable) — the authoritative half of the circular FK (gotcha 1); set only for `fundraiser`-type credits.
+
+### `rep_fundraisers`
+<!-- dict:table:rep_fundraisers -->
+
+**Purpose:** a team-and-season fundraising campaign header (e.g. "Chocolate Bar Drive"). Holds the campaign's default player-rebate rate; the per-player money lives in `rep_fundraiser_entries`.
+
+**Gotchas (read first):**
+1. **No DELETE route** — fundraisers are retired with `is_active=false` (PATCH), never removed; rows accumulate.
+2. **`player_rebate_percent` is a template, not retroactive** — it is copied onto each entry's `rebate_percent` at entry-creation; editing it later does **not** re-rate existing entries (only new ones).
+3. **CHECK `player_rebate_percent BETWEEN 0 AND 100`** (`rep_fundraisers_player_rebate_percent_check`; default 0).
+4. **`is_active` is the only enforced gate** — it blocks **new** entry creation (400 "Fundraiser is closed"); it does not block editing existing entries. **`start_date`/`end_date` are informational only — never enforced** on write.
+5. Scoped by `program_year_id`, so past-season fundraisers are invisible in the coach UI (filtered to the active program year).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_fundraisers.org_id -->
+<!-- dict:col:rep_fundraisers.team_id -->
+<!-- dict:col:rep_fundraisers.program_year_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) / **`program_year_id`** (FK → `rep_program_years.id`, NOT NULL) — scope; index `(team_id, program_year_id)`.
+
+<!-- dict:col:rep_fundraisers.name -->
+**`name`** (text, NOT NULL) — campaign name.
+
+<!-- dict:col:rep_fundraisers.description -->
+**`description`** (text, nullable).
+
+<!-- dict:col:rep_fundraisers.player_rebate_percent -->
+**`player_rebate_percent`** (numeric, NOT NULL, default 0, CHECK 0–100) — default rebate rate copied to entries (gotcha 2).
+
+<!-- dict:col:rep_fundraisers.start_date -->
+<!-- dict:col:rep_fundraisers.end_date -->
+**`start_date`** / **`end_date`** (date, nullable) — informational window, not enforced (gotcha 4).
+
+<!-- dict:col:rep_fundraisers.is_active -->
+**`is_active`** (bool, NOT NULL, default true) — soft open/closed; gates new entries (gotcha 4).
+
+### `rep_fundraiser_entries`
+<!-- dict:table:rep_fundraiser_entries -->
+
+**Purpose:** one row per player per fundraiser — how much that player raised and the resulting dues rebate. The hub of a cross-domain triple-write.
+
+**Gotchas (read first):**
+1. **Recording an entry triple-writes across two domains, non-transactionally.** POST creates (1) an `accounting_entries` income row in the **org** ledger (category `fundraising`, status `posted`), (2) this entry row, and (3) — only if `rebate_amount > 0` — a `rep_dues_credits` row, then a 4th write back-linking `credit_id`. There is **no rollback**: if the credit insert fails, the entry + accounting row persist with `credit_id=NULL`.
+2. **UNIQUE `(fundraiser_id, player_id)`** — one entry per player per fundraiser (POST 409s if it exists → "use PATCH").
+3. **No DELETE route** — an entry can't be removed, only PATCHed. Setting amount to 0 zeroes the rebate and **deletes the linked credit**, but the entry row and its (now-$0) accounting income row remain.
+4. **`rebate_percent` is a SNAPSHOT** copied from the fundraiser at POST and **never recomputed** from the live fundraiser; PATCH uses the stored snapshot. **`rebate_amount = round(amount_raised × rebate_percent / 100, 2)`**, computed and stored (not DB-generated); recomputed on PATCH.
+5. **CHECK `amount_raised >= 0`** (`rep_fundraiser_entries_amount_raised_check`) — note `>= 0`, not `> 0`: a player can be recorded with $0 raised.
+6. **`accounting_entry_id` (→ org `accounting_entries`) is ALWAYS set on POST here** (unlike the expense/payment-request/allocation tables where it's unused); on a PATCH amount change the linked accounting row's amount is updated in lockstep. **`credit_id`** is the circular-FK reverse pointer (see `rep_dues_credits`).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_fundraiser_entries.fundraiser_id -->
+<!-- dict:col:rep_fundraiser_entries.org_id -->
+<!-- dict:col:rep_fundraiser_entries.team_id -->
+<!-- dict:col:rep_fundraiser_entries.player_id -->
+**`fundraiser_id`** (FK → `rep_fundraisers.id`, NOT NULL) / **`org_id`** (FK → `organizations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) / **`player_id`** (FK → `rep_roster_players.id`, NOT NULL) — parent campaign + scope + the player; UNIQUE `(fundraiser_id, player_id)`; indexes `fundraiser_idx`, `player_idx`.
+
+<!-- dict:col:rep_fundraiser_entries.amount_raised -->
+**`amount_raised`** (numeric, NOT NULL, CHECK `>= 0`) — dollars raised by this player (gotcha 5).
+
+<!-- dict:col:rep_fundraiser_entries.rebate_percent -->
+<!-- dict:col:rep_fundraiser_entries.rebate_amount -->
+**`rebate_percent`** (numeric, NOT NULL, default 0) — snapshot of the fundraiser rate (gotcha 4) / **`rebate_amount`** (numeric, NOT NULL, default 0) — computed dollars rebated to the player's dues.
+
+<!-- dict:col:rep_fundraiser_entries.accounting_entry_id -->
+**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting**) — the posted org-ledger income row; always set in practice (gotcha 6).
+
+<!-- dict:col:rep_fundraiser_entries.credit_id -->
+**`credit_id`** (FK → `rep_dues_credits.id`, nullable) — reverse half of the circular FK; null when `rebate_amount = 0`.
+
+<!-- dict:col:rep_fundraiser_entries.notes -->
+**`notes`** (text, nullable) — free text.
+
+### `rep_cost_allocations`
+<!-- dict:table:rep_cost_allocations -->
+
+**Purpose:** a shared cost the ORG splits across multiple rep teams (e.g. a facility bill divided among teams). The envelope; the per-team shares are `rep_allocation_splits`, the dated payments `rep_allocation_installments`. Created org-side (admin), paid coach-side.
+
+**Gotchas (read first):**
+1. **`source_budget_line_id` → `org_budget_lines` (ORG Accounting), NOT `rep_budget_lines`** (dual-budget-line trap). Set only by the org→team bridge route (`allocate-to-teams` — an org budget line allocated across teams); the manual-allocation POST leaves it NULL. `source_entry_id` → `accounting_entries` (ORG) — for an allocation originating from a posted org ledger entry; in current callers it is effectively always NULL.
+2. **Top-level reconciliation allows under-allocation** — Σ`splits.amount` is enforced **≤** `total_amount` (+$0.001 tol), not `=` (an allocation can be partially distributed).
+3. **`mapRepCostAllocation` does not surface `source_budget_line_id`** — only the bridge route echoes it; most code is blind to the budget-line link after creation.
+4. **CHECK `total_amount > 0`**. Created/written only by `createRepCostAllocationWithSplits` ([lib/db.ts:5135](../../../lib/db.ts#L5135)).
+
+**Fields** (boilerplate `id`, `created_at` omitted; no `updated_at`):
+
+<!-- dict:col:rep_cost_allocations.org_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL) — owning org; every read scoped by it.
+
+<!-- dict:col:rep_cost_allocations.source_entry_id -->
+**`source_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting**) — origin org ledger entry (gotcha 1); effectively always NULL in current callers.
+
+<!-- dict:col:rep_cost_allocations.source_budget_line_id -->
+**`source_budget_line_id`** (FK → `org_budget_lines.id`, nullable; **org Accounting**) — origin org budget line; set only by the bridge route; partial index WHERE not null (gotcha 1).
+
+<!-- dict:col:rep_cost_allocations.description -->
+**`description`** (text, NOT NULL) — editable via `updateRepCostAllocationDescription`.
+
+<!-- dict:col:rep_cost_allocations.total_amount -->
+**`total_amount`** (numeric, NOT NULL, CHECK `> 0`) — the allocation envelope; in the bridge path copied from the org budget line's total.
+
+<!-- dict:col:rep_cost_allocations.created_by -->
+**`created_by`** (FK → `auth.users.id`, nullable; snapshot `foreign_table: null` — cross-schema gap).
+
+### `rep_allocation_splits`
+<!-- dict:table:rep_allocation_splits -->
+
+**Purpose:** one rep team's share of a cost allocation. UNIQUE `(allocation_id, team_id)` — a team can't be double-allocated within one allocation.
+
+**Gotchas (read first):**
+1. **`split_method` (CHECK `percentage|sessions|fixed`) interprets `split_value`; `amount` is always the resolved dollars.** `fixed` → `split_value` IS the dollars; `percentage` → `split_value` is a percent and `amount = round(total × split_value)/100`; `sessions` → `split_value` is a per-session rate and `amount` is **entered manually** (NOT auto-derived). The server trusts the client's `amount` (does not recompute from `split_value`). `split_value` is plain `numeric` (the snapshot doesn't record scale) holding the fractional rate / percent / per-session value behind the resolved `amount`.
+2. **`payment_schedule` (CHECK `standard|custom`, default `standard`):** `standard` = ONE installment for the full split amount on a single due date; `custom` = multiple coach-defined installments. No auto-even-split generator.
+3. **Mid-level reconciliation is strict** — Σ`installments.amount` per split must **=** `split.amount` (±$0.01), tighter than the allocation-level ≤ rule.
+4. **`team_id` is NOT NULL here** (contrast: `rep_allocation_installments.team_id` is nullable). **CHECK `amount > 0`.**
+
+**Fields** (boilerplate `id`, `created_at` omitted; no `updated_at`):
+
+<!-- dict:col:rep_allocation_splits.allocation_id -->
+<!-- dict:col:rep_allocation_splits.team_id -->
+<!-- dict:col:rep_allocation_splits.program_year_id -->
+<!-- dict:col:rep_allocation_splits.org_id -->
+**`allocation_id`** (FK → `rep_cost_allocations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) / **`program_year_id`** (FK → `rep_program_years.id`, NOT NULL) / **`org_id`** (FK → `organizations.id`, NOT NULL) — parent + the owing team + season + denormalized org; UNIQUE `(allocation_id, team_id)`; index `(team_id, program_year_id)`.
+
+<!-- dict:col:rep_allocation_splits.amount -->
+**`amount`** (numeric, NOT NULL, CHECK `> 0`) — the team's resolved share in dollars (gotcha 1).
+
+<!-- dict:col:rep_allocation_splits.split_method -->
+<!-- dict:col:rep_allocation_splits.split_value -->
+**`split_method`** (text, NOT NULL; CHECK `percentage|sessions|fixed`) / **`split_value`** (numeric, NOT NULL) — how the share was derived (gotcha 1).
+
+<!-- dict:col:rep_allocation_splits.payment_schedule -->
+**`payment_schedule`** (text, NOT NULL, default `standard`; CHECK `standard|custom`) — installment shape (gotcha 2).
+
+<!-- dict:col:rep_allocation_splits.notes -->
+**`notes`** (text, nullable) — free text.
+
+### `rep_allocation_installments`
+<!-- dict:table:rep_allocation_installments -->
+
+**Purpose:** the dated payments of an allocation split — what a team pays the org and when.
+
+**Gotchas (read first):**
+1. **⚠️ `getRepAllocationSplitsForTeam` queries the non-existent column `allocation_split_id`** ([lib/db.ts:5663](../../../lib/db.ts#L5663)); the real FK is **`split_id`** → the coach allocations GET errors. Other paths correctly use `split_id`. Flag for /dba.
+2. **⚠️ `org_id` is NOT NULL with no default/trigger (verified live), yet `createRepCostAllocationWithSplits` omits it on insert** ([lib/db.ts:5172](../../../lib/db.ts#L5172)) → inserts via this path violate the NN constraint. `team_id` is nullable and also unset (denormalized copy of the split's team; the `team_idx` exists but the column is effectively NULL).
+3. **Paid = `paid_at` (+ `paid_by`), NOT `accounting_entry_id`.** Mark-paid (`markRepAllocationInstallmentPaid` [lib/db.ts:5206](../../../lib/db.ts#L5206)) sets `paid_at`/`paid_by`; its only caller (the coach installment PATCH route) passes `accounting_entry_id = null`, so the payment posts via `create_accounting_transfer` (team→org) and the installment is never linked. Pay is one-way (409 if already paid; no unpay).
+4. **ONE reminder column** (`reminder_sent_at`, 7-day re-send debounce) — contrast the dues installments' three.
+5. **CHECK `amount > 0`**; UNIQUE `(split_id, installment_number)`.
+
+**Fields** (boilerplate `id`, `created_at` omitted; no `updated_at`):
+
+<!-- dict:col:rep_allocation_installments.split_id -->
+**`split_id`** (FK → `rep_allocation_splits.id`, NOT NULL) — parent split (gotcha 1 — beware the `allocation_split_id` typo); UNIQUE `(split_id, installment_number)`.
+
+<!-- dict:col:rep_allocation_installments.installment_number -->
+**`installment_number`** (int, NOT NULL) — 1-based within the split.
+
+<!-- dict:col:rep_allocation_installments.amount -->
+**`amount`** (numeric, NOT NULL, CHECK `> 0`) — chunk dollars; installments sum = `split.amount` (±$0.01).
+
+<!-- dict:col:rep_allocation_installments.due_date -->
+**`due_date`** (date, NOT NULL).
+
+<!-- dict:col:rep_allocation_installments.paid_at -->
+<!-- dict:col:rep_allocation_installments.paid_by -->
+**`paid_at`** (timestamptz, nullable) — the paid flag / **`paid_by`** (FK → `auth.users.id`, nullable; cross-schema gap) — who marked it (gotcha 3).
+
+<!-- dict:col:rep_allocation_installments.accounting_entry_id -->
+**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting**) — designed back-link; **never written** (gotcha 3).
+
+<!-- dict:col:rep_allocation_installments.reminder_sent_at -->
+**`reminder_sent_at`** (timestamptz, nullable) — single org→coach reminder stamp (gotcha 4).
+
+<!-- dict:col:rep_allocation_installments.org_id -->
+<!-- dict:col:rep_allocation_installments.team_id -->
+**`org_id`** (FK → `organizations.id`, **NOT NULL — but unwritten**, gotcha 2; index `org_idx`) / **`team_id`** (FK → `rep_teams.id`, nullable, also unset; index `team_idx`) — denormalized scope.
+
+### `rep_team_expenses`
+<!-- dict:table:rep_team_expenses -->
+
+**Purpose:** a coach-authored ledger of money the team spends or owes. Two shapes share the row via `expense_type`: a one-shot **expense** (single `amount`/`expense_paid_at`) vs a **tournament_payable** that splits into a deposit leg + a balance leg.
+
+**Gotchas (read first):**
+1. **⚠️ SCHEMA/CODE MISMATCH — there is NO `notes` column** (verified live dev+prod 2026-06-09; the row has exactly 23 columns), yet `createRepTeamExpense` ([lib/db.ts:5457](../../../lib/db.ts#L5457)) and `updateRepTeamExpense` ([lib/db.ts:5480](../../../lib/db.ts#L5480)) write `notes` → any insert/update through these helpers errors `column "notes" does not exist`. The exact schema-drift class this dictionary exists to surface. Flag for /dba.
+2. **Two-payment model is by `expense_type`, NOT by arithmetic.** `expense`: fully paid when `expense_paid_at` is set; the deposit/balance fields are ignored. `tournament_payable`: fully paid when BOTH `deposit_paid_at` AND `balance_paid_at` are set; paid amount = (deposit_paid_at ? deposit_amount : 0) + (balance_paid_at ? balance_amount : 0). **`deposit_amount + balance_amount == amount` is NOT enforced** (no CHECK, no app validation). Worse, mark-deposit/mark-balance fall back to the FULL `amount` when the leg amount is NULL, so a payable with null split amounts can post the full amount twice. There is no single "is paid" flag.
+3. **`expense_type` CHECK `expense|tournament_payable`** — `tournament_payable` = money owed to a tournament/host (deposit+balance schedule). `upcoming-payables` surfaces rows by deposit/balance **due dates only**, regardless of `expense_type`, so lump `expense` rows (no due dates) never appear there.
+4. **`accounting_entry_id` is never written** — on mark-paid the route creates a team-ledger entry but discards its id (the ledger entry is authoritative, no back-reference).
+5. **`payee_id` (→ org `org_payees`) vs `payee_payer` (text) are mutually exclusive** — picking a structured org payee sets `payee_id` (clears `payee_payer`); a free-text name sets `payee_payer` (clears `payee_id`); both set at create only. **`category` is free text** and is the (name-based, case-insensitive) join key to `rep_budget_lines` categories in budget-vs-actual — a typo silently drops the expense into "unbudgeted".
+6. **CHECK `amount > 0`** (only `amount`; the deposit/balance amounts have no CHECK and are nullable).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted; **note: no `notes` column exists** — see gotcha 1):
+
+<!-- dict:col:rep_team_expenses.program_year_id -->
+<!-- dict:col:rep_team_expenses.team_id -->
+<!-- dict:col:rep_team_expenses.org_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) / **`org_id`** (FK → `organizations.id`, NOT NULL) — scope; primary list filter `program_year_id` (index `year_idx`).
+
+<!-- dict:col:rep_team_expenses.expense_type -->
+**`expense_type`** (text, NOT NULL; CHECK `expense|tournament_payable`) — shape selector (gotchas 2–3).
+
+<!-- dict:col:rep_team_expenses.description -->
+**`description`** (text, NOT NULL) — reused as the ledger entry description on pay.
+
+<!-- dict:col:rep_team_expenses.category -->
+**`category`** (text, nullable) — free-text budget-match key (gotcha 5).
+
+<!-- dict:col:rep_team_expenses.amount -->
+**`amount`** (numeric, NOT NULL, CHECK `> 0`) — full cost; for `tournament_payable` NOT validated against deposit+balance (gotcha 2).
+
+<!-- dict:col:rep_team_expenses.expense_paid_at -->
+**`expense_paid_at`** (timestamptz, nullable) — marks a lump `expense` paid (not used for payables).
+
+<!-- dict:col:rep_team_expenses.deposit_amount -->
+<!-- dict:col:rep_team_expenses.deposit_due_date -->
+<!-- dict:col:rep_team_expenses.deposit_paid_at -->
+**`deposit_amount`** (numeric, nullable) / **`deposit_due_date`** (date, nullable) / **`deposit_paid_at`** (timestamptz, nullable) — the deposit leg of a `tournament_payable` (gotcha 2).
+
+<!-- dict:col:rep_team_expenses.balance_amount -->
+<!-- dict:col:rep_team_expenses.balance_due_date -->
+<!-- dict:col:rep_team_expenses.balance_paid_at -->
+**`balance_amount`** (numeric, nullable) / **`balance_due_date`** (date, nullable) / **`balance_paid_at`** (timestamptz, nullable) — the balance leg (gotcha 2).
+
+<!-- dict:col:rep_team_expenses.event_id -->
+**`event_id`** (FK → `rep_team_events.id`, nullable; **Rep operations**) — optional link to a team event.
+
+<!-- dict:col:rep_team_expenses.accounting_entry_id -->
+**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting**) — never written (gotcha 4).
+
+<!-- dict:col:rep_team_expenses.payment_method -->
+**`payment_method`** (text, nullable) — free-text label.
+
+<!-- dict:col:rep_team_expenses.payee_id -->
+<!-- dict:col:rep_team_expenses.payee_payer -->
+**`payee_id`** (FK → `org_payees.id`, nullable; **org Accounting**) / **`payee_payer`** (text, nullable) — structured-vs-freetext payee, mutually exclusive (gotcha 5).
+
+<!-- dict:col:rep_team_expenses.created_by -->
+**`created_by`** (FK → `auth.users.id`, nullable; cross-schema gap).
+
+### `rep_team_payment_requests`
+<!-- dict:table:rep_team_payment_requests -->
+
+**Purpose:** the coach → admin approval workflow for moving money between a team's ledger and the org's ledger. A coach files a request (`pending`); an org admin/treasurer/owner approves (posts an accounting transfer) or denies (with a reason). No expense row is created by this flow.
+
+**Gotchas (read first):**
+1. **`request_type` DIRECTION (CHECK `payment_to_org|charge_to_org`):** `payment_to_org` = team pays the org (transfer team→org ledger, category `team_payment_to_org`); `charge_to_org` = org pays/charges to the team (transfer org→team ledger, category `team_charge_to_org`).
+2. **On approve, `accounting_entry_id` is NOT set** — approval calls the `create_accounting_transfer` RPC then updates status, but ignores the RPC's entry id; the column has an FK but is never populated. The ledger transfer is authoritative.
+3. **Approve posts a ledger transfer but creates NO `rep_team_expense`** — the two finance tables are decoupled.
+4. **`budget_line_id` → `org_budget_lines` (ORG Accounting), NOT `rep_budget_lines`** (dual-budget-line trap). Accepted from the coach and surfaced on read, but **not used in the approval/transfer logic** — a categorization hint only, often NULL.
+5. **`status` (CHECK `pending|approved|denied`, default `pending`) is a one-way machine** — both approve and deny 409 if `status != pending`; no reopening. `denial_reason` is required (app-layer) on deny. `reviewed_by`/`reviewed_at` stamped on the decision. Coaches may DELETE (cancel) only their own **pending** requests.
+6. **`created_by` is NOT NULL** (the requesting coach); `reviewed_by` nullable until decided. **NO Stripe columns** — settlement is internal double-entry only (`payment_method` is a free-text label, not a Stripe ref). **CHECK `amount > 0`**; indexes `(org_id, status)`, `(team_id, status)`.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_payment_requests.org_id -->
+<!-- dict:col:rep_team_payment_requests.team_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL) / **`team_id`** (FK → `rep_teams.id`, NOT NULL) — scope; status-indexed both ways.
+
+<!-- dict:col:rep_team_payment_requests.request_type -->
+**`request_type`** (text, NOT NULL; CHECK `payment_to_org|charge_to_org`) — transfer direction (gotcha 1).
+
+<!-- dict:col:rep_team_payment_requests.amount -->
+**`amount`** (numeric, NOT NULL, CHECK `> 0`) — transfer dollars (app ceiling ≤ 999999.99).
+
+<!-- dict:col:rep_team_payment_requests.description -->
+**`description`** (text, NOT NULL) — reused as the transfer description.
+
+<!-- dict:col:rep_team_payment_requests.payment_method -->
+**`payment_method`** (text, nullable) — free-text label (not Stripe).
+
+<!-- dict:col:rep_team_payment_requests.notes -->
+**`notes`** (text, nullable) — coach free text. *(This column DOES exist here — contrast `rep_team_expenses`, which has no `notes` column.)*
+
+<!-- dict:col:rep_team_payment_requests.status -->
+**`status`** (text, NOT NULL, default `pending`; CHECK `pending|approved|denied`) — one-way machine (gotcha 5).
+
+<!-- dict:col:rep_team_payment_requests.denial_reason -->
+**`denial_reason`** (text, nullable) — required on deny (gotcha 5).
+
+<!-- dict:col:rep_team_payment_requests.budget_line_id -->
+**`budget_line_id`** (FK → `org_budget_lines.id`, nullable; **org Accounting**) — categorization hint; not used in transfer logic (gotcha 4).
+
+<!-- dict:col:rep_team_payment_requests.accounting_entry_id -->
+**`accounting_entry_id`** (FK → `accounting_entries.id`, nullable; **org Accounting**) — never written (gotcha 2).
+
+<!-- dict:col:rep_team_payment_requests.created_by -->
+<!-- dict:col:rep_team_payment_requests.reviewed_by -->
+<!-- dict:col:rep_team_payment_requests.reviewed_at -->
+**`created_by`** (FK → `auth.users.id`, NOT NULL; cross-schema gap) — the requesting coach / **`reviewed_by`** (FK → `auth.users.id`, nullable; cross-schema gap) + **`reviewed_at`** (timestamptz, nullable) — stamped on decision.
+
+---
+
+*End of Rep finance (Phase 4b — 13 tables) and of the Rep teams / team workspaces domain (25 tables total: 12 operations + 13 finance). The 4 `team_workspace_*` tables the coverage classifier files under this domain live in the Coaches / basic-teams domain. Deferred: any cross-module roster snapshot back-link (`tournament_roster_players.source_player_id` etc., free-tier Phase 5) — absent from `rep_roster_players` today.*
