@@ -9279,6 +9279,15 @@
     "ordinal_position": 23
   },
   {
+    "table_name": "rep_team_expenses",
+    "column_name": "notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
     "table_name": "rep_team_groups",
     "column_name": "id",
     "data_type": "uuid",
@@ -11797,6 +11806,24 @@
     "is_nullable": "NO",
     "column_default": "'[]'::jsonb",
     "ordinal_position": 33
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "contact_show_on_public",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 35
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "contact_show_to_coaches",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 36
   },
   {
     "table_name": "venue_facilities",

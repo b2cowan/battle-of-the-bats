@@ -14,6 +14,14 @@
     "diamonds",
     "divisions",
     "games",
+    "league_divisions",
+    "league_email_log",
+    "league_games",
+    "league_notification_log",
+    "league_practices",
+    "league_registrations",
+    "league_seasons",
+    "league_teams",
     "org_audit_log",
     "org_internal_notes",
     "org_member_rep_group_scopes",
@@ -79,14 +87,6 @@
     "fan_push_subscriptions": "pending-documentation (Notifications & Push)",
     "import_batch_rows": "pending-documentation (Platform admin)",
     "import_batches": "pending-documentation (Platform admin)",
-    "league_divisions": "pending-documentation (League / house-league)",
-    "league_email_log": "pending-documentation (League / house-league)",
-    "league_games": "pending-documentation (League / house-league)",
-    "league_notification_log": "pending-documentation (League / house-league)",
-    "league_practices": "pending-documentation (League / house-league)",
-    "league_registrations": "pending-documentation (League / house-league)",
-    "league_seasons": "pending-documentation (League / house-league)",
-    "league_teams": "pending-documentation (League / house-league)",
     "notification_preferences": "pending-documentation (Notifications & Push)",
     "notifications": "pending-documentation (Notifications & Push)",
     "org_budget_lines": "pending-documentation (Accounting)",
@@ -374,6 +374,39 @@
       "id",
       "created_at",
       "updated_at"
+    ],
+    "league_seasons": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "league_divisions": [
+      "id",
+      "created_at"
+    ],
+    "league_teams": [
+      "id",
+      "created_at"
+    ],
+    "league_games": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "league_registrations": [
+      "id",
+      "updated_at"
+    ],
+    "league_practices": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "league_email_log": [
+      "id"
+    ],
+    "league_notification_log": [
+      "id"
     ]
   }
 }

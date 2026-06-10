@@ -2,7 +2,7 @@
 
 > **Owned by:** `/db` (field lookups, operational queries) + `/dba` (architecture, migrations, snapshots). **Never archived** — this is a living agent reference.
 > **What this is:** the *semantic* layer — for each meaningful column, **what it means, what reads/writes it (file:line), how it relates to other fields, and its gotchas**. Structure (types/constraints) is owned by the JSON snapshots; this doc does **not** restate it.
-> **Current as of:** code commit `5479605` (branch `feat/free-tier-coaches`) · schema snapshot **2026-06-09** (dev 104 / prod 103 tables). `file:line` refs are relative to that commit — re-verify if the tree has moved (see the branch-drift note below). _(Tournaments & Registration + Coaches domains were originally authored at `ad9dc66`; the Org / Platform core and Rep teams / team workspaces — operations half — domains were verified at `5479605`.)_
+> **Current as of:** code commit `6deac4a` (branch `feat/free-tier-coaches`) · schema snapshot **2026-06-10** (dev 113 / prod 113 tables). `file:line` refs are relative to that commit — re-verify if the tree has moved (see the branch-drift note below). _(Tournaments & Registration + Coaches domains were originally authored at `ad9dc66`; Org / Platform core and Rep teams / team workspaces — operations half — at `5479605`; the **League / house-league** domain was verified at `6deac4a`. Note: the working tree carries uncommitted `lib/db.ts` edits that shift the league helper region ~+37 lines vs `6deac4a` — League refs are pinned to the committed tree.)_
 > **Companions:** [schema-snapshots/](schema-snapshots/) (structure — the authoritative source) · [DB_ARCHITECTURE_REVIEW.md](DB_ARCHITECTURE_REVIEW.md) (design-level findings) · [DRIFT_dev_vs_prod.md](schema-snapshots/DRIFT_dev_vs_prod.md) (dev≠prod catalogue).
 
 ---
@@ -413,6 +413,12 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 
 <!-- dict:col:tournaments.notify_mode -->
 **`notify_mode`** (text, NOT NULL, default `'all'`; CHECK `all|assigned`) — routes admin reg-notify emails. `'all'` → always the tournament default contact; `'assigned'` → the division contact if set, else the default ([register/route.ts:482](../../../app/api/register/route.ts#L482)).
+
+<!-- dict:col:tournaments.contact_show_to_coaches -->
+**`contact_show_to_coaches`** (boolean, NOT NULL, default `true`; mig 120) — per-**audience** display toggle for the *registered-coach* audience: when `false`, the resolved contact email is omitted from (a) all coach-facing emails — registration/waitlist ([register/route.ts](../../../app/api/register/route.ts)) and acceptance/decline/payment ([registrations/[id]/route.ts](../../../app/api/registrations/[id]/route.ts)) — and (b) the in-app Coaches Portal status banner + fee line ([coaches/tournaments/[teamId]/page.tsx](../../../app/coaches/tournaments/[teamId]/page.tsx)). Display-only — does **not** affect admin reg-notify routing (that still uses the resolved chain). Enforced via `resolveTournamentContactEmail(..., 'coach')` ([lib/db.ts](../../../lib/db.ts)). Surfaced in Settings → Notifications & Contact as "Communication with coaches". (Earlier dev-only draft named this `contact_show_in_emails`; renamed pre-prod.)
+
+<!-- dict:col:tournaments.contact_show_on_public -->
+**`contact_show_on_public`** (boolean, NOT NULL, default `true`; mig 120) — per-**audience** display toggle for the *public/anonymous* audience: when `false`, no contact email is shown on public tournament pages. Enforced in `resolveTournamentContactEmail(..., 'public')` ([lib/db.ts](../../../lib/db.ts)), which returns `null` (suppressing even the `org` fallback) so the toggle can't be a no-op. When `true`, public pages resolve the **selected member's** email (then legacy `contact_email`, then org) — previously the public surface only read legacy `contact_email`.
 
 <!-- dict:col:tournaments.fee_schedule_mode -->
 **`fee_schedule_mode`** (text, NOT NULL, default `'tournament'`; `tournament|division`) — selects tournament-level vs per-division fee fields in `resolveFeeSchedule` ([register/page.tsx:65](../../../app/[orgSlug]/[tournamentSlug]/register/page.tsx#L65)). Shadowed by `settings.fee_scope` — gotcha 5. `mapTournament` normalizes non-`'division'` → `'tournament'`.
@@ -2036,11 +2042,11 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 - **Status/method enums are CHECK-enforced — copy the values verbatim.** `rep_allocation_splits.split_method` `percentage|sessions|fixed`; `.payment_schedule` `standard|custom`; `rep_player_dues_installments.source` `manual|budget_generated`; `rep_dues_credits.credit_type` `contribution|fundraiser|overpayment|other`; `rep_team_expenses.expense_type` `expense|tournament_payable`; `rep_team_payment_requests.request_type` `payment_to_org|charge_to_org`; `rep_team_payment_requests.status` `pending|approved|denied`. **Unlike `team_entitlements.status`, none of these carry a US/UK spelling variant** — there is no `cancelled`/`canceled` doublet to guard; match the single spelling exactly.
 - **Reconciliation is mostly APP-enforced, not DB-enforced.** The only DB guarantees are the per-row positivity CHECKs and the UNIQUE keys. Sum relationships are enforced only in route code, and only on some paths: allocation splits must sum **≤** `allocation.total_amount` (under-allocation allowed, +$0.001 tol); a split's installments must sum **=** `split.amount` (±$0.01); budget periods must sum **=** `line.total_amount` (±$0.02); a dues schedule's `total_amount` is checked against its installments **only on the manual POST path**. Editing children later can silently desync the parent total.
 - **`accounting_entry_id` ≠ "paid", and is unpopulated on several tables.** It is a back-link to the org ledger, written **only** by the dues-installment and fundraiser-entry pay paths. On `rep_allocation_installments`, `rep_team_expenses`, and `rep_team_payment_requests` it exists but **no code writes it** — the org-ledger entry is authoritative with no back-reference. Use `paid_at` / `*_paid_at` / `status` for payment state, never the presence of `accounting_entry_id`.
-- **Three verified schema/code-drift bugs live in this domain (the exact class this dictionary exists to surface — all confirmed against live dev+prod via `information_schema`, 2026-06-09):**
-  1. **`rep_team_expenses` has no `notes` column**, yet `createRepTeamExpense`/`updateRepTeamExpense` write `notes` ([lib/db.ts:5457](../../../lib/db.ts#L5457), [:5480](../../../lib/db.ts#L5480)) → any insert/update through these helpers errors `column "notes" does not exist`.
-  2. **`org_id` is `NOT NULL` with no default and no trigger** on both `rep_allocation_installments` and `rep_player_dues_installments`, yet the only insert helpers omit it (`createRepCostAllocationWithSplits` [lib/db.ts:5172](../../../lib/db.ts#L5172), `replaceRepDuesInstallments` [lib/db.ts:5574](../../../lib/db.ts#L5574)) → new-installment inserts via these paths violate the NN constraint.
-  3. **`getRepAllocationSplitsForTeam` queries the non-existent column `allocation_split_id`** ([lib/db.ts:5663](../../../lib/db.ts#L5663)); the real FK column is `split_id` → the coach allocations GET errors.
-  These are code-vs-live-schema mismatches, not documentation gaps — carry them to `/dba`.
+- **Three schema/code-drift bugs were verified at commit `5479605` (the exact class this dictionary exists to surface — confirmed against live dev+prod via `information_schema`, 2026-06-09). Status after the 2026-06-09 follow-up fix pass:**
+  1. **✓ FIXED 2026-06-09 (migration 119, dev+prod):** **`rep_team_expenses` had no `notes` column**, yet `createRepTeamExpense`/`updateRepTeamExpense` and the coach expenses form's Notes textarea all used it → every save/edit errored `column "notes" does not exist`. Migration 119 added the nullable `notes text` to both envs.
+  2. **✓ FIXED 2026-06-09:** **`org_id` is `NOT NULL` with no default and no trigger** on both `rep_allocation_installments` and `rep_player_dues_installments`. The insert helpers (`createRepCostAllocationWithSplits`, `replaceRepDuesInstallments` + its caller, and the `generate-installments` route) now populate `org_id` and the denormalized `team_id`.
+  3. **✓ FIXED 2026-06-09:** **`getRepAllocationSplitsForTeam` queried the non-existent column `allocation_split_id`**; corrected to the real FK column `split_id`.
+  (All three resolved 2026-06-09. Line refs in the per-table gotchas are as-of commit `5479605`; the follow-up fixes shift them slightly.)
 - **`auth.users` FKs show `foreign_table: null`** in the snapshot for `created_by`/`paid_by`/`reviewed_by` (cross-schema introspection gap, same as Rep operations) — they are constrained, not loose.
 - **Dev/prod:** all 13 finance tables are **zero-drift** (none appear in `DRIFT_dev_vs_prod.md`).
 
@@ -2171,7 +2177,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 1. **`paid_at` is the source of truth for "paid", not `accounting_entry_id`.** Mark-paid sets `paid_at` (and links `accounting_entry_id` to the team-ledger income entry created at the same time); all balance/unpaid logic keys on `paid_at`.
 2. **THREE reminder columns — all live, different cadences:** `reminder_sent_at` = original/ad-hoc "send reminders now" (no window); `reminder_30_sent_at` = the 30-day wave; `reminder_7_sent_at` = the 7-day wave. The candidate query checks the window-specific column (falls back to `reminder_sent_at`) and treats a reminder as "already sent" only within the last 7 days. (Contrast: `rep_allocation_installments` has only ONE `reminder_sent_at`.)
 3. **`source` CHECK `manual|budget_generated`** (default `manual`). Regeneration is **all-or-nothing per season**: the generator 409s if ANY `budget_generated` installment already exists for the year (the coach must delete them first) — no selective preserve-manual/replace-generated merge, so the two sources don't coexist on the happy path.
-4. **⚠️ `org_id` is NOT NULL with no default and no trigger (verified live), yet both insert paths omit it** (`replaceRepDuesInstallments` [lib/db.ts:5574](../../../lib/db.ts#L5574); the generator route) → inserts via these paths violate the NN constraint. `team_id` is nullable and also unset (the `team_idx` index exists but the column is effectively always NULL). Flag for /dba.
+4. **`org_id` is NOT NULL with no default and no trigger.** Historically both insert paths omitted it (`replaceRepDuesInstallments`; the generator route) → NN violation — **✓ FIXED 2026-06-09** (both now populate `org_id` + the denormalized `team_id`). `team_id` is still nullable by design (denormalized copy; `team_idx`).
 5. **CHECK `amount > 0`**; UNIQUE `(schedule_id, installment_number)`.
 
 **Fields** (boilerplate `id`, `created_at` omitted; no `updated_at`):
@@ -2387,8 +2393,8 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **Purpose:** the dated payments of an allocation split — what a team pays the org and when.
 
 **Gotchas (read first):**
-1. **⚠️ `getRepAllocationSplitsForTeam` queries the non-existent column `allocation_split_id`** ([lib/db.ts:5663](../../../lib/db.ts#L5663)); the real FK is **`split_id`** → the coach allocations GET errors. Other paths correctly use `split_id`. Flag for /dba.
-2. **⚠️ `org_id` is NOT NULL with no default/trigger (verified live), yet `createRepCostAllocationWithSplits` omits it on insert** ([lib/db.ts:5172](../../../lib/db.ts#L5172)) → inserts via this path violate the NN constraint. `team_id` is nullable and also unset (denormalized copy of the split's team; the `team_idx` exists but the column is effectively NULL).
+1. **`getRepAllocationSplitsForTeam` queried the non-existent column `allocation_split_id`** (real FK = **`split_id`**) → the coach allocations GET errored. **✓ FIXED 2026-06-09** (corrected to `split_id`).
+2. **`org_id` is NOT NULL with no default/trigger.** `createRepCostAllocationWithSplits` historically omitted it on insert → NN violation — **✓ FIXED 2026-06-09** (now sets `org_id` + the denormalized `team_id`). `team_id` remains nullable by design (denormalized copy of the split's team; `team_idx`).
 3. **Paid = `paid_at` (+ `paid_by`), NOT `accounting_entry_id`.** Mark-paid (`markRepAllocationInstallmentPaid` [lib/db.ts:5206](../../../lib/db.ts#L5206)) sets `paid_at`/`paid_by`; its only caller (the coach installment PATCH route) passes `accounting_entry_id = null`, so the payment posts via `create_accounting_transfer` (team→org) and the installment is never linked. Pay is one-way (409 if already paid; no unpay).
 4. **ONE reminder column** (`reminder_sent_at`, 7-day re-send debounce) — contrast the dues installments' three.
 5. **CHECK `amount > 0`**; UNIQUE `(split_id, installment_number)`.
@@ -2427,14 +2433,14 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **Purpose:** a coach-authored ledger of money the team spends or owes. Two shapes share the row via `expense_type`: a one-shot **expense** (single `amount`/`expense_paid_at`) vs a **tournament_payable** that splits into a deposit leg + a balance leg.
 
 **Gotchas (read first):**
-1. **⚠️ SCHEMA/CODE MISMATCH — there is NO `notes` column** (verified live dev+prod 2026-06-09; the row has exactly 23 columns), yet `createRepTeamExpense` ([lib/db.ts:5457](../../../lib/db.ts#L5457)) and `updateRepTeamExpense` ([lib/db.ts:5480](../../../lib/db.ts#L5480)) write `notes` → any insert/update through these helpers errors `column "notes" does not exist`. The exact schema-drift class this dictionary exists to surface. Flag for /dba.
+1. **`notes` column — was missing, now ✓ FIXED (migration 119, dev+prod, 2026-06-09).** At commit `5479605` the row had only 23 columns with **no `notes`**, yet `createRepTeamExpense`/`updateRepTeamExpense` and the coach expenses form's Notes textarea all used `notes` → every save/edit errored `column "notes" does not exist` (the exact schema-drift class this dictionary exists to surface). Migration 119 added the nullable `notes text` to both envs; the feature now works as designed.
 2. **Two-payment model is by `expense_type`, NOT by arithmetic.** `expense`: fully paid when `expense_paid_at` is set; the deposit/balance fields are ignored. `tournament_payable`: fully paid when BOTH `deposit_paid_at` AND `balance_paid_at` are set; paid amount = (deposit_paid_at ? deposit_amount : 0) + (balance_paid_at ? balance_amount : 0). **`deposit_amount + balance_amount == amount` is NOT enforced** (no CHECK, no app validation). Worse, mark-deposit/mark-balance fall back to the FULL `amount` when the leg amount is NULL, so a payable with null split amounts can post the full amount twice. There is no single "is paid" flag.
 3. **`expense_type` CHECK `expense|tournament_payable`** — `tournament_payable` = money owed to a tournament/host (deposit+balance schedule). `upcoming-payables` surfaces rows by deposit/balance **due dates only**, regardless of `expense_type`, so lump `expense` rows (no due dates) never appear there.
 4. **`accounting_entry_id` is never written** — on mark-paid the route creates a team-ledger entry but discards its id (the ledger entry is authoritative, no back-reference).
 5. **`payee_id` (→ org `org_payees`) vs `payee_payer` (text) are mutually exclusive** — picking a structured org payee sets `payee_id` (clears `payee_payer`); a free-text name sets `payee_payer` (clears `payee_id`); both set at create only. **`category` is free text** and is the (name-based, case-insensitive) join key to `rep_budget_lines` categories in budget-vs-actual — a typo silently drops the expense into "unbudgeted".
 6. **CHECK `amount > 0`** (only `amount`; the deposit/balance amounts have no CHECK and are nullable).
 
-**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted; **note: no `notes` column exists** — see gotcha 1):
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
 <!-- dict:col:rep_team_expenses.program_year_id -->
 <!-- dict:col:rep_team_expenses.team_id -->
@@ -2449,6 +2455,9 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_team_expenses.category -->
 **`category`** (text, nullable) — free-text budget-match key (gotcha 5).
+
+<!-- dict:col:rep_team_expenses.notes -->
+**`notes`** (text, nullable) — free-text note on the expense; added in migration 119 (gotcha 1). Written by `createRepTeamExpense`/`updateRepTeamExpense`; read into `RepTeamExpense.notes` and shown on the coach expenses list.
 
 <!-- dict:col:rep_team_expenses.amount -->
 **`amount`** (numeric, NOT NULL, CHECK `> 0`) — full cost; for `tournament_payable` NOT validated against deposit+balance (gotcha 2).
@@ -2536,6 +2545,411 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 ---
 
 *End of Rep finance (Phase 4b — 13 tables) and of the Rep teams / team workspaces domain (25 tables total: 12 operations + 13 finance). The 4 `team_workspace_*` tables the coverage classifier files under this domain live in the Coaches / basic-teams domain. Deferred: any cross-module roster snapshot back-link (`tournament_roster_players.source_player_id` etc., free-tier Phase 5) — absent from `rep_roster_players` today.*
+
+---
+
+# Domain: League / house-league
+
+The **intra-org recreational house-league** module (`league_*`) — sign-ups, divisions, teams, a round-robin schedule, standings, practices, and a bulk-email log for a club's own in-house season (e.g. "U11 Summer 2025 softball"). It is a **League/Club-plan module** (`module_house_league`) and is **distinct from two already-documented domains**: the competitive **Tournaments & Registration** domain (`tournaments`/`divisions`/`teams`/`games`/`pools`/`tournament_registration_*`) and the elite **Rep teams** domain (`rep_*`). `league_divisions`/`league_teams`/`league_games` are the **house-league equivalents** of the tournament tables — same words, different tables; cross-reference the boundary, never merge them. Routes live under `app/api/admin/house-league/*` (admin) and `app/api/league/[orgSlug]/[seasonSlug]/*` + `app/[orgSlug]/league/*` (public). `league_seasons` is the spine: every division/team/game/registration/practice/log row hangs off `season_id`.
+
+> _Last verified: 2026-06-10 @ snapshot 2026-06-10, commit `6deac4a` (branch `feat/free-tier-coaches`). Code is branch-relative — re-verify file:line at author time. **`lib/db.ts` refs are pinned to the committed `6deac4a` tree; the dirty working tree shifts the entire league helper region (`lib/db.ts` ~2904–3670) by ~+37 lines** — use `git show 6deac4a:lib/db.ts` to reproduce. Route/page refs under `app/api/admin/house-league/*`, `app/api/league/*`, `app/[orgSlug]/league/*` are unmodified in the working tree, so their numbers match._
+
+### Gotchas first (the cross-cutting traps)
+
+- **`org_id` is `NOT NULL` on `league_games` + `league_practices`, but NO insert path writes it — every game/practice create currently violates the constraint (CONFIRMED dev+prod).** `org_id` (added by migs 075/078 for direct-lookup RLS) is `NOT NULL`, **no column default, and NO trigger** — verified live against `information_schema`/`pg_trigger` on **both** dev and prod (2026-06-10; zero triggers on any `league_*` table). Yet all three game-insert paths (`createLeagueGame` [lib/db.ts:3465](../../../lib/db.ts#L3465), the `schedule/generate` save [generate/route.ts:105-117](../../../app/api/admin/house-league/seasons/[seasonId]/schedule/generate/route.ts#L105-L117), the dev seed) and the practice-insert path (`createPractices` [lib/db.ts:3412](../../../lib/db.ts#L3412)) **omit `org_id`** → `null value in column "org_id" violates not-null constraint`. This is the **exact schema/code-drift class this dictionary exists to surface** (sibling of the Phase-4b rep-installment `org_id` finding). House-league scheduling + practices are effectively broken on first use until a writer supplies `org_id` (or a trigger/default is added). **Documented as a live bug, NOT a doc artifact.**
+- **`league_seasons.division` (text) ≠ the `league_divisions` table.** The scalar `division` column is the **legacy `age_group` label renamed by migration 093** — a free-text season badge ("U11", "Adult"), still written by the admin form. Structured sub-divisions are the separate `league_divisions` **table**. Classic type-vs-table trap (the same mig 093 also renamed `age_groups`→`divisions` in the Tournaments module and `rep_teams.age_group`→`division`).
+- **Registrations are ACCOUNT-LESS.** A `league_registrations` row is an anonymous family submission keyed by **`guardian_email` (plain text, indexed, NOT an `auth.users` FK)** — the public status page looks a family up by email with no login. Contrast tournament registration (team/contact-based) and basic-coach (membership-keyed). `guardian_email` is **non-unique** → the same family can register a player twice (no dedup).
+- **Fees are INTERNAL double-entry accounting, never Stripe.** `league_seasons.registration_fee` is display-only; when `auto_generate_fees` is on, approving a reg active creates an `accounting_entries` income row (`source_module='league_registration'`) in a per-season ledger and stamps `league_registrations.fee_entry_id`. **`fee_entry_id` is a loose uuid with NO FK** (the durable link is `accounting_entries.source_module`+`source_entity_id`). No `stripe_*` column exists anywhere in the domain. (Billing-flow narrative + `stripe_prices` → the Stripe/Billing phase; columns documented here.)
+- **`league_notification_log` is DEAD/legacy.** Created in mig 020 as the original broadcast log, it has **zero reads/writes** in current code and was **superseded by `league_email_log`**. Naming trap: the admin "Notifications" page (`notifications/page.tsx`) actually writes `league_email_log` via the `/email` route. Different schema (`audience_type`/`audience_label`/`recipient_count` vs `scope`/`audience`/`count_sent`+`count_skipped`).
+- **RLS is ENABLED on all 8 tables and mig 020 defines real org-member + public-read policies — but every code path uses `supabaseAdmin` (service role, RLS-bypassing); enforcement is app-layer.** Admin routes gate on `hasCapability(role, caps, 'module_house_league')` **+** `hasModuleEntitlement(org, 'module_house_league')` (the League/Club plan gate) **+**, for writes, role `owner`/`league_admin` (registrar can manage regs but not place/reassign). The lone exception: the **practices** POST/PATCH routes gate on capability+role but **NOT** `hasModuleEntitlement` — a slightly weaker gate than the sibling routes.
+- **UK spelling `'cancelled'`** is the CHECK value on both `league_games` and `league_practices` (and `'postponed'` on games is allowed-but-dead) — never US `'canceled'`, which would fail the CHECK. Cancels are **soft** (status flips, row persists); `deleteLeagueTeam` is a hard delete but its FKs SET-NULL registrations and CASCADE games.
+- **The `league_practices` recurrence model is the symmetric-`recurrence_group_id` kind, NOT a parent-anchor — so it has NO orphan/anchor bug** (unlike Phase-4a `rep_team_events`). All occurrences in a series share one `recurrence_group_id`; `cancelPractice('all')` keys off it alone (catches every member), `'remaining'` adds `scheduled_at >= clicked`. Verified by reading the helper; stated explicitly so a future reader doesn't assume the rep defect exists here.
+- **Dev/prod:** all 8 tables are **column-, constraint-, and CHECK-identical** dev↔prod. The **only** divergence is **`league_practices` indexes** (the domain's headline drift): mig `077_league_practices_dev_sync.sql` is **dev-only**, so dev has hand-named indexes incl. a **PARTIAL** recurrence index (`WHERE recurrence_group_id IS NOT NULL`) and a dev-only `schedule_idx(season_id, scheduled_at)`, while prod has auto-named indexes, a **FULL** recurrence index, and **no schedule index**. The `DRIFT_dev_vs_prod.md` "Definition changed (0)" line **masks** this — it diffs by index *name*, so the partial-vs-full difference shows up only as separate add/drop entries. (mig 078's `org_id` + `org_idx` was applied to both.)
+
+---
+
+## `league_seasons`
+<!-- dict:table:league_seasons -->
+
+**Purpose:** one row per house-league **season** (e.g. "U11 Summer 2025") — the module's spine. Carries the public slug, registration window, fee + automation flags, waiver, a forward-only status lifecycle, and a transient player-draft working state. Mapped by `mapLeagueSeason` ([lib/db.ts:2904](../../../lib/db.ts#L2904)).
+
+**Gotchas (read first):**
+1. **`division` (text) is NOT `league_divisions`** — it's the legacy `age_group` label renamed by mig 093 (a free-text season badge), still written by the admin create form/PATCH ([seasons/route.ts:57](../../../app/api/admin/house-league/seasons/route.ts#L57)). Structured divisions are the separate table.
+2. **`status` is a forward-only, single-hop lifecycle enforced in APP code, not by the CHECK.** The CHECK allows all 6 values in any order, but `ALLOWED_TRANSITIONS` ([seasons/[seasonId]/route.ts:21-28](../../../app/api/admin/house-league/seasons/[seasonId]/route.ts#L21-L28)) permits only `draft → registration_open → registration_closed → active → completed → archived`, one hop at a time; `archived` is terminal; `draft → registration_open` requires ≥1 division ([:127-135](../../../app/api/admin/house-league/seasons/[seasonId]/route.ts#L127-L135)). Raw SQL could set an illegal state.
+3. **Naming collision:** season `status = 'draft'` (unpublished season) is unrelated to **`draft_state`** (the live player-draft snapshot, gotcha 5).
+4. **`auto_generate_fees` posts INTERNAL accounting, not Stripe** (see `fee_entry_id` on `league_registrations`).
+5. **`draft_state` (jsonb) is a transient draft-room snapshot** — null when no draft is running, cleared on finalize.
+6. **`slug` is client-supplied** (UI auto-derives but allows override); the server only re-validates `[a-z0-9-]` and relies on `UNIQUE(org_id, slug)`, returning **409** on collision — no server-side auto-dedup.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:league_seasons.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — tenant scope; co-key of `UNIQUE(org_id, slug)`. Tenant isolation is app-layer (`.eq('org_id', ctx.org.id)`) since `supabaseAdmin` bypasses RLS.
+
+<!-- dict:col:league_seasons.name -->
+**`name`** (text, NOT NULL) — season display name; ≤120 chars (app-only cap). Feeds the UI's `slugify()` default.
+
+<!-- dict:col:league_seasons.slug -->
+**`slug`** (text, NOT NULL) — URL segment for `/{orgSlug}/league/{seasonSlug}`; `UNIQUE(org_id, slug)` [`league_seasons_org_id_slug_key`]. Client-supplied; 409 on collision (gotcha 6). Public lookup `getLeagueSeasonBySlug` ([lib/db.ts:3009](../../../lib/db.ts#L3009)).
+
+<!-- dict:col:league_seasons.sport -->
+**`sport`** (text, NOT NULL, default `'softball'`) — free-text sport label, no enum; effectively a single-sport assumption (no code branches on it).
+
+<!-- dict:col:league_seasons.division -->
+**`division`** (text, nullable) — **free-text age/division badge** for the whole season ("U11", "Adult"); the legacy `age_group` renamed by mig 093 ([093_divisions_rename.sql:45-48](../../../supabase/migrations/093_divisions_rename.sql#L45-L48)). **NOT** the `league_divisions` table (gotcha 1). Read as a display badge only.
+
+<!-- dict:col:league_seasons.status -->
+**`status`** (text, NOT NULL, default `'draft'`; CHECK `draft|registration_open|registration_closed|active|completed|archived`) — lifecycle; forward-only single-hop in app code (gotcha 2). RLS public-read policy keys off the open-or-later subset (`registration_open`/`registration_closed`/`active`/`completed` — excludes both `draft` and `archived`).
+
+<!-- dict:col:league_seasons.description -->
+**`description`** (text, nullable) — optional blurb.
+
+<!-- dict:col:league_seasons.registration_fee -->
+**`registration_fee`** (numeric, nullable) — **dollars** (not cents); display-only on the form. Drives the auto-generated internal accounting entry (only when `auto_generate_fees` + this is set). _Cross-ref:_ Accounting.
+
+<!-- dict:col:league_seasons.auto_generate_fees -->
+**`auto_generate_fees`** (bool, NOT NULL, default false) — when true, approving a reg active auto-creates a `pending` income `accounting_entries` row for `registration_fee` via `createLeagueRegistrationFeeEntry` ([lib/db.ts:3601](../../../lib/db.ts#L3601)). INTERNAL ledger, NOT Stripe; fire-and-forget on the manual-add path.
+
+<!-- dict:col:league_seasons.auto_approve_under_capacity -->
+**`auto_approve_under_capacity`** (bool, NOT NULL, default false) — when true, a public submit **under** the division capacity is set `active` immediately; otherwise `pending_review` (see `league_registrations.status`).
+
+<!-- dict:col:league_seasons.auto_promote_waitlist -->
+**`auto_promote_waitlist`** (bool, NOT NULL, default false) — when true, declining/withdrawing an active reg auto-promotes `waitlist[0]` → active ([[regId]/route.ts:301-369](../../../app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts#L301-L369)).
+
+<!-- dict:col:league_seasons.registration_open_at -->
+<!-- dict:col:league_seasons.registration_close_at -->
+**`registration_open_at` / `registration_close_at`** (timestamptz, nullable) — informational registration window. **No timestamp-driven automation** opens/closes registration off these (status transitions are manual — verified).
+
+<!-- dict:col:league_seasons.season_start_date -->
+<!-- dict:col:league_seasons.season_end_date -->
+**`season_start_date` / `season_end_date`** (date, nullable) — informational season dates.
+
+<!-- dict:col:league_seasons.waiver_text -->
+**`waiver_text`** (text, nullable) — free-text waiver shown on the public registration form.
+
+<!-- dict:col:league_seasons.draft_state -->
+**`draft_state`** (jsonb, nullable; added mig 079) — **transient live player-draft snapshot** (a **rotating** draft assigning registered players to teams — a plain repeating rotation `(pickNumber-1) % len`, **not** serpentine/snake); null = no active draft, cleared on finalize ([draft/route.ts:172](../../../app/api/admin/house-league/seasons/[seasonId]/draft/route.ts#L172)) or when placement runs ([placement/route.ts:114](../../../app/api/admin/house-league/seasons/[seasonId]/placement/route.ts#L114)). Typed `LeagueDraftState` ([lib/types.ts:708-716](../../../lib/types.ts#L708-L716)). Mig 079 self-labels "DEV ONLY / already in prod" but the column is **identical in both envs** — decide from the snapshot, not the migration.
+
+**`draft_state` jsonb key catalog** (`LeagueDraftState`):
+
+| key | meaning |
+|---|---|
+| `draftId` | session uuid (`crypto.randomUUID()`) |
+| `divisionId` | the division being drafted |
+| `round` | current round = `ceil(pickNumber / pickOrder.length)` |
+| `pickNumber` | 1-based global pick counter |
+| `currentTeamId` | team on the clock = `pickOrder[(pickNumber-1) % len]` |
+| `pickOrder` | array of team ids (rotation order; the same order repeats every round — not snaked) |
+| `picks[]` | committed picks `{round, pickNumber, teamId, registrationId}`; flushed to `league_registrations.team_id` via `bulkAssignTeams` on finalize |
+
+---
+
+## `league_divisions`
+<!-- dict:table:league_divisions -->
+
+**Purpose:** structured sub-groups **within** a season (e.g. "Division A") — each with its own capacity, draft, teams, schedule and standings. Distinct from the free-text `league_seasons.division` label and from the Tournaments-module `divisions` table.
+
+**Gotchas (read first):**
+1. **The structured table, not `league_seasons.division`** (the text badge) — and not the tournament `divisions` table (which mig 093 renamed from `age_groups`). Same word, three different things.
+2. **`capacity` is the soft cap** powering auto-approve/waitlist; **NULL = unlimited**, enforced in app code against the COUNT of `status='active'` regs, not by a DB constraint. App coerces non-positive/non-number `capacity` to NULL, so **`capacity=0` is stored as unlimited**, not a hard zero.
+3. **Delete is app-guarded, not DB-guarded** — the DELETE route 409s if **any** `league_registrations` (any status) point at the division ([[divisionId]/route.ts:82-96](../../../app/api/admin/house-league/seasons/[seasonId]/divisions/[divisionId]/route.ts#L82-L96)); the FK itself is `ON DELETE SET NULL` (raw delete would orphan regs to `division_id=NULL`). The lib comment says "active registrations" but the guard is status-agnostic.
+4. **No secondary index** — PK `id` only; `season_id` is an unindexed FK (fine at house-league scale). `sort_order` is assigned append-to-end (`= existing count`), no reorder endpoint.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:league_divisions.season_id -->
+**`season_id`** (FK → `league_seasons.id` ON DELETE CASCADE, NOT NULL) — owning season; the only scope (divisions inherit org via the season). Unindexed (gotcha 4).
+
+<!-- dict:col:league_divisions.name -->
+**`name`** (text, NOT NULL) — division display name; ≤100 chars (app-only).
+
+<!-- dict:col:league_divisions.capacity -->
+**`capacity`** (integer, nullable) — soft cap = max **active** registrations; NULL/0 → unlimited (gotcha 2). Consumed by the public register capacity check ([register/route.ts:122-128](../../../app/api/league/[orgSlug]/[seasonSlug]/register/route.ts#L122-L128)).
+
+<!-- dict:col:league_divisions.sort_order -->
+**`sort_order`** (integer, NOT NULL, default 0) — display order, append-to-end on create; ties broken by `created_at` (gotcha 4).
+
+---
+
+## `league_teams`
+<!-- dict:table:league_teams -->
+
+**Purpose:** an admin-created **roster bucket** inside a division — name/color/coach label that registered players are *placed onto* (via `league_registrations.team_id`). The house-league analogue of tournament `teams` / rep `team_workspaces`, but **not** a registered or billed competitor. Created by `createLeagueTeam` ([lib/db.ts:3149](../../../lib/db.ts#L3149)).
+
+**Gotchas (read first):**
+1. **NO `org_id` and NO `updated_at`** — `league_teams` scopes via `season_id → league_seasons.org_id` (a 2-hop), unlike its sibling `league_games` which was denormalized with `org_id` (mig 075). PK `id` only; sorted in-app by `(sort_order, created_at)`.
+2. **`coach_name` is FREE TEXT, not an account** — a label, not a FK to `organization_members`/`auth.users`. Distinguishes house-league coaches from the Coaches-Portal operator model.
+3. **`deleteLeagueTeam` is a HARD delete** ([lib/db.ts:3180](../../../lib/db.ts#L3180)) — the lib helper has only a code-comment guard; the DELETE route adds a real guard but it **only counts `status='active'` registrations** ([teams/[teamId]/route.ts:75-86](../../../app/api/admin/house-league/seasons/[seasonId]/teams/[teamId]/route.ts#L75-L86)). So deleting a team with no *active* players still **cascade-deletes every game it appears in** (`league_games.home/away_team_id` `ON DELETE CASCADE`) and **SET-NULLs any non-active registrations** (`league_registrations.team_id` `ON DELETE SET NULL`) — silently.
+4. **Bulk-create restarts `sort_order` at the array index** — a second bulk insert collides at 0 (no uniqueness).
+
+**Fields** (boilerplate `id`, `created_at` omitted; **no `updated_at`**):
+
+<!-- dict:col:league_teams.season_id -->
+**`season_id`** (FK → `league_seasons.id` ON DELETE CASCADE, NOT NULL) — owning season; primary scope (carries org transitively).
+
+<!-- dict:col:league_teams.division_id -->
+**`division_id`** (FK → `league_divisions.id` ON DELETE CASCADE, NOT NULL) — the division the team plays in; schedule generation + standings are per-division.
+
+<!-- dict:col:league_teams.name -->
+**`name`** (text, NOT NULL) — team display name (trimmed on insert).
+
+<!-- dict:col:league_teams.color -->
+**`color`** (text, nullable) — display colour, intended hex (e.g. `#E03030`); no CHECK/validation.
+
+<!-- dict:col:league_teams.coach_name -->
+**`coach_name`** (text, nullable) — free-text coach label, display-only, deliberately unlinked (gotcha 2).
+
+<!-- dict:col:league_teams.sort_order -->
+**`sort_order`** (integer, NOT NULL, default 0) — manual order within a division (gotcha 4).
+
+---
+
+## `league_games`
+<!-- dict:table:league_games -->
+
+**Purpose:** a scheduled game between two `league_teams` in a division — who/when/where, the score, and lifecycle status. Round-robin-generated or added manually, scored by the admin, surfaced on the public schedule and the computed standings. House-league analogue of tournament `games`. Created by `createLeagueGame` ([lib/db.ts:3465](../../../lib/db.ts#L3465)).
+
+**Gotchas (read first):**
+1. **`org_id` write-blocking bug (CONFIRMED dev+prod).** `org_id` is `NOT NULL`, no default, **no trigger** (live probe), yet **no insert path writes it** — `createLeagueGame` ([lib/db.ts:3465](../../../lib/db.ts#L3465)), the `schedule/generate` save ([generate/route.ts:105-117](../../../app/api/admin/house-league/seasons/[seasonId]/schedule/generate/route.ts#L105-L117)), and the dev seed all omit it → NOT-NULL violation on every game create. (Domain gotcha 1.) The column exists only for the 1-hop org-member RLS policy (mig 075) and is backfilled once at migration time.
+2. **Status enum is UK-spelled** `scheduled|completed|cancelled|postponed` (CHECK). Code matches exactly. **`'postponed'` is settable ONLY via the admin schedule edit form's status dropdown** ([schedule/page.tsx:233](../../../app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx#L233) → the PATCH route passes client `status` straight through, [[gameId]/route.ts:54](../../../app/api/admin/house-league/seasons/[seasonId]/schedule/[gameId]/route.ts#L54)) — **not** on create (`createLeagueGame` ignores `status`) and with no automated/lifecycle writer. US `'canceled'` would fail the CHECK.
+3. **DELETE is a SOFT-cancel** (`status='cancelled'`), not a hard delete ([[gameId]/route.ts:71-91](../../../app/api/admin/house-league/seasons/[seasonId]/schedule/[gameId]/route.ts#L71-L91)). `getGamesForSeason` excludes cancelled (`.neq('status','cancelled')` at [lib/db.ts:3359](../../../lib/db.ts#L3359)) but `getGamesForDivision` does **not** — though `computeStandings` re-filters to `completed` anyway.
+4. **Scoring auto-completes:** entering BOTH scores **with no explicit `status` in the PATCH body** (the `status===undefined` guard) sets `status='completed'` (the PATCH route, [[gameId]/route.ts:59-61](../../../app/api/admin/house-league/seasons/[seasonId]/schedule/[gameId]/route.ts#L59-L61)). The helper `enterGameResult` ([lib/db.ts:3496](../../../lib/db.ts#L3496)) does the same but appears **dead** (no route caller; PATCH scores inline).
+5. **`scheduled_at` is built from `new Date(\`${date}T${time}\`)`** ([schedule/route.ts:96-97](../../../app/api/admin/house-league/seasons/[seasonId]/schedule/route.ts#L96-L97)) — uses the **server's** timezone, so the stored UTC instant depends on server TZ, not the org's (DST/offset trap; shared with practices).
+6. **Boundary:** NOT tournament `games` — that `GameStatus` has `'submitted'` and no `'postponed'` ([types.ts:498](../../../lib/types.ts#L498) vs `LeagueGameStatus` [types.ts:698-699](../../../lib/types.ts#L698-L699)). Stale doc to ignore/clean: `AgentPlaybook.tsx:243` still claims games have "no direct org_id".
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:league_games.season_id -->
+**`season_id`** (FK → `league_seasons.id` ON DELETE CASCADE, NOT NULL) — parent season; indexed (`season_idx`, and `schedule_idx(season_id, scheduled_at)`).
+
+<!-- dict:col:league_games.division_id -->
+**`division_id`** (FK → `league_divisions.id` ON DELETE CASCADE, NOT NULL) — the division; generation + standings are per-division. Indexed (`division_idx`).
+
+<!-- dict:col:league_games.home_team_id -->
+<!-- dict:col:league_games.away_team_id -->
+**`home_team_id` / `away_team_id`** (FK → `league_teams.id` ON DELETE CASCADE, NOT NULL) — the two teams; `ON DELETE CASCADE` means deleting a team deletes its games (gotcha, `league_teams` #3). The schedule POST rejects home==away.
+
+<!-- dict:col:league_games.scheduled_at -->
+**`scheduled_at`** (timestamptz, nullable) — game date/time; null games bucket under "Unscheduled" on the public schedule. Server-TZ construction trap (gotcha 5). Part of `schedule_idx`.
+
+<!-- dict:col:league_games.location -->
+**`location`** (text, nullable) — free-text venue; **not** an FK to the org's diamonds/venues tables.
+
+<!-- dict:col:league_games.home_score -->
+<!-- dict:col:league_games.away_score -->
+**`home_score` / `away_score`** (integer, nullable) — runs/points; NULL until scored. Both present → `status='completed'`. `computeStandings` coalesces null→0 but counts only `completed` games.
+
+<!-- dict:col:league_games.status -->
+**`status`** (text, NOT NULL, default `'scheduled'`; CHECK `scheduled|completed|cancelled|postponed`) — lifecycle (gotchas 2-4). PATCH passes a client-supplied status straight through (`updateLeagueGame` [lib/db.ts:3482](../../../lib/db.ts#L3482)).
+
+<!-- dict:col:league_games.notes -->
+**`notes`** (text, nullable) — free-text game notes.
+
+<!-- dict:col:league_games.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL; index `org_idx`) — denormalized org for the 1-hop RLS policy (mig 075). **Read only by RLS; no app code writes it → the write-blocking bug (gotcha 1).** Redundant with `season_id → league_seasons.org_id`.
+
+---
+
+## `league_registrations`
+<!-- dict:table:league_registrations -->
+
+**Purpose:** one **player/family registration** to a season — the central intake + lifecycle unit (player + guardian, an admin review/waitlist lifecycle, optional team placement, and a link to the internal fee ledger entry). Created by `createRegistration` ([lib/db.ts:3273](../../../lib/db.ts#L3273)); mapped by `mapLeagueRegistration` ([lib/db.ts:2953](../../../lib/db.ts#L2953)).
+
+**Gotchas (read first):**
+1. **Account-less, keyed by `guardian_email`** (text, NOT an `auth.users` FK; indexed `guardian_idx`). The public status page looks up by email with **no login** ([status/page.tsx:51-56](../../../app/[orgSlug]/league/[seasonSlug]/status/page.tsx#L51-L56)). `guardian_email` is **non-unique** → duplicate registrations are possible (no dedup found).
+2. **NO `created_at` — `registered_at` is the create stamp** (NN, default `now()`). Never written explicitly; admin-manual rows get `now()`, not a back-dated date.
+3. **Two auto-status engines, both can fire.** (a) At public submit: under-capacity + `auto_approve_under_capacity` → `active`; under-capacity without it → `pending_review`; over-capacity → `waitlisted` ([register/route.ts:112-135](../../../app/api/league/[orgSlug]/[seasonSlug]/register/route.ts#L112-L135)). (b) `auto_promote_waitlist` promotes `waitlist[0]` → active on decline/withdraw. **Capacity counts `status='active'` only**; `pending_review` doesn't consume it. **`admin_manual` create defaults `active` and SKIPS the capacity engine** — an admin can over-fill.
+4. **`waitlist_position` is hand-maintained, race-prone, per-DIVISION.** No DB sequence; `compactWaitlist` decrements every position past a vacated slot via a fan-out of per-row UPDATEs ([[regId]/route.ts:70-89](../../../app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts#L70-L89)). `updateRegistrationStatus` auto-NULLs the position whenever status leaves `'waitlisted'` ([lib/db.ts:3298](../../../lib/db.ts#L3298)).
+5. **`fee_entry_id` is a LOOSE uuid (no FK)** → `accounting_entries.id`; set when a fee entry is created — either auto on approve / manual-active-create (requires `auto_generate_fees` + `registration_fee`) **or** when an admin toggles `registration_fee_paid=true` with `registration_fee` set (**no `auto_generate_fees` needed**, [[regId]/route.ts:144](../../../app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts#L144)). Often NULL. Internal ledger, never Stripe (domain gotcha; cross-ref Accounting).
+6. **`division_id` is nullable** but several flows require it (public submit forces a resolvable division; admin create requires `divisionId`; you can't waitlist a division-less reg). `ON DELETE SET NULL`.
+7. **Role split:** `league_registrar` can change status/feePaid/adminNotes; only `owner`/`league_admin` can reassign division/team, create manual regs, or run placement/draft.
+
+**Fields** (boilerplate `id`, `updated_at` omitted; **no `created_at` — see `registered_at`**):
+
+<!-- dict:col:league_registrations.season_id -->
+**`season_id`** (FK → `league_seasons.id` ON DELETE CASCADE, NOT NULL) — parent season; scopes all admin queries + the public status lookup. Indexed (`season_idx`, `status_idx(season_id, status)`).
+
+<!-- dict:col:league_registrations.division_id -->
+**`division_id`** (FK → `league_divisions.id` ON DELETE SET NULL, nullable) — division (reassignable; drives capacity/waitlist + draft pools). Indexed (`division_idx`). Gotcha 6.
+
+<!-- dict:col:league_registrations.player_first_name -->
+<!-- dict:col:league_registrations.player_last_name -->
+**`player_first_name` / `player_last_name`** (text, NOT NULL) — the registered player; public form trims + caps at 80; admin search uses `ilike`.
+
+<!-- dict:col:league_registrations.player_date_of_birth -->
+**`player_date_of_birth`** (date, nullable) — DOB for age-group context; not server-validated.
+
+<!-- dict:col:league_registrations.player_jersey_pref -->
+**`player_jersey_pref`** (text, nullable) — jersey number/size preference; public form caps at 3 chars (implying a number) but it's plain text.
+
+<!-- dict:col:league_registrations.player_position_pref -->
+**`player_position_pref`** (text, nullable) — preferred position; capped 60 on the public form.
+
+<!-- dict:col:league_registrations.player_notes -->
+**`player_notes`** (text, nullable) — **guardian-supplied** free text (experience/medical), may be shown back to the family. **Distinct from `admin_notes`** (internal). Capped 500 on the public form.
+
+<!-- dict:col:league_registrations.guardian_first_name -->
+<!-- dict:col:league_registrations.guardian_last_name -->
+**`guardian_first_name` / `guardian_last_name`** (text, NOT NULL) — the responsible adult; capped 80 on the public form.
+
+<!-- dict:col:league_registrations.guardian_email -->
+**`guardian_email`** (text, NOT NULL; indexed `guardian_idx`, **non-unique**) — **the de-facto family identity** for this account-less module (gotcha 1). All lifecycle emails go here; the public status page looks up by it (lowercased at lookup, stored as-submitted → mixed-case dups possible).
+
+<!-- dict:col:league_registrations.guardian_phone -->
+**`guardian_phone`** (text, nullable) — capped 30 on the public form; no format validation.
+
+<!-- dict:col:league_registrations.status -->
+**`status`** (text, NOT NULL, default `'pending_review'`; CHECK `pending_review|active|waitlisted|declined|withdrawn`) — lifecycle (gotcha 3). Spellings: `pending_review` (underscore), `waitlisted` (not "waitlist"), `withdrawn`. The public status page renders only active/pending_review/waitlisted and **hides declined/withdrawn** from the family.
+
+<!-- dict:col:league_registrations.waitlist_position -->
+**`waitlist_position`** (integer, nullable) — 1-based queue slot when `waitlisted`; NULL otherwise; per-division, app-maintained, race-prone (gotcha 4).
+
+<!-- dict:col:league_registrations.team_id -->
+**`team_id`** (FK → `league_teams.id` ON DELETE SET NULL, nullable) — the placed team (set by placement/draft, [placement/route.ts](../../../app/api/admin/house-league/seasons/[seasonId]/placement/route.ts) → `assignRegistrationToTeam` [lib/db.ts:3313](../../../lib/db.ts#L3313) / draft finalize → `bulkAssignTeams` [lib/db.ts:3320](../../../lib/db.ts#L3320)); NULL until placement. The **randomize/clear** flows only touch `active` regs, but the manual **assign/bulk_assign** actions place any reg by id with **no status guard** — a waitlisted/pending reg can be given a `team_id`.
+
+<!-- dict:col:league_registrations.registration_fee_paid -->
+**`registration_fee_paid`** (bool, NOT NULL, default false) — admin-toggled payment flag, kept in sync with the linked ledger entry's posted/pending status. Toggling true with no existing entry creates a `posted` `accounting_entries` row ([[regId]/route.ts:130-155](../../../app/api/admin/house-league/seasons/[seasonId]/registrations/[regId]/route.ts#L130-L155)). Manual flag, NOT a payment processor.
+
+<!-- dict:col:league_registrations.fee_entry_id -->
+**`fee_entry_id`** (uuid, nullable, **NO FK**) → `accounting_entries.id` for this reg's fee; back-filled by `createLeagueRegistrationFeeEntry` ([lib/db.ts:3601](../../../lib/db.ts#L3601)). Durable link is `accounting_entries.source_module='league_registration'`+`source_entity_id=regId`. Often NULL (gotcha 5). _Cross-ref:_ Accounting / Stripe phase.
+
+<!-- dict:col:league_registrations.admin_notes -->
+**`admin_notes`** (text, nullable) — internal admin-only notes, **never** shown publicly; distinct from guardian `player_notes`. `canManageRegs`-gated.
+
+<!-- dict:col:league_registrations.source -->
+**`source`** (text, NOT NULL, default `'public_form'`; CHECK `public_form|admin_manual`) — provenance; `admin_manual` rows skip the capacity/waitlist engine (gotcha 3).
+
+<!-- dict:col:league_registrations.registered_at -->
+**`registered_at`** (timestamptz, NOT NULL, default `now()`) — **the effective create stamp** (no `created_at` column exists); drives default list ordering (newest first). Never written by code; admin-manual rows are not back-dated (gotcha 2).
+
+---
+
+## `league_practices`
+<!-- dict:table:league_practices -->
+
+**Purpose:** a team's practice slot (time/place), optionally part of a recurring series. Insert-only + soft-cancel; helpers `createPractices` (batch) / `cancelPractice` ([lib/db.ts:3412](../../../lib/db.ts#L3412), [:3429](../../../lib/db.ts#L3429)).
+
+**Gotchas (read first):**
+1. **`org_id` write-blocking bug (CONFIRMED dev+prod)** — same class as `league_games`: `org_id` is `NOT NULL`, no default, no trigger (live probe), but `createPractices` omits it ([lib/db.ts:3412](../../../lib/db.ts#L3412)) → NOT-NULL violation on every practice create. (Domain gotcha 1.)
+2. **Insert-only + SOFT-cancel — no edit, no hard delete.** Only `get`/`create`/`cancel` helpers exist; `cancelPractice` flips `status='cancelled'` (the row persists). The `[practiceId]` route accepts only `action:'cancel'`.
+3. **Recurrence is symmetric `recurrence_group_id`, NOT a parent-anchor — NO orphan bug** (unlike `rep_team_events`). All occurrences share one `recurrence_group_id` (a plain uuid, not an FK/unique); `cancelPractice('all')` matches by it alone, `'remaining'` adds `.gte('scheduled_at', clicked)` (≥, so it includes the clicked one). Series are created by the route assigning one `randomUUID()` to a batch.
+4. **`status` CHECK is only `scheduled|cancelled`** — narrower than games (no `completed`/`postponed`). UK `'cancelled'`.
+5. **Weaker auth gate:** the practices POST/PATCH routes gate on capability + role but **not** `hasModuleEntitlement('module_house_league')` (the other league routes do).
+6. **`scheduled_at` may be NULL** yet `cancelPractice`'s `'remaining'` path uses `p.scheduled_at!` (non-null assertion) — a null anchor would compare against null. Timestamps are built as naive local strings (server-TZ trap, shared with games).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:league_practices.season_id -->
+**`season_id`** (FK → `league_seasons.id` ON DELETE CASCADE, NOT NULL) — parent season.
+
+<!-- dict:col:league_practices.division_id -->
+**`division_id`** (FK → `league_divisions.id` ON DELETE SET NULL, nullable) — informational division (the row is team-scoped); deleting a division nulls the link, keeps the practice.
+
+<!-- dict:col:league_practices.team_id -->
+**`team_id`** (FK → `league_teams.id` ON DELETE CASCADE, NOT NULL) — the practicing team (the row's primary subject).
+
+<!-- dict:col:league_practices.scheduled_at -->
+**`scheduled_at`** (timestamptz, nullable) — practice start; `'remaining'`-cancel anchor (gotcha 6).
+
+<!-- dict:col:league_practices.ends_at -->
+**`ends_at`** (timestamptz, nullable) — end time; required for recurring series, optional for a single practice.
+
+<!-- dict:col:league_practices.location -->
+**`location`** (text, nullable) — free-text venue (not an FK).
+
+<!-- dict:col:league_practices.notes -->
+**`notes`** (text, nullable) — free-text admin notes.
+
+<!-- dict:col:league_practices.status -->
+**`status`** (text, NOT NULL, default `'scheduled'`; CHECK `scheduled|cancelled`) — soft-cancel only (gotchas 2, 4).
+
+<!-- dict:col:league_practices.recurrence_group_id -->
+**`recurrence_group_id`** (uuid, nullable; **not an FK, not unique**) — groups a recurring series (one `randomUUID()` per series); NULL for a one-off. Bulk cancel keys off it (gotcha 3). **Index drift:** dev `recurrence_idx` is **PARTIAL** (`WHERE … IS NOT NULL`), prod `recurrence_group_id_idx` is **FULL** (see dev/prod note below).
+
+<!-- dict:col:league_practices.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL; index `org_idx` in both envs, mig 078) — denormalized org; **unwritten by `createPractices` → the write-blocking bug (gotcha 1)**.
+
+**Dev/prod (headline drift):** columns identical; **indexes differ** — dev (mig 077, dev-only): `org_idx`, `recurrence_idx` (PARTIAL), `schedule_idx(season_id, scheduled_at)`, `season_idx`, `team_idx`. Prod: `org_idx`, `recurrence_group_id_idx` (FULL), `season_id_idx`, `team_id_idx` — **no `schedule_idx`**, recurrence index FULL not PARTIAL, three indexes name-shifted. `DRIFT_dev_vs_prod.md`'s "Definition changed (0)" masks the partial-vs-full difference (it diffs by name).
+
+---
+
+## `league_email_log`
+<!-- dict:table:league_email_log -->
+
+**Purpose:** the **live** audit log of house-league bulk-email broadcasts — one row per admin "send" (who, targeting scope/audience, sent vs skipped counts). Written by `insertLeagueEmailLog` ([lib/db.ts:3198](../../../lib/db.ts#L3198)), read by `getLeagueEmailLog` ([lib/db.ts:3221](../../../lib/db.ts#L3221)); sole caller is the broadcast route `email/route.ts`.
+
+**Gotchas (read first):**
+1. **This is the LIVE log — `league_notification_log` is its dead predecessor.** The admin "Notifications" page (`notifications/page.tsx`) writes **here** via the `/email` endpoint.
+2. **`scope` vs `audience` are different.** `scope` = machine target (`all|division|team|status`); `audience` = a human label derived from scope+status. For **division/team** scope, `audience` falls through to the raw scope word — **the log does NOT capture WHICH division/team** was emailed ([email/route.ts:115-119](../../../app/api/admin/house-league/seasons/[seasonId]/email/route.ts#L115-L119)).
+3. **`count_skipped` conflates two reasons** — "no guardian email" and "send threw" both increment it ([email/route.ts:97,108-110](../../../app/api/admin/house-league/seasons/[seasonId]/email/route.ts#L97)).
+4. **Logging is best-effort, AFTER send** — wrapped in try/catch that only `console.error`s, so a successful broadcast whose log write fails is silently unrecorded.
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:league_email_log.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — owning org.
+
+<!-- dict:col:league_email_log.season_id -->
+**`season_id`** (FK → `league_seasons.id` ON DELETE CASCADE, NOT NULL) — the targeted season; the read filter (`getLeagueEmailLog`, newest-50).
+
+<!-- dict:col:league_email_log.sent_by -->
+**`sent_by`** (FK → `auth.users.id`, NOT NULL) — who triggered the broadcast. (Snapshot shows `foreign_table:null` — cross-schema introspection gap; the FK to `auth.users` is real, confirmed via `pg_get_constraintdef`.) **NOT NULL here vs nullable in `league_notification_log`.**
+
+<!-- dict:col:league_email_log.sent_at -->
+**`sent_at`** (timestamptz, NOT NULL, default `now()`) — dispatch time; DB-defaulted (never set in code); the history ordering key.
+
+<!-- dict:col:league_email_log.subject -->
+**`subject`** (text, NOT NULL) — the broadcast subject line.
+
+<!-- dict:col:league_email_log.scope -->
+**`scope`** (text, NOT NULL) — machine target `all|division|team|status` (validated in the route, **no DB CHECK**).
+
+<!-- dict:col:league_email_log.audience -->
+**`audience`** (text, NOT NULL) — human audience label derived from scope+status (gotcha 2).
+
+<!-- dict:col:league_email_log.count_sent -->
+**`count_sent`** (integer, NOT NULL, default 0) — recipients successfully emailed.
+
+<!-- dict:col:league_email_log.count_skipped -->
+**`count_skipped`** (integer, NOT NULL, default 0) — recipients skipped; conflates no-email + send-failure (gotcha 3).
+
+---
+
+## `league_notification_log`
+<!-- dict:table:league_notification_log -->
+
+**Purpose:** **LEGACY / DEAD table.** Created in mig 020 as the original house-league broadcast log ("records each bulk email dispatch"), **superseded by `league_email_log`**, with **zero reads/writes** in current code (verified repo-wide). Documented so a future implementer doesn't wire to the wrong table — or knows it's safe to drop.
+
+**Gotchas (read first):**
+1. **Dead** — no helper, route, or UI touches it; the only references are mig 020, the schema mirror/snapshots, and review docs. The live log is `league_email_log`.
+2. **Schema diverges from the live log** — `audience_type`/`audience_label`/`recipient_count` (single count) here vs `scope`/`audience`/`count_sent`+`count_skipped` on `league_email_log`. It also **lacks `org_id`** (only `season_id`), relying on the 2-hop RLS chain mig 078 removed elsewhere; and `sent_by` is **nullable** here (vs NOT NULL on the live log). Ironically, `audience_label` was *meant* to capture the division/team name the live log drops.
+
+**Fields** (boilerplate `id` omitted; all read/written by **NOTHING** in current code):
+
+<!-- dict:col:league_notification_log.season_id -->
+**`season_id`** (FK → `league_seasons.id` ON DELETE CASCADE, NOT NULL) — the only scope (no `org_id`).
+
+<!-- dict:col:league_notification_log.sent_by -->
+**`sent_by`** (FK → `auth.users.id`, nullable — cross-schema gap; asymmetry vs `league_email_log.sent_by` NOT NULL).
+
+<!-- dict:col:league_notification_log.audience_type -->
+**`audience_type`** (text, NOT NULL) — superseded analogue of `league_email_log.scope`.
+
+<!-- dict:col:league_notification_log.audience_label -->
+**`audience_label`** (text, nullable) — analogue of `league_email_log.audience` (intended to hold the division/team name).
+
+<!-- dict:col:league_notification_log.subject -->
+**`subject`** (text, NOT NULL) — the broadcast subject.
+
+<!-- dict:col:league_notification_log.recipient_count -->
+**`recipient_count`** (integer, NOT NULL) — single total count (vs the live log's sent/skipped split).
+
+<!-- dict:col:league_notification_log.sent_at -->
+**`sent_at`** (timestamptz, NOT NULL, default `now()`) — dispatch time.
+
+---
+
+*End of League / house-league (Phase 5 — 8 tables). Cross-refs: registration/season fees → Accounting (`accounting_entries`/`accounting_ledgers`, internal double-entry) and the Stripe/Billing phase (no `stripe_*` columns here); the two comms-log tables are league-only and independent of the platform `notifications`/`email_sends` tables (Notifications & Push phase). Boundary: `league_divisions`/`league_teams`/`league_games` are the house-league siblings of the Tournaments-domain `divisions`/`teams`/`games`, and are distinct from the Rep-teams (`rep_*`) module.*
 
 ---
 

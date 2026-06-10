@@ -9279,6 +9279,15 @@
     "ordinal_position": 23
   },
   {
+    "table_name": "rep_team_expenses",
+    "column_name": "notes",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
     "table_name": "rep_team_groups",
     "column_name": "id",
     "data_type": "uuid",
