@@ -28,6 +28,7 @@ export type PlatformArea =
   | 'bulk_operations'
   | 'platform_users'
   | 'audit'
+  | 'observability'
   | 'email_templates'
   | 'help'
   | 'dev_tools';
@@ -59,6 +60,7 @@ export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
 
   // System
   platform_users:  { viewRoles: ['super_admin'], writeRoles: ['super_admin'] },
+  observability:   { viewRoles: ['super_admin', 'product', 'support'], writeRoles: ['super_admin', 'product'] },
   dev_tools:       { viewRoles: ['super_admin'], writeRoles: ['super_admin'] },
 };
 

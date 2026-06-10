@@ -1,0 +1,47 @@
+/* Shared platform-admin metric card — mirrors the original overview.module.css card. */
+.metricCard {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+  min-height: 7.25rem;
+  padding: 1rem 1.1rem;
+  background: rgba(12, 19, 32, 0.82);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.24);
+}
+
+.iconWrap {
+  width: 42px;
+  height: 42px;
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--logic-lime);
+  flex-shrink: 0;
+}
+
+.metricValue {
+  font-family: var(--font-data);
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--logic-lime);
+  line-height: 1;
+}
+
+.metricLabel {
+  font-family: var(--font-data);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+.metricSub {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  color: var(--data-gray);
+  margin-top: 0.2rem;
+}

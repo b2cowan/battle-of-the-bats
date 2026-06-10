@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import type { ComponentType } from 'react';
 import {
   AlertCircle,
   ArchiveRestore,
@@ -31,30 +30,9 @@ import {
 } from '@/lib/platform-metrics';
 import MetricSnapshotButton from './MetricSnapshotButton';
 import OverviewTabs from './OverviewTabs';
+import MetricCard from '@/components/platform-admin/MetricCard';
 import styles from './overview.module.css';
 
-function MetricCard({
-  label,
-  value,
-  sub,
-  Icon,
-}: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  Icon: ComponentType<{ size?: number }>;
-}) {
-  return (
-    <div className={styles.metricCard}>
-      <div className={styles.iconWrap}><Icon size={18} /></div>
-      <div>
-        <div className={styles.metricValue}>{typeof value === 'number' ? value.toLocaleString() : value}</div>
-        <div className={styles.metricLabel}>{label}</div>
-        {sub && <div className={styles.metricSub}>{sub}</div>}
-      </div>
-    </div>
-  );
-}
 function BarRow({
   label,
   value,
