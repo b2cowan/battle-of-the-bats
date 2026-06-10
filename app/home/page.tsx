@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
-import { getUserAccessContexts, type UserAccessContext } from '@/lib/user-contexts';
+import { getUserAccessContexts, findInvitedMembershipSlug, type UserAccessContext } from '@/lib/user-contexts';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from './home.module.css';
 
@@ -59,7 +59,10 @@ export default async function UserHomePage() {
   });
 
   if (contexts.length === 0) {
-    redirect('/start');
+    // A pending invitee (status='invited') has no active context yet — route them to
+    // finish accepting the invite instead of the zero-context org-creation front door.
+    const invitedSlug = await findInvitedMembershipSlug(user.id);
+    redirect(invitedSlug ? `/auth/accept-invite?org=${invitedSlug}` : '/start');
   }
 
   // Note: single-context users are intentionally NOT auto-redirected here. Landing on

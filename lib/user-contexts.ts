@@ -380,6 +380,34 @@ export async function getDestinationForMembership(member: MemberRow): Promise<st
   return `/${slug}/admin`;
 }
 
+/**
+ * A user with no *active* access context may still have a pending invite
+ * (`organization_members.status = 'invited'`) — e.g. an admin who was added but
+ * signed in via the normal login instead of the emailed accept-invite link, so
+ * their row was never flipped to 'active'. Returns the org slug to route them to
+ * `/auth/accept-invite`, or null if they have no pending invite.
+ *
+ * NOTE: `getActiveMembershipRows` filters `.eq('status', 'active')`, so invited
+ * rows are invisible to the context/destination resolver. Callers that would
+ * otherwise fall through to the zero-context `/start` front door should check
+ * this first so a pending invitee finishes acceptance instead of being told to
+ * create a brand-new organization.
+ */
+export async function findInvitedMembershipSlug(userId: string): Promise<string | null> {
+  const { data } = await supabaseAdmin
+    .from('organization_members')
+    .select('organizations(slug)')
+    .eq('user_id', userId)
+    .eq('status', 'invited')
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) return null;
+  const relation = (data as { organizations: OrgRelation | OrgRelation[] | null }).organizations;
+  const org = Array.isArray(relation) ? relation[0] : relation;
+  return org?.slug ?? null;
+}
+
 export async function getUserAccessContexts(user: {
   id: string;
   email?: string | null;
