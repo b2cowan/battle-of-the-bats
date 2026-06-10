@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
 import { notify } from '@/lib/notify';
+import { captureError } from '@/lib/observability';
 import {
   applyDivisionRoundRobinDeleteScope,
   sanitizeGameIds,
@@ -126,7 +127,7 @@ export async function POST(req: Request) {
     }
 
     const supabase = createClient(url, key);
-    const { action, games, tournamentId, divisionId, gameIds } = await req.json();
+    const { action, games, tournamentId, divisionId, gameIds, autoScheduled } = await req.json();
 
     // Scope check: scoped users may only write to their assigned tournaments
     if (tournamentId) {
@@ -141,8 +142,16 @@ export async function POST(req: Request) {
         return new Response(JSON.stringify({ error: 'Invalid games data' }), { status: 400 });
       }
 
-      const requiredFeature: PlanFeature = games.some((g: any) => g.isPlayoff)
-        ? 'playoff_generator'
+      // Three-state gate:
+      //  • playoff games placed/scheduled BY HAND → 'playoff_manual' (free on all tournament plans)
+      //  • playoff games produced by the auto-schedule optimizer → 'playoff_generator' (Plus)
+      //  • round-robin games (auto-generator) → 'auto_schedule' (Plus)
+      // `autoScheduled` is a client-asserted UI-integrity flag (the optimizer ships
+      // to every browser, like the round-robin generator) — it gates the honest
+      // default path, not a cryptographic boundary.
+      const hasPlayoff = games.some((g: any) => g.isPlayoff);
+      const requiredFeature: PlanFeature = hasPlayoff
+        ? (autoScheduled === true ? 'playoff_generator' : 'playoff_manual')
         : 'auto_schedule';
       if (!hasPlanFeature(ctx.org.planId, requiredFeature)) {
         return planFeatureForbidden(requiredFeature);
@@ -284,8 +293,10 @@ export async function POST(req: Request) {
         });
       }
 
-      if (!hasPlanFeature(ctx.org.planId, 'playoff_generator')) {
-        return planFeatureForbidden('playoff_generator');
+      // Replacing a manually-built bracket is part of the free manual-bracket
+      // workflow, so this is gated on 'playoff_manual' (not 'playoff_generator').
+      if (!hasPlanFeature(ctx.org.planId, 'playoff_manual')) {
+        return planFeatureForbidden('playoff_manual');
       }
 
       const { data: rows, error: lookupError } = await supabaseAdmin
@@ -335,8 +346,8 @@ export async function POST(req: Request) {
         if (await isTournamentLocked(ag.tournament_id)) return tournamentLockedResponse();
       }
 
-      if (!hasPlanFeature(ctx.org.planId, 'playoff_generator')) {
-        return planFeatureForbidden('playoff_generator');
+      if (!hasPlanFeature(ctx.org.planId, 'playoff_manual')) {
+        return planFeatureForbidden('playoff_manual');
       }
 
       const { error } = await supabase.from('games').delete().eq('division_id', divisionId).eq('is_playoff', true);
@@ -373,6 +384,7 @@ export async function POST(req: Request) {
 
   } catch (err: any) {
     console.error('Admin Games API Error:', err);
+    void captureError(err, { ctx, route: '/api/admin/games', method: 'POST', statusCode: 500 });
     return new Response(JSON.stringify({ error: err.message || 'Unknown server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -511,6 +523,7 @@ export async function PATCH(req: Request) {
   } catch (err: any) {
     if (err instanceof TournamentScoringError) return scoringErrorResponse(err);
     console.error('Admin Games PATCH Error:', err);
+    void captureError(err, { ctx, route: '/api/admin/games', method: 'PATCH', statusCode: 500 });
     return new Response(JSON.stringify({ error: err.message || 'Unknown server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

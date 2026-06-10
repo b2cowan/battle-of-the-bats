@@ -1,11 +1,11 @@
 'use client';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Trophy, Check, X, Calendar, AlertCircle, Sparkles, Plus, Trash2, SlidersHorizontal, RefreshCw, Info, Shuffle, GripVertical, ListOrdered } from 'lucide-react';
+import { Trophy, Check, X, Calendar, AlertCircle, Sparkles, Plus, Trash2, SlidersHorizontal, RefreshCw, Info, Shuffle, GripVertical, ListOrdered, Lock, Layers } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { teamColor } from '@/lib/team-color';
-import { Division, Team, Venue, PlayoffConfig, Tournament, Game } from '@/lib/types';
+import { Division, Team, Venue, PlayoffConfig, PlayoffTierConfig, Tournament, Game } from '@/lib/types';
 import { formatPoolName } from '@/lib/utils';
 import { resolveManualTravelBuffers } from '@/lib/schedule-metrics';
 import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
@@ -25,7 +25,7 @@ import {
   type ScheduleDraftSlot,
   type SchedulePrioritySettings,
 } from '@/lib/schedule-generator';
-import { generateBracket, nextPow2, ordinal } from '@/lib/playoff-bracket';
+import { generateBracket, nextPow2, ordinal, remapTierSeed, suggestDefaultTiers, validateTierRanges } from '@/lib/playoff-bracket';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import BracketBuilder from './components/BracketBuilder';
 import BracketHealthPanel from './components/BracketHealthPanel';
@@ -39,6 +39,12 @@ interface Props {
   tournamentId: string;
   tournament?: Tournament | null;
   orgSlug?: string;
+  /**
+   * Whether this org can use the auto-schedule optimizer + tiered auto-split
+   * (the `auto_schedule`/`playoff_generator` Plus features). Free tier can still
+   * build the bracket structure and set dates/times/venues by hand.
+   */
+  canAutoSchedule?: boolean;
   onClose: () => void;
   onComplete: () => void;
 }
@@ -197,7 +203,7 @@ function SortableSeed({ id, seed, teamName, isBye }: { id: string; seed: number;
   );
 }
 
-export default function PlayoffWizard({ divisions, defaultDivisionId, tournamentId, tournament = null, orgSlug, onClose, onComplete }: Props) {
+export default function PlayoffWizard({ divisions, defaultDivisionId, tournamentId, tournament = null, orgSlug, canAutoSchedule = true, onClose, onComplete }: Props) {
   const [selectedDivisionId, setSelectedDivisionId] = useState(() => defaultDivisionId ?? divisions[0]?.id ?? '');
   const division = useMemo(
     () => (divisions.find(d => d.id === selectedDivisionId) ?? divisions[0]) as Division,
@@ -219,7 +225,9 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
   // close the whole wizard mid-edit. Tracking the mousedown target prevents that.
   const overlayMouseDownRef = useRef(false);
   const [showWarning, setShowWarning] = useState(false);
-  const [autoSchedule, setAutoSchedule] = useState(true);
+  // Free tier (no auto_schedule entitlement) defaults to manual bracket building;
+  // the auto-schedule optimizer toggle is locked below.
+  const [autoSchedule, setAutoSchedule] = useState(canAutoSchedule);
   const [generationScope, setGenerationScope] = useState<GenerationScope>('replace');
   const [gameLength, setGameLength] = useState(tournament?.settings?.game_duration_minutes ?? 90);
   const [breakLength, setBreakLength] = useState(tournament?.settings?.buffer_minutes ?? 15);
@@ -298,15 +306,88 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
   }, [teams]);
 
   // Playoff-only brackets seed directly from the ordered team list (no pools):
-  // bracket size = number of seeded teams, seeded as a global reseed.
+  // bracket size = number of seeded teams, seeded as a global reseed — UNLESS the
+  // organizer has switched to Tiered Brackets, which keeps its own crossover and
+  // only syncs the qualifying count to the seed list.
   useEffect(() => {
     if (!isPlayoffOnly) return;
-    setConfig(c => (
-      c.crossover === 'reseed' && c.teamsQualifying === seededTeams.length
+    setConfig(c => {
+      if (c.crossover === 'tiers') {
+        return c.teamsQualifying === seededTeams.length ? c : { ...c, teamsQualifying: seededTeams.length };
+      }
+      return c.crossover === 'reseed' && c.teamsQualifying === seededTeams.length
         ? c
-        : { ...c, crossover: 'reseed', teamsQualifying: seededTeams.length }
-    ));
+        : { ...c, crossover: 'reseed', teamsQualifying: seededTeams.length };
+    });
   }, [isPlayoffOnly, seededTeams.length]);
+
+  // Eligible team count for tiered splitting: seeded list (playoff-only) or all
+  // accepted teams (round robin — standings rank all of them).
+  const tierEligibleCount = isPlayoffOnly ? seededTeams.length : teams.length;
+
+  // When Tiered Brackets is selected but not yet configured, seed a sensible
+  // default split (two equal-ish contiguous tiers) sized to the eligible count.
+  useEffect(() => {
+    if (config.crossover !== 'tiers') return;
+    if ((config.tierConfigs?.length ?? 0) > 0) return;
+    const suggested = suggestDefaultTiers(tierEligibleCount);
+    if (suggested.length === 0) return;
+    setConfig(c => ({ ...c, tierConfigs: suggested, teamsQualifying: Math.max(...suggested.map(t => t.toSeed)) }));
+  }, [config.crossover, config.tierConfigs, tierEligibleCount]);
+
+  // ── Tier editing helpers ───────────────────────────────────────────────────
+  const tierConfigs = config.tierConfigs ?? [];
+  const tierValidation = useMemo(
+    () => validateTierRanges(tierConfigs, tierEligibleCount),
+    [tierConfigs, tierEligibleCount],
+  );
+
+  /** Commit a new tier list, re-deriving contiguity (each tier starts after the
+   *  previous one ends) and keeping teamsQualifying = highest covered seed. */
+  function commitTiers(next: PlayoffTierConfig[]) {
+    let prev = 0;
+    const normalized = next.map(t => {
+      const fromSeed = prev + 1;
+      const toSeed = Math.max(fromSeed + 1, t.toSeed);
+      prev = toSeed;
+      return { ...t, fromSeed, toSeed };
+    });
+    setConfig(c => ({
+      ...c,
+      tierConfigs: normalized,
+      teamsQualifying: normalized.length ? Math.max(...normalized.map(t => t.toSeed)) : c.teamsQualifying,
+    }));
+    clearSeedPreview();
+  }
+
+  function updateTier(idx: number, updates: Partial<PlayoffTierConfig>) {
+    commitTiers(tierConfigs.map((t, i) => (i === idx ? { ...t, ...updates } : t)));
+  }
+
+  function addTier() {
+    const last = tierConfigs[tierConfigs.length - 1];
+    const start = last ? last.toSeed + 1 : 1;
+    commitTiers([
+      ...tierConfigs,
+      { name: `Tier ${tierConfigs.length + 1}`, fromSeed: start, toSeed: start + 1, format: config.format ?? 'single' },
+    ]);
+  }
+
+  function removeTier(idx: number) {
+    if (tierConfigs.length <= 1) return;
+    commitTiers(tierConfigs.filter((_, i) => i !== idx));
+  }
+
+  // Per-tier seed-option lists for the manual bracket builder (tier name → its
+  // global Seed #N range), so each tier's matchup dropdowns scope to its seeds.
+  const tierOptionMap = useMemo<Record<string, string[]> | undefined>(() => {
+    if (config.crossover !== 'tiers') return undefined;
+    const map: Record<string, string[]> = {};
+    for (const t of tierConfigs) {
+      map[t.name] = Array.from({ length: Math.max(0, t.toSeed - t.fromSeed + 1) }, (_, i) => `Seed #${t.fromSeed + i}`);
+    }
+    return map;
+  }, [config.crossover, tierConfigs]);
 
   function clearSeedPreview() {
     setTemplatePreview([]);
@@ -760,7 +841,15 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
     const games: PlayoffTemplateGame[] = [];
     const { crossover, hasThirdPlace, teamsQualifying } = config;
     const pools = division.pools || [];
-    
+
+    if (crossover === 'tiers') {
+      const v = validateTierRanges(config.tierConfigs, tierEligibleCount);
+      if (!v.ok) {
+        setFeedback({ isOpen: true, title: 'Check Tier Setup', message: v.error ?? 'Tier ranges are invalid.', type: 'warning' });
+        return;
+      }
+    }
+
     // 1. No Crossover (Split Pool Championships) — each pool runs its OWN bracket
     //    through the same unified engine as single-bracket play, so every format
     //    (single / consolation / double / placement) is available per pool. The
@@ -791,6 +880,33 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
           });
         }
       });
+    }
+    // 1b. Tiered Brackets — split ONE division's OVERALL standings into N
+    //     contiguous tiers, each an independent bracket. Each tier's bracket is
+    //     generated locally (seeds 1..size) then its `Seed #k` refs are rewritten
+    //     to GLOBAL `Seed #(fromSeed-1+k)` so advancePlayoffs resolves them from
+    //     overall standings (round robin) or the seeded team list (playoff-only).
+    //     `pool` carries the tier name (grouping + a distinct bracketId per tier
+    //     at save), so identical Winner/Loser codes across tiers never collide.
+    else if (crossover === 'tiers' && (config.tierConfigs?.length ?? 0) > 0) {
+      for (const tier of config.tierConfigs!) {
+        const size = tier.toSeed - tier.fromSeed + 1;
+        if (size < 2) continue; // single-team tiers have no games
+        const generated = generateBracket(size, {
+          format: tier.format ?? config.format ?? 'single',
+          thirdPlace: tier.hasThirdPlace ?? false,
+          grandFinalReset: tier.grandFinalReset ?? config.grandFinalReset ?? true,
+        });
+        for (const m of generated) {
+          games.push({
+            round: m.round,
+            code: m.code,
+            pool: tier.name,
+            home: remapTierSeed(m.home, tier.fromSeed),
+            away: remapTierSeed(m.away, tier.fromSeed),
+          });
+        }
+      }
     }
     // 2 & 3. Single-bracket seeding — standard crossover (interleaved pool
     // labels) or global reseed (Seed #1..N). Both feed the unified bracket
@@ -913,9 +1029,15 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
       });
       return options;
     }
+    // Tiered: global seeds 1..(highest tier seed) — exactly the seeds used across
+    // all tiers, so the missing-seed validation in proceedAfterWarning is exact.
+    if (config.crossover === 'tiers' && (config.tierConfigs?.length ?? 0) > 0) {
+      const maxSeed = Math.max(...config.tierConfigs!.map(t => t.toSeed));
+      return Array.from({ length: Math.max(0, maxSeed) }, (_, i) => `Seed #${i + 1}`);
+    }
     const numSeeds = config.teamsQualifying || division.capacity || teams.length || 16;
     return Array.from({length: numSeeds}, (_, i) => `Seed #${i + 1}`);
-  }, [config.crossover, config.teamsQualifying, config.hasThirdPlace, config.splitConfigs, division.pools, division.capacity, teams.length]);
+  }, [config.crossover, config.teamsQualifying, config.hasThirdPlace, config.splitConfigs, config.tierConfigs, division.pools, division.capacity, teams.length]);
 
   function validatePlayoffStartsAfterRoundRobin(rows: PlayoffPreviewRow[]) {
     const earlyRows = rows.filter(row => startsBeforeRoundRobinCompletion(row, roundRobinCompletion));
@@ -932,7 +1054,15 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
 
   function proceedAfterWarning() {
     setShowWarning(false);
-    
+
+    if (config.crossover === 'tiers') {
+      const v = validateTierRanges(config.tierConfigs, tierEligibleCount);
+      if (!v.ok) {
+        setFeedback({ isOpen: true, title: 'Check Tier Setup', message: v.error ?? 'Tier ranges are invalid.', type: 'warning' });
+        return;
+      }
+    }
+
     // Check for missing seeds from baseOptions that aren't in any matchup
     const usedSeeds = new Set(preview.flatMap(p => [p.home, p.away]));
     const missingSeeds = baseOptions.filter(opt => !usedSeeds.has(opt));
@@ -962,12 +1092,13 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
     setLoading(true);
     setShowConfirm(false);
     try {
-      // In No Crossover mode each pool gets its own bracketId so transitive
-      // pool inference (FIN → Winner SF1 → SF1) can match by bracketId and
-      // avoid code collisions between pools that share identical codes.
+      // In No Crossover and Tiered modes each pool/tier gets its own bracketId so
+      // transitive inference (FIN → Winner SF1 → SF1) matches by bracketId and
+      // identical codes never collide between pools/tiers that share them.
+      const usesPerGroupBrackets = config.crossover === 'none' || config.crossover === 'tiers';
       const poolBracketIds: Record<string, string> = {};
       const defaultBracketId = crypto.randomUUID();
-      if (config.crossover === 'none') {
+      if (usesPerGroupBrackets) {
         for (const p of preview) {
           if (p.pool && !poolBracketIds[p.pool]) {
             poolBracketIds[p.pool] = crypto.randomUUID();
@@ -980,7 +1111,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
         : preview;
       const previewToSave = await materializeTemporaryFacilityLanes(previewToCreate);
       const gameRows = previewToSave.map(p => {
-        const bracketId = (config.crossover === 'none' && p.pool && poolBracketIds[p.pool])
+        const bracketId = (usesPerGroupBrackets && p.pool && poolBracketIds[p.pool])
           ? poolBracketIds[p.pool]
           : defaultBracketId;
         return {
@@ -1040,7 +1171,9 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
         const saveRes = await fetch(`/api/admin/games${orgQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'bulk-save', games: gameRows, tournamentId, divisionId: division.id }),
+          // `autoScheduled` tells the server whether the optimizer produced these
+          // rows (Plus) vs a manually-built bracket (free). See games route gate.
+          body: JSON.stringify({ action: 'bulk-save', games: gameRows, tournamentId, divisionId: division.id, autoScheduled: autoSchedule && canAutoSchedule }),
         });
         const saveData = await saveRes.json();
         if (!saveRes.ok) throw new Error(saveData.error || 'Failed to save playoff bracket');
@@ -1109,11 +1242,13 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                     {(division.pools?.length || 0) === 2 && <option value="standard">Standard (Pool A vs. Pool B Crossover)</option>}
                     <option value="reseed">Global Reseed (Top vs. Bottom Seeding)</option>
                     <option value="none">No Crossover (Each Pool Plays Own Finals)</option>
+                    <option value="tiers">Tiered Brackets (split standings into tiers)</option>
                   </select>
                   <small className={styles.crossoverHint}>
                     {config.crossover === 'standard' && '1st in Pool A plays 2nd in Pool B, and vice versa. Requires exactly 2 pools.'}
                     {config.crossover === 'reseed' && 'All qualifying teams are globally ranked. Seed #1 plays the lowest seed, #2 plays the second-lowest, etc.'}
                     {config.crossover === 'none' && 'Each pool runs its own independent championship bracket with no cross-pool matchups.'}
+                    {config.crossover === 'tiers' && 'Splits the division’s overall standings into separate tiers (e.g. seeds 1–5 and 6–9), each its own bracket. Lower seeds still get a championship.'}
                   </small>
                 </div>
                 )}
@@ -1222,6 +1357,80 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                   </div>
                 </div>
               )}
+
+              {config.crossover === 'tiers' && (
+                <div style={{ marginTop: '1.5rem', background: 'var(--bg-2)', padding: '1.5rem', borderRadius: '2px', border: '1px solid var(--border)' }}>
+                  <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
+                    <h5 className="font-bold text-sm" style={{ color: 'var(--logic-lime)', margin: 0 }}>
+                      <Layers size={14} style={{ marginRight: '0.4rem', verticalAlign: '-2px' }} />
+                      Tiered Brackets
+                    </h5>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={addTier} style={{ color: 'var(--logic-lime)' }}>
+                      <Plus size={13} /> Add Tier
+                    </button>
+                  </div>
+                  <p className="text-muted text-xs" style={{ marginBottom: '1rem' }}>
+                    Each tier is an independent bracket seeded from the division’s overall standings.
+                    {tierEligibleCount > 0 ? ` ${tierEligibleCount} team${tierEligibleCount === 1 ? '' : 's'} eligible.` : ''}
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {tierConfigs.map((tier, idx) => {
+                      const size = tier.toSeed - tier.fromSeed + 1;
+                      const byes = nextPow2(size) - size;
+                      const effFormat = tier.format ?? config.format ?? 'single';
+                      const showThird = effFormat !== 'double' && effFormat !== 'placement';
+                      return (
+                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'minmax(110px, 1.1fr) auto minmax(140px, 1.3fr) auto auto', gap: '1rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: '2px', border: '1px solid var(--border)' }}>
+                          <input
+                            className="form-input"
+                            value={tier.name}
+                            onChange={e => updateTier(idx, { name: e.target.value })}
+                            placeholder={`Tier ${idx + 1}`}
+                            aria-label={`Tier ${idx + 1} name`}
+                          />
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted" style={{ whiteSpace: 'nowrap' }}>Seeds {tier.fromSeed}–</span>
+                            <NumberStepper
+                              value={tier.toSeed}
+                              min={tier.fromSeed + 1}
+                              max={Math.max(tier.fromSeed + 1, tierEligibleCount || tier.toSeed)}
+                              onChange={v => updateTier(idx, { toSeed: v })}
+                              ariaLabel={`Last seed in ${tier.name}`}
+                            />
+                            <span className="text-xs text-muted" style={{ whiteSpace: 'nowrap' }}>
+                              ({size} team{size === 1 ? '' : 's'}{byes > 0 ? `, ${byes} bye${byes === 1 ? '' : 's'}` : ''})
+                            </span>
+                          </div>
+                          <select className="form-select" value={effFormat} onChange={e => updateTier(idx, { format: e.target.value as PlayoffTierConfig['format'] })} aria-label={`${tier.name} format`}>
+                            <option value="single">Single Elim</option>
+                            <option value="consolation">Consolation</option>
+                            <option value="double">Double Elim</option>
+                            <option value="placement">Full Placement</option>
+                          </select>
+                          {showThird ? (
+                            <label className="flex items-center gap-2 cursor-pointer" title="Include a 3rd-place game in this tier">
+                              <input type="checkbox" checked={tier.hasThirdPlace ?? false} onChange={e => updateTier(idx, { hasThirdPlace: e.target.checked })} />
+                              <span className="text-xs font-bold">3rd</span>
+                            </label>
+                          ) : <span />}
+                          <button type="button" className="btn btn-ghost btn-data" onClick={() => removeTier(idx)} disabled={tierConfigs.length <= 1} title="Remove tier" style={{ padding: '0.4rem' }}>
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {!tierValidation.ok ? (
+                    <p className="text-xs" style={{ color: 'var(--danger)', marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <AlertCircle size={13} /> {tierValidation.error}
+                    </p>
+                  ) : (
+                    <p className="text-muted text-xs" style={{ marginTop: '0.75rem' }}>
+                      Tiers cover seeds 1–{Math.max(...tierConfigs.map(t => t.toSeed))}{tierEligibleCount > 0 ? ` of ${tierEligibleCount}` : ''}. Lower-ranked teams outside the tiers don’t play in the bracket.
+                    </p>
+                  )}
+                </div>
+              )}
             </section>
 
             {isPlayoffOnly && (
@@ -1242,6 +1451,16 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                     )}
                     <button type="button" className="btn btn-ghost btn-sm" onClick={randomizeSeeds} disabled={seededTeams.length < 2} style={{ color: 'var(--logic-lime)' }}>
                       <Shuffle size={13} /> Randomize
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => setConfig(c => ({ ...c, crossover: c.crossover === 'tiers' ? 'reseed' : 'tiers' }))}
+                      disabled={seededTeams.length < 4}
+                      style={{ color: config.crossover === 'tiers' ? 'var(--logic-lime)' : undefined }}
+                      title="Split the seeded teams into separate tiered brackets"
+                    >
+                      <Layers size={13} /> {config.crossover === 'tiers' ? 'Single bracket' : 'Split into tiers'}
                     </button>
                   </div>
                 </div>
@@ -1310,8 +1529,12 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                   <button
                     type="button"
                     className={`${styles.generatorSegBtn} ${autoSchedule ? styles.generatorSegBtnActive : ''}`}
-                    onClick={() => setAutoSchedule(true)}
+                    onClick={() => { if (canAutoSchedule) setAutoSchedule(true); }}
+                    disabled={!canAutoSchedule}
+                    title={canAutoSchedule ? undefined : 'Automated schedule generation is included with Tournament Plus, League, and Club.'}
+                    style={!canAutoSchedule ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
                   >
+                    {!canAutoSchedule && <Lock size={11} style={{ marginRight: '0.35rem' }} />}
                     Auto-schedule dates & times
                   </button>
                   <button
@@ -1323,7 +1546,9 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                   </button>
                 </div>
                 <p className="text-muted text-xs" style={{ marginTop: '0.5rem' }}>
-                  {autoSchedule
+                  {!canAutoSchedule
+                    ? 'Creates the bracket matchup structure — you assign dates and fields manually in the game slots below. Auto-scheduling dates & times is included with Tournament Plus, League, and Club.'
+                    : autoSchedule
                     ? 'Games are assigned to the date windows you set below. Team names are placeholders until standings are final after round robin.'
                     : 'Creates the bracket matchup structure only — you assign dates and fields manually in the game slots below.'}
                 </p>
@@ -1608,6 +1833,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                     defaultDate={tournament?.endDate || new Date().toISOString().split('T')[0]}
                     templatePreview={templatePreview}
                     baseOptions={baseOptions}
+                    groupOptions={tierOptionMap}
                     onPreviewChange={setPreview}
                     crossover={config.crossover}
                     labelFor={seedLabelFor}

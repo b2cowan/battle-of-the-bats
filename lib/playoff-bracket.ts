@@ -21,6 +21,8 @@
  * resolve unambiguously.
  */
 
+import type { PlayoffTierConfig } from './types';
+
 export type BracketFormat = 'single' | 'consolation' | 'double' | 'placement';
 
 /** Which structural section a matchup belongs to (for display/scheduling). */
@@ -539,4 +541,83 @@ export function generateBracket(seedCount: number, options: GenerateBracketOptio
     default:
       return buildSingleElim(n, thirdPlace);
   }
+}
+
+// ── Tiered brackets (split one division's overall standings into N brackets) ──
+//
+// A tier covers a contiguous range of OVERALL seeds [fromSeed..toSeed]. Its
+// bracket is generated locally (seeds 1..size via generateBracket) then each
+// local `Seed #k` ref is rewritten to the GLOBAL `Seed #(fromSeed-1+k)` so that
+// advancePlayoffs resolves it against overall division standings. Each tier gets
+// its own bracketId at save time so identical Winner/Loser codes never collide.
+
+/** Rewrite a local `Seed #k` ref into the global `Seed #(fromSeed-1+k)`; other refs pass through. */
+export function remapTierSeed(ref: string, fromSeed: number): string {
+  const m = ref.match(/^Seed #(\d+)$/);
+  if (!m) return ref;
+  return `Seed #${fromSeed - 1 + Number(m[1])}`;
+}
+
+/**
+ * Suggest a default tier split for `eligibleCount` teams: two contiguous,
+ * equal-ish tiers (top half / bottom half). Fewer than 4 teams → a single tier.
+ * e.g. 9 → [Tier 1: 1–5, Tier 2: 6–9]; 8 → [1–4, 5–8].
+ */
+export function suggestDefaultTiers(eligibleCount: number): PlayoffTierConfig[] {
+  const n = Math.max(0, Math.floor(eligibleCount));
+  if (n < 2) return [];
+  if (n < 4) return [{ name: 'Tier 1', fromSeed: 1, toSeed: n, format: 'single' }];
+  const cut = Math.ceil(n / 2);
+  return [
+    { name: 'Tier 1', fromSeed: 1, toSeed: cut, format: 'single' },
+    { name: 'Tier 2', fromSeed: cut + 1, toSeed: n, format: 'single' },
+  ];
+}
+
+export interface TierValidationResult {
+  ok: boolean;
+  /** Human-readable reason when ok === false. */
+  error?: string;
+}
+
+/**
+ * Validate tier ranges for saving: non-empty unique names, each tier ≥ 2 seeds,
+ * ranges contiguous from seed #1 with no gaps/overlaps, and the highest seed
+ * within the accepted-team count (when known). Pure — safe to call on every render.
+ */
+export function validateTierRanges(tiers: PlayoffTierConfig[] | undefined, acceptedCount = 0): TierValidationResult {
+  if (!tiers || tiers.length === 0) return { ok: false, error: 'Add at least one tier.' };
+
+  const names = new Set<string>();
+  for (const t of tiers) {
+    const name = (t.name || '').trim();
+    if (!name) return { ok: false, error: 'Every tier needs a name.' };
+    if (names.has(name.toLowerCase())) return { ok: false, error: `Duplicate tier name "${name}".` };
+    names.add(name.toLowerCase());
+  }
+
+  const sorted = [...tiers].sort((a, b) => a.fromSeed - b.fromSeed);
+  let prevTo = 0;
+  for (const t of sorted) {
+    if (!Number.isInteger(t.fromSeed) || !Number.isInteger(t.toSeed) || t.fromSeed < 1 || t.toSeed < t.fromSeed) {
+      return { ok: false, error: `"${t.name}" has an invalid seed range.` };
+    }
+    if (t.toSeed - t.fromSeed < 1) {
+      return { ok: false, error: `"${t.name}" must contain at least 2 seeds — single-team tiers have no games.` };
+    }
+    if (t.fromSeed !== prevTo + 1) {
+      return {
+        ok: false,
+        error: prevTo === 0
+          ? 'Tiers must start at seed #1.'
+          : `Tier ranges must be contiguous — gap or overlap near seed #${prevTo + 1}.`,
+      };
+    }
+    prevTo = t.toSeed;
+  }
+
+  if (acceptedCount > 0 && prevTo > acceptedCount) {
+    return { ok: false, error: `Tiers cover ${prevTo} seeds but only ${acceptedCount} teams are accepted — lower the last tier's range.` };
+  }
+  return { ok: true };
 }

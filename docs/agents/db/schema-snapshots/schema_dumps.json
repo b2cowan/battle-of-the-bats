@@ -2171,6 +2171,366 @@
         "column_default": "now()"
       },
       {
+        "table_name": "error_events",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "error_events",
+        "pos": 2,
+        "column_name": "group_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 3,
+        "column_name": "occurred_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "error_events",
+        "pos": 4,
+        "column_name": "env",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'production'::text"
+      },
+      {
+        "table_name": "error_events",
+        "pos": 5,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'server'::text"
+      },
+      {
+        "table_name": "error_events",
+        "pos": 6,
+        "column_name": "route",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 7,
+        "column_name": "http_method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 8,
+        "column_name": "status_code",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 9,
+        "column_name": "error_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 10,
+        "column_name": "error_message",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 11,
+        "column_name": "stack_trace",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 12,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 13,
+        "column_name": "org_slug",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 14,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 15,
+        "column_name": "user_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 16,
+        "column_name": "user_role",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 17,
+        "column_name": "request_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 18,
+        "column_name": "ip_address",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 19,
+        "column_name": "user_agent",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 20,
+        "column_name": "request_context",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "error_events",
+        "pos": 21,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 2,
+        "column_name": "fingerprint",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 3,
+        "column_name": "title",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 4,
+        "column_name": "error_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 5,
+        "column_name": "route",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 6,
+        "column_name": "http_method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 7,
+        "column_name": "severity",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'error'::text"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 8,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'open'::text"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 9,
+        "column_name": "env",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'production'::text"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 10,
+        "column_name": "first_seen_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 11,
+        "column_name": "last_seen_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 12,
+        "column_name": "occurrence_count",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 13,
+        "column_name": "distinct_org_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 14,
+        "column_name": "resolved_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 15,
+        "column_name": "resolved_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 16,
+        "column_name": "snooze_until",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 17,
+        "column_name": "sample_stack",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 18,
+        "column_name": "sample_context",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 19,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "fan_push_subscriptions",
         "pos": 1,
         "column_name": "id",
@@ -2250,6 +2610,150 @@
         "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 3,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 4,
+        "column_name": "user_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 5,
+        "column_name": "submitter_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 6,
+        "column_name": "type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'feedback'::text"
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 7,
+        "column_name": "category",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 8,
+        "column_name": "title",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 9,
+        "column_name": "body",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 10,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'new'::text"
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 11,
+        "column_name": "severity",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 12,
+        "column_name": "context",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 13,
+        "column_name": "triaged_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 14,
+        "column_name": "triaged_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 15,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 16,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
       },
       {
         "table_name": "games",
@@ -3789,6 +4293,60 @@
         "udt_name": "jsonb",
         "is_nullable": "NO",
         "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "observability_cron_heartbeat",
+        "pos": 1,
+        "column_name": "job_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "observability_cron_heartbeat",
+        "pos": 2,
+        "column_name": "last_run_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "observability_cron_heartbeat",
+        "pos": 3,
+        "column_name": "rows_folded",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "observability_cron_heartbeat",
+        "pos": 4,
+        "column_name": "rows_purged",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "observability_cron_heartbeat",
+        "pos": 5,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "observability_cron_heartbeat",
+        "pos": 6,
+        "column_name": "error_detail",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "org_audit_log",
@@ -9353,6 +9911,141 @@
         "column_default": "now()"
       },
       {
+        "table_name": "request_metrics_raw",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "request_metrics_raw",
+        "pos": 2,
+        "column_name": "flushed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "request_metrics_raw",
+        "pos": 3,
+        "column_name": "env",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'production'::text"
+      },
+      {
+        "table_name": "request_metrics_raw",
+        "pos": 4,
+        "column_name": "route",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "request_metrics_raw",
+        "pos": 5,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "request_metrics_raw",
+        "pos": 6,
+        "column_name": "call_count",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "request_metrics_raw",
+        "pos": 7,
+        "column_name": "error_count",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 2,
+        "column_name": "bucket_start",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 3,
+        "column_name": "env",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'production'::text"
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 4,
+        "column_name": "route",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 5,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 6,
+        "column_name": "call_count",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 7,
+        "column_name": "error_count",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 8,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "resources",
         "pos": 1,
         "column_name": "id",
@@ -11417,6 +12110,20 @@
         "constraint_name": "email_sends_recipient_org_id_fkey"
       },
       {
+        "table_name": "error_events",
+        "column_name": "group_id",
+        "foreign_table": "error_groups",
+        "foreign_column": "id",
+        "constraint_name": "error_events_group_id_fkey"
+      },
+      {
+        "table_name": "error_events",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "error_events_org_id_fkey"
+      },
+      {
         "table_name": "fan_push_subscriptions",
         "column_name": "team_id",
         "foreign_table": "teams",
@@ -11429,6 +12136,13 @@
         "foreign_table": "tournaments",
         "foreign_column": "id",
         "constraint_name": "fan_push_subscriptions_tournament_id_fkey"
+      },
+      {
+        "table_name": "feedback_submissions",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "feedback_submissions_org_id_fkey"
       },
       {
         "table_name": "games",
@@ -13255,6 +13969,51 @@
         "indexdef": "CREATE INDEX idx_email_sends_status ON public.email_sends USING btree (status)"
       },
       {
+        "tablename": "error_events",
+        "indexname": "error_events_pkey",
+        "indexdef": "CREATE UNIQUE INDEX error_events_pkey ON public.error_events USING btree (id)"
+      },
+      {
+        "tablename": "error_events",
+        "indexname": "idx_error_events_group_org",
+        "indexdef": "CREATE INDEX idx_error_events_group_org ON public.error_events USING btree (group_id, org_id) WHERE (org_id IS NOT NULL)"
+      },
+      {
+        "tablename": "error_events",
+        "indexname": "idx_error_events_group_time",
+        "indexdef": "CREATE INDEX idx_error_events_group_time ON public.error_events USING btree (group_id, occurred_at DESC)"
+      },
+      {
+        "tablename": "error_events",
+        "indexname": "idx_error_events_occurred",
+        "indexdef": "CREATE INDEX idx_error_events_occurred ON public.error_events USING btree (occurred_at)"
+      },
+      {
+        "tablename": "error_events",
+        "indexname": "idx_error_events_org_time",
+        "indexdef": "CREATE INDEX idx_error_events_org_time ON public.error_events USING btree (org_id, occurred_at DESC)"
+      },
+      {
+        "tablename": "error_groups",
+        "indexname": "error_groups_fingerprint_key",
+        "indexdef": "CREATE UNIQUE INDEX error_groups_fingerprint_key ON public.error_groups USING btree (fingerprint)"
+      },
+      {
+        "tablename": "error_groups",
+        "indexname": "error_groups_pkey",
+        "indexdef": "CREATE UNIQUE INDEX error_groups_pkey ON public.error_groups USING btree (id)"
+      },
+      {
+        "tablename": "error_groups",
+        "indexname": "idx_error_groups_env_last_seen",
+        "indexdef": "CREATE INDEX idx_error_groups_env_last_seen ON public.error_groups USING btree (env, last_seen_at DESC)"
+      },
+      {
+        "tablename": "error_groups",
+        "indexname": "idx_error_groups_status_severity",
+        "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
+      },
+      {
         "tablename": "fan_push_subscriptions",
         "indexname": "fan_push_subscriptions_endpoint_idx",
         "indexdef": "CREATE INDEX fan_push_subscriptions_endpoint_idx ON public.fan_push_subscriptions USING btree (endpoint)"
@@ -13273,6 +14032,26 @@
         "tablename": "fan_push_subscriptions",
         "indexname": "fan_push_subscriptions_tournament_team_idx",
         "indexdef": "CREATE INDEX fan_push_subscriptions_tournament_team_idx ON public.fan_push_subscriptions USING btree (tournament_id, team_id)"
+      },
+      {
+        "tablename": "feedback_submissions",
+        "indexname": "feedback_submissions_pkey",
+        "indexdef": "CREATE UNIQUE INDEX feedback_submissions_pkey ON public.feedback_submissions USING btree (id)"
+      },
+      {
+        "tablename": "feedback_submissions",
+        "indexname": "idx_feedback_submissions_org_time",
+        "indexdef": "CREATE INDEX idx_feedback_submissions_org_time ON public.feedback_submissions USING btree (org_id, created_at DESC)"
+      },
+      {
+        "tablename": "feedback_submissions",
+        "indexname": "idx_feedback_submissions_status_time",
+        "indexdef": "CREATE INDEX idx_feedback_submissions_status_time ON public.feedback_submissions USING btree (status, created_at DESC)"
+      },
+      {
+        "tablename": "feedback_submissions",
+        "indexname": "idx_feedback_submissions_type",
+        "indexdef": "CREATE INDEX idx_feedback_submissions_type ON public.feedback_submissions USING btree (type)"
       },
       {
         "tablename": "games",
@@ -13463,6 +14242,11 @@
         "tablename": "notifications",
         "indexname": "notifications_user_unread_idx",
         "indexdef": "CREATE INDEX notifications_user_unread_idx ON public.notifications USING btree (user_id, created_at DESC) WHERE (read_at IS NULL)"
+      },
+      {
+        "tablename": "observability_cron_heartbeat",
+        "indexname": "observability_cron_heartbeat_pkey",
+        "indexdef": "CREATE UNIQUE INDEX observability_cron_heartbeat_pkey ON public.observability_cron_heartbeat USING btree (job_name)"
       },
       {
         "tablename": "org_audit_log",
@@ -14255,6 +15039,31 @@
         "indexdef": "CREATE INDEX rep_tryout_registrations_year_idx ON public.rep_tryout_registrations USING btree (program_year_id)"
       },
       {
+        "tablename": "request_metrics_raw",
+        "indexname": "idx_request_metrics_raw_flushed",
+        "indexdef": "CREATE INDEX idx_request_metrics_raw_flushed ON public.request_metrics_raw USING btree (flushed_at)"
+      },
+      {
+        "tablename": "request_metrics_raw",
+        "indexname": "request_metrics_raw_pkey",
+        "indexdef": "CREATE UNIQUE INDEX request_metrics_raw_pkey ON public.request_metrics_raw USING btree (id)"
+      },
+      {
+        "tablename": "request_metrics_rollup",
+        "indexname": "idx_request_metrics_rollup_bucket",
+        "indexdef": "CREATE UNIQUE INDEX idx_request_metrics_rollup_bucket ON public.request_metrics_rollup USING btree (bucket_start, env, COALESCE(route, ''::text), COALESCE(org_id, '00000000-0000-0000-0000-000000000000'::uuid))"
+      },
+      {
+        "tablename": "request_metrics_rollup",
+        "indexname": "idx_request_metrics_rollup_env_time",
+        "indexdef": "CREATE INDEX idx_request_metrics_rollup_env_time ON public.request_metrics_rollup USING btree (env, bucket_start DESC)"
+      },
+      {
+        "tablename": "request_metrics_rollup",
+        "indexname": "request_metrics_rollup_pkey",
+        "indexdef": "CREATE UNIQUE INDEX request_metrics_rollup_pkey ON public.request_metrics_rollup USING btree (id)"
+      },
+      {
         "tablename": "resources",
         "indexname": "resources_pkey",
         "indexdef": "CREATE UNIQUE INDEX resources_pkey ON public.resources USING btree (id)"
@@ -14796,8 +15605,68 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "error_events",
+        "detail": "error_events_source_check",
+        "check_clause": "(source = ANY (ARRAY['server'::text, 'client'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "error_events",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "error_groups",
+        "detail": "error_groups_env_check",
+        "check_clause": "(env = ANY (ARRAY['production'::text, 'dev'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "error_groups",
+        "detail": "error_groups_severity_check",
+        "check_clause": "(severity = ANY (ARRAY['critical'::text, 'error'::text, 'warning'::text, 'info'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "error_groups",
+        "detail": "error_groups_status_check",
+        "check_clause": "(status = ANY (ARRAY['open'::text, 'resolved'::text, 'ignored'::text, 'snoozed'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "error_groups",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "fan_push_subscriptions",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "feedback_submissions",
+        "detail": "feedback_submissions_severity_check",
+        "check_clause": "(severity = ANY (ARRAY['critical'::text, 'error'::text, 'warning'::text, 'info'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "feedback_submissions",
+        "detail": "feedback_submissions_status_check",
+        "check_clause": "(status = ANY (ARRAY['new'::text, 'triaged'::text, 'acknowledged'::text, 'resolved'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "feedback_submissions",
+        "detail": "feedback_submissions_type_check",
+        "check_clause": "(type = ANY (ARRAY['bug'::text, 'feature'::text, 'feedback'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "feedback_submissions",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -14930,6 +15799,18 @@
       {
         "kind": "RLS",
         "table_name": "notifications",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "observability_cron_heartbeat",
+        "detail": "observability_cron_heartbeat_status_check",
+        "check_clause": "(status = ANY (ARRAY['ok'::text, 'error'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "observability_cron_heartbeat",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -15656,6 +16537,18 @@
       {
         "kind": "RLS",
         "table_name": "rep_tryout_registrations",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "request_metrics_raw",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "request_metrics_rollup",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -18049,6 +18942,366 @@
         "column_default": "now()"
       },
       {
+        "table_name": "error_events",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "error_events",
+        "pos": 2,
+        "column_name": "group_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 3,
+        "column_name": "occurred_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "error_events",
+        "pos": 4,
+        "column_name": "env",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'production'::text"
+      },
+      {
+        "table_name": "error_events",
+        "pos": 5,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'server'::text"
+      },
+      {
+        "table_name": "error_events",
+        "pos": 6,
+        "column_name": "route",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 7,
+        "column_name": "http_method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 8,
+        "column_name": "status_code",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 9,
+        "column_name": "error_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 10,
+        "column_name": "error_message",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 11,
+        "column_name": "stack_trace",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 12,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 13,
+        "column_name": "org_slug",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 14,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 15,
+        "column_name": "user_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 16,
+        "column_name": "user_role",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 17,
+        "column_name": "request_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 18,
+        "column_name": "ip_address",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 19,
+        "column_name": "user_agent",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_events",
+        "pos": 20,
+        "column_name": "request_context",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "error_events",
+        "pos": 21,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 2,
+        "column_name": "fingerprint",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 3,
+        "column_name": "title",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 4,
+        "column_name": "error_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 5,
+        "column_name": "route",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 6,
+        "column_name": "http_method",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 7,
+        "column_name": "severity",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'error'::text"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 8,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'open'::text"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 9,
+        "column_name": "env",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'production'::text"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 10,
+        "column_name": "first_seen_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 11,
+        "column_name": "last_seen_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 12,
+        "column_name": "occurrence_count",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 13,
+        "column_name": "distinct_org_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 14,
+        "column_name": "resolved_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 15,
+        "column_name": "resolved_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 16,
+        "column_name": "snooze_until",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 17,
+        "column_name": "sample_stack",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 18,
+        "column_name": "sample_context",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "error_groups",
+        "pos": 19,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "fan_push_subscriptions",
         "pos": 1,
         "column_name": "id",
@@ -18128,6 +19381,150 @@
         "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 3,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 4,
+        "column_name": "user_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 5,
+        "column_name": "submitter_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 6,
+        "column_name": "type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'feedback'::text"
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 7,
+        "column_name": "category",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 8,
+        "column_name": "title",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 9,
+        "column_name": "body",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 10,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'new'::text"
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 11,
+        "column_name": "severity",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 12,
+        "column_name": "context",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 13,
+        "column_name": "triaged_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 14,
+        "column_name": "triaged_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 15,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 16,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
       },
       {
         "table_name": "games",
@@ -19667,6 +21064,60 @@
         "udt_name": "jsonb",
         "is_nullable": "NO",
         "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "observability_cron_heartbeat",
+        "pos": 1,
+        "column_name": "job_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "observability_cron_heartbeat",
+        "pos": 2,
+        "column_name": "last_run_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "observability_cron_heartbeat",
+        "pos": 3,
+        "column_name": "rows_folded",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "observability_cron_heartbeat",
+        "pos": 4,
+        "column_name": "rows_purged",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "observability_cron_heartbeat",
+        "pos": 5,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "observability_cron_heartbeat",
+        "pos": 6,
+        "column_name": "error_detail",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "org_audit_log",
@@ -25231,6 +26682,141 @@
         "column_default": "now()"
       },
       {
+        "table_name": "request_metrics_raw",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "request_metrics_raw",
+        "pos": 2,
+        "column_name": "flushed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "request_metrics_raw",
+        "pos": 3,
+        "column_name": "env",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'production'::text"
+      },
+      {
+        "table_name": "request_metrics_raw",
+        "pos": 4,
+        "column_name": "route",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "request_metrics_raw",
+        "pos": 5,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "request_metrics_raw",
+        "pos": 6,
+        "column_name": "call_count",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "request_metrics_raw",
+        "pos": 7,
+        "column_name": "error_count",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 2,
+        "column_name": "bucket_start",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 3,
+        "column_name": "env",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'production'::text"
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 4,
+        "column_name": "route",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 5,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 6,
+        "column_name": "call_count",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 7,
+        "column_name": "error_count",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "request_metrics_rollup",
+        "pos": 8,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "resources",
         "pos": 1,
         "column_name": "id",
@@ -27322,6 +28908,20 @@
         "constraint_name": "email_sends_recipient_org_id_fkey"
       },
       {
+        "table_name": "error_events",
+        "column_name": "group_id",
+        "foreign_table": "error_groups",
+        "foreign_column": "id",
+        "constraint_name": "error_events_group_id_fkey"
+      },
+      {
+        "table_name": "error_events",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "error_events_org_id_fkey"
+      },
+      {
         "table_name": "fan_push_subscriptions",
         "column_name": "team_id",
         "foreign_table": "teams",
@@ -27334,6 +28934,13 @@
         "foreign_table": "tournaments",
         "foreign_column": "id",
         "constraint_name": "fan_push_subscriptions_tournament_id_fkey"
+      },
+      {
+        "table_name": "feedback_submissions",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "feedback_submissions_org_id_fkey"
       },
       {
         "table_name": "games",
@@ -29174,6 +30781,51 @@
         "indexdef": "CREATE INDEX idx_email_sends_status ON public.email_sends USING btree (status)"
       },
       {
+        "tablename": "error_events",
+        "indexname": "error_events_pkey",
+        "indexdef": "CREATE UNIQUE INDEX error_events_pkey ON public.error_events USING btree (id)"
+      },
+      {
+        "tablename": "error_events",
+        "indexname": "idx_error_events_group_org",
+        "indexdef": "CREATE INDEX idx_error_events_group_org ON public.error_events USING btree (group_id, org_id) WHERE (org_id IS NOT NULL)"
+      },
+      {
+        "tablename": "error_events",
+        "indexname": "idx_error_events_group_time",
+        "indexdef": "CREATE INDEX idx_error_events_group_time ON public.error_events USING btree (group_id, occurred_at DESC)"
+      },
+      {
+        "tablename": "error_events",
+        "indexname": "idx_error_events_occurred",
+        "indexdef": "CREATE INDEX idx_error_events_occurred ON public.error_events USING btree (occurred_at)"
+      },
+      {
+        "tablename": "error_events",
+        "indexname": "idx_error_events_org_time",
+        "indexdef": "CREATE INDEX idx_error_events_org_time ON public.error_events USING btree (org_id, occurred_at DESC)"
+      },
+      {
+        "tablename": "error_groups",
+        "indexname": "error_groups_fingerprint_key",
+        "indexdef": "CREATE UNIQUE INDEX error_groups_fingerprint_key ON public.error_groups USING btree (fingerprint)"
+      },
+      {
+        "tablename": "error_groups",
+        "indexname": "error_groups_pkey",
+        "indexdef": "CREATE UNIQUE INDEX error_groups_pkey ON public.error_groups USING btree (id)"
+      },
+      {
+        "tablename": "error_groups",
+        "indexname": "idx_error_groups_env_last_seen",
+        "indexdef": "CREATE INDEX idx_error_groups_env_last_seen ON public.error_groups USING btree (env, last_seen_at DESC)"
+      },
+      {
+        "tablename": "error_groups",
+        "indexname": "idx_error_groups_status_severity",
+        "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
+      },
+      {
         "tablename": "fan_push_subscriptions",
         "indexname": "fan_push_subscriptions_endpoint_idx",
         "indexdef": "CREATE INDEX fan_push_subscriptions_endpoint_idx ON public.fan_push_subscriptions USING btree (endpoint)"
@@ -29192,6 +30844,26 @@
         "tablename": "fan_push_subscriptions",
         "indexname": "fan_push_subscriptions_tournament_team_idx",
         "indexdef": "CREATE INDEX fan_push_subscriptions_tournament_team_idx ON public.fan_push_subscriptions USING btree (tournament_id, team_id)"
+      },
+      {
+        "tablename": "feedback_submissions",
+        "indexname": "feedback_submissions_pkey",
+        "indexdef": "CREATE UNIQUE INDEX feedback_submissions_pkey ON public.feedback_submissions USING btree (id)"
+      },
+      {
+        "tablename": "feedback_submissions",
+        "indexname": "idx_feedback_submissions_org_time",
+        "indexdef": "CREATE INDEX idx_feedback_submissions_org_time ON public.feedback_submissions USING btree (org_id, created_at DESC)"
+      },
+      {
+        "tablename": "feedback_submissions",
+        "indexname": "idx_feedback_submissions_status_time",
+        "indexdef": "CREATE INDEX idx_feedback_submissions_status_time ON public.feedback_submissions USING btree (status, created_at DESC)"
+      },
+      {
+        "tablename": "feedback_submissions",
+        "indexname": "idx_feedback_submissions_type",
+        "indexdef": "CREATE INDEX idx_feedback_submissions_type ON public.feedback_submissions USING btree (type)"
       },
       {
         "tablename": "games",
@@ -29377,6 +31049,11 @@
         "tablename": "notifications",
         "indexname": "notifications_user_unread_idx",
         "indexdef": "CREATE INDEX notifications_user_unread_idx ON public.notifications USING btree (user_id, created_at DESC) WHERE (read_at IS NULL)"
+      },
+      {
+        "tablename": "observability_cron_heartbeat",
+        "indexname": "observability_cron_heartbeat_pkey",
+        "indexdef": "CREATE UNIQUE INDEX observability_cron_heartbeat_pkey ON public.observability_cron_heartbeat USING btree (job_name)"
       },
       {
         "tablename": "org_audit_log",
@@ -30169,6 +31846,31 @@
         "indexdef": "CREATE INDEX rep_tryout_registrations_year_idx ON public.rep_tryout_registrations USING btree (program_year_id)"
       },
       {
+        "tablename": "request_metrics_raw",
+        "indexname": "idx_request_metrics_raw_flushed",
+        "indexdef": "CREATE INDEX idx_request_metrics_raw_flushed ON public.request_metrics_raw USING btree (flushed_at)"
+      },
+      {
+        "tablename": "request_metrics_raw",
+        "indexname": "request_metrics_raw_pkey",
+        "indexdef": "CREATE UNIQUE INDEX request_metrics_raw_pkey ON public.request_metrics_raw USING btree (id)"
+      },
+      {
+        "tablename": "request_metrics_rollup",
+        "indexname": "idx_request_metrics_rollup_bucket",
+        "indexdef": "CREATE UNIQUE INDEX idx_request_metrics_rollup_bucket ON public.request_metrics_rollup USING btree (bucket_start, env, COALESCE(route, ''::text), COALESCE(org_id, '00000000-0000-0000-0000-000000000000'::uuid))"
+      },
+      {
+        "tablename": "request_metrics_rollup",
+        "indexname": "idx_request_metrics_rollup_env_time",
+        "indexdef": "CREATE INDEX idx_request_metrics_rollup_env_time ON public.request_metrics_rollup USING btree (env, bucket_start DESC)"
+      },
+      {
+        "tablename": "request_metrics_rollup",
+        "indexname": "request_metrics_rollup_pkey",
+        "indexdef": "CREATE UNIQUE INDEX request_metrics_rollup_pkey ON public.request_metrics_rollup USING btree (id)"
+      },
+      {
         "tablename": "resources",
         "indexname": "resources_pkey",
         "indexdef": "CREATE UNIQUE INDEX resources_pkey ON public.resources USING btree (id)"
@@ -30710,8 +32412,68 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "error_events",
+        "detail": "error_events_source_check",
+        "check_clause": "(source = ANY (ARRAY['server'::text, 'client'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "error_events",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "error_groups",
+        "detail": "error_groups_env_check",
+        "check_clause": "(env = ANY (ARRAY['production'::text, 'dev'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "error_groups",
+        "detail": "error_groups_severity_check",
+        "check_clause": "(severity = ANY (ARRAY['critical'::text, 'error'::text, 'warning'::text, 'info'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "error_groups",
+        "detail": "error_groups_status_check",
+        "check_clause": "(status = ANY (ARRAY['open'::text, 'resolved'::text, 'ignored'::text, 'snoozed'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "error_groups",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "fan_push_subscriptions",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "feedback_submissions",
+        "detail": "feedback_submissions_severity_check",
+        "check_clause": "(severity = ANY (ARRAY['critical'::text, 'error'::text, 'warning'::text, 'info'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "feedback_submissions",
+        "detail": "feedback_submissions_status_check",
+        "check_clause": "(status = ANY (ARRAY['new'::text, 'triaged'::text, 'acknowledged'::text, 'resolved'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "feedback_submissions",
+        "detail": "feedback_submissions_type_check",
+        "check_clause": "(type = ANY (ARRAY['bug'::text, 'feature'::text, 'feedback'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "feedback_submissions",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -30844,6 +32606,18 @@
       {
         "kind": "RLS",
         "table_name": "notifications",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "observability_cron_heartbeat",
+        "detail": "observability_cron_heartbeat_status_check",
+        "check_clause": "(status = ANY (ARRAY['ok'::text, 'error'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "observability_cron_heartbeat",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -31570,6 +33344,18 @@
       {
         "kind": "RLS",
         "table_name": "rep_tryout_registrations",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "request_metrics_raw",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "request_metrics_rollup",
         "detail": "ENABLED",
         "check_clause": null
       },

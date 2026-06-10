@@ -8,6 +8,9 @@ import {
   seedOrder,
   displayBracketRefs,
   displayRoundTitle,
+  remapTierSeed,
+  suggestDefaultTiers,
+  validateTierRanges,
   type GeneratedMatchup,
 } from '../../lib/playoff-bracket.ts';
 
@@ -438,5 +441,119 @@ describe('displayRoundTitle (winners round renumber)', () => {
     assert.equal(displayRoundTitle('Grand Final'), 'Grand Final');
     assert.equal(displayRoundTitle('Grand Final Game 2 (If Necessary)'), 'Grand Final Game 2 (If Necessary)');
     assert.equal(displayRoundTitle(''), '');
+  });
+});
+
+// ── Tiered brackets ──────────────────────────────────────────────────────────
+
+describe('remapTierSeed (local → global seed refs)', () => {
+  it('shifts a Seed #k ref by the tier offset', () => {
+    assert.equal(remapTierSeed('Seed #1', 6), 'Seed #6');
+    assert.equal(remapTierSeed('Seed #4', 6), 'Seed #9');
+    assert.equal(remapTierSeed('Seed #1', 1), 'Seed #1');
+  });
+  it('passes Winner/Loser and other refs through unchanged', () => {
+    assert.equal(remapTierSeed('Winner SF1', 6), 'Winner SF1');
+    assert.equal(remapTierSeed('Loser FIN', 6), 'Loser FIN');
+    assert.equal(remapTierSeed('1st Pool A', 6), '1st Pool A');
+  });
+
+  it('a 9-team [1–5, 6–9] split remaps to exactly Seed #1..Seed #9 with no dup/gap', () => {
+    const tiers = [
+      { name: 'Tier 1', fromSeed: 1, toSeed: 5 },
+      { name: 'Tier 2', fromSeed: 6, toSeed: 9 },
+    ];
+    const globalSeeds = new Set<number>();
+    for (const t of tiers) {
+      const ms = generateBracket(t.toSeed - t.fromSeed + 1, { format: 'single' });
+      for (const m of ms) {
+        for (const raw of [m.home, m.away]) {
+          const remapped = remapTierSeed(raw, t.fromSeed);
+          const n = remapped.match(/^Seed #(\d+)$/);
+          if (n) globalSeeds.add(Number(n[1]));
+        }
+      }
+    }
+    assert.deepEqual([...globalSeeds].sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  });
+
+  it('Tier 1 of 5 yields a single first-round play-in (seeds 4 v 5) with byes to 1–3', () => {
+    // Standard 5-team single-elim: the first round (roundIndex 0) has exactly one
+    // game — the 4 v 5 play-in — while seeds 1, 2, 3 receive first-round byes.
+    const ms = generateBracket(5, { format: 'single' });
+    const firstRound = ms.filter(m => m.section === 'W' && m.roundIndex === 0);
+    assert.equal(firstRound.length, 1);
+    const pair = [firstRound[0].home, firstRound[0].away].sort();
+    assert.deepEqual(pair, ['Seed #4', 'Seed #5']);
+  });
+});
+
+describe('suggestDefaultTiers', () => {
+  it('splits 9 into [1–5, 6–9]', () => {
+    assert.deepEqual(
+      suggestDefaultTiers(9).map(t => [t.fromSeed, t.toSeed]),
+      [[1, 5], [6, 9]],
+    );
+  });
+  it('splits 8 into [1–4, 5–8]', () => {
+    assert.deepEqual(
+      suggestDefaultTiers(8).map(t => [t.fromSeed, t.toSeed]),
+      [[1, 4], [5, 8]],
+    );
+  });
+  it('returns a single tier for <4 teams and nothing for <2', () => {
+    assert.equal(suggestDefaultTiers(3).length, 1);
+    assert.equal(suggestDefaultTiers(1).length, 0);
+  });
+});
+
+describe('validateTierRanges', () => {
+  const good = [
+    { name: 'Tier 1', fromSeed: 1, toSeed: 5 },
+    { name: 'Tier 2', fromSeed: 6, toSeed: 9 },
+  ];
+  it('accepts a contiguous, well-named split within the team count', () => {
+    assert.equal(validateTierRanges(good, 9).ok, true);
+  });
+  it('rejects an empty list', () => {
+    assert.equal(validateTierRanges([], 9).ok, false);
+  });
+  it('rejects a gap', () => {
+    const gapped = [
+      { name: 'Tier 1', fromSeed: 1, toSeed: 4 },
+      { name: 'Tier 2', fromSeed: 6, toSeed: 9 },
+    ];
+    assert.equal(validateTierRanges(gapped, 9).ok, false);
+  });
+  it('rejects an overlap', () => {
+    const overlap = [
+      { name: 'Tier 1', fromSeed: 1, toSeed: 5 },
+      { name: 'Tier 2', fromSeed: 5, toSeed: 9 },
+    ];
+    assert.equal(validateTierRanges(overlap, 9).ok, false);
+  });
+  it('rejects a duplicate name', () => {
+    const dup = [
+      { name: 'Tier 1', fromSeed: 1, toSeed: 5 },
+      { name: 'Tier 1', fromSeed: 6, toSeed: 9 },
+    ];
+    assert.equal(validateTierRanges(dup, 9).ok, false);
+  });
+  it('rejects a single-team tier', () => {
+    const tiny = [
+      { name: 'Tier 1', fromSeed: 1, toSeed: 5 },
+      { name: 'Tier 2', fromSeed: 6, toSeed: 6 },
+    ];
+    assert.equal(validateTierRanges(tiny, 9).ok, false);
+  });
+  it('rejects ranges that exceed the accepted-team count', () => {
+    assert.equal(validateTierRanges(good, 7).ok, false);
+  });
+  it('rejects a first tier that does not start at seed #1', () => {
+    const offset = [
+      { name: 'Tier 1', fromSeed: 2, toSeed: 5 },
+      { name: 'Tier 2', fromSeed: 6, toSeed: 9 },
+    ];
+    assert.equal(validateTierRanges(offset, 9).ok, false);
   });
 });

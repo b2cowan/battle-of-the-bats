@@ -1,5 +1,6 @@
 ﻿'use client';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import Link from 'next/link';
 import { Calendar, ChevronRight, ChevronDown, Plus, Pencil, Trash2, X, Check, Sparkles, SlidersHorizontal, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw, AlertTriangle, AlertCircle, Lock, Wrench } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { saveGame, updateGame, deleteGame } from '@/lib/db';
@@ -159,7 +160,10 @@ export default function AdminSchedulePage() {
   }, [modal, form.date, form.time, form.venueId, form.venueFacilityId, form.divisionId, editing?.id, games, divisions, currentTournament]);
 
   const canAutoGenerateSchedule = currentOrg ? hasPlanFeature(currentOrg.planId, 'auto_schedule') : false;
-  const canGeneratePlayoffs = currentOrg ? hasPlanFeature(currentOrg.planId, 'playoff_generator') : false;
+  // Manual playoff bracket building is available on all tournament plans; the
+  // auto-schedule optimizer + tiered auto-split inside the wizard stay Plus
+  // (gated by `auto_schedule`/`playoff_generator` via canAutoGenerateSchedule).
+  const canBuildPlayoffsManually = currentOrg ? hasPlanFeature(currentOrg.planId, 'playoff_manual') : false;
   const canNotify = currentOrg ? hasPlanFeature(currentOrg.planId, 'schedule_notification') : false;
 
   function showScheduleUpgrade(title: string, feature: 'auto_schedule' | 'playoff_generator') {
@@ -181,10 +185,9 @@ export default function AdminSchedulePage() {
   }
 
   function openPlayoffWizard() {
-    if (!canGeneratePlayoffs) {
-      showScheduleUpgrade('Playoff Bracket Builder Requires Tournament Plus', 'playoff_generator');
-      return;
-    }
+    // Available on all tournament plans (manual build); the auto-schedule
+    // optimizer + tiered auto-split inside the wizard self-gate on Plus.
+    if (!canBuildPlayoffsManually) return;
     // Opens like the round-robin generator — defaults to a division and lets the
     // user switch inside the modal (no "choose a division first" gate).
     setShowPlayoffWizard(true);
@@ -1003,7 +1006,7 @@ export default function AdminSchedulePage() {
             className={styles.scheduleToolsMenu}
             disabled={!currentTournament}
             canAutoGenerate={canAutoGenerateSchedule && !isPlayoffOnly}
-            canPlayoffWizard={canGeneratePlayoffs}
+            canPlayoffWizard={canBuildPlayoffsManually}
             onAutoGenerate={openGenerator}
             onPlayoffWizard={openPlayoffWizard}
           />
@@ -1027,7 +1030,7 @@ export default function AdminSchedulePage() {
             onUnpublishOne={() => handleUnpublish(filterGroup)}
             onUnpublishAll={handleUnpublishAll}
             canAutoGenerate={canAutoGenerateSchedule && !isPlayoffOnly}
-            canPlayoffWizard={canGeneratePlayoffs}
+            canPlayoffWizard={canBuildPlayoffsManually}
             onAutoGenerate={openGenerator}
             onPlayoffWizard={openPlayoffWizard}
           />
@@ -1227,7 +1230,7 @@ export default function AdminSchedulePage() {
             ? 'This is a bracket-only tournament. Open the Playoff Bracket Builder to seed your teams and generate the bracket.'
             : canAutoGenerateSchedule
             ? 'Build your schedule by adding games manually, or use the Round-Robin Generator to auto-build games from your teams. For playoffs, use the Playoff Bracket Builder.'
-            : 'Build your schedule by adding games manually. The Round-Robin Generator and Playoff Bracket Builder are available with Tournament Plus or higher.'}
+            : 'Build your schedule by adding games manually, or use the Playoff Bracket Builder to seed a bracket. The Round-Robin Generator is available with Tournament Plus or higher.'}
         />
       )}
 
@@ -1291,7 +1294,7 @@ export default function AdminSchedulePage() {
           games={filtered}
           teams={teams}
           division={activeDivision}
-          canGeneratePlayoffs={canGeneratePlayoffs}
+          canGeneratePlayoffs={canBuildPlayoffsManually}
           onEdit={isLocked ? undefined : openEdit}
           onDelete={isLocked ? undefined : handleDeleteRequest}
           getGroupName={getGroupName}
@@ -1532,14 +1535,13 @@ export default function AdminSchedulePage() {
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
                   <label className="form-label" style={{ margin: 0 }}>Venue *</label>
-                  <button
-                    type="button"
+                  <Link
+                    href={`/${orgSlug}/admin/tournaments/venues`}
                     className="btn btn-outline btn-data"
-                    style={{ height: '26px', fontSize: '0.75rem', padding: '0 0.6rem', gap: '0.25rem' }}
-                    onClick={() => setAddVenueOpen(true)}
+                    style={{ height: '26px', fontSize: '0.75rem', padding: '0 0.6rem', gap: '0.25rem', display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
                   >
-                    <Plus size={12} /> Add venue
-                  </button>
+                    <MapPin size={12} /> Manage venues
+                  </Link>
                 </div>
                 <div style={{ position: 'relative' }}>
                   <MapPin size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--white-30)', pointerEvents: 'none', zIndex: 1 }} />
@@ -1611,6 +1613,11 @@ export default function AdminSchedulePage() {
                     );
                   })()}
                 </div>
+                {!form.venueId && (
+                  <small style={{ display: 'block', marginTop: '0.35rem', color: 'var(--white-40)', fontSize: '0.72rem' }}>
+                    Venues are shared across this tournament — search above before adding, or use “Manage venues” to see the full list.
+                  </small>
+                )}
                 {form.venueId && (
                   <div style={{ marginTop: '0.35rem', fontSize: '0.73rem', color: 'var(--white-40)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     <Check size={11} style={{ color: 'var(--logic-lime)' }} />
@@ -1730,13 +1737,14 @@ export default function AdminSchedulePage() {
         />
       )}
 
-      {showPlayoffWizard && currentTournament && canGeneratePlayoffs && divisions.length > 0 && (
+      {showPlayoffWizard && currentTournament && canBuildPlayoffsManually && divisions.length > 0 && (
         <PlayoffWizard
           divisions={divisions}
           defaultDivisionId={playoffDefaultDivisionId}
           tournamentId={currentTournament.id}
           tournament={currentTournament}
           orgSlug={orgSlug ?? ''}
+          canAutoSchedule={canAutoGenerateSchedule}
           onClose={() => setShowPlayoffWizard(false)}
           onComplete={() => {
             setShowPlayoffWizard(false);
@@ -2468,7 +2476,7 @@ function MobileToolsMenu({
           {row({
             icon: <Trophy size={13} style={{ color: canPlayoffWizard ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
             label: 'Playoff Bracket Builder',
-            sub: 'Auto-build brackets from pool results',
+            sub: 'Build playoff brackets by seed',
             locked: !canPlayoffWizard,
             lockTitle: 'Included with Tournament Plus and up',
             onClick: () => act(onPlayoffWizard),
@@ -2569,7 +2577,7 @@ function ScheduleToolsMenu({
             <Trophy size={13} style={{ flexShrink: 0, color: canPlayoffWizard ? 'var(--logic-lime)' : 'var(--data-gray)' }} />
             <span style={{ flex: 1 }}>
               <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em' }}>Playoff Bracket Builder</div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>Auto-build brackets from pool results</div>
+              <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>Build playoff brackets by seed</div>
             </span>
             {!canPlayoffWizard && <Lock size={11} style={{ flexShrink: 0, color: 'var(--blueprint-blue)' }} />}
           </button>
@@ -2845,7 +2853,7 @@ function PlayoffBracketView({ games, teams, division, canGeneratePlayoffs, onEdi
         <Trophy size={48} />
         <p>No playoff games scheduled for this division.</p>
         <p className="text-sm text-muted">
-          {canGeneratePlayoffs ? 'Use the Playoff Bracket Builder to generate brackets.' : 'Add playoff games manually, or upgrade to Tournament Plus to use the Playoff Bracket Builder.'}
+          {canGeneratePlayoffs ? 'Use the Playoff Bracket Builder to seed and create brackets.' : 'Add playoff games manually.'}
         </p>
       </div>
     );

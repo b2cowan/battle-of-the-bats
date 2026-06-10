@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
+import { withObservability } from '@/lib/observability';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { AppNotification } from '@/lib/types';
 
@@ -25,7 +26,7 @@ function mapRow(row: any): AppNotification {
 
 // ── GET — list notifications + unread count ───────────────────────────────────
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const user = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
@@ -68,11 +69,11 @@ export async function GET(req: Request) {
     notifications: (data ?? []).map(mapRow),
     unreadCount:   count ?? 0,
   });
-}
+}, { route: '/api/notifications' });
 
 // ── POST — mark-read | mark-all-read ─────────────────────────────────────────
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const user = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
@@ -113,4 +114,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ error: 'Unknown action.' }, { status: 400 });
-}
+}, { route: '/api/notifications' });

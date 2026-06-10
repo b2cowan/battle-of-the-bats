@@ -492,17 +492,29 @@ function TournamentVenueCard({
   const [expanded, setExpanded]               = useState(false);
   const [editingFacilityId, setEditingFacilityId] = useState<string | null>(null);
   const [facilityModal, setFacilityModal]     = useState<{ mode: 'add' | 'edit'; facility?: VenueFacility } | null>(null);
+  const [facilityToDelete, setFacilityToDelete]       = useState<VenueFacility | null>(null);
+  const [facilityDeleteError, setFacilityDeleteError] = useState<string | null>(null);
+  const [deletingFacility, setDeletingFacility]       = useState(false);
   const isMobile                              = useMobile();
   const facilities: VenueFacility[] = venue.facilities ?? [];
 
   async function deleteFacility(facilityId: string) {
+    setDeletingFacility(true);
+    setFacilityDeleteError(null);
     const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    await requestJson(`/api/admin/venues${orgQuery}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete-facility', id: facilityId }),
-    });
-    onRefresh();
+    try {
+      await requestJson(`/api/admin/venues${orgQuery}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete-facility', id: facilityId }),
+      });
+      setFacilityToDelete(null);
+      onRefresh();
+    } catch (err) {
+      setFacilityDeleteError(err instanceof Error ? err.message : 'Could not remove facility.');
+    } finally {
+      setDeletingFacility(false);
+    }
   }
 
   return (
@@ -518,10 +530,15 @@ function TournamentVenueCard({
         <div className={`${s.secondaryCell} ${styles.venueColAddress}`}>
           {venue.address ?? '—'}
         </div>
-        {/* Facility count */}
+        {/* Facility count + game-impact count */}
         <div className={styles.venueColFacilities}>
           <span className={styles.facilityCount}>
             {facilities.length} {facilities.length === 1 ? 'facility' : 'facilities'}
+            {venue.gameCount !== undefined && venue.gameCount > 0 && (
+              <span style={{ opacity: 0.65 }}>
+                {' · '}{venue.gameCount} game{venue.gameCount === 1 ? '' : 's'}
+              </span>
+            )}
           </span>
         </div>
         {/* Expand chevron */}
@@ -595,7 +612,7 @@ function TournamentVenueCard({
                       <button
                         className="btn btn-danger btn-data"
                         title="Remove facility"
-                        onClick={() => void deleteFacility(f.id)}
+                        onClick={() => { setFacilityDeleteError(null); setFacilityToDelete(f); }}
                       >
                         <Trash2 size={12} />
                       </button>
@@ -642,6 +659,55 @@ function TournamentVenueCard({
           onClose={() => setFacilityModal(null)}
         />
       )}
+
+      {/* Facility delete — blocked if played games, else confirm */}
+      {facilityToDelete && (() => {
+        const f        = facilityToDelete;
+        const played   = f.playedGameCount ?? 0;
+        const total    = f.gameCount ?? 0;
+        const upcoming = Math.max(0, total - played);
+        const blocked  = played > 0;
+        const dismiss  = () => { setFacilityToDelete(null); setFacilityDeleteError(null); };
+        return (
+          <div className="modal-overlay" onClick={dismiss}>
+            <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>{blocked ? 'Can’t remove facility' : 'Remove facility?'}</h3>
+                <button className="btn btn-ghost btn-data" onClick={dismiss}><X size={16} /></button>
+              </div>
+              {blocked ? (
+                <p style={{ color: 'var(--white-60)' }}>
+                  <strong>{f.name}</strong> is used by {played} played game{played === 1 ? '' : 's'} and can’t be removed.
+                  Rename it instead if it changed.
+                </p>
+              ) : (
+                <p style={{ color: 'var(--white-60)' }}>
+                  {upcoming > 0
+                    ? <>Remove <strong>{f.name}</strong>? {upcoming} upcoming game{upcoming === 1 ? '' : 's'} will stay on this venue but lose this specific facility.</>
+                    : <>Remove <strong>{f.name}</strong>? No games are linked to it.</>}
+                </p>
+              )}
+              {facilityDeleteError && (
+                <p style={{ color: 'var(--danger)', fontFamily: 'var(--font-data)', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                  {facilityDeleteError}
+                </p>
+              )}
+              <div className="modal-footer">
+                <button className="btn btn-ghost btn-data" onClick={dismiss}>{blocked ? 'Close' : 'Cancel'}</button>
+                {!blocked && (
+                  <button
+                    className="btn btn-danger btn-data"
+                    disabled={deletingFacility}
+                    onClick={() => void deleteFacility(f.id)}
+                  >
+                    <Trash2 size={14} /> {deletingFacility ? 'Removing…' : 'Remove'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -660,6 +726,8 @@ export default function TournamentVenuesPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editing, setEditing]           = useState<Venue | undefined>(undefined);
   const [deleteId, setDeleteId]         = useState<string | null>(null);
+  const [deleteError, setDeleteError]   = useState<string | null>(null);
+  const [deleting, setDeleting]         = useState(false);
   const [importOpen, setImportOpen]     = useState(false);
 
   // Org venue library is only available on League and Club plans.
@@ -671,7 +739,7 @@ export default function TournamentVenuesPage() {
     if (!currentTournament) { setVenues([]); return; }
     const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
     const data = await requestJson<Venue[]>(
-      `/api/admin/venues?tournamentId=${encodeURIComponent(currentTournament.id)}${orgParam}`
+      `/api/admin/venues?tournamentId=${encodeURIComponent(currentTournament.id)}${orgParam}&withGameCounts=1`
     );
     setVenues(data);
   }, [currentTournament, orgSlug]);
@@ -825,39 +893,73 @@ export default function TournamentVenuesPage() {
         />
       )}
 
-      {/* Delete confirm */}
-      {deleteId && (
-        <div className="modal-overlay" onClick={() => setDeleteId(null)}>
-          <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Delete Venue?</h3>
-              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}><X size={16} /></button>
-            </div>
-            <p style={{ color: 'var(--white-60)' }}>
-              Games linked to this venue will retain their location name but lose the Maps link.
-            </p>
-            <div className="modal-footer">
-              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button
-                className="btn btn-danger btn-data"
-                id="confirm-delete-venue"
-                onClick={async () => {
-                  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-                  await requestJson(`/api/admin/venues${orgQuery}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'delete-venue', id: deleteId }),
-                  });
-                  setDeleteId(null);
-                  void refresh();
-                }}
-              >
-                <Trash2 size={14} /> Delete
-              </button>
+      {/* Delete confirm — blocked if played games, else warn-then-delete */}
+      {deleteId && (() => {
+        const v        = venues.find(x => x.id === deleteId);
+        const played   = v?.playedGameCount ?? 0;
+        const total    = v?.gameCount ?? 0;
+        const upcoming = Math.max(0, total - played);
+        const blocked  = played > 0;
+        const dismiss  = () => { setDeleteId(null); setDeleteError(null); };
+        return (
+          <div className="modal-overlay" onClick={dismiss}>
+            <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>{blocked ? 'Can’t delete venue' : 'Delete venue?'}</h3>
+                <button className="btn btn-ghost btn-data" onClick={dismiss}><X size={16} /></button>
+              </div>
+              {blocked ? (
+                <p style={{ color: 'var(--white-60)' }}>
+                  <strong>{v?.name}</strong> is used by {played} played game{played === 1 ? '' : 's'} and can’t be deleted.
+                  Rename it instead if the location changed.
+                </p>
+              ) : (
+                <p style={{ color: 'var(--white-60)' }}>
+                  {upcoming > 0
+                    ? <>This venue is used by {upcoming} upcoming game{upcoming === 1 ? '' : 's'} — deleting it clears the venue from {upcoming === 1 ? 'that game' : 'them'}, so {upcoming === 1 ? 'it shows' : 'they show'} as TBD until you assign a new one.</>
+                    : <>No games are linked to this venue.</>}
+                </p>
+              )}
+              {deleteError && (
+                <p style={{ color: 'var(--danger)', fontFamily: 'var(--font-data)', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                  {deleteError}
+                </p>
+              )}
+              <div className="modal-footer">
+                <button className="btn btn-ghost btn-data" onClick={dismiss}>{blocked ? 'Close' : 'Cancel'}</button>
+                {!blocked && (
+                  <button
+                    className="btn btn-danger btn-data"
+                    id="confirm-delete-venue"
+                    disabled={deleting}
+                    onClick={async () => {
+                      setDeleting(true);
+                      setDeleteError(null);
+                      const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+                      try {
+                        await requestJson(`/api/admin/venues${orgQuery}`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'delete-venue', id: deleteId }),
+                        });
+                        setDeleteId(null);
+                        void refresh();
+                      } catch (err) {
+                        setDeleteError(err instanceof Error ? err.message : 'Could not delete venue.');
+                        void refresh();
+                      } finally {
+                        setDeleting(false);
+                      }
+                    }}
+                  >
+                    <Trash2 size={14} /> {deleting ? 'Deleting…' : 'Delete'}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

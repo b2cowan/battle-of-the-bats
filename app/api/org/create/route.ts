@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
+import { captureError } from '@/lib/observability';
 
 function slugify(name: string) {
   return name
@@ -97,6 +98,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, orgSlug: org.slug });
   } catch (err) {
     console.error('[org/create] error:', err);
+    void captureError(err, { route: '/api/org/create', method: 'POST', statusCode: 500 });
     if (orgId) {
       await supabaseAdmin.from('organizations').delete().eq('id', orgId).then(() => {}, () => {});
     }

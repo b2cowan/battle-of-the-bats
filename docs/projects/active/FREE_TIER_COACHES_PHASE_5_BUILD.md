@@ -35,16 +35,17 @@ The C-snapshot source table **`basic_coach_team_players` (+ events/fees/announce
 - **Groundwork (serial, first):** 5·0 → 5a → 5b
 - **Claim/email track (parallel):** 5c → 5e → 5d  *(hard prerequisite for any WRITE on admin-created/imported teams: 5j, 5l)*
 - **Hero/roster track (serial):** 5f, 5g → 5h → 5i → 5j → 5k
-- **Then:** 5l (head-coach) → 5m (afterglow + reminder)
+- **Then:** 5l (head-coach) → 5m (afterglow + reminder) → 5n (email preferences + master off-switch)
 
-**Recommended order:** `5·0 → 5a → 5b → 5c → 5e → 5d → 5f → 5g → 5h → 5i → 5j → 5k → 5l → 5m`
+**Recommended order:** `5·0 → 5a → 5b → 5c → 5e → 5d → 5f → 5g → 5h → 5i → 5j → 5k → 5l → 5m → 5n`
 
 ---
 
 ## Slices
 
-### 5·0 — Pressure-ladder cleanup (pulled EARLY per critic) · low
+### 5·0 — Pressure-ladder cleanup (pulled EARLY per critic) · low · ✅ BUILT 2026-06-09 (lint clean; awaiting browser verification)
 **Goal:** remove the always-on pre-event Premium CTAs so no incremental deploy ever violates pitch-free. The afterglow *ask* is added later in 5m; this slice only **removes**.
+**Built:** removed the detail-page `ctaSection` (Premium "Take your team further" + "Run your own tournament") and the list-page `CtaCards` (both the empty-state and bottom positions) + the now-dead `hasPremiumAccess`/`getUserAccessContexts` plumbing in both files; left a comment pointing to the 5m afterglow ask. No shared modules / no new files → no dev restart. `lint:focused` clean.
 - Detail page Premium CTA (`app/coaches/tournaments/[teamId]/page.tsx` ~L272); list 2-card CtaCards grid (`app/coaches/tournaments/page.tsx` ~L250–273).
 - **Why early:** the critic flagged that shipping 5b/5h/5i before 5m leaves these live on pre-event surfaces. Decoupling removes the rule violation from slice one.
 - **Verify:** pre-event coach surfaces show no Premium pitch; no dead imports left.
@@ -149,6 +150,17 @@ The C-snapshot source table **`basic_coach_team_players` (+ events/fees/announce
 - **Copy owned by `/marketing`.**
 - **Verify:** completed event shows the two-bridge express-interest block; pre-event shows none; finalize results → extended email w/ express-interest link (not checkout); reminder fires with no marketing footer.
 
+### 5n — Organizer automatic-email controls + master off-switch (NEW, owner-requested) · medium · depends 5e, 5m
+**Goal (Q11 = SENDER / organizer, locked 2026-06-09):** the tournament admin controls which automatic coach-facing emails THEIR event sends — an individual off-toggle per email type plus a single "pause all automatic emails" master switch. Tournament-scoped, authored in Event Settings, **mirrors the 5f roster-requirements settings-JSONB pattern (no migration)**.
+- **Emails gated (organizer→coach, automatic):** registration confirmation, acceptance, rejection, payment confirmation, schedule-published, **game-day reminder (5m)**, results-finalized/afterglow.
+- **Storage:** flat keys in `tournaments.settings` JSONB (no migration) — `email_auto_pause_all` + per-type `email_auto_acceptance`/`_rejection`/`_payment`/`_schedule_published`/`_game_day_reminder`/`_results` (**default ON = current behavior**). Reuses the 5f `ALLOWED_SETTINGS_KEYS` + per-key boolean sanitizer machinery 1:1.
+- **UI:** an "Automatic Emails" CollapsibleCard in Event Settings (per-type segmented On/Off + a master "Pause all automatic emails" toggle), reusing the 5f Event-Settings primitives + `notification-labels`-style labels/descriptions.
+- **Gate:** a single helper `shouldSendAutomaticCoachEmail(tournamentSettings, type)` checked at each send site (the routes already have tournament context to read `tournaments.settings`); master pause short-circuits all. 5m's reminder + the 5e-touched sends consult it.
+- **Master = all off:** the organizer is explicitly choosing to handle comms manually, so "pause all" suppresses every automatic coach email (individual toggles give granularity to keep e.g. acceptance on while muting reminders). **No transactional carve-out** — the organizer owns the consequence. *(Revisit only if a coach-missed-acceptance complaint surfaces.)*
+- **NOT in scope:** recipient/coach-side per-user opt-out + no-account token opt-out (that was the "recipient" path, not chosen). The org-level CASL **marketing** unsubscribe (migration 099) stays independent of this transactional-email control.
+- **Reuse:** the 5f settings-JSONB authoring chain, `notification-labels.ts` copy pattern, the Event Settings CollapsibleCard/segmented primitives.
+- **Verify:** toggle a type off in Event Settings → that email no longer sends for that tournament; master pause suppresses all; defaults (no keys set) = every email still sends; `typecheck` + `check:dictionary` (new settings keys documented).
+
 ---
 
 ## Cross-cutting decisions (locked by the synthesis)
@@ -162,20 +174,25 @@ The C-snapshot source table **`basic_coach_team_players` (+ events/fees/announce
 7. Reuse public primitives as clean drop-ins only (`RollingNumber`, `Countdown`, public `CountUp`, `usePublicTournamentLive`, `team-color`, `follow`, `InstallAppPrompt`, `SharePageButton`); never mount `ScoreTicker`/`MyTeamDock` in the coach shell.
 8. Email footer goes in coach-template content, never `wrap()`; accept/reject/payment edits land in all 3 trigger files.
 
-## Open decisions for the owner
+## Decisions
 
-| # | Decision | Recommendation |
-|---|---|---|
-| Q1 | `tournament_roster_players.source_player_id` migration (5j) | **Add it** (provenance + idempotent re-submit; dictionary deferred it to P5) |
-| Q2 | Coach contact email (5l): overwrite `teams.email` / new `teams.coach_email` column / name-only-for-now | **New column (Option B)** — `teams.email` is the portal access key |
-| Q3 | Claim posture (5c): explicit Claim click vs silent auto-link | **Explicit** until Phase 8 email verification |
-| Q4 | Game-day reminder firing (5m): Resend `scheduled_at` vs pull endpoint vs defer | **Resend `scheduled_at`** V1 |
-| Q5 | Coach fee display (5b): binary Paid/Owes vs rich (deposit/past-due) | Binary (parity with the organizer gate) |
-| Q6 | Importer/Add-Teams claim email (5d): auto vs opt-in | Opt-in (default off) |
-| Q7 | "Require waiver" (5k): checkbox-only vs persisted audit | Checkbox-only V1 (no waiver storage exists) |
-| Q8 | Requirements keys (5f): flat vs nested | Flat (per-division override deferred) |
-| Q9 | Check-in line (5b): gate to game day? | Yes — default `not_arrived` reads as a problem otherwise |
-| Q10 | Reassignment (5l): notify the organizer? | Owner call |
+**Locked 2026-06-09 (owner via AskUserQuestion):**
+- **Q1 — `tournament_roster_players.source_player_id`: ADD IT** (5j carries a small migration → provenance + idempotent re-submit + "N of M submitted" UX).
+- **Q2 — coach contact email: NEW `teams.coach_email` column** (5l carries a migration; recipient sites prefer `coach_email ?? email`; `teams.email` stays the portal access/claim key).
+- **Q3 — claim posture: EXPLICIT Claim click** (5c; no silent auto-link until Phase 8 email verification; exact normalized equality; claim = read+link only).
+- **Q4 — game-day reminder: Resend `scheduled_at`** at publish time (5m; `cancelScheduledEmail` on withdrawal).
+- **➕ NEW (owner-requested): automatic-email opt-out + master switch → new slice 5n.** Every automatic coach email gets an individual off-toggle plus a single "pause all automatic emails" master toggle (modeled on the per-user notification preferences). 5m's reminder + all 5e-touched coach emails are gated on it. **Control-owner = open (see below).**
+
+**Owner's call still open:**
+- **Q11 — who controls the 5n email toggles:** recipient (coach) vs organizer (sender) vs both. *(asking now)*
+
+**Taking the recommended default unless you object:**
+- Q5 coach fee display = **binary** Paid/Owes (parity with the organizer gate).
+- Q6 importer/Add-Teams claim email = **opt-in** (default off).
+- Q7 "require waiver" = **checkbox-only** V1 (no waiver storage exists).
+- Q8 requirements keys = **flat** (per-division override deferred).
+- Q9 check-in line = **gated to game day** (default `not_arrived` reads as a problem otherwise).
+- Q10 reassignment (5l) = **does not notify** the organizer in V1.
 
 ## Critic's must-fix checklist (folded into the slices above)
 

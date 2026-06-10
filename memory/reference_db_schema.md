@@ -426,9 +426,21 @@ id (uuid), basic_coach_team_id (uuid) → basic_coach_teams.id NOT NULL, name NO
 id (uuid), name NOT NULL, normalized_name NOT NULL, primary_coach_name, primary_coach_email NOT NULL, sport, age_group, source, team_workspace_id (uuid) → team_workspaces.id, created_at, updated_at
 - Indexes: basic_coach_teams_primary_email_idx, basic_coach_teams_workspace_idx
 
+### error_events
+id (uuid), group_id (uuid) → error_groups.id NOT NULL, occurred_at, env, source, route, http_method, status_code (integer), error_name, error_message, stack_trace, org_id (uuid) → organizations.id, org_slug, user_id (uuid), user_email, user_role, request_id, ip_address, user_agent, request_context (jsonb), created_at
+- Indexes: idx_error_events_group_org, idx_error_events_group_time, idx_error_events_occurred, idx_error_events_org_time
+
+### error_groups
+id (uuid), fingerprint NOT NULL, title, error_name, route, http_method, severity, status, env, first_seen_at, last_seen_at, occurrence_count (bigint), distinct_org_count (integer), resolved_at, resolved_by, snooze_until, sample_stack, sample_context (jsonb), created_at
+- Indexes: error_groups_fingerprint_key, idx_error_groups_env_last_seen, idx_error_groups_status_severity
+
 ### fan_push_subscriptions
 id (uuid), endpoint NOT NULL, keys_p256dh NOT NULL, keys_auth NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, team_id (uuid) → teams.id NOT NULL, device_label, created_at, last_used_at
 - Indexes: fan_push_subscriptions_endpoint_idx, fan_push_subscriptions_endpoint_tournament_id_key, fan_push_subscriptions_tournament_team_idx
+
+### feedback_submissions
+id (uuid), org_id (uuid) → organizations.id, user_id (uuid), user_email, submitter_name, type, category, title, body NOT NULL, status, severity, context (jsonb), triaged_by, triaged_at, created_at, updated_at
+- Indexes: idx_feedback_submissions_org_time, idx_feedback_submissions_status_time, idx_feedback_submissions_type
 
 ### import_batch_rows
 id (uuid), batch_id (uuid) → import_batches.id NOT NULL, row_number (integer) NOT NULL, operation NOT NULL, target_id (uuid), raw_json (jsonb), normalized_json (jsonb), before_json (jsonb), after_json (jsonb), warnings_json (jsonb), errors_json (jsonb), status, created_at
@@ -437,6 +449,17 @@ id (uuid), batch_id (uuid) → import_batches.id NOT NULL, row_number (integer) 
 ### import_batches
 id (uuid), org_id (uuid) → organizations.id NOT NULL, actor_user_id (uuid), actor_email, import_type NOT NULL, scope_json (jsonb), source_filename, status, summary_json (jsonb), created_at, committed_at, expires_at
 - Indexes: idx_import_batches_actor_time, idx_import_batches_org_time
+
+### observability_cron_heartbeat
+job_name NOT NULL, last_run_at, rows_folded (bigint), rows_purged (bigint), status, error_detail
+
+### request_metrics_raw
+id (uuid), flushed_at, env, route, org_id (uuid), call_count (bigint), error_count (bigint)
+- Indexes: idx_request_metrics_raw_flushed
+
+### request_metrics_rollup
+id (uuid), bucket_start NOT NULL, env, route, org_id (uuid), call_count (bigint), error_count (bigint), created_at
+- Indexes: idx_request_metrics_rollup_bucket, idx_request_metrics_rollup_env_time
 
 ### schedule_facility_lanes
 id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, division_id (uuid) → divisions.id NOT NULL, label NOT NULL, sort_order (integer), resolved_venue_id (uuid) → diamonds.id, resolved_venue_facility_id (uuid) → venue_facilities.id, created_at, updated_at
@@ -450,7 +473,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) →
 
 ## Tables by count
 
-Total: **107 tables** across 10 modules.
+Total: **113 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -461,4 +484,4 @@ Total: **107 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 10 tables
+- Other: 16 tables

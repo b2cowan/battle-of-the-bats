@@ -9,6 +9,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { linkTournamentRegistrationToBasicCoachTeam } from '@/lib/basic-coach-teams';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { notify } from '@/lib/notify';
+import { captureError } from '@/lib/observability';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
 import {
   duplicateTournamentTeamMessage,
@@ -522,6 +523,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, id: data.id, status: finalStatus });
   } catch (e) {
     console.error('Register route error:', e);
+    void captureError(e, { route: '/api/register', method: 'POST', statusCode: 500 });
     return NextResponse.json({ error: 'Registration could not be submitted. Please try again.' }, { status: 500 });
   }
 }

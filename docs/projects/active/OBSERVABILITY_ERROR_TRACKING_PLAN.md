@@ -1,10 +1,16 @@
 # Observability, Error Tracking & In-App Feedback — Implementation Plan
 
-**Status:** Proposed (planning only — no code written yet)
-**Branch when built:** `dev` (per branch policy)
+**Status:** **Phase 1 BUILT 2026-06-09** (on branch `feat/free-tier-coaches`, awaiting browser verification) · Phases 2–5 proposed
+**Branch when built:** built on `feat/free-tier-coaches` (current working branch); commit/PR per branch policy
 **Owner:** Platform / DBA + Platform-admin
 **Created:** 2026-06-09
 **PM brief:** [OBSERVABILITY_ERROR_TRACKING_PM_BRIEF.md](OBSERVABILITY_ERROR_TRACKING_PM_BRIEF.md)
+
+> ### Phase 1 build log (2026-06-09)
+> **Built & verified** (in-house, decision locked): migration **118** applied to **dev + prod** (RLS-enabled-no-policies, leak-verified) — 6 tables + `record_error_event` RPC + `obs_severity_rank` + partial index `idx_error_events_group_org`; `lib/observability/{env,request-context,fingerprint,redact,metrics,capture,with-observability,client,index}.ts`; `instrumentation.ts onRequestError` (global server-error safety net); `app/global-error.tsx` + `app/error.tsx` wired to a public IP-rate-limited `/api/client/error-capture`; `org-context` + `notifications` wrapped with `withObservability` (metrics), and `register`/`org/create`/`admin/teams`/`admin/games` call `captureError` in their catch blocks. **Verified:** typecheck clean · lint 0 errors · 13 unit tests pass · dictionary ratchet green (113 tables, new "Observability & Feedback" domain) · dev server restarted (login 200, no EACCES) · end-to-end capture + grouping (occurrence_count bump) + email-value scrubbing confirmed against the live dev DB.
+> **Adversarial review (17-agent) fixes folded in:** rate limiter uses LRU eviction (not `.clear()`) + a spoofing-proof global cap; `distinct_org_count` recomputed only on stored events behind the partial index; metrics flush re-merges its snapshot on failure and advances `lastFlush` only after the attempt (no data-loss + lockout); email VALUES scrubbed from messages/stacks; sampling expression clarified to "every Kth after the cap".
+> **Deploy gate — CLEARED:** migration 118 applied to **dev AND prod** 2026-06-09 (RLS-enabled, leak-verified: anon/authenticated see 0 rows). `OBSERVABILITY_ENV` set in Amplify (All branches=production + dev-branch override=dev). The code can now ship to `master` safely — it writes to tables that already exist in prod. **Pre-prod security catch folded in:** the tables were switched from RLS-disabled → RLS-enabled-no-policies after a check found prod grants `anon` the default `SELECT` on public tables (so RLS-disabled would have exposed `error_events` PII via the public REST API).
+> **Known best-effort limitations (accepted for Phase 1):** request metrics are buffered in-process and flushed opportunistically — a flush failure re-merges and retries, but a hard container freeze can drop the final unflushed window (coarse metrics, acceptable); route-wrapping coverage is incremental (uncaught throws on un-wrapped routes are still caught globally by `onRequestError`, but per-route call counts only exist for wrapped routes).
 
 > This plan was produced from a 12-agent codebase investigation + build-vs-buy design pass. Every "VERIFIED" claim below was checked against live files/grep, not assumed. Decide column existence from live snapshots / `information_schema`, **never** from migration files (binding rule).
 
@@ -132,7 +138,7 @@ The existing `components/FeedbackModal.tsx` is **confirmation/status only** (no 
 ## 9. Privacy, isolation, retention
 
 - **PII redaction** (`lib/observability/redact.ts`, runs BEFORE every write): strip Authorization/cookie/token headers, password-ish keys, and any DOB/contact fields by key name; truncate request bodies; keep only IDs + minimal email. Client-error bodies size-capped. **No raw secrets land in Postgres.**
-- **Multi-tenant isolation:** `org_id` FK + denormalized `org_slug` snapshot (point-in-time forensic attribution; FK still resolves the live org). All six tables **RLS disabled, service-role only** — errors are **never** exposed to org users, only platform-admin. org-less/public/client errors store `org_id=NULL` → render as "Platform / anonymous."
+- **Multi-tenant isolation:** `org_id` FK + denormalized `org_slug` snapshot (point-in-time forensic attribution; FK still resolves the live org). All six tables **RLS ENABLED with no policies** — `supabaseAdmin` (service_role) bypasses RLS; `anon`/`authenticated` get zero rows. **(Build note: the plan originally said "RLS disabled" to match `email_sends`; a pre-prod check found prod grants `anon` the default `SELECT` on public tables, so RLS-disabled would have leaked `error_events` via the public REST API — `email_sends` is safe only because it actually has RLS *enabled* live, contradicting its migration comment. Fixed to RLS-enabled + verified anon sees 0 rows on prod.)** Errors are **never** exposed to org users, only platform-admin. org-less/public/client errors store `org_id=NULL` → render as "Platform / anonymous."
 - **Dev vs prod separation:** every row carries `env`. Belt-and-suspenders — data physically lives in separate Supabase projects (dev `fieldlogichq-dev` vs prod `qcttcboqysynwcdyghil`) **and** is tagged by `env`. Dashboard defaults to `production` with a toggle.
 - **Retention** (pg_cron, documented in `DATA_DICTIONARY.md #retention-policy` + each table COMMENT): raw `error_events` purged after **30 days**; `error_groups` kept until resolved AND aged >90 days; `request_metrics_rollup` trimmed >1 year; `request_metrics_raw` truncated every 5 min; `feedback_submissions` kept indefinitely. The retention job updates `observability_cron_heartbeat`; a manual `/api/platform-admin/observability/sweep` fallback (super_admin-gated, idempotent) runs the same purge if pg_cron is unavailable on the tier.
 
@@ -140,13 +146,13 @@ The existing `components/FeedbackModal.tsx` is **confirmation/status only** (no 
 
 ## 10. Phased delivery (each phase independently shippable)
 
-### Phase 1 — Capture core + schema (errors start being recorded) — *1–2 days*
-- `supabase/migrations/118_observability.sql` — 6 tables + `bump_error_group` RPC, no RLS + mandated COMMENTs; apply `--dev` then `--prod` via `scripts/apply-migration-api.mjs`.
-- `npm run refresh:snapshots` + `DATA_DICTIONARY.md` anchors (`dict:table`/`dict:col`) + `npm run check:dictionary` — **all in the same commit** (binding schema=dictionary rule).
-- `lib/observability/{request-context.ts, fingerprint.ts, redact.ts, capture.ts, with-observability.ts}`.
-- `app/global-error.tsx` (new) + `app/error.tsx` wired + `/api/client/error-capture` (public, IP-rate-limited).
-- Wrap the ~10 hottest API routes with `withObservability`; unit test that a throwing `capture()` never breaks the handler.
-- Restart dev server after lib/* + migration changes (restart rule).
+### Phase 1 — Capture core + schema (errors start being recorded) — *1–2 days* ✅ BUILT 2026-06-09
+- ✅ `supabase/migrations/118_observability.sql` — 6 tables + `record_error_event` RPC (the actual name; supersedes the planning name `bump_error_group`) + `obs_severity_rank` + partial index, **RLS-enabled no-policies** + mandated COMMENTs; **applied to dev + prod** via `scripts/apply-migration-api.mjs`.
+- ✅ `npm run refresh:snapshots` + `DATA_DICTIONARY.md` "Observability & Feedback" domain (6 `dict:table` anchors) + ratchet `'Observability & Feedback'` taxonomy entry + `npm run check:dictionary` green.
+- ✅ `lib/observability/{env,request-context,fingerprint,redact,metrics,capture,with-observability,client,index}.ts`.
+- ✅ `app/global-error.tsx` (new) + `app/error.tsx` wired + `/api/client/error-capture` (public, IP-rate-limited + global cap).
+- ✅ `instrumentation.ts onRequestError` (Next-16-native global safety net — captures uncaught throws/RSC errors with zero route churn). Wrapped `org-context` + `notifications` with `withObservability`; `register`/`org/create`/`admin/teams`/`admin/games` call `captureError` in their catch blocks. (Broad route-wrapping for full metrics coverage = incremental fast-follow.)
+- ✅ Unit tests (`tests/unit/observability.test.ts`, 13 cases — fingerprint grouping/normalization + redaction/email-scrub). Restarted dev server.
 
 ### Phase 2 — Platform-admin observability dashboard (triage UI live) — *2–3 days*
 - Register `observability` area + System-group nav item(s).
@@ -176,18 +182,21 @@ The existing `components/FeedbackModal.tsx` is **confirmation/status only** (no 
 
 ---
 
-## 11. Open decisions (need product/owner input)
+## 11. Open decisions
 
-1. **Build in-house vs Sentry/SaaS** — recommended in-house (§2). Confirm before Phase 1.
-2. **Severity → critical allowlist** — which routes/error types are "critical" (auth, payments, data-integrity?). Needed before alerting fires, or critical alerts spam/miss.
-3. **Write-storm caps** — per-fingerprint event cap N (default ~50/hr) and sample-every-Kth K (default ~10); tune from real volume.
-4. **Raw-event retention window** — 30 days proposed; confirm against any incident-forensics/compliance need for Canadian sports orgs.
-5. **`request_metrics_raw` UNLOGGED?** — less WAL/IO on the shared primary, lost on crash (acceptable for a 5-min-flush staging table?).
-6. **pg_cron availability on the current Supabase plan (dev + prod)** — never used in this repo before (VERIFIED zero migrations reference it). If a tier lacks it, the manual `/sweep` becomes primary + needs an external scheduler.
-7. **Feedback visibility** — platform-admin-only (current design), or also surfaced org-scoped to org admins for their own org?
-8. **Screenshot attachments** — Phase 3 vs later; needs a Supabase storage bucket + signed-URL flow + PII review of uploaded images.
-9. **Critical-alert recipients** — `ADMIN_EMAIL` only, or a configurable `platform_users` distribution? Start single.
-10. **Canonical env signal** — Amplify branch env var vs `NODE_ENV` vs explicit `OBSERVABILITY_ENV`. Pick one.
+**DECIDED 2026-06-09 (owner):**
+- ✅ **Build in-house Postgres**, zero error-SaaS at launch (§2). Sentry remains a clean, additive future option (Phase 5).
+- ✅ **Feedback is platform-admin-only** — one triage queue; not surfaced org-scoped to org admins. (`feedback_submissions` stays service-role/no-RLS like the rest.)
+
+**Still open (resolve before the phase that depends on them):**
+1. **Severity → critical allowlist** *(before Phase 4 alerting)* — which routes/error types are "critical" (auth, payments, data-integrity?). Needed before alerting fires, or critical alerts spam/miss.
+2. **Write-storm caps** *(Phase 1)* — per-fingerprint event cap N (default ~50/hr) and sample-every-Kth K (default ~10); tune from real volume.
+3. **Raw-event retention window** *(Phase 1/4)* — 30 days proposed; confirm against any incident-forensics/compliance need for Canadian sports orgs.
+4. **`request_metrics_raw` UNLOGGED?** *(Phase 1)* — less WAL/IO on the shared primary, lost on crash (acceptable for a 5-min-flush staging table?).
+5. **pg_cron availability on the current Supabase plan (dev + prod)** *(Phase 4)* — never used in this repo before (VERIFIED zero migrations reference it). If a tier lacks it, the manual `/sweep` becomes primary + needs an external scheduler.
+6. **Screenshot attachments** *(Phase 3 vs later)* — needs a Supabase storage bucket + signed-URL flow + PII review of uploaded images.
+7. **Critical-alert recipients** *(Phase 4)* — `ADMIN_EMAIL` only, or a configurable `platform_users` distribution? Start single.
+8. **Canonical env signal** *(Phase 1)* — Amplify branch env var vs `NODE_ENV` vs explicit `OBSERVABILITY_ENV`. Pick one.
 
 ---
 

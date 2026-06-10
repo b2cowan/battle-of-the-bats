@@ -235,6 +235,8 @@ export interface VenueFacility {
   displayOrder: number;
   notes?: string;
   sourceOrgFacilityId?: string;    // set when imported from org venue library
+  gameCount?: number;              // games linked to this facility (set when fetched withGameCounts)
+  playedGameCount?: number;        // of those, games with a recorded result (completed/submitted)
 }
 
 /** A physical venue/facility location within a tournament (e.g. "Lions Park"). */
@@ -246,6 +248,8 @@ export interface Venue {
   notes?: string;                  // facility-level notes
   sourceOrgVenueId?: string;       // set when imported from org venue library
   facilities?: VenueFacility[];    // populated when fetched with includeFacilities option
+  gameCount?: number;              // games linked to this venue (set when fetched withGameCounts)
+  playedGameCount?: number;        // of those, games with a recorded result (completed/submitted)
 }
 
 /** A temporary schedule resource that can later be mapped to a real venue/facility. */
@@ -294,11 +298,39 @@ export interface PlayoffConfig {
   format?: 'single' | 'consolation' | 'double' | 'placement';
   /** Double elimination only: include the if-necessary grand-final reset game. Default true. */
   grandFinalReset?: boolean;
-  crossover: 'standard' | 'reseed' | 'none';
+  /**
+   * How qualifying teams map into bracket(s):
+   * - 'standard' — 2-pool crossover (interleaved pool labels)
+   * - 'reseed'   — single bracket, global reseed (Seed #1..N)
+   * - 'none'     — one independent bracket per pool (requires ≥2 pools)
+   * - 'tiers'    — split ONE division's overall standings into N contiguous
+   *                tiered brackets (see tierConfigs). Each tier is independent
+   *                and self-seeded from global standings (no cross-tier movement).
+   */
+  crossover: 'standard' | 'reseed' | 'none' | 'tiers';
   hasThirdPlace: boolean;
   teamsQualifying: number;
   tieBreakers: ('h2h' | 'rf' | 'ra' | 'rd')[];
   splitConfigs?: Record<string, { teamsQualifying: number; hasThirdPlace: boolean }>;
+  /**
+   * Tiered-bracket definitions (crossover === 'tiers'). Each tier covers a
+   * contiguous range of OVERALL seeds [fromSeed..toSeed] (1-based) and becomes
+   * its own bracket. Ranges must be contiguous (no gaps/overlaps) starting at 1,
+   * names unique. Per-tier format/options fall back to the top-level config.
+   */
+  tierConfigs?: PlayoffTierConfig[];
+}
+
+export interface PlayoffTierConfig {
+  /** Display name + grouping key, e.g. "Tier 1" / "Gold". Must be unique. */
+  name: string;
+  /** First overall seed in this tier (1-based, inclusive). */
+  fromSeed: number;
+  /** Last overall seed in this tier (1-based, inclusive). */
+  toSeed: number;
+  format?: 'single' | 'consolation' | 'double' | 'placement';
+  hasThirdPlace?: boolean;
+  grandFinalReset?: boolean;
 }
 
 export interface BracketSlot {

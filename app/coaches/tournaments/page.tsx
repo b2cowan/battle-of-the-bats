@@ -7,10 +7,8 @@ import {
   type BasicCoachTeamRegistration,
   type BasicCoachTournamentTeam,
 } from '@/lib/basic-coach-teams';
-import { getUserAccessContexts } from '@/lib/user-contexts';
 import {
   COACHES_HOME_PATH,
-  COACHES_START_PATH,
   COACHES_TOURNAMENTS_PATH,
 } from '@/lib/coaches-portal-routes';
 import styles from './tournaments.module.css';
@@ -77,14 +75,8 @@ export default async function CoachTournamentRecordsPage() {
   const email = user.email.toLowerCase();
 
   let coachTeams: BasicCoachTournamentTeam[] = [];
-  let hasPremiumAccess = false;
   try {
-    const [teams, contexts] = await Promise.all([
-      getBasicCoachTournamentTeamsForUser({ userId: user.id, email }),
-      getUserAccessContexts({ id: user.id, email }),
-    ]);
-    coachTeams = teams;
-    hasPremiumAccess = contexts.some(context => context.kind === 'coaches_premium');
+    coachTeams = await getBasicCoachTournamentTeamsForUser({ userId: user.id, email });
   } catch (error) {
     console.error('[coaches tournaments] load error:', error);
     return (
@@ -114,9 +106,6 @@ export default async function CoachTournamentRecordsPage() {
             Register a team for a tournament and it appears here. You can manage your teams from your{' '}
             <Link href={COACHES_HOME_PATH} style={{ color: 'var(--logic-lime)' }}>Coaches Portal home</Link>.
           </p>
-        </div>
-        <div className={styles.ctaSection}>
-          <CtaCards hasPremiumAccess={hasPremiumAccess} />
         </div>
       </div>
     );
@@ -208,10 +197,6 @@ export default async function CoachTournamentRecordsPage() {
           </section>
         ))}
       </div>
-
-      <div className={styles.ctaSection}>
-        <CtaCards hasPremiumAccess={hasPremiumAccess} />
-      </div>
     </div>
   );
 }
@@ -247,27 +232,5 @@ function RegistrationCard({ reg }: { reg: Registration }) {
   );
 }
 
-function CtaCards({ hasPremiumAccess }: { hasPremiumAccess: boolean }) {
-  return (
-    <div className={styles.ctaGrid}>
-      {!hasPremiumAccess && (
-        <div className={styles.ctaCard}>
-          <div className={styles.ctaLabel}>For your team</div>
-          <div className={styles.ctaTitle}>Take your team further</div>
-          <p className={styles.ctaDesc}>
-            Premium adds the serious-operator tools — a lineup builder, dues automation, team budget, and document storage. It carries over automatically if your organization joins FieldLogicHQ.
-          </p>
-          <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Express interest</Link>
-        </div>
-      )}
-      <div className={styles.ctaCard}>
-        <div className={styles.ctaLabel}>For your organization</div>
-        <div className={styles.ctaTitle}>Run your own tournament</div>
-        <p className={styles.ctaDesc}>
-          FieldLogicHQ runs divisions, pools, schedules, and registration from one dashboard.
-        </p>
-        <Link href="/pricing" className="btn btn-ghost btn-sm">See tournament plans</Link>
-      </div>
-    </div>
-  );
-}
+// Pressure ladder (Phase 5·0): the always-on pre-event upsell cards (CtaCards) were
+// removed from this surface. The earned ask returns at the afterglow (completed events) — Phase 5m.

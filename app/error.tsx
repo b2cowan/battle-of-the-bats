@@ -1,8 +1,21 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { reportClientError } from '@/lib/observability/client';
 
-export default function GlobalError({ error, reset }: { error: Error; reset: () => void }) {
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    // The "logged automatically" copy below is now true: report the boundary error to the
+    // observability store (/api/client/error-capture → captureError, source='client').
+    reportClientError({
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      route: typeof window !== 'undefined' ? window.location.pathname : undefined,
+    });
+  }, [error]);
+
   return (
     <div className="min-h-screen bg-pitch-black flex items-center justify-center p-8">
       <div className="max-w-lg w-full border border-red-500/40 bg-red-500/5 p-8">

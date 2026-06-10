@@ -6,6 +6,7 @@ import {
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { captureError } from '@/lib/observability';
 
 function tournamentLockedResponse() {
   return new Response(
@@ -530,6 +531,7 @@ export async function POST(req: Request) {
 
   } catch (err: any) {
     console.error('Admin Teams API Error:', err);
+    void captureError(err, { ctx, route: '/api/admin/teams', method: 'POST', statusCode: 500 });
     return new Response(JSON.stringify({ error: err.message || 'Unknown server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -572,6 +574,7 @@ export async function DELETE(req: Request) {
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (err: any) {
+    void captureError(err, { ctx, route: '/api/admin/teams', method: 'DELETE', statusCode: 500 });
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 }

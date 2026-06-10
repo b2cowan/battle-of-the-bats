@@ -59,6 +59,7 @@ const DOMAINS = [
   'Platform admin',
   'CRM',
   'Notifications & Push',
+  'Observability & Feedback',
   'Unclassified',
 ];
 
@@ -73,6 +74,8 @@ function domainOf(t) {
   if (t.startsWith('platform_') || t.startsWith('plan_') || ['import_batches', 'import_batch_rows'].includes(t))
     return 'Platform admin';
   if (t.startsWith('early_access')) return 'CRM';
+  if (['error_groups', 'error_events', 'request_metrics_rollup', 'request_metrics_raw', 'feedback_submissions', 'observability_cron_heartbeat'].includes(t))
+    return 'Observability & Feedback';
   if (['accounting_entries', 'accounting_ledgers', 'org_payees', 'budget_categories', 'budget_items', 'org_budget_lines', 'org_budget_periods', 'billing_retained_records', 'billing_retention_intents'].includes(t))
     return 'Accounting';
   if (['organizations', 'organization_members', 'org_overrides', 'org_internal_notes', 'org_member_rep_group_scopes', 'org_member_tournament_assignments', 'org_audit_log', 'org_public_site_content'].includes(t))

@@ -310,6 +310,51 @@
     "indexdef": "CREATE INDEX idx_email_sends_status ON public.email_sends USING btree (status)"
   },
   {
+    "tablename": "error_events",
+    "indexname": "error_events_pkey",
+    "indexdef": "CREATE UNIQUE INDEX error_events_pkey ON public.error_events USING btree (id)"
+  },
+  {
+    "tablename": "error_events",
+    "indexname": "idx_error_events_group_org",
+    "indexdef": "CREATE INDEX idx_error_events_group_org ON public.error_events USING btree (group_id, org_id) WHERE (org_id IS NOT NULL)"
+  },
+  {
+    "tablename": "error_events",
+    "indexname": "idx_error_events_group_time",
+    "indexdef": "CREATE INDEX idx_error_events_group_time ON public.error_events USING btree (group_id, occurred_at DESC)"
+  },
+  {
+    "tablename": "error_events",
+    "indexname": "idx_error_events_occurred",
+    "indexdef": "CREATE INDEX idx_error_events_occurred ON public.error_events USING btree (occurred_at)"
+  },
+  {
+    "tablename": "error_events",
+    "indexname": "idx_error_events_org_time",
+    "indexdef": "CREATE INDEX idx_error_events_org_time ON public.error_events USING btree (org_id, occurred_at DESC)"
+  },
+  {
+    "tablename": "error_groups",
+    "indexname": "error_groups_fingerprint_key",
+    "indexdef": "CREATE UNIQUE INDEX error_groups_fingerprint_key ON public.error_groups USING btree (fingerprint)"
+  },
+  {
+    "tablename": "error_groups",
+    "indexname": "error_groups_pkey",
+    "indexdef": "CREATE UNIQUE INDEX error_groups_pkey ON public.error_groups USING btree (id)"
+  },
+  {
+    "tablename": "error_groups",
+    "indexname": "idx_error_groups_env_last_seen",
+    "indexdef": "CREATE INDEX idx_error_groups_env_last_seen ON public.error_groups USING btree (env, last_seen_at DESC)"
+  },
+  {
+    "tablename": "error_groups",
+    "indexname": "idx_error_groups_status_severity",
+    "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
+  },
+  {
     "tablename": "fan_push_subscriptions",
     "indexname": "fan_push_subscriptions_endpoint_idx",
     "indexdef": "CREATE INDEX fan_push_subscriptions_endpoint_idx ON public.fan_push_subscriptions USING btree (endpoint)"
@@ -328,6 +373,26 @@
     "tablename": "fan_push_subscriptions",
     "indexname": "fan_push_subscriptions_tournament_team_idx",
     "indexdef": "CREATE INDEX fan_push_subscriptions_tournament_team_idx ON public.fan_push_subscriptions USING btree (tournament_id, team_id)"
+  },
+  {
+    "tablename": "feedback_submissions",
+    "indexname": "feedback_submissions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX feedback_submissions_pkey ON public.feedback_submissions USING btree (id)"
+  },
+  {
+    "tablename": "feedback_submissions",
+    "indexname": "idx_feedback_submissions_org_time",
+    "indexdef": "CREATE INDEX idx_feedback_submissions_org_time ON public.feedback_submissions USING btree (org_id, created_at DESC)"
+  },
+  {
+    "tablename": "feedback_submissions",
+    "indexname": "idx_feedback_submissions_status_time",
+    "indexdef": "CREATE INDEX idx_feedback_submissions_status_time ON public.feedback_submissions USING btree (status, created_at DESC)"
+  },
+  {
+    "tablename": "feedback_submissions",
+    "indexname": "idx_feedback_submissions_type",
+    "indexdef": "CREATE INDEX idx_feedback_submissions_type ON public.feedback_submissions USING btree (type)"
   },
   {
     "tablename": "games",
@@ -513,6 +578,11 @@
     "tablename": "notifications",
     "indexname": "notifications_user_unread_idx",
     "indexdef": "CREATE INDEX notifications_user_unread_idx ON public.notifications USING btree (user_id, created_at DESC) WHERE (read_at IS NULL)"
+  },
+  {
+    "tablename": "observability_cron_heartbeat",
+    "indexname": "observability_cron_heartbeat_pkey",
+    "indexdef": "CREATE UNIQUE INDEX observability_cron_heartbeat_pkey ON public.observability_cron_heartbeat USING btree (job_name)"
   },
   {
     "tablename": "org_audit_log",
@@ -1303,6 +1373,31 @@
     "tablename": "rep_tryout_registrations",
     "indexname": "rep_tryout_registrations_year_idx",
     "indexdef": "CREATE INDEX rep_tryout_registrations_year_idx ON public.rep_tryout_registrations USING btree (program_year_id)"
+  },
+  {
+    "tablename": "request_metrics_raw",
+    "indexname": "idx_request_metrics_raw_flushed",
+    "indexdef": "CREATE INDEX idx_request_metrics_raw_flushed ON public.request_metrics_raw USING btree (flushed_at)"
+  },
+  {
+    "tablename": "request_metrics_raw",
+    "indexname": "request_metrics_raw_pkey",
+    "indexdef": "CREATE UNIQUE INDEX request_metrics_raw_pkey ON public.request_metrics_raw USING btree (id)"
+  },
+  {
+    "tablename": "request_metrics_rollup",
+    "indexname": "idx_request_metrics_rollup_bucket",
+    "indexdef": "CREATE UNIQUE INDEX idx_request_metrics_rollup_bucket ON public.request_metrics_rollup USING btree (bucket_start, env, COALESCE(route, ''::text), COALESCE(org_id, '00000000-0000-0000-0000-000000000000'::uuid))"
+  },
+  {
+    "tablename": "request_metrics_rollup",
+    "indexname": "idx_request_metrics_rollup_env_time",
+    "indexdef": "CREATE INDEX idx_request_metrics_rollup_env_time ON public.request_metrics_rollup USING btree (env, bucket_start DESC)"
+  },
+  {
+    "tablename": "request_metrics_rollup",
+    "indexname": "request_metrics_rollup_pkey",
+    "indexdef": "CREATE UNIQUE INDEX request_metrics_rollup_pkey ON public.request_metrics_rollup USING btree (id)"
   },
   {
     "tablename": "resources",

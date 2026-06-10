@@ -52,7 +52,9 @@ test.describe.serial('standalone Team org billing Stripe smoke', () => {
       throw new Error('Real Stripe smoke requires STRIPE_WEBHOOK_SECRET=whsec_...')
     }
 
-    const linkedOrgSlug = process.env.UAT_ORG_SLUG ?? 'uat-test-org'
+    // Org-side billing lives under /admin/org/*, which is only reachable on a
+    // non-tournament tier — use the club-tier UAT org.
+    const linkedOrgSlug = process.env.UAT_CLUB_ORG_SLUG ?? 'uat-club-org'
     const { data: linkedOrg, error: linkedOrgError } = await supabaseAdmin
       .from('organizations')
       .select('id, slug, account_kind, plan_id, is_discoverable')
@@ -65,6 +67,15 @@ test.describe.serial('standalone Team org billing Stripe smoke', () => {
     expect(linkedOrg.account_kind ?? 'organization').not.toBe('team_workspace')
     expect(linkedOrg.plan_id).not.toBe('team')
     expect(linkedOrg.is_discoverable ?? true).toBe(true)
+
+    // This spec's own checkout flow (and prior runs) can leave the shared club org
+    // 'canceled', which makes the CancellationGuard redirect the owner off the
+    // Coaches Portal Links page. Reset it to active at the start of the run.
+    const { error: reactivateError } = await supabaseAdmin
+      .from('organizations')
+      .update({ subscription_status: 'active' })
+      .eq('id', linkedOrg.id)
+    if (reactivateError) throw reactivateError
 
     const suffix = `stripe-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
     const coachEmail = `team-billing-smoke-${suffix}@dev.local`

@@ -34,6 +34,106 @@ function mapFacility(f: any) {
 }
 
 // ---------------------------------------------------------------------------
+// Game-impact helpers — a venue/facility cannot be deleted while it is still
+// linked to a *played* game (one with a recorded result). When an upcoming
+// game's venue is deleted we fully detach it (clear the FK links AND the stale
+// location text) so it reads as TBD/blank — a game's location is always either
+// a real linked venue or nothing, never dangling free text.
+// ---------------------------------------------------------------------------
+
+const PLAYED_STATUSES = new Set(['completed', 'submitted']);
+
+function isPlayedGame(g: { status?: string | null; home_score?: number | null; away_score?: number | null }) {
+  if (g.status && PLAYED_STATUSES.has(g.status)) return true;
+  return g.home_score != null && g.away_score != null;
+}
+
+// All games linked to a venue: directly (diamond_id) or via any of its facilities.
+async function getVenueGameImpact(venueId: string, facilityIds: string[]) {
+  const orParts = [`diamond_id.eq.${venueId}`];
+  if (facilityIds.length) orParts.push(`venue_facility_id.in.(${facilityIds.join(',')})`);
+  const { data, error } = await supabaseAdmin
+    .from('games')
+    .select('status, home_score, away_score')
+    .or(orParts.join(','));
+  if (error) throw error;
+  const games = data ?? [];
+  return { total: games.length, played: games.filter(isPlayedGame).length };
+}
+
+async function blockIfPlayedVenue(venueId: string) {
+  const { data: facs } = await supabaseAdmin
+    .from('venue_facilities').select('id').eq('venue_id', venueId);
+  const facilityIds = (facs ?? []).map(f => f.id);
+  const { played } = await getVenueGameImpact(venueId, facilityIds);
+  if (played > 0) {
+    return NextResponse.json(
+      { error: `This venue can't be deleted — it's used by ${played} played game${played === 1 ? '' : 's'}. Rename it instead if the location changed.`, playedCount: played },
+      { status: 409 },
+    );
+  }
+  return null;
+}
+
+async function blockIfPlayedFacility(facilityId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('games').select('status, home_score, away_score').eq('venue_facility_id', facilityId);
+  if (error) throw error;
+  const played = (data ?? []).filter(isPlayedGame).length;
+  if (played > 0) {
+    return NextResponse.json(
+      { error: `This facility can't be removed — it's used by ${played} played game${played === 1 ? '' : 's'}.`, playedCount: played },
+      { status: 409 },
+    );
+  }
+  return null;
+}
+
+// Detach a venue from every game that referenced it (directly or via a facility):
+// clear the FK links AND the now-meaningless location text → game shows TBD/blank.
+// Call BEFORE deleting the venue. Only reached once the played-game guard passes,
+// so this never erases the recorded location of a game that was actually played.
+async function clearVenueFromGames(venueId: string) {
+  const { data: facs } = await supabaseAdmin
+    .from('venue_facilities').select('id').eq('venue_id', venueId);
+  const facilityIds = (facs ?? []).map(f => f.id);
+  const orParts = [`diamond_id.eq.${venueId}`];
+  if (facilityIds.length) orParts.push(`venue_facility_id.in.(${facilityIds.join(',')})`);
+  const { error } = await supabaseAdmin
+    .from('games')
+    .update({ location: null, diamond_id: null, venue_facility_id: null })
+    .or(orParts.join(','));
+  if (error) throw error;
+}
+
+// Detach a single facility from its games. Games that still belong to the parent
+// venue keep that link and fall back to the venue name; games whose only link was
+// this facility go to TBD/blank. Call BEFORE deleting the facility.
+async function clearFacilityFromGames(facilityId: string) {
+  const { data: fac } = await supabaseAdmin
+    .from('venue_facilities').select('venue_id').eq('id', facilityId).single();
+  let venueName: string | null = null;
+  if (fac?.venue_id) {
+    const { data: v } = await supabaseAdmin.from('diamonds').select('name').eq('id', fac.venue_id).single();
+    venueName = v?.name ?? null;
+  }
+  // Still attached to a parent venue → location falls back to the venue name.
+  const { error: e1 } = await supabaseAdmin
+    .from('games')
+    .update({ location: venueName, venue_facility_id: null })
+    .eq('venue_facility_id', facilityId)
+    .not('diamond_id', 'is', null);
+  if (e1) throw e1;
+  // No parent venue left → TBD/blank.
+  const { error: e2 } = await supabaseAdmin
+    .from('games')
+    .update({ location: null, venue_facility_id: null })
+    .eq('venue_facility_id', facilityId)
+    .is('diamond_id', null);
+  if (e2) throw e2;
+}
+
+// ---------------------------------------------------------------------------
 // GET /api/admin/venues
 //   ?tournamentId=<id>           — venues for one tournament (with facilities)
 //   ?scope=org                   — all venues across org's tournaments (flat)
@@ -42,9 +142,10 @@ function mapFacility(f: any) {
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const orgSlug      = searchParams.get('orgSlug') ?? undefined;
-  const tournamentId = searchParams.get('tournamentId');
-  const scope        = searchParams.get('scope');
+  const orgSlug        = searchParams.get('orgSlug') ?? undefined;
+  const tournamentId   = searchParams.get('tournamentId');
+  const scope          = searchParams.get('scope');
+  const withGameCounts = searchParams.get('withGameCounts') === '1';
 
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -116,7 +217,7 @@ export async function GET(req: Request) {
     if (vErr) return NextResponse.json({ error: vErr.message }, { status: 500 });
 
     const venueIds = (venueData ?? []).map(v => v.id);
-    let facilityByVenue: Record<string, any[]> = {};
+    const facilityByVenue: Record<string, any[]> = {};
     if (venueIds.length > 0) {
       const { data: facData } = await supabaseAdmin
         .from('venue_facilities')
@@ -154,7 +255,7 @@ export async function GET(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const venueIds = (data ?? []).map(v => v.id);
-  let facilityByVenue: Record<string, any[]> = {};
+  const facilityByVenue: Record<string, any[]> = {};
 
   if (venueIds.length > 0) {
     const { data: facData, error: facErr } = await supabaseAdmin
@@ -169,9 +270,52 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.json((data ?? []).map(row =>
-    mapVenue(row, facilityByVenue[row.id] ?? [])
-  ));
+  // -- Optional per-venue / per-facility game-impact counts (Venues page) ----
+  // Computed from a single tournament-wide games query, then bucketed in JS so
+  // each venue row can show its reach and gate deletion before the API call.
+  const venueCounts    = new Map<string, { total: number; played: number }>();
+  const facilityCounts = new Map<string, { total: number; played: number }>();
+  if (withGameCounts && venueIds.length > 0) {
+    const facilityToVenue = new Map<string, string>();
+    for (const [vId, facs] of Object.entries(facilityByVenue)) {
+      for (const f of facs) facilityToVenue.set(f.id, vId);
+    }
+    const { data: gameRows, error: gErr } = await supabaseAdmin
+      .from('games')
+      .select('diamond_id, venue_facility_id, status, home_score, away_score')
+      .eq('tournament_id', tournamentId);
+    if (gErr) return NextResponse.json({ error: gErr.message }, { status: 500 });
+
+    const bump = (m: Map<string, { total: number; played: number }>, key: string, played: boolean) => {
+      const cur = m.get(key) ?? { total: 0, played: 0 };
+      cur.total += 1;
+      if (played) cur.played += 1;
+      m.set(key, cur);
+    };
+    for (const g of gameRows ?? []) {
+      const played = isPlayedGame(g);
+      if (g.venue_facility_id) bump(facilityCounts, g.venue_facility_id, played);
+      const vId = g.diamond_id ?? (g.venue_facility_id ? facilityToVenue.get(g.venue_facility_id) : null);
+      if (vId) bump(venueCounts, vId, played);
+    }
+  }
+
+  return NextResponse.json((data ?? []).map(row => {
+    const mapped = mapVenue(row, facilityByVenue[row.id] ?? []) as ReturnType<typeof mapVenue> & {
+      facilities?: ReturnType<typeof mapFacility>[];
+    };
+    if (!withGameCounts) return mapped;
+    const vc = venueCounts.get(row.id) ?? { total: 0, played: 0 };
+    return {
+      ...mapped,
+      gameCount: vc.total,
+      playedGameCount: vc.played,
+      facilities: (mapped.facilities ?? []).map(f => {
+        const fc = facilityCounts.get(f.id) ?? { total: 0, played: 0 };
+        return { ...f, gameCount: fc.total, playedGameCount: fc.played };
+      }),
+    };
+  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -237,6 +381,9 @@ export async function POST(req: Request) {
         const wrongOrg = await requireTournamentInOrg(ctx, existing.tournament_id);
         if (wrongOrg) return wrongOrg;
       }
+      const blocked = await blockIfPlayedVenue(id);
+      if (blocked) return blocked;
+      await clearVenueFromGames(id);
       const { error } = await supabaseAdmin.from('diamonds').delete().eq('id', id);
       if (error) throw error;
       return NextResponse.json({ success: true });
@@ -295,6 +442,9 @@ export async function POST(req: Request) {
         const wrongOrg = await requireTournamentInOrg(ctx, existing.tournament_id);
         if (wrongOrg) return wrongOrg;
       }
+      const blocked = await blockIfPlayedVenue(id);
+      if (blocked) return blocked;
+      await clearVenueFromGames(id);
       const { error } = await supabaseAdmin.from('diamonds').delete().eq('id', id);
       if (error) throw error;
       return NextResponse.json({ success: true });
@@ -353,6 +503,9 @@ export async function POST(req: Request) {
         const wrongOrg = await requireTournamentInOrg(ctx, fac.tournament_id);
         if (wrongOrg) return wrongOrg;
       }
+      const blocked = await blockIfPlayedFacility(id);
+      if (blocked) return blocked;
+      await clearFacilityFromGames(id);
       const { error } = await supabaseAdmin.from('venue_facilities').delete().eq('id', id);
       if (error) throw error;
       return NextResponse.json({ success: true });

@@ -4,6 +4,8 @@ export type PlanFeature =
   // ── Existing features ────────────────────────────────────────────────────
   | 'auto_schedule'
   | 'playoff_generator'
+  /** Manual playoff bracket building (structure + by-seed placement + manual scheduling) — free on all tournament plans. The auto-schedule optimizer + tiered auto-split remain `playoff_generator`. */
+  | 'playoff_manual'
   | 'sealed_archives'
   | 'advanced_tournament_branding'
   | 'schedule_notification'
@@ -57,6 +59,7 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
   // ── Existing features ────────────────────────────────────────────────────
   auto_schedule:                     'tournament_plus',
   playoff_generator:                 'tournament_plus',
+  playoff_manual:                    'tournament',
   sealed_archives:                   'tournament_plus',
   advanced_tournament_branding:      'tournament_plus',
   schedule_notification:             'tournament_plus',
@@ -126,6 +129,9 @@ export function requiresPlanCopy(feature: PlanFeature): string {
     case 'pwa_install':
       // Free on all plans — safe fallback if called unexpectedly.
       return 'Live public pages, team following, and home-screen install are available on all plans.';
+    case 'playoff_manual':
+      // Free on all tournament plans — safe fallback if called unexpectedly.
+      return 'Building playoff brackets by seed is available on all tournament plans. Auto-scheduling and tiered brackets are included with Tournament Plus, League, and Club.';
     // ── Existing features — delegate ──────────────────────────────────────
     default:
       return requiresTournamentPlusCopy(feature);

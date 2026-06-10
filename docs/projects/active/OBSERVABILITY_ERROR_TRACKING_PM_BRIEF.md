@@ -50,9 +50,13 @@ Recommended **build in-house** (our own Postgres + platform-admin) rather than a
 - No measurable latency added to API responses (capture is fire-and-forget); a throwing capture path can never break a user request.
 - No PII or minor data (DOB) stored unredacted; nothing exposed to org-level users.
 
-## Key decisions needed before build
+## Key decisions
 
-1. **Confirm in-house vs Sentry** (recommended in-house).
-2. **Which errors count as "critical"** (drives who gets alerted) — e.g. auth, payments, data-integrity.
-3. **Feedback visibility** — platform-admin-only, or also let org admins see their own org's submissions?
-4. **pg_cron availability** on our Supabase plan (dev + prod), else use the manual sweep fallback.
+**Decided 2026-06-09 (owner):** ✅ build **in-house** (no Sentry now); ✅ feedback is **platform-admin-only**.
+
+**Still to confirm before the dependent phase:**
+1. **Which errors count as "critical"** (drives who gets alerted) — e.g. auth, payments, data-integrity. *(before alerting, Phase 4)*
+2. **pg_cron availability** on our Supabase plan (dev + prod), else use the manual sweep fallback. *(Phase 4)*
+3. Retention window (30d proposed), write-storm caps, and the canonical dev/prod env signal. *(Phase 1)*
+
+**Status: plan under owner review — no code to be written until the plan is approved.**

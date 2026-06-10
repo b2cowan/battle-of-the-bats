@@ -493,7 +493,8 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`requires_pool_selection`** (bool, default false) — registrant must pick a pool vs auto-assign. **Dev/prod drift:** dev NOT NULL / prod nullable (treat NULL as falsy).
 
 <!-- dict:col:divisions.playoff_config -->
-**`playoff_config`** (jsonb) — `{type, crossover, hasThirdPlace, teamsQualifying?}` for the bracket. **Two conflicting defaults:** prod column default omits `teamsQualifying`, but `saveDivision`'s write fallback adds `teamsQualifying:4` ([lib/db.ts:1185](../../../lib/db.ts#L1185)); dev has no column default. Consumers must not assume `teamsQualifying` exists. **Dev/prod drift:** Finding #25.
+**`playoff_config`** (jsonb) — `{type, crossover, hasThirdPlace, teamsQualifying?, format?, grandFinalReset?, splitConfigs?, tierConfigs?}` for the bracket. **Two conflicting defaults:** prod column default omits `teamsQualifying`, but `saveDivision`'s write fallback adds `teamsQualifying:4` ([lib/db.ts:1185](../../../lib/db.ts#L1185)); dev has no column default. Consumers must not assume `teamsQualifying` exists. **Dev/prod drift:** Finding #25.
+- **`crossover`** ∈ `standard | reseed | none | tiers`. `none` runs one bracket per **pool** (config in `splitConfigs`, keyed by pool id). **`tiers`** (added on `feat/free-tier-coaches`) splits one division's **overall** standings into N contiguous tiered brackets defined by **`tierConfigs`**: `{name, fromSeed, toSeed, format?, hasThirdPlace?, grandFinalReset?}[]` — each tier becomes an independent bracket (its own `games.bracket_id`) whose `Seed #N` placeholders are **global** (resolved from overall standings by `advancePlayoffs`). Ranges are contiguous from seed #1, names unique; the play-in (e.g. seeds 4 v 5 in a 5-seed tier) is the natural bracket bye structure, not a separate concept. Validated by `validateTierRanges` ([lib/playoff-bracket.ts](../../../lib/playoff-bracket.ts)). Value-shape change only — **no migration** (existing JSONB column).
 
 <!-- dict:col:divisions.deposit_amount -->
 <!-- dict:col:divisions.deposit_due_date -->
@@ -2535,3 +2536,74 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 ---
 
 *End of Rep finance (Phase 4b — 13 tables) and of the Rep teams / team workspaces domain (25 tables total: 12 operations + 13 finance). The 4 `team_workspace_*` tables the coverage classifier files under this domain live in the Coaches / basic-teams domain. Deferred: any cross-module roster snapshot back-link (`tournament_roster_players.source_player_id` etc., free-tier Phase 5) — absent from `rep_roster_players` today.*
+
+---
+
+# Domain: Observability & Feedback
+
+> **Added by migration 118 (2026-06-09) — applied to dev AND prod.** These 6 tables are **documented at table granularity** (not yet column-sealed) — a future migration that adds a *table* to this domain still fails the coverage ratchet, but new *columns* on these tables will not until the domain is sealed. See [docs/projects/active/OBSERVABILITY_ERROR_TRACKING_PLAN.md](../../projects/active/OBSERVABILITY_ERROR_TRACKING_PLAN.md).
+
+The platform-admin **error-tracking + in-app feedback** store (the "notification center"). Errors captured server-side (`lib/observability/capture.ts` + `instrumentation.ts onRequestError`) and client-side (`/api/client/error-capture`) are fingerprinted and collapsed into one **`error_groups`** row (the triage unit) with raw occurrences in **`error_events`**; coarse traffic is counted into **`request_metrics_raw`** → folded to **`request_metrics_rollup`** (the calls-vs-errors chart source). **`feedback_submissions`** holds in-app bug/feature reports. **`observability_cron_heartbeat`** proves the Phase-4 rollup/retention jobs ran.
+
+### Gotchas first (the cross-cutting traps)
+
+- **All 6 tables are platform-admin-only; RLS is ENABLED with NO policies** — `supabaseAdmin` (service_role) has `BYPASSRLS` so capture/reads work, while `anon`/`authenticated` resolve to **zero rows** via PostgREST. This is the real protection: prod grants `anon` the default `SELECT` on public tables (verified `has_table_privilege('anon','public.email_sends','SELECT')=true`), so RLS-disabled would have leaked `error_events` (emails/IPs/stacks) through the public REST API. Verified on prod: a sentinel row is visible to service_role but returns 0 rows to `anon`/`authenticated`. (Matches the LIVE posture of `email_sends`/`platform_events`, whose migration *comments* claim "no RLS" but which actually have `relrowsecurity=true` — decide from live schema, not migrations.)
+- **Status/severity live on `error_groups`, NOT `error_events`.** Raw events are purged after 30 days (Phase 4); a "resolved"/"ignored" triage decision must survive that purge, so it lives on the group.
+- **Grouping happens at write time in Postgres.** `record_error_event(...)` does an `INSERT … ON CONFLICT (fingerprint) DO UPDATE` — a flood of identical errors becomes one `occurrence_count` bump, not N rows. `error_events` is additionally **sampled** (every occurrence up to 50, then every 10th) so one hot fingerprint can't flood the table.
+- **`error_events.org_slug` is a denormalized point-in-time snapshot** (join-free org filtering + survives org deletion); `org_id` is the FK (`ON DELETE SET NULL`) that resolves the *current* org. Both nullable — client/anonymous errors carry `org_id = NULL` ("Platform / anonymous").
+- **`request_metrics_*` are NOT one row per request.** Each worker buffers per-route tallies in memory (`lib/observability/metrics.ts`) and flushes aggregates into `request_metrics_raw`; pg_cron (Phase 4) folds → `request_metrics_rollup` then truncates the raw table.
+- **`env` ('production' | 'dev')** is set from `OBSERVABILITY_ENV` (fallback `NODE_ENV`) and is belt-and-suspenders on top of the physical dev/prod Supabase-project split. The dashboard defaults to `production`.
+- **Dev/prod:** migration 118 applied to **both dev and prod** (2026-06-09) — zero drift; RLS enabled on all 6 in both.
+
+---
+
+## `error_groups`
+<!-- dict:table:error_groups -->
+
+**Purpose:** one row per distinct issue (**fingerprint** = `sha256(route + errorName + topNormalizedStackFrames)`, 16-hex). The list / triage / drilldown unit. **Status + severity persist here** across the raw-event purge. Modeled on the low-cardinality `platform_events` shape.
+
+**Key columns:** `fingerprint` (text, UNIQUE — the grouping key) · `title`/`error_name`/`route`/`http_method` (sample identity) · `severity` (CHECK `critical|error|warning|info`, escalates to the max ever seen via `obs_severity_rank`) · `status` (CHECK `open|resolved|ignored|snoozed`; auto-**re-opens** a `resolved` group that recurs >7 days after `resolved_at`) · `env` (CHECK `production|dev`) · `first_seen_at`/`last_seen_at` · `occurrence_count` (bigint, bumped every occurrence even when the raw event is sampled out) · `distinct_org_count` (int, recomputed when an org-bearing occurrence lands) · `resolved_at`/`resolved_by`/`snooze_until` (triage state, Phase 2) · `sample_stack` (redacted, most-recent) · `sample_context` (jsonb).
+
+## `error_events`
+<!-- dict:table:error_events -->
+
+**Purpose:** high-volume append-only log, one row per **occurrence** (sampled after the per-fingerprint cap). Mirrors `email_sends`: UUID pk, time-desc composite indexes, no RLS. Raw rows auto-purged after 30 days (Phase 4) — `error_groups` is the durable record.
+
+**Key columns:** `group_id` (FK → `error_groups.id` ON DELETE CASCADE) · `occurred_at` · `env` · `source` (CHECK `server|client`) · `route`/`http_method`/`status_code` · `error_name`/`error_message`/`stack_trace` (redacted + length-capped) · `org_id` (FK → `organizations.id` ON DELETE SET NULL, nullable) + `org_slug` (denormalized snapshot) · `user_id`/`user_email`/`user_role` (attribution — *who triggered it*) · `request_id` (links a client feedback report to its server error) · `ip_address`/`user_agent` · `request_context` (jsonb, PII-redacted by `lib/observability/redact.ts`).
+
+## `request_metrics_rollup`
+<!-- dict:table:request_metrics_rollup -->
+
+**Purpose:** coarse calls-vs-errors counters — **the dashboard chart source**. NOT one row per request. 5-minute buckets; `route = NULL` = all-routes aggregate, `org_id = NULL` = platform-wide. Folded from `request_metrics_raw` by pg_cron (Phase 4). O(buckets) to chart.
+
+**Key columns:** `bucket_start` (timestamptz) · `env` · `route` (nullable) · `org_id` (nullable) · `call_count`/`error_count` (bigint). Unique per `(bucket_start, env, coalesce(route,''), coalesce(org_id, zero-uuid))`.
+
+## `request_metrics_raw`
+<!-- dict:table:request_metrics_raw -->
+
+**Purpose:** thin staging for the in-process tally flushes (so we never insert a row per HTTP call). pg_cron folds it into `request_metrics_rollup` every 5 min then **truncates** it.
+
+**Key columns:** `flushed_at` · `env` · `route` (nullable) · `org_id` (nullable) · `call_count`/`error_count` (bigint).
+
+## `feedback_submissions`
+<!-- dict:table:feedback_submissions -->
+
+**Purpose:** in-app **bug / feature / feedback** submissions from org admin, coach, scorekeeper, and public surfaces (Phase 3). `org_id` nullable (public / org-less Basic coaches allowed). The `context` jsonb deep-links a bug report to its `error_group` via the last `request_id` the client saw on a 5xx.
+
+**Key columns:** `org_id` (FK → `organizations.id` ON DELETE SET NULL, nullable) · `user_id`/`user_email`/`submitter_name` · `type` (CHECK `bug|feature|feedback`) · `category` · `title`/`body` (body NOT NULL) · `status` (CHECK `new|triaged|acknowledged|resolved`) · `severity` (admin-set, nullable) · `context` (jsonb: route/role/help_section/app_version + linked fingerprint/request_id) · `triaged_by`/`triaged_at` · `created_at`/`updated_at`.
+
+## `observability_cron_heartbeat`
+<!-- dict:table:observability_cron_heartbeat -->
+
+**Purpose:** one row per pg_cron job (Phase 4); updated each run so a silently-failed rollup/retention job is visible on the dashboard ("last rollup N minutes ago"). Without it, stale rollups and un-run retention are themselves unobserved.
+
+**Key columns:** `job_name` (text pk) · `last_run_at` · `rows_folded`/`rows_purged` (bigint) · `status` (CHECK `ok|error`) · `error_detail`.
+
+### Functions (not tables — not coverage-checked, documented for completeness)
+
+- **`record_error_event(...) → uuid`** — atomic group-upsert + sampled `error_events` insert + `distinct_org_count` maintenance, in one round trip. Called fire-and-forget by `lib/observability/capture.ts`.
+- **`obs_severity_rank(text) → int`** — immutable `critical=4 … info=1` ranking used by the severity-escalation `CASE` in `record_error_event`.
+
+---
+
+*End of Observability & Feedback (migration 118, 6 tables — table-granular; applied dev+prod 2026-06-09, RLS-enabled no-policies).*

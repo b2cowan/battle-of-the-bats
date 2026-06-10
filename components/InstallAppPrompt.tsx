@@ -79,6 +79,12 @@ export default function InstallAppPrompt({
     // Android / desktop Chromium: wait for the native install prompt.
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
+      // Chromium re-fires `beforeinstallprompt` on client-side (History API)
+      // navigations. The host layout stays mounted across those navigations,
+      // so without re-checking the dismissal here the banner re-appears on
+      // every screen change even after the user dismissed it.
+      const stored = localStorage.getItem(dismissKey);
+      if (stored && Date.now() - parseInt(stored, 10) < DISMISS_MS) return;
       setDeferred(e as BeforeInstallPromptEvent);
       setMode('android');
     };

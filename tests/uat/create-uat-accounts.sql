@@ -29,10 +29,13 @@ WHERE NOT EXISTS (
   SELECT 1 FROM organizations WHERE slug = 'uat-test-org'
 );
 
+-- Enforce canonical plan/status on every (re)provision: UAT orgs are mutated by
+-- billing/checkout specs, so re-running this script must reset them to a known state.
 UPDATE organizations
-SET internal_notes = '[UAT_PROTECTED] UAT test org - tournament plan. Do not wipe.'
-WHERE slug = 'uat-test-org'
-  AND internal_notes NOT LIKE '%[UAT_PROTECTED]%';
+SET internal_notes = '[UAT_PROTECTED] UAT test org - tournament plan. Do not wipe.',
+    plan_id = 'tournament',
+    subscription_status = 'active'
+WHERE slug = 'uat-test-org';
 
 INSERT INTO organizations (
   id, name, slug,
@@ -51,9 +54,35 @@ WHERE NOT EXISTS (
 );
 
 UPDATE organizations
-SET internal_notes = '[UAT_PROTECTED] UAT test org - tournament_plus plan. Do not wipe.'
-WHERE slug = 'uat-plus-org'
-  AND internal_notes NOT LIKE '%[UAT_PROTECTED]%';
+SET internal_notes = '[UAT_PROTECTED] UAT test org - tournament_plus plan. Do not wipe.',
+    plan_id = 'tournament_plus',
+    subscription_status = 'active'
+WHERE slug = 'uat-plus-org';
+
+-- Club-tier org: a non-tournament tier so /admin/org/* (billing, coaches-portal-links,
+-- module pages) is reachable for plan-gating + standalone-team-org-link UAT.
+INSERT INTO organizations (
+  id, name, slug,
+  plan_id, subscription_status,
+  tournament_limit, is_public, is_discoverable,
+  internal_notes, created_at
+)
+SELECT
+  gen_random_uuid(), 'UAT Club Org', 'uat-club-org',
+  'club', 'active',
+  10, false, true,
+  '[UAT_PROTECTED] UAT test org - club plan. Do not wipe.',
+  now()
+WHERE NOT EXISTS (
+  SELECT 1 FROM organizations WHERE slug = 'uat-club-org'
+);
+
+UPDATE organizations
+SET internal_notes = '[UAT_PROTECTED] UAT test org - club plan. Do not wipe.',
+    is_discoverable = true,
+    plan_id = 'club',
+    subscription_status = 'active'
+WHERE slug = 'uat-club-org';
 
 
 -- ================================================================
@@ -273,6 +302,30 @@ WHERE o.slug = 'uat-plus-org'
 ON CONFLICT (organization_id, user_id)
 DO UPDATE SET role = 'owner', status = 'active', display_name = 'UAT Org Owner';
 
+-- Owner on uat-club-org (billing / coaches-portal-links / org-link owner-side tests)
+INSERT INTO organization_members (
+  id, organization_id, user_id, role,
+  invited_at, accepted_at, status, display_name
+)
+SELECT gen_random_uuid(), o.id, u.id, 'owner', now(), now(), 'active', 'UAT Org Owner'
+FROM organizations o, auth.users u
+WHERE o.slug = 'uat-club-org'
+  AND u.email = 'uat-owner@uat-test-org.local'
+ON CONFLICT (organization_id, user_id)
+DO UPDATE SET role = 'owner', status = 'active', display_name = 'UAT Org Owner';
+
+-- Admin on uat-club-org (module-capability denial + read-only-billing tests)
+INSERT INTO organization_members (
+  id, organization_id, user_id, role,
+  invited_at, accepted_at, status, display_name
+)
+SELECT gen_random_uuid(), o.id, u.id, 'admin', now(), now(), 'active', 'UAT Org Admin'
+FROM organizations o, auth.users u
+WHERE o.slug = 'uat-club-org'
+  AND u.email = 'uat-admin@uat-test-org.local'
+ON CONFLICT (organization_id, user_id)
+DO UPDATE SET role = 'admin', status = 'active', display_name = 'UAT Org Admin';
+
 -- Scorekeeper on uat-test-org
 INSERT INTO organization_members (
   id, organization_id, user_id, role,
@@ -391,7 +444,7 @@ SELECT
   slug       AS identifier,
   left(internal_notes, 40) AS notes
 FROM organizations
-WHERE slug IN ('uat-test-org', 'uat-plus-org')
+WHERE slug IN ('uat-test-org', 'uat-plus-org', 'uat-club-org')
 
 UNION ALL
 

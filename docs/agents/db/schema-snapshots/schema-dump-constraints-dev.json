@@ -432,6 +432,46 @@
     "foreign_column": "id"
   },
   {
+    "table_name": "error_events",
+    "constraint_name": "error_events_group_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "group_id",
+    "foreign_table": "error_groups",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "error_events",
+    "constraint_name": "error_events_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "error_events",
+    "constraint_name": "error_events_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "error_groups",
+    "constraint_name": "error_groups_fingerprint_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "fingerprint",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "error_groups",
+    "constraint_name": "error_groups_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
     "table_name": "fan_push_subscriptions",
     "constraint_name": "fan_push_subscriptions_endpoint_tournament_id_key",
     "constraint_type": "UNIQUE",
@@ -470,6 +510,22 @@
     "column_name": "tournament_id",
     "foreign_table": "tournaments",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "feedback_submissions",
+    "constraint_name": "feedback_submissions_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "feedback_submissions",
+    "constraint_name": "feedback_submissions_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "games",
@@ -900,6 +956,14 @@
     "constraint_name": "notifications_user_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "observability_cron_heartbeat",
+    "constraint_name": "observability_cron_heartbeat_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "job_name",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -2702,6 +2766,22 @@
     "column_name": "team_id",
     "foreign_table": "rep_teams",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "request_metrics_raw",
+    "constraint_name": "request_metrics_raw_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "request_metrics_rollup",
+    "constraint_name": "request_metrics_rollup_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "resources",

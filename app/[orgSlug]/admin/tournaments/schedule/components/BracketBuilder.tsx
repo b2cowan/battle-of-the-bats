@@ -46,6 +46,13 @@ interface BracketBuilderProps {
   defaultDate?: string;
   templatePreview: any[];
   baseOptions: string[];
+  /**
+   * Optional per-group participant options (group name → option labels). Used by
+   * Tiered Brackets to scope each tier's matchup dropdowns to its global seeds
+   * (e.g. "Tier 2" → ["Seed #6", … "Seed #9"]). When absent, split groups fall
+   * back to filtering baseOptions by the "Pool X" label convention.
+   */
+  groupOptions?: Record<string, string[]>;
   onPreviewChange: (preview: any[]) => void;
   crossover?: string;
   /** Optional display mapping for participant labels (e.g. "Seed #1" → team name). */
@@ -251,7 +258,7 @@ function ConnectedBracket({ matchups, finalIds, scale, children }: {
   );
 }
 
-export default function BracketBuilder({ division, teams, venues, defaultDate, templatePreview, baseOptions, onPreviewChange, crossover, labelFor }: BracketBuilderProps) {
+export default function BracketBuilder({ teams, venues, defaultDate, templatePreview, baseOptions, groupOptions, onPreviewChange, crossover, labelFor }: BracketBuilderProps) {
   const [rounds, setRounds] = useState<Round[]>([]);
   // Which game's editor is open (compact-card → click to edit). Zoom + drag-pan
   // live in the shared BracketZoomFrame that wraps the render.
@@ -455,8 +462,13 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
 
   const allUsedOptions = new Set(rounds.flatMap(r => r.matchups.flatMap(m => [m.home.label, m.away.label].filter(l => l))));
 
-  const isSplitMode = crossover === 'none' && (division.pools?.length || 0) > 0;
-  const poolNames = division.pools?.map(p => p.name) || [];
+  // Group keys come from the preview's `pool` field — the pool name in
+  // No-Crossover mode or the tier name in Tiered mode — so tiered brackets (which
+  // may have no division pools at all) still render as separate grouped brackets.
+  const groupNames = Array.from(
+    new Set(rounds.flatMap(r => r.matchups.map(m => m.pool)).filter((p): p is string => !!p)),
+  );
+  const isSplitMode = (crossover === 'none' || crossover === 'tiers') && groupNames.length > 0;
 
   // ── Layout helpers: fork double-elim (seed · winners/losers · finals), flat otherwise ──
   const bandOf = (round: Round): 'seed' | 'winners' | 'losers' | 'finals' | 'flat' => {
@@ -470,8 +482,13 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
   const isForkRounds = (rs: Round[]) => rs.some(r => /^(WB|LB|GF)/i.test(r.matchups[0]?.code || ''));
 
   const optionsForRound = (round: Round, poolName?: string) => {
-    const bare = poolName ? poolName.replace(/^Pool\s+/i, '').trim() : '';
-    const base = poolName ? baseOptions.filter(o => o.includes(`Pool ${bare}`)) : baseOptions;
+    // Per-group seed options: prefer an explicit groupOptions map (Tiered mode →
+    // each tier's global Seed #N range); otherwise fall back to filtering
+    // baseOptions by the "Pool X" label convention (No-Crossover pools).
+    const base = !poolName
+      ? baseOptions
+      : groupOptions?.[poolName]
+        ?? baseOptions.filter(o => o.includes(`Pool ${poolName.replace(/^Pool\s+/i, '').trim()}`));
     const refs = rounds
       .flatMap(r => r.matchups)
       .filter(m => m.code && !round.matchups.some(rm => rm.id === m.id) && (!poolName || m.pool === poolName))
@@ -559,7 +576,7 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
       {(zoom) => (
       isSplitMode ? (
         <div className={styles.splitBrackets}>
-          {poolNames.map(poolName => {
+          {groupNames.map(poolName => {
             const poolRounds = rounds.map(r => ({
               ...r,
               matchups: r.matchups.filter(m => m.pool === poolName)
@@ -570,7 +587,7 @@ export default function BracketBuilder({ division, teams, venues, defaultDate, t
               <div key={poolName} className={styles.poolSection}>
                 <div className={styles.poolHeader}>
                   <Trophy size={18} />
-                  <span>{formatPoolName(poolName)} Playoffs</span>
+                  <span>{crossover === 'tiers' ? poolName : `${formatPoolName(poolName)} Playoffs`}</span>
                 </div>
 
                 <ConnectedBracket matchups={poolMatchups} finalIds={finalIdsOf(poolRounds)} scale={zoom}>

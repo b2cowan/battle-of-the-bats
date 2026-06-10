@@ -3,11 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { canUserAccessTournamentRegistration } from '@/lib/basic-coach-teams';
-import { getUserAccessContexts } from '@/lib/user-contexts';
-import {
-  COACHES_START_PATH,
-  COACHES_TOURNAMENTS_PATH,
-} from '@/lib/coaches-portal-routes';
+import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
 import styles from './detail.module.css';
 
 type RouteParams = { params: Promise<{ teamId: string }> };
@@ -64,9 +60,6 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
   if (!access) {
     notFound();
   }
-
-  const contexts = await getUserAccessContexts({ id: user.id, email });
-  const hasPremiumAccess = contexts.some(context => context.kind === 'coaches_premium');
 
   const { data: team, error: teamError } = await supabaseAdmin
     .from('teams')
@@ -268,22 +261,8 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
         )}
       </section>
 
-      <div className={styles.ctaSection}>
-        {team.status === 'accepted' && !hasPremiumAccess && (
-          <div className={styles.ctaCard}>
-            <div className={styles.ctaLabel}>For your team</div>
-            <div className={styles.ctaTitle}>Take your team further</div>
-            <p className={styles.ctaDesc}>
-              Premium adds the serious-operator tools — a lineup builder, dues automation, team budget, and document storage. It carries over automatically if your organization joins FieldLogicHQ.
-            </p>
-            <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Express interest</Link>
-          </div>
-        )}
-        <div className={styles.ctaCardSecondary}>
-          <span className={styles.ctaSecondaryText}>Run your own tournament with FieldLogicHQ.</span>
-          <Link href="/pricing" className="btn btn-ghost btn-sm">See tournament plans</Link>
-        </div>
-      </div>
+      {/* Pressure ladder (Phase 5·0): pre-event surfaces stay pitch-free. The earned
+          upsell (own-team Premium + run-your-own-tournament) returns at the afterglow — Phase 5m. */}
     </div>
   );
 }
