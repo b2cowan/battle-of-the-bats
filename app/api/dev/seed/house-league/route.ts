@@ -7,6 +7,7 @@ const DEV_ORG_SLUGS = ['dev-club-org', 'dev-league-org', 'dev-tplus-org', 'dev-t
 const SEASON_SLUG  = 'dev-league-2026';
 
 type SeedGame = {
+  org_id: string;
   season_id: string;
   division_id: string;
   home_team_id: string;
@@ -119,6 +120,7 @@ export async function POST(request: Request) {
         const d = new Date('2026-06-07');
         d.setDate(d.getDate() + dayOffset * 7);
         games.push({
+          org_id:       org.id,
           season_id:    season!.id,
           division_id:  div.id,
           home_team_id: teams[a].id,

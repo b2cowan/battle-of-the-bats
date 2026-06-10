@@ -1,6 +1,6 @@
 import { getCoachingAssignmentsForUser, type CoachingAssignment } from './db';
 import { supabaseAdmin } from './supabase-admin';
-import { getBasicCoachTournamentSummary } from './basic-coach-teams';
+import { getBasicCoachTournamentSummary, countClaimableRegistrationsForUser } from './basic-coach-teams';
 import { COACHES_HOME_PATH, COACHES_TOURNAMENTS_PATH, coachTeamPath } from './coaches-portal-routes';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import type { OrgAccountKind, OrgPlan } from './types';
@@ -313,6 +313,25 @@ function buildTournamentRegistrationContext(summary: TournamentRegistrationSumma
   };
 }
 
+/**
+ * A coach with no linked teams/registrations but with admin-added / imported registrations
+ * waiting to be claimed by email. Routes them to the portal hub (where the claim prompt
+ * lives) instead of the zero-context /start front door — closing the empty-portal gap.
+ */
+function buildClaimableContext(claimableCount: number): UserAccessContext | null {
+  if (claimableCount <= 0) return null;
+  return {
+    id: 'coaches-basic:claimable',
+    kind: 'coaches_basic',
+    title: 'Coaches Portal',
+    subtitle: claimableCount === 1 ? '1 team to claim' : `${claimableCount} teams to claim`,
+    detail: 'A team registered with your email is ready to claim.',
+    badgeLabel: 'Coach',
+    destination: COACHES_HOME_PATH,
+    sortOrder: 40,
+  };
+}
+
 /** Compute the post-login destination for a single active org membership. */
 export async function getDestinationForMembership(member: MemberRow): Promise<string> {
   const org = normalizeOrg(member);
@@ -405,6 +424,18 @@ export async function getUserAccessContexts(user: {
 
   const tournamentContext = buildTournamentRegistrationContext(registrationSummary);
   if (tournamentContext) contexts.push(tournamentContext);
+
+  // Admin-added / CSV-imported teams have no link row, so a coach with NO context at all would
+  // otherwise hit the zero-context /start front door. ONLY when the user has no context
+  // whatsoever (no org membership, no coach team, no official role) do we run the email-match
+  // scan to surface a claimable registration and route them to the portal hub. Org owners /
+  // admins / officials (>=1 context) never pay for this scan; the /coaches hub fetches the
+  // claim prompt independently, so multi-context coaches still discover claimables there.
+  if (contexts.length === 0) {
+    const claimableCount = await countClaimableRegistrationsForUser(user.id, user.email);
+    const claimableContext = buildClaimableContext(claimableCount);
+    if (claimableContext) contexts.push(claimableContext);
+  }
 
   return contexts.sort((a, b) => {
     if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;

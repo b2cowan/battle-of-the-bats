@@ -11,6 +11,7 @@ import {
   COACHES_HOME_PATH,
   COACHES_TOURNAMENTS_PATH,
 } from '@/lib/coaches-portal-routes';
+import { registrationStatusBadge, registrationStatusLabel } from '@/lib/coaches-status';
 import styles from './tournaments.module.css';
 
 export const metadata = { title: 'Coaches Portal - Tournament Records' };
@@ -41,20 +42,6 @@ type Registration = {
 type CoachTeamGroup = BasicCoachTournamentTeam & {
   active: Registration[];
   past: Registration[];
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  accepted:  'Accepted',
-  pending:   'Pending Review',
-  waitlist:  'Waitlisted',
-  rejected:  'Not Accepted',
-};
-
-const STATUS_BADGE: Record<string, string> = {
-  accepted: 'badge-success',
-  pending:  'badge-warning',
-  waitlist: 'badge-info',
-  rejected: 'badge-danger',
 };
 
 function isActive(tournament: TournamentRow | null): boolean {
@@ -203,8 +190,8 @@ export default async function CoachTournamentRecordsPage() {
 
 function RegistrationCard({ reg }: { reg: Registration }) {
   const { team, tournament, org } = reg;
-  const statusBadge = STATUS_BADGE[team.status] ?? 'badge-info';
-  const statusLabel = STATUS_LABEL[team.status] ?? team.status;
+  const statusBadge = registrationStatusBadge(team.status);
+  const statusLabel = registrationStatusLabel(team.status);
   const detailHref  = `${COACHES_TOURNAMENTS_PATH}/${team.id}`;
 
   const dateRange = tournament?.start_date

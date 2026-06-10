@@ -245,6 +245,10 @@ export async function cloneTournament(
       contact_email: source.contact_email ?? null,
       // Inherit the source event's public contact so the cloned draft is never contactless.
       default_contact_member_id: source.default_contact_member_id ?? null,
+      // Inherit per-audience contact visibility (mig 120) so a clone can't silently re-expose
+      // a contact the organizer had hidden on the source event.
+      contact_show_to_coaches: source.contact_show_to_coaches ?? true,
+      contact_show_on_public: source.contact_show_on_public ?? true,
       require_score_finalization: source.require_score_finalization ?? null,
     };
 
@@ -633,6 +637,10 @@ export async function populateTournamentFrom(
   // ── Copy tournament-level fields from source ───────────────────────────────
   const { error: updateError } = await supabaseAdmin.from('tournaments').update({
     contact_email: source.contact_email ?? null,
+    // Carry per-audience contact visibility (mig 120) so populating from a source can't silently
+    // re-expose a contact the organizer had hidden.
+    contact_show_to_coaches: source.contact_show_to_coaches ?? true,
+    contact_show_on_public: source.contact_show_on_public ?? true,
     require_score_finalization: source.require_score_finalization ?? null,
     fee_schedule_mode: source.fee_schedule_mode ?? 'tournament',
     deposit_amount: source.deposit_amount ?? null,
@@ -2543,6 +2551,49 @@ function mapTournament(r: any): Tournament {
 }
 
 /**
+ * Resolve the contact email to show for a tournament, honoring the per-audience
+ * visibility toggles (migration 120). The contact reaches two audiences:
+ *   - `'public'` → public (anonymous) tournament pages, gated by `contact_show_on_public`
+ *   - `'coach'`  → registered coaches (coach-facing emails + the Coaches Portal),
+ *                  gated by `contact_show_to_coaches`
+ *
+ * Returns null when the organizer has hidden the contact from that audience — the caller
+ * must NOT fall back to its own org email in that case, or the toggle would be a no-op.
+ * When shown, the selected contact member's email is preferred (resolved via auth.users),
+ * then the legacy `tournaments.contact_email`, then the audience-appropriate `orgFallbackEmail`
+ * the caller supplies (org public contact for `'public'`; org owner for `'coach'`).
+ */
+export async function resolveTournamentContactEmail(
+  tournamentId: string,
+  orgFallbackEmail: string | null,
+  audience: 'public' | 'coach',
+): Promise<string | null> {
+  const { data: t } = await supabaseAdmin
+    .from('tournaments')
+    .select('default_contact_member_id, contact_email, contact_show_on_public, contact_show_to_coaches')
+    .eq('id', tournamentId)
+    .single();
+  if (!t) return orgFallbackEmail ?? null;
+  // Hidden from this audience → suppress entirely (including the org fallback).
+  const visible = audience === 'public' ? t.contact_show_on_public !== false : t.contact_show_to_coaches !== false;
+  if (!visible) return null;
+
+  let memberEmail: string | null = null;
+  if (t.default_contact_member_id) {
+    const { data: member } = await supabaseAdmin
+      .from('organization_members')
+      .select('user_id')
+      .eq('id', t.default_contact_member_id)
+      .single();
+    if (member?.user_id) {
+      const { data: user } = await supabaseAdmin.auth.admin.getUserById(member.user_id);
+      memberEmail = user?.user?.email ?? null;
+    }
+  }
+  return memberEmail || t.contact_email || orgFallbackEmail || null;
+}
+
+/**
  * Merge-patch the tournament settings JSONB column.
  * Only supplied keys are changed; all other existing keys are preserved.
  */
@@ -2872,6 +2923,7 @@ export interface LeagueTeamInput {
 }
 
 export interface LeagueGameInput {
+  orgId: string;
   seasonId: string;
   divisionId: string;
   homeTeamId: string;
@@ -3399,6 +3451,7 @@ export async function getPracticesForSeason(seasonId: string): Promise<LeaguePra
 }
 
 interface LeaguePracticeInput {
+  orgId: string;
   seasonId: string;
   divisionId: string | null;
   teamId: string;
@@ -3413,6 +3466,7 @@ export async function createPractices(inputs: LeaguePracticeInput[]): Promise<Le
   const { data } = await supabaseAdmin
     .from('league_practices')
     .insert(inputs.map(i => ({
+      org_id:              i.orgId,
       season_id:           i.seasonId,
       division_id:         i.divisionId ?? null,
       team_id:             i.teamId,
@@ -3466,6 +3520,7 @@ export async function createLeagueGame(input: LeagueGameInput): Promise<LeagueGa
   const { data } = await supabaseAdmin
     .from('league_games')
     .insert({
+      org_id:       input.orgId,
       season_id:    input.seasonId,
       division_id:  input.divisionId,
       home_team_id: input.homeTeamId,
@@ -5172,6 +5227,8 @@ export async function createRepCostAllocationWithSplits(fields: {
           installment_number: inst.installmentNumber,
           amount: inst.amount,
           due_date: inst.dueDate,
+          org_id: fields.orgId,
+          team_id: split.teamId,
         })
         .select()
         .single();
@@ -5560,6 +5617,8 @@ export async function replaceRepDuesInstallments(
   scheduleId: string,
   playerId: string,
   installments: Array<{ installmentNumber: number; amount: number; dueDate: string }>,
+  orgId: string,
+  teamId: string,
 ): Promise<RepPlayerDuesInstallment[]> {
   const { error: delError } = await supabaseAdmin
     .from('rep_player_dues_installments')
@@ -5575,6 +5634,8 @@ export async function replaceRepDuesInstallments(
     installment_number: i.installmentNumber,
     amount: i.amount,
     due_date: i.dueDate,
+    org_id: orgId,
+    team_id: teamId,
   }));
 
   const { data, error } = await supabaseAdmin
@@ -5615,7 +5676,7 @@ export async function upsertRepPlayerDuesSchedule(fields: {
     });
   }
 
-  const newInstallments = await replaceRepDuesInstallments(schedule.id, fields.playerId, fields.installments);
+  const newInstallments = await replaceRepDuesInstallments(schedule.id, fields.playerId, fields.installments, fields.orgId, fields.teamId);
   return { schedule, installments: newInstallments };
 }
 
@@ -5658,7 +5719,7 @@ export async function getRepAllocationSplitsForTeam(
     const { data: instData, error: instError } = await supabaseAdmin
       .from('rep_allocation_installments')
       .select('*')
-      .eq('allocation_split_id', s.id)
+      .eq('split_id', s.id)
       .order('installment_number');
     if (instError) throw instError;
     result.push({

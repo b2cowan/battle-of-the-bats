@@ -1,6 +1,7 @@
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
+import { resolveTournamentContactEmail } from '@/lib/db';
 import { sendEmail, schedulePublishedHtml, SITE_URL } from '@/lib/email';
 import { hasPlanFeature } from '@/lib/plan-features';
 import type { OrgPlan } from '@/lib/types';
@@ -75,7 +76,10 @@ export async function POST(req: Request) {
       .eq('status', 'accepted');
 
     const scheduleUrl = `${SITE_URL}/${ctx.org.slug}/${tournament.slug}/schedule`;
-    const contactEmail = ctx.org.contactEmail ?? undefined;
+    // Coach-facing schedule-published email respects the "Communication with coaches" toggle and
+    // resolves the selected contact member. Off → no contact shown.
+    const scheduleFallback = (await getOrgOwnerEmail(ctx.org.id)) ?? ctx.org.contactEmail ?? null;
+    const contactEmail = (await resolveTournamentContactEmail(tournamentId, scheduleFallback, 'coach')) ?? undefined;
     const showTeamNames = visibility === 'published_teams';
 
     let notified = 0;
@@ -89,6 +93,8 @@ export async function POST(req: Request) {
         showTeamNames,
         scheduleUrl,
         contactEmail,
+        registrationId: team.id,
+        coachEmail: team.email,
       });
       await sendEmail(team.email, `Schedule Published — ${tournament.name}`, html);
       notified++;

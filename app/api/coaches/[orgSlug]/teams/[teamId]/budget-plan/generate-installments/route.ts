@@ -137,6 +137,8 @@ export async function POST(
       amount:             inst.amount,
       due_date:           inst.dueDate,
       source:             'budget_generated' as const,
+      org_id:             ctx!.org.id,
+      team_id:            team.id,
     }));
 
     await supabaseAdmin.from('rep_player_dues_installments').insert(installmentRows);

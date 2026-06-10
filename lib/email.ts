@@ -16,6 +16,8 @@ function htmlToText(html: string): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&nbsp;/g, ' ')
+    .replace(/&rarr;/g, '→')
+    .replace(/&larr;/g, '←')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
@@ -82,13 +84,42 @@ const wrap = (content: string) => `
   ${content}
 </div>`;
 
+/**
+ * Build the coach-portal link for an email. Carries registrationId + email so it doubles as a
+ * CLAIM link: a coach WITH access lands on their team; a coach WITHOUT creates an account and
+ * the registration links automatically (the email half of the claim-by-email gap fix).
+ */
+function coachPortalUrl(p: { registrationId?: string; email?: string }): string {
+  const params = new URLSearchParams();
+  if (p.registrationId) params.set('registrationId', p.registrationId);
+  if (p.email) params.set('email', p.email);
+  params.set('next', p.registrationId ? `/coaches/tournaments/${p.registrationId}` : '/coaches/tournaments');
+  return `${SITE_URL}/coaches/join?${params.toString()}`;
+}
+
+/**
+ * A consistent, quiet footer CTA appended INSIDE coach-facing template content — NEVER in the
+ * shared wrap() shell (which org/billing/founding/auth/league/rep emails also use, so a footer
+ * there would leak the coach CTA everywhere). Gives every coach email one tap back to the portal.
+ */
+export function coachPortalFooter(p: { registrationId?: string; email?: string }): string {
+  return `
+    <div style="margin-top:1.75rem;padding-top:1.25rem;border-top:1px solid rgba(30,58,138,0.2);">
+      <a href="${coachPortalUrl(p)}" style="color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;">See your team's schedule, status &amp; updates in your Coaches Portal &rarr;</a>
+    </div>`;
+}
+
 export function registrationConfirmationHtml(p: {
   teamName: string; coachName: string; divisionName: string; tournamentName: string;
   contactEmail?: string;
   coachEmail?: string;
+  registrationId?: string;
 }) {
+  // Carry the registrationId so the portal link is a CLAIM link: a coach who clicks it
+  // (signed out, or on another device) lands on /coaches/join with this exact registration
+  // pre-selected and links it on sign-in — the email half of the claim-by-email gap fix.
   const joinUrl = p.coachEmail
-    ? `${SITE_URL}/coaches/join?email=${encodeURIComponent(p.coachEmail)}&next=${encodeURIComponent('/coaches/tournaments')}&registered=1`
+    ? `${SITE_URL}/coaches/join?${p.registrationId ? `registrationId=${encodeURIComponent(p.registrationId)}&` : ''}email=${encodeURIComponent(p.coachEmail)}&next=${encodeURIComponent('/coaches/tournaments')}&registered=1`
     : `${SITE_URL}/coaches/join`;
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>
@@ -160,10 +191,13 @@ export function acceptanceHtml(p: {
   teamName: string; coachName: string; divisionName: string; tournamentName: string; teamId: string;
   contactEmail?: string;
   dashboardUrl?: string;
+  coachEmail?: string;
   /** Organizer-authored "how to pay" text (from tournament settings). Shown verbatim when set. */
   paymentInstructions?: string;
 }) {
-  const dashboardUrl = p.dashboardUrl ?? `${SITE_URL}/coaches/tournaments`;
+  // Claim-aware portal link: carries the registration (teamId) so the coach lands on this team
+  // (or creates an account and it links). dashboardUrl override kept for back-compat.
+  const dashboardUrl = p.dashboardUrl ?? coachPortalUrl({ registrationId: p.teamId, email: p.coachEmail });
   const contact = p.contactEmail ?? ADMIN_EMAIL;
   const instructions = p.paymentInstructions?.trim();
   const paymentBody = instructions
@@ -185,6 +219,8 @@ export function acceptanceHtml(p: {
 export function waitlistConfirmationHtml(p: {
   teamName: string; coachName: string; divisionName: string; tournamentName: string;
   contactEmail?: string;
+  registrationId?: string;
+  coachEmail?: string;
 }) {
   return wrap(`
     <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
@@ -200,6 +236,7 @@ export function waitlistConfirmationHtml(p: {
       </p>
     </div>
     <p style="color:rgba(241,245,249,0.7);">The <strong>${p.divisionName}</strong> division is currently full. Your team has been added to the waitlist and you will be notified by email if a spot becomes available.</p>
+    ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
   `);
 }
 
@@ -212,20 +249,23 @@ export function rejectionHtml(p: {
     <h2 style="color:#EF4444;font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>Thank you for your interest in <strong>${p.tournamentName}</strong>. Unfortunately, we are unable to accommodate <strong>${p.teamName}</strong> in the <strong>${p.divisionName}</strong> division at this time.</p>
-    <p style="color:rgba(241,245,249,0.7);">This may be due to division capacity or eligibility requirements. Please contact us if you have any questions.</p>
-    <a href="mailto:${contact}" style="display:inline-block;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#f87171;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">Contact Us</a>
+    <p style="color:rgba(241,245,249,0.7);">This may be due to division capacity or eligibility requirements. If you'd like to be considered for another division or a future event, reach out — many organizers run more than one tournament a season.</p>
+    <a href="mailto:${contact}" style="display:inline-block;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#f87171;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">Contact the organizer</a>
   `);
 }
 
 export function paymentConfirmationHtml(p: {
   teamName: string; coachName: string; divisionName: string; tournamentName: string;
   contactEmail?: string;
+  teamId?: string;
+  coachEmail?: string;
 }) {
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">Payment Recorded</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>The tournament organizer has recorded payment for <strong>${p.teamName}</strong>. Your registration for the <strong>${p.divisionName}</strong> division of <strong>${p.tournamentName}</strong> is now marked <strong style="color:#22C55E;">paid</strong>.</p>
-    <p style="color:rgba(255,255,255,0.7);">Stay tuned for schedule announcements. We look forward to seeing you on the diamond!</p>
+    <p style="color:rgba(255,255,255,0.7);">Stay tuned for schedule announcements — good luck this season!</p>
+    ${coachPortalFooter({ registrationId: p.teamId, email: p.coachEmail })}
   `);
 }
 
@@ -247,6 +287,8 @@ export function paymentReminderHtml(p: {
   dueDate?: string | null;
   paymentInstructions: string;
   contactEmail?: string;
+  registrationId?: string;
+  coachEmail?: string;
 }) {
   const instructions = escapeEmailHtml(p.paymentInstructions)
     .split('\n')
@@ -268,6 +310,7 @@ export function paymentReminderHtml(p: {
     </div>
     <div style="color:rgba(241,245,249,0.75);">${instructions}</div>
     <p style="color:rgba(241,245,249,0.45);font-size:0.86rem;">FieldLogicHQ records payment status for the organizer but does not process tournament payments online.</p>
+    ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
   `);
 }
 
@@ -696,6 +739,8 @@ export function schedulePublishedHtml(p: {
   showTeamNames: boolean;
   scheduleUrl: string;
   contactEmail?: string;
+  registrationId?: string;
+  coachEmail?: string;
 }) {
   const divisionList = p.divisions.map(d => `<li style="margin-bottom:0.25rem;">${d}</li>`).join('');
   const nameNote = p.showTeamNames
@@ -711,6 +756,7 @@ export function schedulePublishedHtml(p: {
     </div>
     <p style="color:rgba(241,245,249,0.65);font-size:0.88rem;">${nameNote}</p>
     <a href="${p.scheduleUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.5rem;">View Schedule &rarr;</a>
+    ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
   `);
 }
 

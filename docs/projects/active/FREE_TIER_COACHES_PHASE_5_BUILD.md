@@ -35,11 +35,29 @@ The C-snapshot source table **`basic_coach_team_players` (+ events/fees/announce
 - **Groundwork (serial, first):** 5·0 → 5a → 5b
 - **Claim/email track (parallel):** 5c → 5e → 5d  *(hard prerequisite for any WRITE on admin-created/imported teams: 5j, 5l)*
 - **Hero/roster track (serial):** 5f, 5g → 5h → 5i → 5j → 5k
-- **Then:** 5l (head-coach) → 5m (afterglow + reminder) → 5n (email preferences + master off-switch)
+- **Then:** 5l (head-coach) → 5m (afterglow + reminder) → 5n (email controls + master off-switch) → **5o (review: public-pages Coaches Portal nav link — closing item)**
 
-**Recommended order:** `5·0 → 5a → 5b → 5c → 5e → 5d → 5f → 5g → 5h → 5i → 5j → 5k → 5l → 5m → 5n`
+**Recommended order:** `5·0 → 5a → 5b → 5c → 5e → 5d → 5f → 5g → 5h → 5i → 5j → 5k → 5l → 5m → 5n → 5o`
 
 ---
+
+## Build log
+
+- **5·0 + 5a + 5b (detail status block) BUILT 2026-06-09** (typecheck clean for these files; focused lint clean; awaiting browser verification). 5a+5b were built together — a pure-plumbing 5a isn't browser-verifiable on its own.
+  - **Scope calls:** the register-page fee-resolver refactor was **DROPPED** — the coach surface reuses the canonical `getRegistrationAttentionFee` / `computeRegistrationAttentionPaymentStatus`, so the public payment path stays untouched (lower risk, same parity). List + team-home **payment chips deferred** to a small follow-up.
+  - **New:** `lib/coaches-status.ts` (consolidated the 3 registration-status maps), `lib/coach-status-model.ts` (`buildCoachTournamentStatus`), `components/coaches/TournamentStatusBlock.tsx` (+ css). Detail page SELECTs widened; status block mounted for accepted teams.
+  - **3-lens adversarial review folded in:** fixed numeric-as-string (PostgREST returns `numeric` as strings → `hasSchedule: Boolean('0.00')` mis-fired → explicit-$0 rendered "Owed · $0"; now `Number()`-coerced) and gross-vs-remaining fee (now mirrors the organizer's `getPaymentDue` — deposit-phase vs balance); display timestamps render in `America/Toronto`. **Dismissed** the `today`-timezone finding as a false positive — the organizer page also computes `today` via `new Date().toISOString()` (UTC), so the coach's UTC `today` matches it; switching to Eastern would *create* a divergence.
+  - **⚠ Unrelated:** `app/platform-admin/observability/page.tsx` has a typecheck error from the concurrent observability workstream on this branch — not this slice.
+  - **Restart required** before browser testing (new files + new shared lib modules).
+- **5c (claim-by-email) BUILT 2026-06-10** (typecheck + focused lint clean; awaiting browser verification + dev restart).
+  - **What:** discovery (`getClaimableRegistrationsForUser`/`countClaimableRegistrationsForUser` — exact email match via `escapeLike` + JS backstop; excludes rejected + platform-admin), a "Claim your team(s)" prompt on the `/coaches` hub, a routing fix (`buildClaimableContext`) so a context-less admin-added coach lands on the hub, and `registrationId` on the resend-access + registration-confirmation email links. The claim ACTION **reuses the existing `/coaches/join?registrationId=` screen** (no new endpoint; explicit claim per Q3 — no silent auto-link).
+  - **3-lens adversarial review folded in:** (HIGH) made `linkTournamentRegistrationToBasicCoachTeam` race-safe — foreign-link pre-check + 23505 handling + orphan-team rollback, and the claim POST maps it to a clean **409 "already claimed"** instead of a 500 + ghost team; (MEDIUM) gated the routing claimable-scan to `contexts.length === 0` so org owners/admins/officials never pay the unindexed `teams.email` scan on `/home`; (MEDIUM) added the platform-admin guard to `/coaches` + a staff early-return in discovery; (MEDIUM) excluded `status='rejected'` registrations.
+  - **Deferred (noted, not bugs):** the `/home` "teams to claim" hint only fires for fully context-less users (the hub always shows the prompt, so multi-context coaches still discover claimables there); the discovery query is unindexed — fine at current scale, add a trigram/`lower(email)` index if `teams` grows; **5d** still needed to seed `teams.email` on Add-Teams/import (so the no-email cohort becomes claimable) — discovery only surfaces teams that already have a matching email.
+- **5e (coach-email footer + acceptance/rejection/payment polish) BUILT 2026-06-10** (typecheck + focused lint clean; awaiting browser verification + dev restart).
+  - **What:** new `coachPortalFooter`/`coachPortalUrl` in `lib/email.ts` → a claim-aware "See your team's schedule, status & updates in your Coaches Portal →" footer added to the portal-less coach emails (payment-confirmation, waitlist, schedule-published, payment-reminder); acceptance button made claim-aware (carries the registration); rejection dead-end → soft "reach out about another division/future event" bridge; payment-confirmation "on the diamond" → multi-sport. `registrationId`+`coachEmail` wired consistently across all 6 send sites (3 accept/reject/payment paths + schedule-publish + payment-reminders + register-waitlist). **Footer stays in coach-template CONTENT, never `wrap()`** — org/billing/founding/auth/league/rep emails untouched.
+  - **DEFERRED:** the computed fee-amount + due-date line in the acceptance email (would need fee-select widening across all 3 accept sites; the organizer payment-instructions block already conveys cost + 5b shows the fee in-portal). Clean follow-up that must touch all 3 sites together.
+  - **2-lens adversarial review folded in (both PASS, only LOW):** fixed `htmlToText` to decode `&rarr;`/`&larr;` (plain-text emails no longer show a literal `&rarr;`); fixed the already-linked-coach interstitial — `/coaches/join` now auto-redirects to the team when the signed-in coach already has access (new `alreadyLinked` flag on `GET /api/coaches/basic-teams`), removing the mild acceptance-button regression for self-registered coaches. Verified `wrap()` untouched + footer only in the 4 coach templates + all 6 sites consistent.
+  - **Restart required** (shared `lib/email.ts`).
 
 ## Slices
 
@@ -75,12 +93,15 @@ The C-snapshot source table **`basic_coach_team_players` (+ events/fees/announce
 - **Security:** [open Q] explicit user-initiated **Claim** vs silent auto-link, given email verification is deferred to Phase 8. Exact normalized equality (not ILIKE); claim is read+link only (no payment).
 - **Verify:** admin team with `teams.email` = test coach email → coach signs in → `/coaches/join` lists + claims it → detail reachable; empty-email team does NOT appear.
 
-### 5d — Seed teams.email on admin add/import + claim-email send (linchpin) · medium · depends 5c, 5e
-**Goal:** make the claim path reliable end-to-end.
-- Seed/require `teams.email` on admin Add-Teams even when notifyTeam is off (`app/api/admin/teams/route.ts`); optional "send portal access link" per imported team in the importer commit; treat the Email column as expected.
+### 5d — Optional claim-email on admin add/import (NOT a teams.email requirement) · medium · depends 5c, 5e
+**Goal:** make the claim path reliable for admins who DO want their coaches in the portal — **without ever requiring coach name/email** for admins who don't.
+- **DECISION (owner, 2026-06-10): email stays OPTIONAL — never hard-required.** Confirmed current behavior: Add-Teams requires only name + division + tournament; `teams.coach`/`teams.email` are optional (stored as `''`); email is required only when the existing "notify the team" toggle is on; the importer maps email only if the CSV has the column. We **keep all of this**. A no-email team is simply **not claimable-by-email** — a normal, documented state, not an error (the organizer manages it directly; 5c's discovery just doesn't surface it).
+- So 5d does NOT touch the Add-Teams/import *requirements*. It only adds a **send portal-access / claim email** path:
+  - A new **opt-in toggle (default off)** on Add-Teams (reuses the `notifyTeam` pattern) + per-import in the importer commit, that — when the row HAS an email — sends a claim email (carrying `registrationId` via the 5e `coachPortalFooter()`), so admins who want to invite coaches can, in one step.
+  - When email is blank, the toggle is a no-op (nothing to send) — no validation error, no forced email.
 - Reuse the existing notifyTeam toggle + `coachPortalFooter()` (from 5e) + `getOrgOwnerEmail` fallback.
-- **[open Q]** importer/Add-Teams claim email = **opt-in toggle (default off)** vs automatic. Recommend opt-in (a big CSV could surprise-blast hundreds).
-- **Verify:** CSV w/ Email + opt-in → each coach gets a claim email landing on `/coaches/join` pre-selected; Add-Teams w/ email = claimable even with notify off.
+- **Defense-in-depth (from the 5c review):** also reject `isPlatformAdminEmail` as a team contact in Add-Teams + import commit (mirrors the register route) so a staff email never lands in `teams.email`.
+- **Verify:** Add-Teams with the claim toggle off + no email → team created, no email, not claimable (expected). Add-Teams with an email + toggle on → coach gets a claim email landing on `/coaches/join` pre-selected. CSV import with an Email column + opt-in → each coach with an email gets a claim email; rows without email import fine and silently.
 
 ### 5e — Shared coach-email footer CTA + status-email polish · medium
 **Goal:** one shared coach-email footer ("see your team in the portal →" carrying registrationId), enrich acceptance, add a rejection soft bridge, fix the voice nit.
@@ -160,6 +181,15 @@ The C-snapshot source table **`basic_coach_team_players` (+ events/fees/announce
 - **NOT in scope:** recipient/coach-side per-user opt-out + no-account token opt-out (that was the "recipient" path, not chosen). The org-level CASL **marketing** unsubscribe (migration 099) stays independent of this transactional-email control.
 - **Reuse:** the 5f settings-JSONB authoring chain, `notification-labels.ts` copy pattern, the Event Settings CollapsibleCard/segmented primitives.
 - **Verify:** toggle a type off in Event Settings → that email no longer sends for that tournament; master pause suppresses all; defaults (no keys set) = every email still sends; `typecheck` + `check:dictionary` (new settings keys documented).
+
+### 5o — REVIEW: public-pages "Coaches Portal" nav link (owner-requested 2026-06-09, FINAL item) · review/spike
+**Goal:** evaluate the options for surfacing a "Coaches Portal" link in the **public-facing** navigation so coaches can find / return to their portal. Deliverable is an **options memo + recommendation** — not an assumed build (a follow-up build slice only if approved).
+- **WHERE:** marketing-site nav (`components/Navbar`) vs public **tournament** nav (desktop `TournamentSideRail` + mobile top/bottom nav) vs both.
+- **WHEN:** always-shown vs **session-aware** (only when signed-in, or only when the user actually has a coach context via `getUserAccessContexts`).
+- **SIGNED-OUT behavior:** link to `/coaches/join` or `/auth/login?next=/coaches` vs hide entirely.
+- **Reconcile with Phase 8** ([FREE_TIER_COACHES_UNIFIED_PLAN.md](FREE_TIER_COACHES_UNIFIED_PLAN.md) Phase 8 already proposes a session-aware "Coaches Portal" link in the public tournament nav for *post-register reachability* / the "stranded after a secondary success-screen link" gap) — **build it once**; this review may absorb or scope that item.
+- **Angle:** discoverability + growth (returning coaches browsing public pages) and the post-register reachability safety net.
+- **Depends on:** nothing hard; best reviewed after the portal surfaces (5b–5m) exist so the link lands somewhere meaningful. **This is the project's closing item.**
 
 ---
 

@@ -38,6 +38,7 @@ type TournamentRow = {
   public_hidden_pages: unknown;
   default_contact_member_id: string | null;
   notify_mode: string | null;
+  contact_show_to_coaches: boolean | null;
   settings: Record<string, unknown> | null;
 };
 
@@ -237,7 +238,7 @@ export async function POST(req: NextRequest) {
         .maybeSingle<DivisionRow>(),
       supabaseAdmin
         .from('tournaments')
-        .select('id, name, contact_email, org_id, status, public_hidden_pages, default_contact_member_id, notify_mode, settings')
+        .select('id, name, contact_email, org_id, status, public_hidden_pages, default_contact_member_id, notify_mode, contact_show_to_coaches, settings')
         .eq('id', tournamentId)
         .maybeSingle<TournamentRow>(),
     ]);
@@ -470,21 +471,26 @@ export async function POST(req: NextRequest) {
     const divisionName = division.name;
     const tournamentName = tournament.name;
 
-    // Footer contact shown in team-facing emails — prefer new member system, fall back to legacy chain.
+    // Resolved contact — prefer new member system, fall back to legacy chain.
     // (organizations has no contact_email column — that field lives on org_public_site_content;
     // the tournament contact + org-owner email cover the fallback.)
-    const footerContactEmail = tournamentDefaultMemberEmail
+    const resolvedContactEmail = tournamentDefaultMemberEmail
       || tournament.contact_email
       || (tournament.org_id ? await getOrgOwnerEmail(tournament.org_id) : undefined)
       || undefined;
 
-    // Admin notification routing respects notify_mode:
+    // Footer contact shown to coaches respects the per-tournament "Communication with coaches"
+    // toggle (Settings → Notifications & Contact). Off → omit the "Questions? Contact …" line.
+    // This only controls DISPLAY in coach-facing emails; admin alert routing below is unaffected.
+    const footerContactEmail = tournament.contact_show_to_coaches === false ? undefined : resolvedContactEmail;
+
+    // Admin notification routing respects notify_mode (independent of the display toggle):
     //   'assigned' → send to division-specific contact if set; otherwise fall back to tournament default
     //   'all'      → always send to tournament default contact (division assignment ignored)
     const notifyMode = (tournament.notify_mode ?? 'all') as 'all' | 'assigned';
     const adminEmailToUse = (notifyMode === 'assigned' && divisionMemberEmail)
       ? divisionMemberEmail
-      : (tournamentDefaultMemberEmail || tournament.contact_email || footerContactEmail || ADMIN_EMAIL);
+      : (tournamentDefaultMemberEmail || tournament.contact_email || resolvedContactEmail || ADMIN_EMAIL);
 
     // The admin notification always fires; the coach confirmation respects the
     // per-tournament "automatic coach emails" switch (Settings → Notifications & Contact).
@@ -501,8 +507,8 @@ export async function POST(req: NextRequest) {
           email,
           isWaitlist ? `Waitlist Confirmation - ${teamName}` : `Registration Received - ${teamName}`,
           isWaitlist
-            ? waitlistConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail })
-            : registrationConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, coachEmail: email })
+            ? waitlistConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, registrationId: data?.id, coachEmail: email })
+            : registrationConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, coachEmail: email, registrationId: data?.id })
         )
       );
     }

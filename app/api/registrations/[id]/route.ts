@@ -8,6 +8,7 @@ import {
 } from '@/lib/email';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { getOrgOwnerEmail } from '@/lib/supabase-admin';
+import { resolveTournamentContactEmail } from '@/lib/db';
 
 export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const auth = await getAuthContext();
@@ -52,9 +53,11 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
 
     const tournamentData = current.tournaments as any;
     const orgOwnerId = tournamentData?.org_id;
-    const contactEmail = tournamentData?.contact_email
-      || (orgOwnerId ? await getOrgOwnerEmail(orgOwnerId) : undefined)
-      || undefined;
+    // Coach-facing status emails (accept / decline / payment) respect the per-tournament
+    // "Communication with coaches" toggle and resolve the selected contact member, mirroring
+    // the registration-confirmation path. Off → no contact shown (org-owner fallback included).
+    const orgOwnerEmail = orgOwnerId ? (await getOrgOwnerEmail(orgOwnerId)) ?? null : null;
+    const contactEmail = (await resolveTournamentContactEmail(current.tournament_id, orgOwnerEmail, 'coach')) ?? undefined;
 
     const paymentInstructions = typeof tournamentData?.settings?.payment_instructions === 'string'
       ? tournamentData.settings.payment_instructions
@@ -67,6 +70,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       tournamentName: tournamentData?.name ?? 'Tournament',
       contactEmail,
       teamId:         id,
+      coachEmail:     current.email,
     };
 
     const coachSettings = tournamentData?.settings;

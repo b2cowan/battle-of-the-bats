@@ -140,6 +140,7 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
       divisionName,
       tournamentName,
       teamId: team.id,
+      coachEmail: team.email,
     };
 
     if (action === 'accept' && team.status !== 'accepted' && coachEmailEnabled(coachSettings, 'acceptance')) {

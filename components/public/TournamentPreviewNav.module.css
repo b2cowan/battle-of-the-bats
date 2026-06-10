@@ -1,7 +1,15 @@
-/* The admin preview has no desktop side rail and no mobile bottom nav, so its
-   section links must stay visible at every width — unlike the public Navbar,
-   which hides .links at ≥1024px (rail) and ≤900px (bottom nav). */
+/* The admin preview has a desktop side rail (≥1024px, like the live site) but NO
+   mobile bottom nav. So the top-bar section links must stay visible from 0–1023px
+   (overriding the public Navbar's ≤900px bottom-nav hide), then hand off to the
+   rail at ≥1024px where the public Navbar already hides .links. */
 .links {
   display: flex !important;
   flex-wrap: wrap;
+}
+
+@media (min-width: 1024px) {
+  /* Rail takes over navigation — hide the top-bar links + push the lone Register
+     action to the right edge (logo is hidden by the public Navbar's rail rules). */
+  .links { display: none !important; }
+  .actions { margin-left: auto; }
 }

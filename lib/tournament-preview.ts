@@ -5,6 +5,10 @@ import { resolveTheme } from '@/lib/themes';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import type { Organization, Tournament } from '@/lib/types';
 
+// The light-mode CSS var block is shared with the live public layout so the two
+// can never drift. Re-exported here for the preview layout's existing import.
+export { buildPublicLightModeCssVars } from '@/lib/public-tournament-theme';
+
 export async function getTournamentPreviewContext(orgSlug: string, tournamentSlug: string): Promise<{
   org: Organization;
   tournament: Tournament;
@@ -45,36 +49,6 @@ export function buildPublicThemeCssVars(org: Organization, tournament?: Tourname
     `--glow:          0 0 32px rgba(${theme.primaryRgb}, 0.4)`,
     `--glow-sm:       0 0 16px rgba(${theme.primaryRgb}, 0.25)`,
     `--on-primary:    ${theme.onPrimary}`,
-  ].join('; ');
-}
-
-export function buildPublicLightModeCssVars(): string {
-  return [
-    '--bg:              #F5F7FC',
-    '--bg-2:            #EEF1F8',
-    '--bg-3:            #E5E9F2',
-    '--surface:         #FFFFFF',
-    '--surface-2:       #F0F3FA',
-    '--white:           #0F1123',
-    '--white-90:        rgba(15,17,35,0.9)',
-    '--white-80:        rgba(15,17,35,0.8)',
-    '--white-70:        rgba(15,17,35,0.7)',
-    '--white-60:        rgba(15,17,35,0.6)',
-    '--white-50:        rgba(15,17,35,0.5)',
-    '--white-45:        rgba(15,17,35,0.45)',
-    '--white-40:        rgba(15,17,35,0.4)',
-    '--white-35:        rgba(15,17,35,0.35)',
-    '--white-30:        rgba(15,17,35,0.3)',
-    '--white-10:        rgba(15,17,35,0.07)',
-    '--border-2:        rgba(15,17,35,0.1)',
-    '--shadow-sm:       0 2px 8px rgba(0,0,0,0.1)',
-    '--shadow:          0 4px 24px rgba(0,0,0,0.12)',
-    '--shadow-lg:       0 8px 48px rgba(0,0,0,0.16)',
-    '--fl-text:         #0F1123',
-    '--data-gray:       #4B5563',
-    '--hud-surface:     #FFFFFF',
-    '--nav-bg-scrolled: rgba(245,247,252,0.95)',
-    '--nav-mobile-bg:   rgba(245,247,252,0.99)',
   ].join('; ');
 }
 

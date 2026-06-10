@@ -25,6 +25,7 @@ import FeeEditor from '@/components/coaches/FeeEditor';
 import AnnouncementEditor from '@/components/coaches/AnnouncementEditor';
 import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
 import LocalDateTime from '@/components/coaches/LocalDateTime';
+import { registrationStatusBadge, registrationStatusLabel } from '@/lib/coaches-status';
 import shared from '../../coaches-portal.module.css';
 import styles from './team.module.css';
 
@@ -62,20 +63,6 @@ function findNextEvent<T extends TeamEventSummary>(events: T[]): T | null {
     .filter(event => event.status !== 'cancelled' && eventStartMs(event) >= now)
     .sort((a, b) => eventStartMs(a) - eventStartMs(b))[0] ?? null;
 }
-
-const STATUS_LABEL: Record<string, string> = {
-  accepted: 'Accepted',
-  pending:  'Pending Review',
-  waitlist: 'Waitlisted',
-  rejected: 'Not Accepted',
-};
-
-const STATUS_BADGE: Record<string, string> = {
-  accepted: 'badge-success',
-  pending:  'badge-warning',
-  waitlist: 'badge-info',
-  rejected: 'badge-danger',
-};
 
 export async function generateMetadata({ params }: RouteParams) {
   const { basicTeamId } = await params;
@@ -127,7 +114,7 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
   const unpaidTotal = unpaidFees.reduce((total, fee) => total + fee.amount, 0);
   const latestHistory = history[0] ?? null;
   const latestHistoryLabel = latestHistory
-    ? `${STATUS_LABEL[latestHistory.registration.status] ?? latestHistory.registration.status} - ${latestHistory.tournament?.name ?? latestHistory.registration.name}`
+    ? `${registrationStatusLabel(latestHistory.registration.status)} - ${latestHistory.tournament?.name ?? latestHistory.registration.name}`
     : 'No tournaments yet';
 
   return (
@@ -263,8 +250,8 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         ) : (
           <div className={styles.historyList}>
             {history.map(entry => {
-              const badge = STATUS_BADGE[entry.registration.status] ?? 'badge-info';
-              const label = STATUS_LABEL[entry.registration.status] ?? entry.registration.status;
+              const badge = registrationStatusBadge(entry.registration.status);
+              const label = registrationStatusLabel(entry.registration.status);
               const dateRange = entry.tournament?.startDate
                 ? entry.tournament.endDate
                   ? `${formatCalendarDate(entry.tournament.startDate, { month: 'short', day: 'numeric' })} - ${formatCalendarDate(entry.tournament.endDate, { month: 'short', day: 'numeric', year: 'numeric' })}`

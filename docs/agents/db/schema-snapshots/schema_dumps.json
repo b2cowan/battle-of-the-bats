@@ -28635,6 +28635,24 @@
         "column_default": "'[]'::jsonb"
       },
       {
+        "table_name": "tournaments",
+        "pos": 34,
+        "column_name": "contact_show_to_coaches",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "table_name": "tournaments",
+        "pos": 35,
+        "column_name": "contact_show_on_public",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
         "table_name": "venue_facilities",
         "pos": 1,
         "column_name": "id",

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
+import { isPlatformAdminEmail } from './platform-auth';
 
 export type BasicCoachTeam = {
   id: string;
@@ -52,6 +53,22 @@ export type PendingTournamentRegistration = {
   coach: string | null;
   email: string | null;
   tournamentId: string | null;
+};
+
+export type ClaimableRegistration = {
+  id: string;
+  name: string;
+  coach: string | null;
+  tournamentId: string | null;
+  tournament: {
+    id: string;
+    name: string;
+    slug: string | null;
+    startDate: string | null;
+    endDate: string | null;
+    status: string;
+  } | null;
+  orgName: string | null;
 };
 
 type BasicCoachTeamRow = {
@@ -362,6 +379,14 @@ export async function linkTournamentRegistrationToBasicCoachTeam(params: {
     return { basicCoachTeamId: existingBasicTeamId, createdTeam: false };
   }
 
+  // A link may already exist owned by ANOTHER account (findLinkedBasicTeamForRegistration only
+  // returns OUR link). Detect that BEFORE creating anything so we return a clean "already
+  // claimed" instead of a UNIQUE(tournament_team_id) violation that leaves an orphan team.
+  const foreignLink = await findBasicCoachTeamIdForTournamentRegistration(params.registrationId);
+  if (foreignLink) {
+    throw new Error('This registration has already been claimed by another account.');
+  }
+
   let basicCoachTeamId = params.basicCoachTeamId ?? null;
   let createdTeam = false;
 
@@ -383,7 +408,19 @@ export async function linkTournamentRegistrationToBasicCoachTeam(params: {
       link_source: params.linkSource ?? 'registration_flow',
     });
 
-  if (linkError) throw linkError;
+  if (linkError) {
+    // A concurrent claim won the race (UNIQUE(tournament_team_id)). If we just created a team
+    // for this claim, roll it back so a failed claim never leaves an orphan basic team (which
+    // would otherwise render as a ghost empty team under "Your teams").
+    if (createdTeam && basicCoachTeamId) {
+      await supabaseAdmin.from('basic_coach_team_users').delete().eq('basic_coach_team_id', basicCoachTeamId);
+      await supabaseAdmin.from('basic_coach_teams').delete().eq('id', basicCoachTeamId);
+    }
+    if ((linkError as { code?: string }).code === '23505') {
+      throw new Error('This registration has already been claimed by another account.');
+    }
+    throw linkError;
+  }
 
   return { basicCoachTeamId, createdTeam };
 }
@@ -565,4 +602,113 @@ export async function findBasicCoachTeamIdForTournamentRegistration(registration
 
   if (error) throw error;
   return data?.basic_coach_team_id ?? null;
+}
+
+/** Escape SQL LIKE/ILIKE wildcards so an email containing `_` or `%` matches literally. */
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, ch => `\\${ch}`);
+}
+
+/**
+ * Tournament registrations whose contact email (`teams.email`) equals the account email but
+ * are NOT yet linked to any Basic coach team — the "claim-by-email" candidates. This is the
+ * discovery half of the admin-created / imported-team claim gap: Add-Teams and the bulk
+ * importer create `teams` rows with no link row, so they never surface via the explicit-link
+ * path (`getBasicCoachTournamentTeamsForUser`). Exact, case-insensitive email equality —
+ * NOT a wildcard match — so a look-alike address can't pull in another coach's team.
+ */
+async function findUnlinkedEmailMatchedRegistrations(
+  userId: string,
+  userEmail: string | null | undefined,
+): Promise<TournamentTeamRow[]> {
+  const email = normalizeEmail(userEmail) || normalizeEmail(await getAuthUserEmail(userId));
+  if (!email) return [];
+  // FieldLogicHQ staff are NOT coaches — never surface claimable registrations for a staff email
+  // (keeps discovery consistent with the requireCoachUser gate on the claim POST).
+  if (await isPlatformAdminEmail(email)) return [];
+
+  const { data, error } = await supabaseAdmin
+    .from('teams')
+    .select('id, name, coach, email, status, registered_at, tournament_id, division_id')
+    .ilike('email', escapeLike(email))
+    .neq('status', 'rejected'); // a rejected registration is dead — not something to claim
+  if (error) throw error;
+
+  // Belt-and-suspenders exact equality (ilike without wildcards is case-insensitive equality,
+  // but never trust collation) — also drops blank-email rows.
+  const matched = ((data ?? []) as TournamentTeamRow[]).filter(
+    row => normalizeEmail(row.email) === email,
+  );
+  if (matched.length === 0) return [];
+
+  const ids = matched.map(row => row.id);
+  const { data: links, error: linkError } = await supabaseAdmin
+    .from('basic_coach_team_registrations')
+    .select('tournament_team_id')
+    .in('tournament_team_id', ids);
+  if (linkError) throw linkError;
+
+  const linkedIds = new Set((links ?? []).map(l => l.tournament_team_id));
+  return matched.filter(row => !linkedIds.has(row.id));
+}
+
+/** Count of claimable (email-matched, unlinked) registrations — for landing/routing only. */
+export async function countClaimableRegistrationsForUser(
+  userId: string,
+  userEmail: string | null | undefined,
+): Promise<number> {
+  const rows = await findUnlinkedEmailMatchedRegistrations(userId, userEmail);
+  return rows.length;
+}
+
+/** Full claimable registrations (hydrated with tournament + org) for the claim prompt. */
+export async function getClaimableRegistrationsForUser(
+  userId: string,
+  userEmail: string | null | undefined,
+): Promise<ClaimableRegistration[]> {
+  const rows = await findUnlinkedEmailMatchedRegistrations(userId, userEmail);
+  if (rows.length === 0) return [];
+
+  const tournamentIds = [...new Set(rows.map(r => r.tournament_id).filter(Boolean))] as string[];
+  const { data: tournaments, error: tErr } = tournamentIds.length > 0
+    ? await supabaseAdmin
+        .from('tournaments')
+        .select('id, name, slug, year, start_date, end_date, org_id, status')
+        .in('id', tournamentIds)
+    : { data: [], error: null };
+  if (tErr) throw tErr;
+
+  const tournamentRows = (tournaments ?? []) as TournamentRow[];
+  const tournamentMap = new Map(tournamentRows.map(t => [t.id, t]));
+
+  const orgIds = [...new Set(tournamentRows.map(t => t.org_id).filter(Boolean))] as string[];
+  const { data: orgs, error: oErr } = orgIds.length > 0
+    ? await supabaseAdmin.from('organizations').select('id, name').in('id', orgIds)
+    : { data: [], error: null };
+  if (oErr) throw oErr;
+  const orgMap = new Map(((orgs ?? []) as { id: string; name: string }[]).map(o => [o.id, o]));
+
+  return rows
+    .map(row => {
+      const tournament = row.tournament_id ? tournamentMap.get(row.tournament_id) ?? null : null;
+      const org = tournament?.org_id ? orgMap.get(tournament.org_id) ?? null : null;
+      return {
+        id: row.id,
+        name: row.name,
+        coach: row.coach,
+        tournamentId: row.tournament_id,
+        tournament: tournament
+          ? {
+              id: tournament.id,
+              name: tournament.name,
+              slug: tournament.slug,
+              startDate: tournament.start_date,
+              endDate: tournament.end_date,
+              status: tournament.status,
+            }
+          : null,
+        orgName: org?.name ?? null,
+      };
+    })
+    .sort((a, b) => (a.tournament?.name ?? a.name).localeCompare(b.tournament?.name ?? b.name));
 }

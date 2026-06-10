@@ -7,7 +7,8 @@ import {
 } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import type { TournamentStatus } from '@/lib/types';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
+import { resolveTournamentContactEmail } from '@/lib/db';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { sendEmail, SITE_URL, tournamentResultsFinalizedHtml } from '@/lib/email';
 import { writePlatformEvent } from '@/lib/platform-events';
@@ -178,7 +179,10 @@ async function sendCompletionResultsNotification(input: {
   const teamsUrl = `${SITE_URL}/${ctx.org.slug}/${tournament.slug}/teams`;
   const fieldLogicUrl = `${SITE_URL}/pricing?source=post_event_results_email`;
   const teamUrl = `${SITE_URL}/coaches/start?billing=annual&source=post_event_results_email&orgSlug=${encodeURIComponent(ctx.org.slug)}&tournamentSlug=${encodeURIComponent(tournament.slug)}`;
-  const contactEmail = tournament.contact_email || ctx.org.contactEmail || undefined;
+  // Coach-facing results email respects the "Communication with coaches" toggle and resolves
+  // the selected contact member. Off → no contact shown.
+  const resultsFallback = (await getOrgOwnerEmail(ctx.org.id)) ?? ctx.org.contactEmail ?? null;
+  const contactEmail = (await resolveTournamentContactEmail(tournament.id, resultsFallback, 'coach')) ?? undefined;
   let sent = 0;
 
   for (const recipient of recipients.values()) {
@@ -463,6 +467,10 @@ export async function POST(req: Request) {
         }
         updates.notify_mode = data.notifyMode;
       }
+
+      // Contact visibility toggles (migration 120) — control each audience independently.
+      if (data.contactShowToCoaches !== undefined) updates.contact_show_to_coaches = Boolean(data.contactShowToCoaches);
+      if (data.contactShowOnPublic !== undefined) updates.contact_show_on_public = Boolean(data.contactShowOnPublic);
 
       if (data.startDate !== undefined || data.endDate !== undefined) {
         const hasStartDateUpdate = data.startDate !== undefined;

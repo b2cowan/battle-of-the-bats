@@ -58,6 +58,7 @@ function JoinForm() {
   const [linkMode, setLinkMode] = useState<'new' | 'existing'>('new');
   const [selectedBasicTeamId, setSelectedBasicTeamId] = useState('');
   const [checkingSession, setCheckingSession] = useState(Boolean(registrationId));
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,9 +84,17 @@ function JoinForm() {
           user?: { email?: string };
           teams?: BasicCoachTeamOption[];
           pendingRegistration?: PendingRegistration | null;
+          alreadyLinked?: boolean;
         };
 
         if (cancelled) return;
+        // Already linked to this account → skip the "choose team" interstitial and go straight
+        // to the team record (the email footer / acceptance button drive returning coaches here).
+        if (data.alreadyLinked) {
+          setRedirecting(true);
+          router.replace(nextParam);
+          return;
+        }
         setSignedInEmail(data.user?.email ?? user.email);
         setEmail(data.user?.email ?? user.email);
         setBasicCoachTeams(data.teams ?? []);
@@ -100,7 +109,7 @@ function JoinForm() {
     return () => {
       cancelled = true;
     };
-  }, [registrationId]);
+  }, [registrationId, router, nextParam]);
 
   async function linkRegistrationToTeam(basicCoachTeamId?: string | null) {
     if (!registrationId) return;
@@ -199,10 +208,10 @@ function JoinForm() {
     : nextParam;
   const loginHref = `/auth/login?next=${encodeURIComponent(loginNext)}${emailParam ? `&email=${encodeURIComponent(emailParam)}` : ''}`;
 
-  if (checkingSession) {
+  if (checkingSession || redirecting) {
     return (
       <div className={styles.card}>
-        <HudSkeleton message="CHECKING ACCOUNT..." rows={3} />
+        <HudSkeleton message={redirecting ? 'OPENING YOUR TEAM...' : 'CHECKING ACCOUNT...'} rows={3} />
       </div>
     );
   }

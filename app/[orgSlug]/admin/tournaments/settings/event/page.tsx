@@ -108,6 +108,9 @@ export default function TournamentEventSettingsPage() {
   // Contact
   const [defaultContactMemberId, setDefaultContactMemberId] = useState<string | null>(null);
   const [notifyMode, setNotifyMode] = useState<'all' | 'assigned'>('all');
+  // Contact visibility per audience — default on so existing events are unchanged (migration 120)
+  const [contactShowToCoaches, setContactShowToCoaches] = useState(true);
+  const [contactShowOnPublic, setContactShowOnPublic] = useState(true);
   const [orgMembers, setOrgMembers] = useState<OrgMemberOption[]>([]);
   const [ownerMember, setOwnerMember] = useState<OrgMemberOption | null>(null);
 
@@ -134,6 +137,8 @@ export default function TournamentEventSettingsPage() {
     coachEmailPayment: true,
     defaultContactMemberId: null as string | null,
     notifyMode: 'all' as 'all' | 'assigned',
+    contactShowToCoaches: true,
+    contactShowOnPublic: true,
   });
 
   // Save lifecycle
@@ -192,6 +197,9 @@ export default function TournamentEventSettingsPage() {
         const notify = Boolean(t.notify_teams_on_complete);
         const contactId = t.default_contact_member_id ?? null;
         const nm = (t.notify_mode === 'assigned' ? 'assigned' : 'all') as 'all' | 'assigned';
+        // Absent (legacy rows) means visible, matching the column default.
+        const csCoaches = t.contact_show_to_coaches !== false;
+        const csPublic = t.contact_show_on_public !== false;
         const gd = typeof t.settings?.game_duration_minutes === 'number' ? t.settings.game_duration_minutes : 90;
         const buf = typeof t.settings?.buffer_minutes === 'number' ? t.settings.buffer_minutes : 15;
         const venueMoveBuf = typeof t.settings?.schedule_travel_venue_buffer_minutes === 'number' ? t.settings.schedule_travel_venue_buffer_minutes : 0;
@@ -258,6 +266,8 @@ export default function TournamentEventSettingsPage() {
         setCoachEmailPayment(cePay);
         setDefaultContactMemberId(contactId);
         setNotifyMode(nm);
+        setContactShowToCoaches(csCoaches);
+        setContactShowOnPublic(csPublic);
         setSaved(s => ({
           ...s,
           name, year, slug, status,
@@ -270,6 +280,7 @@ export default function TournamentEventSettingsPage() {
           venueMoveBufferMinutes: venueMoveBuf, facilityMoveBufferMinutes: facilityMoveBuf,
           tieBreakerScope: tbs, tieBreakers: safeTb,
           notifyTeamsOnComplete: notify, defaultContactMemberId: contactId, notifyMode: nm,
+          contactShowToCoaches: csCoaches, contactShowOnPublic: csPublic,
           coachEmailConfirmation: ceConfirm, coachEmailAcceptance: ceAccept,
           coachEmailRejection: ceReject, coachEmailPayment: cePay,
         }));
@@ -371,6 +382,8 @@ export default function TournamentEventSettingsPage() {
                 notifyTeamsOnComplete,
                 defaultContactMemberId,
                 notifyMode,
+                contactShowToCoaches,
+                contactShowOnPublic,
               },
             }),
           }),
@@ -450,6 +463,7 @@ export default function TournamentEventSettingsPage() {
           venueMoveBufferMinutes, facilityMoveBufferMinutes,
           tieBreakerScope, tieBreakers: [...tieBreakers],
           scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
+          contactShowToCoaches, contactShowOnPublic,
           coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
         }));
         refreshTournaments();
@@ -470,6 +484,7 @@ export default function TournamentEventSettingsPage() {
     tournamentYear, venueMoveBufferMinutes,
     showFeesOnRegister, paymentInstructions, paymentInstructionsOnForm,
     coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
+    contactShowToCoaches, contactShowOnPublic,
   ]);
 
   // ── Auto-save effect — fires 1.2 s after any non-status, non-slug change ──
@@ -490,6 +505,7 @@ export default function TournamentEventSettingsPage() {
     venueMoveBufferMinutes, facilityMoveBufferMinutes,
     tieBreakers, tieBreakerScope,
     scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
+    contactShowToCoaches, contactShowOnPublic,
     coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
   ]);
 
@@ -1148,8 +1164,8 @@ export default function TournamentEventSettingsPage() {
             <p className={styles.subSectionLabel}>Public Contact</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
               <p className={styles.descriptionText}>
-                This member&apos;s email appears in coach-facing registration emails and on the public tournament page.
-                Defaults to the organization owner if not set.
+                Who coaches and visitors can reach with questions. Defaults to the organization owner if not set.
+                Use the toggles below to control where this email is shown.
               </p>
               <div className="form-group">
                 <label className="form-label">Contact Member</label>
@@ -1177,10 +1193,43 @@ export default function TournamentEventSettingsPage() {
                 const selected = orgMembers.find(m => m.id === defaultContactMemberId);
                 return selected ? (
                   <p className={styles.inheritNote}>
-                    Emails will show: <strong style={{ color: 'var(--white-70)' }}>{selected.email}</strong>
+                    Selected contact: <strong style={{ color: 'var(--white-70)' }}>{selected.email}</strong>
                   </p>
                 ) : null;
               })()}
+
+              {/* Per-audience visibility toggles (migration 120) */}
+              {([
+                ['Communication with coaches', 'Show this email to registered coaches — in coach-facing emails (registration, acceptance, payment) and in the Coaches Portal.', contactShowToCoaches, setContactShowToCoaches] as const,
+                ['Show on public site', 'Display this email on your public tournament pages. Turn off to keep it out of reach of spam bots.', contactShowOnPublic, setContactShowOnPublic] as const,
+              ]).map(([label, desc, value, setValue]) => (
+                <div key={label} className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className={styles.subSectionLabel} style={{ margin: 0 }}>{label}</p>
+                    <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>{desc}</p>
+                  </div>
+                  <div className={styles.segmentedControl} role="radiogroup" aria-label={label}>
+                    {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
+                      <button
+                        key={String(val)}
+                        type="button"
+                        role="radio"
+                        aria-checked={value === val}
+                        onClick={() => setValue(val)}
+                        className={`${styles.segmentButton} ${value === val ? styles.segmentButtonActive : ''}`}
+                      >
+                        {lbl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {!contactShowToCoaches && !contactShowOnPublic && (
+                <p className={styles.inheritNote} style={{ color: 'var(--warning, var(--white-70))' }}>
+                  This contact email is hidden everywhere. Coaches won&apos;t see a reply-to address and no contact appears publicly.
+                </p>
+              )}
             </div>
           </div>
 

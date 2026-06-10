@@ -1,4 +1,6 @@
 import TournamentPreviewNav from '@/components/public/TournamentPreviewNav';
+import TournamentSideRail from '@/components/public/TournamentSideRail';
+import railStyles from '@/components/public/TournamentSideRail.module.css';
 import {
   buildPublicLightModeCssVars,
   buildPublicThemeCssVars,
@@ -7,6 +9,7 @@ import {
   getTournamentPreviewContext,
 } from '@/lib/tournament-preview';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
+import { isPlayoffOnly } from '@/lib/tournament-phase';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +29,13 @@ export default async function TournamentPreviewLayout({
   const navOrg = canUseAdvancedTournamentBranding(org)
     ? { ...org, logoUrl: tournament.logoUrl ?? org.logoUrl }
     : { ...org, logoUrl: undefined, heroBannerUrl: undefined };
+  // Bracket-only tournaments have no round-robin standings — hide that nav tab,
+  // matching the live public layout (the preview nav otherwise can't detect this
+  // because it only receives the hidden-pages list, not the tournament settings).
+  const hiddenPages = isPlayoffOnly(tournament)
+    ? Array.from(new Set([...(tournament.publicHiddenPages ?? []), 'standings' as const]))
+    : (tournament.publicHiddenPages ?? []);
+  const previewBase = `/${orgSlug}/admin/tournaments/preview/${tournamentSlug}`;
 
   return (
     <>
@@ -33,13 +43,23 @@ export default async function TournamentPreviewLayout({
       {lightModeVars && (
         <style dangerouslySetInnerHTML={{ __html: `:root { ${lightModeVars} }` }} />
       )}
-      <div data-card-style={cardStyle} data-color-mode={colorMode}>
+      {/* Desktop-only (≥1024px) left rail — mirrors the live public shell. Links stay
+          inside the preview (basePath) so navigation doesn't escape to the live site. */}
+      <TournamentSideRail
+        basePath={previewBase}
+        logoUrl={navOrg.logoUrl ?? null}
+        heading={tournament.name}
+        colorMode={colorMode}
+        hiddenPages={hiddenPages}
+      />
+      <div className={railStyles.shell} data-card-style={cardStyle} data-color-mode={colorMode}>
         <TournamentPreviewNav
           org={navOrg}
           orgSlug={orgSlug}
           tournamentSlug={tournamentSlug}
           tournamentName={tournament.name}
-          hiddenPages={tournament.publicHiddenPages ?? []}
+          colorMode={colorMode}
+          hiddenPages={hiddenPages}
         />
         {children}
       </div>

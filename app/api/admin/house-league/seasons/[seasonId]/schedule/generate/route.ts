@@ -103,6 +103,7 @@ export async function POST(
 
   // Save all games
   const inserts = preview.map(g => ({
+    org_id:       ctx!.org.id,
     season_id:    seasonId,
     division_id:  divisionId,
     home_team_id: g.homeTeamId,

@@ -100,6 +100,7 @@ export async function POST(
   }
 
   const game = await createLeagueGame({
+    orgId: ctx!.org.id,
     seasonId,
     divisionId,
     homeTeamId,

@@ -4,7 +4,8 @@ import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/
 import { hasCapability } from '@/lib/roles';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
+import { resolveTournamentContactEmail } from '@/lib/db';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -201,7 +202,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   const divisions = new Map((divisionRows ?? []).map(group => [group.id, group as DivisionFeeRow]));
-  const contactEmail = tournament.contact_email ?? ctx.org.contactEmail ?? ctx.user.email ?? undefined;
+  // Coach-facing payment reminders respect the "Communication with coaches" toggle and resolve
+  // the selected contact member. Off → no contact shown. Final fallback is the acting admin.
+  const reminderFallback = (await getOrgOwnerEmail(ctx.org.id)) ?? ctx.user.email ?? null;
+  const contactEmail = (await resolveTournamentContactEmail(tournamentId, reminderFallback, 'coach')) ?? undefined;
 
   let emailsSent = 0;
   let skippedCount = 0;
@@ -227,6 +231,8 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         dueDate: due.dueDate,
         paymentInstructions,
         contactEmail,
+        registrationId: team.id,
+        coachEmail: team.email,
       }),
     );
     emailsSent++;

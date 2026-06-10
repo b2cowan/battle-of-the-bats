@@ -1,33 +1,20 @@
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
+import { resolveTournamentContactEmail } from '@/lib/db';
 import { canUserAccessTournamentRegistration } from '@/lib/basic-coach-teams';
 import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
+import {
+  registrationStatusBadge,
+  registrationStatusLabel,
+  registrationStatusDesc,
+} from '@/lib/coaches-status';
+import { buildCoachTournamentStatus } from '@/lib/coach-status-model';
+import TournamentStatusBlock from '@/components/coaches/TournamentStatusBlock';
 import styles from './detail.module.css';
 
 type RouteParams = { params: Promise<{ teamId: string }> };
-
-const STATUS_LABEL: Record<string, string> = {
-  accepted: 'Accepted',
-  pending:  'Pending Review',
-  waitlist: 'Waitlisted',
-  rejected: 'Not Accepted',
-};
-
-const STATUS_BADGE: Record<string, string> = {
-  accepted: 'badge-success',
-  pending:  'badge-warning',
-  waitlist: 'badge-info',
-  rejected: 'badge-danger',
-};
-
-const STATUS_DESC: Record<string, string> = {
-  accepted: 'Your team has been accepted into this tournament. Check below for your schedule and announcements.',
-  pending:  'Your registration is pending review by the tournament director. You will receive an email when your status is updated.',
-  waitlist: 'The division is currently full. Your team is on the waitlist and will be notified if a spot opens up.',
-  rejected: 'Your team was not accepted into this tournament. Contact the organizer for more information.',
-};
 
 export async function generateMetadata({ params }: RouteParams) {
   const { teamId } = await params;
@@ -63,7 +50,7 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
 
   const { data: team, error: teamError } = await supabaseAdmin
     .from('teams')
-    .select('id, name, coach, email, status, registered_at, tournament_id, division_id')
+    .select('id, name, coach, email, status, registered_at, tournament_id, division_id, payment_status, deposit_paid, total_paid, payment_collected_at, check_in_status, checked_in_at, roster_submitted_at, roster_confirmed_at')
     .eq('id', teamId)
     .maybeSingle();
 
@@ -80,7 +67,7 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     team.tournament_id
       ? supabaseAdmin
           .from('tournaments')
-          .select('id, name, slug, year, start_date, end_date, org_id, status, contact_email')
+          .select('id, name, slug, year, start_date, end_date, org_id, status, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
           .eq('id', team.tournament_id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -88,7 +75,7 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     team.division_id
       ? supabaseAdmin
           .from('divisions')
-          .select('id, name, schedule_visibility')
+          .select('id, name, schedule_visibility, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
           .eq('id', team.division_id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -122,6 +109,17 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     org = orgData;
   }
 
+  // Contact shown to the coach in this portal respects the "Communication with coaches" toggle
+  // and resolves the selected contact member (then legacy contact_email, then org owner — the
+  // same chain the coach emails use). Null when the organizer hid the contact from coaches.
+  const coachContactEmail = tournament?.id
+    ? await resolveTournamentContactEmail(
+        tournament.id,
+        tournament.org_id ? (await getOrgOwnerEmail(tournament.org_id)) ?? null : null,
+        'coach',
+      )
+    : null;
+
   const relevantAnnouncements = ((announcements ?? []) as Array<{
     id: string; title: string; body: string | null; created_at: string; division_ids: string[] | null;
   }>).filter(a => {
@@ -147,9 +145,50 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     diamond_id: string | null;
   }>;
 
-  const statusBadge = STATUS_BADGE[team.status] ?? 'badge-info';
-  const statusLabel = STATUS_LABEL[team.status] ?? team.status;
-  const statusDesc  = STATUS_DESC[team.status] ?? '';
+  const statusBadge = registrationStatusBadge(team.status);
+  const statusLabel = registrationStatusLabel(team.status);
+  const statusDesc  = registrationStatusDesc(team.status);
+
+  const today = new Date().toISOString().split('T')[0];
+  // Check-in only matters from game day onward; default 'not_arrived' otherwise reads as a
+  // problem all season. (5h/5i derive a richer phase; this is the simple gate for 5b.)
+  const isGameDayOrLater = Boolean(tournament?.start_date && today >= tournament.start_date);
+
+  const coachStatus = team.status === 'accepted'
+    ? buildCoachTournamentStatus({
+        team: {
+          divisionId: team.division_id,
+          paymentStatus: team.payment_status ?? null,
+          depositPaid: team.deposit_paid ?? null,
+          totalPaid: team.total_paid ?? null,
+          checkInStatus: team.check_in_status ?? null,
+          checkedInAt: team.checked_in_at ?? null,
+          rosterSubmittedAt: team.roster_submitted_at ?? null,
+          rosterConfirmedAt: team.roster_confirmed_at ?? null,
+          paymentCollectedAt: team.payment_collected_at ?? null,
+        },
+        tournament: tournament
+          ? {
+              feeMode: tournament.fee_schedule_mode ?? null,
+              depositAmount: tournament.deposit_amount ?? null,
+              depositDueDate: tournament.deposit_due_date ?? null,
+              totalFeeAmount: tournament.total_fee_amount ?? null,
+              totalFeeDueDate: tournament.total_fee_due_date ?? null,
+            }
+          : null,
+        division: division
+          ? {
+              id: division.id,
+              name: division.name,
+              depositAmount: division.deposit_amount ?? null,
+              depositDueDate: division.deposit_due_date ?? null,
+              totalFeeAmount: division.total_fee_amount ?? null,
+              totalFeeDueDate: division.total_fee_due_date ?? null,
+            }
+          : null,
+        today,
+      })
+    : null;
 
   const dateRange = tournament?.start_date
     ? tournament.end_date
@@ -178,12 +217,23 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
 
       <div className={`card ${styles.statusCard}`}>
         <p className={styles.statusDesc}>{statusDesc}</p>
-        {team.status === 'accepted' && tournament?.contact_email && (
+        {team.status === 'accepted' && coachContactEmail && (
           <p className={styles.contactLine}>
-            Questions? <a href={`mailto:${tournament.contact_email}`}>{tournament.contact_email}</a>
+            Questions? <a href={`mailto:${coachContactEmail}`}>{coachContactEmail}</a>
           </p>
         )}
       </div>
+
+      {coachStatus && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Your status</h2>
+          <TournamentStatusBlock
+            status={coachStatus}
+            contactEmail={coachContactEmail}
+            showCheckIn={isGameDayOrLater}
+          />
+        </section>
+      )}
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Registration Details</h2>

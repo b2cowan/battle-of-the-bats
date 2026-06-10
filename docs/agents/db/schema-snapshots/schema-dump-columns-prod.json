@@ -11835,6 +11835,24 @@
     "ordinal_position": 33
   },
   {
+    "table_name": "tournaments",
+    "column_name": "contact_show_to_coaches",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 34
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "contact_show_on_public",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 35
+  },
+  {
     "table_name": "venue_facilities",
     "column_name": "id",
     "data_type": "uuid",

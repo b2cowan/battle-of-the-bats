@@ -87,7 +87,7 @@ export async function POST(
       return NextResponse.json({ error: 'No occurrences in date range' }, { status: 400 });
 
     for (const { scheduledAt, endsAt } of occurrences) {
-      inputs.push({ seasonId, divisionId, teamId, scheduledAt, endsAt, location, notes, recurrenceGroupId: groupId });
+      inputs.push({ orgId: ctx.org.id, seasonId, divisionId, teamId, scheduledAt, endsAt, location, notes, recurrenceGroupId: groupId });
     }
   } else {
     if (!scheduledDate || !startTime)
@@ -95,7 +95,7 @@ export async function POST(
 
     const scheduledAt = `${scheduledDate}T${startTime}:00`;
     const endsAt = endTime ? `${scheduledDate}T${endTime}:00` : null;
-    inputs.push({ seasonId, divisionId, teamId, scheduledAt, endsAt, location, notes });
+    inputs.push({ orgId: ctx.org.id, seasonId, divisionId, teamId, scheduledAt, endsAt, location, notes });
   }
 
   const practices = await createPractices(inputs);

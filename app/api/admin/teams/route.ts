@@ -463,6 +463,7 @@ export async function POST(req: Request) {
         divisionName:   'Division',
         tournamentName: 'Tournament',
         teamId:         current.id,
+        coachEmail:     current.email,
       };
 
       const updates = item.updates;

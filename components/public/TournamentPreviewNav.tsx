@@ -9,6 +9,7 @@ type TournamentPreviewNavProps = {
   orgSlug: string;
   tournamentSlug: string;
   tournamentName: string;
+  colorMode?: 'dark' | 'light';
   hiddenPages?: PublicPageKey[];
 };
 
@@ -17,6 +18,7 @@ export default function TournamentPreviewNav({
   orgSlug,
   tournamentSlug,
   tournamentName,
+  colorMode = 'dark',
   hiddenPages = [],
 }: TournamentPreviewNavProps) {
   const previewBase = `/${orgSlug}/admin/tournaments/preview/${tournamentSlug}`;
@@ -28,7 +30,7 @@ export default function TournamentPreviewNav({
   ];
 
   return (
-    <nav className={`${styles.nav} ${styles.scrolled}`} aria-label="Tournament preview navigation">
+    <nav className={`${styles.nav} ${styles.scrolled}`} data-color-mode={colorMode} aria-label="Tournament preview navigation">
       <div className={`container ${styles.inner}`}>
         <Link href={previewBase} className={styles.logo}>
           {org.logoUrl && (
@@ -55,7 +57,7 @@ export default function TournamentPreviewNav({
           ))}
         </div>
 
-        <div className={styles.actions}>
+        <div className={`${styles.actions} ${previewStyles.actions}`}>
           {!hiddenPages.includes('register') && (
             <Link href={`${previewBase}/register`} className="btn btn-primary btn-sm">
               Register

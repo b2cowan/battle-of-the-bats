@@ -5,9 +5,15 @@
  * Desktop-only (≥1024px) persistent navigation rail for the public tournament
  * app shell. Spans the full left column (above the top nav) with a branded
  * header (logo + tournament name) so there's no empty nav band, then the
- * section links. Reads the existing OrgNav context so it honours hidden pages
- * and the tournament's color mode. Mobile/tablet render nothing here (CSS-gated)
- * and keep the top bar + bottom nav untouched.
+ * section links. Mobile/tablet render nothing here (CSS-gated) and keep the top
+ * bar + bottom nav untouched.
+ *
+ * Two callers, one component (drift-proof):
+ *  - The live public layout renders <TournamentSideRail/> with NO props — it reads
+ *    the OrgNav context + route params and links to `/{org}/{tournament}/…`.
+ *  - The admin tournament PREVIEW passes an explicit `basePath` (+ branding props)
+ *    so the rail links stay inside `/…/preview/{tournament}/…` and active-state
+ *    matches the preview pathname.
  */
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
@@ -24,28 +30,49 @@ const RAIL_ITEMS: { key: PublicPageKey; label: string; Icon: LucideIcon }[] = [
   { key: 'rules', label: 'Rules', Icon: ScrollText },
 ];
 
-export default function TournamentSideRail() {
+type TournamentSideRailProps = {
+  /** Link prefix for the rail. Omit on the public site (derived from route params);
+   *  the preview passes its `/…/preview/{tournament}` base so links stay in-preview. */
+  basePath?: string;
+  logoUrl?: string | null;
+  heading?: string | null;
+  colorMode?: 'dark' | 'light' | null;
+  hiddenPages?: PublicPageKey[];
+};
+
+export default function TournamentSideRail({
+  basePath,
+  logoUrl,
+  heading,
+  colorMode,
+  hiddenPages,
+}: TournamentSideRailProps = {}) {
   const pathname = usePathname();
   const params = useParams();
+  const ctx = useOrgNav();
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';
-  const { logoUrl, orgName, tournamentName, tournamentColorMode, tournamentHiddenPages } = useOrgNav();
 
-  if (!orgSlug || !tournamentSlug) return null;
+  // Public usage: no props → derive everything from route params + context (unchanged).
+  // Preview usage: an explicit basePath (and branding props) is passed.
+  const homeHref = basePath ?? (orgSlug && tournamentSlug ? `/${orgSlug}/${tournamentSlug}` : null);
+  if (!homeHref) return null;
 
-  const homeHref = `/${orgSlug}/${tournamentSlug}`;
-  const items = RAIL_ITEMS.filter(i => !tournamentHiddenPages.includes(i.key));
-  const heading = tournamentName || orgName;
+  const resolvedLogo = logoUrl !== undefined ? logoUrl : ctx.logoUrl;
+  const resolvedHeading = heading !== undefined ? heading : (ctx.tournamentName || ctx.orgName);
+  const resolvedColorMode = colorMode ?? ctx.tournamentColorMode ?? 'dark';
+  const resolvedHidden = hiddenPages ?? ctx.tournamentHiddenPages;
+  const items = RAIL_ITEMS.filter(i => !resolvedHidden.includes(i.key));
 
   return (
     <aside
       className={styles.rail}
-      data-color-mode={tournamentColorMode ?? 'dark'}
+      data-color-mode={resolvedColorMode}
       aria-label="Tournament sections"
     >
       <Link href={homeHref} className={styles.railHeader}>
-        {logoUrl && <img src={logoUrl} alt="" className={styles.railLogo} />}
-        {heading && <span className={styles.railName}>{heading}</span>}
+        {resolvedLogo && <img src={resolvedLogo} alt="" className={styles.railLogo} />}
+        {resolvedHeading && <span className={styles.railName}>{resolvedHeading}</span>}
       </Link>
       <nav className={styles.nav}>
         <Link

@@ -1,9 +1,14 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { CalendarDays, ShieldCheck, Trophy, Users } from 'lucide-react';
+import { CalendarDays, Inbox, ShieldCheck, Trophy, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
+import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { getUserAccessContexts } from '@/lib/user-contexts';
-import { getBasicCoachTeamsForUser, type BasicCoachTeam } from '@/lib/basic-coach-teams';
+import {
+  getBasicCoachTeamsForUser,
+  getClaimableRegistrationsForUser,
+  type BasicCoachTeam,
+} from '@/lib/basic-coach-teams';
 import {
   COACHES_START_PATH,
   COACHES_TOURNAMENTS_PATH,
@@ -27,14 +32,24 @@ export default async function CoachesPortalPage() {
     redirect(`/auth/login?next=/coaches`);
   }
 
-  const [contexts, basicTeams] = await Promise.all([
-    getUserAccessContexts({ id: user.id, email: user.email }),
+  // FieldLogicHQ staff are NOT coaches — never run coach discovery on a platform-admin session
+  // or surface a claim prompt for them (mirrors /home).
+  if (await isPlatformAdminEmail(user.email)) {
+    redirect('/platform-admin');
+  }
+
+  // Narrowed string for use inside closures (control-flow narrowing is lost in the .map below).
+  const email = user.email;
+
+  const [contexts, basicTeams, claimable] = await Promise.all([
+    getUserAccessContexts({ id: user.id, email }),
     getBasicCoachTeamsForUser(user.id),
+    getClaimableRegistrationsForUser(user.id, email),
   ]);
 
   const workspaceContexts = contexts.filter(context => context.kind === 'coaches_premium');
   const hasTournamentRecords = contexts.some(context => context.id === 'coaches-basic:tournament-records');
-  const isEmpty = basicTeams.length === 0 && workspaceContexts.length === 0 && !hasTournamentRecords;
+  const isEmpty = basicTeams.length === 0 && workspaceContexts.length === 0 && !hasTournamentRecords && claimable.length === 0;
 
   return (
     <div className={styles.page}>
@@ -46,6 +61,44 @@ export default async function CoachesPortalPage() {
           </p>
         </div>
       </div>
+
+      {/* Claim-by-email — admin-added / imported registrations matching this account's email
+          that aren't linked yet. Routes to the existing /coaches/join claim screen (explicit
+          claim — no silent auto-link until Phase 8 email verification). */}
+      {claimable.length > 0 && (
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle}>Claim your team{claimable.length === 1 ? '' : 's'}</h2>
+          </div>
+          <p style={{ margin: '0 0 1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            {claimable.length === 1 ? 'A team was' : 'Teams were'} registered with your email by an organizer.
+            Claim {claimable.length === 1 ? 'it' : 'them'} to see status, schedule, and updates in your portal.
+          </p>
+          <div className={styles.grid}>
+            {claimable.map(reg => (
+              <div key={reg.id} className={styles.card}>
+                <div className={styles.cardTop}>
+                  <div className={styles.cardIcon}><Inbox size={18} /></div>
+                </div>
+                <div>
+                  <h3 className={styles.cardTitle}>{reg.name}</h3>
+                  <p className={styles.cardText}>
+                    {reg.tournament?.name ?? 'Tournament registration'}
+                    {reg.orgName ? ` · ${reg.orgName}` : ''}
+                  </p>
+                </div>
+                <Link
+                  href={`/coaches/join?registrationId=${encodeURIComponent(reg.id)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent(COACHES_TOURNAMENTS_PATH)}`}
+                  className="btn btn-outline btn-sm"
+                  style={{ marginTop: 'auto' }}
+                >
+                  Claim team
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Your teams — the org-less team homes (the coach's home base) */}
       {basicTeams.length > 0 && (

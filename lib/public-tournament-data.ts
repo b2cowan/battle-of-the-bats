@@ -9,6 +9,7 @@ import {
   getStandings,
   getTeams,
   getTournamentsByOrg,
+  resolveTournamentContactEmail,
 } from './db';
 import { hasPlanFeature } from './plan-features';
 import { isPublicPageEnabled, type PublicPageKey } from './public-pages';
@@ -82,10 +83,19 @@ export async function getPublicTournamentPageData(
   const { org, tournaments, tournament } = context;
   const sectionKey = section === 'context' ? null : section;
   const pageEnabled = !sectionKey || isPublicPageEnabled(tournament, sectionKey);
+
+  // Resolve the contact email shown on public pages, honoring the per-tournament
+  // `contact_show_on_public` toggle (migration 120). Override BOTH the tournament and org
+  // contact fields so the components' `tournament.contactEmail ?? organization.contactEmail`
+  // fallback can never leak an address the organizer chose to hide.
+  const publicContactEmail = tournament
+    ? await resolveTournamentContactEmail(tournament.id, org.contactEmail ?? null, 'public')
+    : (org.contactEmail ?? null);
+
   const base: PublicTournamentPageData = {
-    organization: publicOrganization(org, tournament),
+    organization: { ...publicOrganization(org, tournament), contactEmail: publicContactEmail },
     tournaments,
-    tournament,
+    tournament: tournament ? { ...tournament, contactEmail: publicContactEmail ?? undefined } : null,
     pageEnabled,
     divisions: [],
     venues: [],

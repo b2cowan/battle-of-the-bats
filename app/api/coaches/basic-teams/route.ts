@@ -5,6 +5,7 @@ import {
   getBasicCoachTeamsForUser,
   getPendingTournamentRegistrationForUser,
   linkTournamentRegistrationToBasicCoachTeam,
+  canUserAccessTournamentRegistration,
 } from '@/lib/basic-coach-teams';
 
 function json(data: unknown, status = 200) {
@@ -45,10 +46,13 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const registrationId = url.searchParams.get('registrationId');
 
-    const [teams, pendingRegistration] = await Promise.all([
+    const [teams, pendingRegistration, access] = await Promise.all([
       getBasicCoachTeamsForUser(user.id),
       registrationId
         ? getPendingTournamentRegistrationForUser(user.id, user.email, registrationId)
+        : Promise.resolve(null),
+      registrationId
+        ? canUserAccessTournamentRegistration({ userId: user.id, email: user.email, registrationId })
         : Promise.resolve(null),
     ]);
 
@@ -56,6 +60,8 @@ export async function GET(req: NextRequest) {
       user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, name: user.name },
       teams,
       pendingRegistration,
+      // Already linked to this account → the join page skips the "choose team" interstitial.
+      alreadyLinked: access === 'explicit',
     });
   } catch (error) {
     console.error('[coaches basic-teams GET] error:', error);
@@ -93,9 +99,11 @@ export async function POST(req: NextRequest) {
     return json({ ok: true, ...result });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Could not link registration.';
-    const status = message.includes('not linked') || message.includes('not linked to your coach account')
-      ? 403
-      : 500;
+    const status = message.includes('already been claimed')
+      ? 409
+      : message.includes('not linked')
+        ? 403
+        : 500;
     console.error('[coaches basic-teams POST] error:', error);
     return json({ error: message }, status);
   }

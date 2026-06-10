@@ -53,7 +53,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   const origin = req.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const joinUrl = `${origin}/coaches/join?email=${encodeURIComponent(email)}&next=${encodeURIComponent('/coaches/tournaments')}`;
+  const joinUrl = `${origin}/coaches/join?registrationId=${encodeURIComponent(regId)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent('/coaches/tournaments')}`;
   const loginUrl = `${origin}/auth/login?next=${encodeURIComponent('/coaches/tournaments')}`;
 
   try {
