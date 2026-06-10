@@ -12,6 +12,7 @@ import { resolveTournamentContactEmail } from '@/lib/db';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { sendEmail, SITE_URL, tournamentResultsFinalizedHtml } from '@/lib/email';
 import { writePlatformEvent } from '@/lib/platform-events';
+import { ROSTER_WAIVER_TEXT_MAX_LENGTH } from '@/lib/roster-requirements';
 
 function isDateValue(value: unknown): value is string {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -531,6 +532,7 @@ export async function POST(req: Request) {
         'game_timing_scope',
         'tie_breakers',
         'tie_breaker_scope',
+        'max_run_diff_per_game',
         'fee_scope',
         // Public registration payment display
         'show_fees_on_register',
@@ -541,6 +543,14 @@ export async function POST(req: Request) {
         'coach_email_acceptance',
         'coach_email_rejection',
         'coach_email_payment',
+        // Roster requirements (Phase 5f) — what coaches must provide on the event roster
+        'roster_require',
+        'roster_require_dob',
+        'roster_require_jersey',
+        'roster_require_waiver',
+        'roster_waiver_text',
+        'roster_min_players',
+        'roster_max_players',
       ]);
       const FORMAT_VALUES           = new Set(['round_robin_playoffs', 'playoff_only']);
       const RULES_LAYOUT_VALUES     = new Set(['columns', 'single']);
@@ -548,7 +558,7 @@ export async function POST(req: Request) {
       const GAME_TIMING_SCOPE_VALUES  = new Set(['tournament', 'allow_override', 'per_division']);
       const TIE_BREAKER_SCOPE_VALUES  = new Set(['tournament', 'allow_override', 'per_division']);
       const FEE_SCOPE_VALUES          = new Set(['tournament', 'allow_override', 'per_division', 'free']);
-      const TIE_BREAKER_VALID_VALUES  = new Set(['h2h', 'rf', 'ra', 'rd']);
+      const TIE_BREAKER_VALID_VALUES  = new Set(['h2h', 'rf', 'ra', 'rd', 'coin']);
 
       const sanitized: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(data.settings as Record<string, unknown>)) {
@@ -591,24 +601,53 @@ export async function POST(req: Request) {
         }
         if (k === 'tie_breakers') {
           if (!Array.isArray(v)) continue;
-          const validated = (v as unknown[]).filter(b => TIE_BREAKER_VALID_VALUES.has(String(b))).map(String);
+          // De-dupe + keep only valid breakers, preserving order. Subset allowed.
+          const seen = new Set<string>();
+          const validated = (v as unknown[])
+            .map(String)
+            .filter(b => TIE_BREAKER_VALID_VALUES.has(b) && !seen.has(b) && seen.add(b));
           if (validated.length === 0) continue;
           sanitized[k] = validated;
+          continue;
+        }
+        if (k === 'max_run_diff_per_game') {
+          // null/'' clears the cap; otherwise a positive integer (1–99) = max per-game run diff.
+          if (v === null || v === '') { sanitized[k] = null; continue; }
+          const n = Number(v);
+          if (!Number.isInteger(n) || n < 1 || n > 99) continue;
+          sanitized[k] = n;
           continue;
         }
         if (
           k === 'show_fees_on_register' || k === 'payment_instructions_on_form' ||
           k === 'coach_email_confirmation' || k === 'coach_email_acceptance' ||
-          k === 'coach_email_rejection' || k === 'coach_email_payment'
+          k === 'coach_email_rejection' || k === 'coach_email_payment' ||
+          k === 'roster_require' || k === 'roster_require_dob' ||
+          k === 'roster_require_jersey' || k === 'roster_require_waiver'
         ) {
           if (typeof v !== 'boolean') continue;
           sanitized[k] = v;
+          continue;
+        }
+        if (k === 'roster_min_players' || k === 'roster_max_players') {
+          // null/'' clears the limit; otherwise an integer roster size.
+          if (v === null || v === '') { sanitized[k] = null; continue; }
+          const n = Number(v);
+          if (!Number.isInteger(n) || n < 1 || n > 99) continue;
+          sanitized[k] = n;
           continue;
         }
         if (k === 'payment_instructions') {
           if (v === null || v === '') { sanitized[k] = ''; continue; }
           if (typeof v !== 'string') continue;
           sanitized[k] = v.slice(0, 1000);
+          continue;
+        }
+        if (k === 'roster_waiver_text') {
+          if (v === null || v === '') { sanitized[k] = ''; continue; }
+          if (typeof v !== 'string') continue;
+          // Trim so whitespace-only collapses to '' — readers rely on ''/absent = default text.
+          sanitized[k] = v.trim().slice(0, ROSTER_WAIVER_TEXT_MAX_LENGTH);
           continue;
         }
         sanitized[k] = v;

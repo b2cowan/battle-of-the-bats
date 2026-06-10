@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Trophy } from 'lucide-react';
 import { getGames, getTeams, getDivisions, getVenues, getTournaments, getStandings } from '@/lib/db';
+import { normalizeTieBreakers } from '@/lib/tie-breakers';
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
@@ -71,7 +72,7 @@ export default function ResultsPage() {
     if (!selectedTournament || !activeGroup) return;
     async function fetchStandings() {
       const group = divisions.find(g => g.id === activeGroup);
-      const results = await getStandings(activeGroup, group?.playoffConfig);
+      const results = await getStandings(activeGroup, group?.playoffConfig, {}, selectedTournament?.settings);
       setStandings(results.map(s => ({
         ...s,
         id: s.teamId,
@@ -137,7 +138,7 @@ export default function ResultsPage() {
                           </h2>
                         </div>
                         <div className={styles.rulesInfo} title="Tie-Breaker Hierarchy">
-                          Tie Breaker: {(currentGroup?.playoffConfig?.tieBreakers || ['h2h', 'rd', 'rf', 'ra']).map(b => b.toUpperCase()).join(' → ')}
+                          Tie Breaker: {normalizeTieBreakers(currentGroup?.playoffConfig?.tieBreakers || selectedTournament?.settings?.tie_breakers).map(b => b === 'coin' ? 'COIN TOSS' : b.toUpperCase()).join(' → ')}
                         </div>
                       </div>
                     </div>

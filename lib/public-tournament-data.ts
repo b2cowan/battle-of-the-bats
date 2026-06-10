@@ -141,7 +141,7 @@ export async function getPublicTournamentPageData(
     const standingsEntries = await Promise.all(
       divisions.map(async group => [
         group.id,
-        await getStandings(group.id, group.playoffConfig, { admin: true }),
+        await getStandings(group.id, group.playoffConfig, { admin: true }, tournament.settings),
       ] as const),
     );
     return {

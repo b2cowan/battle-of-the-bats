@@ -80,7 +80,7 @@ export default async function TournamentPreviewSectionPage({
     const standingsEntries = await Promise.all(
       divisions.map(async group => [
         group.id,
-        await getStandings(group.id, group.playoffConfig, readOptions),
+        await getStandings(group.id, group.playoffConfig, readOptions, tournament.settings),
       ] as const),
     );
     const initialData: PublicTournamentPageData = {
@@ -108,6 +108,7 @@ export default async function TournamentPreviewSectionPage({
         tournamentSlug={tournamentSlug}
         isPreview
         initialData={initialData}
+        enableCoinTossAdmin
       />
     );
   }

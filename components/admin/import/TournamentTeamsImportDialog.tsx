@@ -34,6 +34,7 @@ export default function TournamentTeamsImportDialog({ open, tournamentId, orgSlu
   const [commitResult, setCommitResult] = useState<ImportCommitResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [committing, setCommitting] = useState(false);
+  const [sendPortalEmails, setSendPortalEmails] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const query = useMemo(() => buildQuery(orgSlug), [orgSlug]);
 
@@ -45,6 +46,7 @@ export default function TournamentTeamsImportDialog({ open, tournamentId, orgSlu
     setError(null);
     setPreview(null);
     setCommitResult(null);
+    setSendPortalEmails(false); // opt-in is a fresh decision per preview
     try {
       const form = new FormData();
       form.append('file', file);
@@ -73,7 +75,7 @@ export default function TournamentTeamsImportDialog({ open, tournamentId, orgSlu
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ batchId: preview.batchId }),
+          body: JSON.stringify({ batchId: preview.batchId, sendPortalEmails }),
         },
       );
       const data = await res.json().catch(() => ({}));
@@ -94,6 +96,7 @@ export default function TournamentTeamsImportDialog({ open, tournamentId, orgSlu
     setError(null);
     setLoading(false);
     setCommitting(false);
+    setSendPortalEmails(false);
     onClose();
   }
 
@@ -171,6 +174,7 @@ export default function TournamentTeamsImportDialog({ open, tournamentId, orgSlu
                     setPreview(null);
                     setCommitResult(null);
                     setError(null);
+                    setSendPortalEmails(false);
                   }}
                 />
                 <span className={styles.filePickerButton}>
@@ -216,11 +220,24 @@ export default function TournamentTeamsImportDialog({ open, tournamentId, orgSlu
                 <span><strong>{preview.summary.updates}</strong> updates</span>
                 <span><strong>{preview.summary.unchanged}</strong> unchanged</span>
               </div>
+              {!commitResult && preview.summary.creates > 0 && (
+                <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', margin: '0.75rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  <input
+                    type="checkbox"
+                    checked={sendPortalEmails}
+                    onChange={event => setSendPortalEmails(event.target.checked)}
+                    disabled={committing}
+                    style={{ marginTop: '0.2rem' }}
+                  />
+                  <span>Email these coaches a link to their Coaches Portal (new teams that have an email address only).</span>
+                </label>
+              )}
               {commitResult && (
                 <div className={styles.successBox}>
                   <CheckCircle2 size={15} aria-hidden />
                   <span>
                     Applied {commitResult.summary.created} create{commitResult.summary.created === 1 ? '' : 's'} and {commitResult.summary.updated} update{commitResult.summary.updated === 1 ? '' : 's'}.
+                    {commitResult.emailsSent ? ` Emailed ${commitResult.emailsSent} coach${commitResult.emailsSent === 1 ? '' : 'es'} a portal link.` : ''}
                   </span>
                 </div>
               )}

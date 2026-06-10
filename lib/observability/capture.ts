@@ -8,6 +8,7 @@
  * debugging keeps working. Callers may `await` it on the error path (errors are rare) or fire it.
  */
 import { supabaseAdmin } from '../supabase-admin';
+import { maybeSendCriticalAlert, type RecordErrorFlags } from './alerts';
 import { observabilityEnv } from './env';
 import { fingerprint } from './fingerprint';
 import { redactContext, scrubEmails } from './redact';
@@ -40,11 +41,14 @@ export interface CaptureOptions {
 }
 
 // Routes whose failures are treated as CRITICAL — drives Phase-4 first-occurrence alerting.
-// Tunable allowlist; see OBSERVABILITY_ERROR_TRACKING_PLAN.md open-decision #1.
+// Allowlist locked by the owner 2026-06-10 (OBSERVABILITY_ERROR_TRACKING_PLAN.md §14.6):
+// payments/billing · auth · tournament registration · org creation (a failed signup is a lost
+// customer). Tune here; alerts stay de-noised regardless (one email per issue transition).
 const CRITICAL_ROUTE_PATTERNS: RegExp[] = [
   /stripe|billing|webhook|checkout|payment/i,
   /\bauth\b|login|signup|sign-in/i,
   /\/api\/register\b/i,
+  /\/api\/org\/create\b/i,
 ];
 
 const MAX_STACK = 8000;
@@ -97,7 +101,7 @@ export async function captureError(err: unknown, opts: CaptureOptions = {}): Pro
       `[observability] ${severity} ${route ?? '?'} ${name}: ${safeMessage ?? ''} (fp=${fp}${requestId ? ` req=${requestId}` : ''})`,
     );
 
-    const { error } = await supabaseAdmin.rpc('record_error_event', {
+    const { data, error } = await supabaseAdmin.rpc('record_error_event', {
       p_fingerprint: fp,
       p_title: opts.title ?? `${name}${route ? ` @ ${route}` : ''}`,
       p_error_name: name,
@@ -119,7 +123,26 @@ export async function captureError(err: unknown, opts: CaptureOptions = {}): Pro
       p_user_agent: opts.userAgent ?? null,
       p_context: context,
     });
-    if (error) console.error('[observability] record_error_event failed:', error.message);
+    if (error) {
+      console.error('[observability] record_error_event failed:', error.message);
+    } else if (data && typeof data === 'object' && !Array.isArray(data)) {
+      // Phase-4 critical alerting. The object check is deliberate: if the code ever outruns
+      // migration 122 (pre-122 RPC returns a uuid string), alerting silently skips while
+      // capture keeps working. AWAITED, not fire-and-forget: maybeSendCriticalAlert never
+      // rejects (its whole body is wrapped in try/catch), and awaiting is required on Amplify's
+      // Lambda runtime — a detached promise can be frozen when the handler returns and the
+      // first-occurrence email (the entire point of the alert) would never be sent. The cost is
+      // one-time email latency on the rare critical error path (de-noised to one send per issue).
+      await maybeSendCriticalAlert(data as RecordErrorFlags, source, env, {
+        title: opts.title ?? `${name}${route ? ` @ ${route}` : ''}`,
+        errorName: name,
+        message: safeMessage,
+        route,
+        method,
+        orgSlug,
+        requestId,
+      });
+    }
   } catch (captureErr) {
     // Capture must NEVER affect the request path.
     try {

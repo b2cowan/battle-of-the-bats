@@ -12,6 +12,7 @@ frontend:
         - echo "RESEND_API_KEY=$RESEND_API_KEY" >> .env.production
         - echo "RESEND_FROM=$RESEND_FROM" >> .env.production
         - echo "PLATFORM_ADMIN_EMAILS=$PLATFORM_ADMIN_EMAILS" >> .env.production
+        - echo "OBSERVABILITY_ENV=$OBSERVABILITY_ENV" >> .env.production
         - echo "NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL" >> .env.production
         - echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env.production
         - echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> .env.production

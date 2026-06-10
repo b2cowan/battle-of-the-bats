@@ -3,6 +3,8 @@
   "generated": "2026-06-08",
   "sealedDomains": [],
   "sealedTables": [
+    "accounting_entries",
+    "accounting_ledgers",
     "announcements",
     "basic_coach_team_announcements",
     "basic_coach_team_events",
@@ -11,9 +13,15 @@
     "basic_coach_team_registrations",
     "basic_coach_team_users",
     "basic_coach_teams",
+    "billing_retained_records",
+    "billing_retention_intents",
+    "budget_categories",
+    "budget_items",
     "diamonds",
     "divisions",
     "games",
+    "import_batch_rows",
+    "import_batches",
     "league_divisions",
     "league_email_log",
     "league_games",
@@ -23,15 +31,33 @@
     "league_seasons",
     "league_teams",
     "org_audit_log",
+    "org_budget_lines",
+    "org_budget_periods",
     "org_internal_notes",
     "org_member_rep_group_scopes",
     "org_member_tournament_assignments",
     "org_overrides",
+    "org_payees",
     "org_public_site_content",
     "org_venue_facilities",
     "org_venues",
     "organization_members",
     "organizations",
+    "plan_config_overrides",
+    "plan_gating",
+    "platform_addon_catalog",
+    "platform_admin_visits",
+    "platform_audit_log",
+    "platform_bulk_operations",
+    "platform_catalog_campaigns",
+    "platform_catalog_change_applications",
+    "platform_catalog_change_requests",
+    "platform_events",
+    "platform_metric_snapshots",
+    "platform_plan_module_entitlements",
+    "platform_plan_versions",
+    "platform_user_notes",
+    "platform_users",
     "pool_slots",
     "pools",
     "rep_allocation_installments",
@@ -63,6 +89,7 @@
     "rule_items",
     "rules",
     "schedule_facility_lanes",
+    "stripe_prices",
     "team_entitlements",
     "team_org_links",
     "team_workspace_claims",
@@ -75,41 +102,14 @@
     "venue_facilities"
   ],
   "acknowledgedTables": {
-    "accounting_entries": "pending-documentation (Accounting)",
-    "accounting_ledgers": "pending-documentation (Accounting)",
-    "billing_retained_records": "pending-documentation (Accounting)",
-    "billing_retention_intents": "pending-documentation (Accounting)",
-    "budget_categories": "pending-documentation (Accounting)",
-    "budget_items": "pending-documentation (Accounting)",
     "early_access_leads": "pending-documentation (CRM)",
     "email_batches": "pending-documentation (Notifications & Push)",
     "email_sends": "pending-documentation (Notifications & Push)",
     "fan_push_subscriptions": "pending-documentation (Notifications & Push)",
-    "import_batch_rows": "pending-documentation (Platform admin)",
-    "import_batches": "pending-documentation (Platform admin)",
     "notification_preferences": "pending-documentation (Notifications & Push)",
     "notifications": "pending-documentation (Notifications & Push)",
-    "org_budget_lines": "pending-documentation (Accounting)",
-    "org_budget_periods": "pending-documentation (Accounting)",
-    "org_payees": "pending-documentation (Accounting)",
-    "plan_config_overrides": "pending-documentation (Platform admin)",
-    "plan_gating": "pending-documentation (Platform admin)",
-    "platform_addon_catalog": "pending-documentation (Platform admin)",
-    "platform_admin_visits": "pending-documentation (Platform admin)",
-    "platform_audit_log": "pending-documentation (Platform admin)",
-    "platform_bulk_operations": "pending-documentation (Platform admin)",
-    "platform_catalog_campaigns": "pending-documentation (Platform admin)",
-    "platform_catalog_change_applications": "pending-documentation (Platform admin)",
-    "platform_catalog_change_requests": "pending-documentation (Platform admin)",
     "platform_email_templates": "pending-documentation (Notifications & Push)",
-    "platform_events": "pending-documentation (Platform admin)",
-    "platform_metric_snapshots": "pending-documentation (Platform admin)",
-    "platform_plan_module_entitlements": "pending-documentation (Platform admin)",
-    "platform_plan_versions": "pending-documentation (Platform admin)",
-    "platform_user_notes": "pending-documentation (Platform admin)",
-    "platform_users": "pending-documentation (Platform admin)",
     "push_subscriptions": "pending-documentation (Notifications & Push)",
-    "stripe_prices": "pending-documentation (Stripe / Billing)",
     "tournament_notification_preferences": "pending-documentation (Notifications & Push)",
     "tournament_roster_players": "pending-documentation (Tournaments & Registration)"
   },
@@ -407,6 +407,115 @@
     ],
     "league_notification_log": [
       "id"
+    ],
+    "accounting_ledgers": [
+      "id",
+      "created_at"
+    ],
+    "accounting_entries": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "org_payees": [
+      "id",
+      "created_at"
+    ],
+    "budget_categories": [
+      "id",
+      "created_at"
+    ],
+    "budget_items": [
+      "id",
+      "created_at"
+    ],
+    "org_budget_lines": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "org_budget_periods": [
+      "id",
+      "created_at"
+    ],
+    "billing_retention_intents": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "billing_retained_records": [
+      "id"
+    ],
+    "stripe_prices": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "platform_users": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "platform_audit_log": [
+      "id",
+      "created_at"
+    ],
+    "platform_user_notes": [
+      "id",
+      "created_at"
+    ],
+    "platform_admin_visits": [
+      "id"
+    ],
+    "platform_events": [
+      "id",
+      "created_at"
+    ],
+    "plan_gating": [
+      "updated_at"
+    ],
+    "plan_config_overrides": [
+      "id",
+      "updated_at"
+    ],
+    "platform_plan_versions": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "platform_plan_module_entitlements": [
+      "updated_at"
+    ],
+    "platform_addon_catalog": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "platform_catalog_change_requests": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "platform_catalog_change_applications": [
+      "id"
+    ],
+    "platform_catalog_campaigns": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "platform_bulk_operations": [
+      "id",
+      "created_at"
+    ],
+    "platform_metric_snapshots": [
+      "id"
+    ],
+    "import_batches": [
+      "created_at"
+    ],
+    "import_batch_rows": [
+      "created_at"
     ]
   }
 }

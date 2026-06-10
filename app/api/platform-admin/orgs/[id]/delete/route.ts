@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformAdmin } from '@/lib/platform-auth';
+import { requireSuperAdmin } from '@/lib/platform-auth';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { sendEmail, orgClosedHtml } from '@/lib/email';
@@ -17,27 +17,12 @@ type OrgRow = {
   stripe_customer_id: string | null;
 };
 
-async function requireSuperAdmin(req: NextRequest) {
-  const auth = await requirePlatformAdmin();
-  if (auth.response) return { auth: null, response: auth.response };
-  if (auth.role !== 'super_admin') {
-    return {
-      auth: null,
-      response: NextResponse.json(
-        { error: 'Organization deletion requires super admin access.' },
-        { status: 403 }
-      ),
-    };
-  }
-  return { auth, response: null };
-}
-
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { auth, response } = await requireSuperAdmin(_req);
-  if (response) return response;
+  const auth = await requireSuperAdmin();
+  if (auth.response) return auth.response;
 
   const { id } = await params;
 
@@ -94,8 +79,8 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { auth, response } = await requireSuperAdmin(req);
-  if (response) return response;
+  const auth = await requireSuperAdmin();
+  if (auth.response) return auth.response;
 
   const { id } = await params;
   const body = await req.json().catch(() => ({})) as {
@@ -160,7 +145,7 @@ export async function DELETE(
   // Write the audit record with org_id: null so it doesn't create a FK reference
   // to the org row we're about to delete. The org details are preserved in new_value.
   await writePlatformAuditLog(
-    auth!.user.email!,
+    auth.user.email!,
     null,
     'delete_organization',
     'org_slug',
@@ -208,7 +193,7 @@ export async function DELETE(
       const message = err instanceof Error ? err.message : String(err);
       console.error('[platform-admin] delete-org Stripe customer deletion failed:', message);
       await writePlatformAuditLog(
-        auth!.user.email!,
+        auth.user.email!,
         null,
         'delete_organization_stripe_customer_failed',
         'stripe_customer_id',

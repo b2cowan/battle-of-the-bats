@@ -11,7 +11,9 @@ import {
   registrationStatusDesc,
 } from '@/lib/coaches-status';
 import { buildCoachTournamentStatus } from '@/lib/coach-status-model';
+import { deriveCoachTournamentPhase } from '@/lib/coach-tournament-phase';
 import TournamentStatusBlock from '@/components/coaches/TournamentStatusBlock';
+import TeamHQ from '@/components/coaches/TeamHQ';
 import styles from './detail.module.css';
 
 type RouteParams = { params: Promise<{ teamId: string }> };
@@ -196,6 +198,22 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
       : new Date(tournament.start_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
     : null;
 
+  // 5h phase-adaptive hero. Pending/waitlist/rejected reuse the existing status copy;
+  // accepted gets the prep narrative + countdown + a read-only checklist HUD. No public
+  // links / Follow here (honesty rule — pending teams have no public profile; 5i adds the
+  // game-day bridge for published, accepted divisions only).
+  const coachPhase = deriveCoachTournamentPhase({
+    registrationStatus: team.status,
+    scheduleVisible,
+    tournamentStatus: tournament?.status ?? null,
+    startDate: tournament?.start_date ?? null,
+    endDate: tournament?.end_date ?? null,
+    today,
+  });
+  const registeredDateLabel = team.registered_at
+    ? new Date(team.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+    : null;
+
   return (
     <div className={styles.page}>
       <nav className={styles.breadcrumb}>
@@ -212,17 +230,25 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
             </p>
           )}
         </div>
-        <span className={`badge ${statusBadge} ${styles.statusBadge}`}>{statusLabel}</span>
+        {/* Status now lives in the phase-aware hero pill below (no duplicate header badge). */}
       </div>
 
-      <div className={`card ${styles.statusCard}`}>
-        <p className={styles.statusDesc}>{statusDesc}</p>
-        {team.status === 'accepted' && coachContactEmail && (
-          <p className={styles.contactLine}>
-            Questions? <a href={`mailto:${coachContactEmail}`}>{coachContactEmail}</a>
-          </p>
-        )}
-      </div>
+      <TeamHQ
+        variant="tournament"
+        phase={coachPhase}
+        statusLabel={statusLabel}
+        statusBadgeClass={statusBadge}
+        statusDesc={statusDesc}
+        teamName={team.name}
+        tournamentName={tournament?.name ?? null}
+        orgName={org?.name ?? null}
+        startDate={tournament?.start_date ?? null}
+        dateRangeLabel={dateRange}
+        contactEmail={coachContactEmail}
+        status={coachStatus}
+        showCheckIn={isGameDayOrLater}
+        registeredDateLabel={registeredDateLabel}
+      />
 
       {coachStatus && (
         <section className={styles.section}>

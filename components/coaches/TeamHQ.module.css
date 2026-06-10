@@ -1,0 +1,234 @@
+/* ── Coaches Portal — shared Team HQ stat strip ───────────────────────────────
+   Lifted verbatim from app/coaches/team/[basicTeamId]/team.module.css (slice 5g)
+   so the standalone team home and the upcoming tournament-coach hero (5h/5i)
+   render on one shell. Shipped design-system tokens only (no ghost --text-*).
+   ⚠ When 5h/5i add a `tournament` variant, keep these rules the single source —
+   re-run the standalone pixel-diff after any change here. */
+
+/* Team HQ stat strip */
+.hqStrip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.hqItem {
+  display: flex;
+  gap: 0.65rem;
+  min-width: 0;
+  min-height: 108px;
+  padding: 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--highlight-top);
+}
+
+.hqIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  border-radius: var(--radius-sm);
+}
+
+.hqItem > div:last-child {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.hqLabel {
+  color: var(--white-40);
+  font-family: var(--font-data, monospace);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hqItem strong {
+  color: var(--white);
+  font-size: 1.08rem;
+  font-weight: 850;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.hqItem p {
+  margin: 0;
+  color: var(--white-60);
+  font-size: 0.76rem;
+  line-height: 1.35;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+@media (max-width: 700px) {
+  .hqStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .hqItem {
+    min-height: 0;
+  }
+}
+
+@media (min-width: 701px) and (max-width: 1120px) {
+  .hqStrip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ── Tournament-coach hero (5h) ───────────────────────────────────────────────
+   Phase-adaptive hero on the tournament record. `--team-color` is set inline from
+   lib/team-color so the monogram + wash track the team's deterministic hue. */
+.hero {
+  margin-bottom: 2rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--highlight-top);
+  /* Faint team-hue wash, dark-safe (mixes toward transparent, not white). */
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--team-color, var(--logic-lime)) 9%, transparent),
+    transparent 62%
+  );
+}
+
+.heroHead {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.6rem;
+}
+
+.heroMonogram {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--team-color, var(--logic-lime));
+  color: var(--white);
+  font-family: var(--font-data, monospace);
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.heroHeadText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.heroTitle {
+  margin: 0;
+  color: var(--white);
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.heroSub {
+  margin: 0;
+  color: var(--white-60);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.heroCountdown {
+  margin: 0.35rem 0 0.6rem;
+  color: var(--white-80);
+  font-size: 0.92rem;
+}
+
+.heroCountdown strong,
+.heroCountdown span {
+  color: var(--logic-lime);
+  font-family: var(--font-data, monospace);
+  font-weight: 800;
+}
+
+.heroDates {
+  margin: 0 0 0.6rem;
+  color: var(--white-40);
+  font-size: 0.8rem;
+}
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.9rem 0 0;
+  border-top: 1px solid var(--border);
+  list-style: none;
+}
+
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.86rem;
+  color: var(--white-60);
+}
+
+.checkIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  color: var(--white-40);
+}
+
+.checkItemDone .checkIcon {
+  color: var(--logic-lime);
+}
+
+.checkLabel {
+  font-weight: 600;
+}
+
+.checkItemDone .checkLabel {
+  color: var(--white);
+}
+
+.checkState {
+  margin-left: auto;
+  color: var(--white-40);
+  font-family: var(--font-data, monospace);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+.checkItemDone .checkState {
+  color: var(--white-60);
+}
+
+.heroContact {
+  margin: 0.9rem 0 0;
+  color: var(--white-40);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.heroContact a {
+  color: var(--logic-lime);
+}

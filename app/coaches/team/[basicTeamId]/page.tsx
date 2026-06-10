@@ -1,6 +1,5 @@
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarClock, CircleDollarSign, Megaphone, Trophy, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import {
@@ -24,7 +23,7 @@ import ScheduleEditor from '@/components/coaches/ScheduleEditor';
 import FeeEditor from '@/components/coaches/FeeEditor';
 import AnnouncementEditor from '@/components/coaches/AnnouncementEditor';
 import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
-import LocalDateTime from '@/components/coaches/LocalDateTime';
+import TeamHQ from '@/components/coaches/TeamHQ';
 import { registrationStatusBadge, registrationStatusLabel } from '@/lib/coaches-status';
 import shared from '../../coaches-portal.module.css';
 import styles from './team.module.css';
@@ -37,14 +36,6 @@ function formatCalendarDate(value: string, options: Intl.DateTimeFormatOptions):
     ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
     : new Date(value);
   return date.toLocaleDateString('en-CA', options);
-}
-
-function formatMoney(amount: number): string {
-  return new Intl.NumberFormat('en-CA', {
-    style: 'currency',
-    currency: 'CAD',
-    maximumFractionDigits: 2,
-  }).format(amount);
 }
 
 type TeamEventSummary = {
@@ -132,54 +123,16 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         </div>
       </div>
 
-      <section className={styles.hqStrip} aria-label="Team HQ">
-        <div className={styles.hqItem}>
-          <div className={styles.hqIcon}><Users size={17} aria-hidden /></div>
-          <div>
-            <span className={styles.hqLabel}>Roster</span>
-            <strong>{players.length}</strong>
-            <p>{players.length === 1 ? '1 player' : `${players.length} players`}</p>
-          </div>
-        </div>
-        <div className={styles.hqItem}>
-          <div className={styles.hqIcon}><CalendarClock size={17} aria-hidden /></div>
-          <div>
-            <span className={styles.hqLabel}>Schedule</span>
-            <strong>{nextEvent ? 'Next' : 'None'}</strong>
-            <p>
-              {nextEvent ? (
-                <>
-                  {nextEvent.title} - <LocalDateTime value={nextEvent.startsAt} />
-                </>
-              ) : 'No upcoming events'}
-            </p>
-          </div>
-        </div>
-        <div className={styles.hqItem}>
-          <div className={styles.hqIcon}><CircleDollarSign size={17} aria-hidden /></div>
-          <div>
-            <span className={styles.hqLabel}>Fees</span>
-            <strong>{formatMoney(unpaidTotal)}</strong>
-            <p>{unpaidFees.length === 1 ? '1 unpaid fee' : `${unpaidFees.length} unpaid fees`}</p>
-          </div>
-        </div>
-        <div className={styles.hqItem}>
-          <div className={styles.hqIcon}><Megaphone size={17} aria-hidden /></div>
-          <div>
-            <span className={styles.hqLabel}>Announcements</span>
-            <strong>{announcementRecipientSummary.recipientCount}</strong>
-            <p>{announcementRecipientSummary.recipientCount === 1 ? 'contact ready' : 'contacts ready'}</p>
-          </div>
-        </div>
-        <div className={styles.hqItem}>
-          <div className={styles.hqIcon}><Trophy size={17} aria-hidden /></div>
-          <div>
-            <span className={styles.hqLabel}>Tournaments</span>
-            <strong>{history.length}</strong>
-            <p>{latestHistoryLabel}</p>
-          </div>
-        </div>
-      </section>
+      <TeamHQ
+        variant="standalone"
+        rosterCount={players.length}
+        nextEvent={nextEvent ? { title: nextEvent.title, startsAt: nextEvent.startsAt } : null}
+        unpaidTotal={unpaidTotal}
+        unpaidCount={unpaidFees.length}
+        recipientCount={announcementRecipientSummary.recipientCount}
+        historyCount={history.length}
+        latestHistoryLabel={latestHistoryLabel}
+      />
 
       {/* Master roster — the coach's primary owned data; leads the page. Identity only
           (name / jersey / optional contact / consent-gated DOB) — attendance, lineups, and

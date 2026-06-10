@@ -48,33 +48,8 @@
   margin: 0;
 }
 
-.statusBadge {
-  flex-shrink: 0;
-  margin-top: 0.35rem;
-}
-
-/* ── Status card ──────────────────────────────────────────────────────────── */
-.statusCard {
-  margin-bottom: 2rem;
-  padding: 1.25rem 1.5rem;
-}
-
-.statusDesc {
-  color: var(--white-80);
-  font-size: 0.9rem;
-  line-height: 1.55;
-  margin: 0 0 0.5rem;
-}
-
-.contactLine {
-  font-size: 0.82rem;
-  color: var(--white-40);
-  margin: 0.5rem 0 0;
-}
-
-.contactLine a {
-  color: var(--logic-lime);
-}
+/* The status card was replaced by the shared phase-adaptive TeamHQ tournament hero
+   (slice 5h) — its styles live in components/coaches/TeamHQ.module.css. */
 
 /* ── Sections ─────────────────────────────────────────────────────────────── */
 .section {

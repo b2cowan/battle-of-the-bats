@@ -6,6 +6,7 @@ import {
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { captureError } from '@/lib/observability';
 
 function tournamentLockedResponse() {
@@ -279,6 +280,15 @@ export async function POST(req: Request) {
         });
       }
 
+      // FieldLogicHQ staff are NOT coaches — never let a staff email become a team contact
+      // (mirrors the public register route; the email is optional, so this only fires when set).
+      if (team.email?.trim() && (await isPlatformAdminEmail(team.email.trim()))) {
+        return new Response(JSON.stringify({ error: "That email belongs to FieldLogicHQ staff and can't be used as a team contact." }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
       const duplicateTeam = await findDuplicateTournamentTeam({
         tournamentId: team.tournamentId,
         divisionId: team.divisionId,
@@ -324,6 +334,8 @@ export async function POST(req: Request) {
             tournamentName: tournament?.name ?? 'Tournament',
             paymentStatus,
             contactEmail: tournament?.contact_email ?? ctx.org.contactEmail ?? undefined,
+            registrationId: id,
+            coachEmail: team.email.trim(),
           })
         );
       }

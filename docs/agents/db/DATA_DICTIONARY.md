@@ -2,7 +2,7 @@
 
 > **Owned by:** `/db` (field lookups, operational queries) + `/dba` (architecture, migrations, snapshots). **Never archived** — this is a living agent reference.
 > **What this is:** the *semantic* layer — for each meaningful column, **what it means, what reads/writes it (file:line), how it relates to other fields, and its gotchas**. Structure (types/constraints) is owned by the JSON snapshots; this doc does **not** restate it.
-> **Current as of:** code commit `6deac4a` (branch `feat/free-tier-coaches`) · schema snapshot **2026-06-10** (dev 113 / prod 113 tables). `file:line` refs are relative to that commit — re-verify if the tree has moved (see the branch-drift note below). _(Tournaments & Registration + Coaches domains were originally authored at `ad9dc66`; Org / Platform core and Rep teams / team workspaces — operations half — at `5479605`; the **League / house-league** domain was verified at `6deac4a`. Note: the working tree carries uncommitted `lib/db.ts` edits that shift the league helper region ~+37 lines vs `6deac4a` — League refs are pinned to the committed tree.)_
+> **Current as of:** code commit `cbcf7c7` (branch `feat/free-tier-coaches`) · schema snapshot **2026-06-10** (dev 113 / prod 113 tables). `file:line` refs are relative to that commit — re-verify if the tree has moved. _(Tournaments & Registration + Coaches domains were originally authored at `ad9dc66`; Org / Platform core and Rep teams / team workspaces — operations half — at `5479605`; **League / house-league** at `6deac4a`; **Accounting** + **Stripe / Billing** + **Platform admin** at `cbcf7c7` (Platform admin's `file:line` refs reflect the working tree — see that domain's stamp). The earlier League `lib/db.ts` +37 working-tree shift was resolved when the league `org_id` fix landed in `cbcf7c7` — the tree is now clean.)_
 > **Companions:** [schema-snapshots/](schema-snapshots/) (structure — the authoritative source) · [DB_ARCHITECTURE_REVIEW.md](DB_ARCHITECTURE_REVIEW.md) (design-level findings) · [DRIFT_dev_vs_prod.md](schema-snapshots/DRIFT_dev_vs_prod.md) (dev≠prod catalogue).
 
 ---
@@ -433,7 +433,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`public_hidden_pages`** (jsonb, NOT NULL, default `'[]'`) — array of **hidden** `PublicPageKey` (`news|schedule|standings|teams|rules|register`, [lib/public-pages.ts:4](../../../lib/public-pages.ts#L4)). **Dual purpose** — nav visibility (`isPublicPageEnabled`) **and** registration gate (gotcha 1). `normalizeHiddenPublicPages` filters to known keys. _Dev/prod:_ identical (both default `'[]'`).
 
 <!-- dict:col:tournaments.settings -->
-**`settings`** (jsonb, NOT NULL, default `'{}'`) — schema-less per-tournament prefs; new keys need no migration (add to `TournamentSettings`, [lib/types.ts:28](../../../lib/types.ts#L28)). Merge-patched via `updateTournamentSettings` (read-merge-write). **Key catalog:** `format` (`round_robin_playoffs|playoff_only`), `rulesLayout` (`columns|single`), `resourcesLayout` (`list|grid`), `game_duration_minutes` (default 90, read in `resolveGameTiming`), `buffer_minutes` (default 15), `schedule_travel_venue_buffer_minutes`, `schedule_travel_facility_buffer_minutes`, `game_timing_scope`, `tie_breakers`, `tie_breaker_scope`, `fee_scope` (incl. `'free'`; shadows `fee_schedule_mode`), `show_fees_on_register`, `payment_instructions`, `payment_instructions_on_form`, `coach_email_confirmation`, `coach_email_acceptance`, `coach_email_rejection`, `coach_email_payment` (per-tournament on/off for the automatic transactional coach emails — absent/`true` = enabled; only explicit `false` disables; read via `coachEmailEnabled` [lib/email.ts], set in Event Settings → Notifications & Contact). **Gotcha:** `playoff_game_duration_minutes` is **NOT** here anymore — removed by mig 112 in favor of per-game `games.duration_minutes`.
+**`settings`** (jsonb, NOT NULL, default `'{}'`) — schema-less per-tournament prefs; new keys need no migration (add to `TournamentSettings`, [lib/types.ts:28](../../../lib/types.ts#L28)). Merge-patched via `updateTournamentSettings` (read-merge-write). **Key catalog:** `format` (`round_robin_playoffs|playoff_only`), `rulesLayout` (`columns|single`), `resourcesLayout` (`list|grid`), `game_duration_minutes` (default 90, read in `resolveGameTiming`), `buffer_minutes` (default 15), `schedule_travel_venue_buffer_minutes`, `schedule_travel_facility_buffer_minutes`, `game_timing_scope`, `tie_breakers` (ordered breaker list; values `h2h|rd|rf|ra|coin` — **may be a subset** since organizers add/remove breakers; `coin` = Coin Toss, a **terminal** admin-resolved breaker; canonical vocab in [lib/tie-breakers.ts](../../../lib/tie-breakers.ts)), `tie_breaker_scope`, `max_run_diff_per_game` (int 1–99 or null/0/absent = no cap — caps each game's **Run Diff** contribution for standings; e.g. cap 7 → a 14-0 win counts as +7. Caps the RD column ONLY: RF/RA stay raw totals, so RF − RA may ≠ displayed RD. Divisions may override via `playoff_config.maxRunDiffPerGame`, governed by `tie_breaker_scope`), `fee_scope` (incl. `'free'`; shadows `fee_schedule_mode`), `show_fees_on_register`, `payment_instructions`, `payment_instructions_on_form`, `coach_email_confirmation`, `coach_email_acceptance`, `coach_email_rejection`, `coach_email_payment` (per-tournament on/off for the automatic transactional coach emails — absent/`true` = enabled; only explicit `false` disables; read via `coachEmailEnabled` [lib/email.ts], set in Event Settings → Notifications & Contact), `roster_require`, `roster_require_dob`, `roster_require_jersey`, `roster_require_waiver` (bool), `roster_waiver_text` (text ≤2000; `''`/absent = the shared `DEFAULT_ROSTER_WAIVER_TEXT` in [lib/roster-requirements.ts](../../../lib/roster-requirements.ts) — the statement the coach ticks at submit), `roster_min_players`, `roster_max_players` (int 1–99 or null = no limit; **min>max IS storable** — the UI warns but auto-saves and the merge-patch API validates each key independently, so readers must treat min>max as no-minimum / max wins, never an unsatisfiable gate) — organizer roster requirements for the Coaches-Portal **event roster submission** (Phase 5f; authored in Event Settings → Roster Requirements). **Opposite polarity from `coach_email_*`:** absent/`false` = OFF — only an explicit `true`/number activates a requirement, so legacy tournaments require nothing; sub-keys apply only when `roster_require=true`. These gate the per-event `tournament_roster_players` snapshot fields ONLY — never the coach's master `basic_coach_team_players` roster (stays identity-only, DOB consent-gated). Waiver = checkbox acknowledgment at submit — the statement text lives in settings but no signed record/document is stored (V1). **Gotcha:** `playoff_game_duration_minutes` is **NOT** here anymore — removed by mig 112 in favor of per-game `games.duration_minutes`.
 
 <!-- dict:col:tournaments.logo_url -->
 <!-- dict:col:tournaments.hero_banner_url -->
@@ -499,8 +499,9 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`requires_pool_selection`** (bool, default false) — registrant must pick a pool vs auto-assign. **Dev/prod drift:** dev NOT NULL / prod nullable (treat NULL as falsy).
 
 <!-- dict:col:divisions.playoff_config -->
-**`playoff_config`** (jsonb) — `{type, crossover, hasThirdPlace, teamsQualifying?, format?, grandFinalReset?, splitConfigs?, tierConfigs?}` for the bracket. **Two conflicting defaults:** prod column default omits `teamsQualifying`, but `saveDivision`'s write fallback adds `teamsQualifying:4` ([lib/db.ts:1185](../../../lib/db.ts#L1185)); dev has no column default. Consumers must not assume `teamsQualifying` exists. **Dev/prod drift:** Finding #25.
+**`playoff_config`** (jsonb) — `{type, crossover, hasThirdPlace, teamsQualifying?, format?, grandFinalReset?, splitConfigs?, tierConfigs?, tieBreakers?, maxRunDiffPerGame?, coinTossResults?}` for the bracket + per-division standings rules. **Two conflicting defaults:** prod column default omits `teamsQualifying`, but `saveDivision`'s write fallback adds `teamsQualifying:4` ([lib/db.ts:1185](../../../lib/db.ts#L1185)); dev has no column default. Consumers must not assume `teamsQualifying` exists. **Dev/prod drift:** Finding #25.
 - **`crossover`** ∈ `standard | reseed | none | tiers`. `none` runs one bracket per **pool** (config in `splitConfigs`, keyed by pool id). **`tiers`** (added on `feat/free-tier-coaches`) splits one division's **overall** standings into N contiguous tiered brackets defined by **`tierConfigs`**: `{name, fromSeed, toSeed, format?, hasThirdPlace?, grandFinalReset?}[]` — each tier becomes an independent bracket (its own `games.bracket_id`) whose `Seed #N` placeholders are **global** (resolved from overall standings by `advancePlayoffs`). Ranges are contiguous from seed #1, names unique; the play-in (e.g. seeds 4 v 5 in a 5-seed tier) is the natural bracket bye structure, not a separate concept. Validated by `validateTierRanges` ([lib/playoff-bracket.ts](../../../lib/playoff-bracket.ts)). Value-shape change only — **no migration** (existing JSONB column).
+- **`tieBreakers`** (per-division override of the tournament tie-breaker order; same `h2h|rd|rf|ra|coin` vocab + subset rules). **`maxRunDiffPerGame`** (per-division run-diff cap; `null`/absent = inherit `tournaments.settings.max_run_diff_per_game`). **`coinTossResults`** (`Record<sortedTiedTeamIdsJoinedBy'|' , orderedTeamIds[]>`) — admin-recorded coin-toss outcomes consumed when `coin` is the deciding breaker; **self-invalidating** (the key is the sorted tied set, so it stops matching if a score change alters who's tied). Written by the `record-coin-toss` action ([app/api/admin/divisions/route.ts](../../../app/api/admin/divisions/route.ts), read-merge-write). Ranking lives in pure `computeTournamentStandings` ([lib/tie-breakers.ts](../../../lib/tie-breakers.ts)). Value-shape change only — **no migration**.
 
 <!-- dict:col:divisions.deposit_amount -->
 <!-- dict:col:divisions.deposit_due_date -->
@@ -2953,9 +2954,1181 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 
 ---
 
+# Domain: Accounting
+
+The org's **internal double-entry bookkeeping** plus two satellites filed here by the coverage classifier. **Three sub-systems, distinct despite sharing a domain:** (1) the **ledger** — `accounting_ledgers` (one per org/tournament/team/league-season) holding `accounting_entries` (income/expense/transfer lines), paired transfers via the `create_accounting_transfer` RPC; (2) the **shared chart of accounts + org budget** — `budget_categories` → `budget_items` (a library co-owned with the Rep finance team budget) feeding `org_budget_lines` (annual, `season_year`-keyed) → `org_budget_periods`; (3) the **billing data-retention lifecycle** — `billing_retention_intents` + `billing_retained_records`, which soft-retain an org's data on downgrade/cancellation, then warn → pending-purge → restore. **All money is internal double-entry — NO `stripe_*` columns anywhere** (the Stripe billing *trigger* that fires retention/cancellation is the Stripe/Billing phase; the columns + mechanics are here). The Rep finance (`rep_*`) and League (`league_*`) domains are **consumers** of this ledger/chart — cross-referenced, not redocumented.
+
+> _Last verified: 2026-06-10 @ snapshot 2026-06-10, commit `cbcf7c7` (branch `feat/free-tier-coaches`). Working tree clean — file:line refs match the committed tree. All 9 tables are column-, constraint-, CHECK-, and index-identical dev↔prod (zero drift). Live `information_schema`/`pg_trigger` probe (2026-06-10, dev+prod): **NO triggers on any accounting table** — `updated_at` is code-maintained, double-entry integrity is RPC+CHECK-enforced (not trigger)._
+
+### Gotchas first (the cross-cutting traps)
+
+- **Money is DOLLARS, never integer cents** — every amount is `numeric` dollars-and-cents; `mapEntry` does `Number(row.amount)` with **no `*100`/`/100`** anywhere ([lib/db.ts:2880](../../../lib/db.ts#L2880)). `accounting_entries.amount` is `numeric(12,2)`; budget amounts are `numeric(10,2)`. Consistent with the Rep-finance convention.
+- **`accounting_entries.amount` is ALWAYS positive; direction is `entry_type`, not sign.** CHECK `amount > 0`. Inflow = `income`+`transfer_in`; outflow = `expense`+`transfer_out` ([getLedgerSummary lib/db.ts:2847](../../../lib/db.ts#L2847)). Never store a negative entry.
+- **Transfers are paired legs created ONLY by the `create_accounting_transfer` RPC** — never by hand. The manual entry route restricts `entry_type` to `income|expense` ([ledgers/[ledgerId]/entries/route.ts:11](../../../app/api/admin/accounting/ledgers/[ledgerId]/entries/route.ts#L11)); the RPC inserts a `transfer_out`+`transfer_in` pair cross-linked via the `linked_entry_id` self-FK (see the Functions note). To change a transfer you **void and re-create** (the edit route refuses to touch a transfer leg).
+- **`void` is a soft-delete** — DELETE sets `status='void'` and keeps the row for audit; `getLedgerSummary` excludes void. There is no hard delete of an entry.
+- **The chart of accounts (`budget_categories`/`budget_items`) is SHARED and the `org_id IS NULL` rows are platform-seeded read-only defaults.** An org's effective list = defaults ∪ its own customs (`.or('org_id.is.null,org_id.eq.<orgId>')`). The **same** categories/items feed BOTH `org_budget_lines` (this domain) and `rep_budget_lines` (Rep finance) — cross-domain.
+- **THE DUAL-BUDGET-LINE TRAP (org side).** `org_budget_lines` is the ORG annual budget keyed by **integer `season_year`** (e.g. 2026); `rep_budget_lines` (Rep finance, documented) is the per-team budget keyed by **uuid `program_year_id`**. Different tables sharing the chart. The FKs that point at THIS table: `rep_cost_allocations.source_budget_line_id` + `rep_team_payment_requests.budget_line_id` → `org_budget_lines`.
+- **`accounting_entries.category` and `org_payees` exclusivity are convention, not constraints.** `category` is **free text** (not an FK to `budget_categories`); `payee_id` (→`org_payees`) vs `payee_payer` (free text) are **mutually exclusive only by UI convention — no DB CHECK**. And **budget-vs-actual does NOT match actuals per line/category** — it sums org-wide posted `expense` entries for the year and subtracts from the total budget ("not yet mapped per-line — Phase J").
+- **The billing-retention lifecycle lives on `billing_retained_records.retained_state`, NOT on the intent.** `billing_retention_intents.status` is **frozen at `'applied'`** (4 of 5 enum values are dead). The **sweep is MANUAL** (`processBillingRetentionExpiry`, no pg_cron) and only advances `retained_inactive → pending_purge` + sends warnings; **`'purged'` is a SUPERSEDE marker, not data deletion** (actual deletion only via the super-admin delete-org path).
+- **RLS is ENABLED with real org-member/owner-treasurer policies on every table — but every runtime path uses `supabaseAdmin` (service-role, RLS-bypassing).** Auth is **app-layer**: org accounting routes gate on `module_accounting` capability+entitlement + role `owner`/`treasurer` (items also allow `coach`); the retention routes are **platform-admin** (`manage_billing` / `super_admin`). The RLS policies are defense-in-depth.
+- **Dev/prod:** all 9 tables zero-drift (columns, constraints, CHECKs, indexes, RLS identical).
+
+---
+
+## `accounting_ledgers`
+<!-- dict:table:accounting_ledgers -->
+
+**Purpose:** the **container** side of the org's double-entry books — one ledger per financial entity: the org's general ledger (`entity_type='org'`, `entity_id` NULL), or a per-tournament / per-rep-team / per-league-season ledger. Mapped by `mapLedger` ([lib/db.ts:2861](../../../lib/db.ts#L2861)).
+
+**Gotchas (read first):**
+1. **`UNIQUE(org_id, entity_type, entity_id)`** — one ledger per entity; the duplicate-insert path maps Postgres `23505` → **409** ([ledgers/route.ts:58](../../../app/api/admin/accounting/ledgers/route.ts#L58)). `getOrCreate*` helpers ([lib/db.ts](../../../lib/db.ts): org `:2682`, tournament `:2713`, rep-team `:2734`, league-season `:3635`) find-or-create idempotently.
+2. **`entity_type='team'` means a REP team (not "rep_team").** CHECK `entity_type ∈ ('org','tournament','team','league_season')`. The **org ledger** is the row with `entity_type='org'` AND `entity_id IS NULL` (found via `.is('entity_id', null)`, [lib/db.ts:2677](../../../lib/db.ts#L2677)).
+3. **The manual-create POST only allows `org`/`tournament`** — `team`/`league_season` ledgers come only from their module helpers ([ledgers/route.ts:47](../../../app/api/admin/accounting/ledgers/route.ts#L47)).
+4. **`currency` is effectively CAD-only** and **`is_archived` is write-never** — both have no code that varies/sets them (archiving a ledger is unimplemented; `getOrgAllLedgers` filters `is_archived=false` but nothing sets it true).
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:accounting_ledgers.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — owning org; part of the UNIQUE key.
+
+<!-- dict:col:accounting_ledgers.entity_type -->
+**`entity_type`** (text, NOT NULL; CHECK `org|tournament|team|league_season`) — which kind of entity this ledger backs (`team`=rep team). Gotcha 2.
+
+<!-- dict:col:accounting_ledgers.entity_id -->
+**`entity_id`** (uuid, nullable) — the entity's id (tournament/rep-team/league-season); **NULL for the org ledger**. Logical ref (no DB FK). Part of the UNIQUE key.
+
+<!-- dict:col:accounting_ledgers.name -->
+**`name`** (text, NOT NULL) — display label (org ledger = `${orgName} — General`).
+
+<!-- dict:col:accounting_ledgers.currency -->
+**`currency`** (char(3), NOT NULL, default `'CAD'`) — never written by app code; effectively CAD-only (gotcha 4).
+
+<!-- dict:col:accounting_ledgers.is_archived -->
+**`is_archived`** (bool, NOT NULL, default false) — soft-hide flag; **no code path sets it true** (archiving unimplemented). `getOrgAllLedgers` filters it.
+
+---
+
+## `accounting_entries`
+<!-- dict:table:accounting_entries -->
+
+**Purpose:** the **line-item** side of the ledger — every income/expense/transfer line. `amount` is always positive; direction is `entry_type`. Cross-module income (e.g. league reg fees) lands here via `source_module`/`source_entity_id`. Mapped by `mapEntry` ([lib/db.ts:2880](../../../lib/db.ts#L2880)).
+
+**Gotchas (read first):**
+1. **`amount > 0` always; direction via `entry_type`** (CHECK `income|expense|transfer_in|transfer_out`). Dollars (`numeric(12,2)`), not cents; route caps ≤ 999999.99.
+2. **`transfer_in`/`transfer_out` only via the `create_accounting_transfer` RPC** (paired legs, `linked_entry_id` cross-linked). Manual POST = `income|expense` only; the edit PATCH refuses transfer legs → "void and re-create" ([ledgers/[ledgerId]/entries/[entryId]/route.ts:50-54](../../../app/api/admin/accounting/ledgers/[ledgerId]/entries/[entryId]/route.ts#L50-L54)).
+3. **DELETE is a soft-`void`** — `voidEntry` sets `status='void'`, row preserved ([lib/db.ts:2823](../../../lib/db.ts#L2823)); `getLedgerSummary` excludes void ([:2839](../../../lib/db.ts#L2839)). Already-void can't be re-voided/edited.
+4. **`category` is FREE TEXT (no FK)** — and budget-vs-actual does **not** join it to `budget_items` by name (it sums org-wide expenses). Don't treat `category` as a chart-of-accounts key.
+5. **`payee_id` (→`org_payees`) vs `payee_payer` (text) are mutually exclusive by CONVENTION only — no DB CHECK.**
+6. **`source_module`/`source_entity_id` = cross-module provenance, but only `'league_registration'` is actually written** at this commit ([lib/db.ts:3677](../../../lib/db.ts#L3677)); the migration's `module_house_league` example is aspirational/unimplemented.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:accounting_entries.ledger_id -->
+**`ledger_id`** (FK → `accounting_ledgers.id`, NOT NULL) — owning ledger; indexed `(ledger_id, entry_date DESC)` + `(ledger_id)`.
+
+<!-- dict:col:accounting_entries.entry_date -->
+**`entry_date`** (date, NOT NULL) — business date (not timestamp); validated ≤ 1 year future. League fee defaults to today.
+
+<!-- dict:col:accounting_entries.description -->
+**`description`** (text, NOT NULL) — line description (≤500 chars app-side).
+
+<!-- dict:col:accounting_entries.amount -->
+**`amount`** (numeric(12,2), NOT NULL, CHECK `> 0`) — dollars, always positive (gotcha 1).
+
+<!-- dict:col:accounting_entries.entry_type -->
+**`entry_type`** (text, NOT NULL; CHECK `income|expense|transfer_in|transfer_out`) — direction/kind; `income`/`expense` single-sided, `transfer_*` are the paired RPC legs (gotcha 2).
+
+<!-- dict:col:accounting_entries.status -->
+**`status`** (text, NOT NULL, default `'posted'`; CHECK `pending|posted|void`) — `pending`=receivable/payable unsettled, `posted`=settled, `void`=soft-cancelled (row kept). Manual create/edit allow only `posted|pending`.
+
+<!-- dict:col:accounting_entries.category -->
+**`category`** (text, nullable) — free-text label, ≤100 chars; NOT an FK (gotcha 4). League fee writes `'registration_fee'`; rep transfers write `'team_payment_to_org'`/`'team_charge_to_org'`.
+
+<!-- dict:col:accounting_entries.linked_entry_id -->
+**`linked_entry_id`** (self-FK → `accounting_entries.id` ON DELETE SET NULL, nullable) — pairs the two transfer legs (each points at the other); populated only for `transfer_*` rows (set by the RPC).
+
+<!-- dict:col:accounting_entries.source_module -->
+<!-- dict:col:accounting_entries.source_entity_id -->
+**`source_module` / `source_entity_id`** (text / uuid, nullable) — cross-module provenance; only `'league_registration'` + the `league_registrations.id` are written today (back-linked via `league_registrations.fee_entry_id`). Logical ref, no FK.
+
+<!-- dict:col:accounting_entries.created_by -->
+**`created_by`** (FK → `auth.users.id`, nullable; cross-schema gap, ON DELETE NO ACTION) — who created the entry (or `p_created_by` from the RPC).
+
+<!-- dict:col:accounting_entries.payment_method -->
+**`payment_method`** (text, nullable) — free-text method (cheque/e-transfer), ≤100 chars (added mig 033).
+
+<!-- dict:col:accounting_entries.payee_id -->
+<!-- dict:col:accounting_entries.payee_payer -->
+**`payee_id`** (FK → `org_payees.id`, nullable) / **`payee_payer`** (text, nullable, ≤200) — structured-vs-freetext payee/payer, mutually exclusive **by convention** (gotcha 5; added mig 033).
+
+<!-- dict:col:accounting_entries.notes -->
+**`notes`** (text, nullable) — free-text internal notes, ≤2000 chars (added mig 033).
+
+---
+
+## `org_payees`
+<!-- dict:table:org_payees -->
+
+**Purpose:** a reusable directory of payees/payers (vendors, people) the org pays or is paid by — a typeahead FK target for `accounting_entries.payee_id` and `rep_team_expenses.payee_id`. Created by `createOrgPayee`, searched by `searchOrgPayees` ([lib/db.ts:5571](../../../lib/db.ts#L5571)).
+
+**Gotchas (read first):**
+1. **Two scopes in one table:** `team_id IS NULL` = org-wide payee (admin-created, visible org-wide); `team_id` set (FK → `rep_teams` ON DELETE CASCADE) = team-scoped (coach-created, that team's coaches only). Team payees arise **only inside team-workspace orgs** ([coaches/[orgSlug]/payees/route.ts:47](../../../app/api/coaches/[orgSlug]/payees/route.ts#L47)).
+2. **Case-insensitive name uniqueness PER SCOPE** via two partial-unique indexes (`(org_id, lower(name)) WHERE team_id IS NULL` and `(org_id, team_id, lower(name)) WHERE team_id IS NOT NULL`); 23505 → 409.
+3. **`is_active` is a soft-delete flag, but NO route flips it false** (no deactivation/hard-delete endpoint found) — `searchOrgPayees` returns only active. Deactivation is effectively unimplemented.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:org_payees.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — owning org; indexed.
+
+<!-- dict:col:org_payees.team_id -->
+**`team_id`** (FK → `rep_teams.id` ON DELETE CASCADE, nullable) — scope discriminator (gotcha 1); indexed.
+
+<!-- dict:col:org_payees.name -->
+**`name`** (text, NOT NULL; CHECK 1–200 chars, trimmed) — payee name; case-insensitive uniqueness per scope (gotcha 2).
+
+<!-- dict:col:org_payees.notes -->
+**`notes`** (text, nullable) — free-text note.
+
+<!-- dict:col:org_payees.is_active -->
+**`is_active`** (bool, NOT NULL, default true) — soft-delete flag; only active appear in search; no writer flips it (gotcha 3).
+
+<!-- dict:col:org_payees.created_by -->
+**`created_by`** (FK → `auth.users.id`, nullable; cross-schema gap) — who created it.
+
+---
+
+## `budget_categories`
+<!-- dict:table:budget_categories -->
+
+**Purpose:** the top level of a **shared two-level chart of accounts** (categories → items) used by BOTH the org budget planner and the rep-team budget planner. `org_id IS NULL` rows are platform-seeded read-only defaults; `org_id`-set rows are org customs.
+
+**Gotchas (read first):**
+1. **Global defaults via NULLABLE `org_id`** — 9 default categories are seeded `org_id NULL` + `is_default=true` (migration 027). An org's effective list = defaults ∪ customs (`.or('org_id.is.null,org_id.eq.<orgId>')`, [budget-categories/route.ts:56](../../../app/api/admin/accounting/budget-categories/route.ts#L56)).
+2. **`scope` (`org|team|both`, default `both`) gates which planner shows the category** — the `org`/`team` filters BOTH include `both`; `'both'` is universal.
+3. **NO category PATCH/DELETE route exists** (only GET + POST) — so neither defaults nor customs can be edited/removed via API (incomplete CRUD, not a bug). Consumed by `org_budget_lines.category_id` + `rep_budget_lines.category_id`, both `ON DELETE SET NULL` (deleting a category — were it possible — silently uncategorizes lines).
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:budget_categories.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, **nullable**) — NULL = platform default; set = org custom. The defaults-vs-custom switch (gotcha 1).
+
+<!-- dict:col:budget_categories.name -->
+**`name`** (text, NOT NULL, ≤80 app-side) — category name. **No unique index** (only `(org_id)` + PK) — unlike `budget_items`/`org_payees`, duplicate category names are **silently allowed**; the POST route's `23505→409` branch is dead code for categories.
+
+<!-- dict:col:budget_categories.scope -->
+**`scope`** (text, NOT NULL, default `'both'`; CHECK `org|team|both`) — which planner(s) show it (gotcha 2).
+
+<!-- dict:col:budget_categories.sort_order -->
+**`sort_order`** (int, NOT NULL, default 0) — display order; defaults seeded 1..9, customs insert at 0 (so customs sort before defaults).
+
+<!-- dict:col:budget_categories.is_default -->
+**`is_default`** (bool, NOT NULL, default false) — true for the platform-seeded read-only set (gotcha 1, 3).
+
+---
+
+## `budget_items`
+<!-- dict:table:budget_items -->
+
+**Purpose:** the bottom level of the shared chart — named items inside a `budget_category`. `org_id IS NULL` = platform default; `org_id`-set = org custom. Optionally tagged by `org_budget_lines.item_id` / `rep_budget_lines.item_id`.
+
+**Gotchas (read first):**
+1. **`is_misc` = the per-category "Misc" catch-all** — each seeded category gets one (`is_misc=true`, `sort_order=99`, pinned LAST); Misc items **cannot be deleted** (they're platform defaults → the `org_id`-default 403 fires first; the explicit `is_misc` delete-guard is a belt-and-suspenders backstop). Custom items can **never** be `is_misc` (POST hardcodes false).
+2. **Defaults (`org_id NULL`) are immutable** — PATCH/DELETE 403 when `org_id != caller org`. But **custom items can attach to a DEFAULT category** (a default category can host org-custom children).
+3. **Case-insensitive item-name uniqueness within a category, per scope** (two partial-unique indexes) — so an org can add a custom item with the same name as a default in the same category without colliding.
+4. **`suggested_amount` is a planner UI HINT, not a budgeted value** (`numeric(10,2)` dollars; stored only when > 0). Actuals live in budget lines / entries.
+5. **`coach` may create items** (unlike categories, which are owner/treasurer-only) — POST allows owner/treasurer/coach; PATCH/DELETE owner/treasurer only.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:budget_items.category_id -->
+**`category_id`** (FK → `budget_categories.id` ON DELETE CASCADE, NOT NULL) — parent category; indexed. Deleting a category cascades its items.
+
+<!-- dict:col:budget_items.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, **nullable**) — NULL = immutable default; set = org custom (immutability enforced via this, not `is_default`).
+
+<!-- dict:col:budget_items.name -->
+**`name`** (text, NOT NULL, ≤80 app-side) — item name; case-insensitive uniqueness per category per scope.
+
+<!-- dict:col:budget_items.suggested_amount -->
+**`suggested_amount`** (numeric(10,2), nullable) — planner pre-fill HINT in dollars; not a budgeted figure (gotcha 4).
+
+<!-- dict:col:budget_items.sort_order -->
+**`sort_order`** (int, NOT NULL, default 0) — order within the category; Misc forced last regardless.
+
+<!-- dict:col:budget_items.is_default -->
+**`is_default`** (bool, NOT NULL, default false) — platform-seeded item.
+
+<!-- dict:col:budget_items.is_misc -->
+**`is_misc`** (bool, NOT NULL, default false) — the per-category Misc catch-all; un-deletable (gotcha 1).
+
+---
+
+## `org_budget_lines`
+<!-- dict:table:org_budget_lines -->
+
+**Purpose:** one **estimated** cost line in the org's **annual** planning budget (keyed `org_id` + integer `season_year`). A planning layer only — actuals live in `accounting_entries`. A line can optionally be allocated to rep teams (spinning up real installment schedules).
+
+**Gotchas (read first):**
+1. **DUAL-BUDGET-LINE TRAP (org side):** keyed by **integer `season_year`** (e.g. 2026); the per-team `rep_budget_lines` is keyed by **uuid `program_year_id`**. Different tables sharing the chart. Incoming FKs that target THIS table: `rep_cost_allocations.source_budget_line_id` + `rep_team_payment_requests.budget_line_id`.
+2. **A line is an ESTIMATE, not money** — `budget-vs-actual` does **not** map actuals per line/category; it sums org-wide `posted` `expense` entries for the year across `entity_type='org'` ledgers and subtracts from the total budget ("not yet mapped per-line — Phase J", [budget-vs-actual/route.ts:16-18](../../../app/api/admin/accounting/budget-vs-actual/route.ts#L16-L18)).
+3. **One allocation per line; delete is app-blocked when an allocation exists** ([[lineId]/route.ts:100-112](../../../app/api/admin/accounting/budget-plan/lines/[lineId]/route.ts#L100-L112), 409) — **stricter than the DB FK** (which is `ON DELETE SET NULL`). Allocating uses the shared `createRepCostAllocationWithSplits`, then tags `rep_cost_allocations.source_budget_line_id`.
+4. **"Current" `season_year` is the server clock** (`new Date().getFullYear()`) when no `?year=` is given; there is no per-org "active season". Validated 2020–2099 on insert; `season_year` is not PATCH-editable.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:org_budget_lines.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — owning org; every read/mutation filters `.eq('org_id', ctx.org.id)`. Indexed `(org_id, season_year)`.
+
+<!-- dict:col:org_budget_lines.season_year -->
+**`season_year`** (integer, NOT NULL) — the annual key (e.g. 2026); **not** a uuid program-year (the dual-budget-line trap, gotcha 1). Not editable via PATCH.
+
+<!-- dict:col:org_budget_lines.category_id -->
+<!-- dict:col:org_budget_lines.item_id -->
+**`category_id` / `item_id`** (FK → `budget_categories.id` / `budget_items.id` ON DELETE SET NULL, nullable) — optional chart-of-accounts tags (shared with the rep budget); both null = uncategorized.
+
+<!-- dict:col:org_budget_lines.description -->
+**`description`** (text, NOT NULL, ≤200 app-side) — line label.
+
+<!-- dict:col:org_budget_lines.total_amount -->
+**`total_amount`** (numeric(10,2), NOT NULL, CHECK `> 0`) — estimated dollars; the allocation ceiling + the budget-vs-actual "estimated".
+
+<!-- dict:col:org_budget_lines.notes -->
+**`notes`** (text, nullable) — free-text note.
+
+<!-- dict:col:org_budget_lines.sort_order -->
+**`sort_order`** (int, NOT NULL, default 0) — manual display order.
+
+---
+
+## `org_budget_periods`
+<!-- dict:table:org_budget_periods -->
+
+**Purpose:** optional time-phasing of a single `org_budget_lines` row into labeled periods (months/quarters), each with a dollar amount + optional date. Zero periods = the line is a lump sum. A leaf child — no `org_id`/`updated_at` (scope via the parent line).
+
+**Gotchas (read first):**
+1. **Writing periods is a destructive FULL REPLACE** — POST deletes ALL periods for the line then inserts the new set; an empty array clears them (reverts to lump sum). No merge/upsert.
+2. **Σ(period amounts) is NOT reconciled to `total_amount`** — the write validates only label + `amount > 0`, never that periods sum to the line total. Migration 031 *claims* the sum "is enforced in application logic" but **the code does not enforce it** — periods can legally over/under-sum. (Contrast `rep_budget_periods`, which DOES reconcile ±$0.02.)
+3. **No `org_id`/`updated_at`** — scope is reached only through `budget_line_id → org_budget_lines`. `ON DELETE CASCADE` from the parent.
+4. **`period_date` (nullable) seeds installment due-dates** when the line is allocated to teams — it **prefills** the allocation UI's installment dates (which the admin can edit); the installment `due_date` is written from the request body, not mechanically from `period_date`. `period_label` is the required identifier; reads order by `sort_order` then `period_date` NULLS LAST.
+
+**Fields** (boilerplate `id`, `created_at` omitted; **no `org_id`, no `updated_at`**):
+
+<!-- dict:col:org_budget_periods.budget_line_id -->
+**`budget_line_id`** (FK → `org_budget_lines.id` ON DELETE CASCADE, NOT NULL) — the parent line; the ONLY scope link; indexed. Full-replace keys on it.
+
+<!-- dict:col:org_budget_periods.period_label -->
+**`period_label`** (text, NOT NULL) — required label ("January"/"Q1"/"Deposit").
+
+<!-- dict:col:org_budget_periods.period_date -->
+**`period_date`** (date, nullable) — optional date; seeds allocation installment dates (gotcha 4).
+
+<!-- dict:col:org_budget_periods.amount -->
+**`amount`** (numeric(10,2), NOT NULL, CHECK `> 0`) — the period's dollars; never reconciled to the parent total (gotcha 2).
+
+<!-- dict:col:org_budget_periods.sort_order -->
+**`sort_order`** (int, NOT NULL, default 0) — order within the line (array index on insert when omitted).
+
+---
+
+## `billing_retention_intents`
+<!-- dict:table:billing_retention_intents -->
+
+**Purpose:** the **header** of a data-retention hold — one row per downgrade/cancellation event recording the plan transition + what is kept vs retained. The actual lifecycle lives on the child `billing_retained_records`. Written by the owner confirm flows, platform-admin cancel, and the Stripe webhook.
+
+**Gotchas (read first):**
+1. **`status` is FROZEN at `'applied'`** — always inserted `'applied'`, never updated; `pending|canceled|restored|purged` are **dead enum values**. The webhook dedup guard depends on `status='applied'` ([webhook/route.ts:383](../../../app/api/billing/webhook/route.ts#L383)). Real progress is on `billing_retained_records.retained_state`.
+2. **`keep_tournament_ids` (uuid[]) is the KEEP set, not the retained set** — on downgrade, the tournaments the org keeps active; retained = non-archived tournaments NOT in this array. Always `[]` for cancellations.
+3. **NO `stripe_*` columns** — `from_plan`/`target_plan` are FieldLogicHQ plan keys validated against `PLAN_ORDER` ([lib/billing-retention.ts:92](../../../lib/billing-retention.ts#L92)); `'team'` is excluded as a downgrade target. The Stripe trigger that creates webhook-initiated intents is the Stripe/Billing phase.
+4. **`effective_at` is vestigial** (never read/written by code, only the DB default); **`applied_at` is the real one** (always set; the webhook dedup orders by it). **`created_by_email`** survives `created_by` being nulled (sentinel `'stripe-webhook'`).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:billing_retention_intents.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — the org; delete-org hard-deletes the retention rows (records then intents) before the org delete — belt-and-suspenders over the `org_id` cascade.
+
+<!-- dict:col:billing_retention_intents.intent_type -->
+**`intent_type`** (text, NOT NULL; CHECK `downgrade|cancellation`) — `downgrade` keeps the org alive on a lower plan; `cancellation` = full account/Coaches-Portal teardown.
+
+<!-- dict:col:billing_retention_intents.status -->
+**`status`** (text, NOT NULL, default `'applied'`; CHECK `pending|applied|canceled|restored|purged`) — frozen at `'applied'` (gotcha 1; note US spelling `canceled`).
+
+<!-- dict:col:billing_retention_intents.from_plan -->
+<!-- dict:col:billing_retention_intents.target_plan -->
+**`from_plan` / `target_plan`** (text, nullable) — plan keys; `target_plan` is set only on downgrade (always null for cancellations). No Stripe (gotcha 3).
+
+<!-- dict:col:billing_retention_intents.keep_tournament_ids -->
+**`keep_tournament_ids`** (uuid[], NOT NULL, default `'{}'`) — the KEEP set on downgrade (gotcha 2).
+
+<!-- dict:col:billing_retention_intents.effective_at -->
+**`effective_at`** (timestamptz, NOT NULL, default `now()`) — **vestigial** (DB-default only, never read/written by code).
+
+<!-- dict:col:billing_retention_intents.retention_until -->
+**`retention_until`** (timestamptz, NOT NULL) — purge-eligibility deadline = now + 90 days (`retentionDeadline()`); copied onto each child record (the **record's** copy is the one the sweep/extend mutate, not this).
+
+<!-- dict:col:billing_retention_intents.reason -->
+**`reason`** (text, nullable) — free text; required for platform-admin cancel (400 if blank); `'Stripe subscription deleted'` for webhook.
+
+<!-- dict:col:billing_retention_intents.created_by -->
+<!-- dict:col:billing_retention_intents.created_by_email -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) / **`created_by_email`** (text, nullable) — actor; `created_by` null for platform-admin/webhook paths; use `created_by_email` (sentinel `'stripe-webhook'`) for attribution.
+
+<!-- dict:col:billing_retention_intents.applied_at -->
+**`applied_at`** (timestamptz, nullable) — set to now() at every insert; the webhook dedup orders by it (gotcha 4).
+
+---
+
+## `billing_retained_records`
+<!-- dict:table:billing_retained_records -->
+
+**Purpose:** the **line items** of a retention hold — one row per retained entity (a tournament, or the `account` itself) put into soft-inactive state by an intent. **This is where the lifecycle state machine lives** (the parent intent stays `'applied'`). Read surface: `app/platform-admin/retention/page.tsx`.
+
+**Gotchas (read first):**
+1. **The lifecycle is `retained_state`:** created `retained_inactive` → the sweep (14 days before `retention_until`) sends a warning + stamps `warning_sent_at` → after `retention_until` flips to `pending_purge` (`pending_purge_at`) → `restored` (on resubscribe) or `purged` (supersede). **`'pending_purge'` is the terminal AUTOMATED state — there is NO automated hard-purge**; actual data deletion is only the super-admin delete-org route. **`'purged'` here = "superseded", not "data deleted".**
+2. **To know a retention's real state, read the RECORDS, not the intent** — nothing ever updates `billing_retention_intents.status` away from `'applied'`.
+3. **The SWEEP is MANUAL, not pg_cron** — `processBillingRetentionExpiry` ([lib/billing-retention.ts:367](../../../lib/billing-retention.ts#L367)) runs only via `POST /api/platform-admin/retention/process` (`manage_billing`); it warns + advances to `pending_purge` and logs to `platform_audit_log`.
+4. **Partial-UNIQUE = at most ONE ACTIVE retention per `(record_type, record_id)`** (`WHERE retained_state IN ('retained_inactive','pending_purge') AND record_id IS NOT NULL`). `record_type='account'` rows have `record_id` NULL → **exempt** (an org can have multiple account rows). The "supersede → purged" updates exist to avoid violating this on re-retention.
+5. **RESTORE is record-type-aware** — only `tournament` records with `metadata.retentionReason='plan_downgrade'` are restored (capped by available slots); each restore un-archives the tournament (to `metadata.previousStatus`) THEN flips the record to `restored`, rolling the tournament back if the record update fails ([lib/billing-retention.ts:209](../../../lib/billing-retention.ts#L209)). Coaches-Portal restore mirrors this in `lib/team-checkout.ts`.
+6. **`metadata.retentionReason` is LOAD-BEARING** (used in restore WHERE clauses, not just display): `plan_downgrade|account_cancellation|coaches_portal_cancellation|stripe_subscription_deleted`.
+7. **`last_extended_by` is text (email/sentinel), NOT an FK** — platform-admin can extend `retention_until` by 1–365 days (default 30, reason required), incrementing `extension_count` ([retention/[recordId]/extend/route.ts](../../../app/api/platform-admin/retention/[recordId]/extend/route.ts)).
+
+**Fields** (boilerplate `id` omitted; **no `created_at`/`updated_at` — see `retained_at`**):
+
+<!-- dict:col:billing_retained_records.intent_id -->
+**`intent_id`** (FK → `billing_retention_intents.id` ON DELETE CASCADE, NOT NULL) — the parent hold.
+
+<!-- dict:col:billing_retained_records.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — the org; indexed `(org_id, retained_state, retention_until)`.
+
+<!-- dict:col:billing_retained_records.record_type -->
+**`record_type`** (text, NOT NULL; CHECK `tournament|account`) — `tournament` (a specific archived tournament, `record_id` set) vs `account` (whole-org shutdown, `record_id` NULL). Downgrades never produce `account` rows.
+
+<!-- dict:col:billing_retained_records.record_id -->
+**`record_id`** (uuid, nullable; **NOT a declared FK**) — `tournaments.id` for tournament rows, NULL for account rows. Restores join manually on `org_id`+`id`.
+
+<!-- dict:col:billing_retained_records.display_name -->
+**`display_name`** (text, NOT NULL) — snapshotted label (tournament/org name); survives later renames/deletion.
+
+<!-- dict:col:billing_retained_records.retained_state -->
+**`retained_state`** (text, NOT NULL, default `'retained_inactive'`; CHECK `retained_inactive|pending_purge|purged|restored`) — THE lifecycle column (gotchas 1–4).
+
+<!-- dict:col:billing_retained_records.retained_at -->
+**`retained_at`** (timestamptz, NOT NULL, default `now()`) — when the record was created (the effective create stamp); downgrade-restore orders newest-first by it.
+
+<!-- dict:col:billing_retained_records.retention_until -->
+**`retention_until`** (timestamptz, NOT NULL) — the **authoritative** per-record purge deadline (copied from the intent; the one the sweep + extend mutate). Lifecycle-indexed.
+
+<!-- dict:col:billing_retained_records.extension_count -->
+**`extension_count`** (int, NOT NULL, default 0) — number of platform-admin extensions.
+
+<!-- dict:col:billing_retained_records.last_extended_at -->
+<!-- dict:col:billing_retained_records.last_extended_by -->
+<!-- dict:col:billing_retained_records.last_extension_reason -->
+**`last_extended_at` / `last_extended_by` / `last_extension_reason`** (timestamptz / text / text, nullable) — most-recent extension audit; `last_extended_by` is an email/sentinel (`'platform-admin'`), **not an FK**; only the LAST reason is kept (full history in `platform_audit_log`).
+
+<!-- dict:col:billing_retained_records.metadata -->
+**`metadata`** (jsonb, NOT NULL, default `'{}'`) — snapshot + provenance; **load-bearing** (`retentionReason`, `previousStatus`, `teamWorkspaceId` drive logic). See catalog below.
+
+<!-- dict:col:billing_retained_records.warning_sent_at -->
+**`warning_sent_at`** (timestamptz, nullable; added mig 039) — set when the 14-day-before warning email is sent; the sweep selects `.is('warning_sent_at', null)` to avoid resending.
+
+<!-- dict:col:billing_retained_records.pending_purge_at -->
+**`pending_purge_at`** (timestamptz, nullable; added mig 039) — stamped when the record flips to `pending_purge`.
+
+<!-- dict:col:billing_retained_records.purge_notice_sent_at -->
+**`purge_notice_sent_at`** (timestamptz, nullable; added mig 039) — stamped when the "window expired" notice email was sent (NULL if it failed / no owner email).
+
+**`metadata` jsonb key catalog:**
+
+| key | meaning |
+|---|---|
+| `retentionReason` | **load-bearing** discriminator scoping restores — `plan_downgrade` \| `account_cancellation` \| `coaches_portal_cancellation` \| `stripe_subscription_deleted` |
+| `previousStatus` | the tournament's pre-archive status, used to restore it (coerced to draft/active/completed) |
+| `slug` / `year` / `startDate` / `endDate` | tournament identity snapshot (display/audit) |
+| `fromPlan` / `targetPlan` | plan-transition snapshot (targetPlan only on downgrade rows) |
+| `teamWorkspaceId` | on Coaches-Portal cancellation account rows, the `team_workspaces.id` (matched by the Coaches-Portal restore) |
+| `moduleShutdown` / `premiumToolsInactive` | modules/tools that went dark (owner-facing explanation) |
+| `basicTournamentRecordsRemainAvailable` | flag: free Basic tournament data is NOT purged when a Premium workspace cancels |
+| `initiatedBy` / `adminEmail` | provenance for platform-admin-initiated cancellations |
+
+---
+
+### Functions (not tables — not coverage-checked, documented for completeness)
+
+- **`create_accounting_transfer(p_from_ledger_id, p_to_ledger_id, p_amount numeric(12,2), p_entry_date, p_description, p_category, p_created_by) → void`** ([migration 016](../../../supabase/migrations/016_org_accounting.sql)) — the double-entry transfer primitive. In one transaction it inserts a **pair** of `accounting_entries`: a `transfer_out` leg in the source ledger + a `transfer_in` leg in the dest ledger, both `posted`, same amount/date/description/category, **cross-linked via `linked_entry_id`** (pre-generates both UUIDs to set the reciprocal links). The ONLY way `transfer_*` rows are created. Plain `LANGUAGE plpgsql` (no `SECURITY DEFINER`); all callers invoke it via `supabaseAdmin`. Callers: `accounting/transfers/route.ts` (admin manual transfer between any two of the org's ledgers — typically org↔tournament; not entity-type-restricted), `rep-teams/payment-requests/[id]/route.ts` (team↔org ledger), + rep/coaches allocation-installment routes.
+- **`processBillingRetentionExpiry(actorEmail)`** ([lib/billing-retention.ts:367](../../../lib/billing-retention.ts#L367)) — the manual retention sweep (not pg_cron): sends 14-day warnings (`warning_sent_at`), advances expired `retained_inactive` → `pending_purge`, logs to `platform_audit_log`. Invoked by `POST /api/platform-admin/retention/process`.
+
+---
+
+*End of Accounting (Phase 6 — 9 tables: ledger [`accounting_ledgers`/`accounting_entries`/`org_payees`] + shared chart & org budget [`budget_categories`/`budget_items`/`org_budget_lines`/`org_budget_periods`] + billing retention [`billing_retention_intents`/`billing_retained_records`]). Consumers cross-referenced, not redocumented: Rep finance (`rep_*` write entries, share `org_payees` + the chart, target `org_budget_lines`) and League fees (`league_registrations.fee_entry_id` → entries via the per-season ledger). NO `stripe_*` columns anywhere — the Stripe billing trigger that fires retention/cancellation is the Stripe/Billing phase.*
+
+---
+
+# Domain: Stripe / Billing
+
+The platform's **Stripe surface** — deliberately **column-light**: ONE dedicated table (**`stripe_prices`**, the platform price catalog) plus the **billing flow** that ties together columns documented in other domains. The flow's state lives on `organizations` (Phase 3 — `stripe_customer_id` / `stripe_subscription_id` / `subscription_status` / `subscription_period` / `current_period_end` / `plan_id` / `tournament_limit` / `rep_team_subscription_item_id` / `billing_suspended_at` / `billing_suspension_reason`), on `team_workspaces` + `team_entitlements` (Phase 2), and in the billing data-retention tables (Phase 6 Accounting — `billing_retention_intents` / `billing_retained_records`). Those columns are **cross-referenced here, not redocumented**. The spine: checkout resolves a price from `stripe_prices` → the Stripe webhook applies entitlement to `organizations` via the **reverse** price→plan lookup → downgrade/cancel run **DB-first** and hand off to the retention lifecycle.
+
+> _Last verified: 2026-06-10 @ snapshot 2026-06-10, commit `cbcf7c7` (branch `feat/free-tier-coaches`). The working tree carries unrelated uncommitted edits (observability Phase 4 etc.), but every billing/Stripe file cited in this domain is UNMODIFIED vs `cbcf7c7` (checked via git status) — refs match the commit; the one cite into the modified `lib/types.ts` was verified identical at `cbcf7c7`. Live probes (2026-06-10, dev+prod `information_schema`/`pg_trigger`/`pg_class`/`pg_policy`): `stripe_prices` is column-, constraint-, CHECK-, and index-identical dev↔prod (zero structural drift); **NO triggers**; **RLS ENABLED with ZERO policies**; row content probed (see gotchas)._
+
+### Gotchas first (the cross-cutting traps)
+
+- **The webhook derives the plan from the PRICE, not from metadata — an unmapped `price_id` silently no-ops entitlement.** `customer.subscription.created/updated` reverse-looks-up `getPlanFromPriceId(priceId)` ([app/api/billing/webhook/route.ts:137](../../../app/api/billing/webhook/route.ts#L137)); no matching `stripe_prices` row → the whole handler body is skipped and the webhook still ACKs 200. The org's `plan_id`/`subscription_status` never update, and **nothing is logged** — the webhook route does not import `lib/observability/capture` (verified: zero matches). A paid subscription on an unmapped price is invisible.
+- **Environment = `STRIPE_SECRET_KEY` prefix sniff; the CHECK value is `sandbox`, never `test`.** `'live'` iff the key starts with `sk_live_`, else `'sandbox'` ([lib/stripe-prices.ts:18-19](../../../lib/stripe-prices.ts#L18)) — `NODE_ENV` is irrelevant (a dev deployment holding a live key reads live rows). The same sniff is re-implemented in 4+ places (stripe-prices PATCH, change-request apply, dev readiness route, audit script) — drift risk if the convention changes.
+- **Live content is mirror-imaged ON PURPOSE (content "drift" that isn't drift).** Both env DBs hold the same 24 seed slots (6 plan keys × 2 cycles × 2 environments), but the dev DB maps only its 12 `sandbox` rows (`price_id` set) and prod maps only its 12 `live` rows — each DB's other-environment rows are inert seed scaffolding (probed live 2026-06-10). Structure is zero-drift.
+- **RLS-with-no-policies is the ONLY thing keeping this table off prod's public REST API.** Probed live: prod grants `anon`+`authenticated` SELECT on `public.stripe_prices` (`has_table_privilege` = true; dev does NOT — the [[reference_supabase_rls_grants]] class). With RLS enabled and zero policies, `anon` resolves to 0 rows via PostgREST while `supabaseAdmin` (service-role, BYPASSRLS) does all reads/writes. Don't "simplify" by disabling RLS.
+- **`organizations.subscription_status` can hold RAW Stripe statuses outside the 4-value TS type.** The org webhook path writes `sub.status` **verbatim** ([webhook/route.ts:233](../../../app/api/billing/webhook/route.ts#L233)) — Stripe statuses like `incomplete`/`unpaid`/`paused` can land in a column typed `active|trialing|past_due|canceled` ([lib/types.ts:13](../../../lib/types.ts#L13)). Only the team-workspace paths normalize via `mapStripeStatusToOrgStatus` ([lib/team-checkout.ts:205-210](../../../lib/team-checkout.ts#L205)). Every entitlement gate checks only `=== 'canceled'`, so e.g. `unpaid` keeps full access.
+- **`invoice.payment_failed` never suspends or retains — only `customer.subscription.deleted` does.** Failed payment → `subscription_status='past_due'` + a bell notification + a `subscription_past_due` platform event, nothing else ([webhook/route.ts:557](../../../app/api/billing/webhook/route.ts#L557)). The full cascade (retention intent, tournament archival, `is_public=false`, `billing_suspended_at`) runs only in the `deleted` handler — the grace window is governed entirely by Stripe dunning settings, not app code.
+- **Downgrade/cancel are DB-FIRST; Stripe reconciliation failure leaves DB and Stripe out of sync by design.** Both confirm routes apply intent + archival + org update **before** touching Stripe; a Stripe failure writes an `org_audit_log` row `billing_stripe_reconciliation_failed` and returns a contact-support 500 — the org is already downgraded/canceled in-app while Stripe may keep billing ([downgrade/confirm/route.ts:201](../../../app/api/billing/downgrade/confirm/route.ts#L201)). No automatic retry.
+- **Three Stripe-bypass paths legitimately write plan state with NO Stripe objects** (so "org has a plan" ⇏ a `stripe_prices` lookup ever happened): (1) mock billing — `isBillingMockEnabled()` is hard-FALSE in production ([lib/billing-mock.ts:27](../../../lib/billing-mock.ts#L27)); (2) the **no-key direct-apply**: any non-production env with `STRIPE_SECRET_KEY` unset applies plan changes straight to the DB (`shouldApplyDirectly`, [create-checkout/route.ts:134](../../../app/api/billing/create-checkout/route.ts#L134)) — independent of the mock flag; (3) the **founding-season comp** (tournament→tournament_plus): `subscription_status='active'`, `stripe_subscription_id=NULL`, `current_period_end=FOUNDING_SEASON_END` ([create-checkout/route.ts:216-221](../../../app/api/billing/create-checkout/route.ts#L216)) — a populated `current_period_end` is NOT proof of a Stripe subscription. Free-plan selection goes through `/api/admin/org/onboarding-plan`, not checkout. Note `mock-apply` only requires org membership (no `billing` capability) — dev/preview-only privilege escalation, unreachable in prod.
+- **Recovery paths never clear `billing_suspended_at`/`billing_suspension_reason` for regular orgs.** Only the team-workspace reactivation writer nulls them ([lib/team-checkout.ts:411-412](../../../lib/team-checkout.ts#L411)); webhook plan-application and `invoice.payment_succeeded` restore plan/status but leave the suspension stamp — a resubscribed org carries a stale `billing_suspended_at` forever. Harmless today (no app reader gates on it) but a trap for future consumers.
+- **Webhook idempotency is PARTIAL.** `platform_events` dedupe on `(source, source_event_id)` and the `deleted` handler is self-deduping via its retention-intent guard — but the `subscription.created/updated` org write is unconditioned last-write-wins keyed on `stripe_customer_id` (no event-timestamp guard, no processed-event ledger): a replayed/out-of-order older event could regress `plan_id`/`subscription_status` ([webhook/route.ts:228-238](../../../app/api/billing/webhook/route.ts#L228)).
+- **Dev/prod:** `stripe_prices` structure identical (zero drift); content intentionally mirror-imaged (see above).
+
+---
+
+## `stripe_prices`
+<!-- dict:table:stripe_prices -->
+
+**Purpose:** the **platform-level Stripe price catalog** — one row per `(plan_id, billing_cycle, environment)` slot mapping a FieldLogicHQ plan key to a Stripe `price_…` id. DB-backed (not env vars) so platform admins can rotate price ids without a redeploy ([migration 048](../../../supabase/migrations/048_stripe_prices.sql) header). Canonical readers in [lib/stripe-prices.ts](../../../lib/stripe-prices.ts): `getStripePriceId(planId, billingCycle)` (forward, environment-filtered, [:22](../../../lib/stripe-prices.ts#L22)), `getPlanFromPriceId(priceId)` (reverse — the webhook's plan resolver, **no environment filter**, [:37](../../../lib/stripe-prices.ts#L37)), `getAllStripePrices()` (admin listing, [:49](../../../lib/stripe-prices.ts#L49)). All access via `supabaseAdmin` (RLS enabled, zero policies).
+
+**Gotchas (read first):**
+1. **NULL `price_id` is always a SOFT fail.** Checkout routes 400 "checkout is not configured" ([create-checkout/route.ts:304](../../../app/api/billing/create-checkout/route.ts#L304), [create-team-checkout/route.ts:163](../../../app/api/billing/create-team-checkout/route.ts#L163), [lib/team-org-billing.ts:800](../../../lib/team-org-billing.ts#L800)); `syncRepTeamBilling` logs and bails — **Club orgs ride free on extra rep teams until the `rep_team` price is mapped** ([lib/stripe-sync.ts:52-61](../../../lib/stripe-sync.ts#L52)); the webhook silently skips (domain gotcha 1); `billing-preview` 500s. Only downgrade/confirm raises an internal exception (caught → the reconciliation-failed 500); everything else fails soft.
+2. **All three read helpers swallow DB errors** — they destructure only `{ data }`, never `error` ([lib/stripe-prices.ts:27](../../../lib/stripe-prices.ts#L27)). A transient DB failure (or a `maybeSingle()` multi-row error) is indistinguishable from "not configured".
+3. **`getPlanFromPriceId` is environment-blind and `price_id` has NO unique constraint** (UNIQUE is on `(plan_id, billing_cycle, environment)` only). Safe today because Stripe price-id strings are mode-unique and each DB maps one side — but pasting the same id onto two rows would make `maybeSingle()` error → swallowed (gotcha 2) → the webhook silently ignores every subscription on that price. Operator-input footgun in the price editor.
+4. **UPDATE-only; no code INSERT path.** Rows exist only from migration seeds (048: 16 rows; 065: +8). Both writers update `price_id` + the three audit columns only; `plan_id`/`billing_cycle`/`environment`/`product_name` are seed-fixed slots. A new billable plan key needs a migration to seed its 4 rows. **`updated_at` is CODE-maintained** (no trigger, probed live): both writers set it explicitly ([stripe-prices/route.ts:108-113](../../../app/api/platform-admin/stripe-prices/route.ts#L108)).
+5. **Every `price_id` write requires an APPROVED catalog change request — no unilateral edit path.** Path A: `PATCH /api/platform-admin/stripe-prices` (`manage_billing` OR `manage_product`, [:40](../../../app/api/platform-admin/stripe-prices/route.ts#L40)) hard-fails without an approved `platform_catalog_change_requests` row ([:66](../../../app/api/platform-admin/stripe-prices/route.ts#L66)). Path B: approving a `stripe_price_update` proposal on the change-requests PATCH applies it inline with a 409 optimistic-concurrency guard, then auto-marks the request `implemented` ([change-requests/route.ts:685](../../../app/api/platform-admin/product-catalog/change-requests/route.ts#L685)). Both validate the `price_` prefix, double-log to `platform_audit_log` (`update_stripe_price_id`) + `platform_catalog_change_applications`. GET is any platform-admin role incl. `read_only` — not super_admin-only.
+6. **Cross-environment edits are accepted UNVALIDATED.** Stripe-API active-price validation runs only when the row's `environment` matches the runtime key's environment ([stripe-prices/route.ts:86](../../../app/api/platform-admin/stripe-prices/route.ts#L86)) — editing a `live` row from a sandbox-keyed deployment (exactly how prod rows would be staged from dev) skips validation; a typo'd live id saves fine.
+7. **`plan_id` is unconstrained text spanning TWO kinds of key.** Live domain = 6 keys: org plans (`tournament_plus`/`league`/`club` — OrgPlan keys) + Stripe-line-item keys (`team`, `org_team_addon`, `rep_team` — the latter two are **never** written to `organizations.plan_id`; they branch to add-on/quantity paths before the org write). `'tournament'` (free) is **absent by design** — free selection goes through `/api/admin/org/onboarding-plan`, and create-checkout fails closed if it ever reaches the Stripe branch. Migration 048's in-file `plan_id` comment lists only 4 keys (mig 065 already re-COMMENTed the live column to all 6) — cite the live probe, not migration files.
+8. **downgrade/confirm guesses `'monthly'` when the CURRENT price is unmapped** (`currentMatch?.billingCycle ?? 'monthly'`, [downgrade/confirm/route.ts:183-186](../../../app/api/billing/downgrade/confirm/route.ts#L183)) — a paid-to-paid downgrade could swap an annual subscriber onto a monthly price. The subsequent target-price null-check at least fails loudly into the reconciliation-failed path.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted — but see gotcha 4: `updated_at` is code-maintained, equal to `created_at` on never-edited rows):
+
+<!-- dict:col:stripe_prices.plan_id -->
+**`plan_id`** (text, NOT NULL; no CHECK, no FK) — the plan key half of the lookup. Per-key reader map: `tournament_plus`/`league`/`club` ← org checkout passthrough ([create-checkout/route.ts:303](../../../app/api/billing/create-checkout/route.ts#L303)) + downgrade targets; `team` ← [create-team-checkout/route.ts:162](../../../app/api/billing/create-team-checkout/route.ts#L162); `org_team_addon` ← [lib/team-org-billing.ts:799](../../../lib/team-org-billing.ts#L799); `rep_team` ← [lib/stripe-sync.ts:50](../../../lib/stripe-sync.ts#L50) + [rep-teams/billing-preview/route.ts:74](../../../app/api/admin/rep-teams/billing-preview/route.ts#L74). No seeded-but-unread keys. Seed-only (never written by code). Gotcha 7.
+
+<!-- dict:col:stripe_prices.billing_cycle -->
+**`billing_cycle`** (text, NOT NULL; CHECK `monthly|annual`) — the cycle half of the lookup; mirrors the `BillingCycle` TS type. Checkout callers pre-coerce via `normalizeBillingCycle` (anything ≠ `'annual'` → `'monthly'`, [lib/plan-config.ts:127](../../../lib/plan-config.ts#L127)); the `subscription_period`-sourced callers (stripe-sync, billing-preview, downgrade) use a `?? 'monthly'` null-fallback instead — outcome-safe because `subscription_period` only ever holds `billing_cycle` values or NULL. Forward reads can't miss on a bad cycle string. The reverse-lookup result feeds `organizations.subscription_period` ([webhook/route.ts:235](../../../app/api/billing/webhook/route.ts#L235)). Seed-only.
+
+<!-- dict:col:stripe_prices.environment -->
+**`environment`** (text, NOT NULL; CHECK `sandbox|live` — `sandbox` is the canonical spelling for Stripe test mode, never `'test'`) — lets one table hold both Stripe modes so dev and prod DBs share identical structure; each deployment reads only the side matching its key prefix (`getStripeEnvironment()`, [lib/stripe-prices.ts:18](../../../lib/stripe-prices.ts#L18)). Write-side it decides whether Stripe-API validation runs (gotcha 6). `getPlanFromPriceId` ignores it (gotcha 3). Seed-only.
+
+<!-- dict:col:stripe_prices.price_id -->
+**`price_id`** (text, nullable) — the payload: the actual Stripe `price_…` id; **NULL = slot not configured for that environment** (soft-fail everywhere, gotcha 1). Written ONLY by the two governed platform-admin paths (gotcha 5), both enforcing the `price_` prefix ([stripe-prices/route.ts:59](../../../app/api/platform-admin/stripe-prices/route.ts#L59)) and coercing empty → NULL (`price_id || null`). No unique constraint (gotcha 3).
+
+<!-- dict:col:stripe_prices.product_name -->
+**`product_name`** (text, nullable) — hand-seeded display label so the admin UI shows named slots before any price id is entered (set on all 48 live rows). **NO code writer** (seed-only; mig 065 renamed the `rep_team` label once). NOT synced from Stripe — the Stripe-side product id captured during validation goes into the audit payload, not this column. Read for display by [StripePricesClient.tsx:99](../../../app/platform-admin/stripe-prices/StripePricesClient.tsx#L99).
+
+<!-- dict:col:stripe_prices.last_change_note -->
+**`last_change_note`** (text, nullable; mig 051) — operator note for price edits, written by BOTH update paths via `sanitizePlatformChangeNote` (trim, 1000-char cap, null-for-empty, [lib/platform-change-note.ts:3](../../../lib/platform-change-note.ts#L3)). **Overwrite-with-NULL semantics:** an edit without a note CLEARS the previous note. NOT dead — but never exercised: NULL on all 48 rows in both envs (probed 2026-06-10), including the 12 mapped prod-live rows.
+
+<!-- dict:col:stripe_prices.updated_by_email -->
+**`updated_by_email`** (text, nullable; mig 051) — email of the platform admin who last edited the slot ([stripe-prices/route.ts:114](../../../app/api/platform-admin/stripe-prices/route.ts#L114)); complements `platform_audit_log`. **NULL ≠ never-edited** — edits made before mig 051 added the column left no attribution (live: set on all 12 prod-live mapped rows; mixed on dev-sandbox).
+
+---
+
+### The billing flow (not tables — not coverage-checked, documented for completeness)
+
+The narrative spine tying together the already-documented columns. All paths use `supabaseAdmin`.
+
+1. **Org checkout** (`POST /api/billing/create-checkout`, owner-only via `requireCapability('billing')` [:96](../../../app/api/billing/create-checkout/route.ts#L96)): validates `planKey` against `PLAN_CONFIG` (rejects `'team'` → Coaches Portal flow [:110](../../../app/api/billing/create-checkout/route.ts#L110); plan-gating 403s `early_access` plans [:121](../../../app/api/billing/create-checkout/route.ts#L121)), resolves `getStripePriceId(planKey, cycle)` (NULL → 400), lazily creates the Stripe customer and writes `organizations.stripe_customer_id` **before** redirect ([:323](../../../app/api/billing/create-checkout/route.ts#L323)), and stamps `{orgId, planKey, billingCycle}` metadata on session + subscription.
+2. **Webhook** (`POST /api/billing/webhook`; signature via `STRIPE_WEBHOOK_SECRET` [:59](../../../app/api/billing/webhook/route.ts#L59); customer-less events ACKed-and-dropped [:72](../../../app/api/billing/webhook/route.ts#L72)) handles exactly **7 event types**. Org resolution is by `stripe_customer_id`, NOT `metadata.orgId`. `checkout.session.completed` only dispatches on `metadata.checkoutKind` (`org_team_addon` / `standalone_team`) and backfills the customer id — org plan application is deliberately deferred to `customer.subscription.created/updated`.
+3. **Entitlement application** (`subscription.created/updated` — THE org writer): reverse-lookup `getPlanFromPriceId` → branch `org_team_addon`/`team`/org-plan → org write keyed by `stripe_customer_id`: `plan_id`, `tournament_limit` (from `PLAN_CONFIG`), `subscription_status` = **raw** `sub.status`, `stripe_subscription_id`, `subscription_period` (the matched row's `billing_cycle`), `current_period_end` (from the **SubscriptionItem** — moved off the subscription in Stripe API `2026-04-22.dahlia`, [:221-236](../../../app/api/billing/webhook/route.ts#L221)). Then `restoreRetainedDowngradeTournaments` (un-archives Phase-6-retained tournaments on upgrade), upsell-email cancellation, and `platform_events` (`plan_downgraded`/`subscription_past_due`/`subscription_recovered`, deduped by `source_event_id`).
+4. **Team-workspace flows** (columns documented Phase 2 — writer code verified to match): **standalone Team** (`create-team-checkout`, key `team`, `checkoutKind='standalone_team'`; creates a NEW Stripe customer per attempt — abandoned checkouts orphan customers [:178](../../../app/api/billing/create-team-checkout/route.ts#L178)) → `provisionTeamWorkspaceFromCheckoutMetadata`, `billing_mode='team_direct'`. **Org add-on takeover** (`startOrgTeamAddonCheckout`, key `org_team_addon`) → `applyOrgTeamAddonBilling` puts the Stripe ids + RAW status on `team_workspaces` and **NULLs the workspace shadow-org's** `stripe_customer_id`/`stripe_subscription_id` ([lib/team-org-billing.ts:613-628](../../../lib/team-org-billing.ts#L613)) — confirming the Phase-2 invariant from the writer side — then the webhook cancels the coach's prior personal subscription (only ids starting `sub_`, so mocks are never sent to Stripe [:45](../../../app/api/billing/webhook/route.ts#L45)). Ongoing `syncTeamWorkspaceSubscription` keeps raw status on the workspace, **mapped** status on the shadow-org ([lib/team-checkout.ts:252-256](../../../lib/team-checkout.ts#L252)). `team_entitlements.status` keeps its dual spelling: `applyOrgTeamAddonBilling` supersedes with `'cancelled'`, the in-app cancel writes `'canceled'` — both are typed-in values; filter positively (`.in('status', ['active','trialing','past_due'])`).
+5. **Club per-rep-team quantity billing** (`syncRepTeamBilling`, [lib/stripe-sync.ts:23](../../../lib/stripe-sync.ts#L23)): no-op unless `plan_id='club'` AND `stripe_subscription_id` is non-null (a `mock_sub_*` id passes the guard); quantity = `max(0, activeRepTeams − 3)`; creates/updates/deletes the `rep_team` subscription item and maintains `organizations.rep_team_subscription_item_id` (Phase 3 column). Fired fire-and-forget from rep-team create + program-year status changes. Unmapped `rep_team` price → log-and-bail (table gotcha 1).
+6. **Payment lifecycle:** `invoice.payment_succeeded` → `subscription_status='active'` (+ `current_period_end` from `invoice.period_end`); `invoice.payment_failed` → `'past_due'` only + bell notification (NO suspension/retention — domain gotcha 6); `trial_will_end` → owner email, no DB write.
+7. **Downgrade / cancel** (owner-only, preflight → confirm, both **DB-FIRST**): downgrade-confirm inserts the Phase-6 intent (`intent_type='downgrade'`, retained records `retentionReason='plan_downgrade'`), updates the org (`subscription_status='active'`), THEN reconciles Stripe — target free → `subscriptions.cancel`; paid target → price swap with prorations via reverse-then-forward `stripe_prices` lookups (table gotcha 8). Cancel-confirm inserts `intent_type='cancellation'` (`account_cancellation` / `coaches_portal_cancellation`), archives ALL tournaments, sets `subscription_status='canceled'` + `billing_suspended_at`/`_reason` (and `is_public=false` on the regular account branch only — the coaches-portal branch omits it) — but does NOT clear the 3 Stripe fields; the later `subscription.deleted` webhook finds the intent and clears them ([webhook/route.ts:492](../../../app/api/billing/webhook/route.ts#L492)).
+8. **`subscription.deleted`** — the retention entry point, **three branches** keyed on the latest applied intent: no intent (Stripe-initiated: dunning exhaustion, portal cancel) → full cascade: intent `'cancellation'` by `'stripe-webhook'`, archive tournaments, `billing_retained_records` (`retentionReason='stripe_subscription_deleted'`, 90-day `retentionDeadline()`), org suspension (`'canceled'`, Stripe fields NULLed, `is_public=false`, `billing_suspended_at`) ([:389-486](../../../app/api/billing/webhook/route.ts#L389)); intent `'cancellation'` exists → clear Stripe fields only; intent `'downgrade'` → clear Stripe fields only, org stays active on free. Retention expiry is the Phase-6 **manual sweep** (`POST /api/platform-admin/retention/process`); restore on resubscribe = `restoreRetainedDowngradeTournaments` + `restoreCoachesPortalRetainedRecords`.
+9. **Entitlement gating anchors** (columns documented Phase 3): `hasModuleEntitlement` — `'canceled'` kills ALL modules, else `PLAN_CONFIG[planId].moduleEntitlements ∪ enabledAddons` ([lib/module-entitlements.ts:15](../../../lib/module-entitlements.ts#L15)); `mapOrg` applies `getEffectiveTournamentLimit` ([lib/db.ts:2491](../../../lib/db.ts#L2491) — the stale-cap gotcha); public pages/registration/admin chrome branch on `subscriptionStatus === 'canceled'`. Cancellation **preserves `plan_id`** — access is killed by status, never infer entitlement from `plan_id` alone.
+10. **Portal & mock:** `POST /api/billing/portal` (owner `billing` capability; needs `stripe_customer_id`, else 400; mock mode → in-app mock-portal page). Mock billing + the no-key direct-apply + founding-season comp are the three bypass paths (domain gotcha 8); `mock_sub_*` sentinel ids are load-bearing — onboarding free-plan reset allows only `mock_sub_*` ids, and the webhook's prior-sub cancel only touches `sub_*` ids.
+
+---
+
+*End of Stripe / Billing (Phase 7 — 1 table: `stripe_prices`, the governed platform price catalog. The billing-flow narrative above cross-references — not redocuments — the `organizations` billing columns (Org / Platform core, Phase 3), `team_workspaces`/`team_entitlements` (Coaches, Phase 2), and `billing_retention_intents`/`billing_retained_records` (Accounting, Phase 6).)*
+
+---
+
+# Domain: Platform admin
+
+The **platform control plane** — the tables behind `/platform-admin/` that FieldLogicHQ staff (not org tenants) use to govern the whole fleet: who may operate the platform and what they did (`platform_users` / `platform_audit_log` / `platform_user_notes` / `platform_admin_visits`), a durable **business-event** telemetry log (`platform_events` — distinct from Observability's *error* log), the **plans & catalog control plane** with its human-in-the-loop change-approval gate (`plan_gating` / `plan_config_overrides` / `platform_plan_*` / `platform_addon_catalog` / `platform_catalog_change_requests` / `_change_applications` / `_campaigns`), and platform ops + the org-scoped data-import staging (`platform_bulk_operations` / `platform_metric_snapshots` / `import_batches` / `import_batch_rows`). 17 tables, three labeled sub-domains below.
+
+> _Last verified: 2026-06-10 @ snapshot 2026-06-10, commit `cbcf7c7` (branch `feat/free-tier-coaches`). **`file:line` refs reflect the WORKING TREE at authoring**, which carries uncommitted edits in several cited files (`lib/platform-auth.ts` +20 at L123 = the new `requireSuperAdmin`, so the RBAC cites at L10–95 are above it and identical to `cbcf7c7`; `lib/import/types.ts` +2 at L61 = `emailsSent?`; plus `app/api/admin/tournaments/route.ts`, `app/api/admin/teams/route.ts`, `.../registrations/import/commit/route.ts`, `components/admin/import/TournamentTeamsImportDialog.tsx`) — line numbers in those files may differ by a few lines from `cbcf7c7`; the schema/RLS/grant/trigger facts are commit-independent. Live probes (2026-06-10, dev+prod `information_schema`/`pg_class`/`pg_policies`/`pg_trigger`/`role_table_grants`): all 17 tables are **column-, CHECK-, UNIQUE-, FK-identical dev↔prod (ZERO structural drift)**; **RLS ENABLED with ZERO policies and ZERO triggers** on every one of the 17 in both envs; **prod grants `anon`+`authenticated` full `SELECT/INSERT/UPDATE/DELETE` on 16 of the 17 (all but `plan_gating`, which is `service_role`-only) while dev grants only `REFERENCES/TRIGGER/TRUNCATE`** (the security headline below); content/row-counts probed (see per-table dead/unused notes)._
+
+### Gotchas first (the cross-cutting traps)
+
+- **SECURITY HEADLINE — RLS-with-zero-policies is the ONLY thing keeping this entire control plane off prod's public PostgREST API.** Probed live: **prod** grants `anon`+`authenticated` the full `SELECT/INSERT/UPDATE/DELETE` set on **16 of the 17** tables (the lone exception, `plan_gating`, grants only `service_role` — even tighter); **dev** grants only `REFERENCES/TRIGGER/TRUNCATE`. All 17 are RLS-**enabled** with **zero policies** (both envs), so `anon`/`authenticated` resolve to **0 rows** via PostgREST and `supabaseAdmin` (service-role, `BYPASSRLS`) does all I/O. This is the [[reference_supabase_rls_grants]] class: if any policy is ever *added* (or RLS disabled) on prod, the RBAC table, the mutation audit log, every org's plan-change history, and the PII-bearing import staging leak to the anonymous REST API. **Never "simplify" by disabling RLS or adding a permissive policy.**
+- **Everything is service-role + app-layer auth — RLS is never the gate.** Every reader/writer goes through `supabaseAdmin`; authorization is `platform_users` role → `ROLE_PERMISSIONS` ([lib/platform-auth.ts:26](../../../lib/platform-auth.ts#L26)) plus the per-area view/write matrix in [lib/platform-areas.ts](../../../lib/platform-areas.ts). (The two `import_*` tables are the exception — they gate on **org** membership capabilities, not platform role; see that sub-domain.)
+- **The RBAC bootstrap is an ENV allowlist, not the DB table — which is why prod has 0 `platform_users` rows.** `getPlatformAdminContext` checks `isBootstrapAdmin(email)` against the `PLATFORM_ADMIN_EMAILS` env list **first** and short-circuits to `role='super_admin'` with **no DB read** ([lib/platform-auth.ts:89-91](../../../lib/platform-auth.ts#L89), env parsed [:35-45](../../../lib/platform-auth.ts#L35)); the DB table is the *secondary, optional* staff-management layer ([:55-68](../../../lib/platform-auth.ts#L55)). Six roles live in the CHECK (`super_admin|support|billing|product|growth|read_only`); `normalizePlatformRole` maps legacy `'admin'`→`super_admin` and coerces any unknown value to `read_only` (fail-safe, never throws, [:47-53](../../../lib/platform-auth.ts#L47)).
+- **Zero triggers anywhere ⇒ every `updated_at` is CODE-maintained, and several tables have none at all.** No table in this domain has a trigger (probed). `updated_at`/`completed_at`/`committed_at` are set explicitly by their writers (or, on `platform_plan_versions`/`platform_addon_catalog`, only ever by migrations → frozen at seed); `platform_audit_log`, `platform_admin_visits`, `platform_catalog_change_applications`, `platform_metric_snapshots`, `import_batch_rows` are append-only with no `updated_at` column.
+- **"Looks authoritative but isn't" — the runtime-source split is the crux of the Plans & catalog sub-domain.** The static `PLAN_CONFIG` const ([lib/plan-config.ts:32](../../../lib/plan-config.ts#L32)) is the true entitlement/limit floor. Of the DB catalog tables: **`plan_gating` IS runtime-consumed** (checkout gating, DB overlaid on the static fallback, [lib/plan-gating-server.ts:38-50](../../../lib/plan-gating-server.ts#L38)); **`plan_config_overrides` is consumed at CHECKOUT only** (sets the limit written onto the new subscription, [lib/plan-config-db.ts:44-59](../../../lib/plan-config-db.ts#L44)); **`platform_plan_module_entitlements`, `platform_plan_versions`, `platform_addon_catalog`, and `platform_catalog_campaigns` are admin-display / planning catalogs NOT read by any runtime entitlement path** — editing the feature matrix changes the admin display, **not** what `hasModuleEntitlement` enforces (that reads static `PLAN_CONFIG`, [lib/module-entitlements.ts:13](../../../lib/module-entitlements.ts#L13)).
+- **The catalog-governance gate authorizes by `proposal.kind`, not `request_type`, and has NO separation of duties.** Every governed write (`stripe_prices`, `plan_gating`, `plan_config_overrides`, the feature matrix) requires `manage_product` **and** an `approved` `platform_catalog_change_requests` row; the apply branches solely on `proposal.kind` ([change-requests/route.ts:682-687](../../../app/api/platform-admin/product-catalog/change-requests/route.ts#L682)), so `request_type` is descriptive metadata only. The **same** `manage_product` permission gates both submit and approve, with **no submitter-vs-reviewer check** — a `product`/`super_admin` user can approve and apply their own request. The `_change_applications` ledger is **best-effort** (`recordCatalogChangeApplication` swallows insert errors, [lib/platform-catalog-approval.ts:85-87](../../../lib/platform-catalog-approval.ts#L85)); **`platform_audit_log` is the durable trail.**
+- **`actor_email` is the universal, FK-less actor identity** across `platform_audit_log` / `platform_admin_visits` / `platform_events` / `platform_catalog_change_applications` — captured at write time, often the literal fallback string `'platform-admin'` when the session email is null. Treat it as a denormalized label, never a reliable join key to a user.
+- **Five tables are built-but-(barely-)used today.** `platform_user_notes` (0 rows both envs — full CRUD + UI exist, never exercised), `platform_bulk_operations` (0/0 — never run), `platform_metric_snapshots` (0/0 — never taken), `platform_catalog_campaigns` (0/0 — pure planning scaffolding, no checkout/Stripe consumer), `platform_plan_versions` (1 seed row, **no app writer**). Documented so a reader doesn't mistake schema presence for an active feature.
+- **`import_batches`/`import_batch_rows` are ORG-scoped, not platform-admin.** The coverage classifier files them here (an ops/staging surface), but they are gated by **org** capabilities and `org_id` FK→`organizations` ON DELETE CASCADE — the tournament data-import staging an org admin uses, not a `/platform-admin` feature.
+- **Dev/prod:** zero structural drift on all 17 (column/CHECK/UNIQUE/FK-identical). Divergence is **content + grants** only: prod `anon`/`authenticated` hold full DML on 16 of 17 (dev doesn't; `plan_gating` is `service_role`-only in both); and several tables differ in row counts (e.g. `plan_config_overrides` dev 4 / prod 0 ⇒ **prod runs on pure static `PLAN_CONFIG` defaults**; `platform_events` dev 210 / prod 0; `platform_catalog_change_requests` dev 6 / prod 14).
+
+---
+
+## Platform identity, RBAC & audit
+
+> Who may operate the platform, and the three append-only logs of platform activity. `platform_users` (+ the `PLATFORM_ADMIN_EMAILS` env bootstrap) is the authz spine; **`platform_audit_log`** records privileged *mutations* (active), **`platform_admin_visits`** records *navigation* telemetry (passive), and **`platform_events`** is the *business-event* log (billing/plan transitions + acquisition/feature telemetry) — three distinct logs, easy to confuse. `platform_user_notes` is staff notes about *customer* users.
+
+### `platform_users`
+<!-- dict:table:platform_users -->
+
+**Purpose:** the DB-managed allowlist of FieldLogicHQ internal staff who may access `/platform-admin`, each with an RBAC `role`. It is the **secondary** authz layer — the `PLATFORM_ADMIN_EMAILS` env allowlist is the primary/bootstrap path (and the reason prod works with **0 rows**: dev 1 / prod 0).
+
+**Gotchas (read first):**
+1. **Not the sole source of truth** — `getPlatformAdminContext` returns `role='super_admin'` + `isBootstrapAdmin:true` for any `PLATFORM_ADMIN_EMAILS` email **before** any DB read ([lib/platform-auth.ts:89-91](../../../lib/platform-auth.ts#L89)); the DB lookup is the fallback path ([:55-63](../../../lib/platform-auth.ts#L55), filtered `is_active=true`, email lowercased).
+2. **Unknown roles fail safe to `read_only`** and legacy `'admin'`→`super_admin` via `normalizePlatformRole` ([:47-53](../../../lib/platform-auth.ts#L47)) — a future role value not added to that map silently degrades, never errors.
+3. **Bootstrap (env) admins appear in the Company Users UI as synthetic rows** (`id="bootstrap:<email>"`, `invitedBy='env:PLATFORM_ADMIN_EMAILS'`, [users/page.tsx:12-23](../../../app/platform-admin/users/page.tsx#L12)) and are **blocked from deletion** ([company-users/[id]/route.ts:50-54](../../../app/api/platform-admin/company-users/[id]/route.ts#L50)).
+4. **Removing a staffer is a two-system op** — DELETE refuses the last active user ([:56-58](../../../app/api/platform-admin/company-users/[id]/route.ts#L56)) **and** deletes the matching Supabase `auth.users` account by email ([:61-65](../../../app/api/platform-admin/company-users/[id]/route.ts#L61)). Invite (POST) creates the `auth.users` account (`email_confirm:true`) and returns a one-time `setupLink` the admin must hand-deliver — **no invite email is sent** ([company-users/route.ts:26-61](../../../app/api/platform-admin/company-users/route.ts#L26)).
+5. **Writes need `manage_platform_users` (super_admin only)** and the whole area is super_admin-only for view+write ([lib/platform-areas.ts:62](../../../lib/platform-areas.ts#L62)) — other roles can't even see the staff list.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted — `updated_at` is code-maintained, [lib/db.ts:6157](../../../lib/db.ts#L6157)):
+
+<!-- dict:col:platform_users.email -->
+**`email`** (text, NOT NULL; UNIQUE) — canonical staff identity; stored lowercased ([lib/db.ts:6141](../../../lib/db.ts#L6141)) and matched lowercased on read ([lib/platform-auth.ts:59](../../../lib/platform-auth.ts#L59)); the implicit link to the `auth.users` account and the value compared against `PLATFORM_ADMIN_EMAILS`.
+
+<!-- dict:col:platform_users.display_name -->
+**`display_name`** (text, nullable) — optional human label; set on invite/update, mapped to `displayName` ([lib/db.ts:6101](../../../lib/db.ts#L6101)).
+
+<!-- dict:col:platform_users.role -->
+**`role`** (text, NOT NULL, default `'support'`; CHECK `super_admin|support|billing|product|growth|read_only`) — the RBAC role driving `ROLE_PERMISSIONS` ([lib/platform-auth.ts:26-33](../../../lib/platform-auth.ts#L26)). Read via `getDbPlatformRole`→`normalizePlatformRole`; the 6 perms are `manage_platform_users` (super_admin only), `manage_billing`, `manage_growth`, `manage_product`, `manage_support`, `view_platform_admin`. `growth` is a live wired role (`manage_growth`+view), not dormant. API validates against the 6-value list before write ([company-users/route.ts:21](../../../app/api/platform-admin/company-users/route.ts#L21)).
+
+<!-- dict:col:platform_users.is_active -->
+**`is_active`** (bool, NOT NULL, default true) — soft-disable; the auth lookup filters `is_active=true` so `false` = no access without deleting the row ([lib/platform-auth.ts:60](../../../lib/platform-auth.ts#L60)).
+
+<!-- dict:col:platform_users.invited_by -->
+**`invited_by`** (text, nullable, no FK) — email of the staffer who created the row, from `auth.user.email` on invite ([lib/db.ts:6144](../../../lib/db.ts#L6144)); synthetic bootstrap rows show `'env:PLATFORM_ADMIN_EMAILS'`.
+
+### `platform_audit_log`
+<!-- dict:table:platform_audit_log -->
+
+**Purpose:** the append-only **platform-admin mutation log** — one row per privileged staff action against an org or platform object. THE record-of-who-changed-what for the control plane (dev 117 / prod 53). Written by the shared `writePlatformAuditLog` helper ([lib/platform-audit.ts:4](../../../lib/platform-audit.ts#L4)) from ~30 routes; read by the global audit page, the per-org activity feed, and the CSV export.
+
+**Gotchas (read first):**
+1. **Append-only + best-effort** — `writePlatformAuditLog` INSERTs and on error only `console.error`s; it **never throws**, so a failed audit write does not block or roll back the action it was logging ([lib/platform-audit.ts:11-21](../../../lib/platform-audit.ts#L11)). Completeness is not guaranteed.
+2. **`action` is free-text (no CHECK)** — dozens of verbs invented at call sites; the audit page builds its filter dropdown by SELECTing all `action` values and de-duping in JS ([audit/page.tsx:105-111](../../../app/platform-admin/audit/page.tsx#L105)), so retired call sites leave orphan verbs in the filter.
+3. **`field`/`old_value`/`new_value` are an action-defined, untyped triple** — meaning differs per call site (a whole before/after object for `update_platform_user` vs a scalar for `create_user_note`); no schema contract.
+4. **`org_id` FK is ON DELETE SET NULL** — deleting an org orphans its audit rows (org_id→null) rather than cascading, so history survives but loses org linkage.
+5. **Viewable by ALL platform roles, no write role** ([lib/platform-areas.ts:44](../../../lib/platform-areas.ts#L44)) — rows are only ever side-effects of other gated actions; there is no "create audit row" endpoint.
+
+**Fields** (boilerplate `id`, `created_at` omitted — `created_at` is the DESC sort + date-range filter key, [audit/page.tsx:71-75](../../../app/platform-admin/audit/page.tsx#L71)):
+
+<!-- dict:col:platform_audit_log.actor_email -->
+**`actor_email`** (text, NOT NULL, no FK) — who performed the action (1st arg to the writer); usually `auth.user.email`, falls back to the literal `'platform-admin'`. Filterable + searchable in the UI.
+
+<!-- dict:col:platform_audit_log.org_id -->
+**`org_id`** (uuid, nullable; FK→`organizations(id)` ON DELETE SET NULL) — the org the action targeted, or null for platform-scoped actions (e.g. `invite_platform_user`, `create_user_note`). Joined to `organizations(id,name)` for display on the global audit page ([audit/page.tsx:70](../../../app/platform-admin/audit/page.tsx#L70)); filtered by `org_id` (no join) for the per-org recent-activity feed ([orgs/[id]/page.tsx:142](../../../app/platform-admin/orgs/[id]/page.tsx#L142)).
+
+<!-- dict:col:platform_audit_log.action -->
+**`action`** (text, NOT NULL, no CHECK) — the verb (e.g. `update_plan`, `cancel_subscription`, `transfer_org_ownership`, `delete_organization`, `run_bulk_operation`, `update_stripe_price_id`, `update_plan_gating`, `publish_feature_matrix_entitlements`, `create/delete_user_note`, `invite/update/remove_platform_user`). Rendered via an `ACTION_LABELS` map with snake→space fallback.
+
+<!-- dict:col:platform_audit_log.field -->
+**`field`** (text, nullable) — optional sub-target label naming what changed (e.g. `'plan_and_limit'`, `'platform_users'`); 4th arg, purely descriptive, paired with old/new for the diff display.
+
+<!-- dict:col:platform_audit_log.old_value -->
+**`old_value`** (jsonb, nullable) — prior state (5th arg, null-coerced when undefined); action-specific shape (scalar, string, or whole before-object); truncated to 80 chars in the UI.
+
+<!-- dict:col:platform_audit_log.new_value -->
+**`new_value`** (jsonb, nullable) — resulting state (6th arg, null-coerced); same per-action polymorphic shape as `old_value`.
+
+### `platform_user_notes`
+<!-- dict:table:platform_user_notes -->
+
+**Purpose:** free-text internal staff notes **about a CUSTOMER (org) user** — *not* about platform staff. Surfaced in the Customer Users admin drawer. Built and fully wired (GET/POST/DELETE) but holds **0 rows on both envs** — never used.
+
+**Gotchas (read first):**
+1. **Despite the name, these are notes about `auth.users` customers** — FK `user_id`→`auth.users(id)` ON DELETE CASCADE; the only caller passes a customer user id from the Customer Users table ([CustomerUsersClient.tsx:330](../../../app/platform-admin/customer-users/CustomerUsersClient.tsx#L330)). There is **no** notes table for platform staff. (Org-level notes are the separate `org_internal_notes` table — Org / Platform core.)
+2. **CASCADE delete** ⇒ deleting the customer's `auth.users` account wipes their notes; not a durable trail (note create/delete also writes a `platform_audit_log` row — create [users/[id]/notes/route.ts:58](../../../app/api/platform-admin/users/[id]/notes/route.ts#L58), delete [users/[id]/notes/[noteId]/route.ts:26](../../../app/api/platform-admin/users/[id]/notes/[noteId]/route.ts#L26)).
+3. **Asymmetric gating** — GET requires only `requirePlatformAdmin` (any role) but POST/DELETE require `manage_support` ([:36](../../../app/api/platform-admin/users/[id]/notes/route.ts#L36)) — product/growth/read_only can read but not write.
+4. **Immutable** — GET/POST/DELETE only, no PATCH route; editing = delete + recreate. DELETE is scoped by both note id **and** user id.
+
+**Fields** (boilerplate `id`, `created_at` omitted — no `updated_at`, notes are immutable):
+
+<!-- dict:col:platform_user_notes.user_id -->
+**`user_id`** (uuid, NOT NULL; FK→`auth.users(id)` ON DELETE CASCADE) — the **customer** the note is about; filter key for listing and set from the route param ([:49](../../../app/api/platform-admin/users/[id]/notes/route.ts#L49)). Indexed `(user_id, created_at DESC)`.
+
+<!-- dict:col:platform_user_notes.body -->
+**`body`** (text, NOT NULL; CHECK `char_length(body) <= 4000`) — the note text; the route also trims/slices to 4000 and rejects empty before insert ([:41-45](../../../app/api/platform-admin/users/[id]/notes/route.ts#L41)), so the CHECK is belt-and-suspenders.
+
+<!-- dict:col:platform_user_notes.created_by_email -->
+**`created_by_email`** (text, NOT NULL, no FK) — the authoring staffer's email, from `auth.user.email!` ([:49](../../../app/api/platform-admin/users/[id]/notes/route.ts#L49)).
+
+### `platform_admin_visits`
+<!-- dict:table:platform_admin_visits -->
+
+**Purpose:** lightweight navigation telemetry — one row per platform-admin route view by a signed-in staffer (dev 262 / prod 32). Its **sole** functional use is the "Last visit" timestamp on the Overview, which drives "since last visit" deltas (e.g. newly past-due orgs).
+
+**Gotchas (read first):**
+1. **Written on EVERY client navigation** — `PlatformVisitRecorder` POSTs on each pathname change ([PlatformVisitRecorder.tsx:9-19](../../../app/platform-admin/PlatformVisitRecorder.tsx#L9)), mounted in both layout branches; rows accumulate fast and **there is no retention sweep** — the table grows monotonically forever.
+2. **Only ONE thing reads it** — `getPreviousPlatformAdminVisit` returns the single most-recent row by `actor_email` ([lib/platform-admin-visits.ts:3-18](../../../lib/platform-admin-visits.ts#L3)), consumed only by the Overview ([page.tsx:104](../../../app/platform-admin/page.tsx#L104)). There is no "recent visits" list view; `actor_user_id` is never even selected, and `path` *is* selected by the reader ([lib/platform-admin-visits.ts:6](../../../lib/platform-admin-visits.ts#L6)) but never **consumed** (the Overview uses only `visited_at`) — effectively write-only telemetry.
+3. **`path` is sanitized server-side** — anything not starting `/platform-admin` is forced to `/platform-admin` and capped at 300 chars ([lib/platform-admin-visits.ts:29](../../../lib/platform-admin-visits.ts#L29)); the login route is excluded from recording.
+
+**Fields** (boilerplate `id` omitted; no `created_at`/`updated_at` — `visited_at` is the timestamp):
+
+<!-- dict:col:platform_admin_visits.actor_user_id -->
+**`actor_user_id`** (uuid, nullable, no FK [cross-schema to `auth.users`]) — the visiting staffer's id, always supplied (`auth.user.id`) so effectively never null; not used by the only reader.
+
+<!-- dict:col:platform_admin_visits.actor_email -->
+**`actor_email`** (text, NOT NULL, no FK) — visiting staffer's email, lowercased on write, fallback `'platform-admin'`; the lookup key for `getPreviousPlatformAdminVisit`. Indexed `(actor_email, visited_at DESC)`.
+
+<!-- dict:col:platform_admin_visits.path -->
+**`path`** (text, NOT NULL, default `'/platform-admin'`) — the route visited, sanitized as above; selected by the reader but **not actually consumed** by the Overview (only `visited_at` is).
+
+<!-- dict:col:platform_admin_visits.visited_at -->
+**`visited_at`** (timestamptz, NOT NULL, default now()) — visit time; the only column the Overview consumes (ordered DESC limit 1).
+
+### `platform_events`
+<!-- dict:table:platform_events -->
+
+**Purpose:** the durable platform **business-event** log (mig 053) — plan/subscription lifecycle transitions, Tournament-Plus acquisition/feature telemetry, and team-org link/billing/ownership lifecycle events (dev 210 / prod 0). Written by ~27 files (~43 call sites) via `writePlatformEvent` ([lib/platform-events.ts:51](../../../lib/platform-events.ts#L51)); the **only reader** is `getCommandCenterStats`, which consumes just the 4 billing-lifecycle types for the Overview.
+
+**Gotchas (read first):**
+1. **THE LOG BOUNDARY** — this is the *business*-event log; Observability's `error_groups`/`error_events` (mig 118) are the *error* log. No FK, no shared writer; do not conflate. The `event_type` domain is exactly the `PlatformEventType` union ([lib/platform-events.ts:3-34](../../../lib/platform-events.ts#L3)) — a naive grep for `eventType:` collides with the unrelated in-app-bell `notify()` and calendar systems that reuse the field name.
+2. **Dedup is app-side, best-effort, and has a TOCTOU race** — `writePlatformEvent` dedups **only when `source_event_id` is set**: SELECT by `(source, source_event_id)`, bail if found, else insert ([:52-65](../../../lib/platform-events.ts#L52)). No atomic upsert, **no live unique constraint in the snapshot** (only the PK + org_id FK), so two concurrent Stripe retries can both pass the check and double-insert. The vast majority of writes pass no `source_event_id` and skip dedup entirely.
+3. **One Stripe event ⇒ up to three rows** — the webhook suffixes the id (`${event.id}:plan_downgraded` / `:subscription_past_due` / `:subscription_recovered`, [webhook/route.ts:257](../../../app/api/billing/webhook/route.ts#L257)), each individually idempotent.
+4. **Write-mostly** — of the 31 `event_type` values, only **4** are ever read (`subscription_canceled`, `plan_downgraded`, `subscription_past_due`, `subscription_recovered`, [lib/platform-metrics.ts:158](../../../lib/platform-metrics.ts#L158)); all `tournament_plus_*` and `team_org_*` families are captured but consumed by no code path (dead capture — no funnel/team-org dashboard exists yet). The TS `source` values `'platform_admin'` (team-ownership transfer [lib/team-ownership-transfer.ts:610](../../../lib/team-ownership-transfer.ts#L610) + dev seed) and `'founding_season'` (the founding-season recovery-comp path [create-checkout/route.ts:268](../../../app/api/billing/create-checkout/route.ts#L268)) **are** written, just rarely.
+5. **`occurred_at` ≠ `created_at`** — `occurred_at` is the business-event time (writer-supplied, default now()) and is what all metrics window/order on; `created_at` is the insert time. Append-only (no writer ever UPDATEs).
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:platform_events.event_type -->
+**`event_type`** (text, NOT NULL, **no DB CHECK**) — the business-event discriminator; TS-typed (not DB-enforced) to the 31-value `PlatformEventType` union. Read-side only matches the 4 billing types.
+
+<!-- dict:col:platform_events.source -->
+**`source`** (text, NOT NULL, default `'app'`, no CHECK) — provenance; TS union `app|stripe|mock|platform_admin|migration_053|founding_season`. Live values: `app` (most), `stripe` (webhook), `mock`, `migration_053` (the one-time backfill), plus the rare `founding_season` (recovery-comp path) and `platform_admin` (team-ownership transfer / dev seed). First half of the dedup key.
+
+<!-- dict:col:platform_events.source_event_id -->
+**`source_event_id`** (text, nullable) — external idempotency key, second half of the dedup key; for Stripe `${event.id}:<transition>`. NULL for almost all `app`-source writes (which therefore skip dedup).
+
+<!-- dict:col:platform_events.org_id -->
+**`org_id`** (uuid, nullable; FK→`organizations(id)` ON DELETE SET NULL) — the tenant; nulled (not deleted) on org removal so lifecycle telemetry survives. May be NULL for some Stripe team-workspace writes.
+
+<!-- dict:col:platform_events.actor_user_id -->
+**`actor_user_id`** (uuid, nullable, **no FK** — bare uuid, soft pointer to `auth.users`) — user who triggered the event when known (from `ctx.user.id`); NULL for stripe/webhook/public writes.
+
+<!-- dict:col:platform_events.actor_email -->
+**`actor_email`** (text, nullable) — denormalized actor email captured at write time; NULL for system/stripe writes.
+
+<!-- dict:col:platform_events.previous_plan_id -->
+**`previous_plan_id`** (text, nullable, free-text plan key, no FK) — plan before a plan-change event; set on lifecycle transitions, NULL for feature/acquisition/team-org events.
+
+<!-- dict:col:platform_events.plan_id -->
+**`plan_id`** (text, nullable, free-text, no FK) — plan after the event / current plan key; also passed through on feature-usage events for segmentation.
+
+<!-- dict:col:platform_events.previous_subscription_status -->
+**`previous_subscription_status`** (text, nullable) — subscription status before the transition (raw Stripe-ish string); drives `isPastDueTransition`/`isRecoveryTransition` ([lib/platform-events.ts:89-96](../../../lib/platform-events.ts#L89)).
+
+<!-- dict:col:platform_events.subscription_status -->
+**`subscription_status`** (text, nullable) — subscription status after the transition (raw string); NULL for non-billing events.
+
+<!-- dict:col:platform_events.metadata -->
+**`metadata`** (jsonb, NOT NULL, default `{}`) — per-event-type payload bag. Key catalog by family: billing → `{stripeSubscriptionId, priceId, billingCycle}`; downgrade → `{retainedTournamentIds, keepTournamentIds, retentionUntil, reason}`; `tournament_plus_feature_used` → `{feature, action, tournamentId, status, notified, reason}`; acquisition CTA → `{acquisitionSource, surface, orgSlug, tournamentSlug, tournamentId, currentPath, ctaHref}`; team-org-link → `{teamWorkspaceId, linkedOrgId, repTeamId, …}`. **Not read by any consumer today** (the metrics reader selects only `event_type`+`occurred_at`).
+
+<!-- dict:col:platform_events.occurred_at -->
+**`occurred_at`** (timestamptz, NOT NULL, default now()) — the business-event time; all metrics windowing/ordering uses this, never `created_at` ([lib/platform-metrics.ts:159](../../../lib/platform-metrics.ts#L159)).
+
+---
+
+## Plans & catalog control plane
+
+> The plan/pricing/feature catalog and its **human-in-the-loop change-approval gate**. The runtime entitlement floor is the static `PLAN_CONFIG` const — these DB tables either overlay it on specific hot paths (`plan_gating`, `plan_config_overrides`) or are **admin-display / planning catalogs** (`platform_plan_module_entitlements`, `platform_plan_versions`, `platform_addon_catalog`, `platform_catalog_campaigns`). Every governed write flows through `platform_catalog_change_requests` → `_change_applications` and is mirrored to `platform_audit_log`.
+
+### `plan_gating`
+<!-- dict:table:plan_gating -->
+
+**Purpose:** the per-plan checkout gating switch managed by platform admins (5 rows, PK `plan_key`). `gating_status='early_access'` blocks self-serve Stripe Checkout for that plan and shows an early-access CTA; `'live'` opens it. **Runtime-consumed** — `getPlanGatingMap` overlays these rows on the static `PLAN_CONFIG.gatingStatus` fallback.
+
+**Gotchas (read first):**
+1. **This table IS consumed at runtime** — `getPlanGatingMap` selects `plan_key/gating_status` and overlays it on the code fallback ([lib/plan-gating-server.ts:38-50](../../../lib/plan-gating-server.ts#L38)); a DB edit here actually changes checkout behavior. It drives the 403 in `create-checkout` ([:120-126](../../../app/api/billing/create-checkout/route.ts#L120)) and is also read by the home + pricing pages, coaches start/claim, and `create-team-checkout`.
+2. **Two env/cookie short-circuits force all plans live, bypassing the DB** — `NEXT_PUBLIC_DEV_PLAN_GATES_TOGGLE` + `dev_plan_gates` cookie, and `NEXT_PUBLIC_PLAN_GATES='live'` ([lib/plan-gating-server.ts:31-36](../../../lib/plan-gating-server.ts#L31)).
+3. **Fails OPEN, not closed** — a DB read error or zero rows silently reverts to `PLAN_CONFIG.gatingStatus` defaults ([:42](../../../lib/plan-gating-server.ts#L42)).
+4. **UPDATE-only write path** (`.update().eq('plan_key',…)`, [plan-gating/route.ts:67-75](../../../app/api/platform-admin/plan-gating/route.ts#L67)) — the 5 rows are migration-seeded; no insert path. Every edit needs `manage_product` **and** an approved change request (type `plan_version|pricing|campaign|trial`). A separate static `isEffectivelyGated` ([lib/plan-config.ts:108](../../../lib/plan-config.ts#L108)) reads only the code default — don't confuse it with the DB-merged `getPlanGatingMap`.
+
+**Fields:**
+
+<!-- dict:col:plan_gating.plan_key -->
+**`plan_key`** (text, NOT NULL, PK; CHECK `tournament|team|tournament_plus|league|club`) — plan identity + PK; matched against `OrgPlan` keys when overlaying ([lib/plan-gating-server.ts:46](../../../lib/plan-gating-server.ts#L46)). The `team` row only matters to the coach/team checkout + display reads (general `create-checkout` 400s `team`).
+
+<!-- dict:col:plan_gating.gating_status -->
+**`gating_status`** (text, NOT NULL, default `'early_access'`; CHECK `live|early_access`) — `early_access` ⇒ gated=true (checkout 403s); `live` ⇒ open.
+
+<!-- dict:col:plan_gating.updated_by_email -->
+**`updated_by_email`** (text, nullable) — last editor's email, from `auth.user.email` ([plan-gating/route.ts:72](../../../app/api/platform-admin/plan-gating/route.ts#L72)); display/audit only.
+
+<!-- dict:col:plan_gating.last_change_note -->
+**`last_change_note`** (text, nullable) — free-text rationale, sanitized via `sanitizePlatformChangeNote`; display/audit only. (`updated_at` is code-maintained, nullable; never-edited seed rows can be null.)
+
+### `plan_config_overrides`
+<!-- dict:table:plan_config_overrides -->
+
+**Purpose:** per-plan numeric overrides (`tournament_limit`, `seat_limit`, `trial_days`) layered **over** the static `PLAN_CONFIG` defaults. Sparse — a row exists only if an admin overrode that plan; null fields mean "use the code default" (dev 4 / prod 0, so **prod runs on pure `PLAN_CONFIG`**).
+
+**Gotchas (read first):**
+1. **Merge precedence: DB non-null wins, else default** — `override?.tournament_limit ?? base.tournamentLimit` (and seat/trial) ([lib/plan-config-db.ts:53-55](../../../lib/plan-config-db.ts#L53)).
+2. **Consumed at CHECKOUT only** — `create-checkout` resolves the merged config ([create-checkout/route.ts:118](../../../app/api/billing/create-checkout/route.ts#L118)) and writes the merged `tournamentLimit` onto `organizations.tournament_limit` ([:142](../../../app/api/billing/create-checkout/route.ts#L142) direct-apply / [:217](../../../app/api/billing/create-checkout/route.ts#L217) Stripe path; `trialDays` at [:334](../../../app/api/billing/create-checkout/route.ts#L334)); `create-team-checkout` calls `getPlanConfigOverride('team')` ([:171](../../../app/api/billing/create-team-checkout/route.ts#L171)). It sets the base default *written into the org row at checkout* — it is **not** the ongoing per-org cap (that's `organizations.tournament_limit` + `getEffectiveTournamentLimit`'s `Math.min` clamp, a different mechanism — see the stale-cap gotcha in Org / Platform core).
+3. **`UNIQUE(plan_id)` backs an upsert** (`onConflict:'plan_id'`); clearing an override = writing null fields, **not** deleting the row ([lib/plan-config-db.ts:74-97](../../../lib/plan-config-db.ts#L74)). Two writers (direct plan-config PATCH + the inline catalog-request apply), both requiring `manage_product` + an approved request.
+
+**Fields** (boilerplate `id`, `updated_at` omitted — `updated_at` code-maintained):
+
+<!-- dict:col:plan_config_overrides.plan_id -->
+**`plan_id`** (text, NOT NULL; UNIQUE — **no CHECK**, unlike `plan_gating.plan_key`) — which plan the override applies to. The app validates against the 5-plan list on write ([plan-config/route.ts:25](../../../app/api/platform-admin/plan-config/route.ts#L25)) but the DB does not, so a service-role write could insert an off-list `plan_id`.
+
+<!-- dict:col:plan_config_overrides.tournament_limit -->
+**`tournament_limit`** (integer, nullable) — override for max non-archived tournaments; null ⇒ `PLAN_CONFIG` default. The merged value is written to `organizations.tournament_limit` at checkout.
+
+<!-- dict:col:plan_config_overrides.seat_limit -->
+**`seat_limit`** (integer, nullable) — override for the staff seat cap; null ⇒ default. Flows through `getPlanConfigOverride`'s `MergedPlanLimits`; `create-checkout` itself persists only `tournament_limit` to the org.
+
+<!-- dict:col:plan_config_overrides.trial_days -->
+**`trial_days`** (integer, nullable) — override for the Stripe trial length; null ⇒ default; the merged value feeds the Checkout trial config.
+
+<!-- dict:col:plan_config_overrides.updated_by_email -->
+**`updated_by_email`** (text, nullable) — admin who last set the override; audit/display only.
+
+<!-- dict:col:plan_config_overrides.last_change_note -->
+**`last_change_note`** (text, nullable) — sanitized rationale for the override change; audit/display only.
+
+### `platform_plan_versions`
+<!-- dict:table:platform_plan_versions -->
+
+**Purpose:** an append-only catalog of named plan-packaging versions (draft/scheduled/published/archived) for product-planning history (1 seed row, both envs). **Not consumed by any runtime billing/entitlement path** — read only as a history list on the plans-pricing admin page, and used as an FK target for change requests.
+
+**Gotchas (read first):**
+1. **ZERO app writers** — the single row was seeded by migration 058 (`'current-2026-05'`, `status='published'`, `created_by_email='migration_058'`); no insert/update/upsert exists in app code, so `updated_at`/`published_at` are frozen at seed. `draft`/`scheduled`/`archived` statuses are never produced.
+2. **`snapshot` is write-once-never-read** — seeded by mig 058 but the page SELECT omits it ([plans-pricing/page.tsx:170](../../../app/platform-admin/plans-pricing/page.tsx#L170)) — its contents are dead.
+3. **Its only structural role is as an FK target** — `platform_catalog_change_requests.target_version_id`→here ON DELETE SET NULL (but that FK column is itself never read/written — see change-requests).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:platform_plan_versions.version_key -->
+**`version_key`** (text, NOT NULL, UNIQUE) — human key (seed `'current-2026-05'`); displayed as a fallback label.
+
+<!-- dict:col:platform_plan_versions.title -->
+**`title`** (text, NOT NULL) — display title (seed `'Current public catalog'`); display only.
+
+<!-- dict:col:platform_plan_versions.description -->
+**`description`** (text, nullable) — optional long description; shown in the version list.
+
+<!-- dict:col:platform_plan_versions.status -->
+**`status`** (text, NOT NULL, default `'draft'`; CHECK `draft|published|scheduled|archived`) — lifecycle state; only `'published'` exists in data, the rest are unused scaffolding (no code transitions it).
+
+<!-- dict:col:platform_plan_versions.effective_at -->
+**`effective_at`** (timestamptz, nullable) — when the version takes effect (seeded now()); display only.
+
+<!-- dict:col:platform_plan_versions.published_at -->
+**`published_at`** (timestamptz, nullable) — when published (seeded now()); display only.
+
+<!-- dict:col:platform_plan_versions.created_by_email -->
+**`created_by_email`** (text, nullable) — author; the seed reads the literal `'migration_058'`.
+
+<!-- dict:col:platform_plan_versions.snapshot -->
+**`snapshot`** (jsonb, NOT NULL, default `{}`) — **dead column**: seeded with `{plans, source:'PLAN_CONFIG', purpose}` by mig 058 but never SELECTed by any code.
+
+<!-- dict:col:platform_plan_versions.notes -->
+**`notes`** (text, nullable) — free-text notes; selected by the page for display ([plans-pricing/page.tsx:170](../../../app/platform-admin/plans-pricing/page.tsx#L170)) — only `snapshot` is omitted from that SELECT.
+
+### `platform_plan_module_entitlements`
+<!-- dict:table:platform_plan_module_entitlements -->
+
+**Purpose:** an admin-editable mirror of which modules each plan includes — the `(plan_id × module_key)` grid behind the platform-admin **Feature Matrix** (35 rows = 5 plans × 7 modules). **IMPORTANT: it is NOT the runtime entitlement source.**
+
+**Gotchas (read first):**
+1. **CRUX — not the runtime entitlement source** — the actual route-handler check `hasModuleEntitlement` reads the **static** `PLAN_CONFIG[org.planId].moduleEntitlements` + `org.enabledAddons`, never this table ([lib/module-entitlements.ts:13-20](../../../lib/module-entitlements.ts#L13)). Editing/publishing this table changes the admin Feature-Matrix **display only** — it does not change what any API route enforces, so it can silently drift from real entitlement.
+2. **Only reader is the Feature Matrix** — `getEffectivePlanModuleEntitlements` ([lib/plan-module-entitlements.ts:78-105](../../../lib/plan-module-entitlements.ts#L78)) overlays this table on the `PLAN_CONFIG` default (row present ⇒ use `included`; absent ⇒ default; DB error ⇒ default), consumed only by `getFeatureMatrixRows` + the publish route's diff.
+3. **Writes upsert the FULL 35-row grid every time** (`onConflict 'plan_id,module_key'`, [:126-138](../../../lib/plan-module-entitlements.ts#L126)) — hence the exact 35-row count; never partial. Gated by `manage_product` + an approved `feature_matrix` change request; refuses a no-op proposal.
+
+**Fields** (boilerplate `updated_at` omitted — code-maintained):
+
+<!-- dict:col:platform_plan_module_entitlements.plan_id -->
+**`plan_id`** (text, NOT NULL; part of composite PK `(plan_id, module_key)`; CHECK `tournament|team|tournament_plus|league|club`) — plan side of the grid; iterated via `PLAN_ORDER`.
+
+<!-- dict:col:platform_plan_module_entitlements.module_key -->
+**`module_key`** (text, NOT NULL; part of composite PK; CHECK `module_tournaments|module_communications|module_members|module_public_site|module_house_league|module_accounting|module_rep_teams`) — module side of the grid (= the 7-entry `MODULE_CATALOG`).
+
+<!-- dict:col:platform_plan_module_entitlements.included -->
+**`included`** (bool, NOT NULL, default false) — whether the plan includes the module in the **published Feature Matrix**; display/publish only — **not enforced** at runtime.
+
+<!-- dict:col:platform_plan_module_entitlements.updated_by_email -->
+**`updated_by_email`** (text, nullable) — admin who last published the matrix; audit/display.
+
+### `platform_addon_catalog`
+<!-- dict:table:platform_addon_catalog -->
+
+**Purpose:** a product-planning catalog of add-ons / module packaging (key, label, pricing model, default-included plans, status, optional reference price) — 7 rows. **Not consumed by any runtime entitlement or billing path** (real per-org grants live on `organizations.enabled_addons`; real prices in `stripe_prices`).
+
+**Gotchas (read first):**
+1. **NOT live-consumed** — the only reader is the plans-pricing admin page ([plans-pricing/page.tsx:173-176](../../../app/platform-admin/plans-pricing/page.tsx#L173)); no checkout/entitlement code reads it. **ZERO app writers** — all 7 rows are migration-seeded (6 by mig 058, `org_team_addon` by mig 065; mig 065 also UPDATEs `extra_rep_team` → `live`, $19/$190); `updated_at` only moves via migrations.
+2. **`status` is a LABEL, not a switch** — 6 of 7 rows are `'live'`, 1 `'planned'` (`support_package`); "live" here is a catalog label with no runtime effect.
+3. **`default_included_plans` and the prices are descriptive and can drift** — runtime inclusion is decided by static `PLAN_CONFIG.moduleEntitlements`; the billed amounts come from `stripe_prices`. `addon_key` UNIQUE; `pricing_model`/`status` CHECK-constrained (DB-enforced enums even though nothing reads them at runtime).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:platform_addon_catalog.addon_key -->
+**`addon_key`** (text, NOT NULL, UNIQUE) — stable add-on id (`public_site`, `house_league`, `accounting`, `rep_teams`, `extra_rep_team`, `support_package`, `org_team_addon`); the upsert conflict target in seeding migrations.
+
+<!-- dict:col:platform_addon_catalog.label -->
+**`label`** (text, NOT NULL) — display name; read into the admin page's addon catalog.
+
+<!-- dict:col:platform_addon_catalog.description -->
+**`description`** (text, nullable) — long description for the planning UI; display only.
+
+<!-- dict:col:platform_addon_catalog.module_key -->
+**`module_key`** (text, nullable, **no CHECK**) — which module the add-on maps to (e.g. `module_rep_teams`); null for non-module add-ons like `support_package`; display only.
+
+<!-- dict:col:platform_addon_catalog.status -->
+**`status`** (text, NOT NULL, default `'planned'`; CHECK `planned|draft|live|retired`) — catalog lifecycle **label** (6 `live`, 1 `planned`); does not gate anything at runtime.
+
+<!-- dict:col:platform_addon_catalog.default_included_plans -->
+**`default_included_plans`** (text[], NOT NULL, default `{}`) — descriptive list of plans that bundle the add-on (e.g. `['league','club']`); purely documentary — can disagree with the real `PLAN_CONFIG` entitlement.
+
+<!-- dict:col:platform_addon_catalog.pricing_model -->
+**`pricing_model`** (text, NOT NULL, default `'custom'`; CHECK `included|flat|per_team|per_seat|custom`) — how the add-on would be priced; display/planning only.
+
+<!-- dict:col:platform_addon_catalog.monthly_price -->
+**`monthly_price`** (numeric, nullable) — reference monthly price (e.g. `org_team_addon`=29, `extra_rep_team`=19); **not** the billed amount (that's `stripe_prices`); display only.
+
+<!-- dict:col:platform_addon_catalog.annual_price -->
+**`annual_price`** (numeric, nullable) — reference annual price; display only.
+
+<!-- dict:col:platform_addon_catalog.effective_at -->
+**`effective_at`** (timestamptz, nullable) — optional planning effective date; not set by seeds; display only.
+
+<!-- dict:col:platform_addon_catalog.notes -->
+**`notes`** (text, nullable) — planning notes (e.g. `extra_rep_team`'s note points to `stripe_prices` for ids); display only.
+
+### `platform_catalog_change_requests`
+<!-- dict:table:platform_catalog_change_requests -->
+
+**Purpose:** the proposal/approval workflow record for any governed catalog change (plan availability, plan limits, Stripe price ids, feature matrix, add-ons, grandfathering, campaigns). A row moves `draft → needs_review → approved → implemented` (or `rejected`/`canceled`); when it reaches `approved` carrying a recognized `proposal.kind`, the PATCH applies the change inline and auto-flips to `implemented`. This is the **human-in-the-loop gate** that authorizes writes to `stripe_prices` / `plan_gating` / `plan_config_overrides` / the feature matrix (dev 6 / prod 14).
+
+**Gotchas (read first):**
+1. **Apply branches on `proposal.kind`, NOT `request_type`** (`stripe_price_update` | `plan_gating_update` | `plan_config_update`, [change-requests/route.ts:682-687](../../../app/api/platform-admin/product-catalog/change-requests/route.ts#L682)); `request_type` is descriptive metadata. The kinds `addon`/`grandfathering`/bare `plan_version`/`campaign` have **no auto-apply branch** — they can only be flipped through statuses manually.
+2. **Approving auto-advances to `implemented`** (not left at `approved`) when a recognized proposal applies ([:714](../../../app/api/platform-admin/product-catalog/change-requests/route.ts#L714)); the `current.status !== 'implemented'` guard ([:685](../../../app/api/platform-admin/product-catalog/change-requests/route.ts#L685)) makes the **apply** a no-op (no duplicate catalog write) — but the status UPDATE still runs, so re-PATCHing an already-implemented request to `approved` can regress its status.
+3. **Optimistic-concurrency on the live target** — if the target already equals the proposed value it records `already_current` and still implements; if the target no longer matches the request's expected `current*` snapshot it **409s** "changed after this request was created" ([:222-255](../../../app/api/platform-admin/product-catalog/change-requests/route.ts#L222)).
+4. **No separation of duties** — the same `manage_product` gates POST (submit) and PATCH (approve), with no submitter-vs-reviewer check, so a user can approve their own request ([:593](../../../app/api/platform-admin/product-catalog/change-requests/route.ts#L593) / [:654](../../../app/api/platform-admin/product-catalog/change-requests/route.ts#L654)).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted — `updated_at` code-maintained on PATCH):
+
+<!-- dict:col:platform_catalog_change_requests.request_type -->
+**`request_type`** (text, NOT NULL; CHECK `plan_version|feature_matrix|addon|pricing|grandfathering|campaign|trial`) — descriptive category, validated on insert; **not** used to choose the apply path (that's `proposal.kind`); display/grouping only.
+
+<!-- dict:col:platform_catalog_change_requests.title -->
+**`title`** (text, NOT NULL) — human label, required + trimmed to 160 chars on insert.
+
+<!-- dict:col:platform_catalog_change_requests.description -->
+**`description`** (text, nullable) — free-text detail, cleaned to 2000 chars; display.
+
+<!-- dict:col:platform_catalog_change_requests.status -->
+**`status`** (text, NOT NULL, default `'draft'`; CHECK `draft|needs_review|approved|rejected|implemented|canceled`) — workflow state; the gate `requireApprovedCatalogChangeRequest` requires `status='approved'` ([lib/platform-catalog-approval.ts:50](../../../lib/platform-catalog-approval.ts#L50)); PATCH may override to `implemented` on auto-apply.
+
+<!-- dict:col:platform_catalog_change_requests.priority -->
+**`priority`** (text, NOT NULL, default `'medium'`; CHECK `low|medium|high|launch_blocker`) — triage priority; display/sort only.
+
+<!-- dict:col:platform_catalog_change_requests.target_plan_id -->
+**`target_plan_id`** (text, nullable, no CHECK) — which plan the request concerns; cleaned to 80 chars; display/filter only.
+
+<!-- dict:col:platform_catalog_change_requests.target_addon_key -->
+**`target_addon_key`** (text, nullable) — which add-on the request concerns; display/filter only; no apply branch consumes it.
+
+<!-- dict:col:platform_catalog_change_requests.target_version_id -->
+**`target_version_id`** (uuid, nullable; FK→`platform_plan_versions(id)` ON DELETE SET NULL) — **dead column**: never written by the insert and never SELECTed by any reader; only the FK constraint exists.
+
+<!-- dict:col:platform_catalog_change_requests.effective_at -->
+**`effective_at`** (timestamptz, nullable) — intended go-live timestamp; display only (apply paths use `new Date()` at apply-time, not this field).
+
+<!-- dict:col:platform_catalog_change_requests.impact_summary -->
+**`impact_summary`** (text, nullable) — plain-language blast-radius note, cleaned to 1200 chars; rendered for reviewers.
+
+<!-- dict:col:platform_catalog_change_requests.proposal -->
+**`proposal`** (jsonb, NOT NULL, default `{}`) — **the load-bearing column**: the proposed change payload, stored verbatim. Recognized shapes by `kind`: `{kind:'stripe_price_update', stripePriceId, planId, billingCycle, environment, currentPriceId, proposedPriceId, changeNote}`; `{kind:'plan_gating_update', planId, currentStatus, proposedStatus, changeNote}`; `{kind:'plan_config_update', planId, current:{tournamentLimit,seatLimit,trialDays}, proposed:{…}, changeNote}`; `{kind:'feature_matrix', moduleEntitlements}`. An unrecognized/missing `kind` = informational request that never auto-applies.
+
+<!-- dict:col:platform_catalog_change_requests.submitted_by_email -->
+**`submitted_by_email`** (text, nullable) — captured when the request first enters `needs_review` (or is auto-submitted by an apply).
+
+<!-- dict:col:platform_catalog_change_requests.submitted_at -->
+**`submitted_at`** (timestamptz, nullable) — first needs_review/apply submission time.
+
+<!-- dict:col:platform_catalog_change_requests.reviewed_by_email -->
+**`reviewed_by_email`** (text, nullable) — approver/rejecter email, set only when status becomes `approved`/`rejected`; **no check that it differs from `submitted_by_email`**.
+
+<!-- dict:col:platform_catalog_change_requests.reviewed_at -->
+**`reviewed_at`** (timestamptz, nullable) — approval/rejection time.
+
+<!-- dict:col:platform_catalog_change_requests.implementation_notes -->
+**`implementation_notes`** (text, nullable) — notes recorded at apply/implement time, sanitized via `sanitizePlatformChangeNote` (or auto-generated "Marked implemented because…").
+
+<!-- dict:col:platform_catalog_change_requests.created_by_email -->
+**`created_by_email`** (text, NOT NULL) — request author, always set to `auth.user.email` on insert.
+
+<!-- dict:col:platform_catalog_change_requests.updated_by_email -->
+**`updated_by_email`** (text, nullable) — last mutator; set on insert and every PATCH.
+
+### `platform_catalog_change_applications`
+<!-- dict:table:platform_catalog_change_applications -->
+
+**Purpose:** an append-only ledger of catalog changes that were **actually applied** under an approved change request. Each row links to its authorizing request, names the affected `surface` + `target_key`, and snapshots the `applied_payload` (dev 8 / prod 14). Complements the request workflow + the `platform_audit_log` entry.
+
+**Gotchas (read first):**
+1. **Best-effort writer** — `recordCatalogChangeApplication` swallows insert errors (`console.error` only, no throw, [lib/platform-catalog-approval.ts:75-87](../../../lib/platform-catalog-approval.ts#L75)) — the catalog write can succeed while its ledger row is silently dropped; `platform_audit_log` is the durable trail.
+2. **FK ON DELETE RESTRICT** — `change_request_id`→`platform_catalog_change_requests(id)` RESTRICT, so once a request has any application row it **cannot be deleted** — the ledger pins its authorizing request permanently.
+3. **Immutable-by-convention** — has an `id` PK but no `created_at`/`updated_at` (`applied_at` is the only timestamp); no UPDATE/DELETE code path. **Ten** write call sites cover the four surfaces — the change-requests PATCH (stripe / plan_gating / plan_config, each inline + already-current = 6), the feature-matrix publish route, and the three direct PATCH routes (stripe-prices, plan-gating, plan-config).
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:platform_catalog_change_applications.change_request_id -->
+**`change_request_id`** (uuid, NOT NULL; FK→`platform_catalog_change_requests(id)` ON DELETE RESTRICT) — the authorizing request (gotcha 2).
+
+<!-- dict:col:platform_catalog_change_applications.surface -->
+**`surface`** (text, NOT NULL; CHECK `plan_gating|plan_config|stripe_price|feature_matrix`) — which catalog surface was written; mirrors the `ApprovalSurface` TS union ([lib/platform-catalog-approval.ts:3](../../../lib/platform-catalog-approval.ts#L3)).
+
+<!-- dict:col:platform_catalog_change_applications.target_key -->
+**`target_key`** (text, NOT NULL) — the specific written target within the surface: `stripe_prices.id` (stripe_price), `plan_key` (plan_gating), `plan_id` (plan_config), the literal `'module_entitlements'` (feature_matrix).
+
+<!-- dict:col:platform_catalog_change_applications.actor_email -->
+**`actor_email`** (text, NOT NULL) — the platform admin who applied the change (`auth.user.email`).
+
+<!-- dict:col:platform_catalog_change_applications.applied_payload -->
+**`applied_payload`** (jsonb, NOT NULL, default `{}`) — snapshot of the applied result + provenance flags. Key catalog by surface: stripe_price → `{id, plan_id, billing_cycle, environment, price_id, change_note, stripe_validation:{checked,active?,product?}, approval_mode, already_current?, expected_previous_price_id?}`; plan_gating → `{planKey, gatingStatus, changeNote, approval_mode, already_current?, expected_previous_status?}`; plan_config → `{plan_id, tournament_limit, seat_limit, trial_days, change_note, approval_mode, already_current?, expected_previous_config?}`; feature_matrix → `{change_note, changes[], previous_module_entitlements, module_entitlements}`.
+
+<!-- dict:col:platform_catalog_change_applications.applied_at -->
+**`applied_at`** (timestamptz, NOT NULL, default now()) — when the application was recorded (relies on the default; no caller sets it); the ordering key for the change-requests page.
+
+### `platform_catalog_campaigns`
+<!-- dict:table:platform_catalog_campaigns -->
+
+**Purpose:** admin scaffolding to **track** planned coupon/promo/trial/launch/retention campaigns for product planning (mig 059). A CRUD-only planning register — **0 rows both envs**, and **not wired into checkout, Stripe, trials, or any entitlement path**.
+
+**Gotchas (read first):**
+1. **Built-but-unused at runtime** — no checkout/billing/Stripe code consumes campaigns; `coupon_code` is stored but never passed to Stripe; `trial_days`/`target_plan_ids`/`starts_at`/`ends_at` are write-then-display only. No expiry sweep or auto-status flip.
+2. **No FK to the change-requests table** — the `request_type='campaign'` enum value is a category label only; there is no DB linkage between the two tables.
+3. **Only `status` is mutable after creation** — the PATCH updates `status`/`updated_at`/`updated_by_email` and nothing else ([campaigns/route.ts:139-148](../../../app/api/platform-admin/product-catalog/campaigns/route.ts#L139)); everything else is write-once at POST. `campaign_key` is auto-generated server-side (slug + base36 timestamp), never client-supplied.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:platform_catalog_campaigns.campaign_key -->
+**`campaign_key`** (text, NOT NULL, UNIQUE) — stable slug, auto-generated as `${slug(title)}-${Date.now().toString(36)}` ([campaigns/route.ts:23-29](../../../app/api/platform-admin/product-catalog/campaigns/route.ts#L23)); never read by any consumer.
+
+<!-- dict:col:platform_catalog_campaigns.title -->
+**`title`** (text, NOT NULL) — campaign name, required + trimmed to 160 chars; also the seed for `campaign_key`.
+
+<!-- dict:col:platform_catalog_campaigns.campaign_type -->
+**`campaign_type`** (text, NOT NULL; CHECK `coupon|promo|trial|launch|retention`) — category; display/planning only.
+
+<!-- dict:col:platform_catalog_campaigns.status -->
+**`status`** (text, NOT NULL, default `'draft'`; CHECK `draft|scheduled|active|paused|ended`) — lifecycle; the only PATCH-mutable field; no code reads it to gate anything (a campaign is never "activated" into a discount).
+
+<!-- dict:col:platform_catalog_campaigns.target_plan_ids -->
+**`target_plan_ids`** (text[], NOT NULL, default `{}`) — plans the campaign targets, cleaned to the valid plan set + de-duped; stored only, never consumed.
+
+<!-- dict:col:platform_catalog_campaigns.starts_at -->
+**`starts_at`** (timestamptz, nullable) — planned start; indexed but no code queries by it; display only.
+
+<!-- dict:col:platform_catalog_campaigns.ends_at -->
+**`ends_at`** (timestamptz, nullable) — planned end; no expiry sweep / auto-status flip exists.
+
+<!-- dict:col:platform_catalog_campaigns.coupon_code -->
+**`coupon_code`** (text, nullable) — intended coupon code, cleaned to 80 chars; **never passed to Stripe** — purely informational.
+
+<!-- dict:col:platform_catalog_campaigns.discount_summary -->
+**`discount_summary`** (text, nullable) — plain-language discount description, cleaned to 500 chars; display only.
+
+<!-- dict:col:platform_catalog_campaigns.trial_days -->
+**`trial_days`** (integer, nullable; CHECK `trial_days IS NULL OR trial_days >= 0`) — intended trial length; never applied to any actual trial (no consumer).
+
+<!-- dict:col:platform_catalog_campaigns.notes -->
+**`notes`** (text, nullable) — internal planning notes, cleaned to 1200 chars.
+
+<!-- dict:col:platform_catalog_campaigns.created_by_email -->
+**`created_by_email`** (text, NOT NULL) — author, set to `auth.user.email` on POST.
+
+<!-- dict:col:platform_catalog_campaigns.updated_by_email -->
+**`updated_by_email`** (text, nullable) — last mutator; set on POST and every status PATCH.
+
+---
+
+## Platform ops & data import
+
+> Two platform-control-plane ops tables (`platform_bulk_operations`, `platform_metric_snapshots` — both 0 rows, never exercised) plus the **org-scoped** tournament data-import staging (`import_batches`/`import_batch_rows` — gated by *org* capabilities, not platform role; the classifier files them here as an ops/staging surface).
+
+### `platform_bulk_operations`
+<!-- dict:table:platform_bulk_operations -->
+
+**Purpose:** a post-hoc audit ledger of platform-admin bulk org actions (subscription-status override, comp-period grant, plan change, module add-on enable/disable across up to 100 orgs at once) — one row per run, inserted up-front then updated with the per-org outcome. **0 rows both envs — no bulk op has ever run.**
+
+**Gotchas (read first):**
+1. **`status` default is dead** — the row is INSERTed with `status='failed'` / success=0 / failure=all, then UPDATEd to the real status after the loop ([bulk-operations/route.ts:153-156](../../../app/api/platform-admin/bulk-operations/route.ts#L153) / [:326-331](../../../app/api/platform-admin/bulk-operations/route.ts#L326)); the DB default `'completed'` is never observed. `operationStatus()`: `completed`=all ok, `partial_failed`=mixed, `failed`=none ok.
+2. **Not a job queue — a redundant ledger** — orgs are mutated synchronously in the same request loop (`org_overrides`/`organizations` writes) and **each mutation also writes `platform_audit_log`**, so this table duplicates audit info that lives there.
+3. **Permission split beyond the CHECK** — `module_addon_enablement` requires `manage_product`; the other three require `manage_billing` ([:97-103](../../../app/api/platform-admin/bulk-operations/route.ts#L97)) — a `manage_billing`-only role 403s on module changes even though the CHECK allows the value. `result_summary` is write-only (the history reader omits it).
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:platform_bulk_operations.action_type -->
+**`action_type`** (text, NOT NULL; CHECK `subscription_status_override|comp_period|plan_change|module_addon_enablement`) — which bulk action ran; validated against `VALID_ACTIONS`; read into the history list.
+
+<!-- dict:col:platform_bulk_operations.status -->
+**`status`** (text, NOT NULL, default `'completed'`; CHECK `completed|partial_failed|failed`) — run outcome; default dead (code inserts `'failed'` then UPDATEs).
+
+<!-- dict:col:platform_bulk_operations.target_count -->
+**`target_count`** (integer, NOT NULL, default 0) — orgs targeted (`orgs.length`); set on insert, never updated.
+
+<!-- dict:col:platform_bulk_operations.success_count -->
+**`success_count`** (integer, NOT NULL, default 0) — orgs where the action succeeded; updated post-loop to `results.filter(ok).length`.
+
+<!-- dict:col:platform_bulk_operations.failure_count -->
+**`failure_count`** (integer, NOT NULL, default 0) — orgs where the action threw; updated post-loop.
+
+<!-- dict:col:platform_bulk_operations.reason -->
+**`reason`** (text, NOT NULL, app-required non-empty) — operator justification, max 1200 chars; also copied into each per-org `platform_audit_log` entry.
+
+<!-- dict:col:platform_bulk_operations.parameters -->
+**`parameters`** (jsonb, NOT NULL, default `{}`) — action inputs; key catalog `{target_status, target_plan, target_module, module_operation, expires_at}` (each non-null only for the matching `action_type`); read into the history list.
+
+<!-- dict:col:platform_bulk_operations.result_summary -->
+**`result_summary`** (jsonb, NOT NULL, default `{}`) — per-org outcomes `{results:[{orgId,name,slug,ok,message}]}`, written on the post-loop UPDATE (which `.select('*')`s the row back into the POST response) but **never read back from the DB** — the history reader omits it and the POST client uses the in-memory `results` array.
+
+<!-- dict:col:platform_bulk_operations.created_by_email -->
+**`created_by_email`** (text, NOT NULL) — platform-admin email that ran the op; read into the history list.
+
+<!-- dict:col:platform_bulk_operations.completed_at -->
+**`completed_at`** (timestamptz, nullable) — when the loop finished, set explicitly on the post-loop UPDATE; NULL only if that UPDATE itself errors.
+
+### `platform_metric_snapshots`
+<!-- dict:table:platform_metric_snapshots -->
+
+**Purpose:** a daily point-in-time archive of the platform command-center stats (MRR/ARR, plan & subscription mix, growth, usage, lifecycle, alerts) — one row per calendar day (`UNIQUE snapshot_date`), upserted on demand by the manual "Take snapshot" button. **0 rows both envs — never taken.**
+
+**Gotchas (read first):**
+1. **`metrics` jsonb is write-only** — the only reader `getLatestPlatformMetricSnapshot` selects just `snapshot_date/created_at/created_by_email/source` ([lib/platform-metrics.ts:341](../../../lib/platform-metrics.ts#L341)); the Overview uses it purely as a "last snapshot" label while showing LIVE stats from `getCommandCenterStats`.
+2. **`UNIQUE(snapshot_date)` upsert overwrites** (`onConflict:'snapshot_date'`) — re-snapshotting the same day replaces rather than appends, and `created_at` is set explicitly so it bumps to the latest run (not a stable creation marker).
+3. **`source` is only ever `'manual'`** — the writer defaults it to `'manual'` and the only caller passes `'manual'`; any pg_cron/scheduled source is unbuilt. Gated only by `requirePlatformAdmin` (any platform role).
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:platform_metric_snapshots.snapshot_date -->
+**`snapshot_date`** (date, NOT NULL; UNIQUE) — calendar day of the snapshot (today sliced to `YYYY-MM-DD`); the upsert conflict target (one row/day).
+
+<!-- dict:col:platform_metric_snapshots.metrics -->
+**`metrics`** (jsonb, NOT NULL, default `{}`) — the full `getCommandCenterStats` blob. Key catalog: `generatedAt`; `totals{organizations,users,tournaments,teams,estimatedMrr,estimatedArr}`; `subscription{byPlan,byStatus,statusByPlan,trialEndingSoon}`; `growth{newOrgs7/30/90,newOrgsByPlan,earlyAccessTotal,newLeads7,convertedLeads,conversionRate,…}`; `usage{tournaments*,teamsTotal,leagueSeasons*,repTeams*,accountingEntriesTotal,moduleCounts}`; `lifecycle{cancellations,downgrades,recoveries,recoveryRate30}`; `alerts{pastDue,trialEndingSoon,retentionAlertCount,expiredOverrides,orgsWithoutOwner,…}`. **Never read back.**
+
+<!-- dict:col:platform_metric_snapshots.source -->
+**`source`** (text, NOT NULL, default `'manual'`, no CHECK) — how the snapshot was created; only ever `'manual'` (the writer defaults it; the only caller passes `'manual'`).
+
+<!-- dict:col:platform_metric_snapshots.created_by_email -->
+**`created_by_email`** (text, nullable) — platform-admin who took the snapshot (`auth.user.email ?? 'platform-admin'`).
+
+<!-- dict:col:platform_metric_snapshots.created_at -->
+**`created_at`** (timestamptz, NOT NULL, default now()) — **not boilerplate here**: the writer sets it explicitly in the upsert, so a same-day re-snapshot overwrites it; read by `getLatestPlatformMetricSnapshot`.
+
+### `import_batches`
+<!-- dict:table:import_batches -->
+
+**Purpose:** the **org-scoped** staging header for the two-phase tournament data importer (CSV/XLSX) — one row per uploaded preview, holding scope, source filename, rollup summary, lifecycle status, and a 24h preview TTL (dev 6 / prod 0). **NOT a platform-admin table** despite living in this Phase-8 group: it is gated by **org** membership capabilities and `org_id` FK→`organizations` ON DELETE CASCADE.
+
+**Gotchas (read first):**
+1. **`'expired'` is set LAZILY, never by a sweep** — there is no cron/trigger (mig 106 is table-only). A preview past `expires_at` stays `status='previewed'` in the DB; it is flipped to `'expired'` only if someone tries to commit it ([commit/route.ts:369-371](../../../app/api/admin/tournaments/[tournamentId]/registrations/import/commit/route.ts#L369)) and shown as expired purely via read-time `effectiveStatus()`. Stale `previewed` rows accumulate (dev has 6).
+2. **`expires_at` is never set by code** — both preview writers omit it and rely on the DB default `now()+24h`; the TTL exists only because of that default.
+3. **Commit is single-actor-locked + type-checked** — only the `actor_user_id` who previewed may apply the batch, and the batch `import_type` must match the importer or 409 ([commit/route.ts:360-365](../../../app/api/admin/tournaments/[tournamentId]/registrations/import/commit/route.ts#L360)). `import_type` values are `'tournament_teams'` and `'tournament_schedule'` — **not** `'registrations'` (that's only the URL path; the teams importer powers the registrations route).
+
+**Fields** (boilerplate `created_at` omitted; `id` is documented — it's app-generated and reused):
+
+<!-- dict:col:import_batches.id -->
+**`id`** (uuid, NOT NULL, PK, default gen_random_uuid()) — **not blind-boilerplate**: generated app-side via `crypto.randomUUID()` *before* insert so it can be reused as `batchId` on the child rows ([preview/route.ts:54](../../../app/api/admin/tournaments/[tournamentId]/registrations/import/preview/route.ts#L54)); also the commit-time lookup key.
+
+<!-- dict:col:import_batches.org_id -->
+**`org_id`** (uuid, NOT NULL; FK→`organizations(id)` ON DELETE CASCADE) — owning org, from `ctx.org.id` at preview; re-enforced at commit (cross-org → reject) and the history filter.
+
+<!-- dict:col:import_batches.actor_user_id -->
+**`actor_user_id`** (uuid, nullable, cross-schema ref to `auth.users`, not FK-constrained in snapshot) — admin who previewed; locks commit to the same user (NULL ⇒ any in-org user can commit).
+
+<!-- dict:col:import_batches.actor_email -->
+**`actor_email`** (text, nullable) — previewing admin's email; surfaced in the history list; denormalized, not authoritative.
+
+<!-- dict:col:import_batches.import_type -->
+**`import_type`** (text, NOT NULL, no CHECK) — importer discriminator `'tournament_teams'` | `'tournament_schedule'`; validated at commit against the route's importer; filters/labels the history list.
+
+<!-- dict:col:import_batches.scope_json -->
+**`scope_json`** (jsonb, NOT NULL, default `{}`) — import scope, always `{tournamentId}`; re-read at commit to re-verify the tournament and used as the history filter (`.contains`).
+
+<!-- dict:col:import_batches.source_filename -->
+**`source_filename`** (text, nullable) — uploaded file name; display-only in history.
+
+<!-- dict:col:import_batches.status -->
+**`status`** (text, NOT NULL, default `'previewed'`; CHECK `previewed|committed|failed|expired`) — lifecycle: inserted `previewed` → `committed` on success / `failed` on commit error / `expired` lazily on commit-after-TTL; read-time `effectiveStatus` may *render* expired without persisting it.
+
+<!-- dict:col:import_batches.summary_json -->
+**`summary_json`** (jsonb, NOT NULL, default `{}`) — preview + commit rollup; key catalog `{totalRows,creates,updates,unchanged,warnings,blocked,notices[]}` at preview, merged with `{commit:{created,updated,unchanged,skipped}}` at commit; read for history display.
+
+<!-- dict:col:import_batches.committed_at -->
+**`committed_at`** (timestamptz, nullable) — set explicitly only on a successful commit; NULL for previewed/failed/expired; display-only.
+
+<!-- dict:col:import_batches.expires_at -->
+**`expires_at`** (timestamptz, NOT NULL, default `now() + 24h`) — preview TTL; **never set by code** (relies on the default); read to compute expiry at commit + read-time; no sweep updates it.
+
+### `import_batch_rows`
+<!-- dict:table:import_batch_rows -->
+
+**Purpose:** per-row staging detail for an `import_batches` preview — raw cell values, server-normalized values, before/after snapshots, warnings, errors, the proposed DB operation, and per-row commit status. The commit handler **re-reads `normalized_json` from here (not the file)** and re-validates against current DB state — the import is safe-by-replay (dev 9 / prod 0).
+
+**Gotchas (read first):**
+1. **`status='failed'` is a DEAD enum value** — rows go `previewed → committed` (create/update) or `→ skipped` (unchanged); on an unexpected (500) error the **parent batch** goes `'failed'` (a 409 blocked/stale `CommitError` leaves the batch `'previewed'`), and the child rows are left at `'previewed'` either way — no code path writes row `status='failed'`.
+2. **`operation='blocked'` rows can never be committed** — written at preview for rows with errors, but `prepareTournamentTeamCommitRows` 409s the whole batch if any row is blocked ([tournament-teams-commit.ts:172](../../../lib/import/tournament-teams-commit.ts#L172)) — a blocked row stays `blocked`/`previewed` permanently (preview-only diagnostic).
+3. **Safe-by-replay** — commit re-reads `normalized_json`/`before_json`/`errors_json` and re-validates against current DB state ([commit/route.ts:374-381](../../../app/api/admin/tournaments/[tournamentId]/registrations/import/commit/route.ts#L374)); `raw_json`/`after_json`/`warnings_json` are **not** re-read (write-once preview archives). `target_id` is back-filled to the new record id at commit for `create` rows.
+
+**Fields** (boilerplate `created_at` omitted; `id` is documented — it's the commit update key):
+
+<!-- dict:col:import_batch_rows.id -->
+**`id`** (uuid, NOT NULL, PK, default gen_random_uuid()) — **not blind-boilerplate**: the commit-time update key used to flip per-row status ([commit/route.ts:263](../../../app/api/admin/tournaments/[tournamentId]/registrations/import/commit/route.ts#L263)).
+
+<!-- dict:col:import_batch_rows.batch_id -->
+**`batch_id`** (uuid, NOT NULL; FK→`import_batches(id)` ON DELETE CASCADE) — parent batch; set to the app-generated `batchId` at preview; every commit update is scoped `.eq('batch_id',…)` for safety.
+
+<!-- dict:col:import_batch_rows.row_number -->
+**`row_number`** (integer, NOT NULL) — 1-based source spreadsheet row index; orders the commit read and is echoed in validation errors.
+
+<!-- dict:col:import_batch_rows.operation -->
+**`operation`** (text, NOT NULL; CHECK `create|update|unchanged|blocked`) — proposed DB action, derived at preview (errors→`blocked`, existing+changes→`update`, existing+no-change→`unchanged`, new→`create`); `blocked` rows can never be committed (gotcha 2).
+
+<!-- dict:col:import_batch_rows.target_id -->
+**`target_id`** (uuid, nullable, no FK) — existing/created record id; NULL at preview for creates, set for updates, **back-filled** to the new id at commit for creates; points at `teams` or `games` depending on `import_type`.
+
+<!-- dict:col:import_batch_rows.raw_json -->
+**`raw_json`** (jsonb, NOT NULL, default `{}`) — untouched cell values keyed by header, from the parsed file; **write-once preview archive** (commit does not re-read it).
+
+<!-- dict:col:import_batch_rows.normalized_json -->
+**`normalized_json`** (jsonb, NOT NULL, default `{}`) — server-normalized typed values; **the source of truth replayed at commit** (`parseTournamentTeamNormalizedRow` builds the insert/update).
+
+<!-- dict:col:import_batch_rows.before_json -->
+**`before_json`** (jsonb, nullable) — pre-change snapshot of the matched record; NULL for create rows, set for update/unchanged; re-read at commit for stale-detection.
+
+<!-- dict:col:import_batch_rows.after_json -->
+**`after_json`** (jsonb, nullable) — proposed post-change record, always populated at preview; **write-once** (not re-read at commit).
+
+<!-- dict:col:import_batch_rows.warnings_json -->
+**`warnings_json`** (jsonb, NOT NULL, default `[]`) — array of non-blocking warning strings for the preview UI; write-once.
+
+<!-- dict:col:import_batch_rows.errors_json -->
+**`errors_json`** (jsonb, NOT NULL, default `[]`) — array of blocking error strings; re-read at commit, and any non-empty value (like `operation='blocked'`) aborts the whole batch with 409.
+
+<!-- dict:col:import_batch_rows.status -->
+**`status`** (text, NOT NULL, default `'previewed'`; CHECK `previewed|committed|failed|skipped`) — per-row lifecycle: `previewed` → `committed` (create/update) / `skipped` (unchanged); **`failed` is in the CHECK but never written by any code path** (dead value).
+
+### Functions & mechanics (not tables — not coverage-checked, documented for completeness)
+
+- **RBAC resolution** — `getPlatformAdminContext` ([lib/platform-auth.ts:74](../../../lib/platform-auth.ts#L74)) is the spine: env bootstrap (`PLATFORM_ADMIN_EMAILS` → super_admin, no DB) first, else the `platform_users` row (`is_active`, lowercased email) via `normalizePlatformRole`. `ROLE_PERMISSIONS` ([:26](../../../lib/platform-auth.ts#L26)) maps the 6 roles to 6 permissions; `requirePlatformPermission`/`requireAnyPlatformPermission`/`requireSuperAdmin` (the last working-tree-new) are the API gates; `lib/platform-areas.ts` (`canViewPlatformArea`) is the per-area view/write matrix for server components.
+- **The catalog-approval gate** — `requireApprovedCatalogChangeRequest(id, surface)` ([lib/platform-catalog-approval.ts:19](../../../lib/platform-catalog-approval.ts#L19)) enforces `status='approved'` + a `SURFACE_REQUEST_TYPES` match ([:12-17](../../../lib/platform-catalog-approval.ts#L12)); `recordCatalogChangeApplication` ([:68](../../../lib/platform-catalog-approval.ts#L68)) writes the (best-effort) `platform_catalog_change_applications` row. The `proposal.kind` parsers + apply functions live in `app/api/platform-admin/product-catalog/change-requests/route.ts`.
+- **Business-event writer** — `writePlatformEvent` ([lib/platform-events.ts:51](../../../lib/platform-events.ts#L51)) + the transition helpers `isPastDueTransition` / `isRecoveryTransition` ([:89-96](../../../lib/platform-events.ts#L89)). The reader is `getCommandCenterStats` ([lib/platform-metrics.ts:84](../../../lib/platform-metrics.ts#L84)), which also produces the `platform_metric_snapshots.metrics` blob.
+
+---
+
+*End of Platform admin (Phase 8 — 17 tables across 3 sub-domains: identity/RBAC/audit + business events, the plans & catalog control plane, platform ops + the org-scoped data-import staging. RLS-enabled-zero-policies + the prod anon-grant drift is the headline; runtime entitlement is the static `PLAN_CONFIG`, with `plan_gating`/`plan_config_overrides` the only DB tables on a hot path; `stripe_prices` writes are gated by this domain's `platform_catalog_change_requests`. Cross-references — not redocuments — `organizations`/`stripe_prices`/`org_internal_notes`/`auth.users`, and the Observability *error* log it is distinct from.)*
+
+---
+
 # Domain: Observability & Feedback
 
-> **Added by migration 118 (2026-06-09) — applied to dev AND prod.** These 6 tables are **documented at table granularity** (not yet column-sealed) — a future migration that adds a *table* to this domain still fails the coverage ratchet, but new *columns* on these tables will not until the domain is sealed. See [docs/projects/active/OBSERVABILITY_ERROR_TRACKING_PLAN.md](../../projects/active/OBSERVABILITY_ERROR_TRACKING_PLAN.md).
+> **Added by migration 118 (2026-06-09) — applied to dev AND prod.** **Migration 122 (Phase 4, 2026-06-10 — applied to dev AND prod, owner-approved)** adds pg_cron + the fold/retention job functions + alert flags on `record_error_event`; it adds **no tables/columns**, so `npm run check:migrations` was BLIND to it (it was applied to prod as a deliberate manual step, verified live). These 6 tables are **documented at table granularity** (not yet column-sealed) — a future migration that adds a *table* to this domain still fails the coverage ratchet, but new *columns* on these tables will not until the domain is sealed. See [docs/projects/active/OBSERVABILITY_ERROR_TRACKING_PLAN.md](../../projects/active/OBSERVABILITY_ERROR_TRACKING_PLAN.md).
 
 The platform-admin **error-tracking + in-app feedback** store (the "notification center"). Errors captured server-side (`lib/observability/capture.ts` + `instrumentation.ts onRequestError`) and client-side (`/api/client/error-capture`) are fingerprinted and collapsed into one **`error_groups`** row (the triage unit) with raw occurrences in **`error_events`**; coarse traffic is counted into **`request_metrics_raw`** → folded to **`request_metrics_rollup`** (the calls-vs-errors chart source). **`feedback_submissions`** holds in-app bug/feature reports. **`observability_cron_heartbeat`** proves the Phase-4 rollup/retention jobs ran.
 
@@ -2965,9 +4138,11 @@ The platform-admin **error-tracking + in-app feedback** store (the "notification
 - **Status/severity live on `error_groups`, NOT `error_events`.** Raw events are purged after 30 days (Phase 4); a "resolved"/"ignored" triage decision must survive that purge, so it lives on the group.
 - **Grouping happens at write time in Postgres.** `record_error_event(...)` does an `INSERT … ON CONFLICT (fingerprint) DO UPDATE` — a flood of identical errors becomes one `occurrence_count` bump, not N rows. `error_events` is additionally **sampled** (every occurrence up to 50, then every 10th) so one hot fingerprint can't flood the table.
 - **`error_events.org_slug` is a denormalized point-in-time snapshot** (join-free org filtering + survives org deletion); `org_id` is the FK (`ON DELETE SET NULL`) that resolves the *current* org. Both nullable — client/anonymous errors carry `org_id = NULL` ("Platform / anonymous").
-- **`request_metrics_*` are NOT one row per request.** Each worker buffers per-route tallies in memory (`lib/observability/metrics.ts`) and flushes aggregates into `request_metrics_raw`; pg_cron (Phase 4) folds → `request_metrics_rollup` then truncates the raw table.
-- **`env` ('production' | 'dev')** is set from `OBSERVABILITY_ENV` (fallback `NODE_ENV`) and is belt-and-suspenders on top of the physical dev/prod Supabase-project split. The dashboard defaults to `production`.
-- **Dev/prod:** migration 118 applied to **both dev and prod** (2026-06-09) — zero drift; RLS enabled on all 6 in both.
+- **`request_metrics_*` are NOT one row per request.** Each worker buffers per-route tallies in memory (`lib/observability/metrics.ts`) and flushes aggregates into `request_metrics_raw`; the pg_cron fold (`obs_fold_metrics`, every 5 min since mig 122) drains it into `request_metrics_rollup`. **The drain is `DELETE … RETURNING` inside one atomic statement — NEVER "optimize" it to SELECT-then-TRUNCATE** (TRUNCATE is not MVCC-safe and would destroy raw rows committed after the read) **and never change the metrics flush to UPDATE-in-place on `request_metrics_raw`** (a concurrent fold-DELETE would silently swallow the increment).
+- **Retention is LIVE (mig 122, `obs_retention_sweep`, nightly 08:15 UTC):** `error_events` > 30 d purged · `error_groups` resolved > 90 d after `resolved_at` deleted (events cascade) · `request_metrics_rollup` > 1 y trimmed · expired snoozes re-opened (`status='snoozed' AND snooze_until < now()` → `open`) · `cron.job_run_details` > 7 d pruned (pg_cron never cleans its own history). **`ignored` groups are kept indefinitely** (deliberate triage decisions). **`distinct_org_count` consequently means "distinct orgs among RETAINED events"** — the sweep recomputes it for every group it purged events from, so it can legitimately shrink over time.
+- **`observability_cron_heartbeat.last_run_at` is bumped ONLY on success** — a failing job updates only `status='error'` + `error_detail`, so persistent failure surfaces as dashboard-chip staleness instead of a false-fresh chip. Job rows: `metrics_fold`, `retention_sweep`.
+- **`env` ('production' | 'dev')** is set from `OBSERVABILITY_ENV` (fallback `NODE_ENV`) and is belt-and-suspenders on top of the physical dev/prod Supabase-project split. The dashboard defaults to `production`. (Phase 4 also plumbed `OBSERVABILITY_ENV` through `amplify.yml` — before that, BOTH Amplify branches fell back to `NODE_ENV` and tagged `production`.)
+- **Dev/prod:** migration 118 applied to **both dev and prod** (2026-06-09); **migration 122 applied to BOTH dev and prod 2026-06-10** (functions/jobs only — invisible to the column-level drift gate; prod verified live: pg_cron installed, 2 jobs as postgres, anon execute denied).
 
 ---
 
@@ -2995,7 +4170,7 @@ The platform-admin **error-tracking + in-app feedback** store (the "notification
 ## `request_metrics_raw`
 <!-- dict:table:request_metrics_raw -->
 
-**Purpose:** thin staging for the in-process tally flushes (so we never insert a row per HTTP call). pg_cron folds it into `request_metrics_rollup` every 5 min then **truncates** it.
+**Purpose:** thin staging for the in-process tally flushes (so we never insert a row per HTTP call). The pg_cron fold (`obs_fold_metrics`, every 5 min) **drains it via atomic `DELETE … RETURNING`** into `request_metrics_rollup` (rows committed after the fold's snapshot simply survive to the next run).
 
 **Key columns:** `flushed_at` · `env` · `route` (nullable) · `org_id` (nullable) · `call_count`/`error_count` (bigint).
 
@@ -3009,15 +4184,19 @@ The platform-admin **error-tracking + in-app feedback** store (the "notification
 ## `observability_cron_heartbeat`
 <!-- dict:table:observability_cron_heartbeat -->
 
-**Purpose:** one row per pg_cron job (Phase 4); updated each run so a silently-failed rollup/retention job is visible on the dashboard ("last rollup N minutes ago"). Without it, stale rollups and un-run retention are themselves unobserved.
+**Purpose:** one row per pg_cron job (live since mig 122: `metrics_fold`, `retention_sweep`); updated on each *successful* run so a stalled or failing job is visible on the dashboard. The freshness chip turns amber on three signals: a **ran-and-failed** job (`status='error'`), a stale **fold** (most-recent run >15 min vs its 5-min cadence), or a stale **sweep** (>26h). Two residual blind spots (by design, low-risk): a job that has **never** run leaves no row → the chip shows the neutral gray "Rollup has not run yet" (also the deployed-but-pre-122 window); and a `statement_timeout`-cancelled fold writes no `status='error'` row (`WHEN OTHERS` doesn't trap SQLSTATE 57014) but rolls back cleanly and is still caught by fold-staleness.
 
-**Key columns:** `job_name` (text pk) · `last_run_at` · `rows_folded`/`rows_purged` (bigint) · `status` (CHECK `ok|error`) · `error_detail`.
+**Key columns:** `job_name` (text pk) · `last_run_at` (**success-only** — failures don't bump it, see gotchas) · `rows_folded`/`rows_purged` (bigint) · `status` (CHECK `ok|error`) · `error_detail`.
 
-### Functions (not tables — not coverage-checked, documented for completeness)
+### Functions & cron jobs (not tables — not coverage-checked, documented for completeness)
 
-- **`record_error_event(...) → uuid`** — atomic group-upsert + sampled `error_events` insert + `distinct_org_count` maintenance, in one round trip. Called fire-and-forget by `lib/observability/capture.ts`.
+- **`record_error_event(...) → jsonb`** (mig 122 changed the return from `uuid` — a return type can't be altered in place, so 122 DROPs + recreates it) — atomic group-upsert + sampled `error_events` insert + `distinct_org_count` maintenance, in one round trip; called fire-and-forget by `lib/observability/capture.ts`. Returns `{group_id, is_new, became_critical, regressed, reopened, severity, status}` — the Phase-4 **alert transition flags** (live-verified on dev: `is_new` ⟺ brand-new fingerprint; `regressed` fires exactly once per resolve cycle on the first recurrence — covering the ≤7-day window where the group deliberately stays `resolved`; `reopened` = the >7-day auto-reopen). OLD values come from a pre-SELECT, NEW values from the upsert's RETURNING (a pre-SELECT alone can never see post-transition values).
+- **`obs_fold_metrics() → jsonb`** — the 5-min fold (see `request_metrics_raw`). Bucket keys are pre-normalized with the same `coalesce` as the rollup's unique index then mapped back to NULL via `nullif` — without this, a NULL-vs-`''` route pair in one bucket raises SQLSTATE 21000 and wedges the fold permanently.
+- **`obs_retention_sweep() → jsonb`** — the nightly retention pass (see gotchas). Purge → recompute `distinct_org_count` runs as **two separate statements** deliberately: a CTE recount would share the DELETE's snapshot and still count the deleted rows.
+- Both job functions: **SECURITY DEFINER** (owner `postgres`; needed so the service-role manual sweep can prune `cron.job_run_details`), `search_path = ''`, **EXECUTE revoked from PUBLIC/anon/authenticated** (verified live: anon → `42501`), granted to `service_role` (the `/api/platform-admin/observability/sweep` fallback, super_admin-gated). Neither ever raises — failures land in the heartbeat + the returned jsonb.
 - **`obs_severity_rank(text) → int`** — immutable `critical=4 … info=1` ranking used by the severity-escalation `CASE` in `record_error_event`.
+- **Cron jobs (`cron.job`, scheduled as `postgres`, GMT):** `observability-metrics-fold` `*/5 * * * *` · `observability-retention-sweep` `15 8 * * *` (≈3–4 am Eastern). `cron.schedule(name, …)` is a named upsert → re-applying 122 is idempotent (but it does NOT re-activate a job deactivated via `cron.alter_job(active:=false)`). pg_cron never runs the same job concurrently with itself.
 
 ---
 
-*End of Observability & Feedback (migration 118, 6 tables — table-granular; applied dev+prod 2026-06-09, RLS-enabled no-policies).*
+*End of Observability & Feedback (migration 118, 6 tables — table-granular; applied dev+prod 2026-06-09, RLS-enabled no-policies. Phase-4 functions/jobs: migration 122, applied dev+prod 2026-06-10).*

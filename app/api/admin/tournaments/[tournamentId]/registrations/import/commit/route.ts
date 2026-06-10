@@ -17,6 +17,8 @@ import {
 } from '@/lib/import/tournament-teams-commit';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isPlatformAdminEmail } from '@/lib/platform-auth';
+import { manualTeamRegistrationHtml, sendEmail } from '@/lib/email';
 import {
   authorizeTournamentTeamImport,
   json,
@@ -282,6 +284,56 @@ async function applyRows(input: {
       .eq('batch_id', input.batchId);
     if (error) throw new Error(error.message);
   }
+
+  return { createdTargetIds };
+}
+
+/**
+ * Opt-in (default off) coach-portal claim emails for NEWLY created teams. Best-effort and run
+ * AFTER the batch is committed, so a send failure never rolls back the import. Coach email is
+ * NOT required — rows without an email are skipped, as are FieldLogicHQ staff emails (defense in
+ * depth; the claim discovery already excludes staff).
+ */
+async function sendImportPortalEmails(input: {
+  tournamentId: string;
+  createRows: PreparedTournamentTeamCommitRow[];
+  createdTargetIds: Map<string, string>;
+}): Promise<number> {
+  const candidates = input.createRows
+    .map(row => ({ row, teamId: input.createdTargetIds.get(row.id) }))
+    .filter((c): c is { row: PreparedTournamentTeamCommitRow; teamId: string } =>
+      Boolean(c.teamId) && Boolean((c.row.normalized.email ?? '').trim()));
+  if (candidates.length === 0) return 0;
+
+  const { data: tournament } = await supabaseAdmin
+    .from('tournaments')
+    .select('name, contact_email')
+    .eq('id', input.tournamentId)
+    .maybeSingle<{ name: string | null; contact_email: string | null }>();
+  const tournamentName = tournament?.name ?? 'Tournament';
+  const contactEmail = tournament?.contact_email ?? undefined;
+
+  let sent = 0;
+  for (const { row, teamId } of candidates) {
+    const email = (row.normalized.email ?? '').trim();
+    if (await isPlatformAdminEmail(email)) continue; // never invite FieldLogicHQ staff
+    const result = await sendEmail(
+      email,
+      `Team Registered - ${row.normalized.teamName}`,
+      manualTeamRegistrationHtml({
+        teamName: row.normalized.teamName,
+        coachName: row.normalized.coachName ?? '',
+        divisionName: row.normalized.divisionName || 'Division',
+        tournamentName,
+        paymentStatus: row.normalized.paymentStatus === 'paid' ? 'paid' : 'pending',
+        contactEmail,
+        registrationId: teamId,
+        coachEmail: email,
+      }),
+    ).catch(() => ({ status: 'provider_error' as const }));
+    if (result.status === 'sent') sent++;
+  }
+  return sent;
 }
 
 export async function POST(req: Request, { params }: RouteParams) {
@@ -294,6 +346,7 @@ export async function POST(req: Request, { params }: RouteParams) {
     const body = await req.json().catch(() => ({}));
     batchId = typeof body.batchId === 'string' ? body.batchId : '';
     if (!batchId) return json({ error: 'Choose an import preview to apply.' }, 400);
+    const sendPortalEmails = body.sendPortalEmails === true;
 
     const { data: batch, error: batchError } = await supabaseAdmin
       .from('import_batches')
@@ -332,7 +385,7 @@ export async function POST(req: Request, { params }: RouteParams) {
       updateRows: prepared.updateRows,
     });
 
-    await applyRows({
+    const { createdTargetIds } = await applyRows({
       batchId: batch.id,
       tournamentId,
       createRows: prepared.createRows,
@@ -346,6 +399,17 @@ export async function POST(req: Request, { params }: RouteParams) {
       commit: commitSummary,
     };
     await updateBatchStatus(batch.id, 'committed', summary);
+
+    // Opt-in coach-portal claim emails for newly created teams — best-effort, post-commit so a
+    // send failure never rolls back the import. Coach email stays OPTIONAL: no-email rows skipped.
+    let emailsSent = 0;
+    if (sendPortalEmails && prepared.createRows.length > 0) {
+      emailsSent = await sendImportPortalEmails({
+        tournamentId,
+        createRows: prepared.createRows,
+        createdTargetIds,
+      }).catch(() => 0);
+    }
 
     await writePlatformEvent({
       eventType: 'tournament_registration_operation_used',
@@ -370,6 +434,7 @@ export async function POST(req: Request, { params }: RouteParams) {
       result: {
         batchId: batch.id,
         summary: commitSummary,
+        emailsSent,
       },
     });
   } catch (error) {

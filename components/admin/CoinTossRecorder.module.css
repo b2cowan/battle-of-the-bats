@@ -1,0 +1,93 @@
+.box {
+  margin-top: 0.6rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--warning);
+  border-radius: 4px;
+  background: rgba(var(--warning-rgb), 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--warning);
+}
+
+.help {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--white-45);
+  line-height: 1.4;
+}
+
+.order {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.order li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: var(--font-data);
+  background: var(--white-5);
+  border: 1px solid var(--border-2);
+  border-radius: 3px;
+  padding: 0.2rem 0.5rem;
+}
+
+.rank {
+  font-weight: 900;
+  color: var(--logic-lime);
+}
+
+.picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pick {
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: var(--font-data);
+  color: var(--white-90);
+  background: var(--white-5);
+  border: 1px solid var(--border-2);
+  border-radius: 3px;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+}
+
+.pick:hover {
+  border-color: var(--logic-lime);
+  color: var(--logic-lime);
+}
+
+.pick:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.error {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--danger-light);
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}

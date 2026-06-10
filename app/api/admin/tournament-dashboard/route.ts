@@ -2,7 +2,12 @@ import { forbidden, getAuthContextWithScope, scopeGuard, unauthorized } from '@/
 import {
   getTournamentRegistrationFieldAnswersForRegistrations,
   getTournamentRegistrationFields,
+  getTeams,
+  getGames,
+  getDivisions,
+  computeTournamentStandings,
 } from '@/lib/db';
+import type { TournamentSettings } from '@/lib/types';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { buildRegistrationAttentionSummary } from '@/lib/registration-attention';
 import { hasCapability } from '@/lib/roles';
@@ -40,6 +45,7 @@ type DivisionRow = {
   deposit_due_date: string | null;
   total_fee_amount: number | null;
   total_fee_due_date: string | null;
+  playoff_config: { tieBreakers?: string[] } | null;
 };
 
 type TeamPaymentRow = {
@@ -126,7 +132,7 @@ export async function GET(req: Request) {
   const [divisionsRes, teamsRes, gamesRes, announcementsRes, teamPaymentsRes, poolSlotsRes, venuesRes, rulesRes] = await Promise.all([
     supabaseAdmin
       .from('divisions')
-      .select('id, name, is_closed, capacity, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date', { count: 'exact' })
+      .select('id, name, is_closed, capacity, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, playoff_config', { count: 'exact' })
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('teams')
@@ -515,7 +521,36 @@ export async function GET(req: Request) {
     },
   );
 
+  // ── Coin-toss nudge ───────────────────────────────────────────────
+  // Surface divisions where a tied group is still awaiting an admin coin toss.
+  // Only runs when 'coin' is actually configured somewhere (cheap guard), then
+  // ranks each such division in-memory via the pure standings engine.
+  const coinTossNeeded: { divisionId: string; divisionName: string; teamNames: string[] }[] = [];
+  const tournamentUsesCoin = Array.isArray(tSettings.tie_breakers) && tSettings.tie_breakers.includes('coin');
+  const anyDivisionUsesCoin = divisions.some(d => Array.isArray(d.playoff_config?.tieBreakers) && d.playoff_config!.tieBreakers!.includes('coin'));
+  if (tournamentUsesCoin || anyDivisionUsesCoin) {
+    try {
+      const [domainTeams, domainGames, domainDivisions] = await Promise.all([
+        getTeams(tournamentId, { admin: true }),
+        getGames(tournamentId, { admin: true }),
+        getDivisions(tournamentId, { admin: true }),
+      ]);
+      for (const d of domainDivisions) {
+        const effectiveBreakers = d.playoffConfig?.tieBreakers ?? tSettings.tie_breakers;
+        if (!Array.isArray(effectiveBreakers) || !effectiveBreakers.includes('coin')) continue;
+        const rows = computeTournamentStandings(d.id, domainTeams, domainGames, d.playoffConfig, tSettings as TournamentSettings);
+        const flagged = rows.filter(r => r.needsCoinToss).map(r => r.teamName);
+        if (flagged.length > 0) {
+          coinTossNeeded.push({ divisionId: d.id, divisionName: d.name, teamNames: flagged });
+        }
+      }
+    } catch (e) {
+      console.error('[tournament-dashboard] coin-toss check failed', e);
+    }
+  }
+
   return Response.json({
+    coinTossNeeded,
     divisions:      divisionsRes.count ?? divisions.length,
     teams:          teamsRes.count ?? 0,
     scheduled:      games.filter(game => game.status === 'scheduled').length,

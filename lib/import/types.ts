@@ -58,6 +58,8 @@ export type ImportCommitResult = {
     unchanged: number;
     skipped: number;
   };
+  /** Coaches emailed a portal-claim link (opt-in at commit). Absent/0 when the toggle was off. */
+  emailsSent?: number;
 };
 
 export class ImportParseError extends Error {

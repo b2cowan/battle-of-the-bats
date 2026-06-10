@@ -5,6 +5,10 @@ import { createClient as createBrowserSupabaseClient } from './supabase-browser'
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
 import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
+// Re-export so existing import sites (e.g. '@/lib/db') keep working.
+export { computeTournamentStandings } from './tie-breakers';
+export type { DivisionStandingRow } from './tie-breakers';
 
 // Use the SSR browser client (cookie-based session) for writes that need auth;
 // falls back to anon client on the server where there is no window.
@@ -1603,131 +1607,11 @@ export async function deleteGame(id: string): Promise<void> {
   await authClient().from('games').delete().eq('id', id);
 }
 
-export async function getStandings(divisionId: string, config?: PlayoffConfig, options: ReadOptions = {}, tournamentSettings?: import('./types').TournamentSettings) {
+/** Async wrapper: fetch teams+games (filtered inside) then rank one division. */
+export async function getStandings(divisionId: string, config?: PlayoffConfig, options: ReadOptions = {}, tournamentSettings?: import('./types').TournamentSettings): Promise<DivisionStandingRow[]> {
   const games = await getGames(undefined, options);
   const teams = await getTeams(undefined, options);
-  const groupTeams = teams.filter(t => t.divisionId === divisionId && t.status === 'accepted');
-  const groupGames = games.filter(g =>
-    g.divisionId === divisionId &&
-    (g.status === 'completed' || g.status === 'submitted') &&
-    !g.isPlayoff
-  );
-
-  const teamStats = groupTeams.map(t => {
-    const teamGames = groupGames.filter(g => g.homeTeamId === t.id || g.awayTeamId === t.id);
-    let wins = 0, losses = 0, ties = 0, rf = 0, ra = 0;
-
-    teamGames.forEach(g => {
-      const isHome = g.homeTeamId === t.id;
-      const tScore = isHome ? (g.homeScore || 0) : (g.awayScore || 0);
-      const oScore = isHome ? (g.awayScore || 0) : (g.homeScore || 0);
-
-      rf += tScore;
-      ra += oScore;
-      if (tScore > oScore) wins++;
-      else if (tScore < oScore) losses++;
-      else ties++;
-    });
-
-    return {
-      teamId: t.id,
-      teamName: t.name,
-      poolId: t.poolId,
-      gp: teamGames.length,
-      w: wins,
-      l: losses,
-      t: ties,
-      pts: (wins * 2) + ties,
-      rf,
-      ra,
-      rd: rf - ra,
-      hasPendingGame: teamGames.some(g => g.status === 'submitted'),
-    };
-  });
-
-  // Tie-breaker priority: division playoffConfig → tournament settings → hardcoded default
-  const breakers = config?.tieBreakers || tournamentSettings?.tie_breakers || ['h2h', 'rd', 'rf', 'ra'];
-
-  function breakTies(tiedTeams: any[], breakerIndex: number): any[] {
-    if (tiedTeams.length <= 1 || breakerIndex >= breakers.length) return tiedTeams;
-
-    const breaker = breakers[breakerIndex];
-
-    // Skip H2H if 3+ teams are tied
-    if (breaker === 'h2h' && tiedTeams.length >= 3) {
-      return breakTies(tiedTeams, breakerIndex + 1);
-    }
-
-    const sorted = [...tiedTeams];
-    if (breaker === 'h2h') {
-      // Compare the two teams directly
-      const t1 = tiedTeams[0];
-      const t2 = tiedTeams[1];
-      const h2hGames = groupGames.filter(g =>
-        (g.homeTeamId === t1.teamId && g.awayTeamId === t2.teamId) ||
-        (g.homeTeamId === t2.teamId && g.awayTeamId === t1.teamId)
-      );
-      let t1Wins = 0, t2Wins = 0;
-      h2hGames.forEach(g => {
-        const t1Score = g.homeTeamId === t1.teamId ? (g.homeScore || 0) : (g.awayScore || 0);
-        const t2Score = g.homeTeamId === t2.teamId ? (g.homeScore || 0) : (g.awayScore || 0);
-        if (t1Score > t2Score) t1Wins++;
-        else if (t2Score > t1Score) t2Wins++;
-      });
-      if (t1Wins !== t2Wins) {
-        return t1Wins > t2Wins ? [t1, t2] : [t2, t1];
-      }
-    } else if (breaker === 'rf') {
-      sorted.sort((a, b) => b.rf - a.rf);
-    } else if (breaker === 'ra') {
-      sorted.sort((a, b) => a.ra - b.ra);
-    } else if (breaker === 'rd') {
-      sorted.sort((a, b) => b.rd - a.rd);
-    }
-
-    // After sorting by current breaker, group them again if still tied
-    const results: any[] = [];
-    let i = 0;
-    while (i < sorted.length) {
-      const current = sorted[i];
-      const subGroup = [current];
-      let j = i + 1;
-      while (j < sorted.length) {
-        const next = sorted[j];
-        const stillTied = breaker === 'h2h' ? false : (
-          breaker === 'rf' ? next.rf === current.rf :
-          breaker === 'ra' ? next.ra === current.ra :
-          next.rd === current.rd
-        );
-        if (stillTied) {
-          subGroup.push(next);
-          j++;
-        } else break;
-      }
-
-      if (subGroup.length > 1) {
-        results.push(...breakTies(subGroup, breakerIndex + 1));
-      } else {
-        results.push(current);
-      }
-      i = j;
-    }
-    return results;
-  }
-
-  // Initial sort by Points
-  const byPoints: Record<number, any[]> = {};
-  teamStats.forEach(s => {
-    if (!byPoints[s.pts]) byPoints[s.pts] = [];
-    byPoints[s.pts].push(s);
-  });
-
-  const finalStandings: any[] = [];
-  Object.keys(byPoints).sort((a, b) => Number(b) - Number(a)).forEach(pts => {
-    finalStandings.push(...breakTies(byPoints[Number(pts)], 0));
-  });
-
-  return finalStandings;
+  return computeTournamentStandings(divisionId, teams, games, config, tournamentSettings);
 }
 
 // --- Announcements ---
@@ -1947,7 +1831,11 @@ export async function advancePlayoffs(game: Game, options: ReadOptions = {}) {
 
   if (allPoolDone && poolGames.length > 0) {
     const division = (await getDivisions(game.tournamentId, options)).find(g => g.id === game.divisionId);
-    const standings = await getStandings(game.divisionId, division?.playoffConfig, options);
+    // Pass tournament settings so the tournament-level tie-breaker order + run-diff cap
+    // apply to playoff SEEDING (not just the public standings view). Division-level
+    // playoffConfig still takes priority inside getStandings.
+    const tournament = await getTournament(game.tournamentId);
+    const standings = await getStandings(game.divisionId, division?.playoffConfig, options, tournament?.settings);
     const pools = division?.pools || [];
 
     for (const pg of playoffGames) {

@@ -147,6 +147,8 @@ export function manualTeamRegistrationHtml(p: {
   teamName: string; coachName: string; divisionName: string; tournamentName: string;
   paymentStatus: 'pending' | 'paid';
   contactEmail?: string;
+  registrationId?: string;
+  coachEmail?: string;
 }) {
   const paymentLine = p.paymentStatus === 'paid'
     ? 'The organizer has marked your tournament fee as paid.'
@@ -165,6 +167,7 @@ export function manualTeamRegistrationHtml(p: {
       </p>
     </div>
     <p style="color:rgba(255,255,255,0.7);">${paymentLine}</p>
+    ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
   `);
 }
 

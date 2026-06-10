@@ -127,6 +127,7 @@ type DashboardStats = {
   isGameDay: boolean;
   gameDay: GameDayStats;
   champions: DivisionChampion[];
+  coinTossNeeded: { divisionId: string; divisionName: string; teamNames: string[] }[];
   publishChecklist: PublishChecklist;
   registration: {
     totalCapacity: number;
@@ -268,6 +269,7 @@ const EMPTY_STATS: DashboardStats = {
   isGameDay: false,
   gameDay: EMPTY_GAME_DAY,
   champions: [],
+  coinTossNeeded: [],
   publishChecklist: {
     hasDates: false, hasDivisions: false, hasPublicContact: false, hasOpenDivision: false,
     hasBranding: false, hasVenues: false, hasRules: false, hasFees: false,
@@ -609,6 +611,7 @@ export default function AdminDashboard() {
           isGameDay:       data?.isGameDay       ?? false,
           gameDay:         data?.gameDay         ?? EMPTY_GAME_DAY,
           champions:       data?.champions       ?? [],
+          coinTossNeeded:  data?.coinTossNeeded  ?? [],
           publishChecklist: {
             hasDates:         data?.publishChecklist?.hasDates         ?? false,
             hasDivisions:     data?.publishChecklist?.hasDivisions     ?? false,
@@ -1268,6 +1271,30 @@ export default function AdminDashboard() {
 
       {currentTournament?.id && statsError && (
         <div className="mb-4 text-xs" style={{ color: 'var(--data-gray)' }}>Dashboard counts are unavailable right now.</div>
+      )}
+
+      {/* ── COIN TOSS NEEDED ─────────────────────────────── */}
+      {currentTournament?.id && visibleStats.coinTossNeeded.length > 0 && (
+        <div className={styles.reuseSetupPrompt} style={{ borderColor: 'var(--warning)' }}>
+          <div className={styles.reusePromptBody}>
+            <AlertCircle size={16} className={styles.reusePromptIcon} style={{ color: 'var(--warning)' }} />
+            <div>
+              <strong className={styles.reusePromptTitle}>Coin toss required</strong>
+              <p>
+                {visibleStats.coinTossNeeded.map(c => `${c.divisionName} — ${c.teamNames.join(' & ')}`).join(' · ')}.
+                {' '}Teams are tied; record the coin-toss result to finalize standings &amp; playoff seeding.
+              </p>
+            </div>
+          </div>
+          <div className={styles.reusePromptActions}>
+            <Link
+              className="btn btn-lime btn-data"
+              href={`/${currentOrg?.slug}/admin/tournaments/preview/${currentTournament.slug}/standings`}
+            >
+              Record coin toss
+            </Link>
+          </div>
+        </div>
       )}
 
       {/* ── EDIT LAYOUT TOOLBAR ──────────────────────────── */}

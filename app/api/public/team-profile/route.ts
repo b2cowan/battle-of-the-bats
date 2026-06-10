@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getOrganizationBySlug, getTournamentsByOrg, getTeams, getDivisions, getGames } from '@/lib/db';
+import { clampRunDiffCap, cappedGameDiff } from '@/lib/tie-breakers';
 import type { Game } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -61,16 +62,23 @@ export async function GET(req: Request) {
       !g.isPlayoff,
   );
 
+  // Run-diff cap (division override → tournament default → none). Caps the RD value
+  // only — rf/ra stay raw — matching getStandings (lib/db.ts).
+  const runDiffCap = clampRunDiffCap(
+    division.playoffConfig?.maxRunDiffPerGame ?? tournament.settings?.max_run_diff_per_game ?? null,
+  );
+
   const standingsRows = divTeams
     .map(t => {
       const tGames = poolPlayGames.filter(g => g.homeTeamId === t.id || g.awayTeamId === t.id);
-      let w = 0, l = 0, ti = 0, rf = 0, ra = 0;
+      let w = 0, l = 0, ti = 0, rf = 0, ra = 0, rd = 0;
       tGames.forEach(g => {
         const isHome = g.homeTeamId === t.id;
         const tf = isHome ? (g.homeScore ?? 0) : (g.awayScore ?? 0);
         const ta = isHome ? (g.awayScore ?? 0) : (g.homeScore ?? 0);
         rf += tf;
         ra += ta;
+        rd += cappedGameDiff(tf - ta, runDiffCap);
         if (tf > ta) w++;
         else if (tf < ta) l++;
         else ti++;
@@ -84,7 +92,7 @@ export async function GET(req: Request) {
         pts: w * 2 + ti,
         rf,
         ra,
-        rd: rf - ra,
+        rd,
       };
     })
     .sort((a, b) => b.pts - a.pts || b.rd - a.rd || b.rf - a.rf);

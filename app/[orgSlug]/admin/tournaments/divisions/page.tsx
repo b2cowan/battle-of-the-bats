@@ -6,6 +6,8 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import type { Division, DivisionSettings } from '@/lib/types';
 import { TournamentAdminHeader } from '@/components/admin/tournament';
+import TieBreakerEditor from '@/components/admin/TieBreakerEditor';
+import { normalizeTieBreakers, clampRunDiffCap, DEFAULT_TIE_BREAKERS, BREAKER_LABELS, type TieBreaker } from '@/lib/tie-breakers';
 
 interface OrgMemberOption {
   id: string;
@@ -17,7 +19,6 @@ interface OrgMemberOption {
 import styles from './admin-page.module.css';
 
 type ModalMode = 'add' | 'edit' | null;
-type TieBreaker = NonNullable<Division['playoffConfig']>['tieBreakers'][number];
 type DivisionFormPayload = {
   tournamentId: string;
   name: string;
@@ -69,12 +70,6 @@ function getErrorMessage(err: unknown, fallback: string) {
   return err instanceof Error ? err.message : fallback;
 }
 
-function normalizeTieBreakers(values: string[]): TieBreaker[] {
-  const allowed = new Set<TieBreaker>(['h2h', 'rd', 'rf', 'ra']);
-  const normalized = values.filter((value): value is TieBreaker => allowed.has(value as TieBreaker));
-  return normalized.length ? normalized : ['h2h', 'rd', 'rf', 'ra'];
-}
-
 export default function DivisionsPage() {
   const { currentTournament, isLocked } = useTournament();
   const { currentOrg } = useOrg();
@@ -88,7 +83,8 @@ export default function DivisionsPage() {
     name: '', minAge: '', maxAge: '', order: '', contactMemberId: '',
     capacity: '', poolCount: '0', poolNames: '',
     requiresPoolSelection: false, usePools: false,
-    tieBreakers: ['h2h', 'rd', 'rf', 'ra'],
+    tieBreakers: [...DEFAULT_TIE_BREAKERS] as TieBreaker[],
+    runDiffCap: '',
     depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
     overrideGameTiming: false,
     gameDurationMinutes: '',
@@ -124,7 +120,8 @@ export default function DivisionsPage() {
       name: '', minAge: '', maxAge: '', order: String(groups.length + 1),
       contactMemberId: '', capacity: '', poolCount: '0', poolNames: '',
       requiresPoolSelection: false, usePools: false,
-      tieBreakers: ['h2h', 'rd', 'rf', 'ra'],
+      tieBreakers: [...DEFAULT_TIE_BREAKERS] as TieBreaker[],
+      runDiffCap: '',
       depositAmount: '', depositDueDate: '', totalFeeAmount: '', totalFeeDueDate: '',
       overrideGameTiming: false, gameDurationMinutes: '', bufferMinutes: '',
     });
@@ -144,7 +141,9 @@ export default function DivisionsPage() {
       poolCount: String(g.poolCount || 0), poolNames: g.poolNames || '',
       requiresPoolSelection: !!g.requiresPoolSelection,
       usePools: (g.poolCount || 0) >= 2,
-      tieBreakers: g.playoffConfig?.tieBreakers || ['h2h', 'rd', 'rf', 'ra'],
+      tieBreakers: normalizeTieBreakers(g.playoffConfig?.tieBreakers),
+      runDiffCap: typeof g.playoffConfig?.maxRunDiffPerGame === 'number' && g.playoffConfig.maxRunDiffPerGame > 0
+        ? String(g.playoffConfig.maxRunDiffPerGame) : '',
       depositAmount: g.depositAmount != null ? String(g.depositAmount) : '',
       depositDueDate: g.depositDueDate ?? '',
       totalFeeAmount: g.totalFeeAmount != null ? String(g.totalFeeAmount) : '',
@@ -155,10 +154,11 @@ export default function DivisionsPage() {
     });
     // Auto-expand advanced accordion if any overrides are present
     const hasFeeOverride = g.depositAmount != null || g.totalFeeAmount != null;
-    const tournamentTBs = currentTournament?.settings?.tie_breakers ?? ['h2h', 'rd', 'rf', 'ra'];
-    const divTBs = g.playoffConfig?.tieBreakers ?? ['h2h', 'rd', 'rf', 'ra'];
+    const tournamentTBs = normalizeTieBreakers(currentTournament?.settings?.tie_breakers);
+    const divTBs = normalizeTieBreakers(g.playoffConfig?.tieBreakers);
     const hasTBOverride = JSON.stringify(divTBs) !== JSON.stringify(tournamentTBs);
-    setAdvancedOpen(!!g.contactMemberId || hasTimingOverride || hasFeeOverride || hasTBOverride);
+    const hasCapOverride = typeof g.playoffConfig?.maxRunDiffPerGame === 'number' && g.playoffConfig.maxRunDiffPerGame > 0;
+    setAdvancedOpen(!!g.contactMemberId || hasTimingOverride || hasFeeOverride || hasTBOverride || hasCapOverride);
 
     setEditing(g);
     setModal('edit');
@@ -204,7 +204,9 @@ export default function DivisionsPage() {
       requiresPoolSelection: form.requiresPoolSelection,
       playoffConfig: {
         ...(editing?.playoffConfig || { type: 'single', crossover: 'reseed', hasThirdPlace: false, teamsQualifying: 4 }),
-        tieBreakers: normalizeTieBreakers(form.tieBreakers)
+        tieBreakers: normalizeTieBreakers(form.tieBreakers),
+        // null = inherit the tournament-level cap (TournamentSettings.max_run_diff_per_game)
+        maxRunDiffPerGame: clampRunDiffCap(form.runDiffCap),
       },
       depositAmount:  form.depositAmount  ? Number(form.depositAmount)  : null,
       depositDueDate: form.depositDueDate || null,
@@ -251,23 +253,6 @@ export default function DivisionsPage() {
     }
   }
 
-  const breakerLabels: Record<string, string> = {
-    h2h: 'Head-to-Head',
-    rd: 'Run Diff',
-    rf: 'Runs For',
-    ra: 'Runs Against'
-  };
-
-  function moveBreaker(index: number, direction: 'up' | 'down') {
-    const newBreakers = [...form.tieBreakers];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= newBreakers.length) return;
-
-    const temp = newBreakers[index];
-    newBreakers[index] = newBreakers[targetIndex];
-    newBreakers[targetIndex] = temp;
-    setForm(f => ({ ...f, tieBreakers: newBreakers }));
-  }
 
   return (
     <div className={styles.page}>
@@ -490,9 +475,7 @@ export default function DivisionsPage() {
                 const feeScope = currentTournament?.settings?.fee_scope ?? null;
                 const gameTimingScope = currentTournament?.settings?.game_timing_scope ?? null;
                 const tieBreakerScope = currentTournament?.settings?.tie_breaker_scope ?? null;
-                const tTieBreakers = normalizeTieBreakers(
-                  (currentTournament?.settings?.tie_breakers ?? ['h2h', 'rd', 'rf', 'ra']) as string[]
-                );
+                const tTieBreakers = normalizeTieBreakers(currentTournament?.settings?.tie_breakers);
                 const tGameDuration = currentTournament?.settings?.game_duration_minutes ?? 90;
                 const tBufferMinutes = currentTournament?.settings?.buffer_minutes ?? 15;
 
@@ -653,7 +636,7 @@ export default function DivisionsPage() {
                             </label>
                             {tieBreakerScope === 'allow_override' && (
                               <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
-                                Tournament default: {tTieBreakers.map(b => breakerLabels[b]).join(' → ')}. Reorder below to override for this division.
+                                Tournament default: {tTieBreakers.map(b => BREAKER_LABELS[b]).join(' → ')}. Reorder below to override for this division.
                               </p>
                             )}
                             {tieBreakerScope === 'per_division' && (
@@ -666,28 +649,14 @@ export default function DivisionsPage() {
                                 Configure tie-breaker scope in Event Settings to control how standings are broken.
                               </p>
                             )}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxWidth: '400px' }}>
-                              {form.tieBreakers.map((b, i) => (
-                                <div key={b} style={{
-                                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                  background: 'var(--white-5)', padding: '0.5rem 0.75rem',
-                                  borderRadius: '2px', border: '1px solid var(--border-2)',
-                                }}>
-                                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--logic-lime)', minWidth: '15px' }}>{i + 1}</span>
-                                    <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{breakerLabels[b]}</span>
-                                  </div>
-                                  <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                    <button type="button" className="btn btn-ghost btn-data" style={{ padding: '0.15rem' }} onClick={() => moveBreaker(i, 'up')} disabled={i === 0}>
-                                      <ChevronUp size={14} />
-                                    </button>
-                                    <button type="button" className="btn btn-ghost btn-data" style={{ padding: '0.15rem' }} onClick={() => moveBreaker(i, 'down')} disabled={i === form.tieBreakers.length - 1}>
-                                      <ChevronDown size={14} />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                            <TieBreakerEditor
+                              idPrefix="division"
+                              value={form.tieBreakers}
+                              onChange={next => setForm(f => ({ ...f, tieBreakers: next }))}
+                              cap={form.runDiffCap}
+                              onCapChange={raw => setForm(f => ({ ...f, runDiffCap: raw }))}
+                              capHelp="Blank = inherit the tournament default. Caps the Run Diff column only."
+                            />
                             {tieBreakerScope === 'allow_override' && JSON.stringify(form.tieBreakers) !== JSON.stringify(tTieBreakers) && (
                               <button
                                 type="button"

@@ -67,13 +67,24 @@ export interface TournamentSettings {
   /**
    * Tournament-level tie-breaker priority order. Used when tie_breaker_scope is
    * 'tournament' or 'allow_override'. Divisions may store their own override in
-   * division.playoffConfig.tieBreakers.
+   * division.playoffConfig.tieBreakers. May be a SUBSET (organizers can add/remove
+   * breakers) and may include 'coin' (Coin Toss — terminal, admin-resolved).
+   * See lib/tie-breakers.ts for the canonical vocabulary.
    */
-  tie_breakers?: ('h2h' | 'rf' | 'ra' | 'rd')[];
+  tie_breakers?: import('./tie-breakers').TieBreaker[];
   /**
    * How tie-breaker rules are configured. null = not yet decided (blocks activation).
    */
   tie_breaker_scope?: TieBreakerScope | null;
+  /**
+   * Tournament-level cap on a single game's run differential when ranking
+   * standings. A positive integer caps each game's Run Diff contribution
+   * (e.g. cap 7 → a 14-0 win counts as +7); null/absent/0 = no cap. Caps the
+   * RD column ONLY — Runs For / Runs Against keep the real totals, so RF − RA
+   * may not equal the displayed RD when a cap is active. Divisions may override
+   * via division.playoffConfig.maxRunDiffPerGame (governed by tie_breaker_scope).
+   */
+  max_run_diff_per_game?: number | null;
   /**
    * How registration fees are configured. null = not yet decided (blocks activation).
    * 'free' = organizer explicitly chose no payment tracking (valid confirmed state).
@@ -115,6 +126,40 @@ export interface TournamentSettings {
   coach_email_rejection?: boolean;
   /** "Payment recorded" email sent when a team's payment_status changes to paid. */
   coach_email_payment?: boolean;
+
+  // ── Roster requirements (Phase 5 — tournament coach experience) ────────────
+  // What an accepted team must provide when it submits its event roster from the
+  // Coaches Portal. Authored in Event Settings → Roster Requirements. These apply
+  // ONLY to the per-event submission (tournament_roster_players) — they never add
+  // required fields to a coach's master roster (basic_coach_team_players stays
+  // identity-only, DOB consent-gated). Defaults are all OFF/absent: legacy
+  // tournaments require nothing; only an explicit `true`/number activates a
+  // requirement. Note: opposite polarity from the coach_email_* keys above
+  // (those treat absent as enabled).
+  /** Require accepted teams to submit an event roster. When false/absent the coach checklist shows no Roster item and none of the keys below apply. */
+  roster_require?: boolean;
+  /** Require a date of birth per player on the submitted roster (written to the event snapshot only — never back to the master roster). */
+  roster_require_dob?: boolean;
+  /** Require a jersey number per player on the submitted roster. */
+  roster_require_jersey?: boolean;
+  /** Require a waiver acknowledgment checkbox at submit (V1 stores no waiver document). */
+  roster_require_waiver?: boolean;
+  /**
+   * Organizer-authored statement the coach ticks agreement to when
+   * `roster_require_waiver` is on (max 2000 chars). Absent/'' = the shared
+   * default acknowledgment (DEFAULT_ROSTER_WAIVER_TEXT, lib/roster-requirements.ts).
+   */
+  roster_waiver_text?: string;
+  /**
+   * Minimum players on a submitted roster (1–99). null/absent = no minimum.
+   * ⚠ min>max IS storable (Event Settings warns but still auto-saves, and the
+   * merge-patch API validates each key independently) — readers (5k submit
+   * gating) MUST treat min>max as no-minimum (max wins), never as an
+   * unsatisfiable gate that would block every submission.
+   */
+  roster_min_players?: number | null;
+  /** Maximum players on a submitted roster (1–99). null/absent = no maximum. See roster_min_players for the min>max rule. */
+  roster_max_players?: number | null;
 }
 
 /**
@@ -310,7 +355,25 @@ export interface PlayoffConfig {
   crossover: 'standard' | 'reseed' | 'none' | 'tiers';
   hasThirdPlace: boolean;
   teamsQualifying: number;
-  tieBreakers: ('h2h' | 'rf' | 'ra' | 'rd')[];
+  /**
+   * Per-division tie-breaker priority order (overrides the tournament order when set).
+   * May be a SUBSET and may include 'coin'. See lib/tie-breakers.ts.
+   */
+  tieBreakers: import('./tie-breakers').TieBreaker[];
+  /**
+   * Per-division override for the run-diff-per-game cap. A positive integer caps
+   * each game's Run Diff contribution; null/absent = inherit the tournament-level
+   * TournamentSettings.max_run_diff_per_game (or no cap). Caps the RD column only.
+   */
+  maxRunDiffPerGame?: number | null;
+  /**
+   * Admin-recorded coin-toss results, used when 'coin' is the deciding breaker.
+   * Keyed by lib/tie-breakers.coinTossKey(tiedTeamIds) (the SORTED set of the
+   * tied teams' ids joined by '|'); the value is the organizer's finishing order
+   * for that group (team ids, best → worst). Self-invalidates if the tied set
+   * changes, because the key no longer matches.
+   */
+  coinTossResults?: Record<string, string[]>;
   splitConfigs?: Record<string, { teamsQualifying: number; hasThirdPlace: boolean }>;
   /**
    * Tiered-bracket definitions (crossover === 'tiers'). Each tier covers a

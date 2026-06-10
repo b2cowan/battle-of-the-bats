@@ -2,14 +2,17 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Settings2, ChevronUp, ChevronDown, AlertTriangle, Check, Loader2 } from 'lucide-react';
+import { Settings2, AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import FeedbackModal from '@/components/FeedbackModal';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import { DEFAULT_ROSTER_WAIVER_TEXT, ROSTER_WAIVER_TEXT_MAX_LENGTH } from '@/lib/roster-requirements';
 import type { GameTimingScope, TieBreakerScope, FeeScope, TournamentStatus, TournamentFormat } from '@/lib/types';
+import TieBreakerEditor from '@/components/admin/TieBreakerEditor';
+import { normalizeTieBreakers, clampRunDiffCap, DEFAULT_TIE_BREAKERS, type TieBreaker } from '@/lib/tie-breakers';
 import styles from '../../branding/branding.module.css';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
@@ -23,14 +26,6 @@ interface OrgMemberOption {
 }
 
 type ScorePolicyMode = 'review' | 'final';
-type TieBreaker = 'h2h' | 'rf' | 'ra' | 'rd';
-
-const breakerLabels: Record<TieBreaker, string> = {
-  h2h: 'Head-to-Head',
-  rd:  'Run Diff',
-  rf:  'Runs For',
-  ra:  'Runs Against',
-};
 
 function scorePolicyModeFromValue(value: boolean | null | undefined): ScorePolicyMode {
   return value === false ? 'final' : 'review';
@@ -91,7 +86,9 @@ export default function TournamentEventSettingsPage() {
 
   // Tie-breakers
   const [tieBreakerScope, setTieBreakerScope] = useState<TieBreakerScope | null>('tournament');
-  const [tieBreakers, setTieBreakers] = useState<TieBreaker[]>(['h2h', 'rd', 'rf', 'ra']);
+  const [tieBreakers, setTieBreakers] = useState<TieBreaker[]>([...DEFAULT_TIE_BREAKERS]);
+  // Max run differential per game (raw input string; '' = no cap).
+  const [runDiffCap, setRunDiffCap] = useState('');
 
   // Scoring
   const [scorePolicyMode, setScorePolicyMode] = useState<ScorePolicyMode>('review');
@@ -104,6 +101,16 @@ export default function TournamentEventSettingsPage() {
   const [coachEmailAcceptance, setCoachEmailAcceptance] = useState(true);
   const [coachEmailRejection, setCoachEmailRejection] = useState(true);
   const [coachEmailPayment, setCoachEmailPayment] = useState(true);
+
+  // Roster requirements (Phase 5f; default all-off so existing events require nothing).
+  // Min/max are kept as strings for the inputs — '' = no limit (saved as null).
+  const [rosterRequire, setRosterRequire] = useState(false);
+  const [rosterRequireDob, setRosterRequireDob] = useState(false);
+  const [rosterRequireJersey, setRosterRequireJersey] = useState(false);
+  const [rosterRequireWaiver, setRosterRequireWaiver] = useState(false);
+  const [rosterWaiverText, setRosterWaiverText] = useState('');
+  const [rosterMinPlayers, setRosterMinPlayers] = useState('');
+  const [rosterMaxPlayers, setRosterMaxPlayers] = useState('');
 
   // Contact
   const [defaultContactMemberId, setDefaultContactMemberId] = useState<string | null>(null);
@@ -128,13 +135,21 @@ export default function TournamentEventSettingsPage() {
     venueMoveBufferMinutes: 0,
     facilityMoveBufferMinutes: 0,
     tieBreakerScope: 'tournament' as TieBreakerScope | null,
-    tieBreakers: ['h2h', 'rd', 'rf', 'ra'] as TieBreaker[],
+    tieBreakers: [...DEFAULT_TIE_BREAKERS] as TieBreaker[],
+    runDiffCap: '',
     scorePolicyMode: 'review' as ScorePolicyMode,
     notifyTeamsOnComplete: false,
     coachEmailConfirmation: true,
     coachEmailAcceptance: true,
     coachEmailRejection: true,
     coachEmailPayment: true,
+    rosterRequire: false,
+    rosterRequireDob: false,
+    rosterRequireJersey: false,
+    rosterRequireWaiver: false,
+    rosterWaiverText: '',
+    rosterMinPlayers: '',
+    rosterMaxPlayers: '',
     defaultContactMemberId: null as string | null,
     notifyMode: 'all' as 'all' | 'assigned',
     contactShowToCoaches: true,
@@ -225,6 +240,15 @@ export default function TournamentEventSettingsPage() {
         const ceReject  = t.settings?.coach_email_rejection !== false;
         const cePay     = t.settings?.coach_email_payment !== false;
 
+        // Roster requirements — absent key means OFF (legacy events require nothing).
+        const rosterReq    = t.settings?.roster_require === true;
+        const rosterDob    = t.settings?.roster_require_dob === true;
+        const rosterJersey = t.settings?.roster_require_jersey === true;
+        const rosterWaiver = t.settings?.roster_require_waiver === true;
+        const rosterWaiverTxt = typeof t.settings?.roster_waiver_text === 'string' ? t.settings.roster_waiver_text : '';
+        const rosterMin    = typeof t.settings?.roster_min_players === 'number' ? String(t.settings.roster_min_players) : '';
+        const rosterMax    = typeof t.settings?.roster_max_players === 'number' ? String(t.settings.roster_max_players) : '';
+
         const rawGTS = t.settings?.game_timing_scope;
         const validTimingScopes = new Set<string>(['tournament', 'allow_override', 'per_division']);
         const gts: GameTimingScope = validTimingScopes.has(rawGTS) ? rawGTS as GameTimingScope : 'tournament';
@@ -232,11 +256,9 @@ export default function TournamentEventSettingsPage() {
         const rawTBS = t.settings?.tie_breaker_scope;
         const tbs: TieBreakerScope = validTimingScopes.has(rawTBS) ? rawTBS as TieBreakerScope : 'tournament';
 
-        const validBreakers = new Set<string>(['h2h', 'rf', 'ra', 'rd']);
-        const tb: TieBreaker[] = Array.isArray(t.settings?.tie_breakers)
-          ? (t.settings.tie_breakers as string[]).filter(b => validBreakers.has(b)) as TieBreaker[]
-          : ['h2h', 'rd', 'rf', 'ra'];
-        const safeTb = tb.length > 0 ? tb : (['h2h', 'rd', 'rf', 'ra'] as TieBreaker[]);
+        const safeTb = normalizeTieBreakers(t.settings?.tie_breakers);
+        const rawCap = t.settings?.max_run_diff_per_game;
+        const rdCapStr = typeof rawCap === 'number' && rawCap > 0 ? String(rawCap) : '';
 
         setTournamentName(name);
         setTournamentYear(year);
@@ -259,11 +281,19 @@ export default function TournamentEventSettingsPage() {
         setFacilityMoveBufferMinutes(facilityMoveBuf);
         setTieBreakerScope(tbs);
         setTieBreakers(safeTb);
+        setRunDiffCap(rdCapStr);
         setNotifyTeamsOnComplete(notify);
         setCoachEmailConfirmation(ceConfirm);
         setCoachEmailAcceptance(ceAccept);
         setCoachEmailRejection(ceReject);
         setCoachEmailPayment(cePay);
+        setRosterRequire(rosterReq);
+        setRosterRequireDob(rosterDob);
+        setRosterRequireJersey(rosterJersey);
+        setRosterRequireWaiver(rosterWaiver);
+        setRosterWaiverText(rosterWaiverTxt);
+        setRosterMinPlayers(rosterMin);
+        setRosterMaxPlayers(rosterMax);
         setDefaultContactMemberId(contactId);
         setNotifyMode(nm);
         setContactShowToCoaches(csCoaches);
@@ -278,11 +308,15 @@ export default function TournamentEventSettingsPage() {
           showFeesOnRegister: showFees, paymentInstructions: payInstr, paymentInstructionsOnForm: payInstrOnForm,
           gameTimingScope: gts, gameDurationMinutes: gd, bufferMinutes: buf,
           venueMoveBufferMinutes: venueMoveBuf, facilityMoveBufferMinutes: facilityMoveBuf,
-          tieBreakerScope: tbs, tieBreakers: safeTb,
+          tieBreakerScope: tbs, tieBreakers: safeTb, runDiffCap: rdCapStr,
           notifyTeamsOnComplete: notify, defaultContactMemberId: contactId, notifyMode: nm,
           contactShowToCoaches: csCoaches, contactShowOnPublic: csPublic,
           coachEmailConfirmation: ceConfirm, coachEmailAcceptance: ceAccept,
           coachEmailRejection: ceReject, coachEmailPayment: cePay,
+          rosterRequire: rosterReq, rosterRequireDob: rosterDob,
+          rosterRequireJersey: rosterJersey, rosterRequireWaiver: rosterWaiver,
+          rosterWaiverText: rosterWaiverTxt,
+          rosterMinPlayers: rosterMin, rosterMaxPlayers: rosterMax,
         }));
       }
       const policyMode = scorePolicyModeFromValue((branding as { requireScoreFinalization?: boolean | null }).requireScoreFinalization);
@@ -408,6 +442,7 @@ export default function TournamentEventSettingsPage() {
                   game_timing_scope: gameTimingScope,
                   tie_breakers: tieBreakers,
                   tie_breaker_scope: tieBreakerScope,
+                  max_run_diff_per_game: clampRunDiffCap(runDiffCap),
                   fee_scope: feeScope,
                   show_fees_on_register: showFeesOnRegister,
                   payment_instructions: paymentInstructions.trim(),
@@ -416,6 +451,13 @@ export default function TournamentEventSettingsPage() {
                   coach_email_acceptance: coachEmailAcceptance,
                   coach_email_rejection: coachEmailRejection,
                   coach_email_payment: coachEmailPayment,
+                  roster_require: rosterRequire,
+                  roster_require_dob: rosterRequireDob,
+                  roster_require_jersey: rosterRequireJersey,
+                  roster_require_waiver: rosterRequireWaiver,
+                  roster_waiver_text: rosterWaiverText.trim(),
+                  roster_min_players: rosterMinPlayers ? Number(rosterMinPlayers) : null,
+                  roster_max_players: rosterMaxPlayers ? Number(rosterMaxPlayers) : null,
                 },
               },
             }),
@@ -461,10 +503,12 @@ export default function TournamentEventSettingsPage() {
           showFeesOnRegister, paymentInstructions, paymentInstructionsOnForm,
           gameTimingScope, gameDurationMinutes, bufferMinutes,
           venueMoveBufferMinutes, facilityMoveBufferMinutes,
-          tieBreakerScope, tieBreakers: [...tieBreakers],
+          tieBreakerScope, tieBreakers: [...tieBreakers], runDiffCap,
           scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
           contactShowToCoaches, contactShowOnPublic,
           coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
+          rosterRequire, rosterRequireDob, rosterRequireJersey, rosterRequireWaiver,
+          rosterWaiverText, rosterMinPlayers, rosterMaxPlayers,
         }));
         refreshTournaments();
         setSaveStatus('saved');
@@ -479,11 +523,13 @@ export default function TournamentEventSettingsPage() {
     bufferMinutes, currentTournament, defaultContactMemberId, depositAmount,
     depositDueDate, endDate, feeScope, gameDurationMinutes, gameTimingScope,
     facilityMoveBufferMinutes, notifyMode, notifyTeamsOnComplete, orgParam, orgQuery, refreshTournaments,
-    saved.slug, scorePolicyMode, startDate, tieBreakerScope, tieBreakers,
+    saved.slug, scorePolicyMode, startDate, tieBreakerScope, tieBreakers, runDiffCap,
     totalFeeAmount, totalFeeDueDate, tournamentId, tournamentName, tournamentFormat,
     tournamentYear, venueMoveBufferMinutes,
     showFeesOnRegister, paymentInstructions, paymentInstructionsOnForm,
     coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
+    rosterRequire, rosterRequireDob, rosterRequireJersey, rosterRequireWaiver,
+    rosterWaiverText, rosterMinPlayers, rosterMaxPlayers,
     contactShowToCoaches, contactShowOnPublic,
   ]);
 
@@ -503,23 +549,15 @@ export default function TournamentEventSettingsPage() {
     showFeesOnRegister, paymentInstructions, paymentInstructionsOnForm,
     gameTimingScope, gameDurationMinutes, bufferMinutes,
     venueMoveBufferMinutes, facilityMoveBufferMinutes,
-    tieBreakers, tieBreakerScope,
+    tieBreakers, tieBreakerScope, runDiffCap,
     scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
     contactShowToCoaches, contactShowOnPublic,
     coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
+    rosterRequire, rosterRequireDob, rosterRequireJersey, rosterRequireWaiver,
+    rosterWaiverText, rosterMinPlayers, rosterMaxPlayers,
   ]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-
-  function moveTieBreaker(index: number, direction: 'up' | 'down') {
-    setTieBreakers(prev => {
-      const next = [...prev];
-      const target = direction === 'up' ? index - 1 : index + 1;
-      if (target < 0 || target >= next.length) return prev;
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
-  }
 
   function handleStatusClick(s: TournamentStatus) {
     if (s === tournamentStatus) return;
@@ -658,6 +696,21 @@ export default function TournamentEventSettingsPage() {
   const showFeeInputs = feeScope === 'tournament' || feeScope === 'allow_override' || feeScope === null;
   const showTimingInputs = gameTimingScope !== 'per_division';
   const showTieBreakerList = tieBreakerScope !== 'per_division';
+
+  // Roster Requirements — what the coach-side submission (5k) will show for the current choices.
+  const effectiveWaiverText = rosterWaiverText.trim() || DEFAULT_ROSTER_WAIVER_TEXT;
+  const rosterSizeSummary = (() => {
+    const min = rosterMinPlayers ? Number(rosterMinPlayers) : null;
+    const max = rosterMaxPlayers ? Number(rosterMaxPlayers) : null;
+    if (min != null && max != null) {
+      // min>max is storable (warn-don't-block) — readers apply max-wins, so preview honestly does too.
+      if (min > max) return `at most ${max} players (the minimum is ignored while it exceeds the maximum)`;
+      return min === max ? `exactly ${min} players` : `between ${min} and ${max} players`;
+    }
+    if (min != null) return `at least ${min} players`;
+    if (max != null) return `up to ${max} players`;
+    return null;
+  })();
 
   return (
     <div className={styles.page}>
@@ -1002,28 +1055,18 @@ export default function TournamentEventSettingsPage() {
             </div>
             {showTieBreakerList ? (
               <div style={{ marginTop: '0.75rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxWidth: '420px' }}>
-                  {tieBreakers.map((b, i) => (
-                    <div key={b} className={styles.tieBreakerRow}>
-                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'var(--logic-lime)', minWidth: '14px', fontFamily: 'var(--font-data)' }}>{i + 1}</span>
-                        <span style={{ fontWeight: 600, fontSize: '0.82rem', fontFamily: 'var(--font-data)' }}>{breakerLabels[b]}</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.2rem' }}>
-                        <button type="button" className="btn btn-ghost btn-data" style={{ padding: '0.2rem' }} onClick={() => moveTieBreaker(i, 'up')} disabled={i === 0}>
-                          <ChevronUp size={14} />
-                        </button>
-                        <button type="button" className="btn btn-ghost btn-data" style={{ padding: '0.2rem' }} onClick={() => moveTieBreaker(i, 'down')} disabled={i === tieBreakers.length - 1}>
-                          <ChevronDown size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className={styles.inheritNote} style={{ marginTop: '0.5rem' }}>
-                  If 3+ teams are tied, Head-to-Head is automatically skipped.
-                  {tieBreakerScope === 'allow_override' && ' Divisions can reorder tie-breakers individually.'}
-                </p>
+                <TieBreakerEditor
+                  idPrefix="event"
+                  value={tieBreakers}
+                  onChange={setTieBreakers}
+                  cap={runDiffCap}
+                  onCapChange={setRunDiffCap}
+                />
+                {tieBreakerScope === 'allow_override' && (
+                  <p className={styles.inheritNote} style={{ marginTop: '0.5rem' }}>
+                    Divisions can reorder, add/remove, and cap tie-breakers individually.
+                  </p>
+                )}
               </div>
             ) : (
               <p className={styles.descriptionText} style={{ marginTop: '0.5rem' }}>
@@ -1381,6 +1424,190 @@ export default function TournamentEventSettingsPage() {
               )}
             </div>
           </div>
+        </CollapsibleCard>
+
+        {/* ── Card 5: Roster Requirements (Phase 5f) — read by the Coaches Portal
+            event-roster submission (5h/5k). Applies to the per-event snapshot only,
+            never to a coach's master roster. ── */}
+        <CollapsibleCard title="Roster Requirements" defaultOpen={false}>
+          <div className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem', marginBottom: '0.5rem' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Event roster</p>
+              <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>
+                Ask accepted teams to submit a roster for this event from their Coaches Portal.
+                When off, teams aren&apos;t asked for a roster.
+              </p>
+            </div>
+            <div className={styles.segmentedControl} role="radiogroup" aria-label="Event roster requirement">
+              {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
+                <button
+                  key={String(val)}
+                  type="button"
+                  role="radio"
+                  aria-checked={rosterRequire === val}
+                  onClick={() => setRosterRequire(val)}
+                  className={`${styles.segmentButton} ${rosterRequire === val ? styles.segmentButtonActive : ''}`}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {rosterRequire ? (
+            <>
+              <hr className={styles.cardDivider} />
+
+              <p className={styles.subSectionLabel}>Required Details</p>
+              <p className={styles.descriptionText} style={{ marginBottom: '0.85rem' }}>
+                Coaches are asked for exactly what you require here and nothing more. These apply to this
+                event&apos;s roster submission only — they never change what a coach keeps on their own team roster.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                {/* Names aren't a toggle — every submission carries them from the coach's saved roster. */}
+                <div className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className={styles.subSectionLabel} style={{ margin: 0 }}>Player names</p>
+                    <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>
+                      Every roster submission includes each player&apos;s full name, taken from the coach&apos;s saved team roster.
+                    </p>
+                  </div>
+                  <span style={{ fontSize: '0.7rem', fontWeight: 700, fontFamily: 'var(--font-data)', color: 'var(--logic-lime)', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', padding: '0.35rem 0' }}>
+                    Always
+                  </span>
+                </div>
+                {([
+                  ['Player birthdates', 'Each player on the submitted roster needs a date of birth (e.g. for age verification). Collected for this event only.', rosterRequireDob, setRosterRequireDob] as const,
+                  ['Jersey numbers', 'Each player on the submitted roster needs a jersey number.', rosterRequireJersey, setRosterRequireJersey] as const,
+                  ['Waiver acknowledgment', 'The coach must tick a waiver acknowledgment to submit. No document is uploaded or stored.', rosterRequireWaiver, setRosterRequireWaiver] as const,
+                ]).map(([label, desc, value, setValue]) => (
+                  <div key={label} className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p className={styles.subSectionLabel} style={{ margin: 0 }}>{label}</p>
+                      <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>{desc}</p>
+                    </div>
+                    <div className={styles.segmentedControl} role="radiogroup" aria-label={`${label} requirement`}>
+                      {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
+                        <button
+                          key={String(val)}
+                          type="button"
+                          role="radio"
+                          aria-checked={value === val}
+                          onClick={() => setValue(val)}
+                          className={`${styles.segmentButton} ${value === val ? styles.segmentButtonActive : ''}`}
+                        >
+                          {lbl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {rosterRequireWaiver && (
+                <div style={{ marginTop: '0.85rem' }}>
+                  <p className={styles.subSectionLabel} style={{ marginBottom: '0.35rem' }}>Waiver statement</p>
+                  <textarea
+                    className="form-textarea"
+                    rows={3}
+                    maxLength={ROSTER_WAIVER_TEXT_MAX_LENGTH}
+                    placeholder={DEFAULT_ROSTER_WAIVER_TEXT}
+                    value={rosterWaiverText}
+                    onChange={e => setRosterWaiverText(e.target.value)}
+                  />
+                  <p className={styles.descriptionText} style={{ marginTop: '0.4rem' }}>
+                    This is exactly what the coach ticks agreement to when submitting. Leave blank to use the
+                    default wording shown above.
+                  </p>
+                </div>
+              )}
+
+              <hr className={styles.cardDivider} />
+
+              <p className={styles.subSectionLabel}>Roster Size</p>
+              <p className={styles.descriptionText}>Leave a field blank for no limit.</p>
+              <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Minimum Players</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="1" max="99" step="1"
+                    placeholder="No minimum"
+                    value={rosterMinPlayers}
+                    onChange={e => {
+                      const raw = e.target.value;
+                      if (raw === '') { setRosterMinPlayers(''); return; }
+                      const n = parseInt(raw, 10);
+                      if (!isNaN(n) && n >= 1 && n <= 99) setRosterMinPlayers(String(n));
+                    }}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Maximum Players</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="1" max="99" step="1"
+                    placeholder="No maximum"
+                    value={rosterMaxPlayers}
+                    onChange={e => {
+                      const raw = e.target.value;
+                      if (raw === '') { setRosterMaxPlayers(''); return; }
+                      const n = parseInt(raw, 10);
+                      if (!isNaN(n) && n >= 1 && n <= 99) setRosterMaxPlayers(String(n));
+                    }}
+                  />
+                </div>
+              </div>
+              {rosterMinPlayers !== '' && rosterMaxPlayers !== '' && Number(rosterMinPlayers) > Number(rosterMaxPlayers) && (
+                <p className={styles.inheritNote} style={{ marginTop: '0.35rem', color: 'var(--warning, var(--white-70))' }}>
+                  Minimum is greater than maximum — no roster could satisfy both. Adjust one of the two.
+                </p>
+              )}
+
+              <hr className={styles.cardDivider} />
+
+              {/* Live sample of the coach-side submission for the current choices. */}
+              <p className={styles.subSectionLabel}>What the Coach Will See</p>
+              <p className={styles.descriptionText} style={{ marginBottom: '0.75rem' }}>
+                A sample of the submission this event asks for — it updates as you change the requirements above.
+                Coaches pick players from their saved team roster and fill in only what&apos;s required.
+              </p>
+              <div className={styles.questionCard}>
+                <p style={{ margin: 0, fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--white-40)', fontFamily: 'var(--font-data)' }}>
+                  For each player
+                </p>
+                <ul style={{ margin: '0.4rem 0 0', paddingLeft: '1.1rem', color: 'var(--white-70)', fontSize: '0.82rem', lineHeight: 1.7, fontFamily: 'var(--font-data)' }}>
+                  <li>Full name <span style={{ color: 'var(--white-35)' }}>(always included)</span></li>
+                  {rosterRequireDob && <li>Date of birth</li>}
+                  {rosterRequireJersey && <li>Jersey number</li>}
+                </ul>
+                {(rosterRequireWaiver || rosterSizeSummary) && (
+                  <div style={{ marginTop: '0.85rem' }}>
+                    <p style={{ margin: 0, fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--white-40)', fontFamily: 'var(--font-data)' }}>
+                      To submit
+                    </p>
+                    {rosterSizeSummary && (
+                      <p style={{ margin: '0.4rem 0 0', color: 'var(--white-70)', fontSize: '0.82rem', lineHeight: 1.55, fontFamily: 'var(--font-data)' }}>
+                        The roster must list {rosterSizeSummary}.
+                      </p>
+                    )}
+                    {rosterRequireWaiver && (
+                      <p style={{ display: 'flex', gap: '0.5rem', margin: '0.4rem 0 0', color: 'var(--white-70)', fontSize: '0.82rem', lineHeight: 1.55 }}>
+                        <span aria-hidden="true" style={{ flexShrink: 0 }}>☐</span>
+                        <em>{effectiveWaiverText}</em>
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className={styles.inheritNote}>
+              Teams can take part without submitting a roster. Turn this on to collect one per team before game day.
+            </p>
+          )}
         </CollapsibleCard>
 
         {/* Registration Questions */}

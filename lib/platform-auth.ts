@@ -120,6 +120,26 @@ export async function requirePlatformAdmin(): Promise<
   return { user: auth.user, role: auth.role, response: null };
 }
 
+/**
+ * Hard super_admin-only API gate — for destructive / data-deleting operations where even the
+ * widest functional permission (manage_product etc.) is not enough. Promoted from the local
+ * helper in app/api/platform-admin/orgs/[id]/delete/route.ts so there is one source of truth.
+ */
+export async function requireSuperAdmin(): Promise<
+  { user: User; role: PlatformRole; response: null } | { user: null; role: null; response: NextResponse }
+> {
+  const auth = await requirePlatformAdmin();
+  if (auth.response) return auth;
+  if (auth.role !== 'super_admin') {
+    return {
+      user: null,
+      role: null,
+      response: NextResponse.json({ error: 'Requires super admin access.' }, { status: 403 }),
+    };
+  }
+  return auth;
+}
+
 export async function requirePlatformPermission(permission: PlatformPermission): Promise<
   { user: User; role: PlatformRole; response: null } | { user: null; role: null; response: NextResponse }
 > {

@@ -1,6 +1,7 @@
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { coinTossKey } from '@/lib/tie-breakers';
 
 function tournamentLockedResponse() {
   return Response.json(
@@ -210,7 +211,7 @@ export async function POST(req: Request) {
     else if (action === 'update' && id) {
       const { data: ag } = await supabaseAdmin
         .from('divisions')
-        .select('tournament_id')
+        .select('tournament_id, playoff_config')
         .eq('id', id)
         .single();
 
@@ -222,6 +223,14 @@ export async function POST(req: Request) {
         if (await isTournamentLocked(ag.tournament_id)) return tournamentLockedResponse();
       }
 
+      // Merge playoff_config defensively. coinTossResults is owned by the
+      // 'record-coin-toss' action, so always preserve it from the DB — never let a
+      // (possibly stale) division-form payload drop or overwrite it.
+      const currentConfig = (ag?.playoff_config ?? {}) as Record<string, unknown>;
+      const incomingConfig = { ...(data.playoffConfig ?? {}) } as Record<string, unknown>;
+      delete incomingConfig.coinTossResults;
+      const mergedConfig = { ...currentConfig, ...incomingConfig };
+
       const { error: agError } = await supabaseAdmin.from('divisions').update({
         name:                    data.name,
         min_age:                 data.minAge,
@@ -232,7 +241,7 @@ export async function POST(req: Request) {
         pool_count:              data.poolCount,
         pool_names:              data.poolNames,
         requires_pool_selection: data.requiresPoolSelection,
-        playoff_config:          data.playoffConfig,
+        playoff_config:          mergedConfig,
         deposit_amount:          data.depositAmount ?? null,
         deposit_due_date:        data.depositDueDate ?? null,
         total_fee_amount:        data.totalFeeAmount ?? null,
@@ -274,6 +283,67 @@ export async function POST(req: Request) {
       if (ag) {
         await syncSlots(ag.tournament_id, id, data.capacity);
       }
+    }
+
+    else if (action === 'record-coin-toss' && id) {
+      // Record (or clear) an admin coin-toss result for a tied group in this division.
+      // Body: { action, id: divisionId, groupKey, orderedTeamIds: string[] }
+      // orderedTeamIds = the organizer's finishing order (best → worst) for the tied set;
+      // an empty array clears the recorded result. Stored in playoff_config.coinTossResults.
+      const { groupKey, orderedTeamIds } = (data ?? {}) as { groupKey?: string; orderedTeamIds?: unknown };
+
+      const { data: div } = await supabaseAdmin
+        .from('divisions')
+        .select('tournament_id, playoff_config')
+        .eq('id', id)
+        .single();
+      if (!div) return Response.json({ error: 'Division not found' }, { status: 404 });
+
+      const denied = scopeGuard(ctx, div.tournament_id);
+      if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, div.tournament_id);
+      if (wrongOrg) return wrongOrg;
+
+      if (typeof groupKey !== 'string' || !groupKey) {
+        return Response.json({ error: 'groupKey required' }, { status: 400 });
+      }
+      const ordered = Array.isArray(orderedTeamIds)
+        ? orderedTeamIds.filter((t): t is string => typeof t === 'string')
+        : [];
+
+      const playoffConfig = (div.playoff_config ?? {}) as { coinTossResults?: Record<string, string[]> };
+      const results: Record<string, string[]> = { ...(playoffConfig.coinTossResults ?? {}) };
+
+      // The groupKey must name only accepted teams in THIS division — for both
+      // recording and clearing — so no caller can read/write/delete entries keyed
+      // by teams outside the division.
+      const { data: divTeams } = await supabaseAdmin
+        .from('teams')
+        .select('id')
+        .eq('division_id', id)
+        .eq('status', 'accepted');
+      const validIds = new Set((divTeams ?? []).map(t => t.id));
+      const keyTeamIds = groupKey.split('|');
+      if (keyTeamIds.length < 2 || !keyTeamIds.every(t => validIds.has(t))) {
+        return Response.json({ error: 'groupKey does not name a valid tied group in this division' }, { status: 400 });
+      }
+
+      if (ordered.length === 0) {
+        // Clear the recorded result for this group.
+        delete results[groupKey];
+      } else {
+        // The submitted order must cover exactly the tied set named by groupKey.
+        if (coinTossKey(ordered) !== groupKey) {
+          return Response.json({ error: 'orderedTeamIds do not match groupKey' }, { status: 400 });
+        }
+        results[groupKey] = ordered;
+      }
+
+      const { error } = await supabaseAdmin
+        .from('divisions')
+        .update({ playoff_config: { ...playoffConfig, coinTossResults: results } })
+        .eq('id', id);
+      if (error) throw error;
     }
 
     else if (action === 'set-visibility') {

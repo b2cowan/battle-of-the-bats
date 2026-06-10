@@ -145,3 +145,144 @@ These are small and all have a sensible default; flagging them so the UX matches
 ## Verification note for the owner (testing on dev)
 
 Errors are already being captured on dev. Because the dev Supabase project tags **localhost-captured** rows as `dev` and **dev-branch-deployed** rows as `production`, when you test locally you'll want to flip the dashboard's **environment toggle to "Dev"** to see the errors you generate on your machine. The Production default is correct for real operations; it just means localhost data hides under the Dev toggle. Final visual verification is yours to do in the browser.
+
+---
+
+# PM Brief — Phase 3: In-App Feedback Widget & Triage Queue
+
+**Added:** 2026-06-10 · **Status:** Proposed (awaiting owner go-ahead) · **Priority:** High · **Est:** 1.5–2 days
+**Depends on:** Phase 1 (capture core — BUILT; provides the `error_groups`/`error_events` a bug report can deep-link to). **Independent of Phase 4** — the two phases don't depend on each other.
+**Owner decisions locked 2026-06-10:** best-effort requestId auto-link (header from the single server mint site + a tiny client stash) · **text-only** (screenshots deferred) · mount on **authenticated app surfaces only** (admin + coach + scorekeeper/check-in; public deferred) · confirmation email to a signed-in submitter + an **awaited** admin-notify · **1 submission/user/hr** (+ IP throttle for the anonymous path) · six route-defaulted categories. **No database migration** — the table already exists.
+
+## In one sentence
+
+Phases 1–2 let *us* see and triage the errors the app catches; Phase 3 is the **customer-facing half** — a one-tap **"Send feedback"** button so org admins, coaches, and scorekeepers can report a bug or request a feature without leaving the app, plus a **platform-admin queue** to triage what they send (with bug reports auto-linking to the underlying captured error wherever we can).
+
+## What end users see and do differently (surface by surface)
+
+Today there is **no in-app feedback mechanism anywhere** — a help-surfaces audit found none, and coaches don't even have a Help link. After Phase 3:
+
+### 1. The "Send feedback" launcher
+A small **"Send feedback"** control appears on the surfaces people already use:
+- **Admin** — in the desktop sidebar footer next to the existing **Help** link, and in the mobile bottom-nav **"More"** menu.
+- **Coach portal** — the coach portal gains **both** its first-ever **Help** link *and* the feedback control (it has neither today).
+- **Scorekeeper & check-in** — a lightweight feedback button in the header, beside Sign Out.
+
+### 2. The feedback dialog
+Clicking the launcher opens a small dialog in our standard modal look (the same dark "HUD" shell as our other dialogs):
+- **Type** — three pills: **Bug** / **Feature** / **Feedback**.
+- **Category** — a dropdown (Tournaments / Coaches / Registrations / Accounting / Billing / Other), **pre-selected from the page they're on** (e.g. opening it inside a tournament defaults to "Tournaments").
+- **Title** — a one-line summary.
+- **Description** — the only required field; everything else can be left as-is.
+- Submit → an on-screen **"Thanks — we've got it"** confirmation. A signed-in user also gets a confirmation email.
+
+### 3. What's captured automatically (no user effort)
+The report quietly attaches the **page/route** they were on, their **role**, the **app version**, and — when available — the **ID of the exact server error they just hit**, so a "this is broken" report can jump straight to the captured stack trace in our dashboard. Personal data is **scrubbed before anything is stored**.
+
+## What WE (platform-admin) see and do differently
+
+A new **"Feedback"** item appears in the platform-admin left-nav **System** group (a speech-bubble icon, next to Observability). It opens a **triage queue**:
+- A **filterable, paginated table** of every submission — a **type** badge (bug/feature/feedback), the **category**, a **status** badge, the originating **org** (a link, or "Platform / anonymous" for org-less/public), the **title**, and the **date**.
+- **Filters** for type, category, and status, plus **CSV/XLSX export** of the filtered set (same export pattern as the Audit Log).
+- Each row moves through a **status lifecycle: New → Triaged → Acknowledged → Resolved** (deliberately distinct from the error-issue lifecycle). Changing status stamps who triaged it and when, and writes a **platform audit-log** entry — the same accountability as every other platform-admin action.
+- A bug submission that carries a linked error shows a **"View related issue"** button that deep-links into the Observability issue detail.
+
+## Why it matters
+
+- **We finally hear from customers in-product.** Today bugs/requests arrive by email or not at all; Phase 3 funnels them into one triage queue with full context attached.
+- **Bug reports become actionable instantly.** "X is broken" can arrive pre-linked to the captured error and stack trace — no back-and-forth to reproduce.
+- **Coaches get a Help link for the first time** — closing a known gap in the coach portal.
+- **A product signal.** Aggregated, categorized, exportable feature requests tell us what customers actually want next.
+
+## Role-based access (who can submit vs. who can triage)
+
+- **Submit:** any org admin, coach, or scorekeeper (and, when later enabled, anonymous/public visitors). Submitting is open and additive.
+- **See the triage queue:** **platform-admins only** — the `feedback_submissions` table is platform-admin-only (RLS-enabled, no policies; never exposed to org users). Feedback **reuses the existing `observability` access area** (no new permission): **view** = super_admin / product / support; **change status** = super_admin / product; **support is view-only** (the status control is locked and the API rejects their writes), exactly like the Observability dashboard.
+
+## What this phase deliberately does NOT do
+
+- **No screenshots/attachments** — text-only (bug/feature/feedback). Image upload needs a Storage bucket + signed URLs + an image-PII review; deferred to a later phase.
+- **No org-scoped feedback view** — there is one platform-admin queue, not a per-org inbox (locked decision); org admins don't see others' or even their own submissions listed.
+- **No public/fan-site mounting yet** — authenticated app surfaces only in v1 (the table already allows anonymous rows, so public surfaces can be added later with no schema change).
+- **No new database table or migration** — `feedback_submissions` already exists (shipped in migration 118, Phase 1).
+- **No in-app notification bell** — the admin-notify is an email to `ADMIN_EMAIL`; the org-less platform-admin bell remains Phase 5.
+
+## Decisions — ✅ locked 2026-06-10 (owner)
+
+1. ✅ **Bug→error auto-link:** best-effort now — emit `x-request-id` from the single server mint site, a tiny client helper stashes the last-seen id, the widget attaches it. Coverage is limited to instrumented routes today and grows as more are wrapped; the widget works fully when no id is present.
+2. ✅ **Screenshots:** deferred — text-only v1.
+3. ✅ **Mount surfaces:** authenticated app surfaces only (admin sidebar + bottom-nav More · coach portal + new Help link · scorekeeper/check-in); public deferred.
+4. ✅ **Emails:** confirmation to a signed-in submitter (fire-and-forget) + admin-notify to `ADMIN_EMAIL` (**awaited**, so serverless can't drop it).
+5. ✅ **Rate limit:** 1 submission/user/hr signed-in; IP throttle (cloned from the Phase-1 error-capture route) for the anonymous path; body-size capped.
+6. ✅ **Categories:** Tournaments / Coaches / Registrations / Accounting / Billing / Other, defaulted from the current route.
+
+## Success criteria (Phase 3 is "done" when)
+
+1. A signed-in coach/admin/scorekeeper can open "Send feedback" on each mounted surface, submit a bug/feature/feedback in under ~30 seconds, and see a success confirmation.
+2. The submission lands in `feedback_submissions` with route/role/app_version context attached and PII scrubbed.
+3. A bug submitted right after hitting a captured 5xx (on an instrumented route) carries the requestId, and its triage row shows a working "View related issue" deep-link to the matching Observability issue.
+4. A platform admin opens **/platform-admin/feedback**, filters by type/category/status, exports CSV/XLSX, and moves an item New→Triaged→Acknowledged→Resolved — each change audit-logged.
+5. A **support** user sees the queue but the status control is disabled and a direct status API call as support is rejected (403).
+6. The unauthenticated path is rate-limited + size-capped + PII-scrubbed and can't be abused; `ADMIN_EMAIL` is notified on submit; a signed-in submitter gets a confirmation email.
+7. Static checks pass (typecheck + focused lint), unit tests cover the `/api/feedback` validation + rate-limit gate, the dev server restarts clean (login 200, no Supabase EACCES), and the diff passes an adversarial review before hand-off.
+
+**Status: Proposed — awaiting owner go-ahead. No code until approved. All six product decisions locked 2026-06-10; no migration needed (table sealed in 118); reuses the existing `observability` platform area. Detailed build plan = §15 of the implementation plan.**
+
+---
+
+# PM Brief — Phase 4: Rollup, Retention & Critical-Error Alerts
+
+**Added:** 2026-06-10 · **Status:** ✅ BUILT & LIVE 2026-06-10 (four decisions locked by owner; **mig 122 applied to dev AND prod**; per-branch `OBSERVABILITY_ENV` console vars set by owner; awaiting owner browser pass) · **Priority:** High · **Est:** 0.5–1 day
+**Depends on:** Phase 1 (capture — BUILT) + Phase 2 (dashboard — BUILT, commit `962c0cd`). Phase 3 (feedback widget) is independent and not blocked by this.
+**Pre-build design review:** a 3-agent adversarial verification pass (live database probes, official-docs fact-check, repo integration check) ran on this design *before* sign-off; 1 blocking + 7 should-fix findings are already folded into the scope below. The scheduler's availability was confirmed live on both databases — it is a fact, not an assumption.
+
+## In one sentence
+
+Phases 1–2 record every failure and give us a screen to triage them; Phase 4 makes the system **self-maintaining and proactive** — the database now cleans up after itself on a schedule, the dashboard chart gets its proper fast data feed, and a brand-new critical failure **emails us the moment it first happens** instead of waiting for someone to open the dashboard.
+
+## What changes operationally (plain language)
+
+1. **The database starts doing housekeeping on a schedule.** Two automatic jobs run inside our own Postgres (no new external service):
+   - **Every 5 minutes:** the raw traffic tallies are folded into the compact chart table the dashboard was designed to read. The "Calls vs Errors" chart gets faster and stays fast forever, because it now reads a small pre-aggregated table instead of recomputing from staging rows.
+   - **Every night (~3–4 am Eastern):** old data is swept out — raw error occurrences older than 30 days are deleted (the grouped *issue* rows survive, so triage history is never lost), issues resolved more than 90 days ago are removed, chart data older than 1 year is trimmed, and **snoozed issues whose snooze expired are actually re-opened** (today they're only *displayed* as expired; nothing flips them back).
+   - Each run stamps a heartbeat. The dashboard's freshness chip — which today says "Rollup not yet enabled (Phase 4)" — automatically switches to "**Last rollup N min ago**" and turns amber if a job silently stops **or keeps failing** (the pre-build design review caught that the original chip would have stayed green while a job ran-but-failed; fixed in scope). The "orgs affected" number on an issue also stays consistent when old raw events are purged, instead of silently pointing at deleted rows.
+2. **A manual "Run sweep now" backstop.** A super-admin-only API endpoint runs the exact same fold + cleanup on demand — useful if a scheduled job ever misbehaves, and it's audit-logged like every other consequential platform-admin action. *(We verified the scheduler **is available** on both our dev and prod databases, so this is a backstop, not the primary path.)*
+3. **Critical errors now page us by email.** The **first time** a new critical-severity failure appears (payments, billing webhooks, login/signup, registration, org creation), an email goes to **fieldlogichq@gmail.com** with the error name, the route, which org was affected, and a direct link to the issue's detail page in platform-admin. It is deliberately **de-noised**: roughly one email per *distinct* issue — a thousand repeats of the same failure produce **one** email, not a thousand. We also email when an existing issue **escalates** to critical for the first time, and when a previously-resolved critical issue **comes back** (a regression). De-noising caveat (locked): across one resolve-then-recur cycle a regression can produce **at most two** emails — one for an in-week recurrence and one if it's still recurring after the 7-day auto-reopen window — never per-occurrence. Alerts fire only for **production** errors and only for **server-side** captures, and only when the production environment flag is **explicitly** set (so a dev-site deploy fails closed) — local dev noise and the public browser-error endpoint can never spam the inbox.
+4. **One plumbing fix rides along (found by the pre-build design review).** The environment label our *deployed* branches stamp on captured errors was never actually passed through the build — so the dev-site deployment labels its errors "production" today and would have triggered production alerts. Phase 4 fixes the build config so only the real production site can page us. Visible side-effect: errors from the dev-site deployment will finally show under the dashboard's **Dev** toggle instead of Production.
+
+## Who is alerted, and about what
+
+- **Recipient:** fieldlogichq@gmail.com (the existing `ADMIN_EMAIL` used for admin notifications today). Expandable later; starting with one inbox keeps it dead simple.
+- **What qualifies as "critical" (locked):** failures on payment/billing/webhook/checkout routes, auth (login/signup), tournament registration (`/api/register`), and **organization creation (`/api/org/create`)** — the routes where a silent failure costs money or strands/loses a customer.
+- **What can never alert:** dev-environment errors, client/browser-reported errors (the public capture endpoint), and anything below critical severity. A per-hour safety cap also bounds worst-case email volume (e.g. a bad deploy creating many new critical issues at once).
+
+## Why it matters
+
+- **The dashboard becomes trustworthy long-term.** Without retention, the raw events table grows forever on the same database that serves customers. After Phase 4, storage is bounded and the chart is O(small) to render no matter how much traffic we get.
+- **We find out about the worst failures in minutes, not days.** Today a critical production failure sits silently in the dashboard until someone looks. After Phase 4, the first occurrence of any new payments/auth/registration failure lands in the inbox with a one-click link to the full scrubbed detail.
+- **Snooze finally means what it says.** "Snooze for 7 days" now actually re-opens the issue on day 7 instead of just being labelled "expired."
+
+## What this phase deliberately does NOT do
+
+- **No customer-facing change at all.** Org admins, coaches, scorekeepers, and the public see nothing different.
+- **No new external services.** The scheduler is Postgres's own (`pg_cron`, confirmed available on both our databases); alerts use our existing Resend email stack.
+- The §6 breakdown tiles (top routes / status codes / affected orgs) keep their existing "sampled beyond 5,000 events" behaviour — the sampling disclosure stays. Making those exact needs richer rollup dimensions and is a Phase 5 candidate, not Phase 4. (The headline **chart + error rate** do become rollup-backed and exact.)
+- Feedback widget + triage page remain **Phase 3** (next after this, or before — they don't depend on each other).
+
+## Decisions needed from the owner (recommended defaults in bold)
+
+1. **Critical-route allowlist** — **keep the current three patterns (payments/billing/webhooks/checkout · auth/login/signup · /api/register) and add org-creation (`/api/org/create`)**, since a failed org signup is a lost customer. Or: keep exactly as-is / payments-only / custom list.
+2. **Alert triggers** — **first-seen critical + first escalation to critical + a resolved critical coming back (regression)**, production + server-side only. Or: first-seen only.
+3. **Recipients** — **fieldlogichq@gmail.com only** (current `ADMIN_EMAIL`). Or: an env-var list for multiple recipients.
+4. **Retention windows** — **raw error occurrences 30 days · resolved issues 90 days after resolution · chart rollups 1 year · ignored issues + feedback kept indefinitely**; nightly sweep ~3–4 am Eastern. Confirm or adjust.
+
+## Success criteria (Phase 4 is "done" when)
+
+1. Within ~5 minutes of the migration landing on dev, the dashboard freshness chip reads "Last rollup N min ago" on its own, and the staging table is empty after each fold (chart totals unchanged before vs after — no double-counting, no gaps).
+2. The nightly sweep provably deletes only out-of-window rows, re-opens expired snoozes, and stamps its heartbeat; a silently-failing job turns the chip amber within 15 minutes.
+3. Forcing a brand-new critical error on a payments-pattern route produces **exactly one** email to ADMIN_EMAIL with a working deep-link to the issue detail; repeating the same error produces **zero** additional emails.
+4. The manual sweep endpoint: super-admin runs it successfully (audit-logged); a support-role call is rejected.
+5. A throwing alert/cron path can never break a customer request (same fire-and-forget discipline as Phase 1, unit-tested).
+6. Static checks green; migration applied to **dev** with snapshots + data dictionary updated in the same commit; **prod apply only on explicit owner approval** — and flagged clearly: this migration adds no new tables, so the automatic prod-drift gate **cannot** detect it; the prod apply must be done deliberately before the code promotes to master.
+
+**Status: ✅ BUILT & LIVE 2026-06-10 — all four decisions locked by the owner and implemented; mig 122 applied to dev AND prod (extension + cron jobs verified live on prod, anon execute denied); per-branch `OBSERVABILITY_ENV` console vars set in Amplify (prod=production, dev=dev), taking effect on next deploy. The code also fails closed if the var is unset, so a missing var cannot cause dev-deploy alert spam. Remaining: owner browser pass of the dashboard freshness chip.**

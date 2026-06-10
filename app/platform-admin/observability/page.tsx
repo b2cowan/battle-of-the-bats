@@ -126,12 +126,20 @@ export default async function ObservabilityDashboardPage({
     getErrorGroups(params),
   ]);
 
-  // Freshness chip — most-recent cron run, or "not yet enabled" before Phase 4.
+  // Freshness chip — most-recent cron run, or "not run yet" before migration 122 is applied to
+  // this environment. The jobs bump last_run_at ONLY on success. Three independent staleness
+  // signals (any one → amber): the fold (>15 min vs its 5-min cadence) via the most-recent row;
+  // the nightly sweep (>26h — caught explicitly because a fresh fold otherwise keeps the chip
+  // green); and anyJobError (a job that ran-and-failed). A job that NEVER runs leaves an empty
+  // table → the gray "not run yet" state below (also the deployed-but-pre-122 window).
   const mostRecent = freshness.rows
     .filter(r => r.minutesAgo !== null)
     .sort((a, b) => (a.minutesAgo ?? Infinity) - (b.minutesAgo ?? Infinity))[0];
+  const sweepRow = freshness.rows.find(r => r.jobName === 'retention_sweep');
+  const sweepStale = !!sweepRow && (sweepRow.minutesAgo ?? 0) > 26 * 60;
+  const anyJobError = freshness.rows.some(r => r.status === 'error');
   const freshnessEnabled = freshness.enabled && !!mostRecent;
-  const freshnessStale = freshnessEnabled && (mostRecent.minutesAgo ?? 0) > 15;
+  const freshnessStale = (freshnessEnabled && (mostRecent.minutesAgo ?? 0) > 15) || sweepStale || anyJobError;
 
   const routeMax = Math.max(...data.byRoute.map(r => r.count), 1);
   const sourceMax = Math.max(...data.bySource.map(r => r.count), 1);
@@ -169,13 +177,23 @@ export default async function ObservabilityDashboardPage({
             ))}
           </div>
           <span
-            className={`${styles.freshnessChip} ${freshnessStale ? styles.freshnessStale : ''} ${!freshnessEnabled ? styles.freshnessOff : ''}`}
-            title={freshnessEnabled ? `Rollup job last ran ${mostRecent.minutesAgo} min ago` : 'The pg_cron rollup job ships in Phase 4'}
+            className={`${styles.freshnessChip} ${freshnessStale ? styles.freshnessStale : ''} ${!freshnessEnabled && !anyJobError ? styles.freshnessOff : ''}`}
+            title={
+              anyJobError
+                ? 'A rollup/retention job is reporting errors — see observability_cron_heartbeat.error_detail'
+                : sweepStale
+                  ? 'The nightly retention sweep has not run in over 26h — check pg_cron'
+                  : freshnessEnabled
+                    ? `Rollup job last ran ${mostRecent.minutesAgo} min ago`
+                    : 'No cron run recorded yet — confirm migration 122 is applied and pg_cron is running'
+            }
           >
             <span className={styles.freshnessDot} />
             {freshnessEnabled
-              ? `Last rollup ${mostRecent.minutesAgo}m ago`
-              : 'Rollup not yet enabled (Phase 4)'}
+              ? `Last rollup ${mostRecent.minutesAgo}m ago${anyJobError ? ' · job error' : sweepStale ? ' · sweep stale' : ''}`
+              : anyJobError
+                ? 'Rollup job failing'
+                : 'Rollup has not run yet'}
           </span>
         </div>
       </header>
