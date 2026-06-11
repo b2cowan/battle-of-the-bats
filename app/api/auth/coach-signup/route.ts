@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
+import { withObservability } from '@/lib/observability';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withObservability(async (req: NextRequest) => {
   const body = await req.json().catch(() => ({})) as {
     email?: unknown;
     password?: unknown;
@@ -69,4 +70,4 @@ export async function POST(req: NextRequest) {
   }
 
   return json({ ok: true });
-}
+}, { route: '/api/auth/coach-signup' });

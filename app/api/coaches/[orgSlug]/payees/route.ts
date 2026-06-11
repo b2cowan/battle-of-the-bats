@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, searchOrgPayees, createOrgPayee } from '@/lib/db';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string) {
   const ctx = await getAuthContext();
@@ -12,28 +13,24 @@ async function resolveCoachContext(orgSlug: string) {
   return { ctx, assignments };
 }
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string }> },
-) {
+export const GET = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string }> },) => {
   const { orgSlug } = await params;
   const resolved = await resolveCoachContext(orgSlug);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, assignments } = resolved;
 
   const q = new URL(req.url).searchParams.get('q') ?? '';
   const teamId = isTeamWorkspaceOrg(ctx.org) ? assignments[0]?.teamId : undefined;
   const payees = await searchOrgPayees(ctx.org.id, q, teamId);
   return NextResponse.json({ payees });
-}
+}, { route: '/api/coaches/[orgSlug]/payees' });
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string }> },) => {
   const { orgSlug } = await params;
   const resolved = await resolveCoachContext(orgSlug);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, assignments } = resolved;
 
   const body = await req.json();
@@ -52,4 +49,4 @@ export async function POST(
     if (error.code === '23505') return NextResponse.json({ error: 'A payee with that name already exists' }, { status: 409 });
     throw e;
   }
-}
+}, { route: '/api/coaches/[orgSlug]/payees' });

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendEmail, signupVerificationHtml } from '@/lib/email';
 import { COACHES_START_PATH, normalizeCoachPortalNext } from '@/lib/coaches-portal-routes';
+import { captureError, withObservability } from '@/lib/observability';
 
 function shouldRequireEmailVerification() {
   const explicit = process.env.REQUIRE_SIGNUP_EMAIL_VERIFICATION;
@@ -20,7 +21,7 @@ function normalizeNext(value: unknown): string {
     : COACHES_START_PATH;
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   let userId: string | null = null;
 
   try {
@@ -105,9 +106,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, requiresEmailVerification: false, email: normalizedEmail });
   } catch (err) {
     console.error('Coaches Portal signup route error:', err);
+    void captureError(err, { route: '/api/auth/team-signup', method: 'POST', statusCode: 500 });
     if (userId) {
       await rollbackAuthUser(userId).catch(() => {});
     }
     return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
   }
-}
+}, { route: '/api/auth/team-signup' });

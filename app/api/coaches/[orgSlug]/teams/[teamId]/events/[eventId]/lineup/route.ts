@@ -13,6 +13,7 @@ import {
   upsertRepTeamLineup,
 } from '@/lib/db';
 import type { RepLineupMode } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 const VALID_LINEUP_MODES: RepLineupMode[] = ['nine_player', 'everyone_bats'];
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
@@ -79,13 +80,11 @@ function normalizeInningPositions(raw: unknown, inningCount: number): Record<str
   return next;
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId, eventId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   const [players, attendance, lineup] = await Promise.all([
@@ -102,15 +101,13 @@ export async function GET(
     entries,
     programYear,
   });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/lineup' });
 
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },
-) {
+export const PUT = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId, eventId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, programYear, event } = resolved;
 
   const body = await req.json();
@@ -216,4 +213,4 @@ export async function PUT(
       { status: 400 },
     );
   }
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/lineup' });

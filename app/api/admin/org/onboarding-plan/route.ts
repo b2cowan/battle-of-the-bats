@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { tournamentPlusUpsellHtml, SITE_URL } from '@/lib/email';
 import { sendMarketingEmail } from '@/lib/email-sender';
 import { getBillingHref } from '@/lib/billing-urls';
+import { withObservability } from '@/lib/observability';
 
 const STARTUP_TASK_IDS = ['tournament', 'divisions', 'welcome', 'venues', 'contacts'];
 
@@ -26,7 +27,7 @@ function hasStoredSavedStartupWork(value: unknown) {
   });
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') {
@@ -120,4 +121,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ success: true });
-}
+}, { route: '/api/admin/org/onboarding-plan' });

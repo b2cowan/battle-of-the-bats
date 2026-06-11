@@ -1,7 +1,8 @@
 import { getAuthContext, requireCapability, unauthorized } from '@/lib/api-auth';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
+import { withObservability } from '@/lib/observability';
 
-export async function POST() {
+export const POST = withObservability(async () => {
   const auth = await getAuthContext();
   if (!auth) return unauthorized();
   // Billing is owner-only — enforce server-side (the UI also hides these controls).
@@ -43,4 +44,4 @@ export async function POST() {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });
-}
+}, { route: '/api/billing/portal' });

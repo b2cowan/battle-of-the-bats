@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
+import { withObservability } from '@/lib/observability';
 
 type DivisionAgeConfig = {
   min: number | null;
@@ -83,7 +84,7 @@ function normalizeTournamentName(name: string) {
   return name.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const auth = await getAuthContext({ orgSlug });
   if (!auth) return unauthorized();
@@ -585,4 +586,4 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json' }
     });
   }
-}
+}, { route: '/api/admin/setup-tournament' });

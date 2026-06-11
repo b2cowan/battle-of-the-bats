@@ -1,8 +1,8 @@
 # PM Brief — Observability Route-Instrumentation Rollout
 
 **Plan:** [OBSERVABILITY_ROUTE_INSTRUMENTATION_PLAN.md](OBSERVABILITY_ROUTE_INSTRUMENTATION_PLAN.md)
-**Created:** 2026-06-10 · **Status:** Proposed (awaiting go-ahead) · **Priority:** Medium-High · **Est:** Mechanism A ~0.5 day · Mechanism B ~spread over many small PRs · Mechanism C ~0.5 day
-**Parent:** [OBSERVABILITY_ERROR_TRACKING_PM_BRIEF.md](OBSERVABILITY_ERROR_TRACKING_PM_BRIEF.md)
+**Created:** 2026-06-10 · **Status:** ✅ **COMPLETE 2026-06-11** — Mechanism A (every API response carries a request ID) + Mechanism C (swallowed-500 capture on money/identity, its locked scope) + **Mechanism B per-route wrapping at 100% (388/388 wrappable handlers, all Tranches 0–3)**. Built but NOT yet committed (branch = trunk). · **Priority:** Medium-High · **Outcome:** the platform-admin calls-vs-errors chart now has a real denominator across the entire API, and every server route carries a `requestId` for support/bug→error deep-linking.
+**Parent:** [OBSERVABILITY_ERROR_TRACKING_PM_BRIEF.md](../active/OBSERVABILITY_ERROR_TRACKING_PM_BRIEF.md)
 
 ## In one sentence
 
@@ -60,4 +60,4 @@ A **coverage number** ("X of Y routes instrumented") is tracked the whole way, s
 4. Each tranche ships as a small PR that passes typecheck + focused lint + a smoke pass, with **zero** change to any route's response behaviour or latency.
 5. No customer-visible change; no new tables/migrations.
 
-**Status: Proposed — awaiting owner go-ahead. Independent of the Phase 3 go/no-go, but Mechanism A is the recommended fast-follow that makes Phase 3's bug→error link broad.**
+**Status: Tranche 0 BUILT 2026-06-11 (money/identity proof PR) — awaiting browser smoke + dev metrics check, then owner sign-off to pace Tranches 1–3 (one domain per PR). Not yet committed (branch = trunk). Mechanism A already live.**

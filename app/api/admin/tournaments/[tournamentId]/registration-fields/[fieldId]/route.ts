@@ -8,6 +8,7 @@ import {
   updateTournamentRegistrationField,
 } from '@/lib/db';
 import type { TournamentRegistrationFieldType } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 const FIELD_TYPES = new Set<TournamentRegistrationFieldType>([
   'short_text',
@@ -55,11 +56,11 @@ function parseOptions(value: unknown) {
   return value.map(item => typeof item === 'string' ? item.trim() : '').filter(Boolean);
 }
 
-export async function PATCH(req: NextRequest, { params }: RouteParams) {
+export const PATCH = withObservability(async (req: NextRequest, { params }: RouteParams) => {
   const { tournamentId, fieldId } = await params;
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const guarded = await guardField(tournamentId, fieldId, orgSlug);
-  if ('response' in guarded) return guarded.response;
+  if ('response' in guarded) return guarded.response!;
 
   const body = await req.json() as Record<string, unknown>;
   const patch: Parameters<typeof updateTournamentRegistrationField>[1] = {};
@@ -90,14 +91,14 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
   const field = await updateTournamentRegistrationField(fieldId, patch);
   return NextResponse.json({ field });
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/registration-fields/[fieldId]' });
 
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+export const DELETE = withObservability(async (_req: NextRequest, { params }: RouteParams) => {
   const { tournamentId, fieldId } = await params;
   const orgSlug = _req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const guarded = await guardField(tournamentId, fieldId, orgSlug);
-  if ('response' in guarded) return guarded.response;
+  if ('response' in guarded) return guarded.response!;
 
   await archiveTournamentRegistrationField(fieldId);
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/registration-fields/[fieldId]' });

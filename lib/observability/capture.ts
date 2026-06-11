@@ -29,6 +29,10 @@ export interface CaptureOptions {
   statusCode?: number;
   severity?: Severity;
   source?: 'server' | 'client';
+  /** Upstream-minted request id (proxy.ts stamps x-request-id). Wins over the ALS context so the
+   *  id stored on error_events matches the one the client read off the response — even on the
+   *  global onRequestError path, which has no ALS context. */
+  requestId?: string | null;
   /** Pass the route's resolved auth context for full org/user/role attribution. */
   ctx?: CaptureCtx | null;
   org?: { id?: string | null; slug?: string | null } | null;
@@ -93,7 +97,7 @@ export async function captureError(err: unknown, opts: CaptureOptions = {}): Pro
     // (the dedicated user_email attribution column is set separately and intentionally).
     const safeStack = stack ? scrubEmails(stack).slice(0, MAX_STACK) : null;
     const safeMessage = message ? scrubEmails(message).slice(0, MAX_MESSAGE) : null;
-    const requestId = reqCtx?.requestId ?? null;
+    const requestId = opts.requestId ?? reqCtx?.requestId ?? null;
     const context = redactContext({ ...(opts.requestContext ?? {}), requestId });
 
     // Surface to CloudWatch so existing log-based debugging keeps working.

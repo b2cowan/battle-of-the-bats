@@ -8,6 +8,7 @@ import {
   deleteRepDocumentTemplate,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -24,17 +25,15 @@ async function resolveTemplate(templateId: string, orgId: string) {
   return { template };
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ templateId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ templateId: string }> },) => {
   const { templateId } = await params;
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
 
   const resolved = await resolveTemplate(templateId, ctx!.org.id);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { template } = resolved;
 
   const { data, error } = await supabaseAdmin.storage
@@ -47,12 +46,10 @@ export async function GET(
 
   const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
   return NextResponse.json({ url: data.signedUrl, expiresAt });
-}
+}, { route: '/api/admin/rep-teams/document-templates/[templateId]' });
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ templateId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ templateId: string }> },) => {
   const { templateId } = await params;
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
@@ -61,7 +58,7 @@ export async function PATCH(
   if (ctx!.role !== 'owner' && ctx!.role !== 'admin') return forbidden();
 
   const resolved = await resolveTemplate(templateId, ctx!.org.id);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
 
   const body = await req.json();
   if (typeof body.isActive !== 'boolean') {
@@ -71,12 +68,10 @@ export async function PATCH(
   const updated = await updateRepDocumentTemplate(templateId, { isActive: body.isActive });
   const { storagePath: _sp, ...rest } = updated;
   return NextResponse.json({ template: rest });
-}
+}, { route: '/api/admin/rep-teams/document-templates/[templateId]' });
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ templateId: string }> },
-) {
+export const DELETE = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ templateId: string }> },) => {
   const { templateId } = await params;
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
@@ -85,11 +80,11 @@ export async function DELETE(
   if (ctx!.role !== 'owner' && ctx!.role !== 'admin') return forbidden();
 
   const resolved = await resolveTemplate(templateId, ctx!.org.id);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { template } = resolved;
 
   await supabaseAdmin.storage.from('rep-team-documents').remove([template.storagePath]);
   await deleteRepDocumentTemplate(templateId);
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/rep-teams/document-templates/[templateId]' });

@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLedgerById } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -21,7 +22,7 @@ function isValidEntryDate(s: string): boolean {
   return d <= limit;
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -74,4 +75,4 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ ok: true }, { status: 201 });
-}
+}, { route: '/api/admin/accounting/transfers' });

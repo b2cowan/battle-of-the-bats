@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBasicCoachTeamOwner } from '@/lib/coach-team-guard';
 import { reorderBasicCoachTeamPlayers } from '@/lib/basic-coach-roster';
+import { withObservability } from '@/lib/observability';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -15,7 +16,7 @@ function authError(status: 401 | 403) {
 type RouteCtx = { params: Promise<{ basicTeamId: string }> };
 
 /** Persist a new player display order (owner only). Body: { orderedIds: string[] }. */
-export async function POST(req: NextRequest, { params }: RouteCtx) {
+export const POST = withObservability(async (req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId } = await params;
     const guard = await requireBasicCoachTeamOwner(basicTeamId);
@@ -42,4 +43,4 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
     console.error('[coaches roster reorder POST] error:', error);
     return json({ error: 'Could not save the new order.' }, 500);
   }
-}
+}, { route: '/api/coaches/teams/[basicTeamId]/roster/reorder' });

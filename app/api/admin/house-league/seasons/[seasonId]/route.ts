@@ -10,6 +10,7 @@ import {
   updateLeagueSeason,
 } from '@/lib/db';
 import type { LeagueSeasonStatus } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -27,10 +28,8 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   archived:             [],
 };
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ seasonId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ seasonId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -77,12 +76,10 @@ export async function GET(
       pendingReviewCount:      regs.filter(r => r.status === 'pending_review').length,
     },
   });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]' });
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ seasonId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ seasonId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -144,4 +141,4 @@ export async function PATCH(
   await updateLeagueSeason(seasonId, ctx!.org.id, patch);
   const updated = await getLeagueSeasonById(seasonId, ctx!.org.id);
   return NextResponse.json(updated);
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]' });

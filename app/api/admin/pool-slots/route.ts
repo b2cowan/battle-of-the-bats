@@ -1,6 +1,7 @@
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function mapSlot(s: any, teamNames = new Map<string, string>()) {
   return {
@@ -28,7 +29,7 @@ async function getTeamNamesForSlots(slots: Array<{ team_id?: string | null }>) {
   return new Map((data ?? []).map(team => [team.id as string, team.name as string]));
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -63,9 +64,9 @@ export async function GET(req: Request) {
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message || 'Unknown error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
-}
+}, { route: '/api/admin/pool-slots' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -368,4 +369,4 @@ export async function POST(req: Request) {
     console.error('Pool Slots API error:', err);
     return new Response(JSON.stringify({ error: err.message || 'Unknown error' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
-}
+}, { route: '/api/admin/pool-slots' });

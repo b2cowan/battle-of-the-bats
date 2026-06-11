@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithScope, unauthorized, forbidden } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 // ---------------------------------------------------------------------------
 // Org Venue Library API
@@ -40,7 +41,7 @@ function mapOrgFacility(f: any) {
 // GET
 // ---------------------------------------------------------------------------
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
 
@@ -57,7 +58,7 @@ export async function GET(req: Request) {
   if (vErr) return NextResponse.json({ error: vErr.message }, { status: 500 });
 
   const venueIds = (venues ?? []).map(v => v.id);
-  let facilityByVenue: Record<string, any[]> = {};
+  const facilityByVenue: Record<string, any[]> = {};
 
   if (venueIds.length > 0) {
     const { data: facData, error: fErr } = await supabaseAdmin
@@ -75,13 +76,13 @@ export async function GET(req: Request) {
   return NextResponse.json((venues ?? []).map(v =>
     mapOrgVenue(v, facilityByVenue[v.id] ?? [])
   ));
-}
+}, { route: '/api/admin/org/venues' });
 
 // ---------------------------------------------------------------------------
 // POST
 // ---------------------------------------------------------------------------
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -176,4 +177,4 @@ export async function POST(req: Request) {
     const message = err instanceof Error ? err.message : 'Unknown server error';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+}, { route: '/api/admin/org/venues' });

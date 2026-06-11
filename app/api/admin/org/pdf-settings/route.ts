@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPdfSettings } from '@/lib/export/pdf';
+import { withObservability } from '@/lib/observability';
 
 /**
  * GET /api/admin/org/pdf-settings
@@ -10,7 +11,7 @@ import type { OrgPdfSettings } from '@/lib/export/pdf';
  * styling-only (not sensitive) and coaches portal pages need it to
  * produce branded exports.  Write access is still restricted to owner/admin.
  */
-export async function GET(req: NextRequest) {
+export const GET = withObservability(async (req: NextRequest) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug });
   if (!ctx) return unauthorized();
@@ -26,14 +27,14 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json((data?.pdf_settings as OrgPdfSettings | null) ?? {});
-}
+}, { route: '/api/admin/org/pdf-settings' });
 
 /**
  * POST /api/admin/org/pdf-settings
  * Writes pdf_settings JSONB to the organizations row.
  * Accessible to owner and admin roles.
  */
-export async function POST(req: NextRequest) {
+export const POST = withObservability(async (req: NextRequest) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug });
   if (!ctx) return unauthorized();
@@ -78,4 +79,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/org/pdf-settings' });

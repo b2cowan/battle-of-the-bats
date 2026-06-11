@@ -14,12 +14,13 @@ import {
 } from '@/lib/team-workspace-claims';
 import { TeamWorkspaceProvisioningError } from '@/lib/team-workspace-provisioning';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { captureError, withObservability } from '@/lib/observability';
 
 function appendSuccess(url: string) {
   return `${url}${url.includes('?') ? '&' : '?'}success=1`;
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const user = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
@@ -145,6 +146,7 @@ export async function POST(req: Request) {
         });
       }
       console.error('[team checkout mock] provisioning error:', error);
+      void captureError(error, { user: { id: user.id, email: user.email }, route: '/api/billing/create-team-checkout', method: 'POST', statusCode: 500 });
       return new Response(JSON.stringify({ error: 'Failed to create Coaches Portal.' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
@@ -201,4 +203,4 @@ export async function POST(req: Request) {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });
-}
+}, { route: '/api/billing/create-team-checkout' });

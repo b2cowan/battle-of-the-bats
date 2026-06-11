@@ -9,6 +9,7 @@ import {
   getLedgerEntries,
   getRegistrationsForSeason,
 } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -17,10 +18,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ seasonId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ seasonId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -66,4 +65,4 @@ export async function GET(
     feePerReg,
     activeCount,
   });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/ledger' });

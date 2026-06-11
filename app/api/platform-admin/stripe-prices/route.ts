@@ -7,6 +7,7 @@ import { sanitizePlatformChangeNote } from '@/lib/platform-change-note';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getStripe } from '@/lib/stripe';
+import { withObservability } from '@/lib/observability';
 
 function unauthorized() {
   return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -15,7 +16,7 @@ function unauthorized() {
   });
 }
 
-export async function GET() {
+export const GET = withObservability(async () => {
   const user = await getPlatformAuthContext();
   if (!user) return unauthorized();
 
@@ -34,9 +35,9 @@ export async function GET() {
   }
 
   return Response.json(data);
-}
+}, { route: '/api/platform-admin/stripe-prices' });
 
-export async function PATCH(req: Request) {
+export const PATCH = withObservability(async (req: Request) => {
   const auth = await requireAnyPlatformPermission(['manage_billing', 'manage_product']);
   if (auth.response) return auth.response;
 
@@ -174,4 +175,4 @@ export async function PATCH(req: Request) {
     stripe_validation: stripeValidation,
     approved_change_request_id: approval.changeRequest.id,
   });
-}
+}, { route: '/api/platform-admin/stripe-prices' });

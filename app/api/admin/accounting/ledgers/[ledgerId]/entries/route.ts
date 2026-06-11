@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLedgerById, getLedgerEntries, createEntry } from '@/lib/db';
 import type { AccountingEntryStatus, AccountingEntryType } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 type Params = { params: Promise<{ ledgerId: string }> };
 
@@ -26,7 +27,7 @@ function isValidEntryDate(s: string): boolean {
   return d <= limit;
 }
 
-export async function GET(req: Request, { params }: Params) {
+export const GET = withObservability(async (req: Request, { params }: Params) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -46,9 +47,9 @@ export async function GET(req: Request, { params }: Params) {
 
   const entries = await getLedgerEntries(ledgerId, { status, limit, offset });
   return NextResponse.json({ entries });
-}
+}, { route: '/api/admin/accounting/ledgers/[ledgerId]/entries' });
 
-export async function POST(req: Request, { params }: Params) {
+export const POST = withObservability(async (req: Request, { params }: Params) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -109,4 +110,4 @@ export async function POST(req: Request, { params }: Params) {
   );
 
   return NextResponse.json(entry, { status: 201 });
-}
+}, { route: '/api/admin/accounting/ledgers/[ledgerId]/entries' });

@@ -11,6 +11,7 @@ import {
   getRepTeam,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -19,10 +20,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function PATCH(
-  _req: Request,
-  { params }: { params: Promise<{ allocationId: string; splitId: string; installId: string }> },
-) {
+export const PATCH = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ allocationId: string; splitId: string; installId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -75,4 +74,4 @@ export async function PATCH(
   const updated = await markRepAllocationInstallmentPaid(installId, ctx!.user.id, null);
 
   return NextResponse.json({ installment: updated });
-}
+}, { route: '/api/admin/rep-teams/allocations/[allocationId]/splits/[splitId]/installments/[installId]' });

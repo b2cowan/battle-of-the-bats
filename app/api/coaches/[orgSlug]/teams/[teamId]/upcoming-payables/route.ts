@@ -6,6 +6,7 @@ import {
   getActiveRepProgramYear,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -36,13 +37,11 @@ function daysUntil(dueDateStr: string): number {
 }
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/upcoming-payables?days=90
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const GET = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { team, programYear } = resolved;
 
   const url = new URL(req.url);
@@ -185,4 +184,4 @@ export async function GET(
       { id: 'org_payables',    title: 'Org Allocations Due', emptyMessage: 'No org allocation payments due.',         items: allocItems },
     ],
   });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/upcoming-payables' });

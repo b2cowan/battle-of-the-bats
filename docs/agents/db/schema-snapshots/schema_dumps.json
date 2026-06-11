@@ -11063,6 +11063,15 @@
         "column_default": null
       },
       {
+        "table_name": "teams",
+        "pos": 26,
+        "column_name": "coach_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "tournament_archives",
         "pos": 1,
         "column_name": "id",
@@ -11520,6 +11529,15 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "tournament_roster_players",
+        "pos": 14,
+        "column_name": "source_player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "tournaments",
@@ -13633,6 +13651,13 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "tournament_roster_players_org_id_fkey"
+      },
+      {
+        "table_name": "tournament_roster_players",
+        "column_name": "source_player_id",
+        "foreign_table": "basic_coach_team_players",
+        "foreign_column": "id",
+        "constraint_name": "tournament_roster_players_source_player_id_fkey"
       },
       {
         "table_name": "tournament_roster_players",

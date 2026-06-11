@@ -90,53 +90,8 @@
   margin: 0;
 }
 
-/* ── Game list ────────────────────────────────────────────────────────────── */
-.gameList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.gameRow {
-  display: grid;
-  grid-template-columns: auto auto 1fr auto;
-  align-items: center;
-  gap: 0.75rem 1.25rem;
-  padding: 0.75rem 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--highlight-top);
-  font-size: 0.85rem;
-}
-
-.gameDate {
-  color: var(--white-80);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.gameOpponent {
-  color: var(--white-60);
-  white-space: nowrap;
-}
-
-.gameLocation {
-  color: var(--white-40);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.8rem;
-}
-
-.gameScore {
-  font-family: var(--font-data, monospace);
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  font-size: 0.88rem;
-  color: var(--logic-lime);
-  white-space: nowrap;
-}
+/* The populated schedule + live scorebug moved to components/coaches/CoachLiveSchedule
+   (slice 5i); only the empty/unpublished notes render from this page now. */
 
 /* ── Announcements ────────────────────────────────────────────────────────── */
 .announcementList {
@@ -232,14 +187,5 @@
   .header {
     flex-direction: column;
     gap: 0.5rem;
-  }
-
-  .gameRow {
-    grid-template-columns: 1fr 1fr;
-    row-gap: 0.25rem;
-  }
-
-  .gameLocation {
-    grid-column: 1 / -1;
   }
 }

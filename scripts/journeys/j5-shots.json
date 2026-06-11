@@ -1,0 +1,17 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J5",
+  "login": { "email": "coach@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "01-register-open",      "url": "/dev-test-org/dev-tournament-2026/register" },
+    { "name": "02-coaches-join",       "url": "/coaches/join" },
+    { "name": "03-coaches-hub",        "url": "/coaches", "auth": true },
+    { "name": "04-tournaments-list",   "url": "/coaches/tournaments", "auth": true },
+    { "name": "05-teamhq-prep",        "url": "/coaches/tournaments/def4a0a8-a042-4710-958c-8dbc0e7d92a5", "auth": true },
+    { "name": "06-teamhq-fee-pending", "url": "/coaches/tournaments/cedfcaf5-eb00-4010-9335-06aebaf36639", "auth": true },
+    { "name": "07-teamhq-gameday",     "url": "/coaches/tournaments/d912ebbe-3634-4d2b-b0fe-7a0fe6e33ac0", "auth": true },
+    { "name": "08-teamhq-completed",   "url": "/coaches/tournaments/647b38e2-2ebd-4c5d-b935-784a4022d539", "auth": true },
+    { "name": "09-coaches-teams",      "url": "/coaches/teams", "auth": true },
+    { "name": "10-public-team-live",   "url": "/dev-test-org/live-demo/teams/d912ebbe-3634-4d2b-b0fe-7a0fe6e33ac0" }
+  ]
+}

@@ -14,6 +14,7 @@ import { cancelScheduledEmail } from '@/lib/email-sender';
 import { notify } from '@/lib/notify';
 import type { OrgPlan } from '@/lib/types';
 import type Stripe from 'stripe';
+import { withObservability } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -50,7 +51,7 @@ async function cancelPriorTeamSubscription(subscriptionId: string | null | undef
   }
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const rawBody = await req.text();
   const sig = req.headers.get('stripe-signature') ?? '';
 
@@ -611,4 +612,4 @@ export async function POST(req: Request) {
   }
 
   return new Response('ok', { status: 200 });
-}
+}, { route: '/api/billing/webhook' });

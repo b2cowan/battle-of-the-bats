@@ -249,3 +249,22 @@ from `@/components/admin/CollapsibleCard`.
   `ADMIN_VISUAL_REDESIGN_QA_CHECKLIST.md` once browser-verified.
 - Log the binding decisions (canonical recap = Summary; plan-aware thin pointer; Summary
   3-zone hierarchy) to `memory/design_decisions.md` **after** approval/implementation.
+
+---
+
+## 9. Journey-audit inputs (J1 — tournament organizer, routed 2026-06-11)
+
+The platform-wide user-journey audit routed 11 verified close-out findings onto this plan (full
+detail + evidence refs in [journeys/JOURNEY_J1_TOURNAMENT_ORGANIZER.md](journeys/JOURNEY_J1_TOURNAMENT_ORGANIZER.md)):
+
+- **J1-105 (High)** `.wrapUpCard` never stacks <640px — add it to the 640px stack rule; on phones the stat line crushes to a ~130px column with the lime CTA overlapping text.
+- **J1-106 (High)** champion chips render light-on-lime (near-illegible) — use the `--on-primary` ink token on lime chip fills (Summary champions bar + dashboard banner + division recap).
+- **J1-107 (High)** the renewal moment is buried: completed dashboard has no reuse affordance and "What's next" is statically collapsed — add a "Run it back / Start {nextYear} from this setup" card + auto-open What's next when the end date is >60 days past.
+- **J1-108 (Med)** `AdminContextStrip` + sidebar Summary nav route FREE orgs into the Summary lock wall — violates this plan's own "never Open summary → into a lock" rule; plan-gate the strip's completed action (free → "Review final results" → /results).
+- **J1-109 (Med)** the summary route's local standings sort (pts→rd→rf→ra→name) can contradict the canonical tie-breaker standings shared one zone below — replace with `computeTournamentStandings`.
+- **J1-110 (Med)** Zone-2 Print outputs the dark admin shell — the app's only `@media print` block hides Zones 2/3 and nothing else; add a real print stylesheet.
+- **J1-114 (Med)** completed dashboard reads abandoned, not celebratory — amber (warning-register) banner atop ~70% blank canvas; the second division's champion is invisible.
+- **J1-115 (Med)** post-event money story mislabeled — "Payment readiness" headlines $500 collected while "$3,500 outstanding" sits in 12px subtext.
+- **J1-116 (Med)** the context strip self-references on the Summary page ("REVIEW EVENT SUMMARY →" while on it) — suppress on its own destination.
+- **J1-117 (Med)** mobile Summary stat cards ~320px tall per single number — 2-up grid so all four stats fit one screen.
+- **J1-118 (Low)** copy cluster: raw ISO dates in the Summary subtitle, "1 champions detected", "Bears U11 U11" chip stutter.

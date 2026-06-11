@@ -1,0 +1,27 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J1",
+  "login": { "email": "owner@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "01-landing",          "url": "/" },
+    { "name": "02-pricing",          "url": "/pricing" },
+    { "name": "03-start",            "url": "/start" },
+    { "name": "04-start-tournament", "url": "/start/tournament" },
+    { "name": "05-public-home",      "url": "/dev-test-org/live-demo" },
+    { "name": "06-public-schedule",  "url": "/dev-test-org/live-demo/schedule" },
+    { "name": "07-public-standings", "url": "/dev-test-org/live-demo/standings" },
+    { "name": "08-public-register",  "url": "/dev-test-org/live-demo/register" },
+    { "name": "09-admin-hub",        "url": "/dev-test-org/admin", "auth": true },
+    { "name": "10-dash-live",        "url": "/dev-test-org/admin/tournaments/dashboard?tournamentId=a860d51b-c349-41dc-a1f7-419cda935747", "auth": true },
+    { "name": "11-teams-manage",     "url": "/dev-test-org/admin/tournaments/manage?tournamentId=a860d51b-c349-41dc-a1f7-419cda935747", "auth": true },
+    { "name": "12-registrations",    "url": "/dev-test-org/admin/tournaments/registrations?tournamentId=a860d51b-c349-41dc-a1f7-419cda935747", "auth": true },
+    { "name": "13-schedule",         "url": "/dev-test-org/admin/tournaments/schedule?tournamentId=a860d51b-c349-41dc-a1f7-419cda935747", "auth": true },
+    { "name": "14-results",          "url": "/dev-test-org/admin/tournaments/results?tournamentId=a860d51b-c349-41dc-a1f7-419cda935747", "auth": true },
+    { "name": "15-check-in",         "url": "/dev-test-org/admin/tournaments/check-in?tournamentId=a860d51b-c349-41dc-a1f7-419cda935747", "auth": true },
+    { "name": "16-branding",         "url": "/dev-test-org/admin/tournaments/branding?tournamentId=a860d51b-c349-41dc-a1f7-419cda935747", "auth": true },
+    { "name": "17-divisions",        "url": "/dev-test-org/admin/tournaments/divisions?tournamentId=a860d51b-c349-41dc-a1f7-419cda935747", "auth": true },
+    { "name": "18-event-settings",   "url": "/dev-test-org/admin/tournaments/settings/event?tournamentId=a860d51b-c349-41dc-a1f7-419cda935747", "auth": true },
+    { "name": "19-dash-completed",   "url": "/dev-test-org/admin/tournaments/dashboard?tournamentId=8444a33d-26db-4844-84c7-7e3002eb3a9c", "auth": true },
+    { "name": "20-summary",          "url": "/dev-test-org/admin/tournaments/summary?tournamentId=8444a33d-26db-4844-84c7-7e3002eb3a9c", "auth": true }
+  ]
+}

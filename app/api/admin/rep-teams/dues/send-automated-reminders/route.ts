@@ -15,6 +15,7 @@ import {
   markInstallments7ReminderSent,
 } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -33,7 +34,7 @@ function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -118,4 +119,4 @@ export async function POST(req: Request) {
     emailsSent: totalEmailed,
     installmentsTagged: totalTagged,
   });
-}
+}, { route: '/api/admin/rep-teams/dues/send-automated-reminders' });

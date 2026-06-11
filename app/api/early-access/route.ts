@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PLAN_OPTIONS = new Set(['league', 'club']);
@@ -24,7 +25,7 @@ function cleanList(value: unknown, allowed: Set<string>, maxItems = 8) {
     .slice(0, maxItems);
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const body = await req.json().catch(() => ({}));
 
   // Honeypot for low-effort bots. Real users never see/fill this field.
@@ -111,4 +112,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/early-access' });

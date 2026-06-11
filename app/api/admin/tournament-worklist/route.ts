@@ -2,6 +2,7 @@ import { forbidden, getAuthContextWithScope, scopeGuard, unauthorized } from '@/
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 /**
  * Lightweight "needs-you" counts for the admin nav worklist (B5).
@@ -15,7 +16,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
  * games-to-finalize appear on game day — so the nav follows the phase without
  * extra logic.
  */
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const searchParams = new URL(req.url).searchParams;
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -55,4 +56,4 @@ export async function GET(req: Request) {
     registrations: pendingRes.count ?? 0,
     results: finalizeRes.count ?? 0,
   });
-}
+}, { route: '/api/admin/tournament-worklist' });

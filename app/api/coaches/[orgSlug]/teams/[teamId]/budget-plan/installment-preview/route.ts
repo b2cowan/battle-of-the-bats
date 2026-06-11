@@ -3,6 +3,7 @@ import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepInstallmentPreviewRow } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -30,13 +31,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 //
 // Returns a per-player preview of the installment amounts that would be
 // generated. Does not write anything to the database.
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const GET = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   const url   = new URL(req.url);
@@ -104,4 +103,4 @@ export async function GET(
     perPlayer:    Math.round(perPlayer * 100) / 100,
     installmentCount: count,
   });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/installment-preview' });

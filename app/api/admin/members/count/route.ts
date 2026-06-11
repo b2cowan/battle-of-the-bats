@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { PLAN_CONFIG } from '@/lib/plan-config';
+import { withObservability } from '@/lib/observability';
 
-export async function GET(request: Request) {
+export const GET = withObservability(async (request: Request) => {
   const { searchParams } = new URL(request.url);
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug });
@@ -35,4 +36,4 @@ export async function GET(request: Request) {
     limit: planCfg.seatLimit,
     officialsFree: planCfg.officialsFreeSeats,
   });
-}
+}, { route: '/api/admin/members/count' });

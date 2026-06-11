@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { withObservability } from '@/lib/observability';
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string; oid: string }> }
-) {
+export const DELETE = withObservability(async (_req: NextRequest,
+  { params }: { params: Promise<{ id: string; oid: string }> }) => {
   const auth = await requirePlatformPermission('manage_billing');
   if (auth.response) return auth.response;
 
@@ -33,4 +32,4 @@ export async function DELETE(
   );
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/platform-admin/orgs/[id]/overrides/[oid]' });

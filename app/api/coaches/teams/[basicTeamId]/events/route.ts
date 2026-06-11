@@ -5,6 +5,7 @@ import {
   createBasicCoachTeamEvent,
   normalizeBasicCoachTeamEventBody,
 } from '@/lib/basic-coach-schedule';
+import { withObservability } from '@/lib/observability';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -19,7 +20,7 @@ function authError(status: 401 | 403) {
 type RouteCtx = { params: Promise<{ basicTeamId: string }> };
 
 /** List the schedule for an org-less Basic coach team (owner only). */
-export async function GET(_req: NextRequest, { params }: RouteCtx) {
+export const GET = withObservability(async (_req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId } = await params;
     const guard = await requireBasicCoachTeamOwner(basicTeamId);
@@ -31,10 +32,10 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
     console.error('[coaches events GET] error:', error);
     return json({ error: 'Could not load your schedule.' }, 500);
   }
-}
+}, { route: '/api/coaches/teams/[basicTeamId]/events' });
 
 /** Add a practice/game to the schedule (owner only). */
-export async function POST(req: NextRequest, { params }: RouteCtx) {
+export const POST = withObservability(async (req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId } = await params;
     const guard = await requireBasicCoachTeamOwner(basicTeamId);
@@ -56,4 +57,4 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
     console.error('[coaches events POST] error:', error);
     return json({ error: 'Could not add the event.' }, 500);
   }
-}
+}, { route: '/api/coaches/teams/[basicTeamId]/events' });

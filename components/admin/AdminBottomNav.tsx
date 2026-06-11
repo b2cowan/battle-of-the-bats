@@ -6,7 +6,7 @@ import {
   Users, MoreHorizontal,
   LogOut, X, ChevronRight, ChevronDown,
   LayoutGrid, CalendarDays, UserCheck,
-  ExternalLink, FileText,
+  ExternalLink, FileText, MessageSquarePlus,
   type LucideIcon,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
@@ -16,6 +16,7 @@ import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { TOUR_GROUPS, type TourNavItem } from './admin-nav-config';
 import AdminContextStrip from './AdminContextStrip';
+import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import styles from './AdminBottomNav.module.css';
 
 type NavItem = {
@@ -36,6 +37,7 @@ export default function AdminBottomNav() {
   const orgSlug = currentOrg?.slug ?? 'milton-bats';
   const currentOrgSlug = currentOrg?.slug;
   const [moreOpen, setMoreOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const worklist = useAdminWorklist();
@@ -285,6 +287,16 @@ export default function AdminBottomNav() {
             )}
 
             <button
+              className={styles.dropItem}
+              onClick={() => { setMoreOpen(false); setFeedbackOpen(true); }}
+              role="menuitem"
+              id="admin-mob-feedback"
+            >
+              <MessageSquarePlus size={17} />
+              <span>Send feedback</span>
+            </button>
+
+            <button
               className={`${styles.dropItem} ${styles.dropLogout}`}
               onClick={handleLogout}
               role="menuitem"
@@ -296,6 +308,10 @@ export default function AdminBottomNav() {
           </div>
         )}
       </div>
+
+      {/* Rendered at the nav root (not inside the transient More dropdown) so the modal survives
+          the dropdown closing on outside-click — it portals to <body> and owns its own state. */}
+      <FeedbackWidget open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </nav>
   );
 }

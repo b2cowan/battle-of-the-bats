@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { BudgetCategoryWithItems } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -41,7 +42,7 @@ function mapCategory(row: Record<string, unknown>): BudgetCategoryWithItems {
 // GET /api/admin/accounting/budget-categories?scope=team|org|both
 // Returns platform defaults merged with org's custom categories,
 // filtered by scope (defaults to all scopes).
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -69,11 +70,11 @@ export async function GET(req: Request) {
   }
 
   return NextResponse.json({ categories });
-}
+}, { route: '/api/admin/accounting/budget-categories' });
 
 // POST /api/admin/accounting/budget-categories
 // Creates a custom category for this org (owner/treasurer only).
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -105,4 +106,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ category: mapCategory(data) }, { status: 201 });
-}
+}, { route: '/api/admin/accounting/budget-categories' });

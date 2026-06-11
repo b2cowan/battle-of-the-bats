@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendEmail, platformPasswordResetHtml } from '@/lib/email';
+import { withObservability } from '@/lib/observability';
 
-export async function POST(req: NextRequest) {
+export const POST = withObservability(async (req: NextRequest) => {
   const { email } = await req.json();
   if (!email || typeof email !== 'string') {
     return NextResponse.json({ ok: true }); // never reveal whether email exists
@@ -40,4 +41,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/auth/forgot-password' });

@@ -1,0 +1,334 @@
+/* ── Coaches Portal — game-day bridge (slice 5i) ──────────────────────────────
+   Opponent names + monograms, deep-linked rows, and a live broadcast scorebug
+   for the game in progress. Shipped design-system tokens only (no ghost --text-*).
+   Lives alongside the tournament hero (TeamHQ); kept in its own module so the 5g
+   standalone pixel-diff on TeamHQ.module.css stays untouched. */
+
+.bridge {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* ── Follow / install controls ────────────────────────────────────────────── */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem 0.85rem;
+  flex-wrap: wrap;
+}
+
+.followBtn,
+.followActive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.followBtn {
+  color: var(--white-80);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.followBtn:hover {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+}
+
+.followActive {
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+}
+
+.followHint {
+  color: var(--white-40);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+/* ── Game list ────────────────────────────────────────────────────────────── */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--highlight-top);
+  font-size: 0.85rem;
+}
+
+a.rowLink {
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, transform 0.05s ease;
+}
+
+a.rowLink:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.45);
+}
+
+a.rowLink:active {
+  transform: translateY(1px);
+}
+
+.rowDate {
+  flex: 0 0 auto;
+  color: var(--white-80);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rowOpp {
+  display: flex;
+  flex: 1 1 140px;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.oppName {
+  color: var(--white);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vs {
+  color: var(--white-40);
+  font-weight: 600;
+}
+
+.tag {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: var(--radius-sm);
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  color: var(--logic-lime);
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.rowLoc {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 38%;
+  color: var(--white-40);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
+.rowScore {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-data, monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--white);
+  white-space: nowrap;
+}
+
+.resultWin {
+  color: var(--logic-lime);
+  font-weight: 800;
+}
+
+.resultMuted {
+  color: var(--white-40);
+  font-weight: 800;
+}
+
+.sideChip,
+.cancelChip {
+  flex: 0 0 auto;
+  font-family: var(--font-data, monospace);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sideChip {
+  color: var(--white-40);
+}
+
+.cancelChip {
+  color: var(--danger);
+}
+
+/* ── Monograms ────────────────────────────────────────────────────────────── */
+.mono,
+.monoSm {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--opp-color, var(--logic-lime));
+  color: var(--white);
+  font-family: var(--font-data, monospace);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.monoSm {
+  width: 26px;
+  height: 26px;
+  font-size: 0.7rem;
+}
+
+.mono {
+  width: 38px;
+  height: 38px;
+  font-size: 0.82rem;
+}
+
+/* ── LIVE broadcast row (scorebug) ────────────────────────────────────────── */
+.live {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+  background-image: linear-gradient(
+    135deg,
+    rgba(var(--logic-lime-rgb), 0.1),
+    transparent 60%
+  );
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+}
+
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: start;
+  color: var(--logic-lime);
+  font-family: var(--font-data, monospace);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--logic-lime);
+  box-shadow: 0 0 0 0 rgba(var(--logic-lime-rgb), 0.6);
+  animation: livePulse 1.6s ease-out infinite;
+}
+
+@keyframes livePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(var(--logic-lime-rgb), 0.6); }
+  70%  { box-shadow: 0 0 0 6px rgba(var(--logic-lime-rgb), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--logic-lime-rgb), 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liveDot { animation: none; }
+}
+
+.matchup {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.side {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.sideRight {
+  justify-content: flex-end;
+  text-align: right;
+  flex-direction: row-reverse;
+}
+
+.sideName {
+  color: var(--white);
+  font-weight: 700;
+  font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bcScores {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.bcScore {
+  font-family: var(--font-data, monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: 850;
+  font-size: 1.7rem;
+  line-height: 1;
+  color: var(--white);
+}
+
+.bcSep {
+  color: var(--white-40);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.bcAwaiting {
+  color: var(--white-60);
+  font-family: var(--font-data, monospace);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.bcMeta {
+  color: var(--white-60);
+  font-size: 0.78rem;
+}
+
+/* ── Mobile ───────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .rowLoc {
+    flex-basis: 100%;
+    max-width: 100%;
+    order: 5;
+  }
+
+  .bcScore {
+    font-size: 1.45rem;
+  }
+
+  .sideName {
+    font-size: 0.85rem;
+  }
+}

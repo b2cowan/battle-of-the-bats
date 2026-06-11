@@ -9,6 +9,7 @@ import {
   deleteRepTeamEvent,
   deleteRepTeamEventsByRecurrenceParent,
 } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -32,13 +33,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   const event = await getRepTeamEventById(eventId);
@@ -69,15 +68,13 @@ export async function PATCH(
 
   const updated = await updateRepTeamEvent(eventId, fields);
   return NextResponse.json({ event: updated });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]' });
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },
-) {
+export const DELETE = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   const event = await getRepTeamEventById(eventId);
@@ -110,4 +107,4 @@ export async function DELETE(
   }
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]' });

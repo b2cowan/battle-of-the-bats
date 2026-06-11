@@ -1,7 +1,7 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
-import { userOwnsBasicCoachTeam } from '@/lib/basic-coach-teams';
+import { userOwnsBasicCoachTeam, findLinkedBasicTeamForRegistration } from '@/lib/basic-coach-teams';
 
 /**
  * The two-layer auth gate for org-less Basic-coach-team APIs (the master-roster routes and any
@@ -27,4 +27,26 @@ export async function requireBasicCoachTeamOwner(basicCoachTeamId: string): Prom
   if (await isPlatformAdminEmail(user.email)) return { ok: false, status: 401 };
   if (!(await userOwnsBasicCoachTeam(user.id, basicCoachTeamId))) return { ok: false, status: 403 };
   return { ok: true, user: { id: user.id, email: user.email } };
+}
+
+/**
+ * The two-layer auth gate for coach-side WRITES keyed on a tournament REGISTRATION (a `teams.id`,
+ * NOT a basic_coach_team id) — the analogue of `requireBasicCoachTeamOwner` for the tournament-coach
+ * surface (5j roster submit, 5l head-coach assignment). Same posture: signed-in + non-staff, then
+ * the EXPLICIT-link ownership check (`findLinkedBasicTeamForRegistration`). On success it also
+ * returns the owned `basicCoachTeamId` so the caller can read that team's master roster without a
+ * second lookup. Returns 403 for an unclaimed/foreign registration (IDOR boundary).
+ */
+export type CoachRegistrationGuardResult =
+  | { ok: true; user: { id: string; email: string }; basicCoachTeamId: string }
+  | { ok: false; status: 401 | 403 };
+
+export async function requireCoachRegistrationAccess(registrationId: string): Promise<CoachRegistrationGuardResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id || !user.email) return { ok: false, status: 401 };
+  if (await isPlatformAdminEmail(user.email)) return { ok: false, status: 401 };
+  const basicCoachTeamId = await findLinkedBasicTeamForRegistration(user.id, registrationId);
+  if (!basicCoachTeamId) return { ok: false, status: 403 };
+  return { ok: true, user: { id: user.id, email: user.email }, basicCoachTeamId };
 }

@@ -242,3 +242,12 @@ Free floors add operational risk (dormant orgs, duplicate teams, accidental mino
 **Future Rail (monetization expansion):** Premium Coaches Portal paid launch · Stripe subscription cutover after founding season (Flow A / Phase G) · payment-processing Flow B (Connect) · processing-funded public positioning · Club Activation Trial (needs `plan_tier` grants first).
 
 *(The §10 Coaches × Free-Tier integrated sequence still governs the coach-floor spine ordering; the cap-primitive prerequisite means caps land just-in-time before the League Starter beta, not before the coach floor. This rail view is the program-level structure.)*
+
+## 16. Journey-audit pricing inputs (J1, routed 2026-06-11)
+
+Two free-tier friction findings from the J1 organizer journey are pricing decisions, not bugs (evidence in docs/projects/active/journeys/JOURNEY_J1_TOURNAMENT_ORGANIZER.md):
+
+- **J1-072** — the free tier has zero registration export (no CSV for gate lists / insurance). Consider one basic CSV (or a print view) on free; keep XLSX/PDF/custom-field exports as Plus.
+- **J1-078** — the free 3-seat cap counts scorekeepers, so a 3-diamond weekend cannot be staffed on free. Consider making official/scorekeeper seats free on all tiers and capping admin/staff seats only.
+
+Related context from the same walk (kept in the audit backlog, same free-tier value story): J1-104 (archiving last year's event makes its results unviewable on free) and J1-113 (in-admin upsells never mention Plus is $0 during the Founding Season).

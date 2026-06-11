@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { updateRepTeamGroup, deleteRepTeamGroup } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -12,10 +13,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ groupId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ groupId: string }> },) => {
   const { groupId } = await params;
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
@@ -42,12 +41,10 @@ export async function PATCH(
     }
     throw e;
   }
-}
+}, { route: '/api/admin/rep-teams/groups/[groupId]' });
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ groupId: string }> },
-) {
+export const DELETE = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ groupId: string }> },) => {
   const { groupId } = await params;
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
@@ -62,4 +59,4 @@ export async function DELETE(
     }
     throw e;
   }
-}
+}, { route: '/api/admin/rep-teams/groups/[groupId]' });

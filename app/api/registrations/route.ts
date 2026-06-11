@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { captureError, withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
+export const GET = withObservability(async (req: NextRequest) => {
   const searchParams = req.nextUrl.searchParams;
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
   const requestedTournamentId = searchParams.get('tournamentId');
@@ -53,6 +54,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(flattened);
   } catch (err: any) {
     console.error('Registrations Route Error:', err);
+    void captureError(err, { route: '/api/registrations', method: 'GET', statusCode: 500 });
     return NextResponse.json({ error: 'Server error', message: err?.message }, { status: 500 });
   }
-}
+}, { route: '/api/registrations' });

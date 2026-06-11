@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPermission } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { withObservability } from '@/lib/observability';
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requirePlatformPermission('manage_support');
   if (auth.response) return auth.response;
 
@@ -43,4 +42,4 @@ export async function POST(
   );
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/platform-admin/users/[id]/revoke-sessions' });

@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -13,10 +14,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 
 // PATCH /api/admin/accounting/budget-categories/[catId]/items/[itemId]
 // Updates name or suggestedAmount on an org-owned custom item (not platform defaults).
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ catId: string; itemId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ catId: string; itemId: string }> },) => {
   const { catId, itemId } = await params;
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
@@ -76,15 +75,13 @@ export async function PATCH(
   }
 
   return NextResponse.json({ item: data });
-}
+}, { route: '/api/admin/accounting/budget-categories/[catId]/items/[itemId]' });
 
 // DELETE /api/admin/accounting/budget-categories/[catId]/items/[itemId]
 // Removes an org-owned custom item (owner/treasurer only).
 // Platform defaults cannot be deleted.
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ catId: string; itemId: string }> },
-) {
+export const DELETE = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ catId: string; itemId: string }> },) => {
   const { catId, itemId } = await params;
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
@@ -117,4 +114,4 @@ export async function DELETE(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return new NextResponse(null, { status: 204 });
-}
+}, { route: '/api/admin/accounting/budget-categories/[catId]/items/[itemId]' });

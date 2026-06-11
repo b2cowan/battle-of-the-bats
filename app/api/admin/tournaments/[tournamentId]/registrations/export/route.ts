@@ -9,6 +9,7 @@ import {
   getTournamentRegistrationFields,
 } from '@/lib/db';
 import { writePlatformEvent } from '@/lib/platform-events';
+import { withObservability } from '@/lib/observability';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -95,7 +96,7 @@ function paymentDue(team: TeamExportRow, fee: FeeRow) {
   };
 }
 
-export async function GET(req: NextRequest, { params }: RouteParams) {
+export const GET = withObservability(async (req: NextRequest, { params }: RouteParams) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -250,4 +251,4 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       'Content-Disposition': `attachment; filename="${slug}-registrations-${date}.csv"`,
     },
   });
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/registrations/export' });

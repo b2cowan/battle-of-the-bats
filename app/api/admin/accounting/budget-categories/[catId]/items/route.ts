@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { BudgetItem } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -30,10 +31,8 @@ function mapItem(row: Record<string, unknown>): BudgetItem {
 // Creates a custom item in any category (owner, treasurer, or coach).
 // Custom items are scoped to this org regardless of whether the parent
 // category is a platform default or an org custom.
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ catId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ catId: string }> },) => {
   const { catId } = await params;
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
@@ -86,4 +85,4 @@ export async function POST(
   }
 
   return NextResponse.json({ item: mapItem(data) }, { status: 201 });
-}
+}, { route: '/api/admin/accounting/budget-categories/[catId]/items' });

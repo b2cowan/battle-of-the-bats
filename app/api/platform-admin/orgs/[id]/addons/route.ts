@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { withObservability } from '@/lib/observability';
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requirePlatformPermission('manage_product');
   if (auth.response) return auth.response;
 
@@ -44,4 +43,4 @@ export async function PATCH(
   );
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/platform-admin/orgs/[id]/addons' });

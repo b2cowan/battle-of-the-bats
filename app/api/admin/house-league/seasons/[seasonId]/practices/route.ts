@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { getPracticesForTeam, createPractices } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 function generateOccurrences(
   startDate: string,
@@ -29,10 +30,8 @@ function generateOccurrences(
   return result;
 }
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ seasonId: string }> },
-) {
+export const GET = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ seasonId: string }> },) => {
   await params;
   const ctx = await getAuthContextWithRole();
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -44,12 +43,10 @@ export async function GET(
 
   const practices = await getPracticesForTeam(teamId);
   return NextResponse.json({ practices });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/practices' });
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ seasonId: string }> },
-) {
+export const POST = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ seasonId: string }> },) => {
   const { seasonId } = await params;
   const ctx = await getAuthContextWithRole();
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -100,4 +97,4 @@ export async function POST(
 
   const practices = await createPractices(inputs);
   return NextResponse.json({ practices, count: practices.length }, { status: 201 });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/practices' });

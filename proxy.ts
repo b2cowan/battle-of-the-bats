@@ -22,6 +22,21 @@ export async function proxy(request: NextRequest) {
     requestHeaders.set('x-org-slug', segments[0]);
   }
 
+  // Observability: stamp one x-request-id on every request so the client can read it off the
+  // response and attach it to a feedback report (Phase 3 bug→error deep-link). withObservability
+  // adopts this same id when a wrapped route runs, so the stored error_events.request_id matches.
+  const requestId = crypto.randomUUID();
+  requestHeaders.set('x-request-id', requestId);
+
+  // Cheap fast-path for API routes that don't need the session work below: stamp the id and return
+  // immediately — no Supabase getUser() round-trip. /api/admin/* is excluded so it keeps the full
+  // proxy flow (its existing unauthenticated → login guard below is preserved unchanged).
+  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/admin')) {
+    const apiRes = NextResponse.next({ request: { headers: requestHeaders } });
+    apiRes.headers.set('x-request-id', requestId);
+    return apiRes;
+  }
+
   // Redirect legacy /[orgSlug]/admin/tournaments/teams → /[orgSlug]/admin/tournaments/registrations
   if (segments.length >= 4 && segments[1] === 'admin' && segments[2] === 'tournaments' && segments[3] === 'teams') {
     const url = request.nextUrl.clone();
@@ -164,6 +179,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Carry the request id onto the response so the client can read it (pages + /api/admin/*).
+  supabaseResponse.headers.set('x-request-id', requestId);
   return supabaseResponse;
 }
 
@@ -180,11 +197,9 @@ export const config = {
     '/platform-admin/:path*',
     '/platform-admin/login',
     '/home',
-    '/api/admin/:path*',
-    '/api/scorekeeper/:path*',
-    '/api/registrations',
-    '/api/org-context',
-    '/api/dev/:path*',
+    // All API routes: /api/admin/* runs the full proxy below; every other /api/* hits the cheap
+    // x-request-id fast-path at the top (no session work). Replaces the prior per-prefix /api entries.
+    '/api/:path*',
     '/my',
     '/my/:path*',
     '/coaches',

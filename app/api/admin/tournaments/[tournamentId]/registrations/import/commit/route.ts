@@ -24,6 +24,7 @@ import {
   json,
   type RouteParams,
 } from '../shared';
+import { withObservability } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 
@@ -336,10 +337,10 @@ async function sendImportPortalEmails(input: {
   return sent;
 }
 
-export async function POST(req: Request, { params }: RouteParams) {
+export const POST = withObservability(async (req: Request, { params }: RouteParams) => {
   const { tournamentId } = await params;
   const auth = await authorizeTournamentTeamImport(req, tournamentId, { blockLocked: true });
-  if ('response' in auth) return auth.response;
+  if ('response' in auth) return auth.response!;
 
   let batchId = '';
   try {
@@ -446,4 +447,4 @@ export async function POST(req: Request, { params }: RouteParams) {
     }
     return json({ error: error instanceof Error ? error.message : 'Import apply failed.' }, 500);
   }
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/registrations/import/commit' });

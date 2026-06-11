@@ -5,6 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLedgerById, updateEntry, voidEntry } from '@/lib/db';
 import type { AccountingEntryType, AccountingEntryStatus } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 type Params = { params: Promise<{ ledgerId: string; entryId: string }> };
 
@@ -26,7 +27,7 @@ function isValidEntryDate(s: string): boolean {
   return d <= limit;
 }
 
-export async function PATCH(req: Request, { params }: Params) {
+export const PATCH = withObservability(async (req: Request, { params }: Params) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -113,9 +114,9 @@ export async function PATCH(req: Request, { params }: Params) {
 
   await updateEntry(entryId, ledgerId, input);
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/accounting/ledgers/[ledgerId]/entries/[entryId]' });
 
-export async function DELETE(_req: Request, { params }: Params) {
+export const DELETE = withObservability(async (_req: Request, { params }: Params) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -139,4 +140,4 @@ export async function DELETE(_req: Request, { params }: Params) {
 
   await voidEntry(entryId, ledgerId);
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/accounting/ledgers/[ledgerId]/entries/[entryId]' });

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
 const MAX_LIMIT = 100;
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   try {
     const { searchParams } = new URL(req.url);
     const limit  = Math.min(Math.max(parseInt(searchParams.get('limit')  ?? '20', 10), 1), MAX_LIMIT);
@@ -105,4 +106,4 @@ export async function GET(req: Request) {
     const message = e instanceof Error ? e.message : 'Unable to load public tournaments.';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+}, { route: '/api/public/tournaments' });

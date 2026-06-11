@@ -22,6 +22,7 @@ import {
   sendEmail,
 } from '@/lib/email';
 import type { LeagueRegistrationStatus } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -88,10 +89,8 @@ async function compactWaitlist(divisionId: string, afterPosition: number) {
   );
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ seasonId: string; regId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ seasonId: string; regId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -104,12 +103,10 @@ export async function GET(
   if (!reg) return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
 
   return NextResponse.json({ registration: reg });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/registrations/[regId]' });
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ seasonId: string; regId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ seasonId: string; regId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -375,4 +372,4 @@ export async function PATCH(
   await updateRegistrationStatus(regId, 'pending_review', adminNotes);
   const updated = await fetchReg(regId, seasonId);
   return NextResponse.json({ registration: updated });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/registrations/[regId]' });

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 const PAGE_SIZE = 25;
 
@@ -24,7 +25,7 @@ function summarizePayload(action: string, payload: Record<string, unknown> | nul
   }
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
@@ -91,4 +92,4 @@ export async function GET(req: Request) {
     page,
     pageSize: PAGE_SIZE,
   });
-}
+}, { route: '/api/admin/members/audit' });

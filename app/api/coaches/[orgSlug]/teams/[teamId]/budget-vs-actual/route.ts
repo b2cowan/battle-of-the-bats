@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -36,13 +37,11 @@ function toMonthKey(dateStr: string | null): string | null {
 // Actuals are matched to budget categories by expense.category name (case-insensitive).
 // Period actuals are assigned by comparing expense.expense_paid_at to period_date ranges.
 // Unbudgeted actuals are expenses whose category doesn't match any budget category name.
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   // ── 1. Load budget lines + periods ──────────────────────────────────────
@@ -312,4 +311,4 @@ export async function GET(
     duesCollection,
     monthlyChart,
   });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual' });

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -25,13 +26,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 }
 
 // DELETE /api/coaches/[orgSlug]/teams/[teamId]/players/[playerId]/dues-credits/[creditId]
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; playerId: string; creditId: string }> },
-) {
+export const DELETE = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; playerId: string; creditId: string }> },) => {
   const { orgSlug, teamId, playerId, creditId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   const { error } = await supabaseAdmin
@@ -44,4 +43,4 @@ export async function DELETE(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return new Response(null, { status: 204 });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/players/[playerId]/dues-credits/[creditId]' });

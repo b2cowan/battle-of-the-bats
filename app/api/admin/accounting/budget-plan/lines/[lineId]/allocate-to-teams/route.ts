@@ -9,6 +9,7 @@ import {
   getRepProgramYear,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -36,7 +37,7 @@ type Ctx = { params: Promise<{ lineId: string }> };
 //     installments: [{ installmentNumber, amount, dueDate }]
 //   }]
 // }
-export async function POST(req: Request, { params }: Ctx) {
+export const POST = withObservability(async (req: Request, { params }: Ctx) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -159,4 +160,4 @@ export async function POST(req: Request, { params }: Ctx) {
     { allocation: { ...result.allocation, sourceBudgetLineId: lineId } },
     { status: 201 },
   );
-}
+}, { route: '/api/admin/accounting/budget-plan/lines/[lineId]/allocate-to-teams' });

@@ -17,6 +17,7 @@ import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { Capability } from '@/lib/roles';
+import { withObservability } from '@/lib/observability';
 
 type CatalogChangeRequestWithProposal = {
   id: string;
@@ -58,7 +59,7 @@ function diffMatrix(current: PlanModuleEntitlementMatrix, proposed: PlanModuleEn
   );
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const auth = await requirePlatformPermission('manage_product');
   if (auth.response) return auth.response;
 
@@ -156,4 +157,4 @@ export async function POST(req: Request) {
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
-}
+}, { route: '/api/platform-admin/product-catalog/feature-matrix/publish' });

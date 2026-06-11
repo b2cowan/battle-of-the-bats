@@ -12,6 +12,7 @@ import { sendEmail, welcomeBackHtml, tournamentPlusWelcomeHtml, SITE_URL } from 
 import { sendMarketingEmail, cancelScheduledEmail } from '@/lib/email-sender';
 import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
 import type { OrgPlan } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 /** Welcome email fires this many days after a user selects Tournament Plus at onboarding. */
 const PLUS_WELCOME_DELAY_DAYS = 1;
@@ -82,7 +83,7 @@ async function ensureFoundingSeasonCompPeriod(orgId: string, createdBy: string |
   if (insertError) throw insertError;
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const body = await req.json().catch(() => ({})) as {
     planKey?: unknown;
     returnTo?: unknown;
@@ -343,4 +344,4 @@ export async function POST(req: Request) {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });
-}
+}, { route: '/api/billing/create-checkout' });

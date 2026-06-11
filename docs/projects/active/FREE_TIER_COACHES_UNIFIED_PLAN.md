@@ -193,3 +193,7 @@ Both projects touch the **same coach surface** — `app/coaches/*`, the `basic_c
 - **Phase 9** — last; gated on Phase 7.
 
 If you execute strictly top-to-bottom (0 → 9), the order is always safe; the `[parallel]` tags only matter if you staff more than one stream.
+
+---
+
+**Journey-audit input (J1, routed 2026-06-11):** J1-024 confirmed the deliberate Phase-2 state that marketing never links `/start` (every CTA → `/auth/signup`), so the persona picker is unreachable signed-out; no harm found beyond discoverability, and the Phase 9 marketing flip already owns the fix. (Evidence: docs/projects/active/journeys/JOURNEY_J1_TOURNAMENT_ORGANIZER.md)

@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -15,7 +16,7 @@ type Ctx = { params: Promise<{ lineId: string }> };
 
 // PATCH /api/admin/accounting/budget-plan/lines/[lineId]
 // Updates description, totalAmount, categoryId, itemId, notes, or sortOrder.
-export async function PATCH(req: Request, { params }: Ctx) {
+export const PATCH = withObservability(async (req: Request, { params }: Ctx) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -74,11 +75,11 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ line: data });
-}
+}, { route: '/api/admin/accounting/budget-plan/lines/[lineId]' });
 
 // DELETE /api/admin/accounting/budget-plan/lines/[lineId]
 // Deletes a budget line. Blocked if a rep_cost_allocation already references this line.
-export async function DELETE(_req: Request, { params }: Ctx) {
+export const DELETE = withObservability(async (_req: Request, { params }: Ctx) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -119,4 +120,4 @@ export async function DELETE(_req: Request, { params }: Ctx) {
   if (de) return NextResponse.json({ error: de.message }, { status: 500 });
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/accounting/budget-plan/lines/[lineId]' });

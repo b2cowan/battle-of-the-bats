@@ -2,13 +2,14 @@ import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTo
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
-import { sendEmail, schedulePublishedHtml, SITE_URL } from '@/lib/email';
+import { sendEmail, schedulePublishedHtml, resolveCoachRecipient, SITE_URL } from '@/lib/email';
 import { hasPlanFeature } from '@/lib/plan-features';
 import type { OrgPlan } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 // POST /api/admin/schedule-publish
 // Body: { tournamentId, divisionIds: string[], visibility: 'published_generic' | 'published_teams', notify: boolean }
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
     // Fetch accepted teams in the published divisions.
     const { data: teams } = await supabaseAdmin
       .from('teams')
-      .select('id, name, coach, email, division_id')
+      .select('id, name, coach, email, coach_email, division_id')
       .eq('tournament_id', tournamentId)
       .in('division_id', divisionIds)
       .eq('status', 'accepted');
@@ -84,7 +85,10 @@ export async function POST(req: Request) {
 
     let notified = 0;
     for (const team of teams ?? []) {
-      if (!team.email) continue;
+      // Recipient prefers the assigned coach (teams.coach_email), falls back to teams.email; skip
+      // only when neither exists. The footer keeps teams.email (the claim key, never overwritten).
+      const recipient = resolveCoachRecipient(team);
+      if (!recipient) continue;
       const divisions = [divisionNameMap[team.division_id] ?? team.division_id];
       const html = schedulePublishedHtml({
         tournamentName: tournament.name,
@@ -94,9 +98,9 @@ export async function POST(req: Request) {
         scheduleUrl,
         contactEmail,
         registrationId: team.id,
-        coachEmail: team.email,
+        coachEmail: team.email ?? undefined,
       });
-      await sendEmail(team.email, `Schedule Published — ${tournament.name}`, html);
+      await sendEmail(recipient, `Schedule Published — ${tournament.name}`, html);
       notified++;
     }
 
@@ -107,4 +111,4 @@ export async function POST(req: Request) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return Response.json({ error: message }, { status: 500 });
   }
-}
+}, { route: '/api/admin/schedule-publish' });

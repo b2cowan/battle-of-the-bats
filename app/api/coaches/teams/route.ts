@@ -4,6 +4,7 @@ import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createBasicCoachTeam } from '@/lib/basic-coach-teams';
 import { coachTeamPath } from '@/lib/coaches-portal-routes';
 import { basicCoachTeamWelcomeHtml, sendEmail, SITE_URL } from '@/lib/email';
+import { withObservability } from '@/lib/observability';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -38,7 +39,7 @@ async function requireCoachUser() {
  * is already signed in, so this never touches the auth layer (existing emails can't
  * error here). Returns the new team id so the client can route to its org-less home.
  */
-export async function POST(req: NextRequest) {
+export const POST = withObservability(async (req: NextRequest) => {
   try {
     const user = await requireCoachUser();
     if (!user) return json({ error: 'Sign in required.' }, 401);
@@ -86,4 +87,4 @@ export async function POST(req: NextRequest) {
     console.error('[coaches teams POST] error:', error);
     return json({ error: 'Could not create your team.' }, 500);
   }
-}
+}, { route: '/api/coaches/teams' });

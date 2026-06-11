@@ -236,7 +236,7 @@ function JoinForm() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
                 <button
                   type="button"
-                  className={`btn ${linkMode === 'existing' ? 'btn-primary' : 'btn-outline'} btn-sm`}
+                  className={`btn ${linkMode === 'existing' ? 'btn-lime' : 'btn-ghost'}`}
                   onClick={() => setLinkMode('existing')}
                   disabled={loading}
                 >
@@ -244,7 +244,7 @@ function JoinForm() {
                 </button>
                 <button
                   type="button"
-                  className={`btn ${linkMode === 'new' ? 'btn-primary' : 'btn-outline'} btn-sm`}
+                  className={`btn ${linkMode === 'new' ? 'btn-lime' : 'btn-ghost'}`}
                   onClick={() => {
                     setLinkMode('new');
                     setSelectedBasicTeamId('');

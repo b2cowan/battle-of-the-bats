@@ -3,6 +3,7 @@ import { coachAccessReminderHtml, sendEmail } from '@/lib/email';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 type RouteParams = { params: Promise<{ tournamentId: string; regId: string }> };
 
@@ -10,7 +11,7 @@ function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
 }
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+export const POST = withObservability(async (req: NextRequest, { params }: RouteParams) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -74,4 +75,4 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   return json({ ok: true });
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/registrations/[regId]/resend-access' });

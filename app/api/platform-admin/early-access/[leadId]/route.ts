@@ -9,6 +9,7 @@ import {
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { requireAnyPlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 type PatchBody = {
   internalStatus?: string;
@@ -25,10 +26,8 @@ type EarlyAccessLeadRow = {
   converted_at: string | null;
 };
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ leadId: string }> }
-) {
+export const PATCH = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ leadId: string }> }) => {
   const auth = await requireAnyPlatformPermission(['manage_growth', 'manage_product']);
   if (auth.response) return auth.response;
 
@@ -122,4 +121,4 @@ export async function PATCH(
   );
 
   return NextResponse.json({ ok: true, lead: data });
-}
+}, { route: '/api/platform-admin/early-access/[leadId]' });

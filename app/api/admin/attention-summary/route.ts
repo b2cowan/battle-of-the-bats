@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasCapability } from '@/lib/roles';
+import { withObservability } from '@/lib/observability';
 
-export async function GET() {
+export const GET = withObservability(async () => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
 
@@ -99,4 +100,4 @@ export async function GET() {
     openLeagueSeasonId,
     pendingTryoutCount,
   });
-}
+}, { route: '/api/admin/attention-summary' });

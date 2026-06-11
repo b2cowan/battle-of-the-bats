@@ -12,6 +12,8 @@ import {
   coachTeamPath,
   isCoachPortalShellPath,
 } from '@/lib/coaches-portal-routes';
+import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
+import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdProvider';
 import styles from './CoachPortalShell.module.css';
 
 type BasicTeam = { id: string; name: string };
@@ -73,6 +75,7 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
 
   return (
     <div className={styles.shell}>
+      <FeedbackRequestIdProvider />
       {/* Desktop left rail (≥1024px) */}
       <aside className={styles.rail} aria-label="Coaches Portal">
         <div className={styles.railHeader}>
@@ -107,6 +110,7 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
         )}
 
         <div className={styles.railFooter}>
+          <FeedbackLauncher className={styles.railSignOut} label="Send feedback" iconSize={14} />
           <Link href="/home" className={styles.railSignOut}>
             <LayoutGrid size={14} aria-hidden />
             <span>All workspaces</span>

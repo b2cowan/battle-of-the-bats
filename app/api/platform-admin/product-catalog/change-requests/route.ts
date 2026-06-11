@@ -6,6 +6,7 @@ import { sanitizePlatformChangeNote } from '@/lib/platform-change-note';
 import { upsertPlanConfigOverride } from '@/lib/plan-config-db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getStripe } from '@/lib/stripe';
+import { withObservability } from '@/lib/observability';
 
 const VALID_TYPES = new Set(['plan_version', 'feature_matrix', 'addon', 'pricing', 'grandfathering', 'campaign', 'trial']);
 const VALID_STATUSES = new Set(['draft', 'needs_review', 'approved', 'rejected', 'implemented', 'canceled']);
@@ -589,7 +590,7 @@ async function applyPlanConfigUpdateProposal(
   return { ok: true, planConfig: updated };
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const auth = await requirePlatformPermission('manage_product');
   if (auth.response) return auth.response;
 
@@ -648,9 +649,9 @@ export async function POST(req: Request) {
   );
 
   return NextResponse.json({ ok: true, changeRequest: data });
-}
+}, { route: '/api/platform-admin/product-catalog/change-requests' });
 
-export async function PATCH(req: Request) {
+export const PATCH = withObservability(async (req: Request) => {
   const auth = await requirePlatformPermission('manage_product');
   if (auth.response) return auth.response;
 
@@ -793,4 +794,4 @@ export async function PATCH(req: Request) {
         }
       : null,
   });
-}
+}, { route: '/api/platform-admin/product-catalog/change-requests' });

@@ -6,6 +6,7 @@ import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features'
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { Communication } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -105,7 +106,7 @@ function usesAdvancedTargeting(targeting: RecipientTargeting | null): boolean {
 
 // ─── GET — list all communications for a tournament ──────────────────────────
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -128,11 +129,11 @@ export async function GET(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json((data ?? []).map(mapRow));
-}
+}, { route: '/api/admin/communications' });
 
 // ─── POST — create, update, delete, toggle-pin ───────────────────────────────
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -399,4 +400,4 @@ export async function POST(req: Request) {
     const message = err instanceof Error ? err.message : 'Unable to process communication.';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+}, { route: '/api/admin/communications' });

@@ -18,6 +18,7 @@ import {
   requestTeamOwnershipTransfer,
   respondToTeamOwnershipTransferInvite,
 } from '@/lib/team-ownership-transfer';
+import { withObservability } from '@/lib/observability';
 
 type RouteParams = {
   params: Promise<{ orgSlug: string }>;
@@ -47,19 +48,19 @@ async function resolveTeamCoachContext(orgSlug: string) {
   return { ctx, workspace };
 }
 
-export async function GET(_req: Request, { params }: RouteParams) {
+export const GET = withObservability(async (_req: Request, { params }: RouteParams) => {
   const { orgSlug } = await params;
   const resolved = await resolveTeamCoachContext(orgSlug);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
 
   const links = await listTeamOrgLinksForWorkspace(resolved.workspace.id);
   return NextResponse.json({ links });
-}
+}, { route: '/api/coaches/[orgSlug]/team-links' });
 
-export async function POST(req: Request, { params }: RouteParams) {
+export const POST = withObservability(async (req: Request, { params }: RouteParams) => {
   const { orgSlug } = await params;
   const resolved = await resolveTeamCoachContext(orgSlug);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
 
   let body: { target?: unknown };
   try {
@@ -85,12 +86,12 @@ export async function POST(req: Request, { params }: RouteParams) {
   }
 
   return NextResponse.json({ link: result.link, reusedExisting: result.reusedExisting }, { status: result.reusedExisting ? 200 : 201 });
-}
+}, { route: '/api/coaches/[orgSlug]/team-links' });
 
-export async function PATCH(req: Request, { params }: RouteParams) {
+export const PATCH = withObservability(async (req: Request, { params }: RouteParams) => {
   const { orgSlug } = await params;
   const resolved = await resolveTeamCoachContext(orgSlug);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
 
   let body: { linkId?: unknown; action?: unknown };
   try {
@@ -177,4 +178,4 @@ export async function PATCH(req: Request, { params }: RouteParams) {
   }
 
   return NextResponse.json({ link: result.link });
-}
+}, { route: '/api/coaches/[orgSlug]/team-links' });

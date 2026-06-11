@@ -5,6 +5,7 @@ import {
   deleteBasicCoachTeamPlayer,
   normalizeBasicCoachTeamPlayerBody,
 } from '@/lib/basic-coach-roster';
+import { withObservability } from '@/lib/observability';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -19,7 +20,7 @@ function authError(status: 401 | 403) {
 type RouteCtx = { params: Promise<{ basicTeamId: string; playerId: string }> };
 
 /** Edit a player (partial — only provided identity fields are written; owner only). */
-export async function PATCH(req: NextRequest, { params }: RouteCtx) {
+export const PATCH = withObservability(async (req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId, playerId } = await params;
     const guard = await requireBasicCoachTeamOwner(basicTeamId);
@@ -38,10 +39,10 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     console.error('[coaches roster PATCH] error:', error);
     return json({ error: 'Could not update the player.' }, 500);
   }
-}
+}, { route: '/api/coaches/teams/[basicTeamId]/roster/[playerId]' });
 
 /** Remove a player from the master roster (owner only). */
-export async function DELETE(_req: NextRequest, { params }: RouteCtx) {
+export const DELETE = withObservability(async (_req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId, playerId } = await params;
     const guard = await requireBasicCoachTeamOwner(basicTeamId);
@@ -54,4 +55,4 @@ export async function DELETE(_req: NextRequest, { params }: RouteCtx) {
     console.error('[coaches roster DELETE] error:', error);
     return json({ error: 'Could not remove the player.' }, 500);
   }
-}
+}, { route: '/api/coaches/teams/[basicTeamId]/roster/[playerId]' });

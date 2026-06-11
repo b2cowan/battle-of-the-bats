@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -16,7 +17,7 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 // Returns org budget lines with their allocation and collection status,
 // total org ledger expenses for the year (not yet mapped per-line — Phase J),
 // and per-team health summary.
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -326,4 +327,4 @@ export async function GET(req: Request) {
     },
     teamHealth,
   });
-}
+}, { route: '/api/admin/accounting/budget-vs-actual' });

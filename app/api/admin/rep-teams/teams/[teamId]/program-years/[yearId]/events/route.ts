@@ -8,6 +8,7 @@ import {
   getRepTeamEvents,
 } from '@/lib/db';
 import type { RepEventType } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -16,10 +17,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ teamId: string; yearId: string }> },
-) {
+export const GET = withObservability(async (req: Request,
+  { params }: { params: Promise<{ teamId: string; yearId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -44,4 +43,4 @@ export async function GET(
 
   const events = await getRepTeamEvents(programYear.id, { from, to, type });
   return NextResponse.json({ events, programYear });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/events' });

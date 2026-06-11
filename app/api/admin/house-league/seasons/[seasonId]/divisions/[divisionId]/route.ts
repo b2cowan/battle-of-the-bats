@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLeagueSeasonById, updateDivision, deleteDivision } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -28,10 +29,8 @@ async function verifyDivisionBelongsToOrg(
   return !!data;
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ seasonId: string; divisionId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ seasonId: string; divisionId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -63,12 +62,10 @@ export async function PATCH(
 
   await updateDivision(divisionId, patch);
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/divisions/[divisionId]' });
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ seasonId: string; divisionId: string }> },
-) {
+export const DELETE = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ seasonId: string; divisionId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -97,4 +94,4 @@ export async function DELETE(
 
   await deleteDivision(divisionId);
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/divisions/[divisionId]' });

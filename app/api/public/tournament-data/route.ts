@@ -3,6 +3,7 @@ import {
   getPublicTournamentPageData,
   type PublicTournamentSection,
 } from '@/lib/public-tournament-data';
+import { withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,7 @@ const VALID_SECTIONS = new Set<PublicTournamentSection>([
   'register',
 ]);
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   try {
     const { searchParams } = new URL(req.url);
     const orgSlug = searchParams.get('orgSlug')?.trim();
@@ -44,4 +45,4 @@ export async function GET(req: Request) {
     console.error('Public tournament data API error:', error);
     return NextResponse.json({ error: 'Unable to load public tournament data.' }, { status: 500 });
   }
-}
+}, { route: '/api/public/tournament-data' });

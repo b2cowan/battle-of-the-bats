@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 type Params = { params: Promise<{ memberId: string }> };
 
 /** GET /api/admin/members/[memberId]/assignments — returns current tournament assignment IDs */
-export async function GET(_req: Request, { params }: Params) {
+export const GET = withObservability(async (_req: Request, { params }: Params) => {
   const ctx = await getAuthContext();
   if (!ctx) return unauthorized();
 
@@ -35,7 +36,7 @@ export async function GET(_req: Request, { params }: Params) {
   return NextResponse.json({
     tournamentIds: (assignments ?? []).map(a => a.tournament_id),
   });
-}
+}, { route: '/api/admin/members/[memberId]/assignments' });
 
 /**
  * PUT /api/admin/members/[memberId]/assignments
@@ -43,7 +44,7 @@ export async function GET(_req: Request, { params }: Params) {
  * Replaces the full assignment set for the member. An empty array makes the user unrestricted.
  * Requires manage_members capability.
  */
-export async function PUT(req: Request, { params }: Params) {
+export const PUT = withObservability(async (req: Request, { params }: Params) => {
   const ctx = await getAuthContext();
   if (!ctx) return unauthorized();
 
@@ -116,4 +117,4 @@ export async function PUT(req: Request, { params }: Params) {
   }
 
   return NextResponse.json({ ok: true, tournamentIds });
-}
+}, { route: '/api/admin/members/[memberId]/assignments' });

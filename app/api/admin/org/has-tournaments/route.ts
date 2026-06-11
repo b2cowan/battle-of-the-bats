@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
-export async function GET() {
+export const GET = withObservability(async () => {
   const ctx = await getAuthContext();
   if (!ctx) return unauthorized();
 
@@ -24,4 +25,4 @@ export async function GET() {
     hasTournaments: (count ?? 0) > 0,
     nonArchivedTournamentCount: count ?? 0,
   });
-}
+}, { route: '/api/admin/org/has-tournaments' });

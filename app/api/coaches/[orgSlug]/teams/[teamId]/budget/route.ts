@@ -9,6 +9,7 @@ import {
   getRepPlayerDuesInstallments,
   getRepTeamExpenses,
 } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -32,13 +33,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   // Compute summary stats
@@ -59,15 +58,13 @@ export async function GET(
     net: (programYear.budgetAmount ?? 0) + duesCollected - totalExpenses,
     programYear,
   });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget' });
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   const body = await req.json();
@@ -79,4 +76,4 @@ export async function PATCH(
 
   const updated = await updateRepProgramYear(programYear.id, { budgetAmount });
   return NextResponse.json({ programYear: updated });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget' });

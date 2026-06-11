@@ -4,7 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
 import { notify } from '@/lib/notify';
-import { captureError } from '@/lib/observability';
+import { captureError, withObservability } from '@/lib/observability';
 import {
   applyDivisionRoundRobinDeleteScope,
   sanitizeGameIds,
@@ -49,7 +49,7 @@ function scoringErrorResponse(error: TournamentScoringError) {
   });
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -106,9 +106,9 @@ export async function GET(req: Request) {
   }));
 
   return new Response(JSON.stringify(games), { status: 200, headers: { 'Content-Type': 'application/json' } });
-}
+}, { route: '/api/admin/games' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -390,9 +390,9 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
-}
+}, { route: '/api/admin/games' });
 
-export async function PATCH(req: Request) {
+export const PATCH = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -529,4 +529,4 @@ export async function PATCH(req: Request) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
-}
+}, { route: '/api/admin/games' });

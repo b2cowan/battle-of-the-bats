@@ -5,6 +5,8 @@ import { getAuthContextWithRole } from '@/lib/api-auth';
 import { getOrganizationBySlug } from '@/lib/db';
 import { hasCapability } from '@/lib/roles';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
+import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
+import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdProvider';
 
 export async function generateMetadata({
   params,
@@ -78,17 +80,21 @@ export default async function CheckInVolunteerLayout({
             {authCtx.org.name}
           </div>
         </div>
-        <Link href="/auth/logout" style={{
-          fontFamily: 'var(--font-data)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em',
-          color: '#94A3B8', textDecoration: 'none', flexShrink: 0,
-        }}>
-          Sign Out
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexShrink: 0 }}>
+          <FeedbackLauncher compact />
+          <Link href="/auth/logout" style={{
+            fontFamily: 'var(--font-data)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em',
+            color: '#94A3B8', textDecoration: 'none', flexShrink: 0,
+          }}>
+            Sign Out
+          </Link>
+        </div>
       </header>
 
       <main style={{ padding: '1.25rem', maxWidth: '760px', margin: '0 auto' }}>
         {children}
       </main>
+      <FeedbackRequestIdProvider />
       <InstallAppPrompt
         appName="FieldLogicHQ"
         subtitle="Check teams in at the gate — one tap away."

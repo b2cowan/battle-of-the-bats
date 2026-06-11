@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendEmail, orgInviteHtml } from '@/lib/email';
+import { withObservability } from '@/lib/observability';
 
 function getActionLink(data: unknown) {
   return (data as { properties?: { action_link?: string | null } }).properties?.action_link ?? null;
@@ -9,7 +10,7 @@ function getActionLink(data: unknown) {
 
 type Params = { params: Promise<{ memberId: string }> };
 
-export async function POST(_req: Request, { params }: Params) {
+export const POST = withObservability(async (_req: Request, { params }: Params) => {
   const ctx = await getAuthContext();
   if (!ctx) return unauthorized();
 
@@ -100,4 +101,4 @@ export async function POST(_req: Request, { params }: Params) {
   );
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/members/[memberId]/reinvite' });

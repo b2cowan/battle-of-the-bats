@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -26,13 +27,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 
 // PATCH /api/coaches/[orgSlug]/teams/[teamId]/budget-plan/lines/[lineId]
 // Updates description, totalAmount, or notes on a budget line.
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; lineId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; lineId: string }> },) => {
   const { orgSlug, teamId, lineId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   // Verify line belongs to this program year
@@ -83,18 +82,16 @@ export async function PATCH(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ line: data });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/lines/[lineId]' });
 
 // DELETE /api/coaches/[orgSlug]/teams/[teamId]/budget-plan/lines/[lineId]
 // Removes a budget line and its periods (cascade). Blocked if budget-generated
 // installments already exist for this program year.
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; lineId: string }> },
-) {
+export const DELETE = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; lineId: string }> },) => {
   const { orgSlug, teamId, lineId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   const { data: existing, error: fetchErr } = await supabaseAdmin
@@ -136,4 +133,4 @@ export async function DELETE(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return new NextResponse(null, { status: 204 });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/lines/[lineId]' });

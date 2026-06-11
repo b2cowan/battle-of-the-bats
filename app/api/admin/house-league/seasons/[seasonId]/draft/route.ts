@@ -5,6 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, getRegistrationsForDivision, bulkAssignTeams } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { LeagueDraftState } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -42,10 +43,8 @@ async function getRemainingPlayers(divisionId: string, pickedIds: Set<string>) {
   return all.filter(r => !pickedIds.has(r.id));
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ seasonId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ seasonId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -61,12 +60,10 @@ export async function GET(
   const remainingPlayers = await getRemainingPlayers(draft.divisionId, pickedIds);
 
   return NextResponse.json({ draft, remainingPlayers });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/draft' });
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ seasonId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ seasonId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -174,4 +171,4 @@ export async function POST(
   }
 
   return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/draft' });

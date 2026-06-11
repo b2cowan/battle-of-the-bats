@@ -12,6 +12,7 @@ import {
   slugify,
   type RouteParams,
 } from '../shared';
+import { withObservability } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 
@@ -102,10 +103,10 @@ async function buildWorkbook(input: {
   return workbook.xlsx.writeBuffer();
 }
 
-export async function GET(req: Request, { params }: RouteParams) {
+export const GET = withObservability(async (req: Request, { params }: RouteParams) => {
   const { tournamentId } = await params;
   const auth = await authorizeTournamentScheduleImport(req, tournamentId, { blockLocked: false });
-  if ('response' in auth) return auth.response;
+  if ('response' in auth) return auth.response!;
 
   const url = new URL(req.url);
   const format = url.searchParams.get('format') === 'csv' ? 'csv' : 'xlsx';
@@ -151,4 +152,4 @@ export async function GET(req: Request, { params }: RouteParams) {
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : 'Schedule template could not be generated.' }, 500);
   }
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/schedule/import/template' });

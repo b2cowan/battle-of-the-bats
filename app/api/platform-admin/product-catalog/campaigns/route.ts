@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 const VALID_TYPES = new Set(['coupon', 'promo', 'trial', 'launch', 'retention']);
 const VALID_STATUSES = new Set(['draft', 'scheduled', 'active', 'paused', 'ended']);
@@ -36,7 +37,7 @@ function cleanPlanIds(value: unknown): string[] {
     .filter((item, index, arr) => arr.indexOf(item) === index);
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const auth = await requirePlatformPermission('manage_product');
   if (auth.response) return auth.response;
 
@@ -106,9 +107,9 @@ export async function POST(req: Request) {
   );
 
   return NextResponse.json({ ok: true, campaign: data });
-}
+}, { route: '/api/platform-admin/product-catalog/campaigns' });
 
-export async function PATCH(req: Request) {
+export const PATCH = withObservability(async (req: Request) => {
   const auth = await requirePlatformPermission('manage_product');
   if (auth.response) return auth.response;
 
@@ -161,4 +162,4 @@ export async function PATCH(req: Request) {
   );
 
   return NextResponse.json({ ok: true, campaign: data });
-}
+}, { route: '/api/platform-admin/product-catalog/campaigns' });

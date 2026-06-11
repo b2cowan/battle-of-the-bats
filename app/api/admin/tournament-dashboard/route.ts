@@ -13,6 +13,7 @@ import { buildRegistrationAttentionSummary } from '@/lib/registration-attention'
 import { hasCapability } from '@/lib/roles';
 import { buildScheduleMetrics, type ScheduleMetricGame } from '@/lib/schedule-metrics';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 type GameRow = {
   id: string;
@@ -95,7 +96,7 @@ function positiveNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const searchParams = new URL(req.url).searchParams;
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -598,4 +599,4 @@ export async function GET(req: Request) {
     },
     registrationAttention,
   });
-}
+}, { route: '/api/admin/tournament-dashboard' });

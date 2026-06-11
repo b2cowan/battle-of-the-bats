@@ -28,6 +28,7 @@ import {
   spotlightFullPictureHtml,
 } from '@/lib/email';
 import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
+import { withObservability } from '@/lib/observability';
 
 const FOUNDING_SEASON_EXPIRES = '2027-01-01T00:00:00.000Z';
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
@@ -213,7 +214,7 @@ async function getCoachRecipients(): Promise<
   }>;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withObservability(async (request: NextRequest) => {
   const auth = await getPlatformAdminContext();
   if (!auth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -405,4 +406,4 @@ export async function POST(request: NextRequest) {
   await finalizeBatch(batchId, failed > 0 && sent === 0 ? 'failed' : 'complete');
 
   return NextResponse.json({ batchId, sent, suppressed, failed });
-}
+}, { route: '/api/admin/email/send' });

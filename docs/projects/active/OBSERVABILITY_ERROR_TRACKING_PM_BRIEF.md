@@ -37,7 +37,7 @@ Recommended **build in-house** (our own Postgres + platform-admin) rather than a
 | 2 | Platform-admin dashboard: chart, metrics, filterable issues, triage | 2–3 d |
 | 3 | In-app bug/feature feedback widget + triage queue | 1.5–2 d |
 | 4 | Auto rollup chart data, retention purge, critical-error email alerts | 0.5–1 d |
-| 5 (optional, deferred) | In-app admin notification bell + full route coverage + optional Sentry capture | 2–3 d |
+| ~~5 (optional)~~ | ❌ **CANCELLED 2026-06-10** — in-app admin notification bell not needed (email alerting suffices); full route coverage moved to the Route-Instrumentation plan (Mechanisms B+C); Sentry stays an additive non-planned option | — |
 
 **Total core (Phases 1–4): ~5–8 days.** Each phase ships independently.
 
@@ -150,7 +150,7 @@ Errors are already being captured on dev. Because the dev Supabase project tags 
 
 # PM Brief — Phase 3: In-App Feedback Widget & Triage Queue
 
-**Added:** 2026-06-10 · **Status:** Proposed (awaiting owner go-ahead) · **Priority:** High · **Est:** 1.5–2 days
+**Added:** 2026-06-10 · **Status:** ✅ BUILT 2026-06-10 (on `feat/free-tier-coaches`; awaiting owner browser pass) · **Priority:** High · **Est:** 1.5–2 days
 **Depends on:** Phase 1 (capture core — BUILT; provides the `error_groups`/`error_events` a bug report can deep-link to). **Independent of Phase 4** — the two phases don't depend on each other.
 **Owner decisions locked 2026-06-10:** best-effort requestId auto-link (header from the single server mint site + a tiny client stash) · **text-only** (screenshots deferred) · mount on **authenticated app surfaces only** (admin + coach + scorekeeper/check-in; public deferred) · confirmation email to a signed-in submitter + an **awaited** admin-notify · **1 submission/user/hr** (+ IP throttle for the anonymous path) · six route-defaulted categories. **No database migration** — the table already exists.
 
@@ -226,7 +226,7 @@ A new **"Feedback"** item appears in the platform-admin left-nav **System** grou
 6. The unauthenticated path is rate-limited + size-capped + PII-scrubbed and can't be abused; `ADMIN_EMAIL` is notified on submit; a signed-in submitter gets a confirmation email.
 7. Static checks pass (typecheck + focused lint), unit tests cover the `/api/feedback` validation + rate-limit gate, the dev server restarts clean (login 200, no Supabase EACCES), and the diff passes an adversarial review before hand-off.
 
-**Status: Proposed — awaiting owner go-ahead. No code until approved. All six product decisions locked 2026-06-10; no migration needed (table sealed in 118); reuses the existing `observability` platform area. Detailed build plan = §15 of the implementation plan.**
+**Status: ✅ BUILT 2026-06-10 on `feat/free-tier-coaches` — all six decisions locked + implemented; no migration (table sealed in 118); reuses the `observability` area. The owner-approved Mechanism A (global requestId stamp) was folded in, so the bug→error deep-link is broad, not 2-route best-effort. A 10-agent adversarial review ran on the diff; 4 findings folded (request-id-on-the-global-capture-path, CSV formula-injection guard, fetch-wrapper HMR idempotency, modal portal). Static checks green (typecheck/lint/34 unit tests). Remaining: owner browser pass; restart the dev server first. Detailed build plan = §15 of the implementation plan.**
 
 ---
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 const BUCKET    = 'org-assets';
 const MAX_BYTES = 4 * 1024 * 1024; // 4 MB
@@ -23,7 +24,7 @@ async function ensureBucket() {
   await supabaseAdmin.storage.createBucket(BUCKET, { public: true });
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContext();
   if (!ctx) return unauthorized();
 
@@ -94,9 +95,9 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ heroBannerUrl });
-}
+}, { route: '/api/admin/org-hero-banner' });
 
-export async function DELETE() {
+export const DELETE = withObservability(async () => {
   const ctx = await getAuthContext();
   if (!ctx) return unauthorized();
 
@@ -123,4 +124,4 @@ export async function DELETE() {
   }
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/org-hero-banner' });

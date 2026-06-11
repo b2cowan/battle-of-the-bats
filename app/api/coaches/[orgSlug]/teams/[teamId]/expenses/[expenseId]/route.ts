@@ -9,6 +9,7 @@ import {
   getOrCreateRepTeamLedger,
   createEntry,
 } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -32,13 +33,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; expenseId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; expenseId: string }> },) => {
   const { orgSlug, teamId, expenseId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, team } = resolved;
 
   const expense = await getRepTeamExpense(expenseId);
@@ -127,4 +126,4 @@ export async function PATCH(
 
   const updated = await updateRepTeamExpense(expenseId, patch);
   return NextResponse.json({ expense: updated });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/expenses/[expenseId]' });

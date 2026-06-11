@@ -2,6 +2,7 @@ import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTo
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { coinTossKey } from '@/lib/tie-breakers';
+import { withObservability } from '@/lib/observability';
 
 function tournamentLockedResponse() {
   return Response.json(
@@ -84,7 +85,7 @@ async function syncSlots(tournamentId: string, divisionId: string, capacity: num
   }
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -150,9 +151,9 @@ export async function GET(req: Request) {
       })) as ApiPool[])
       .sort((a, b) => a.order - b.order),
   })));
-}
+}, { route: '/api/admin/divisions' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -421,4 +422,4 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
-}
+}, { route: '/api/admin/divisions' });

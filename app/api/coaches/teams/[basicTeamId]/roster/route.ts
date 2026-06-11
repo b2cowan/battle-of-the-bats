@@ -5,6 +5,7 @@ import {
   createBasicCoachTeamPlayer,
   normalizeBasicCoachTeamPlayerBody,
 } from '@/lib/basic-coach-roster';
+import { withObservability } from '@/lib/observability';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -19,7 +20,7 @@ function authError(status: 401 | 403) {
 type RouteCtx = { params: Promise<{ basicTeamId: string }> };
 
 /** List the master roster for an org-less Basic coach team (owner only). */
-export async function GET(_req: NextRequest, { params }: RouteCtx) {
+export const GET = withObservability(async (_req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId } = await params;
     const guard = await requireBasicCoachTeamOwner(basicTeamId);
@@ -31,10 +32,10 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
     console.error('[coaches roster GET] error:', error);
     return json({ error: 'Could not load your roster.' }, 500);
   }
-}
+}, { route: '/api/coaches/teams/[basicTeamId]/roster' });
 
 /** Add a player to the master roster (identity fields only; owner only). */
-export async function POST(req: NextRequest, { params }: RouteCtx) {
+export const POST = withObservability(async (req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId } = await params;
     const guard = await requireBasicCoachTeamOwner(basicTeamId);
@@ -55,4 +56,4 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
     console.error('[coaches roster POST] error:', error);
     return json({ error: 'Could not add the player.' }, 500);
   }
-}
+}, { route: '/api/coaches/teams/[basicTeamId]/roster' });

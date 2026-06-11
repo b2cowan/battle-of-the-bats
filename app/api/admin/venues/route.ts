@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -140,7 +141,7 @@ async function clearFacilityFromGames(facilityId: string) {
 //   ?scope=past&orgSlug=<slug>   — for import-from-past flow (no-org users)
 // ---------------------------------------------------------------------------
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const orgSlug        = searchParams.get('orgSlug') ?? undefined;
   const tournamentId   = searchParams.get('tournamentId');
@@ -316,7 +317,7 @@ export async function GET(req: Request) {
       }),
     };
   }));
-}
+}, { route: '/api/admin/venues' });
 
 // ---------------------------------------------------------------------------
 // POST /api/admin/venues
@@ -325,7 +326,7 @@ export async function GET(req: Request) {
 //          import-from-org | import-from-past
 // ---------------------------------------------------------------------------
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -611,4 +612,4 @@ export async function POST(req: Request) {
     const message = err instanceof Error ? err.message : 'Unknown server error';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+}, { route: '/api/admin/venues' });

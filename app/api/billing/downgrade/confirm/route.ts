@@ -14,6 +14,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { sendEmail, planDowngradedHtml, SITE_URL } from '@/lib/email';
 import type { OrgPlan } from '@/lib/types';
+import { captureError, withObservability } from '@/lib/observability';
 
 type ConfirmBody = {
   targetPlan?: unknown;
@@ -26,7 +27,7 @@ function normalizeKeepIds(value: unknown): string[] {
   return [...new Set(value.filter((v): v is string => typeof v === 'string'))];
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
@@ -198,6 +199,7 @@ export async function POST(req: Request) {
     } catch (stripeErr) {
       const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
       console.error('[downgrade/confirm] Stripe reconciliation failed:', message);
+      void captureError(stripeErr, { ctx, route: '/api/billing/downgrade/confirm', method: 'POST', statusCode: 500 });
       await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_stripe_reconciliation_failed', {
         action: 'downgrade',
         targetPlan,
@@ -245,4 +247,4 @@ export async function POST(req: Request) {
     retainedCount: retainedTournaments.length,
     retentionUntil,
   });
-}
+}, { route: '/api/billing/downgrade/confirm' });

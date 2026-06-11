@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { requirePlatformAdmin } from '@/lib/platform-auth';
 import { writeTodayPlatformMetricSnapshot } from '@/lib/platform-metrics';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { withObservability } from '@/lib/observability';
 
-export async function POST() {
+export const POST = withObservability(async () => {
   const auth = await requirePlatformAdmin();
   if (auth.response) return auth.response;
 
@@ -22,4 +23,4 @@ export async function POST() {
     console.error('[platform-admin] metric snapshot failed', error);
     return NextResponse.json({ error: 'Snapshot failed' }, { status: 500 });
   }
-}
+}, { route: '/api/platform-admin/metrics/snapshot' });

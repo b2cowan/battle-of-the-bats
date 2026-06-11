@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -75,4 +76,4 @@ export async function GET(req: Request) {
     console.error('Public Stats API Error:', e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
-}
+}, { route: '/api/public/stats' });

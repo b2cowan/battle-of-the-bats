@@ -5,6 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getRepDocumentTemplates, createRepDocumentTemplate } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepDocumentType } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 const ALLOWED_TYPES = [
   'application/pdf',
@@ -22,9 +23,7 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET(
-  _req: Request,
-) {
+export const GET = withObservability(async (_req: Request,) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -32,11 +31,9 @@ export async function GET(
   const templates = await getRepDocumentTemplates(ctx!.org.id);
   const withoutPaths = templates.map(({ storagePath: _sp, ...rest }) => rest);
   return NextResponse.json({ templates: withoutPaths });
-}
+}, { route: '/api/admin/rep-teams/document-templates' });
 
-export async function POST(
-  req: Request,
-) {
+export const POST = withObservability(async (req: Request,) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -92,4 +89,4 @@ export async function POST(
 
   const { storagePath: _sp, ...rest } = template;
   return NextResponse.json({ template: rest }, { status: 201 });
-}
+}, { route: '/api/admin/rep-teams/document-templates' });

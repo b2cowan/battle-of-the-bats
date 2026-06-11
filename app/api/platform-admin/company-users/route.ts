@@ -3,16 +3,17 @@ import { getPlatformAuthContext, requirePlatformPermission } from '@/lib/platfor
 import { getPlatformUsers, createPlatformUser } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { withObservability } from '@/lib/observability';
 
-export async function GET() {
+export const GET = withObservability(async () => {
   const user = await getPlatformAuthContext();
   if (!user) return new NextResponse('Forbidden', { status: 403 });
 
   const users = await getPlatformUsers();
   return NextResponse.json(users);
-}
+}, { route: '/api/platform-admin/company-users' });
 
-export async function POST(req: NextRequest) {
+export const POST = withObservability(async (req: NextRequest) => {
   const auth = await requirePlatformPermission('manage_platform_users');
   if (auth.response) return auth.response;
 
@@ -59,4 +60,4 @@ export async function POST(req: NextRequest) {
     user: platformUser,
     setupLink: linkData?.properties?.action_link ?? null,
   });
-}
+}, { route: '/api/platform-admin/company-users' });

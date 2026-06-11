@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { ALL_CAPABILITY_KEYS, hasCapability } from '@/lib/roles';
 import type { OrgRole } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 const VALID_CAPABILITIES = new Set<string>(ALL_CAPABILITY_KEYS);
 
@@ -22,7 +23,7 @@ async function ownerCount(orgId: string): Promise<number> {
  * Returns the contact-assignment impact for a member — how many tournaments and
  * divisions list them as the primary contact. Used to warn before removal.
  */
-export async function GET(_req: Request, { params }: Params) {
+export const GET = withObservability(async (_req: Request, { params }: Params) => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'manage_members')) return forbidden();
@@ -53,9 +54,9 @@ export async function GET(_req: Request, { params }: Params) {
   ]);
 
   return NextResponse.json({ tournamentCount: tournamentCount ?? 0, divisionCount: divisionCount ?? 0 });
-}
+}, { route: '/api/admin/members/[memberId]' });
 
-export async function DELETE(_req: Request, { params }: Params) {
+export const DELETE = withObservability(async (_req: Request, { params }: Params) => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
 
@@ -111,9 +112,9 @@ export async function DELETE(_req: Request, { params }: Params) {
   });
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/members/[memberId]' });
 
-export async function PATCH(req: Request, { params }: Params) {
+export const PATCH = withObservability(async (req: Request, { params }: Params) => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
 
@@ -283,4 +284,4 @@ export async function PATCH(req: Request, { params }: Params) {
   }
 
   return NextResponse.json({ ok: true, ...(hasRoleUpdate ? { role: update.role } : {}) });
-}
+}, { route: '/api/admin/members/[memberId]' });

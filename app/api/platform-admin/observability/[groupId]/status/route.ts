@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requirePlatformPermission } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 const VALID_STATUSES = ['open', 'resolved', 'ignored', 'snoozed'] as const;
 type ObsStatus = (typeof VALID_STATUSES)[number];
@@ -16,7 +17,7 @@ function clampSnoozeHours(value: unknown): number {
 
 type GroupRow = { id: string; status: string };
 
-export async function POST(req: Request, ctx: { params: Promise<{ groupId: string }> }) {
+export const POST = withObservability(async (req: Request, ctx: { params: Promise<{ groupId: string }> }) => {
   // Write gate: super_admin + product only (manage_product). support is view-only → 403.
   const auth = await requirePlatformPermission('manage_product');
   if (auth.response) return auth.response;
@@ -82,4 +83,4 @@ export async function POST(req: Request, ctx: { params: Promise<{ groupId: strin
   );
 
   return NextResponse.json({ ok: true, status: newStatus });
-}
+}, { route: '/api/platform-admin/observability/[groupId]/status' });

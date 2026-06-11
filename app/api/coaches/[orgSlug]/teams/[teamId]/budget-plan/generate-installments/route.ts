@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -44,13 +45,11 @@ interface PlayerOverride {
 // Creates one rep_player_dues_schedule + N rep_player_dues_installments per active
 // roster player. Uses source='budget_generated' to distinguish from manual schedules.
 // Blocked if budget-generated installments already exist for this program year.
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, team, programYear } = resolved;
 
   // Block double-generation
@@ -151,4 +150,4 @@ export async function POST(
     installmentsCreated: totalCreated,
     totalPerPlayer,
   }, { status: 201 });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/generate-installments' });

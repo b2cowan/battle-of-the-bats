@@ -271,3 +271,136 @@ export async function reorderBasicCoachTeamPlayers(params: {
     if (error) throw error;
   }
 }
+
+// ── Per-event roster SNAPSHOT (free-tier Phase 5j) ──────────────────────────────────────────────
+//
+// THE MASTER/SNAPSHOT SEAM. A tournament coach submits selected MASTER players into the per-event
+// snapshot table `tournament_roster_players` (mig 110). This builder produces the snapshot rows
+// ONLY — it is a PURE function with NO DB access, and it deliberately does NOT call
+// `updateBasicCoachTeamPlayer` (or any master write). The free master roster
+// (`basic_coach_team_players`) is IDENTITY-ONLY and is never mutated by a submission:
+//   - `name` ALWAYS comes from the master (a coach cannot rename a player in the snapshot).
+//   - organizer-required DOB / jersey overrides and the snapshot-only `position` live on the event
+//     COPY alone. "Require DOB" prompts the coach to fill it for THIS snapshot — it never writes
+//     back to the master (whose DOB stays optional + consent-gated; FT strategy §5/§14).
+// The route writes the returned rows + the org/tournament/team/source/created_by columns.
+
+/** A coach's per-player selection for an event-roster submission. Field overrides default to the
+ *  master value when omitted (`undefined`); an explicit empty string clears the field for this
+ *  snapshot only. `position` is snapshot-only (the master has no position column). */
+export type SnapshotPlayerSelection = {
+  sourcePlayerId: string;
+  jerseyNumber?: string | null;
+  dateOfBirth?: string | null;
+  position?: string | null;
+  notes?: string | null;
+};
+
+/** A normalized snapshot row (camelCase content only — the route adds the DB scope columns). */
+export type SnapshotRosterRow = {
+  name: string;
+  jerseyNumber: string | null;
+  dateOfBirth: string | null;
+  position: string | null;
+  notes: string | null;
+  sourcePlayerId: string;
+};
+
+/** The subset of parsed organizer requirements this builder enforces (app-layer, server-side). */
+export type SnapshotRosterRequirements = {
+  requireDob: boolean;
+  requireJersey: boolean;
+  requireWaiver: boolean;
+  effectiveMinPlayers: number;
+  maxPlayers: number | null;
+};
+
+// Snapshot-side caps. `tournament_roster_players` has a `position` column the master lacks; the
+// others mirror the master caps so a submitted override can never exceed what the master allows.
+const SNAPSHOT_JERSEY_MAX = 16;
+const SNAPSHOT_POSITION_MAX = 40;
+const SNAPSHOT_NOTES_MAX = 600;
+
+/**
+ * Build the per-event roster snapshot rows from the coach's master roster + their selections,
+ * enforcing the organizer's requirements (required DOB/jersey, min/max count, waiver). Returns
+ * `{ rows }` on success or `{ rows: [], error }` with a coach-facing message on the first failure.
+ *
+ * IDOR/integrity: every selection must reference a player ON THIS TEAM's master roster
+ * (`masterPlayers` is already team-scoped by the caller); a foreign or duplicate id is rejected.
+ */
+export function buildTournamentRosterSnapshot(params: {
+  masterPlayers: BasicCoachTeamPlayer[];
+  selections: SnapshotPlayerSelection[];
+  requirements: SnapshotRosterRequirements;
+  waiverAccepted: boolean;
+}): { rows: SnapshotRosterRow[]; error?: string } {
+  const { masterPlayers, selections, requirements, waiverAccepted } = params;
+
+  if (!Array.isArray(selections) || selections.length === 0) {
+    return { rows: [], error: 'Select at least one player to submit.' };
+  }
+
+  const byId = new Map(masterPlayers.map(p => [p.id, p]));
+  const seen = new Set<string>();
+  const rows: SnapshotRosterRow[] = [];
+
+  // Override default-to-master: `undefined` keeps the master value; an explicit blank clears it.
+  const overrideOrMaster = (value: unknown, master: string | null): string | null => {
+    if (value === undefined) return master;
+    return typeof value === 'string' && value.trim() ? value.trim() : null;
+  };
+
+  for (const sel of selections) {
+    const id = typeof sel?.sourcePlayerId === 'string' ? sel.sourcePlayerId : '';
+    const master = byId.get(id);
+    if (!master) return { rows: [], error: 'A selected player is not on your team roster.' };
+    if (seen.has(id)) return { rows: [], error: 'A player was selected more than once.' };
+    seen.add(id);
+
+    const jersey = overrideOrMaster(sel.jerseyNumber, master.jerseyNumber);
+    // position is snapshot-only — no master fallback.
+    const position = typeof sel.position === 'string' && sel.position.trim() ? sel.position.trim() : null;
+    const notes = overrideOrMaster(sel.notes, master.notes);
+
+    let dob: string | null;
+    if (sel.dateOfBirth === undefined) {
+      dob = master.dateOfBirth;
+    } else {
+      dob = typeof sel.dateOfBirth === 'string' && sel.dateOfBirth.trim() ? sel.dateOfBirth.trim() : null;
+      if (dob !== null && !isValidDateString(dob)) {
+        return { rows: [], error: `Enter a valid date of birth for ${master.name} (YYYY-MM-DD).` };
+      }
+    }
+
+    if (requirements.requireDob && !dob) {
+      return { rows: [], error: `A date of birth is required for every player (missing for ${master.name}).` };
+    }
+    if (requirements.requireJersey && !jersey) {
+      return { rows: [], error: `A jersey number is required for every player (missing for ${master.name}).` };
+    }
+    if (jersey && jersey.length > SNAPSHOT_JERSEY_MAX) {
+      return { rows: [], error: `That jersey number is too long (max ${SNAPSHOT_JERSEY_MAX} characters).` };
+    }
+    if (position && position.length > SNAPSHOT_POSITION_MAX) {
+      return { rows: [], error: `That position is too long (max ${SNAPSHOT_POSITION_MAX} characters).` };
+    }
+    if (notes && notes.length > SNAPSHOT_NOTES_MAX) {
+      return { rows: [], error: `That note is too long (max ${SNAPSHOT_NOTES_MAX} characters).` };
+    }
+
+    rows.push({ name: master.name, jerseyNumber: jersey, dateOfBirth: dob, position, notes, sourcePlayerId: id });
+  }
+
+  if (rows.length < requirements.effectiveMinPlayers) {
+    return { rows: [], error: `This tournament requires at least ${requirements.effectiveMinPlayers} players on the roster.` };
+  }
+  if (requirements.maxPlayers != null && rows.length > requirements.maxPlayers) {
+    return { rows: [], error: `This tournament allows at most ${requirements.maxPlayers} players on the roster.` };
+  }
+  if (requirements.requireWaiver && waiverAccepted !== true) {
+    return { rows: [], error: 'You must acknowledge the waiver before submitting your roster.' };
+  }
+
+  return { rows };
+}

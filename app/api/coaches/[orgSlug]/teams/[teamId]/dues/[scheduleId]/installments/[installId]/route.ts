@@ -9,6 +9,7 @@ import {
   getOrCreateRepTeamLedger,
   createEntry,
 } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -32,13 +33,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export async function PATCH(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; scheduleId: string; installId: string }> },
-) {
+export const PATCH = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; scheduleId: string; installId: string }> },) => {
   const { orgSlug, teamId, scheduleId, installId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, team } = resolved;
 
   // Verify the installment belongs to this schedule
@@ -68,4 +67,4 @@ export async function PATCH(
 
   const updated = await markRepPlayerDuesInstallmentPaid(installId, entry.id);
   return NextResponse.json({ installment: updated });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/dues/[scheduleId]/installments/[installId]' });

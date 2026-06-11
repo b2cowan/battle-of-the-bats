@@ -3,8 +3,9 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
-export async function GET() {
+export const GET = withObservability(async () => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_accounting')) return forbidden();
@@ -34,4 +35,4 @@ export async function GET() {
   )].sort();
 
   return NextResponse.json({ categories });
-}
+}, { route: '/api/admin/accounting/categories' });

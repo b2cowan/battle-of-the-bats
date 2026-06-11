@@ -9,6 +9,7 @@ import {
   deleteRepPlayerDocument,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -42,13 +43,11 @@ async function resolveContext(teamId: string, playerId: string, docId: string) {
   return { ctx: ctx!, doc };
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ teamId: string; playerId: string; docId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ teamId: string; playerId: string; docId: string }> },) => {
   const { teamId, playerId, docId } = await params;
   const resolved = await resolveContext(teamId, playerId, docId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { doc } = resolved;
 
   const { data, error } = await supabaseAdmin.storage
@@ -61,19 +60,17 @@ export async function GET(
 
   const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
   return NextResponse.json({ url: data.signedUrl, expiresAt });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/players/[playerId]/documents/[docId]' });
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ teamId: string; playerId: string; docId: string }> },
-) {
+export const DELETE = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ teamId: string; playerId: string; docId: string }> },) => {
   const { teamId, playerId, docId } = await params;
   const resolved = await resolveContext(teamId, playerId, docId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { doc } = resolved;
 
   await supabaseAdmin.storage.from('rep-team-documents').remove([doc.storagePath]);
   await deleteRepPlayerDocument(docId);
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/players/[playerId]/documents/[docId]' });

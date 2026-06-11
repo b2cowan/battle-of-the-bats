@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 type StartupTaskId =
   | 'plan'
@@ -153,7 +154,7 @@ async function buildProgress(
   };
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug });
@@ -165,9 +166,9 @@ export async function GET(req: Request) {
     const message = err instanceof Error ? err.message : 'Unable to load startup progress';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+}, { route: '/api/admin/org/startup-tasks' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug });
@@ -207,4 +208,4 @@ export async function POST(req: Request) {
     const message = err instanceof Error ? err.message : 'Unable to update startup progress';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+}, { route: '/api/admin/org/startup-tasks' });

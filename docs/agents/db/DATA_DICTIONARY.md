@@ -547,7 +547,10 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`coach`** (text) — coach **display name** (gotcha 6). _Dev/prod drift:_ dev nullable / **prod NOT NULL** (gotcha 5).
 
 <!-- dict:col:teams.email -->
-**`email`** (text) — coach/contact email, **lowercased at insert** ([register/route.ts:202](../../../app/api/register/route.ts#L202)); the team-facing address for confirmation/acceptance/payment emails. **Not** the coach-identity key (gotcha 2).
+**`email`** (text) — coach/contact email, **lowercased at insert** ([register/route.ts:202](../../../app/api/register/route.ts#L202)); the team-facing address for confirmation/acceptance/payment emails. **Not** the coach-identity key (gotcha 2). Stays the **portal access / claim key** (claim-by-email, mig 092) — never overwritten by coach reassignment.
+
+<!-- dict:col:teams.coach_email -->
+**`coach_email`** (text, nullable; **mig 124, dev-only**) — OPTIONAL head-coach contact email, set per-tournament from the Coaches Portal (Phase 5l, `PATCH /api/coaches/tournaments/[teamId]`). **Distinct from `email`**: coach-facing automatic emails (acceptance/rejection/payment/schedule-published/payment-reminder) resolve the recipient as **`coach_email ?? email`** (`resolveCoachRecipient`, [lib/email.ts](../../../lib/email.ts)); `email` stays the claim/access key. Null = no separate coach contact (route to `email`). Pairs with `coach` (the head-coach display **name**). _Dev-only until the Phase-5 prod deploy gate (`check:migrations`)._
 
 <!-- dict:col:teams.status -->
 **`status`** (text) — registration lifecycle: `pending | waitlist | accepted | rejected`. Drives capacity counting (`.neq('status','rejected')`), check-in eligibility (`.eq('status','accepted')`), slot release on reject. _Dev/prod drift:_ dev NOT NULL / prod nullable.

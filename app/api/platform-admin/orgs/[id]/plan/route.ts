@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function isOrgPlan(planId: unknown): planId is OrgPlan {
   return typeof planId === 'string' && planId in PLAN_CONFIG;
@@ -18,10 +19,8 @@ type CurrentPlanRow = {
   current_period_end: string | null;
 };
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requirePlatformPermission('manage_billing');
   if (auth.response) return auth.response;
 
@@ -128,4 +127,4 @@ export async function PATCH(
     planId,
     tournamentLimit: effectiveTournamentLimit,
   });
-}
+}, { route: '/api/platform-admin/orgs/[id]/plan' });

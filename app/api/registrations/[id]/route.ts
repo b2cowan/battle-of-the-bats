@@ -4,13 +4,14 @@ import { createClient } from '@supabase/supabase-js';
 import {
   sendEmail,
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml,
-  coachEmailEnabled,
+  coachEmailEnabled, resolveCoachRecipient,
 } from '@/lib/email';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
+import { captureError, withObservability } from '@/lib/observability';
 
-export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export const PATCH = withObservability(async (req: NextRequest, props: { params: Promise<{ id: string }> }) => {
   const auth = await getAuthContext();
   if (!auth) return unauthorized();
 
@@ -73,26 +74,30 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
       coachEmail:     current.email,
     };
 
+    // Route coach-facing status emails to the assigned coach (teams.coach_email) when set,
+    // falling back to teams.email. teams.email stays the claim key (the footer keeps using it).
+    const recipient = resolveCoachRecipient(current);
     const coachSettings = tournamentData?.settings;
     if (status === 'accepted' && current.status !== 'accepted' && coachEmailEnabled(coachSettings, 'acceptance')) {
-      await sendEmail(current.email, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions }));
+      await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions }));
     }
     if (status === 'rejected' && current.status !== 'rejected' && coachEmailEnabled(coachSettings, 'rejection')) {
-      await sendEmail(current.email, `Registration Update — ${current.name}`, rejectionHtml(p));
+      await sendEmail(recipient, `Registration Update — ${current.name}`, rejectionHtml(p));
     }
     if (payment_status === 'paid' && current.payment_status !== 'paid' && coachEmailEnabled(coachSettings, 'payment')) {
-      await sendEmail(current.email, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
+      await sendEmail(recipient, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
     }
 
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error('PATCH team error:', e);
+    void captureError(e, { route: '/api/registrations/[id]', method: 'PATCH', statusCode: 500 });
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+}, { route: '/api/registrations/[id]' });
 
 // Public GET — used by the team lookup page; only returns accepted teams
-export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export const GET = withObservability(async (req: NextRequest, props: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await props.params;
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -132,6 +137,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     });
   } catch (e: any) {
     console.error('GET team error:', e);
+    void captureError(e, { route: '/api/registrations/[id]', method: 'GET', statusCode: 500 });
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
-}
+}, { route: '/api/registrations/[id]' });

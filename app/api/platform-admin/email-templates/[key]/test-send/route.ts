@@ -1,13 +1,14 @@
 import { getPlatformAuthContext } from '@/lib/platform-auth';
 import { sendEmail } from '@/lib/email';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 type Params = { params: Promise<{ key: string }> };
 
 // POST /api/platform-admin/email-templates/[key]/test-send
 // Sends a preview of the template (with placeholder variable values) to the
 // logged-in platform admin's email address.
-export async function POST(req: Request, { params }: Params) {
+export const POST = withObservability(async (req: Request, { params }: Params) => {
   const user = await getPlatformAuthContext();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   if (!user.email) return Response.json({ error: 'No email address on platform user account.' }, { status: 400 });
@@ -83,4 +84,4 @@ export async function POST(req: Request, { params }: Params) {
   await sendEmail(user.email, `[TEST] ${filledSubject}`, html);
 
   return Response.json({ ok: true, sentTo: user.email });
-}
+}, { route: '/api/platform-admin/email-templates/[key]/test-send' });

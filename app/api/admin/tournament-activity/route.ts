@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithScope, unauthorized, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 export type ActivityEvent = {
   id: string;
@@ -20,7 +21,7 @@ function timeAgo(iso: string): string {
   return `${d}d ago`;
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -107,4 +108,4 @@ export async function GET(req: Request) {
   return NextResponse.json(
     events.slice(0, limit).map(e => ({ ...e, timeAgo: timeAgo(e.timestamp) }))
   );
-}
+}, { route: '/api/admin/tournament-activity' });

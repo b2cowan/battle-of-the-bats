@@ -6,6 +6,7 @@ import {
   getActiveRepProgramYear,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -31,13 +32,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 // PATCH /api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]/entries/[entryId]
 // Updates a player's fundraising amount. Also adjusts the linked
 // accounting entry and dues credit to match the new amount.
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string; entryId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string; entryId: string }> },) => {
   const { orgSlug, teamId, fundraiserId, entryId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, team, programYear } = resolved;
 
   const { data: entry } = await supabaseAdmin
@@ -130,4 +129,4 @@ export async function PATCH(
       updatedAt:         updated.updated_at,
     },
   });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]/entries/[entryId]' });

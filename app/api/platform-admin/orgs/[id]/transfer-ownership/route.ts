@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { withObservability } from '@/lib/observability';
 
 type MemberRow = {
   user_id: string;
@@ -9,10 +10,8 @@ type MemberRow = {
   status: string;
 };
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requirePlatformPermission('manage_support');
   if (auth.response) return auth.response;
 
@@ -102,4 +101,4 @@ export async function POST(
     newOwnerUserId,
     demotedCount: currentOwners.length,
   });
-}
+}, { route: '/api/platform-admin/orgs/[id]/transfer-ownership' });

@@ -11061,6 +11061,15 @@
     "ordinal_position": 25
   },
   {
+    "table_name": "teams",
+    "column_name": "coach_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 26
+  },
+  {
     "table_name": "tournament_archives",
     "column_name": "id",
     "data_type": "uuid",
@@ -11518,6 +11527,15 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 13
+  },
+  {
+    "table_name": "tournament_roster_players",
+    "column_name": "source_player_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
   },
   {
     "table_name": "tournaments",

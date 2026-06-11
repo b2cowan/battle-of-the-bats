@@ -11,6 +11,7 @@ import {
   getRepProgramYear,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -19,7 +20,7 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET(_req: Request) {
+export const GET = withObservability(async (_req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -85,9 +86,9 @@ export async function GET(_req: Request) {
     : enrichedAll;
 
   return NextResponse.json({ allocations: enriched });
-}
+}, { route: '/api/admin/rep-teams/allocations' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -176,4 +177,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json(result, { status: 201 });
-}
+}, { route: '/api/admin/rep-teams/allocations' });

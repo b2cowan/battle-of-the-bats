@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { withObservability } from '@/lib/observability';
 
 const MAX_NOTE_LENGTH = 4000;
 
@@ -12,10 +13,8 @@ function cleanNoteBody(value: unknown) {
   return body.slice(0, MAX_NOTE_LENGTH);
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string; noteId: string }> }
-) {
+export const PATCH = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ id: string; noteId: string }> }) => {
   const auth = await requirePlatformPermission('manage_support');
   if (auth.response) return auth.response;
 
@@ -66,12 +65,10 @@ export async function PATCH(
   );
 
   return NextResponse.json({ note: data });
-}
+}, { route: '/api/platform-admin/orgs/[id]/notes/[noteId]' });
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string; noteId: string }> }
-) {
+export const DELETE = withObservability(async (_req: NextRequest,
+  { params }: { params: Promise<{ id: string; noteId: string }> }) => {
   const auth = await requirePlatformPermission('manage_support');
   if (auth.response) return auth.response;
 
@@ -115,4 +112,4 @@ export async function DELETE(
   );
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/platform-admin/orgs/[id]/notes/[noteId]' });

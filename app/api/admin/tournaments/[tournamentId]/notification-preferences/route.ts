@@ -16,6 +16,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithScope } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { NotificationEventType } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function badRequest(msg: string) {
   return NextResponse.json({ error: msg }, { status: 400 });
@@ -28,7 +29,7 @@ type RouteContext = { params: Promise<{ tournamentId: string }> };
 
 // ── GET ───────────────────────────────────────────────────────────────────────
 
-export async function GET(req: Request, context: RouteContext) {
+export const GET = withObservability(async (req: Request, context: RouteContext) => {
   const { tournamentId } = await context.params;
   if (!tournamentId) return badRequest('Missing tournamentId.');
 
@@ -74,11 +75,11 @@ export async function GET(req: Request, context: RouteContext) {
   }));
 
   return NextResponse.json({ preferences });
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/notification-preferences' });
 
 // ── POST ──────────────────────────────────────────────────────────────────────
 
-export async function POST(req: Request, context: RouteContext) {
+export const POST = withObservability(async (req: Request, context: RouteContext) => {
   const { tournamentId } = await context.params;
   if (!tournamentId) return badRequest('Missing tournamentId.');
 
@@ -130,4 +131,4 @@ export async function POST(req: Request, context: RouteContext) {
   }
 
   return NextResponse.json({ success: true });
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/notification-preferences' });

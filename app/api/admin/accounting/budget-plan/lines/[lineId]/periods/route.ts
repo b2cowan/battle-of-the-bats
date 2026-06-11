@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -17,7 +18,7 @@ type Ctx = { params: Promise<{ lineId: string }> };
 // Full replace: deletes all existing periods for this line and inserts the new set.
 // Send an empty array to clear all periods (revert line to lump sum).
 // Body: { periods: [{ label, periodDate?, amount, sortOrder? }] }
-export async function POST(req: Request, { params }: Ctx) {
+export const POST = withObservability(async (req: Request, { params }: Ctx) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -89,4 +90,4 @@ export async function POST(req: Request, { params }: Ctx) {
   }));
 
   return NextResponse.json({ periods });
-}
+}, { route: '/api/admin/accounting/budget-plan/lines/[lineId]/periods' });

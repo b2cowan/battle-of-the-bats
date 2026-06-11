@@ -1,10 +1,11 @@
 import { getPlatformAuthContext } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 type Params = { params: Promise<{ key: string }> };
 
 // GET /api/platform-admin/email-templates/[key]
-export async function GET(_req: Request, { params }: Params) {
+export const GET = withObservability(async (_req: Request, { params }: Params) => {
   const user = await getPlatformAuthContext();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -17,10 +18,10 @@ export async function GET(_req: Request, { params }: Params) {
 
   if (error) return Response.json({ error: error.message }, { status: 404 });
   return Response.json({ template: data });
-}
+}, { route: '/api/platform-admin/email-templates/[key]' });
 
 // PUT /api/platform-admin/email-templates/[key] — save customised content
-export async function PUT(req: Request, { params }: Params) {
+export const PUT = withObservability(async (req: Request, { params }: Params) => {
   const user = await getPlatformAuthContext();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -53,10 +54,10 @@ export async function PUT(req: Request, { params }: Params) {
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ template: data });
-}
+}, { route: '/api/platform-admin/email-templates/[key]' });
 
 // DELETE /api/platform-admin/email-templates/[key] — reset to hardcoded default
-export async function DELETE(_req: Request, { params }: Params) {
+export const DELETE = withObservability(async (_req: Request, { params }: Params) => {
   const user = await getPlatformAuthContext();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -78,4 +79,4 @@ export async function DELETE(_req: Request, { params }: Params) {
 
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ template: data, reset: true });
-}
+}, { route: '/api/platform-admin/email-templates/[key]' });

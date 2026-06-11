@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { STOCK_LOGOS, PLAN_ORDER } from '@/lib/stock-logos';
+import { withObservability } from '@/lib/observability';
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContext();
   if (!ctx) return unauthorized();
 
@@ -51,4 +52,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ logoUrl });
-}
+}, { route: '/api/admin/org-logo-stock' });

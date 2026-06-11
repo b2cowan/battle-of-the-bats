@@ -11,6 +11,7 @@ import AdminMobileTopBar from '@/components/admin/AdminMobileTopBar';
 import { AdminDensityProvider } from '@/lib/admin-density';
 import { AdminWorklistProvider } from '@/lib/admin-worklist';
 import AdminTitleManager from './AdminTitleManager';
+import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdProvider';
 import styles from './admin.module.css';
 
 export default function AdminChrome({
@@ -49,6 +50,7 @@ export default function AdminChrome({
       <AdminWorklistProvider>
       <CancellationGuard />
       <AdminTitleManager />
+      <FeedbackRequestIdProvider />
       {/* Mobile-only top app-bar — tournament + live status + notification bell +
           one-tap switcher. The sidebar (incl. its bell) is hidden <900px. */}
       {!isFocused && <AdminMobileTopBar />}

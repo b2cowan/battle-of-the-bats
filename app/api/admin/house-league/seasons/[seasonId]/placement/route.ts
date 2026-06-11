@@ -10,6 +10,7 @@ import {
   bulkAssignTeams,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -27,10 +28,8 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ seasonId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ seasonId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -119,4 +118,4 @@ export async function POST(
   }
 
   return NextResponse.json({ error: 'Unhandled action' }, { status: 500 });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/placement' });

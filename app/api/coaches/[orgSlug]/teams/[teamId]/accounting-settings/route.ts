@@ -6,6 +6,7 @@ import {
   getActiveRepProgramYear,
   setAutoRemindersEnabled,
 } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -29,25 +30,21 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   return NextResponse.json({ autoRemindersEnabled: programYear.autoRemindersEnabled });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/accounting-settings' });
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   const body = await req.json().catch(() => ({}));
@@ -59,4 +56,4 @@ export async function PATCH(
   }
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/accounting-settings' });

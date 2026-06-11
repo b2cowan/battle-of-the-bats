@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { paymentReminderHtml, sendEmail } from '@/lib/email';
+import { paymentReminderHtml, sendEmail, resolveCoachRecipient } from '@/lib/email';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -16,6 +17,7 @@ type TeamRow = {
   name: string;
   coach: string | null;
   email: string | null;
+  coach_email: string | null;
   status: string | null;
   deposit_paid: number | null;
   total_paid: number | null;
@@ -130,7 +132,7 @@ async function trackReminderEvent(input: {
   });
 }
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+export const POST = withObservability(async (req: NextRequest, { params }: RouteParams) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -183,7 +185,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       .maybeSingle<TournamentRow>(),
     supabaseAdmin
       .from('teams')
-      .select('id, tournament_id, division_id, name, coach, email, status, deposit_paid, total_paid')
+      .select('id, tournament_id, division_id, name, coach, email, coach_email, status, deposit_paid, total_paid')
       .in('id', ids),
     supabaseAdmin
       .from('divisions')
@@ -213,14 +215,17 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   for (const team of selectedTeams) {
     const fee = effectiveFee(team, tournament, divisions);
     const due = reminderAmountDue(team, fee);
-    if (!team.email || team.status !== 'accepted' || !due || due.amount <= 0) {
+    // Recipient prefers the assigned coach (teams.coach_email), falls back to teams.email; the
+    // footer keeps teams.email (the claim key, never overwritten).
+    const recipient = resolveCoachRecipient(team);
+    if (!recipient || team.status !== 'accepted' || !due || due.amount <= 0) {
       skippedCount++;
       continue;
     }
 
     const divisionName = divisions.get(team.division_id)?.name ?? 'Division';
     await sendEmail(
-      team.email,
+      recipient,
       `Payment Reminder - ${tournament.name}`,
       paymentReminderHtml({
         teamName: team.name,
@@ -232,7 +237,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         paymentInstructions,
         contactEmail,
         registrationId: team.id,
-        coachEmail: team.email,
+        coachEmail: team.email ?? undefined,
       }),
     );
     emailsSent++;
@@ -251,4 +256,4 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   });
 
   return json({ success: true, emailsSent, skippedCount });
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/registrations/payment-reminders' });

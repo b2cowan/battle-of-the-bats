@@ -250,7 +250,13 @@ export async function getPendingTournamentRegistrationForUser(
   };
 }
 
-async function findLinkedBasicTeamForRegistration(
+/**
+ * The basic_coach_team id the user OWNS that is explicitly linked to this tournament registration,
+ * or null. The owner-checked resolver behind `canUserAccessTournamentRegistration` — exported so
+ * coach-side WRITE routes (5j roster submit, 5l head-coach) can both gate access AND obtain the
+ * team id (to read the master roster) in one call. Explicit-link only (no email-match fallback).
+ */
+export async function findLinkedBasicTeamForRegistration(
   userId: string,
   registrationId: string,
 ): Promise<string | null> {

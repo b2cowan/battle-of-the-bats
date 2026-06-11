@@ -10,6 +10,7 @@ import {
   type TournamentRegistrationFieldInput,
 } from '@/lib/db';
 import type { TournamentRegistrationFieldType } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 const FIELD_TYPES = new Set<TournamentRegistrationFieldType>([
   'short_text',
@@ -78,18 +79,18 @@ function parseFieldInput(body: Record<string, unknown>): TournamentRegistrationF
   };
 }
 
-export async function GET(_req: NextRequest, { params }: RouteParams) {
+export const GET = withObservability(async (_req: NextRequest, { params }: RouteParams) => {
   const orgSlug = _req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   const { tournamentId } = await params;
   const scoped = await getScopedTournament(tournamentId, ctx);
-  if ('response' in scoped) return scoped.response;
+  if ('response' in scoped) return scoped.response!;
 
   const fields = await getTournamentRegistrationFields(tournamentId, { includeArchived: false });
   return NextResponse.json({ fields });
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/registration-fields' });
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+export const POST = withObservability(async (req: NextRequest, { params }: RouteParams) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
   const { tournamentId } = await params;
   const scoped = await getScopedTournament(tournamentId, ctx);
-  if ('response' in scoped) return scoped.response;
+  if ('response' in scoped) return scoped.response!;
 
   const body = await req.json() as Record<string, unknown>;
   if (body.action === 'reorder' && Array.isArray(body.fields)) {
@@ -129,4 +130,4 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   });
 
   return NextResponse.json({ field }, { status: 201 });
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/registration-fields' });

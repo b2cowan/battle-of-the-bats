@@ -1,6 +1,7 @@
 import { forbidden, getAuthContextWithScope, requireTournamentInOrg, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 type LaneRow = {
   id: string;
@@ -83,7 +84,7 @@ async function fetchLanes(tournamentId: string, divisionId?: string | null) {
   return query;
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -105,9 +106,9 @@ export async function GET(req: Request) {
   }
 
   return json((data ?? []).map(row => mapLane(row as LaneRow)));
-}
+}, { route: '/api/admin/schedule-facility-lanes' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -269,4 +270,4 @@ export async function POST(req: Request) {
     console.error('Schedule Facility Lanes API error:', err);
     return json({ error: err instanceof Error ? err.message : 'Unknown server error' }, 500);
   }
-}
+}, { route: '/api/admin/schedule-facility-lanes' });

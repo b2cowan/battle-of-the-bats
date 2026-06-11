@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getRepTeams, bulkRenameTeamSlugs } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 const SLUG_RE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
 
@@ -10,7 +11,7 @@ function isValidSlug(s: string): boolean {
   return s.length >= 3 && s.length <= 80 && SLUG_RE.test(s);
 }
 
-export async function PATCH(req: Request) {
+export const PATCH = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_rep_teams')) return forbidden();
@@ -70,4 +71,4 @@ export async function PATCH(req: Request) {
   await bulkRenameTeamSlugs(ctx.org.id, renames);
 
   return NextResponse.json({ updated: renames.length });
-}
+}, { route: '/api/admin/rep-teams/bulk-rename-slugs' });

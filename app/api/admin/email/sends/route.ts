@@ -8,8 +8,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPlatformAdminContext } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
-export async function GET(request: NextRequest) {
+export const GET = withObservability(async (request: NextRequest) => {
   const auth = await getPlatformAdminContext();
   if (!auth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -34,4 +35,4 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({ sends: data ?? [] });
-}
+}, { route: '/api/admin/email/sends' });

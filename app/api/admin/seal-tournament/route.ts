@@ -4,8 +4,9 @@ import { getAuthContextWithScope, unauthorized, scopeGuard } from '@/lib/api-aut
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import { withObservability } from '@/lib/observability';
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -211,4 +212,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ archive });
-}
+}, { route: '/api/admin/seal-tournament' });

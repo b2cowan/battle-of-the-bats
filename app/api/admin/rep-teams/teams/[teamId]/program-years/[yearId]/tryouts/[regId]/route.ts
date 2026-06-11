@@ -11,6 +11,7 @@ import {
 } from '@/lib/db';
 import { sendEmail, tryoutOfferHtml, tryoutAcceptedHtml, tryoutDeclinedHtml } from '@/lib/email';
 import type { RepTryoutRegistrationStatus } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -27,10 +28,8 @@ const VALID_TRANSITIONS: Record<RepTryoutRegistrationStatus, RepTryoutRegistrati
   withdrawn:      [],
 };
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ teamId: string; yearId: string; regId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ teamId: string; yearId: string; regId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -54,12 +53,10 @@ export async function GET(
   }
 
   return NextResponse.json({ registration });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/[regId]' });
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ teamId: string; yearId: string; regId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ teamId: string; yearId: string; regId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -146,4 +143,4 @@ export async function PATCH(
   }
 
   return NextResponse.json({ registration });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/[regId]' });

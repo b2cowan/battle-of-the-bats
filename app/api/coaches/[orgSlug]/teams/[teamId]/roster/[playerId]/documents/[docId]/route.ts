@@ -7,6 +7,7 @@ import {
   deleteRepPlayerDocument,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveContext(orgSlug: string, teamId: string, playerId: string, docId: string) {
   const ctx = await getAuthContext();
@@ -29,13 +30,11 @@ async function resolveContext(orgSlug: string, teamId: string, playerId: string,
   return { ctx, player, doc };
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; playerId: string; docId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; playerId: string; docId: string }> },) => {
   const { orgSlug, teamId, playerId, docId } = await params;
   const resolved = await resolveContext(orgSlug, teamId, playerId, docId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { doc } = resolved;
 
   const { data, error } = await supabaseAdmin.storage
@@ -48,19 +47,17 @@ export async function GET(
 
   const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
   return NextResponse.json({ url: data.signedUrl, expiresAt });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]/documents/[docId]' });
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; playerId: string; docId: string }> },
-) {
+export const DELETE = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; playerId: string; docId: string }> },) => {
   const { orgSlug, teamId, playerId, docId } = await params;
   const resolved = await resolveContext(orgSlug, teamId, playerId, docId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { doc } = resolved;
 
   await supabaseAdmin.storage.from('rep-team-documents').remove([doc.storagePath]);
   await deleteRepPlayerDocument(docId);
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]/documents/[docId]' });

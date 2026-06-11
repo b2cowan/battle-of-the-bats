@@ -48,6 +48,9 @@ type TournamentTeamHQProps = {
   showCheckIn: boolean;
   /** Formatted "registered on" date for the first checklist milestone. */
   registeredDateLabel: string | null;
+  /** Organizer requires an event roster (5f) → show the Roster milestone even before
+   *  submission (as "Not submitted"). The actionable submit UI is the 5k card below. */
+  rosterRequired?: boolean;
 };
 
 type TeamHQProps = StandaloneTeamHQProps | TournamentTeamHQProps;
@@ -169,6 +172,7 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
     status,
     showCheckIn,
     registeredDateLabel,
+    rosterRequired,
   } = props;
 
   const heroStyle = { '--team-color': teamColor(teamName) } as CSSProperties;
@@ -207,15 +211,20 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
     if (status?.fee.hasSchedule) {
       checklist.push({ key: 'fee', label: 'Fee', state: status.fee.isPaid ? 'Paid' : 'Owed', done: status.fee.isPaid });
     }
-    // Roster — positive state only (Submitted/Confirmed). No "submit your roster"
-    // prompt here: that actionable, requirement-gated step is 5k.
-    if (status && status.roster.state !== 'none') {
-      checklist.push({
-        key: 'roster',
-        label: 'Roster',
-        state: status.roster.state === 'confirmed' ? 'Confirmed' : 'Submitted',
-        done: true,
-      });
+    // Roster — shown when the organizer requires one (5f) OR once the coach has
+    // submitted. "Not submitted" (awaiting) → "Submitted" → "Confirmed". The actionable
+    // submit UI is the 5k card below the hero — this row is the read-only milestone.
+    if (status) {
+      const rosterDone = status.roster.state !== 'none';
+      if (rosterRequired || rosterDone) {
+        checklist.push({
+          key: 'roster',
+          label: 'Roster',
+          state: status.roster.state === 'confirmed' ? 'Confirmed' : rosterDone ? 'Submitted' : 'Not submitted',
+          done: rosterDone,
+          awaiting: !rosterDone,
+        });
+      }
     }
     // Check-in — game day onward only (default 'not_arrived' reads as a problem otherwise).
     if (showCheckIn && status) {

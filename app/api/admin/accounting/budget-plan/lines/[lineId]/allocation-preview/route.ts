@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -17,7 +18,7 @@ type Ctx = { params: Promise<{ lineId: string }> };
 // ?teamIds=id1,id2&splitMethod=equal|percentage|fixed
 // &splits=JSON (array of { teamId, splitMethod, value } for per-team config)
 // Read-only: returns the computed per-team amounts before the treasurer confirms.
-export async function GET(req: Request, { params }: Ctx) {
+export const GET = withObservability(async (req: Request, { params }: Ctx) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -87,4 +88,4 @@ export async function GET(req: Request, { params }: Ctx) {
   });
 
   return NextResponse.json({ line, periods: periods ?? [], preview });
-}
+}, { route: '/api/admin/accounting/budget-plan/lines/[lineId]/allocation-preview' });

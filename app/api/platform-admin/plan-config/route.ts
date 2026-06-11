@@ -7,6 +7,7 @@ import { sanitizePlatformChangeNote } from '@/lib/platform-change-note';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { getAllPlanConfigOverrideRows, upsertPlanConfigOverride } from '@/lib/plan-config-db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function unauthorized() {
   return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -24,15 +25,15 @@ function badRequest(message: string) {
 
 const VALID_PLANS = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 
-export async function GET() {
+export const GET = withObservability(async () => {
   const user = await getPlatformAuthContext();
   if (!user) return unauthorized();
 
   const rows = await getAllPlanConfigOverrideRows();
   return Response.json(rows);
-}
+}, { route: '/api/platform-admin/plan-config' });
 
-export async function PATCH(req: Request) {
+export const PATCH = withObservability(async (req: Request) => {
   const auth = await requirePlatformPermission('manage_product');
   if (auth.response) return auth.response;
 
@@ -119,4 +120,4 @@ export async function PATCH(req: Request) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
-}
+}, { route: '/api/platform-admin/plan-config' });

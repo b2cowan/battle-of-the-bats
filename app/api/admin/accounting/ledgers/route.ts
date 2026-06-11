@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getOrCreateOrgLedger, getOrgAllLedgers, getLedgerSummary } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -12,7 +13,7 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -26,9 +27,9 @@ export async function GET(req: Request) {
   const summaries = await Promise.all(ledgers.map(l => getLedgerSummary(l, { from, to })));
 
   return NextResponse.json({ ledgers: summaries });
-}
+}, { route: '/api/admin/accounting/ledgers' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -62,4 +63,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json(data, { status: 201 });
-}
+}, { route: '/api/admin/accounting/ledgers' });

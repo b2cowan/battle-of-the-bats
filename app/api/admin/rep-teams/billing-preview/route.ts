@@ -15,11 +15,12 @@ import { stripe } from '@/lib/stripe';
 import { getStripePriceId } from '@/lib/stripe-prices';
 import { getActiveRepTeamCount } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
@@ -133,4 +134,4 @@ export async function GET(req: Request) {
     billingPeriod: billingCycle,
     nextRenewal: ctx.org.currentPeriodEnd ?? null,
   });
-}
+}, { route: '/api/admin/rep-teams/billing-preview' });

@@ -11,8 +11,9 @@ import { sendEmail, cancellationConfirmationHtml, teamWorkspaceCancelledHtml, SI
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import type { OrgPlan } from '@/lib/types';
+import { captureError, withObservability } from '@/lib/observability';
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
@@ -174,6 +175,7 @@ export async function POST(req: Request) {
       } catch (stripeErr) {
         const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
         console.error('[cancel/confirm] Coaches Portal Stripe reconciliation failed:', message);
+        void captureError(stripeErr, { ctx, route: '/api/billing/cancel/confirm', method: 'POST', statusCode: 500 });
         await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_stripe_reconciliation_failed', {
           action: 'coaches_portal_cancellation',
           stripeSubscriptionId,
@@ -318,6 +320,7 @@ export async function POST(req: Request) {
     } catch (stripeErr) {
       const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
       console.error('[cancel/confirm] Stripe reconciliation failed:', message);
+      void captureError(stripeErr, { ctx, route: '/api/billing/cancel/confirm', method: 'POST', statusCode: 500 });
       await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_stripe_reconciliation_failed', {
         action: 'cancellation',
         stripeSubscriptionId,
@@ -360,4 +363,4 @@ export async function POST(req: Request) {
     retainedCount: preflight.tournaments.length + 1,
     retentionUntil,
   });
-}
+}, { route: '/api/billing/cancel/confirm' });

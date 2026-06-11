@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireSuperAdmin } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 /**
  * Manual observability sweep — the pg_cron fallback (Phase 4). Runs the exact same fold +
@@ -12,7 +13,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
  * The functions never raise: failures come back as { status: 'error', error } jsonb and are also
  * written to observability_cron_heartbeat, so rpc .error here means transport/permission only.
  */
-export async function POST() {
+export const POST = withObservability(async () => {
   const auth = await requireSuperAdmin();
   if (auth.response) return auth.response;
 
@@ -41,4 +42,4 @@ export async function POST() {
     { ok: !failed, fold: fold.data, sweep: sweep.data },
     { status: failed ? 500 : 200 },
   );
-}
+}, { route: '/api/platform-admin/observability/sweep' });

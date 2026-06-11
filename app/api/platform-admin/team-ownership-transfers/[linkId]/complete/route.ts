@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAnyPlatformPermission } from '@/lib/platform-auth';
 import { completeTeamOwnershipTransfer } from '@/lib/team-ownership-transfer';
+import { withObservability } from '@/lib/observability';
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ linkId: string }> },
-) {
+export const POST = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ linkId: string }> },) => {
   const auth = await requireAnyPlatformPermission(['manage_support', 'manage_billing']);
   if (auth.response) return auth.response;
 
@@ -35,4 +34,4 @@ export async function POST(
     stripeCancellation: result.stripeCancellation,
     stripeCancellationError: result.stripeCancellationError ?? null,
   });
-}
+}, { route: '/api/platform-admin/team-ownership-transfers/[linkId]/complete' });

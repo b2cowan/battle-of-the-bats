@@ -20,8 +20,9 @@ import {
   declineTeamOwnershipTransferRequest,
   inviteTeamOwnershipTransfer,
 } from '@/lib/team-ownership-transfer';
+import { withObservability } from '@/lib/observability';
 
-export async function GET(req: NextRequest) {
+export const GET = withObservability(async (req: NextRequest) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug });
   if (!ctx) return unauthorized();
@@ -46,9 +47,9 @@ export async function GET(req: NextRequest) {
       showClubValueNudge: shouldShowClubValueNudge(activeOrgPaidTeamCount),
     },
   });
-}
+}, { route: '/api/admin/org/team-links' });
 
-export async function POST(req: NextRequest) {
+export const POST = withObservability(async (req: NextRequest) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug });
   if (!ctx) return unauthorized();
@@ -183,4 +184,4 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ link: result.link });
-}
+}, { route: '/api/admin/org/team-links' });

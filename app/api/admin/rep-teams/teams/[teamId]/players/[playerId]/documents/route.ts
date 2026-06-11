@@ -10,6 +10,7 @@ import {
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepDocumentType } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 const ALLOWED_TYPES = [
   'application/pdf',
@@ -52,25 +53,21 @@ async function resolveContext(teamId: string, playerId: string) {
   return { ctx: ctx!, team, player };
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ teamId: string; playerId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ teamId: string; playerId: string }> },) => {
   const { teamId, playerId } = await params;
   const resolved = await resolveContext(teamId, playerId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
 
   const docs = await getRepPlayerDocuments(playerId);
   return NextResponse.json({ documents: docs.map(stripStoragePath) });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/players/[playerId]/documents' });
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ teamId: string; playerId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ teamId: string; playerId: string }> },) => {
   const { teamId, playerId } = await params;
   const resolved = await resolveContext(teamId, playerId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, player } = resolved;
 
   let formData: FormData;
@@ -119,4 +116,4 @@ export async function POST(
   });
 
   return NextResponse.json({ document: stripStoragePath(doc) }, { status: 201 });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/players/[playerId]/documents' });

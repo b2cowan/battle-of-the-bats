@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getRepCostAllocationDetail, updateRepCostAllocationDescription } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -12,10 +13,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ allocationId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ allocationId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -37,12 +36,10 @@ export async function GET(
   }
 
   return NextResponse.json(detail);
-}
+}, { route: '/api/admin/rep-teams/allocations/[allocationId]' });
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ allocationId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ allocationId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -64,4 +61,4 @@ export async function PATCH(
   );
 
   return NextResponse.json({ allocation });
-}
+}, { route: '/api/admin/rep-teams/allocations/[allocationId]' });

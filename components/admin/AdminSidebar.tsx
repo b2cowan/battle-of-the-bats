@@ -22,6 +22,7 @@ import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
 import { isWithinEventDates } from '@/lib/tournament-phase';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { TOUR_GROUPS, type TourNavItem, type TourGroup } from './admin-nav-config';
+import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
 import styles from './AdminSidebar.module.css';
 
 type HouseLeagueSeasonOption = {
@@ -603,6 +604,7 @@ export default function AdminSidebar() {
           >
             <HelpCircle size={15} /> Help
           </Link>
+          <FeedbackLauncher className={styles.footerLink} label="Send feedback" />
           <button type="button" onClick={handleLogout} className={styles.logoutBtn} id="admin-logout">
             <LogOut size={15} /> Logout
           </button>

@@ -10,6 +10,7 @@ import {
   deleteRepTeamEvent,
   deleteRepTeamEventsByRecurrenceParent,
 } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -33,10 +34,8 @@ async function resolveEvent(ctx: NonNullable<Awaited<ReturnType<typeof getAuthCo
   return { team, programYear, event };
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ teamId: string; yearId: string; eventId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ teamId: string; yearId: string; eventId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -45,7 +44,7 @@ export async function PATCH(
 
   const { teamId, yearId, eventId } = await params;
   const resolved = await resolveEvent(ctx!, teamId, yearId, eventId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
 
   const body = await req.json();
   const fields: Parameters<typeof updateRepTeamEvent>[1] = {};
@@ -69,12 +68,10 @@ export async function PATCH(
 
   const updated = await updateRepTeamEvent(eventId, fields);
   return NextResponse.json({ event: updated });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/events/[eventId]' });
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ teamId: string; yearId: string; eventId: string }> },
-) {
+export const DELETE = withObservability(async (req: Request,
+  { params }: { params: Promise<{ teamId: string; yearId: string; eventId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -83,7 +80,7 @@ export async function DELETE(
 
   const { teamId, yearId, eventId } = await params;
   const resolved = await resolveEvent(ctx!, teamId, yearId, eventId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { event } = resolved;
 
   const url = new URL(req.url);
@@ -105,4 +102,4 @@ export async function DELETE(
   }
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/events/[eventId]' });

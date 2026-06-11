@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { TournamentArchive } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 type ArchiveRow = {
   id: string;
@@ -41,7 +42,7 @@ function mapArchive(row: ArchiveRow): TournamentArchive {
   };
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContext({ orgSlug });
   if (!ctx) {
@@ -60,4 +61,4 @@ export async function GET(req: Request) {
   }
 
   return NextResponse.json((data ?? []).map(mapArchive));
-}
+}, { route: '/api/admin/tournament-archives' });

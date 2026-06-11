@@ -404,3 +404,16 @@ gate becomes a confirm, and the roster is upgrade-ready (decision 1).
 - Email triggers mapped: registration/accept/reject/payment → `app/api/registrations/[id]/route.ts`
   + bulk route; schedule-published → `app/api/admin/schedule-publish/route.ts`; results-finalized →
   `app/api/admin/tournaments/route.ts`; access reminder → `.../resend-access/route.ts`.
+
+## Journey-audit inputs (J5 tournament coach, routed 2026-06-11)
+
+The platform user-journey audit routed 7 verified portal-shell/IA findings here (full detail + evidence in
+[journeys/JOURNEY_J5_TOURNAMENT_COACH.md](journeys/JOURNEY_J5_TOURNAMENT_COACH.md); screenshots in the gitignored `tests/uat/results/journeys/J5/`):
+
+- **J5-013 (High)** the claim wall doesn't scale and buries the post-claim home — ~16,000px of identical "Claim team" cards on mobile; after claiming, "YOUR TEAMS" renders BELOW the remaining wall on a page still headed "CLAIM YOUR TEAMS". Invert order, group matches by team with a count header + claim-all, collapse the rest.
+- **J5-015 (High)** the "Teams" nav tab opens the Premium upsell page, not the coach's teams — one of three tabs is upsell-only for the free cohort; real teams hide under "Home"; mobile has no My Teams surface at all.
+- **J5-020 (Med)** mobile portal has no sign-out or account surface anywhere (desktop-rail-footer only, hidden <1024px) — add an account menu to the mobile top bar (also solves the missing mobile team switcher).
+- **J5-021 (Low)** hub + records list share the "Coaches Portal" h1 and "Basic" tier vocabulary leaks — residual violation of the locked kill-Basic/Premium-framing decision.
+- **J5-022 (Low)** no nav tab is active on the org-less team home — one-character route collision (`/coaches/team` vs `/coaches/teams`).
+- **J5-023 (Low)** hub CTAs use btn-outline/btn-sm against the locked convention, and "Claim team" — the most journey-critical button in the portal — is the quietest.
+- **J5-055 (Low)** ScopeCeilingInterest pre-checks 4 of 5 interest boxes, biasing the demand signal — start unchecked.

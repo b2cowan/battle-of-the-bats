@@ -15,11 +15,17 @@ import { recordRequest } from './metrics';
 
 type AnyRouteHandler = (...args: never[]) => Promise<Response> | Response;
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function withObservability<T extends AnyRouteHandler>(handler: T, opts: { route: string }): T {
   const wrapped = (...args: Parameters<T>): Promise<Response> => {
     const req = args[0] as unknown as Request | undefined;
     const method = req && typeof req.method === 'string' ? req.method : 'GET';
-    const requestId = randomUUID();
+    // Adopt an upstream-minted id when present (proxy.ts stamps a UUID x-request-id on every /api
+    // request) so the id the client reads off the response equals the one stored on error_events —
+    // one mint site, no mismatch. Only accept a well-formed UUID; otherwise mint our own.
+    const incoming = req?.headers?.get?.('x-request-id');
+    const requestId = incoming && UUID_RE.test(incoming) ? incoming : randomUUID();
     return runWithRequestContext(
       { requestId, route: opts.route, method, source: 'server' },
       async () => {
@@ -28,6 +34,9 @@ export function withObservability<T extends AnyRouteHandler>(handler: T, opts: {
           const res = (await callable(...args)) as Response;
           const status = res && typeof res.status === 'number' ? res.status : 200;
           recordRequest(opts.route, status >= 500);
+          // Surface the id so the client can attach it to a feedback report (Phase 3 deep-link).
+          // Guarded: a plain Response could have immutable headers — this wrapper must never throw.
+          try { res?.headers?.set?.('x-request-id', requestId); } catch { /* immutable headers */ }
           return res;
         } catch (err) {
           recordRequest(opts.route, true);

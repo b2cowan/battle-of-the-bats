@@ -6,6 +6,7 @@ import { sendEmail, orgClosedHtml } from '@/lib/email';
 import { stripe } from '@/lib/stripe';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 type OrgRow = {
   id: string;
@@ -17,10 +18,8 @@ type OrgRow = {
   stripe_customer_id: string | null;
 };
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withObservability(async (_req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requireSuperAdmin();
   if (auth.response) return auth.response;
 
@@ -73,12 +72,10 @@ export async function GET(
     coachesLinkCount: coachesLinkCount.count ?? 0,
     retentionRecordCount: retentionCount.count ?? 0,
   });
-}
+}, { route: '/api/platform-admin/orgs/[id]/delete' });
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requireSuperAdmin();
   if (auth.response) return auth.response;
 
@@ -205,4 +202,4 @@ export async function DELETE(
   }
 
   return NextResponse.json({ ok: true, deletedSlug: org.slug, stripeCustomerWarning });
-}
+}, { route: '/api/platform-admin/orgs/[id]/delete' });

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformAdmin } from '@/lib/platform-auth';
 import { recordPlatformAdminVisit } from '@/lib/platform-admin-visits';
+import { withObservability } from '@/lib/observability';
 
-export async function POST(req: NextRequest) {
+export const POST = withObservability(async (req: NextRequest) => {
   const auth = await requirePlatformAdmin();
   if (auth.response) return auth.response;
 
@@ -18,4 +19,4 @@ export async function POST(req: NextRequest) {
     console.error('[platform-admin] visit record failed', error);
     return NextResponse.json({ error: 'Visit record failed' }, { status: 500 });
   }
-}
+}, { route: '/api/platform-admin/visits' });

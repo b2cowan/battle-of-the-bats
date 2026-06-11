@@ -45,6 +45,7 @@ const ACTION_LABELS: Record<string, string> = {
   run_bulk_operation: 'Run Bulk Operation',
   update_addons: 'Update Add-ons',
   update_early_access_lead: 'Update Early Access Lead',
+  update_feedback_status: 'Update Feedback Status',
   update_internal_note: 'Update Internal Note',
   update_org_identity: 'Update Organization Identity',
   update_org_plan_and_limit: 'Update Plan And Limit',

@@ -6,6 +6,7 @@ import { CARD_STYLE_OPTIONS, FONT_OPTIONS, PRESETS } from '@/lib/themes';
 import { normalizeHiddenPublicPages } from '@/lib/public-pages';
 import { hasPlanFeature } from '@/lib/plan-features';
 import type { PublicPageKey } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 const VALID_PRESETS = new Set(Object.keys(PRESETS));
@@ -20,7 +21,7 @@ const PLUS_VISUAL_FIELDS = [
   'colorMode',
 ] as const;
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -64,9 +65,9 @@ export async function GET(req: Request) {
     requireScoreFinalization: data.require_score_finalization,
     publicHiddenPages:        normalizeHiddenPublicPages(pageData?.public_hidden_pages),
   });
-}
+}, { route: '/api/admin/tournament-branding' });
 
-export async function PATCH(req: Request) {
+export const PATCH = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -197,4 +198,4 @@ export async function PATCH(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/tournament-branding' });

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
-export async function POST() {
+export const POST = withObservability(async () => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
@@ -18,4 +19,4 @@ export async function POST() {
   }
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/org/complete-onboarding' });

@@ -6,6 +6,7 @@ import {
   getRepDocumentTemplates,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -23,13 +24,11 @@ async function resolveContext(orgSlug: string, teamId: string) {
   return { ctx, team };
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx } = resolved;
 
   const templates = await getRepDocumentTemplates(ctx.org.id, teamId);
@@ -46,5 +45,5 @@ export async function GET(
   );
 
   return NextResponse.json({ templates: withUrls });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/documents/templates' });
 

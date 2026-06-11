@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { cancelPractice } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ seasonId: string; practiceId: string }> },
-) {
+export const PATCH = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ seasonId: string; practiceId: string }> },) => {
   const { practiceId } = await params;
   const ctx = await getAuthContextWithRole();
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -23,4 +22,4 @@ export async function PATCH(
 
   await cancelPractice(practiceId, scope as 'one' | 'remaining' | 'all');
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/practices/[practiceId]' });

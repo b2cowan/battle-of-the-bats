@@ -47,6 +47,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         {/* Apple touch icon for "Add to Home Screen" */}
         <link rel="apple-touch-icon" href="/icons/pwa-192.png" />
+        {/* No-flash admin density — set data-density on <html> before first paint.
+            Lives in the root layout (never re-created on client nav) so React only
+            ever hydrates it; placing it in a layout you navigate *into* makes React
+            re-create it on the client, which it can't execute (dev warning + FOUC). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var k='fl_admin_density',v=null;try{v=localStorage.getItem(k);}catch(e){}if(v!=='comfortable'&&v!=='compact'){v=(window.matchMedia&&window.matchMedia('(pointer: coarse)').matches)?'comfortable':'compact';}document.documentElement.setAttribute('data-density',v);}catch(e){}})();",
+          }}
+        />
       </head>
       <body>
         <OrgNavProvider>

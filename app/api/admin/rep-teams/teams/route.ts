@@ -5,6 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeams, createRepTeam } from '@/lib/db';
 import { syncRepTeamBilling } from '@/lib/stripe-sync';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -21,7 +22,7 @@ function slugify(s: string): string {
     .replace(/^-|-$/g, '');
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -59,9 +60,9 @@ export async function GET(req: Request) {
   }));
 
   return NextResponse.json({ teams: summaries });
-}
+}, { route: '/api/admin/rep-teams/teams' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -107,4 +108,4 @@ export async function POST(req: Request) {
     }
     throw e;
   }
-}
+}, { route: '/api/admin/rep-teams/teams' });

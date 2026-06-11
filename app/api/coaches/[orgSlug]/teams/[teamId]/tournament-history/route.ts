@@ -9,6 +9,7 @@ import {
   getTeamScopedRepTeamAccess,
   getTeamWorkspaceForRepTeam,
 } from '@/lib/team-workspace-entitlements';
+import { withObservability } from '@/lib/observability';
 
 async function resolveBasicCoachTeamIdForWorkspace(teamWorkspace: {
   id: string;
@@ -41,10 +42,8 @@ async function resolveBasicCoachTeamIdForWorkspace(teamWorkspace: {
   return basicCoachTeamId;
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const ctx = await getAuthContext({ orgSlug });
   if (!ctx) return unauthorized();
@@ -79,4 +78,4 @@ export async function GET(
       { status: 500 },
     );
   }
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tournament-history' });

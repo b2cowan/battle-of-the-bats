@@ -3,6 +3,7 @@ import { getAuthContextWithRole, forbidden, unauthorized } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getOrgPublicSiteContent, upsertOrgPublicSiteContent } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 const URL_RE = /^https:\/\/.+/;
 const MAX_TAGLINE     = 100;
@@ -17,16 +18,16 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET() {
+export const GET = withObservability(async () => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
 
   const content = await getOrgPublicSiteContent(ctx!.org.id);
   return NextResponse.json(content ?? {});
-}
+}, { route: '/api/admin/public-site' });
 
-export async function PATCH(req: Request) {
+export const PATCH = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -63,4 +64,4 @@ export async function PATCH(req: Request) {
   });
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/public-site' });

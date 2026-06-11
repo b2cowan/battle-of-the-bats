@@ -3,6 +3,7 @@ import { getAuthContextWithScope, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { Division, Venue, Game, GameStatus } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
@@ -187,7 +188,9 @@ function mapDivision(row: DivisionRow): Division {
   };
 }
 
-export async function GET(req: Request, { params }: Params) {
+// Raw handler — exported (unwrapped) so the scorekeeper score route can wrap it under its own
+// route key without double-wrapping. The official route's own GET wraps it just below.
+export async function getScore(req: Request, { params }: Params) {
   const { orgSlug } = await params;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -374,3 +377,5 @@ export async function GET(req: Request, { params }: Params) {
     emptyState: null,
   } satisfies OfficialScorePayload);
 }
+
+export const GET = withObservability(getScore, { route: '/api/official/[orgSlug]/score' });

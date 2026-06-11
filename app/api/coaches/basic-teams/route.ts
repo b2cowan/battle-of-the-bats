@@ -7,6 +7,7 @@ import {
   linkTournamentRegistrationToBasicCoachTeam,
   canUserAccessTournamentRegistration,
 } from '@/lib/basic-coach-teams';
+import { withObservability } from '@/lib/observability';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -38,7 +39,7 @@ async function requireCoachUser() {
   return { id: user.id, email: user.email, firstName, lastName, name };
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withObservability(async (req: NextRequest) => {
   try {
     const user = await requireCoachUser();
     if (!user) return json({ error: 'Sign in required.' }, 401);
@@ -67,9 +68,9 @@ export async function GET(req: NextRequest) {
     console.error('[coaches basic-teams GET] error:', error);
     return json({ error: 'Could not load coach teams.' }, 500);
   }
-}
+}, { route: '/api/coaches/basic-teams' });
 
-export async function POST(req: NextRequest) {
+export const POST = withObservability(async (req: NextRequest) => {
   try {
     const user = await requireCoachUser();
     if (!user) return json({ error: 'Sign in required.' }, 401);
@@ -107,4 +108,4 @@ export async function POST(req: NextRequest) {
     console.error('[coaches basic-teams POST] error:', error);
     return json({ error: message }, status);
   }
-}
+}, { route: '/api/coaches/basic-teams' });

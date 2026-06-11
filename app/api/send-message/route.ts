@@ -5,6 +5,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 type RecipientTargeting = {
   includeTeams?: boolean;
@@ -71,7 +72,7 @@ async function trackCommunicationEvent(input: {
   });
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -209,4 +210,4 @@ export async function POST(req: Request) {
     const message = err instanceof Error ? err.message : 'Unable to send message';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+}, { route: '/api/send-message' });

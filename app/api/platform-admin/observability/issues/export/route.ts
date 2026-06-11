@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformAdmin } from '@/lib/platform-auth';
 import { canViewPlatformArea } from '@/lib/platform-areas';
 import { getErrorGroupsForExport, normalizeEnv, type IssueFilters } from '@/lib/observability/dashboard';
+import { withObservability } from '@/lib/observability';
 
 const SEVERITY_OPTIONS = ['critical', 'error', 'warning', 'info'];
 const STATUS_OPTIONS = ['open', 'resolved', 'ignored', 'snoozed'];
@@ -16,7 +17,7 @@ function csvValue(value: unknown) {
   return `"${raw.replace(/"/g, '""')}"`;
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withObservability(async (req: NextRequest) => {
   // Export is a read — allow any observability viewer (super_admin / product / support).
   const auth = await requirePlatformAdmin();
   if (auth.response) return auth.response;
@@ -93,4 +94,4 @@ export async function GET(req: NextRequest) {
       'Content-Disposition': `attachment; filename="observability-issues-${filters.env}-${date}.csv"`,
     },
   });
-}
+}, { route: '/api/platform-admin/observability/issues/export' });

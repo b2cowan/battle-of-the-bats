@@ -3,6 +3,7 @@ import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getCoachingAssignmentsForUser } from '@/lib/db';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function mapItem(row: Record<string, unknown>): BudgetItem {
   return {
@@ -33,13 +34,11 @@ async function resolveCoachContext(orgSlug: string) {
 // Returns platform defaults + org custom categories/items visible to coaches.
 // Only 'team' and 'both' scoped categories are returned (org-only categories
 // are admin tools, not relevant to the team budget planner).
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string }> },) => {
   const { orgSlug } = await params;
   const resolved = await resolveCoachContext(orgSlug);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx } = resolved;
 
   const { data, error } = await supabaseAdmin
@@ -68,18 +67,16 @@ export async function GET(
   }));
 
   return NextResponse.json({ categories });
-}
+}, { route: '/api/coaches/[orgSlug]/budget-items' });
 
 // POST /api/coaches/[orgSlug]/budget-items
 // Lets a coach add a custom item to any accessible category.
 // The item is saved org-wide so it becomes reusable by all coaches in the org.
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string }> },) => {
   const { orgSlug } = await params;
   const resolved = await resolveCoachContext(orgSlug);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx } = resolved;
 
   const body = await req.json();
@@ -131,4 +128,4 @@ export async function POST(
   }
 
   return NextResponse.json({ item: mapItem(data) }, { status: 201 });
-}
+}, { route: '/api/coaches/[orgSlug]/budget-items' });

@@ -9,6 +9,7 @@ import {
   normalizeBasicCoachTeamAnnouncementBody,
   sendBasicCoachTeamAnnouncement,
 } from '@/lib/basic-coach-announcements';
+import { withObservability } from '@/lib/observability';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -38,7 +39,7 @@ function validationError(error: unknown): string | null {
 type RouteCtx = { params: Promise<{ basicTeamId: string }> };
 
 /** List the recent one-way announcement log for an org-less Basic coach team (owner only). */
-export async function GET(_req: NextRequest, { params }: RouteCtx) {
+export const GET = withObservability(async (_req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId } = await params;
     if (!UUID_RE.test(basicTeamId)) return json({ error: 'Team not found.' }, 400);
@@ -54,10 +55,10 @@ export async function GET(_req: NextRequest, { params }: RouteCtx) {
     console.error('[coaches announcements GET] error:', error);
     return json({ error: 'Could not load your announcements.' }, 500);
   }
-}
+}, { route: '/api/coaches/teams/[basicTeamId]/announcements' });
 
 /** Send a one-way announcement to current roster contact emails (owner only). */
-export async function POST(req: NextRequest, { params }: RouteCtx) {
+export const POST = withObservability(async (req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId } = await params;
     if (!UUID_RE.test(basicTeamId)) return json({ error: 'Team not found.' }, 400);
@@ -82,4 +83,4 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
     console.error('[coaches announcements POST] error:', error);
     return json({ error: 'Could not send the announcement.' }, 500);
   }
-}
+}, { route: '/api/coaches/teams/[basicTeamId]/announcements' });

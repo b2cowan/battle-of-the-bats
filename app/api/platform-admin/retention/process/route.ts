@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { processBillingRetentionExpiry } from '@/lib/billing-retention';
 import { requirePlatformPermission } from '@/lib/platform-auth';
+import { withObservability } from '@/lib/observability';
 
-export async function POST() {
+export const POST = withObservability(async () => {
   const auth = await requirePlatformPermission('manage_billing');
   if (auth.response) return auth.response;
 
@@ -13,4 +14,4 @@ export async function POST() {
     const message = err instanceof Error ? err.message : 'Failed to process retention expiry.';
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
+}, { route: '/api/platform-admin/retention/process' });

@@ -8,6 +8,7 @@ import {
   getOrCreateOrgLedger,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -18,10 +19,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 
 // PATCH /api/admin/rep-teams/payment-requests/[id]
 // Body: { action: 'approve' | 'deny', denialReason?: string }
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ id: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -121,4 +120,4 @@ export async function PATCH(
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
 
   return NextResponse.json({ ok: true, status: 'approved' });
-}
+}, { route: '/api/admin/rep-teams/payment-requests/[id]' });

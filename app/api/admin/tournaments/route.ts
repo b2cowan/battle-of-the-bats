@@ -13,6 +13,7 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { sendEmail, SITE_URL, tournamentResultsFinalizedHtml } from '@/lib/email';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { ROSTER_WAIVER_TEXT_MAX_LENGTH } from '@/lib/roster-requirements';
+import { withObservability } from '@/lib/observability';
 
 function isDateValue(value: unknown): value is string {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -228,7 +229,7 @@ async function sendCompletionResultsNotification(input: {
  * Returns tournaments for the calling user's org, filtered by their assignment scope.
  * Owners and unscoped users (no assignment rows) receive all tournaments.
  */
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -249,9 +250,9 @@ export async function GET(req: Request) {
   }
 
   return Response.json(data ?? []);
-}
+}, { route: '/api/admin/tournaments' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -710,4 +711,4 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
-}
+}, { route: '/api/admin/tournaments' });

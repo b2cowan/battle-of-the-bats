@@ -4,6 +4,7 @@ import { PLAN_CONFIG } from '@/lib/plan-config';
 import { isPastDueTransition, isRecoveryTransition, writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 const PLAN_RANK: Record<OrgPlan, number> = {
   tournament: 0,
@@ -13,7 +14,7 @@ const PLAN_RANK: Record<OrgPlan, number> = {
   club: 3,
 };
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   if (!isBillingMockEnabled()) {
     return new Response(JSON.stringify({ error: 'Not found' }), {
       status: 404,
@@ -95,4 +96,4 @@ export async function POST(req: Request) {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });
-}
+}, { route: '/api/billing/mock-apply' });

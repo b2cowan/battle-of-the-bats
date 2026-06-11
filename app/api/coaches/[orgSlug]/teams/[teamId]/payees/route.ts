@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, searchOrgPayees, createOrgPayee } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -24,28 +25,24 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team };
 }
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const GET = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx } = resolved;
 
   const q = new URL(req.url).searchParams.get('q') ?? '';
   // Returns org-wide payees + this team's scoped payees
   const payees = await searchOrgPayees(ctx.org.id, q, teamId);
   return NextResponse.json({ payees });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/payees' });
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx } = resolved;
 
   const body = await req.json();
@@ -63,4 +60,4 @@ export async function POST(
     if (e?.code === '23505') return NextResponse.json({ error: 'A payee with that name already exists for this team' }, { status: 409 });
     throw e;
   }
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/payees' });

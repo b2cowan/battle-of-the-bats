@@ -14,6 +14,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithScope } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { NotificationEventType, NotificationPreference } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function badRequest(msg: string) {
   return NextResponse.json({ error: msg }, { status: 400 });
@@ -24,7 +25,7 @@ function unauthorized() {
 
 // ── GET ───────────────────────────────────────────────────────────────────────
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const url     = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug');
   if (!orgSlug) return badRequest('Missing orgSlug.');
@@ -51,11 +52,11 @@ export async function GET(req: Request) {
   }));
 
   return NextResponse.json({ preferences });
-}
+}, { route: '/api/admin/org/notification-preferences' });
 
 // ── POST ──────────────────────────────────────────────────────────────────────
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const url     = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug');
   if (!orgSlug) return badRequest('Missing orgSlug.');
@@ -93,4 +94,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ success: true });
-}
+}, { route: '/api/admin/org/notification-preferences' });

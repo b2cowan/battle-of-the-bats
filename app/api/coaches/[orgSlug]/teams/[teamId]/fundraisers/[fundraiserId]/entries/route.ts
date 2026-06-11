@@ -8,6 +8,7 @@ import {
   createEntry,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -58,13 +59,11 @@ function mapEntry(e: Record<string, unknown>) {
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]/entries
 // Returns per-player entries joined with player names, plus a summary.
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string }> },) => {
   const { orgSlug, teamId, fundraiserId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   const fundraiser = await getFundraiser(fundraiserId, teamId);
@@ -163,19 +162,17 @@ export async function GET(
     },
     players: playerRows,
   });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]/entries' });
 
 // POST /api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]/entries
 // Logs or updates a player's fundraising amount for this fundraiser.
 // Creates: accounting_entries income record + rep_fundraiser_entries row +
 // rep_dues_credits row (when rebate > 0). All three are linked by FK.
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string }> },) => {
   const { orgSlug, teamId, fundraiserId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, team, programYear } = resolved;
 
   const fundraiser = await getFundraiser(fundraiserId, teamId);
@@ -294,4 +291,4 @@ export async function POST(
     credit,
     accountingEntryId: accountingEntry.id,
   }, { status: 201 });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]/entries' });

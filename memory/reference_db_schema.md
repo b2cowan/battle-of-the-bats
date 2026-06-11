@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-06-10 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-06-11 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-06-10
+# DB Schema Reference — 2026-06-11
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -54,7 +54,7 @@ id (uuid), rule_id (uuid) → rules.id NOT NULL, content NOT NULL, display_order
 id (uuid), tournament_id (uuid) → tournaments.id, title NOT NULL, display_order (integer), icon, division_ids
 
 ### teams
-id (uuid), tournament_id (uuid) → tournaments.id, division_id (uuid) → divisions.id, name NOT NULL, coach, email, status, payment_status, registered_at, admin_notes, pool_id (uuid) → pools.id, deposit_paid (numeric), total_paid (numeric), waitlist_position (integer), slot_id (uuid) → pool_slots.id, check_in_status, checked_in_at, checked_in_by_user_id (uuid), checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes, seed (integer)
+id (uuid), tournament_id (uuid) → tournaments.id, division_id (uuid) → divisions.id, name NOT NULL, coach, email, status, payment_status, registered_at, admin_notes, pool_id (uuid) → pools.id, deposit_paid (numeric), total_paid (numeric), waitlist_position (integer), slot_id (uuid) → pool_slots.id, check_in_status, checked_in_at, checked_in_by_user_id (uuid), checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes, seed (integer), coach_email
 - Indexes: idx_teams_slot_id
 
 ### tournament_archives
@@ -466,7 +466,7 @@ id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, division_id (uuid) 
 - Indexes: schedule_facility_lanes_division_id_idx, schedule_facility_lanes_resolved_venue_facility_id_idx, schedule_facility_lanes_resolved_venue_id_idx, schedule_facility_lanes_tournament_id_idx, schedule_facility_lanes_unique_label
 
 ### tournament_roster_players
-id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, team_id (uuid) → teams.id NOT NULL, name NOT NULL, jersey_number, date_of_birth, position, notes, source, created_by_user_id (uuid), created_at, updated_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, team_id (uuid) → teams.id NOT NULL, name NOT NULL, jersey_number, date_of_birth, position, notes, source, created_by_user_id (uuid), created_at, updated_at, source_player_id (uuid) → basic_coach_team_players.id
 - Indexes: idx_tournament_roster_players_org, idx_tournament_roster_players_team, idx_tournament_roster_players_tournament
 
 ---

@@ -1,13 +1,13 @@
 import {
   sendEmail,
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml, manualTeamRegistrationHtml,
-  coachEmailEnabled,
+  coachEmailEnabled, resolveCoachRecipient,
 } from '@/lib/email';
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
-import { captureError } from '@/lib/observability';
+import { captureError, withObservability } from '@/lib/observability';
 
 function tournamentLockedResponse() {
   return new Response(
@@ -36,7 +36,7 @@ import {
   findDuplicateTournamentTeam,
 } from '@/lib/team-registration-duplicates';
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -107,9 +107,9 @@ export async function GET(req: Request) {
   }));
 
   return new Response(JSON.stringify(teamsWithAnswers), { status: 200, headers: { 'Content-Type': 'application/json' } });
-}
+}, { route: '/api/admin/teams' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -477,11 +477,14 @@ export async function POST(req: Request) {
         teamId:         current.id,
         coachEmail:     current.email,
       };
+      // Route to the assigned coach (teams.coach_email) when set, else teams.email (the claim key,
+      // which the footer keeps using — teams.email is never overwritten).
+      const recipient = resolveCoachRecipient(current);
 
       const updates = item.updates;
       if (updates.status === 'accepted' && current.status !== 'accepted') {
         if (coachEmailEnabled(bulkCoachSettings, 'acceptance')) {
-          await sendEmail(current.email, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions }));
+          await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions }));
         }
         // Notify other org admins of the status change (fire-and-forget)
         notify({
@@ -496,7 +499,7 @@ export async function POST(req: Request) {
       }
       if (updates.status === 'rejected' && current.status !== 'rejected') {
         if (coachEmailEnabled(bulkCoachSettings, 'rejection')) {
-          await sendEmail(current.email, `Registration Update — ${current.name}`, rejectionHtml(p));
+          await sendEmail(recipient, `Registration Update — ${current.name}`, rejectionHtml(p));
         }
         // Notify other org admins of the status change (fire-and-forget)
         notify({
@@ -522,7 +525,7 @@ export async function POST(req: Request) {
       }
       if ((updates.payment_status === 'paid' || updates.paymentStatus === 'paid') && current.payment_status !== 'paid') {
         if (coachEmailEnabled(bulkCoachSettings, 'payment')) {
-          await sendEmail(current.email, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
+          await sendEmail(recipient, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
         }
         // Notify org admins of received payment (fire-and-forget)
         notify({
@@ -550,9 +553,9 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
-}
+}, { route: '/api/admin/teams' });
 
-export async function DELETE(req: Request) {
+export const DELETE = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -590,4 +593,4 @@ export async function DELETE(req: Request) {
     void captureError(err, { ctx, route: '/api/admin/teams', method: 'DELETE', statusCode: 500 });
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
-}
+}, { route: '/api/admin/teams' });

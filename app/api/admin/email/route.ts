@@ -12,6 +12,7 @@
 import { NextResponse } from 'next/server';
 import { getPlatformAdminContext } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 // ── Founding season audience query ────────────────────────────────────────────
 // Orgs with a founding-season comp_period override (expires_at = Jan 1 2027)
@@ -53,7 +54,7 @@ async function getOptOutCount(): Promise<number> {
   return count ?? 0;
 }
 
-export async function GET() {
+export const GET = withObservability(async () => {
   const auth = await getPlatformAdminContext();
   if (!auth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -143,4 +144,4 @@ export async function GET() {
     console.error('[email/route] GET error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-}
+}, { route: '/api/admin/email' });

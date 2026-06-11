@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getRepPastProgramYears } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -12,7 +13,7 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET() {
+export const GET = withObservability(async () => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -29,4 +30,4 @@ export async function GET() {
 
   const years = await getRepPastProgramYears(ctx!.org.id, scopeTeamIds);
   return NextResponse.json({ years });
-}
+}, { route: '/api/admin/rep-teams/past' });

@@ -5,6 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLedgerById, getLedgerEntries, getLedgerSummary } from '@/lib/db';
 import type { AccountingEntryStatus } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 type Params = { params: Promise<{ ledgerId: string }> };
 
@@ -17,7 +18,7 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET(req: Request, { params }: Params) {
+export const GET = withObservability(async (req: Request, { params }: Params) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -41,9 +42,9 @@ export async function GET(req: Request, { params }: Params) {
   ]);
 
   return NextResponse.json({ ledger, summary, entries });
-}
+}, { route: '/api/admin/accounting/ledgers/[ledgerId]' });
 
-export async function PATCH(req: Request, { params }: Params) {
+export const PATCH = withObservability(async (req: Request, { params }: Params) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -70,4 +71,4 @@ export async function PATCH(req: Request, { params }: Params) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/accounting/ledgers/[ledgerId]' });

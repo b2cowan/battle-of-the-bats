@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -29,7 +30,7 @@ function orgSlugFromRelation(organizations: unknown) {
   return (organizations as { slug?: string } | null)?.slug ?? null;
 }
 
-export async function GET() {
+export const GET = withObservability(async () => {
   const user = await getAuthenticatedUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -50,9 +51,9 @@ export async function GET() {
     role: member?.role ?? null,
     status: member?.status ?? null,
   });
-}
+}, { route: '/api/auth/accept-invite' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const user = await getAuthenticatedUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -114,4 +115,4 @@ export async function POST(req: Request) {
 
   const orgSlug = orgSlugFromRelation(member.organizations);
   return NextResponse.json({ ok: true, orgSlug, role: member.role });
-}
+}, { route: '/api/auth/accept-invite' });

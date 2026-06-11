@@ -4,6 +4,7 @@ import { hasPlatformPermission, requireAnyPlatformPermission } from '@/lib/platf
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 type BulkActionType = 'subscription_status_override' | 'comp_period' | 'plan_change' | 'module_addon_enablement';
 type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
@@ -77,7 +78,7 @@ function operationStatus(successCount: number, failureCount: number) {
   return 'failed';
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const auth = await requireAnyPlatformPermission(['manage_billing', 'manage_product']);
   if (auth.response) return auth.response;
 
@@ -349,4 +350,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ ok: failureCount === 0, operation: updatedOperation, results });
-}
+}, { route: '/api/platform-admin/bulk-operations' });

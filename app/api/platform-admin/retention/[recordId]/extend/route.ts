@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { requirePlatformPermission } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 type RetentionRecordRow = {
   id: string;
@@ -18,7 +19,7 @@ function clampDays(value: unknown): number | null {
   return rounded;
 }
 
-export async function POST(req: Request, ctx: { params: Promise<{ recordId: string }> }) {
+export const POST = withObservability(async (req: Request, ctx: { params: Promise<{ recordId: string }> }) => {
   const auth = await requirePlatformPermission('manage_billing');
   if (auth.response) return auth.response;
 
@@ -71,4 +72,4 @@ export async function POST(req: Request, ctx: { params: Promise<{ recordId: stri
   );
 
   return NextResponse.json({ ok: true, retentionUntil: nextIso });
-}
+}, { route: '/api/platform-admin/retention/[recordId]/extend' });

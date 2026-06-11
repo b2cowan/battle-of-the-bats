@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { sendEmail, signupVerificationHtml } from '@/lib/email';
+import { captureError, withObservability } from '@/lib/observability';
 
 function slugify(name: string) {
   return name
@@ -38,7 +39,7 @@ async function rollbackAuthUser(id: string) {
   if (error) console.error('Signup rollback auth user error:', error);
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   let userId: string | null = null;
   let orgId: string | null = null;
 
@@ -203,6 +204,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, orgSlug: org.slug, requiresEmailVerification: false });
   } catch (err) {
     console.error('Signup route error:', err);
+    void captureError(err, { route: '/api/auth/signup', method: 'POST', statusCode: 500 });
     if (orgId) {
       await rollbackOrganization(orgId).catch(() => {});
     }
@@ -211,4 +213,4 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
   }
-}
+}, { route: '/api/auth/signup' });

@@ -5,6 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, getRegistrationsForSeason, insertLeagueEmailLog, getLeagueEmailLog } from '@/lib/db';
 import { sendEmail, leagueBroadcastHtml, ADMIN_EMAIL } from '@/lib/email';
 import type { LeagueRegistrationStatus } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -13,10 +14,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ seasonId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ seasonId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -29,12 +28,10 @@ export async function GET(
   } catch {
     return NextResponse.json({ log: [] });
   }
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/email' });
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ seasonId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ seasonId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -134,4 +131,4 @@ export async function POST(
   }
 
   return NextResponse.json({ sent, skipped });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/email' });

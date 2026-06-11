@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { sendEmail, orgInviteHtml, orgMemberAddedHtml } from '@/lib/email';
 import type { OrgRole } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function getActionLink(data: unknown) {
   return (data as { properties?: { action_link?: string | null } }).properties?.action_link ?? null;
@@ -22,7 +23,7 @@ const ROLE_EMAIL_LABEL: Record<OrgRole, string> = {
   coach: 'coach',
 };
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContext();
   if (!ctx) return unauthorized();
 
@@ -184,4 +185,4 @@ export async function POST(req: Request) {
   );
 
   return NextResponse.json({ ok: true, added: false });
-}
+}, { route: '/api/admin/members/invite' });

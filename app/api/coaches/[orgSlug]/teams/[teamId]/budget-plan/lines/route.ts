@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -26,13 +27,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 
 // POST /api/coaches/[orgSlug]/teams/[teamId]/budget-plan/lines
 // Adds a new estimated cost line to the team's budget plan.
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, team, programYear } = resolved;
 
   const body = await req.json();
@@ -68,4 +67,4 @@ export async function POST(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ line: data }, { status: 201 });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/lines' });

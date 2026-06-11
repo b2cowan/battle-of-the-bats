@@ -537,13 +537,56 @@ export default function TournamentEventSettingsPage() {
 
   useEffect(() => {
     if (!isInitialized || !tournamentId) return;
+    // Hydration sets every field AND isInitialized in one batch, which would
+    // otherwise look like a "change" and auto-save on load (and re-fire on every
+    // tournament switch). Only save when a field actually differs from the last
+    // persisted snapshot.
+    const dirty =
+      tournamentName !== saved.name ||
+      tournamentYear !== saved.year ||
+      startDate !== saved.startDate ||
+      endDate !== saved.endDate ||
+      feeScope !== saved.feeScope ||
+      depositAmount !== saved.depositAmount ||
+      depositDueDate !== saved.depositDueDate ||
+      totalFeeAmount !== saved.totalFeeAmount ||
+      totalFeeDueDate !== saved.totalFeeDueDate ||
+      showFeesOnRegister !== saved.showFeesOnRegister ||
+      paymentInstructions !== saved.paymentInstructions ||
+      paymentInstructionsOnForm !== saved.paymentInstructionsOnForm ||
+      gameTimingScope !== saved.gameTimingScope ||
+      gameDurationMinutes !== saved.gameDurationMinutes ||
+      bufferMinutes !== saved.bufferMinutes ||
+      venueMoveBufferMinutes !== saved.venueMoveBufferMinutes ||
+      facilityMoveBufferMinutes !== saved.facilityMoveBufferMinutes ||
+      tieBreakerScope !== saved.tieBreakerScope ||
+      runDiffCap !== saved.runDiffCap ||
+      JSON.stringify(tieBreakers) !== JSON.stringify(saved.tieBreakers) ||
+      scorePolicyMode !== saved.scorePolicyMode ||
+      notifyTeamsOnComplete !== saved.notifyTeamsOnComplete ||
+      defaultContactMemberId !== saved.defaultContactMemberId ||
+      notifyMode !== saved.notifyMode ||
+      contactShowToCoaches !== saved.contactShowToCoaches ||
+      contactShowOnPublic !== saved.contactShowOnPublic ||
+      coachEmailConfirmation !== saved.coachEmailConfirmation ||
+      coachEmailAcceptance !== saved.coachEmailAcceptance ||
+      coachEmailRejection !== saved.coachEmailRejection ||
+      coachEmailPayment !== saved.coachEmailPayment ||
+      rosterRequire !== saved.rosterRequire ||
+      rosterRequireDob !== saved.rosterRequireDob ||
+      rosterRequireJersey !== saved.rosterRequireJersey ||
+      rosterRequireWaiver !== saved.rosterRequireWaiver ||
+      rosterWaiverText !== saved.rosterWaiverText ||
+      rosterMinPlayers !== saved.rosterMinPlayers ||
+      rosterMaxPlayers !== saved.rosterMaxPlayers;
+    if (!dirty) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
       performSaveRef.current?.();
     }, 1200);
     return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
   }, [
-    isInitialized, tournamentId,
+    isInitialized, tournamentId, saved,
     tournamentName, tournamentYear, startDate, endDate,
     feeScope, depositAmount, depositDueDate, totalFeeAmount, totalFeeDueDate,
     showFeesOnRegister, paymentInstructions, paymentInstructionsOnForm,

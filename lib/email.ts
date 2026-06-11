@@ -23,7 +23,7 @@ function htmlToText(html: string): string {
 }
 
 /** Escape user/organizer-authored text before interpolating into an HTML email body. */
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -74,9 +74,27 @@ export function coachEmailEnabled(settings: unknown, type: CoachEmailType): bool
   return value !== false;
 }
 
+/**
+ * Resolve the `to:` address for a coach-facing automatic email (free-tier Phase 5l).
+ *
+ * Prefers the head coach's per-tournament contact email (`teams.coach_email`, set in the Coaches
+ * Portal) and falls back to `teams.email`. `teams.email` is NEVER overwritten — it stays the portal
+ * access / claim key (claim-by-email), so a reassigned coach gets the mail while the registrant
+ * keeps portal access. Returns `''` when neither is set (callers that pre-skip no-email teams
+ * should guard on the result, not on `email` alone).
+ *
+ * This is the recipient ONLY — the email's claim-link footer (`coachPortalFooter`) still carries
+ * `teams.email` (the claim key), so do not pass the resolved recipient into the footer.
+ */
+export function resolveCoachRecipient(team: { coach_email?: string | null; email?: string | null }): string {
+  const coach = team.coach_email?.trim();
+  if (coach) return coach;
+  return team.email?.trim() ?? '';
+}
+
 // ── Email templates ────────────────────────────────────────────────────────────
 
-const wrap = (content: string) => `
+export const wrap = (content: string) => `
 <div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
   <div style="margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);">
     <span style="font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;">FIELDLOGICHQ</span>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformAdmin, requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { withObservability } from '@/lib/observability';
 
 const MAX_NOTE_LENGTH = 4000;
 
@@ -12,10 +13,8 @@ function cleanNoteBody(value: unknown) {
   return body.slice(0, MAX_NOTE_LENGTH);
 }
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withObservability(async (_req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requirePlatformAdmin();
   if (auth.response) return auth.response;
 
@@ -34,12 +33,10 @@ export async function GET(
   }
 
   return NextResponse.json({ notes: data ?? [] });
-}
+}, { route: '/api/platform-admin/orgs/[id]/notes' });
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requirePlatformPermission('manage_support');
   if (auth.response) return auth.response;
 
@@ -76,4 +73,4 @@ export async function POST(
   );
 
   return NextResponse.json({ note: data });
-}
+}, { route: '/api/platform-admin/orgs/[id]/notes' });

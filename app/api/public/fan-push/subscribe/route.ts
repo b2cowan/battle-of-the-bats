@@ -14,8 +14,9 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature } from '@/lib/plan-features';
 import type { OrgPlan } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   let body: {
     endpoint?: string;
     keys?: { p256dh?: string; auth?: string };
@@ -89,4 +90,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ success: true });
-}
+}, { route: '/api/public/fan-push/subscribe' });

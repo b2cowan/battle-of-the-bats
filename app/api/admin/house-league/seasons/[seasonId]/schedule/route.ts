@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, createLeagueGame } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -30,10 +31,8 @@ function mapGame(row: any) {
   };
 }
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ seasonId: string }> },
-) {
+export const GET = withObservability(async (req: Request,
+  { params }: { params: Promise<{ seasonId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -65,12 +64,10 @@ export async function GET(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ games: (data ?? []).map(mapGame) });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/schedule' });
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ seasonId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ seasonId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -111,4 +108,4 @@ export async function POST(
   });
 
   return NextResponse.json({ game }, { status: 201 });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/schedule' });

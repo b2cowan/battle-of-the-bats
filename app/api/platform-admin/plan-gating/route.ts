@@ -6,6 +6,7 @@ import {
 import { sanitizePlatformChangeNote } from '@/lib/platform-change-note';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function unauthorized() {
   return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -14,7 +15,7 @@ function unauthorized() {
   });
 }
 
-export async function GET() {
+export const GET = withObservability(async () => {
   const user = await getPlatformAuthContext();
   if (!user) return unauthorized();
 
@@ -31,9 +32,9 @@ export async function GET() {
   }
 
   return Response.json(data);
-}
+}, { route: '/api/platform-admin/plan-gating' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const auth = await requirePlatformPermission('manage_product');
   if (auth.response) return auth.response;
 
@@ -112,4 +113,4 @@ export async function POST(req: Request) {
     last_change_note: sanitizedNote,
     approved_change_request_id: approval.changeRequest.id,
   });
-}
+}, { route: '/api/platform-admin/plan-gating' });

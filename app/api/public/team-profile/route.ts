@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getOrganizationBySlug, getTournamentsByOrg, getTeams, getDivisions, getGames } from '@/lib/db';
 import { clampRunDiffCap, cappedGameDiff } from '@/lib/tie-breakers';
 import type { Game } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ function ordinal(n: number): string {
   return `${n}th`;
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const teamId = searchParams.get('teamId');
   const orgSlug = searchParams.get('orgSlug');
@@ -146,4 +147,4 @@ export async function GET(req: Request) {
     games: teamGames,
     teamNames: teamMap,
   });
-}
+}, { route: '/api/public/team-profile' });

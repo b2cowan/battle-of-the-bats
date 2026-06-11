@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 /**
  * POST /api/admin/org/onboarding-survey
@@ -13,7 +14,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
  * This is a non-blocking step — callers should not surface errors to the user.
  * Segmentation data only; does not gate any features.
  */
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug });
   if (!ctx) return unauthorized();
@@ -62,4 +63,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/org/onboarding-survey' });

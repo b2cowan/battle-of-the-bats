@@ -18,8 +18,9 @@
 import { NextResponse }         from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { supabaseAdmin }        from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const user = await getAuthenticatedUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -71,4 +72,4 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ success: true });
-}
+}, { route: '/api/notifications/push/subscribe' });

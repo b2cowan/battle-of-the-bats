@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, getRepRosterPlayers } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -100,13 +101,11 @@ async function buildRefundBreakdown(programYearId: string, totalSurplus: number)
 }
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/season-surplus
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   const { data: surplusRow } = await supabaseAdmin
@@ -130,16 +129,14 @@ export async function GET(
     await buildRefundBreakdown(programYear.id, totalSurplus);
 
   return NextResponse.json({ surplus, breakdown, totalAllCredits, evenPool, playerCount });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/season-surplus' });
 
 // PUT /api/coaches/[orgSlug]/teams/[teamId]/season-surplus
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const PUT = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, programYear } = resolved;
 
   const body = await req.json();
@@ -182,4 +179,4 @@ export async function PUT(
     evenPool,
     playerCount,
   });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/season-surplus' });

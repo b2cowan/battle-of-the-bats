@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { GET as getOfficialScore } from '@/app/api/official/[orgSlug]/score/route';
+import { getScore as getOfficialScore } from '@/app/api/official/[orgSlug]/score/route';
 import { getAuthContextWithScope, unauthorized, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import {
@@ -8,14 +8,15 @@ import {
   TournamentScoringError,
 } from '@/lib/tournament-scoring-service';
 import { notify } from '@/lib/notify';
+import { withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
 type Params = { params: Promise<{ orgSlug: string }> };
 
-export const GET = getOfficialScore;
+export const GET = withObservability(getOfficialScore, { route: '/api/scorekeeper/[orgSlug]/score' });
 
-export async function PATCH(req: Request, { params }: Params) {
+export const PATCH = withObservability(async (req: Request, { params }: Params) => {
   const { orgSlug } = await params;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -78,4 +79,4 @@ export async function PATCH(req: Request, { params }: Params) {
     }
     throw err;
   }
-}
+}, { route: '/api/scorekeeper/[orgSlug]/score' });

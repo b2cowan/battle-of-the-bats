@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -20,13 +21,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 }
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/payment-requests
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const GET = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
 
   const url = new URL(req.url);
   const status = url.searchParams.get('status') ?? undefined;
@@ -61,16 +60,14 @@ export async function GET(
   }));
 
   return NextResponse.json({ requests });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/payment-requests' });
 
 // POST /api/coaches/[orgSlug]/teams/[teamId]/payment-requests
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, team } = resolved;
 
   const body = await req.json();
@@ -127,4 +124,4 @@ export async function POST(
       updatedAt:    data.updated_at,
     },
   }, { status: 201 });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/payment-requests' });

@@ -6,6 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeam, getRepProgramYear, getRepProgramYears, updateRepProgramYear } from '@/lib/db';
 import { syncRepTeamBilling } from '@/lib/stripe-sync';
 import type { RepProgramYearStatus } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -21,10 +22,8 @@ const VALID_TRANSITIONS: Record<RepProgramYearStatus, RepProgramYearStatus[]> = 
   archived:  [],
 };
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ teamId: string; yearId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ teamId: string; yearId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -73,12 +72,10 @@ export async function GET(
       upcomingEvents: upcomingEvents ?? 0,
     },
   });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]' });
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ teamId: string; yearId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ teamId: string; yearId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -143,4 +140,4 @@ export async function PATCH(
   }
 
   return NextResponse.json({ programYear: updated });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]' });

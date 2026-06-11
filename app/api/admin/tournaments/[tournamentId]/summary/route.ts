@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -181,7 +182,7 @@ async function trackSummaryEvent(input: {
   });
 }
 
-export async function GET(req: NextRequest, { params }: RouteParams) {
+export const GET = withObservability(async (req: NextRequest, { params }: RouteParams) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -350,9 +351,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       teams: `/${ctx.org.slug}/${tournament.slug}/teams`,
     },
   });
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/summary' });
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+export const POST = withObservability(async (req: NextRequest, { params }: RouteParams) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -417,4 +418,4 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   });
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/summary' });

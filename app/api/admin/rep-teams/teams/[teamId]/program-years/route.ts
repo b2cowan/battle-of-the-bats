@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeam, getRepProgramYears, createRepProgramYear } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -12,10 +13,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ teamId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ teamId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -30,12 +29,10 @@ export async function GET(
 
   const programYears = await getRepProgramYears(team.id);
   return NextResponse.json({ programYears });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years' });
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ teamId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ teamId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -85,4 +82,4 @@ export async function POST(
     }
     throw e;
   }
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years' });

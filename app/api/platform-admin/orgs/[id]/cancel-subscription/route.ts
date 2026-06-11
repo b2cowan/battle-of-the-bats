@@ -10,6 +10,7 @@ import { stripe } from '@/lib/stripe';
 import { sendEmail, cancellationConfirmationHtml, SITE_URL } from '@/lib/email';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan, Organization } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 type OrgRow = {
   id: string;
@@ -40,10 +41,8 @@ function mapOrgRow(row: OrgRow): Organization {
   };
 }
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withObservability(async (_req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requirePlatformPermission('manage_billing');
   if (auth.response) return auth.response;
 
@@ -73,12 +72,10 @@ export async function GET(
     planLabel: PLAN_CONFIG[orgRow.plan_id as OrgPlan]?.label ?? orgRow.plan_id,
     ...preflight,
   });
-}
+}, { route: '/api/platform-admin/orgs/[id]/cancel-subscription' });
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const POST = withObservability(async (req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }) => {
   const auth = await requirePlatformPermission('manage_billing');
   if (auth.response) return auth.response;
 
@@ -273,4 +270,4 @@ export async function POST(
     shutsDown: preflight.shutsDown,
     tournaments: preflight.tournaments,
   });
-}
+}, { route: '/api/platform-admin/orgs/[id]/cancel-subscription' });

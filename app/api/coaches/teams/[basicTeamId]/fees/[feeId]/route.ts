@@ -6,6 +6,7 @@ import {
   normalizeBasicCoachTeamFeeBody,
   updateBasicCoachTeamFee,
 } from '@/lib/basic-coach-fees';
+import { withObservability } from '@/lib/observability';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -33,7 +34,7 @@ function validationError(error: unknown): string | null {
 type RouteCtx = { params: Promise<{ basicTeamId: string; feeId: string }> };
 
 /** Edit a fee (partial; owner only). */
-export async function PATCH(req: NextRequest, { params }: RouteCtx) {
+export const PATCH = withObservability(async (req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId, feeId } = await params;
     if (!UUID_RE.test(basicTeamId) || !UUID_RE.test(feeId)) return json({ error: 'Fee not found.' }, 400);
@@ -53,10 +54,10 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
     console.error('[coaches fees PATCH] error:', error);
     return json({ error: 'Could not update the fee.' }, 500);
   }
-}
+}, { route: '/api/coaches/teams/[basicTeamId]/fees/[feeId]' });
 
 /** Remove a fee (owner only). */
-export async function DELETE(_req: NextRequest, { params }: RouteCtx) {
+export const DELETE = withObservability(async (_req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId, feeId } = await params;
     if (!UUID_RE.test(basicTeamId) || !UUID_RE.test(feeId)) return json({ error: 'Fee not found.' }, 400);
@@ -70,4 +71,4 @@ export async function DELETE(_req: NextRequest, { params }: RouteCtx) {
     console.error('[coaches fees DELETE] error:', error);
     return json({ error: 'Could not remove the fee.' }, 500);
   }
-}
+}, { route: '/api/coaches/teams/[basicTeamId]/fees/[feeId]' });

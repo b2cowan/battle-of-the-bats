@@ -8,6 +8,7 @@ import {
   getRepTryoutRegistrations,
   createRepTryoutRegistration,
 } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -16,10 +17,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ teamId: string; yearId: string }> },
-) {
+export const GET = withObservability(async (req: Request,
+  { params }: { params: Promise<{ teamId: string; yearId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -55,12 +54,10 @@ export async function GET(
   }
 
   return NextResponse.json({ registrations });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts' });
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ teamId: string; yearId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ teamId: string; yearId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -108,4 +105,4 @@ export async function POST(
   });
 
   return NextResponse.json({ registration }, { status: 201 });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts' });

@@ -3,6 +3,7 @@ import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepBudgetLineWithPeriods, RepBudgetPlan } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -62,13 +63,11 @@ function mapLine(row: Record<string, unknown>): RepBudgetLineWithPeriods {
 // Returns the full budget plan for the active program year, including
 // per-line period breakdowns, total budget, roster count, and whether
 // dues installments have already been generated.
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   const { data: linesData, error: linesErr } = await supabaseAdmin
@@ -111,4 +110,4 @@ export async function GET(
   };
 
   return NextResponse.json({ plan });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan' });

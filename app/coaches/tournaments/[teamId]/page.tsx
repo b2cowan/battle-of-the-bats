@@ -12,9 +12,19 @@ import {
 } from '@/lib/coaches-status';
 import { buildCoachTournamentStatus } from '@/lib/coach-status-model';
 import { deriveCoachTournamentPhase } from '@/lib/coach-tournament-phase';
+import { teamColor, teamInitials } from '@/lib/team-color';
 import TournamentStatusBlock from '@/components/coaches/TournamentStatusBlock';
 import TeamHQ from '@/components/coaches/TeamHQ';
+import CoachLiveSchedule, { type CoachScheduleGame } from '@/components/coaches/CoachLiveSchedule';
+import TournamentRosterSubmit from '@/components/coaches/TournamentRosterSubmit';
+import HeadCoachEditor from '@/components/coaches/HeadCoachEditor';
+import { parseRosterRequirements } from '@/lib/roster-requirements';
+import type { GameStatus, TournamentSettings } from '@/lib/types';
 import styles from './detail.module.css';
+
+// Empty-slot sentinel some games use instead of NULL for an unassigned team
+// (matches the public game page / opengraph image resolution).
+const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
 type RouteParams = { params: Promise<{ teamId: string }> };
 
@@ -52,7 +62,7 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
 
   const { data: team, error: teamError } = await supabaseAdmin
     .from('teams')
-    .select('id, name, coach, email, status, registered_at, tournament_id, division_id, payment_status, deposit_paid, total_paid, payment_collected_at, check_in_status, checked_in_at, roster_submitted_at, roster_confirmed_at')
+    .select('id, name, coach, email, coach_email, status, registered_at, tournament_id, division_id, payment_status, deposit_paid, total_paid, payment_collected_at, check_in_status, checked_in_at, roster_submitted_at, roster_confirmed_at')
     .eq('id', teamId)
     .maybeSingle();
 
@@ -65,11 +75,12 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     { data: division },
     { data: announcements },
     { data: games },
+    { data: acceptedTeams },
   ] = await Promise.all([
     team.tournament_id
       ? supabaseAdmin
           .from('tournaments')
-          .select('id, name, slug, year, start_date, end_date, org_id, status, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
+          .select('id, name, slug, year, start_date, end_date, org_id, status, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, settings')
           .eq('id', team.tournament_id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -93,11 +104,22 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     team.tournament_id
       ? supabaseAdmin
           .from('games')
-          .select('id, game_date, game_time, location, home_team_id, away_team_id, home_score, away_score, status, is_playoff, diamond_id')
+          .select('id, game_date, game_time, location, home_team_id, away_team_id, home_score, away_score, status, is_playoff, diamond_id, home_placeholder, away_placeholder')
           .eq('tournament_id', team.tournament_id)
           .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
           .order('game_date', { ascending: true })
           .order('game_time', { ascending: true })
+      : Promise.resolve({ data: [] }),
+
+    // Accepted teams in the tournament → opponent-name lookup for the schedule
+    // bridge. Only accepted teams have public profiles, so this is the honest
+    // resolution set; null home/away (TBD bracket games) fall back to "TBD".
+    team.tournament_id
+      ? supabaseAdmin
+          .from('teams')
+          .select('id, name')
+          .eq('tournament_id', team.tournament_id)
+          .eq('status', 'accepted')
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -145,7 +167,65 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     status: string;
     is_playoff: boolean;
     diamond_id: string | null;
+    home_placeholder: string | null;
+    away_placeholder: string | null;
   }>;
+
+  // 5i game-day bridge data. Opponent names resolve from the accepted set (only
+  // accepted teams have public profiles); null home/away → "TBD".
+  const teamNameById = new Map(
+    ((acceptedTeams ?? []) as Array<{ id: string; name: string }>).map(t => [t.id, t.name] as const),
+  );
+
+  // Matchups are public ONLY under 'published_teams'. 'published_generic' means the
+  // organizer published times/locations but deliberately HID who-plays-who — so the
+  // coach bridge must mirror the public game page (getTeamDisplay): show the
+  // placeholder/TBD, never the real opponent name, or it would leak the hidden
+  // identity AND mismatch the page it links to.
+  const namesPublished = division?.schedule_visibility === 'published_teams';
+
+  // The live bridge (public deep-links, live scorebug, Follow) additionally
+  // requires the tournament to be publicly visible (active|completed) — the public
+  // game page + follow dock don't exist for a draft tournament. When the division
+  // schedule is published but the tournament isn't yet public, the schedule still
+  // renders statically (names + final scores), just without links / polling / follow.
+  const tournamentIsPublic = tournament?.status === 'active' || tournament?.status === 'completed';
+  const canLinkPublic = Boolean(scheduleVisible && tournamentIsPublic && org?.slug && tournament?.slug);
+
+  const initialGames: CoachScheduleGame[] = teamGames.map(g => {
+    const isHome = g.home_team_id === teamId;
+    const opponentId = isHome ? g.away_team_id : g.home_team_id;
+    const opponentPlaceholder = isHome ? g.away_placeholder : g.home_placeholder;
+    // Reveal a real opponent name only when matchups are published AND a real team
+    // is assigned; otherwise fall back to the game's placeholder/TBD with a neutral
+    // monogram (mirrors the public game page — never leaks a hidden/undecided team).
+    const realOpponentId = opponentId && opponentId !== NIL_UUID ? opponentId : null;
+    const realOpponentName = namesPublished && realOpponentId ? teamNameById.get(realOpponentId) : undefined;
+    const revealed = Boolean(realOpponentName);
+    const opponentName = realOpponentName ?? opponentPlaceholder ?? 'TBD';
+    return {
+      id: g.id,
+      href: canLinkPublic ? `/${org!.slug}/${tournament!.slug}/schedule/${g.id}` : null,
+      dateLabel: g.game_date
+        ? new Date(g.game_date + 'T00:00:00').toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })
+        : 'TBD',
+      timeLabel: g.game_time
+        ? new Date(`1970-01-01T${g.game_time}`).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })
+        : null,
+      date: g.game_date,
+      isHome,
+      opponentName,
+      opponentInitials: revealed ? teamInitials(opponentName) : '–',
+      opponentColor: revealed ? teamColor(opponentName) : 'var(--white-40)',
+      location: g.location,
+      isPlayoff: g.is_playoff,
+      myScore: isHome ? g.home_score : g.away_score,
+      oppScore: isHome ? g.away_score : g.home_score,
+      status: g.status as GameStatus,
+    };
+  });
+
+  const showLiveBridge = team.status === 'accepted' && scheduleVisible && initialGames.length > 0;
 
   const statusBadge = registrationStatusBadge(team.status);
   const statusLabel = registrationStatusLabel(team.status);
@@ -214,6 +294,18 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     ? new Date(team.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
 
+  // 5k roster submit. The organizer's requirements (5f) drive whether the Roster milestone
+  // shows in the hero checklist and whether the submit card appears. Show the card for an
+  // accepted team when a roster is required OR one was already submitted (so a coach can still
+  // view/update it). The card itself fetches the master roster + current snapshot from the 5j API.
+  const rosterRequirements = parseRosterRequirements((tournament?.settings ?? null) as TournamentSettings | null);
+  const showRosterSubmit = team.status === 'accepted' && (rosterRequirements.required || Boolean(team.roster_submitted_at));
+
+  // 5l head-coach assignment. The registrant assigns/changes the head-coach name (+ optional
+  // contact email) for any non-rejected team — pending included, so the contact email can route
+  // the acceptance email. Rejected teams have nothing to assign.
+  const showHeadCoach = team.status !== 'rejected';
+
   return (
     <div className={styles.page}>
       <nav className={styles.breadcrumb}>
@@ -248,7 +340,28 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
         status={coachStatus}
         showCheckIn={isGameDayOrLater}
         registeredDateLabel={registeredDateLabel}
+        rosterRequired={rosterRequirements.required}
       />
+
+      {/* 5i game-day bridge — placed directly under the hero so the live scorebug
+          + opponents sit in the "hero zone" for accepted teams with a published
+          division schedule. Renders static (names, no links/live) when the
+          tournament isn't public yet. */}
+      {showLiveBridge && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Schedule</h2>
+          <CoachLiveSchedule
+            orgSlug={org?.slug ?? ''}
+            tournamentSlug={tournament?.slug ?? ''}
+            teamId={teamId}
+            teamName={team.name}
+            teamDivisionId={team.division_id}
+            live={canLinkPublic}
+            pollEnabled={canLinkPublic && coachPhase === 'game_day'}
+            initialGames={initialGames}
+          />
+        </section>
+      )}
 
       {coachStatus && (
         <section className={styles.section}>
@@ -257,6 +370,30 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
             status={coachStatus}
             contactEmail={coachContactEmail}
             showCheckIn={isGameDayOrLater}
+          />
+        </section>
+      )}
+
+      {/* 5k — per-event roster submit. Only for accepted teams when the organizer requires a
+          roster (or one was already submitted). The card fetches the master roster + current
+          snapshot from the 5j API and writes the snapshot only (never the master). */}
+      {showRosterSubmit && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Your roster</h2>
+          <TournamentRosterSubmit teamId={teamId} />
+        </section>
+      )}
+
+      {/* 5l — head-coach + contact assignment. The registrant sets who coaches this team for
+          the event + an optional contact email; writes teams.coach / teams.coach_email. The
+          email never overwrites the team's access/claim email. */}
+      {showHeadCoach && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Head coach</h2>
+          <HeadCoachEditor
+            teamId={teamId}
+            initialCoach={team.coach ?? ''}
+            initialCoachEmail={team.coach_email ?? null}
           />
         </section>
       )}
@@ -275,44 +412,16 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
         </div>
       </section>
 
-      {team.status === 'accepted' && (
+      {/* When there's no live bridge to show, keep the schedule empty/unpublished
+          notes in their normal position (the bridge above owns the populated case). */}
+      {team.status === 'accepted' && !showLiveBridge && (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Schedule</h2>
-          {!scheduleVisible ? (
-            <div className="card" style={{ padding: '1.5rem', color: 'var(--text-secondary)', textAlign: 'center', fontSize: '0.88rem' }}>
-              The schedule for this division has not been published yet. Check back after the organizer publishes it.
-            </div>
-          ) : teamGames.length === 0 ? (
-            <div className="card" style={{ padding: '1.5rem', color: 'var(--text-secondary)', textAlign: 'center', fontSize: '0.88rem' }}>
-              No games scheduled for your team yet.
-            </div>
-          ) : (
-            <div className={styles.gameList}>
-              {teamGames.map(game => {
-                const isHome = game.home_team_id === teamId;
-                const myScore   = isHome ? game.home_score : game.away_score;
-                const oppScore  = isHome ? game.away_score : game.home_score;
-                const hasResult = myScore !== null && oppScore !== null;
-                const gameDate  = game.game_date
-                  ? new Date(game.game_date + 'T00:00:00').toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })
-                  : '-';
-                const gameTime  = game.game_time
-                  ? new Date(`1970-01-01T${game.game_time}`).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })
-                  : null;
-
-                return (
-                  <div key={game.id} className={styles.gameRow}>
-                    <div className={styles.gameDate}>{gameDate}{gameTime ? ` - ${gameTime}` : ''}</div>
-                    <div className={styles.gameOpponent}>{isHome ? 'Home' : 'Away'}{game.is_playoff ? ' (Playoff)' : ''}</div>
-                    {game.location && <div className={styles.gameLocation}>{game.location}</div>}
-                    {hasResult && (
-                      <div className={styles.gameScore}>{myScore}-{oppScore}</div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div className="card" style={{ padding: '1.5rem', color: 'var(--text-secondary)', textAlign: 'center', fontSize: '0.88rem' }}>
+            {!scheduleVisible
+              ? 'The schedule for this division has not been published yet. Check back after the organizer publishes it.'
+              : 'No games scheduled for your team yet.'}
+          </div>
         </section>
       )}
 

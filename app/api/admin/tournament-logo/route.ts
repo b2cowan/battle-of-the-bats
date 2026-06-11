@@ -3,6 +3,7 @@ import { forbidden, getAuthContextWithScope, scopeGuard, unauthorized } from '@/
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { hasCapability } from '@/lib/roles';
+import { withObservability } from '@/lib/observability';
 
 const BUCKET   = 'org-logos';
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -23,7 +24,7 @@ async function ensureBucket() {
   await supabaseAdmin.storage.createBucket(BUCKET, { public: true });
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -73,9 +74,9 @@ export async function POST(req: Request) {
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 
   return NextResponse.json({ logoUrl });
-}
+}, { route: '/api/admin/tournament-logo' });
 
-export async function DELETE(req: Request) {
+export const DELETE = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -108,4 +109,4 @@ export async function DELETE(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/tournament-logo' });

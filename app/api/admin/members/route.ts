@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContext({ orgSlug });
   if (!ctx) return unauthorized();
@@ -80,4 +81,4 @@ export async function GET(req: Request) {
   });
 
   return NextResponse.json(result);
-}
+}, { route: '/api/admin/members' });

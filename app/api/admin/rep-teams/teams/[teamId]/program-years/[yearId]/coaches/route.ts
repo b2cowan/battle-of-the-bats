@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeam, getRepProgramYear, getRepTeamCoaches, addRepTeamCoach, removeRepTeamCoach } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -12,10 +13,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ teamId: string; yearId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ teamId: string; yearId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -59,12 +58,10 @@ export async function GET(
   }));
 
   return NextResponse.json({ coaches: enriched });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/coaches' });
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ teamId: string; yearId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ teamId: string; yearId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -114,12 +111,10 @@ export async function POST(
     }
     throw e;
   }
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/coaches' });
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ teamId: string; yearId: string }> },
-) {
+export const DELETE = withObservability(async (req: Request,
+  { params }: { params: Promise<{ teamId: string; yearId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -154,4 +149,4 @@ export async function DELETE(
 
   await removeRepTeamCoach(coachId);
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/coaches' });

@@ -221,6 +221,8 @@
   color: rgba(15, 17, 35, 0.3);
 }
 
+[data-color-mode="light"] select { color-scheme: light; }
+
 [data-color-mode="light"] select option {
   background: #FFFFFF;
   color: #0F1123;
@@ -748,6 +750,11 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
   background: rgba(217, 249, 157, 0.12);
 }
+
+/* Native <select> popups render in dark system chrome (readable white-on-dark,
+   including the highlighted row + scrollbar) instead of OS-light. Light-mode
+   pages opt back out via the [data-color-mode="light"] guard above. */
+select { color-scheme: dark; }
 
 select option {
   background: var(--bg-2);

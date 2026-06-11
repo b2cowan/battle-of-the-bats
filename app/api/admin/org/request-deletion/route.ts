@@ -3,8 +3,9 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { sendEmail, orgDeletionRequestHtml } from '@/lib/email';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
@@ -31,4 +32,4 @@ export async function POST(req: Request) {
   );
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/org/request-deletion' });

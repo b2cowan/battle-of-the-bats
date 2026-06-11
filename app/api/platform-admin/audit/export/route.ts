@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformAdmin } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ExcelJS from 'exceljs';
+import { withObservability } from '@/lib/observability';
 
 const EXPORT_LIMIT = 2000;
 
@@ -31,7 +32,7 @@ function csvValue(value: unknown) {
   return `"${raw.replace(/"/g, '""')}"`;
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withObservability(async (req: NextRequest) => {
   const auth = await requirePlatformAdmin();
   if (auth.response) return auth.response;
 
@@ -142,4 +143,4 @@ export async function GET(req: NextRequest) {
       'Content-Disposition': `attachment; filename="platform-audit-log-${date}.csv"`,
     },
   });
-}
+}, { route: '/api/platform-admin/audit/export' });

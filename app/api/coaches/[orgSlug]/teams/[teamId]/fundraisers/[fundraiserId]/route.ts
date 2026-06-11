@@ -6,6 +6,7 @@ import {
   getActiveRepProgramYear,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -32,13 +33,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 // Updates fundraiser header fields (name, description, rebate %, dates, isActive).
 // Changing player_rebate_percent only affects future entries — existing entries
 // snapshot their percent at creation time.
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string }> },) => {
   const { orgSlug, teamId, fundraiserId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { team } = resolved;
 
   const { data: existing } = await supabaseAdmin
@@ -90,4 +89,4 @@ export async function PATCH(
       updatedAt:           data.updated_at,
     },
   });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/fundraisers/[fundraiserId]' });

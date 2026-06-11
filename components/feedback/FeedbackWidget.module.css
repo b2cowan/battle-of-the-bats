@@ -1,0 +1,118 @@
+/* Feedback widget form — rendered inside the global .modal shell (dark --hud-surface), so
+   light-on-dark text is safe on every mount surface (admin, coach, scorekeeper). */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.5rem 0 0.25rem;
+}
+
+.pills {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.pill {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.4rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--white-70, rgba(241, 245, 249, 0.7));
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.pill:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.pillActive {
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  color: var(--logic-lime);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.label {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-50, rgba(241, 245, 249, 0.5));
+}
+
+.optional {
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--white-30, rgba(241, 245, 249, 0.35));
+}
+
+.select,
+.input,
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--white, #f1f5f9);
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  padding: 0.5rem 0.6rem;
+}
+
+.select:focus,
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: rgba(var(--logic-lime-rgb), 0.55);
+}
+
+.select option {
+  background: #0a0f0a;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 5.5rem;
+  line-height: 1.5;
+}
+
+.error {
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  color: var(--danger, #f87171);
+}
+
+.success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  text-align: center;
+  padding: 1.5rem 0.5rem 0.5rem;
+}
+
+.success p {
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  color: var(--white-70, rgba(241, 245, 249, 0.7));
+  line-height: 1.5;
+}

@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
-import { captureError } from '@/lib/observability';
+import { captureError, withObservability } from '@/lib/observability';
 
 function slugify(name: string) {
   return name
@@ -33,7 +33,7 @@ async function isSlugAvailable(slug: string) {
  * invariant: $0 / active / no Stripe sub) with the founding-season comp, exactly like
  * a first-time signup org.
  */
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   let orgId: string | null = null;
   try {
     const supabase = await createClient();
@@ -104,4 +104,4 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
   }
-}
+}, { route: '/api/org/create' });

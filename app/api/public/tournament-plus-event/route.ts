@@ -9,6 +9,7 @@ import {
   type TournamentPlusEventType,
   type TournamentPlusMarketingSurface,
 } from '@/lib/tournament-plus-analytics';
+import { withObservability } from '@/lib/observability';
 
 const ALLOWED_EVENT_TYPES = new Set<TournamentPlusEventType>(
   TOURNAMENT_PLUS_EVENT_TYPES.filter(type =>
@@ -33,7 +34,7 @@ function stringOrNull(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim().slice(0, 500) : null;
 }
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   let body: EventBody;
   try {
     body = await req.json() as EventBody;
@@ -86,4 +87,4 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/public/tournament-plus-event' });

@@ -6,6 +6,7 @@ import {
   createRepTryoutRegistration,
 } from '@/lib/db';
 import { sendEmail, tryoutRegistrationConfirmationHtml } from '@/lib/email';
+import { withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,10 +21,8 @@ function str(v: unknown, max?: number): string | null {
   return max ? t.slice(0, max) : t;
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamSlug: string; yearId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamSlug: string; yearId: string }> },) => {
   const { orgSlug, teamSlug, yearId } = await params;
 
   const org = await getOrganizationBySlug(orgSlug);
@@ -109,4 +108,4 @@ export async function POST(
   })();
 
   return NextResponse.json({ id: registration.id, status: registration.status }, { status: 201 });
-}
+}, { route: '/api/rep-teams/[orgSlug]/[teamSlug]/tryouts/[yearId]/register' });

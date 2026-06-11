@@ -10,6 +10,7 @@ import {
   upsertRepTeamEventAttendance,
 } from '@/lib/db';
 import type { RepAttendanceStatus } from '@/lib/types';
+import { withObservability } from '@/lib/observability';
 
 const VALID_ATTENDANCE_STATUSES: RepAttendanceStatus[] = ['unknown', 'attending', 'absent', 'late'];
 
@@ -40,13 +41,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string, eventId: str
   return { ctx, team, assignment, programYear, event };
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId, eventId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   const [players, attendance] = await Promise.all([
@@ -59,15 +58,13 @@ export async function GET(
     attendance,
     programYear,
   });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/attendance' });
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId, eventId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, programYear, event } = resolved;
 
   const body = await req.json();
@@ -109,4 +106,4 @@ export async function PATCH(
 
   const attendance = await upsertRepTeamEventAttendance(rows);
   return NextResponse.json({ attendance, event });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/attendance' });

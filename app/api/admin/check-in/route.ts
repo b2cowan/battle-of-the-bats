@@ -12,6 +12,7 @@ import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTo
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { notify } from '@/lib/notify';
+import { withObservability } from '@/lib/observability';
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -47,7 +48,7 @@ function mapRoster(row: any) {
   };
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -113,9 +114,9 @@ export async function GET(req: Request) {
   }));
 
   return json({ teams });
-}
+}, { route: '/api/admin/check-in' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -223,4 +224,4 @@ export async function POST(req: Request) {
   }
 
   return json({ ok: true });
-}
+}, { route: '/api/admin/check-in' });

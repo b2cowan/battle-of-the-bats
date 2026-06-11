@@ -12,6 +12,7 @@ import {
   leagueRegistrationPendingHtml,
   leagueRegistrationWaitlistHtml,
 } from '@/lib/email';
+import { withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,10 +31,8 @@ function str(v: unknown, max?: number): string | null {
 
 // ── Route ─────────────────────────────────────────────────────────────────────
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> },) => {
   const { orgSlug, seasonSlug } = await params;
 
   // 1. Resolve org + season
@@ -189,4 +188,4 @@ export async function POST(
     status:           registration.status,
     waitlistPosition: registration.waitlistPosition,
   }, { status: 201 });
-}
+}, { route: '/api/league/[orgSlug]/[seasonSlug]/register' });

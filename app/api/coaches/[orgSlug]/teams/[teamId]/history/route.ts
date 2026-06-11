@@ -8,6 +8,7 @@ import {
   getRepPlayerDuesInstallments,
   getRepTeamExpenses,
 } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -26,13 +27,11 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment };
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
 
   const history = await getRepTeamHistory(teamId);
 
@@ -63,4 +62,4 @@ export async function GET(
       accounting: summaryMap.get(y.id) ?? { duesCollected: 0, duesOutstanding: 0, totalExpenses: 0 },
     })),
   });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/history' });

@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS } from '@/lib/themes';
+import { withObservability } from '@/lib/observability';
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 const VALID_PRESETS     = new Set(Object.keys(PRESETS));
 const VALID_FONTS       = new Set(Object.keys(FONT_OPTIONS));
 const VALID_CARD_STYLES = new Set(Object.keys(CARD_STYLE_OPTIONS));
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   // Resolve the org from the visited slug — a user may now own several workspaces, so
   // the default "first membership" is ambiguous (Phase 2 add-workspace).
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -40,9 +41,9 @@ export async function GET(req: Request) {
     themeCardStyle:           data.theme_card_style          ?? 'default',
     requireScoreFinalization: data.require_score_finalization ?? false,
   });
-}
+}, { route: '/api/admin/org-settings' });
 
-export async function PATCH(req: Request) {
+export const PATCH = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContext({ orgSlug });
   if (!ctx) return unauthorized();
@@ -187,4 +188,4 @@ export async function PATCH(req: Request) {
     themeCardStyle:           updated.theme_card_style          ?? 'default',
     requireScoreFinalization: updated.require_score_finalization ?? false,
   });
-}
+}, { route: '/api/admin/org-settings' });

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 /**
  * GET /api/admin/org/founding-season-status
@@ -8,7 +9,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
  * Returns whether this org has an active founding season comp_period override.
  * Founding season = comp_period expires_at = 2027-01-01 (auto-assigned at signup through Dec 31, 2026).
  */
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug });
   if (!ctx) return unauthorized();
@@ -33,4 +34,4 @@ export async function GET(req: Request) {
   const isFoundingSeason = compUntil.startsWith('2027-01-01');
 
   return NextResponse.json({ isFoundingSeason, compUntil });
-}
+}, { route: '/api/admin/org/founding-season-status' });

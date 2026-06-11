@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, updateLeagueGame } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -22,10 +23,8 @@ async function verifyGame(gameId: string, seasonId: string) {
   return data;
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ seasonId: string; gameId: string }> },
-) {
+export const PATCH = withObservability(async (req: Request,
+  { params }: { params: Promise<{ seasonId: string; gameId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -66,13 +65,11 @@ export async function PATCH(
 
   await updateLeagueGame(gameId, patch);
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/[gameId]' });
 
 // Soft-cancel: sets status = 'cancelled', does not hard-delete
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ seasonId: string; gameId: string }> },
-) {
+export const DELETE = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ seasonId: string; gameId: string }> },) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -88,4 +85,4 @@ export async function DELETE(
 
   await updateLeagueGame(gameId, { status: 'cancelled' });
   return NextResponse.json({ ok: true });
-}
+}, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/[gameId]' });

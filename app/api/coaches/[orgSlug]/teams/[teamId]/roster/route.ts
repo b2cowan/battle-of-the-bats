@@ -7,6 +7,7 @@ import {
   getRepRosterPlayers,
   createRepRosterPlayer,
 } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -30,26 +31,22 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   const players = await getRepRosterPlayers(programYear.id);
   return NextResponse.json({ players, programYear });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster' });
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { ctx, team, programYear } = resolved;
 
   const body = await req.json();
@@ -80,4 +77,4 @@ export async function POST(
   });
 
   return NextResponse.json({ player }, { status: 201 });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster' });

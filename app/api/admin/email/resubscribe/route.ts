@@ -10,8 +10,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPlatformAdminContext } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
-export async function POST(request: NextRequest) {
+export const POST = withObservability(async (request: NextRequest) => {
   const auth = await getPlatformAdminContext();
   if (!auth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -43,4 +44,4 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ success: true });
-}
+}, { route: '/api/admin/email/resubscribe' });

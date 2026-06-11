@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getRepTeamGroups, createRepTeamGroup } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -11,16 +12,16 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET() {
+export const GET = withObservability(async () => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
 
   const groups = await getRepTeamGroups(ctx!.org.id);
   return NextResponse.json({ groups });
-}
+}, { route: '/api/admin/rep-teams/groups' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -42,4 +43,4 @@ export async function POST(req: Request) {
     }
     throw e;
   }
-}
+}, { route: '/api/admin/rep-teams/groups' });

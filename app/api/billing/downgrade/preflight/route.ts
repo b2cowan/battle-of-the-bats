@@ -5,8 +5,9 @@ import {
   isOrganizationDowngradeTarget,
   normalizePlan,
 } from '@/lib/billing-retention';
+import { withObservability } from '@/lib/observability';
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
@@ -25,4 +26,4 @@ export async function POST(req: Request) {
 
   const preflight = await buildDowngradePreflight(ctx.org, targetPlan);
   return Response.json(preflight);
-}
+}, { route: '/api/billing/downgrade/preflight' });

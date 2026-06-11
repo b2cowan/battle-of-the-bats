@@ -4,13 +4,14 @@ import {
   paymentConfirmationHtml,
   rejectionHtml,
   sendEmail,
-  coachEmailEnabled,
+  coachEmailEnabled, resolveCoachRecipient,
 } from '@/lib/email';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { notify } from '@/lib/notify';
+import { withObservability } from '@/lib/observability';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -28,6 +29,7 @@ type TeamRow = {
   name: string;
   coach: string | null;
   email: string | null;
+  coach_email: string | null;
   status: string | null;
   payment_status: string | null;
   slot_id: string | null;
@@ -132,7 +134,10 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
   if (action !== 'accept' && action !== 'reject' && action !== 'mark_paid') return;
 
   for (const team of teams) {
-    if (!team.email) continue;
+    // Recipient prefers the assigned coach (teams.coach_email), falls back to teams.email; skip
+    // only when neither exists. The footer keeps using teams.email (the claim key, never touched).
+    const recipient = resolveCoachRecipient(team);
+    if (!recipient) continue;
     const divisionName = divisions.get(team.division_id)?.name ?? 'Division';
     const payload = {
       teamName: team.name,
@@ -140,22 +145,22 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
       divisionName,
       tournamentName,
       teamId: team.id,
-      coachEmail: team.email,
+      coachEmail: team.email ?? undefined,
     };
 
     if (action === 'accept' && team.status !== 'accepted' && coachEmailEnabled(coachSettings, 'acceptance')) {
-      await sendEmail(team.email, `Your Team Has Been Accepted - ${team.name}`, acceptanceHtml({ ...payload, paymentInstructions }));
+      await sendEmail(recipient, `Your Team Has Been Accepted - ${team.name}`, acceptanceHtml({ ...payload, paymentInstructions }));
     }
     if (action === 'reject' && team.status !== 'rejected' && coachEmailEnabled(coachSettings, 'rejection')) {
-      await sendEmail(team.email, `Registration Update - ${team.name}`, rejectionHtml(payload));
+      await sendEmail(recipient, `Registration Update - ${team.name}`, rejectionHtml(payload));
     }
     if (action === 'mark_paid' && team.payment_status !== 'paid' && coachEmailEnabled(coachSettings, 'payment')) {
-      await sendEmail(team.email, `Payment Recorded - ${team.name}`, paymentConfirmationHtml(payload));
+      await sendEmail(recipient, `Payment Recorded - ${team.name}`, paymentConfirmationHtml(payload));
     }
   }
 }
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+export const POST = withObservability(async (req: NextRequest, { params }: RouteParams) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
   if (!ctx) return unauthorized();
@@ -197,7 +202,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       .maybeSingle<TournamentRow>(),
     supabaseAdmin
       .from('teams')
-      .select('id, tournament_id, division_id, name, coach, email, status, payment_status, slot_id, waitlist_position, deposit_paid, total_paid')
+      .select('id, tournament_id, division_id, name, coach, email, coach_email, status, payment_status, slot_id, waitlist_position, deposit_paid, total_paid')
       .in('id', ids),
     supabaseAdmin
       .from('divisions')
@@ -317,4 +322,4 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   });
 
   return json({ success: true, count: selectedTeams.length, action: bulkAction });
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/registrations/bulk' });

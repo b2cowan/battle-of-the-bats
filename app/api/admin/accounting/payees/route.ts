@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { searchOrgPayees, createOrgPayee } from '@/lib/db';
+import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -11,7 +12,7 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-export async function GET(req: Request) {
+export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -19,9 +20,9 @@ export async function GET(req: Request) {
   const q = new URL(req.url).searchParams.get('q') ?? '';
   const payees = await searchOrgPayees(ctx!.org.id, q);
   return NextResponse.json({ payees });
-}
+}, { route: '/api/admin/accounting/payees' });
 
-export async function POST(req: Request) {
+export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
   const err = gate(ctx);
   if (err) return err;
@@ -42,4 +43,4 @@ export async function POST(req: Request) {
     if (e?.code === '23505') return NextResponse.json({ error: 'A payee with that name already exists' }, { status: 409 });
     throw e;
   }
-}
+}, { route: '/api/admin/accounting/payees' });

@@ -5,6 +5,7 @@ import { TOURNAMENT_TEAM_IMPORT_TYPE } from '@/lib/import/tournament-teams';
 import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 
@@ -65,7 +66,7 @@ function importLabel(importType: string) {
   return 'Import';
 }
 
-export async function GET(req: Request, { params }: RouteParams) {
+export const GET = withObservability(async (req: Request, { params }: RouteParams) => {
   const { tournamentId } = await params;
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug });
@@ -118,4 +119,4 @@ export async function GET(req: Request, { params }: RouteParams) {
   }));
 
   return NextResponse.json({ imports });
-}
+}, { route: '/api/admin/tournaments/[tournamentId]/imports/history' });

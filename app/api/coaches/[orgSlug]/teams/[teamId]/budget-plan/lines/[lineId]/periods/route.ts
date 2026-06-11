@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -34,13 +35,11 @@ interface PeriodInput {
 // Full replace of periods for a budget line.
 // Sending an empty array clears all periods (reverts to lump-sum).
 // Amounts are validated to sum to the line's total_amount (±$0.02 rounding tolerance).
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string; lineId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; lineId: string }> },) => {
   const { orgSlug, teamId, lineId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { programYear } = resolved;
 
   // Verify line belongs to this program year
@@ -107,4 +106,4 @@ export async function POST(
   if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 });
 
   return NextResponse.json({ periods: data }, { status: 201 });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/lines/[lineId]/periods' });

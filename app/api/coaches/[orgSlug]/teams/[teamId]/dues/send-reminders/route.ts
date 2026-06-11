@@ -10,6 +10,7 @@ import {
   markInstallments7ReminderSent,
 } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
+import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext();
@@ -43,13 +44,11 @@ function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },
-) {
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  if ('error' in resolved) return resolved.error!;
   const { team, programYear } = resolved;
 
   const body = await req.json().catch(() => ({}));
@@ -128,4 +127,4 @@ export async function POST(
     emailsSent,
     installmentsTagged: taggedIds.length,
   });
-}
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/dues/send-reminders' });

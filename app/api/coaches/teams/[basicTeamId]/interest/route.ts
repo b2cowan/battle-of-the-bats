@@ -4,6 +4,7 @@ import {
   normalizeBasicCoachInterestOptions,
   submitBasicCoachTeamScopeInterest,
 } from '@/lib/basic-coach-interest';
+import { withObservability } from '@/lib/observability';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -20,7 +21,7 @@ function authError(status: 401 | 403) {
 type RouteCtx = { params: Promise<{ basicTeamId: string }> };
 
 /** Capture coach interest in beyond-Basic team tools (owner only; no checkout/unlock). */
-export async function POST(req: NextRequest, { params }: RouteCtx) {
+export const POST = withObservability(async (req: NextRequest, { params }: RouteCtx) => {
   try {
     const { basicTeamId } = await params;
     if (!UUID_RE.test(basicTeamId)) return json({ error: 'Team not found.' }, 400);
@@ -44,4 +45,4 @@ export async function POST(req: NextRequest, { params }: RouteCtx) {
     console.error('[coaches team interest POST] error:', error);
     return json({ error: 'Could not save your interest.' }, 500);
   }
-}
+}, { route: '/api/coaches/teams/[basicTeamId]/interest' });
