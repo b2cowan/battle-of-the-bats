@@ -40,6 +40,7 @@ import { execFileSync } from 'child_process';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const SNAP_DIR = path.join(ROOT, 'docs', 'agents', 'db', 'schema-snapshots');
+const MIGRATIONS_DIR = path.join(ROOT, 'supabase', 'migrations');
 
 const PROJECTS = {
   dev: 'npgnrxaitgbtbtvvykto',
@@ -233,6 +234,30 @@ function shapeRls(rows) {
 
 function writeJson(file, obj) {
   fs.writeFileSync(path.join(SNAP_DIR, file), JSON.stringify(obj, null, 2) + '\n', 'utf8');
+}
+
+// ── migration watermark (the snapshot-freshness gate) ─────────────────────────
+// Records the state of supabase/migrations/ at refresh time so scripts/check-snapshot-freshness.mjs
+// can fail when a migration lands without a snapshot refresh — the residual hole the coverage ratchet
+// cannot see (it reads the committed, possibly-stale snapshot). See DATA_DICTIONARY_PLAN.md §11.
+// Number-only (no date) so a true no-op refresh produces no diff (byte-stable, like the dumps).
+function writeManifest() {
+  const files = fs.existsSync(MIGRATIONS_DIR)
+    ? fs.readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith('.sql'))
+    : [];
+  const nums = files.map((f) => parseInt((f.match(/^(\d+)/) || [])[1], 10)).filter((n) => Number.isFinite(n));
+  const manifest = {
+    _comment:
+      'Migration watermark for the snapshot-freshness gate (scripts/check-snapshot-freshness.mjs). ' +
+      'highestMigration + migrationCount record the state of supabase/migrations/ at the last ' +
+      '`npm run refresh:snapshots`. The gate FAILS when supabase/migrations/ has advanced beyond this ' +
+      '(a migration landed without a snapshot refresh+commit). See DATA_DICTIONARY_PLAN.md §11. ' +
+      'Written by refresh-db-snapshots.mjs — do not hand-edit.',
+    highestMigration: nums.length ? Math.max(...nums) : 0,
+    migrationCount: files.length,
+  };
+  writeJson('SNAPSHOT_MANIFEST.json', manifest);
+  return { highest: manifest.highestMigration, count: manifest.migrationCount };
 }
 
 // ── drift (purely structural; dev vs prod) ────────────────────────────────────
@@ -431,6 +456,9 @@ async function main() {
       console.error(`--fail-on-drift: ${drift.total} dev/prod divergence(s) found.`);
       process.exitCode = 2;
     }
+
+    const wm = writeManifest();
+    console.log(`Wrote SNAPSHOT_MANIFEST.json — migration watermark #${wm.highest} (${wm.count} files).`);
   } else {
     console.log('Single-env run: skipped schema_dumps.json + drift (need both envs).');
   }
