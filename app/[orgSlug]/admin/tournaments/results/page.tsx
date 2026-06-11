@@ -190,8 +190,12 @@ export default function AdminResultsPage() {
     const facility = (venue as any).facilities?.find((f: any) => f.id === facilityId);
     return facility ? `${venue.name} — ${facility.name}` : venue.name;
   };
+  // Key by facility when present so each diamond/field is its own filter row with
+  // an accurate count — matches the Schedule venue filter exactly.
   const getGameVenueKey = (g: Game) =>
-    g.venueId ? `venue:${g.venueId}` : `custom:${(g.location || '').trim() || '__none__'}`;
+    g.venueId
+      ? (g.venueFacilityId ? `venue:${g.venueId}:${g.venueFacilityId}` : `venue:${g.venueId}`)
+      : `custom:${(g.location || '').trim() || '__none__'}`;
   const getGameVenueDisplay = (g: Game): { name: string; sublabel?: string } => {
     if (g.venueId) {
       const venue = venues.find(v => v.id === g.venueId);
