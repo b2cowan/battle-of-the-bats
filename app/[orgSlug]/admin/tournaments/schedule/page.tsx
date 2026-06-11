@@ -83,6 +83,7 @@ export default function AdminSchedulePage() {
   const tournamentId = currentTournament?.id;
   const orgSlug = currentOrg?.slug;
   const [games, setGames]       = useState<Game[]>([]);
+  const [gamesLoading, setGamesLoading] = useState(true);
   const [teams, setTeams]       = useState<Team[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -201,29 +202,35 @@ export default function AdminSchedulePage() {
       setDivisions([]);
       setVenues([]);
       setFacilityLanes([]);
+      setGamesLoading(false);
       return;
     }
     const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
-    const [gamesRes, teamsRes, groupsRes, venuesRes, lanesRes] = await Promise.all([
-      fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-      fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-      fetch(`/api/admin/divisions?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-      fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-      fetch(`/api/admin/schedule-facility-lanes?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-    ]);
+    setGamesLoading(true);
+    try {
+      const [gamesRes, teamsRes, groupsRes, venuesRes, lanesRes] = await Promise.all([
+        fetch(`/api/admin/games?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+        fetch(`/api/admin/teams?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+        fetch(`/api/admin/divisions?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+        fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+        fetch(`/api/admin/schedule-facility-lanes?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
+      ]);
 
-    const games = gamesRes.ok ? await gamesRes.json() : [];
-    const allTeams = teamsRes.ok ? await teamsRes.json() : [];
-    const groups = groupsRes.ok ? await groupsRes.json() : [];
-    const venues = venuesRes.ok ? await venuesRes.json() : [];
-    const lanes = lanesRes.ok ? await lanesRes.json() : [];
+      const games = gamesRes.ok ? await gamesRes.json() : [];
+      const allTeams = teamsRes.ok ? await teamsRes.json() : [];
+      const groups = groupsRes.ok ? await groupsRes.json() : [];
+      const venues = venuesRes.ok ? await venuesRes.json() : [];
+      const lanes = lanesRes.ok ? await lanesRes.json() : [];
 
-    setGames(games);
-    setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
-    setDivisions(groups);
-    setVenues(venues);
-    setFacilityLanes(lanes);
+      setGames(games);
+      setTeams(allTeams.filter((t: any) => t.status === 'accepted'));
+      setDivisions(groups);
+      setVenues(venues);
+      setFacilityLanes(lanes);
+    } finally {
+      setGamesLoading(false);
+    }
   }, [tournamentId, tournamentLoading, orgSlug]);
   
   useEffect(() => {
@@ -296,7 +303,10 @@ export default function AdminSchedulePage() {
     return facility ? `${venue.name} — ${facility.name}` : venue.name;
   };
   const getGameVenueKey = (g: Game) => {
-    if (g.venueId) return `venue:${g.venueId}`;
+    // Key by facility when present so each diamond/field is its own filter row.
+    // A venue with Diamonds 1–3 then yields three accurate options instead of one
+    // whose count spans every diamond under a single facility's sublabel.
+    if (g.venueId) return g.venueFacilityId ? `venue:${g.venueId}:${g.venueFacilityId}` : `venue:${g.venueId}`;
     if (g.scheduleFacilityLaneId) return `lane:${g.scheduleFacilityLaneId}`;
     return `custom:${(g.location || '').trim() || '__none__'}`;
   };
@@ -666,6 +676,18 @@ export default function AdminSchedulePage() {
       resolveTeam(g.awayTeamId, g.awayPlaceholder).toLowerCase().includes(q);
     return matchesDivision && matchesView && matchesStatus && matchesVenue && matchesSearch;
   });
+
+  // True when the division+stage has games but the active search/status/venue
+  // filters hide all of them — drives a "Clear filters" recovery empty state,
+  // distinct from a division that genuinely has no games scheduled yet.
+  const filtersHidingGames = filtered.length === 0 && divisionGames.length > 0;
+
+  function clearScheduleFilters() {
+    setSearch('');
+    setSelectedVenueKeys([]);
+    setSelectedStatuses(STATUS_FILTERS.map(f => f.key));
+    setConflictsOnly(false);
+  }
 
   function formatDate(d: string) {
     return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -1046,9 +1068,19 @@ export default function AdminSchedulePage() {
             {STATUS_FILTERS.map(({ key, label }) => {
               const isActive = selectedStatuses.includes(key);
               const chipMod = STATUS_CHIP_CLASS[key];
+              const count = statusCounts[key] ?? 0;
+              // Dim 0-count chips (shared data-empty convention) so non-zero counts
+              // draw the eye, and disable a 0-count chip that isn't already applied so
+              // it can't route the user into an empty view. An applied chip stays
+              // interactive so it can always be toggled back off.
+              const isDisabled = count === 0 && !isActive;
               return (
                 <button
                   key={key}
+                  type="button"
+                  data-empty={count === 0 ? 'true' : undefined}
+                  disabled={isDisabled}
+                  title={isDisabled ? `No ${label.toLowerCase()} games` : undefined}
                   className={[
                     s.filterChip,
                     styles.scheduleStatusChip,
@@ -1060,7 +1092,7 @@ export default function AdminSchedulePage() {
                   onClick={() => setSelectedStatuses(prev => isActive ? prev.filter(status => status !== key) : [...prev, key])}
                 >
                   {label.toUpperCase()}
-                  <span className={s.chipCount}>{statusCounts[key] ?? 0}</span>
+                  <span className={s.chipCount}>{count}</span>
                 </button>
               );
             })}
@@ -1222,7 +1254,7 @@ export default function AdminSchedulePage() {
       )}
 
 
-      {currentTournament && games.length === 0 && (
+      {currentTournament && !gamesLoading && games.length === 0 && (
         <HelpCallout
           variant="info"
           title="No games scheduled yet"
@@ -1267,10 +1299,10 @@ export default function AdminSchedulePage() {
         </div>
       )}
 
-      {tournamentLoading ? (
+      {tournamentLoading || gamesLoading ? (
         <div className="empty-state">
           <RefreshCw size={32} className="spin" style={{ opacity: 0.4 }} />
-          <p>Loading tournament...</p>
+          <p>{tournamentLoading ? 'Loading tournament...' : 'Loading schedule...'}</p>
         </div>
       ) : layout === 'timeline' ? (
         <ScheduleTimeline
@@ -1304,10 +1336,20 @@ export default function AdminSchedulePage() {
       ) : filterGroup === 'all' ? (
         <div className={s.compactList}>
           {filtered.length === 0 ? (
-            <div className="empty-state">
-              <Calendar size={40} style={{ opacity: 0.2 }} />
-              <p>{currentTournament ? 'No games found.' : 'No tournament selected.'}</p>
-            </div>
+            filtersHidingGames ? (
+              <div className="empty-state">
+                <Calendar size={40} style={{ opacity: 0.2 }} />
+                <p>No games match your filters.</p>
+                <button type="button" className="btn btn-outline btn-data" style={{ marginTop: '0.6rem' }} onClick={clearScheduleFilters}>
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              <div className="empty-state">
+                <Calendar size={40} style={{ opacity: 0.2 }} />
+                <p>{currentTournament ? 'No games found.' : 'No tournament selected.'}</p>
+              </div>
+            )
           ) : (
             divisions
               .map(div => ({ div, divGames: filtered.filter(g => g.divisionId === div.id) }))
@@ -1343,10 +1385,20 @@ export default function AdminSchedulePage() {
       ) : (
         <div className={s.compactList}>
           {filtered.length === 0 ? (
-            <div className="empty-state">
-              <Calendar size={40} style={{ opacity: 0.2 }} />
-              <p>{currentTournament ? 'No games found for this division.' : 'No tournament selected.'}</p>
-            </div>
+            filtersHidingGames ? (
+              <div className="empty-state">
+                <Calendar size={40} style={{ opacity: 0.2 }} />
+                <p>No games match your filters.</p>
+                <button type="button" className="btn btn-outline btn-data" style={{ marginTop: '0.6rem' }} onClick={clearScheduleFilters}>
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              <div className="empty-state">
+                <Calendar size={40} style={{ opacity: 0.2 }} />
+                <p>{currentTournament ? 'No games found for this division.' : 'No tournament selected.'}</p>
+              </div>
+            )
           ) : (
             <GameList
               games={filtered}
