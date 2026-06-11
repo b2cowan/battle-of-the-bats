@@ -345,9 +345,16 @@ projects ship, rather than depending on anyone remembering rule 2.
 - **Layer 3 — pending Phase 1** (edit `/dba`/`/db`/`/plan` skill prompts + an AGENCY_RULES line once
   `DATA_DICTIONARY.md` exists to point at).
 - **Layer 4 — ongoing** (`/dba` quarterly check; per-domain "Last verified" stamps added as domains land).
-- **Deferred follow-up (tracked):** a CI **snapshot-freshness gate** that fails when the committed snapshot
-  is older than the newest `supabase/migrations/` file — closes the residual "author forgot to refresh+commit
-  the snapshot" hole that Layers 1–2 can't catch on their own (raised in `/dba` review). Not built in Phase 0.
+- **Layer 1½ (snapshot-freshness gate) — DONE 2026-06-11.** `scripts/check-snapshot-freshness.mjs`
+  (`npm run check:snapshots`, wired into `npm run verify:changed` before the coverage ratchet) fails when
+  `supabase/migrations/` has advanced beyond the **migration watermark** (`highestMigration`/`migrationCount`)
+  that `refresh-db-snapshots.mjs` now records in `docs/agents/db/schema-snapshots/SNAPSHOT_MANIFEST.json` on
+  every refresh. Watermark-based (not mtime/git-time) → deterministic, no git history/network, so it's safe in
+  the routine local check; the manifest is **only** (re)written by a real refresh, so the sole way to clear a
+  stale failure is to actually refresh + commit. Closes the residual "author added a migration but forgot to
+  refresh+commit the snapshot" hole the coverage ratchet (Layer 1) can't see — it reads the committed snapshot,
+  so a stale snapshot makes it blind to the new column. Seeded at watermark #122 (123 files); negative-tested
+  (a higher-numbered migration trips it, cleanup clears it).
 
 ---
 
