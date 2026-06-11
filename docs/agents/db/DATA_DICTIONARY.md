@@ -1099,7 +1099,64 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 
 ---
 
-*End of Tournaments & Registration domain. Deferred (active free-tier work): `tournament_roster_players` (the per-event snapshot — documented when the Phase 5 submit/snapshot lands); its persistent master `basic_coach_team_players` is now built + documented in the Coaches / basic-teams domain (free-tier Phase 3, mig 114). Remaining domains (Org/Platform core, Rep teams, League, Accounting, Stripe/Billing, Platform admin, CRM, Notifications & Push) are enumerated in [DATA_DICTIONARY_PLAN.md](../../projects/active/DATA_DICTIONARY_PLAN.md) §5.*
+## `tournament_roster_players`
+<!-- dict:table:tournament_roster_players -->
+
+**Purpose:** the per-tournament-event roster **snapshot** — one row per player per registered team for a specific tournament. Written by two paths (the coach event-roster submit and the admin day-of gate-roster); read by the coach submit page and the check-in board. The **master** identity roster is `basic_coach_team_players` (Coaches / basic-teams domain); this is the per-event **copy**, gated by the organizer's `tournaments.settings.roster_*` requirements. New with free-tier Phase 5f/5j — **0 rows in dev AND prod** (dev-only/undeployed).
+
+**Gotchas (read first):**
+1. **★ `source_player_id` is DEV-ONLY (mig 123) and the coach route reads + writes it UNCONDITIONALLY → it breaks on prod if the code ships ahead of mig 123.** The coach GET names it in the SELECT ([roster/route.ts:112](../../../app/api/coaches/tournaments/[teamId]/roster/route.ts#L112)) and the submit INSERT sets it ([:210](../../../app/api/coaches/tournaments/[teamId]/roster/route.ts#L210)). On prod (column absent) the **submit POST hard-500s** (`throw insError`); the GET names it too but never error-checks the query, so it only **degrades to an empty snapshot (200)** — either way the feature is broken on prod. **Procedurally fenced** by the migration deploy gate — mig 123's header requires migs 114–117 + 123 on prod before any Phase-5 prod deploy, and `npm run check:migrations` enforces it — so code + schema land together; but it's the highest-risk item here. The admin check-in path uses `select('*')` and omits the column on write, so it is prod-safe regardless.
+2. **Three `source` values in the CHECK (`coach|gate|admin`) but only TWO are written** — `'admin'` is a **reserved/dead enum value** (no code path writes it anywhere). `coach` = the coach event-roster submit; `gate` = the admin day-of gate-roster.
+3. **Resubmit = delete-then-reinsert, and the delete SCOPE differs by path** — the coach submit deletes only its OWN rows (`.eq('team_id').eq('source','coach')`, preserving any `gate` rows); the gate save deletes **ALL** of the team's rows (`.eq('team_id')`, replace-all) and **auto-confirms** (stamps `teams.roster_confirmed_at`). Neither is atomic. There is **no UPDATE path** — see `updated_at`.
+4. **The snapshot is a one-directional COPY of the master** — `buildTournamentRosterSnapshot` ([lib/basic-coach-roster.ts:332](../../../lib/basic-coach-roster.ts#L332)) is **pure (zero DB access)**, reads `basic_coach_team_players` only as a fallback, stamps `source_player_id`, and **never writes back** to the master. `name` is always the master's (a coach can't rename in the snapshot); `position` is snapshot-only (no master column).
+5. **Organizer roster requirements gate the SNAPSHOT only** — the `tournaments.settings.roster_*` keys (parsed by `parseRosterRequirements`, [lib/roster-requirements.ts:56](../../../lib/roster-requirements.ts#L56)) enforce dob/jersey/min/max/waiver against the assembled snapshot rows in the builder, never against the identity-only master. `min > max` is treated as no-minimum (never an unsatisfiable gate).
+6. **RLS-enabled, zero policies, zero triggers (both envs); service-role only** — the [[reference_supabase_rls_grants]] class (prod grants `anon`+`authenticated` FULL DML; dev only `REFERENCES/TRIGGER/TRUNCATE`).
+7. **Dev/prod:** `source_player_id` is the **only** column-level divergence (dev-only, mig 123); all other 13 columns, the `source` CHECK, and the three CASCADE FKs are identical.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted — `created_at` is DB-default `now()`; **`updated_at` is DEAD**: no code ever UPDATEs a row [resubmit is delete + reinsert], so it always equals `created_at`):
+
+<!-- dict:col:tournament_roster_players.org_id -->
+**`org_id`** (uuid, NN; FK→`organizations(id)` ON DELETE CASCADE) — owning org; set from `tournament.org_id` (coach) / `ctx.org.id` (gate).
+
+<!-- dict:col:tournament_roster_players.tournament_id -->
+**`tournament_id`** (uuid, NN; FK→`tournaments(id)` ON DELETE CASCADE) — the event this snapshot belongs to.
+
+<!-- dict:col:tournament_roster_players.team_id -->
+**`team_id`** (uuid, NN; FK→`teams(id)` ON DELETE CASCADE) — the **registered team** (`teams.id`, the registration unit — note the coach route's `[teamId]` param IS this id, not a `basic_coach_team_id`); the scope key both GETs filter on and both writers delete by.
+
+<!-- dict:col:tournament_roster_players.name -->
+**`name`** (text, NN) — player display name; for coach rows **always copied from the master** (`master.name`, [basic-coach-roster.ts:392](../../../lib/basic-coach-roster.ts#L392)) — not renameable in the snapshot; gate rows set it directly.
+
+<!-- dict:col:tournament_roster_players.jersey_number -->
+**`jersey_number`** (text, nullable) — jersey #; **text** (leading zeros / non-numeric allowed); coach value = snapshot override or master fallback; orders the GET queries; gated by `roster_require_jersey`.
+
+<!-- dict:col:tournament_roster_players.date_of_birth -->
+**`date_of_birth`** (date, nullable) — minor PII; coach value = override or master fallback; gated by `roster_require_dob`. (Unlike the master, where DOB is consent-gated, the snapshot copy carries it when the organizer requires it.)
+
+<!-- dict:col:tournament_roster_players.position -->
+**`position`** (text, nullable) — playing position; **snapshot-only** (the master has no position column, so no fallback); set by the coach builder / gate insert; edited on the check-in board but not shown in its read-only list.
+
+<!-- dict:col:tournament_roster_players.notes -->
+**`notes`** (text, nullable) — free-text note; **coach-path only** — the gate save and (absent) admin path never write it, and the check-in board drops it.
+
+<!-- dict:col:tournament_roster_players.source -->
+**`source`** (text, NN, default `'coach'`; CHECK `coach|gate|admin`) — provenance of the row: `'coach'` (the coach submit) or `'gate'` (the admin gate-roster). **`'admin'` is allowed by the CHECK but never written** (dead enum value). Read by the coach UI to key prior rows + count org-added (`source !== 'coach'`) rows; mapped-but-ignored by the check-in board.
+
+<!-- dict:col:tournament_roster_players.created_by_user_id -->
+**`created_by_user_id`** (uuid, nullable, **no FK**) — who created the row (`guard.user.id` coach / `ctx.user.id` gate). **Write-only audit** — fetched by the gate's `select('*')` but consumed by no reader/UI; no FK, so it silently orphans if the user is deleted.
+
+<!-- dict:col:tournament_roster_players.source_player_id -->
+**`source_player_id`** (uuid, nullable; FK→`basic_coach_team_players(id)` ON DELETE SET NULL) — **DEV-ONLY (mig 123 — absent on prod).** The provenance back-link a coach submission stamps with the master player it copied; **null for gate rows** (no master origin) and for coach rows whose master player was later deleted (SET NULL). Read by the coach GET to pre-fill a re-submit. **The coach route reads + writes it unconditionally → prod-breaking if shipped ahead of mig 123 (gotcha 1).**
+
+### Functions & mechanics (not tables — not coverage-checked, documented for completeness)
+
+- **The coach submit** — `app/api/coaches/tournaments/[teamId]/roster/route.ts` (auth `requireCoachRegistrationAccess` → `guard.basicCoachTeamId`/`guard.user`): GET loads the parsed requirements + master + current snapshot; POST runs a lock ladder (rejects if the tournament is completed, the team isn't `accepted`, or `roster_confirmed_at` is set), builds rows via `buildTournamentRosterSnapshot`, **deletes its own `source='coach'` rows then reinserts**, and stamps `teams.roster_submitted_at`.
+- **`buildTournamentRosterSnapshot`** ([lib/basic-coach-roster.ts:332](../../../lib/basic-coach-roster.ts#L332)) — the **pure** snapshot builder: maps selected master players → snapshot rows (name from master, jersey/notes/dob override-or-master, position snapshot-only, `source_player_id` = master id), applies the requirement gates (dob/jersey/min/max/waiver), and rejects foreign/duplicate player ids (IDOR). No DB access; never mutates the master.
+- **The gate roster** — `app/api/admin/check-in/route.ts` action `save_gate_roster`: a **replace-all** for the team (deletes every source) → inserts `source='gate'` rows (no `notes`, no `source_player_id`) and stamps both `roster_submitted_at` **and** `roster_confirmed_at` (the gate auto-confirms). Read back by the check-in board (`select('*')` → `mapRoster`), which shows jersey/name/DOB only.
+
+---
+
+*End of Tournaments & Registration domain — **all 19 tables column-sealed** (`tournament_roster_players`, the per-event roster snapshot, sealed 2026-06-11 as the FINAL closing table of the dictionary). Its master `basic_coach_team_players` lives in the Coaches / basic-teams domain (free-tier Phase 3, mig 114); the `source_player_id` provenance back-link (free-tier Phase 5j, mig 123, **dev-only**) closes the cross-module roster seam. With this table the dictionary is **100% column-sealed across all 11 domains** — see [DATA_DICTIONARY_PLAN.md](../../projects/active/DATA_DICTIONARY_PLAN.md) §5.*
 
 ---
 
@@ -1217,7 +1274,7 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 2. **Identity-only, by policy.** NO attendance, lineups, positions, dues, or documents columns — those are **Premium** and must never be added here (FT strategy §10; "roster fields scoped to Basic", §12). `display_order` is list ordering, **not** a lineup/batting order.
 3. **`date_of_birth` is privacy-gated minor PII.** Optional + purpose-driven (division eligibility). The editor never shows it by default — it's behind an explicit opt-in with a guardian-consent acknowledgment (FT §5/§14). A *persisted* consent audit trail is deferred to Phase 8; today the gate is UI-enforced only.
 4. **Ownership = `basic_coach_team_users` membership**, same as the rest of the family — there is no `org_id` and no per-row owner column beyond the team FK. RLS-enabled with **no policies** = `supabaseAdmin` only; the API gates on `userOwnsBasicCoachTeam` ([lib/basic-coach-roster.ts](../../../lib/basic-coach-roster.ts)).
-5. **Snapshot source for Phase 5.** Column shape (single `name`, `jersey_number` text, `date_of_birth` date) deliberately mirrors `tournament_roster_players` (mig 110) so the per-event submit/snapshot is a clean copy; the back-link (`source_player_id` on the snapshot table) lands in Phase 5, not here.
+5. **Snapshot source for the per-event copy.** Column shape (single `name`, `jersey_number` text, `date_of_birth` date) deliberately mirrors `tournament_roster_players` (mig 110) so the per-event submit/snapshot is a clean copy. The back-link lives on the snapshot side: `tournament_roster_players.source_player_id` (mig 123, free-tier Phase 5j) is stamped with **this** master row's id on submit. **Seam:** the copy is one-directional — a submission reads the master and writes the snapshot; it NEVER writes back here (organizer-required DOB/jersey + the snapshot-only `position` live on the event copy alone). Enforced structurally in `buildTournamentRosterSnapshot` ([lib/basic-coach-roster.ts](../../../lib/basic-coach-roster.ts)), which is pure and never calls `updateBasicCoachTeamPlayer`.
 6. **Upgrade-ready.** When a Basic team upgrades, the master seeds the paid workspace roster via `basic_coach_teams.team_workspace_id` (a per-program-year shape-translation, wired in a later phase) — no rebuild required.
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
@@ -1530,7 +1587,7 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 
 ---
 
-*End of Coaches / basic-teams domain. `basic_coach_team_players` (free-tier Phase 3, mig 114) is documented above. Deferred: the per-event snapshot back-link `tournament_roster_players.source_player_id` (free-tier Phase 5).*
+*End of Coaches / basic-teams domain. `basic_coach_team_players` (free-tier Phase 3, mig 114) is documented above. The per-event snapshot back-link `tournament_roster_players.source_player_id` was ADDED in free-tier Phase 5j (mig 123, dev-only, FK ON DELETE SET NULL) — see the Tournaments & Registration domain note. The coach event-roster submit API is `app/api/coaches/tournaments/[teamId]/roster/route.ts` (the snapshot WRITE; the master/snapshot seam is `buildTournamentRosterSnapshot`).*
 
 ---
 
@@ -2545,7 +2602,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 ---
 
-*End of Rep finance (Phase 4b — 13 tables) and of the Rep teams / team workspaces domain (25 tables total: 12 operations + 13 finance). The 4 `team_workspace_*` tables the coverage classifier files under this domain live in the Coaches / basic-teams domain. Deferred: any cross-module roster snapshot back-link (`tournament_roster_players.source_player_id` etc., free-tier Phase 5) — absent from `rep_roster_players` today.*
+*End of Rep finance (Phase 4b — 13 tables) and of the Rep teams / team workspaces domain (25 tables total: 12 operations + 13 finance). The 4 `team_workspace_*` tables the coverage classifier files under this domain live in the Coaches / basic-teams domain. The cross-module roster snapshot back-link `tournament_roster_players.source_player_id` now exists (free-tier Phase 5j, mig 123) on the **tournament/basic-coach** side only — `rep_roster_players` still has **no** such snapshot link (its only inbound provenance is `tryout_registration_id`; don't invent one).*
 
 ---
 
@@ -4126,9 +4183,465 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 
 ---
 
+# Domain: CRM
+
+The growth/CRM pipeline — exactly **one table, `early_access_leads`** (the smallest domain). Public marketing **lead capture** (the Early Access form on the homepage / pricing / `/start/league` / `/start/club`, plus the free-tier coach "express interest" capture) writes leads; the platform-admin **Early Access triage** page + the command-center **growth metrics** read them. Built but unexercised — **0 rows in dev AND prod.**
+
+> _Last verified: 2026-06-10 @ snapshot 2026-06-10, commit `9faea936` (branch `feat/free-tier-coaches`). Authored against a clean tree; a concurrent workstream (feedback center / observability) has since touched unrelated files, but **every file this domain cites is UNMODIFIED vs `9faea936`** (checked via `git status`) — refs match the commit. Live probes (2026-06-10, dev+prod `pg_class`/`pg_policies`/`pg_trigger`/`role_table_grants`): `early_access_leads` is column-, constraint-, and FK-identical dev↔prod (**zero structural drift**); **RLS ENABLED with ZERO policies and ZERO triggers** in both envs; **prod grants `anon`+`authenticated` FULL `SELECT/INSERT/UPDATE/DELETE` while dev grants only `REFERENCES/TRIGGER/TRUNCATE`** (the [[reference_supabase_rls_grants]] gate); **0 rows** in both envs. No DB CHECK constraints — every "enum" is a TS union/string convention._
+
+### Gotchas first (the cross-cutting traps)
+
+- **Every writer and reader is service-role — the RLS posture is never exercised by app code.** The public POST ([app/api/early-access/route.ts:2](../../../app/api/early-access/route.ts#L2)), the free-tier capture ([lib/basic-coach-interest.ts:2](../../../lib/basic-coach-interest.ts#L2)), the admin list/PATCH/export, and the metrics ([lib/platform-metrics.ts:1](../../../lib/platform-metrics.ts#L1)) all go through `supabaseAdmin`. RLS-enabled-zero-policies is purely the [[reference_supabase_rls_grants]] backstop: **prod** grants `anon`+`authenticated` full DML, so RLS is the only thing keeping lead PII (name/email/UA) off the public PostgREST API; **dev** grants `anon` only `REFERENCES/TRIGGER/TRUNCATE`. The **public POST does NOT run as the visitor** — it is a server-side service-role insert (which is why it works despite dev anon having no INSERT grant).
+- **DUAL-STATUS TRAP — `internal_status` is the live triage field; `status` is legacy/dead.** Both default `'new'`; the insert stamps `status='new'` once and never touches it again, while every triage write, list filter, and metric reads **`internal_status`** (8-value TS union). `status` is selected into the row + typed on the `Lead` type but **no code ever reads it**.
+- **`metadata` jsonb is 100% dead** — never written by either insert helper, never selected (absent from `EARLY_ACCESS_SELECT`); no key catalog exists. Three more columns are **write-only** (written, never read): `last_submitted_at`, `user_agent`, `last_contacted_by`, plus `updated_at` (code-maintained, never read).
+- **`converted_org_id` is set ONLY by the manual admin PATCH** — no signup/billing automation ever links a lead to an org. The command-center conversion metrics key off the **FK** (`converted_org_id` non-null), not `internal_status='converted'` (the PATCH enforces that the two agree by rejecting a `'converted'` status with no org).
+- **The public "upsert" is a manual select-then-insert/update keyed on `email_normalized` (UNIQUE), not an atomic Postgres upsert** — two concurrent first-submits of the same email can collide on the unique constraint and 500. A public resubmit bumps `submission_count`/`last_submitted_at` and overwrites capture fields but does **not** reset `internal_status`/`converted_org_id` — a converted lead that resubmits stays converted.
+- **No DB triggers or CHECKs** — `updated_at` is code-maintained (set inconsistently across the three writers); the 8-value `internal_status` domain, the `plan_interest`/`features_interested` array allowlists, and the lead's identity guards live entirely in `lib/early-access-admin.ts` + the route allowlists.
+- **Dev/prod:** zero structural drift; 0 rows both; the only divergence is the grant drift above (prod anon full DML).
+
+---
+
+## `early_access_leads`
+<!-- dict:table:early_access_leads -->
+
+**Purpose:** the single CRM/growth-pipeline table. Captured by two public writers — the Early Access form POST ([app/api/early-access/route.ts](../../../app/api/early-access/route.ts), homepage/pricing/`start-*`) and the free-tier coach scope-interest capture ([lib/basic-coach-interest.ts](../../../lib/basic-coach-interest.ts)) — and triaged by the platform-admin Early Access page ([EarlyAccessClient.tsx](../../../app/platform-admin/early-access/EarlyAccessClient.tsx)) via the PATCH at [app/api/platform-admin/early-access/[leadId]/route.ts](../../../app/api/platform-admin/early-access/[leadId]/route.ts). Read columns flow through the central `EARLY_ACCESS_SELECT` list ([lib/early-access-admin.ts:46](../../../lib/early-access-admin.ts#L46)).
+
+**Gotchas (read first):**
+1. **`internal_status` is the real state machine; `status` is a dead duplicate.** Both insert paths stamp `status='new'` ([route.ts:106](../../../app/api/early-access/route.ts#L106) + [basic-coach-interest.ts:150](../../../lib/basic-coach-interest.ts#L150)) once; the PATCH only ever writes `internal_status` ([[leadId]/route.ts:61](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L61)); the list filter maps the `status` query param onto `internal_status` ([route.ts:38](../../../app/api/platform-admin/early-access/route.ts#L38)); `earlyAccessByStatus` groups by `internal_status` ([lib/platform-metrics.ts:238](../../../lib/platform-metrics.ts#L238)). A fresh lead's `internal_status='new'` comes from the **column default**, not the insert.
+2. **`converted_org_id` is the conversion source of truth.** `convertedLeads`/`conversionRate` count `converted_org_id` non-null ([lib/platform-metrics.ts:243](../../../lib/platform-metrics.ts#L243)); setting `internal_status='converted'` is **rejected** without a valid org ([[leadId]/route.ts:92](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L92)). The org is validated against `organizations` before write ([:77](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L77)); FK is `ON DELETE SET NULL`.
+3. **Every triage PATCH writes a `platform_audit_log` row** (`action='update_early_access_lead'`, before/after snapshot, [[leadId]/route.ts:115](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L115)) — the lead's mutation history lives in the audit log, not on the row. PATCH needs `manage_growth` **or** `manage_product` ([:32](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L32)); list/export need only any platform-admin role.
+4. **The public form's `'coaches_portal'` plan-interest is silently dropped.** [app/pricing/page.tsx:63](../../../app/pricing/page.tsx#L63) passes it, but the POST allowlist is `PLAN_OPTIONS = {league, club}` ([route.ts:5](../../../app/api/early-access/route.ts#L5)) and `cleanList` filters it out — `'coaches_portal'` never persists.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted — `created_at` drives `newLeads7` + date-range filters + the default sort and is exported as the `submitted_at` header; `updated_at` is code-maintained, set on all three write paths, and selected but **never consumed**):
+
+<!-- dict:col:early_access_leads.last_submitted_at -->
+**`last_submitted_at`** (tstz, NN, default now()) — "most recent public submission"; set to now on every insert and resubmit ([route.ts:77](../../../app/api/early-access/route.ts#L77)). **Selected but never consumed** — present in `EARLY_ACCESS_SELECT` + the client type, but never rendered or used in any logic (effectively write-only).
+
+<!-- dict:col:early_access_leads.submission_count -->
+**`submission_count`** (int4, NN, default 1) — how many times this email submitted; the manual upsert reads `existing.submission_count` and increments ([route.ts:97](../../../app/api/early-access/route.ts#L97)). Sole reader is the "N submissions" badge ([EarlyAccessClient.tsx:476](../../../app/platform-admin/early-access/EarlyAccessClient.tsx#L476), shown only when >1).
+
+<!-- dict:col:early_access_leads.status -->
+**`status`** (text, NN, default `'new'`) — **LEGACY/DEAD.** Stamped `'new'` at insert by both writers and never updated; selected ([lib/early-access-admin.ts:52](../../../lib/early-access-admin.ts#L52)) and typed but **never read** by any triage/filter/metric path — all of those use `internal_status`. No governing TS union (only value ever written is `'new'`).
+
+<!-- dict:col:early_access_leads.name -->
+**`name`** (text, NN, no default) — contact name; public path guards it required and `cleanText`-caps at 120 ([route.ts:35](../../../app/api/early-access/route.ts#L35)); the free-tier writer always supplies a fallback (`primary_coach_name || email`, [basic-coach-interest.ts:122](../../../lib/basic-coach-interest.ts#L122)) so the NN-no-default column never violates. Feeds the `{{name}}` outreach-template token.
+
+<!-- dict:col:early_access_leads.email -->
+**`email`** (text, NN) — raw contact email, lowercased + `EMAIL_RE`-validated ([route.ts:36](../../../app/api/early-access/route.ts#L36),[:50](../../../app/api/early-access/route.ts#L50)); searchable via `ilike` in the admin list ([route.ts:28](../../../app/api/platform-admin/early-access/route.ts#L28)); feeds the "copy consented emails" outreach list.
+
+<!-- dict:col:early_access_leads.email_normalized -->
+**`email_normalized`** (text, NN; **UNIQUE**) — the dedup key (== lowercased email). The manual upsert looks a lead up by this column then INSERTs or UPDATEs ([route.ts:68](../../../app/api/early-access/route.ts#L68)). **Gotcha:** not an atomic upsert — concurrent first-submits can race onto the unique constraint and 500. Excluded from `EARLY_ACCESS_SELECT`.
+
+<!-- dict:col:early_access_leads.organization_name -->
+**`organization_name`** (text, nullable) — org/club/team name; public-form-required but column-nullable; free-tier writer uses `team.name || 'Basic coach team'` ([basic-coach-interest.ts:125](../../../lib/basic-coach-interest.ts#L125)). Feeds the `{{organization}}` token.
+
+<!-- dict:col:early_access_leads.role -->
+**`role`** (text, nullable) — contact role (President/registrar/…); free-tier writer hardcodes `'Coach'` ([basic-coach-interest.ts:127](../../../lib/basic-coach-interest.ts#L127)).
+
+<!-- dict:col:early_access_leads.sports -->
+**`sports`** (text, nullable) — free-text sport/program (e.g. "Softball, hockey"); exported as `sport_or_program`.
+
+<!-- dict:col:early_access_leads.plan_interest -->
+**`plan_interest`** (text[], NN, default `{}`) — plan tiers the lead wants. **Live value domain = `{team, league, club}`** (TS-only, no DB CHECK): the public allowlist is `PLAN_OPTIONS = {league, club}` (capped at 2, [route.ts:5](../../../app/api/early-access/route.ts#L5)), the free-tier writer adds `'team'` ([basic-coach-interest.ts:128](../../../lib/basic-coach-interest.ts#L128)); the admin label map is `EARLY_ACCESS_PLAN_LABELS` ([lib/early-access-admin.ts:25](../../../lib/early-access-admin.ts#L25)). Filtered with `.contains` ([route.ts:36](../../../app/api/platform-admin/early-access/route.ts#L36)); feeds the conversion-by-plan breakdown. (`'coaches_portal'` from the pricing page is filtered out — see gotcha 4.)
+
+<!-- dict:col:early_access_leads.features_interested -->
+**`features_interested`** (text[], NN, default `{}`) — module/feature interests. Public allowlist `FEATURE_OPTIONS = house_league|registration|public_site|accounting|rep_teams|coach_portal|communications` ([route.ts:6](../../../app/api/early-access/route.ts#L6)); free-tier writer adds `coach_portal` + `team_lineups|team_attendance|team_documents|team_budget|team_dues_automation` ([basic-coach-interest.ts:47](../../../lib/basic-coach-interest.ts#L47)); 12-value label map `EARLY_ACCESS_FEATURE_LABELS` ([lib/early-access-admin.ts:31](../../../lib/early-access-admin.ts#L31)).
+
+<!-- dict:col:early_access_leads.notes -->
+**`notes`** (text, nullable, max 1200) — public "what would make this useful" free-text. **Gotcha:** the free-tier path **appends** an interest summary (keeping the last 1200 chars, [basic-coach-interest.ts:68](../../../lib/basic-coach-interest.ts#L68)) whereas the public path overwrites. Distinct from the private `internal_notes`.
+
+<!-- dict:col:early_access_leads.source_path -->
+**`source_path`** (text, nullable) — the page/path that produced the lead; powers the top-5 source attribution ([lib/platform-metrics.ts:245](../../../lib/platform-metrics.ts#L245)). Public form sends `window.location.pathname+hash`; the free-tier writer hardcodes `/coaches/team/{id}` ([basic-coach-interest.ts:131](../../../lib/basic-coach-interest.ts#L131)). Not in the CSV export. Because `/start/league`, `/start/club`, the homepage and pricing all submit via the same modal, `source_path` is whatever pathname the modal was opened on.
+
+<!-- dict:col:early_access_leads.user_agent -->
+**`user_agent`** (text, nullable, max 500) — submitter UA (anti-bot/diagnostic), sliced to 500 ([route.ts:63](../../../app/api/early-access/route.ts#L63)). **Write-only** — not in `EARLY_ACCESS_SELECT`, never displayed/exported.
+
+<!-- dict:col:early_access_leads.release_notifications_consent -->
+**`release_notifications_consent`** (bool, NN, default true) — opt-in for release/feature emails; gates the "copy consented emails" outreach list ([EarlyAccessClient.tsx:231](../../../app/platform-admin/early-access/EarlyAccessClient.tsx#L231)). **Gotcha:** the public form defaults this **true**, but the free-tier coach capture defaults it **false** ([basic-coach-interest.ts:133](../../../lib/basic-coach-interest.ts#L133)) — a coach expressing tool-interest is not auto-subscribed. No automated email is ever sent from these routes; outreach is manual copy/paste.
+
+<!-- dict:col:early_access_leads.metadata -->
+**`metadata`** (jsonb, NN, default `{}`) — **FULLY DEAD.** No writer sets it (absent from both insert helpers), no reader selects it (absent from `EARLY_ACCESS_SELECT`); relies on the DB default forever. No key catalog exists in code.
+
+<!-- dict:col:early_access_leads.internal_status -->
+**`internal_status`** (text, NN, default `'new'`) — **the live triage state machine.** 8-value TS union `EARLY_ACCESS_STATUSES` ([lib/early-access-admin.ts:1](../../../lib/early-access-admin.ts#L1)): `new | qualified | contacted | pilot_candidate | waiting_for_launch | converted | not_a_fit | do_not_contact`, validated by `isEarlyAccessStatus` at the PATCH (no DB CHECK). Written by the PATCH ([[leadId]/route.ts:61](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L61); forced `'contacted'` on `markContacted`, `'converted'` requires an org); grouped by the growth metrics; rendered/filtered in the triage UI.
+
+<!-- dict:col:early_access_leads.internal_notes -->
+**`internal_notes`** (text, nullable, max 4000) — private triage notes (separate from the public `notes`); edited in the triage drawer, exported as `internal_notes`.
+
+<!-- dict:col:early_access_leads.last_contacted_at -->
+**`last_contacted_at`** (tstz, nullable) — set when the admin uses `markContacted` ([[leadId]/route.ts:67](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L67)); rendered as "Last contacted" + exported.
+
+<!-- dict:col:early_access_leads.last_contacted_by -->
+**`last_contacted_by`** (text, nullable, no FK) — email of the platform admin who marked contacted ([[leadId]/route.ts:68](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L68)). **Selected but never surfaced** — present in `EARLY_ACCESS_SELECT`, but never rendered or exported (effectively write-only).
+
+<!-- dict:col:early_access_leads.converted_org_id -->
+**`converted_org_id`** (uuid, nullable; FK→`organizations(id)` ON DELETE SET NULL) — the org this lead became, **set only by the manual admin PATCH** ([[leadId]/route.ts:65](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L65)) after org validation; the conversion-metric key. Never written by any signup/billing automation; org deletion nulls it but leaves `converted_at`. Links to `/platform-admin/orgs/{id}` in the UI.
+
+<!-- dict:col:early_access_leads.converted_at -->
+**`converted_at`** (tstz, nullable) — when the lead was marked converted; **idempotent** (`current.converted_at ?? now`, so re-saving keeps the original, [[leadId]/route.ts:98](../../../app/api/platform-admin/early-access/[leadId]/route.ts#L98)); nulled when the org link is explicitly cleared.
+
+<!-- dict:col:early_access_leads.follow_up_due_at -->
+**`follow_up_due_at`** (**date**, nullable) — next follow-up date (YYYY-MM-DD, not a timestamp); the client compares the string `<= today` to highlight overdue follow-ups ([EarlyAccessClient.tsx:466](../../../app/platform-admin/early-access/EarlyAccessClient.tsx#L466)), which works only because both are `YYYY-MM-DD`.
+
+<!-- dict:col:early_access_leads.next_action -->
+**`next_action`** (text, nullable, max 500) — free-text next-step note; edited in the triage drawer, exported.
+
+### Functions & mechanics (not tables — not coverage-checked, documented for completeness)
+
+- **The manual upsert** ([app/api/early-access/route.ts:65](../../../app/api/early-access/route.ts#L65); [lib/basic-coach-interest.ts:111](../../../lib/basic-coach-interest.ts#L111)) — both writers `select('id, submission_count').eq('email_normalized', …).maybeSingle()` then UPDATE (bump count) or INSERT (`submission_count:1`, `status:'new'`). Not atomic; the `UNIQUE(email_normalized)` constraint is the only backstop against a concurrent-first-submit race.
+- **`EARLY_ACCESS_SELECT`** ([lib/early-access-admin.ts:46](../../../lib/early-access-admin.ts#L46)) — the 24-column source of truth for the admin list/PATCH/export; **excludes** only `metadata`, `user_agent`, `email_normalized` (the three columns never read back). Adding a readable column means editing this constant.
+- **Growth metrics** — `getCommandCenterStats` ([lib/platform-metrics.ts:136](../../../lib/platform-metrics.ts#L136),[:237](../../../lib/platform-metrics.ts#L237)) fetches up to 5000 leads (`internal_status`/`created_at`/`converted_org_id`/`source_path`) and derives `earlyAccessTotal`, `newLeads7`, `convertedLeads`, `conversionRate`, `earlyAccessByStatus`, and the top-5 `sourcePathRows`; surfaced on the platform-admin overview. `EarlyAccessClient` additionally computes its **own** page-local summary (from ≤100 loaded rows) independent of these server metrics.
+- **Free-tier "express interest" bridge** — `lib/basic-coach-interest.ts` writes leads with `plan_interest=['team']` + `source_path=/coaches/team/{id}` from the free Basic-coach portal (forward-link to [[project_free_tier_strategy]]); `/start/league` + `/start/club` feed the same public POST. These do **not** redocument the free-tier feature — they only close the writer link.
+
+---
+
+*End of CRM (Phase 9 — 1 table, the smallest domain. Service-role-only, RLS-enabled-zero-policies; `internal_status` (not `status`) is the live triage field and `converted_org_id` (not the status string) is the conversion source of truth; `metadata` + 4 write-only columns are dead. Cross-references — not redocuments — `organizations` (the `converted_org_id` FK), `platform_audit_log` (the durable mutation trail), and the free-tier `basic-coach-interest` writer.)*
+
+---
+
+# Domain: Notifications & Push
+
+FieldLogicHQ's three notification **delivery channels** and the preference/opt-out layers that gate them: the **in-app bell** (`notifications` + the two preference tables), **web push** (two subscription tables — authenticated member vs anonymous fan), and **email** (the Resend send log + the platform-admin template registry). The hub is **`notify()`** ([lib/notify.ts](../../../lib/notify.ts)): one call fans a single event out to the bell, web push, and email per the recipient's preferences. 8 tables across **3 labeled sub-systems** below.
+
+> _Last verified: 2026-06-10 @ snapshot 2026-06-10, commit `9faea936` (branch `feat/free-tier-coaches`). Authored against a clean tree; a concurrent workstream has since edited unrelated files. **All heavily-cited files are UNMODIFIED vs `9faea936`** (`lib/notify.ts`, `lib/web-push.ts`, `lib/fan-notify.ts`, `lib/email-sender.ts`, and every cited route — checked via `git status`); the lone exception is `lib/email.ts`, which is cited only line-free (its concurrent change merely adds `export` to `escapeHtml`/`wrap` — the "templates are hardcoded, `resolveEmailTemplate` was never built" claim re-verified by grep). Live probes (2026-06-10, dev+prod `pg_class`/`pg_policies`/`pg_trigger`/`role_table_grants`): all 8 tables are column-, constraint-, and FK-identical dev↔prod (**zero structural drift**) with **ZERO triggers** and **ZERO CHECK constraints**; **RLS ENABLED on all 8**, with **policies ONLY on `notifications`** (2, identical dev↔prod — see below) and **zero policies on the other 7**; **prod grants `anon`+`authenticated` FULL DML on all 8 while dev grants only `REFERENCES/TRIGGER/TRUNCATE`** (the [[reference_supabase_rls_grants]] gate). Row counts (dev/prod): `notifications` 57/1 · `notification_preferences` 5/0 · `tournament_notification_preferences` 11/0 · `push_subscriptions` 0/0 · `fan_push_subscriptions` 0/0 · `platform_email_templates` 24/24 · `email_batches` 0/1 · `email_sends` 0/3._
+
+### Gotchas first (the cross-cutting traps)
+
+- **`notify()` is the hub, and it is fire-and-forget.** A single `notify()` call ([lib/notify.ts:87](../../../lib/notify.ts#L87)) resolves recipients, then writes a bell row, optionally fans a Web Push, optionally sends an email — each per-channel-gated. The whole body is wrapped in a try/catch that only `console.error`s ([:273](../../../lib/notify.ts#L273)); a failed notification **never surfaces to or blocks the caller**. Call sites fire it without awaiting — predominantly `notify(...).catch(console.error)` (e.g. [admin/teams/route.ts:352](../../../app/api/admin/teams/route.ts#L352), [billing/webhook/route.ts:581](../../../app/api/billing/webhook/route.ts#L581)), occasionally `void notify(...)` (the check-in route).
+- **TWO suppression layers, in this order:** **Layer 2** = per-tournament opt-out (`tournament_notification_preferences.opted_out`, checked **only when the caller passes `tournamentId`**, [:166](../../../lib/notify.ts#L166)) runs **before** **Layer 1** = global per-channel prefs (`notification_preferences`, [:178](../../../lib/notify.ts#L178)). Missing rows ⇒ **deliver** (the bell channel is default-ON).
+- **Only `notifications` has RLS policies, and they are VESTIGIAL for every shipped data path.** The two policies — `own notifications select` and `own notifications update`, both `qual = auth.uid() = user_id`, roles `public`, **identical dev↔prod** — are never evaluated by the bell list, unread count, or mark-read, which all run through `supabaseAdmin` (service-role, BYPASSRLS) with ownership enforced **in code** (`.eq('user_id', …)`). The only user-scoped client that could exercise the SELECT policy is the `NotificationBell` Realtime subscription ([NotificationBell.tsx:49](../../../components/notifications/NotificationBell.tsx#L49)); the UPDATE policy is fully vestigial. The other 7 tables are **RLS-enabled-ZERO-policies** (service-role-only) — the [[reference_supabase_rls_grants]] backstop against prod's anon full-DML grant.
+- **`notifications.event_type` name-collides with `platform_events.event_type` but is a DISJOINT union.** `NotificationEventType` ([lib/types.ts:1377](../../../lib/types.ts#L1377), 12 values) shares zero values with `PlatformEventType` ([lib/platform-events.ts:3](../../../lib/platform-events.ts#L3)) — e.g. `payment_failed` exists only in the notification union. Never conflate the two. **5 of the 12** notification values have NO emitter (dead enum values — see the table).
+- **No DB triggers or CHECKs anywhere in this domain** — every `updated_at` is code-maintained, and every "enum" (`event_type`, `email_batches.status`, `email_sends.status`/`suppression_reason`, the template `category`) is a TS union/string convention.
+- **Two push tables, by design — different identity models.** `push_subscriptions` = authenticated member (`user_id`, **globally-unique endpoint** → one row per browser, follows the logged-in member across orgs); `fan_push_subscriptions` = anonymous public fan (**no `user_id`**, scoped to `(tournament_id, team_id)`, **`UNIQUE(endpoint, tournament_id)`** → the same browser can follow many tournaments, one row each). Both are **EMPTY in dev AND prod** (built, zero live subscriptions). `sendWebPush` is shared and **no-ops when VAPID keys are unset**.
+- **The DB email-template registry is a MIRROR, not the source of sends.** `platform_email_templates` is admin **edit/preview/test-send only**; the planned `resolveEmailTemplate()`/`resolveEmail()` DB loader **was never built** (grep = no matches), so the hardcoded `lib/email.ts` templates always send. The "looks authoritative but isn't" trap — editing a template here changes nothing that ships.
+- **Dev/prod:** all 8 column/constraint-identical (zero structural drift). Divergence is **content** (row counts above) + **grants** (prod anon full DML; dev `REFERENCES/TRIGGER/TRUNCATE`) only; the 2 `notifications` policies are identical across envs.
+
+---
+
+## In-app bell & preferences
+
+> The in-app notification bell and the two preference layers that gate it. `notifications` is the per-user bell store; `notification_preferences` is the **global** per-(user, org, event) channel matrix; `tournament_notification_preferences` is a **per-tournament opt-out** overlay. All three are touched exclusively by `supabaseAdmin` on every shipped path — the only user-scoped client in the sub-system is the bell's Realtime subscription.
+
+### `notifications`
+<!-- dict:table:notifications -->
+
+**Purpose:** the in-app notification bell store — one row per (recipient, event) when the bell channel is enabled. Written **exclusively** by `notify()` ([lib/notify.ts:197](../../../lib/notify.ts#L197), service-role INSERT); read/mapped by [app/api/notifications/route.ts](../../../app/api/notifications/route.ts) (GET list + unread count) into `AppNotification` ([lib/types.ts:1391](../../../lib/types.ts#L1391)); rendered by [NotificationPanel.tsx](../../../components/notifications/NotificationPanel.tsx) + the badge in [NotificationBell.tsx](../../../components/notifications/NotificationBell.tsx).
+
+**Gotchas (read first):**
+1. **The 2 RLS policies are vestigial for the bell.** GET (count + list) and POST (mark-read / mark-all-read) all go through `supabaseAdmin` ([route.ts:41](../../../app/api/notifications/route.ts#L41)), so `own notifications select/update` are never evaluated; ownership is enforced in code by `.eq('user_id', user.id)`. Only the `NotificationBell` Realtime INSERT subscription (filtered `user_id=eq.<self>`, [NotificationBell.tsx:59](../../../components/notifications/NotificationBell.tsx#L59)) may rely on the SELECT policy for server-side broadcast filtering.
+2. **Mark-read is a POST with an `action` body — there is NO PATCH verb** ([route.ts:76](../../../app/api/notifications/route.ts#L76); actions `mark-read` / `mark-all-read`). `read_at` is set to the request-time ISO string ([:93](../../../app/api/notifications/route.ts#L93)); unread = `read_at IS NULL`.
+3. **The unread badge is a separate `head:true` count query** ([route.ts:41](../../../app/api/notifications/route.ts#L41)), independent of the list — the badge stays accurate even when the bell fetches only 1 row.
+4. **`event_type` is a name-collision + has 5 dead values** (see the column). **`metadata` is effectively dead** — `notify()` writes `opts.metadata ?? {}` but no call site passes one, and no UI reads it.
+5. **`link` navigation is a hard reload** — `NotificationPanel` assigns `window.location.href = notification.link` ([:82](../../../components/notifications/NotificationPanel.tsx#L82)), not the Next router; links are relative app paths.
+
+**Fields** (boilerplate `id` + `created_at` omitted — `created_at` is DB-default `now()`, the newest-first sort + relative-time label; no `updated_at` column):
+
+<!-- dict:col:notifications.org_id -->
+**`org_id`** (uuid, NN; FK→`organizations(id)` ON DELETE CASCADE) — the org the notification belongs to; scopes the per-org bell. Supplied by the caller (`opts.orgId`, [lib/notify.ts:200](../../../lib/notify.ts#L200)); recipient resolution derives members **from** that org, so consistency is code-enforced. Filter key for the list + mark-all-read ([route.ts:45](../../../app/api/notifications/route.ts#L45)).
+
+<!-- dict:col:notifications.user_id -->
+**`user_id`** (uuid, NN; FK→`auth.users(id)` ON DELETE CASCADE) — the recipient; set from resolved `recipient.userId` ([lib/notify.ts:201](../../../lib/notify.ts#L201)). Drives the (vestigial) RLS `qual auth.uid()=user_id` **and** the code-level ownership filter on every read/write ([route.ts:44](../../../app/api/notifications/route.ts#L44)).
+
+<!-- dict:col:notifications.event_type -->
+**`event_type`** (text, NN, **no CHECK**) — which event produced the row; selects the panel icon and the per-event preference key. 12-value TS union `NotificationEventType` ([lib/types.ts:1377](../../../lib/types.ts#L1377)). **Emitted (have `notify()` callers):** `registration_new`, `registration_status_changed`, `payment_received`, `payment_failed`, `score_submitted`, `team_no_show`, `house_league_registration_new`. **DEAD ENUM VALUES (no emitter anywhere — verified by grep: no `notify()` call passes these 5):** `roster_change_requested`, `coach_access_requested`, `score_disputed`, `waitlist_opened`, `registration_deadline_approaching` (they appear only in the UI label/icon/section maps in `lib/notification-labels.ts`). **Name-collision:** disjoint from `platform_events`' `PlatformEventType` — do not conflate.
+
+<!-- dict:col:notifications.title -->
+**`title`** (text, NN) — bold panel headline; **also reused as the push/email subject** when those channels fire ([lib/notify.ts:233](../../../lib/notify.ts#L233),[:265](../../../lib/notify.ts#L265)).
+
+<!-- dict:col:notifications.body -->
+**`body`** (text, nullable) — optional secondary panel line (`opts.body ?? null`).
+
+<!-- dict:col:notifications.link -->
+**`link`** (text, nullable) — relative deep-link path; clicking it does a **hard `window.location.href` reload** ([NotificationPanel.tsx:82](../../../components/notifications/NotificationPanel.tsx#L82)), not a router push.
+
+<!-- dict:col:notifications.read_at -->
+**`read_at`** (tstz, nullable) — NULL = unread; ISO timestamp = read. Set by the mark-read / mark-all-read POST ([route.ts:93](../../../app/api/notifications/route.ts#L93)) (no trigger); the insert never sets it, so new rows default unread. Unread-filter key for the list + badge count.
+
+<!-- dict:col:notifications.metadata -->
+**`metadata`** (jsonb, NN, default `{}`) — intended structured payload; surfaced onto `AppNotification.metadata`. **Effectively dead / write-only** — `notify()` writes `opts.metadata ?? {}` ([lib/notify.ts:206](../../../lib/notify.ts#L206)) but no call site passes a `metadata` option, and no UI reads it. (The `metadata:` blocks in `admin/teams/route.ts` / `register/route.ts` belong to `writePlatformEvent`, not `notify()`.)
+
+### `notification_preferences`
+<!-- dict:table:notification_preferences -->
+
+**Purpose:** the **global** per-(user, org, event_type) channel matrix — the Layer-1 gate. PK `(user_id, org_id, event_type)`. Written by the org notification-settings page via [app/api/admin/org/notification-preferences/route.ts](../../../app/api/admin/org/notification-preferences/route.ts) (POST upsert); read **only** by `notify()` ([lib/notify.ts:179](../../../lib/notify.ts#L179)) to gate each of the 3 channels.
+
+**Gotchas (read first):**
+1. **Absence of a row is NOT all-off — it falls through to `systemDefaults()` which is bell-ON.** `notify()` uses the row if present, else `systemDefaults()` ([lib/notify.ts:187](../../../lib/notify.ts#L187)), which returns `{bell:true, push:false, email:(payment_failed && owner|admin)}` ([:58](../../../lib/notify.ts#L58)). A user who never touched preferences still gets every bell event.
+2. **`channel_email` default-true is special-cased to `payment_failed` for owners/admins only** — the single channel-by-role default in the system ([:63](../../../lib/notify.ts#L63)); all other events default email-off.
+3. **The role for that email default is forced to `'member'` when an explicit `userIds` recipient list is supplied** ([:113](../../../lib/notify.ts#L113)), so explicit-recipient `payment_failed` emails are never auto-on.
+
+**Fields** (boilerplate `updated_at` omitted — code-maintained, NN default now(), and **never read**; no `id`/`created_at` columns):
+
+<!-- dict:col:notification_preferences.user_id -->
+**`user_id`** (uuid, NN; PK part; FK→`auth.users(id)` ON DELETE CASCADE) — the preference owner; set from `ctx.user.id`, filter key for `notify()`'s lookup.
+
+<!-- dict:col:notification_preferences.org_id -->
+**`org_id`** (uuid, NN; PK part; FK→`organizations(id)` ON DELETE CASCADE) — the org scope; set from `ctx.org.id`.
+
+<!-- dict:col:notification_preferences.event_type -->
+**`event_type`** (text, NN; PK part, **no CHECK**) — the event the toggle applies to; same `NotificationEventType` domain as `notifications.event_type`. The settings UI groups these via `NOTIFICATION_SECTIONS` ([lib/notification-labels.ts:49](../../../lib/notification-labels.ts#L49)), module-gated (Coaches Portal needs `module_rep_teams`, House League needs `module_house_league`).
+
+<!-- dict:col:notification_preferences.channel_bell -->
+**`channel_bell`** (bool, NN, default true) — whether this event writes a bell row for the user; consumed at [lib/notify.ts:196](../../../lib/notify.ts#L196) (`if (prefs.bell)`).
+
+<!-- dict:col:notification_preferences.channel_push -->
+**`channel_push`** (bool, NN, default false) — whether this event fans a Web Push to the user's `push_subscriptions`; consumed at [lib/notify.ts:215](../../../lib/notify.ts#L215). Default-off ⇒ the member push channel is opt-in.
+
+<!-- dict:col:notification_preferences.channel_email -->
+**`channel_email`** (bool, NN, default false) — whether this event sends a transactional email via `sendEmail`; consumed at [lib/notify.ts:262](../../../lib/notify.ts#L262). (See the `payment_failed`/owner-admin system default above.)
+
+### `tournament_notification_preferences`
+<!-- dict:table:tournament_notification_preferences -->
+
+**Purpose:** the **per-tournament opt-out overlay** (Layer 2) — suppresses `notify()` for one tournament even when the global channel is on. PK `(user_id, tournament_id, event_type)`. Written by [app/api/admin/tournaments/[tournamentId]/notification-preferences/route.ts](../../../app/api/admin/tournaments/[tournamentId]/notification-preferences/route.ts) (POST upsert); consumed **only** by `notify()` ([lib/notify.ts:166](../../../lib/notify.ts#L166)).
+
+**Gotchas (read first):**
+1. **This is a per-USER opt-out keyed on `auth.users.user_id` with a boolean `opted_out` — NOT the contact-member `notify_mode` mechanism.** The writer sets `user_id: ctx.user.id` (the authenticated org user), and `notify()` filters `.eq('user_id', recipient.userId)`; there is no `notify_mode` anywhere in this table's paths. (Contrast the `staff`-role recipient scoping in `org_member_tournament_assignments`, sealed in **Org / Platform core** — a different mechanism; not redocumented here.)
+2. **`opted_out` is consumed in exactly one place — `notify()`'s Layer-2 gate — and only when the caller passes a `tournamentId`** ([lib/notify.ts:166](../../../lib/notify.ts#L166)). Many tournament-relevant events (registration/payment notifications in `admin/teams/route.ts` / `register/route.ts`) do **not** pass `tournamentId`, so a per-tournament opt-out cannot suppress them.
+3. **Missing row = NOT opted out** — the strict `opted_out === true` check ([:175](../../../lib/notify.ts#L175)) means an absent pref (maybeSingle → null) delivers.
+
+**Fields** (boilerplate `updated_at` omitted — code-maintained, never read; no `id`/`created_at` columns):
+
+<!-- dict:col:tournament_notification_preferences.user_id -->
+**`user_id`** (uuid, NN; PK part; FK→`auth.users(id)` ON DELETE CASCADE) — the authenticated org user opting out; set from `ctx.user.id`. Keyed on `auth.users`, **not** a contact/org-member — the distinguishing fact from the `notify_mode` model.
+
+<!-- dict:col:tournament_notification_preferences.tournament_id -->
+**`tournament_id`** (uuid, NN; PK part; FK→`tournaments(id)` ON DELETE CASCADE) — the tournament the opt-out applies to.
+
+<!-- dict:col:tournament_notification_preferences.event_type -->
+**`event_type`** (text, NN; PK part, **no CHECK**) — the event being opted out of; same `NotificationEventType` domain.
+
+<!-- dict:col:tournament_notification_preferences.opted_out -->
+**`opted_out`** (bool, NN, default false) — `true` suppresses delivery (Layer 2). The only consumer is [lib/notify.ts:175](../../../lib/notify.ts#L175); the route doc-comment states the client treats missing rows as `optedOut=false`.
+
+## Web push
+
+> The two Web Push subscription stores, kept separate because they have **different identity models**. `push_subscriptions` = authenticated member/admin PWA (user-keyed, globally-unique endpoint). `fan_push_subscriptions` = anonymous public fan PWA (no account, tournament/team-scoped). Both are sent via the shared `sendWebPush` ([lib/web-push.ts](../../../lib/web-push.ts)) and are **EMPTY in dev AND prod**.
+
+### `push_subscriptions`
+<!-- dict:table:push_subscriptions -->
+
+**Purpose:** one row per browser push endpoint for an **authenticated** member/admin. Hydrated by `POST /api/notifications/push/subscribe` ([route.ts:51](../../../app/api/notifications/push/subscribe/route.ts#L51)) on a successful `pushManager.subscribe()`; consumed by the member push channel in `notify()` ([lib/notify.ts:216](../../../lib/notify.ts#L216)) to fan a bell notification to all of a user's devices. **EMPTY in dev AND prod.**
+
+**Gotchas (read first):**
+1. **`endpoint` is globally UNIQUE and is the upsert conflict key** (`onConflict:'endpoint'`, [route.ts:63](../../../app/api/notifications/push/subscribe/route.ts#L63)) — re-registering the same browser updates the existing row **including `user_id`**, so the same endpoint re-subscribed by a different account **reassigns ownership**. Identity is still app-checked: subscribe sets `user_id` from the session, unsubscribe filters `.eq('user_id', user.id)`.
+2. **The member channel is gated OFF by default** — `channel_push` defaults false, so even with a subscription row present nothing sends unless the user opted in ([lib/notify.ts:215](../../../lib/notify.ts#L215)).
+3. **410-Gone cleanup deletes the row by `id`, and the member path treats ONLY 410 as dead** (not 404, [lib/notify.ts:244](../../../lib/notify.ts#L244)) — unlike the fan path (410 OR 404).
+4. **`sendWebPush` silently no-ops when VAPID keys are unset** ([lib/web-push.ts:62](../../../lib/web-push.ts#L62)) — the send loop still runs and still refreshes `last_used_at`, but nothing is delivered.
+5. **`device_label` and `last_used_at` are write-only** — captured/refreshed but never selected; the "stale subscription" comment on `last_used_at` is aspirational (no sweep reads it).
+
+**Fields** (boilerplate `id` + `created_at` omitted — `created_at` is DB-default-only, never read by app code):
+
+<!-- dict:col:push_subscriptions.user_id -->
+**`user_id`** (uuid, NN; FK→`auth.users(id)` ON DELETE CASCADE) — the owning authenticated user, from the session ([route.ts:55](../../../app/api/notifications/push/subscribe/route.ts#L55)); the fan-out filter key. **Reassigned** if the same endpoint is re-subscribed by another account (endpoint-only conflict key).
+
+<!-- dict:col:push_subscriptions.endpoint -->
+**`endpoint`** (text, NN; **UNIQUE**) — the browser `PushSubscription.endpoint`; the upsert conflict target; passed to `sendWebPush`. One row per browser globally.
+
+<!-- dict:col:push_subscriptions.keys_p256dh -->
+**`keys_p256dh`** (text, NN) — base64url P-256 public key from the browser subscription; consumed by `webPush.sendNotification` ([lib/web-push.ts:71](../../../lib/web-push.ts#L71)).
+
+<!-- dict:col:push_subscriptions.keys_auth -->
+**`keys_auth`** (text, NN) — base64url auth secret from the browser subscription; consumed by `webPush.sendNotification` ([lib/web-push.ts:72](../../../lib/web-push.ts#L72)).
+
+<!-- dict:col:push_subscriptions.device_label -->
+**`device_label`** (text, nullable) — client-derived UA label (e.g. "Chrome on iPhone"), from `getDeviceLabel()`. **Write-only** — intended for a "manage devices" list that does not exist.
+
+<!-- dict:col:push_subscriptions.last_used_at -->
+**`last_used_at`** (tstz, nullable) — stamped on subscribe and refreshed after each successful send ([lib/notify.ts:241](../../../lib/notify.ts#L241)); code-maintained (no trigger). **Write-only** — no reader; no staleness sweep exists.
+
+### `fan_push_subscriptions`
+<!-- dict:table:fan_push_subscriptions -->
+
+**Purpose:** one row per browser endpoint **per tournament** for an **anonymous** public fan (no account) following a team's score alerts — a Tournament Plus `fan_score_alerts` feature ([[project_public_tournament_wow]], forward-link only). Hydrated by `POST /api/public/fan-push/subscribe` ([route.ts:71](../../../app/api/public/fan-push/subscribe/route.ts#L71)); consumed by `notifyFansForGame` ([lib/fan-notify.ts:55](../../../lib/fan-notify.ts#L55)) to push final/score-update alerts to everyone following either team in a game. **EMPTY in dev AND prod.**
+
+**Gotchas (read first):**
+1. **Two tables by design — this one has NO `user_id`** and is scoped to `(tournament_id, team_id)` with **`UNIQUE(endpoint, tournament_id)`**, so the same browser endpoint can have **many** rows (one per tournament). Contrast `push_subscriptions` (`user_id` + globally-unique `endpoint` = one row per browser). The migration-107 header states the rationale ("fans have no `auth.users` account").
+2. **The routes are fully anonymous (no session)** and use `supabaseAdmin`. Subscribe validates the team belongs to the tournament **and** gates on `fan_score_alerts` (Tournament Plus) before writing ([route.ts:43](../../../app/api/public/fan-push/subscribe/route.ts#L43),[:62](../../../app/api/public/fan-push/subscribe/route.ts#L62)); the sender re-checks the plan (defense-in-depth, [lib/fan-notify.ts:49](../../../lib/fan-notify.ts#L49)).
+3. **Re-following a different team in the SAME tournament overwrites `team_id`** — the conflict key is `(endpoint, tournament_id)`, not team, so a device follows at most ONE team per tournament.
+4. **410-cleanup deletes by `endpoint` and treats 410 OR 404 as dead** ([lib/fan-notify.ts:93](../../../lib/fan-notify.ts#L93)) — so one dead endpoint nukes that browser's subscriptions across **all** tournaments (contrast the member path's delete-by-id, 410-only).
+5. **Fan-out only fires on score-posting transitions** — `notifyFansForGame` early-returns unless `status` is `submitted`/`completed` ([lib/fan-notify.ts:21](../../../lib/fan-notify.ts#L21)); the sole production caller is the scoring-service `onScored` hook ([lib/tournament-scoring-service.ts:167](../../../lib/tournament-scoring-service.ts#L167)), covering scorekeeper/official/admin.
+
+**Fields** (boilerplate `id` + `created_at` omitted — `created_at` DB-default-only, never read):
+
+<!-- dict:col:fan_push_subscriptions.endpoint -->
+**`endpoint`** (text, NN; part of `UNIQUE(endpoint, tournament_id)`) — the browser `PushSubscription.endpoint`; **not** globally unique here (one row per tournament). Deduped per-endpoint in the send loop; the 410/404 delete key.
+
+<!-- dict:col:fan_push_subscriptions.keys_p256dh -->
+**`keys_p256dh`** (text, NN) — base64url P-256 public key; consumed by `sendWebPush`.
+
+<!-- dict:col:fan_push_subscriptions.keys_auth -->
+**`keys_auth`** (text, NN) — base64url auth secret; consumed by `sendWebPush`.
+
+<!-- dict:col:fan_push_subscriptions.tournament_id -->
+**`tournament_id`** (uuid, NN; FK→`tournaments(id)` ON DELETE CASCADE) — the tournament being followed; half of the unique key and the fan-out query filter ([lib/fan-notify.ts:58](../../../lib/fan-notify.ts#L58)). Validated against `team_id` at subscribe.
+
+<!-- dict:col:fan_push_subscriptions.team_id -->
+**`team_id`** (uuid, NN; FK→`teams(id)` ON DELETE CASCADE) — the single team this device follows in this tournament; drives the "who follows either team in this game" fan-out (`.in('team_id', [home, away])`). **Overwritten** on re-follow (conflict key excludes it).
+
+<!-- dict:col:fan_push_subscriptions.device_label -->
+**`device_label`** (text, nullable) — client-derived UA label (from [FollowAlertsToggle.tsx:89](../../../components/public/FollowAlertsToggle.tsx#L89)). **Write-only.**
+
+<!-- dict:col:fan_push_subscriptions.last_used_at -->
+**`last_used_at`** (tstz, nullable) — stamped on subscribe + refreshed after each successful fan send ([lib/fan-notify.ts:89](../../../lib/fan-notify.ts#L89)); code-maintained. **Write-only** — no reader, no sweep.
+
+## Email (Resend)
+
+> The email layer: a per-recipient **send log** (`email_sends`) under campaign **batch headers** (`email_batches`), both written by [lib/email-sender.ts](../../../lib/email-sender.ts) around the Resend API; plus a platform-admin **template registry** (`platform_email_templates`) that is an editing **mirror only**, not a send-time source. Forward-links — not redocuments — [[project_email_stack]] (Resend via `fieldlogichq.ca`, the two send patterns, the CloudWatch `[email]` log path), [[project_founding_season_email]], and [[project_signup_flow_fixes]].
+
+### `platform_email_templates`
+<!-- dict:table:platform_email_templates -->
+
+**Purpose:** a platform-admin **editable mirror** of the hardcoded `lib/email.ts` templates (24 seeded rows; categories auth/billing/tournament/rep_teams/house_league/system) powering an **edit + preview + test-send** UI at `/platform-admin/email-templates`. **Despite the authoritative-looking schema it is NOT read by any send path** — the actual send uses the hardcoded `lib/email.ts` template functions.
+
+**Gotchas (read first):**
+1. **MIRROR, not runtime-consumed — the "looks authoritative but isn't" trap.** The planned `resolveEmailTemplate()`/`resolveEmail()` DB loader **does not exist** (grep across `lib/` = no matches; referenced only as comments in migration 083 and the DELETE route). The only readers are the 4 platform-admin routes + the editor page; the send path ([lib/email-sender.ts](../../../lib/email-sender.ts), [app/api/admin/email/send/route.ts](../../../app/api/admin/email/send/route.ts)) calls hardcoded HTML builders. Editing a row here changes the preview/test-send, **not what ships**.
+2. **`is_customised` is decorative** — set `true` by PUT, `false` by DELETE, shown as an admin badge + reset-button enable, but **no send-path branches on it**; its documented "false ⇒ use hardcoded" meaning is vacuously true (hardcoded is always used).
+3. **The template `key` namespace is DISJOINT from `email_sends`/`email_batches.email_key`.** These keys mirror `lib/email.ts` (`signup_verification`, `tournament_registration_*`, …); the send-log keys are `founding_*` / `spotlight_*` / `tournament_plus_*`. The two key spaces do not join.
+4. **Count is live truth, not the migration** — **24 rows live** in both envs (seed-only; no app INSERT path writes a new template, so a new key needs a migration). `updated_at`/`updated_by` are code-maintained (no trigger).
+
+**Fields** (boilerplate `updated_at` omitted — code-maintained; no `id` [`key` is PK] / no `created_at`):
+
+<!-- dict:col:platform_email_templates.key -->
+**`key`** (text, **PK**) — stable template id mirroring a `lib/email.ts` template; the lookup key for GET/PUT/test-send. Value domain = the seeded keys (decide the live set from the snapshot, not migration 083).
+
+<!-- dict:col:platform_email_templates.label -->
+**`label`** (text, NN) — human display name in the admin template list.
+
+<!-- dict:col:platform_email_templates.description -->
+**`description`** (text, NN) — admin-facing one-liner describing when the email fires.
+
+<!-- dict:col:platform_email_templates.subject -->
+**`subject`** (text, NN) — editable subject for **preview/test-send only**; the real send subject comes from code.
+
+<!-- dict:col:platform_email_templates.heading -->
+**`heading`** (text, NN) — editable email H2 heading (preview/test only).
+
+<!-- dict:col:platform_email_templates.body -->
+**`body`** (text, NN) — editable body with `**bold**` + `{{var}}` tokens (preview/test only).
+
+<!-- dict:col:platform_email_templates.cta_label -->
+**`cta_label`** (text, nullable) — optional CTA button label (preview/test only; `''` coerced to null on PUT).
+
+<!-- dict:col:platform_email_templates.cta_url_pattern -->
+**`cta_url_pattern`** (text, nullable) — seeded `{{var}}` URL pattern for the CTA (e.g. `{{scheduleUrl}}`). **Dead post-seed** — no PUT path updates it, no editor input renders it, not used at send time.
+
+<!-- dict:col:platform_email_templates.variables -->
+**`variables`** (jsonb, NN, default `[]`) — JSON array of `{{}}` token **names**; consumed only by the editor's var chips + the test-send placeholder fill ([test-send/route.ts:41](../../../app/api/platform-admin/email-templates/[key]/test-send/route.ts#L41)). Real sends interpolate via the hardcoded function params.
+
+<!-- dict:col:platform_email_templates.category -->
+**`category`** (text, NN, default `'system'`, **no CHECK**) — admin grouping bucket; observed domain `auth | billing | tournament | rep_teams | house_league | system`; unknown values fall through to raw display.
+
+<!-- dict:col:platform_email_templates.is_customised -->
+**`is_customised`** (bool, NN, default false) — `true` if an admin saved an override; PUT→true, DELETE→false. **Decorative** — drives only the admin badge + reset button; no send-path consumer.
+
+<!-- dict:col:platform_email_templates.updated_by -->
+**`updated_by`** (text, nullable, no FK) — who last edited (`user.email ?? user.id`); free-text, not a FK.
+
+### `email_batches`
+<!-- dict:table:email_batches -->
+
+**Purpose:** the campaign **header** for a bulk founding-season/marketing send — one row per "Send now" in the platform-admin email dashboard. Created by `createEmailBatch`, tallied by `incrementBatchCounter`, closed by `finalizeBatch` (all [lib/email-sender.ts](../../../lib/email-sender.ts)); read by the dashboard ([app/platform-admin/email/page.tsx](../../../app/platform-admin/email/page.tsx)).
+
+**Gotchas (read first):**
+1. **The counters use a NON-ATOMIC read-then-write increment** ([lib/email-sender.ts:255](../../../lib/email-sender.ts#L255)) — `SELECT {counter}_count` then `UPDATE current+1`. The code comment accepts this for the 30–50-org founding cohort and flags revisiting with a Postgres function at higher volume.
+2. **DB default `status='pending'` is never written by the app** — `createEmailBatch` always inserts `'running'` and `finalizeBatch` writes `'complete'`/`'failed'`. The dashboard badge map additionally synthesizes `scheduled`/`sent` from batch existence (not from `status`).
+3. **`started_at` is set at row CREATION** (inside `createEmailBatch`, [:300](../../../lib/email-sender.ts#L300)) — it equals creation time, not a true "first email dispatched" marker.
+
+**Fields** (boilerplate `id` + `created_at` omitted — `id` is referenced by `email_sends.batch_id` + the `?batchId=` drill-in; `created_at` is the dashboard sort key, DB-default now()):
+
+<!-- dict:col:email_batches.email_key -->
+**`email_key`** (text, NN, **no CHECK**) — which campaign this batch is for. Code-convention domain = the `TEMPLATE_REGISTRY` keys ([app/api/admin/email/send/route.ts:37](../../../app/api/admin/email/send/route.ts#L37)): `founding_welcome`, `founding_checkin`, `founding_renewal`, `founding_final`, `spotlight_club`, `spotlight_league`, `spotlight_coaches_org`, `spotlight_coaches_coach`, `spotlight_club_last`, `spotlight_full_picture`.
+
+<!-- dict:col:email_batches.subject -->
+**`subject`** (text, NN) — the batch subject (from the code `TEMPLATE_REGISTRY.subject`).
+
+<!-- dict:col:email_batches.triggered_by -->
+**`triggered_by`** (text, NN) — audit string for who/what launched the batch; JSDoc documents `'signup' | 'platform_admin:<email>'`, but the only live caller produces `platform_admin:<email>`.
+
+<!-- dict:col:email_batches.recipient_count -->
+**`recipient_count`** (int4, NN, default 0) — planned audience size at creation (`recipients.length`).
+
+<!-- dict:col:email_batches.suppressed_count -->
+**`suppressed_count`** (int4, NN, default 0) — running tally of opt-out-suppressed sends ([lib/email-sender.ts:127](../../../lib/email-sender.ts#L127)).
+
+<!-- dict:col:email_batches.sent_count -->
+**`sent_count`** (int4, NN, default 0) — running tally of successful sends.
+
+<!-- dict:col:email_batches.failed_count -->
+**`failed_count`** (int4, NN, default 0) — running tally of failed sends.
+
+<!-- dict:col:email_batches.status -->
+**`status`** (text, NN, default `'pending'`, **no CHECK**) — batch lifecycle. **Code domain = `running` → `complete` | `failed`** (the DB default `'pending'` is never written by the app); the dashboard also styles `scheduled`/`sent` synthetically.
+
+<!-- dict:col:email_batches.started_at -->
+**`started_at`** (tstz, nullable) — set at row creation (= `created_at`), not a true dispatch marker.
+
+<!-- dict:col:email_batches.completed_at -->
+**`completed_at`** (tstz, nullable) — when `finalizeBatch` ran.
+
+### `email_sends`
+<!-- dict:table:email_sends -->
+
+**Purpose:** the per-recipient send **log** — one row per individual email attempt, written before+after the Resend call (`logSend` INSERT → `updateSend`, [lib/email-sender.ts:203](../../../lib/email-sender.ts#L203)). `batch_id` is NULL for standalone scheduled emails and set for dashboard bulk sends. Read by the per-send drill-in ([app/api/admin/email/sends/route.ts](../../../app/api/admin/email/sends/route.ts)).
+
+**Gotchas (read first):**
+1. **The migration comment claims "no RLS" but live `relrowsecurity=true`** (RLS enabled, zero policies) — the textbook [[reference_supabase_rls_grants]] instance. On prod (anon+authenticated full DML grant) the zero-policy RLS is the only thing blocking direct REST DML; read the posture from live `pg_class`, not the comment.
+2. **There is NO `scheduled_at` DB column** — scheduling is entirely Resend's native `scheduled_at` **request param**, computed app-side and spread into the Resend POST ([lib/email-sender.ts:164](../../../lib/email-sender.ts#L164)); delays are `+1d` (welcome, [create-checkout/route.ts:245](../../../app/api/billing/create-checkout/route.ts#L245)) / `+7d` (upsell, [onboarding-plan/route.ts:104](../../../app/api/admin/org/onboarding-plan/route.ts#L104)). The DB stores only `created_at` and (post-send) `sent_at`.
+3. **`cancelScheduledEmail` is the cancel-on-upgrade path** ([lib/email-sender.ts:342](../../../lib/email-sender.ts#L342)) — it targets `status='sent'` AND non-null `resend_message_id` rows for `(org, email_key)`, POSTs Resend `/{id}/cancel`, then marks them `suppressed` / `suppression_reason='cancelled_on_upgrade'`. Wired from the billing webhook + create-checkout for `tournament_plus_upsell`.
+4. **`suppression_reason` is also written on FAILURE** (`no_api_key`/`send_error`) with `status='failed'` (not `'suppressed'`); a successful `'sent'` update resets it (and `sent_at`) to null.
+
+**Fields** (boilerplate `id` + `created_at` omitted — `id` is returned by `logSend` so `updateSend` can patch the same row; `created_at` is the per-batch sends sort key, DB-default now()):
+
+<!-- dict:col:email_sends.email_key -->
+**`email_key`** (text, NN, **no CHECK**) — which email type this send is. Domain = the batch keys (`founding_*`/`spotlight_*`) **plus** the standalone scheduled keys `tournament_plus_upsell` + `tournament_plus_welcome`. The `cancelScheduledEmail` filter key.
+
+<!-- dict:col:email_sends.subject -->
+**`subject`** (text, NN) — the subject as sent (denormalized). **Write-mostly** — the per-send drill-in API does not select it.
+
+<!-- dict:col:email_sends.recipient_org_id -->
+**`recipient_org_id`** (uuid, nullable; FK→`organizations(id)` ON DELETE SET NULL) — the org used for opt-out/unsubscribe attribution; the log row survives org deletion with a null org. **Gotcha:** for coach-audience sends this is the **founding org's** id, not the coach's own org (V1 simplification). Nullable in schema but always populated by code.
+
+<!-- dict:col:email_sends.recipient_email -->
+**`recipient_email`** (text, NN) — destination email address.
+
+<!-- dict:col:email_sends.recipient_name -->
+**`recipient_name`** (text, nullable) — optional display name.
+
+<!-- dict:col:email_sends.status -->
+**`status`** (text, NN, default `'queued'`, **no CHECK**) — per-send lifecycle; TS-typed `'queued' | 'sent' | 'failed' | 'suppressed'` ([lib/email-sender.ts:199](../../../lib/email-sender.ts#L199)). Initial `queued` (or `suppressed` on opt-out at insert) → `sent` | `failed` via `updateSend`, or `suppressed` via `cancelScheduledEmail`.
+
+<!-- dict:col:email_sends.suppression_reason -->
+**`suppression_reason`** (text, nullable, **no CHECK**) — why a non-sent row was suppressed/failed. Domain = `opt_out` | `no_api_key` | `send_error` | `cancelled_on_upgrade`. Written on failure too (with `status='failed'`); reset to null on `'sent'`.
+
+<!-- dict:col:email_sends.resend_message_id -->
+**`resend_message_id`** (text, nullable) — the Resend API message id from the send response; the handle `cancelScheduledEmail` uses to cancel a still-scheduled send (POST `/{id}/cancel`).
+
+<!-- dict:col:email_sends.batch_id -->
+**`batch_id`** (uuid, nullable; FK→`email_batches(id)` ON DELETE SET NULL) — the parent batch, or **NULL for standalone scheduled emails** (`tournament_plus_upsell`/`_welcome`) — those call `sendMarketingEmail` with no `batchId`, so `incrementBatchCounter` no-ops and the rows never appear in the batch drill-in.
+
+<!-- dict:col:email_sends.sent_at -->
+**`sent_at`** (tstz, nullable) — when the row reached `'sent'`; code-maintained (no trigger); reset to null if the row is updated to `'failed'`. The `cancelScheduledEmail` order key.
+
+### Functions & mechanics (not tables — not coverage-checked, documented for completeness)
+
+- **`notify()`** ([lib/notify.ts:87](../../../lib/notify.ts#L87)) — the fan-out hub: resolve recipients (all org members, or an explicit `userIds` list forced to `role='member'`) → **Layer 2** tournament opt-out (only if `tournamentId` passed) → **Layer 1** global channel prefs (falling back to `systemDefaults`) → write bell row (`channel_bell`) → fan Web Push (`channel_push` → `push_subscriptions` → `sendWebPush`, 410-delete) → send email (`channel_email` → `notificationEmailHtml` → `sendEmail`). Fire-and-forget; the whole body never throws to the caller.
+- **`sendWebPush`** ([lib/web-push.ts:58](../../../lib/web-push.ts#L58)) — the shared single-subscription sender for **both** push tables; VAPID configured once at module load; 24h TTL; **no-ops when VAPID env is unset**; throws `WebPushError` statusCode 410 on expired endpoints (the cleanup signal).
+- **`notifyFansForGame(gameId, status)`** ([lib/fan-notify.ts:20](../../../lib/fan-notify.ts#L20)) — the sole reader/writer of `fan_push_subscriptions` for sending: early-returns unless `submitted`/`completed`, re-checks the `fan_score_alerts` plan gate, selects by `(tournament_id, team_id ∈ [home, away])`, dedupes by endpoint, refreshes `last_used_at`, deletes by endpoint on 410/404. Sole production caller = the scoring-service `onScored` hook ([lib/tournament-scoring-service.ts:167](../../../lib/tournament-scoring-service.ts#L167)).
+- **Email send pipeline** ([lib/email-sender.ts](../../../lib/email-sender.ts)) — `createEmailBatch` (header, status `'running'`, `started_at=now`) → per recipient `logSend` (INSERT, returns id) → Resend POST (with optional native `scheduled_at`) → `updateSend` (`sent`/`failed` + `resend_message_id`/`sent_at`) → `incrementBatchCounter` (non-atomic) → `finalizeBatch` (`complete`/`failed` + `completed_at`). `cancelScheduledEmail` cancels still-scheduled Resend messages on upgrade. The actual HTML/subjects come from the hardcoded `lib/email.ts` builders + the route `TEMPLATE_REGISTRY` — **not** from `platform_email_templates`.
+- **`resolveEmailTemplate()` / `resolveEmail()`** — referenced by migration 083 + a route comment as the planned DB-template loader, but **never built** (no code reads `platform_email_templates` at send time). Documented so a reader doesn't mistake the registry for the send-time source.
+
+---
+
+*End of Notifications & Push (Phase 10 — 8 tables across 3 sub-systems: in-app bell + the global/per-tournament preference layers, the member-vs-fan web-push split, and the Resend send-log + mirror template registry. `notify()` is the fan-out hub; only `notifications` carries RLS policies (vestigial for data paths); the two push tables and the DB template registry are built-but-unexercised. Cross-references — not redocuments — `auth.users`, `organizations`, `tournaments`, `teams`, `org_member_tournament_assignments` (Org core), `platform_events.PlatformEventType` (the name-collision), and [[project_email_stack]] / [[project_public_tournament_wow]].)*
+
+---
+
 # Domain: Observability & Feedback
 
-> **Added by migration 118 (2026-06-09) — applied to dev AND prod.** **Migration 122 (Phase 4, 2026-06-10 — applied to dev AND prod, owner-approved)** adds pg_cron + the fold/retention job functions + alert flags on `record_error_event`; it adds **no tables/columns**, so `npm run check:migrations` was BLIND to it (it was applied to prod as a deliberate manual step, verified live). These 6 tables are **documented at table granularity** (not yet column-sealed) — a future migration that adds a *table* to this domain still fails the coverage ratchet, but new *columns* on these tables will not until the domain is sealed. See [docs/projects/active/OBSERVABILITY_ERROR_TRACKING_PLAN.md](../../projects/active/OBSERVABILITY_ERROR_TRACKING_PLAN.md).
+> **Added by migration 118 (2026-06-09) — applied to dev AND prod.** **Migration 122 (Phase 4, 2026-06-10 — applied to dev AND prod, owner-approved)** adds pg_cron + the fold/retention job functions + alert flags on `record_error_event`; it adds **no tables/columns**, so `npm run check:migrations` was BLIND to it (it was applied to prod as a deliberate manual step, verified live). These 6 tables are now **column-sealed** — every live column is documented (anchored) or waived, so a future migration that adds a column here fails the coverage ratchet until triaged. See [docs/projects/active/OBSERVABILITY_ERROR_TRACKING_PLAN.md](../../projects/active/OBSERVABILITY_ERROR_TRACKING_PLAN.md).
+
+> _Last verified: 2026-06-10 @ snapshot 2026-06-10, atop commit `412e4036` (branch `feat/free-tier-coaches`). **The Phase-3 feedback center + the `request_id` "Mechanism A" thread are UNCOMMITTED in the working tree** — `feedback_submissions`' writer/readers (`app/api/feedback/route.ts`, `app/platform-admin/feedback/*`, `app/api/platform-admin/feedback/*`, `lib/feedback-shared.ts`) are UNTRACKED new files, and `lib/observability/capture.ts`/`with-observability.ts`/`instrumentation.ts`/`proxy.ts` are MODIFIED; those `file:line` refs are working-tree-relative. The committed readers (`lib/observability/dashboard.ts`/`metrics.ts`/`alerts.ts`, the triage `status` routes) and the DB-function bodies (`supabase/migrations/118_observability.sql`, `122_observability_phase4.sql`) match `412e4036`. Live probes (2026-06-10, dev+prod `pg_class`/`pg_policies`/`pg_trigger`/`role_table_grants`): all 6 tables column/constraint/CHECK-identical dev↔prod (**zero structural drift**); **RLS ENABLED, ZERO policies, ZERO triggers**; **prod grants `anon`+`authenticated` FULL DML while dev grants only `REFERENCES/TRIGGER/TRUNCATE`** ([[reference_supabase_rls_grants]]). Row counts dev/prod: error_groups 4/0 · error_events 5/0 · request_metrics_rollup 4/0 · request_metrics_raw 2/0 · feedback_submissions 0/0 · observability_cron_heartbeat 2/1._
 
 The platform-admin **error-tracking + in-app feedback** store (the "notification center"). Errors captured server-side (`lib/observability/capture.ts` + `instrumentation.ts onRequestError`) and client-side (`/api/client/error-capture`) are fingerprinted and collapsed into one **`error_groups`** row (the triage unit) with raw occurrences in **`error_events`**; coarse traffic is counted into **`request_metrics_raw`** → folded to **`request_metrics_rollup`** (the calls-vs-errors chart source). **`feedback_submissions`** holds in-app bug/feature reports. **`observability_cron_heartbeat`** proves the Phase-4 rollup/retention jobs ran.
 
@@ -4142,6 +4655,9 @@ The platform-admin **error-tracking + in-app feedback** store (the "notification
 - **Retention is LIVE (mig 122, `obs_retention_sweep`, nightly 08:15 UTC):** `error_events` > 30 d purged · `error_groups` resolved > 90 d after `resolved_at` deleted (events cascade) · `request_metrics_rollup` > 1 y trimmed · expired snoozes re-opened (`status='snoozed' AND snooze_until < now()` → `open`) · `cron.job_run_details` > 7 d pruned (pg_cron never cleans its own history). **`ignored` groups are kept indefinitely** (deliberate triage decisions). **`distinct_org_count` consequently means "distinct orgs among RETAINED events"** — the sweep recomputes it for every group it purged events from, so it can legitimately shrink over time.
 - **`observability_cron_heartbeat.last_run_at` is bumped ONLY on success** — a failing job updates only `status='error'` + `error_detail`, so persistent failure surfaces as dashboard-chip staleness instead of a false-fresh chip. Job rows: `metrics_fold`, `retention_sweep`.
 - **`env` ('production' | 'dev')** is set from `OBSERVABILITY_ENV` (fallback `NODE_ENV`) and is belt-and-suspenders on top of the physical dev/prod Supabase-project split. The dashboard defaults to `production`. (Phase 4 also plumbed `OBSERVABILITY_ENV` through `amplify.yml` — before that, BOTH Amplify branches fell back to `NODE_ENV` and tagged `production`.)
+- **`request_id` is the bug→error deep-link (Mechanism A).** `proxy.ts` mints an `x-request-id` per `/api/*` request → `with-observability.ts` adopts it (seeds AsyncLocalStorage + re-stamps the response) → `onRequestError` threads it to capture → `error_events.request_id`. The feedback widget stashes the last response id it saw into `feedback_submissions.context.requestId`; the triage page joins `feedback.context.requestId → error_events.request_id → group_id` to render "View related issue". (All of this is **uncommitted** working-tree code.)
+- **`request_metrics_*` instrument only 2 routes today** (`org-context`, `notifications` — the only `withObservability`-wrapped routes), so the calls-vs-errors chart is a **narrow slice**, not total platform traffic; the rollup `route`/`org_id` dimensions are written-but-unread or hardcoded-NULL (future-proofing for a broader rollout). The dashboard shows the metric error count (instrumented) **and** the exact `error_events` count side-by-side because they legitimately disagree (e.g. a 4xx bumps `error_events` but not the metric `error_count`).
+- **Many columns here are capture-but-never-read or read-but-unrendered, by design** — forensic-only and truly unread (`error_events.ip_address`/`user_agent`, both `created_at` twins), selected-but-not-surfaced (`error_groups.sample_stack`/`sample_context` — pulled by the detail `select('*')` but never displayed), future-proofing (the rollup `route`/`org_id`), or admin-trail (`feedback_submissions.triaged_by`/`triaged_at`/`updated_at`, the heartbeat `rows_*`/`error_detail`). Each is flagged per-column below so a reader doesn't assume a UI surfaces it.
 - **Dev/prod:** migration 118 applied to **both dev and prod** (2026-06-09); **migration 122 applied to BOTH dev and prod 2026-06-10** (functions/jobs only — invisible to the column-level drift gate; prod verified live: pg_cron installed, 2 jobs as postgres, anon execute denied).
 
 ---
@@ -4149,44 +4665,281 @@ The platform-admin **error-tracking + in-app feedback** store (the "notification
 ## `error_groups`
 <!-- dict:table:error_groups -->
 
-**Purpose:** one row per distinct issue (**fingerprint** = `sha256(route + errorName + topNormalizedStackFrames)`, 16-hex). The list / triage / drilldown unit. **Status + severity persist here** across the raw-event purge. Modeled on the low-cardinality `platform_events` shape.
+**Purpose:** one row per distinct issue (**fingerprint** = `sha256(route + errorName + topNormalizedStackFrames)`, 16-hex). The list / triage / drilldown unit. **Status + severity persist here** across the raw-event purge. Upserted by the `record_error_event` RPC on every capture (`ON CONFLICT (fingerprint)`); triaged by the platform-admin status route.
 
-**Key columns:** `fingerprint` (text, UNIQUE — the grouping key) · `title`/`error_name`/`route`/`http_method` (sample identity) · `severity` (CHECK `critical|error|warning|info`, escalates to the max ever seen via `obs_severity_rank`) · `status` (CHECK `open|resolved|ignored|snoozed`; auto-**re-opens** a `resolved` group that recurs >7 days after `resolved_at`) · `env` (CHECK `production|dev`) · `first_seen_at`/`last_seen_at` · `occurrence_count` (bigint, bumped every occurrence even when the raw event is sampled out) · `distinct_org_count` (int, recomputed when an org-bearing occurrence lands) · `resolved_at`/`resolved_by`/`snooze_until` (triage state, Phase 2) · `sample_stack` (redacted, most-recent) · `sample_context` (jsonb).
+**Gotchas (read first):**
+1. **Sample identity is frozen at first capture** — `title`/`error_name`/`route`/`http_method`/`env`/`first_seen_at` are set on insert and **not** touched by the conflict update; only `last_seen_at`, `occurrence_count`, `severity` (escalate-only), `distinct_org_count`, and the sample blobs update on recurrence.
+2. **No `org_id` column** — org filtering on the issue list is a 2-hop resolve through `error_events.org_slug` ([dashboard.ts:313](../../../lib/observability/dashboard.ts#L313)).
+3. **The dashboard treats an expired snooze as `open` at read time, but the row's `status` stays `'snoozed'`** until the nightly `obs_retention_sweep` flips it — so an expired-snooze group is *counted* open while its stored status is still snoozed.
+4. **Lifecycle columns are derived by app code, not a trigger** (there are none): the status route sets `resolved_at`/`resolved_by`/`snooze_until` purely from the target status ([status/route.ts:50](../../../app/api/platform-admin/observability/[groupId]/status/route.ts#L50)).
+
+**Fields** (boilerplate `id` + `created_at` omitted — `created_at` is **write-only** [DB-default, never read; redundant with `first_seen_at`]; no `updated_at`):
+
+<!-- dict:col:error_groups.fingerprint -->
+**`fingerprint`** (text, NN, **UNIQUE**) — the grouping key: `sha256(route + errorName + topNormalizedStackFrames)` sliced to 16 hex ([lib/observability/fingerprint.ts:49](../../../lib/observability/fingerprint.ts#L49)); the `ON CONFLICT (fingerprint)` target that collapses identical errors at write time. The normalization regex ([fingerprint.ts:14](../../../lib/observability/fingerprint.ts#L14)) is the merge/split tuning knob, pinned by `tests/unit/observability.test.ts`.
+
+<!-- dict:col:error_groups.title -->
+**`title`** (text, nullable) — human label (`name @ route` unless explicit); **frozen at first capture**; searchable.
+
+<!-- dict:col:error_groups.error_name -->
+**`error_name`** (text, nullable) — `Error.name` (or `ClientError`); part of the fingerprint basis; frozen on conflict; searchable.
+
+<!-- dict:col:error_groups.route -->
+**`route`** (text, nullable) — request route; fingerprint basis; frozen on conflict; filterable + searchable.
+
+<!-- dict:col:error_groups.http_method -->
+**`http_method`** (text, nullable) — HTTP verb of the originating request; frozen on conflict.
+
+<!-- dict:col:error_groups.severity -->
+**`severity`** (text, NN, default `'error'`; CHECK `critical|error|warning|info`) — **escalate-only**: the RPC raises it only when `obs_severity_rank(new) > rank(existing)` ([122:275](../../../supabase/migrations/122_observability_phase4.sql#L275)), so a group that ever hit `critical` stays critical. Per-occurrence value from `classifySeverity` (critical when the route matches the payments/auth/register/org-create patterns; the client endpoint forces `warning`).
+
+<!-- dict:col:error_groups.status -->
+**`status`** (text, NN, default `'open'`; CHECK `open|resolved|ignored|snoozed`) — triage lifecycle; **persists across the event purge**. The RPC only ever does the **>7-day auto-reopen** (`resolved`→`open`, anti-flap — a recurrence within 7 days deliberately stays resolved); `resolved`/`ignored`/`snoozed` are set solely by the triage route.
+
+<!-- dict:col:error_groups.env -->
+**`env`** (text, NN, default `'production'`; CHECK `production|dev`) — dev/prod discriminator the dashboard defaults+filters on; frozen on conflict. **Asymmetry:** the CHECK exists here but **not** on `error_events.env`. Value = `observabilityEnv()` (`OBSERVABILITY_ENV` override else `NODE_ENV`).
+
+<!-- dict:col:error_groups.first_seen_at -->
+**`first_seen_at`** (tstz, NN, default now()) — first capture of this fingerprint; the MTTR denominator + `newIssues` window key; frozen on conflict.
+
+<!-- dict:col:error_groups.last_seen_at -->
+**`last_seen_at`** (tstz, NN, default now()) — most recent occurrence; bumped every conflict; the issue-list sort key.
+
+<!-- dict:col:error_groups.occurrence_count -->
+**`occurrence_count`** (int8, NN, default 0) — **total** occurrences, inserted as 1 and `+1` per conflict **even when the raw event is sampled out** — so it routinely exceeds the stored `error_events` row count. `==1` is the `is_new` alert flag.
+
+<!-- dict:col:error_groups.distinct_org_count -->
+**`distinct_org_count`** (int4, NN, default 0) — "affected orgs" = `count(distinct org_id)` among **currently-retained** `error_events`. Recomputed by the RPC (gated on a sampled insert + non-null org) and by the retention sweep — so it can legitimately **shrink** after the 30-day purge removes an org's last event.
+
+<!-- dict:col:error_groups.resolved_at -->
+**`resolved_at`** (tstz, nullable) — set by the triage route on resolve; drives the >7-day auto-reopen, the >90-day group purge, and MTTR.
+
+<!-- dict:col:error_groups.resolved_by -->
+**`resolved_by`** (text, nullable, no FK) — email of the resolving platform admin (`auth.user.email ?? 'platform-admin'`). Selected by the detail `select('*')` but **not** in the paginated list select.
+
+<!-- dict:col:error_groups.snooze_until -->
+**`snooze_until`** (tstz, nullable) — snooze expiry (clamped 1h–720h by the route, no DB CHECK). The dashboard derives "expired = open" at read time; the nightly sweep does the real `→open` + null-out.
+
+<!-- dict:col:error_groups.sample_stack -->
+**`sample_stack`** (text, nullable) — most-recent redacted stack (overwritten each occurrence). **Selected but not rendered** — the detail page shows the per-`error_events` stack instead.
+
+<!-- dict:col:error_groups.sample_context -->
+**`sample_context`** (jsonb, NN, default `{}`) — most-recent redacted `request_context` (overwritten each occurrence). Same as `sample_stack` — selected into the detail type but not rendered.
 
 ## `error_events`
 <!-- dict:table:error_events -->
 
-**Purpose:** high-volume append-only log, one row per **occurrence** (sampled after the per-fingerprint cap). Mirrors `email_sends`: UUID pk, time-desc composite indexes, no RLS. Raw rows auto-purged after 30 days (Phase 4) — `error_groups` is the durable record.
+**Purpose:** high-volume append-only log, one row per **occurrence** — written **only by the `record_error_event` RPC**, whose INSERT is **sampled inside the function** (every occurrence up to 50, then every 10th). Rich point-in-time attribution; raw rows auto-purged after 30 days — `error_groups` is the durable record. (RLS-enabled-zero-policies despite the migration comment's "no RLS" — read posture from live `pg_class`.)
 
-**Key columns:** `group_id` (FK → `error_groups.id` ON DELETE CASCADE) · `occurred_at` · `env` · `source` (CHECK `server|client`) · `route`/`http_method`/`status_code` · `error_name`/`error_message`/`stack_trace` (redacted + length-capped) · `org_id` (FK → `organizations.id` ON DELETE SET NULL, nullable) + `org_slug` (denormalized snapshot) · `user_id`/`user_email`/`user_role` (attribution — *who triggered it*) · `request_id` (links a client feedback report to its server error) · `ip_address`/`user_agent` · `request_context` (jsonb, PII-redacted by `lib/observability/redact.ts`).
+**Gotchas (read first):**
+1. **`env` has NO CHECK** (unlike `error_groups.env`) — intentional asymmetry; both written from the same `coalesce(p_env,'production')`.
+2. **Attribution comes from AsyncLocalStorage, which is EMPTY on the global `onRequestError` path** (the throw unwound it) — so uncaught/RSC errors carry `route`/`http_method`/`request_id`/`status_code=500` but typically **no org/user**. The only ALS enricher is `app/api/org-context/route.ts`.
+3. **`user_email` is stored VERBATIM by design** (the dedicated attribution column — the one intentionally-retained email), while `error_message`/`stack_trace`/`request_context` are email-**scrubbed**. `request_id` is duplicated into `request_context` too.
+4. **Deleted only by the retention sweep + `ON DELETE CASCADE` from the group** — never by app code.
+
+**Fields** (boilerplate `id` + `created_at` omitted — `created_at` is **write-only** [redundant with `occurred_at`]):
+
+<!-- dict:col:error_events.group_id -->
+**`group_id`** (uuid, NN; FK→`error_groups(id)` ON DELETE CASCADE) — ties the occurrence to its issue; the drilldown + org→group resolve key; the retention sweep collects affected `group_id`s to recompute `distinct_org_count`.
+
+<!-- dict:col:error_events.occurred_at -->
+**`occurred_at`** (tstz, NN, default now()) — occurrence time; the breakdown/sparkline axis and the 30-day purge cutoff.
+
+<!-- dict:col:error_events.env -->
+**`env`** (text, NN, default `'production'`, **no CHECK**) — dev/prod tag; the dashboard's primary event filter (see gotcha 1).
+
+<!-- dict:col:error_events.source -->
+**`source`** (text, NN, default `'server'`; CHECK `server|client`) — server capture vs the public `/api/client/error-capture` endpoint. **`alerts.ts` hard-gates `source==='server'`**, so a client-reported error can never trigger a critical email (anti-spoof).
+
+<!-- dict:col:error_events.route -->
+**`route`** (text, nullable) — per-occurrence route (may differ from the group's frozen route); the `byRoute` breakdown source.
+
+<!-- dict:col:error_events.http_method -->
+**`http_method`** (text, nullable) — per-occurrence HTTP verb.
+
+<!-- dict:col:error_events.status_code -->
+**`status_code`** (int4, nullable) — HTTP status of the failing response; NULL unless a caller passes it; `onRequestError` always sets **500**.
+
+<!-- dict:col:error_events.error_name -->
+**`error_name`** (text, nullable) — `Error.name` for this occurrence. **Write-only on events** — no event reader selects it (the detail UI shows the group's `error_name`).
+
+<!-- dict:col:error_events.error_message -->
+**`error_message`** (text, nullable) — email-scrubbed, 1000-char-capped message (`scrubEmails` → embedded PII emails become `[redacted-email]`).
+
+<!-- dict:col:error_events.stack_trace -->
+**`stack_trace`** (text, nullable) — email-scrubbed, 8000-char-capped stack.
+
+<!-- dict:col:error_events.org_id -->
+**`org_id`** (uuid, nullable; FK→`organizations(id)` ON DELETE SET NULL) — attributed org; drives `distinct_org_count`. Goes **NULL on org deletion** (silently lowering the count on the next recompute); `org_slug` preserves the historical slug.
+
+<!-- dict:col:error_events.org_slug -->
+**`org_slug`** (text, nullable, no FK) — denormalized **point-in-time** org slug; the **join-free org filter key** (the issue-list org filter is a 2-hop `org_slug ILIKE → group_ids`, since `error_groups` has no `org_id`). Survives org deletion.
+
+<!-- dict:col:error_events.user_id -->
+**`user_id`** (uuid, nullable, no FK [cross-schema to `auth.users`]) — acting user id. **Write-only** — no reader selects it.
+
+<!-- dict:col:error_events.user_email -->
+**`user_email`** (text, nullable) — acting user's email, stored **verbatim** (deliberately not scrubbed — see gotcha 3); surfaced in the event drilldown.
+
+<!-- dict:col:error_events.user_role -->
+**`user_role`** (text, nullable) — acting user's role (owner/admin/coach/…) for triage context.
+
+<!-- dict:col:error_events.request_id -->
+**`request_id`** (text, nullable) — the `x-request-id` threaded from the request (Mechanism A); **the deep-link key joining a `feedback_submissions` bug report to its server error** (`feedback.context.requestId → error_events.request_id → group_id`). NULL for captures with no upstream id (client-source events typically have it null). Also copied into `request_context`.
+
+<!-- dict:col:error_events.ip_address -->
+**`ip_address`** (text, nullable) — best-effort client IP; **written ONLY by the public client-error endpoint, read by NOBODY** (write-only — and the only IP the system retains).
+
+<!-- dict:col:error_events.user_agent -->
+**`user_agent`** (text, nullable) — client UA; same as `ip_address` — written only by the client endpoint, **read by nobody**.
+
+<!-- dict:col:error_events.request_context -->
+**`request_context`** (jsonb, NN, default `{}`) — redacted free-form context (componentStack, RSC `routeType`/`renderSource`, + a copy of `requestId`); the whole blob runs through `redactContext` ([lib/observability/redact.ts:44](../../../lib/observability/redact.ts#L44)) — sensitive keys → `[redacted]`, email values → `[redacted-email]`, depth/length capped.
 
 ## `request_metrics_rollup`
 <!-- dict:table:request_metrics_rollup -->
 
 **Purpose:** coarse calls-vs-errors counters — **the dashboard chart source**. NOT one row per request. 5-minute buckets; `route = NULL` = all-routes aggregate, `org_id = NULL` = platform-wide. Folded from `request_metrics_raw` by pg_cron (Phase 4). O(buckets) to chart.
 
-**Key columns:** `bucket_start` (timestamptz) · `env` · `route` (nullable) · `org_id` (nullable) · `call_count`/`error_count` (bigint). Unique per `(bucket_start, env, coalesce(route,''), coalesce(org_id, zero-uuid))`.
+**Gotchas (read first):**
+1. **Uniqueness is a UNIQUE EXPRESSION INDEX, not a table constraint** — `(bucket_start, env, coalesce(route,''), coalesce(org_id, zero-uuid))` ([118:105](../../../supabase/migrations/118_observability.sql#L105)); it won't appear in `pg_constraint`, and the fold's `ON CONFLICT` target must restate the same `coalesce` expression.
+2. **Counts ACCUMULATE via the fold upsert** (`+= excluded`), not overwrite; re-running the fold is idempotent only because raw was DELETE-drained first.
+3. **NO CHECK on `env`** (unlike `error_groups.env`) — discipline is app-side `observabilityEnv()` only.
+4. **`route` + `org_id` are written by the fold but NOT read by the dashboard** (it selects only `bucket_start`/`call_count`/`error_count`); the per-route breakdown comes from `error_events`, and `org_id` is hardcoded NULL upstream — both dimensions are future-proofing.
+
+**Fields** (boilerplate `id` + `created_at` omitted — `id` is a pure surrogate [never read or explicitly written]; `created_at` is write-only [windowing uses `bucket_start`]):
+
+<!-- dict:col:request_metrics_rollup.bucket_start -->
+**`bucket_start`** (tstz, NN) — start of the 5-minute bucket, computed by the **fold** as `to_timestamp(floor(epoch(flushed_at)/300)*300)` (the flooring happens in the DB function, not at write time); the chart window key; rollup rows >1y trimmed by the sweep.
+
+<!-- dict:col:request_metrics_rollup.env -->
+**`env`** (text, NN, default `'production'`, **no CHECK**) — env discriminator carried verbatim through the fold; the chart's `.eq('env')` filter.
+
+<!-- dict:col:request_metrics_rollup.route -->
+**`route`** (text, nullable) — route the counts belong to (`NULL` = all-routes); part of the unique index. **Written by the fold but never selected by the dashboard** — the per-route breakdown is computed from `error_events` instead.
+
+<!-- dict:col:request_metrics_rollup.org_id -->
+**`org_id`** (uuid, nullable, no enforced FK) — org the counts belong to (`NULL` = platform-wide); part of the unique index. **Always NULL today** (the writer hardcodes it) and never selected — pure future-proofing.
+
+<!-- dict:col:request_metrics_rollup.call_count -->
+**`call_count`** (int8, NN, default 0) — calls in the bucket; summed into `totalCalls`, the **error-rate denominator** (read via `Number(...)` to coerce the bigint string).
+
+<!-- dict:col:request_metrics_rollup.error_count -->
+**`error_count`** (int8, NN, default 0) — 5xx/error calls in the bucket; the chart error line + error-rate **numerator**. The metric (instrumented-routes) error count — **distinct from** the exact `error_events` count the dashboard also shows side-by-side.
 
 ## `request_metrics_raw`
 <!-- dict:table:request_metrics_raw -->
 
 **Purpose:** thin staging for the in-process tally flushes (so we never insert a row per HTTP call). The pg_cron fold (`obs_fold_metrics`, every 5 min) **drains it via atomic `DELETE … RETURNING`** into `request_metrics_rollup` (rows committed after the fold's snapshot simply survive to the next run).
 
-**Key columns:** `flushed_at` · `env` · `route` (nullable) · `org_id` (nullable) · `call_count`/`error_count` (bigint).
+**Gotchas (read first):**
+1. **Insert-only aggregate flush** — `lib/observability/metrics.ts` buffers per-route tallies in memory and inserts one row **per buffered route** on flush (not per request). The only drain trigger is the lazy `maybeFlush` on a later request (60s age OR 200 calls); `flushRequestMetrics` is exported but **unused** (no shutdown/SIGTERM hook → a frozen/killed serverless worker loses its unflushed buffer — accepted, "metrics must never break the request path").
+2. **Drained by `DELETE … RETURNING`, NOT TRUNCATE** — load-bearing for MVCC: rows committed after the fold's snapshot survive to the next run. The migration comments' "truncates the staging table" is misleading shorthand. Raw is purely insert-then-delete — **no UPDATE-in-place**, so no fold-vs-flush increment race.
+3. **NO CHECK on `env`**; `flushed_at` is the time axis — raw has **no `created_at`** (the inverse of `rollup`, which has `created_at` and no `flushed_at`; easy to confuse).
+
+**Fields** (boilerplate `id` omitted — pure surrogate, never read or explicitly written; **no `created_at`** column):
+
+<!-- dict:col:request_metrics_raw.flushed_at -->
+**`flushed_at`** (tstz, NN, default now()) — wall-clock of the worker flush; raw's time axis (the value the fold floors into `bucket_start`); the chart's raw-window filter.
+
+<!-- dict:col:request_metrics_raw.env -->
+**`env`** (text, NN, default `'production'`, **no CHECK**) — env from `observabilityEnv()`; folded verbatim into `rollup.env`.
+
+<!-- dict:col:request_metrics_raw.route -->
+**`route`** (text, nullable) — the in-memory buffer key (the `withObservability` route). **Only `org-context` / `notifications` appear today** (the only wrapped routes); folds into the (unread) `rollup.route`.
+
+<!-- dict:col:request_metrics_raw.org_id -->
+**`org_id`** (uuid, nullable, no enforced FK) — **hardcoded NULL** by the writer ([metrics.ts:71](../../../lib/observability/metrics.ts#L71)); the per-org dimension is never exercised.
+
+<!-- dict:col:request_metrics_raw.call_count -->
+**`call_count`** (int8, NN, default 0) — calls accumulated for the route since the last flush (incremented on **every** `recordRequest`); summed into the chart's `totalCalls` (raw + rollup, no double-count because DELETE drains raw before it becomes a rollup row).
+
+<!-- dict:col:request_metrics_raw.error_count -->
+**`error_count`** (int8, NN, default 0) — error calls since the last flush — incremented **only when `isError`** (HTTP ≥500 or a thrown error), so it can disagree with `error_events` (a 4xx capture bumps `error_events` but not this).
 
 ## `feedback_submissions`
 <!-- dict:table:feedback_submissions -->
 
-**Purpose:** in-app **bug / feature / feedback** submissions from org admin, coach, scorekeeper, and public surfaces (Phase 3). `org_id` nullable (public / org-less Basic coaches allowed). The `context` jsonb deep-links a bug report to its `error_group` via the last `request_id` the client saw on a 5xx.
+**Purpose:** in-app **bug / feature / feedback** submissions from all personas (org admin, coach, scorekeeper, anonymous public) — the Phase-3 feedback center (writer + readers are **UNCOMMITTED** working-tree files; **0 rows in both envs**, brand new). `org_id` nullable. The `context` jsonb deep-links a bug report to its `error_group` via `context.requestId`.
 
-**Key columns:** `org_id` (FK → `organizations.id` ON DELETE SET NULL, nullable) · `user_id`/`user_email`/`submitter_name` · `type` (CHECK `bug|feature|feedback`) · `category` · `title`/`body` (body NOT NULL) · `status` (CHECK `new|triaged|acknowledged|resolved`) · `severity` (admin-set, nullable) · `context` (jsonb: route/role/help_section/app_version + linked fingerprint/request_id) · `triaged_by`/`triaged_at` · `created_at`/`updated_at`.
+**Gotchas (read first):**
+1. **`org_id` NULL collapses TWO cases** under the triage label "Platform / anonymous": (a) truly anonymous (no session), and (b) an **org-less signed-in Basic coach** (`user_id`/`user_email` are set, but `auth.org` is null — the `getAuthenticatedUser` fallback).
+2. **`context.requestId` is the bug→error deep-link** (camelCase on both write + read): the triage page resolves it via `error_events.request_id → group_id` and renders "View related issue →". **Only `context.requestId` is read back** — the other context keys are write-only.
+3. **`severity` is admin-set-only AND currently unreachable through the UI** — the submission writer never sets it; only the status PATCH can, but the triage UI exposes **no severity control at all** (`StatusControls` sends only `{status}`), so it's settable solely by a hand-crafted API call and stays NULL in practice (latent UI gap).
+4. **`type`/`status`/`severity` are DB-CHECK enums; `category` is TS-only** (no DB CHECK — invalid coerced to `'Other'`, the 6-value list duplicated across 2+ TS files). The validator requires `type` + `body`, so the `type` DB default `'feedback'` is unreachable via the route.
+5. **`updated_at` is code-maintained (no trigger)** — set explicitly on every status PATCH; the insert relies on the DB default. `body`/`title` are email-scrubbed (`scrubEmails`) while the `context` blob is key-redacted by a *different* function (`redactContext`); the CSV/XLSX export formula-neutralizes the attacker-controlled `body`.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted — `created_at` is the newest-first sort key for the list + export; `updated_at` is code-maintained on the status PATCH and **never read back**):
+
+<!-- dict:col:feedback_submissions.org_id -->
+**`org_id`** (uuid, nullable; FK→`organizations(id)` ON DELETE SET NULL) — owning org, or NULL (anonymous / org-less Basic coach — gotcha 1). Deleting an org orphans feedback to NULL (retained); triage joins `organizations(id,name)` for display.
+
+<!-- dict:col:feedback_submissions.user_id -->
+**`user_id`** (uuid, nullable, no FK to `auth.users`) — submitting user from the session (never the body; set for org-less coaches too). **Write-only** — no reader selects it.
+
+<!-- dict:col:feedback_submissions.user_email -->
+**`user_email`** (text, nullable) — submitter email from the session only (can't be spoofed; null for anonymous); the confirmation-email recipient + triage "From" column.
+
+<!-- dict:col:feedback_submissions.submitter_name -->
+**`submitter_name`** (text, nullable) — display name from `user_metadata.full_name || name`; the confirmation-email greeting + triage "From" fallback; null for anonymous.
+
+<!-- dict:col:feedback_submissions.type -->
+**`type`** (text, NN, default `'feedback'`; CHECK `bug|feature|feedback`) — submission kind; **required by the validator** so the DB default is unreachable via the route. Drives the type badge + email subject.
+
+<!-- dict:col:feedback_submissions.category -->
+**`category`** (text, nullable, **no CHECK**) — user-facing area bucket; **TS-only enum** `Tournaments|Coaches|Registrations|Accounting|Billing|Other` (`lib/feedback-shared.ts`), default picked from the route, invalid → `'Other'` (so effectively never null from the route).
+
+<!-- dict:col:feedback_submissions.title -->
+**`title`** (text, nullable) — optional summary; email-scrubbed, capped 150.
+
+<!-- dict:col:feedback_submissions.body -->
+**`body`** (text, NN) — required free-text; email-scrubbed, capped 4000; **attacker-controlled** (anonymous) → the CSV/XLSX export neutralizes a leading `=`/`+`/`-`/`@` to defuse formula injection. The only required field besides `type`.
+
+<!-- dict:col:feedback_submissions.status -->
+**`status`** (text, NN, default `'new'`; CHECK `new|triaged|acknowledged|resolved`) — triage state; the **submission writer never sets it** (always `'new'` via default); mutated only by the status PATCH (optimistic UI; view-only roles get a badge + a 403).
+
+<!-- dict:col:feedback_submissions.severity -->
+**`severity`** (text, nullable; CHECK `critical|error|warning|info`) — operator-assigned (same enum as `error_groups.severity`); **admin-set-only and unreachable through the shipped UI** (gotcha 3): the triage UI has no severity control and `StatusControls` sends only `{status}`, so it stays DB-default NULL in practice — the CSV/XLSX export is the only surface that reads it.
+
+<!-- dict:col:feedback_submissions.context -->
+**`context`** (jsonb, NN, default `{}`) — structured metadata; **always populated by the route** (never the bare default). Key catalog: the client supplies `route`/`help_section`/`app_version`/`requestId`; the server adds `ip`/`user_agent`/`role`/`org_slug`; then the whole blob is `redactContext`-scrubbed. **Only `context.requestId` is ever read back** (the error deep-link) — the rest are write-only. Not in the export.
+
+<!-- dict:col:feedback_submissions.triaged_by -->
+**`triaged_by`** (text, nullable, no FK) — operator email who first moved the item off `'new'` (also written to `platform_audit_log`); set conditionally. **Write-only** — no reader selects it.
+
+<!-- dict:col:feedback_submissions.triaged_at -->
+**`triaged_at`** (tstz, nullable) — timestamp of the first move off `'new'` (set with `triaged_by`); distinct from `updated_at` (which bumps on every change). **Write-only** — no reader selects it.
 
 ## `observability_cron_heartbeat`
 <!-- dict:table:observability_cron_heartbeat -->
 
 **Purpose:** one row per pg_cron job (live since mig 122: `metrics_fold`, `retention_sweep`); updated on each *successful* run so a stalled or failing job is visible on the dashboard. The freshness chip turns amber on three signals: a **ran-and-failed** job (`status='error'`), a stale **fold** (most-recent run >15 min vs its 5-min cadence), or a stale **sweep** (>26h). Two residual blind spots (by design, low-risk): a job that has **never** run leaves no row → the chip shows the neutral gray "Rollup has not run yet" (also the deployed-but-pre-122 window); and a `statement_timeout`-cancelled fold writes no `status='error'` row (`WHEN OTHERS` doesn't trap SQLSTATE 57014) but rolls back cleanly and is still caught by fold-staleness.
 
-**Key columns:** `job_name` (text pk) · `last_run_at` (**success-only** — failures don't bump it, see gotchas) · `rows_folded`/`rows_purged` (bigint) · `status` (CHECK `ok|error`) · `error_detail`.
+**Gotchas (read first):**
+1. **`last_run_at` is bumped ONLY on the success path** — the exception path upserts `status='error'` + `error_detail` **without** touching `last_run_at`, so a persistently-failing job shows as freshness staleness (amber), never a false-fresh green chip.
+2. **`rows_folded`/`rows_purged` are partitioned by job** — `metrics_fold` writes `rows_folded` (leaves `rows_purged` null), `retention_sweep` writes `rows_purged` (leaves `rows_folded` null); each job's on-conflict update touches only its own counter.
+3. **The reader ignores `rows_folded`/`rows_purged`/`error_detail`** (`getCronFreshness` selects only `job_name`/`last_run_at`/`status`) — all three are write-only; `error_detail` appears only as static dashboard copy ("see `observability_cron_heartbeat.error_detail`"), so an operator must query the table directly to read it.
+4. **Only `retention_sweep` is matched by name** in the reader; `metrics_fold`'s freshness is captured positionally as the freshest job (`mostRecent`), which in practice is the 5-min fold.
+
+**Fields** (no boilerplate `id`/`created_at`/`updated_at` — `job_name` is the PK; the rest are job-state columns):
+
+<!-- dict:col:observability_cron_heartbeat.job_name -->
+**`job_name`** (text, **PK**, no CHECK) — the pg_cron job id; one of `'metrics_fold'` / `'retention_sweep'` (set literally in the function bodies); the upsert conflict target.
+
+<!-- dict:col:observability_cron_heartbeat.last_run_at -->
+**`last_run_at`** (tstz, nullable) — last **successful** run (success-only — gotcha 1); drives the "last rollup N min ago" chip. NULL until first success → the gray "not run yet" state.
+
+<!-- dict:col:observability_cron_heartbeat.rows_folded -->
+**`rows_folded`** (int8, nullable) — rows folded by the last `metrics_fold` success. **Write-only** (the reader doesn't select it); `retention_sweep` leaves it null.
+
+<!-- dict:col:observability_cron_heartbeat.rows_purged -->
+**`rows_purged`** (int8, nullable) — rows deleted by the last `retention_sweep` success (events + groups + rollup-trim + cron-history). **Write-only**; `metrics_fold` leaves it null.
+
+<!-- dict:col:observability_cron_heartbeat.status -->
+**`status`** (text, nullable; CHECK `ok|error`) — last-run outcome; `'error'` (set without bumping `last_run_at`) drives the `anyJobError` amber signal.
+
+<!-- dict:col:observability_cron_heartbeat.error_detail -->
+**`error_detail`** (text, nullable) — truncated `left(SQLERRM, 2000)` from the last failure, reset to null on success (holds only the most recent failure). **Write-only** — referenced only in static UI copy, never fetched.
 
 ### Functions & cron jobs (not tables — not coverage-checked, documented for completeness)
 
@@ -4196,7 +4949,10 @@ The platform-admin **error-tracking + in-app feedback** store (the "notification
 - Both job functions: **SECURITY DEFINER** (owner `postgres`; needed so the service-role manual sweep can prune `cron.job_run_details`), `search_path = ''`, **EXECUTE revoked from PUBLIC/anon/authenticated** (verified live: anon → `42501`), granted to `service_role` (the `/api/platform-admin/observability/sweep` fallback, super_admin-gated). Neither ever raises — failures land in the heartbeat + the returned jsonb.
 - **`obs_severity_rank(text) → int`** — immutable `critical=4 … info=1` ranking used by the severity-escalation `CASE` in `record_error_event`.
 - **Cron jobs (`cron.job`, scheduled as `postgres`, GMT):** `observability-metrics-fold` `*/5 * * * *` · `observability-retention-sweep` `15 8 * * *` (≈3–4 am Eastern). `cron.schedule(name, …)` is a named upsert → re-applying 122 is idempotent (but it does NOT re-activate a job deactivated via `cron.alter_job(active:=false)`). pg_cron never runs the same job concurrently with itself.
+- **Request-metrics buffer/flush** — `lib/observability/metrics.ts`: an in-process per-route `Map` tally (`recordRequest` increments `call`, and `error` when `isError` = HTTP ≥500 or a throw), flushed by the lazy `maybeFlush` (60 s / 200 calls) as one `request_metrics_raw` row per route via `supabaseAdmin`. Fed by `withObservability` (the route wrapper, working-tree). Only `org-context` + `notifications` are wrapped today, so the metrics see a narrow slice of traffic.
+- **Mechanism A — the `request_id` thread (working-tree, uncommitted)** — `proxy.ts` mints `crypto.randomUUID()` and stamps `x-request-id` on the forwarded request + response → `with-observability.ts` adopts a valid incoming id (else mints), seeds AsyncLocalStorage, re-stamps the response → `onRequestError` reads it off the request headers (no ALS on that path) and passes `opts.requestId` → `capture.ts` writes it to `error_events.request_id` (and copies it into `request_context`). The browser (`lib/observability/client-request-id.ts`) stashes the response id; the feedback widget submits it as `context.requestId`; the triage page joins it back to the error group.
+- **Feedback ingest + redaction (working-tree, uncommitted)** — `app/api/feedback/route.ts` (all-personas POST, `runtime='nodejs'` so it can use the service-role key): validates via `lib/feedback-shared.ts`, scrubs `title`/`body` with `scrubEmails`, `redactContext`s the `context` blob, best-effort per-Lambda-instance throttles (returns a 202 soft-success, not 429), then `supabaseAdmin`-inserts and fires an awaited admin-notify + a fire-and-forget submitter-confirmation email (`lib/feedback-email.ts`, reusing `lib/email.ts`'s `wrap`/`escapeHtml`). Triage = `app/platform-admin/feedback/*` + the formula-neutralized CSV/XLSX export, both gated by the **observability platform-area view** (`super_admin`/`product`/`support`); the `[id]/status` PATCH additionally requires `manage_product`.
 
 ---
 
-*End of Observability & Feedback (migration 118, 6 tables — table-granular; applied dev+prod 2026-06-09, RLS-enabled no-policies. Phase-4 functions/jobs: migration 122, applied dev+prod 2026-06-10).*
+*End of Observability & Feedback (migrations 118 + 122 [Phase-4 functions/jobs] applied dev+prod; 6 tables, now **column-sealed**). RLS-enabled-zero-policies-zero-triggers throughout; the error-tracking core (RPC-upserted groups + sampled events), the in-process metrics fold, the Phase-3 feedback center [uncommitted working-tree], and the cron heartbeat. Many forensic / future-proof columns are capture-but-never-read by design (flagged per-column). Cross-references — not redocuments — `organizations`, `auth.users`, `platform_events` [the distinct business-event log], and [[project_email_stack]] [the feedback emails].*

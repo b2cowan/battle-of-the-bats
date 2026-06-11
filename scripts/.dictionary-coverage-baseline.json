@@ -19,6 +19,13 @@
     "budget_items",
     "diamonds",
     "divisions",
+    "early_access_leads",
+    "email_batches",
+    "email_sends",
+    "error_events",
+    "error_groups",
+    "fan_push_subscriptions",
+    "feedback_submissions",
     "games",
     "import_batch_rows",
     "import_batches",
@@ -30,6 +37,9 @@
     "league_registrations",
     "league_seasons",
     "league_teams",
+    "notification_preferences",
+    "notifications",
+    "observability_cron_heartbeat",
     "org_audit_log",
     "org_budget_lines",
     "org_budget_periods",
@@ -52,6 +62,7 @@
     "platform_catalog_campaigns",
     "platform_catalog_change_applications",
     "platform_catalog_change_requests",
+    "platform_email_templates",
     "platform_events",
     "platform_metric_snapshots",
     "platform_plan_module_entitlements",
@@ -60,6 +71,7 @@
     "platform_users",
     "pool_slots",
     "pools",
+    "push_subscriptions",
     "rep_allocation_installments",
     "rep_allocation_splits",
     "rep_budget_lines",
@@ -85,6 +97,8 @@
     "rep_team_payment_requests",
     "rep_teams",
     "rep_tryout_registrations",
+    "request_metrics_raw",
+    "request_metrics_rollup",
     "resources",
     "rule_items",
     "rules",
@@ -96,23 +110,14 @@
     "team_workspaces",
     "teams",
     "tournament_archives",
+    "tournament_notification_preferences",
     "tournament_registration_field_answers",
     "tournament_registration_fields",
+    "tournament_roster_players",
     "tournaments",
     "venue_facilities"
   ],
-  "acknowledgedTables": {
-    "early_access_leads": "pending-documentation (CRM)",
-    "email_batches": "pending-documentation (Notifications & Push)",
-    "email_sends": "pending-documentation (Notifications & Push)",
-    "fan_push_subscriptions": "pending-documentation (Notifications & Push)",
-    "notification_preferences": "pending-documentation (Notifications & Push)",
-    "notifications": "pending-documentation (Notifications & Push)",
-    "platform_email_templates": "pending-documentation (Notifications & Push)",
-    "push_subscriptions": "pending-documentation (Notifications & Push)",
-    "tournament_notification_preferences": "pending-documentation (Notifications & Push)",
-    "tournament_roster_players": "pending-documentation (Tournaments & Registration)"
-  },
+  "acknowledgedTables": {},
   "acknowledgedColumns": {
     "announcements": [
       "id"
@@ -516,6 +521,65 @@
     ],
     "import_batch_rows": [
       "created_at"
+    ],
+    "early_access_leads": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "notifications": [
+      "id",
+      "created_at"
+    ],
+    "notification_preferences": [
+      "updated_at"
+    ],
+    "tournament_notification_preferences": [
+      "updated_at"
+    ],
+    "push_subscriptions": [
+      "id",
+      "created_at"
+    ],
+    "fan_push_subscriptions": [
+      "id",
+      "created_at"
+    ],
+    "platform_email_templates": [
+      "updated_at"
+    ],
+    "email_batches": [
+      "id",
+      "created_at"
+    ],
+    "email_sends": [
+      "id",
+      "created_at"
+    ],
+    "error_groups": [
+      "id",
+      "created_at"
+    ],
+    "error_events": [
+      "id",
+      "created_at"
+    ],
+    "request_metrics_rollup": [
+      "id",
+      "created_at"
+    ],
+    "request_metrics_raw": [
+      "id"
+    ],
+    "feedback_submissions": [
+      "id",
+      "created_at",
+      "updated_at"
+    ],
+    "tournament_roster_players": [
+      "id",
+      "created_at",
+      "updated_at"
     ]
   }
 }
