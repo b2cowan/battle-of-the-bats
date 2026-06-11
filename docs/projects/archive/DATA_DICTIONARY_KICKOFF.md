@@ -133,7 +133,7 @@ expand domain-by-domain.
 
 ### Process requirements (AGENCY_RULES — non-negotiable)
 
-- Create a **`docs/projects/active/DATA_DICTIONARY_PLAN.md`** + **`DATA_DICTIONARY_PM_BRIEF.md`** pair
+- Create a **`docs/projects/archive/DATA_DICTIONARY_PLAN.md`** + **`DATA_DICTIONARY_PM_BRIEF.md`** pair
   before substantive work; add a one-line entry to `TODO.md` linking the plan.
 - Present a **plain-language PM UX summary** before building (per AGENCY_RULES; even though this is
   internal docs, state who benefits and how it changes the agent workflow).

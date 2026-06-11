@@ -1156,7 +1156,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 
 ---
 
-*End of Tournaments & Registration domain — **all 19 tables column-sealed** (`tournament_roster_players`, the per-event roster snapshot, sealed 2026-06-11 as the FINAL closing table of the dictionary). Its master `basic_coach_team_players` lives in the Coaches / basic-teams domain (free-tier Phase 3, mig 114); the `source_player_id` provenance back-link (free-tier Phase 5j, mig 123, **dev-only**) closes the cross-module roster seam. With this table the dictionary is **100% column-sealed across all 11 domains** — see [DATA_DICTIONARY_PLAN.md](../../projects/active/DATA_DICTIONARY_PLAN.md) §5.*
+*End of Tournaments & Registration domain — **all 19 tables column-sealed** (`tournament_roster_players`, the per-event roster snapshot, sealed 2026-06-11 as the FINAL closing table of the dictionary). Its master `basic_coach_team_players` lives in the Coaches / basic-teams domain (free-tier Phase 3, mig 114); the `source_player_id` provenance back-link (free-tier Phase 5j, mig 123, **dev-only**) closes the cross-module roster seam. With this table the dictionary is **100% column-sealed across all 11 domains** — see [DATA_DICTIONARY_PLAN.md](../../projects/archive/DATA_DICTIONARY_PLAN.md) §5.*
 
 ---
 
