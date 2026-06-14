@@ -5,22 +5,30 @@ import { CalendarDays } from 'lucide-react';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
+import StartLeagueForm from './StartLeagueForm';
 import styles from '../start.module.css';
 
 export const metadata: Metadata = {
-  title: 'Start a small league season — FieldLogicHQ',
+  title: 'Start a league season — FieldLogicHQ',
 };
 
 /**
- * /start/league — thin wrapper over the existing League express-interest capture.
- * The free League Starter floor + server-side caps are a later phase; here we only
- * route the persona to express interest (League self-serve isn't live yet).
+ * /start/league — the Free League Starter on-ramp.
+ *  - LEAGUE_STARTER_BETA on  → a real create path (StartLeagueForm) → the house-league
+ *    onboarding wizard. The free floor caps at 1 season / 1 division / 8 teams.
+ *  - LEAGUE_STARTER_BETA off → the express-interest waitlist (self-serve not live yet).
+ * Unlisted capped beta: not linked from marketing until caps + first-value data are proven
+ * (the /start picker also reflects the flag).
  */
 export default async function StartLeaguePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user?.email && (await isPlatformAdminEmail(user.email))) {
     redirect('/platform-admin');
+  }
+
+  if (process.env.LEAGUE_STARTER_BETA === 'true') {
+    return <StartLeagueForm isLoggedIn={Boolean(user?.email)} email={user?.email ?? null} />;
   }
 
   return (
@@ -30,7 +38,7 @@ export default async function StartLeaguePage() {
           <div className={styles.iconWrap}>
             <CalendarDays size={21} strokeWidth={1.8} aria-hidden />
           </div>
-          <h1 className={styles.title}>Start a small league season</h1>
+          <h1 className={styles.title}>Start a league season</h1>
           <p className={styles.sub}>League — coming soon</p>
         </header>
 

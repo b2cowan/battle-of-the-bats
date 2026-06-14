@@ -5,10 +5,12 @@ import { CalendarDays, X, Users } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
 import HelpCallout from '@/components/help/HelpCallout';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import styles from './house-league.module.css';
 import type { LeagueSeason, LeagueSeasonSummary, LeagueSeasonStatus } from '@/lib/types';
+import type { LeagueCapKind } from '@/lib/free-floor';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -103,6 +105,7 @@ export default function HouseLeaguePage() {
   const [form, setForm]               = useState<SeasonForm>(BLANK_FORM);
   const [slugEdited, setSlugEdited]   = useState(false);
   const [creating,  setCreating]      = useState(false);
+  const [capHit,    setCapHit]        = useState<LeagueCapKind | null>(null);
 
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
@@ -175,7 +178,11 @@ export default function HouseLeaguePage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to create season');
+      if (!res.ok) {
+        // Free-floor cap hit → upgrade-aware modal instead of a generic error.
+        if (data.capHit) { setCreateOpen(false); setCapHit(data.capHit); return; }
+        throw new Error(data.error ?? 'Failed to create season');
+      }
       setCreateOpen(false);
       await load();
       showFeedback('success', `Season "${form.name}" created.`);
@@ -480,6 +487,8 @@ export default function HouseLeaguePage() {
         message={feedbackMsg}
         type={feedbackType}
       />
+
+      {capHit && <LeagueCapUpgradeModal capHit={capHit} onClose={() => setCapHit(null)} orgId={currentOrg?.id} />}
     </div>
   );
 }

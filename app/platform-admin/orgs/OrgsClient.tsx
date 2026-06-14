@@ -16,6 +16,7 @@ const ORGS_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Plan',            key: 'planLabel',          format: 'text' },
   { label: 'Status',          key: 'subscriptionStatus', format: 'text' },
   { label: 'Founding Season', key: 'isFoundingSeason',   format: 'text' },
+  { label: 'League Starter',  key: 'isFreeFloor',        format: 'text' },
   { label: 'Created',         key: 'createdAt',          format: 'text' },
 ];
 
@@ -31,6 +32,7 @@ interface OrgRow {
   enabledAddons: string[];
   internalNotes: string | null;
   isFoundingSeason: boolean;
+  isFreeFloor: boolean;
   missingOwner: boolean;
   ownerInactive: boolean;
   expiredOverride: boolean;
@@ -88,6 +90,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
   const [planFilter,          setPlanFilter]          = useState('');
   const [statusFilter,        setStatusFilter]        = useState(initialStatus);
   const [foundingSeasonOnly,  setFoundingSeasonOnly]  = useState(false);
+  const [freeFloorOnly,       setFreeFloorOnly]       = useState(false);
   const [attentionFilter,     setAttentionFilter]     = useState(
     ATTENTION_LABELS[initialFilter] ? initialFilter : '',
   );
@@ -101,6 +104,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
   const notesCount = orgs.filter(org => org.internalNotes).length;
   const activeOrTrialing = (statusCounts.active ?? 0) + (statusCounts.trialing ?? 0);
   const foundingSeasonCount = orgs.filter(org => org.isFoundingSeason).length;
+  const freeFloorCount = orgs.filter(org => org.isFreeFloor).length;
 
   const filteredOrgs = orgs.filter(o => {
     if (search) {
@@ -110,6 +114,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
     if (planFilter         && o.planId             !== planFilter)   return false;
     if (statusFilter       && o.subscriptionStatus !== statusFilter) return false;
     if (foundingSeasonOnly && !o.isFoundingSeason)                   return false;
+    if (freeFloorOnly      && !o.isFreeFloor)                        return false;
     if (attentionFilter    && !matchesAttentionFilter(o, attentionFilter)) return false;
     return true;
   });
@@ -123,6 +128,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
       planLabel:          PLAN_LABELS[o.planId] ?? o.planId,
       subscriptionStatus: o.subscriptionStatus,
       isFoundingSeason:   o.isFoundingSeason ? 'Yes' : 'No',
+      isFreeFloor:        o.isFreeFloor ? 'Yes' : 'No',
       createdAt:          fmtDate(o.createdAt),
     }));
   }
@@ -183,6 +189,10 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
         <div className={`${styles.metric} ${foundingSeasonCount > 0 ? styles.metricHighlight : ''}`}>
           <span className={styles.metricLabel}>Founding Season</span>
           <strong>{foundingSeasonCount}</strong>
+        </div>
+        <div className={`${styles.metric} ${freeFloorCount > 0 ? styles.metricHighlight : ''}`}>
+          <span className={styles.metricLabel}>Free League Starter</span>
+          <strong>{freeFloorCount}</strong>
         </div>
       </section>
 
@@ -255,6 +265,14 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
             />
             Founding Season only
           </label>
+          <label className={styles.filterCheckbox}>
+            <input
+              type="checkbox"
+              checked={freeFloorOnly}
+              onChange={e => setFreeFloorOnly(e.target.checked)}
+            />
+            League Starter only
+          </label>
           {attentionFilter && (
             <button
               type="button"
@@ -265,10 +283,10 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
               {ATTENTION_LABELS[attentionFilter]} ✕
             </button>
           )}
-          {(search || planFilter || statusFilter || foundingSeasonOnly || attentionFilter) && (
+          {(search || planFilter || statusFilter || foundingSeasonOnly || freeFloorOnly || attentionFilter) && (
             <button
               className={styles.filterClear}
-              onClick={() => { setSearch(''); setPlanFilter(''); setStatusFilter(''); setFoundingSeasonOnly(false); setAttentionFilter(''); }}
+              onClick={() => { setSearch(''); setPlanFilter(''); setStatusFilter(''); setFoundingSeasonOnly(false); setFreeFloorOnly(false); setAttentionFilter(''); }}
             >
               Clear
             </button>
@@ -324,6 +342,11 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
                     </span>
                   </td>
                   <td>
+                    {org.isFreeFloor && (
+                      <span className={styles.foundingBadge} title="Free League Starter floor (plan_id stays 'tournament')">
+                        League Starter
+                      </span>
+                    )}
                     {org.isFoundingSeason && (
                       <span className={styles.foundingBadge}>Founding</span>
                     )}

@@ -1,4 +1,5 @@
 import { PLAN_CONFIG } from './plan-config';
+import { freeFloorModules } from './free-floor';
 import type { Capability } from './roles';
 import type { Organization } from './types';
 
@@ -16,5 +17,8 @@ export function hasModuleEntitlement(org: Organization, cap: Capability): boolea
 
   const plan = PLAN_CONFIG[org.planId];
   if (plan.moduleEntitlements.includes(cap)) return true;
+  // Free-floor profile (e.g. League Starter) grants module_house_league on top of the paid plan —
+  // never module_public_site (the full org site stays a paid-League differentiator).
+  if (freeFloorModules(org.freeFloor).includes(cap)) return true;
   return org.enabledAddons.includes(cap);
 }

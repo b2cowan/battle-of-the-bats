@@ -9,6 +9,9 @@ type EarlyAccessModalTriggerProps = {
   className?: string;
   initialPlanInterest?: string[];
   initialFeaturesInterested?: string[];
+  /** Fired when the trigger is clicked (before the modal opens). Used for instrumentation; must not
+   *  throw. Does not affect the open behaviour. */
+  onClick?: () => void;
 };
 
 export default function EarlyAccessModalTrigger({
@@ -16,6 +19,7 @@ export default function EarlyAccessModalTrigger({
   className,
   initialPlanInterest,
   initialFeaturesInterested,
+  onClick,
 }: EarlyAccessModalTriggerProps) {
   const [open, setOpen] = useState(false);
   const titleId = useId();
@@ -39,7 +43,7 @@ export default function EarlyAccessModalTrigger({
 
   return (
     <>
-      <button type="button" className={className} onClick={() => setOpen(true)}>
+      <button type="button" className={className} onClick={() => { onClick?.(); setOpen(true); }}>
         {children}
       </button>
 

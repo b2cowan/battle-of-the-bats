@@ -14,6 +14,8 @@ import {
 } from '@dnd-kit/core';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useOrg } from '@/lib/org-context';
+import { houseLeagueTeamCap } from '@/lib/free-floor';
+import { LeagueUpgradeCta } from '@/components/admin/LeagueCapUpgrade';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
@@ -205,21 +207,31 @@ function DroppableTeamColumn({
 
 function CreateTeamsModal({
   divisionName,
+  remaining,
   onClose,
   onSave,
+  orgId,
 }: {
   divisionName: string;
+  /** Teams still allowed under the free-floor cap (Infinity = unlimited / paid plan). */
+  remaining: number;
   onClose: () => void;
   onSave: (teams: Array<{ name: string }>) => Promise<void>;
+  /** Attribution for the upgrade_intent_clicked event from the at-cap CTA. */
+  orgId?: string | null;
 }) {
-  const [count, setCount] = useState(4);
+  const unlimited = !Number.isFinite(remaining);
+  const maxCreatable = unlimited ? 20 : Math.max(0, Math.min(20, remaining));
+  const atCap = maxCreatable === 0;
+  const initialCount = Math.min(4, maxCreatable) || 1;
+  const [count, setCount] = useState(initialCount);
   const [names, setNames] = useState<string[]>(
-    Array.from({ length: 4 }, (_, i) => `Team ${i + 1}`)
+    Array.from({ length: initialCount }, (_, i) => `Team ${i + 1}`)
   );
   const [saving, setSaving] = useState(false);
 
   function handleCountChange(n: number) {
-    const clamped = Math.max(1, Math.min(20, n));
+    const clamped = Math.max(1, Math.min(maxCreatable, n));
     setCount(clamped);
     setNames(prev =>
       Array.from({ length: clamped }, (_, i) => prev[i] ?? `Team ${i + 1}`)
@@ -241,40 +253,57 @@ function CreateTeamsModal({
           <button className={styles.modalCloseBtn} onClick={onClose}><X size={18} /></button>
         </div>
 
-        <div className={styles.field}>
-          <label className={styles.label}>Number of teams</label>
-          <input
-            type="number"
-            min={1}
-            max={20}
-            value={count}
-            onChange={e => handleCountChange(Number(e.target.value))}
-            className={styles.input}
-            style={{ width: 100 }}
-          />
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
-          {names.map((name, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--white-35)', width: 20, textAlign: 'right', flexShrink: 0 }}>
-                {i + 1}.
-              </span>
+        {atCap ? (
+          <p style={{ fontSize: '0.85rem', color: 'var(--data-gray)', lineHeight: 1.5, margin: '0.25rem 0 1rem' }}>
+            You&apos;ve reached the 8-team limit on the free League Starter plan. League gives you unlimited teams.
+          </p>
+        ) : (
+          <>
+            {!unlimited && (
+              <p style={{ fontSize: '0.75rem', color: 'var(--data-gray)', margin: '0 0 0.75rem', lineHeight: 1.5 }}>
+                Free League Starter — you can add up to {remaining} more team{remaining !== 1 ? 's' : ''}.
+              </p>
+            )}
+            <div className={styles.field}>
+              <label className={styles.label}>Number of teams</label>
               <input
+                type="number"
+                min={1}
+                max={maxCreatable}
+                value={count}
+                onChange={e => handleCountChange(Number(e.target.value))}
                 className={styles.input}
-                value={name}
-                onChange={e => setNames(prev => prev.map((n, j) => j === i ? e.target.value : n))}
-                placeholder={`Team ${i + 1}`}
+                style={{ width: 100 }}
               />
             </div>
-          ))}
-        </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+              {names.map((name, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--white-35)', width: 20, textAlign: 'right', flexShrink: 0 }}>
+                    {i + 1}.
+                  </span>
+                  <input
+                    className={styles.input}
+                    value={name}
+                    onChange={e => setNames(prev => prev.map((n, j) => j === i ? e.target.value : n))}
+                    placeholder={`Team ${i + 1}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         <div className={styles.modalFooter}>
-          <button style={BTN_SECONDARY} onClick={onClose}>Cancel</button>
-          <button style={BTN_PRIMARY} onClick={handleSubmit} disabled={saving}>
-            {saving ? 'Creating…' : `Create ${count} Team${count !== 1 ? 's' : ''}`}
-          </button>
+          <button style={BTN_SECONDARY} onClick={onClose}>{atCap ? 'Close' : 'Cancel'}</button>
+          {atCap ? (
+            <LeagueUpgradeCta className="btn btn-lime" orgId={orgId} capHit="league_team" />
+          ) : (
+            <button style={BTN_PRIMARY} onClick={handleSubmit} disabled={saving}>
+              {saving ? 'Creating…' : `Create ${count} Team${count !== 1 ? 's' : ''}`}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -491,6 +520,10 @@ export default function TeamsPage() {
   // Derived state
   const selectedDiv = divisions.find(d => d.id === selectedDivId);
   const divTeams = teams.filter(t => t.divisionId === selectedDivId);
+  // Free-floor (League Starter) team cap. The floor has exactly one division, so the selected
+  // division's team count equals the season count the server enforces against. Infinity for paid.
+  const teamCap = currentOrg ? houseLeagueTeamCap(currentOrg) : Infinity;
+  const remainingTeamSlots = Number.isFinite(teamCap) ? Math.max(0, teamCap - divTeams.length) : Infinity;
 
   const pool = registrations.filter(r => !r.teamId);
   const filteredPool = pool; // search filtering handled below
@@ -928,8 +961,10 @@ export default function TeamsPage() {
       {showCreateModal && selectedDiv && (
         <CreateTeamsModal
           divisionName={selectedDiv.name}
+          remaining={remainingTeamSlots}
           onClose={() => setShowCreateModal(false)}
           onSave={handleCreateTeams}
+          orgId={currentOrg?.id}
         />
       )}
 

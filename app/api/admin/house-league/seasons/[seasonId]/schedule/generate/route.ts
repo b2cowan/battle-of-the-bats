@@ -3,6 +3,8 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, getTeamsForDivision } from '@/lib/db';
+import { isFreeFloorLeague } from '@/lib/free-floor';
+import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
@@ -117,6 +119,19 @@ export const POST = withObservability(async (req: Request,
     .select();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Instrumentation (§13): League Starter first-value signal (a generated schedule). Only on a real
+  // save, gated to the free floor so the metric tracks free-tier activation. Fire-and-forget.
+  if (isFreeFloorLeague(ctx!.org)) {
+    await writePlatformEvent({
+      eventType: 'league_schedule_generated',
+      source: 'app',
+      orgId: ctx!.org.id,
+      actorUserId: ctx!.user?.id ?? null,
+      actorEmail: ctx!.user?.email ?? null,
+      metadata: { freeFloor: 'league_starter', seasonId, divisionId, gameCount: (data ?? []).length },
+    });
+  }
 
   const games = (data ?? []).map((row: any) => ({
     id:          row.id,

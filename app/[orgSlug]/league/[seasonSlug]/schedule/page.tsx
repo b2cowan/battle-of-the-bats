@@ -7,6 +7,7 @@ import {
   getTeamsForSeason,
   getGamesForSeason,
 } from '@/lib/db';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import type { LeagueDivision, LeagueTeam, LeagueGame } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -50,6 +51,7 @@ export default async function PublicSchedulePage({
 
   const org = await getOrganizationBySlug(orgSlug);
   if (!org) notFound();
+  if (!hasModuleEntitlement(org, 'module_house_league')) notFound();
 
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!season) notFound();

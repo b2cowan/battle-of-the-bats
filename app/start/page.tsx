@@ -16,7 +16,7 @@ import styles from './start.module.css';
 
 export const metadata: Metadata = {
   title: 'Get started — FieldLogicHQ',
-  description: 'Tell us your job and start free — run a tournament, coach a team, start a small league season, or explore Club.',
+  description: 'Tell us your job and start free — run a tournament, coach a team, start a league season, or explore Club.',
 };
 
 type StartOption = {
@@ -51,8 +51,9 @@ const OPTIONS: StartOption[] = [
   {
     href: '/start/league',
     icon: CalendarDays,
+    // accent + tag are set dynamically below from the LEAGUE_STARTER_BETA flag.
     label: 'League admin',
-    title: 'Start a small league season',
+    title: 'Start a league season',
     body: 'Run a house-league season — registration, draft, scheduling, standings, and parent comms.',
     tag: { text: 'Coming soon', tone: 'soon' },
   },
@@ -75,6 +76,15 @@ export default async function StartPage() {
     redirect('/platform-admin');
   }
 
+  // League Starter is an unlisted capped beta: when the flag is on, the picker shows it as a
+  // live free start; otherwise it stays "Coming soon" (the page itself shows the waitlist).
+  const leagueStarterLive = process.env.LEAGUE_STARTER_BETA === 'true';
+  const options: StartOption[] = OPTIONS.map(opt =>
+    opt.href === '/start/league' && leagueStarterLive
+      ? { ...opt, accent: 'free', tag: { text: 'Free', tone: 'free' } }
+      : opt,
+  );
+
   return (
     <div className={styles.page}>
       <div className={styles.container}>
@@ -87,7 +97,7 @@ export default async function StartPage() {
         </header>
 
         <div className={styles.grid}>
-          {OPTIONS.map(opt => {
+          {options.map(opt => {
             const Icon = opt.icon;
             return (
               <Link key={opt.href} href={opt.href} className={styles.card}>

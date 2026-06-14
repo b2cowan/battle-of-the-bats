@@ -14,7 +14,9 @@ import {
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
-import type { OrgPlan, TournamentFormat } from '@/lib/types';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/lib/free-floor';
+import type { FreeFloor, OrgPlan, TournamentFormat } from '@/lib/types';
 import PricingSection from '@/components/PricingSection';
 import styles from './onboarding.module.css';
 
@@ -301,9 +303,12 @@ function normalizePlanId(planId: string): OrgPlan {
   return PLAN_ORDER.includes(planId as OrgPlan) ? planId as OrgPlan : 'tournament';
 }
 
-function hasNonTournamentWorkspace(planId: string, enabledAddons: string[] = []) {
+function hasNonTournamentWorkspace(planId: string, enabledAddons: string[] = [], freeFloor?: FreeFloor) {
   const entitledModules = new Set([
     ...PLAN_CONFIG[normalizePlanId(planId)].moduleEntitlements,
+    // A League Starter free-floor org keeps plan_id='tournament' but DOES run house-league —
+    // union the free-floor modules so it lands on /admin, not the tournament dashboard.
+    ...freeFloorModules(freeFloor),
     ...enabledAddons,
   ]);
   return (
@@ -315,10 +320,12 @@ function hasNonTournamentWorkspace(planId: string, enabledAddons: string[] = [])
 }
 
 function getPostOnboardingHref(
-  org: { slug: string; planId: string; enabledAddons?: string[] },
+  org: { slug: string; planId: string; enabledAddons?: string[]; freeFloor?: FreeFloor },
   options: { hasTournament?: boolean } = {},
 ) {
-  if (hasNonTournamentWorkspace(org.planId, org.enabledAddons)) return `/${org.slug}/admin`;
+  // Free League Starter floor → land on the league dashboard (their job), not the generic hub.
+  if (org.freeFloor === 'league_starter') return `/${org.slug}/admin/house-league`;
+  if (hasNonTournamentWorkspace(org.planId, org.enabledAddons, org.freeFloor)) return `/${org.slug}/admin`;
   if (options.hasTournament === false) return `/${org.slug}/admin/tournaments`;
   return `/${org.slug}/admin/tournaments/dashboard`;
 }
@@ -382,7 +389,6 @@ export default function OnboardingPage() {
   const [venueDraft, setVenueDraft] = useState<VenueFields>(buildVenueDraft);
   const [venueRows, setVenueRows] = useState<VenueRow[]>([]);
   const [leagueSeasonForm, setLeagueSeasonForm] = useState<LeagueSeasonForm>(getDefaultLeagueSeasonForm);
-  const [leagueSlugEdited, setLeagueSlugEdited] = useState(false);
   const [leagueDivisionPreset, setLeagueDivisionPreset] = useState<LeagueDivisionPreset>('youth');
   const [leagueDivisionRows, setLeagueDivisionRows] = useState<LeagueDivisionRow[]>(() => buildLeagueDivisionRows(LEAGUE_DIVISION_PRESETS.youth));
   const [leagueCustomDivisionName, setLeagueCustomDivisionName] = useState('');
@@ -430,7 +436,9 @@ export default function OnboardingPage() {
 
     const entitlements = PLAN_CONFIG[activePlan].moduleEntitlements;
 
-    const seasonsRequest = entitlements.includes('module_house_league')
+    // House-league can be unlocked by the paid plan OR the League Starter free-floor profile —
+    // use the effective entitlement, not the plan config alone, so free-floor orgs run the wizard.
+    const seasonsRequest = hasModuleEntitlement(currentOrg, 'module_house_league')
       ? fetch('/api/admin/house-league/seasons')
         .then(r => r.ok ? r.json() : [])
         .then(d => Array.isArray(d) && d.length > 0)
@@ -523,12 +531,21 @@ export default function OnboardingPage() {
       return;
     }
 
-    const activePlan = normalizePlanId(currentOrg.planId);
-    if (activePlan !== 'league' && activePlan !== 'club') return;
-    if (!PLAN_CONFIG[activePlan].moduleEntitlements.includes('module_house_league')) return;
+    // Trigger the house-league setup wizard whenever the org has the module — via the paid
+    // League/Club plan OR the League Starter free-floor profile (plan_id stays 'tournament').
+    if (!hasModuleEntitlement(currentOrg, 'module_house_league')) return;
 
     void showWizardStep('league-season');
   }, [loading, currentOrg, userRole, planChoiceRequired, seasonsDone, activeModal, planChooserOpen, wizardDismissed, workflowRedirecting]);
+
+  // League Starter free-floor caps at one division — trim the multi-division preset default so the
+  // wizard can't author (and then self-trip the server cap on) a second division mid-flow.
+  useEffect(() => {
+    if (currentOrg && isFreeFloorLeague(currentOrg)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLeagueDivisionRows(prev => (prev.length > 1 ? prev.slice(0, 1) : prev));
+    }
+  }, [currentOrg]);
 
   async function complete() {
     if (!currentOrg || completing) return;
@@ -664,7 +681,6 @@ export default function OnboardingPage() {
 
   function resetLeagueSetupDraft() {
     setLeagueSeasonForm(getDefaultLeagueSeasonForm());
-    setLeagueSlugEdited(false);
     setLeagueDivisionPreset('youth');
     setLeagueDivisionRows(buildLeagueDivisionRows(LEAGUE_DIVISION_PRESETS.youth));
     setLeagueCustomDivisionName('');
@@ -764,16 +780,9 @@ export default function OnboardingPage() {
   }
 
   function handleLeagueSeasonNameChange(name: string) {
-    setLeagueSeasonForm(form => ({
-      ...form,
-      name,
-      slug: leagueSlugEdited ? form.slug : generateSlug(name),
-    }));
-  }
-
-  function handleLeagueSeasonSlugChange(slug: string) {
-    setLeagueSlugEdited(true);
-    setLeagueSeasonForm(form => ({ ...form, slug: slug.toLowerCase().replace(/[^a-z0-9-]/g, '') }));
+    // The public link is auto-generated from the season name (the URL field was removed from the
+    // wizard, mirroring tournament onboarding). The slug is still editable later in season settings.
+    setLeagueSeasonForm(form => ({ ...form, name, slug: generateSlug(name) }));
   }
 
   function applyLeagueDivisionPreset(preset: LeagueDivisionPreset) {
@@ -786,6 +795,8 @@ export default function OnboardingPage() {
   function addLeagueDivisionRow() {
     const name = leagueCustomDivisionName.trim();
     if (!name) return;
+    // Free-floor (League Starter) caps at one division — don't let the UI exceed it.
+    if (currentOrg && leagueDivisionRows.length >= houseLeagueDivisionCap(currentOrg)) return;
     setLeagueDivisionRows(prev => [
       ...prev,
       {
@@ -997,6 +1008,13 @@ export default function OnboardingPage() {
       .filter(row => row.name);
 
     if (rows.length === 0) throw new Error('Add at least one division, or skip this step.');
+
+    // Free-floor (League Starter) division cap — authoritative client guard so a multi-division
+    // draft can't reach the API and 403 mid-flow. Mirrors the server cap.
+    const divisionCap = currentOrg ? houseLeagueDivisionCap(currentOrg) : Infinity;
+    if (rows.length > divisionCap) {
+      throw new Error('Your free League Starter includes one division. Multiple divisions are part of League — upgrade to add more.');
+    }
 
     const duplicateDivision = rows.find((row, index) =>
       rows.findIndex(other => other.name.toLowerCase() === row.name.toLowerCase()) !== index
@@ -1516,15 +1534,9 @@ export default function OnboardingPage() {
                   placeholder="2026 House League"
                   autoFocus
                 />
-              </label>
-              <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
-                Public link
-                <input
-                  className="form-input"
-                  value={leagueSeasonForm.slug}
-                  onChange={e => handleLeagueSeasonSlugChange(e.target.value)}
-                  placeholder="2026-house-league"
-                />
+                <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', marginTop: '0.3rem' }}>
+                  Public link: <span style={{ color: 'var(--logic-lime)' }}>/league/{leagueSeasonForm.slug || 'your-season'}</span> — auto-generated; editable later in season settings.
+                </span>
               </label>
               <label className={styles.fieldLabel}>
                 Sport
@@ -1588,36 +1600,47 @@ export default function OnboardingPage() {
     }
 
     if (activeModal === 'league-divisions') {
+      const leagueDivisionLimited = Boolean(currentOrg && isFreeFloorLeague(currentOrg));
       return renderModalFrame(
         'Set up divisions',
-        'Create the registration groups parents will choose from. Capacities can be blank if you do not need hard limits yet.',
+        leagueDivisionLimited
+          ? 'Free League Starter includes one division and up to 8 teams (you add teams after setup). Add more divisions by upgrading to League.'
+          : 'Create the registration groups parents will choose from. Capacities can be blank if you do not need hard limits yet.',
         (
           <div className={styles.inlineList}>
-            <div className={styles.divisionPresetGrid}>
-              {(['youth', 'adult', 'custom'] as LeagueDivisionPreset[]).map(preset => (
-                <button
-                  key={preset}
-                  type="button"
-                  className={`${styles.presetCard} ${leagueDivisionPreset === preset ? styles.presetCardActive : ''}`}
-                  onClick={() => applyLeagueDivisionPreset(preset)}
-                >
-                  <strong>{preset === 'youth' ? 'Youth starter' : preset === 'adult' ? 'Adult starter' : 'Custom'}</strong>
-                  <span>{preset === 'custom' ? 'Start with a blank list.' : `Adds ${LEAGUE_DIVISION_PRESETS[preset].join(', ')}.`}</span>
-                </button>
-              ))}
-            </div>
+            <p style={{ fontSize: '0.72rem', color: 'var(--data-gray)', margin: 0, lineHeight: 1.5 }}>
+              <strong style={{ color: 'var(--white-55, rgba(255,255,255,0.55))' }}>Max players</strong> caps how many players can register in a division — it&apos;s
+              not the number of teams{leagueDivisionLimited ? ' (your free plan includes up to 8 teams, added after setup)' : ''}. Leave it blank for no limit.
+            </p>
+            {!leagueDivisionLimited && (
+              <>
+                <div className={styles.divisionPresetGrid}>
+                  {(['youth', 'adult', 'custom'] as LeagueDivisionPreset[]).map(preset => (
+                    <button
+                      key={preset}
+                      type="button"
+                      className={`${styles.presetCard} ${leagueDivisionPreset === preset ? styles.presetCardActive : ''}`}
+                      onClick={() => applyLeagueDivisionPreset(preset)}
+                    >
+                      <strong>{preset === 'youth' ? 'Youth starter' : preset === 'adult' ? 'Adult starter' : 'Custom'}</strong>
+                      <span>{preset === 'custom' ? 'Start with a blank list.' : `Adds ${LEAGUE_DIVISION_PRESETS[preset].join(', ')}.`}</span>
+                    </button>
+                  ))}
+                </div>
 
-            <div className={styles.inlineActions}>
-              <input
-                className="form-input"
-                value={leagueCustomDivisionName}
-                onChange={e => setLeagueCustomDivisionName(e.target.value)}
-                placeholder="Add division name"
-              />
-              <button type="button" className="btn btn-outline btn-sm" onClick={addLeagueDivisionRow}>
-                <Plus size={14} /> Add
-              </button>
-            </div>
+                <div className={styles.inlineActions}>
+                  <input
+                    className="form-input"
+                    value={leagueCustomDivisionName}
+                    onChange={e => setLeagueCustomDivisionName(e.target.value)}
+                    placeholder="Add division name"
+                  />
+                  <button type="button" className="btn btn-outline btn-sm" onClick={addLeagueDivisionRow}>
+                    <Plus size={14} /> Add
+                  </button>
+                </div>
+              </>
+            )}
 
             <div className={styles.divisionList}>
               {leagueDivisionRows.map(row => (
@@ -1634,12 +1657,14 @@ export default function OnboardingPage() {
                     min="1"
                     value={row.capacity}
                     onChange={e => updateLeagueDivisionRow(row.id, current => ({ ...current, capacity: e.target.value }))}
-                    placeholder="Capacity"
-                    aria-label={`${row.name || 'Division'} capacity`}
+                    placeholder="Max players"
+                    aria-label={`${row.name || 'Division'} max players`}
                   />
-                  <button type="button" className={styles.iconOnlyButton} onClick={() => setLeagueDivisionRows(prev => prev.filter(item => item.id !== row.id))} aria-label={`Remove ${row.name || 'division'}`}>
-                    <Trash2 size={14} />
-                  </button>
+                  {!leagueDivisionLimited && (
+                    <button type="button" className={styles.iconOnlyButton} onClick={() => setLeagueDivisionRows(prev => prev.filter(item => item.id !== row.id))} aria-label={`Remove ${row.name || 'division'}`}>
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               ))}
               {leagueDivisionRows.length === 0 && (
@@ -1653,6 +1678,7 @@ export default function OnboardingPage() {
     }
 
     if (activeModal === 'league-registration') {
+      const leagueStarterFloor = Boolean(currentOrg && isFreeFloorLeague(currentOrg));
       return renderModalFrame(
         'Configure registration',
         'Set the defaults that control how public submissions are handled when registration opens.',
@@ -1706,20 +1732,28 @@ export default function OnboardingPage() {
                 <span>Automation</span>
                 <small>These can be changed later.</small>
               </div>
-              {[
-                ['autoApproveUnderCapacity', 'Auto-approve while spots are open'],
-                ['autoPromoteWaitlist', 'Auto-promote from waitlist'],
-                ['autoGenerateFees', 'Auto-generate accounting fee entries'],
-              ].map(([key, label]) => (
-                <label key={key} className={styles.checkboxLine}>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(leagueSeasonForm[key as keyof LeagueSeasonForm])}
-                    onChange={e => setLeagueSeasonForm(form => ({ ...form, [key]: e.target.checked }))}
-                  />
-                  {label}
-                </label>
-              ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginTop: '0.5rem' }}>
+                {[
+                  { key: 'autoApproveUnderCapacity', label: 'Auto-approve while spots are open', help: 'New registrations are confirmed automatically until a division reaches its max players. After that they go to the waitlist for you to review.' },
+                  { key: 'autoPromoteWaitlist', label: 'Auto-promote from waitlist', help: 'When a confirmed spot opens up, the next person on the waitlist is moved in automatically.' },
+                  // The accounting fee-entry toggle is hidden on the free League Starter floor — it
+                  // requires the paid accounting module and is force-disabled server-side.
+                  ...(leagueStarterFloor ? [] : [{ key: 'autoGenerateFees', label: 'Auto-generate accounting fee entries', help: 'Creates a pending fee entry in the accounting ledger for each approved registration. Part of paid League/Club.' }]),
+                ].map(({ key, label, help }) => (
+                  <label key={key} style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      style={{ width: 16, height: 16, marginTop: '0.15rem', flexShrink: 0 }}
+                      checked={Boolean(leagueSeasonForm[key as keyof LeagueSeasonForm])}
+                      onChange={e => setLeagueSeasonForm(form => ({ ...form, [key]: e.target.checked }))}
+                    />
+                    <span style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--white-70, rgba(255,255,255,0.7))' }}>{label}</span>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 400, color: 'var(--data-gray)', lineHeight: 1.4 }}>{help}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
         ),

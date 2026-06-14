@@ -2,14 +2,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarDays, Users, Pencil, Trash2, X, Plus } from 'lucide-react';
+import { CalendarDays, Users, Pencil, Trash2, X, Plus, ExternalLink } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
+import { isFreeFloorLeague } from '@/lib/free-floor';
+import { fireLeagueEvent } from '@/lib/league-events-client';
 import HelpCallout from '@/components/help/HelpCallout';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import styles from '../../house-league.module.css';
 import type { LeagueSeason, LeagueSeasonStatus } from '@/lib/types';
+import type { LeagueCapKind } from '@/lib/free-floor';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -129,6 +133,7 @@ export default function SeasonDetailPage() {
   const [newDivName,    setNewDivName]    = useState('');
   const [newDivCap,     setNewDivCap]     = useState('');
   const [addingDiv,     setAddingDiv]     = useState(false);
+  const [capHit,        setCapHit]        = useState<LeagueCapKind | null>(null);
 
   // Edit division modal
   const [editDivId,     setEditDivId]     = useState<string | null>(null);
@@ -254,7 +259,11 @@ export default function SeasonDetailPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to create division');
+      if (!res.ok) {
+        // Free-floor cap hit → upgrade-aware modal instead of a generic error.
+        if (data.capHit) { setAddDivOpen(false); setCapHit(data.capHit); return; }
+        throw new Error(data.error ?? 'Failed to create division');
+      }
       setAddDivOpen(false);
       await load();
       showFeedback('success', `Division "${newDivName}" added.`);
@@ -388,8 +397,29 @@ export default function SeasonDetailPage() {
             </div>
           </div>
 
-          {isAdmin && (
-            <div className={styles.seasonHeaderActions}>
+          <div className={styles.seasonHeaderActions}>
+            {/* Public-facing season page (schedule / standings / registration). Only live once the
+                season leaves draft — the public route 404s on draft seasons. */}
+            {season.status !== 'draft' && currentOrg?.slug && (
+              <a
+                href={`/${currentOrg.slug}/league/${season.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-secondary"
+                style={{ fontSize: '0.82rem' }}
+                onClick={() => {
+                  // §13 League Starter first-value signal (share). Gated to the free floor so the
+                  // metric tracks free-tier sharing, not every house-league org. Fire-and-forget.
+                  if (currentOrg && isFreeFloorLeague(currentOrg)) {
+                    fireLeagueEvent('league_public_page_shared', { orgId: currentOrg.id, metadata: { seasonId: season.id } });
+                  }
+                }}
+              >
+                <ExternalLink size={13} style={{ marginRight: 4 }} />
+                View public page
+              </a>
+            )}
+            {isAdmin && (
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -399,8 +429,8 @@ export default function SeasonDetailPage() {
                 <Pencil size={13} style={{ marginRight: 4 }} />
                 Edit
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Dates row */}
@@ -815,6 +845,8 @@ export default function SeasonDetailPage() {
         message={feedbackMsg}
         type={feedbackType}
       />
+
+      {capHit && <LeagueCapUpgradeModal capHit={capHit} onClose={() => setCapHit(null)} orgId={currentOrg?.id} />}
     </div>
   );
 }

@@ -21,7 +21,7 @@ async function getOrgs() {
   const [orgsResult, foundingSeasonOrgIds, ownersResult, authUsersResult, overridesResult] = await Promise.all([
     supabaseAdmin
       .from('organizations')
-      .select('id, name, slug, plan_id, subscription_status, current_period_end, created_at, enabled_addons, internal_notes')
+      .select('id, name, slug, plan_id, subscription_status, current_period_end, created_at, enabled_addons, internal_notes, free_floor')
       .order('created_at', { ascending: false }),
     getFoundingSeasonOrgIds(),
     supabaseAdmin
@@ -98,6 +98,7 @@ async function getOrgs() {
         ? `${noteCount} internal note${noteCount === 1 ? '' : 's'}`
         : ((r.internal_notes as string | null) ?? null),
       isFoundingSeason:   foundingSeasonOrgIds.has(id),
+      isFreeFloor:        (r.free_floor as string | null) === 'league_starter',
       missingOwner:       !ownerOrgIds.has(id),
       ownerInactive:      ownerIds.length > 0 && (!mostRecentOwnerSignIn || mostRecentOwnerSignIn < inactiveOwnerCutoff),
       expiredOverride:    expiredOverrideOrgIds.has(id),

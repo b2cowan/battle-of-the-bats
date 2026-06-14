@@ -44,6 +44,7 @@ type AuthOrgRow = {
   account_kind: Organization['accountKind'] | null;
   team_workspace_status: Organization['teamWorkspaceStatus'] | null;
   is_discoverable: boolean | null;
+  free_floor: Organization['freeFloor'] | null;
 };
 
 type AuthMemberOrgRow = {
@@ -113,6 +114,7 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
     accountKind: orgRow.account_kind ?? 'organization',
     teamWorkspaceStatus: orgRow.team_workspace_status ?? null,
     isDiscoverable: orgRow.is_discoverable ?? true,
+    freeFloor: orgRow.free_floor ?? null,
   };
 
   return { user, org: await applyEntitlementGrants(org) };

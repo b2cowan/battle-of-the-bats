@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getOrganizationBySlug, getLeagueSeasonBySlug, getDivisionsForSeason } from '@/lib/db';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 export const dynamic = 'force-dynamic';
@@ -29,6 +30,7 @@ export default async function RegistrationStatusPage({
 
   const org = await getOrganizationBySlug(orgSlug);
   if (!org) notFound();
+  if (!hasModuleEntitlement(org, 'module_house_league')) notFound();
 
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!season) notFound();

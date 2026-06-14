@@ -4,6 +4,8 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLeagueSeasonById, getDivisionsForSeason } from '@/lib/db';
+import { houseLeagueDivisionCap, leagueCapHit } from '@/lib/free-floor';
+import { writePlatformEvent } from '@/lib/platform-events';
 import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -77,6 +79,21 @@ export const POST = withObservability(async (req: Request,
 
   // sortOrder: place after existing divisions
   const existing = await getDivisionsForSeason(seasonId);
+
+  // Free-floor (League Starter) cap: one division per season. Paid plans are uncapped (this branch
+  // is only reachable for a free-floor org, since the cap is Infinity otherwise).
+  if (existing.length >= houseLeagueDivisionCap(ctx!.org)) {
+    await writePlatformEvent({
+      eventType: 'scope_wall_hit',
+      source: 'app',
+      orgId: ctx!.org.id,
+      actorUserId: ctx!.user?.id ?? null,
+      actorEmail: ctx!.user?.email ?? null,
+      metadata: { freeFloor: 'league_starter', capHit: 'league_division', seasonId },
+    });
+    return NextResponse.json(leagueCapHit('league_division'), { status: 403 });
+  }
+
   const sortOrder = existing.length;
 
   const { data, error } = await supabaseAdmin

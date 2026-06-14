@@ -312,6 +312,32 @@ export default async function PlatformOverviewPage() {
                 <Link href="/platform-admin/early-access">Open pipeline</Link>
               </div>
             </section>
+
+            <section className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <div>
+                  <div className={styles.sectionKicker}>Free Tier</div>
+                  <h2 className={styles.sectionTitle}>League Starter</h2>
+                </div>
+                <CalendarDays size={16} />
+              </div>
+              <div className={styles.statRow}>
+                <div><strong>{stats.leagueStarter.orgs}</strong><span>Free-floor orgs</span></div>
+                <div><strong>{stats.leagueStarter.created.days7}</strong><span>Created 7d</span></div>
+                <div><strong>{stats.leagueStarter.created.days30}</strong><span>Created 30d</span></div>
+              </div>
+              <div className={styles.compactList}>
+                <div><span>Seasons created (30d)</span><strong>{stats.leagueStarter.seasonsCreated30}</strong></div>
+                <div><span>Schedules generated (30d)</span><strong>{stats.leagueStarter.schedulesGenerated30}</strong></div>
+                <div><span>Public pages shared (30d)</span><strong>{stats.leagueStarter.publicShared30}</strong></div>
+                <div><span>Existing-user adds (30d)</span><strong>{stats.leagueStarter.existingUserAdded30}</strong></div>
+                <div><span>Scope-wall hits (30d)</span><strong>{stats.leagueStarter.scopeWallHits30}</strong></div>
+                <div><span>Upgrade intents (30d)</span><strong>{stats.leagueStarter.upgradeIntents30}</strong></div>
+              </div>
+              <div className={styles.panelLinkRow}>
+                <Link href="/platform-admin/orgs">Review League Starter orgs</Link>
+              </div>
+            </section>
           </div>
         }
         usage={

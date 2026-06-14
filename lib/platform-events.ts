@@ -31,7 +31,17 @@ export type PlatformEventType =
   | 'team_org_ownership_invite_accepted'
   | 'team_org_ownership_request_declined'
   | 'team_org_ownership_invite_declined'
-  | 'team_org_ownership_transfer_completed';
+  | 'team_org_ownership_transfer_completed'
+  // Free Tier Phase 6 — Free League Starter (§13 instrumentation). Reuse this store; no new
+  // analytics pipeline. `platform_events.event_type` is free text (no CHECK), so no migration.
+  // First five are server-fired (route handlers); last two are client-fired via /api/events/league.
+  | 'free_floor_created'
+  | 'existing_user_floor_added'
+  | 'league_season_created'
+  | 'league_schedule_generated'
+  | 'scope_wall_hit'
+  | 'upgrade_intent_clicked'
+  | 'league_public_page_shared';
 
 export type PlatformEventInput = {
   eventType: PlatformEventType;
@@ -48,41 +58,50 @@ export type PlatformEventInput = {
   occurredAt?: string | null;
 };
 
+// Throw-proof by contract: identical discipline to captureError/notify. Callers may `await` it on
+// Lambda (so the insert flushes before the handler returns and the event isn't dropped) WITHOUT risk
+// of the write affecting the request path — e.g. /api/league/create awaits this inside a try/catch
+// that rolls back the org on error, so a rejection here must never escape.
 export async function writePlatformEvent(input: PlatformEventInput): Promise<void> {
-  if (input.sourceEventId) {
-    const { data: existing, error: lookupError } = await supabaseAdmin
-      .from('platform_events')
-      .select('id')
-      .eq('source', input.source)
-      .eq('source_event_id', input.sourceEventId)
-      .maybeSingle();
+  try {
+    if (input.sourceEventId) {
+      const { data: existing, error: lookupError } = await supabaseAdmin
+        .from('platform_events')
+        .select('id')
+        .eq('source', input.source)
+        .eq('source_event_id', input.sourceEventId)
+        .maybeSingle();
 
-    if (lookupError) {
-      console.error('[platform-events] lookup error:', lookupError);
-      return;
+      if (lookupError) {
+        console.error('[platform-events] lookup error:', lookupError);
+        return;
+      }
+      if (existing) return;
     }
-    if (existing) return;
-  }
 
-  const { error } = await supabaseAdmin
-    .from('platform_events')
-    .insert({
-      event_type: input.eventType,
-      source: input.source,
-      source_event_id: input.sourceEventId ?? null,
-      org_id: input.orgId ?? null,
-      actor_user_id: input.actorUserId ?? null,
-      actor_email: input.actorEmail ?? null,
-      previous_plan_id: input.previousPlanId ?? null,
-      plan_id: input.planId ?? null,
-      previous_subscription_status: input.previousSubscriptionStatus ?? null,
-      subscription_status: input.subscriptionStatus ?? null,
-      metadata: input.metadata ?? {},
-      occurred_at: input.occurredAt ?? new Date().toISOString(),
-    });
+    const { error } = await supabaseAdmin
+      .from('platform_events')
+      .insert({
+        event_type: input.eventType,
+        source: input.source,
+        source_event_id: input.sourceEventId ?? null,
+        org_id: input.orgId ?? null,
+        actor_user_id: input.actorUserId ?? null,
+        actor_email: input.actorEmail ?? null,
+        previous_plan_id: input.previousPlanId ?? null,
+        plan_id: input.planId ?? null,
+        previous_subscription_status: input.previousSubscriptionStatus ?? null,
+        subscription_status: input.subscriptionStatus ?? null,
+        metadata: input.metadata ?? {},
+        occurred_at: input.occurredAt ?? new Date().toISOString(),
+      });
 
-  if (error) {
-    console.error('[platform-events] write error:', error);
+    if (error) {
+      console.error('[platform-events] write error:', error);
+    }
+  } catch (err) {
+    // A network/fetch-layer rejection (rare) must not propagate to the caller's request path.
+    console.error('[platform-events] write threw (swallowed):', err);
   }
 }
 

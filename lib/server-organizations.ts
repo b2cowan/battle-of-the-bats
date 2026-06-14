@@ -28,6 +28,7 @@ type OrganizationRow = {
   account_kind: Organization['accountKind'] | null;
   team_workspace_status: Organization['teamWorkspaceStatus'] | null;
   is_discoverable: boolean | null;
+  free_floor: Organization['freeFloor'] | null;
 };
 
 function mapOrganization(row: OrganizationRow): Organization {
@@ -56,6 +57,7 @@ function mapOrganization(row: OrganizationRow): Organization {
     accountKind: row.account_kind ?? 'organization',
     teamWorkspaceStatus: row.team_workspace_status ?? null,
     isDiscoverable: row.is_discoverable ?? true,
+    freeFloor: row.free_floor ?? null,
   };
 }
 

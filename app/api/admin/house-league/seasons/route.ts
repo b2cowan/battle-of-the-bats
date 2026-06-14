@@ -4,6 +4,8 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getLeagueSeasons, getLeagueSeasonSummary } from '@/lib/db';
+import { houseLeagueSeasonCap, isFreeFloorLeague, leagueCapHit } from '@/lib/free-floor';
+import { writePlatformEvent } from '@/lib/platform-events';
 import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -48,6 +50,29 @@ export const POST = withObservability(async (req: Request) => {
     );
   }
 
+  // Free-floor (League Starter) cap: one non-archived season (draft or in-progress both count;
+  // archiving an old season frees the slot for a new one). Server-enforced because house-league
+  // is module-gated, not cap-gated. Paid plans are uncapped (Infinity).
+  const seasonCap = houseLeagueSeasonCap(ctx!.org);
+  if (seasonCap < Infinity) {
+    const { count } = await supabaseAdmin
+      .from('league_seasons')
+      .select('id', { count: 'exact', head: true })
+      .eq('org_id', ctx!.org.id)
+      .neq('status', 'archived');
+    if ((count ?? 0) >= seasonCap) {
+      await writePlatformEvent({
+        eventType: 'scope_wall_hit',
+        source: 'app',
+        orgId: ctx!.org.id,
+        actorUserId: ctx!.user?.id ?? null,
+        actorEmail: ctx!.user?.email ?? null,
+        metadata: { freeFloor: 'league_starter', capHit: 'league_season' },
+      });
+      return NextResponse.json(leagueCapHit('league_season'), { status: 403 });
+    }
+  }
+
   const { data, error } = await supabaseAdmin
     .from('league_seasons')
     .insert({
@@ -58,7 +83,9 @@ export const POST = withObservability(async (req: Request) => {
       division:                    typeof body.division === 'string' && body.division ? body.division : null,
       description:                  typeof body.description === 'string' && body.description ? body.description : null,
       registration_fee:             typeof body.registrationFee === 'number' ? body.registrationFee : null,
-      auto_generate_fees:           body.autoGenerateFees === true,
+      // Manual fee tracking only on the free floor: never auto-create accounting-ledger
+      // entries (the accounting module is a paid/Club differentiator the floor doesn't own).
+      auto_generate_fees:           body.autoGenerateFees === true && !isFreeFloorLeague(ctx!.org),
       auto_approve_under_capacity:  body.autoApproveUnderCapacity === true,
       auto_promote_waitlist:        body.autoPromoteWaitlist === true,
       registration_open_at:         typeof body.registrationOpenAt === 'string' && body.registrationOpenAt ? body.registrationOpenAt : null,
@@ -75,6 +102,19 @@ export const POST = withObservability(async (req: Request) => {
       return NextResponse.json({ error: 'A season with this slug already exists' }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Instrumentation (§13): League Starter activation signal. Gated to the free floor so the metric
+  // tracks free-tier first-value, not paid League/Club season creation. Fire-and-forget.
+  if (isFreeFloorLeague(ctx!.org)) {
+    void writePlatformEvent({
+      eventType: 'league_season_created',
+      source: 'app',
+      orgId: ctx!.org.id,
+      actorUserId: ctx!.user?.id ?? null,
+      actorEmail: ctx!.user?.email ?? null,
+      metadata: { freeFloor: 'league_starter', seasonId: data.id },
+    });
   }
 
   return NextResponse.json(data, { status: 201 });

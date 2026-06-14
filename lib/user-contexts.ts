@@ -15,6 +15,7 @@ export type OrgRelation = {
   team_workspace_status?: string | null;
   subscription_status?: string | null;
   onboarding_completed_at?: string | null;
+  free_floor?: string | null;
 } | null;
 
 export type MemberRow = {
@@ -156,7 +157,7 @@ async function hasExplicitPlanChoice(orgId: string, planId: OrgPlan): Promise<bo
 async function getActiveMembershipRows(userId: string): Promise<ActiveMemberRow[]> {
   const { data } = await supabaseAdmin
     .from('organization_members')
-    .select('id, organization_id, role, organizations(id, slug, name, plan_id, subscription_status, enabled_addons, account_kind, team_workspace_status, onboarding_completed_at)')
+    .select('id, organization_id, role, organizations(id, slug, name, plan_id, subscription_status, enabled_addons, account_kind, team_workspace_status, onboarding_completed_at, free_floor)')
     .eq('user_id', userId)
     .eq('status', 'active');
 
@@ -232,7 +233,9 @@ function buildMembershipContext(member: ActiveMemberRow): UserAccessContext | nu
     kind: 'organization',
     title: org?.name ?? slug,
     subtitle: 'Organization access',
-    detail: `${formatPlan(planId)} subscription`,
+    // A free League Starter floor sits on a tournament plan — label the /home card as the floor it
+    // actually is, not "Tournament subscription".
+    detail: org?.free_floor === 'league_starter' ? 'Free League Starter' : `${formatPlan(planId)} subscription`,
     badgeLabel: roleLabel,
     destination: '',
     sortOrder: 10,
@@ -350,6 +353,13 @@ export async function getDestinationForMembership(member: MemberRow): Promise<st
 
   if (isTeamWorkspaceOrg({ accountKind, planId: planId ?? 'tournament' })) {
     return `/${slug}/coaches`;
+  }
+
+  // Free League Starter floor: a house-league operator who happens to sit on a tournament plan
+  // (free_floor grants module_house_league on top). Send them to their league dashboard — NOT the
+  // tournament dashboard (plan_id='tournament' would otherwise route there) or the generic /admin hub.
+  if (org?.free_floor === 'league_starter') {
+    return `/${slug}/admin/house-league`;
   }
 
   const enabledAddons = org?.enabled_addons ?? [];
