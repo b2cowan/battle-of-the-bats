@@ -118,6 +118,8 @@ export default function SeasonDetailPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const { seasonId } = useParams<{ seasonId: string }>();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
+  // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const isAdmin = userRole === 'owner' || userRole === 'league_admin';
 
   const [detail,    setDetail]    = useState<SeasonDetail | null>(null);
@@ -160,7 +162,7 @@ export default function SeasonDetailPage() {
     if (!seasonId) return;
     setFetching(true);
     try {
-      const res  = await fetch(`/api/admin/house-league/seasons/${seasonId}`);
+      const res  = await fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load');
       setDetail(data);
@@ -169,7 +171,7 @@ export default function SeasonDetailPage() {
     } finally {
       setFetching(false);
     }
-  }, [seasonId]);
+  }, [seasonId, orgQuery]);
 
   useEffect(() => {
     if (currentOrg && seasonId) load();
@@ -187,7 +189,7 @@ export default function SeasonDetailPage() {
     if (!editForm || !detail) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}`, {
+      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -222,7 +224,7 @@ export default function SeasonDetailPage() {
   async function handleTransition(newStatus: LeagueSeasonStatus) {
     setTransitioningTo(newStatus);
     try {
-      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}`, {
+      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -250,7 +252,7 @@ export default function SeasonDetailPage() {
     if (!newDivName.trim()) return;
     setAddingDiv(true);
     try {
-      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/divisions`, {
+      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/divisions${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -286,7 +288,7 @@ export default function SeasonDetailPage() {
     if (!editDivId) return;
     setSavingDiv(true);
     try {
-      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/divisions/${editDivId}`, {
+      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/divisions/${editDivId}${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -312,7 +314,7 @@ export default function SeasonDetailPage() {
     if (!deleteDivId) return;
     setDeletingDiv(true);
     try {
-      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/divisions/${deleteDivId}`, {
+      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/divisions/${deleteDivId}${orgQuery}`, {
         method: 'DELETE',
       });
       const data = await res.json();

@@ -176,6 +176,7 @@ function formatDate(iso: string | null): string {
 export default function MembersPage() {
   const { currentOrg, userRole, userCapabilities, user, loading } = useOrg();
   usePageTitle('Members');
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const [members, setMembers] = useState<Member[]>([]);
   const [tournaments, setTournaments] = useState<TournamentOption[]>([]);
@@ -220,7 +221,7 @@ export default function MembersPage() {
   async function loadMembers() {
     setFetching(true);
     try {
-      const res = await fetch('/api/admin/members');
+      const res = await fetch(`/api/admin/members${orgQuery}`);
       if (!res.ok) throw new Error('Failed to load members');
       setMembers(await res.json());
     } catch (err: any) {
@@ -232,7 +233,7 @@ export default function MembersPage() {
 
   async function loadTournaments() {
     try {
-      const res = await fetch('/api/admin/tournaments');
+      const res = await fetch(`/api/admin/tournaments${orgQuery}`);
       if (res.ok) {
         const rows = await res.json();
         setTournaments(rows.map((r: any) => ({ id: r.id, name: r.name, year: r.year })));
@@ -244,7 +245,7 @@ export default function MembersPage() {
 
   async function loadRepGroups() {
     try {
-      const res = await fetch('/api/admin/rep-teams/groups');
+      const res = await fetch(`/api/admin/rep-teams/groups${orgQuery}`);
       if (res.ok) {
         const data = await res.json();
         setRepGroups((data.groups ?? []).map((g: any) => ({ id: g.id, name: g.name })));
@@ -266,7 +267,7 @@ export default function MembersPage() {
     }
     setInviting(true);
     try {
-      const res = await fetch('/api/admin/members/invite', {
+      const res = await fetch(`/api/admin/members/invite${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
@@ -345,7 +346,7 @@ export default function MembersPage() {
       if (roleChanged) patchBody.role = manageDraftRole;
       if (displayNameChanged) patchBody.displayName = manageDraftDisplayName.trim() || null;
       if (titleChanged) patchBody.title = manageDraftTitle.trim() || null;
-      const res = await fetch(`/api/admin/members/${manageTarget.id}`, {
+      const res = await fetch(`/api/admin/members/${manageTarget.id}${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patchBody),
@@ -363,7 +364,7 @@ export default function MembersPage() {
     }
 
     if (assignmentsChanged) {
-      const res = await fetch(`/api/admin/members/${manageTarget.id}/assignments`, {
+      const res = await fetch(`/api/admin/members/${manageTarget.id}/assignments${orgQuery}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tournamentIds: manageDraftAssignments }),
@@ -379,7 +380,7 @@ export default function MembersPage() {
     }
 
     if (repGroupsChanged) {
-      const res = await fetch(`/api/admin/members/${manageTarget.id}`, {
+      const res = await fetch(`/api/admin/members/${manageTarget.id}${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ repGroupIds: manageDraftRepGroupIds }),
@@ -406,7 +407,7 @@ export default function MembersPage() {
   async function handleSaveCapabilities() {
     if (!manageTarget) return;
     setCapSaving(true);
-    const res = await fetch(`/api/admin/members/${manageTarget.id}`, {
+    const res = await fetch(`/api/admin/members/${manageTarget.id}${orgQuery}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ capabilities: capDraft }),
@@ -428,7 +429,7 @@ export default function MembersPage() {
     if (!manageTarget) return;
     setManageSuspending(true);
     const newStatus = manageTarget.status === 'suspended' ? 'active' : 'suspended';
-    const res = await fetch(`/api/admin/members/${manageTarget.id}`, {
+    const res = await fetch(`/api/admin/members/${manageTarget.id}${orgQuery}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
@@ -451,7 +452,7 @@ export default function MembersPage() {
 
   async function handleRemove(member: Member) {
     setRemovingId(member.id);
-    const res = await fetch(`/api/admin/members/${member.id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/admin/members/${member.id}${orgQuery}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) {
       showError(data.error ?? 'Remove failed');
@@ -466,7 +467,7 @@ export default function MembersPage() {
 
   async function handleReinvite(member: Member) {
     setReinvitingId(member.id);
-    const res = await fetch(`/api/admin/members/${member.id}/reinvite`, { method: 'POST' });
+    const res = await fetch(`/api/admin/members/${member.id}/reinvite${orgQuery}`, { method: 'POST' });
     const data = await res.json();
     if (!res.ok) {
       showError(data.error ?? 'Resend failed');
@@ -640,7 +641,7 @@ export default function MembersPage() {
                           onClick={async () => {
                             setConfirmRemoveId(m.id);
                             setRemoveImpact(null);
-                            const impactRes = await fetch(`/api/admin/members/${m.id}`);
+                            const impactRes = await fetch(`/api/admin/members/${m.id}${orgQuery}`);
                             if (impactRes.ok) {
                               const impactData = await impactRes.json() as { tournamentCount: number; divisionCount: number };
                               setRemoveImpact(impactData);

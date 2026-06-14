@@ -19,6 +19,7 @@ export default function TeamHistoryPage({
 }) {
   const params = use(paramsPromise);
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
 
   const [team, setTeam] = useState<RepTeam | null>(null);
@@ -30,7 +31,7 @@ export default function TeamHistoryPage({
     setFetching(true);
     setError('');
     try {
-      const res = await fetch(`/api/admin/rep-teams/teams/${params.teamId}/history`);
+      const res = await fetch(`/api/admin/rep-teams/teams/${params.teamId}/history${orgQuery}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load');
       setTeam(data.team);
@@ -40,7 +41,7 @@ export default function TeamHistoryPage({
     } finally {
       setFetching(false);
     }
-  }, [params.teamId]);
+  }, [params.teamId, orgQuery]);
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 

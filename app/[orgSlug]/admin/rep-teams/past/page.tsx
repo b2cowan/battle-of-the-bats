@@ -19,6 +19,7 @@ function groupByTeam(years: RepPastProgramYear[]): Map<string, RepPastProgramYea
 
 export default function PastProgramYearsPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
 
   const [years, setYears] = useState<RepPastProgramYear[]>([]);
@@ -29,7 +30,7 @@ export default function PastProgramYearsPage() {
     setFetching(true);
     setError('');
     try {
-      const res = await fetch('/api/admin/rep-teams/past');
+      const res = await fetch(`/api/admin/rep-teams/past${orgQuery}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load');
       setYears(data.years ?? []);
@@ -38,7 +39,7 @@ export default function PastProgramYearsPage() {
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [orgQuery]);
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 

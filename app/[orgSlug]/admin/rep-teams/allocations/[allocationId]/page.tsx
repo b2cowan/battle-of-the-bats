@@ -53,8 +53,8 @@ function isOverdue(dueDate: string, paidAt: string | null) {
 }
 
 // Resolve team names from the teams API (cached in-component)
-async function fetchTeamName(teamId: string): Promise<string> {
-  const r = await fetch(`/api/admin/rep-teams/teams/${teamId}`);
+async function fetchTeamName(teamId: string, orgQuery: string): Promise<string> {
+  const r = await fetch(`/api/admin/rep-teams/teams/${teamId}${orgQuery}`);
   const d = await r.json();
   return d.team?.name ?? teamId.slice(0, 8);
 }
@@ -64,6 +64,7 @@ export default function AllocationDetailPage() {
   const allocationId = params.allocationId as string;
 
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canMarkPaid = userRole === 'owner' || userRole === 'treasurer';
 
@@ -88,7 +89,7 @@ export default function AllocationDetailPage() {
     setFetching(true);
     setFetchError('');
     try {
-      const res = await fetch(`/api/admin/rep-teams/allocations/${allocationId}`);
+      const res = await fetch(`/api/admin/rep-teams/allocations/${allocationId}${orgQuery}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load');
       setAllocation(data.allocation);
@@ -103,7 +104,7 @@ export default function AllocationDetailPage() {
       const ids = [...new Set((data.splits ?? []).map((s: Split) => s.teamId))] as string[];
       const names: Record<string, string> = {};
       await Promise.all(ids.map(async id => {
-        names[id] = await fetchTeamName(id);
+        names[id] = await fetchTeamName(id, orgQuery);
       }));
       setTeamNames(names);
     } catch (e: any) {
@@ -111,7 +112,7 @@ export default function AllocationDetailPage() {
     } finally {
       setFetching(false);
     }
-  }, [currentOrg, allocationId]);
+  }, [currentOrg, allocationId, orgQuery]);
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
@@ -120,7 +121,7 @@ export default function AllocationDetailPage() {
     setMarking(prev => ({ ...prev, [key]: true }));
     try {
       const res = await fetch(
-        `/api/admin/rep-teams/allocations/${allocationId}/splits/${split.id}/installments/${inst.id}`,
+        `/api/admin/rep-teams/allocations/${allocationId}/splits/${split.id}/installments/${inst.id}${orgQuery}`,
         { method: 'PATCH' },
       );
       const data = await res.json();

@@ -25,6 +25,8 @@ interface TeamRow {
 
 export default function RenameSlugPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
 
@@ -45,7 +47,7 @@ export default function RenameSlugPage() {
   const load = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await fetch('/api/admin/rep-teams/teams?archived=true');
+      const res = await fetch(`/api/admin/rep-teams/teams?archived=true${orgParam}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load');
       const loaded: TeamRow[] = (data.teams ?? []).map((s: any) => ({ team: s.team }));
@@ -58,7 +60,7 @@ export default function RenameSlugPage() {
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [orgParam]);
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
@@ -105,7 +107,7 @@ export default function RenameSlugPage() {
     if (!canSave) return;
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/rep-teams/bulk-rename-slugs', {
+      const res = await fetch(`/api/admin/rep-teams/bulk-rename-slugs${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ renames: changedRenames }),

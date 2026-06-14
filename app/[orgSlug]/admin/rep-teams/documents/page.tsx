@@ -29,6 +29,7 @@ interface TemplateRow {
 
 export default function AdminDocumentsPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const canWrite = userRole === 'owner' || userRole === 'admin';
 
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
@@ -59,13 +60,13 @@ export default function AdminDocumentsPage() {
   const load = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await fetch('/api/admin/rep-teams/document-templates');
+      const res = await fetch(`/api/admin/rep-teams/document-templates${orgQuery}`);
       const data = await res.json();
       if (res.ok) setTemplates(data.templates ?? []);
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [orgQuery]);
 
   useEffect(() => { if (!loading) load(); }, [loading, load]);
 
@@ -88,7 +89,7 @@ export default function AdminDocumentsPage() {
       form.append('name', uploadName.trim());
       form.append('documentType', uploadType);
       if (uploadTeamId.trim()) form.append('teamId', uploadTeamId.trim());
-      const res = await fetch('/api/admin/rep-teams/document-templates', { method: 'POST', body: form });
+      const res = await fetch(`/api/admin/rep-teams/document-templates${orgQuery}`, { method: 'POST', body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Upload failed');
       await load();
@@ -106,7 +107,7 @@ export default function AdminDocumentsPage() {
   }
 
   async function handleDownload(templateId: string, fileName: string) {
-    const res = await fetch(`/api/admin/rep-teams/document-templates/${templateId}`);
+    const res = await fetch(`/api/admin/rep-teams/document-templates/${templateId}${orgQuery}`);
     const data = await res.json();
     if (!res.ok || !data.url) { showFeedback('error', 'Could not generate download link.'); return; }
     const a = document.createElement('a');
@@ -120,7 +121,7 @@ export default function AdminDocumentsPage() {
   async function handleToggleActive(t: TemplateRow) {
     setTogglingId(t.id);
     try {
-      const res = await fetch(`/api/admin/rep-teams/document-templates/${t.id}`, {
+      const res = await fetch(`/api/admin/rep-teams/document-templates/${t.id}${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !t.isActive }),
@@ -136,7 +137,7 @@ export default function AdminDocumentsPage() {
   async function handleDelete(t: TemplateRow) {
     setDeletingId(t.id);
     try {
-      const res = await fetch(`/api/admin/rep-teams/document-templates/${t.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/rep-teams/document-templates/${t.id}${orgQuery}`, { method: 'DELETE' });
       if (res.ok) {
         setTemplates(prev => prev.filter(r => r.id !== t.id));
         showFeedback('success', `"${t.name}" deleted.`);

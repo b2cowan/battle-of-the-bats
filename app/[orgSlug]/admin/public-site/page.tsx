@@ -33,6 +33,7 @@ const EMPTY: SiteForm = {
 
 export default function PublicSitePage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const [saved, setSaved]     = useState<SiteForm>(EMPTY);
   const [form, setForm]       = useState<SiteForm>(EMPTY);
   const [fetching, setFetching] = useState(true);
@@ -44,9 +45,10 @@ export default function PublicSitePage() {
   const isDirty = JSON.stringify(form) !== JSON.stringify(saved);
 
   const load = useCallback(async () => {
+    const query = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
     setFetching(true);
     try {
-      const res  = await fetch('/api/admin/public-site');
+      const res  = await fetch(`/api/admin/public-site${query}`);
       const data = await res.json();
       const populated: SiteForm = {
         tagline:                 data.tagline             ?? '',
@@ -67,7 +69,7 @@ export default function PublicSitePage() {
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [currentOrg?.slug]);
 
   useEffect(() => {
     if (currentOrg) load();
@@ -84,7 +86,7 @@ export default function PublicSitePage() {
     if (saving) return;
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/public-site', {
+      const res = await fetch(`/api/admin/public-site${orgQuery}`, {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(form),

@@ -49,9 +49,10 @@ function formatAgeRange(min: number | null | undefined, max: number | null | und
 async function loadDivisionState(tournamentId?: string, orgSlug?: string) {
   if (!tournamentId) return { groups: [] as Division[], orgMembers: [] as OrgMemberOption[] };
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const [groupsRes, membersRes] = await Promise.all([
     fetch(`/api/admin/divisions?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`),
-    fetch('/api/admin/members'),
+    fetch(`/api/admin/members${orgQuery}`),
   ]);
   const groups: Division[] = groupsRes.ok ? await groupsRes.json() : [];
   const allMembers: OrgMemberOption[] = membersRes.ok ? await membersRes.json() : [];

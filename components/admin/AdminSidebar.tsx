@@ -84,7 +84,7 @@ export default function AdminSidebar() {
   const [houseLeagueSeasons, setHouseLeagueSeasons] = useState<{ id: string; name: string }[]>([]);
   useEffect(() => {
     if (!isHouseLeague || !currentOrgSlug) return;
-    fetch(`/api/admin/house-league/seasons`)
+    fetch(`/api/admin/house-league/seasons?orgSlug=${encodeURIComponent(currentOrgSlug)}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         const seasons = Array.isArray(d?.seasons)

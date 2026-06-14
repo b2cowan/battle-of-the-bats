@@ -29,6 +29,8 @@ export default function CoachManagementPage({
 }) {
   const params = use(paramsPromise);
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
 
@@ -54,20 +56,20 @@ export default function CoachManagementPage({
 
   const loadCoaches = useCallback(async () => {
     const res = await fetch(
-      `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/coaches`,
+      `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/coaches${orgQuery}`,
     );
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? 'Failed to load coaches');
     setCoaches(data.coaches ?? []);
-  }, [params.teamId, params.yearId]);
+  }, [params.teamId, params.yearId, orgQuery]);
 
   const loadAll = useCallback(async () => {
     setFetching(true);
     try {
       const [coachRes, memberRes, yearRes] = await Promise.all([
-        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/coaches`),
-        fetch('/api/admin/members'),
-        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}`),
+        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/coaches${orgQuery}`),
+        fetch(`/api/admin/members${orgQuery}`),
+        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}${orgQuery}`),
       ]);
       const [coachData, memberData, yearData] = await Promise.all([
         coachRes.json(), memberRes.json(), yearRes.json(),
@@ -90,7 +92,7 @@ export default function CoachManagementPage({
     } finally {
       setFetching(false);
     }
-  }, [params.teamId, params.yearId]);
+  }, [params.teamId, params.yearId, orgQuery]);
 
   useEffect(() => { if (currentOrg) loadAll(); }, [currentOrg, loadAll]);
 
@@ -102,7 +104,7 @@ export default function CoachManagementPage({
     setAssigning(true);
     try {
       const res = await fetch(
-        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/coaches`,
+        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/coaches${orgQuery}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -126,7 +128,7 @@ export default function CoachManagementPage({
     setRemovingId(coachId);
     try {
       const res = await fetch(
-        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/coaches?coachId=${coachId}`,
+        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/coaches?coachId=${coachId}${orgParam}`,
         { method: 'DELETE' },
       );
       const data = await res.json();

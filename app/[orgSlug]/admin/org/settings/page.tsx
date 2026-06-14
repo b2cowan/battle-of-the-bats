@@ -29,6 +29,7 @@ export default function OrgSettingsPage() {
   const { currentOrg, userRole, loading, refresh } = useOrg();
   usePageTitle('Settings');
   const { setOrgNav } = useOrgNav();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const [settings, setSettings] = useState<OrgSettings | null>(null);
   const [form, setForm] = useState({ name: '', slug: '', isPublic: false });
@@ -255,7 +256,7 @@ export default function OrgSettingsPage() {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch('/api/admin/org-hero-banner', { method: 'POST', body: fd });
+      const res = await fetch(`/api/admin/org-hero-banner${orgQuery}`, { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Upload failed');
       setHeroBannerPreview(data.heroBannerUrl);
@@ -275,7 +276,7 @@ export default function OrgSettingsPage() {
   async function handleRemoveHeroBanner() {
     setBannerUploading(true);
     try {
-      const res = await fetch('/api/admin/org-hero-banner', { method: 'DELETE' });
+      const res = await fetch(`/api/admin/org-hero-banner${orgQuery}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Remove failed');
       setHeroBannerPreview(null);
       setSettings(prev => prev ? { ...prev, heroBannerUrl: null } : null);
@@ -297,7 +298,7 @@ export default function OrgSettingsPage() {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch('/api/admin/org-logo', { method: 'POST', body: fd });
+      const res = await fetch(`/api/admin/org-logo${orgQuery}`, { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Upload failed');
       setLogoPreview(data.logoUrl);
@@ -318,7 +319,7 @@ export default function OrgSettingsPage() {
   async function handleRemoveLogo() {
     setUploading(true);
     try {
-      const res = await fetch('/api/admin/org-logo', { method: 'DELETE' });
+      const res = await fetch(`/api/admin/org-logo${orgQuery}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Remove failed');
       setLogoPreview(null);
@@ -338,7 +339,7 @@ export default function OrgSettingsPage() {
     if (!stockLogoSelected || !currentOrg) return;
     setStockLogoSaving(true);
     try {
-      const res = await fetch('/api/admin/org-logo-stock', {
+      const res = await fetch(`/api/admin/org-logo-stock${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stockPath: stockLogoSelected }),
@@ -370,7 +371,7 @@ export default function OrgSettingsPage() {
   async function handleRequestDeletion() {
     setDeletionSending(true);
     try {
-      const res = await fetch('/api/admin/org/request-deletion', {
+      const res = await fetch(`/api/admin/org/request-deletion${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: deletionReason }),

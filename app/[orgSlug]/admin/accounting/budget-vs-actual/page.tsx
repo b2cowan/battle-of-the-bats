@@ -184,11 +184,15 @@ export default function OrgBudgetVsActualPage() {
     await doPdfExport();
   }
 
+  const orgSlug = currentOrg?.slug;
+
   const load = useCallback(async (y: number) => {
     setFetching(true);
     setError('');
     try {
-      const res  = await fetch(`/api/admin/accounting/budget-vs-actual?year=${y}`);
+      const qs = new URLSearchParams({ year: String(y) });
+      if (orgSlug) qs.set('orgSlug', orgSlug);
+      const res  = await fetch(`/api/admin/accounting/budget-vs-actual?${qs}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? 'Failed to load');
       setData(json);
@@ -198,7 +202,7 @@ export default function OrgBudgetVsActualPage() {
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [orgSlug]);
 
   useEffect(() => {
     if (currentOrg) load(year);
@@ -206,11 +210,12 @@ export default function OrgBudgetVsActualPage() {
   }, [currentOrg]);
 
   useEffect(() => {
-    fetch('/api/admin/org/pdf-settings')
+    const pdfOrgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+    fetch(`/api/admin/org/pdf-settings${pdfOrgQuery}`)
       .then(r => r.ok ? r.json() : {})
       .then(d => setPdfSettings(d as OrgPdfSettings))
       .catch(() => setPdfSettings(null));
-  }, []);
+  }, [orgSlug]);
 
   if (loading) return <p className={styles.muted}>Loading…</p>;
 

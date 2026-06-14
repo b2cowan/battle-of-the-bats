@@ -210,7 +210,7 @@ export default function BillingPage() {
   // E6 — fetch rep-team add-on usage for Club orgs
   useEffect(() => {
     if (!currentOrg || currentOrg.planId !== 'club') return;
-    fetch('/api/admin/rep-teams/billing-preview?proposedCount=0')
+    fetch(`/api/admin/rep-teams/billing-preview?proposedCount=0${currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : ''}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data && typeof data.currentCount === 'number') {

@@ -57,6 +57,8 @@ function computeAmount(method: string, value: string, total: number): number | n
 export default function NewAllocationPage() {
   const router = useRouter();
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
 
   const [step, setStep] = useState(1);
@@ -76,7 +78,7 @@ export default function NewAllocationPage() {
 
   useEffect(() => {
     if (!currentOrg) return;
-    fetch('/api/admin/rep-teams/teams')
+    fetch(`/api/admin/rep-teams/teams${orgQuery}`)
       .then(r => r.json())
       .then(data => {
         const teamList: TeamOption[] = (data.teams ?? []).map((s: any) => ({
@@ -88,7 +90,7 @@ export default function NewAllocationPage() {
         // Fetch program years for each team
         Promise.all(
           teamList.map((t: TeamOption) =>
-            fetch(`/api/admin/rep-teams/teams/${t.id}/program-years`)
+            fetch(`/api/admin/rep-teams/teams/${t.id}/program-years${orgQuery}`)
               .then(r => r.json())
               .then(d => ({ teamId: t.id, years: d.programYears ?? [] })),
           ),
@@ -102,7 +104,7 @@ export default function NewAllocationPage() {
         }).finally(() => setTeamsLoading(false));
       })
       .catch(() => setTeamsLoading(false));
-  }, [currentOrg]);
+  }, [currentOrg, orgQuery]);
 
   if (loading) return <p className={styles.muted}>Loading…</p>;
 
@@ -266,7 +268,7 @@ export default function NewAllocationPage() {
     setError('');
     setSubmitting(true);
     try {
-      const res = await fetch('/api/admin/rep-teams/allocations', {
+      const res = await fetch(`/api/admin/rep-teams/allocations${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

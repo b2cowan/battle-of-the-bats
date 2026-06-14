@@ -98,11 +98,16 @@ export default function OrgBudgetPage() {
   // Delete confirmation
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  const orgSlug = currentOrg?.slug;
+  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+
   const load = useCallback(async (y: number) => {
     setFetching(true);
     setError('');
     try {
-      const res  = await fetch(`/api/admin/accounting/budget-plan?year=${y}`);
+      const qs = new URLSearchParams({ year: String(y) });
+      if (orgSlug) qs.set('orgSlug', orgSlug);
+      const res  = await fetch(`/api/admin/accounting/budget-plan?${qs}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load');
       setPlan(data);
@@ -112,13 +117,14 @@ export default function OrgBudgetPage() {
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [orgSlug]);
 
   const loadCategories = useCallback(async () => {
-    const res  = await fetch('/api/admin/accounting/budget-categories?scope=org');
+    const catQs = orgSlug ? `scope=org&orgSlug=${encodeURIComponent(orgSlug)}` : 'scope=org';
+    const res  = await fetch(`/api/admin/accounting/budget-categories?${catQs}`);
     const data = await res.json();
     if (res.ok) setCategories(data.categories ?? []);
-  }, []);
+  }, [orgSlug]);
 
   useEffect(() => {
     if (currentOrg) {
@@ -183,7 +189,7 @@ export default function OrgBudgetPage() {
     setAddSaving(true);
     setAddError('');
     try {
-      const res = await fetch('/api/admin/accounting/budget-plan/lines', {
+      const res = await fetch(`/api/admin/accounting/budget-plan/lines${orgQuery}`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -202,7 +208,7 @@ export default function OrgBudgetPage() {
       if (showPeriodsForm) {
         const filled = addPeriods.filter(p => p.label.trim() && p.amount);
         if (filled.length > 0) {
-          await fetch(`/api/admin/accounting/budget-plan/lines/${data.line.id}/periods`, {
+          await fetch(`/api/admin/accounting/budget-plan/lines/${data.line.id}/periods${orgQuery}`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -257,7 +263,7 @@ export default function OrgBudgetPage() {
     setEditSaving(true);
     setEditError('');
     try {
-      const res = await fetch(`/api/admin/accounting/budget-plan/lines/${editLineId}`, {
+      const res = await fetch(`/api/admin/accounting/budget-plan/lines/${editLineId}${orgQuery}`, {
         method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description: desc, totalAmount: amount, notes: editNotes.trim() || null }),
@@ -278,7 +284,7 @@ export default function OrgBudgetPage() {
   async function handleDelete(lineId: string) {
     setDeletingId(lineId);
     try {
-      const res  = await fetch(`/api/admin/accounting/budget-plan/lines/${lineId}`, { method: 'DELETE' });
+      const res  = await fetch(`/api/admin/accounting/budget-plan/lines/${lineId}${orgQuery}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to delete');
       await load(year);

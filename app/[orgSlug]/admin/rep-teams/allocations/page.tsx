@@ -25,6 +25,7 @@ function fmt(n: number) {
 
 export default function AllocationsPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'treasurer';
 
@@ -36,7 +37,7 @@ export default function AllocationsPage() {
     setFetching(true);
     setError('');
     try {
-      const res = await fetch('/api/admin/rep-teams/allocations');
+      const res = await fetch(`/api/admin/rep-teams/allocations${orgQuery}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load');
       setAllocations(data.allocations ?? []);
@@ -45,7 +46,7 @@ export default function AllocationsPage() {
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [orgQuery]);
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 

@@ -115,10 +115,12 @@ export default function HouseLeaguePage() {
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
   }
 
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+
   const load = useCallback(async () => {
     setFetching(true);
     try {
-      const res  = await fetch('/api/admin/house-league/seasons');
+      const res  = await fetch(`/api/admin/house-league/seasons${orgQuery}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load');
       setSummaries(data.seasons ?? []);
@@ -127,7 +129,7 @@ export default function HouseLeaguePage() {
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [orgQuery]);
 
   useEffect(() => {
     if (currentOrg) load();
@@ -157,7 +159,7 @@ export default function HouseLeaguePage() {
     if (!form.name.trim() || !form.slug.trim()) return;
     setCreating(true);
     try {
-      const res = await fetch('/api/admin/house-league/seasons', {
+      const res = await fetch(`/api/admin/house-league/seasons${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -254,6 +256,7 @@ export default function HouseLeaguePage() {
               base={base}
               isAdmin={isAdmin}
               onTransition={load}
+              orgSlug={currentOrg?.slug}
             />
           ))}
         </div>
@@ -504,6 +507,7 @@ function SeasonCard({
   base,
   isAdmin,
   onTransition,
+  orgSlug,
 }: {
   season: LeagueSeason;
   activeCount: number;
@@ -513,10 +517,12 @@ function SeasonCard({
   base: string;
   isAdmin: boolean;
   onTransition: () => void;
+  orgSlug: string | undefined;
 }) {
   const [transitioning, setTransitioning] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [transitionError, setTransitionError] = useState<string | null>(null);
+  const seasonOrgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
   const href = `${base}/house-league/seasons/${season.id}`;
   const next = NEXT_TRANSITION[season.status] ?? null;
@@ -525,7 +531,7 @@ function SeasonCard({
     setTransitioning(true);
     setTransitionError(null);
     try {
-      const res = await fetch(`/api/admin/house-league/seasons/${season.id}`, {
+      const res = await fetch(`/api/admin/house-league/seasons/${season.id}${seasonOrgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),

@@ -31,6 +31,7 @@ function emptyForm(org: { name?: string; themeAccent?: string | null } | null): 
 
 export default function PdfSettingsPage() {
   const { currentOrg, userRole, loading: orgLoading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const [form, setForm]     = useState<OrgPdfSettings | null>(null);
   const [saved, setSaved]   = useState<OrgPdfSettings | null>(null);
   const [saving, setSaving] = useState(false);
@@ -45,8 +46,9 @@ export default function PdfSettingsPage() {
   // ── Load saved settings from API ─────────────────────────────────────────
   const load = useCallback(async () => {
     if (!currentOrg) return;
+    const loadOrgQuery = currentOrg.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
     try {
-      const res = await fetch('/api/admin/org/pdf-settings');
+      const res = await fetch(`/api/admin/org/pdf-settings${loadOrgQuery}`);
       if (!res.ok) throw new Error('Failed to load PDF settings');
       const data: Partial<OrgPdfSettings> = await res.json();
       const merged: OrgPdfSettings = {
@@ -70,7 +72,7 @@ export default function PdfSettingsPage() {
     if (!form || saving) return;
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/org/pdf-settings', {
+      const res = await fetch(`/api/admin/org/pdf-settings${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

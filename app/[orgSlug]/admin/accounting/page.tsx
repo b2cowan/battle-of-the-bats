@@ -67,10 +67,13 @@ export default function AccountingOverviewPage() {
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
   }
 
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+
   const load = useCallback(async (from: string, to: string) => {
     setFetching(true);
     try {
       const qs  = new URLSearchParams({ from, to });
+      if (currentOrg?.slug) qs.set('orgSlug', currentOrg.slug);
       const res  = await fetch(`/api/admin/accounting/ledgers?${qs}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load');
@@ -80,7 +83,7 @@ export default function AccountingOverviewPage() {
     } finally {
       setFetching(false);
     }
-  }, []);
+  }, [currentOrg?.slug]);
 
   useEffect(() => {
     if (currentOrg) load(defaults.from, defaults.to);
@@ -92,7 +95,7 @@ export default function AccountingOverviewPage() {
     if (!name) return;
     setCreating(true);
     try {
-      const res = await fetch('/api/admin/accounting/ledgers', {
+      const res = await fetch(`/api/admin/accounting/ledgers${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, entityType: 'org' }),
@@ -113,7 +116,7 @@ export default function AccountingOverviewPage() {
   async function handleOpenTournamentLedger(tournamentId: string, tournamentName: string) {
     setCreatingForTournamentId(tournamentId);
     try {
-      const res = await fetch('/api/admin/accounting/ledgers', {
+      const res = await fetch(`/api/admin/accounting/ledgers${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: tournamentName, entityType: 'tournament', entityId: tournamentId }),
@@ -132,7 +135,7 @@ export default function AccountingOverviewPage() {
   async function runDueReminders(window: 30 | 7) {
     setSendingDueReminders(window);
     try {
-      const res = await fetch('/api/admin/rep-teams/dues/send-automated-reminders', {
+      const res = await fetch(`/api/admin/rep-teams/dues/send-automated-reminders${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ window }),
@@ -150,7 +153,7 @@ export default function AccountingOverviewPage() {
   async function runAllocReminders() {
     setSendingAllocReminders(true);
     try {
-      const res = await fetch('/api/admin/rep-teams/allocations/send-reminders', {
+      const res = await fetch(`/api/admin/rep-teams/allocations/send-reminders${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ daysAhead: 30 }),

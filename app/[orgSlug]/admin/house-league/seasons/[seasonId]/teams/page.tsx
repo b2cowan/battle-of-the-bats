@@ -487,6 +487,8 @@ function DraftOverlay({
 export default function TeamsPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
   const { currentOrg, userRole, userCapabilities } = useOrg();
+  // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const [season, setSeason] = useState<SeasonInfo | null>(null);
   const [divisions, setDivisions] = useState<LeagueDivision[]>([]);
@@ -541,19 +543,20 @@ export default function TeamsPage() {
   // ── Data loading ────────────────────────────────────────────────────────────
 
   const loadSeasonAndDivisions = useCallback(async () => {
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}`);
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`);
     if (!res.ok) return;
     const { season: s, divisions: divs } = await res.json();
     setSeason({ id: s.id, name: s.name });
     setDivisions(divs ?? []);
     if (divs?.length && !selectedDivId) setSelectedDivId(divs[0].id);
-  }, [seasonId, selectedDivId]);
+  }, [seasonId, selectedDivId, orgQuery]);
 
   const loadTeamsAndRegs = useCallback(async (divId: string) => {
+    const orgParam = orgQuery ? orgQuery.replace('?', '&') : '';
     const [teamsRes, regsRes, draftRes] = await Promise.all([
-      fetch(`/api/admin/house-league/seasons/${seasonId}/teams?divisionId=${divId}`),
-      fetch(`/api/admin/house-league/seasons/${seasonId}/registrations?status=active&divisionId=${divId}`),
-      fetch(`/api/admin/house-league/seasons/${seasonId}/draft`),
+      fetch(`/api/admin/house-league/seasons/${seasonId}/teams?divisionId=${divId}${orgParam}`),
+      fetch(`/api/admin/house-league/seasons/${seasonId}/registrations?status=active&divisionId=${divId}${orgParam}`),
+      fetch(`/api/admin/house-league/seasons/${seasonId}/draft${orgQuery}`),
     ]);
     if (teamsRes.ok) {
       const d = await teamsRes.json();
@@ -568,7 +571,7 @@ export default function TeamsPage() {
       setDraft(d.draft ?? null);
       setDraftPlayers(d.remainingPlayers ?? []);
     }
-  }, [seasonId]);
+  }, [seasonId, orgQuery]);
 
   useEffect(() => {
     setLoading(true);
@@ -615,7 +618,7 @@ export default function TeamsPage() {
     );
 
     try {
-      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/placement`, {
+      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/placement${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -638,7 +641,7 @@ export default function TeamsPage() {
   // ── Team actions ────────────────────────────────────────────────────────────
 
   async function handleCreateTeams(defs: Array<{ name: string }>) {
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/teams`, {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/teams${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ divisionId: selectedDivId, teams: defs }),
@@ -653,7 +656,7 @@ export default function TeamsPage() {
 
   async function handleEditTeam(patch: { name?: string; color?: string | null; coachName?: string | null }) {
     if (!editTeam) return;
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/teams/${editTeam.id}`, {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/teams/${editTeam.id}${orgQuery}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
@@ -668,7 +671,7 @@ export default function TeamsPage() {
 
   async function handleDeleteTeam(team: LeagueTeam) {
     setSaving(true);
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/teams/${team.id}`, {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/teams/${team.id}${orgQuery}`, {
       method: 'DELETE',
     });
     setSaving(false);
@@ -685,7 +688,7 @@ export default function TeamsPage() {
   async function handleRandomize() {
     setSaving(true);
     setShowRandomizeConfirm(false);
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/placement`, {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/placement${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'randomize', divisionId: selectedDivId }),
@@ -701,7 +704,7 @@ export default function TeamsPage() {
   async function handleClearAll() {
     setSaving(true);
     setShowClearConfirm(false);
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/placement`, {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/placement${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'clear', divisionId: selectedDivId }),
@@ -720,7 +723,7 @@ export default function TeamsPage() {
   async function handleStartDraft() {
     if (!divTeams.length) return;
     const pickOrder = divTeams.map(t => t.id);
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/draft`, {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/draft${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'start', divisionId: selectedDivId, pickOrder }),
@@ -737,7 +740,7 @@ export default function TeamsPage() {
 
   async function draftAction(body: Record<string, unknown>) {
     setSaving(true);
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/draft`, {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/draft${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

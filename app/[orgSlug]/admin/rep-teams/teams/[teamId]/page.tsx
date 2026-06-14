@@ -32,6 +32,7 @@ const BLANK_YEAR: YearForm = {
 export default function TeamOverviewPage({ params: paramsPromise }: { params: Promise<{ orgSlug: string; teamId: string }> }) {
   const params = use(paramsPromise);
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
 
@@ -53,7 +54,7 @@ export default function TeamOverviewPage({ params: paramsPromise }: { params: Pr
   const load = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await fetch(`/api/admin/rep-teams/teams/${params.teamId}`);
+      const res = await fetch(`/api/admin/rep-teams/teams/${params.teamId}${orgQuery}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load');
       setTeam(data.team);
@@ -63,7 +64,7 @@ export default function TeamOverviewPage({ params: paramsPromise }: { params: Pr
     } finally {
       setFetching(false);
     }
-  }, [params.teamId]);
+  }, [params.teamId, orgQuery]);
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
@@ -71,7 +72,7 @@ export default function TeamOverviewPage({ params: paramsPromise }: { params: Pr
     if (!yearForm.name.trim() || !yearForm.year) return;
     setCreating(true);
     try {
-      const res = await fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years`, {
+      const res = await fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

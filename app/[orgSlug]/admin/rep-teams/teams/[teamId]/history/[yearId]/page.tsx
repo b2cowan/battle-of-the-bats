@@ -47,6 +47,8 @@ export default function PastYearDetailPage({
 }) {
   const params = use(paramsPromise);
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
 
   const [tab, setTab] = useState<Tab>('roster');
@@ -63,10 +65,10 @@ export default function PastYearDetailPage({
     setError('');
     try {
       const [pyRes, rosterRes, eventsRes, coachesRes] = await Promise.all([
-        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}`),
-        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/roster`),
-        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/events`),
-        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/coaches`),
+        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}${orgQuery}`),
+        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/roster${orgQuery}`),
+        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/events${orgQuery}`),
+        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/coaches${orgQuery}`),
       ]);
 
       const pyData = await pyRes.json();
@@ -88,7 +90,7 @@ export default function PastYearDetailPage({
     } finally {
       setFetching(false);
     }
-  }, [params.teamId, params.yearId]);
+  }, [params.teamId, params.yearId, orgQuery]);
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 

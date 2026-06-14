@@ -128,12 +128,16 @@ export default function LedgerDetailPage() {
 
   const [categories, setCategories] = useState<string[]>(CATEGORY_DEFAULTS);
 
+  const orgSlug = currentOrg?.slug;
+  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+
   useEffect(() => {
-    fetch('/api/admin/accounting/categories')
+    fetch(`/api/admin/accounting/categories${orgQuery}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.categories?.length) setCategories(d.categories); })
       .catch(() => {});
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgSlug]);
 
   function showFeedback(type: 'success' | 'danger', msg: string) {
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
@@ -144,6 +148,7 @@ export default function LedgerDetailPage() {
     try {
       const qs = new URLSearchParams({ limit: String(LIMIT), offset: String(pageOffset) });
       if (statusFilter !== 'all') qs.set('status', statusFilter);
+      if (orgSlug) qs.set('orgSlug', orgSlug);
 
       if (append) {
         const res  = await fetch(`/api/admin/accounting/ledgers/${ledgerId}/entries?${qs}`);
@@ -170,7 +175,7 @@ export default function LedgerDetailPage() {
       setFetching(false);
       setLoadingMore(false);
     }
-  }, [ledgerId]);
+  }, [ledgerId, orgSlug]);
 
   useEffect(() => {
     if (currentOrg && ledgerId) fetchPage('all', 0, false);
@@ -183,7 +188,7 @@ export default function LedgerDetailPage() {
 
   async function handleVoid(entry: AccountingEntry) {
     if (!window.confirm('Void this entry? It will remain in the ledger for audit purposes but be excluded from totals.')) return;
-    const res = await fetch(`/api/admin/accounting/ledgers/${ledgerId}/entries/${entry.id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/admin/accounting/ledgers/${ledgerId}/entries/${entry.id}${orgQuery}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) { showFeedback('danger', data.error ?? 'Failed to void entry.'); return; }
     fetchPage(tab, 0, false);
@@ -243,8 +248,8 @@ export default function LedgerDetailPage() {
       };
 
       const url = isAdd
-        ? `/api/admin/accounting/ledgers/${ledgerId}/entries`
-        : `/api/admin/accounting/ledgers/${ledgerId}/entries/${editingEntry!.id}`;
+        ? `/api/admin/accounting/ledgers/${ledgerId}/entries${orgQuery}`
+        : `/api/admin/accounting/ledgers/${ledgerId}/entries/${editingEntry!.id}${orgQuery}`;
 
       const res  = await fetch(url, { method: isAdd ? 'POST' : 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await res.json();
@@ -265,7 +270,7 @@ export default function LedgerDetailPage() {
     setTransferForm(emptyTransferForm());
     setTransferModal(true);
     try {
-      const res  = await fetch('/api/admin/accounting/ledgers');
+      const res  = await fetch(`/api/admin/accounting/ledgers${orgQuery}`);
       const data = await res.json();
       setAllLedgers((data.ledgers ?? []).filter((l: LedgerSummary) => l.ledger.id !== ledgerId));
     } catch { /* non-critical: user sees empty dropdown */ }
@@ -279,7 +284,7 @@ export default function LedgerDetailPage() {
 
     setTransferring(true);
     try {
-      const res = await fetch('/api/admin/accounting/transfers', {
+      const res = await fetch(`/api/admin/accounting/transfers${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

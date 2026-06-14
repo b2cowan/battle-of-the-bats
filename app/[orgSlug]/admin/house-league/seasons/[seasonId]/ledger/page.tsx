@@ -36,7 +36,9 @@ function fmtDate(iso: string): string {
 
 export default function LedgerPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
-  const { user, userRole, userCapabilities } = useOrg();
+  const { currentOrg, user, userRole, userCapabilities } = useOrg();
+  // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const canView = hasCapability(userRole ?? 'staff', userCapabilities ?? null, 'module_house_league');
 
@@ -49,8 +51,8 @@ export default function LedgerPage() {
     setLoading(true);
     try {
       const [seasonRes, ledgerRes] = await Promise.all([
-        fetch(`/api/admin/house-league/seasons/${seasonId}`),
-        fetch(`/api/admin/house-league/seasons/${seasonId}/ledger`),
+        fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`),
+        fetch(`/api/admin/house-league/seasons/${seasonId}/ledger${orgQuery}`),
       ]);
       const [sd, ld] = await Promise.all([seasonRes.json(), ledgerRes.json()]);
       if (sd.season) setSeason({ id: sd.season.id, name: sd.season.name });
@@ -59,7 +61,7 @@ export default function LedgerPage() {
     } finally {
       setLoading(false);
     }
-  }, [seasonId, canView]);
+  }, [seasonId, canView, orgQuery]);
 
   useEffect(() => { load(); }, [load]);
 

@@ -53,6 +53,7 @@ export default function ProgramYearOverviewPage({
 }) {
   const params = use(paramsPromise);
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
 
@@ -78,7 +79,7 @@ export default function ProgramYearOverviewPage({
     setFetching(true);
     try {
       const res = await fetch(
-        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}`,
+        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}${orgQuery}`,
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load');
@@ -90,13 +91,13 @@ export default function ProgramYearOverviewPage({
     } finally {
       setFetching(false);
     }
-  }, [params.teamId, params.yearId]);
+  }, [params.teamId, params.yearId, orgQuery]);
 
   const loadRoster = useCallback(async () => {
     setRosterFetching(true);
     try {
       const res = await fetch(
-        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/roster`,
+        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/roster${orgQuery}`,
       );
       if (res.ok) {
         const data = await res.json();
@@ -105,7 +106,7 @@ export default function ProgramYearOverviewPage({
     } finally {
       setRosterFetching(false);
     }
-  }, [params.teamId, params.yearId]);
+  }, [params.teamId, params.yearId, orgQuery]);
 
   useEffect(() => { if (currentOrg) { load(); loadRoster(); } }, [currentOrg, load, loadRoster]);
 
@@ -113,7 +114,7 @@ export default function ProgramYearOverviewPage({
     setTransitioning(true);
     try {
       const res = await fetch(
-        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}`,
+        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}${orgQuery}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

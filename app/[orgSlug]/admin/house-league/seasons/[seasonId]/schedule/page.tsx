@@ -581,6 +581,8 @@ function CancelPracticeModal({
 export default function SchedulePage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
   const { currentOrg, userRole, userCapabilities } = useOrg();
+  // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const [season, setSeason] = useState<SeasonInfo | null>(null);
   const [divisions, setDivisions] = useState<LeagueDivision[]>([]);
@@ -609,29 +611,31 @@ export default function SchedulePage() {
   // ── Load data ──────────────────────────────────────────────────────────────
 
   const loadSeasonAndDivisions = useCallback(async () => {
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}`);
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`);
     if (!res.ok) return;
     const { season: s, divisions: divs } = await res.json();
     setSeason({ id: s.id, name: s.name });
     setDivisions(divs ?? []);
     if (divs?.length && !selectedDivId) setSelectedDivId(divs[0].id);
-  }, [seasonId, selectedDivId]);
+  }, [seasonId, selectedDivId, orgQuery]);
 
   const loadTeamsAndGames = useCallback(async (divId: string) => {
+    const orgParam = orgQuery ? orgQuery.replace('?', '&') : '';
     const [teamsRes, gamesRes] = await Promise.all([
-      fetch(`/api/admin/house-league/seasons/${seasonId}/teams?divisionId=${divId}`),
-      fetch(`/api/admin/house-league/seasons/${seasonId}/schedule?divisionId=${divId}`),
+      fetch(`/api/admin/house-league/seasons/${seasonId}/teams?divisionId=${divId}${orgParam}`),
+      fetch(`/api/admin/house-league/seasons/${seasonId}/schedule?divisionId=${divId}${orgParam}`),
     ]);
     const newTeams = teamsRes.ok ? ((await teamsRes.json()).teams ?? []) : [];
     setTeams(newTeams);
     setSelectedTeamId(t => t || (newTeams[0]?.id ?? ''));
     if (gamesRes.ok) setGames((await gamesRes.json()).games ?? []);
-  }, [seasonId]);
+  }, [seasonId, orgQuery]);
 
   const loadPractices = useCallback(async (teamId: string) => {
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/practices?teamId=${teamId}`);
+    const orgParam = orgQuery ? orgQuery.replace('?', '&') : '';
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/practices?teamId=${teamId}${orgParam}`);
     if (res.ok) setPractices((await res.json()).practices ?? []);
-  }, [seasonId]);
+  }, [seasonId, orgQuery]);
 
   useEffect(() => {
     setLoading(true);
@@ -696,7 +700,7 @@ export default function SchedulePage() {
   // ── Generate schedule ──────────────────────────────────────────────────────
 
   async function handlePreview(cfg: GenerateConfig): Promise<PreviewGame[]> {
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/generate`, {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/generate${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ divisionId: selectedDivId, save: false, ...cfg }),
@@ -710,7 +714,7 @@ export default function SchedulePage() {
 
   async function handleGenerateSave(cfg: GenerateConfig) {
     setSaving(true);
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/generate`, {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/generate${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ divisionId: selectedDivId, save: true, ...cfg }),
@@ -730,8 +734,8 @@ export default function SchedulePage() {
     setSaving(true);
     const isCreate = !activeGame;
     const url = isCreate
-      ? `/api/admin/house-league/seasons/${seasonId}/schedule`
-      : `/api/admin/house-league/seasons/${seasonId}/schedule/${activeGame!.id}`;
+      ? `/api/admin/house-league/seasons/${seasonId}/schedule${orgQuery}`
+      : `/api/admin/house-league/seasons/${seasonId}/schedule/${activeGame!.id}${orgQuery}`;
     const method = isCreate ? 'POST' : 'PATCH';
 
     const body: Record<string, unknown> = {
@@ -767,7 +771,7 @@ export default function SchedulePage() {
   async function handleCancelGame() {
     if (!activeGame) return;
     setSaving(true);
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/${activeGame.id}`, {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/${activeGame.id}${orgQuery}`, {
       method: 'DELETE',
     });
     setSaving(false);
@@ -801,7 +805,7 @@ export default function SchedulePage() {
       body.scheduledDate = form.scheduledDate;
     }
 
-    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/practices`, {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/practices${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -825,7 +829,7 @@ export default function SchedulePage() {
     if (!activePractice) return;
     setSaving(true);
     const res = await fetch(
-      `/api/admin/house-league/seasons/${seasonId}/practices/${activePractice.id}`,
+      `/api/admin/house-league/seasons/${seasonId}/practices/${activePractice.id}${orgQuery}`,
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

@@ -123,6 +123,8 @@ function StatusBadge({ status }: { status: LeagueRegistrationStatus }) {
 export default function RegistrationsPage() {
   const { currentOrg, userRole } = useOrg();
   const { seasonId } = useParams<{ seasonId: string }>();
+  // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const isAdminOrOwner   = userRole === 'owner' || userRole === 'league_admin';
   const canManageRegs    = isAdminOrOwner || userRole === 'league_registrar';
@@ -176,8 +178,8 @@ export default function RegistrationsPage() {
     setFetching(true);
     try {
       const [seasonRes, regsRes] = await Promise.all([
-        fetch(`/api/admin/house-league/seasons/${seasonId}`),
-        fetch(`/api/admin/house-league/seasons/${seasonId}/registrations`),
+        fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`),
+        fetch(`/api/admin/house-league/seasons/${seasonId}/registrations${orgQuery}`),
       ]);
       const [seasonData, regsData] = await Promise.all([seasonRes.json(), regsRes.json()]);
       if (!seasonRes.ok) throw new Error(seasonData.error ?? 'Failed to load season');
@@ -195,7 +197,7 @@ export default function RegistrationsPage() {
     } finally {
       setFetching(false);
     }
-  }, [seasonId, currentOrg]);
+  }, [seasonId, currentOrg, orgQuery]);
 
   useEffect(() => {
     load();
@@ -247,18 +249,18 @@ export default function RegistrationsPage() {
   // Lazy-load teams when "By Team" scope is selected
   useEffect(() => {
     if (composeScope === 'team' && !teamsLoaded && seasonId) {
-      fetch(`/api/admin/house-league/seasons/${seasonId}/teams`)
+      fetch(`/api/admin/house-league/seasons/${seasonId}/teams${orgQuery}`)
         .then(r => r.json())
         .then(d => { setTeams(d.teams ?? []); setTeamsLoaded(true); });
     }
-  }, [composeScope, teamsLoaded, seasonId]);
+  }, [composeScope, teamsLoaded, seasonId, orgQuery]);
 
   // ── Actions ───────────────────────────────────────────────────────────────────
 
   async function patchStatus(regId: string, status: LeagueRegistrationStatus) {
     setActing(regId);
     try {
-      const res  = await fetch(`/api/admin/house-league/seasons/${seasonId}/registrations/${regId}`, {
+      const res  = await fetch(`/api/admin/house-league/seasons/${seasonId}/registrations/${regId}${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -287,7 +289,7 @@ export default function RegistrationsPage() {
 
   async function toggleFeePaid(reg: LeagueRegistration) {
     try {
-      const res  = await fetch(`/api/admin/house-league/seasons/${seasonId}/registrations/${reg.id}`, {
+      const res  = await fetch(`/api/admin/house-league/seasons/${seasonId}/registrations/${reg.id}${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ feePaid: !reg.registrationFeePaid }),
@@ -308,7 +310,7 @@ export default function RegistrationsPage() {
     }
     setAdding(true);
     try {
-      const res  = await fetch(`/api/admin/house-league/seasons/${seasonId}/registrations`, {
+      const res  = await fetch(`/api/admin/house-league/seasons/${seasonId}/registrations${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -350,7 +352,7 @@ export default function RegistrationsPage() {
     }
     setComposeSending(true);
     try {
-      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/email`, {
+      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/email${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

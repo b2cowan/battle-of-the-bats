@@ -48,6 +48,8 @@ export default function NotificationsPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const { seasonId } = useParams<{ seasonId: string }>();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
+  // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const isAdmin = userRole === 'owner' || userRole === 'league_admin';
 
   const [subject,  setSubject]  = useState('');
@@ -64,7 +66,7 @@ export default function NotificationsPage() {
   const loadLog = useCallback(async () => {
     if (!seasonId) return;
     try {
-      const res  = await fetch(`/api/admin/house-league/seasons/${seasonId}/email`);
+      const res  = await fetch(`/api/admin/house-league/seasons/${seasonId}/email${orgQuery}`);
       const data = await res.json();
       setLog(data.log ?? []);
     } catch {
@@ -72,7 +74,7 @@ export default function NotificationsPage() {
     } finally {
       setLogLoading(false);
     }
-  }, [seasonId]);
+  }, [seasonId, orgQuery]);
 
   useEffect(() => {
     if (currentOrg && seasonId) loadLog();
@@ -84,7 +86,7 @@ export default function NotificationsPage() {
     setError(null);
     setResult(null);
     try {
-      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/email`, {
+      const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/email${orgQuery}`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(buildPayload(subject, message, audience)),

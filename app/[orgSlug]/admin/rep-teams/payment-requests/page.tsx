@@ -83,6 +83,8 @@ function TypeBadge({ type }: { type: string }) {
 
 export default function AdminPaymentRequestsPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
 
   const canReview = userRole === 'owner' || userRole === 'treasurer' || userRole === 'admin';
@@ -100,19 +102,19 @@ export default function AdminPaymentRequestsPage() {
 
   const loadPending = useCallback(async () => {
     if (!currentOrg) return;
-    const res = await fetch('/api/admin/rep-teams/payment-requests?status=pending');
+    const res = await fetch(`/api/admin/rep-teams/payment-requests?status=pending${orgParam}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? 'Failed to load');
     setPendingRequests(data.requests ?? []);
-  }, [currentOrg]);
+  }, [currentOrg, orgParam]);
 
   const loadHistory = useCallback(async () => {
     if (!currentOrg) return;
-    const res = await fetch('/api/admin/rep-teams/payment-requests?status=all');
+    const res = await fetch(`/api/admin/rep-teams/payment-requests?status=all${orgParam}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? 'Failed to load');
     setHistoryRequests((data.requests ?? []).filter((r: PaymentRequest) => r.status !== 'pending'));
-  }, [currentOrg]);
+  }, [currentOrg, orgParam]);
 
   const load = useCallback(async () => {
     setFetching(true);
@@ -132,7 +134,7 @@ export default function AdminPaymentRequestsPage() {
     setReviewing(req.id);
     setError('');
     try {
-      const res = await fetch(`/api/admin/rep-teams/payment-requests/${req.id}`, {
+      const res = await fetch(`/api/admin/rep-teams/payment-requests/${req.id}${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'approve' }),
@@ -158,7 +160,7 @@ export default function AdminPaymentRequestsPage() {
     setReviewing(denyTarget.id);
     setDenyError('');
     try {
-      const res = await fetch(`/api/admin/rep-teams/payment-requests/${denyTarget.id}`, {
+      const res = await fetch(`/api/admin/rep-teams/payment-requests/${denyTarget.id}${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'deny', denialReason: denyReason.trim() }),

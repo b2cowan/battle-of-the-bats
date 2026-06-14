@@ -44,6 +44,8 @@ const BLANK_FORM: TeamForm = {
 
 export default function RepTeamsPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
 
@@ -90,20 +92,20 @@ export default function RepTeamsPage() {
 
   const loadGroups = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/rep-teams/groups');
+      const res = await fetch(`/api/admin/rep-teams/groups${orgQuery}`);
       if (res.ok) {
         const data = await res.json();
         setGroups(data.groups ?? []);
       }
     } catch { /* non-fatal */ }
-  }, []);
+  }, [orgQuery]);
 
   const load = useCallback(async () => {
     setFetching(true);
     try {
       const qs = groupFilter ? `?group=${groupFilter}` : '';
       const [teamsRes] = await Promise.all([
-        fetch(`/api/admin/rep-teams/teams${qs}`),
+        fetch(`/api/admin/rep-teams/teams${qs}${qs ? orgParam : orgQuery}`),
         loadGroups(),
       ]);
       const data = await teamsRes.json();
@@ -114,7 +116,7 @@ export default function RepTeamsPage() {
     } finally {
       setFetching(false);
     }
-  }, [groupFilter, loadGroups]);
+  }, [groupFilter, loadGroups, orgParam, orgQuery]);
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
@@ -137,7 +139,7 @@ export default function RepTeamsPage() {
     setCreating(true);
     setBillingConfirmOpen(false);
     try {
-      const res = await fetch('/api/admin/rep-teams/teams', {
+      const res = await fetch(`/api/admin/rep-teams/teams${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -178,7 +180,7 @@ export default function RepTeamsPage() {
         setBillingChecking(true);
         try {
           const res = await fetch(
-            `/api/admin/rep-teams/billing-preview?proposedCount=${approxActiveCount + 1}`,
+            `/api/admin/rep-teams/billing-preview?proposedCount=${approxActiveCount + 1}${orgParam}`,
           );
           const preview = await res.json();
           if (!res.ok) throw new Error(preview.error ?? 'Billing check failed');
@@ -204,7 +206,7 @@ export default function RepTeamsPage() {
     if (!archiveTarget) return;
     setArchiving(true);
     try {
-      const res = await fetch(`/api/admin/rep-teams/teams/${archiveTarget.team.id}`, {
+      const res = await fetch(`/api/admin/rep-teams/teams/${archiveTarget.team.id}${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isArchived: true }),
@@ -226,7 +228,7 @@ export default function RepTeamsPage() {
     if (!name) return;
     setAddingGroup(true);
     try {
-      const res = await fetch('/api/admin/rep-teams/groups', {
+      const res = await fetch(`/api/admin/rep-teams/groups${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, displayOrder: groups.length }),
@@ -247,7 +249,7 @@ export default function RepTeamsPage() {
     if (!name) return;
     setSavingGroup(true);
     try {
-      const res = await fetch(`/api/admin/rep-teams/groups/${groupId}`, {
+      const res = await fetch(`/api/admin/rep-teams/groups/${groupId}${orgQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
@@ -268,7 +270,7 @@ export default function RepTeamsPage() {
   async function handleDeleteGroup(groupId: string, groupName: string) {
     setDeletingGroupId(groupId);
     try {
-      const res = await fetch(`/api/admin/rep-teams/groups/${groupId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/rep-teams/groups/${groupId}${orgQuery}`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to delete group');
       if (groupFilter === groupId) setGroupFilter('');

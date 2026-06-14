@@ -438,8 +438,9 @@ export default function OnboardingPage() {
 
     // House-league can be unlocked by the paid plan OR the League Starter free-floor profile —
     // use the effective entitlement, not the plan config alone, so free-floor orgs run the wizard.
+    const onboardOrgQuery = currentOrg.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
     const seasonsRequest = hasModuleEntitlement(currentOrg, 'module_house_league')
-      ? fetch('/api/admin/house-league/seasons')
+      ? fetch(`/api/admin/house-league/seasons${onboardOrgQuery}`)
         .then(r => r.ok ? r.json() : [])
         .then(d => Array.isArray(d) && d.length > 0)
         .catch(() => false)
@@ -447,7 +448,7 @@ export default function OnboardingPage() {
     seasonsRequest.then(setSeasonsDone);
 
     const repTeamsRequest = entitlements.includes('module_rep_teams')
-      ? fetch('/api/admin/rep-teams/teams')
+      ? fetch(`/api/admin/rep-teams/teams${onboardOrgQuery}`)
         .then(r => r.ok ? r.json() : { teams: [] })
         .then(d => Array.isArray(d?.teams) && d.teams.length > 0)
         .catch(() => false)
@@ -455,7 +456,7 @@ export default function OnboardingPage() {
     repTeamsRequest.then(setRepTeamsDone);
 
     const publicSiteRequest = entitlements.includes('module_public_site')
-      ? fetch('/api/admin/public-site')
+      ? fetch(`/api/admin/public-site${onboardOrgQuery}`)
         .then(r => r.ok ? r.json() : {})
         .then((d: Record<string, unknown>) => !!(d?.tagline || d?.description))
         .catch(() => false)
@@ -550,7 +551,8 @@ export default function OnboardingPage() {
   async function complete() {
     if (!currentOrg || completing) return;
     setCompleting(true);
-    await fetch('/api/admin/org/complete-onboarding', { method: 'POST' });
+    const completeOrgQuery = currentOrg.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+    await fetch(`/api/admin/org/complete-onboarding${completeOrgQuery}`, { method: 'POST' });
     setWorkflowRedirecting(true);
     router.replace(getPostOnboardingHref(currentOrg, { hasTournament: false }));
   }

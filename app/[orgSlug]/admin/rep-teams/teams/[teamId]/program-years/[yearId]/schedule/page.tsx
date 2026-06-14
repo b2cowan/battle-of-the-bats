@@ -117,7 +117,9 @@ export default function AdminSchedulePage({
 }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId, yearId } = params;
-  const { loading: orgLoading } = useOrg();
+  const { loading: orgLoading, currentOrg } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const [events, setEvents] = useState<RepTeamEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,7 +139,7 @@ export default function AdminSchedulePage({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(apiBase);
+      const res = await fetch(`${apiBase}${orgQuery}`);
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setEvents(data.events ?? []);
@@ -149,14 +151,14 @@ export default function AdminSchedulePage({
     } finally {
       setLoading(false);
     }
-  }, [apiBase]);
+  }, [apiBase, orgQuery]);
 
   useEffect(() => {
-    fetch(`/api/admin/rep-teams/teams/${teamId}`)
+    fetch(`/api/admin/rep-teams/teams/${teamId}${orgQuery}`)
       .then(r => r.json())
       .then(d => { if (d.team) setTeamName(d.team.name); })
       .catch(() => {});
-  }, [teamId]);
+  }, [teamId, orgQuery]);
 
   useEffect(() => { fetchEvents(); }, [fetchEvents]);
 

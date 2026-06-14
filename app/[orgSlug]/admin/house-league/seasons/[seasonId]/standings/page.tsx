@@ -33,6 +33,8 @@ interface SeasonInfo { id: string; name: string; }
 export default function StandingsPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
   const { currentOrg, user, userRole, userCapabilities } = useOrg();
+  // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const canView = hasCapability(userRole ?? 'staff', userCapabilities ?? null, 'module_house_league');
 
@@ -46,7 +48,7 @@ export default function StandingsPage() {
   // Load season + divisions
   useEffect(() => {
     if (!canView) return;
-    fetch(`/api/admin/house-league/seasons/${seasonId}`)
+    fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`)
       .then(r => r.json())
       .then(d => {
         if (d.season) setSeason({ id: d.season.id, name: d.season.name });
@@ -56,22 +58,23 @@ export default function StandingsPage() {
         }
       })
       .finally(() => setLoading(false));
-  }, [seasonId, canView]);
+  }, [seasonId, canView, orgQuery]);
 
   // Load standings when division changes
   const loadStandings = useCallback(async (divId: string) => {
     if (!divId) return;
     setStandingsLoading(true);
     try {
+      const orgParam = orgQuery ? orgQuery.replace('?', '&') : '';
       const r = await fetch(
-        `/api/admin/house-league/seasons/${seasonId}/standings?divisionId=${divId}`,
+        `/api/admin/house-league/seasons/${seasonId}/standings?divisionId=${divId}${orgParam}`,
       );
       const d = await r.json();
       setStandings(d.standings ?? []);
     } finally {
       setStandingsLoading(false);
     }
-  }, [seasonId]);
+  }, [seasonId, orgQuery]);
 
   useEffect(() => {
     if (selectedDiv) loadStandings(selectedDiv);

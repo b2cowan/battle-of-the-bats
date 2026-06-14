@@ -24,7 +24,7 @@ export default function CoachTournamentAwarenessBanner({ orgSlug, isTeamWorkspac
   useEffect(() => {
     if (localStorage.getItem(dismissKey) === '1') return;
     let active = true;
-    fetch('/api/admin/org/has-tournaments')
+    fetch(`/api/admin/org/has-tournaments?orgSlug=${encodeURIComponent(orgSlug)}`)
       .then(res => res.ok ? res.json() as Promise<HasTournamentsResponse> : null)
       .then(data => {
         if (!active || !data) return;

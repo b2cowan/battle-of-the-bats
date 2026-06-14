@@ -80,6 +80,8 @@ export default function TryoutsPage({
 }) {
   const params = use(paramsPromise);
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
 
@@ -108,8 +110,8 @@ export default function TryoutsPage({
     setFetching(true);
     try {
       const [infoRes, regRes] = await Promise.all([
-        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}`),
-        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/tryouts`),
+        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}${orgQuery}`),
+        fetch(`/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/tryouts${orgQuery}`),
       ]);
       const [infoData, regData] = await Promise.all([infoRes.json(), regRes.json()]);
       if (!infoRes.ok) throw new Error(infoData.error ?? 'Failed to load');
@@ -121,7 +123,7 @@ export default function TryoutsPage({
     } finally {
       setFetching(false);
     }
-  }, [params.teamId, params.yearId]);
+  }, [params.teamId, params.yearId, orgQuery]);
 
   useEffect(() => { if (currentOrg) load(); }, [currentOrg, load]);
 
@@ -145,7 +147,7 @@ export default function TryoutsPage({
     setActionLoading(regId);
     try {
       const res = await fetch(
-        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/tryouts/${regId}`,
+        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/tryouts/${regId}${orgQuery}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -174,7 +176,7 @@ export default function TryoutsPage({
     setSavingNotes(true);
     try {
       const res = await fetch(
-        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/tryouts/${selected.id}`,
+        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/tryouts/${selected.id}${orgQuery}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -196,7 +198,7 @@ export default function TryoutsPage({
     setTogglingOpen(true);
     try {
       const res = await fetch(
-        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}`,
+        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}${orgQuery}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -220,7 +222,7 @@ export default function TryoutsPage({
     setAdding(true);
     try {
       const res = await fetch(
-        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/tryouts`,
+        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/tryouts${orgQuery}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

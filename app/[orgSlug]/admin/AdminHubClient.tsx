@@ -104,7 +104,8 @@ export default function AdminHubClient() {
 
   useEffect(() => {
     if (loading || !currentOrg) return;
-    fetch('/api/admin/attention-summary')
+    const orgQuery = currentOrg.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+    fetch(`/api/admin/attention-summary${orgQuery}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data) setAttention(data); })
       .catch(() => {});

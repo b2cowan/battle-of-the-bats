@@ -59,6 +59,7 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
   const router  = useRouter();
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const base    = `/${currentOrg?.slug ?? ''}/admin`;
+  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const [step, setStep] = useState(1);
   const [lineInfo, setLineInfo]   = useState<BudgetLineInfo | null>(null);
@@ -77,7 +78,9 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
   useEffect(() => {
     if (!currentOrg) return;
     const year = new Date().getFullYear();
-    fetch(`/api/admin/accounting/budget-plan?year=${year}`)
+    const qs = new URLSearchParams({ year: String(year) });
+    if (currentOrg.slug) qs.set('orgSlug', currentOrg.slug);
+    fetch(`/api/admin/accounting/budget-plan?${qs}`)
       .then(r => r.json())
       .then(data => {
         const allLines = [
@@ -103,7 +106,7 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
   // Load teams + program years
   useEffect(() => {
     if (!currentOrg) return;
-    fetch('/api/admin/rep-teams/teams')
+    fetch(`/api/admin/rep-teams/teams${orgQuery}`)
       .then(r => r.json())
       .then(data => {
         const teamList: TeamOption[] = (data.teams ?? []).map((s: any) => ({
@@ -112,7 +115,7 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
         setTeams(teamList);
         Promise.all(
           teamList.map(t =>
-            fetch(`/api/admin/rep-teams/teams/${t.id}/program-years`)
+            fetch(`/api/admin/rep-teams/teams/${t.id}/program-years${orgQuery}`)
               .then(r => r.json())
               .then(d => ({ teamId: t.id, years: d.programYears ?? [] })),
           ),
@@ -124,7 +127,7 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
         }).finally(() => setTeamsLoading(false));
       })
       .catch(() => setTeamsLoading(false));
-  }, [currentOrg]);
+  }, [currentOrg, orgQuery]);
 
   if (loading || lineLoading) return <p className={styles.muted}>Loading…</p>;
 
@@ -320,7 +323,7 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
     setError('');
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/admin/accounting/budget-plan/lines/${lineId}/allocate-to-teams`, {
+      const res = await fetch(`/api/admin/accounting/budget-plan/lines/${lineId}/allocate-to-teams${orgQuery}`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
