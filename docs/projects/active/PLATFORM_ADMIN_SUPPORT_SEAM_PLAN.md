@@ -78,18 +78,18 @@ This is the single decision that controls the shape of every task below. Present
 
 ## Task list
 
-### Phase 0 — Owner decision (blocking)
+### Phase 0 — Owner decision (blocking) ✅ RESOLVED 2026-06-14
 
-- [ ] **Owner decides Option A vs. Option B** for the permission model. No code changes begin until this is confirmed.
+- [x] **Option B chosen** (dedicated capability boundary), realized via a **split `feedback` area** gated through the F1 `requirePlatformAreaApi` helper — no redundant `manage_feedback` permission enum, since area membership already expresses the capability and nothing reads a `hasPlatformPermission('manage_feedback')`. **Writers = super_admin + product + support + billing** (billing added per owner; both hold manage_support and do customer-facing work).
 
-### Phase 1 — Permission fix (unblocks the rest)
+### Phase 1 — Permission fix (unblocks the rest) ✅ BUILT 2026-06-14 (dev-only, uncommitted; typecheck + lint clean)
 
-- [ ] [B-only] Add `manage_feedback` to the permission constant list (wherever `manage_product`, `manage_support` etc. are defined — likely `lib/platform-areas.ts` or a sibling types file). Confirm location before editing.
-- [ ] [B-only] Add a `feedback` area entry to `lib/platform-areas.ts` with `writeRoles: ['manage_support', 'manage_product']` and `viewRoles` covering all roles that currently see the Feedback nav item. Confirm that the Feedback nav link derives its visibility from this area (or update accordingly).
-- [ ] Update `app/api/platform-admin/feedback/[id]/status/route.ts:19` — replace `requirePlatformPermission('manage_product')` with the appropriate area write check (Option B: `requirePlatformAreaApi('feedback', 'write')` once the F1 helper exists; Option A: pass both permissions to the existing helper).
-- [ ] Update `app/platform-admin/feedback/page.tsx:116–117` — the `readOnly` derivation. Under Option B, derive from the new `feedback` area rather than `observability`, so support gets `readOnly=false` for feedback status but `readOnly=true` for observability error groups.
-- [ ] Smoke-test: verify support role can change feedback status to `triaged` and the audit log records the actor email. Verify support role still sees `readOnly=true` / disabled controls on the observability error group status panel.
-- [ ] `npm run typecheck` — touches shared `lib/platform-areas.ts`; restart dev server before browser QA.
+- [x] Added `feedback` area to `lib/platform-areas.ts`: `viewRoles` & `writeRoles` = `['super_admin','product','support','billing']`. `observability` (error groups) unchanged (view super/product/support, write super/product).
+- [x] Re-pointed the Feedback nav item (`PlatformAdminNav.tsx`) from `area: 'observability'` → `'feedback'` (so billing now sees Feedback; support stays a viewer and becomes a writer).
+- [x] `feedback/[id]/status/route.ts` → `requirePlatformAreaApi('feedback', 'write')` (was `manage_product`). `observability/[groupId]/status` left product-only (error triage stays product).
+- [x] `feedback/export/route.ts` → `requirePlatformAreaApi('feedback', 'view')` (was observability view) + comment updated (billing can now export feedback).
+- [x] `feedback/page.tsx` → guard + `readOnly` derive from `'feedback'`; StatusControls dropdown now renders for support/billing; callout updated to write-capable guidance ("use the status dropdown… audit-logged… error groups need product access").
+- [ ] **Browser smoke-test (owner):** support/billing can move feedback status; both still see disabled error-group triage in Observability. Restart dev server first (shared `lib/platform-areas.ts` changed).
 
 ### Phase 2 — Default actionable filters
 

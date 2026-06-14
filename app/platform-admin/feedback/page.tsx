@@ -113,8 +113,8 @@ export default async function FeedbackTriagePage({
 }: {
   searchParams: Promise<{ type?: string; category?: string; status?: string; offset?: string }>;
 }) {
-  const auth = await requirePlatformAreaView('observability');
-  const readOnly = isPlatformAreaReadOnly(auth.role, 'observability');
+  const auth = await requirePlatformAreaView('feedback');
+  const readOnly = isPlatformAreaReadOnly(auth.role, 'feedback');
 
   const sp = await searchParams;
   const offset = Math.max(0, parseInt(sp.offset ?? '0', 10));
@@ -142,7 +142,7 @@ export default async function FeedbackTriagePage({
       <HelpCallout
         variant="info"
         title="In-app feedback queue"
-        body={`Bug reports, feature requests, and general feedback submitted from inside the app (admin, coach, scorekeeper, and anonymous). Move each item New → Triaged → Acknowledged → Resolved; a bug that hit a captured error shows a link to the related issue. Feedback is retained indefinitely.${readOnly ? ' Status changes require product access — contact a product operator to triage or resolve items.' : ''}`}
+        body={`Bug reports, feature requests, and general feedback submitted from inside the app (admin, coach, scorekeeper, and anonymous). Move each item New → Triaged → Acknowledged → Resolved; a bug that hit a captured error shows a link to the related issue. Feedback is retained indefinitely.${readOnly ? ' Status changes require support or product access.' : ' Use the status dropdown to triage items; transitions are audit-logged with your email. Error group status changes (in Observability) require product access.'}`}
       />
 
       <form method="GET" action="/platform-admin/feedback" className={styles.filterBar}>

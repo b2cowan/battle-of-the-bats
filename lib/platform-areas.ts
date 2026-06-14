@@ -29,6 +29,7 @@ export type PlatformArea =
   | 'platform_users'
   | 'audit'
   | 'observability'
+  | 'feedback'
   | 'email_templates'
   | 'help'
   | 'dev_tools';
@@ -60,7 +61,11 @@ export const PLATFORM_AREAS: Record<PlatformArea, AreaAccess> = {
 
   // System
   platform_users:  { viewRoles: ['super_admin'], writeRoles: ['super_admin'] },
+  // Error-tracking console — triage stays product-only (engineering signal).
   observability:   { viewRoles: ['super_admin', 'product', 'support'], writeRoles: ['super_admin', 'product'] },
+  // Customer-feedback triage — a support capability, distinct from error-group triage.
+  // Support + billing (both hold manage_support) can triage feedback; F3 decision 2026-06-14.
+  feedback:        { viewRoles: ['super_admin', 'product', 'support', 'billing'], writeRoles: ['super_admin', 'product', 'support', 'billing'] },
   dev_tools:       { viewRoles: ['super_admin'], writeRoles: ['super_admin'] },
 };
 

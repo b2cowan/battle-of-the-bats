@@ -45,7 +45,7 @@ const BASE_NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/platform-admin/users', label: 'Platform Users', Icon: Users, area: 'platform_users' },
       { href: '/platform-admin/observability', label: 'Observability', Icon: AlertTriangle, area: 'observability' },
-      { href: '/platform-admin/feedback', label: 'Feedback', Icon: MessageSquare, area: 'observability' },
+      { href: '/platform-admin/feedback', label: 'Feedback', Icon: MessageSquare, area: 'feedback' },
       { href: '/platform-admin/audit', label: 'Audit Log', Icon: ScrollText, area: 'audit' },
       { href: '/platform-admin/email-templates', label: 'Email Templates', Icon: FileText, area: 'email_templates' },
       { href: '/platform-admin/help', label: 'Help', Icon: HelpCircle, area: 'help', newWindow: true },

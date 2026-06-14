@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
-// Feedback triage status mutation. Write-gated to super_admin + product (manage_product);
-// support is view-only → 403. Mirrors the observability status route.
+// Feedback triage status mutation. Write-gated to the `feedback` area
+// (super_admin / product / support / billing) — distinct from observability
+// error-group triage, which stays product-only. F3 decision 2026-06-14.
 const VALID_STATUSES = ['new', 'triaged', 'acknowledged', 'resolved'] as const;
 type FeedbackStatus = (typeof VALID_STATUSES)[number];
 
@@ -16,7 +17,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 type FeedbackRow = { id: string; status: string; org_id: string | null };
 
 export const POST = withObservability(async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
-  const auth = await requirePlatformPermission('manage_product');
+  const auth = await requirePlatformAreaApi('feedback', 'write');
   if (auth.response) return auth.response;
 
   const { id } = await ctx.params;

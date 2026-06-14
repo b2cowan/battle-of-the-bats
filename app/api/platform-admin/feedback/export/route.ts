@@ -4,8 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import ExcelJS from 'exceljs';
 import { withObservability } from '@/lib/observability';
 
-// Gated to viewers of the observability area (super_admin / product / support) — same as the page,
-// stricter than a generic platform-admin check so billing/growth can't pull the feedback export.
+// Gated to viewers of the feedback area (super_admin / product / support / billing) — same as the
+// page, stricter than a generic platform-admin check so growth/read_only can't pull the export.
 const EXPORT_LIMIT = 2000;
 
 type FeedbackRow = {
@@ -45,7 +45,7 @@ function csvValue(value: unknown) {
 }
 
 export const GET = withObservability(async (req: NextRequest) => {
-  const { response } = await requirePlatformAreaApi('observability', 'view');
+  const { response } = await requirePlatformAreaApi('feedback', 'view');
   if (response) return response;
 
   const sp = req.nextUrl.searchParams;
