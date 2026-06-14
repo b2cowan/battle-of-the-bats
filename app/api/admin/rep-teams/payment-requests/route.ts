@@ -14,11 +14,12 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 
 // GET /api/admin/rep-teams/payment-requests?status=pending&teamId=...
 export const GET = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
-  const url = new URL(req.url);
   const status = url.searchParams.get('status') ?? 'pending';
   const teamId = url.searchParams.get('teamId') ?? null;
 

@@ -33,8 +33,8 @@ function stripStoragePath<T extends { storagePath: string }>(doc: T): Omit<T, 's
   return rest;
 }
 
-async function resolveContext(teamId: string, playerId: string) {
-  const ctx = await getAuthContextWithRole();
+async function resolveContext(teamId: string, playerId: string, orgSlug: string | undefined) {
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return { error: err };
 
@@ -56,7 +56,8 @@ async function resolveContext(teamId: string, playerId: string) {
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ teamId: string; playerId: string }> },) => {
   const { teamId, playerId } = await params;
-  const resolved = await resolveContext(teamId, playerId);
+  const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
+  const resolved = await resolveContext(teamId, playerId, orgSlug);
   if ('error' in resolved) return resolved.error!;
 
   const docs = await getRepPlayerDocuments(playerId);
@@ -66,7 +67,8 @@ export const GET = withObservability(async (_req: Request,
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ teamId: string; playerId: string }> },) => {
   const { teamId, playerId } = await params;
-  const resolved = await resolveContext(teamId, playerId);
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const resolved = await resolveContext(teamId, playerId, orgSlug);
   if ('error' in resolved) return resolved.error!;
   const { ctx, player } = resolved;
   // Uploading a player's compliance documents is an org-owned write — owner/admin only

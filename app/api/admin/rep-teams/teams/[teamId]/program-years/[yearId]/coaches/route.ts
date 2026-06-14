@@ -15,7 +15,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ teamId: string; yearId: string }> },) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
@@ -62,7 +63,8 @@ export const GET = withObservability(async (_req: Request,
 
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ teamId: string; yearId: string }> },) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
@@ -115,7 +117,9 @@ export const POST = withObservability(async (req: Request,
 
 export const DELETE = withObservability(async (req: Request,
   { params }: { params: Promise<{ teamId: string; yearId: string }> },) => {
-  const ctx = await getAuthContextWithRole();
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
@@ -129,7 +133,7 @@ export const DELETE = withObservability(async (req: Request,
   const groupErr = repGroupScopeGuard(ctx!, team.groupId);
   if (groupErr) return groupErr;
 
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = url;
   const coachId = searchParams.get('coachId');
   if (!coachId) {
     return NextResponse.json({ error: 'coachId query param is required' }, { status: 400 });

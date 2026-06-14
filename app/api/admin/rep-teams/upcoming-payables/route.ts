@@ -21,11 +21,11 @@ function daysUntil(dueDateStr: string): number {
 
 // GET /api/admin/rep-teams/upcoming-payables?days=90
 export const GET = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
-
-  const url = new URL(req.url);
   const days = Math.min(Math.max(parseInt(url.searchParams.get('days') ?? '90', 10), 1), 365);
 
   // When the caller is scoped to specific groups, restrict to those teams

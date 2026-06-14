@@ -22,7 +22,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 
 export const PATCH = withObservability(async (_req: Request,
   { params }: { params: Promise<{ allocationId: string; splitId: string; installId: string }> },) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 

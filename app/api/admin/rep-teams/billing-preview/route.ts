@@ -21,7 +21,9 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export const GET = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
   if (!hasModuleEntitlement(ctx.org, 'module_rep_teams')) return forbidden();
@@ -29,7 +31,7 @@ export const GET = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'Billing preview is only available on the Club plan.' }, { status: 400 });
   }
 
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = url;
   const proposedParam = searchParams.get('proposedCount');
   const proposedCount = proposedParam !== null ? parseInt(proposedParam, 10) : null;
 

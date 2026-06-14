@@ -21,7 +21,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 // Body: { action: 'approve' | 'deny', denialReason?: string }
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ id: string }> },) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 

@@ -18,8 +18,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
-async function resolveContext(teamId: string, playerId: string, docId: string) {
-  const ctx = await getAuthContextWithRole();
+async function resolveContext(teamId: string, playerId: string, docId: string, orgSlug: string | undefined) {
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return { error: err };
 
@@ -46,7 +46,8 @@ async function resolveContext(teamId: string, playerId: string, docId: string) {
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ teamId: string; playerId: string; docId: string }> },) => {
   const { teamId, playerId, docId } = await params;
-  const resolved = await resolveContext(teamId, playerId, docId);
+  const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
+  const resolved = await resolveContext(teamId, playerId, docId, orgSlug);
   if ('error' in resolved) return resolved.error!;
   const { doc } = resolved;
 
@@ -65,7 +66,8 @@ export const GET = withObservability(async (_req: Request,
 export const DELETE = withObservability(async (_req: Request,
   { params }: { params: Promise<{ teamId: string; playerId: string; docId: string }> },) => {
   const { teamId, playerId, docId } = await params;
-  const resolved = await resolveContext(teamId, playerId, docId);
+  const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
+  const resolved = await resolveContext(teamId, playerId, docId, orgSlug);
   if ('error' in resolved) return resolved.error!;
   const { ctx, doc } = resolved;
   // Deleting a player's compliance document is an org-owned write — owner/admin only

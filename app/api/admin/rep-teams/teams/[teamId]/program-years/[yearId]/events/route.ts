@@ -19,7 +19,9 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ teamId: string; yearId: string }> },) => {
-  const ctx = await getAuthContextWithRole();
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
@@ -35,8 +37,6 @@ export const GET = withObservability(async (req: Request,
   if (!programYear || programYear.teamId !== team.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
-
-  const url = new URL(req.url);
   const from = url.searchParams.get('from') ?? undefined;
   const to   = url.searchParams.get('to')   ?? undefined;
   const type = url.searchParams.get('type') as RepEventType | undefined ?? undefined;

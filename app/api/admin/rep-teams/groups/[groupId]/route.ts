@@ -16,7 +16,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ groupId: string }> },) => {
   const { groupId } = await params;
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
@@ -46,7 +47,8 @@ export const PATCH = withObservability(async (req: Request,
 export const DELETE = withObservability(async (_req: Request,
   { params }: { params: Promise<{ groupId: string }> },) => {
   const { groupId } = await params;
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 

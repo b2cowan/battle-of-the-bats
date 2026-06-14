@@ -30,7 +30,8 @@ const VALID_TRANSITIONS: Record<RepTryoutRegistrationStatus, RepTryoutRegistrati
 
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ teamId: string; yearId: string; regId: string }> },) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
@@ -57,7 +58,8 @@ export const GET = withObservability(async (_req: Request,
 
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ teamId: string; yearId: string; regId: string }> },) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 

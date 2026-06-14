@@ -12,7 +12,8 @@ function isValidSlug(s: string): boolean {
 }
 
 export const PATCH = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_rep_teams')) return forbidden();
   if (!hasModuleEntitlement(ctx.org, 'module_rep_teams')) return forbidden();

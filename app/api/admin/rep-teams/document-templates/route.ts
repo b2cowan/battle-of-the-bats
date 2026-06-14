@@ -24,7 +24,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 }
 
 export const GET = withObservability(async (_req: Request,) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
@@ -34,7 +35,8 @@ export const GET = withObservability(async (_req: Request,) => {
 }, { route: '/api/admin/rep-teams/document-templates' });
 
 export const POST = withObservability(async (req: Request,) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
