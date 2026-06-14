@@ -28,6 +28,114 @@
 /* Team HQ stat strip lives in components/coaches/TeamHQ.module.css (slice 5g) —
    the standalone team home and the tournament-coach hero share that one source. */
 
+/* ── Theme 4: standalone team-colour identity band ────────────────────────────
+   Replaces the plain text H1. 18% team-hue wash + 30% team-hue border + watermark
+   monogram, matching the public team page. The shared monogram (same rounded
+   square + --font-display + teamColor formula as the tournament hero) is the seam
+   bridge between the two "my team" screens. The .hqStrip below stays --surface
+   (no wash) — the band is identity, the strip is the data layer. */
+.identityBand {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  box-shadow: var(--highlight-top);
+  border: 1px solid color-mix(in srgb, var(--team-color, var(--logic-lime)) 30%, transparent);
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--team-color, var(--logic-lime)) 18%, transparent),
+    transparent 70%
+  );
+}
+
+[data-color-mode='light'] .identityBand {
+  border-color: color-mix(in srgb, var(--team-color, var(--logic-lime)) 25%, transparent);
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--team-color, var(--logic-lime)) 12%, transparent),
+    transparent 70%
+  );
+}
+
+.identityWatermark {
+  position: absolute;
+  right: -0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  font-family: var(--font-display, sans-serif);
+  font-size: 7rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--team-color, var(--logic-lime));
+  opacity: 0.07;
+  user-select: none;
+  pointer-events: none;
+}
+
+.identityMonogram {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  background: var(--team-color, var(--logic-lime));
+  color: var(--white);
+  font-family: var(--font-display, sans-serif);
+  font-weight: 900;
+  font-size: 1.25rem;
+  letter-spacing: 0.01em;
+}
+
+.identityText {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.identityName {
+  margin: 0;
+  color: var(--white);
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.identityMeta {
+  margin: 0;
+  color: var(--white-60);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .identityWatermark {
+    font-size: 5rem;
+  }
+
+  .identityMonogram {
+    width: 44px;
+    height: 44px;
+    font-size: 1.05rem;
+  }
+
+  .identityName {
+    font-size: 1.4rem;
+  }
+}
+
 /* First-run getting-started checklist (rendered inside CoachEmptyState). */
 .firstRunSteps {
   width: 100%;

@@ -26,6 +26,8 @@ import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
 import TeamHQ from '@/components/coaches/TeamHQ';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { Rocket, Users, CalendarDays, Megaphone } from 'lucide-react';
+import type { CSSProperties } from 'react';
+import { teamColor, teamInitials } from '@/lib/team-color';
 import { registrationStatusBadge, registrationStatusLabel } from '@/lib/coaches-status';
 import shared from '../../coaches-portal.module.css';
 import styles from './team.module.css';
@@ -125,10 +127,15 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         <Link href={COACHES_HOME_PATH}>Back to Coaches Portal</Link>
       </nav>
 
-      <div className={shared.header}>
-        <div>
-          <h1 className={shared.title}>{team.name}</h1>
-          <p className={shared.sub}>
+      <div
+        className={styles.identityBand}
+        style={{ '--team-color': teamColor(team.name) } as CSSProperties}
+      >
+        <p className={styles.identityWatermark} aria-hidden>{teamInitials(team.name)}</p>
+        <div className={styles.identityMonogram} aria-hidden>{teamInitials(team.name)}</div>
+        <div className={styles.identityText}>
+          <h1 className={styles.identityName}>{team.name}</h1>
+          <p className={styles.identityMeta}>
             {metaParts.length > 0 ? metaParts.join(' · ') : 'Your team home'}
           </p>
         </div>

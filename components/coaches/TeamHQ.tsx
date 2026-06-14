@@ -184,6 +184,10 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
   const heroStyle = { '--team-color': teamColor(teamName) } as CSSProperties;
   const monogram = teamInitials(teamName);
   const accepted = phase !== 'pending' && phase !== 'rejected';
+  // Theme 4: the celebration phases (accepted / prep / schedule-live) wear the
+  // 18% team-hue wash + watermark. game_day + result get phase-semantic washes
+  // from Theme 1 (not built yet), so they stay on the faint base for now.
+  const celebration = accepted && phase !== 'game_day' && phase !== 'result';
 
   // Headline + sub per phase. Pending/waitlist/rejected reuse the existing
   // registration-status copy (statusDesc); accepted gets the prep narrative.
@@ -250,7 +254,12 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
   }
 
   return (
-    <div className={styles.hero} style={heroStyle} aria-label="Tournament status">
+    <div
+      className={`${styles.hero}${celebration ? ` ${styles.heroCelebration}` : ''}`}
+      style={heroStyle}
+      aria-label="Tournament status"
+    >
+      {celebration && <p className={styles.heroWatermark} aria-hidden>{monogram}</p>}
       <div className={styles.heroHead}>
         <div className={styles.heroMonogram} aria-hidden>{monogram}</div>
         <div className={styles.heroHeadText}>

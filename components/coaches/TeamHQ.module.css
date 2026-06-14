@@ -90,8 +90,17 @@
 
 /* ── Tournament-coach hero (5h) ───────────────────────────────────────────────
    Phase-adaptive hero on the tournament record. `--team-color` is set inline from
-   lib/team-color so the monogram + wash track the team's deterministic hue. */
+   lib/team-color so the monogram + wash track the team's deterministic hue.
+
+   Theme 4 (team-colour identity): the CELEBRATION phases (accepted / prep /
+   schedule-live) carry the 18% team-hue wash + 30% team-hue border + watermark,
+   matching the public team page; `.heroCelebration` layers that on the base.
+   Non-celebration phases keep the faint base until Theme 1 (the phase-adaptive
+   hero) themes them with their own phase-semantic washes — both restyle `.hero`,
+   so Theme 4 owns the base and Theme 1's overrides will sit on top. */
 .hero {
+  position: relative;
+  overflow: hidden;
   margin-bottom: 2rem;
   padding: 1.25rem 1.5rem;
   background: var(--surface);
@@ -106,7 +115,45 @@
   );
 }
 
+/* Celebration wash — accepted / prep / schedule-live. 18% team-hue (matches the
+   public team page) + 30% team-hue border. Light mode softens to 12% / 25%. */
+.heroCelebration {
+  border-color: color-mix(in srgb, var(--team-color, var(--logic-lime)) 30%, transparent);
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--team-color, var(--logic-lime)) 18%, transparent),
+    transparent 70%
+  );
+}
+
+[data-color-mode='light'] .heroCelebration {
+  border-color: color-mix(in srgb, var(--team-color, var(--logic-lime)) 25%, transparent);
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--team-color, var(--logic-lime)) 12%, transparent),
+    transparent 70%
+  );
+}
+
+/* Oversized watermark monogram bleeding off the right edge (celebration only). */
+.heroWatermark {
+  position: absolute;
+  right: -0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  font-family: var(--font-display, sans-serif);
+  font-size: 9rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--team-color, var(--logic-lime));
+  opacity: 0.07;
+  user-select: none;
+  pointer-events: none;
+}
+
 .heroHead {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.85rem;
@@ -117,15 +164,27 @@
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border-radius: var(--radius-sm);
   background: var(--team-color, var(--logic-lime));
   color: var(--white);
-  font-family: var(--font-data, monospace);
-  font-weight: 800;
-  font-size: 0.95rem;
-  letter-spacing: 0.02em;
+  font-family: var(--font-display, sans-serif);
+  font-weight: 900;
+  font-size: 1.25rem;
+  letter-spacing: 0.01em;
+}
+
+@media (max-width: 640px) {
+  .heroWatermark {
+    font-size: 6rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .hero {
+    padding: 1.5rem 2rem;
+  }
 }
 
 .heroHeadText {
