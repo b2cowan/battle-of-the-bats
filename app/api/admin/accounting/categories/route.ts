@@ -5,8 +5,9 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
-export const GET = withObservability(async () => {
-  const ctx = await getAuthContextWithRole();
+export const GET = withObservability(async (req: Request) => {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_accounting')) return forbidden();
   if (!hasModuleEntitlement(ctx.org, 'module_accounting')) return forbidden();

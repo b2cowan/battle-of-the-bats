@@ -15,7 +15,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 // POST /api/admin/accounting/budget-plan/lines
 // Adds a new budget line to the org's plan for a given year.
 export const POST = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 

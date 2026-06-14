@@ -16,11 +16,12 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 // Returns the full org budget plan for a season year — lines grouped by category,
 // each line includes its period distribution and allocation summary (if allocated).
 export const GET = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const url  = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
-  const url  = new URL(req.url);
   const year = parseInt(url.searchParams.get('year') ?? '', 10) || new Date().getFullYear();
 
   // Fetch all budget lines for this org + year, with category and item names

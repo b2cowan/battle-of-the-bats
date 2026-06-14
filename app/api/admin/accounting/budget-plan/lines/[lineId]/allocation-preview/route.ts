@@ -19,14 +19,15 @@ type Ctx = { params: Promise<{ lineId: string }> };
 // &splits=JSON (array of { teamId, splitMethod, value } for per-team config)
 // Read-only: returns the computed per-team amounts before the treasurer confirms.
 export const GET = withObservability(async (req: Request, { params }: Ctx) => {
-  const ctx = await getAuthContextWithRole();
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
   if (ctx!.role !== 'owner' && ctx!.role !== 'treasurer') return forbidden();
 
   const { lineId } = await params;
-  const url = new URL(req.url);
 
   const { data: line, error: le } = await supabaseAdmin
     .from('org_budget_lines')

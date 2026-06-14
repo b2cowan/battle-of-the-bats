@@ -14,11 +14,12 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 }
 
 export const GET = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const url  = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
-  const url  = new URL(req.url);
   const from = url.searchParams.get('from') ?? undefined;
   const to   = url.searchParams.get('to')   ?? undefined;
 
@@ -30,7 +31,8 @@ export const GET = withObservability(async (req: Request) => {
 }, { route: '/api/admin/accounting/ledgers' });
 
 export const POST = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 

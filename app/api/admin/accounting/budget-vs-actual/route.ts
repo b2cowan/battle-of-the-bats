@@ -18,11 +18,12 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 // total org ledger expenses for the year (not yet mapped per-line — Phase J),
 // and per-team health summary.
 export const GET = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const url  = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
-  const url  = new URL(req.url);
   const year = parseInt(url.searchParams.get('year') ?? '', 10) || new Date().getFullYear();
   const orgId = ctx!.org.id;
 

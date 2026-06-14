@@ -28,15 +28,15 @@ function isValidEntryDate(s: string): boolean {
 }
 
 export const GET = withObservability(async (req: Request, { params }: Params) => {
-  const ctx = await getAuthContextWithRole();
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
   const { ledgerId } = await params;
   const ledger = await getLedgerById(ledgerId, ctx!.org.id);
   if (!ledger) return NextResponse.json({ error: 'Ledger not found' }, { status: 404 });
-
-  const url = new URL(req.url);
   const statusParam = url.searchParams.get('status');
   const limit  = Math.min(parseInt(url.searchParams.get('limit')  ?? '50', 10), 200);
   const offset = Math.max(parseInt(url.searchParams.get('offset') ?? '0',  10), 0);
@@ -50,7 +50,8 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
 }, { route: '/api/admin/accounting/ledgers/[ledgerId]/entries' });
 
 export const POST = withObservability(async (req: Request, { params }: Params) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 

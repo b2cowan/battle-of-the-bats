@@ -28,7 +28,8 @@ function isValidEntryDate(s: string): boolean {
 }
 
 export const PATCH = withObservability(async (req: Request, { params }: Params) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
@@ -121,8 +122,9 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/accounting/ledgers/[ledgerId]/entries/[entryId]' });
 
-export const DELETE = withObservability(async (_req: Request, { params }: Params) => {
-  const ctx = await getAuthContextWithRole();
+export const DELETE = withObservability(async (req: Request, { params }: Params) => {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 

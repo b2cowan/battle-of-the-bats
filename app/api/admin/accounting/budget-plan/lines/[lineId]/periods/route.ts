@@ -19,7 +19,8 @@ type Ctx = { params: Promise<{ lineId: string }> };
 // Send an empty array to clear all periods (revert line to lump sum).
 // Body: { periods: [{ label, periodDate?, amount, sortOrder? }] }
 export const POST = withObservability(async (req: Request, { params }: Ctx) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 

@@ -17,7 +17,8 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 export const PATCH = withObservability(async (req: Request,
   { params }: { params: Promise<{ catId: string; itemId: string }> },) => {
   const { catId, itemId } = await params;
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
@@ -80,10 +81,11 @@ export const PATCH = withObservability(async (req: Request,
 // DELETE /api/admin/accounting/budget-categories/[catId]/items/[itemId]
 // Removes an org-owned custom item (owner/treasurer only).
 // Platform defaults cannot be deleted.
-export const DELETE = withObservability(async (_req: Request,
+export const DELETE = withObservability(async (req: Request,
   { params }: { params: Promise<{ catId: string; itemId: string }> },) => {
   const { catId, itemId } = await params;
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 

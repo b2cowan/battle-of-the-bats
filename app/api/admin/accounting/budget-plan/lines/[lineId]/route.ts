@@ -17,7 +17,8 @@ type Ctx = { params: Promise<{ lineId: string }> };
 // PATCH /api/admin/accounting/budget-plan/lines/[lineId]
 // Updates description, totalAmount, categoryId, itemId, notes, or sortOrder.
 export const PATCH = withObservability(async (req: Request, { params }: Ctx) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
@@ -79,8 +80,9 @@ export const PATCH = withObservability(async (req: Request, { params }: Ctx) => 
 
 // DELETE /api/admin/accounting/budget-plan/lines/[lineId]
 // Deletes a budget line. Blocked if a rep_cost_allocation already references this line.
-export const DELETE = withObservability(async (_req: Request, { params }: Ctx) => {
-  const ctx = await getAuthContextWithRole();
+export const DELETE = withObservability(async (req: Request, { params }: Ctx) => {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 

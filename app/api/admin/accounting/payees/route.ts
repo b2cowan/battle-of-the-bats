@@ -13,17 +13,20 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 }
 
 export const GET = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
-  const q = new URL(req.url).searchParams.get('q') ?? '';
+  const q = url.searchParams.get('q') ?? '';
   const payees = await searchOrgPayees(ctx!.org.id, q);
   return NextResponse.json({ payees });
 }, { route: '/api/admin/accounting/payees' });
 
 export const POST = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 

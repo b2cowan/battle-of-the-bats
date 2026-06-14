@@ -43,11 +43,12 @@ function mapCategory(row: Record<string, unknown>): BudgetCategoryWithItems {
 // Returns platform defaults merged with org's custom categories,
 // filtered by scope (defaults to all scopes).
 export const GET = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const url   = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
-  const url   = new URL(req.url);
   const scope = url.searchParams.get('scope'); // 'org' | 'team' | 'both' | null
 
   // Fetch platform defaults (org_id IS NULL) and org customs
@@ -75,7 +76,8 @@ export const GET = withObservability(async (req: Request) => {
 // POST /api/admin/accounting/budget-categories
 // Creates a custom category for this org (owner/treasurer only).
 export const POST = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
