@@ -47,6 +47,10 @@ type Props = {
   total: number;
   page: number;
   pageSize: number;
+  /** manage_support — gates the whole Actions menu (super_admin / support / billing). */
+  canManageUsers: boolean;
+  /** super_admin only — gates the permanent Delete User verb (matches the F1 API guard). */
+  canDelete: boolean;
 };
 
 type ResetState = { link?: string; error?: string; copied?: boolean };
@@ -115,7 +119,7 @@ function statusClass(value: string, s: Record<string, string>) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function CustomerUsersClient({ initialRows, query, total, page, pageSize }: Props) {
+export default function CustomerUsersClient({ initialRows, query, total, page, pageSize, canManageUsers, canDelete }: Props) {
   const router = useRouter();
 
   // ── Core busy / error state ───────────────────────────────────────────────
@@ -430,6 +434,12 @@ export default function CustomerUsersClient({ initialRows, query, total, page, p
         </div>
       </header>
 
+      {!canManageUsers && (
+        <div className={styles.viewOnlyBanner}>
+          View-only access — search and review user records. Contact the support team to take action on a user.
+        </div>
+      )}
+
       {/* ── Search bar ─────────────────────────────────────────────────────── */}
       <form method="GET" action="/platform-admin/customer-users" className={styles.searchBar}>
         <label className={styles.searchBox}>
@@ -515,6 +525,9 @@ export default function CustomerUsersClient({ initialRows, query, total, page, p
                   </td>
 
                   <td className={styles.actionsCell}>
+                    {!canManageUsers ? (
+                      <span className={styles.viewOnlyCell}>View only</span>
+                    ) : (
                     <div className={styles.actionsMenu} ref={menuOpen ? menuRef : undefined}>
                       <button
                         className={styles.actionBtn}
@@ -580,16 +593,19 @@ export default function CustomerUsersClient({ initialRows, query, total, page, p
                               Unban User
                             </button>
                           )}
-                          <button
-                            className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                            type="button"
-                            onClick={() => { setOpenMenuId(null); setDeleteConfirmText(''); setDeleteModal({ userId: row.userId, email: row.email }); }}
-                          >
-                            Delete User
-                          </button>
+                          {canDelete && (
+                            <button
+                              className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                              type="button"
+                              onClick={() => { setOpenMenuId(null); setDeleteConfirmText(''); setDeleteModal({ userId: row.userId, email: row.email }); }}
+                            >
+                              Delete User
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
+                    )}
                   </td>
                 </tr>
               );

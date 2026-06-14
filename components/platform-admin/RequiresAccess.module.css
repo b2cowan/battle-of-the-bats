@@ -1,0 +1,8 @@
+/* Matches the observability StatusControls .readOnlyNote so the least-privilege
+   message is visually uniform across every platform-admin surface. */
+.note {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  color: var(--data-gray);
+  font-style: italic;
+}

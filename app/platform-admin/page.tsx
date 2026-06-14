@@ -16,7 +16,8 @@ import {
   UsersRound,
 } from 'lucide-react';
 import { PLAN_CONFIG } from '@/lib/plan-config';
-import { getPlatformAuthContext } from '@/lib/platform-auth';
+import { getPlatformAdminContext } from '@/lib/platform-auth';
+import { canViewPlatformArea } from '@/lib/platform-areas';
 import { getPreviousPlatformAdminVisit } from '@/lib/platform-admin-visits';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
@@ -61,11 +62,13 @@ function AlertItem({
   value,
   href,
   tone = 'neutral',
+  title,
 }: {
   label: string;
   value: number;
   href?: string;
   tone?: 'neutral' | 'warn';
+  title?: string;
 }) {
   const content = (
     <>
@@ -74,6 +77,8 @@ function AlertItem({
     </>
   );
 
+  // href is omitted when the signed-in role can't reach the target area — render a
+  // non-clickable tile (with a "requires X access" tooltip) instead of a dead link.
   if (href) {
     return (
       <Link className={`${styles.alertItem} ${tone === 'warn' ? styles.alertWarn : ''}`} href={href}>
@@ -83,7 +88,7 @@ function AlertItem({
   }
 
   return (
-    <div className={`${styles.alertItem} ${tone === 'warn' ? styles.alertWarn : ''}`}>
+    <div className={`${styles.alertItem} ${tone === 'warn' ? styles.alertWarn : ''}`} title={title}>
       {content}
     </div>
   );
@@ -100,7 +105,13 @@ function fmtDateTime(iso: string) {
 }
 
 export default async function PlatformOverviewPage() {
-  const platformUser = await getPlatformAuthContext();
+  const auth = await getPlatformAdminContext();
+  const platformUser = auth?.user ?? null;
+  const role = auth?.role ?? 'read_only';
+  // Role-aware Action Queue: strip the link (and tooltip-explain) for areas this role can't reach.
+  const canEarlyAccess = canViewPlatformArea(role, 'early_access');
+  const canRetention = canViewPlatformArea(role, 'retention');
+  const canChangeRequests = canViewPlatformArea(role, 'change_requests');
   const previousVisit = platformUser?.email ? await getPreviousPlatformAdminVisit(platformUser.email) : null;
   const [stats, latestSnapshot, pricingRequestResult] = await Promise.all([
     getCommandCenterStats({ since: previousVisit?.visited_at ?? null }),
@@ -149,9 +160,9 @@ export default async function PlatformOverviewPage() {
           <AlertItem label="Past due orgs" value={stats.alerts.pastDue} href="/platform-admin/orgs?status=past_due" tone={stats.alerts.pastDue > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Past due since visit" value={stats.alerts.newPastDueSinceLastVisit} href="/platform-admin/orgs?status=past_due" tone={stats.alerts.newPastDueSinceLastVisit > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Trials ending soon" value={stats.alerts.trialEndingSoon} href="/platform-admin/orgs?filter=trial_ending" tone={stats.alerts.trialEndingSoon > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="New leads" value={stats.alerts.newEarlyAccessLeads} href="/platform-admin/early-access" tone={stats.alerts.newEarlyAccessLeads > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Retention records" value={stats.alerts.retentionAlertCount} href="/platform-admin/retention" tone={stats.alerts.retentionAlertCount > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Price approvals" value={pendingPricingRequests} href="/platform-admin/change-requests" tone={pendingPricingRequests > 0 ? 'warn' : 'neutral'} />
+          <AlertItem label="New leads" value={stats.alerts.newEarlyAccessLeads} href={canEarlyAccess ? '/platform-admin/early-access' : undefined} title={canEarlyAccess ? undefined : 'Requires growth or product access'} tone={stats.alerts.newEarlyAccessLeads > 0 ? 'warn' : 'neutral'} />
+          <AlertItem label="Retention records" value={stats.alerts.retentionAlertCount} href={canRetention ? '/platform-admin/retention' : undefined} title={canRetention ? undefined : 'Requires billing or support access'} tone={stats.alerts.retentionAlertCount > 0 ? 'warn' : 'neutral'} />
+          <AlertItem label="Price approvals" value={pendingPricingRequests} href={canChangeRequests ? '/platform-admin/change-requests' : undefined} title={canChangeRequests ? undefined : 'Requires product or billing access'} tone={pendingPricingRequests > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Expired overrides" value={stats.alerts.expiredOverrides} href="/platform-admin/orgs?filter=expired_overrides" tone={stats.alerts.expiredOverrides > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Missing owners" value={stats.alerts.orgsWithoutOwner} href="/platform-admin/orgs?filter=no_owner" tone={stats.alerts.orgsWithoutOwner > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Owner inactive" value={stats.alerts.orgsWithInactiveOwner} href="/platform-admin/orgs?filter=owner_inactive" tone={stats.alerts.orgsWithInactiveOwner > 0 ? 'warn' : 'neutral'} />

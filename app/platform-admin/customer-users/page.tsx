@@ -1,7 +1,7 @@
 import type { User } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getPlatformUsers } from '@/lib/db';
-import { getBootstrapAdminEmails } from '@/lib/platform-auth';
+import { getBootstrapAdminEmails, requirePlatformAreaView, hasPlatformPermission } from '@/lib/platform-auth';
 import CustomerUsersClient, { type CustomerUserRow } from './CustomerUsersClient';
 
 export const metadata = { title: 'Customer Users - Platform Admin' };
@@ -132,10 +132,16 @@ export default async function CustomerUsersPage({
 }: {
   searchParams: Promise<{ q?: string; page?: string }>;
 }) {
+  const auth = await requirePlatformAreaView('customer_users');
   const sp = await searchParams;
   const query = cleanQuery(sp.q);
   const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
   const { rows, total } = await getCustomerUsers(query, page);
+
+  // Write actions (reset/ban/edit/notes/etc.) need manage_support; permanent
+  // delete is super_admin-only (matches the F1 API guard on the delete route).
+  const canManageUsers = hasPlatformPermission(auth.role, 'manage_support');
+  const canDelete = auth.role === 'super_admin';
 
   return (
     <CustomerUsersClient
@@ -144,6 +150,8 @@ export default async function CustomerUsersPage({
       total={total}
       page={page}
       pageSize={PAGE_SIZE}
+      canManageUsers={canManageUsers}
+      canDelete={canDelete}
     />
   );
 }

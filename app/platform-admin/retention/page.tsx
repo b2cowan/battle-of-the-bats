@@ -1,6 +1,6 @@
 import HelpCallout from '@/components/help/HelpCallout';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requirePlatformAreaView } from '@/lib/platform-auth';
+import { requirePlatformAreaView, hasPlatformPermission } from '@/lib/platform-auth';
 import RetentionQueueClient from './RetentionQueueClient';
 import styles from '../audit/audit.module.css';
 
@@ -58,7 +58,8 @@ async function getRetentionRows() {
 }
 
 export default async function RetentionQueuePage() {
-  await requirePlatformAreaView('retention');
+  const auth = await requirePlatformAreaView('retention');
+  const canManageBilling = hasPlatformPermission(auth.role, 'manage_billing');
   const rows = await getRetentionRows();
 
   return (
@@ -75,7 +76,7 @@ export default async function RetentionQueuePage() {
         body="This queue shows retained billing records with a purge deadline in the next 30 days, plus records that have already moved into pending purge. Process expiry to send owner notices, then extend retention when support needs more time to resolve a billing or restoration case."
       />
 
-      <RetentionQueueClient rows={rows} />
+      <RetentionQueueClient rows={rows} canManageBilling={canManageBilling} />
     </div>
   );
 }

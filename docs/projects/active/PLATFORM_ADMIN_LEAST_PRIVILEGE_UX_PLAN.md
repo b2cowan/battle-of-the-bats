@@ -86,8 +86,26 @@ This is a UX scope item that is in scope for F2 (not F3). Even before the F3 per
 
 ---
 
+## Build status — 2026-06-14 (dev-only, uncommitted; typecheck + lint:focused + verify:changed clean)
+
+**Real gaps found & fixed:** T1 (component), T2 (Customer Users — the only true Blocker), T3 (Retention), T7 (Overview Action Queue), T8 (Feedback note).
+**Already satisfied in existing code (no change needed — audit findings were stale/over-stated, verified first-hand):**
+- **T4/T5 (PAS-003, PAB-003) — OrgDetailClient was already fully gated.** Billing & Access shows a view-only banner ("requires billing access to change the plan, apply overrides, **or cancel the subscription**") at `OrgDetailClient.tsx:1217`; plan fields `disabled={!canManageBilling}`; the override form is `{showForm && canManageBilling}`; Cancel Subscription is `{canManageBilling && …}` (1493); the Entitlements tab shows "Requires product access to change module overrides" (1525) with all controls disabled. No silent dead-ends here.
+- **T6 (PAB-004) — Change Requests already gated.** `renderActions()` returns a "Read only" indicator for `!canManageProduct` (`ChangeRequestsClient.tsx:484`), so billing never sees dead Approve/Reject buttons. No header note added (would be redundant).
+
+Net effect: the systemic "silent role-gated dead-end" was real on **3 surfaces** (Customer Users, Retention, Overview alerts) — the rest of the console already followed the gate-and-message pattern. Plus the F1 delete-button regression is closed (T2d).
+
 ## Task list
 
+- [x] **T1** Created `components/platform-admin/RequiresAccess.tsx` (+ `.module.css`) — matches the observability "View-only for your role" note style.
+- [x] **T2** CustomerUsersClient — added `canManageUsers` + `canDelete` props from `customer-users/page.tsx`; Actions column shows "View only" for roles without `manage_support`; Delete User hidden unless `super_admin` (closes the F1 regression); page-level view-only banner. ~~T1~~
+- [x] **T3** Retention — `canManageBilling` from page; "+30 days" / "Process expiry" disabled + `RequiresAccess` note for non-billing roles (buttons kept visible, not hidden).
+- [x] **T7** Overview Action Queue — role-aware: New leads / Retention records / Price approvals links stripped (non-clickable + tooltip) when the role can't reach the target area.
+- [x] **T8** Feedback — view-only note appended to the HelpCallout for support ("Status changes require product access…").
+- [x] **T4/T5/T6** — verified already satisfied (see Build status above); no change.
+- [ ] **T9/T10** — typecheck + lint + verify:changed all clean ✓; dev-server restart needed before browser QA (new files added).
+
+### Original task detail (for reference)
 - [ ] **T1** Create `components/platform-admin/RequiresAccess.tsx` — shared inline note component with `permission` and optional `role` props; style matches the existing observability "View-only for your role" note.
 
 - [ ] **T2** `CustomerUsersClient` role prop (PAR-001 + PAP-003):

@@ -142,7 +142,7 @@ export default async function FeedbackTriagePage({
       <HelpCallout
         variant="info"
         title="In-app feedback queue"
-        body="Bug reports, feature requests, and general feedback submitted from inside the app (admin, coach, scorekeeper, and anonymous). Move each item New → Triaged → Acknowledged → Resolved; a bug that hit a captured error shows a link to the related issue. Feedback is retained indefinitely."
+        body={`Bug reports, feature requests, and general feedback submitted from inside the app (admin, coach, scorekeeper, and anonymous). Move each item New → Triaged → Acknowledged → Resolved; a bug that hit a captured error shows a link to the related issue. Feedback is retained indefinitely.${readOnly ? ' Status changes require product access — contact a product operator to triage or resolve items.' : ''}`}
       />
 
       <form method="GET" action="/platform-admin/feedback" className={styles.filterBar}>

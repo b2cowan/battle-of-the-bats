@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import RequiresAccess from '@/components/platform-admin/RequiresAccess';
 import styles from '../audit/audit.module.css';
 
 type RetentionRow = {
@@ -37,7 +38,7 @@ function noticeLabel(row: RetentionRow) {
   return notices.length ? notices.join(' / ') : 'None';
 }
 
-export default function RetentionQueueClient({ rows }: { rows: RetentionRow[] }) {
+export default function RetentionQueueClient({ rows, canManageBilling }: { rows: RetentionRow[]; canManageBilling: boolean }) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -115,13 +116,15 @@ export default function RetentionQueueClient({ rows }: { rows: RetentionRow[] })
         <button
           className={styles.filterBtn}
           onClick={processExpiry}
-          disabled={processing}
+          disabled={processing || !canManageBilling}
+          title={!canManageBilling ? 'Requires billing access' : undefined}
         >
           {processing ? 'Processing...' : 'Process expiry'}
         </button>
         <span className={styles.dimText}>
           Sends 14-day warnings and moves expired records into pending purge.
         </span>
+        {!canManageBilling && <RequiresAccess permission="billing access" role="billing" />}
       </div>
 
       {(message || error) && (
@@ -209,7 +212,8 @@ export default function RetentionQueueClient({ rows }: { rows: RetentionRow[] })
                     <button
                       className={styles.filterBtn}
                       onClick={() => startExtend(row)}
-                      disabled={busyId === row.id}
+                      disabled={busyId === row.id || !canManageBilling}
+                      title={!canManageBilling ? 'Requires billing access' : undefined}
                       type="button"
                     >
                       +30 days

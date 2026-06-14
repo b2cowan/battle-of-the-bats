@@ -588,3 +588,24 @@
   color: var(--data-gray);
   letter-spacing: 0.06em;
 }
+
+/* Least-privilege (F2): shown to roles that can view but not act on customer users. */
+.viewOnlyCell {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-style: italic;
+  color: var(--white-35);
+}
+
+.viewOnlyBanner {
+  margin: 0.75rem 0 0;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 2px solid var(--data-gray);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
