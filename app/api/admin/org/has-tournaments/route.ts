@@ -4,8 +4,9 @@ import { PLAN_CONFIG } from '@/lib/plan-config';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
-export const GET = withObservability(async () => {
-  const ctx = await getAuthContext();
+export const GET = withObservability(async (req: Request) => {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const hasTournamentEntitlement = PLAN_CONFIG[ctx.org.planId]?.moduleEntitlements.includes('module_tournaments') ?? false;

@@ -13,7 +13,7 @@ export const GET = withObservability(async (req: Request) => {
   // Resolve the org from the visited slug — a user may now own several workspaces, so
   // the default "first membership" is ambiguous (Phase 2 add-workspace).
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContext({ orgSlug });
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const { org } = ctx;
@@ -45,7 +45,7 @@ export const GET = withObservability(async (req: Request) => {
 
 export const PATCH = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContext({ orgSlug });
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const { user, org } = ctx;

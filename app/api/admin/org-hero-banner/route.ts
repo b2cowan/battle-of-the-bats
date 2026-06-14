@@ -25,7 +25,8 @@ async function ensureBucket() {
 }
 
 export const POST = withObservability(async (req: Request) => {
-  const ctx = await getAuthContext();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const { user, org } = ctx;
@@ -97,8 +98,9 @@ export const POST = withObservability(async (req: Request) => {
   return NextResponse.json({ heroBannerUrl });
 }, { route: '/api/admin/org-hero-banner' });
 
-export const DELETE = withObservability(async () => {
-  const ctx = await getAuthContext();
+export const DELETE = withObservability(async (req: Request) => {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const { user, org } = ctx;

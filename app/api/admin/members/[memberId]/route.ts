@@ -23,8 +23,9 @@ async function ownerCount(orgId: string): Promise<number> {
  * Returns the contact-assignment impact for a member — how many tournaments and
  * divisions list them as the primary contact. Used to warn before removal.
  */
-export const GET = withObservability(async (_req: Request, { params }: Params) => {
-  const ctx = await getAuthContextWithRole();
+export const GET = withObservability(async (req: Request, { params }: Params) => {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'manage_members')) return forbidden();
 
@@ -56,8 +57,9 @@ export const GET = withObservability(async (_req: Request, { params }: Params) =
   return NextResponse.json({ tournamentCount: tournamentCount ?? 0, divisionCount: divisionCount ?? 0 });
 }, { route: '/api/admin/members/[memberId]' });
 
-export const DELETE = withObservability(async (_req: Request, { params }: Params) => {
-  const ctx = await getAuthContextWithRole();
+export const DELETE = withObservability(async (req: Request, { params }: Params) => {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   if (!hasCapability(ctx.role, ctx.capabilities, 'manage_members')) return forbidden();
@@ -115,7 +117,8 @@ export const DELETE = withObservability(async (_req: Request, { params }: Params
 }, { route: '/api/admin/members/[memberId]' });
 
 export const PATCH = withObservability(async (req: Request, { params }: Params) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   if (!hasCapability(ctx.role, ctx.capabilities, 'manage_members')) return forbidden();

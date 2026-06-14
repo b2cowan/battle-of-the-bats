@@ -6,7 +6,8 @@ import type { OrgPlan } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
 export const POST = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
 

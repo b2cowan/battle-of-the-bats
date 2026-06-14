@@ -24,7 +24,8 @@ const ROLE_EMAIL_LABEL: Record<OrgRole, string> = {
 };
 
 export const POST = withObservability(async (req: Request) => {
-  const ctx = await getAuthContext();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const { user, org } = ctx;

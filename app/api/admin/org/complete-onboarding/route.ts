@@ -3,8 +3,9 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
-export const POST = withObservability(async () => {
-  const ctx = await getAuthContextWithRole();
+export const POST = withObservability(async (req: Request) => {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
 

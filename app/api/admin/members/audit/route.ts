@@ -26,11 +26,11 @@ function summarizePayload(action: string, payload: Record<string, unknown> | nul
 }
 
 export const GET = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const { searchParams } = new URL(req.url);
+  const orgSlug = searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
-
-  const { searchParams } = new URL(req.url);
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
   const offset = (page - 1) * PAGE_SIZE;
 

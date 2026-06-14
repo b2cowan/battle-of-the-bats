@@ -28,7 +28,8 @@ function hasStoredSavedStartupWork(value: unknown) {
 }
 
 export const POST = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') {
     return NextResponse.json({ error: 'Only organization owners can change onboarding plans.' }, { status: 403 });

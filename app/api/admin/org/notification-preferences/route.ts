@@ -30,7 +30,7 @@ export const GET = withObservability(async (req: Request) => {
   const orgSlug = url.searchParams.get('orgSlug');
   if (!orgSlug) return badRequest('Missing orgSlug.');
 
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const { data, error } = await supabaseAdmin
@@ -61,7 +61,7 @@ export const POST = withObservability(async (req: Request) => {
   const orgSlug = url.searchParams.get('orgSlug');
   if (!orgSlug) return badRequest('Missing orgSlug.');
 
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const body = await req.json().catch(() => null);

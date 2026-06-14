@@ -4,8 +4,9 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasCapability } from '@/lib/roles';
 import { withObservability } from '@/lib/observability';
 
-export const GET = withObservability(async () => {
-  const ctx = await getAuthContextWithRole();
+export const GET = withObservability(async (req: Request) => {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const orgId = ctx.org.id;

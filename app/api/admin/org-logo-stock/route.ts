@@ -5,7 +5,8 @@ import { STOCK_LOGOS, PLAN_ORDER } from '@/lib/stock-logos';
 import { withObservability } from '@/lib/observability';
 
 export const POST = withObservability(async (req: Request) => {
-  const ctx = await getAuthContext();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const { user, org } = ctx;

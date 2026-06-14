@@ -13,7 +13,7 @@ import { withObservability } from '@/lib/observability';
  */
 export const GET = withObservability(async (req: NextRequest) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug });
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const { data, error } = await supabaseAdmin
@@ -36,7 +36,7 @@ export const GET = withObservability(async (req: NextRequest) => {
  */
 export const POST = withObservability(async (req: NextRequest) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug });
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
 

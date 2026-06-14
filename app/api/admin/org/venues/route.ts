@@ -45,7 +45,7 @@ export const GET = withObservability(async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
 
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   // Org Venue Library is a League/Club org-admin feature (matches the page-level gate).
   if (!['league', 'club'].includes(ctx.org.planId)) return forbidden();
@@ -84,7 +84,7 @@ export const GET = withObservability(async (req: Request) => {
 
 export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   // Org Venue Library is a League/Club org-admin feature (matches the page-level gate).
   if (!['league', 'club'].includes(ctx.org.planId)) return forbidden();

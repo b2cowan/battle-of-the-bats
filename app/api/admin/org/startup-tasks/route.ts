@@ -157,7 +157,7 @@ async function buildProgress(
 export const GET = withObservability(async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug });
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   try {
@@ -171,7 +171,7 @@ export const GET = withObservability(async (req: Request) => {
 export const POST = withObservability(async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug });
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   try {

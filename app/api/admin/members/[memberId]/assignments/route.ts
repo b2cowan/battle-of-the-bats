@@ -6,8 +6,9 @@ import { withObservability } from '@/lib/observability';
 type Params = { params: Promise<{ memberId: string }> };
 
 /** GET /api/admin/members/[memberId]/assignments — returns current tournament assignment IDs */
-export const GET = withObservability(async (_req: Request, { params }: Params) => {
-  const ctx = await getAuthContext();
+export const GET = withObservability(async (req: Request, { params }: Params) => {
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const { memberId } = await params;
@@ -45,7 +46,8 @@ export const GET = withObservability(async (_req: Request, { params }: Params) =
  * Requires manage_members capability.
  */
 export const PUT = withObservability(async (req: Request, { params }: Params) => {
-  const ctx = await getAuthContext();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const denied = await requireCapability(ctx, 'manage_members');
