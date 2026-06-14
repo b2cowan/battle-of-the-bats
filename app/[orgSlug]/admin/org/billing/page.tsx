@@ -101,7 +101,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     'Unlimited staff / admin seats',
   ],
   club: [
-    'Everything in League',
+    'Everything in League Plus',
     'Accounting — ledger, invoicing, payment reconciliation',
     'Rep Teams — tryouts, rosters, player documents',
     'Coaches portal',
@@ -112,8 +112,8 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
 const PLAN_META_COPY: Record<OrgPlan, string> = {
   tournament:      "You're on the free starter plan. Upgrade when you need custom registration, exports, payment reminders, waitlist promotion, branding, or repeat-event tools.",
   team:            "You're on Coaches Portal Premium. Your team tools and one free-tier tournament slot are active.",
-  tournament_plus: "You're on Tournament Plus. Your tournament operations tools are active; League and Club are coming soon while those broader workflows are refined.",
-  league:          "You're on League. Need accounting or rep team tools? Club is the complete platform.",
+  tournament_plus: "You're on Tournament Plus. Your tournament operations tools are active; League Plus and Club are coming soon while those broader workflows are refined.",
+  league:          "You're on League Plus. Need accounting or rep team tools? Club is the complete platform.",
   club:            "You're on the complete Club platform.",
 };
 
@@ -122,7 +122,7 @@ const PRODUCT_SHELF_PLANS: ProductShelfPlan[] = ['team', 'league', 'club'];
 
 const PRODUCT_SHELF_META: Record<ProductShelfPlan, { eyebrow: string; detailLabel: string }> = {
   team:   { eyebrow: 'For rep teams',       detailLabel: 'Preview Coaches Portal' },
-  league: { eyebrow: 'For league programs', detailLabel: 'Preview League' },
+  league: { eyebrow: 'For league programs', detailLabel: 'Preview League Plus' },
   club:   { eyebrow: 'For full clubs',      detailLabel: 'Preview Club' },
 };
 

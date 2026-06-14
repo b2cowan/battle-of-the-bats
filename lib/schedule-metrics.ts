@@ -92,6 +92,10 @@ export interface ScheduleMetrics {
   bufferConflictCount: number;
   travelBufferWarningCount: number;
   unresolvedFacilityLaneCount: number;
+  /** Effective "max games/day" threshold used for the day-load rating (organizer rule or default 2). */
+  maxGamesPerDay: number;
+  /** Effective back-to-back threshold in minutes used for the rest rating (organizer rule or default 15). */
+  minRestThresholdMinutes: number;
   healthScore: number;
   healthTone: ScheduleHealthTone;
   healthBreakdown: ScheduleHealthBreakdown;
@@ -111,6 +115,8 @@ export interface BuildScheduleMetricsOptions {
   bufferMinutes?: number;
   manualTravelBuffers?: ManualTravelBufferSettings;
   maxGamesPerDay?: number;
+  /** Back-to-back threshold: a team's consecutive games closer than this count as back-to-back. */
+  minRestMinutes?: number;
   includePlayoffs?: boolean;
 }
 
@@ -141,11 +147,17 @@ export function buildScheduleMetrics(options: BuildScheduleMetricsOptions): Sche
     divisions = [],
     tournament = null,
     divisionId,
-    expectedGamesPerParticipant,
-    maxGamesPerDay = DEFAULT_MAX_GAMES_PER_DAY,
     includePlayoffs = false,
   } = options;
   const manualTravelBuffers = resolveManualTravelBuffers(options, tournament);
+
+  // Effective "healthy schedule" thresholds: explicit options win, then the organizer's
+  // saved rules (settings.schedule_health_rules), then hard defaults. bufferMinutes stays
+  // a back-to-back fallback so callers that pass only it keep their existing behavior.
+  const savedRules = getScheduleHealthRules(tournament);
+  const maxGamesPerDay = options.maxGamesPerDay ?? savedRules.maxGamesPerDay;
+  const backToBackThreshold = options.minRestMinutes ?? options.bufferMinutes ?? savedRules.minRestMinutes;
+  const expectedGamesPerParticipant = options.expectedGamesPerParticipant ?? (savedRules.targetGamesPerTeam ?? undefined);
 
   const scopedGames = options.games.filter(game => {
     if (divisionId && game.divisionId !== divisionId) return false;
@@ -187,7 +199,7 @@ export function buildScheduleMetrics(options: BuildScheduleMetricsOptions): Sche
   );
 
   const teamMetrics = allKeys.map(key =>
-    buildTeamMetrics(key, participantLabels.get(key) ?? key, participantGames.get(key) ?? [], options.bufferMinutes, manualTravelBuffers)
+    buildTeamMetrics(key, participantLabels.get(key) ?? key, participantGames.get(key) ?? [], backToBackThreshold, manualTravelBuffers)
   );
 
   const conflictSummary = scanVenueConflicts(scopedGames, options, divisions, tournament);
@@ -208,6 +220,7 @@ export function buildScheduleMetrics(options: BuildScheduleMetricsOptions): Sche
     participantCount: teamMetrics.length,
     expectedGamesPerParticipant,
     ...aggregate,
+    minRestThresholdMinutes: backToBackThreshold,
     healthScore,
     healthTone: healthScore >= 85 ? 'good' : healthScore >= 70 ? 'warning' : 'danger',
     healthBreakdown,
@@ -238,6 +251,32 @@ export function resolveManualTravelBuffers(
   return {
     venueChangeMinutes: venueSetting,
     facilityChangeMinutes: facilitySetting,
+  };
+}
+
+function normalizeRuleInt(value: unknown, min: number, max: number): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const i = Math.round(n);
+  if (i < min || i > max) return null;
+  return i;
+}
+
+/**
+ * The organizer's saved "healthy schedule" thresholds with hard defaults applied.
+ * Pure read of `tournament.settings.schedule_health_rules` — used by the Schedule
+ * Health editor for its initial values, and by `buildScheduleMetrics` as the fallback
+ * when explicit options aren't supplied. `targetGamesPerTeam` of null = no target.
+ */
+export function getScheduleHealthRules(
+  tournament?: Tournament | null,
+): { maxGamesPerDay: number; minRestMinutes: number; targetGamesPerTeam: number | null } {
+  const saved = tournament?.settings?.schedule_health_rules;
+  return {
+    maxGamesPerDay: normalizeRuleInt(saved?.maxGamesPerDay, 1, 10) ?? DEFAULT_MAX_GAMES_PER_DAY,
+    minRestMinutes: normalizeRuleInt(saved?.minRestMinutes, 0, 600) ?? DEFAULT_BUFFER_MINUTES,
+    targetGamesPerTeam: normalizeRuleInt(saved?.targetGamesPerTeam, 1, 99),
   };
 }
 
@@ -287,7 +326,7 @@ function buildTeamMetrics(
   participantKey: string,
   label: string,
   games: ParticipantGame[],
-  overrideBufferMinutes: number | undefined,
+  backToBackThresholdMinutes: number,
   manualTravelBuffers: Required<ManualTravelBufferSettings>,
 ): TeamScheduleMetrics {
   const sortedGames = [...games].sort((a, b) => a.startAbsoluteMinutes - b.startAbsoluteMinutes);
@@ -311,8 +350,7 @@ function buildTeamMetrics(
     const current = sortedGames[i];
     const restMinutes = current.startAbsoluteMinutes - (previous.startAbsoluteMinutes + previous.durationMinutes);
     minRestMinutes = minRestMinutes == null ? restMinutes : Math.min(minRestMinutes, restMinutes);
-    const backToBackThreshold = overrideBufferMinutes ?? DEFAULT_BUFFER_MINUTES;
-    if (restMinutes >= 0 && restMinutes <= backToBackThreshold) backToBackCount += 1;
+    if (restMinutes >= 0 && restMinutes <= backToBackThresholdMinutes) backToBackCount += 1;
 
     const venueChanged = Boolean(previous.venueKey && current.venueKey && previous.venueKey !== current.venueKey);
     const facilityChanged = Boolean(previous.facilityKey && current.facilityKey && previous.facilityKey !== current.facilityKey);

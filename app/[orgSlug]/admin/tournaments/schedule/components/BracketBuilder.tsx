@@ -57,6 +57,13 @@ interface BracketBuilderProps {
   crossover?: string;
   /** Optional display mapping for participant labels (e.g. "Seed #1" → team name). */
   labelFor?: (raw: string) => string;
+  /**
+   * When set, the matchup whose `sourceGameId` matches is opened (its inline
+   * editor expands) and scrolled into view — used to jump straight to a specific
+   * game when the editor is entered from a List-view row. Re-applied whenever the
+   * id changes (so re-clicking the same row after closing re-focuses it).
+   */
+  focusSourceGameId?: string;
 }
 
 function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, labelFor, editing, onSelect, onClose, onUpdateCode, onUpdate, onDelete }: {
@@ -258,7 +265,7 @@ function ConnectedBracket({ matchups, finalIds, scale, children }: {
   );
 }
 
-export default function BracketBuilder({ teams, venues, defaultDate, templatePreview, baseOptions, groupOptions, onPreviewChange, crossover, labelFor }: BracketBuilderProps) {
+export default function BracketBuilder({ teams, venues, defaultDate, templatePreview, baseOptions, groupOptions, onPreviewChange, crossover, labelFor, focusSourceGameId }: BracketBuilderProps) {
   const [rounds, setRounds] = useState<Round[]>([]);
   // Which game's editor is open (compact-card → click to edit). Zoom + drag-pan
   // live in the shared BracketZoomFrame that wraps the render.
@@ -323,14 +330,38 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
     onPreviewChange(preview);
   }, [rounds, onPreviewChange]);
 
+  // Jump to a specific game when entered from a List-view row: open its inline
+  // editor and scroll its card into view. Runs once the rounds are populated and
+  // re-runs if the requested id changes.
+  useEffect(() => {
+    if (!focusSourceGameId) return;
+    const target = rounds.flatMap(r => r.matchups).find(m => m.sourceGameId === focusSourceGameId);
+    if (!target) return;
+    setEditingId(target.id);
+    const el = document.querySelector<HTMLElement>(`[data-matchup-id="${target.id}"]`);
+    if (el) requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' }));
+  }, [focusSourceGameId, rounds]);
+
+  // A new matchup's code MUST be unique across the WHOLE bracket — `Winner <code>`
+  // / `Loser <code>` references resolve by exact code, so two rounds sharing a code
+  // (the old `name.substring(0,2)` scheme made "Round 1" and "Round 2" both "RO1")
+  // would cross-wire advancement. Code by round position + a collision-free suffix.
+  const nextMatchupCode = (rs: Round[], roundIdx: number): string => {
+    const used = new Set(rs.flatMap(r => r.matchups.map(m => m.code)));
+    let n = 1;
+    let code = `R${roundIdx + 1}-${n}`;
+    while (used.has(code)) { n++; code = `R${roundIdx + 1}-${n}`; }
+    return code;
+  };
+
   const addMatchup = (roundId: string) => {
-    setRounds(rounds.map(r => {
+    setRounds(rounds.map((r, idx) => {
       if (r.id === roundId) {
         return {
           ...r,
           matchups: [...r.matchups, {
             id: crypto.randomUUID(),
-            code: `${r.name.substring(0, 2).toUpperCase()}${r.matchups.length + 1}`,
+            code: nextMatchupCode(rounds, idx),
             roundName: r.name,
             home: { label: '' },
             away: { label: '' },
@@ -346,14 +377,13 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
   };
 
   const addMatchupForPool = (roundId: string, poolName: string) => {
-    setRounds(rounds.map(r => {
+    setRounds(rounds.map((r, idx) => {
       if (r.id === roundId) {
-        const poolMatchups = r.matchups.filter(m => m.pool === poolName);
         return {
           ...r,
           matchups: [...r.matchups, {
             id: crypto.randomUUID(),
-            code: `${r.name.substring(0, 2).toUpperCase()}${poolMatchups.length + 1}`,
+            code: nextMatchupCode(rounds, idx),
             roundName: r.name,
             home: { label: '' },
             away: { label: '' },

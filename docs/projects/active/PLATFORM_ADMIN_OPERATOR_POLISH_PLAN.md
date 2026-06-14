@@ -1,0 +1,117 @@
+# Platform-Admin Operator Polish (F5) — Backlog Plan
+
+> **Status:** Scoped 2026-06-13. **Priority: P3 — opportunistic polish backlog.**
+> **Companion:** [PLATFORM_ADMIN_OPERATOR_POLISH_PM_BRIEF.md](PLATFORM_ADMIN_OPERATOR_POLISH_PM_BRIEF.md)
+> **Spun out of:** [Platform-Admin Employee Audit — SYNTHESIS.md](../archive/platform-admin-audit/SYNTHESIS.md) Theme F + unclaimed Low/Medium findings from PA1–PA6.
+
+## What this is
+
+A grouped backlog of lower-impact consistency fixes and per-role nits from the platform-admin audit. None of these are blockers or security issues — those are in F1–F3. These items can be picked off opportunistically (one at a time during a related feature session) or batched into a single polish sprint. Tackle them alongside or after the higher-priority F2–F4 work.
+
+**Out of scope:** anything in F1 (API guards), F2 (least-privilege UX consistency pass), F3 (support seam / feedback triage), or F4 (SOPs + day-one orientation). Items that touch those themes are routed there, not here.
+
+---
+
+## Backlog table
+
+Items are grouped by theme. Finding ID · surface · file reference (where available) · one-line fix direction · rough effort.
+
+### Group A — Action Queue dead links (Overview)
+
+| ID | Surface | File / Line | Fix direction | Effort |
+|----|---------|-------------|---------------|--------|
+| PAR-003 (partial) | Overview — Action Queue | `app/platform-admin/page.tsx:149–158` | For the `expired_overrides` count specifically: make the link go to `?filter=expired_overrides` on the Orgs list instead of the unfiltered list. The dead-link suppression for non-billing roles (PAR-003 core) belongs to F2; this item is the "link destination is wrong even for billing" half. | XS |
+| PAB-002 | Overview → Orgs list | `app/platform-admin/page.tsx` (action queue count) + `app/platform-admin/orgs/page.tsx` (filter chips) | Add an `expired_overrides` attention filter to the Orgs list so the dashboard count is a live drill-through, not a dead count. Billing loses the "hunt org-by-org" pain. | S |
+
+### Group B — Customer Users menu ordering
+
+| ID | Surface | File / Line | Fix direction | Effort |
+|----|---------|-------------|---------------|--------|
+| PAS-010 / PAB-011 | Customer Users — Actions menu | `app/platform-admin/customer-users/CustomerUsersClient.tsx:541–543` | Reorder to triage sequence: Reset Password → Confirm Email → Revoke Sessions → [divider] → Edit Info → Notes → [divider] → Ban/Unban/Delete. Confirmed for both support (PAS-010) and billing (PAB-011). | XS |
+
+### Group C — League Starter / §13 badge on org detail (PF-4)
+
+| ID | Surface | File / Line | Fix direction | Effort |
+|----|---------|-------------|---------------|--------|
+| PAS-009 / PA0-004 | Org detail — hero badges area | `app/platform-admin/orgs/[id]/page.tsx` (no `free_floor` fetch); `app/platform-admin/orgs/[id]/OrgDetailClient.tsx` (no badge) | Fetch `free_floor` on the org detail server page and render a "League Starter" badge in the account hero section when true. Add per-org scope-wall hit count from `platform_events` in the Entitlements tab. Org list already has the badge — copy the pattern. | S |
+
+### Group D — Org detail tab: URL-addressable
+
+| ID | Surface | File / Line | Fix direction | Effort |
+|----|---------|-------------|---------------|--------|
+| PAB-008 | Org detail | `app/platform-admin/orgs/[id]/OrgDetailClient.tsx:219` (`useState<TabId>('support')`) | Add `?tab=<tabId>` as a URL search param and read initial tab from `useSearchParams()`. Enables Retention row deep-links, cross-team URL sharing, and back-button tab restore. | S |
+| PAB-007 (partial) | Retention Queue → Org detail | `app/platform-admin/retention/RetentionQueueClient.tsx:163–165` | Change org name link in retention table to `/platform-admin/orgs/${id}?tab=billing` once PAB-008 is done. Depends on PAB-008. | XS |
+
+### Group E — Billing surface polish
+
+| ID | Surface | File / Line | Fix direction | Effort |
+|----|---------|-------------|---------------|--------|
+| PAB-009 | Org detail — Billing & Access | `app/platform-admin/orgs/[id]/OrgDetailClient.tsx:1493–1517` | Add a Stripe dashboard deep-link next to the Stripe Subscription ID in the Account Context header: `https://dashboard.stripe.com/subscriptions/{stripeSubscriptionId}`. Label `(Sandbox)` when the ID starts with `sub_test_`. | XS |
+| PAB-006 | Retention Queue | `app/platform-admin/retention/RetentionQueueClient.tsx:148–220` | Add urgency badges to retention rows: `daysRemaining <= 0` → "PAST DEADLINE" chip, `daysRemaining <= 3` → "URGENT" chip, matching the attention color system. Replace empty-table cell with a HelpCallout (success variant) "No records approaching purge." | XS |
+| PAB-010 | Bulk Operations — Recent Batches | `app/platform-admin/bulk-operations/BulkOperationsClient.tsx:490–526` | Add "View all bulk operations in Audit Log →" link at the bottom of the Recent Operations table, pre-filtered by `run_bulk_operation` action type. | XS |
+| PAB-012 | Org detail — override list | `app/platform-admin/orgs/[id]/OrgDetailClient.tsx:1401–1410` | Replace inline `.replace('_', ' ')` with a `OVERRIDE_TYPE_LABELS` constant map for proper-cased labels (`Subscription Status`, `Comp Period`, `Module Add-on`). | XS |
+| PAB-005 | Bulk Operations — action type dropdown | `app/platform-admin/bulk-operations/BulkOperationsClient.tsx:344–350` | Show `module_addon_enablement` with a `(requires product access)` note, or filter it from the dropdown for roles that cannot run it, rather than letting billing select it and then see an error on Review. | XS |
+| PAB-014 | Org detail — override form copy | `app/platform-admin/orgs/[id]/OrgDetailClient.tsx:1352–1353` | Change "Leave expiry blank for an open-ended grant" to "An expiry is strongly recommended. Without one, access will remain permanently until manually revoked." Routes the auto-revert feature itself to `existing:TIMED_ENTITLEMENTS_PLAN`. | XS |
+| PAB-013 | Help Hub | `lib/help-content/platform-admin.tsx` | Add a "Billing Specialist" role-path card linking to the four existing Billing SOPs (overrides, cancel, retention, bulk-ops). Content already exists — this is a navigation card only. | XS |
+
+### Group F — Growth surface polish
+
+| ID | Surface | File / Line | Fix direction | Effort |
+|----|---------|-------------|---------------|--------|
+| PAG-004 | Overview — Action Queue | `app/platform-admin/page.tsx:143–158` | Add a one-line context note ("Contact billing for trial/retention items") on action queue alerts for areas growth cannot act on. Core link suppression for view-only roles is F2; this is the copy-only half. | XS |
+| PAG-005 | Email — preview modal | `app/platform-admin/email/EmailDashboardClient.tsx:218–221, 805` | Replace `[First Name]` / `[Org Name]` placeholder tokens in the `founding_welcome` static preview with sample values ("Hi Sarah," / "Demo Org"), matching the other nine email previews. | XS |
+| PAG-006 | Email — confirm-send modal | `app/platform-admin/email/EmailDashboardClient.tsx:454–465` | Wire per-email-key `recipientCounts` (already fetched by the server page) through the client to the confirm-send modal and table Recipient column. The server already returns them; the client ignores them. | S |
+| PAG-007 | Early Access — filter bar | `app/platform-admin/early-access/EarlyAccessClient.tsx:362–408` | Add a date-range filter (preset select: Last 7/30/90 days + Custom) to the filter bar. API already supports `dateFrom`/`dateTo` params. | S |
+| PAG-008 | Early Access — default filter | `app/platform-admin/early-access/EarlyAccessClient.tsx:130–136` | Default status filter to `new` on first load (no URL param). Add secondary sort by `follow_up_due_at` ascending so overdue follow-ups surface first. | XS |
+| PAG-009 | Early Access — pagination | `app/platform-admin/early-access/EarlyAccessClient.tsx:434–489` | Add "Load more" / page buttons wired to the `offset` param the API already supports. Update summary metric counts to use API totals, not `leads.length`. | S |
+| PAG-010 | Email — stats row | `app/platform-admin/email/EmailDashboardClient.tsx:396–430` | Add a subtitle "Founding season organizations with active marketing email consent" below the stats row. Add `title` tooltip on each stat card explaining the filter scope. | XS |
+| PAG-011 | Overview — tab default | `app/platform-admin/OverviewTabs.tsx:16–18` | Default the Overview to the "Growth" tab when the session role is `growth`, or persist the last-used tab in `localStorage`. | XS |
+
+### Group G — Super-admin / nav IA polish
+
+| ID | Surface | File / Line | Fix direction | Effort |
+|----|---------|-------------|---------------|--------|
+| PA0-005 | Nav — System group | `app/platform-admin/PlatformAdminNav.tsx:44–53` | Restructure "System" nav group into "Support & Diagnostics" (Feedback, Observability) + "Governance" (Platform Users, Audit Log). "Email Templates" could move to "Billing & Product." This is an IA polish item; the functional guard fix for Feedback/Observability nav group is F4. | M |
+| PA0-006 | Nav — Email vs Email Templates naming | `app/platform-admin/PlatformAdminNav.tsx:35–38, 50` | Rename to distinguish: e.g. "Marketing Email" (batch) vs "Transactional Templates" (product copy); or add a subtitle/kicker to each page header explaining audience and scope. | XS |
+| PA0-008 | Change Requests — dual appearance | `app/platform-admin/change-requests/page.tsx:9` | Add a HelpCallout on the Change Requests page explaining its relationship to Plans & Pricing. Consider renaming the standalone nav item to "Approval Queue." | XS |
+| PA0-011 | Feedback / Observability — header kicker | `app/platform-admin/feedback/page.tsx:139`; observability page header | Update `headerLabel` kicker on both Feedback and Observability pages once the nav group is resolved (PA0-005). Depends on PA0-005. | XS |
+| PA0-012 | Org detail — Delete Organization position | `app/platform-admin/orgs/[id]/OrgDetailClient.tsx:1028–1056` | Move "Delete Organization" card to a dedicated "Danger" section at the bottom of the Support tab with a visual separator, or to its own "Admin" sub-tab, so it is not the first card seen on load. | XS |
+| PA0-013 | Email Templates — header kicker | `app/platform-admin/email-templates/page.tsx:53` | Change `headerLabel` kicker from "Platform Admin" to "System" (or the resolved group label) to match all other System-group pages. | XS |
+| PA0-014 | ALL_ROLES pages — defensive guards | `app/platform-admin/orgs/page.tsx`, `orgs/[id]/page.tsx`, `customer-users/page.tsx`, `audit/page.tsx` | Add `requirePlatformAreaView('organizations')`, `customer_users`, `audit` guards to the four ALL_ROLES pages as a defensive pattern, preventing future matrix-tightening from silently missing enforcement. Zero current impact. | XS |
+| PA0-009 | Customer Users — employee exclusion note | `app/platform-admin/customer-users/page.tsx` (no inline callout) | Add a brief HelpCallout: "Platform employees are excluded from this list. To manage platform staff, use Platform Users." Prevents "is my account missing?" confusion. | XS |
+
+### Group H — Read-only observer polish
+
+| ID | Surface | File / Line | Fix direction | Effort |
+|----|---------|-------------|---------------|--------|
+| PAR-007 | Org detail — Billing tab | `app/platform-admin/orgs/[id]/OrgDetailClient.tsx:1213–1219` | Collapse the Plan/Limit form to a read-only `<dl>` summary when `!canManageBilling`, rather than rendering disabled fields. Low visual clutter for pure observers. | S |
+| PAR-005 | Overview — MetricSnapshotButton | `app/platform-admin/MetricSnapshotButton.tsx:11–18`; `app/api/platform-admin/metrics/snapshot/route.ts:8` | Hide the button (or pass `canSnapshot=false`) for read_only. Tighten the API to `requirePlatformPermission('manage_product')` to close the accidental-write channel. Straddles F2 and F5; assign here since it is low-risk and small. | XS |
+| PAR-002 | Org detail — Coaches Portal textarea | `app/platform-admin/orgs/[id]/OrgDetailClient.tsx:1028–1056` | Wrap the ownership-transfer textarea so it does not render for roles where `!canManageSupport && !canManageBilling`. Remove the interactive field from the read-only fallback block. | XS |
+
+### Group I — Date-format drift (cross-surface)
+
+| ID | Surface | File / Line | Fix direction | Effort |
+|----|---------|-------------|---------------|--------|
+| PF-5 (2026-06-04 eval carry) | All platform-admin surfaces | Various — mix of relative ("3 days ago") and absolute ("Jun 4, 2026") dates across the console | Establish a consistent date display rule: absolute dates for anything more than 7 days old; relative for within 7 days. Apply consistently to the Retention Queue, override timestamps, audit log event dates, feedback submission timestamps, and org detail activity fields. Audit surfaces for drift and align. | M |
+
+### Group J — Growth analytics (future consideration, not built here)
+
+> Note: growth currently lacks in-console conversion/churn analytics (§13 funnel drill-through, per-cohort upgrade rates, churn by segment). These signals are locked behind product/billing surfaces that growth cannot access. This is a meaningful capability gap but is scoped as a **future growth-analytics feature**, not a polish fix. Flag for a dedicated Growth Analytics project when the founding-season moment matures. Not built in F5.
+
+---
+
+## Effort legend
+
+| Label | Meaning |
+|-------|---------|
+| XS | < 1 hour; one file, one component, copy/prop change |
+| S | 1–3 hours; multi-file but contained, no new data fetch |
+| M | 3–6 hours; structural change (nav IA, date audit sweep) |
+
+---
+
+## Recommended order of attack
+
+If batching: tackle Group B (menu ordering, XS) and Group C (§13 badge, S) first — highest cross-role friction per effort. Group D (URL-addressable tabs, S) unblocks Group E's Retention deep-link. Groups F and G can be done in a single session once F4 SOP work has established the nav group resolution.
+
+If picking off opportunistically: any XS item is safe to grab when touching the relevant file for another reason.

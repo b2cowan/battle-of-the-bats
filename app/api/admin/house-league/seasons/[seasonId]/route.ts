@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { isFreeFloorLeague } from '@/lib/free-floor';
 import {
   getLeagueSeasonById,
   getDivisionsForSeason,
@@ -100,7 +101,9 @@ export const PATCH = withObservability(async (req: Request,
   if ('division'               in body)      patch.division     = body.division ?? null;
   if ('description'            in body)      patch.description  = body.description ?? null;
   if ('registrationFee'        in body)      patch.registrationFee = body.registrationFee ?? null;
-  if ('autoGenerateFees'       in body)      patch.autoGenerateFees = Boolean(body.autoGenerateFees);
+  // Free-floor (League Starter) keeps manual fees only — force auto-fee generation off on UPDATE
+  // too (creation already does), so it can't be re-enabled to create module_accounting ledger entries.
+  if ('autoGenerateFees'       in body)      patch.autoGenerateFees = Boolean(body.autoGenerateFees) && !isFreeFloorLeague(ctx!.org);
   if ('autoApproveUnderCapacity' in body)    patch.autoApproveUnderCapacity = Boolean(body.autoApproveUnderCapacity);
   if ('autoPromoteWaitlist'    in body)      patch.autoPromoteWaitlist = Boolean(body.autoPromoteWaitlist);
   if ('registrationOpenAt'     in body)      patch.registrationOpenAt  = body.registrationOpenAt  ?? null;

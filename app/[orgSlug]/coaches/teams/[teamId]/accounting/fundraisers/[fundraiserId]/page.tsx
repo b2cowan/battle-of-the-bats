@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Gift, Settings, X, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -46,10 +46,11 @@ function fmt(n: number) {
 }
 
 export default function FundraiserDetailPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { orgSlug: string; teamId: string; fundraiserId: string };
+  params: Promise<{ orgSlug: string; teamId: string; fundraiserId: string }>;
 }) {
+  const params = use(paramsPromise);
   const { orgSlug, teamId, fundraiserId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
 

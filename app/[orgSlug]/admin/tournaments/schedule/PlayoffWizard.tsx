@@ -27,7 +27,7 @@ import {
 } from '@/lib/schedule-generator';
 import { generateBracket, nextPow2, ordinal, remapTierSeed, suggestDefaultTiers, validateTierRanges } from '@/lib/playoff-bracket';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
-import BracketBuilder from './components/BracketBuilder';
+import BracketColumns, { buildBracketColumns } from './components/BracketColumns';
 import BracketHealthPanel from './components/BracketHealthPanel';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './schedule-admin.module.css';
@@ -45,6 +45,12 @@ interface Props {
    * build the bracket structure and set dates/times/venues by hand.
    */
   canAutoSchedule?: boolean;
+  /**
+   * Optional config overrides merged into the opened division's defaults — used
+   * by the "Start from standings" entry point to pre-set a simple single-elim
+   * baseline (1 v 8, 2 v 7 …). Cleared on a real division switch.
+   */
+  initialConfig?: Partial<PlayoffConfig>;
   onClose: () => void;
   onComplete: () => void;
 }
@@ -203,7 +209,7 @@ function SortableSeed({ id, seed, teamName, isBye }: { id: string; seed: number;
   );
 }
 
-export default function PlayoffWizard({ divisions, defaultDivisionId, tournamentId, tournament = null, orgSlug, canAutoSchedule = true, onClose, onComplete }: Props) {
+export default function PlayoffWizard({ divisions, defaultDivisionId, tournamentId, tournament = null, orgSlug, canAutoSchedule = true, initialConfig, onClose, onComplete }: Props) {
   const [selectedDivisionId, setSelectedDivisionId] = useState(() => defaultDivisionId ?? divisions[0]?.id ?? '');
   const division = useMemo(
     () => (divisions.find(d => d.id === selectedDivisionId) ?? divisions[0]) as Division,
@@ -212,7 +218,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
   const [loading, setLoading] = useState(false);
   const [teams, setTeams] = useState<Team[]>([]);
   const [feedback, setFeedback] = useState<{isOpen: boolean; title: string; message: string; type: 'primary'|'danger'|'warning'|'success'|'info'}>({isOpen: false, title: '', message: '', type: 'primary'});
-  const [config, setConfig] = useState<PlayoffConfig>(() => initialPlayoffConfig(division));
+  const [config, setConfig] = useState<PlayoffConfig>(() => ({ ...initialPlayoffConfig(division), ...(initialConfig ?? {}) }));
   const lastDivisionId = useRef(selectedDivisionId);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [existingGames, setExistingGames] = useState<Game[]>([]);
@@ -264,11 +270,13 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
     lastDivisionId.current = selectedDivisionId;
     const next = divisions.find(d => d.id === selectedDivisionId) ?? divisions[0];
     if (!next) return;
-    setConfig(initialPlayoffConfig(next));
+    // Reset to the new division's defaults, then re-apply the entry-point preset
+    // (e.g. "Start from standings" → single-elim/reseed) so it survives a switch.
+    setConfig({ ...initialPlayoffConfig(next), ...(initialConfig ?? {}) });
     setPreview([]);
     setTemplatePreview([]);
     setDraftSummary(null);
-  }, [selectedDivisionId, divisions]);
+  }, [selectedDivisionId, divisions, initialConfig]);
 
   // ── Playoff-only (bracket-first) seeding ───────────────────────────────────
   const isPlayoffOnly = useMemo(() => resolveIsPlayoffOnly(tournament), [tournament]);
@@ -377,17 +385,6 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
     if (tierConfigs.length <= 1) return;
     commitTiers(tierConfigs.filter((_, i) => i !== idx));
   }
-
-  // Per-tier seed-option lists for the manual bracket builder (tier name → its
-  // global Seed #N range), so each tier's matchup dropdowns scope to its seeds.
-  const tierOptionMap = useMemo<Record<string, string[]> | undefined>(() => {
-    if (config.crossover !== 'tiers') return undefined;
-    const map: Record<string, string[]> = {};
-    for (const t of tierConfigs) {
-      map[t.name] = Array.from({ length: Math.max(0, t.toSeed - t.fromSeed + 1) }, (_, i) => `Seed #${t.fromSeed + i}`);
-    }
-    return map;
-  }, [config.crossover, tierConfigs]);
 
   function clearSeedPreview() {
     setTemplatePreview([]);
@@ -540,7 +537,61 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
     );
   }, [preview, gameLength, priorities.minRestMinutes]);
 
+  // The wizard preview is now READ-ONLY — in-modal bracket editing moved to the
+  // inline BracketEditor on the main Schedule screen. Mirror the generated
+  // template rows straight into the `preview` state that executeCreate + bracket
+  // health read, filling a default date the same way the old editable canvas did,
+  // so the Generate/save path stays byte-for-byte unchanged.
+  useEffect(() => {
+    const fallbackDate = tournament?.endDate || new Date().toISOString().split('T')[0];
+    setPreview((templatePreview ?? []).map(p => ({
+      round: p.round,
+      home: p.home,
+      away: p.away,
+      code: p.code,
+      date: p.date || fallbackDate || '',
+      time: p.time || '',
+      venueId: p.venueId || '',
+      venueFacilityId: p.venueFacilityId || undefined,
+      scheduleFacilityLaneId: p.scheduleFacilityLaneId ?? null,
+      scheduleFacilityLaneLabel: p.scheduleFacilityLaneLabel ?? null,
+      location: p.location ?? '',
+      pool: p.pool,
+      sourceGameId: p.sourceGameId,
+    })));
+  }, [templatePreview, tournament?.endDate]);
 
+  // ── Read-only preview rendering (reuses the main screen's BracketColumns) ─────
+  function previewFormatDate(d: string) {
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  /** Resolve a friendly field/venue label for a preview row (read-only display). */
+  function resolvePreviewLocation(row: PlayoffPreviewRow): string {
+    if (row.location) return row.location;
+    if (row.scheduleFacilityLaneLabel) return row.scheduleFacilityLaneLabel;
+    if (row.venueFacilityId) {
+      for (const v of venues) {
+        const f = v.facilities?.find(fac => fac.id === row.venueFacilityId);
+        if (f) return `${v.name} · ${f.name}`;
+      }
+    }
+    if (row.venueId) return venues.find(v => v.id === row.venueId)?.name ?? '';
+    return '';
+  }
+
+  /** Map a preview row to the game-ish shape BracketColumns/buildBracketColumns expect. */
+  function previewRowToGame(row: PlayoffPreviewRow, i: number) {
+    return {
+      id: row.sourceGameId || `${row.pool ?? ''}:${row.code}:${i}`,
+      bracketCode: row.code,
+      homePlaceholder: seedLabelFor ? seedLabelFor(row.home) : row.home,
+      awayPlaceholder: seedLabelFor ? seedLabelFor(row.away) : row.away,
+      date: row.date,
+      time: row.time,
+      location: resolvePreviewLocation(row),
+    };
+  }
 
   function savedPlayoffKey(item: Pick<PlayoffPreviewRow, 'code' | 'home' | 'away'>) {
     return `${item.code}:${item.home}:${item.away}`;
@@ -1209,7 +1260,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                 <Trophy size={20} />
               </div>
               <div>
-                <h3 style={{ margin: 0 }}>Playoff Bracket Generator</h3>
+                <h3 style={{ margin: 0 }}>Playoff Bracket Builder</h3>
                 <p className="text-label" style={{ color: 'var(--logic-lime)', marginTop: '0.25rem' }}>{division.name} Division</p>
               </div>
             </div>
@@ -1531,7 +1582,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                     className={`${styles.generatorSegBtn} ${autoSchedule ? styles.generatorSegBtnActive : ''}`}
                     onClick={() => { if (canAutoSchedule) setAutoSchedule(true); }}
                     disabled={!canAutoSchedule}
-                    title={canAutoSchedule ? undefined : 'Automated schedule generation is included with Tournament Plus, League, and Club.'}
+                    title={canAutoSchedule ? undefined : 'Automated schedule generation is included with Tournament Plus, League Plus, and Club.'}
                     style={!canAutoSchedule ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
                   >
                     {!canAutoSchedule && <Lock size={11} style={{ marginRight: '0.35rem' }} />}
@@ -1547,7 +1598,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                 </div>
                 <p className="text-muted text-xs" style={{ marginTop: '0.5rem' }}>
                   {!canAutoSchedule
-                    ? 'Creates the bracket matchup structure — you assign dates and fields manually in the game slots below. Auto-scheduling dates & times is included with Tournament Plus, League, and Club.'
+                    ? 'Creates the bracket matchup structure — you assign dates and fields manually in the game slots below. Auto-scheduling dates & times is included with Tournament Plus, League Plus, and Club.'
                     : autoSchedule
                     ? 'Games are assigned to the date windows you set below. Team names are placeholders until standings are final after round robin.'
                     : 'Creates the bracket matchup structure only — you assign dates and fields manually in the game slots below.'}
@@ -1826,18 +1877,44 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                     </div>
                   )}
 
-                  <BracketBuilder
-                    division={division}
-                    teams={teams}
-                    venues={venues}
-                    defaultDate={tournament?.endDate || new Date().toISOString().split('T')[0]}
-                    templatePreview={templatePreview}
-                    baseOptions={baseOptions}
-                    groupOptions={tierOptionMap}
-                    onPreviewChange={setPreview}
-                    crossover={config.crossover}
-                    labelFor={seedLabelFor}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem 1rem', background: 'var(--white-5)', borderRadius: '2px', margin: '0.75rem 0', fontSize: '0.8rem', color: 'var(--white-60)', lineHeight: 1.5 }}>
+                    <Info size={14} style={{ marginTop: '1px', flexShrink: 0, color: 'var(--blueprint-blue)' }} />
+                    Preview only. Click <strong>Generate Playoff Bracket</strong> to save it, then fine-tune dates, fields and matchups on the schedule with <strong>Edit Bracket</strong>.
+                  </div>
+
+                  {(() => {
+                    const poolNames = Array.from(
+                      new Set(templatePreview.map(p => p.pool).filter((p): p is string => !!p)),
+                    );
+                    if (poolNames.length > 0) {
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                          {poolNames.map(poolName => (
+                            <div key={poolName}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                                <Trophy size={16} style={{ color: 'var(--logic-lime)' }} />
+                                <h4 className="text-label" style={{ margin: 0, color: 'var(--logic-lime)' }}>
+                                  {config.crossover === 'tiers' ? poolName : `${formatPoolName(poolName)} Playoffs`}
+                                </h4>
+                              </div>
+                              <BracketColumns
+                                columns={buildBracketColumns(templatePreview.filter(p => p.pool === poolName).map(previewRowToGame))}
+                                readOnly
+                                formatDate={previewFormatDate}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return (
+                      <BracketColumns
+                        columns={buildBracketColumns(templatePreview.map(previewRowToGame))}
+                        readOnly
+                        formatDate={previewFormatDate}
+                      />
+                    );
+                  })()}
                 </>
               )}
             </section>

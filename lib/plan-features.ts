@@ -104,17 +104,17 @@ export function requiresPlanCopy(feature: PlanFeature): string {
   switch (feature) {
     // ── Export features ───────────────────────────────────────────────────
     case 'pdf_exports':
-      return 'PDF exports are included with Tournament Plus, League, and Club.';
+      return 'PDF exports are included with Tournament Plus, League Plus, and Club.';
     case 'pdf_template_settings':
-      return 'Custom PDF headers, logos, and footers are included with Tournament Plus, League, and Club.';
+      return 'Custom PDF headers, logos, and footers are included with Tournament Plus, League Plus, and Club.';
     case 'league_exports':
-      return 'Data exports for house league seasons are included with League and Club.';
+      return 'Data exports for house league seasons are included with League Plus and Club.';
     case 'club_exports':
       return 'Data exports for rep teams and accounting are included with Club.';
     case 'bulk_operational_workbook':
-      return 'Full tournament export workbooks (registrations, schedule, and results in one file) are included with Tournament Plus, League, and Club.';
+      return 'Full tournament export workbooks (registrations, schedule, and results in one file) are included with Tournament Plus, League Plus, and Club.';
     case 'bulk_data_imports':
-      return 'Spreadsheet imports are included with Tournament Plus, League, and Club.';
+      return 'Spreadsheet imports are included with Tournament Plus, League Plus, and Club.';
     case 'schedule_xlsx_export':
     case 'results_xlsx_export':
     case 'ical_export':
@@ -123,7 +123,7 @@ export function requiresPlanCopy(feature: PlanFeature): string {
       return 'Schedule, results, and calendar exports are available on all plans.';
     // ── Public fan experience ─────────────────────────────────────────────
     case 'fan_score_alerts':
-      return 'Live score alerts to fans who follow a team are included with Tournament Plus, League, and Club.';
+      return 'Live score alerts to fans who follow a team are included with Tournament Plus, League Plus, and Club.';
     case 'live_score_refresh':
     case 'fan_following':
     case 'pwa_install':
@@ -131,7 +131,7 @@ export function requiresPlanCopy(feature: PlanFeature): string {
       return 'Live public pages, team following, and home-screen install are available on all plans.';
     case 'playoff_manual':
       // Free on all tournament plans — safe fallback if called unexpectedly.
-      return 'Building playoff brackets by seed is available on all tournament plans. Auto-scheduling and tiered brackets are included with Tournament Plus, League, and Club.';
+      return 'Building playoff brackets by seed is available on all tournament plans. Auto-scheduling and tiered brackets are included with Tournament Plus, League Plus, and Club.';
     // ── Existing features — delegate ──────────────────────────────────────
     default:
       return requiresTournamentPlusCopy(feature);
@@ -146,37 +146,37 @@ export function requiresPlanCopy(feature: PlanFeature): string {
 export function requiresTournamentPlusCopy(feature: PlanFeature): string {
   switch (feature) {
     case 'auto_schedule':
-      return 'Automated schedule generation is included with Tournament Plus, League, and Club.';
+      return 'Automated schedule generation is included with Tournament Plus, League Plus, and Club.';
     case 'playoff_generator':
-      return 'The playoff bracket generator is included with Tournament Plus, League, and Club.';
+      return 'The playoff bracket generator is included with Tournament Plus, League Plus, and Club.';
     case 'sealed_archives':
-      return 'Permanent sealed archives are included with Tournament Plus, League, and Club.';
+      return 'Permanent sealed archives are included with Tournament Plus, League Plus, and Club.';
     case 'advanced_tournament_branding':
-      return 'Full tournament branding control - logos, colors, presets, and public appearance options - is included with Tournament Plus, League, and Club.';
+      return 'Full tournament branding control - logos, colors, presets, and public appearance options - is included with Tournament Plus, League Plus, and Club.';
     case 'schedule_notification':
-      return 'Email notifications to registered teams are included with Tournament Plus, League, and Club.';
+      return 'Email notifications to registered teams are included with Tournament Plus, League Plus, and Club.';
     case 'custom_registration_fields':
-      return 'Custom registration questions and file collection are included with Tournament Plus, League, and Club.';
+      return 'Custom registration questions and file collection are included with Tournament Plus, League Plus, and Club.';
     case 'registration_export':
-      return 'Registration CSV export for insurance, check-in, and reporting is included with Tournament Plus, League, and Club.';
+      return 'Registration CSV export for insurance, check-in, and reporting is included with Tournament Plus, League Plus, and Club.';
     case 'bulk_data_imports':
-      return 'Spreadsheet imports are included with Tournament Plus, League, and Club.';
+      return 'Spreadsheet imports are included with Tournament Plus, League Plus, and Club.';
     case 'bulk_registration_actions':
       return 'Basic selected-row registration updates are available on all tournament plans.';
     case 'waitlist_collection':
       return 'Overflow waitlist collection is available on all tournament plans.';
     case 'waitlist_automation':
-      return 'Waitlist promotion and queue management are included with Tournament Plus, League, and Club.';
+      return 'Waitlist promotion and queue management are included with Tournament Plus, League Plus, and Club.';
     case 'tournament_cloning':
-      return 'Tournament cloning is included with Tournament Plus, League, and Club so repeat events can start from last year\'s setup.';
+      return 'Tournament cloning is included with Tournament Plus, League Plus, and Club so repeat events can start from last year\'s setup.';
     case 'targeted_tournament_announcements':
-      return 'Targeted tournament announcements by division or registration status are included with Tournament Plus, League, and Club.';
+      return 'Targeted tournament announcements by division or registration status are included with Tournament Plus, League Plus, and Club.';
     case 'post_tournament_summary':
-      return 'Post-tournament summaries for reporting, sharing, and renewal planning are included with Tournament Plus, League, and Club.';
+      return 'Post-tournament summaries for reporting, sharing, and renewal planning are included with Tournament Plus, League Plus, and Club.';
     case 'payment_readiness_tools':
-      return 'Payment tracking dashboards, payment filters, and payment reminder workflows are included with Tournament Plus, League, and Club.';
+      return 'Payment tracking dashboards, payment filters, and payment reminder workflows are included with Tournament Plus, League Plus, and Club.';
     case 'online_tournament_payments':
-      return 'Online tournament entry fee and deposit collection is planned as a Tournament Plus, League, and Club workflow.';
+      return 'Online tournament entry fee and deposit collection is planned as a Tournament Plus, League Plus, and Club workflow.';
     default:
       // New export features — forward to requiresPlanCopy to avoid duplication
       return requiresPlanCopy(feature);

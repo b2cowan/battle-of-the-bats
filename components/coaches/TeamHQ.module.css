@@ -232,3 +232,50 @@
 .heroContact a {
   color: var(--logic-lime);
 }
+
+/* ── 5m afterglow (result phase) ── */
+.afterglow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0.6rem;
+}
+
+.afterglowLead {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: var(--white-80);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.afterglowLead svg {
+  color: var(--logic-lime);
+}
+
+.afterglowRecord {
+  margin: 0;
+  color: var(--white-60);
+  font-size: 0.86rem;
+}
+
+.afterglowRecord strong {
+  color: var(--logic-lime);
+  font-family: var(--font-data, monospace);
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.afterglowLink {
+  align-self: flex-start;
+  color: var(--logic-lime);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.afterglowLink:hover {
+  text-decoration: underline;
+}

@@ -3337,6 +3337,14 @@
   },
   {
     "table_name": "tournament_roster_players",
+    "constraint_name": "tournament_roster_players_source_player_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "source_player_id",
+    "foreign_table": "basic_coach_team_players",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "tournament_roster_players",
     "constraint_name": "tournament_roster_players_team_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",

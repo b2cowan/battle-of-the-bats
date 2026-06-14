@@ -104,7 +104,7 @@ export default function HouseLeaguePage() {
         <div className="max-w-4xl mx-auto px-6">
           <p className="font-mono text-xs text-data-gray/50 uppercase tracking-widest mb-4">Included in</p>
           <div className="flex flex-wrap gap-3 mb-6">
-            {['League', 'Club'].map(plan => (
+            {['League Plus', 'Club'].map(plan => (
               <span
                 key={plan}
                 className="font-mono text-xs uppercase tracking-widest border border-blueprint-blue/40 px-4 py-2 text-fl-text"
@@ -129,7 +129,7 @@ export default function HouseLeaguePage() {
             Ready to run a real season?
           </h2>
           <p className="font-mono text-xs text-data-gray mb-10">
-            House League will be included in the League and Club plans when those tiers open for self-serve signup.
+            House League will be included in the League Plus and Club plans when those tiers open for self-serve signup.
           </p>
           <EarlyAccessModalTrigger
             className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"

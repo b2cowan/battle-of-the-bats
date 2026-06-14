@@ -1,9 +1,10 @@
 ﻿'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check, AlertTriangle, Lock, Unlock, Plus, Minus } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check, AlertTriangle, Lock, Unlock, Plus, Minus, Network } from 'lucide-react';
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import { checkVenueConflict, buildConflictMap, resolveGameTiming, type ConflictResult, type ConflictInfo } from '@/lib/schedule-conflict';
 import { formatTime, formatPoolName } from '@/lib/utils';
+import { buildPlaceholderOptions } from '@/lib/playoff-bracket';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import { Pool } from '@/lib/types';
 import s from '../../../admin-common.module.css';
@@ -18,12 +19,15 @@ interface GameListProps {
   groupByPool: boolean;
   pools?: Pool[];
   onEdit?: (g: Game) => void;
+  /** Playoff games only: open the inline bracket canvas editor focused on this
+   *  game (structural wiring). When absent, playoff rows edit inline as before. */
+  onPlayoffEdit?: (g: Game) => void;
   onFinalize?: (id: string) => void;
   onDelete?: (id: string) => void;
   onCancel?: (id: string) => void;
   onSchedule?: (id: string) => void;
   onToggleGeneratorLock?: (id: string, nextLocked: boolean) => void;
-  onSave?: (gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string }) => Promise<void>;
+  onSave?: (gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder: string; awayPlaceholder: string }) => Promise<void>;
   onSaveScore?: (gameId: string, homeScore: number, awayScore: number) => Promise<void>;
   onCreateVenue?: () => void;
   mode: 'planning' | 'scoring';
@@ -33,7 +37,7 @@ interface GameListProps {
   tournament?: Tournament | null;
 }
 
-type EditFields = { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string };
+type EditFields = { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder: string; awayPlaceholder: string };
 
 type ScoreFields = { home: string; away: string };
 
@@ -50,7 +54,7 @@ function parseGameStart(date?: string | null, time?: string | null): number {
 
 export default function GameList({
   games, teams, divisions, venues, viewMode, groupByPool, pools: poolsProp,
-  onEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onCreateVenue, mode, conflictsOnly = false, tournament
+  onEdit, onPlayoffEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onCreateVenue, mode, conflictsOnly = false, tournament
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editState, setEditState] = useState<Record<string, EditFields>>({});
@@ -161,6 +165,8 @@ export default function GameList({
             notes: game.notes ?? '',
             homeTeamId: game.homeTeamId ?? '',
             awayTeamId: game.awayTeamId ?? '',
+            homePlaceholder: game.homePlaceholder ?? '',
+            awayPlaceholder: game.awayPlaceholder ?? '',
           },
         };
       });
@@ -532,13 +538,15 @@ export default function GameList({
       notes: g.notes ?? '',
       homeTeamId: g.homeTeamId ?? '',
       awayTeamId: g.awayTeamId ?? '',
+      homePlaceholder: g.homePlaceholder ?? '',
+      awayPlaceholder: g.awayPlaceholder ?? '',
     };
     const isSaving = saving.has(g.id);
 
     const handleDiscard = () => {
       setEditState(prev => ({
         ...prev,
-        [g.id]: { date: g.date ?? '', time: g.time ?? '', venueId: g.venueId ?? '', venueFacilityId: g.venueFacilityId ?? '', notes: g.notes ?? '', homeTeamId: g.homeTeamId ?? '', awayTeamId: g.awayTeamId ?? '' },
+        [g.id]: { date: g.date ?? '', time: g.time ?? '', venueId: g.venueId ?? '', venueFacilityId: g.venueFacilityId ?? '', notes: g.notes ?? '', homeTeamId: g.homeTeamId ?? '', awayTeamId: g.awayTeamId ?? '', homePlaceholder: g.homePlaceholder ?? '', awayPlaceholder: g.awayPlaceholder ?? '' },
       }));
       setSaveErrors(prev => { const n = { ...prev }; delete n[g.id]; return n; });
       setExpanded(prev => { const next = new Set(prev); next.delete(g.id); return next; });
@@ -667,6 +675,20 @@ export default function GameList({
             })()}
           </div>
 
+          {/* Playoff games: jump to the bracket canvas editor (structural wiring),
+              focused on this game. Inline expand still handles quick scheduling. */}
+          {g.isPlayoff && onPlayoffEdit && !isExpanded && (
+            <button
+              className={`${s.iconBtn} ${styles.playoffEditIconBtn}`}
+              onClick={e => { e.stopPropagation(); onPlayoffEdit(g); }}
+              style={{ flexShrink: 0 }}
+              title="Edit in bracket builder"
+              aria-label="Edit in bracket builder"
+            >
+              <Network size={15} />
+            </button>
+          )}
+
           {/* Chevron — hidden for completed games */}
           {!locksEditing ? (
             <button
@@ -791,8 +813,65 @@ export default function GameList({
                   <option value="__create__">＋ Add venue…</option>
                 </select>
               </div>
-              {/* Away / Home Teams — order matches row display (away left, home right) */}
-              {!g.homeSlotId && !g.awaySlotId && (
+              {/* Away / Home participants — order matches row display (away left, home right).
+                  Playoff games wire by Seed/Winner/Loser placeholder (or a known team);
+                  round-robin games pick a team directly. */}
+              {!g.homeSlotId && !g.awaySlotId && (g.isPlayoff ? (() => {
+                const divPo = divisions.find(d => d.id === g.divisionId);
+                const seedCount = (divPo?.playoffConfig?.teamsQualifying as number | undefined)
+                  || teams.filter(t => t.divisionId === g.divisionId).length || 8;
+                const codes = games
+                  .filter(x => x.isPlayoff && x.divisionId === g.divisionId && x.bracketCode && x.id !== g.id)
+                  .map(x => x.bracketCode as string);
+                const opts = buildPlaceholderOptions(seedCount, codes);
+                const dteams = teams.filter(t => t.divisionId === g.divisionId);
+                // Each Seed / Winner / Loser feeds exactly one slot: hide refs
+                // already wired into another game (and this game's other side).
+                const assignedElsewhere = new Set(
+                  games
+                    .filter(x => x.isPlayoff && x.divisionId === g.divisionId && x.id !== g.id)
+                    .flatMap(x => [x.homePlaceholder, x.awayPlaceholder])
+                    .filter((x): x is string => !!x),
+                );
+                const setSide = (isHome: boolean, v: string) => {
+                  const teamId = v.startsWith('team:') ? v.slice(5) : '';
+                  const ph = v.startsWith('ph:') ? v.slice(3) : '';
+                  setEditState(prev => ({
+                    ...prev,
+                    [g.id]: { ...prev[g.id], ...(isHome
+                      ? { homeTeamId: teamId, homePlaceholder: ph }
+                      : { awayTeamId: teamId, awayPlaceholder: ph }) },
+                  }));
+                };
+                const sideSelect = (isHome: boolean, label: string) => {
+                  const teamId = isHome ? edit.homeTeamId : edit.awayTeamId;
+                  const ph = isHome ? edit.homePlaceholder : edit.awayPlaceholder;
+                  const otherPh = isHome ? edit.awayPlaceholder : edit.homePlaceholder;
+                  const value = teamId ? `team:${teamId}` : ph ? `ph:${ph}` : '';
+                  const avail = (s: string) => s === ph || (!assignedElsewhere.has(s) && s !== otherPh);
+                  const seeds = opts.seeds.filter(avail);
+                  const winners = opts.winners.filter(avail);
+                  const losers = opts.losers.filter(avail);
+                  return (
+                    <div className={styles.formField}>
+                      <label className={styles.formLabel}>{label}</label>
+                      <select className={styles.formSelect} value={value} onChange={e => setSide(isHome, e.target.value)}>
+                        <option value="">— TBD —</option>
+                        {seeds.length > 0 && <optgroup label="Seeds">{seeds.map(sd => <option key={sd} value={`ph:${sd}`}>{sd}</option>)}</optgroup>}
+                        {winners.length > 0 && <optgroup label="Winner of…">{winners.map(sd => <option key={sd} value={`ph:${sd}`}>{sd}</option>)}</optgroup>}
+                        {losers.length > 0 && <optgroup label="Loser of…">{losers.map(sd => <option key={sd} value={`ph:${sd}`}>{sd}</option>)}</optgroup>}
+                        {dteams.length > 0 && <optgroup label="Teams">{dteams.map(t => <option key={t.id} value={`team:${t.id}`}>{t.name}</option>)}</optgroup>}
+                      </select>
+                    </div>
+                  );
+                };
+                return (
+                  <div className={styles.formFieldFull} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    {sideSelect(false, 'Away')}
+                    {sideSelect(true, 'Home')}
+                  </div>
+                );
+              })() : (
                 <div className={styles.formFieldFull} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className={styles.formField}>
                     <label className={styles.formLabel}>Away Team</label>
@@ -821,7 +900,7 @@ export default function GameList({
                     </select>
                   </div>
                 </div>
-              )}
+              ))}
 
               {/* Notes — full width */}
               <div className={`${styles.formField} ${styles.formFieldFull}`}>
@@ -895,6 +974,11 @@ export default function GameList({
                 {onDelete && (
                   <button className="btn btn-danger btn-data" onClick={() => onDelete(g.id)}>
                     <Trash2 size={13} /> Delete
+                  </button>
+                )}
+                {g.isPlayoff && onPlayoffEdit && (
+                  <button className="btn btn-ghost btn-data" onClick={() => onPlayoffEdit(g)} title="Open this game in the bracket canvas to rewire matchups">
+                    <Network size={13} /> Edit in bracket
                   </button>
                 )}
                 {saveErrors[g.id] && (

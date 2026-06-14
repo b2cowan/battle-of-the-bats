@@ -4,6 +4,16 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-12 — Schedule toolbar: destructive "Clear Bracket" de-emphasized vs neutral "Auto" menu
+
+**Decision:** In the Schedule admin toolbar's Row 1 right action group, the new **Clear Bracket** button (shown in Playoffs view once a bracket exists, beside the **Auto ▾** tools menu) drops `btn-ghost` and adopts a new recessive/tertiary treatment (`.clearBracketBtn` in `schedule-admin.module.css`): transparent fill + `var(--data-gray)` text/icon at rest, with a danger reveal on hover (`rgba(var(--danger-rgb),0.12)` bg, `0.3` border, `--danger` text). It keeps `btn-data` sizing **and a 1px transparent border** so its box height matches the bordered `.btn-ghost` Auto trigger exactly (a borderless button would render 2px shorter — `.btn` is `border:none`, `.btn-ghost` adds 1px). Double-class selector (`.clearBracketBtn.clearBracketBtn`) for specificity over the global `.btn`/`.btn-ghost`. Auto stays the neutral ghost pill, unchanged. Establishes a 3-tier action hierarchy in this cluster: **create = prominent** (Build Bracket `btn-lime`), **everyday tool = secondary** (Auto `btn-ghost`), **destroy = recessive** (Clear Bracket transparent→danger-on-hover).
+
+**Rationale:** Adding Clear Bracket put two visually identical gray ghost pills side by side, giving a rare destructive "delete the whole bracket" action the same resting weight as the everyday Auto menu and letting them blur together. Pairs with the binding rule "status = label vs action = button" and the admin convention "btn-lime/ghost/danger/data only." Destructive, infrequently-used actions should recede at rest and only signal danger on intent (hover), not compete with neutral tools. Transparent border preserves height parity so the pair still reads as a clean, aligned group.
+
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/page.tsx` (Clear Bracket button className), `app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css` (`.clearBracketBtn`). Pattern is the standard for any future inline destructive action sitting beside a neutral peer in an admin toolbar cluster: recessive at rest, danger on hover, keep a transparent border for height parity.
+
+---
+
 ### 2026-06-08 — Public registration form: de-duplicated header + inline payment panel (height reduction)
 
 **Decision:** The public tournament registration form (`app/[orgSlug]/[tournamentSlug]/register/page.tsx` + `app/[orgSlug]/register/register.module.css`) was compacted to fit one screen:

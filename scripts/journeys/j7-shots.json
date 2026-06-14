@@ -1,0 +1,18 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J7",
+  "login": null,
+  "shots": [
+    { "name": "01-league-index",      "url": "/dev-league-org/league" },
+    { "name": "02-season-open",       "url": "/dev-league-org/league/dev-league-2027" },
+    { "name": "03-register-form",     "url": "/dev-league-org/league/dev-league-2027/register" },
+    { "name": "04-register-closed",   "url": "/dev-league-org/league/dev-league-2026/register" },
+    { "name": "05-status-active",     "url": "/dev-league-org/league/dev-league-2026/status?email=avery.macdonald@dev.local" },
+    { "name": "06-status-waitlist",   "url": "/dev-league-org/league/dev-league-2026/status?email=zoe.leblanc@dev.local" },
+    { "name": "07-season-active",     "url": "/dev-league-org/league/dev-league-2026" },
+    { "name": "08-schedule",          "url": "/dev-league-org/league/dev-league-2026/schedule" },
+    { "name": "09-standings",         "url": "/dev-league-org/league/dev-league-2026/standings" },
+    { "name": "10-season-completed",  "url": "/dev-league-org/league/dev-league-2025" },
+    { "name": "11-org-home",          "url": "/dev-league-org" }
+  ]
+}

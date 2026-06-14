@@ -138,7 +138,7 @@ export default function ComparisonTable() {
             <th className={styles.thFeature}>Feature</th>
             <th className={styles.th}>Tournament</th>
             <th className={styles.th}>Tournament Plus</th>
-            <th className={styles.th}>League</th>
+            <th className={styles.th}>League Plus</th>
             <th className={`${styles.th} ${styles.thClub}`}>Club</th>
           </tr>
         </thead>

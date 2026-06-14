@@ -255,13 +255,13 @@ function CreateTeamsModal({
 
         {atCap ? (
           <p style={{ fontSize: '0.85rem', color: 'var(--data-gray)', lineHeight: 1.5, margin: '0.25rem 0 1rem' }}>
-            You&apos;ve reached the 8-team limit on the free League Starter plan. League gives you unlimited teams.
+            You&apos;ve reached the 8-team limit on the free League plan. League Plus gives you unlimited teams.
           </p>
         ) : (
           <>
             {!unlimited && (
               <p style={{ fontSize: '0.75rem', color: 'var(--data-gray)', margin: '0 0 0.75rem', lineHeight: 1.5 }}>
-                Free League Starter — you can add up to {remaining} more team{remaining !== 1 ? 's' : ''}.
+                Free League — you can add up to {remaining} more team{remaining !== 1 ? 's' : ''}.
               </p>
             )}
             <div className={styles.field}>

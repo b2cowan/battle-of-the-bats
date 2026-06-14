@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -150,10 +150,11 @@ function CumulativeChart({ data }: { data: MonthlyPoint[] }) {
 }
 
 export default function BudgetVsActualPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { orgSlug: string; teamId: string };
+  params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
+  const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;

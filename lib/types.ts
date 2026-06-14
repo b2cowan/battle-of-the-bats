@@ -22,6 +22,21 @@ export type PublicPageKey = 'news' | 'schedule' | 'standings' | 'teams' | 'rules
 export type TournamentFormat = 'round_robin_playoffs' | 'playoff_only';
 
 /**
+ * Organizer-defined thresholds that determine what a "healthy" schedule is, edited
+ * inline from the Schedule Health panel. Drives the health score, the same-day /
+ * back-to-back / target warnings, and seeds the auto-Generator's per-day default.
+ * Absent fields fall back to engine defaults (2 / 15 / no target). See lib/schedule-metrics.ts.
+ */
+export interface ScheduleHealthRules {
+  /** Flag a team scheduled for more than this many games on a single day. Default 2. */
+  maxGamesPerDay?: number;
+  /** A team's consecutive games closer than this (minutes) count as back-to-back. Default 15. */
+  minRestMinutes?: number;
+  /** Target games per team; teams under/over are flagged. null/absent = no target (default). */
+  targetGamesPerTeam?: number | null;
+}
+
+/**
  * Per-tournament display/behaviour preferences stored as JSONB in tournaments.settings.
  * Add new optional keys here as features require them — no migration needed for new keys.
  */
@@ -55,6 +70,11 @@ export interface TournamentSettings {
    * Organizer-entered estimate for how much rest a team should have when it changes facilities inside a venue.
    */
   schedule_travel_facility_buffer_minutes?: number;
+  /**
+   * Organizer-defined "healthy schedule" thresholds, edited inline from the Schedule
+   * Health panel (max games/day, min rest, target games/team). See ScheduleHealthRules.
+   */
+  schedule_health_rules?: ScheduleHealthRules;
 
   // ── Scope controls (Phase 2 — Divisions UX Rework) ─────────────────────────
   /**
@@ -117,7 +137,9 @@ export interface TournamentSettings {
   // to a team's coach/contact. Absent/`true` = enabled (legacy behaviour); only an
   // explicit `false` disables. Read via `coachEmailEnabled()` (lib/email.ts), set
   // from Event Settings → Notifications & Contact. Do not gate the org-admin
-  // notifications or the manual send tools — these only govern the auto coach emails.
+  // notifications or the manual send tools (announcements, payment reminders, resend
+  // access) — these keys only govern the automatic coach emails. The master
+  // `coach_email_pause_all` (below) overrides every per-type key when on.
   /** Registration confirmation / waitlist receipt sent when a coach submits a registration. */
   coach_email_confirmation?: boolean;
   /** "Team accepted" email sent when a team's status changes to accepted. */
@@ -126,6 +148,18 @@ export interface TournamentSettings {
   coach_email_rejection?: boolean;
   /** "Payment recorded" email sent when a team's payment_status changes to paid. */
   coach_email_payment?: boolean;
+  /** "Schedule published" email sent to accepted teams when the organizer publishes a schedule. */
+  coach_email_schedule?: boolean;
+  /** Game-day reminder (Phase 5m) scheduled the evening before a team's first game. Still bypasses the org marketing opt-out, but the organizer can disable it here (5n). */
+  coach_email_game_day?: boolean;
+  /**
+   * Master kill-switch (Phase 5n): when `true`, suppresses ALL automatic coach-facing
+   * emails for this tournament — the per-type keys above AND the post-event results email.
+   * The organizer is handling coach communication manually; there is NO transactional
+   * carve-out. Default OFF (absent/`false` = not paused). OPPOSITE polarity from the per-type
+   * keys (`true` DISABLES). Read via `coachEmailsPaused`/`coachEmailEnabled` (lib/email.ts).
+   */
+  coach_email_pause_all?: boolean;
 
   // ── Roster requirements (Phase 5 — tournament coach experience) ────────────
   // What an accepted team must provide when it submits its event roster from the
@@ -180,6 +214,14 @@ export interface DivisionSettings {
   buffer_minutes?: number;
 }
 
+/**
+ * Free-floor entitlement profile on an org (NULL = none). A free floor contributes extra module
+ * entitlements + server-side caps on top of the paid `planId` — it is NOT a new OrgPlan key.
+ * `league_starter` = the capped free house-league floor (Free Tier Phase 6, migration 125).
+ * Forward-compatible with a future `'tournament_free'`. See lib/free-floor.ts.
+ */
+export type FreeFloor = 'league_starter' | null;
+
 export interface Organization {
   id: string;
   name: string;
@@ -208,6 +250,8 @@ export interface Organization {
   accountKind: OrgAccountKind;
   teamWorkspaceStatus?: TeamWorkspaceStatus | null;
   isDiscoverable: boolean;
+  /** Free-floor entitlement profile (NULL/undefined = none). See FreeFloor + lib/free-floor.ts. */
+  freeFloor?: FreeFloor;
 }
 
 export interface OrganizationMember {

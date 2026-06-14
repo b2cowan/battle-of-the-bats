@@ -473,6 +473,12 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
   const paymentInstructions = (tournament?.settings?.payment_instructions ?? '').trim();
   const formInstructions =
     paymentInstructions && tournament?.settings?.payment_instructions_on_form ? paymentInstructions : '';
+  // J5-007 / 5n: only promise a confirmation email when the organizer actually sends one — the
+  // per-type confirmation toggle must be on AND automatic emails not paused. Mirrors
+  // coachEmailEnabled(settings, 'confirmation') without importing the server email module.
+  const confirmationEmailEnabled =
+    tournament?.settings?.coach_email_pause_all !== true &&
+    tournament?.settings?.coach_email_confirmation !== false;
   // Success-screen momentum ticker — only when the event hasn't started yet.
   const firstGameTarget = tournament?.startDate ? `${tournament.startDate}T09:00:00` : null;
   const showCountdown = firstGameTarget != null && Date.parse(firstGameTarget) > mountedAtMs;
@@ -725,11 +731,17 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
                   <div className={styles.successItem}>
                     <Mail size={18} className={styles.successIcon} />
                     <div>
-                      <span className={styles.successTitleInner}>Watch your email</span>
+                      <span className={styles.successTitleInner}>
+                        {confirmationEmailEnabled ? 'Watch your email' : 'What happens next'}
+                      </span>
                       <span className={styles.successDescInner}>
-                        {confirmation.status === 'waitlist'
-                          ? 'Check your inbox for your waitlist confirmation. The organizer will reach out if a spot opens'
-                          : 'Check your inbox for your confirmation. The organizer follows up with approval and how to pay'}
+                        {confirmationEmailEnabled
+                          ? (confirmation.status === 'waitlist'
+                              ? 'Check your inbox for your waitlist confirmation. The organizer will reach out if a spot opens'
+                              : 'Check your inbox for your confirmation. The organizer follows up with approval and how to pay')
+                          : (confirmation.status === 'waitlist'
+                              ? 'The organizer reviews waitlist requests and will reach out if a spot opens'
+                              : 'The organizer reviews your registration and will follow up with approval and how to pay')}
                         {contactEmail ? <> — reach them anytime at <a href={`mailto:${contactEmail}`}>{contactEmail}</a> with questions.</> : '.'}
                       </span>
                     </div>

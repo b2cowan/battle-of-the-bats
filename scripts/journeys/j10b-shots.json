@@ -1,0 +1,9 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J10",
+  "login": { "email": "j10-admin@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "05-accept-invite", "url": "/auth/accept-invite?org=dev-test-org", "auth": true },
+    { "name": "06-home-invited",  "url": "/home", "auth": true }
+  ]
+}

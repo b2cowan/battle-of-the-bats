@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Archive } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -24,10 +24,11 @@ function acceptanceRate(total: number, accepted: number): string {
 }
 
 export default function CoachesHistoryPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { orgSlug: string; teamId: string };
+  params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
+  const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === teamId);

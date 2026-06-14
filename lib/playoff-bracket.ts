@@ -480,8 +480,16 @@ export function bracketRoundInfo(code: string): BracketRoundInfo {
   if (c === 'GF' || c === 'GF2') return { key: 'GF', title: 'Grand Final', rank: 500 };
   if (c.startsWith('CON')) { const r = after('CON'); return { key: `CON${r}`, title: r > 0 ? `Consolation Round ${r}` : 'Consolation', rank: 700 + r }; }
 
-  // Single elimination (negative ranks → before any double-elim section)
-  if (/^R\d+-/.test(c)) { const n = parseInt(c.match(/^R(\d+)-/)?.[1] ?? '0', 10) || 0; return { key: `R${n}`, title: `Round of ${n}`, rank: -n }; }
+  // Single elimination. The auto-generator emits R{teamsInRound}- for fields of
+  // 16+ ("Round of 16/32" — more teams = earlier, rank -n). The MANUAL builder
+  // emits R{roundNumber}- (1,2,3 …), where "Round of 1/2/3" is nonsense — those are
+  // round NUMBERS, so label them "Round N" and order them ascending (round 1 first).
+  if (/^R\d+-/.test(c)) {
+    const n = parseInt(c.match(/^R(\d+)-/)?.[1] ?? '0', 10) || 0;
+    return n >= 16
+      ? { key: `R${n}`, title: `Round of ${n}`, rank: -n }
+      : { key: `R${n}`, title: `Round ${n}`, rank: n };
+  }
   if (c.startsWith('QF')) return { key: 'QF', title: 'Quarterfinals', rank: -8 };
   if (c.startsWith('SF')) return { key: 'SF', title: 'Semifinals', rank: -4 };
   if (c === 'FIN' || c === 'IF' || c === '3RD' || c === 'P3') return { key: 'FIN', title: 'Finals', rank: -2 };
@@ -517,6 +525,155 @@ export function displayRoundTitle(title: string | null | undefined): string {
   if (!m) return title ?? '';
   const r = parseInt(m[1], 10);
   return r <= 1 ? 'Seed Round' : `Winners Round ${r - 1}`;
+}
+
+/**
+ * Canonical participant-placeholder options for a manual bracket game.
+ *
+ * Returns the exact strings `advancePlayoffs` (lib/db.ts) and the bracket
+ * connectors string-match on — `Seed #N`, `Winner <code>`, `Loser <code>` (the
+ * space is required). Shared by the bracket builder and the Add Game modal so
+ * both emit identical, resolvable references.
+ *
+ * @param seedCount  highest seed offered (teams qualifying, or accepted-team count)
+ * @param bracketCodes existing playoff game codes in the division (e.g. ['SF1','SF2'])
+ */
+export function buildPlaceholderOptions(
+  seedCount: number,
+  bracketCodes: string[],
+): { seeds: string[]; winners: string[]; losers: string[] } {
+  const n = Math.max(0, Math.floor(Number.isFinite(seedCount) ? seedCount : 0));
+  const seeds = Array.from({ length: n }, (_, i) => `Seed #${i + 1}`);
+  const codes = Array.from(new Set(bracketCodes.filter(Boolean)));
+  return {
+    seeds,
+    winners: codes.map(c => `Winner ${c}`),
+    losers: codes.map(c => `Loser ${c}`),
+  };
+}
+
+export interface LoadableBracketGame {
+  id: string;
+  bracketCode?: string | null;
+  homePlaceholder?: string | null;
+  awayPlaceholder?: string | null;
+  date?: string | null;
+  time?: string | null;
+  venueId?: string | null;
+  venueFacilityId?: string | null;
+  location?: string | null;
+}
+
+export interface BracketPreviewRow {
+  round: string;
+  code: string;
+  home: string;
+  away: string;
+  date: string;
+  time: string;
+  venueId: string;
+  venueFacilityId?: string;
+  location?: string;
+  /** Links this canvas row back to its existing game so a save can DIFF (update vs insert). */
+  sourceGameId?: string;
+}
+
+/**
+ * Convert an existing division's playoff games into canvas `templatePreview` rows
+ * so a saved bracket can be loaded back into the BracketBuilder for editing.
+ * Groups into rounds via `bracketRoundInfo` (same as the read-only view), threads
+ * each game's id as `sourceGameId`, and uses the stored Seed/Winner/Loser
+ * placeholder as the slot label (so wiring round-trips).
+ */
+export function gamesToBracketPreview(games: LoadableBracketGame[]): BracketPreviewRow[] {
+  const groups = new Map<string, { title: string; rank: number; games: LoadableBracketGame[] }>();
+  for (const g of games) {
+    const info = bracketRoundInfo(g.bracketCode || '');
+    let grp = groups.get(info.key);
+    if (!grp) { grp = { title: info.title, rank: info.rank, games: [] }; groups.set(info.key, grp); }
+    grp.games.push(g);
+  }
+  return [...groups.values()]
+    .sort((a, b) => a.rank - b.rank)
+    .flatMap(grp => grp.games
+      .slice()
+      .sort((a, b) => (a.bracketCode || '').localeCompare(b.bracketCode || ''))
+      .map(g => ({
+        round: grp.title,
+        code: g.bracketCode || '',
+        home: g.homePlaceholder || '',
+        away: g.awayPlaceholder || '',
+        date: g.date || '',
+        time: g.time || '',
+        venueId: g.venueId || '',
+        venueFacilityId: g.venueFacilityId || undefined,
+        location: g.location || '',
+        sourceGameId: g.id,
+      })));
+}
+
+export interface BracketTimingGame {
+  code?: string | null;
+  home?: string | null;
+  away?: string | null;
+  date?: string | null;
+  time?: string | null;
+}
+
+export interface BracketSchedulingViolation {
+  /** Dependent game's code. */
+  game: string;
+  /** Feeder game's code it is scheduled at/before. */
+  feeder: string;
+  reason: 'earlier-date' | 'same-day-unordered';
+}
+
+const ADVANCEMENT_REF_RE = /^(?:winner|loser)\s+(.+)$/i;
+
+function timingStartMinutes(time?: string | null): number | null {
+  if (!time) return null;
+  const m = /^(\d{1,2}):(\d{2})/.exec(time);
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+}
+
+/**
+ * Detect games scheduled before a game they depend on. A dependent game (one whose
+ * Home/Away is `Winner <code>` / `Loser <code>`) must come AFTER the referenced
+ * feeder. Unscheduled games (no date) can't be "before" anything, so they're
+ * skipped — this lets a structure-only bracket save. Cross-day ordering needs no
+ * times (a later date is always fine); SAME-day pairs require both times in order,
+ * because otherwise the feeder's winner can't reach the dependent in time.
+ *
+ * Pure + dependency-free for `node --test`.
+ */
+export function findBracketSchedulingViolations(games: BracketTimingGame[]): BracketSchedulingViolation[] {
+  const byCode = new Map<string, BracketTimingGame>();
+  for (const g of games) if (g.code) byCode.set(g.code.trim().toUpperCase(), g);
+
+  const out: BracketSchedulingViolation[] = [];
+  const seen = new Set<string>();
+  for (const y of games) {
+    if (!y.date) continue; // an unscheduled dependent can't be "before" its feeder
+    for (const ph of [y.home, y.away]) {
+      const m = (ph ?? '').match(ADVANCEMENT_REF_RE);
+      if (!m) continue;
+      const x = byCode.get(m[1].trim().toUpperCase());
+      if (!x || x === y || !x.date) continue; // feeder unscheduled → can't compare
+      let reason: BracketSchedulingViolation['reason'] | null = null;
+      if (y.date < x.date) {
+        reason = 'earlier-date';
+      } else if (y.date === x.date) {
+        const ys = timingStartMinutes(y.time);
+        const xs = timingStartMinutes(x.time);
+        if (ys == null || xs == null || ys <= xs) reason = 'same-day-unordered';
+      }
+      if (reason) {
+        const key = `${y.code}>${x.code}`;
+        if (!seen.has(key)) { seen.add(key); out.push({ game: y.code ?? '?', feeder: x.code ?? '?', reason }); }
+      }
+    }
+  }
+  return out;
 }
 
 /**

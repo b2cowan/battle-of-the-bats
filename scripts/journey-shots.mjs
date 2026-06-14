@@ -6,8 +6,10 @@
  *
  * Run: node scripts/journey-shots.mjs scripts/journeys/j1-shots.json
  * Spec: { baseUrl, outDir, login: {email, password} | null,
- *         shots: [{ name, url, auth?: true, fullPage?: false }] }
+ *         shots: [{ name, url, auth?: true, fullPage?: false, localStorage?: {key: value} }] }
  * Output: <outDir>/<name>--mobile.png + <name>--desktop.png (outDir must be gitignored)
+ * localStorage shots run in a dedicated context seeded before page scripts
+ * (e.g. the anonymous follow-a-team state on public tournament pages).
  */
 import { chromium } from '@playwright/test';
 import fs from 'fs';
@@ -55,7 +57,18 @@ for (const [vpName, vp] of Object.entries(VIEWPORTS)) {
     : null;
 
   for (const shot of spec.shots) {
-    const ctx = shot.auth ? authCtx : anonCtx;
+    let ctx = shot.auth ? authCtx : anonCtx;
+    let ownCtx = null;
+    if (shot.localStorage) {
+      ownCtx = await browser.newContext({
+        viewport: vp, deviceScaleFactor: vp.deviceScaleFactor, isMobile: vp.isMobile, hasTouch: vp.hasTouch,
+        ...(shot.auth && authState ? { storageState: authState } : {}),
+      });
+      await ownCtx.addInitScript((items) => {
+        for (const [k, v] of Object.entries(items)) window.localStorage.setItem(k, v);
+      }, shot.localStorage);
+      ctx = ownCtx;
+    }
     if (!ctx) { console.error(`✗ ${shot.name}: auth shot but no login in spec`); failures++; continue; }
     const page = await ctx.newPage();
     const file = path.join(spec.outDir, `${shot.name}--${vpName}.png`);
@@ -69,6 +82,7 @@ for (const [vpName, vp] of Object.entries(VIEWPORTS)) {
       failures++;
     } finally {
       await page.close();
+      if (ownCtx) await ownCtx.close();
     }
   }
   await anonCtx.close();

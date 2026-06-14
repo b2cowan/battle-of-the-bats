@@ -130,7 +130,7 @@ const AGENTS: AgentDef[] = [
       'Always use hasPlanFeature(org.plan_id, \'feature_key\') — never compare plan_id strings directly.',
       'Price IDs are in the stripe_prices DB table (migration 048) — never hardcode them.',
       'When adding a new gated feature: add to PlanFeature union → FEATURE_MIN_PLAN → server guard → UpgradeGate wrapper.',
-      'Use plan display names in copy: Tournament, Tournament Plus, League, Club — not Starter/Pro/Elite.',
+      'Use plan display names in copy: Tournament, Tournament Plus, League (free house-league floor), League Plus, Club — not Starter/Pro/Elite.',
       'Upsell messaging: "available on Tournament Plus and above" — never "upgrade to unlock".',
       'On downgrade: data is retained, access is gated — never hard-delete on plan change.',
     ],
@@ -470,7 +470,7 @@ const AGENTS: AgentDef[] = [
     rules: [
       '/marketing owns copy wording; /billing owns gate mechanics — keep them in separate conversations.',
       '/design owns visual layout; /marketing owns what the words say — never recommend colours or spacing.',
-      'Always use full plan names: Tournament, Tournament Plus, League, Club — never "Pro", "Plus-only", or "paid tier".',
+      'Always use full plan names: Tournament, Tournament Plus, League, League Plus, Club — never "Pro", "Plus-only", or "paid tier". (League = free house-league floor; League Plus = the $89 paid tier.)',
       'Forbidden words: "unlock", "powerful", "robust", "seamless", "supercharge", "game-changing". See memory/marketing_brand_voice.md for the full list.',
       'Upgrade copy rule: "available on Tournament Plus and above" — never "upgrade to unlock".',
       'The free Tournament plan is a real product, not a trial — copy must never imply otherwise.',

@@ -776,6 +776,151 @@
   padding: 0 0.75rem 0.72rem;
 }
 
+/* ── Schedule Health rules editor ──────────────────────────────────────────── */
+.healthGear {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border-radius: 4px;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  background: var(--white-5);
+  color: var(--white-50);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.healthGear:hover {
+  color: var(--white-85);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.5);
+}
+
+.healthGear[aria-pressed="true"] {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+}
+
+.healthRules {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.65rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
+  border-radius: 6px;
+  background: rgba(var(--logic-lime-rgb), 0.05);
+}
+
+.healthRulesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .healthRulesGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.healthRule {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.healthRule span {
+  color: var(--white-45);
+  font-family: var(--font-data);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.healthRule input {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding: 0 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--white-5);
+  color: var(--white-90);
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+}
+
+.healthRule input:focus {
+  outline: none;
+  border-color: rgba(var(--logic-lime-rgb), 0.6);
+}
+
+.healthRulesFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.healthRulesActions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.healthRulesReset,
+.healthRulesDiscard,
+.healthRulesSave {
+  height: 30px;
+  padding: 0 0.7rem;
+  border-radius: 4px;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.healthRulesReset,
+.healthRulesDiscard {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--white-50);
+}
+
+.healthRulesReset:hover,
+.healthRulesDiscard:hover {
+  color: var(--white-85);
+  border-color: var(--white-30);
+}
+
+.healthRulesSave {
+  background: var(--logic-lime);
+  color: #0a0c12;
+  border-color: var(--logic-lime);
+}
+
+.healthRulesSave:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.healthRulesHint {
+  margin: 0;
+  color: var(--white-45);
+  font-size: 0.64rem;
+  line-height: 1.35;
+}
+
 .healthKpiGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1651,6 +1796,23 @@
 .scheduleExportButton,
 .scheduleToolsMenu {
   flex-shrink: 0;
+}
+
+/* Destructive "Clear bracket" — a quiet, de-emphasized peer to the neutral Auto
+   tools menu. Recessive text + trash icon at rest (transparent fill, muted slate
+   text) so it doesn't read as a second identical ghost pill next to Auto, then
+   surfaces its danger semantics on hover. Keeps a 1px transparent border so its
+   box height matches the bordered .btn-ghost Auto trigger exactly. Double class
+   for specificity over the global .btn / .btn-ghost rules. */
+.clearBracketBtn.clearBracketBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--data-gray);
+}
+.clearBracketBtn.clearBracketBtn:hover {
+  background: rgba(var(--danger-rgb), 0.12);
+  border-color: rgba(var(--danger-rgb), 0.3);
+  color: var(--danger);
 }
 
 .scheduleFilterGroup {
@@ -3701,4 +3863,11 @@
   background: var(--white-5);
   border-radius: 999px;
   padding: 0.1rem 0.5rem;
+}
+
+/* Playoff row "edit in bracket builder" icon (List view). On very narrow phones
+   the collapsed row is content-dense, so hide the icon-only button there and rely
+   on the labelled "Edit in bracket" button in the expanded row footer. */
+@media (max-width: 480px) {
+  .playoffEditIconBtn { display: none; }
 }

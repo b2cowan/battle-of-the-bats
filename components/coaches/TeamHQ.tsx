@@ -51,6 +51,10 @@ type TournamentTeamHQProps = {
   /** Organizer requires an event roster (5f) → show the Roster milestone even before
    *  submission (as "Not submitted"). The actionable submit UI is the 5k card below. */
   rosterRequired?: boolean;
+  /** 5m afterglow (result phase only) — final W-L-T from the team's completed games. */
+  record?: { wins: number; losses: number; ties: number } | null;
+  /** 5m afterglow — public standings link, present only when the tournament is public. */
+  standingsHref?: string | null;
 };
 
 type TeamHQProps = StandaloneTeamHQProps | TournamentTeamHQProps;
@@ -173,6 +177,8 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
     showCheckIn,
     registeredDateLabel,
     rosterRequired,
+    record,
+    standingsHref,
   } = props;
 
   const heroStyle = { '--team-color': teamColor(teamName) } as CSSProperties;
@@ -189,6 +195,9 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
   } else if (phase === 'rejected') {
     headline = 'Not selected for this event';
     sub = statusDesc || null;
+  } else if (phase === 'result') {
+    headline = "That's a wrap!";
+    sub = [tournamentName, orgName].filter(Boolean).join(' · ') || null;
   } else {
     headline = "You're in!";
     sub = [tournamentName, orgName].filter(Boolean).join(' · ') || null;
@@ -203,7 +212,9 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
   if (phase === 'pending') {
     checklist.push({ key: 'registered', label: 'Registered', state: registeredDateLabel ?? 'Submitted', done: true });
     checklist.push({ key: 'decision', label: 'Decision', state: 'Awaiting organizer', done: false, awaiting: true });
-  } else if (accepted) {
+  } else if (accepted && phase !== 'result') {
+    // Result phase collapses the prep checklist (the event is over) — the afterglow block below
+    // shows the final record + standings link instead (5m, J5-052).
     checklist.push({ key: 'registered', label: 'Registered', state: registeredDateLabel ?? 'Submitted', done: true });
     checklist.push({ key: 'accepted', label: 'Accepted', state: 'Confirmed', done: true });
     // Fee — only when the organizer set a fee schedule; read-only state, no amount
@@ -260,8 +271,20 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
       {phase === 'game_day' && (
         <p className={styles.heroCountdown}><strong>Event underway</strong></p>
       )}
-      {accepted && phase === 'result' && (
-        <p className={styles.heroCountdown}><strong>Event complete</strong></p>
+      {phase === 'result' && (
+        <div className={styles.afterglow}>
+          <p className={styles.afterglowLead}>
+            <Trophy size={15} aria-hidden /> Event complete — thanks for playing.
+          </p>
+          {record && (record.wins + record.losses + record.ties) > 0 && (
+            <p className={styles.afterglowRecord}>
+              Final record <strong>{record.wins}-{record.losses}-{record.ties}</strong>
+            </p>
+          )}
+          {standingsHref && (
+            <a className={styles.afterglowLink} href={standingsHref}>View final standings →</a>
+          )}
+        </div>
       )}
 
       {dateRangeLabel && <p className={styles.heroDates}>{dateRangeLabel}</p>}

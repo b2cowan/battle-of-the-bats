@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
+  },
   "permissions": {
     "allow": [
       "Bash(mkdir -p \"c:\\\\Users\\\\Robert Cowan\\\\Documents\\\\tournament-website\\\\app\\\\[orgSlug]\\\\admin\\\\org\\\\notifications\" 2>/dev/null; echo done)",

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, use } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Download, Upload, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -28,10 +28,11 @@ interface TemplateRow {
 }
 
 export default function TeamDocumentsPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { orgSlug: string; teamId: string };
+  params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
+  const params = use(paramsPromise);
   const { assignments, loading: assignmentsLoading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === params.teamId);
   const base = `/${params.orgSlug}/coaches/teams/${params.teamId}`;

@@ -1,0 +1,9 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J4",
+  "login": { "email": "club-owner@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "02-rep-teams-hub", "url": "/dev-club-org/admin/rep-teams", "auth": true },
+    { "name": "03-program-year",  "url": "/dev-club-org/admin/rep-teams/teams/e1520a86-f6ea-4b74-8aa9-c4525d38bada/program-years/75fc5490-a175-4c1c-8ed8-29cfee3a3eed", "auth": true }
+  ]
+}

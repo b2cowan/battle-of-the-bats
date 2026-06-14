@@ -66,6 +66,8 @@ interface Props {
   live: boolean;
   /** Poll for live scores — game day only. */
   pollEnabled: boolean;
+  /** Result phase (event over) → retire the live-updates copy + the install banner (5m, J5-054). */
+  isResult?: boolean;
   initialGames: CoachScheduleGame[];
 }
 
@@ -79,6 +81,7 @@ export default function CoachLiveSchedule({
   teamDivisionId,
   live,
   pollEnabled,
+  isResult = false,
   initialGames,
 }: Props) {
   const [games, setGames] = useState<CoachScheduleGame[]>(initialGames);
@@ -123,11 +126,15 @@ export default function CoachLiveSchedule({
     <div className={styles.bridge}>
       {live && (
         <>
-          <InstallAppPrompt
-            appName="Coaches Portal"
-            subtitle="Add it to your home screen for live game updates."
-            dismissKey="flhq-coach-install-dismissed"
-          />
+          {/* The install banner sells "live game updates" — only meaningful before/during the
+              event, so it's retired in the result phase (5m). */}
+          {!isResult && (
+            <InstallAppPrompt
+              appName="Coaches Portal"
+              subtitle="Add it to your home screen for live game updates."
+              dismissKey="flhq-coach-install-dismissed"
+            />
+          )}
           <div className={styles.controls}>
             <button
               type="button"
@@ -143,9 +150,11 @@ export default function CoachLiveSchedule({
               {isFollowing ? 'Following' : 'Follow this team'}
             </button>
             <span className={styles.followHint}>
-              {isFollowing
-                ? 'Highlighted on the public schedule & live scorebug on this device.'
-                : 'Highlight your team on the public schedule & live scorebug.'}
+              {isResult
+                ? 'Highlighted on the public schedule on this device.'
+                : isFollowing
+                  ? 'Highlighted on the public schedule & live scorebug on this device.'
+                  : 'Highlight your team on the public schedule & live scorebug.'}
             </span>
           </div>
         </>

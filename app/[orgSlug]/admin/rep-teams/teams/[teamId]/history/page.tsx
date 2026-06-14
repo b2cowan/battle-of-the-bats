@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Archive, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -13,10 +13,11 @@ function acceptanceRate(total: number, accepted: number): string {
 }
 
 export default function TeamHistoryPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { orgSlug: string; teamId: string };
+  params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
+  const params = use(paramsPromise);
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
 

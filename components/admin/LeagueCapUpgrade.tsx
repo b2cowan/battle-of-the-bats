@@ -12,9 +12,9 @@ const CAP_TITLE: Record<LeagueCapKind, string> = {
 };
 
 const CAP_BODY: Record<LeagueCapKind, string> = {
-  league_season: 'Your free League Starter includes one active season. League lets you run multiple seasons and age groups side by side.',
-  league_division: 'Your free League Starter includes one division. Multiple divisions — each with its own schedule and standings — are part of League.',
-  league_team: 'Your free League Starter includes up to 8 teams. Upgrade to League for unlimited teams.',
+  league_season: 'Your free League plan includes one active season. League Plus lets you run multiple seasons and age groups side by side.',
+  league_division: 'Your free League plan includes one division. Multiple divisions — each with its own schedule and standings — are part of League Plus.',
+  league_team: 'Your free League plan includes up to 8 teams. Upgrade to League Plus for unlimited teams.',
 };
 
 /**
@@ -42,7 +42,7 @@ export function LeagueUpgradeCta({
       initialFeaturesInterested={['house_league', 'registration', 'public_site']}
       onClick={() => fireLeagueEvent('upgrade_intent_clicked', { orgId, metadata: { capHit, surface: 'league_cap' } })}
     >
-      {gated ? 'Express interest in League →' : 'Upgrade to League →'}
+      {gated ? 'Express interest in League Plus →' : 'Upgrade to League Plus →'}
     </EarlyAccessModalTrigger>
   );
 }

@@ -18,7 +18,7 @@ const CROSS_SELLS = [
   {
     label: 'Club',
     q: 'Also running rep teams?',
-    body: 'Club combines everything in League with rep teams, accounting, org-wide financials, and three Coaches Portal accounts — for clubs that do it all.',
+    body: 'Club combines everything in League Plus with rep teams, accounting, org-wide financials, and three Coaches Portal accounts — for clubs that do it all.',
     cta: 'Express interest in Club',
     initialPlanInterest: ['club'],
     initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
@@ -57,7 +57,7 @@ export default function ForLeaguesPage() {
               initialPlanInterest={['league']}
               initialFeaturesInterested={['house_league', 'registration', 'public_site']}
             >
-              Express interest in League
+              Express interest in League Plus
             </EarlyAccessModalTrigger>
             <Link
               href="/for-tournament-organizers"
@@ -68,7 +68,7 @@ export default function ForLeaguesPage() {
           </div>
           <p className={styles.heroNote}>
             <span className={styles.heroNoteAccent}>Coming soon</span>
-            {' '}— League is in final refinement. Tournament and Tournament Plus are live today.
+            {' '}— League Plus is in final refinement. Tournament and Tournament Plus are live today.
           </p>
           <div className={styles.trustRow}>
             {['No contracts — cancel anytime', 'Billed in CAD', 'Upgrade or downgrade at any time'].map(s => (
@@ -122,16 +122,16 @@ export default function ForLeaguesPage() {
       <section className={styles.section}>
         <div className="container">
           <p className={styles.sectionEyebrow}>The plan</p>
-          <h2 className={styles.sectionTitle}>League — built for the full season.</h2>
+          <h2 className={styles.sectionTitle}>League Plus — built for the full season.</h2>
           <p className={styles.sectionSub}>
-            League is opening soon. Express interest to be notified when self-serve checkout opens for your organization.
+            League Plus is opening soon. Express interest to be notified when self-serve checkout opens for your organization.
           </p>
           <div className={styles.planGrid}>
 
             {/* ── League plan ────────────────────────────────────────────── */}
             <div className={`${styles.planCard} ${styles.planCardFeatured}`}>
               <div>
-                <p className={styles.planName}>League</p>
+                <p className={styles.planName}>League Plus</p>
                 <div className={styles.planPrice}>
                   <span className={styles.planAmount}>{formatPriceAmount(PLAN_CONFIG.league.monthlyPrice)}</span>
                   <span className={styles.planPeriod}>/month</span>
@@ -170,7 +170,7 @@ export default function ForLeaguesPage() {
               <p className={styles.startNowBody}>
                 Tournament and Tournament Plus are live now. If your organization runs an annual
                 tournament or spring event, start there — your org is already on the platform
-                when League opens.
+                when League Plus opens.
               </p>
               <div className={styles.startNowPlans}>
                 {[`Tournament — Free`, `Tournament Plus — ${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo`].map(p => (
@@ -225,7 +225,7 @@ export default function ForLeaguesPage() {
             <span className={styles.ctaAccent}>a real platform.</span>
           </h2>
           <p className={styles.ctaSub}>
-            Express interest in League to be notified when self-serve checkout opens.
+            Express interest in League Plus to be notified when self-serve checkout opens.
             Running a tournament now? Start free today.
           </p>
           <div className={styles.ctaActions}>
@@ -234,7 +234,7 @@ export default function ForLeaguesPage() {
               initialPlanInterest={['league']}
               initialFeaturesInterested={['house_league', 'registration', 'public_site']}
             >
-              Express interest in League
+              Express interest in League Plus
             </EarlyAccessModalTrigger>
             <Link
               href="/auth/signup"

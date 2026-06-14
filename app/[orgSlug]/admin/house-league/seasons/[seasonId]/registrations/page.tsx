@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { X, Plus, ChevronLeft, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
+import { isFreeFloorLeague } from '@/lib/free-floor';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import {
@@ -528,6 +529,17 @@ export default function RegistrationsPage() {
         </div>
         {isAdminOrOwner && (
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {/* Exports are a paid-League capability. The free League Starter floor hides the menu.
+                NOTE: exports are 100% client-side today (no server route). If a server export route
+                is ever added for house-league it MUST guard isFreeFloorLeague(org) → 403. */}
+            {currentOrg && isFreeFloorLeague(currentOrg) ? (
+              <span
+                title="Exports are part of League. Upgrade to export your registrations."
+                style={{ fontFamily: 'var(--font-data)', fontSize: '0.7rem', letterSpacing: '0.04em', color: 'var(--data-gray)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.35rem 0.6rem', whiteSpace: 'nowrap' }}
+              >
+                Exports · League
+              </span>
+            ) : (
             <ExportMenu
               formats={['xlsx', 'csv', 'pdf']}
               onExportXLSX={handleExportXLSX}
@@ -540,6 +552,7 @@ export default function RegistrationsPage() {
               pdfFeatureKey="pdf_exports"
               disabled={tabRegs.length === 0}
             />
+            )}
             <button
               className={styles.iconBtn}
               style={{ gap: '0.35rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}

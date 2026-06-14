@@ -1,0 +1,9 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J8",
+  "login": { "email": "j8-gate@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "08-checkin-staff", "url": "/dev-test-org/check-in", "auth": true },
+    { "name": "09-admin-staff",   "url": "/dev-test-org/admin", "auth": true }
+  ]
+}

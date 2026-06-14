@@ -1,12 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertTriangle, CheckCircle2, ChevronDown, Info, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronDown, Info, ShieldAlert, SlidersHorizontal } from 'lucide-react';
 import type { ScheduleIssue, ScheduleMetrics } from '@/lib/schedule-metrics';
 import { formatRestMinutes } from '@/lib/schedule-metrics';
 import styles from '../schedule-admin.module.css';
 
 type MetricTone = 'good' | 'warning' | 'danger' | 'neutral';
+
+/** Organizer-defined "healthy schedule" thresholds edited inline from the panel. */
+export interface ScheduleHealthRulesDraft {
+  maxGamesPerDay: number;
+  minRestMinutes: number;
+  targetGamesPerTeam: number | null;
+}
+
+function clampInt(raw: string, min: number, max: number, fallback: number): number {
+  const n = parseInt(raw, 10);
+  if (Number.isNaN(n)) return fallback;
+  return Math.max(min, Math.min(max, n));
+}
 
 interface ScheduleHealthPanelProps {
   metrics: ScheduleMetrics;
@@ -17,6 +30,20 @@ interface ScheduleHealthPanelProps {
   sticky?: boolean;
   /** When provided and conflicts exist, the summary shows a tappable jump chip. */
   onJumpToConflict?: () => void;
+  // ── Organizer-defined rules editor (all optional; omit to hide the editor) ──
+  /** Current (draft) rule values — drives the live preview while editing. */
+  rules?: ScheduleHealthRulesDraft;
+  /** Whether the current user may edit rules (e.g. not on a locked tournament). */
+  canEditRules?: boolean;
+  /** True when the draft differs from the saved rules (enables Save/Discard). */
+  rulesDirty?: boolean;
+  savingRules?: boolean;
+  onRuleChange?: (patch: Partial<ScheduleHealthRulesDraft>) => void;
+  onSaveRules?: () => void;
+  /** Discard unsaved edits, back to the last saved rules. */
+  onResetRules?: () => void;
+  /** Set the rules back to the engine defaults (2 / 15 / no target). */
+  onRestoreDefaultRules?: () => void;
 }
 
 export default function ScheduleHealthPanel({
@@ -27,8 +54,18 @@ export default function ScheduleHealthPanel({
   defaultOpen = true,
   sticky = false,
   onJumpToConflict,
+  rules,
+  canEditRules = false,
+  rulesDirty = false,
+  savingRules = false,
+  onRuleChange,
+  onSaveRules,
+  onResetRules,
+  onRestoreDefaultRules,
 }: ScheduleHealthPanelProps) {
   const [expanded, setExpanded] = useState(defaultOpen);
+  const [editing, setEditing] = useState(false);
+  const showRulesEditor = canEditRules && !!rules && !!onRuleChange;
   const conflictTotal = metrics.venueConflictCount + metrics.bufferConflictCount;
   const scoreClass = metrics.healthTone === 'good'
     ? styles.healthScoreGood
@@ -60,6 +97,18 @@ export default function ScheduleHealthPanel({
               {conflictTotal}
             </button>
           )}
+          {showRulesEditor && (
+            <button
+              type="button"
+              className={styles.healthGear}
+              aria-label="Adjust health rules"
+              aria-pressed={editing}
+              title="Adjust health rules"
+              onClick={event => { event.preventDefault(); event.stopPropagation(); setExpanded(true); setEditing(value => !value); }}
+            >
+              <SlidersHorizontal size={14} aria-hidden />
+            </button>
+          )}
         </div>
         <div className={`${styles.healthScore} ${scoreClass}`}>
           <span>{metrics.healthScore}</span>
@@ -72,6 +121,51 @@ export default function ScheduleHealthPanel({
       </summary>
 
       <div className={styles.healthBody}>
+        {showRulesEditor && editing && rules && (
+          <div className={styles.healthRules}>
+            <div className={styles.healthRulesGrid}>
+              <label className={styles.healthRule}>
+                <span>Max games / day</span>
+                <input
+                  type="number" min={1} max={10} value={rules.maxGamesPerDay}
+                  onChange={event => onRuleChange?.({ maxGamesPerDay: clampInt(event.target.value, 1, 10, rules.maxGamesPerDay) })}
+                />
+              </label>
+              <label className={styles.healthRule}>
+                <span>Min rest between games (min)</span>
+                <input
+                  type="number" min={0} max={600} step={5} value={rules.minRestMinutes}
+                  onChange={event => onRuleChange?.({ minRestMinutes: clampInt(event.target.value, 0, 600, rules.minRestMinutes) })}
+                />
+              </label>
+              <label className={styles.healthRule}>
+                <span>Target games / team</span>
+                <input
+                  type="number" min={1} max={99} placeholder="No target"
+                  value={rules.targetGamesPerTeam ?? ''}
+                  onChange={event => onRuleChange?.({ targetGamesPerTeam: event.target.value === '' ? null : clampInt(event.target.value, 1, 99, rules.targetGamesPerTeam ?? 1) })}
+                />
+              </label>
+            </div>
+            <div className={styles.healthRulesFooter}>
+              <button type="button" className={styles.healthRulesReset} onClick={onRestoreDefaultRules}>Restore defaults</button>
+              <div className={styles.healthRulesActions}>
+                {rulesDirty && (
+                  <button type="button" className={styles.healthRulesDiscard} onClick={onResetRules}>Discard</button>
+                )}
+                <button
+                  type="button"
+                  className={styles.healthRulesSave}
+                  disabled={!rulesDirty || savingRules}
+                  onClick={onSaveRules}
+                >
+                  {savingRules ? 'Saving…' : 'Save rules'}
+                </button>
+              </div>
+            </div>
+            <p className={styles.healthRulesHint}>The score and warnings below update live as you adjust. Saved per tournament.</p>
+          </div>
+        )}
         <ScheduleHealthContent metrics={metrics} showTeamTable={showTeamTable} />
       </div>
     </details>
@@ -113,7 +207,7 @@ export function ScheduleHealthContent({
           label="Max/day"
           value={String(metrics.maxGamesInDay)}
           detail={`${metrics.venueChangeCount} venue moves`}
-          tone={metrics.maxGamesInDay > 2 ? 'warning' : 'good'}
+          tone={metrics.maxGamesInDay > metrics.maxGamesPerDay ? 'warning' : 'good'}
         />
         <Metric
           label="Warnings"

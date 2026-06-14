@@ -296,8 +296,8 @@ const orgHelp: HelpPageContent = {
         <>
           <p>Modules extend FieldLogicHQ beyond the core tournament tools. Each module unlocks a new section in your admin panel and appears in the left navigation once enabled.</p>
           <ul>
-            <li><strong>Public Organization Page</strong> — A branded public landing page listing your tournaments, results, and registration links. Included on League and above.</li>
-            <li><strong>House League</strong> — Registration, divisions, seasons, game scheduling, standings, and league communications. Included on League and above.</li>
+            <li><strong>Public Organization Page</strong> — A branded public landing page listing your tournaments, results, and registration links. Included on League Plus and above.</li>
+            <li><strong>House League</strong> — Registration, divisions, seasons, game scheduling, standings, and league communications. Included on League Plus and above.</li>
             <li><strong>Accounting</strong> — Org ledger, team invoicing, payment reconciliation, and expense tracking. Included on Club.</li>
             <li><strong>Rep Teams</strong> — Tryouts, rosters, player documents, and the Coaches Portal. Included on Club.</li>
           </ul>
@@ -312,7 +312,7 @@ const orgHelp: HelpPageContent = {
           <p>The <strong>Subscription</strong> page (visible to Owners only) shows your current plan, tournament slot usage, seat usage, and available upgrades.</p>
           <p>The free Tournament plan is meant for one starter event with standard registration, basic selected-row registration updates, waitlist collection, and FieldLogicHQ default public styling. Tournament Plus is the serious tournament operations plan: unlimited tournament slots, 10 staff seats, custom registration questions, Excel and PDF exports for registrations, schedules, and results — useful for check-in sheets, insurance submissions, and post-event board reports — payment reminders, waitlist promotion, full branding, automation, cloning, and post-event reporting.</p>
           <p>Org-billed Coaches Portal is separate from Club extra teams. It pays for a coach-operated Premium portal. Club included or extra teams are org-owned rep teams under Club. Club includes the first three active rep teams, then uses the lower Club extra-team rate for additional active teams.</p>
-          <p>To upgrade to Tournament Plus, click <strong>Upgrade to Tournament Plus</strong>. You'll be taken to secure Stripe Checkout to enter payment details. Your first payment is collected automatically after the 14-day trial. League and Club are shown as coming soon until those tiers open for self-serve checkout.</p>
+          <p>To upgrade to Tournament Plus, click <strong>Upgrade to Tournament Plus</strong>. You'll be taken to secure Stripe Checkout to enter payment details. Your first payment is collected automatically after the 14-day trial. League Plus and Club are shown as coming soon until those tiers open for self-serve checkout.</p>
           <p>If you're on a paid plan, use <strong>Manage Subscription</strong> to update your payment method, view past invoices, or cancel. This opens the Stripe customer portal.</p>
           <p><strong>Past-due payments:</strong> If a payment fails, your access stays active during a grace period. Update your payment method via <strong>Manage Subscription</strong> before the grace period ends to avoid service interruption.</p>
         </>

@@ -192,8 +192,21 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
     () => new Set(venues.flatMap(getVenueResourceKeys)),
   );
   const [temporaryFacilityCount, setTemporaryFacilityCount] = useState(2);
-  const [priorities, setPriorities] = useState<SchedulePrioritySettings>(() => defaultSchedulePriorities());
-  const [selectedPresetId, setSelectedPresetId] = useState<SchedulePresetId>('balanced');
+  // Seed the per-day cap from the organizer's saved Schedule Health rule so generating
+  // and grading share one definition of "healthy" (only maxGamesPerDay is unified — the
+  // generator's minRestMinutes is a target, not the health back-to-back threshold).
+  const [priorities, setPriorities] = useState<SchedulePrioritySettings>(() => {
+    const base = defaultSchedulePriorities();
+    const savedMaxPerDay = tournament.settings?.schedule_health_rules?.maxGamesPerDay;
+    return savedMaxPerDay && savedMaxPerDay !== base.maxGamesPerDay
+      ? { ...base, maxGamesPerDay: savedMaxPerDay }
+      : base;
+  });
+  const [selectedPresetId, setSelectedPresetId] = useState<SchedulePresetId>(() => {
+    const savedMaxPerDay = tournament.settings?.schedule_health_rules?.maxGamesPerDay;
+    // Start in Custom when the saved max/day diverges from the Balanced default.
+    return savedMaxPerDay && savedMaxPerDay !== defaultSchedulePriorities().maxGamesPerDay ? 'custom' : 'balanced';
+  });
   const [dateSlots, setDateSlots] = useState<DateSlot[]>([
     { date: tournament.startDate || '', startTime: '09:00', endTime: '20:30' }
   ]);

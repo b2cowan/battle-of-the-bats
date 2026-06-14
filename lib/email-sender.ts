@@ -382,3 +382,61 @@ export async function cancelScheduledEmail(orgId: string, emailKey: string): Pro
     console.error('[email-sender] cancelScheduledEmail error (non-fatal):', err);
   }
 }
+
+/** Email key for the per-team game-day reminder (Phase 5m). Shared by the scheduler
+ *  (schedule-publish) and the cancel-on-reject sites so the string never drifts. */
+export const COACH_GAME_DAY_REMINDER_EMAIL_KEY = 'coach_game_day_reminder';
+
+/**
+ * Cancel a still-scheduled email for ONE recipient (org + key + recipient_email), best-effort,
+ * never throws (free-tier Coaches Phase 5m). Unlike `cancelScheduledEmail` (org-wide, built for the
+ * single per-org upsell), the game-day reminder is per-team, so a withdrawn/rejected team's reminder
+ * must be cancelled WITHOUT touching the other teams' scheduled reminders for the same tournament.
+ * `recipientEmail` must match the address the reminder was sent to (the resolved coach recipient).
+ */
+export async function cancelScheduledEmailForRecipient(
+  orgId: string,
+  emailKey: string,
+  recipientEmail: string,
+): Promise<void> {
+  try {
+    const normalized = recipientEmail.trim().toLowerCase();
+    if (!normalized) return;
+    const { data: rows, error } = await supabaseAdmin
+      .from('email_sends')
+      .select('id, resend_message_id')
+      .eq('recipient_org_id', orgId)
+      .eq('email_key', emailKey)
+      .eq('recipient_email', normalized)
+      .eq('status', 'sent')
+      .not('resend_message_id', 'is', null)
+      .order('sent_at', { ascending: false })
+      .limit(5);
+
+    if (error || !rows || rows.length === 0) return;
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return;
+
+    for (const row of rows) {
+      try {
+        const res = await fetch(`${RESEND_API}/${row.resend_message_id}/cancel`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${apiKey}` },
+        });
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          console.warn(`[email-sender] cancel ${emailKey} for ${normalized}: ${res.status} ${txt}`);
+        }
+      } catch (err) {
+        console.error(`[email-sender] cancel ${emailKey} request error (non-fatal):`, err);
+      }
+      await supabaseAdmin
+        .from('email_sends')
+        .update({ status: 'suppressed', suppression_reason: 'cancelled_team_withdrawn' })
+        .eq('id', row.id);
+    }
+  } catch (err) {
+    console.error('[email-sender] cancelScheduledEmailForRecipient error (non-fatal):', err);
+  }
+}

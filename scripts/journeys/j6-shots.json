@@ -1,0 +1,23 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J6",
+  "login": null,
+  "shots": [
+    { "name": "01-home-live",          "url": "/dev-test-org/live-demo" },
+    { "name": "02-home-followed",      "url": "/dev-test-org/live-demo",
+      "localStorage": { "fl_follow_team_dev-test-org_live-demo": "{\"id\":\"615a2002-1c52-4f24-91d3-d2e3ef07c96e\",\"name\":\"Lions U11\",\"divisionId\":\"773f878a-dde3-4e8f-86dd-73c4ba3c6adc\"}" } },
+    { "name": "03-schedule-followed",  "url": "/dev-test-org/live-demo/schedule",
+      "localStorage": { "fl_follow_team_dev-test-org_live-demo": "{\"id\":\"615a2002-1c52-4f24-91d3-d2e3ef07c96e\",\"name\":\"Lions U11\",\"divisionId\":\"773f878a-dde3-4e8f-86dd-73c4ba3c6adc\"}" } },
+    { "name": "04-game-live",          "url": "/dev-test-org/live-demo/schedule/aaf9bd71-7714-4876-aa46-157f26e56220" },
+    { "name": "05-game-scheduled",     "url": "/dev-test-org/live-demo/schedule/9c3d9e3d-71b5-4a78-a788-4f312e2292e9" },
+    { "name": "06-standings-followed", "url": "/dev-test-org/live-demo/standings",
+      "localStorage": { "fl_follow_team_dev-test-org_live-demo": "{\"id\":\"615a2002-1c52-4f24-91d3-d2e3ef07c96e\",\"name\":\"Lions U11\",\"divisionId\":\"773f878a-dde3-4e8f-86dd-73c4ba3c6adc\"}" } },
+    { "name": "07-teams-list",         "url": "/dev-test-org/live-demo/teams" },
+    { "name": "08-team-profile",       "url": "/dev-test-org/live-demo/teams/615a2002-1c52-4f24-91d3-d2e3ef07c96e" },
+    { "name": "09-news",               "url": "/dev-test-org/live-demo/news" },
+    { "name": "10-register",           "url": "/dev-test-org/live-demo/register" },
+    { "name": "11-completed-home",     "url": "/dev-test-org/completed-demo" },
+    { "name": "12-completed-standings","url": "/dev-test-org/completed-demo/standings" },
+    { "name": "13-completed-team",     "url": "/dev-test-org/completed-demo/teams/647b38e2-2ebd-4c5d-b935-784a4022d539" }
+  ]
+}

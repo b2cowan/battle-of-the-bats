@@ -69,7 +69,7 @@ const MODULE_ADDONS = [
 const PLAN_LABELS: Record<string, string> = {
   tournament: 'Tournament',
   tournament_plus: 'Tournament+',
-  league: 'League',
+  league: 'League Plus',
   club: 'Club',
   team: 'Premium',
 };
@@ -235,7 +235,7 @@ function buildMembershipContext(member: ActiveMemberRow): UserAccessContext | nu
     subtitle: 'Organization access',
     // A free League Starter floor sits on a tournament plan — label the /home card as the floor it
     // actually is, not "Tournament subscription".
-    detail: org?.free_floor === 'league_starter' ? 'Free League Starter' : `${formatPlan(planId)} subscription`,
+    detail: org?.free_floor === 'league_starter' ? 'Free League' : `${formatPlan(planId)} subscription`,
     badgeLabel: roleLabel,
     destination: '',
     sortOrder: 10,

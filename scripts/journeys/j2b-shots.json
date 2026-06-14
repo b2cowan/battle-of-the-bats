@@ -1,0 +1,13 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J2",
+  "login": { "email": "j2-rep-coach@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "08-premium-portal",     "url": "/dev-club-org/coaches", "auth": true },
+    { "name": "09-premium-team",       "url": "/dev-club-org/coaches/teams/e1520a86-f6ea-4b74-8aa9-c4525d38bada", "auth": true },
+    { "name": "10-premium-schedule",   "url": "/dev-club-org/coaches/teams/e1520a86-f6ea-4b74-8aa9-c4525d38bada/schedule", "auth": true },
+    { "name": "11-premium-accounting", "url": "/dev-club-org/coaches/teams/e1520a86-f6ea-4b74-8aa9-c4525d38bada/accounting", "auth": true },
+    { "name": "12-premium-bva",        "url": "/dev-club-org/coaches/teams/e1520a86-f6ea-4b74-8aa9-c4525d38bada/accounting/budget-vs-actual", "auth": true },
+    { "name": "13-premium-dues",       "url": "/dev-club-org/coaches/teams/e1520a86-f6ea-4b74-8aa9-c4525d38bada/accounting/dues", "auth": true }
+  ]
+}

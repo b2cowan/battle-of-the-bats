@@ -99,6 +99,7 @@ type ScheduleHealthDashboardStats = {
   participantCount: number;
   backToBack: number;
   maxGamesInDay: number;
+  maxGamesPerDay: number;
   venueChanges: number;
   facilityChanges: number;
   conflicts: number;
@@ -256,6 +257,7 @@ const EMPTY_STATS: DashboardStats = {
     participantCount: 0,
     backToBack: 0,
     maxGamesInDay: 0,
+    maxGamesPerDay: 2,
     venueChanges: 0,
     facilityChanges: 0,
     conflicts: 0,
@@ -939,7 +941,7 @@ export default function AdminDashboard() {
                 <strong>{health.backToBack}</strong>
                 <small>Back-to-back</small>
               </span>
-              <span className={styles.scheduleHealthMiniMetric} data-tone={health.maxGamesInDay > 2 ? 'warning' : 'good'}>
+              <span className={styles.scheduleHealthMiniMetric} data-tone={health.maxGamesInDay > (health.maxGamesPerDay || 2) ? 'warning' : 'good'}>
                 <strong>{health.maxGamesInDay}</strong>
                 <small>Max/day</small>
               </span>

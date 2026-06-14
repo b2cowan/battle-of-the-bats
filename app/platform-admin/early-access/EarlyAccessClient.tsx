@@ -60,7 +60,7 @@ type LeadResponse = {
 };
 
 const TEMPLATE_COPY = {
-  league: `Subject: FieldLogicHQ League early access\n\nHi {{name}},\n\nThanks for joining the League early-access list. We are refining the house league workflow now and I would love to learn more about how {{organization}} manages registration, scheduling, communications, and public updates today.\n\nWould you be open to a short feedback call?`,
+  league: `Subject: FieldLogicHQ League Plus early access\n\nHi {{name}},\n\nThanks for joining the League Plus early-access list. We are refining the house league workflow now and I would love to learn more about how {{organization}} manages registration, scheduling, communications, and public updates today.\n\nWould you be open to a short feedback call?`,
   club: `Subject: FieldLogicHQ Club roadmap update\n\nHi {{name}},\n\nThanks for your interest in the Club tier. We are shaping the combined tournament, league, public site, accounting, and team workflows now, and your notes are helpful as we decide what should launch first.\n\nI will send updates as the release gets closer.`,
   feedback: `Subject: Quick FieldLogicHQ feedback call\n\nHi {{name}},\n\nI saw your early-access request for {{organization}} and wanted to ask a few questions about what would make FieldLogicHQ useful for your program.\n\nWould a 20-minute call work sometime next week?`,
 };
@@ -649,10 +649,10 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
               <section className={styles.templates} aria-label="Outreach templates">
                 <div className={styles.notesLabel}>Templates</div>
                 <button
-                  onClick={() => copyText(applyTemplate(TEMPLATE_COPY.league, selectedLead), 'Copied League template.')}
+                  onClick={() => copyText(applyTemplate(TEMPLATE_COPY.league, selectedLead), 'Copied League Plus template.')}
                   type="button"
                 >
-                  League beta invite
+                  League Plus beta invite
                 </button>
                 <button
                   onClick={() => copyText(applyTemplate(TEMPLATE_COPY.club, selectedLead), 'Copied Club update.')}

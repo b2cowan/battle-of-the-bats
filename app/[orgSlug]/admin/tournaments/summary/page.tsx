@@ -562,7 +562,7 @@ export default function TournamentSummaryPage() {
             {!canClone && <p className={styles.whatsNextNote}>{requiresTournamentPlusCopy('tournament_cloning')}</p>}
             <p className={styles.discoveryLine}>
               FieldLogicHQ also runs season-long leagues and full club operations — registrations, house league, rep teams, and accounting.{' '}
-              <Link href="/pricing" target="_blank" className={styles.discoveryLink}>See what League and Club include →</Link>
+              <Link href="/pricing" target="_blank" className={styles.discoveryLink}>See what League Plus and Club include →</Link>
             </p>
           </CollapsibleCard>
         </>

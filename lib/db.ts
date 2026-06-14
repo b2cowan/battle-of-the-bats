@@ -1559,7 +1559,10 @@ export async function saveGame(g: Omit<Game, 'id'>): Promise<void> {
   };
   if (g.scheduleFacilityLaneId !== undefined) row.schedule_facility_lane_id = g.scheduleFacilityLaneId ?? null;
   if (g.generatorLocked !== undefined) row.generator_locked = Boolean(g.generatorLocked);
-  await authClient().from('games').insert(row);
+  // Surface failures (incl. RLS WITH CHECK violations) instead of silently
+  // swallowing them — a non-member operator would otherwise see "nothing happened".
+  const { error } = await authClient().from('games').insert(row);
+  if (error) throw error;
 }
 
 export async function updateGame(id: string, g: Partial<Game>, options: ReadOptions = {}): Promise<void> {
@@ -1593,8 +1596,13 @@ export async function updateGame(id: string, g: Partial<Game>, options: ReadOpti
   if (g.scoreSubmissionSource !== undefined) updates.score_submission_source = g.scoreSubmissionSource;
 
   const writeClient = options.admin ? supabaseAdmin : authClient();
-  const { error } = await writeClient.from('games').update(updates).eq('id', id);
+  const { data: updated, error } = await writeClient.from('games').update(updates).eq('id', id).select('id');
   if (error) throw error;
+  // RLS-denied updates return 0 rows with no error. Surface that to the browser
+  // operator (server/admin paths keep their existing silent behavior).
+  if (typeof window !== 'undefined' && !options.admin && (!updated || updated.length === 0)) {
+    throw new Error("Couldn't update the game — you may not have permission to modify this tournament.");
+  }
 
   // Trigger advancement
   if (g.status === 'completed' || (g.homeScore !== undefined && g.awayScore !== undefined)) {
@@ -1604,7 +1612,13 @@ export async function updateGame(id: string, g: Partial<Game>, options: ReadOpti
 }
 
 export async function deleteGame(id: string): Promise<void> {
-  await authClient().from('games').delete().eq('id', id);
+  // .select() so we can detect an RLS-denied delete (0 rows, no error) and tell
+  // the operator, instead of silently doing nothing.
+  const { data, error } = await authClient().from('games').delete().eq('id', id).select('id');
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("Couldn't remove the game — it may already be gone, or you may not have permission to modify this tournament.");
+  }
 }
 
 /** Async wrapper: fetch teams+games (filtered inside) then rank one division. */
@@ -2303,6 +2317,7 @@ export async function createOrganization(
     accountKind?: Organization['accountKind'];
     teamWorkspaceStatus?: Organization['teamWorkspaceStatus'] | null;
     isDiscoverable?: boolean;
+    freeFloor?: Organization['freeFloor'];
   } = {},
 ): Promise<Organization> {
   const limit = PLAN_CONFIG[planId]?.tournamentLimit ?? 1;
@@ -2316,6 +2331,7 @@ export async function createOrganization(
       account_kind: options.accountKind ?? 'organization',
       team_workspace_status: options.teamWorkspaceStatus ?? null,
       is_discoverable: options.isDiscoverable ?? true,
+      free_floor: options.freeFloor ?? null,
     })
     .select()
     .single();
@@ -2392,6 +2408,7 @@ function mapOrg(r: any): Organization {
     accountKind:           r.account_kind ?? 'organization',
     teamWorkspaceStatus:   r.team_workspace_status ?? null,
     isDiscoverable:        r.is_discoverable ?? true,
+    freeFloor:             r.free_floor ?? null,
   };
 }
 

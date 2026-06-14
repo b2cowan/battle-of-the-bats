@@ -1,0 +1,11 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J10",
+  "login": { "email": "j10-admin2@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "07-admin-dashboard",    "url": "/dev-test-org/admin/tournaments/dashboard", "auth": true },
+    { "name": "08-settings-hub-admin", "url": "/dev-test-org/admin/tournaments/settings", "auth": true },
+    { "name": "09-branding-admin",     "url": "/dev-test-org/admin/tournaments/branding", "auth": true },
+    { "name": "10-audit-404",          "url": "/dev-test-org/admin/tournaments/settings/members/audit", "auth": true }
+  ]
+}

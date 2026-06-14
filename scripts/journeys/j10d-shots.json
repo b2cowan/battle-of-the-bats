@@ -1,0 +1,10 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J10",
+  "login": { "email": "j10-club-admin@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "11-club-admin-hub",     "url": "/dev-club-org/admin", "auth": true },
+    { "name": "12-org-settings-denied","url": "/dev-club-org/admin/org/settings", "auth": true },
+    { "name": "13-club-billing-admin", "url": "/dev-club-org/admin/org/billing", "auth": true }
+  ]
+}

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, X, Trophy, Swords, Shield, Dumbbell, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
@@ -111,10 +111,11 @@ function WLTWidget({ events }: { events: RepTeamEvent[] }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function AdminSchedulePage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { orgSlug: string; teamId: string; yearId: string };
+  params: Promise<{ orgSlug: string; teamId: string; yearId: string }>;
 }) {
+  const params = use(paramsPromise);
   const { orgSlug, teamId, yearId } = params;
   const { loading: orgLoading } = useOrg();
 

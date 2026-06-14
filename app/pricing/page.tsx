@@ -8,7 +8,7 @@ import styles from './page.module.css';
 
 export const metadata = {
   title: 'Pricing — FieldLogicHQ',
-  description: 'Simple, honest pricing for every role in your organization — from running one tournament to managing a full club. Tournament and Tournament Plus are available now. League, Club, and the Coaches Portal are coming soon.',
+  description: 'Simple, honest pricing for every role in your organization — from running one tournament to managing a full club. Tournament and Tournament Plus are available now. League Plus, Club, and the Coaches Portal are coming soon.',
 };
 
 const TRUST_SIGNALS = [
@@ -40,7 +40,7 @@ const BUYER_SEGMENTS: Array<{
     eyebrow: 'House league administrator',
     title: 'I run a house league season.',
     body: 'Player registration, draft, scheduling, standings, and automated parent notifications — from opening day to final game, in one dashboard.',
-    cta: 'Express interest in League',
+    cta: 'Express interest in League Plus',
     earlyAccess: true,
     initialPlanInterest: ['league'],
     initialFeaturesInterested: ['house_league', 'registration', 'public_site'],
@@ -81,18 +81,18 @@ const UPGRADE_BRIDGES = [
   },
   {
     headline: 'Running a full house league season?',
-    body: 'League is the complete house league platform — player registration, draft, season scheduling, standings, and automated parent notifications in one dashboard. No tournament plan required — League is its own entry point for house league organizations. Available soon — express interest to be notified when it opens.',
+    body: 'League Plus is the complete house league platform — player registration, draft, season scheduling, standings, and automated parent notifications in one dashboard. No tournament plan required — League Plus is its own entry point for house league organizations. Available soon — express interest to be notified when it opens.',
     from: null,
     to: null,
     label: 'House league administrators',
-    cta: 'Express interest in League',
+    cta: 'Express interest in League Plus',
     earlyAccess: true,
     initialPlanInterest: ['league'],
     initialFeaturesInterested: ['house_league', 'registration', 'public_site'],
   },
   {
     headline: 'Running a club with rep teams, house league, and tournaments?',
-    body: 'Club is the complete platform — tournaments, house league, rep teams, and accounting in one place. Includes three Coaches Portal accounts for your coaching staff, with additional teams at $19/month. Start directly on Club — you don\'t need to have been on League first. Available soon — express interest to be notified when it opens.',
+    body: 'Club is the complete platform — tournaments, house league, rep teams, and accounting in one place. Includes three Coaches Portal accounts for your coaching staff, with additional teams at $19/month. Start directly on Club — you don\'t need to have been on League Plus first. Available soon — express interest to be notified when it opens.',
     from: null,
     to: null,
     label: 'Club executives',
@@ -111,15 +111,15 @@ const FAQS = [
   },
   {
     q: 'Is the platform only for tournaments?',
-    a: 'No. Tournament and Tournament Plus are the live self-serve plans today, and the Coaches Portal is coming for coaches managing a single rep team. League and Club — covering house league seasons, rep team management, and accounting — are the next parts of the platform. They\'re shown here so your organization can plan ahead.',
+    a: 'No. Tournament and Tournament Plus are the live self-serve plans today, and the Coaches Portal is coming for coaches managing a single rep team. League Plus and Club — covering house league seasons, rep team management, and accounting — are the next parts of the platform. They\'re shown here so your organization can plan ahead.',
   },
   {
     q: 'What if I only manage one competitive team?',
     a: 'Use the Coaches Portal. It\'s a standalone workspace for one rep team — roster, schedule, budget, documents, attendance, and lineups. No org account needed. If your organization joins FieldLogicHQ later, your workspace carries over automatically. The Coaches Portal is coming soon — express interest to be notified.',
   },
   {
-    q: 'Can I buy League, Club, or the Coaches Portal today?',
-    a: 'Not through self-serve checkout yet. Tournament and Tournament Plus are available now. League, Club, and the Coaches Portal are shown as coming-soon previews so organizations and coaches can plan ahead and express interest while those workflows are finished.',
+    q: 'Can I buy League Plus, Club, or the Coaches Portal today?',
+    a: 'Not through self-serve checkout yet. Tournament and Tournament Plus are available now. League Plus, Club, and the Coaches Portal are shown as coming-soon previews so organizations and coaches can plan ahead and express interest while those workflows are finished.',
   },
   {
     q: 'How does billing work?',
@@ -147,7 +147,7 @@ const FAQS = [
   },
   {
     q: 'Is there a limit on how many staff accounts I can have?',
-    a: 'Not on any paid plan. Tournament Plus, League, and Club all include unlimited staff seats — add as many admins, schedulers, and scorekeepers as you need. The free Tournament tier includes 3 staff seats as a soft limit. On the free tier, officials count toward that limit; on all paid plans there is no staff seat limit at all.',
+    a: 'Not on any paid plan. Tournament Plus, League Plus, and Club all include unlimited staff seats — add as many admins, schedulers, and scorekeepers as you need. The free Tournament tier includes 3 staff seats as a soft limit. On the free tier, officials count toward that limit; on all paid plans there is no staff seat limit at all.',
   },
   {
     q: 'Is there a setup fee or onboarding cost?',
@@ -171,7 +171,7 @@ export default async function PricingPage() {
           </h1>
           <p className={styles.heroSub}>
             Tournament and Tournament Plus are live — start free, no credit card required.
-            League, Club, and the Coaches Portal are open for interest while we finish those workflows.
+            League Plus, Club, and the Coaches Portal are open for interest while we finish those workflows.
           </p>
           <div className={styles.trustRow}>
             {TRUST_SIGNALS.map(s => (
@@ -232,7 +232,7 @@ export default async function PricingPage() {
         <div className="container">
           <div className={styles.sectionIntro}>
             <p className={styles.sectionEyebrow}>For organizations</p>
-            <h2 className={styles.sectionTitle}>Tournament, League, and Club plans</h2>
+            <h2 className={styles.sectionTitle}>Tournament, League Plus, and Club plans</h2>
             <p className={styles.sectionSub}>
               Use these plans when you manage events or organization-wide operations.
             </p>
@@ -272,11 +272,11 @@ export default async function PricingPage() {
         <div className="container">
           <h2 className={styles.sectionTitle}>Compare all plans</h2>
           <p className={styles.sectionSub}>
-            Tournament and Tournament Plus are available now. League and Club are open for early interest.
+            Tournament and Tournament Plus are available now. League Plus and Club are open for early interest.
           </p>
           <ComparisonTable />
           <p className="font-mono text-xs text-data-gray/50 mt-4 text-center">
-            League and Club are available for early interest — express interest to be notified when self-serve checkout opens. Coaches Portal is also available standalone for coaches managing one team — see below.
+            League Plus and Club are available for early interest — express interest to be notified when self-serve checkout opens. Coaches Portal is also available standalone for coaches managing one team — see below.
           </p>
         </div>
       </section>
@@ -317,15 +317,15 @@ export default async function PricingPage() {
           <div className={styles.clubInner}>
             <div className={styles.clubText}>
               <p className="font-mono text-xs uppercase tracking-widest text-logic-lime mb-3">Coming Soon</p>
-              <h2 className={styles.clubTitle}>League and Club — what&apos;s coming next</h2>
+              <h2 className={styles.clubTitle}>League Plus and Club — what&apos;s coming next</h2>
               <p className={styles.clubSub}>We&apos;re finishing the workflows before opening self-serve checkout. Here&apos;s what they cover.</p>
               <p className={styles.clubBody}>
-                Tournament and Tournament Plus are the live plans available today. League and Club are shown
+                Tournament and Tournament Plus are the live plans available today. League Plus and Club are shown
                 here so organizations can understand the full platform direction before committing their
                 tournament workflow to us.
               </p>
               <p className={styles.clubBody}>
-                League is focused on house league registration, divisions, seasons, public organization
+                League Plus is focused on house league registration, divisions, seasons, public organization
                 pages, and registrar workflows. Club adds rep teams and accounting — plus three Coaches
                 Portal accounts for your coaching staff — for organizations that need the complete
                 operating system.
@@ -350,7 +350,7 @@ export default async function PricingPage() {
                 },
                 {
                   label: 'Coming next',
-                  body: 'League, Club, and the Coaches Portal workflows are being finished before self-serve checkout opens.',
+                  body: 'League Plus, Club, and the Coaches Portal workflows are being finished before self-serve checkout opens.',
                 },
                 {
                   label: 'Express interest',
@@ -399,7 +399,7 @@ export default async function PricingPage() {
           </h2>
           <p className={styles.ctaSub}>
             Start free with Tournament. Tournament Plus is free through December 31, 2026 — no credit card required.
-            League, Club, and the Coaches Portal are coming soon — express interest to be notified.
+            League Plus, Club, and the Coaches Portal are coming soon — express interest to be notified.
           </p>
           <div className={styles.ctaActions}>
             <Link

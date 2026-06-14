@@ -60,15 +60,38 @@ export { ADMIN_EMAIL, SITE_URL };
 // coach/contact. Stored as booleans under tournaments.settings (keys below).
 // Absent key === enabled, so tournaments created before this feature keep the
 // historical behavior (all automatic coach emails on).
+//
+// `coach_email_pause_all` (Phase 5n) is a master kill-switch: when true it suppresses
+// EVERY coach-facing automatic email (the organizer is handling comms manually) — there is
+// no transactional carve-out. It defaults OFF (absent/`false` = not paused) and has the
+// OPPOSITE polarity from the per-type keys (here `true` DISABLES).
 
-export type CoachEmailType = 'confirmation' | 'acceptance' | 'rejection' | 'payment';
+export type CoachEmailType =
+  | 'confirmation'
+  | 'acceptance'
+  | 'rejection'
+  | 'payment'
+  | 'schedule'    // schedule-published email (gated in 5n)
+  | 'game_day';   // game-day reminder, scheduled at publish time (5m; gated in 5n)
+
+/**
+ * Whether the organizer has paused ALL automatic coach-facing emails for a tournament
+ * (the Phase 5n master switch). Use this for coach-facing sends that DON'T flow through
+ * `coachEmailEnabled` — i.e. the post-event results email, which has its own per-event
+ * "Post-Event Results" toggle and only needs the master override layered on top.
+ */
+export function coachEmailsPaused(settings: unknown): boolean {
+  return (settings as Record<string, unknown> | null | undefined)?.coach_email_pause_all === true;
+}
 
 /**
  * Whether a given automatic coach email is enabled for a tournament.
  * Pass the tournament's `settings` JSONB. Defaults to true when the key is
  * missing or `settings` is null/undefined — only an explicit `false` disables.
+ * Returns false unconditionally when the master `coach_email_pause_all` is on.
  */
 export function coachEmailEnabled(settings: unknown, type: CoachEmailType): boolean {
+  if (coachEmailsPaused(settings)) return false;
   const key = `coach_email_${type}`;
   const value = (settings as Record<string, unknown> | null | undefined)?.[key];
   return value !== false;
@@ -87,9 +110,14 @@ export function coachEmailEnabled(settings: unknown, type: CoachEmailType): bool
  * `teams.email` (the claim key), so do not pass the resolved recipient into the footer.
  */
 export function resolveCoachRecipient(team: { coach_email?: string | null; email?: string | null }): string {
-  const coach = team.coach_email?.trim();
+  // Lowercased so the resolved address is canonical: it's both the `to:` recipient AND (for the 5m
+  // game-day reminder) the `email_sends.recipient_email` stored at schedule time and the key the
+  // per-recipient cancel matches on. The admin manual-add path stores teams.email un-lowercased, so
+  // without this a mixed-case address would never match the lowercased cancel query → duplicate /
+  // un-cancelled reminders. Email delivery is case-insensitive, so lowercasing the to-address is safe.
+  const coach = team.coach_email?.trim().toLowerCase();
   if (coach) return coach;
-  return team.email?.trim() ?? '';
+  return team.email?.trim().toLowerCase() ?? '';
 }
 
 // ── Email templates ────────────────────────────────────────────────────────────
@@ -107,7 +135,7 @@ export const wrap = (content: string) => `
  * CLAIM link: a coach WITH access lands on their team; a coach WITHOUT creates an account and
  * the registration links automatically (the email half of the claim-by-email gap fix).
  */
-function coachPortalUrl(p: { registrationId?: string; email?: string }): string {
+export function coachPortalUrl(p: { registrationId?: string; email?: string }): string {
   const params = new URLSearchParams();
   if (p.registrationId) params.set('registrationId', p.registrationId);
   if (p.email) params.set('email', p.email);
@@ -384,18 +412,26 @@ export function tournamentResultsFinalizedHtml(p: {
   scheduleUrl: string;
   teamsUrl: string;
   fieldLogicUrl: string;
+  /** Express-interest destination ("keep this team going"). NOT a checkout link (no billing param). */
   teamUrl?: string;
   contactEmail?: string;
+  /** Coach-portal claim footer (Phase 5m) — carries the registration + claim-key email. */
+  registrationId?: string;
+  coachEmail?: string;
 }) {
+  // The afterglow earned-ask: ONE express-interest bridge ("keep this team going"), framed as
+  // interest — not a purchase (the pressure ladder allows a single post-event ask). The
+  // checkout-flavored billing link was removed (Phase 5m / J5-059); teamUrl now points at the
+  // repaired express-interest destination.
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Final Results Are Posted</h2>
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">That's a wrap — final results are in 🎉</h2>
     <p>Hi <strong>${escapeEmailHtml(p.coachName)}</strong>,</p>
-    <p>The organizer has finalized results for <strong>${escapeEmailHtml(p.tournamentName)}</strong>. You can review standings, scores, and team information from the public tournament site.</p>
+    <p>The organizer has finalized results for <strong>${escapeEmailHtml(p.tournamentName)}</strong>. See where your team landed, then relive the weekend from the public tournament site.</p>
     <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Tournament Links</p>
+      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">See how it finished</p>
       <p style="margin:0;line-height:1.9;">
-        <a href="${escapeEmailHtml(p.resultsUrl)}" style="color:#D9F99D;">View standings and results</a><br>
-        <a href="${escapeEmailHtml(p.scheduleUrl)}" style="color:#D9F99D;">View schedule</a><br>
+        <a href="${escapeEmailHtml(p.resultsUrl)}" style="color:#D9F99D;font-weight:700;">View final standings</a><br>
+        <a href="${escapeEmailHtml(p.scheduleUrl)}" style="color:#D9F99D;">View scores &amp; schedule</a><br>
         <a href="${escapeEmailHtml(p.teamsUrl)}" style="color:#D9F99D;">View teams</a>
       </p>
     </div>
@@ -403,13 +439,51 @@ export function tournamentResultsFinalizedHtml(p: {
     ${p.teamUrl ? `
       <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
         <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Keep this team going</p>
-        <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">Upgrade your Coaches Portal for roster, schedule, dues, documents, attendance, and lineups.</p>
-        <a href="${escapeEmailHtml(p.teamUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Explore Coaches Portal</a>
+        <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">Your Coaches Portal stays free between tournaments — roster, schedule, and team comms in one place. Tell us which tools you'd want next; no commitment.</p>
+        <a href="${escapeEmailHtml(p.teamUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Explore the Coaches Portal</a>
       </div>
     ` : ''}
     <p style="color:rgba(241,245,249,0.4);font-size:0.82rem;line-height:1.55;margin-top:1.5rem;">
       Running your own tournament? <a href="${escapeEmailHtml(p.fieldLogicUrl)}" style="color:#D9F99D;">See how FieldLogicHQ helps organizers manage registration, schedules, results, and post-event reporting.</a>
     </p>
+    ${coachPortalFooter({ registrationId: p.registrationId, email: p.coachEmail })}
+  `);
+}
+
+/**
+ * Game-day reminder (free-tier Coaches Phase 5m). TRANSACTIONAL — sent via
+ * `sendMarketingEmail({ skipOptOutCheck: true })` so the organizer's marketing opt-out can't
+ * suppress a coach knowing when/where to show up. Scheduled at schedule-publish time via Resend
+ * `scheduled_at` for the evening before the team's first game; cancelled if the team is withdrawn
+ * or rejected. The opponent is honesty-gated by the caller (only passed when matchups are public).
+ */
+export function gameDayReminderHtml(p: {
+  teamName: string;
+  coachName: string;
+  tournamentName: string;
+  firstGameLabel: string;
+  location?: string | null;
+  opponentName?: string | null;
+  portalUrl: string;
+  contactEmail?: string;
+}) {
+  const detailRows = [
+    `When: <strong>${escapeEmailHtml(p.firstGameLabel)}</strong>`,
+    p.opponentName ? `Opponent: <strong>${escapeEmailHtml(p.opponentName)}</strong>` : null,
+    p.location ? `Where: <strong>${escapeEmailHtml(p.location)}</strong>` : null,
+  ].filter(Boolean).join('<br>');
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${escapeEmailHtml(p.teamName)} plays soon</h2>
+    <p>Hi <strong>${escapeEmailHtml(p.coachName)}</strong>,</p>
+    <p>Your first game at <strong>${escapeEmailHtml(p.tournamentName)}</strong> is coming up. Here's what to know.</p>
+    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0;line-height:1.9;color:rgba(241,245,249,0.9);">${detailRows}</p>
+    </div>
+    <p style="color:rgba(241,245,249,0.72);font-size:0.9rem;line-height:1.6;">Plan to check in with the organizer when you arrive — they'll confirm your roster and payment at the gate.</p>
+    <p style="margin:1.25rem 0;">
+      <a href="${escapeEmailHtml(p.portalUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Open your team in the Coaches Portal</a>
+    </p>
+    ${p.contactEmail ? `<p style="color:rgba(241,245,249,0.5);font-size:0.82rem;">Questions? <a href="mailto:${escapeEmailHtml(p.contactEmail)}" style="color:#D9F99D;">${escapeEmailHtml(p.contactEmail)}</a></p>` : ''}
   `);
 }
 
@@ -1440,11 +1514,11 @@ export function spotlightLeagueHtml(p: {
       No parallel spreadsheets. No manual notifications. One dashboard.
     </p>
     <p style="margin:0 0 1.5rem;line-height:1.7;">
-      Available on the League plan (<strong>$89/month</strong>) and Club plan (<strong>$179/month</strong>).<br>
+      Available on the League Plus plan (<strong>$89/month</strong>) and Club plan (<strong>$179/month</strong>).<br>
       Both are <strong>free through December 31, 2026</strong> for founding organizations.
     </p>
     <p style="margin:0 0 1rem;line-height:1.7;">If you're planning a league season:</p>
-    <a href="${p.setupUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Get set up on League — free through December 31 →</a>
+    <a href="${p.setupUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Get set up on League Plus — free through December 31 →</a>
 
     <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
     ${unsubscribeBlock}
@@ -1494,7 +1568,7 @@ export function spotlightCoachesOrgHtml(p: {
       A coach can sign up independently, on their own billing, and manage their team year-round.
     </p>
     <p style="margin:0 0 1.5rem;line-height:1.7;">
-      Standalone at <strong>$29/month</strong>, or included in League and Club plans.
+      Standalone at <strong>$29/month</strong>, or included in League Plus and Club plans.
     </p>
 
     <p style="margin:0 0 0.75rem;line-height:1.7;">Know a coach who needs this?</p>

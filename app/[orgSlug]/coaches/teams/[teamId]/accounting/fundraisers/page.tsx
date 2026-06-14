@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Gift, Plus, X, ChevronRight, TrendingUp } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -30,10 +30,11 @@ function fmtDate(d: string | null) {
 }
 
 export default function FundraisersListPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { orgSlug: string; teamId: string };
+  params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
+  const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
 

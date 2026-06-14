@@ -1,0 +1,15 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J9",
+  "login": { "email": "league-owner@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "01-season-home",        "url": "/dev-league-org/league/dev-league-2026" },
+    { "name": "02-public-schedule",    "url": "/dev-league-org/league/dev-league-2026/schedule" },
+    { "name": "03-public-standings",   "url": "/dev-league-org/league/dev-league-2026/standings" },
+    { "name": "04-status-deadend",     "url": "/dev-league-org/league/dev-league-2026/status" },
+    { "name": "05-admin-teams",        "url": "/dev-league-org/admin/house-league/seasons/a13b2a3b-b0da-4b1b-bccb-c4425504c3c6/teams", "auth": true },
+    { "name": "06-admin-notifications","url": "/dev-league-org/admin/house-league/seasons/a13b2a3b-b0da-4b1b-bccb-c4425504c3c6/notifications", "auth": true },
+    { "name": "07-admin-registrations","url": "/dev-league-org/admin/house-league/seasons/a13b2a3b-b0da-4b1b-bccb-c4425504c3c6/registrations", "auth": true },
+    { "name": "08-admin-schedule",     "url": "/dev-league-org/admin/house-league/seasons/a13b2a3b-b0da-4b1b-bccb-c4425504c3c6/schedule", "auth": true }
+  ]
+}

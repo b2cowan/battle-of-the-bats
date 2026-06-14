@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Users, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -23,10 +23,11 @@ interface OrgMember {
 }
 
 export default function CoachManagementPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { orgSlug: string; teamId: string; yearId: string };
+  params: Promise<{ orgSlug: string; teamId: string; yearId: string }>;
 }) {
+  const params = use(paramsPromise);
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'admin';

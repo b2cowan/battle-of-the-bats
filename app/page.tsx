@@ -25,7 +25,7 @@ const MODULE_CARDS = [
     id: '02',
     name: 'House League Admin',
     href: '/for-leagues',
-    plan: 'League · Coming soon',
+    plan: 'League Plus · Coming soon',
     tagline: 'From first registration to final standings, in one dashboard.',
     features: [
       'Player registration and waitlist management',
@@ -69,7 +69,7 @@ const STEPS = [
   {
     num: '01',
     label: 'SET UP YOUR ORGANIZATION',
-    desc: 'Create your organization and set up the tournament tools you need today. League and Club modules can be added as they open.',
+    desc: 'Create your organization and set up the tournament tools you need today. League Plus and Club modules can be added as they open.',
   },
   {
     num: '02',
@@ -120,7 +120,7 @@ const PERSONAS = [
   },
   {
     id: 'league',
-    label: 'League',
+    label: 'League Plus',
     question: 'Managing a house league season?',
     body: 'Player registration, draft, schedule, standings, and parent notifications — from first signup to final game.',
     badge: 'Coming soon · express interest',
@@ -233,7 +233,7 @@ export default async function HomePage() {
               <p className={styles.eyebrow}>What&apos;s included</p>
               <h2 className={styles.sectionTitle}>One platform. Every role.</h2>
               <p className={styles.sectionSub}>
-                Tournament organizers can start today — free, no credit card required. League, Club, and Coaches Portal are in active development.
+                Tournament organizers can start today — free, no credit card required. League Plus, Club, and Coaches Portal are in active development.
               </p>
             </div>
           </AnimateIn>
@@ -306,7 +306,7 @@ export default async function HomePage() {
               <p className={styles.eyebrow}>Pricing</p>
               <h2 className={styles.sectionTitle}>Plans built for how you operate.</h2>
               <p className={styles.sectionSub}>
-                Tournament and Tournament Plus are available now. League and Club are open for early-access interest while those workflows are refined.
+                Tournament and Tournament Plus are available now. League Plus and Club are open for early-access interest while those workflows are refined.
               </p>
             </div>
           </AnimateIn>

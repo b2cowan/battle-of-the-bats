@@ -100,7 +100,7 @@ interface MockBillingConfig {
 const ORG_PLAN_OPTIONS: { value: OrgPlan; label: string; price: string }[] = [
   { value: 'tournament',      label: 'Tournament',  price: 'Free'    },
   { value: 'tournament_plus', label: 'Tournament+', price: '$39/mo'  },
-  { value: 'league',          label: 'League',      price: '$89/mo'  },
+  { value: 'league',          label: 'League Plus', price: '$89/mo'  },
   { value: 'club',            label: 'Club',        price: '$179/mo' },
 ];
 
@@ -1372,7 +1372,7 @@ export default function DevDashboard() {
             <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>
               {planGatesMode === 'live'
                 ? 'All plans treated as live — checkout CTAs visible on pricing page.'
-                : 'Gates enforced — League and Club show early-access CTAs.'}
+                : 'Gates enforced — League Plus and Club show early-access CTAs.'}
             </div>
           </div>
           <button

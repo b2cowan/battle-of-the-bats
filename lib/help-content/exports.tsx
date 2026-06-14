@@ -71,7 +71,7 @@ const exportsHelp: HelpPageContent = {
             optional footer text.
           </p>
           <p>
-            PDF exports are available on Tournament Plus, League, and Club plans. Free Tournament
+            PDF exports are available on Tournament Plus, League Plus, and Club plans. Free Tournament
             plan organizations get PDFs with default FieldLogicHQ branding.
           </p>
           <p>
@@ -133,25 +133,25 @@ const exportsHelp: HelpPageContent = {
                 <td><strong>House League</strong></td>
                 <td>Season Registrations</td>
                 <td>✓</td><td>✓</td><td>—</td><td>✓</td>
-                <td>League</td>
+                <td>League Plus</td>
               </tr>
               <tr>
                 <td><strong>House League</strong></td>
                 <td>Season Schedule</td>
                 <td>✓</td><td>✓</td><td>✓</td><td>—</td>
-                <td>League</td>
+                <td>League Plus</td>
               </tr>
               <tr>
                 <td><strong>House League</strong></td>
                 <td>Season Standings</td>
                 <td>✓</td><td>✓</td><td>—</td><td>—</td>
-                <td>League</td>
+                <td>League Plus</td>
               </tr>
               <tr>
                 <td><strong>House League</strong></td>
                 <td>Season Teams</td>
                 <td>✓</td><td>✓</td><td>—</td><td>—</td>
-                <td>League</td>
+                <td>League Plus</td>
               </tr>
               <tr>
                 <td><strong>Rep Teams</strong></td>
@@ -417,14 +417,14 @@ const exportsHelp: HelpPageContent = {
           popular: true,
           answer: (
             <p>
-              PDF exports are available on Tournament Plus, League, and Club plans. If the PDF
+              PDF exports are available on Tournament Plus, League Plus, and Club plans. If the PDF
               option is disabled, your organization is on the free Tournament plan.{' '}
               <strong>Upgrade to Tournament Plus</strong> for PDF exports and template
               customization.
             </p>
           ),
           answerText:
-            'PDF exports require Tournament Plus, League, or Club. The free Tournament plan does not include PDF exports.',
+            'PDF exports require Tournament Plus, League Plus, or Club. The free Tournament plan does not include PDF exports.',
         },
         {
           id: 'faq-who-can-export',

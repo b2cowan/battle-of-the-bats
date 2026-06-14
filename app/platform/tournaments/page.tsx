@@ -95,7 +95,7 @@ export default function TournamentsPage() {
         <div className="max-w-4xl mx-auto px-6">
           <p className="font-mono text-xs text-data-gray/50 uppercase tracking-widest mb-4">Included in</p>
           <div className="flex flex-wrap gap-3 mb-6">
-            {['Tournament (Free)', 'Tournament Plus', 'League', 'Club'].map(plan => (
+            {['Tournament (Free)', 'Tournament Plus', 'League Plus', 'Club'].map(plan => (
               <span
                 key={plan}
                 className="font-mono text-xs uppercase tracking-widest border border-blueprint-blue/40 px-4 py-2 text-fl-text"

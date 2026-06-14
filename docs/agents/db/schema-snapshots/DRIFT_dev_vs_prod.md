@@ -1,15 +1,15 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-06-11 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-06-14 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 53 divergence(s)** across dev/prod.
+**⚠️ 50 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
-| Columns | 2 | 3 | 23 |
+| Columns | 0 | 3 | 23 |
 | Indexes | 4 | 3 | 0 |
-| Constraints | 8 | 9 | — |
+| Constraints | 7 | 9 | — |
 | RLS / CHECK | 0 | 1 | 0 (RLS state) |
 
 ## Tables
@@ -20,9 +20,8 @@ _none_
 _none_
 
 ## Columns
-### Only in DEV (2)
-- `teams.coach_email`
-- `tournament_roster_players.source_player_id`
+### Only in DEV (0)
+_none_
 
 ### Only in PROD (3)
 - `resources.created_at`
@@ -70,7 +69,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (8)
+### Only in DEV (7)
 - `announcements.announcements_tournament_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
@@ -78,7 +77,6 @@ _none_
 - `games.games_away_team_id_fkey`
 - `games.games_tournament_id_fkey`
 - `teams.teams_tournament_id_fkey`
-- `tournament_roster_players.tournament_roster_players_source_player_id_fkey`
 
 ### Only in PROD (9)
 - `announcements.fk_announcements_tournament`

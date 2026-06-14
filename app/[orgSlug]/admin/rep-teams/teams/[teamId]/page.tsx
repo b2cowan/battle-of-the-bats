@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Users, X, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -29,7 +29,8 @@ const BLANK_YEAR: YearForm = {
   name: '', year: String(new Date().getFullYear()), tryoutOpen: false, tryoutDescription: '',
 };
 
-export default function TeamOverviewPage({ params }: { params: { orgSlug: string; teamId: string } }) {
+export default function TeamOverviewPage({ params: paramsPromise }: { params: Promise<{ orgSlug: string; teamId: string }> }) {
+  const params = use(paramsPromise);
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'admin';

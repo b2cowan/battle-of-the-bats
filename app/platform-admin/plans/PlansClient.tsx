@@ -16,7 +16,7 @@ const PLAN_META: Record<string, { label: string; price: string }> = {
   tournament:      { label: 'Tournament',      price: 'Free' },
   team:            { label: 'Team',            price: `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/mo` },
   tournament_plus: { label: 'Tournament Plus', price: `${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo` },
-  league:          { label: 'League',          price: `${formatPriceAmount(PLAN_CONFIG.league.monthlyPrice)}/mo` },
+  league:          { label: 'League Plus',     price: `${formatPriceAmount(PLAN_CONFIG.league.monthlyPrice)}/mo` },
   club:            { label: 'Club',            price: `${formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)}/mo` },
 };
 

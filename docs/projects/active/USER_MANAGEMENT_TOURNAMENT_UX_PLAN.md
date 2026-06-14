@@ -151,3 +151,13 @@ Onboarding and edge-case clarity.
 | `app/[orgSlug]/admin/org/members/page.tsx` | All 8 fixes |
 | `app/[orgSlug]/admin/tournaments/settings/members/page.tsx` | Phase 1: audit href prop or plan detection |
 | `lib/billing-urls.ts` | Import only (no changes expected) |
+
+---
+
+## Journey-audit inputs — J10 invited staff admin (2026-06-13, Phase 4)
+
+The J10 walk routes 3 findings here (report = source of truth: [journeys/JOURNEY_J10_INVITED_STAFF_ADMIN.md](journeys/JOURNEY_J10_INVITED_STAFF_ADMIN.md); 0 refuted):
+
+- **J10-003 — P2 scope correction (raise to High):** the Tournament-tier "Audit Log" button is not just a *wrong href* — it's a **hard 404**. `app/[orgSlug]/admin/tournaments/settings/members/` contains only `page.tsx` (the members re-export); there is no `audit/` route, and `proxy.ts:133-147` bounces tournament tiers out of `/admin/org/*` so the org-path fallback would also fail. **P2's fix is incomplete as written** — it must *build* `tournaments/settings/members/audit/page.tsx` (re-export the org audit page, like members does) so the existing owner-gated audit API is reachable, OR hide the button for tournament tiers until that surface exists. The API already works; only the page is missing.
+- **J10-017 (Med, NEW — Phase 3 candidate):** the accept-invite flow renders inside the full public-marketing wrapper (nav: Tournaments/Leagues/Clubs/Coaches/Pricing + footer) instead of a clean auth shell, and the card omits the inviting org's name as context. Use a full-bleed onboarding shell (suppress public nav/footer) with the org name above the form.
+- **J10-010 (Low, NEW — Phase 3 candidate):** the scorekeeper accept-invite flashes the admin-flavoured title until an async GET resolves `inviteContext`, so an official invitee briefly sees the wrong product identity. Carry the role in the invite link (or render a neutral title until the role resolves).

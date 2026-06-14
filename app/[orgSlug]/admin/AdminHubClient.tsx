@@ -275,15 +275,19 @@ export default function AdminHubClient() {
             color: 'var(--white-30)',
             marginBottom: '0.75rem',
           }}>
-            Coming soon — League &amp; Club plans
+            Coming soon — League Plus &amp; Club plans
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {([
-              { label: 'Public Site', desc: 'Branded org page with registration and news — League plan', icon: Globe, plan: 'league' },
-              { label: 'House League', desc: 'Recreational seasons, registrations, scheduling, and standings — League plan', icon: CalendarDays, plan: 'league' },
-              { label: 'Accounting', desc: 'Income, expenses, and financial activity across the org and tournaments — Club plan', icon: DollarSign, plan: 'club' },
-              { label: 'Rep Teams', desc: 'Competitive team programs, tryouts, rosters, player documents, and team finances — Club plan', icon: Users, plan: 'club' },
-            ] as const).map(({ label, desc }) => (
+              { label: 'Public Site', desc: 'Branded org page with registration and news — League Plus plan', icon: Globe, plan: 'league', capability: 'module_public_site' },
+              { label: 'House League', desc: 'Recreational seasons, registrations, scheduling, and standings — League Plus plan', icon: CalendarDays, plan: 'league', capability: 'module_house_league' },
+              { label: 'Accounting', desc: 'Income, expenses, and financial activity across the org and tournaments — Club plan', icon: DollarSign, plan: 'club', capability: 'module_accounting' },
+              { label: 'Rep Teams', desc: 'Competitive team programs, tryouts, rosters, player documents, and team finances — Club plan', icon: Users, plan: 'club', capability: 'module_rep_teams' },
+            ] as const)
+              // Don't tease a module the org already has — e.g. a League Starter free-floor org
+              // already runs House League, so it shouldn't also appear under "coming soon".
+              .filter(({ capability }) => !canUseModule(capability))
+              .map(({ label, desc }) => (
               <Link
                 key={label}
                 href={`${base}/org/billing`}
@@ -303,7 +307,7 @@ export default function AdminHubClient() {
             ))}
           </div>
           <p style={{ marginTop: '0.85rem', fontSize: '0.8rem', color: 'var(--white-30)' }}>
-            League and Club plans are in early access.{' '}
+            League Plus and Club plans are in early access.{' '}
             <Link href={`${base}/org/billing`} style={{ color: 'var(--white-50)', textDecoration: 'underline' }}>
               View billing and upgrade options →
             </Link>

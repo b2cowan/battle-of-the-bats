@@ -1,0 +1,17 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J4",
+  "login": { "email": "club-owner@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "01-admin-dashboard", "url": "/dev-club-org/admin", "auth": true },
+    { "name": "02-rep-teams-hub",   "url": "/dev-club-org/admin/rep-teams", "auth": true },
+    { "name": "03-program-year",    "url": "/dev-club-org/admin/rep-teams/teams/e1520a86-f6ea-4b74-8aa9-c4525d38bada/program-years/75fc5490-a175-4c1c-8ed8-29cfee3a3eed", "auth": true },
+    { "name": "04-allocations",     "url": "/dev-club-org/admin/rep-teams/allocations", "auth": true },
+    { "name": "05-accounting",      "url": "/dev-club-org/admin/accounting", "auth": true },
+    { "name": "06-budget",          "url": "/dev-club-org/admin/accounting/budget", "auth": true },
+    { "name": "07-portal-links",    "url": "/dev-club-org/admin/org/coaches-portal-links", "auth": true },
+    { "name": "08-hl-hub",          "url": "/dev-club-org/admin/house-league", "auth": true },
+    { "name": "09-org-public-home", "url": "/dev-club-org" },
+    { "name": "10-home-workspace",  "url": "/home", "auth": true }
+  ]
+}

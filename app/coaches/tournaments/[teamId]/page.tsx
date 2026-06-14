@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
-import { canUserAccessTournamentRegistration } from '@/lib/basic-coach-teams';
+import { canUserAccessTournamentRegistration, findLinkedBasicTeamForRegistration } from '@/lib/basic-coach-teams';
 import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
 import {
   registrationStatusBadge,
@@ -18,6 +18,8 @@ import TeamHQ from '@/components/coaches/TeamHQ';
 import CoachLiveSchedule, { type CoachScheduleGame } from '@/components/coaches/CoachLiveSchedule';
 import TournamentRosterSubmit from '@/components/coaches/TournamentRosterSubmit';
 import HeadCoachEditor from '@/components/coaches/HeadCoachEditor';
+import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
+import SharePageButton from '@/components/public/SharePageButton';
 import { parseRosterRequirements } from '@/lib/roster-requirements';
 import type { GameStatus, TournamentSettings } from '@/lib/types';
 import styles from './detail.module.css';
@@ -306,6 +308,35 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
   // the acceptance email. Rejected teams have nothing to assign.
   const showHeadCoach = team.status !== 'rejected';
 
+  // 5m afterglow (result phase only). The in-portal afterglow renders for EVERY coach regardless
+  // of the organizer's plan (J5-050) — final W-L-T from completed games + a public standings link.
+  const isResultPhase = coachPhase === 'result';
+  const record = isResultPhase
+    ? teamGames.reduce(
+        (acc, g) => {
+          if (g.status !== 'completed') return acc;
+          const isHome = g.home_team_id === teamId;
+          const my = isHome ? g.home_score : g.away_score;
+          const opp = isHome ? g.away_score : g.home_score;
+          if (my == null || opp == null) return acc;
+          if (my > opp) acc.wins++;
+          else if (my < opp) acc.losses++;
+          else acc.ties++;
+          return acc;
+        },
+        { wins: 0, losses: 0, ties: 0 },
+      )
+    : null;
+  // Standings link + team-profile share exist only when the tournament is public (active|completed).
+  const canShareAfterglow = Boolean(isResultPhase && tournamentIsPublic && org?.slug && tournament?.slug);
+  const standingsHref = canShareAfterglow ? `/${org!.slug}/${tournament!.slug}/standings` : null;
+  const shareUrl = canShareAfterglow ? `/${org!.slug}/${tournament!.slug}/teams/${teamId}` : null;
+  // The own-team express-interest ask needs the linked basic team id; resolve it only in the
+  // result phase (one extra query, afterglow-only) — the single earned ask in the pressure ladder.
+  const afterglowBasicTeamId = isResultPhase
+    ? await findLinkedBasicTeamForRegistration(user.id, teamId)
+    : null;
+
   return (
     <div className={styles.page}>
       <nav className={styles.breadcrumb}>
@@ -341,6 +372,8 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
         showCheckIn={isGameDayOrLater}
         registeredDateLabel={registeredDateLabel}
         rosterRequired={rosterRequirements.required}
+        record={record}
+        standingsHref={standingsHref}
       />
 
       {/* 5i game-day bridge — placed directly under the hero so the live scorebug
@@ -358,8 +391,36 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
             teamDivisionId={team.division_id}
             live={canLinkPublic}
             pollEnabled={canLinkPublic && coachPhase === 'game_day'}
+            isResult={isResultPhase}
             initialGames={initialGames}
           />
+        </section>
+      )}
+
+      {/* 5m afterglow — the SINGLE earned ask, shown only after the event completes (the rest of
+          the coach experience stays pitch-free). Share the result + two express-interest bridges:
+          own-team Premium (real capture) and a soft "run your own event" discovery link. */}
+      {isResultPhase && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>That&apos;s a wrap</h2>
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.25rem' }}>
+            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.55 }}>
+              Thanks for a great event with {team.name}. Share how your team did, and tell us which tools you&apos;d want next — your Coaches Portal stays free between tournaments.
+            </p>
+            {shareUrl && (
+              <SharePageButton
+                url={shareUrl}
+                title={`${team.name} — ${tournament?.name ?? 'Tournament'}`}
+                text={`See how ${team.name} finished at ${tournament?.name ?? 'the tournament'}.`}
+                label="Share your team"
+              />
+            )}
+            {afterglowBasicTeamId && <ScopeCeilingInterest basicTeamId={afterglowBasicTeamId} />}
+            <p style={{ margin: 0, color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>
+              Thinking about running your own event?{' '}
+              <Link href="/pricing?source=coach_afterglow" style={{ color: 'var(--logic-lime)' }}>See how organizers use FieldLogicHQ &rarr;</Link>
+            </p>
+          </div>
         </section>
       )}
 

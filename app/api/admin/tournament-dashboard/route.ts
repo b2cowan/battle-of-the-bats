@@ -96,6 +96,10 @@ function positiveNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
 }
 
+function nonNegativeNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : undefined;
+}
+
 export const GET = withObservability(async (req: Request) => {
   const searchParams = new URL(req.url).searchParams;
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
@@ -366,6 +370,7 @@ export const GET = withObservability(async (req: Request) => {
       status: game.status,
       isPlayoff: game.is_playoff,
     }));
+  const savedHealthRules = (tSettings as TournamentSettings).schedule_health_rules;
   const scheduleMetrics = buildScheduleMetrics({
     games: scheduleMetricGames,
     teams: acceptedTeams.map(team => ({
@@ -376,6 +381,10 @@ export const GET = withObservability(async (req: Request) => {
     })),
     gameDurationMinutes: positiveNumber(tSettings.game_duration_minutes),
     bufferMinutes: positiveNumber(tSettings.buffer_minutes),
+    // Organizer-defined Schedule Health rules so the dashboard score/tone match the Schedule panel.
+    maxGamesPerDay: positiveNumber(savedHealthRules?.maxGamesPerDay),
+    minRestMinutes: nonNegativeNumber(savedHealthRules?.minRestMinutes),
+    expectedGamesPerParticipant: positiveNumber(savedHealthRules?.targetGamesPerTeam ?? undefined),
     manualTravelBuffers: {
       venueChangeMinutes: positiveNumber(tSettings.schedule_travel_venue_buffer_minutes),
       facilityChangeMinutes: positiveNumber(tSettings.schedule_travel_facility_buffer_minutes),
@@ -392,6 +401,7 @@ export const GET = withObservability(async (req: Request) => {
     participantCount: scheduleMetrics.participantCount,
     backToBack: scheduleMetrics.backToBackCount,
     maxGamesInDay: scheduleMetrics.maxGamesInDay,
+    maxGamesPerDay: scheduleMetrics.maxGamesPerDay,
     venueChanges: scheduleMetrics.venueChangeCount,
     facilityChanges: scheduleMetrics.facilityChangeCount,
     conflicts: scheduleMetrics.venueConflictCount + scheduleMetrics.bufferConflictCount,

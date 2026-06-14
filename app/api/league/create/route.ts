@@ -50,7 +50,7 @@ export const POST = withObservability(async (req: Request) => {
   // Capped beta: off by default. The /start/league page renders the waitlist when this is off,
   // so a create request only arrives when the flag is on — but guard the route too (defense-in-depth).
   if (process.env.LEAGUE_STARTER_BETA !== 'true') {
-    return NextResponse.json({ error: 'League Starter is not available yet.' }, { status: 403 });
+    return NextResponse.json({ error: 'League is not available yet.' }, { status: 403 });
   }
 
   let orgId: string | null = null;

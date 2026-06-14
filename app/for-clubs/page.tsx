@@ -117,7 +117,7 @@ export default function ForClubsPage() {
             <span className={styles.includedNoteDot} />
             <span>
               Club includes the full house league module — if your org runs a house league program
-              alongside rep teams, you do not need to purchase League separately.
+              alongside rep teams, you do not need to purchase League Plus separately.
             </span>
           </div>
         </div>

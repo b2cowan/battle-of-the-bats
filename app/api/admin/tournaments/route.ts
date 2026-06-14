@@ -10,7 +10,7 @@ import type { TournamentStatus } from '@/lib/types';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
 import { hasPlanFeature } from '@/lib/plan-features';
-import { sendEmail, SITE_URL, tournamentResultsFinalizedHtml } from '@/lib/email';
+import { sendEmail, SITE_URL, tournamentResultsFinalizedHtml, resolveCoachRecipient, coachEmailsPaused } from '@/lib/email';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { ROSTER_WAIVER_TEXT_MAX_LENGTH } from '@/lib/roster-requirements';
 import { withObservability } from '@/lib/observability';
@@ -31,6 +31,7 @@ type CompletionNotificationTournament = {
   contact_email: string | null;
   notify_teams_on_complete: boolean | null;
   results_notified_at: string | null;
+  settings: Record<string, unknown> | null;
 };
 
 type ResultsNotificationTeam = {
@@ -38,6 +39,7 @@ type ResultsNotificationTeam = {
   name: string;
   coach: string | null;
   email: string | null;
+  coach_email: string | null;
 };
 
 function normalizeEmail(value: unknown) {
@@ -96,6 +98,22 @@ async function sendCompletionResultsNotification(input: {
       tournamentId: tournament.id,
       status: 'skipped',
       reason: 'disabled',
+    });
+    return;
+  }
+
+  // Phase 5n master switch: the organizer paused all automatic coach emails → suppress the
+  // post-event results email too. ("Post-Event Results" above is the per-event control; this
+  // is the org-wide override layered on top.)
+  if (coachEmailsPaused(tournament.settings)) {
+    await trackResultsNotificationEvent({
+      orgId: ctx.org.id,
+      userId: ctx.user.id,
+      userEmail: ctx.user.email,
+      planId: ctx.org.planId,
+      tournamentId: tournament.id,
+      status: 'skipped',
+      reason: 'paused',
     });
     return;
   }
@@ -164,7 +182,7 @@ async function sendCompletionResultsNotification(input: {
 
   const { data: teams, error: teamsError } = await supabaseAdmin
     .from('teams')
-    .select('id, name, coach, email')
+    .select('id, name, coach, email, coach_email')
     .eq('tournament_id', tournament.id)
     .eq('status', 'accepted');
 
@@ -180,7 +198,9 @@ async function sendCompletionResultsNotification(input: {
   const scheduleUrl = `${SITE_URL}/${ctx.org.slug}/${tournament.slug}/schedule`;
   const teamsUrl = `${SITE_URL}/${ctx.org.slug}/${tournament.slug}/teams`;
   const fieldLogicUrl = `${SITE_URL}/pricing?source=post_event_results_email`;
-  const teamUrl = `${SITE_URL}/coaches/start?billing=annual&source=post_event_results_email&orgSlug=${encodeURIComponent(ctx.org.slug)}&tournamentSlug=${encodeURIComponent(tournament.slug)}`;
+  // Express-interest destination (Phase 5m / J5-059): no billing param — the repaired /coaches/start
+  // captures interest, it doesn't start a purchase. The single post-event earned ask.
+  const teamUrl = `${SITE_URL}/coaches/start?source=post_event_results_email&orgSlug=${encodeURIComponent(ctx.org.slug)}&tournamentSlug=${encodeURIComponent(tournament.slug)}`;
   // Coach-facing results email respects the "Communication with coaches" toggle and resolves
   // the selected contact member. Off → no contact shown.
   const resultsFallback = (await getOrgOwnerEmail(ctx.org.id)) ?? ctx.org.contactEmail ?? null;
@@ -188,8 +208,11 @@ async function sendCompletionResultsNotification(input: {
   let sent = 0;
 
   for (const recipient of recipients.values()) {
+    // Dedup key stays teams.email (the claim key — keeps the footer's claim link correct); the
+    // actual recipient prefers the assigned coach (teams.coach_email) — the 6th coach-facing send
+    // now matches the other 5 (Phase 5m, folds the 5l carry-forward).
     await sendEmail(
-      recipient.email!,
+      resolveCoachRecipient(recipient),
       `Final Results Posted - ${tournament.name}`,
       tournamentResultsFinalizedHtml({
         tournamentName: tournament.name,
@@ -200,6 +223,8 @@ async function sendCompletionResultsNotification(input: {
         fieldLogicUrl,
         teamUrl,
         contactEmail,
+        registrationId: recipient.id,
+        coachEmail: recipient.email ?? undefined,
       }),
     );
     sent++;
@@ -337,7 +362,7 @@ export const POST = withObservability(async (req: Request) => {
       if (newStatus === 'completed') {
         const { data: tournamentRow, error: tournamentError } = await supabase
           .from('tournaments')
-          .select('id, name, slug, status, contact_email, notify_teams_on_complete, results_notified_at')
+          .select('id, name, slug, status, contact_email, notify_teams_on_complete, results_notified_at, settings')
           .eq('id', id)
           .eq('org_id', ctx.org.id)
           .single();
@@ -439,7 +464,7 @@ export const POST = withObservability(async (req: Request) => {
       if (data.notifyTeamsOnComplete !== undefined) {
         const wantsNotification = Boolean(data.notifyTeamsOnComplete);
         if (wantsNotification && !hasPlanFeature(ctx.org.planId, 'post_tournament_summary')) {
-          return Response.json({ error: 'Post-event result notifications are included with Tournament Plus, League, and Club.' }, { status: 403 });
+          return Response.json({ error: 'Post-event result notifications are included with Tournament Plus, League Plus, and Club.' }, { status: 403 });
         }
         updates.notify_teams_on_complete = wantsNotification;
       }
@@ -529,6 +554,8 @@ export const POST = withObservability(async (req: Request) => {
         'buffer_minutes',
         'schedule_travel_venue_buffer_minutes',
         'schedule_travel_facility_buffer_minutes',
+        // Organizer-defined Schedule Health thresholds (edited from the Schedule Health panel)
+        'schedule_health_rules',
         // Scope controls (Phase 2 — Divisions UX Rework)
         'game_timing_scope',
         'tie_breakers',
@@ -544,6 +571,9 @@ export const POST = withObservability(async (req: Request) => {
         'coach_email_acceptance',
         'coach_email_rejection',
         'coach_email_payment',
+        'coach_email_schedule',
+        'coach_email_game_day',
+        'coach_email_pause_all',
         // Roster requirements (Phase 5f) — what coaches must provide on the event roster
         'roster_require',
         'roster_require_dob',
@@ -623,6 +653,8 @@ export const POST = withObservability(async (req: Request) => {
           k === 'show_fees_on_register' || k === 'payment_instructions_on_form' ||
           k === 'coach_email_confirmation' || k === 'coach_email_acceptance' ||
           k === 'coach_email_rejection' || k === 'coach_email_payment' ||
+          k === 'coach_email_schedule' || k === 'coach_email_game_day' ||
+          k === 'coach_email_pause_all' ||
           k === 'roster_require' || k === 'roster_require_dob' ||
           k === 'roster_require_jersey' || k === 'roster_require_waiver'
         ) {
@@ -649,6 +681,26 @@ export const POST = withObservability(async (req: Request) => {
           if (typeof v !== 'string') continue;
           // Trim so whitespace-only collapses to '' — readers rely on ''/absent = default text.
           sanitized[k] = v.trim().slice(0, ROSTER_WAIVER_TEXT_MAX_LENGTH);
+          continue;
+        }
+        if (k === 'schedule_health_rules') {
+          // null clears (revert to engine defaults). Otherwise validate each field;
+          // out-of-range/invalid fields are dropped, not rejected wholesale.
+          if (v === null) { sanitized[k] = null; continue; }
+          if (typeof v !== 'object' || Array.isArray(v)) continue;
+          const obj = v as Record<string, unknown>;
+          const out: Record<string, unknown> = {};
+          const mpd = Number(obj.maxGamesPerDay);
+          if (Number.isInteger(mpd) && mpd >= 1 && mpd <= 10) out.maxGamesPerDay = mpd;
+          const mrm = Number(obj.minRestMinutes);
+          if (Number.isInteger(mrm) && mrm >= 0 && mrm <= 600) out.minRestMinutes = mrm;
+          if (obj.targetGamesPerTeam === null || obj.targetGamesPerTeam === '') {
+            out.targetGamesPerTeam = null;
+          } else if (obj.targetGamesPerTeam !== undefined) {
+            const tgt = Number(obj.targetGamesPerTeam);
+            if (Number.isInteger(tgt) && tgt >= 1 && tgt <= 99) out.targetGamesPerTeam = tgt;
+          }
+          sanitized[k] = out;
           continue;
         }
         sanitized[k] = v;

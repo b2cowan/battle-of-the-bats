@@ -8,7 +8,7 @@ import styles from './stripe-prices.module.css';
 const PLAN_LABELS: Record<string, string> = {
   team:            'Team',
   tournament_plus: 'Tournament Plus',
-  league:          'League',
+  league:          'League Plus',
   club:            'Club',
   org_team_addon:  'Org Team Add-on',
   rep_team:        'Club Extra Rep Team',

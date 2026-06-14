@@ -405,6 +405,15 @@
     padding-bottom: 0.4rem;
   }
   .compactCard { width: 72vw; flex: 0 0 72vw; }
+
+  /* Expanded per-game editor fills the round column on phones (the inline editor
+     has the full screen width — no modal squeeze), and its scheduling inputs get
+     finger-friendly hit targets. */
+  .matchupCard { width: 72vw; }
+  .dateInput, .timeInput, .fieldSelect, .teamInput, .codeInput { min-height: 38px; font-size: 0.8rem; }
+  .doneBtn { min-height: 40px; }
+  .addBtn { padding: 0.7rem; }
+  .addRoundBtnSimple { width: 48px; height: 48px; }
 }
 
 /* ── Fork layout (double elimination): seed left · winners top / losers bottom · finals right ── */

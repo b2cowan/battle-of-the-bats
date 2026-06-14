@@ -175,7 +175,7 @@ const PLAN_META: Record<string, { label: string; price: string; summary: string 
 const PRICE_PLAN_LABELS: Record<string, string> = {
   team: 'Team',
   tournament_plus: 'Tournament Plus',
-  league: 'League',
+  league: 'League Plus',
   club: 'Club',
   org_team_addon: 'Org Team Add-on',
   rep_team: 'Club Extra Rep Team',
@@ -1997,7 +1997,7 @@ export default function PlansPricingClient({
                 <input
                   className={styles.noteInput}
                   value={campaignDraft.discount_summary}
-                  placeholder="Example: 20% off annual League for first season"
+                  placeholder="Example: 20% off annual League Plus for first season"
                   onChange={event => setCampaignDraft(draft => ({ ...draft, discount_summary: event.target.value }))}
                 />
               </label>

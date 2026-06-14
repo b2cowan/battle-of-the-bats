@@ -18,6 +18,9 @@ The sections below document all copy changes applied to the live pages after the
 >
 > Do **not** reintroduce trial-length language (14/30/90-day) anywhere in live copy. The body trial sections are retained below only as historical record.
 
+> ### 🔁 RENAME — "League Starter"/"League" → "League"/"League Plus" (applied 2026-06-13)
+> The $89 paid tier is now **"League Plus"** on the live pages (was "League"). A new **free "League"** house-league floor (1 season / 1 division / 8 teams; internal `free_floor='league_starter'`, capped beta) sits below it, mirroring Tournament (free) / Tournament Plus (paid). **Read every "League" in the body sections below as "League Plus"** unless it clearly means the free floor or the **"House League"** module. Internal keys are unchanged (`plan_id='league'`, Stripe). The free "League" **public pricing card** is held for the Free-Tier Phase-9 launch — until then the live pricing page shows "League Plus" as the $89 tier and does not advertise the free "League". Never write "League Starter"/"Starter" in customer copy. Full inventory + rules: `docs/projects/active/LEAGUE_REBRAND_PLAN.md`.
+
 ### Phase 1 amendments (applied 2026-05-27)
 - `/for-tournament-organizers` planNote → "Free through Dec 31, 2026 — Founding Season · $390/year from Jan 2027"; CTA → "Start Free — No Credit Card →"
 - `/pricing` Bridge 1 CTA → "Start Free — No Credit Card" (not "Start Free Trial")

@@ -1,0 +1,14 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J2",
+  "login": { "email": "j2-coach@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "01-for-coaches",     "url": "/for-coaches" },
+    { "name": "02-start-picker",    "url": "/start" },
+    { "name": "03-start-team",      "url": "/start/team" },
+    { "name": "04-team-home",       "url": "/coaches/team/93d38e7b-35db-46a5-91f4-f5dbfff3b01b", "auth": true },
+    { "name": "05-coaches-hub",     "url": "/coaches", "auth": true },
+    { "name": "06-coaches-start",   "url": "/coaches/start", "auth": true },
+    { "name": "07-pricing",         "url": "/pricing" }
+  ]
+}

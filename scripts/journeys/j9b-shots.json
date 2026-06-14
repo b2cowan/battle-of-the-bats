@@ -1,0 +1,8 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J9",
+  "login": { "email": "j9-coach@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "09-coaches-empty", "url": "/dev-league-org/coaches", "auth": true }
+  ]
+}

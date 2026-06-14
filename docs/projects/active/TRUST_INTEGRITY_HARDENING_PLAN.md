@@ -1,0 +1,60 @@
+# Trust & Integrity Hardening — Implementation Plan
+
+> **Status:** SCOPED 2026-06-13 — spun out of the User Journey Audit (Phase 5). Awaiting owner go-ahead to build. **FIX-NOW headline project.**
+> **Branch:** dev (default). **Companion:** [TRUST_INTEGRITY_HARDENING_PM_BRIEF.md](TRUST_INTEGRITY_HARDENING_PM_BRIEF.md)
+> **Source:** [USER_JOURNEY_AUDIT_SYNTHESIS.md](USER_JOURNEY_AUDIT_SYNTHESIS.md) §4 FP-1 + the cited journey reports.
+
+## Goal
+
+Close the cross-app **security and data-integrity roots** the journey audit surfaced — the items that are trust-catastrophic, leak data, corrupt records, or gate a module's public promotion. This is the audit's single highest-priority spin-out: nothing else (the experience projects FP-2…FP-7) should ship before the fix-now tranche here lands.
+
+## Scope
+
+Cross-cutting correctness/security only. UX polish, IA, and design live in the other six fix projects. Each item below is a verified finding (0 refuted across the audit); the reports carry the file refs and repro.
+
+### Tranche 0 — Blockers + fix-now (ship first)
+
+| ID | Sev | Finding | Sweep / fix shape |
+|----|-----|---------|-------------------|
+| **J6-001** | Blocker-class | Anonymous `/api/public/tournament-data` + public pages serve every coach email, paymentStatus, adminNotes | One public-team sanitizer (id/name/divisionId/poolId/status/seed) in `getPublicTournamentPageData` + every server→client Team pass on public routes |
+| **J3-069** | **Blocker** | Unauthenticated child-disclosure oracle on league status lookup | Require email + reference code (POST, not GET); pairs with J3-068 |
+| **J3-068** | High (fix-now) | League public sub-pages + register API skip the index's org gating | Extract `resolvePublicLeagueContext(orgSlug)` (isPublic + not-canceled + entitlement), apply to all 5 sub-pages + register route |
+| **J4-020** | **Blocker** | "+ Add Ledger" plants NULL-entity ledger → snowballing duplicate Generals, scattered postings | Fix `getOrgLedger` multi-row swallow + non-NULL entity discriminator/partial-unique-index + one-time dedupe migration |
+| **J3-012** | High (fix-now) | Org-context from caller's FIRST membership; 78 files / 121 sites; wrong-org reads **and writes** | Thread `orgSlug` from page URL through every admin fetch + `getAuthContext`; make `getAuthContext` **fail closed** (require orgSlug) |
+| **J4-012** | High | Coach-API consequence of J3-012: 36 coach-API sites bare `getAuthContext` → second-org coaches 403-locked | Pass `{orgSlug}` into `getAuthContext` in every `resolveCoachContext` under `app/api/coaches/[orgSlug]/**` — ship with J3-012 |
+| **J4-001** | High (fix-now) | 17 pages dead on Next 16 (program-year oversight + entire premium coach money suite) | Mechanical `use(params)` / async-server-component migration + lint/codemod guard. *(Uncommitted fix already in this tree — fold + commit.)* |
+| **J4-003** | High (fix-now) | Admin events API retains full PATCH+DELETE on coach-owned events (0406d42 remnant) | Remove PATCH+DELETE (or design an explicit audited org-takeover) |
+| **J4-004** | High (fix-now) | Four admin rep-teams routes missing owner\|admin gate (medical-file delete, guardian-spam waves) | Add the gate to all four handlers; ship with J4-003/005/021 as one authz sweep |
+| **J4-005** | High | Coach-role members read org-wide rep finance + every coach's email via admin GETs | Role-gate the admin rep-teams GETs, or drop `module_rep_teams` from coach ROLE_DEFAULTS |
+| **J4-021** | High | Org owner/treasurer has full write on coach-owned team ledgers (entity-type-blind) | Make team-entity ledgers read-only in the org accounting UI + APIs |
+| **J10-002** | High | `GET /api/admin/members` ungated — any member reads every email + capabilities map | Add `requireCapability(ctx,'module_members')`; trim caps/last-sign-in for non-owner callers |
+| **J9-003** | High | Module-cap override (only coach onboarding workaround) leaks ALL guardian PII | Resolved by the team-scoped coach relationship (FP-4/coaches plans); interim = never gate coach access via the module cap |
+| **J3-047** | High (fix-now) | Game & practice times stored timezone-naive → wrong wall-clock on UTC prod | Store org/season timezone; `zonedTimeToUtc` in generate/game-PATCH/practice-POST; before any League org goes live |
+| **J5-026** | High (fix-now) | Organizer "Mark Paid" writes `payment_status` without `total_paid` → organizer says paid, coach says OWED | Align the single-row + check-in writes with the bulk path; decide resolver terminal semantics |
+| **J5-012 / J4-036** | High (fix-now) | Member/coach removal hard-deletes multi-org accounts; orphan basic teams become unclaimable | Membership-or-orphan claim fallback + delete-user cleanup; delete only the membership row when other orgs exist |
+| **J8-018 / J10-019** | High | Login page has no already-authenticated forward → infinite loop (cross-org volunteer; suspended member) | On login, forward an already-authenticated user to a stable destination; suspended → `/auth/suspended` |
+| **J5-035** | Low | `generateMetadata` resolves private team names without the access gate | Mirror the access check in metadata |
+
+### Tranche 1 — bracket correctness (decision pending; see §Decisions)
+Per owner call 2026-06-13, **J1-083 (tied playoff advances away) + J1-084 (coin toss no re-seed)** remain in **FP-5 (Tournament Organizer Experience)**, not here. Cross-referenced for visibility; FP-5 owns them.
+
+## Phases
+
+- **Phase A — Authorization & data-exposure sweep:** J3-012 + J4-012 (org-context fail-closed) · J6-001 (public sanitizer) · J3-069 + J3-068 (league gating) · J4-003/004/005/021 + J10-002 + J9-003 (authz). One PR per coherent sweep.
+- **Phase B — Data integrity & dead pages:** J4-020 (ledger) · J4-001 (Next-16 dead pages) · J3-047 (timezone) · J5-026 (mark-paid shape) · J5-012/J4-036 (account deletion).
+- **Phase C — Auth loop forwards:** J8-018 + J10-019 + J5-035.
+
+Each phase ships behind the normal verification gate (`npm run verify:changed`, `typecheck` on shared-module touches, dictionary refresh on any schema change per CLAUDE.md). Several items touch `lib/api-auth.ts`, `lib/db.ts`, `proxy.ts` → restart dev server before handoff.
+
+## Key decisions
+
+- **Fail-closed org context (J3-012)** is a 78-file breadth change — sequence it as its own PR with a regression test ("multi-org user hits each module's API for the URL org") and a lint guard against bare `getAuthContext()` in admin routes.
+- **Schema changes** (J4-020 dedupe migration, J3-047 timezone column) MUST update `DATA_DICTIONARY.md` + refresh dev+prod snapshots (`npm run refresh:snapshots`) per the schema-dictionary rule; decide column existence from live snapshots, never migration files.
+- **Bracket math stays in FP-5** (owner, 2026-06-13).
+
+## Success criteria
+
+1. The five Blockers (J6-001, J3-069, J4-020, plus J3-067/J8-001 in their own projects) and every fix-now High here verified fixed with the repro from its source report.
+2. `getAuthContext` fails closed; a multi-org user can no longer read or write the wrong org.
+3. Anonymous public endpoints serve only sanitized data (curl re-check per J6-001's verifier method).
+4. No regression: `npm run verify:changed` + targeted `typecheck` clean; dictionary ratchet green on schema touches.

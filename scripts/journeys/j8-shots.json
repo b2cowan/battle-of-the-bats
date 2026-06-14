@@ -1,0 +1,12 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J8",
+  "login": { "email": "j8-scorekeeper@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "01-scorekeeper",      "url": "/dev-test-org/scorekeeper", "auth": true },
+    { "name": "02-checkin-official", "url": "/dev-test-org/check-in", "auth": true },
+    { "name": "03-admin-blank-hub",  "url": "/dev-test-org/admin", "auth": true },
+    { "name": "04-home-official",    "url": "/home", "auth": true },
+    { "name": "05-logout-404",       "url": "/auth/logout", "auth": true }
+  ]
+}

@@ -11,6 +11,8 @@ import {
   remapTierSeed,
   suggestDefaultTiers,
   validateTierRanges,
+  buildPlaceholderOptions,
+  findBracketSchedulingViolations,
   type GeneratedMatchup,
 } from '../../lib/playoff-bracket.ts';
 
@@ -555,5 +557,64 @@ describe('validateTierRanges', () => {
       { name: 'Tier 2', fromSeed: 6, toSeed: 9 },
     ];
     assert.equal(validateTierRanges(offset, 9).ok, false);
+  });
+});
+
+describe('buildPlaceholderOptions (manual bracket wiring)', () => {
+  it('emits the canonical strings advancePlayoffs string-matches', () => {
+    const { seeds, winners, losers } = buildPlaceholderOptions(4, ['SF1', 'SF2']);
+    // Exact format is load-bearing: advancePlayoffs compares ('Winner ' + code),
+    // ('Loser ' + code) and parses 'Seed #N' — the space and casing must match.
+    assert.deepEqual(seeds, ['Seed #1', 'Seed #2', 'Seed #3', 'Seed #4']);
+    assert.deepEqual(winners, ['Winner SF1', 'Winner SF2']);
+    assert.deepEqual(losers, ['Loser SF1', 'Loser SF2']);
+  });
+  it('dedupes bracket codes and drops empties', () => {
+    const { winners, losers } = buildPlaceholderOptions(0, ['QF1', 'QF1', '', 'QF2']);
+    assert.deepEqual(winners, ['Winner QF1', 'Winner QF2']);
+    assert.deepEqual(losers, ['Loser QF1', 'Loser QF2']);
+  });
+  it('clamps a non-finite or negative seed count to zero seeds', () => {
+    assert.deepEqual(buildPlaceholderOptions(-3, []).seeds, []);
+    assert.deepEqual(buildPlaceholderOptions(Number.NaN, []).seeds, []);
+  });
+  it('does not silently cap large seed counts (supports >64-team fields)', () => {
+    assert.equal(buildPlaceholderOptions(100, []).seeds.length, 100);
+    assert.equal(buildPlaceholderOptions(100, []).seeds[99], 'Seed #100');
+  });
+});
+
+describe('findBracketSchedulingViolations (dependent-before-feeder)', () => {
+  const sf1 = { code: 'SF1', home: 'Seed #1', away: 'Seed #4', date: '2026-07-05', time: '09:00' };
+  const sf2 = { code: 'SF2', home: 'Seed #2', away: 'Seed #3', date: '2026-07-05', time: '11:00' };
+
+  it('passes when the final is later the same day than both semis', () => {
+    const fin = { code: 'FIN', home: 'Winner SF1', away: 'Winner SF2', date: '2026-07-05', time: '14:00' };
+    assert.deepEqual(findBracketSchedulingViolations([sf1, sf2, fin]), []);
+  });
+  it('passes when the final is on a later day (no times needed)', () => {
+    const fin = { code: 'FIN', home: 'Winner SF1', away: 'Winner SF2', date: '2026-07-06', time: null };
+    assert.deepEqual(findBracketSchedulingViolations([sf1, sf2, fin]), []);
+  });
+  it('flags an earlier-day final', () => {
+    const fin = { code: 'FIN', home: 'Winner SF1', away: 'Winner SF2', date: '2026-07-04', time: '14:00' };
+    const v = findBracketSchedulingViolations([sf1, sf2, fin]);
+    assert.equal(v.length, 2);
+    assert.ok(v.every(x => x.game === 'FIN' && x.reason === 'earlier-date'));
+  });
+  it('flags a same-day final with no times (ordering not guaranteed)', () => {
+    const fin = { code: 'FIN', home: 'Winner SF1', away: 'Winner SF2', date: '2026-07-05', time: null };
+    const v = findBracketSchedulingViolations([sf1, sf2, fin]);
+    assert.equal(v.length, 2);
+    assert.ok(v.every(x => x.reason === 'same-day-unordered'));
+  });
+  it('flags a same-day final that starts before/at a semi', () => {
+    const fin = { code: 'FIN', home: 'Winner SF1', away: 'Winner SF2', date: '2026-07-05', time: '09:00' };
+    const v = findBracketSchedulingViolations([sf1, sf2, fin]);
+    assert.ok(v.some(x => x.feeder === 'SF1' && x.reason === 'same-day-unordered'));
+  });
+  it('ignores an unscheduled dependent (no date) — structure-only saves', () => {
+    const fin = { code: 'FIN', home: 'Winner SF1', away: 'Winner SF2', date: null, time: null };
+    assert.deepEqual(findBracketSchedulingViolations([sf1, sf2, fin]), []);
   });
 });

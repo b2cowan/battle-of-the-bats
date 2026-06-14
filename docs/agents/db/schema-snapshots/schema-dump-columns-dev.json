@@ -5535,6 +5535,15 @@
     "ordinal_position": 32
   },
   {
+    "table_name": "organizations",
+    "column_name": "free_floor",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 33
+  },
+  {
     "table_name": "plan_config_overrides",
     "column_name": "id",
     "data_type": "uuid",

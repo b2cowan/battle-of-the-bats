@@ -102,7 +102,7 @@ const PLANS: Plan[] = [
   },
   {
     key: 'league',
-    name: 'League',
+    name: 'League Plus',
     tagline: 'A preview of house league, registration, and public-site tools currently being refined.',
     monthlyPrice: formatPriceAmount(PLAN_CONFIG.league.monthlyPrice),
     annualPrice: formatPriceAmount(PLAN_CONFIG.league.annualPrice),
@@ -144,14 +144,14 @@ const PLANS: Plan[] = [
     freeNote: 'No credit card required',
     trialNote: 'No credit card required',
     features: [
-      'Everything in League',
+      'Everything in League Plus',
       'Accounting — org ledger, invoicing, expense tracking, and payment reconciliation',
       'Rep Teams — tryouts, rosters, player documents, and season history',
       'Coaches Portal — 3 team accounts included',
       'Additional Coaches Portal accounts at $19/mo each',
     ],
     compactFeatures: [
-      'Everything in League',
+      'Everything in League Plus',
       'Accounting — org ledger, invoicing & reconciliation',
       'Rep Teams — tryouts, rosters & documents',
       'Coaches Portal — 3 accounts included',

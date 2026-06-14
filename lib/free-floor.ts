@@ -71,9 +71,9 @@ export function houseLeagueTeamCap(org: FloorOrg): number {
 export type LeagueCapKind = 'league_season' | 'league_division' | 'league_team';
 
 const CAP_MESSAGES: Record<LeagueCapKind, string> = {
-  league_season: 'Your free League Starter includes one active season. Upgrade to League to run multiple seasons.',
-  league_division: 'Your free League Starter includes one division. Multiple divisions are part of League.',
-  league_team: 'Your free League Starter includes up to 8 teams. Upgrade to League for more.',
+  league_season: 'Your free League plan includes one active season. Upgrade to League Plus to run multiple seasons.',
+  league_division: 'Your free League plan includes one division. Multiple divisions are part of League Plus.',
+  league_team: 'Your free League plan includes up to 8 teams. Upgrade to League Plus for more.',
 };
 
 /**

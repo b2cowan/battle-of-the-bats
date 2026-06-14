@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, ArrowDownLeft, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -77,10 +77,11 @@ function TypeBadge({ type }: { type: string }) {
 }
 
 export default function PaymentRequestsPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { orgSlug: string; teamId: string };
+  params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
+  const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
 

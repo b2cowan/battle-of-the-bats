@@ -66,7 +66,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     gatingStatus: 'live',
   },
   league: {
-    label: 'League',
+    label: 'League Plus',
     monthlyPrice: 89,
     annualPrice: 890,
     tournamentLimit: 9999,

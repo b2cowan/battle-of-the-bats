@@ -68,7 +68,7 @@ const PLAN_LABELS: Record<string, string> = {
   tournament:      'Tournament',
   team:            'Team',
   tournament_plus: 'Tournament Plus',
-  league:          'League',
+  league:          'League Plus',
   club:            'Club',
 };
 

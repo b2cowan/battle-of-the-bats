@@ -1013,7 +1013,7 @@ export default function OnboardingPage() {
     // draft can't reach the API and 403 mid-flow. Mirrors the server cap.
     const divisionCap = currentOrg ? houseLeagueDivisionCap(currentOrg) : Infinity;
     if (rows.length > divisionCap) {
-      throw new Error('Your free League Starter includes one division. Multiple divisions are part of League — upgrade to add more.');
+      throw new Error('Your free League plan includes one division. Multiple divisions are part of League Plus — upgrade to add more.');
     }
 
     const duplicateDivision = rows.find((row, index) =>
@@ -1604,7 +1604,7 @@ export default function OnboardingPage() {
       return renderModalFrame(
         'Set up divisions',
         leagueDivisionLimited
-          ? 'Free League Starter includes one division and up to 8 teams (you add teams after setup). Add more divisions by upgrading to League.'
+          ? 'Free League includes one division and up to 8 teams (you add teams after setup). Add more divisions by upgrading to League Plus.'
           : 'Create the registration groups parents will choose from. Capacities can be blank if you do not need hard limits yet.',
         (
           <div className={styles.inlineList}>

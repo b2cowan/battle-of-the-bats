@@ -101,6 +101,10 @@ export default function TournamentEventSettingsPage() {
   const [coachEmailAcceptance, setCoachEmailAcceptance] = useState(true);
   const [coachEmailRejection, setCoachEmailRejection] = useState(true);
   const [coachEmailPayment, setCoachEmailPayment] = useState(true);
+  const [coachEmailSchedule, setCoachEmailSchedule] = useState(true);
+  const [coachEmailGameDay, setCoachEmailGameDay] = useState(true);
+  // Master kill-switch (5n) — pause ALL automatic coach emails (default off).
+  const [coachEmailPauseAll, setCoachEmailPauseAll] = useState(false);
 
   // Roster requirements (Phase 5f; default all-off so existing events require nothing).
   // Min/max are kept as strings for the inputs — '' = no limit (saved as null).
@@ -143,6 +147,9 @@ export default function TournamentEventSettingsPage() {
     coachEmailAcceptance: true,
     coachEmailRejection: true,
     coachEmailPayment: true,
+    coachEmailSchedule: true,
+    coachEmailGameDay: true,
+    coachEmailPauseAll: false,
     rosterRequire: false,
     rosterRequireDob: false,
     rosterRequireJersey: false,
@@ -239,6 +246,10 @@ export default function TournamentEventSettingsPage() {
         const ceAccept  = t.settings?.coach_email_acceptance !== false;
         const ceReject  = t.settings?.coach_email_rejection !== false;
         const cePay     = t.settings?.coach_email_payment !== false;
+        const ceSchedule = t.settings?.coach_email_schedule !== false;
+        const ceGameDay  = t.settings?.coach_email_game_day !== false;
+        // Master pause — absent/false means NOT paused (opposite polarity).
+        const cePauseAll = t.settings?.coach_email_pause_all === true;
 
         // Roster requirements — absent key means OFF (legacy events require nothing).
         const rosterReq    = t.settings?.roster_require === true;
@@ -287,6 +298,9 @@ export default function TournamentEventSettingsPage() {
         setCoachEmailAcceptance(ceAccept);
         setCoachEmailRejection(ceReject);
         setCoachEmailPayment(cePay);
+        setCoachEmailSchedule(ceSchedule);
+        setCoachEmailGameDay(ceGameDay);
+        setCoachEmailPauseAll(cePauseAll);
         setRosterRequire(rosterReq);
         setRosterRequireDob(rosterDob);
         setRosterRequireJersey(rosterJersey);
@@ -313,6 +327,8 @@ export default function TournamentEventSettingsPage() {
           contactShowToCoaches: csCoaches, contactShowOnPublic: csPublic,
           coachEmailConfirmation: ceConfirm, coachEmailAcceptance: ceAccept,
           coachEmailRejection: ceReject, coachEmailPayment: cePay,
+          coachEmailSchedule: ceSchedule, coachEmailGameDay: ceGameDay,
+          coachEmailPauseAll: cePauseAll,
           rosterRequire: rosterReq, rosterRequireDob: rosterDob,
           rosterRequireJersey: rosterJersey, rosterRequireWaiver: rosterWaiver,
           rosterWaiverText: rosterWaiverTxt,
@@ -451,6 +467,9 @@ export default function TournamentEventSettingsPage() {
                   coach_email_acceptance: coachEmailAcceptance,
                   coach_email_rejection: coachEmailRejection,
                   coach_email_payment: coachEmailPayment,
+                  coach_email_schedule: coachEmailSchedule,
+                  coach_email_game_day: coachEmailGameDay,
+                  coach_email_pause_all: coachEmailPauseAll,
                   roster_require: rosterRequire,
                   roster_require_dob: rosterRequireDob,
                   roster_require_jersey: rosterRequireJersey,
@@ -507,6 +526,7 @@ export default function TournamentEventSettingsPage() {
           scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
           contactShowToCoaches, contactShowOnPublic,
           coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
+          coachEmailSchedule, coachEmailGameDay, coachEmailPauseAll,
           rosterRequire, rosterRequireDob, rosterRequireJersey, rosterRequireWaiver,
           rosterWaiverText, rosterMinPlayers, rosterMaxPlayers,
         }));
@@ -528,6 +548,7 @@ export default function TournamentEventSettingsPage() {
     tournamentYear, venueMoveBufferMinutes,
     showFeesOnRegister, paymentInstructions, paymentInstructionsOnForm,
     coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
+    coachEmailSchedule, coachEmailGameDay, coachEmailPauseAll,
     rosterRequire, rosterRequireDob, rosterRequireJersey, rosterRequireWaiver,
     rosterWaiverText, rosterMinPlayers, rosterMaxPlayers,
     contactShowToCoaches, contactShowOnPublic,
@@ -572,6 +593,9 @@ export default function TournamentEventSettingsPage() {
       coachEmailAcceptance !== saved.coachEmailAcceptance ||
       coachEmailRejection !== saved.coachEmailRejection ||
       coachEmailPayment !== saved.coachEmailPayment ||
+      coachEmailSchedule !== saved.coachEmailSchedule ||
+      coachEmailGameDay !== saved.coachEmailGameDay ||
+      coachEmailPauseAll !== saved.coachEmailPauseAll ||
       rosterRequire !== saved.rosterRequire ||
       rosterRequireDob !== saved.rosterRequireDob ||
       rosterRequireJersey !== saved.rosterRequireJersey ||
@@ -596,6 +620,7 @@ export default function TournamentEventSettingsPage() {
     scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
     contactShowToCoaches, contactShowOnPublic,
     coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
+    coachEmailSchedule, coachEmailGameDay, coachEmailPauseAll,
     rosterRequire, rosterRequireDob, rosterRequireJersey, rosterRequireWaiver,
     rosterWaiverText, rosterMinPlayers, rosterMaxPlayers,
   ]);
@@ -1364,12 +1389,17 @@ export default function TournamentEventSettingsPage() {
               These transactional emails are sent automatically to a team&apos;s coach/contact. Turn any off to manage that
               communication yourself — your manual tools (announcements, payment reminders, resend access) are unaffected.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', opacity: coachEmailPauseAll ? 0.5 : 1 }}
+              aria-disabled={coachEmailPauseAll}
+            >
               {([
                 ['Registration received', 'Sent to the coach when they submit a registration (confirmation or waitlist receipt).', coachEmailConfirmation, setCoachEmailConfirmation] as const,
                 ['Team accepted', 'Sent when a team is accepted into the tournament.', coachEmailAcceptance, setCoachEmailAcceptance] as const,
                 ['Registration declined', 'Sent when a registration is declined.', coachEmailRejection, setCoachEmailRejection] as const,
                 ['Payment recorded', 'Sent when a team is marked as paid.', coachEmailPayment, setCoachEmailPayment] as const,
+                ['Schedule published', 'Sent to accepted teams when you publish a schedule.', coachEmailSchedule, setCoachEmailSchedule] as const,
+                ['Game-day reminder', "Sent the evening before each team's first game.", coachEmailGameDay, setCoachEmailGameDay] as const,
               ]).map(([label, desc, value, setValue]) => (
                 <div key={label} className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -1393,6 +1423,39 @@ export default function TournamentEventSettingsPage() {
                 </div>
               ))}
             </div>
+
+            {/* Master kill-switch — overrides every per-type toggle above (5n). */}
+            <div
+              className={styles.cardHeaderRow}
+              style={{ alignItems: 'flex-start', gap: '1rem', marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '1px solid var(--border, rgba(255,255,255,0.08))' }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p className={styles.subSectionLabel} style={{ margin: 0 }}>Pause all automatic emails</p>
+                <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>
+                  Stop every automatic coach email for this tournament — including acceptances, the schedule, game-day reminders
+                  and final results. Turn this on when you&apos;re handling all coach communication yourself.
+                </p>
+              </div>
+              <div className={styles.segmentedControl} role="radiogroup" aria-label="Pause all automatic coach emails">
+                {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
+                  <button
+                    key={String(val)}
+                    type="button"
+                    role="radio"
+                    aria-checked={coachEmailPauseAll === val}
+                    onClick={() => setCoachEmailPauseAll(val)}
+                    className={`${styles.segmentButton} ${coachEmailPauseAll === val ? styles.segmentButtonActive : ''}`}
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {coachEmailPauseAll && (
+              <p className={styles.inheritNote} style={{ color: 'var(--warning, var(--white-70))', marginTop: '0.5rem' }}>
+                All automatic coach emails are paused. The individual settings above are ignored until you turn this off.
+              </p>
+            )}
           </div>
 
           <hr className={styles.cardDivider} />

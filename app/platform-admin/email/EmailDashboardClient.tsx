@@ -704,8 +704,8 @@ const SPOTLIGHT_LEAGUE_PREVIEW = W(`
       <li>Standings update the moment scores are entered.</li>
     </ul>
   </div>
-  <p style="margin:0 0 1.5rem;line-height:1.7;">Available on League (<strong>$89/month</strong>) and Club (<strong>$179/month</strong>). Both are <strong>free through December 31, 2026</strong>.</p>
-  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Get set up on League — free through December 31 →</a>
+  <p style="margin:0 0 1.5rem;line-height:1.7;">Available on League Plus (<strong>$89/month</strong>) and Club (<strong>$179/month</strong>). Both are <strong>free through December 31, 2026</strong>.</p>
+  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Get set up on League Plus — free through December 31 →</a>
   <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
 `);
 
@@ -722,7 +722,7 @@ const SPOTLIGHT_COACHES_ORG_PREVIEW = W(`
       <li>Document management: consent forms, medical notes, eligibility files</li>
     </ul>
   </div>
-  <p style="margin:0 0 1.5rem;line-height:1.7;">Standalone at <strong>$29/month</strong>, or included in League and Club plans.</p>
+  <p style="margin:0 0 1.5rem;line-height:1.7;">Standalone at <strong>$29/month</strong>, or included in League Plus and Club plans.</p>
   <p style="margin:0 0 0.75rem;line-height:1.7;">Know a coach who needs this?</p>
   <a href="#" style="display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;">Send them this link →</a>
   <p style="margin:1.25rem 0 0.75rem;line-height:1.7;">Or express your own interest:</p>

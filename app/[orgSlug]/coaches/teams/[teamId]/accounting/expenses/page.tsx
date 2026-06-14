@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Receipt, Plus, X, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -46,10 +46,11 @@ const BLANK_PAYABLE = {
 };
 
 export default function CoachesExpensesPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { orgSlug: string; teamId: string };
+  params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
+  const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
 

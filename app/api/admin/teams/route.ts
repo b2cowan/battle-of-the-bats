@@ -3,6 +3,7 @@ import {
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml, manualTeamRegistrationHtml,
   coachEmailEnabled, resolveCoachRecipient,
 } from '@/lib/email';
+import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -501,6 +502,8 @@ export const POST = withObservability(async (req: Request) => {
         if (coachEmailEnabled(bulkCoachSettings, 'rejection')) {
           await sendEmail(recipient, `Registration Update — ${current.name}`, rejectionHtml(p));
         }
+        // 5m: a rejected team is no longer playing — cancel any scheduled game-day reminder.
+        if (recipient) await cancelScheduledEmailForRecipient(ctx.org.id, COACH_GAME_DAY_REMINDER_EMAIL_KEY, recipient);
         // Notify other org admins of the status change (fire-and-forget)
         notify({
           orgId: ctx.org.id,

@@ -1,0 +1,9 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J10",
+  "login": { "email": "j10-owner@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "01-members-owner", "url": "/dev-test-org/admin/tournaments/settings/members", "auth": true },
+    { "name": "02-settings-hub-owner", "url": "/dev-test-org/admin/tournaments/settings", "auth": true }
+  ]
+}

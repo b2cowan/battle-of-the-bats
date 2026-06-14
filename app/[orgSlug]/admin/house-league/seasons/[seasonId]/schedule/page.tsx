@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { Calendar, ChevronLeft, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
+import { isFreeFloorLeague } from '@/lib/free-floor';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
@@ -994,13 +995,25 @@ export default function SchedulePage() {
         {viewMode !== 'practices' && (
           <>
             <div className={styles.toolbarSep} />
-            <ExportMenu
-              formats={['xlsx', 'csv', 'ics']}
-              onExportXLSX={handleExportXLSX}
-              onExportCSV={handleExportCSV}
-              onExportICS={handleExportICS}
-              disabled={games.length === 0}
-            />
+            {/* Exports are a paid-League capability. The free League Starter floor hides the menu.
+                NOTE: exports are 100% client-side today (no server route). If a server export route
+                is ever added for house-league it MUST guard isFreeFloorLeague(org) → 403. */}
+            {currentOrg && isFreeFloorLeague(currentOrg) ? (
+              <span
+                title="Exports are part of League. Upgrade to export your schedule, standings, and registrations."
+                style={{ fontFamily: 'var(--font-data)', fontSize: '0.7rem', letterSpacing: '0.04em', color: 'var(--data-gray)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.35rem 0.6rem', whiteSpace: 'nowrap' }}
+              >
+                Exports · League
+              </span>
+            ) : (
+              <ExportMenu
+                formats={['xlsx', 'csv', 'ics']}
+                onExportXLSX={handleExportXLSX}
+                onExportCSV={handleExportCSV}
+                onExportICS={handleExportICS}
+                disabled={games.length === 0}
+              />
+            )}
           </>
         )}
 

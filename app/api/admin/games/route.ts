@@ -207,6 +207,163 @@ export const POST = withObservability(async (req: Request) => {
       if (error) throw error;
     }
 
+    // Manual single (or few) game add — FREE for org members. The Plus value is the
+    // auto-generator/optimizer, not manual entry; so unlike `bulk-save` this carries
+    // no `auto_schedule`/`playoff_generator` gate. (Client writes can't go direct:
+    // the `authenticated` role has no INSERT grant on `games`.)
+    else if (action === 'create') {
+      if (!games || !Array.isArray(games) || games.length === 0) {
+        return new Response(JSON.stringify({ error: 'Invalid game data' }), { status: 400 });
+      }
+      const batchTournamentIds = Array.from(new Set(games.map((g: any) => g.tournamentId).filter(Boolean)));
+      for (const tid of batchTournamentIds) {
+        const denied = scopeGuard(ctx, tid);
+        if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, tid);
+        if (wrongOrg) return wrongOrg;
+        if (await isTournamentLocked(tid)) return tournamentLockedResponse();
+      }
+      const rows = games.map((g: any) => ({
+        tournament_id:    g.tournamentId,
+        division_id:      g.divisionId,
+        home_team_id:     g.homeTeamId || null,
+        away_team_id:     g.awayTeamId || null,
+        game_date:        g.date || null,
+        game_time:        g.time || null,
+        duration_minutes: typeof g.durationMinutes === 'number' ? g.durationMinutes : null,
+        location:         g.location ?? null,
+        diamond_id:       g.venueId || null,
+        venue_facility_id: g.venueFacilityId || null,
+        status:           g.status || 'scheduled',
+        is_playoff:       g.isPlayoff || false,
+        bracket_id:       g.bracketId || null,
+        bracket_code:     g.bracketCode || null,
+        home_placeholder: g.homePlaceholder || null,
+        away_placeholder: g.awayPlaceholder || null,
+        home_slot_id:     g.homeSlotId || null,
+        away_slot_id:     g.awaySlotId || null,
+        notes:            g.notes || null,
+      }));
+      const { error } = await supabase.from('games').insert(rows);
+      if (error) throw error;
+    }
+
+    // Delete a single game (any type) — FREE for org members. Used by the row /
+    // bracket-view delete and the cascade-clear delete.
+    else if (action === 'delete-game') {
+      const ids = sanitizeGameIds(gameIds);
+      if (!ids || ids.length === 0) {
+        return new Response(JSON.stringify({ error: 'Game IDs are required' }), { status: 400 });
+      }
+      const { data: rows, error: lookupError } = await supabaseAdmin
+        .from('games')
+        .select('id, tournament_id')
+        .in('id', ids);
+      if (lookupError) throw lookupError;
+      if ((rows?.length ?? 0) !== ids.length) {
+        return new Response(JSON.stringify({ error: 'One or more games were not found' }), { status: 404 });
+      }
+      const tournamentIds = Array.from(new Set((rows ?? []).map(r => r.tournament_id).filter(Boolean)));
+      for (const id of tournamentIds) {
+        const denied = scopeGuard(ctx, id);
+        if (denied) return denied;
+        const wrongOrg = await requireTournamentInOrg(ctx, id);
+        if (wrongOrg) return wrongOrg;
+        if (await isTournamentLocked(id)) return tournamentLockedResponse();
+      }
+      const { error } = await supabase.from('games').delete().in('id', ids);
+      if (error) throw error;
+    }
+
+    // Save a manually-edited bracket as a DIFF — FREE (playoff_manual). Games with a
+    // sourceGameId are UPDATED in place (preserving status + scores of played games);
+    // games without are INSERTED; existing division playoff games absent from the
+    // submission are DELETED only if still replaceable (scheduled + not generator-locked),
+    // so a completed/locked game is never silently dropped.
+    else if (action === 'save-bracket' && divisionId) {
+      if (!games || !Array.isArray(games)) {
+        return new Response(JSON.stringify({ error: 'Invalid games data' }), { status: 400 });
+      }
+      if (!hasPlanFeature(ctx.org.planId, 'playoff_manual')) {
+        return planFeatureForbidden('playoff_manual');
+      }
+      const { data: divRow } = await supabaseAdmin.from('divisions').select('tournament_id').eq('id', divisionId).single();
+      if (!divRow) return new Response(JSON.stringify({ error: 'Division not found' }), { status: 404 });
+      const denied = scopeGuard(ctx, divRow.tournament_id);
+      if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, divRow.tournament_id);
+      if (wrongOrg) return wrongOrg;
+      if (await isTournamentLocked(divRow.tournament_id)) return tournamentLockedResponse();
+
+      const { data: existing, error: exErr } = await supabaseAdmin
+        .from('games').select('*').eq('division_id', divisionId).eq('is_playoff', true);
+      if (exErr) throw exErr;
+      const existingById = new Map((existing ?? []).map(e => [e.id, e]));
+      const submittedIds = new Set(games.map((g: any) => g.sourceGameId).filter(Boolean));
+
+      const inserts: Record<string, unknown>[] = [];
+      for (const g of games as any[]) {
+        // Schedule + structure fields, shared by update + insert. Team ids and
+        // duration are NOT in `common`: a played game's resolved teams + scores
+        // must be preserved, and per-game duration (e.g. a longer final) isn't
+        // canvas-editable so it must not be clobbered on existing games.
+        const common: Record<string, unknown> = {
+          game_date:        g.date || null,
+          game_time:        g.time || null,
+          location:         g.location ?? null,
+          diamond_id:       g.venueId || null,
+          venue_facility_id: g.venueFacilityId || null,
+          bracket_id:       g.bracketId || null,
+          bracket_code:     g.bracketCode || null,
+          home_placeholder: g.homePlaceholder || null,
+          away_placeholder: g.awayPlaceholder || null,
+        };
+        if (g.sourceGameId) {
+          // A sourceGameId that no longer exists (deleted/raced, or wrong division)
+          // would silently become a phantom insert — reject instead.
+          const existingRow = existingById.get(g.sourceGameId);
+          if (!existingRow) {
+            return new Response(JSON.stringify({ error: 'A game being edited no longer exists. Reload and try again.' }), { status: 409 });
+          }
+          // Re-wiring a SCHEDULED game (placeholder changed) must clear the old
+          // resolved team id, or the bracket would show the stale team until the new
+          // feeder completes. Played games keep their teams (handled by not nulling
+          // when status !== 'scheduled').
+          if (existingRow.status === 'scheduled') {
+            if ((existingRow.home_placeholder || null) !== (g.homePlaceholder || null)) common.home_team_id = null;
+            if ((existingRow.away_placeholder || null) !== (g.awayPlaceholder || null)) common.away_team_id = null;
+          }
+          const { error } = await supabase.from('games').update(common).eq('id', g.sourceGameId);
+          if (error) throw error;
+        } else {
+          inserts.push({
+            ...common,
+            tournament_id:    divRow.tournament_id,
+            division_id:      divisionId,
+            home_team_id:     g.homeTeamId || null,
+            away_team_id:     g.awayTeamId || null,
+            duration_minutes: typeof g.durationMinutes === 'number' ? g.durationMinutes : null,
+            is_playoff:       true,
+            status:           'scheduled',
+          });
+        }
+      }
+      if (inserts.length) {
+        const { error } = await supabase.from('games').insert(inserts);
+        if (error) throw error;
+      }
+      // Remove games dropped from the canvas — only if still removable (scheduled or
+      // cancelled, never generator-locked). A scored game (submitted/completed) is
+      // never silently deleted.
+      const removableIds = (existing ?? [])
+        .filter(e => !submittedIds.has(e.id) && (e.status === 'scheduled' || e.status === 'cancelled') && !e.generator_locked)
+        .map(e => e.id);
+      if (removableIds.length) {
+        const { error } = await supabase.from('games').delete().in('id', removableIds);
+        if (error) throw error;
+      }
+    }
+
     else if (action === 'delete-division-games' && divisionId) {
       // Look up the division's tournament to scope-check before deleting
       const { data: ag } = await supabaseAdmin
@@ -447,6 +604,11 @@ export const PATCH = withObservability(async (req: Request) => {
       if (body.notes            !== undefined) updates.notes              = body.notes;
       if (body.homeTeamId       !== undefined) updates.home_team_id       = body.homeTeamId || null;
       if (body.awayTeamId       !== undefined) updates.away_team_id       = body.awayTeamId || null;
+      // Playoff matchup placeholders (Seed #N / Winner <code> / Loser <code>) —
+      // mutually exclusive with a real team id on the same side.
+      if (body.homePlaceholder  !== undefined) updates.home_placeholder   = body.homePlaceholder || null;
+      if (body.awayPlaceholder  !== undefined) updates.away_placeholder   = body.awayPlaceholder || null;
+      if (body.bracketCode      !== undefined) updates.bracket_code       = body.bracketCode || null;
       if (body.generatorLocked  !== undefined) updates.generator_locked   = Boolean(body.generatorLocked);
 
       const { error } = await supabase.from('games').update(updates).eq('id', id);

@@ -6,6 +6,7 @@ import {
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml,
   coachEmailEnabled, resolveCoachRecipient,
 } from '@/lib/email';
+import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
@@ -83,6 +84,11 @@ export const PATCH = withObservability(async (req: NextRequest, props: { params:
     }
     if (status === 'rejected' && current.status !== 'rejected' && coachEmailEnabled(coachSettings, 'rejection')) {
       await sendEmail(recipient, `Registration Update — ${current.name}`, rejectionHtml(p));
+    }
+    // 5m: a newly-rejected team is no longer playing — cancel any scheduled game-day reminder
+    // (independent of the rejection-email toggle). Best-effort; never throws.
+    if (status === 'rejected' && current.status !== 'rejected' && orgOwnerId && recipient) {
+      await cancelScheduledEmailForRecipient(orgOwnerId, COACH_GAME_DAY_REMINDER_EMAIL_KEY, recipient);
     }
     if (payment_status === 'paid' && current.payment_status !== 'paid' && coachEmailEnabled(coachSettings, 'payment')) {
       await sendEmail(recipient, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));

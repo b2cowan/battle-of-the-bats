@@ -370,7 +370,7 @@ export default function OrgVenueLibraryPage() {
       <div className="empty-state">
         <MapPin size={32} />
         <h3>Venue Library not available</h3>
-        <p>The Venue Library is included in League and Club plans. Upgrade your subscription to manage a shared venue library across tournaments.</p>
+        <p>The Venue Library is included in League Plus and Club plans. Upgrade your subscription to manage a shared venue library across tournaments.</p>
       </div>
     );
   }

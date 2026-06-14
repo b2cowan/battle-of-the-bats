@@ -114,7 +114,7 @@ const tournamentsHelp: HelpPageContent = {
             <li><strong>Content</strong> - rules, resources, and welcome content.</li>
           </ul>
           <p><strong>Never copied:</strong> teams, registrations, waitlists, games, scores, standings, champions, payment status, reminders, uploaded files, message history, archived summaries, or private admin notes.</p>
-          <p>Free Tournament users may see the repeat-event value prompt, but creating a reused setup draft is available on Tournament Plus, League, and Club.</p>
+          <p>Free Tournament users may see the repeat-event value prompt, but creating a reused setup draft is available on Tournament Plus, League Plus, and Club.</p>
         </>
       ),
       faqs: [
@@ -451,9 +451,9 @@ const tournamentsHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p>Use <strong>Add Game</strong> for manual scheduling. Tournament Plus, League, and Club can also use <strong>Auto-Generate</strong> to create round-robin games from accepted teams, divisions, venues, and time slots.</p>
+          <p>Use <strong>Add Game</strong> for manual scheduling. Tournament Plus, League Plus, and Club can also use <strong>Auto-Generate</strong> to create round-robin games from accepted teams, divisions, venues, and time slots.</p>
           <p>Use pool view when a division is split into pools. Use flat view when you want one combined list.</p>
-          <p>For playoffs, switch to the Playoffs view. Free Tournament orgs can add playoff games manually; Tournament Plus, League, and Club can use the <strong>Playoff Wizard</strong>. Bracket view helps admins inspect playoff paths after games are created.</p>
+          <p>For playoffs, switch to the Playoffs view. Free Tournament orgs can add playoff games manually; Tournament Plus, League Plus, and Club can use the <strong>Playoff Wizard</strong>. Bracket view helps admins inspect playoff paths after games are created.</p>
           <p>The public schedule updates as games are added or edited. There is no separate schedule publish step.</p>
         </>
       ),
@@ -590,7 +590,7 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-targeted-communication',
           question: 'Who can use targeted tournament communication?',
-          answerText: 'Tournament Plus, League, and Club can target messages by team status, payment status, division, selected teams, and contact role.',
+          answerText: 'Tournament Plus, League Plus, and Club can target messages by team status, payment status, division, selected teams, and contact role.',
           keywords: ['targeted communication', 'email selected', 'division email', 'payment status'],
           answer: (
             <p>Targeted communication is included with Tournament Plus and higher. Free Tournament can still send basic all-team email, but targeted filters are locked so an unauthorized filter never falls back to sending everyone.</p>

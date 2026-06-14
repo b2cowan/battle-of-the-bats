@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { BarChart3, Plus, X, ChevronDown, ChevronRight, Pencil, Trash2 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -51,10 +51,11 @@ interface InstallmentRow { date: string; amount: string }
 const DEFAULT_INSTALLMENT: InstallmentRow = { date: '', amount: '' };
 
 export default function BudgetPlannerPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { orgSlug: string; teamId: string };
+  params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
+  const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;

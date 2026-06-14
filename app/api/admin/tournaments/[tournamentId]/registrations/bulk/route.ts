@@ -6,6 +6,7 @@ import {
   sendEmail,
   coachEmailEnabled, resolveCoachRecipient,
 } from '@/lib/email';
+import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { writePlatformEvent } from '@/lib/platform-events';
@@ -130,7 +131,7 @@ async function releaseTeamSlot(team: TeamRow) {
   await supabaseAdmin.from('pool_slots').update({ team_id: null }).eq('id', team.slot_id);
 }
 
-async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournamentName: string, divisions: Map<string, DivisionFeeRow>, paymentInstructions?: string, coachSettings?: unknown) {
+async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournamentName: string, divisions: Map<string, DivisionFeeRow>, orgId: string | null, paymentInstructions?: string, coachSettings?: unknown) {
   if (action !== 'accept' && action !== 'reject' && action !== 'mark_paid') return;
 
   for (const team of teams) {
@@ -151,8 +152,12 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
     if (action === 'accept' && team.status !== 'accepted' && coachEmailEnabled(coachSettings, 'acceptance')) {
       await sendEmail(recipient, `Your Team Has Been Accepted - ${team.name}`, acceptanceHtml({ ...payload, paymentInstructions }));
     }
-    if (action === 'reject' && team.status !== 'rejected' && coachEmailEnabled(coachSettings, 'rejection')) {
-      await sendEmail(recipient, `Registration Update - ${team.name}`, rejectionHtml(payload));
+    if (action === 'reject' && team.status !== 'rejected') {
+      if (coachEmailEnabled(coachSettings, 'rejection')) {
+        await sendEmail(recipient, `Registration Update - ${team.name}`, rejectionHtml(payload));
+      }
+      // 5m: a rejected team is no longer playing — cancel any scheduled game-day reminder.
+      if (orgId) await cancelScheduledEmailForRecipient(orgId, COACH_GAME_DAY_REMINDER_EMAIL_KEY, recipient);
     }
     if (action === 'mark_paid' && team.payment_status !== 'paid' && coachEmailEnabled(coachSettings, 'payment')) {
       await sendEmail(recipient, `Payment Recorded - ${team.name}`, paymentConfirmationHtml(payload));
@@ -267,7 +272,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const paymentInstructions = typeof tournament.settings?.payment_instructions === 'string'
     ? tournament.settings.payment_instructions
     : undefined;
-  await sendStatusEmails(selectedTeams, bulkAction, tournament.name, divisions, paymentInstructions, tournament.settings);
+  await sendStatusEmails(selectedTeams, bulkAction, tournament.name, divisions, tournament.org_id, paymentInstructions, tournament.settings);
 
   // Notify org admins of bulk status / payment changes (fire-and-forget, one notification per operation)
   const count = selectedTeams.length;

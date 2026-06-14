@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, use } from 'react';
 import Link from 'next/link';
 import { ClipboardList, X, Plus, ChevronRight } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
@@ -74,10 +74,11 @@ const TRYOUT_EXPORT_COLS: ExportColumnDef[] = [
 ];
 
 export default function TryoutsPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { orgSlug: string; teamId: string; yearId: string };
+  params: Promise<{ orgSlug: string; teamId: string; yearId: string }>;
 }) {
+  const params = use(paramsPromise);
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'admin';

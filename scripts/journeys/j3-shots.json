@@ -1,0 +1,21 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "outDir": "tests/uat/results/journeys/J3",
+  "login": { "email": "league-owner@dev.local", "password": "devpass123" },
+  "shots": [
+    { "name": "01-for-leagues",        "url": "/for-leagues" },
+    { "name": "02-pricing",            "url": "/pricing" },
+    { "name": "03-home-workspace",     "url": "/home", "auth": true },
+    { "name": "04-admin-dashboard",    "url": "/dev-league-org/admin", "auth": true },
+    { "name": "05-onboarding-wizard",  "url": "/dev-league-org/admin/onboarding", "auth": true },
+    { "name": "06-hl-hub",             "url": "/dev-league-org/admin/house-league", "auth": true },
+    { "name": "07-hl-season",          "url": "/dev-league-org/admin/house-league/seasons/a13b2a3b-b0da-4b1b-bccb-c4425504c3c6", "auth": true },
+    { "name": "08-hl-registrations",   "url": "/dev-league-org/admin/house-league/seasons/a13b2a3b-b0da-4b1b-bccb-c4425504c3c6/registrations", "auth": true },
+    { "name": "09-hl-teams",           "url": "/dev-league-org/admin/house-league/seasons/a13b2a3b-b0da-4b1b-bccb-c4425504c3c6/teams", "auth": true },
+    { "name": "10-hl-schedule",        "url": "/dev-league-org/admin/house-league/seasons/a13b2a3b-b0da-4b1b-bccb-c4425504c3c6/schedule", "auth": true },
+    { "name": "11-hl-standings",       "url": "/dev-league-org/admin/house-league/seasons/a13b2a3b-b0da-4b1b-bccb-c4425504c3c6/standings", "auth": true },
+    { "name": "12-public-league-index","url": "/dev-league-org/league" },
+    { "name": "13-public-season-active","url": "/dev-league-org/league/dev-league-2026" },
+    { "name": "14-public-season-open", "url": "/dev-league-org/league/dev-league-2027" }
+  ]
+}

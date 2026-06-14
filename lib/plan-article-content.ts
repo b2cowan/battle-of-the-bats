@@ -157,8 +157,8 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
   league: {
     billingQuestion: 'Does your organization run a year-round league, or need a public-facing presence?',
     billingSub:
-      'League adds player registration, house league season management, a public org page, and automated parent notifications.',
-    eyebrow: 'League',
+      'League Plus adds player registration, house league season management, a public org page, and automated parent notifications.',
+    eyebrow: 'League Plus',
     panelHeadline: 'One dashboard. The full season arc.',
     painHeadline: 'If this is your season setup, we know the drill.',
     painItems: [

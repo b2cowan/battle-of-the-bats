@@ -4,7 +4,7 @@ import { FormEvent, useState } from 'react';
 import styles from './EarlyAccessForm.module.css';
 
 const PLAN_OPTIONS = [
-  { value: 'league', label: 'League' },
+  { value: 'league', label: 'League Plus' },
   { value: 'club', label: 'Club' },
 ] as const;
 

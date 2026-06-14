@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { DollarSign, Users, Receipt, Building2, BarChart3, TrendingUp, Gift, ArrowLeftRight, Bell } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -19,10 +19,11 @@ function fmt(n: number) {
 }
 
 export default function CoachesAccountingPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { orgSlug: string; teamId: string };
+  params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
+  const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
 
