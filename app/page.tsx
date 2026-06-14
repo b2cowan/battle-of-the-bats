@@ -221,6 +221,12 @@ export default async function HomePage() {
             >
               Start free →
             </Link>
+            <Link
+              href="/start"
+              className="font-mono text-xs uppercase tracking-widest text-data-gray/60 hover:text-fl-text transition-colors"
+            >
+              Not sure? See your options →
+            </Link>
           </div>
         </div>
       </section>

@@ -40,13 +40,14 @@ const OPTIONS: StartOption[] = [
     tag: { text: 'Free', tone: 'free' },
   },
   {
-    href: '/start/team',
+    // Coaches Portal is still in development (not customer-ready) — route to the express-interest
+    // page, not the live /start/team create flow. Flip back to '/start/team' + Free when it launches.
+    href: '/for-coaches',
     icon: Users,
-    accent: 'coach',
     label: 'Coach',
     title: 'Coach a team',
     body: 'A free team home for your season — no organization needed. Track your registrations and team.',
-    tag: { text: 'Free', tone: 'free' },
+    tag: { text: 'Coming soon', tone: 'soon' },
   },
   {
     href: '/start/league',
