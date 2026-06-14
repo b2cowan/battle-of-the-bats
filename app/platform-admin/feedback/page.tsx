@@ -150,7 +150,7 @@ export default async function FeedbackTriagePage({
       <HelpCallout
         variant="info"
         title="In-app feedback queue"
-        body={`Bug reports, feature requests, and general feedback submitted from inside the app (admin, coach, scorekeeper, and anonymous). Move each item New → Triaged → Acknowledged → Resolved; a bug that hit a captured error shows a link to the related issue. Feedback is retained indefinitely.${readOnly ? ' Status changes require support or product access.' : ' Use the status dropdown to triage items; transitions are audit-logged with your email. Error group status changes (in Observability) require product access.'}`}
+        body={`Bug reports, feature requests, and general feedback submitted from inside the app (admin, coach, scorekeeper, and anonymous). Move each item New → Triaged → Acknowledged → Resolved; a bug that hit a captured error shows a link to the related issue. Feedback is retained indefinitely.${readOnly ? ' Status changes require support or product access.' : ' Use the status dropdown to triage items, and Escalate to product to flag an item the product team needs to act on (filter by Escalated to see the flagged queue); transitions are audit-logged with your email. Error group status changes (in Observability) require product access.'}`}
       />
 
       <form method="GET" action="/platform-admin/feedback" className={styles.filterBar}>

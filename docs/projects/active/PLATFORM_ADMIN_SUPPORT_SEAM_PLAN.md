@@ -114,12 +114,10 @@ This is the single decision that controls the shape of every task below. Present
 - Seeded one escalated row ("Payment page 500s") in dev so the badge + filter are exercisable in browser QA.
 - [ ] **Browser smoke-test (owner):** support/billing/product can escalate + clear; "Escalated" badge appears; `status=escalated` filter shows only flagged rows; view-only roles see the badge but no button. Restart dev server first (new files + shared snapshot/migration).
 
-### Phase 5 — Callout and transparency copy
+### Phase 5 — Callout and transparency copy ✅ BUILT 2026-06-14 (dev-only, uncommitted; copy-only, lint clean)
 
-- [ ] `app/platform-admin/feedback/page.tsx:142–145` — update HelpCallout body to include a role-aware note:
-  - For support (write-capable after Phase 1): "You can triage feedback items — use the status dropdown to move items from new to triaged, acknowledged, or resolved. Error group status changes require product access."
-  - For read-only roles (if any exist with feedback view): "Status changes require support or product access."
-- [ ] Append to the same HelpCallout for write-capable roles: "Status transitions are audit-logged with your email and timestamp." (PAP-013)
+- [x] Role-aware HelpCallout was **already** delivered in Phase 1 (read-only → "Status changes require support or product access."; write-capable → status-dropdown guidance + "transitions are audit-logged with your email" + "error group status changes require product access"). PAP-013 audit-log transparency satisfied there.
+- [x] Phase 4 follow-on: appended the **escalation** sentence to the write-capable callout — "and Escalate to product to flag an item the product team needs to act on (filter by Escalated to see the flagged queue)". This is the only net-new copy Phase 5 needed once Phase 1 had landed the rest.
 
 ### Phase 6 — Optional: customer-notification affordance
 
