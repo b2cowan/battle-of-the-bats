@@ -91,11 +91,11 @@ This is the single decision that controls the shape of every task below. Present
 - [x] `feedback/page.tsx` → guard + `readOnly` derive from `'feedback'`; StatusControls dropdown now renders for support/billing; callout updated to write-capable guidance ("use the status dropdown… audit-logged… error groups need product access").
 - [ ] **Browser smoke-test (owner):** support/billing can move feedback status; both still see disabled error-group triage in Observability. Restart dev server first (shared `lib/platform-areas.ts` changed).
 
-### Phase 2 — Default actionable filters
+### Phase 2 — Default actionable filters ✅ BUILT 2026-06-14 (dev-only, uncommitted; typecheck + lint clean)
 
-- [ ] `app/platform-admin/feedback/page.tsx:133–166` — default to `?status=new` when no filter param is set in the URL. Use URL state (not localStorage) so the filter is shareable and bookmarkable. Page reload and direct navigation retain context.
-- [ ] `app/platform-admin/observability/page.tsx:113–122` — default to `?status=open` when no filter param is set. Same URL-state approach.
-- [ ] Verify that explicit `?status=all` or any other explicit value overrides the default (i.e. the default does not stomp intentional filter choices).
+- [x] `feedback/page.tsx` — defaults to `status=new` on a bare visit. Used an explicit **`all` token** for "show everything" (not empty string) so the filter survives `buildHref` (which omits empty params) — otherwise pagination on the All view would silently re-default to New. `getRows` treats `all` as no status filter; "All statuses" `<option value="all">`; Clear → `?status=all`.
+- [x] `observability/page.tsx` — same pattern, defaults to `status=open`. `getErrorGroups` is called with `status` mapped `all → ''` (no shared-lib change); `params.status` stays the token for the dropdown/buildHref/export. `hasFilters` reworked so Clear shows whenever the view is narrower than All (incl. the default Open), and hides on the All view.
+- [x] Verified: explicit `?status=all` (or any valid status) overrides the default; the default only applies when the `status` param is absent.
 
 ### Phase 3 — Reverse back-link (error group → related feedback)
 

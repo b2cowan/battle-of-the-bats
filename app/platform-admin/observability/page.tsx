@@ -113,7 +113,9 @@ export default async function ObservabilityDashboardPage({
     env: normalizeEnv(sp.env),
     window: normalizeWindow(sp.window),
     severity: SEVERITY_OPTIONS.includes(sp.severity ?? '') ? sp.severity! : '',
-    status: STATUS_OPTIONS.includes(sp.status ?? '') ? sp.status! : '',
+    // Default to the actionable view (Open) on a bare visit; `status=all` is the explicit
+    // widen-to-everything token (non-empty so it survives buildHref); invalid → Open.
+    status: sp.status === undefined ? 'open' : (sp.status === 'all' || STATUS_OPTIONS.includes(sp.status) ? sp.status : 'open'),
     route: (sp.route ?? '').slice(0, 120),
     org: (sp.org ?? '').slice(0, 120),
     q: (sp.q ?? '').slice(0, 120),
@@ -123,7 +125,7 @@ export default async function ObservabilityDashboardPage({
   const [data, freshness, issues] = await Promise.all([
     getDashboardData(params.env, params.window),
     getCronFreshness(),
-    getErrorGroups(params),
+    getErrorGroups({ ...params, status: params.status === 'all' ? '' : params.status }),
   ]);
 
   // Freshness chip — most-recent cron run, or "not run yet" before migration 122 is applied to
@@ -143,7 +145,7 @@ export default async function ObservabilityDashboardPage({
 
   const routeMax = Math.max(...data.byRoute.map(r => r.count), 1);
   const sourceMax = Math.max(...data.bySource.map(r => r.count), 1);
-  const hasFilters = !!(params.severity || params.status || params.route || params.org || params.q);
+  const hasFilters = !!(params.severity || params.route || params.org || params.q) || params.status !== 'all';
 
   return (
     <div className={styles.page}>
@@ -311,7 +313,7 @@ export default async function ObservabilityDashboardPage({
           {SEVERITY_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <select name="status" defaultValue={params.status} className={styles.filterSelect} aria-label="Status">
-          <option value="">All statuses</option>
+          <option value="all">All statuses</option>
           {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <input type="text" name="route" defaultValue={params.route} placeholder="Route…" className={styles.filterInput} style={{ maxWidth: 160 }} />
@@ -321,7 +323,7 @@ export default async function ObservabilityDashboardPage({
           filters={{ env: params.env, severity: params.severity, status: params.status, route: params.route, org: params.org, q: params.q }}
           disabled={issues.rows.length === 0}
         />
-        {hasFilters && <Link href={buildHref({ ...params, severity: '', status: '', route: '', org: '', q: '', offset: 0 })} className={styles.filterClear}>Clear</Link>}
+        {hasFilters && <Link href={buildHref({ ...params, severity: '', status: 'all', route: '', org: '', q: '', offset: 0 })} className={styles.filterClear}>Clear</Link>}
       </form>
 
       <div className={styles.tableWrap}>

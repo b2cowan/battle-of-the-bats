@@ -69,7 +69,7 @@ async function getRows(f: Filters): Promise<FeedbackRow[]> {
 
   if (f.type) q = q.eq('type', f.type);
   if (f.category) q = q.eq('category', f.category);
-  if (f.status) q = q.eq('status', f.status);
+  if (f.status && f.status !== 'all') q = q.eq('status', f.status);
 
   const { data, error } = await q;
   if (error || !data) return [];
@@ -121,7 +121,10 @@ export default async function FeedbackTriagePage({
   const filters: Filters = {
     type: sp.type ?? '',
     category: sp.category ?? '',
-    status: sp.status ?? '',
+    // Default to the actionable view (New) on a bare visit; the "All statuses"
+    // option submits `status=all` (a non-empty token so it survives buildHref),
+    // which getRows treats as no status filter.
+    status: sp.status ?? 'new',
     offset,
   };
 
@@ -155,13 +158,14 @@ export default async function FeedbackTriagePage({
           {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
         <select name="status" defaultValue={filters.status} className={styles.filterSelect}>
-          <option value="">All statuses</option>
+          <option value="all">All statuses</option>
           {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
         <button type="submit" className={styles.filterBtn}>Filter</button>
         <FeedbackExportClient type={filters.type} category={filters.category} status={filters.status} />
-        {(filters.type || filters.category || filters.status) && (
-          <Link href="/platform-admin/feedback" className={styles.filterClear}>Clear</Link>
+        {(filters.type || filters.category || filters.status !== 'all') && (
+          // status=all widens to every status (and clears type/category); a bare URL would re-apply New.
+          <Link href="/platform-admin/feedback?status=all" className={styles.filterClear}>Clear</Link>
         )}
       </form>
 
