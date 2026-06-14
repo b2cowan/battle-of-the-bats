@@ -27,7 +27,7 @@ async function ensureBucket() {
 export const POST = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'manage_branding')) return forbidden();
 
@@ -79,7 +79,7 @@ export const POST = withObservability(async (req: Request) => {
 export const DELETE = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'manage_branding')) return forbidden();
 

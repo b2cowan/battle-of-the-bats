@@ -32,7 +32,7 @@ async function getTeamNamesForSlots(slots: Array<{ team_id?: string | null }>) {
 export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const tournamentId = url.searchParams.get('tournamentId');
@@ -68,7 +68,7 @@ export const GET = withObservability(async (req: Request) => {
 
 export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   if (!hasCapability(ctx.role, ctx.capabilities, 'manage_schedule_structure')) return forbidden();

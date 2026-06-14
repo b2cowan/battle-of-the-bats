@@ -13,7 +13,7 @@ function json(data: unknown, status = 200) {
 
 export const POST = withObservability(async (req: NextRequest, { params }: RouteParams) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_tournaments')) return forbidden();
   if (

@@ -24,7 +24,7 @@ const PLUS_VISUAL_FIELDS = [
 export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   // Admins may read tournament branding + score policy for their own org's tournaments
   // (scopeGuard below still restricts which tournaments). Owner-only enforcement on
@@ -70,7 +70,7 @@ export const GET = withObservability(async (req: Request) => {
 export const PATCH = withObservability(async (req: Request) => {
   const url = new URL(req.url);
   const orgSlug = url.searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const tournamentId = url.searchParams.get('tournamentId');

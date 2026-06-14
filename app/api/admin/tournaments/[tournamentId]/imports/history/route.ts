@@ -69,7 +69,7 @@ function importLabel(importType: string) {
 export const GET = withObservability(async (req: Request, { params }: RouteParams) => {
   const { tournamentId } = await params;
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_tournaments')) return forbidden();
   if (!hasPlanFeature(ctx.org.planId, 'bulk_data_imports')) {

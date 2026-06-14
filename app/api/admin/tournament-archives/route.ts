@@ -44,7 +44,7 @@ function mapArchive(row: ArchiveRow): TournamentArchive {
 
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContext({ orgSlug });
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

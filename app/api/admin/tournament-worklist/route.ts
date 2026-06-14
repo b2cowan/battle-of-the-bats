@@ -19,7 +19,7 @@ import { withObservability } from '@/lib/observability';
 export const GET = withObservability(async (req: Request) => {
   const searchParams = new URL(req.url).searchParams;
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_tournaments')) return forbidden();

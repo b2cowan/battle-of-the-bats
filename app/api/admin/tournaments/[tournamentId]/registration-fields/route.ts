@@ -81,7 +81,7 @@ function parseFieldInput(body: Record<string, unknown>): TournamentRegistrationF
 
 export const GET = withObservability(async (_req: NextRequest, { params }: RouteParams) => {
   const orgSlug = _req.nextUrl.searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   const { tournamentId } = await params;
   const scoped = await getScopedTournament(tournamentId, ctx);
   if ('response' in scoped) return scoped.response!;
@@ -92,7 +92,7 @@ export const GET = withObservability(async (_req: NextRequest, { params }: Route
 
 export const POST = withObservability(async (req: NextRequest, { params }: RouteParams) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 

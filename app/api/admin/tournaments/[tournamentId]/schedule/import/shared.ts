@@ -82,7 +82,7 @@ export async function authorizeTournamentScheduleImport(
   options: { blockLocked: boolean },
 ) {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { response: unauthorized() };
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_tournaments')) return { response: forbidden() };
   if (

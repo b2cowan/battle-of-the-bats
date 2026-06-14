@@ -24,7 +24,7 @@ function timeAgo(iso: string): string {
 export const GET = withObservability(async (req: Request) => {
   const { searchParams } = new URL(req.url);
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
 
   const tournamentId = searchParams.get('tournamentId');

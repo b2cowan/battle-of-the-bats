@@ -52,7 +52,7 @@ export const GET = withObservability(async (req: Request, context: RouteContext)
   if (orgErr) console.error('[notif-prefs GET] org lookup error:', orgErr.message);
   if (!orgRow) return unauthorized();
 
-  const ctx = await getAuthContextWithScope({ orgSlug: orgRow.slug });
+  const ctx = await getAuthContextWithScope({ orgSlug: orgRow.slug, requireOrgSlug: true });
   if (!ctx) {
     console.error('[notif-prefs GET] auth failed for orgSlug:', orgRow.slug);
     return unauthorized();
@@ -102,7 +102,7 @@ export const POST = withObservability(async (req: Request, context: RouteContext
   if (orgErr) console.error('[notif-prefs POST] org lookup error:', orgErr.message);
   if (!orgRow) return unauthorized();
 
-  const ctx = await getAuthContextWithScope({ orgSlug: orgRow.slug });
+  const ctx = await getAuthContextWithScope({ orgSlug: orgRow.slug, requireOrgSlug: true });
   if (!ctx) {
     console.error('[notif-prefs POST] auth failed for orgSlug:', orgRow.slug);
     return unauthorized();

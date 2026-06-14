@@ -15,7 +15,7 @@ const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 // Body: { tournamentId, divisionIds: string[], visibility: 'published_generic' | 'published_teams', notify: boolean }
 export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 

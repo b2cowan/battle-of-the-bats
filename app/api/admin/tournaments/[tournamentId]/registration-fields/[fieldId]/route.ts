@@ -21,7 +21,7 @@ const FIELD_TYPES = new Set<TournamentRegistrationFieldType>([
 type RouteParams = { params: Promise<{ tournamentId: string; fieldId: string }> };
 
 async function guardField(tournamentId: string, fieldId: string, orgSlug?: string) {
-  const ctx = await getAuthContextWithScope({ orgSlug });
+  const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { response: unauthorized() };
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return { response: forbidden() };
 
