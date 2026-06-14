@@ -97,11 +97,12 @@ This is the single decision that controls the shape of every task below. Present
 - [x] `observability/page.tsx` — same pattern, defaults to `status=open`. `getErrorGroups` is called with `status` mapped `all → ''` (no shared-lib change); `params.status` stays the token for the dropdown/buildHref/export. `hasFilters` reworked so Clear shows whenever the view is narrower than All (incl. the default Open), and hides on the All view.
 - [x] Verified: explicit `?status=all` (or any valid status) overrides the default; the default only applies when the `status` param is absent.
 
-### Phase 3 — Reverse back-link (error group → related feedback)
+### Phase 3 — Reverse back-link (error group → related feedback) ✅ BUILT 2026-06-14 (dev-only, uncommitted; typecheck + lint clean; reverse path proven against seed data)
 
-- [ ] `app/platform-admin/observability/[groupId]/page.tsx` — add a "Related feedback" section. Query `feedback_submissions` where `context->>'requestId'` matches any `requestId` value found in this group's `error_events` (join via the group's event sample set or a direct requestId set). Show: count of related submissions, type badges (bug/feature/general), and a link to the Feedback list pre-filtered to those submissions.
-- [ ] If the reverse query is expensive (table scan on JSONB context), add a functional index on `feedback_submissions((context->>'requestId'))` — check existing indexes in the dev snapshot before migrating.
-- [ ] Add the "No related error captured" note on feedback list rows where `requestId` is absent — `app/platform-admin/feedback/page.tsx:208–212`. Use muted text: "No error event linked — search Observability by org slug and timeframe to correlate manually."
+- [x] `observability/[groupId]/page.tsx` — added a "Related feedback" section. `getRelatedFeedback(groupId)` collects this group's `error_events.request_id`s (deduped) then queries `feedback_submissions.in('context->>requestId', reqIds)` (PostgREST JSON-path `in` — verified executes), rendered as CollapsibleCards (type + feedback-status badges, submitter, date, body) + an "Open Feedback →" link. End-to-end verified: audit group → 12 req-ids → 1 related feedback.
+- [~] JSONB functional index on `feedback_submissions((context->>'requestId'))` — **deferred** (table is tiny; the reverse query runs only on a single error-group detail view, bounded to ≤~50 req-ids). Add later if `feedback_submissions` grows large. No migration in this phase.
+- [x] `feedback/page.tsx` — "No linked error event — correlate manually by org + time in Observability." muted note on **bug**-type rows where no `requestId`/group link exists (shown in the row's details panel in place of the issue link).
+- Staging: seeded one linked feedback row (`context.requestId` matching the audit error group) via `seed-support-loop`-style insert so the reverse panel is exercisable in browser QA.
 
 ### Phase 4 — Escalation / assignment affordance
 

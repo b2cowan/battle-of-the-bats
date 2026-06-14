@@ -209,11 +209,13 @@ export default async function FeedbackTriagePage({
                     <details className={styles.bodyDetails}>
                       <summary>{row.title ?? row.body.slice(0, 80)}</summary>
                       <pre>{row.body}</pre>
-                      {groupId && (
+                      {groupId ? (
                         <Link href={`/platform-admin/observability/${groupId}`} className={styles.issueLink}>
                           View related issue →
                         </Link>
-                      )}
+                      ) : row.type === 'bug' ? (
+                        <span className={styles.dimText}>No linked error event — correlate manually by org + time in Observability.</span>
+                      ) : null}
                     </details>
                   </td>
                   <td>

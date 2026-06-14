@@ -4,6 +4,7 @@ import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { isPlatformAreaReadOnly } from '@/lib/platform-areas';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import { getErrorGroupDetail, type EventSample } from '@/lib/observability/dashboard';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import StatusControls from './StatusControls';
 import styles from '../observability.module.css';
 
@@ -21,6 +22,32 @@ const STATUS_BADGE: Record<string, string> = {
   ignored: 'badge-neutral',
   snoozed: 'badge-info',
 };
+const FB_TYPE_BADGE: Record<string, string> = { bug: 'badge-danger', feature: 'badge-info', feedback: 'badge-neutral' };
+const FB_STATUS_BADGE: Record<string, string> = { new: 'badge-warning', triaged: 'badge-info', acknowledged: 'badge-info', resolved: 'badge-success' };
+
+type RelatedFeedback = {
+  id: string; type: string; status: string; title: string | null; body: string;
+  user_email: string | null; submitter_name: string | null; created_at: string;
+};
+
+/** Reverse of the feedback "View related issue" link: feedback whose context.requestId
+ *  matches a request_id captured on this group's stored events. */
+async function getRelatedFeedback(groupId: string): Promise<RelatedFeedback[]> {
+  const { data: events } = await supabaseAdmin
+    .from('error_events')
+    .select('request_id')
+    .eq('group_id', groupId)
+    .not('request_id', 'is', null);
+  const reqIds = [...new Set((events ?? []).map(e => e.request_id as string | null).filter((v): v is string => !!v))];
+  if (reqIds.length === 0) return [];
+  const { data } = await supabaseAdmin
+    .from('feedback_submissions')
+    .select('id, type, status, title, body, user_email, submitter_name, created_at')
+    .in('context->>requestId', reqIds)
+    .order('created_at', { ascending: false })
+    .limit(25);
+  return (data ?? []) as RelatedFeedback[];
+}
 
 function fmtDateTime(iso: string | null) {
   if (!iso) return '—';
@@ -128,6 +155,7 @@ export default async function ErrorGroupDetailPage({
   }
 
   const g = detail.group;
+  const related = await getRelatedFeedback(groupId);
 
   return (
     <div className={styles.page}>
@@ -166,6 +194,36 @@ export default async function ErrorGroupDetailPage({
 
         <StatusControls groupId={g.id} currentStatus={g.status} readOnly={readOnly} />
       </div>
+
+      {related.length > 0 && (
+        <>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionKicker}>Support</span>
+            <h2 className={styles.sectionTitle}>Related feedback</h2>
+            <span className={styles.count}>{related.length}</span>
+          </div>
+          <div className={styles.eventList}>
+            {related.map(f => (
+              <CollapsibleCard
+                key={f.id}
+                defaultOpen={false}
+                title={f.title ?? f.body.slice(0, 80)}
+                meta={
+                  <span className={styles.eventSummary}>
+                    <span className={`badge ${FB_TYPE_BADGE[f.type] ?? 'badge-neutral'}`}>{f.type}</span>
+                    <span className={`badge ${FB_STATUS_BADGE[f.status] ?? 'badge-neutral'}`}>{f.status}</span>
+                    <span>{f.user_email ?? f.submitter_name ?? 'anonymous'}</span>
+                    <span>{fmtDateTime(f.created_at)}</span>
+                  </span>
+                }
+              >
+                <pre className={styles.pre}>{f.body}</pre>
+              </CollapsibleCard>
+            ))}
+            <Link href="/platform-admin/feedback?status=all" className={styles.issueLink}>Open Feedback →</Link>
+          </div>
+        </>
+      )}
 
       <div className={styles.sparkWrap}>
         <p className={styles.chartTitle}>Occurrences · last 14 days (from sampled events)</p>
