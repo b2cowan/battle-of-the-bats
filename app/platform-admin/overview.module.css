@@ -121,6 +121,13 @@
   gap: 0.55rem;
 }
 
+.alertRoleNote {
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--data-gray);
+}
+
 .alertItem {
   display: grid;
   grid-template-columns: auto 1fr;

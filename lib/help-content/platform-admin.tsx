@@ -207,6 +207,106 @@ const platformAdminHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'feedback-triage',
+      group: 'Support SOP',
+      heading: 'How to triage customer feedback',
+      summary: 'Work the in-app feedback queue from New to Resolved, pivot to a related error, and flag items for product.',
+      keywords: ['feedback', 'triage', 'bug report', 'feature request', 'escalate', 'escalation', 'related issue', 'support queue'],
+      searchText: 'how do i triage customer feedback bug reports feature requests move new triaged acknowledged resolved escalate to product view related issue error group flag for product',
+      links: [
+        { label: 'Feedback', href: '/platform-admin/feedback' },
+        { label: 'Observability', href: '/platform-admin/observability' },
+      ],
+      content: (
+        <>
+          <p><strong>Feedback</strong> collects bug reports, feature requests, and general feedback submitted from inside the app — admin, coach, scorekeeper, and anonymous public users. Work it like a queue, oldest-actionable first.</p>
+          <ol>
+            <li>Open <strong>Feedback</strong>. It opens on the <strong>New</strong> status by default so you see what is unworked. Use the type, category, and status filters to narrow; choose <strong>All statuses</strong> to widen back out.</li>
+            <li>Open a row&apos;s title to read the full body. For a bug, look for the <strong>View related issue →</strong> link — it jumps straight to the matching error group in Observability so you can confirm whether the error is already tracked.</li>
+            <li>If a bug shows <em>&ldquo;No linked error event&rdquo;</em>, no captured error was correlated automatically. Correlate manually: note the org and the time, then search Observability by route and org slug around that timestamp.</li>
+            <li>Move the item through its lifecycle with the status dropdown: <strong>New → Triaged → Acknowledged → Resolved</strong>. Triaged means you have read and categorised it; Acknowledged means the customer has had a response or the item is queued for work; Resolved means it is done or won&apos;t-do with a reason recorded elsewhere.</li>
+            <li>When the product team needs to act on an item, click <strong>Escalate to product</strong>. This stamps an <strong>Escalated</strong> badge on the row and adds it to the <em>Escalated</em> filter so product can find the flagged queue. It does <strong>not</strong> send a notification or assign anyone — pair it with your normal product hand-off (standup, ticket, or channel). Click again to clear the flag.</li>
+          </ol>
+          <p>Every status change is audit-logged with your email and a timestamp. Feedback is retained indefinitely. Export the filtered view (XLSX/CSV) when you need to attach a queue snapshot to a report.</p>
+          <p><strong>Permission boundary:</strong> super admin, product, support, and billing can change feedback status and escalate. The <strong>error group</strong> behind a bug is a separate surface — resolving the error group itself (in Observability) is product-only (see <em>How to use the observability dashboard</em>).</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-feedback-escalate-notify',
+          question: 'Does escalating a feedback item notify the product team?',
+          answer: (
+            <p>No. Escalate only sets an <strong>Escalated</strong> badge and adds the item to the <em>Escalated</em> filter so product can find it. There is no email, alert, or assignment. Always pair an escalation with your normal product hand-off.</p>
+          ),
+          answerText: 'No. Escalate only sets a badge and adds the item to the Escalated filter — no notification or assignment. Pair it with your normal product hand-off.',
+          keywords: ['escalate notify', 'escalation alert', 'flag for product'],
+          popular: true,
+        },
+        {
+          id: 'faq-feedback-no-linked-error',
+          question: 'A bug report has no linked error. How do I find the error?',
+          answer: (
+            <p>No <code>requestId</code> was captured for that submission, so it could not be auto-correlated. Open <strong>Observability</strong> and search by the bug&apos;s route and org slug around the time the feedback was submitted to find the matching error group manually.</p>
+          ),
+          answerText: 'No requestId was captured. Search Observability by route and org slug around the submission time to find the error group manually.',
+          keywords: ['no linked error', 'correlate manually', 'request id'],
+        },
+      ],
+    },
+    {
+      id: 'observability-triage',
+      group: 'Support SOP',
+      heading: 'How to use the observability dashboard and resolve error groups',
+      summary: 'Read the error dashboard, open an error group, and resolve, ignore, or snooze it.',
+      keywords: ['observability', 'error tracking', 'error group', 'issue', 'resolve', 'ignore', 'snooze', 'stack trace', 'error rate'],
+      searchText: 'how do i use observability dashboard error tracking error groups issues resolve ignore snooze reopen stack trace error rate freshness affected orgs',
+      links: [
+        { label: 'Observability', href: '/platform-admin/observability' },
+        { label: 'Feedback', href: '/platform-admin/feedback' },
+      ],
+      content: (
+        <>
+          <p><strong>Observability</strong> is the in-house error console. Each row is one distinct error fingerprint — a flood of identical failures collapses into a single triable <em>issue</em>, so the list stays workable.</p>
+          <ul>
+            <li>The top metric cards show errors in the selected window, error rate (from instrumented routes only), open issues, and affected orgs. Switch the environment (Production / Dev) and time window with the toggles.</li>
+            <li>The <strong>freshness chip</strong> reports when the rollup job last ran. A green chip is healthy; an amber chip (&ldquo;job error&rdquo; / &ldquo;sweep stale&rdquo;) or &ldquo;Rollup has not run yet&rdquo; means the data is stale and the cron job needs attention — flag it to engineering rather than trusting the counts.</li>
+            <li>The issue list opens on <strong>Open</strong> by default. Filter by severity, status, environment, route, or org slug. Export (XLSX/CSV) carries the active filters.</li>
+          </ul>
+          <p>Open an issue to read its detail: route and HTTP method, occurrence count, affected orgs, first/last seen, a 14-day occurrence sparkline, scrubbed sample events (stack trace and request context, redacted), and any <strong>related feedback</strong> matched by request ID.</p>
+          <p>Triage an open issue with the status controls:</p>
+          <ul>
+            <li><strong>Resolve</strong> — the error is fixed or understood and closed. Records who resolved it and when.</li>
+            <li><strong>Ignore</strong> — known noise you do not intend to fix (third-party, expected client error). It drops out of the open queue.</li>
+            <li><strong>Snooze</strong> — temporarily hide a known issue for 24 hours, 3 days, or 7 days; it returns to the open queue when the snooze expires.</li>
+            <li><strong>Reopen</strong> — bring a resolved/ignored/snoozed issue back to open if it recurs.</li>
+          </ul>
+          <p>Every transition is audit-logged. There is no confirmation modal — changes apply immediately, but every status is reversible.</p>
+          <p><strong>Permission boundary:</strong> error-group triage (Resolve / Ignore / Snooze / Reopen) is <strong>product and super admin only</strong> — this is engineering signal. Support can <em>view</em> the dashboard and issues but the controls are disabled with a <em>&ldquo;View-only for your role&rdquo;</em> note. To get a bug actioned, triage it from <strong>Feedback</strong> and escalate to product (see <em>How to triage customer feedback</em>).</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-obs-resolve-vs-snooze',
+          question: 'Should I resolve, ignore, or snooze an issue?',
+          answer: (
+            <p><strong>Resolve</strong> when the error is fixed or closed for good. <strong>Ignore</strong> for known noise you will never fix. <strong>Snooze</strong> for a known issue you want out of the queue temporarily — it comes back when the snooze expires. Any status can be reopened.</p>
+          ),
+          answerText: 'Resolve = fixed/closed. Ignore = permanent known noise. Snooze = temporary hide that returns to the queue on expiry. Any status can be reopened.',
+          keywords: ['resolve', 'ignore', 'snooze', 'difference'],
+          popular: true,
+        },
+        {
+          id: 'faq-obs-readonly',
+          question: 'The Resolve/Ignore/Snooze buttons are disabled. Why?',
+          answer: (
+            <p>Error-group triage is product and super admin only. Your role can view the dashboard but not change error-group status — the controls show <em>&ldquo;View-only for your role.&rdquo;</em> Triage the underlying bug from Feedback and escalate it to product instead.</p>
+          ),
+          answerText: 'Error-group triage is product/super admin only. View-only roles see disabled controls — triage the bug from Feedback and escalate to product.',
+          keywords: ['disabled', 'view only', 'read only', 'permission'],
+        },
+      ],
+    },
+    {
       id: 'org-ownership-transfer',
       group: 'Support SOP',
       heading: 'How to transfer organization ownership',
@@ -414,25 +514,219 @@ const platformAdminHelp: HelpPageContent = {
       ),
     },
     {
-      id: 'plans-pricing',
+      id: 'change-requests',
       group: 'Product SOP',
-      heading: 'How to work with plans, pricing, and feature matrix changes',
-      summary: 'Live product packaging changes require the approved catalog workflow.',
-      keywords: ['plans pricing', 'product catalog', 'feature matrix', 'stripe price', 'approval', 'campaign'],
+      heading: 'How to review and action change requests',
+      summary: 'Work the catalog change-request queue: submit, approve, and apply pricing, gating, and config changes.',
+      keywords: ['change requests', 'approval', 'pricing change', 'stripe price', 'plan gating', 'plan config', 'needs review', 'apply', 'implemented'],
+      searchText: 'how do i review action change requests approve apply pricing gating config draft needs review approved implemented stripe price update auto apply',
       links: [
+        { label: 'Change Requests', href: '/platform-admin/change-requests' },
         { label: 'Plans & Pricing', href: '/platform-admin/plans-pricing' },
+        { label: 'Audit Log', href: '/platform-admin/audit' },
       ],
       content: (
         <>
-          <p><strong>Plans &amp; Pricing</strong> is for global product configuration. This is different from one customer override.</p>
-          <ul>
-            <li>Use subscriber impact summaries before changing availability, limits, trials, or Stripe price IDs.</li>
-            <li>Use Product Catalog planning records for proposed package, entitlement, add-on, or campaign changes.</li>
-            <li>Live feature matrix publishing must come from an approved Feature Matrix request.</li>
-            <li>Use org-level module overrides when only one customer needs temporary access.</li>
-          </ul>
+          <p><strong>Change Requests</strong> is the single review queue for product, pricing, entitlement, campaign, and approval changes. Requests are <strong>created from the Plans &amp; Pricing catalog flow</strong> (and billing-initiated catalog actions), not from this page — here you review and move them forward. The queue opens on <strong>Action Needed</strong> (items in needs review or approved).</p>
+          <ol>
+            <li>Open a request to read its summary, the human-readable proposal, the raw proposal payload, and the stage history (created / submitted / reviewed / applied).</li>
+            <li>Move it through the lifecycle: <strong>Draft → Needs Review → Approved → Implemented</strong> (or <strong>Rejected / Canceled</strong>). The detail footer shows only the actions valid for the current status.</li>
+            <li>For a <strong>generated</strong> proposal (a Stripe price change, plan availability/gating change, or plan config/limit change), approval <strong>auto-applies</strong>: the button reads <strong>Approve &amp; Apply</strong> and on click the change is written and the request jumps straight to <strong>Implemented</strong>. There is no separate manual step.</li>
+            <li>For a <strong>manual</strong> request (e.g. a feature-matrix publish), approval sets it to <strong>Approved</strong> and leaves a separate <strong>Mark Implemented</strong> step for the implementer to take after doing the manual work.</li>
+          </ol>
+          <p><strong>Safe-harbour for price changes:</strong> a generated change captures the slot&apos;s current value when the request was created. If the slot changed since then, applying it is blocked with a 409 that names the current vs. expected value — create a fresh request from the current row rather than forcing it. Stripe price IDs must start with <code>price_</code>, and when the environment matches the change is live-validated against Stripe (an inactive price is rejected). Always confirm the price ID is from the correct Stripe environment (sandbox vs. live) before approving.</p>
+          <p>Every transition and every auto-apply is audit-logged. Change Requests also surface as a queue you reach from Plans &amp; Pricing.</p>
+          <p><strong>Permission boundary:</strong> super admin and product can submit, approve, and apply. Billing can <em>view</em> the queue (actions show <em>Read only</em>). Support and growth do not see this surface.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-cr-auto-apply',
+          question: 'Does approving a change request apply it, or is there a separate step?',
+          answer: (
+            <p>It depends on the request. A generated price, gating, or config change <strong>auto-applies on approval</strong> and goes straight to Implemented. A manual request (like a feature-matrix publish) only becomes Approved on approval and needs a separate <strong>Mark Implemented</strong> step after you do the manual work.</p>
+          ),
+          answerText: 'Generated price/gating/config changes auto-apply on approval and become Implemented. Manual requests need a separate Mark Implemented step.',
+          keywords: ['auto apply', 'approve', 'implemented', 'manual'],
+          popular: true,
+        },
+        {
+          id: 'faq-cr-stale-price',
+          question: 'Applying a price change was blocked saying the slot changed. What do I do?',
+          answer: (
+            <p>The Stripe price slot was modified after this request was created, so applying it would overwrite a newer value. Cancel the stale request if the current value is already correct, or create a fresh request from the current Plans &amp; Pricing row and approve that one.</p>
+          ),
+          answerText: 'The slot changed after the request was created. Cancel the stale request if the value is already correct, or create a fresh request from the current row.',
+          keywords: ['stale', 'slot changed', '409', 'price change blocked'],
+        },
+      ],
+    },
+    {
+      id: 'email-templates',
+      group: 'Product SOP',
+      heading: 'How to edit email templates safely',
+      summary: 'Customise transactional email copy without breaking variable tokens; test before saving.',
+      keywords: ['email templates', 'transactional email', 'variable token', 'test send', 'reset to default', 'subject', 'heading', 'cta'],
+      searchText: 'how do i edit email templates safely customise transactional email copy variable tokens curly braces test send reset to default subject heading body cta',
+      links: [
+        { label: 'Email Templates', href: '/platform-admin/email-templates' },
+      ],
+      content: (
+        <>
+          <p><strong>Email Templates</strong> lets you override the copy of platform transactional emails. Editing a template replaces the built-in default; the FieldLogicHQ brand envelope (header, footer) is always applied automatically. Templates are grouped by category: <strong>Authentication</strong>, <strong>Billing</strong>, <strong>Tournament</strong>, <strong>Rep Teams</strong>, <strong>House League</strong>, and <strong>System</strong>. Most of these fire automatically on a customer action, so copy mistakes reach real customers.</p>
+          <ol>
+            <li>Open the template from the list (the status column shows <strong>Customised</strong> or <strong>Default</strong>).</li>
+            <li>Edit the <strong>Subject line</strong>, <strong>Heading</strong>, <strong>Body</strong>, and optional <strong>CTA button label</strong>. The live preview on the right shows the branded result as you type.</li>
+            <li>Insert variables with the <strong>token chips</strong> below the body — they use <code>{'{{variableName}}'}</code> syntax. <strong>Do not hand-type or alter a token.</strong> A broken token (typo, missing brace) renders the literal <code>{'{{variableName}}'}</code> in the email instead of the real value.</li>
+            <li>Before saving, click <strong>Send test</strong>. A preview of your <em>unsaved</em> draft is emailed to your platform-admin address, with a TEST EMAIL badge and tokens shown as <code>[placeholders]</code>. Open it in an inbox and confirm it reads correctly.</li>
+            <li>Click <strong>Save</strong> to publish. The template is marked Customised and records you as the last editor.</li>
+            <li>To revert, click <strong>Reset to default</strong> and confirm — your customised copy is discarded and the built-in default is restored.</li>
+          </ol>
+          <p><strong>Approval expectation:</strong> copy changes to transactional templates that go directly to customers (auth, billing, tournament, rep-teams, house-league categories) should be reviewed with the product owner before saving. System templates are internal.</p>
+          <p><strong>Permission boundary:</strong> Email Templates is super admin and product only — it is not visible to support, billing, or growth.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-email-template-broken-token',
+          question: 'What happens if I break a variable token?',
+          answer: (
+            <p>The email renders the literal text — e.g. <code>{'{{firstName}}'}</code> — instead of the real value, so the customer sees raw template code. Always insert tokens with the chips and run a <strong>Send test</strong> to confirm the values fill in before saving.</p>
+          ),
+          answerText: 'The email shows the literal {{token}} text instead of the value. Use the token chips and run a test send before saving.',
+          keywords: ['broken token', 'variable', 'curly braces', 'literal'],
+          popular: true,
+        },
+      ],
+    },
+    {
+      id: 'plans-pricing',
+      group: 'Product SOP',
+      heading: 'How to work with plans, pricing, and feature matrix changes',
+      summary: 'Live product packaging changes require the approved catalog workflow — sequenced by customer impact.',
+      keywords: ['plans pricing', 'product catalog', 'feature matrix', 'stripe price', 'approval', 'campaign', 'risk ladder', 'plan config', 'gating'],
+      links: [
+        { label: 'Plans & Pricing', href: '/platform-admin/plans-pricing' },
+        { label: 'Change Requests', href: '/platform-admin/change-requests' },
+        { label: 'Bulk Operations', href: '/platform-admin/bulk-operations' },
+      ],
+      content: (
+        <>
+          <p><strong>Plans &amp; Pricing</strong> is for global product configuration — it changes the product for <em>every</em> customer, which is different from a one-customer override. Treat the controls as a <strong>risk ladder</strong>, from lowest to highest customer impact:</p>
+          <ol>
+            <li><strong>Gating status</strong> (live / early access) — controls whether a plan is offered. Reversible.</li>
+            <li><strong>Config limits</strong> (tournament caps, seat caps, trial days) — affects what customers on the plan can do.</li>
+            <li><strong>Stripe price IDs</strong> — affects real billing; a wrong ID can break checkout or charge the wrong amount.</li>
+            <li><strong>Feature matrix</strong> — the public plan comparison; highest blast radius and least immediately reversible.</li>
+          </ol>
+          <p><strong>Recommended sequence for any change:</strong> verify subscriber impact (use the impact summaries) → create a change request → get it approved → apply. Generated price, gating, and config changes auto-apply on approval through <strong>Change Requests</strong> (see <em>How to review and action change requests</em>).</p>
+          <p><strong>Stripe price change checklist:</strong></p>
+          <ul>
+            <li>Confirm the <code>price_...</code> ID is from the correct Stripe environment — sandbox vs. live.</li>
+            <li>Confirm no org is on a Stripe-managed subscription that swapping the price would break.</li>
+            <li>Let the change-request flow validate the ID against Stripe before it applies; do not force a blocked (stale) apply.</li>
+          </ul>
+          <p><strong>When to use which tool:</strong></p>
+          <ul>
+            <li><strong>Plans &amp; Pricing</strong> — global changes that should affect every customer.</li>
+            <li><strong>Bulk Operations</strong> — the same exception applied to a chosen set of orgs.</li>
+            <li><strong>Org-level Entitlements / billing override</strong> — a single-customer exception (see <em>How to provide module access</em> and <em>How to temporarily override billing access</em>).</li>
+          </ul>
+          <p>Live feature matrix publishing must come from an approved Feature Matrix request.</p>
+        </>
+      ),
+    },
+    {
+      id: 'email-batch-send',
+      group: 'Growth SOP',
+      heading: 'How to send a batch marketing email',
+      summary: 'Trigger a founding-season marketing send safely, with a pre-send review and the confirm modal.',
+      keywords: ['email', 'batch send', 'marketing email', 'founding season', 'recipients', 'send history', 'opt out', 'resend'],
+      searchText: 'how do i send a batch marketing email founding season recipients preview confirm send irreversible cannot be undone send history opted out resubscribe',
+      links: [
+        { label: 'Email', href: '/platform-admin/email' },
+      ],
+      content: (
+        <>
+          <p>The <strong>Email</strong> dashboard triggers the founding-season marketing emails. Sends go to <strong>real customers</strong> and <strong>cannot be recalled</strong>, so the review step matters.</p>
+          <ol>
+            <li>Check the audience stats at the top: <strong>Founding Season Orgs</strong>, <strong>Active Recipients</strong> (founding orgs minus opt-outs), and <strong>Opted Out</strong>. The per-email <strong>Recipients</strong> column is the count that will actually receive that email — read that number, not the total org count.</li>
+            <li>Click the <strong>Preview</strong> (eye) icon to read the exact email before sending. A row whose template is not built shows <em>not built</em> and cannot be sent.</li>
+            <li>Click <strong>Send</strong>. The <strong>Confirm Send</strong> modal restates the email key, the recipient count, and the subject, with the warning <em>&ldquo;This will send real emails… This action cannot be undone.&rdquo;</em> Read all three before confirming.</li>
+            <li>Confirm with <strong>Send to N recipients</strong>. Do not close the window while it says <em>&ldquo;Sending in progress.&rdquo;</em> When it finishes you get a result line: <em>Sent / Suppressed / Failed / Batch</em>.</li>
+            <li>If a send partially fails, open <strong>Sent History</strong> and expand the batch row for per-recipient delivery status (sent / suppressed / failed) before deciding whether to re-send to anyone.</li>
+          </ol>
+          <p>Use the <strong>Opt-Outs</strong> table only to re-subscribe an org that has <em>explicitly</em> asked to be re-added. Opt-outs are excluded from Active Recipients automatically.</p>
+          <p><strong>Permission boundary:</strong> growth, product, and super admin can trigger a send. Billing and support cannot — the Email surface is not visible to them.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-email-batch-recall',
+          question: 'Can I recall a marketing email after sending it?',
+          answer: (
+            <p>No. Once you confirm the send, the emails go out and cannot be undone or recalled. Preview the email and verify the recipient count in the Confirm Send modal before clicking send.</p>
+          ),
+          answerText: 'No — a sent batch cannot be recalled. Preview and verify the recipient count in the confirm modal before sending.',
+          keywords: ['recall', 'undo', 'cannot be undone', 'irreversible'],
+          popular: true,
+        },
+        {
+          id: 'faq-email-batch-recipient-count',
+          question: 'Which number is the real recipient count?',
+          answer: (
+            <p>The per-email <strong>Recipients</strong> column (and the count restated in the Confirm Send modal). That is Active Recipients — founding orgs minus opt-outs — not the total org count. Always confirm that number before sending.</p>
+          ),
+          answerText: 'The per-email Recipients column / the count in the confirm modal — Active Recipients, not total orgs.',
+          keywords: ['recipient count', 'how many', 'active recipients'],
+        },
+      ],
+    },
+    {
+      id: 'early-access-pipeline',
+      group: 'Growth SOP',
+      heading: 'How to manage the early-access lead pipeline',
+      summary: 'Work early-access leads through the pipeline: status, notes, outreach templates, and conversion.',
+      keywords: ['early access', 'leads', 'pipeline', 'outreach', 'convert', 'follow up', 'growth', 'lead status', 'export'],
+      searchText: 'how do i manage early access lead pipeline status new qualified contacted pilot converted not a fit do not contact outreach templates mark converted follow up export copy emails',
+      links: [
+        { label: 'Early Access', href: '/platform-admin/early-access' },
+      ],
+      content: (
+        <>
+          <p><strong>Early Access</strong> is the growth lead pipeline. The summary tiles show leads loaded, New, Pilot, Converted (with rate), and Follow-up Due. The conversion panels break down what is converting by plan interest and feature interest.</p>
+          <ol>
+            <li>Filter the list by search text, plan interest, feature interest, status, or consent. Click a lead to open the detail panel.</li>
+            <li>Move the lead through its lifecycle with the status select: <strong>New → Qualified → Contacted → Pilot candidate → Waiting for launch → Converted</strong>, or close it as <strong>Not a fit</strong> / <strong>Do not contact</strong>. Any status can be set directly — there is no forced order.</li>
+            <li>Record work in the detail panel: set a <strong>Follow-up due</strong> date, a <strong>Next action</strong>, and <strong>Internal notes</strong>, then <strong>Save</strong>. Use <strong>Mark contacted</strong> to stamp the last-contacted date.</li>
+            <li>For outreach, use the built-in <strong>Templates</strong> (League Plus beta invite, Club roadmap update, Feedback call). Clicking one copies the subject and body with the lead&apos;s name and org filled in — paste into your email tool and personalise before sending. <strong>Copy email</strong> grabs the lead&apos;s address; <strong>Copy emails</strong> grabs all consented addresses in the current view.</li>
+            <li>To convert a lead, first pick the <strong>Converted organization</strong> in the panel, then click <strong>Mark converted</strong>. This links the lead to that org and records the conversion (a lead with no org selected cannot be marked converted).</li>
+          </ol>
+          <p><strong>Reporting:</strong> the list loads at most <strong>100 leads</strong> — when the true total exceeds that, narrow with filters or <strong>Export</strong> (XLSX/CSV) for the full pipeline. Respect consent: only consented leads are included in <em>Copy emails</em>.</p>
+          <p><strong>Permission boundary:</strong> growth, product, and super admin can update leads. Billing and support do not see this surface. A view-only role can read a lead but cannot edit it.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-ea-mark-converted',
+          question: 'I cannot mark a lead converted. What am I missing?',
+          answer: (
+            <p>You must select the <strong>Converted organization</strong> in the lead detail panel first. <strong>Mark converted</strong> links the lead to that org and records the conversion — without an org selected it cannot proceed.</p>
+          ),
+          answerText: 'Select the Converted organization in the detail panel first — Mark converted links the lead to that org and needs it set.',
+          keywords: ['mark converted', 'convert lead', 'organization'],
+          popular: true,
+        },
+        {
+          id: 'faq-ea-100-cap',
+          question: 'The list seems capped. How do I see all the leads?',
+          answer: (
+            <p>The list loads up to 100 leads at a time. The total count tile reflects the true number — when it exceeds 100, narrow the view with filters or use <strong>Export</strong> (XLSX/CSV) to pull the full pipeline.</p>
+          ),
+          answerText: 'The list caps at 100 loaded leads. Filter to narrow, or Export (XLSX/CSV) for the full pipeline.',
+          keywords: ['100 cap', 'limit', 'export', 'all leads'],
+        },
+      ],
     },
     {
       id: 'cancel-subscription',

@@ -17,7 +17,8 @@ import {
 } from 'lucide-react';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { getPlatformAdminContext } from '@/lib/platform-auth';
-import { canViewPlatformArea } from '@/lib/platform-areas';
+import { canViewPlatformArea, canWritePlatformArea } from '@/lib/platform-areas';
+import HelpCallout from '@/components/help/HelpCallout';
 import { getPreviousPlatformAdminVisit } from '@/lib/platform-admin-visits';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
@@ -94,6 +95,35 @@ function AlertItem({
   );
 }
 
+// Role-aware first-login orientation. Each role is pointed only to surfaces it can
+// actually reach (e.g. growth is not sent to observability, which is hidden for it).
+const ORIENTATION_BY_ROLE: Record<string, { body: string; cta: { label: string; href: string } }> = {
+  super_admin: {
+    body: 'You have access to every area of the console. Read the Platform Admin Operations SOP before making account, billing, or pricing changes.',
+    cta: { label: 'Open the Operations SOP', href: '/platform-admin/help/platform-admin' },
+  },
+  support: {
+    body: 'Your job surfaces are Customer Users, Feedback, Observability (view), and Audit. Start with the Support SOP for password resets, feedback triage, and account investigation.',
+    cta: { label: 'Open the Support SOP', href: '/platform-admin/help/platform-admin#reset-password' },
+  },
+  billing: {
+    body: 'Your primary surfaces are Organizations (Billing & Access), Retention, Feedback, and Bulk Operations. Start with the Billing SOP for overrides, retention, and cancellations.',
+    cta: { label: 'Open the Billing SOP', href: '/platform-admin/help/platform-admin#billing-overrides' },
+  },
+  product: {
+    body: 'You have write access to Feedback, Change Requests, Email Templates, Email, Plans & Pricing, and Observability. Start with the Product Operator path.',
+    cta: { label: 'Open the Product Operator path', href: '/platform-admin/help/platform-admin#change-requests' },
+  },
+  growth: {
+    body: 'Your surfaces are Early Access and Email. Start with the Growth Operator path for the lead pipeline and batch marketing sends.',
+    cta: { label: 'Open the Growth Operator path', href: '/platform-admin/help/platform-admin#early-access-pipeline' },
+  },
+  read_only: {
+    body: 'This console is read-only for your role. You can view the Action Queue and org details, but no changes can be made from any surface.',
+    cta: { label: 'Browse the Operations SOP', href: '/platform-admin/help/platform-admin' },
+  },
+};
+
 function fmtDateTime(iso: string) {
   return new Date(iso).toLocaleString('en-CA', {
     year: 'numeric',
@@ -112,7 +142,12 @@ export default async function PlatformOverviewPage() {
   const canEarlyAccess = canViewPlatformArea(role, 'early_access');
   const canRetention = canViewPlatformArea(role, 'retention');
   const canChangeRequests = canViewPlatformArea(role, 'change_requests');
+  // Trial-ending and expired-override alerts are billing-team work; retention writers
+  // (super_admin + billing) are the roles that can actually action them.
+  const canActionBillingAlerts = canWritePlatformArea(role, 'retention');
   const previousVisit = platformUser?.email ? await getPreviousPlatformAdminVisit(platformUser.email) : null;
+  // First-login orientation: shows once, then a localStorage flag keeps it dismissed.
+  const orientation = previousVisit === null ? ORIENTATION_BY_ROLE[role] : null;
   const [stats, latestSnapshot, pricingRequestResult] = await Promise.all([
     getCommandCenterStats({ since: previousVisit?.visited_at ?? null }),
     getLatestPlatformMetricSnapshot(),
@@ -151,6 +186,17 @@ export default async function PlatformOverviewPage() {
         <MetricCard label="Estimated MRR" value={`$${stats.totals.estimatedMrr.toLocaleString()}`} sub={`$${stats.totals.estimatedArr.toLocaleString()} ARR`} Icon={CreditCard} />
       </section>
 
+      {orientation && (
+        <HelpCallout
+          variant="info"
+          title="Welcome to the platform admin console"
+          body={orientation.body}
+          cta={orientation.cta}
+          dismissible
+          localStorageKey="pa_orientation_dismissed"
+        />
+      )}
+
       <section className={styles.alertStrip} aria-label="Needs attention">
         <div>
           <div className={styles.sectionKicker}>Needs Attention</div>
@@ -167,6 +213,11 @@ export default async function PlatformOverviewPage() {
           <AlertItem label="Missing owners" value={stats.alerts.orgsWithoutOwner} href="/platform-admin/orgs?filter=no_owner" tone={stats.alerts.orgsWithoutOwner > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Owner inactive" value={stats.alerts.orgsWithInactiveOwner} href="/platform-admin/orgs?filter=owner_inactive" tone={stats.alerts.orgsWithInactiveOwner > 0 ? 'warn' : 'neutral'} />
         </div>
+        {!canActionBillingAlerts && (stats.alerts.trialEndingSoon > 0 || stats.alerts.expiredOverrides > 0) && (
+          <p className={styles.alertRoleNote}>
+            Trials ending soon and expired overrides require billing access — contact the billing team to action them.
+          </p>
+        )}
       </section>
 
       <OverviewTabs
