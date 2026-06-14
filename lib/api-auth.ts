@@ -16,6 +16,17 @@ export interface AuthContext {
 
 type AuthContextOptions = {
   orgSlug?: string;
+  /**
+   * Fail-closed switch (J3-012). When true, a missing `orgSlug` resolves to NO org
+   * (returns null) instead of falling back to the caller's first membership row.
+   * Every admin route under app/api/admin/** and every coach route under
+   * app/api/coaches/[orgSlug]/** MUST set this so a multi-org user can never have a
+   * read/write silently land in whichever org sorts first. Orgless callers that
+   * genuinely mean "the user's own org" (billing, /api/auth/me) deliberately leave it
+   * off and keep the first-membership fallback. A lint guard
+   * (scripts/check-admin-org-context.mjs) enforces the admin-route half.
+   */
+  requireOrgSlug?: boolean;
 };
 
 export interface AuthContextWithScope extends AuthContext {
@@ -88,9 +99,14 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
     .neq('status', 'suspended')
     .returns<AuthMemberOrgRow[]>();
 
+  // Fail closed (J3-012): when the caller requires an explicit org and didn't pass one,
+  // resolve to NO org rather than the arbitrary first membership. Otherwise (orgless
+  // callers like billing / auth/me) keep the first-non-null-membership fallback.
   const membership = options.orgSlug
     ? memberData?.find(row => row.organizations?.slug === options.orgSlug)
-    : memberData?.find(row => row.organizations !== null);
+    : options.requireOrgSlug
+      ? undefined
+      : memberData?.find(row => row.organizations !== null);
 
   const orgRow = membership?.organizations;
   if (!orgRow) return null;
