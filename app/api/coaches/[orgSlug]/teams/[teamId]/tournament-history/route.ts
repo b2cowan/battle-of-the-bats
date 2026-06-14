@@ -45,7 +45,7 @@ async function resolveBasicCoachTeamIdForWorkspace(teamWorkspace: {
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const ctx = await getAuthContext({ orgSlug });
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (ctx.org.slug !== orgSlug) return forbidden();
 

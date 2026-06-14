@@ -25,7 +25,7 @@ type RouteParams = {
 };
 
 async function resolveTeamCoachContext(orgSlug: string) {
-  const ctx = await getAuthContext({ orgSlug });
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { error: unauthorized() };
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
   if (!isTeamWorkspaceOrg(ctx.org)) return { error: forbidden() };

@@ -10,7 +10,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
 async function resolveContext(orgSlug: string, teamId: string, playerId: string, docId: string) {
-  const ctx = await getAuthContext();
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { error: unauthorized() };
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
 

@@ -20,7 +20,7 @@ const MAX_SIZE = 10 * 1024 * 1024;
 const VALID_DOC_TYPES: RepDocumentType[] = ['waiver', 'medical_consent', 'code_of_conduct', 'other'];
 
 async function resolveContext(orgSlug: string, teamId: string, playerId: string) {
-  const ctx = await getAuthContext();
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { error: unauthorized() };
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
 

@@ -5,7 +5,7 @@ import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string) {
-  const ctx = await getAuthContext();
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { error: unauthorized() };
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);

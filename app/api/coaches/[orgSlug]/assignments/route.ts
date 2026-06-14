@@ -6,7 +6,7 @@ import { withObservability } from '@/lib/observability';
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string }> },) => {
   const { orgSlug } = await params;
-  const ctx = await getAuthContext({ orgSlug });
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (ctx.org.slug !== orgSlug) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 

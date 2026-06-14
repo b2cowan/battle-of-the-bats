@@ -20,7 +20,7 @@ function mapItem(row: Record<string, unknown>): BudgetItem {
 }
 
 async function resolveCoachContext(orgSlug: string) {
-  const ctx = await getAuthContext();
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { error: unauthorized() };
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
 

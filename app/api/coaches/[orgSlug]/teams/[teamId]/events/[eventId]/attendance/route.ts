@@ -15,7 +15,7 @@ import { withObservability } from '@/lib/observability';
 const VALID_ATTENDANCE_STATUSES: RepAttendanceStatus[] = ['unknown', 'attending', 'absent', 'late'];
 
 async function resolveCoachContext(orgSlug: string, teamId: string, eventId: string) {
-  const ctx = await getAuthContext();
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { error: unauthorized() };
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
 

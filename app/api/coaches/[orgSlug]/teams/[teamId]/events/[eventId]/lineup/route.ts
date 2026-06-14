@@ -30,7 +30,7 @@ type RawLineupEntry = {
 };
 
 async function resolveCoachContext(orgSlug: string, teamId: string, eventId: string) {
-  const ctx = await getAuthContext();
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
   if (!ctx) return { error: unauthorized() };
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
 
