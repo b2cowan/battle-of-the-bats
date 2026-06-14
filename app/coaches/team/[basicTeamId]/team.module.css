@@ -28,6 +28,40 @@
 /* Team HQ stat strip lives in components/coaches/TeamHQ.module.css (slice 5g) —
    the standalone team home and the tournament-coach hero share that one source. */
 
+/* First-run getting-started checklist (rendered inside CoachEmptyState). */
+.firstRunSteps {
+  width: 100%;
+  max-width: 42ch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  text-align: left;
+}
+
+.firstRunStep {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--white-70);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.firstRunStepIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  color: var(--logic-lime);
+  background: rgba(217, 249, 157, 0.1);
+  border: 1px solid rgba(217, 249, 157, 0.22);
+}
+
 /* Tournament history rows */
 .historyList {
   display: flex;

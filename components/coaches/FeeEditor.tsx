@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, CheckCircle2, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Check, CheckCircle2, CircleDollarSign, Pencil, Plus, Trash2, X } from 'lucide-react';
 import type { BasicCoachTeamFee } from '@/lib/basic-coach-fees';
 import type { BasicCoachTeamPlayer } from '@/lib/basic-coach-roster';
+import CoachEmptyState from './CoachEmptyState';
 import styles from './FeeEditor.module.css';
 
 type Props = {
@@ -254,9 +255,12 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
           <h3 className={styles.blockTitle}>Roster fees</h3>
         </div>
         {players.length === 0 ? (
-          <div className={styles.empty}>
-            <p>Add players to track fees against your roster.</p>
-          </div>
+          <CoachEmptyState
+            compact
+            icon={<CircleDollarSign size={20} aria-hidden />}
+            headline="No roster to bill yet"
+            description="Add players on the Roster tab to start tracking fees against your roster."
+          />
         ) : (
           <div className={styles.playerList}>
             {players.map(player => {
@@ -303,9 +307,7 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
           <span className={styles.blockMeta}>{grouped.teamWide.length}</span>
         </div>
         {grouped.teamWide.length === 0 ? (
-          <div className={styles.empty}>
-            <p>No team-wide charges yet.</p>
-          </div>
+          <p className={styles.noFees}>No team-wide charges yet.</p>
         ) : (
           <FeeList
             fees={grouped.teamWide}

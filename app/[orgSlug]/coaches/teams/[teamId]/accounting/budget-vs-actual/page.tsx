@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import styles from './bva.module.css';
 
 interface PeriodResult {
@@ -238,16 +239,13 @@ export default function BudgetVsActualPage({
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : !data || data.totalBudget === 0 ? (
-        <div className={styles.emptyState}>
-          <TrendingUp size={40} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-          <p>No budget plan found.</p>
-          <p className={styles.emptyHint}>
-            <Link href={`${base}/accounting/budget`} className={styles.inlineLink}>
-              Create a budget plan
-            </Link>{' '}
-            to start tracking budget vs. actual.
-          </p>
-        </div>
+        <CoachEmptyState
+          icon={<TrendingUp size={22} aria-hidden />}
+          eyebrow="Budget vs. actual"
+          headline="No budget plan yet"
+          description="Create a budget plan to start tracking estimated spend against your actual ledger."
+          primaryAction={{ label: 'Create a budget plan', href: `${base}/accounting/budget` }}
+        />
       ) : (
         <>
           {/* Headroom summary */}

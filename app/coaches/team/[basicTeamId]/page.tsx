@@ -24,6 +24,8 @@ import FeeEditor from '@/components/coaches/FeeEditor';
 import AnnouncementEditor from '@/components/coaches/AnnouncementEditor';
 import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
 import TeamHQ from '@/components/coaches/TeamHQ';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import { Rocket, Users, CalendarDays, Megaphone } from 'lucide-react';
 import { registrationStatusBadge, registrationStatusLabel } from '@/lib/coaches-status';
 import shared from '../../coaches-portal.module.css';
 import styles from './team.module.css';
@@ -108,6 +110,15 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
     ? `${registrationStatusLabel(latestHistory.registration.status)} - ${latestHistory.tournament?.name ?? latestHistory.registration.name}`
     : 'No tournaments yet';
 
+  // First-run banner: a brand-new team with nothing entered yet. Falls away on
+  // its own once the coach adds anything (no persisted dismiss state needed).
+  const isFirstRun =
+    players.length === 0 &&
+    events.length === 0 &&
+    fees.length === 0 &&
+    announcements.length === 0 &&
+    history.length === 0;
+
   return (
     <div className={shared.page}>
       <nav className={styles.breadcrumb}>
@@ -134,10 +145,37 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         latestHistoryLabel={latestHistoryLabel}
       />
 
+      {isFirstRun && (
+        <section className={shared.section}>
+          <CoachEmptyState
+            icon={<Rocket size={22} aria-hidden />}
+            eyebrow="Get started"
+            headline="Let's set up your team"
+            description="Three quick steps and your team home is ready to share."
+            primaryAction={{ label: 'Add your first player', href: '#roster' }}
+          >
+            <ol className={styles.firstRunSteps}>
+              <li className={styles.firstRunStep}>
+                <span className={styles.firstRunStepIcon}><Users size={15} aria-hidden /></span>
+                Add your players to build the roster
+              </li>
+              <li className={styles.firstRunStep}>
+                <span className={styles.firstRunStepIcon}><CalendarDays size={15} aria-hidden /></span>
+                Add practices and games to the schedule
+              </li>
+              <li className={styles.firstRunStep}>
+                <span className={styles.firstRunStepIcon}><Megaphone size={15} aria-hidden /></span>
+                Send your first announcement to parents
+              </li>
+            </ol>
+          </CoachEmptyState>
+        </section>
+      )}
+
       {/* Master roster — the coach's primary owned data; leads the page. Identity only
           (name / jersey / optional contact / consent-gated DOB) — attendance, lineups, and
           positions stay Premium. The per-tournament roster submission is a later phase. */}
-      <section className={shared.section}>
+      <section id="roster" className={shared.section}>
         <div className={shared.sectionHeader}>
           <h2 className={shared.sectionTitle}>Roster</h2>
           <span className={styles.rosterCount}>

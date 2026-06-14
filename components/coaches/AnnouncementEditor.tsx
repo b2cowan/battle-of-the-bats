@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle2, RefreshCw, Send, XCircle } from 'lucide-react';
+import { CheckCircle2, Mail, RefreshCw, Send, XCircle } from 'lucide-react';
 import type {
   BasicCoachTeamAnnouncement,
   BasicCoachTeamAnnouncementRecipientSummary,
 } from '@/lib/basic-coach-announcements';
+import CoachEmptyState from './CoachEmptyState';
 import styles from './AnnouncementEditor.module.css';
 
 type Props = {
@@ -136,17 +137,18 @@ export default function AnnouncementEditor({
       </div>
 
       {!hasRecipients && (
-        <div className={styles.empty}>
-          <p>Add at least one roster contact email before sending an announcement.</p>
-          <button
-            type="button"
-            className={styles.refreshBtn}
-            onClick={refreshRecipients}
-            disabled={refreshBusy || busy}
-          >
-            <RefreshCw size={14} aria-hidden /> {refreshBusy ? 'Checking...' : 'Refresh contacts'}
-          </button>
-        </div>
+        <CoachEmptyState
+          icon={<Mail size={22} aria-hidden />}
+          eyebrow="Announcements"
+          headline="No contacts to email yet"
+          description="Add at least one roster contact email before sending an announcement, then refresh to pick it up."
+          primaryAction={{
+            label: refreshBusy ? 'Checking…' : 'Refresh contacts',
+            icon: <RefreshCw size={15} aria-hidden />,
+            onClick: refreshRecipients,
+            disabled: refreshBusy || busy,
+          }}
+        />
       )}
 
       <div className={styles.form}>
@@ -196,9 +198,7 @@ export default function AnnouncementEditor({
         </div>
 
         {announcements.length === 0 ? (
-          <div className={styles.empty}>
-            <p>No announcements sent yet.</p>
-          </div>
+          <p className={styles.logNote}>No announcements sent yet.</p>
         ) : (
           <ul className={styles.list}>
             {announcements.map(announcement => (

@@ -4,7 +4,7 @@ import { Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSl
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
-import HelpCallout from '@/components/help/HelpCallout';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
   buildFilename, serializeRows, serializeHeaders, downloadPDF, DEFAULT_PDF_SETTINGS,
@@ -740,10 +740,16 @@ export default function CoachesSchedulePage({
   function renderListView() {
     if (!events.length) {
       return (
-        <HelpCallout
-          variant="info"
-          title="No events scheduled yet"
-          body="Add games, practices, meetings, and tournaments to your team calendar using the Add Event button. Events are visible to you and your org admin."
+        <CoachEmptyState
+          icon={<Calendar size={22} aria-hidden />}
+          eyebrow="Schedule"
+          headline="No events scheduled yet"
+          description="Add games, practices, meetings, and tournaments to your team calendar. Events are visible to you and your org admin."
+          primaryAction={{
+            label: 'Add Event',
+            icon: <Plus size={15} aria-hidden />,
+            onClick: () => setAddTypeMenuOpen(true),
+          }}
         />
       );
     }
@@ -888,9 +894,10 @@ export default function CoachesSchedulePage({
               </button>
             ))}
           </div>
-          {/* Add event */}
+          {/* Add event — coach-portal primary actions are btn-lime (CP-1), not the
+              shared blueprint-blue .btnPrimary used by in-modal save buttons. */}
           <div className={styles.addEventWrap}>
-            <button className={styles.btnPrimary} onClick={() => setAddTypeMenuOpen(v => !v)}>
+            <button className="btn btn-lime" onClick={() => setAddTypeMenuOpen(v => !v)}>
               <Plus size={15} /> Add Event
             </button>
             {addTypeMenuOpen && (

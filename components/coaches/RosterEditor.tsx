@@ -18,8 +18,9 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Pencil, Trash2, Plus, X, Check, ShieldCheck } from 'lucide-react';
+import { GripVertical, Pencil, Trash2, Plus, X, Check, ShieldCheck, Users } from 'lucide-react';
 import type { BasicCoachTeamPlayer } from '@/lib/basic-coach-roster';
+import CoachEmptyState from './CoachEmptyState';
 import styles from './RosterEditor.module.css';
 
 type Props = {
@@ -155,9 +156,17 @@ export default function RosterEditor({ basicTeamId, initialPlayers }: Props) {
       {error && <p className={styles.error} role="alert">{error}</p>}
 
       {players.length === 0 && !adding ? (
-        <div className={styles.empty}>
-          <p>No players yet. Build your roster once and reuse it for every tournament you join.</p>
-        </div>
+        <CoachEmptyState
+          icon={<Users size={22} aria-hidden />}
+          eyebrow="Roster"
+          headline="Build your roster"
+          description="Add your players once and reuse this roster for every tournament you join."
+          primaryAction={{
+            label: 'Add player',
+            icon: <Plus size={15} aria-hidden />,
+            onClick: () => { setEditingId(null); setAdding(true); },
+          }}
+        />
       ) : (
         <DndContext id={`roster-dnd-${basicTeamId}`} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={players.map(p => p.id)} strategy={verticalListSortingStrategy}>
@@ -191,7 +200,7 @@ export default function RosterEditor({ basicTeamId, initialPlayers }: Props) {
         <div className={styles.formRow}>
           <PlayerForm busy={busy} onCancel={() => setAdding(false)} onSubmit={addPlayer} />
         </div>
-      ) : (
+      ) : players.length > 0 ? (
         <button
           type="button"
           className={styles.addBtn}
@@ -200,7 +209,7 @@ export default function RosterEditor({ basicTeamId, initialPlayers }: Props) {
         >
           <Plus size={15} aria-hidden /> Add player
         </button>
-      )}
+      ) : null}
     </div>
   );
 }

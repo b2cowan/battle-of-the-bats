@@ -1,0 +1,113 @@
+/* CoachEmptyState — the shared coach-portal empty-state card.
+   Locked spec: COACH_SURFACE_DESIGN_ADDENDUM.md §iii.
+
+   Org-LESS by design — the hue is `--logic-lime` (the coach portal's permanent
+   accent), NOT `--primary` (org-overrideable). The medallion is a rounded
+   square (`--radius`), never a circle: circles are banned in the coach portal. */
+
+.state {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  /* Soft lime glow from the top reads as an intentional illustration, not a
+     blank box. Literal lime RGB (217,249,157) is the resolved `--logic-lime`. */
+  background:
+    radial-gradient(110% 80% at 50% 0%, rgba(217, 249, 157, 0.07), transparent 55%),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--highlight-top);
+  overflow: hidden;
+}
+
+.compact {
+  padding: 1.25rem;
+}
+
+/* Tournament-mode glow: the radial leans on the team hue; the medallion ICON
+   stays lime (handled below — only the medallion tint shifts to team-hue). */
+.tournamentGlow {
+  background:
+    radial-gradient(
+      110% 80% at 50% 0%,
+      color-mix(in srgb, var(--team-color, var(--logic-lime)) 8%, transparent),
+      transparent 55%
+    ),
+    var(--surface);
+}
+
+/* Medallion — rounded square, lime-tinted. NOT a circle. */
+.medallion {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius);
+  color: var(--logic-lime);
+  background: rgba(217, 249, 157, 0.1);
+  border: 1px solid rgba(217, 249, 157, 0.25);
+  box-shadow: 0 0 24px rgba(217, 249, 157, 0.15);
+}
+
+.compact .medallion {
+  width: 40px;
+  height: 40px;
+}
+
+/* In tournament-mode the medallion shell tints to the team hue; the icon
+   colour (--logic-lime) is unchanged. */
+.tournamentGlow .medallion {
+  background: color-mix(in srgb, var(--team-color, var(--logic-lime)) 12%, transparent);
+  border-color: color-mix(in srgb, var(--team-color, var(--logic-lime)) 30%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--team-color, var(--logic-lime)) 20%, transparent);
+}
+
+.eyebrow {
+  color: var(--white-40);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.headline {
+  margin: 0;
+  color: var(--white);
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.description {
+  margin: 0;
+  max-width: 42ch;
+  color: var(--white-60);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 640px) {
+  .state {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .actions {
+    justify-content: flex-start;
+  }
+}

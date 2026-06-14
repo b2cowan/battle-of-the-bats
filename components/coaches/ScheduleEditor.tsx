@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, Trash2, Plus, X, Check } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Check, CalendarDays } from 'lucide-react';
 import type { BasicCoachTeamEvent } from '@/lib/basic-coach-schedule';
+import CoachEmptyState from './CoachEmptyState';
 import styles from './ScheduleEditor.module.css';
 
 type Props = {
@@ -143,9 +144,17 @@ export default function ScheduleEditor({ basicTeamId, initialEvents }: Props) {
       {error && <p className={styles.error} role="alert">{error}</p>}
 
       {events.length === 0 && !adding ? (
-        <div className={styles.empty}>
-          <p>No events yet. Add your practices and games — keep your whole season in one place.</p>
-        </div>
+        <CoachEmptyState
+          icon={<CalendarDays size={22} aria-hidden />}
+          eyebrow="Schedule"
+          headline="Plan your season"
+          description="Add your practices and games to keep your whole season in one place."
+          primaryAction={{
+            label: 'Add event',
+            icon: <Plus size={15} aria-hidden />,
+            onClick: () => { setEditingId(null); setAdding(true); },
+          }}
+        />
       ) : (
         <ul className={styles.list}>
           {events.map(ev =>
@@ -201,7 +210,7 @@ export default function ScheduleEditor({ basicTeamId, initialEvents }: Props) {
         <div className={styles.formRow}>
           <EventForm busy={busy} onCancel={() => setAdding(false)} onSubmit={addEvent} />
         </div>
-      ) : (
+      ) : events.length > 0 ? (
         <button
           type="button"
           className={styles.addBtn}
@@ -210,7 +219,7 @@ export default function ScheduleEditor({ basicTeamId, initialEvents }: Props) {
         >
           <Plus size={15} aria-hidden /> Add event
         </button>
-      )}
+      ) : null}
     </div>
   );
 }

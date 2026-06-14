@@ -75,6 +75,16 @@
   line-height: 1.55;
 }
 
+/* Send-log "no history yet" — a text-only note (the coach can't act from
+   the log itself), per the coach empty-state decision rule. */
+.logNote {
+  margin: 0;
+  padding: 0.5rem 0;
+  color: var(--white-40);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
 .refreshBtn {
   display: inline-flex;
   align-items: center;

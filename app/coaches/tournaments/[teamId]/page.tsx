@@ -12,7 +12,9 @@ import {
 } from '@/lib/coaches-status';
 import { buildCoachTournamentStatus } from '@/lib/coach-status-model';
 import { deriveCoachTournamentPhase } from '@/lib/coach-tournament-phase';
+import { CalendarClock } from 'lucide-react';
 import { teamColor, teamInitials } from '@/lib/team-color';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import TournamentStatusBlock from '@/components/coaches/TournamentStatusBlock';
 import TeamHQ from '@/components/coaches/TeamHQ';
 import CoachLiveSchedule, { type CoachScheduleGame } from '@/components/coaches/CoachLiveSchedule';
@@ -478,20 +480,23 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
       {team.status === 'accepted' && !showLiveBridge && (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Schedule</h2>
-          <div className="card" style={{ padding: '1.5rem', color: 'var(--text-secondary)', textAlign: 'center', fontSize: '0.88rem' }}>
-            {!scheduleVisible
-              ? 'The schedule for this division has not been published yet. Check back after the organizer publishes it.'
-              : 'No games scheduled for your team yet.'}
-          </div>
+          <CoachEmptyState
+            compact
+            icon={<CalendarClock size={20} aria-hidden />}
+            headline={!scheduleVisible ? 'Schedule not published yet' : 'No games scheduled yet'}
+            description={
+              !scheduleVisible
+                ? 'The schedule for this division has not been published. Check back after the organizer publishes it.'
+                : 'No games have been scheduled for your team yet.'
+            }
+          />
         </section>
       )}
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Announcements</h2>
         {relevantAnnouncements.length === 0 ? (
-          <div className="card" style={{ padding: '1.5rem', color: 'var(--text-secondary)', textAlign: 'center', fontSize: '0.88rem' }}>
-            No announcements yet from the organizer.
-          </div>
+          <p className={styles.organizerNote}>No announcements yet from the organizer.</p>
         ) : (
           <div className={styles.announcementList}>
             {relevantAnnouncements.map(a => (
