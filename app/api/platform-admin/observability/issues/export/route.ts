@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformAdmin } from '@/lib/platform-auth';
-import { canViewPlatformArea } from '@/lib/platform-areas';
+import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { getErrorGroupsForExport, normalizeEnv, type IssueFilters } from '@/lib/observability/dashboard';
 import { withObservability } from '@/lib/observability';
 
@@ -19,11 +18,8 @@ function csvValue(value: unknown) {
 
 export const GET = withObservability(async (req: NextRequest) => {
   // Export is a read — allow any observability viewer (super_admin / product / support).
-  const auth = await requirePlatformAdmin();
-  if (auth.response) return auth.response;
-  if (!canViewPlatformArea(auth.role, 'observability')) {
-    return NextResponse.json({ error: 'Insufficient platform role' }, { status: 403 });
-  }
+  const { response } = await requirePlatformAreaApi('observability', 'view');
+  if (response) return response;
 
   const sp = req.nextUrl.searchParams;
   const filters: IssueFilters = {

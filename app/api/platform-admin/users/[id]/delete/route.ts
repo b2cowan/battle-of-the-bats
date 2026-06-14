@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requirePlatformPermission } from '@/lib/platform-auth';
+import { requireSuperAdmin } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 
 export const DELETE = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
-  const auth = await requirePlatformPermission('manage_support');
+  // Permanent, irreversible account deletion → super_admin only (matches org delete).
+  const auth = await requireSuperAdmin();
   if (auth.response) return auth.response;
 
   const { id } = await params;

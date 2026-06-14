@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlatformAdminContext } from '@/lib/platform-auth';
+import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendMarketingEmail, createEmailBatch, finalizeBatch } from '@/lib/email-sender';
 import {
@@ -215,10 +215,8 @@ async function getCoachRecipients(): Promise<
 }
 
 export const POST = withObservability(async (request: NextRequest) => {
-  const auth = await getPlatformAdminContext();
-  if (!auth) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requirePlatformAreaApi('email', 'write');
+  if (auth.response) return auth.response;
 
   let emailKey: string;
   try {

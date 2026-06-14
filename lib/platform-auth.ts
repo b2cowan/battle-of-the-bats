@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 import type { User } from '@supabase/supabase-js';
 import { supabaseAdmin } from './supabase-admin';
 import { getAuthenticatedUser } from './api-auth';
-import { canViewPlatformArea, type PlatformArea } from './platform-areas';
+import { canViewPlatformArea, canWritePlatformArea, type PlatformArea } from './platform-areas';
 
 export type PlatformRole = 'super_admin' | 'support' | 'billing' | 'product' | 'growth' | 'read_only';
 
@@ -121,6 +121,32 @@ export async function requirePlatformAdmin(): Promise<
 }
 
 /**
+ * API-route counterpart to `requirePlatformAreaView` (which is for server pages and redirects).
+ * Enforces the `lib/platform-areas.ts` access matrix at the API layer so route guards read from
+ * the same single source of truth as the nav + page guards — closing the class of bug where a
+ * route checked only "is there a platform session" and silently bypassed least-privilege.
+ *
+ *   access: 'view'  -> caller's role must be able to VIEW the area  (PLATFORM_AREAS[area].viewRoles)
+ *   access: 'write' -> caller's role must be able to WRITE the area (PLATFORM_AREAS[area].writeRoles)
+ *
+ * super_admin always passes (both predicates short-circuit on it). Returns the standard guard
+ * shape — `if (auth.response) return auth.response;` then use `auth.user` / `auth.role`.
+ */
+export async function requirePlatformAreaApi(area: PlatformArea, access: 'view' | 'write'): Promise<
+  { user: User; role: PlatformRole; response: null } | { user: null; role: null; response: NextResponse }
+> {
+  const auth = await requirePlatformAdmin();
+  if (auth.response) return auth;
+  const allowed = access === 'write'
+    ? canWritePlatformArea(auth.role, area)
+    : canViewPlatformArea(auth.role, area);
+  if (!allowed) {
+    return { user: null, role: null, response: NextResponse.json({ error: 'Insufficient platform role' }, { status: 403 }) };
+  }
+  return auth;
+}
+
+/**
  * Hard super_admin-only API gate — for destructive / data-deleting operations where even the
  * widest functional permission (manage_product etc.) is not enough. Promoted from the local
  * helper in app/api/platform-admin/orgs/[id]/delete/route.ts so there is one source of truth.
@@ -175,6 +201,14 @@ export async function requireDevToolPlatformAdmin(): Promise<
 
   const auth = await requirePlatformAdmin();
   if (auth.response) {
+    return {
+      user: null,
+      role: null,
+      response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
+    };
+  }
+  // dev_tools is super_admin-only in the access matrix.
+  if (auth.role !== 'super_admin') {
     return {
       user: null,
       role: null,

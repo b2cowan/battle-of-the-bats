@@ -6,11 +6,11 @@
  *  - Opt-out org list
  *  - Live recipient counts per email key
  *
- * Protected: platform admin session required (checked via getPlatformAdminContext).
+ * Protected: requires view access to the `email` platform area (super_admin / product / growth).
  */
 
 import { NextResponse } from 'next/server';
-import { getPlatformAdminContext } from '@/lib/platform-auth';
+import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
@@ -55,10 +55,8 @@ async function getOptOutCount(): Promise<number> {
 }
 
 export const GET = withObservability(async () => {
-  const auth = await getPlatformAdminContext();
-  if (!auth) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requirePlatformAreaApi('email', 'view');
+  if (auth.response) return auth.response;
 
   try {
     // Fetch in parallel

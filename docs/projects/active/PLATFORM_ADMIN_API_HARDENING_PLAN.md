@@ -37,22 +37,25 @@ export async function requirePlatformAreaApi(area: PlatformArea, access: 'view' 
 
 Then replace each session-only check above with the right `requirePlatformAreaApi(area, access)` call. This makes the API layer self-consistent with the nav + page guards and the matrix.
 
-## Tasks
+## Tasks — BUILT 2026-06-13 (dev-only, uncommitted on feat/free-tier-coaches; typecheck + lint:focused clean)
 
-- [ ] Add `requirePlatformAreaApi(area, access)` to `lib/platform-auth.ts` (+ unit-level reasoning; reuse `canViewPlatformArea`/`canWritePlatformArea`).
-- [ ] **#1** email-templates `[key]` GET/PUT/reset/test-send → `requirePlatformAreaApi('email_templates','write')`; guard the `[key]` page with `requirePlatformAreaView('email_templates')`.
-- [ ] **#2** `admin/email/send` + resubscribe → `requirePlatformAreaApi('email','write')`.
-- [ ] **#3** `early-access` GET + export → `requirePlatformAreaApi('early_access','view')` (match the already-correct `[leadId]` route).
-- [ ] **#4/#5** `feedback/export` + `observability/issues/export` → `requirePlatformAreaApi('observability','view')`.
-- [ ] **#6** dev-tools: add a `super_admin` check to the page/layout + tighten `requireDevToolPlatformAdmin` to require `super_admin` (keep the env-flag belt-and-suspenders). *(Lower urgency — prod-gated.)*
-- [ ] **#7 (owner policy)** decide delete-user elevation → apply `requireSuperAdmin()` or `manage_billing` to `users/[id]/delete` and drop the verb from `CustomerUsersClient` for ineligible roles (coordinate with F2).
-- [ ] Grep-sweep for any other platform-admin API route using bare `getPlatformAdminContext()`/`getPlatformAuthContext()`/`requirePlatformAdmin()` as its only gate; bring each onto the helper or document why session-only is correct.
-- [ ] `npm run typecheck` (touches shared `lib/platform-auth.ts` — restart dev server before browser QA).
+- [x] Added `requirePlatformAreaApi(area, access)` to `lib/platform-auth.ts` (reuses `canViewPlatformArea`/`canWritePlatformArea`).
+- [x] **#1** email-templates list GET + `[key]` GET → `('email_templates','view')`; `[key]` PUT/DELETE + test-send → `('email_templates','write')`; guarded the `[key]` **page** with `requirePlatformAreaView('email_templates')`.
+- [x] **#2** `admin/email/send` + resubscribe → `('email','write')`; `admin/email` GET + `sends` GET → `('email','view')`.
+- [x] **#3** `early-access` GET + export → `('early_access','view')`.
+- [x] **#4/#5 — were FALSE POSITIVES.** `feedback/export` (line 50) and `observability/issues/export` (line 24) **already** gated on `canViewPlatformArea(role,'observability')` after the session check — the walkers flagged the first guard line and missed the second. Not leaky. **Refactored onto the helper anyway** (single source of truth, removes the two-line foot-gun) — no behavior change.
+- [x] **#6** dev-tools: added a `super_admin` redirect to `dev-tools/layout.tsx` (now async) + tightened `requireDevToolPlatformAdmin` to require `super_admin`. (`requireDevToolUserAuth` left as-is — it intentionally allows any auth'd user for the signup-flow seed/wipe testing.)
+- [x] **#7** delete-user → `requireSuperAdmin()` (owner-approved default; matches org-delete). The button-removal in `CustomerUsersClient` for ineligible roles is left to **F2** (UI consistency).
+- [x] Grep-sweep done: the genuinely-leaky routes are the email-templates (4) + admin/email (4) + early-access (2) groups. Left session-only **by design** (correct): `audit/export` (audit = ALL_ROLES view), `me`, `visits`, `metrics/snapshot`, `users/notes`, `orgs/[id]/notes`. **Documented follow-ups (lower-risk reads, not in this pass):** `stripe-prices` GET, `plan-config` GET, `plan-gating` GET use session-only for their GET (config visible to all roles) — consider `plans_pricing` view in a later sweep.
+- [x] `npm run typecheck` clean + `npm run lint:focused` clean on all 15 changed files.
 
-## Open decisions for owner
+## Decisions taken (owner-approved 2026-06-13)
 
-1. **Delete-user (#7):** is permanent customer-account deletion a support-rep capability, or should it require `super_admin` (matching org-delete) / `manage_billing`?
-2. **Dev-tools (#6):** tighten to `super_admin`, or accept the prod env-flag as sufficient and just document it?
+1. **Delete-user (#7):** elevated to `super_admin` (matches org-delete). Reversible to `manage_billing` if preferred.
+2. **Dev-tools (#6):** tightened to `super_admin` (page + API helper); env-flag kept as belt-and-suspenders.
+
+## ⚠ Handoff note
+Shared `lib/platform-auth.ts` changed → **restart the dev server before browser QA** (AGENTS.md). Not committed. Suggested verification: log in as `support@`/`billing@`/`growth@`/`readonly@dev.local` (devpass123) and confirm the email-template editor, mass-email send, and lead/feedback/error exports now return 403 for the wrong role while `product@`/bootstrap still work.
 
 ## Out of scope
 - UX consistency of the now-correctly-403'ing buttons → owned by **F2** (Least-Privilege UX Consistency).

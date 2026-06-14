@@ -1,11 +1,11 @@
-import { getPlatformAuthContext } from '@/lib/platform-auth';
+import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
 // GET /api/platform-admin/email-templates — list all templates
 export const GET = withObservability(async () => {
-  const user = await getPlatformAuthContext();
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const { response } = await requirePlatformAreaApi('email_templates', 'view');
+  if (response) return response;
 
   const { data, error } = await supabaseAdmin
     .from('platform_email_templates')

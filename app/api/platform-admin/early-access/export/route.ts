@@ -8,7 +8,7 @@ import {
   parseEarlyAccessFilters,
   toCsvCell,
 } from '@/lib/early-access-admin';
-import { requirePlatformAdmin } from '@/lib/platform-auth';
+import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ExcelJS from 'exceljs';
 import { withObservability } from '@/lib/observability';
@@ -34,7 +34,7 @@ type LeadExportRow = {
 };
 
 export const GET = withObservability(async (req: NextRequest) => {
-  const auth = await requirePlatformAdmin();
+  const auth = await requirePlatformAreaApi('early_access', 'view');
   if (auth.response) return auth.response;
 
   const { searchParams } = new URL(req.url);

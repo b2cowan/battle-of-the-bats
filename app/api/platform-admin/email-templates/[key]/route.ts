@@ -1,4 +1,4 @@
-import { getPlatformAuthContext } from '@/lib/platform-auth';
+import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
@@ -6,8 +6,8 @@ type Params = { params: Promise<{ key: string }> };
 
 // GET /api/platform-admin/email-templates/[key]
 export const GET = withObservability(async (_req: Request, { params }: Params) => {
-  const user = await getPlatformAuthContext();
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const { response } = await requirePlatformAreaApi('email_templates', 'view');
+  if (response) return response;
 
   const { key } = await params;
   const { data, error } = await supabaseAdmin
@@ -22,8 +22,8 @@ export const GET = withObservability(async (_req: Request, { params }: Params) =
 
 // PUT /api/platform-admin/email-templates/[key] — save customised content
 export const PUT = withObservability(async (req: Request, { params }: Params) => {
-  const user = await getPlatformAuthContext();
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const { user, response } = await requirePlatformAreaApi('email_templates', 'write');
+  if (response) return response;
 
   const { key } = await params;
   const body = await req.json().catch(() => ({}));
@@ -58,8 +58,8 @@ export const PUT = withObservability(async (req: Request, { params }: Params) =>
 
 // DELETE /api/platform-admin/email-templates/[key] — reset to hardcoded default
 export const DELETE = withObservability(async (_req: Request, { params }: Params) => {
-  const user = await getPlatformAuthContext();
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const { user, response } = await requirePlatformAreaApi('email_templates', 'write');
+  if (response) return response;
 
   const { key } = await params;
 

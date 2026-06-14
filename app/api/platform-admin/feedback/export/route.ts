@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPlatformAdminContext } from '@/lib/platform-auth';
-import { canViewPlatformArea } from '@/lib/platform-areas';
+import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ExcelJS from 'exceljs';
 import { withObservability } from '@/lib/observability';
@@ -46,10 +45,8 @@ function csvValue(value: unknown) {
 }
 
 export const GET = withObservability(async (req: NextRequest) => {
-  const auth = await getPlatformAdminContext();
-  if (!auth || !canViewPlatformArea(auth.role, 'observability')) {
-    return new NextResponse('Forbidden', { status: 403 });
-  }
+  const { response } = await requirePlatformAreaApi('observability', 'view');
+  if (response) return response;
 
   const sp = req.nextUrl.searchParams;
   const type = sp.get('type') ?? '';

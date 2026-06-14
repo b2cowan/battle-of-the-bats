@@ -94,7 +94,7 @@ This is a UX scope item that is in scope for F2 (not F3). Even before the F3 per
   - [ ] T2a — Compute `canManageUsers = hasPlatformPermission(auth.role, 'manage_support')` in `customer-users/page.tsx` and pass to `CustomerUsersClient`.
   - [ ] T2b — Gate the Actions button and all menu items in `CustomerUsersClient` on `canManageUsers`. When false, render view-only indicator or suppress the column.
   - [ ] T2c — Add page-level view-only `HelpCallout` when `canManageUsers=false` (PAR-006).
-  - [ ] T2d — Coordinate with F1 #7: add `canDelete` prop (separate from `canManageUsers`), gated on whatever permission F1 settles on for the delete-user route. Hide the Delete User menu item for ineligible roles.
+  - [ ] T2d — Coordinate with F1 #7 (**RESOLVED 2026-06-13: F1 elevated the delete-user API to `requireSuperAdmin()`**). Add a `canDelete = auth.role === 'super_admin'` prop (separate from `canManageUsers`) and hide the Delete User menu item for non-super roles. ⚠ **Now a live regression:** F1's elevation means `support`/`billing` (who previously held `manage_support` and could delete) now see a Delete button that 403s — a new silent dead-end until this task ships.
 
 - [ ] **T3** Retention Queue gate (PAS-002):
   - [ ] Confirm `canManageBilling` is available from `retention/page.tsx` (or compute via `hasPlatformPermission`).
