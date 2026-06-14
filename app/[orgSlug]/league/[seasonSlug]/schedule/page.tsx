@@ -1,13 +1,12 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import {
-  getOrganizationBySlug,
   getLeagueSeasonBySlug,
   getDivisionsForSeason,
   getTeamsForSeason,
   getGamesForSeason,
 } from '@/lib/db';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { resolvePublicLeagueContext } from '@/lib/public-league';
 import type { LeagueDivision, LeagueTeam, LeagueGame } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -49,9 +48,8 @@ export default async function PublicSchedulePage({
   const { orgSlug, seasonSlug } = await params;
   const { d: divisionIdParam } = await searchParams;
 
-  const org = await getOrganizationBySlug(orgSlug);
+  const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) notFound();
-  if (!hasModuleEntitlement(org, 'module_house_league')) notFound();
 
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!season) notFound();

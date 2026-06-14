@@ -196,7 +196,7 @@ export default function RegisterForm({
           Reference: <span className={styles.refCode}>{success.id.slice(0, 8).toUpperCase()}</span>
         </div>
         <p className={styles.successStatusLink}>
-          <a href={`/${orgSlug}/league/${seasonSlug}/status?email=${encodeURIComponent(success.guardianEmail)}`}>
+          <a href={`/${orgSlug}/league/${seasonSlug}/status`}>
             Check registration status later →
           </a>
         </p>

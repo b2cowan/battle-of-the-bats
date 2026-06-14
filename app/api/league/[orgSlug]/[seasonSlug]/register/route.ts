@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
-  getOrganizationBySlug,
   getLeagueSeasonBySlug,
   getDivisionsForSeason,
   createRegistration,
 } from '@/lib/db';
+import { resolvePublicLeagueContext } from '@/lib/public-league';
 import {
   sendEmail,
   leagueRegistrationApprovedHtml,
@@ -36,7 +36,9 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, seasonSlug } = await params;
 
   // 1. Resolve org + season
-  const org = await getOrganizationBySlug(orgSlug);
+  // Gate the public register API exactly like the league index/sub-pages (audit J3-068):
+  // a private, canceled, or non-entitled org must not accept public registrations.
+  const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
 
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);

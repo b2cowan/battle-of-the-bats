@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { getOrganizationBySlug, getLeagueSeasons } from '@/lib/db';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { getLeagueSeasons } from '@/lib/db';
+import { resolvePublicLeagueContext } from '@/lib/public-league';
 import type { LeagueSeason } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -39,11 +39,8 @@ export default async function LeagueIndexPage({
 }) {
   const { orgSlug } = await params;
 
-  const org = await getOrganizationBySlug(orgSlug);
-  // Private orgs and canceled subscriptions hide all public surfaces — mirror the org home page gates.
-  if (!org || !org.isPublic) notFound();
-  if (org.subscriptionStatus === 'canceled') notFound();
-  if (!hasModuleEntitlement(org, 'module_house_league')) notFound();
+  const org = await resolvePublicLeagueContext(orgSlug);
+  if (!org) notFound();
 
   const allSeasons = await getLeagueSeasons(org.id);
   const visibleSeasons = allSeasons.filter(s => s.status !== 'draft');
