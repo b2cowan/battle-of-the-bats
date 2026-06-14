@@ -36,7 +36,7 @@ export default async function CoachesTeamWorkspacesPage() {
             <Users size={28} />
           </div>
           <p>Premium adds the serious-operator tools — a lineup builder, dues automation, team budget, and document storage. It carries over automatically if your organization joins FieldLogicHQ.</p>
-          <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Express interest</Link>
+          <Link href={COACHES_START_PATH} className="btn btn-ghost btn-sm">Express interest</Link>
         </div>
       ) : (
         <section className={styles.section}>

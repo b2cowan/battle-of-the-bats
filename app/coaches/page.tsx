@@ -68,7 +68,7 @@ export default async function CoachesPortalPage() {
       {claimable.length > 0 && (
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Claim your team{claimable.length === 1 ? '' : 's'}</h2>
+            <h2 className={styles.sectionTitle} style={{ color: 'var(--logic-lime)' }}>Claim your team{claimable.length === 1 ? '' : 's'}</h2>
           </div>
           <p style={{ margin: '0 0 1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
             {claimable.length === 1 ? 'A team was' : 'Teams were'} registered with your email by an organizer.
@@ -89,8 +89,8 @@ export default async function CoachesPortalPage() {
                 </div>
                 <Link
                   href={`/coaches/join?registrationId=${encodeURIComponent(reg.id)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent(COACHES_TOURNAMENTS_PATH)}`}
-                  className="btn btn-outline btn-sm"
-                  style={{ marginTop: 'auto' }}
+                  className="btn btn-lime"
+                  style={{ width: '100%', marginTop: 'auto' }}
                 >
                   Claim team
                 </Link>
@@ -149,7 +149,7 @@ export default async function CoachesPortalPage() {
         <section className={styles.section}>
           <div className={styles.empty}>
             <p>Your teams show up here. Register a team for a tournament, or start a free team home to manage your season.</p>
-            <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm">Explore the Coaches Portal</Link>
+            <Link href={COACHES_START_PATH} className="btn btn-ghost btn-sm">Express interest</Link>
           </div>
         </section>
       )}
@@ -195,7 +195,7 @@ export default async function CoachesPortalPage() {
                   Premium adds the serious-operator tools — a lineup builder, dues automation, team budget, and document storage. It carries over automatically if your organization joins FieldLogicHQ.
                 </p>
               </div>
-              <Link href={COACHES_START_PATH} className="btn btn-outline btn-sm" style={{ marginTop: 'auto' }}>
+              <Link href={COACHES_START_PATH} className="btn btn-ghost btn-sm" style={{ marginTop: 'auto' }}>
                 Express interest
               </Link>
             </div>

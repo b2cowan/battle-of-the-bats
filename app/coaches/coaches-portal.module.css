@@ -155,3 +155,73 @@ a.card:active {
     align-items: stretch;
   }
 }
+
+/* ── Coach lifecycle chip (Rule CP-2) ─────────────────────────────────────────
+   Distinct from the global .badge (which is a 999px pill) — the lifecycle chip is
+   a 6px rounded-square data-font tag signalling a tournament's live-first phase.
+   CSS only this slice: the tournament-list sort that renders these is a later
+   Phase-5 slice (phase5:ref(5h)). See COACH_SURFACE_DESIGN_ADDENDUM.md §ii. */
+.coachLifecycleChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: var(--radius-sm);
+  padding: 0.18rem 0.5rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+/* LIVE — tournament dates straddle today. Loudest: lime fill, dark text, pulse-dot. */
+.coachLifecycleChipLive {
+  background: var(--logic-lime);
+  color: #0f1123;
+}
+
+/* GAME DAY — start_date === today. Same lime, slightly dimmed to rank below LIVE. */
+.coachLifecycleChipGameDay {
+  background: var(--logic-lime);
+  color: #0f1123;
+  opacity: 0.85;
+}
+
+/* The leading dot on LIVE / GAME DAY chips. */
+.coachLifecycleChipDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+
+.coachLifecycleChipLive .coachLifecycleChipDot {
+  animation: coachChipDotPulse 1.4s ease-in-out infinite;
+}
+
+/* UPCOMING — 1–14 days out. Info-tinted container. */
+.coachLifecycleChipUpcoming {
+  background: rgba(var(--info-rgb), 0.1);
+  border-color: rgba(var(--info-rgb), 0.45);
+  color: var(--info);
+}
+
+/* FUTURE — > 14 days. Quiet text, no container. */
+.coachLifecycleChipFuture {
+  padding: 0.18rem 0;
+  color: var(--white-40);
+}
+
+/* COMPLETE — end_date < today. Muted text + faint border. */
+.coachLifecycleChipComplete {
+  border-color: var(--border-2);
+  color: var(--white-30);
+}
+
+@keyframes coachChipDotPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}

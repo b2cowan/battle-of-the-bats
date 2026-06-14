@@ -7,7 +7,7 @@ export default function CoachTeamNotFound() {
     <div className={styles.page}>
       <div className={styles.empty}>
         <p>This team isn&apos;t linked to your signed-in coach account, or it no longer exists.</p>
-        <Link href={COACHES_HOME_PATH} className="btn btn-outline btn-sm">
+        <Link href={COACHES_HOME_PATH} className="btn btn-ghost btn-sm">
           Back to Coaches Portal
         </Link>
       </div>
