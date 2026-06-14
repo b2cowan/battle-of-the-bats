@@ -2756,6 +2756,24 @@
         "column_default": "now()"
       },
       {
+        "table_name": "feedback_submissions",
+        "pos": 17,
+        "column_name": "escalated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "feedback_submissions",
+        "pos": 18,
+        "column_name": "escalated_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "games",
         "pos": 1,
         "column_name": "id",

@@ -4,6 +4,7 @@ import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { isPlatformAreaReadOnly } from '@/lib/platform-areas';
 import HelpCallout from '@/components/help/HelpCallout';
 import StatusControls from './[id]/StatusControls';
+import EscalateControls from './[id]/EscalateControls';
 import FeedbackExportClient from './FeedbackExportClient';
 import styles from './feedback.module.css';
 
@@ -31,6 +32,7 @@ type FeedbackRow = {
   status: string;
   severity: string | null;
   context: Record<string, unknown> | null;
+  escalated_at: string | null;
   created_at: string;
   organizations: { id: string; name: string } | { id: string; name: string }[] | null;
 };
@@ -62,14 +64,17 @@ async function getRows(f: Filters): Promise<FeedbackRow[]> {
   let q = supabaseAdmin
     .from('feedback_submissions')
     .select(
-      'id, org_id, user_email, submitter_name, type, category, title, body, status, severity, context, created_at, organizations(id, name)',
+      'id, org_id, user_email, submitter_name, type, category, title, body, status, severity, context, escalated_at, created_at, organizations(id, name)',
     )
     .order('created_at', { ascending: false })
     .range(f.offset, f.offset + PAGE_SIZE - 1);
 
   if (f.type) q = q.eq('type', f.type);
   if (f.category) q = q.eq('category', f.category);
-  if (f.status && f.status !== 'all') q = q.eq('status', f.status);
+  // `escalated` is a synthetic status that filters on the escalation flag, not the status column
+  // (an escalated item keeps its own new/triaged/… status). `all` = no status filter.
+  if (f.status === 'escalated') q = q.not('escalated_at', 'is', null);
+  else if (f.status && f.status !== 'all') q = q.eq('status', f.status);
 
   const { data, error } = await q;
   if (error || !data) return [];
@@ -160,6 +165,7 @@ export default async function FeedbackTriagePage({
         <select name="status" defaultValue={filters.status} className={styles.filterSelect}>
           <option value="all">All statuses</option>
           {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+          <option value="escalated">escalated</option>
         </select>
         <button type="submit" className={styles.filterBtn}>Filter</button>
         <FeedbackExportClient type={filters.type} category={filters.category} status={filters.status} />
@@ -219,11 +225,19 @@ export default async function FeedbackTriagePage({
                     </details>
                   </td>
                   <td>
-                    {readOnly ? (
-                      <span className={`badge ${STATUS_BADGE[row.status] ?? 'badge-neutral'}`}>{row.status}</span>
-                    ) : (
-                      <StatusControls id={row.id} currentStatus={row.status} readOnly={readOnly} />
-                    )}
+                    <div className={styles.statusCell}>
+                      {readOnly ? (
+                        <span className={`badge ${STATUS_BADGE[row.status] ?? 'badge-neutral'}`}>{row.status}</span>
+                      ) : (
+                        <StatusControls id={row.id} currentStatus={row.status} readOnly={readOnly} />
+                      )}
+                      {row.escalated_at && (
+                        <span className="badge badge-danger" title="Flagged for the product team">Escalated</span>
+                      )}
+                      {!readOnly && (
+                        <EscalateControls id={row.id} escalated={!!row.escalated_at} />
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

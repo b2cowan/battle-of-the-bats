@@ -4916,6 +4916,12 @@ The platform-admin **error-tracking + in-app feedback** store (the "notification
 <!-- dict:col:feedback_submissions.triaged_at -->
 **`triaged_at`** (tstz, nullable) — timestamp of the first move off `'new'` (set with `triaged_by`); distinct from `updated_at` (which bumps on every change). **Write-only** — no reader selects it.
 
+<!-- dict:col:feedback_submissions.escalated_at -->
+**`escalated_at`** (tstz, nullable) — flag-for-product timestamp (F3 Phase 4, mig 126). NULL = not escalated; set to `now()` when a write-capable operator escalates, **nulled** when the escalation is cleared (no history — the `platform_audit_log` `escalate_feedback`/`clear_feedback_escalation` entries are the durable trail). **Its presence IS the escalated state** — read back by the triage list for the "Escalated" badge, by the synthetic `status=escalated` filter on both the list **and the CSV/XLSX export** (`.not('escalated_at','is',null)`, orthogonal to the `status` column: an escalated item keeps its own new/triaged/… status), and emitted as the export's `escalated_at` column. Mutated only by `feedback/[id]/escalate/route.ts`, gated on the `feedback` area write check.
+
+<!-- dict:col:feedback_submissions.escalated_by -->
+**`escalated_by`** (text, nullable, no FK) — platform-operator email who escalated the item (mirrors `triaged_by`); set with `escalated_at`, nulled when the escalation is cleared. Re-escalating an already-escalated item is a no-op (the original who/when is **not** restamped). **Write-only** — no reader selects it (the list reads only `escalated_at`).
+
 ## `observability_cron_heartbeat`
 <!-- dict:table:observability_cron_heartbeat -->
 

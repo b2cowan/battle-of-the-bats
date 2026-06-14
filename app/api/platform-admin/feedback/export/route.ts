@@ -19,6 +19,7 @@ type FeedbackRow = {
   body: string;
   status: string;
   severity: string | null;
+  escalated_at: string | null;
   created_at: string;
   organizations: { id: string; name: string } | { id: string; name: string }[] | null;
 };
@@ -55,13 +56,17 @@ export const GET = withObservability(async (req: NextRequest) => {
 
   let query = supabaseAdmin
     .from('feedback_submissions')
-    .select('id, org_id, user_email, submitter_name, type, category, title, body, status, severity, created_at, organizations(id, name)')
+    .select('id, org_id, user_email, submitter_name, type, category, title, body, status, severity, escalated_at, created_at, organizations(id, name)')
     .order('created_at', { ascending: false })
     .limit(EXPORT_LIMIT);
 
   if (type) query = query.eq('type', type);
   if (category) query = query.eq('category', category);
-  if (status) query = query.eq('status', status);
+  // `escalated` is a synthetic status the triage page emits — it filters the escalation flag,
+  // not the status column (which has no 'escalated' value). Mirror getRows so an Escalated-filtered
+  // export returns the flagged rows instead of silently matching zero.
+  if (status === 'escalated') query = query.not('escalated_at', 'is', null);
+  else if (status) query = query.eq('status', status);
 
   const { data, error } = await query;
   if (error) {
@@ -75,6 +80,7 @@ export const GET = withObservability(async (req: NextRequest) => {
     category: row.category ?? '',
     status: row.status,
     severity: row.severity ?? '',
+    escalatedAt: row.escalated_at ?? '',
     orgId: row.org_id ?? '',
     orgName: orgNameFromJoin(row.organizations),
     userEmail: row.user_email ?? '',
@@ -83,13 +89,13 @@ export const GET = withObservability(async (req: NextRequest) => {
     body: row.body,
   }));
 
-  const header = ['id', 'created_at', 'type', 'category', 'status', 'severity', 'org_id', 'org_name', 'user_email', 'submitter_name', 'title', 'body'];
+  const header = ['id', 'created_at', 'type', 'category', 'status', 'severity', 'escalated_at', 'org_id', 'org_name', 'user_email', 'submitter_name', 'title', 'body'];
   const date = new Date().toISOString().slice(0, 10);
   const format = sp.get('format') ?? 'csv';
 
   function rowValues(row: (typeof rows)[number]): (string | null)[] {
     return [
-      row.id, row.createdAt, row.type, row.category, row.status, row.severity,
+      row.id, row.createdAt, row.type, row.category, row.status, row.severity, row.escalatedAt || null,
       row.orgId || null, row.orgName || null, row.userEmail || null, row.submitterName || null,
       row.title || null, row.body,
     ];

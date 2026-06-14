@@ -2754,6 +2754,24 @@
     "ordinal_position": 16
   },
   {
+    "table_name": "feedback_submissions",
+    "column_name": "escalated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
+    "table_name": "feedback_submissions",
+    "column_name": "escalated_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 18
+  },
+  {
     "table_name": "games",
     "column_name": "id",
     "data_type": "uuid",

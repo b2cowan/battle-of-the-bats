@@ -179,11 +179,59 @@
 
 .issueLink:hover { text-decoration: underline; }
 
+.statusCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
 .statusControl {
   display: inline-flex;
   flex-direction: column;
   gap: 0.25rem;
 }
+
+.escalateControl {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.escalateBtn,
+.escalateBtnActive {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.escalateBtn {
+  background: transparent;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  color: var(--data-gray);
+}
+
+.escalateBtn:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  color: var(--fl-text);
+}
+
+.escalateBtnActive {
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  color: var(--danger, #f87171);
+}
+
+.escalateBtnActive:hover { background: rgba(248, 113, 113, 0.18); }
+
+.escalateBtn:disabled,
+.escalateBtnActive:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .statusSelect {
   background: rgba(255, 255, 255, 0.04);
