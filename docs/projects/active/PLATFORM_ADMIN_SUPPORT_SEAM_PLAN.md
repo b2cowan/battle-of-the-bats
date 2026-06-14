@@ -1,5 +1,7 @@
 # Platform-Admin Support Seam / Feedback Triage (F3) — Implementation Plan
 
+> **✅ COMPLETE 2026-06-14** (Phases 0–5 built; Phase 6 mailto deferred by owner). On `feat/free-tier-coaches`, **not pushed**. Phase commits: 1 = 736e0a7 · 2 = d6abe5d · 3 = cc405bb · 4 = de69712 · 5 = 40fb78d. **mig 126 (escalation cols) applied to DEV only — must reach PROD before this branch promotes to master** (`check:migrations` gate red by intent). **Owner browser smoke-tests still pending** (Phase 1 support/billing status writes; Phase 4 escalate/clear/badge/filter — restart dev server first). Archive both this + the PM brief once smoke-tested.
+>
 > **Status:** Scoped 2026-06-13. **Priority: P1.** Spun out of the [Platform-Admin Employee Audit](../archive/platform-admin-audit/SYNTHESIS.md) Theme C.
 > **Companion:** [PLATFORM_ADMIN_SUPPORT_SEAM_PM_BRIEF.md](PLATFORM_ADMIN_SUPPORT_SEAM_PM_BRIEF.md)
 > **Branch:** feat/support-seam-feedback-triage (create from dev)
@@ -119,10 +121,9 @@ This is the single decision that controls the shape of every task below. Present
 - [x] Role-aware HelpCallout was **already** delivered in Phase 1 (read-only → "Status changes require support or product access."; write-capable → status-dropdown guidance + "transitions are audit-logged with your email" + "error group status changes require product access"). PAP-013 audit-log transparency satisfied there.
 - [x] Phase 4 follow-on: appended the **escalation** sentence to the write-capable callout — "and Escalate to product to flag an item the product team needs to act on (filter by Escalated to see the flagged queue)". This is the only net-new copy Phase 5 needed once Phase 1 had landed the rest.
 
-### Phase 6 — Optional: customer-notification affordance
+### Phase 6 — Optional: customer-notification affordance ⏸ DEFERRED 2026-06-14 (owner)
 
-- [ ] Evaluate whether a mailto link is acceptable UX for the owner. If yes, add a "Notify submitter" link on the feedback row expansion panel, rendered only when the submission has a `user_email` or `context.userEmail` value. Link format: `mailto:{email}?subject=Your+feedback+has+been+reviewed&body=...` with a pre-populated template. No sending API required.
-- [ ] This phase is optional and can be deferred without blocking any other phase.
+- [ ] **DEFERRED — not built.** Owner decision #4: a `mailto:` "Notify submitter" link is the weakest mechanism in the project — best-effort (depends on a configured desktop mail client), unrecorded (no audit trail of whether the customer was told, unlike the Phase-4 escalation flag which *is* logged), and sends from the operator's personal address rather than the branded Resend stack (`memory/project_email_stack.md`). If customer-facing replies become a priority, build them *properly* as a tracked, audit-logged action on the existing Resend stack — a separate scoped item, not a throwaway mailto. F3 does not block on this.
 
 ---
 
