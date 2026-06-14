@@ -38,11 +38,36 @@ Cross-cutting correctness/security only. UX polish, IA, and design live in the o
 ### Tranche 1 — bracket correctness (decision pending; see §Decisions)
 Per owner call 2026-06-13, **J1-083 (tied playoff advances away) + J1-084 (coin toss no re-seed)** remain in **FP-5 (Tournament Organizer Experience)**, not here. Cross-referenced for visibility; FP-5 owns them.
 
-## Phases
+## Phases — annotated checklist (the audit's "first go")
 
-- **Phase A — Authorization & data-exposure sweep:** J3-012 + J4-012 (org-context fail-closed) · J6-001 (public sanitizer) · J3-069 + J3-068 (league gating) · J4-003/004/005/021 + J10-002 + J9-003 (authz). One PR per coherent sweep.
-- **Phase B — Data integrity & dead pages:** J4-020 (ledger) · J4-001 (Next-16 dead pages) · J3-047 (timezone) · J5-026 (mark-paid shape) · J5-012/J4-036 (account deletion).
-- **Phase C — Auth loop forwards:** J8-018 + J10-019 + J5-035.
+Each item notes the **UX change** it produces. Most are security/correctness: the user-facing effect is usually *something trust-breaking stops happening*, not a new screen. Group items into coherent PRs (one per sweep).
+
+### Phase A — Authorization & data-exposure sweep
+
+- [ ] **J6-001 — Public PII sanitizer.** Anonymous public pages + API stop carrying coach emails, payment status, and admin notes. → *Fans see identical pages; scrapers/view-source can no longer harvest sensitive fields.*
+- [ ] **J3-069 + J3-068 — League child-disclosure oracle.** Status lookup now requires email **+** reference code (POST, off-URL); sub-pages + register API adopt the index's org gate. → *A legitimate parent uses a code they already have; a stranger can no longer pull a child's name/age/status, even on private orgs.*
+- [ ] **J3-012 + J4-012 — Org-context fails closed** (78 + 36 files; thread `orgSlug` from the URL, require it). → *Multi-org users (club presidents, coaches with a free workspace) stop hitting phantom "Forbidden" and stop having reads/writes land in the wrong org.*
+- [ ] **J4-003 — Events side-door** (remove admin PATCH+DELETE on coach-owned events). → *The "Read-only" calendar label becomes true; an admin can no longer silently rewrite a coach's scores or delete a practice series.*
+- [ ] **J4-004 — Four ungated routes** (add owner\|admin to player-doc POST/DELETE + the two reminder waves). → *A volunteer coach can no longer delete another team's medical files or blast every guardian.*
+- [ ] **J4-005 — Coach lateral read** (role-gate the admin rep-teams GETs). → *"Coaches see only their own team" becomes true; a coach can't read org-wide finances or peers' emails.*
+- [ ] **J4-021 — Org write on team ledgers** (make team-entity ledgers read-only in the org accounting UI + API). → *Read-only oversight becomes real; a treasurer can't silently rewrite a coach's books.*
+- [ ] **J10-002 — Members API ungated** (add `requireCapability('module_members')`; trim caps for non-owner callers). → *Member emails + the capability map become visible only to roles that should see them; no change for owners/admins.*
+- [ ] **J9-003 — Module-cap PII over-grant** (never gate coach access via the module cap; resolved fully by the team-scoped relationship in FP-4). → *Onboarding a league coach stops being a choice between "nothing" and "all guardian PII."*
+
+### Phase B — Data integrity & dead pages
+
+- [ ] **J4-020 — Ledger-corruption Blocker** (fix `getOrgLedger` multi-row swallow + non-NULL entity discriminator + dedupe migration). → *"+ Add Ledger" creates exactly one ledger; the books stop fragmenting and the accounting totals stop drifting from reality.*
+- [ ] **J4-001 — 17 dead Next-16 pages** (`use(params)` migration + lint guard; fix already uncommitted in tree). → *The program-year oversight page and the entire premium coach accounting suite render instead of "Program year not found."*
+- [ ] **J3-047 — League timezone** (store org/season tz; `zonedTimeToUtc` in generate/PATCH/practice). → *The league's most-read datum — game time — is correct for every family in production (6:00 PM means 6:00 PM).*
+- [ ] **J5-026 — Mark-paid data shape** (align single-row + check-in writes with the bulk path). → *"Paid" means paid everywhere; the organizer's view and the coach's portal stop contradicting each other.*
+- [ ] **J5-012 + J4-036 — Multi-org account deletion** (delete only the membership row when other orgs exist; claim fallback + delete cleanup). → *Removing someone from your org no longer destroys their account in every other org; orphan teams become claimable.*
+
+### Phase C — Auth loop forwards
+
+- [ ] **J8-018 + J10-019 — Login redirect loops** (forward an already-authenticated user to a stable destination; suspended → `/auth/suspended`). → *A cross-org volunteer or suspended member gets a clear destination/message instead of an infinite sign-in loop.*
+- [ ] **J5-035 — Metadata access gate** (Low; mirror the access check in `generateMetadata`). → *Closes a minor private-team-name leak; no visible change.*
+
+> **Net effect of the first go:** the platform becomes safe to promote — no anonymous data harvesting, no wrong-org reads/writes, no corrupting buttons, no infinite loops, correct times/payment states, and the dead premium pages restored. Most legitimate users see no new screens; a whole class of trust-breaking failures stops happening. This is the gate FP-2…FP-7 sit behind (see [USER_JOURNEY_AUDIT_SYNTHESIS.md](USER_JOURNEY_AUDIT_SYNTHESIS.md) §6).
 
 Each phase ships behind the normal verification gate (`npm run verify:changed`, `typecheck` on shared-module touches, dictionary refresh on any schema change per CLAUDE.md). Several items touch `lib/api-auth.ts`, `lib/db.ts`, `proxy.ts` → restart dev server before handoff.
 
