@@ -62,7 +62,11 @@ export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
     'module_members',
   ]),
   coach: new Set<Capability>([
-    'module_rep_teams',
+    // Intentionally empty. A coach reaches the Coaches Portal via their
+    // rep_team_coaches assignment (resolveCoachContext / /api/coaches/**), NOT via this
+    // org-level capability. Granting module_rep_teams here let coach-role members read
+    // org-wide rep finance and every coach's email through the ADMIN rep-teams routes
+    // (audit J4-005). The admin namespace is owner/admin-only; the portal is separate.
   ]),
 };
 

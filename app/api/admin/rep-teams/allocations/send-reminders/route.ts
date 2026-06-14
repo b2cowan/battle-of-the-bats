@@ -36,6 +36,10 @@ export const POST = withObservability(async (req: Request) => {
   const err = gate(ctx);
   if (err) return err;
 
+  // Org-owned reminder action that mutates reminder state org-wide — owner/admin only
+  // (audit J4-004). gate() only checks the module cap; this blocks others who hold it.
+  if (ctx!.role !== 'owner' && ctx!.role !== 'admin') return forbidden();
+
   const body = await req.json().catch(() => ({}));
   const daysAhead: number = typeof body.daysAhead === 'number' ? body.daysAhead : 30;
 

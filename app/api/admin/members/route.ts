@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized } from '@/lib/api-auth';
+import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
@@ -7,6 +7,12 @@ export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContext({ orgSlug });
   if (!ctx) return unauthorized();
+
+  // The roster exposes every member's email, capability map, and last sign-in — that is
+  // members-management data, so gate it like the page does. Without this, any non-suspended
+  // member (scorekeeper, staff, even a still-invited member) could read it (audit J10-002).
+  const capErr = await requireCapability(ctx, 'module_members');
+  if (capErr) return capErr;
 
   const { org } = ctx;
 

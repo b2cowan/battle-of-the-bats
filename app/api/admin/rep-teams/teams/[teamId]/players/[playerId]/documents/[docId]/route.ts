@@ -67,7 +67,10 @@ export const DELETE = withObservability(async (_req: Request,
   const { teamId, playerId, docId } = await params;
   const resolved = await resolveContext(teamId, playerId, docId);
   if ('error' in resolved) return resolved.error!;
-  const { doc } = resolved;
+  const { ctx, doc } = resolved;
+  // Deleting a player's compliance document is an org-owned write — owner/admin only
+  // (audit J4-004). gate() only checks the module cap, which other roles can hold.
+  if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
 
   await supabaseAdmin.storage.from('rep-team-documents').remove([doc.storagePath]);
   await deleteRepPlayerDocument(docId);

@@ -69,6 +69,9 @@ export const POST = withObservability(async (req: Request,
   const resolved = await resolveContext(teamId, playerId);
   if ('error' in resolved) return resolved.error!;
   const { ctx, player } = resolved;
+  // Uploading a player's compliance documents is an org-owned write — owner/admin only
+  // (audit J4-004). gate() only checks the module cap, which other roles can hold.
+  if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
 
   let formData: FormData;
   try {

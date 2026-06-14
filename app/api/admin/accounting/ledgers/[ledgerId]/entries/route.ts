@@ -59,6 +59,11 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   const { ledgerId } = await params;
   const ledger = await getLedgerById(ledgerId, ctx!.org.id);
   if (!ledger) return NextResponse.json({ error: 'Ledger not found' }, { status: 404 });
+  // A team-entity ledger is the coach's own books — read-only from the org side
+  // (audit J4-021). Org-side money moves go through allocations / payment-request approvals.
+  if (ledger.entityType === 'team') {
+    return NextResponse.json({ error: 'This ledger belongs to a coach-managed team and is read-only here. Use allocations or payment-request approvals to move money.' }, { status: 403 });
+  }
 
   const body = await req.json();
 
