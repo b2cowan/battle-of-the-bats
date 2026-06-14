@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Users, Search, ChevronDown, Star } from 'lucide-react';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
-import { Game, Team, Division, Tournament } from '@/lib/types';
+import { Game, PublicTeam, Division, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import YearSelector from '@/components/YearSelector';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
@@ -47,7 +47,7 @@ interface StandingsRow {
   pts: number; rf: number; ra: number; rd: number;
 }
 
-function computeStandings(divisionId: string, teams: Team[], games: Game[]): StandingsRow[] {
+function computeStandings(divisionId: string, teams: PublicTeam[], games: Game[]): StandingsRow[] {
   const divTeams = teams.filter(t => t.divisionId === divisionId);
   const divGames = games.filter(
     g =>
@@ -129,17 +129,17 @@ function TeamCard({
   onFollow,
   onUnfollow,
 }: {
-  team: Team;
+  team: PublicTeam;
   division: Division;
   tournament: Tournament | null;
   games: Game[];
-  teams: Team[];
+  teams: PublicTeam[];
   standings: StandingsRow[];
   isFollowed: boolean;
   isPreview: boolean;
   orgSlug: string;
   tournamentSlug: string;
-  onFollow: (team: Team) => void;
+  onFollow: (team: PublicTeam) => void;
   onUnfollow: () => void;
 }) {
   const name = cleanTeamName(team.name);
@@ -265,7 +265,7 @@ function TeamCard({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = false, initialData }: Props) {
-  const [teams, setTeams]           = useState<Team[]>(() => initialData?.teams ?? []);
+  const [teams, setTeams]           = useState<PublicTeam[]>(() => initialData?.teams ?? []);
   const [divisions, setDivisions]   = useState<Division[]>(() => initialData?.divisions ?? []);
   const [games, setGames]           = useState<Game[]>(() => initialData?.games ?? []);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>(() => initialData?.tournaments ?? []);
@@ -341,7 +341,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
   // The followed team is always pinned to the top of its pool.
   const standingRank = new Map(divisionStandings.map((s, i) => [s.teamId, i]));
   const divisionStarted = divisionStandings.some(s => s.w + s.l + s.t > 0);
-  const sortForDisplay = (arr: Team[]): Team[] => {
+  const sortForDisplay = (arr: PublicTeam[]): PublicTeam[] => {
     const base = divisionStarted
       ? [...arr].sort((a, b) => (standingRank.get(a.id) ?? 999) - (standingRank.get(b.id) ?? 999))
       : [...arr].sort((a, b) => cleanTeamName(a.name).localeCompare(cleanTeamName(b.name)));
@@ -356,7 +356,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
   const canRegister = Boolean(selectedTournament && isPublicPageEnabled(selectedTournament, 'register'));
   const showSchedulePage = Boolean(selectedTournament && isPublicPageEnabled(selectedTournament, 'schedule'));
 
-  function followTeam(team: Team) {
+  function followTeam(team: PublicTeam) {
     saveFollowedTeam(orgSlug, tournamentSlug, team);
     setFollowedTeamId(team.id);
     if (team.divisionId) {
@@ -389,7 +389,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
   }
 
   // Build pool groups within the active division
-  const poolGroups: { poolId: string | null; poolName: string; teams: Team[] }[] = [];
+  const poolGroups: { poolId: string | null; poolName: string; teams: PublicTeam[] }[] = [];
   if (activeDivision) {
     const hasPools = (activeDivision.poolCount ?? 0) >= 2 && (activeDivision.pools?.length ?? 0) >= 2;
     if (hasPools) {

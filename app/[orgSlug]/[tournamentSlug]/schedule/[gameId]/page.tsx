@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, Calendar, Clock, ExternalLink, Info, MapPin, Navigation, Trophy } from 'lucide-react';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
-import type { Division, Game, Team, Venue } from '@/lib/types';
+import type { Division, Game, PublicTeam, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { bracketRoundInfo } from '@/lib/playoff-bracket';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
@@ -47,7 +47,7 @@ function formatFullDate(date?: string) {
   });
 }
 
-function getTeamDisplay(game: Game, isHome: boolean, teams: Team[], divisions: Division[]) {
+function getTeamDisplay(game: Game, isHome: boolean, teams: PublicTeam[], divisions: Division[]) {
   const id = isHome ? game.homeTeamId : game.awayTeamId;
   const placeholder = isHome ? game.homePlaceholder : game.awayPlaceholder;
   const visibility = divisions.find(group => group.id === game.divisionId)?.scheduleVisibility ?? 'unpublished';

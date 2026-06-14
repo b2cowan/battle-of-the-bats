@@ -3,6 +3,7 @@ import { getOrganizationBySlug, getTournamentsByOrg, getTeams, getDivisions, get
 import { clampRunDiffCap, cappedGameDiff } from '@/lib/tie-breakers';
 import type { Game } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { toPublicTeam } from '@/lib/public-tournament-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -134,7 +135,9 @@ export const GET = withObservability(async (req: Request) => {
     }));
 
   return NextResponse.json({
-    team,
+    // Public-safe team only — never expose coach email / paymentStatus / adminNotes
+    // on this anonymous endpoint (J6-001).
+    team: toPublicTeam(team),
     divisionName: division.name,
     poolName,
     gameDurationMinutes,

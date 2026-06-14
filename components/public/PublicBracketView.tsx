@@ -1,6 +1,6 @@
 'use client';
 import { Trophy } from 'lucide-react';
-import { Game, Team } from '@/lib/types';
+import { Game, PublicTeam } from '@/lib/types';
 import { teamInitials, teamColorFromName } from '@/lib/teamBadge';
 import { formatTime } from '@/lib/utils';
 import { bracketRoundInfo } from '@/lib/playoff-bracket';
@@ -8,7 +8,7 @@ import styles from '@/app/[orgSlug]/standings/standings.module.css';
 
 interface Props {
   games: Game[];
-  teams: Team[];
+  teams: PublicTeam[];
   requireFinalization: boolean;
 }
 
@@ -38,7 +38,7 @@ function buildRounds(playoffGames: Game[]): BracketRound[] {
   return Array.from(map.values()).sort((a, b) => a.order - b.order);
 }
 
-function teamName(teams: Team[], id?: string | null): string {
+function teamName(teams: PublicTeam[], id?: string | null): string {
   if (!id) return 'TBD';
   return teams.find(t => t.id === id)?.name ?? 'TBD';
 }
@@ -65,7 +65,7 @@ function MatchupCard({
   compact = false,
 }: {
   game: Game;
-  teams: Team[];
+  teams: PublicTeam[];
   requireFinalization: boolean;
   compact?: boolean;
 }) {
@@ -137,7 +137,7 @@ function MatchupCard({
 
 function BracketTree({ rounds, teams, requireFinalization }: {
   rounds: BracketRound[];
-  teams: Team[];
+  teams: PublicTeam[];
   requireFinalization: boolean;
 }) {
   // Separate 3rd-place game from main bracket rounds
@@ -202,7 +202,7 @@ function BracketTree({ rounds, teams, requireFinalization }: {
 
 function BracketList({ rounds, teams, requireFinalization }: {
   rounds: BracketRound[];
-  teams: Team[];
+  teams: PublicTeam[];
   requireFinalization: boolean;
 }) {
   const allRounds = [...rounds].sort((a, b) => a.order - b.order);
@@ -230,7 +230,7 @@ function BracketList({ rounds, teams, requireFinalization }: {
 
 // ─── Champion spotlight — the decided final's winner ─────────────────────────
 
-function getChampionName(playoffGames: Game[], teams: Team[]): string | null {
+function getChampionName(playoffGames: Game[], teams: PublicTeam[]): string | null {
   // The decided final's winner — for double elimination that is the grand-final
   // reset (if played), then the grand final, otherwise the single-elim final.
   const decided = (g?: Game) =>

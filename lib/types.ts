@@ -570,6 +570,21 @@ export interface Team {
   checkInNotes?: string | null;
 }
 
+/**
+ * The subset of {@link Team} fields safe to expose on public / anonymous tournament
+ * surfaces. Deliberately EXCLUDES coach email, payment status, admin notes, roster
+ * players, and all game-day check-in fields — see audit finding J6-001 (anonymous
+ * public pages + `/api/public/tournament-data` were leaking coach emails, payment
+ * status, and admin notes to every visitor). `coach` (the coach *name*) IS public by
+ * design — the public Teams page displays and searches it. Build these via
+ * `toPublicTeam` in lib/public-tournament-data.ts; never hand a raw `Team` to a
+ * public client component or anonymous response.
+ */
+export type PublicTeam = Pick<
+  Team,
+  'id' | 'tournamentId' | 'divisionId' | 'name' | 'coach' | 'status' | 'poolId' | 'seed'
+>;
+
 export type TournamentRegistrationFieldType =
   | 'short_text'
   | 'long_text'

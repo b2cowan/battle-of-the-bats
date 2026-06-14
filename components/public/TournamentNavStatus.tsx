@@ -14,7 +14,7 @@ import { CalendarClock, CircleCheck } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
-import type { Game, Team } from '@/lib/types';
+import type { Game, PublicTeam } from '@/lib/types';
 import styles from './TournamentNavStatus.module.css';
 
 type Phase = 'pre' | 'live' | 'done' | 'none';
@@ -44,7 +44,7 @@ function daysUntil(start: string | null, today: string): number {
   return Math.max(0, Math.round(ms / 86_400_000));
 }
 
-function teamLabel(id: string | null | undefined, placeholder: string | null | undefined, teams: Team[]): string {
+function teamLabel(id: string | null | undefined, placeholder: string | null | undefined, teams: PublicTeam[]): string {
   const name = teams.find(t => t.id === id)?.name ?? placeholder ?? 'TBD';
   return name.replace(/\s*\([^)]*\)\s*/g, '').trim() || name;
 }
@@ -59,7 +59,7 @@ export default function TournamentNavStatus() {
   const phase = phaseOf(tournamentStartDate, tournamentEndDate, tournamentStatus, today);
   const isGameDay = phase === 'live' && !!orgSlug && !!tournamentSlug;
 
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<PublicTeam[]>([]);
   const [games, setGames] = useState<Game[]>([]);
 
   useEffect(() => {

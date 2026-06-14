@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Calendar, CalendarPlus, Trophy, List, LayoutTemplate, Search, ChevronDown, Star, X, Info } from 'lucide-react';
-import { Game, Team, Division, Tournament } from '@/lib/types';
+import { Game, PublicTeam, Division, Tournament } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
@@ -63,7 +63,7 @@ function calcTeamRecord(teamId: string, allGames: Game[]) {
 
 interface StandingRow { teamId: string; name: string; w: number; l: number; t: number; pts: number; }
 
-function calcDivisionStandings(divisionId: string, allGames: Game[], allTeams: Team[]): StandingRow[] {
+function calcDivisionStandings(divisionId: string, allGames: Game[], allTeams: PublicTeam[]): StandingRow[] {
   const divTeams = allTeams.filter(t => t.divisionId === divisionId && t.status !== 'rejected');
   const map = new Map<string, StandingRow>();
   for (const team of divTeams) map.set(team.id, { teamId: team.id, name: team.name, w: 0, l: 0, t: 0, pts: 0 });
@@ -99,7 +99,7 @@ interface Props {
 
 export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = false, initialData }: Props) {
   const [games, setGames]           = useState<Game[]>(() => initialData?.games ?? []);
-  const [teams, setTeams]           = useState<Team[]>(() => initialData?.teams ?? []);
+  const [teams, setTeams]           = useState<PublicTeam[]>(() => initialData?.teams ?? []);
   const [divisions, setDivisions]   = useState<Division[]>(() => initialData?.divisions ?? []);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>(() => initialData?.tournaments ?? []);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(() => initialData?.tournament ?? null);

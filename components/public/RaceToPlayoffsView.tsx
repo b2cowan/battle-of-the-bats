@@ -1,6 +1,6 @@
 'use client';
 import { Trophy, Star } from 'lucide-react';
-import { Team } from '@/lib/types';
+import { PublicTeam } from '@/lib/types';
 import { teamInitials, teamColorFromName } from '@/lib/teamBadge';
 import type { PlayoffConfig, Pool } from '@/lib/types';
 import styles from '@/app/[orgSlug]/standings/standings.module.css';
@@ -22,7 +22,7 @@ interface RaceToPlayoffsViewProps {
   pools: Pool[];
   playoffConfig?: PlayoffConfig;
   followedTeamId: string | null;
-  teams: Team[];
+  teams: PublicTeam[];
   gamesStarted: boolean;
 }
 

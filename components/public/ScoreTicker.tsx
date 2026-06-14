@@ -15,10 +15,10 @@ import { useOrgNav } from '@/components/OrgNavContext';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { formatTime } from '@/lib/utils';
-import type { Game, Team } from '@/lib/types';
+import type { Game, PublicTeam } from '@/lib/types';
 import styles from './ScoreTicker.module.css';
 
-function teamShort(id: string | null | undefined, placeholder: string | null | undefined, teams: Team[]): string {
+function teamShort(id: string | null | undefined, placeholder: string | null | undefined, teams: PublicTeam[]): string {
   const n = teams.find(t => t.id === id)?.name ?? placeholder ?? 'TBD';
   return n.replace(/\s*\([^)]*\)\s*/g, '').trim() || n;
 }
@@ -35,7 +35,7 @@ export default function ScoreTicker() {
     today >= tournamentStartDate && today <= tournamentEndDate;
   const active = inWindow && !!orgSlug && !!tournamentSlug;
 
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<PublicTeam[]>([]);
   const [games, setGames] = useState<Game[]>([]);
 
   // Per-tournament minimize preference — persists until the fan restores it.

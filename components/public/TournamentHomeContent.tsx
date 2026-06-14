@@ -9,6 +9,7 @@ import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { getRegistrationState } from '@/lib/registration-state';
 import LocationLink from '@/components/LocationLink';
 import MyTournamentCard from '@/components/public/MyTournamentCard';
+import { toPublicTeam } from '@/lib/public-tournament-data';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import CountUp from '@/components/public/CountUp';
 import Countdown from '@/components/public/Countdown';
@@ -43,7 +44,9 @@ export default async function TournamentHomeContent({
     .slice(0, 4);
 
   const allTeams  = await getTeams(tournament.id, readOptions);
-  const teams     = allTeams.filter(team => team.status === 'accepted');
+  // Sanitize before any of these rows reach a client component (MyTournamentCard) —
+  // see J6-001 / toPublicTeam. allTeams stays raw for server-only registration math.
+  const teams     = allTeams.filter(team => team.status === 'accepted').map(toPublicTeam);
   const divisions = await getDivisions(tournament.id, readOptions);
   const venues  = await getVenues(tournament.id, readOptions);
   const activeRegistrations = allTeams.filter(team => team.status !== 'rejected');

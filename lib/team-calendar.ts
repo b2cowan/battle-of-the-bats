@@ -7,11 +7,11 @@
  */
 import { downloadICS, type ICSEventInput } from './export/ics';
 import { formatTime } from './utils';
-import type { Game, Team, Division } from './types';
+import type { Game, Team, PublicTeam, Division } from './types';
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
-function resolveName(teams: Team[], id: string | undefined, placeholder: string | undefined | null): string {
+function resolveName(teams: PublicTeam[], id: string | undefined, placeholder: string | undefined | null): string {
   if (id && id !== NIL_UUID) {
     const found = teams.find(t => t.id === id);
     if (found) return found.name;
@@ -26,7 +26,7 @@ function slugify(name: string): string {
 export interface TeamCalendarInput {
   team: Pick<Team, 'id' | 'name'>;
   games: Game[];
-  teams: Team[];
+  teams: PublicTeam[];
   divisions: Division[];
   tournamentName: string;
   orgSlug: string;

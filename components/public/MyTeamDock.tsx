@@ -14,7 +14,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Star, ChevronUp, MapPin } from 'lucide-react';
-import type { Game, Team } from '@/lib/types';
+import type { Game, PublicTeam } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { useFollowedTeam } from '@/lib/follow';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
@@ -44,7 +44,7 @@ function formatCountdown(ms: number): string {
 
 export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress }: Props) {
   const { followedTeamId } = useFollowedTeam(orgSlug, tournamentSlug);
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<PublicTeam[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [tournamentName, setTournamentName] = useState('');
   const [loaded, setLoaded] = useState(false);

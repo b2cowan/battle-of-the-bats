@@ -6,7 +6,7 @@ import CoinTossRecorder from '@/components/admin/CoinTossRecorder';
 import { normalizeTieBreakers } from '@/lib/tie-breakers';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
-import { Division, Game, Team, Tournament, Venue } from '@/lib/types';
+import { Division, Game, PublicTeam, Tournament, Venue } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
 import LocationLink from '@/components/LocationLink';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
@@ -71,7 +71,7 @@ const STAT_LEGEND: { abbr: string; label: string }[] = [
 export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = false, initialData, enableCoinTossAdmin = false }: Props) {
   const [divisions, setDivisions]           = useState<Division[]>(() => initialData?.divisions ?? []);
   const [games, setGames]                   = useState<Game[]>(() => initialData?.games ?? []);
-  const [teams, setTeams]                   = useState<Team[]>(() => initialData?.teams ?? []);
+  const [teams, setTeams]                   = useState<PublicTeam[]>(() => initialData?.teams ?? []);
   const [venues, setVenues]                 = useState<Venue[]>(() => initialData?.venues ?? []);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>(() => initialData?.tournaments ?? []);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(() => initialData?.tournament ?? null);
@@ -281,7 +281,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
     setDivisionPref(orgSlug, followedDivision.name);
   }
 
-  function getOpponentName(game: Game, team: Team) {
+  function getOpponentName(game: Game, team: PublicTeam) {
     if (game.homeTeamId === team.id) return getTeamName(game.awayTeamId);
     return getTeamName(game.homeTeamId);
   }

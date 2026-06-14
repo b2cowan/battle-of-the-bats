@@ -13,9 +13,29 @@ import {
 } from './db';
 import { hasPlanFeature } from './plan-features';
 import { isPublicPageEnabled, type PublicPageKey } from './public-pages';
-import type { Division, Venue, Game, Organization, Resource, RuleSection, Team, Tournament, TournamentRegistrationField } from './types';
+import type { Division, Venue, Game, Organization, Resource, RuleSection, Team, PublicTeam, Tournament, TournamentRegistrationField } from './types';
 
 export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context';
+
+/**
+ * Strip a {@link Team} down to its public-safe fields ({@link PublicTeam}). The single
+ * choke point for every public/anonymous tournament surface: `getPublicTournamentPageData`
+ * feeds BOTH the public pages (server components) and the anonymous
+ * `/api/public/tournament-data` endpoint, so sanitizing here closes the J6-001 leak
+ * everywhere at once. Never return raw `Team` rows from this module.
+ */
+export function toPublicTeam(t: Team): PublicTeam {
+  return {
+    id: t.id,
+    tournamentId: t.tournamentId,
+    divisionId: t.divisionId,
+    name: t.name,
+    coach: t.coach,
+    status: t.status,
+    poolId: t.poolId,
+    seed: t.seed ?? null,
+  };
+}
 
 export type PublicTournamentPageData = {
   organization: Pick<Organization, 'id' | 'name' | 'slug' | 'logoUrl' | 'contactEmail' | 'requireScoreFinalization'>;
@@ -27,7 +47,8 @@ export type PublicTournamentPageData = {
   games: Game[];
   resources: Resource[];
   rules: RuleSection[];
-  teams: Team[];
+  /** Public-safe teams only — see {@link toPublicTeam} / J6-001. */
+  teams: PublicTeam[];
   registrationFields: TournamentRegistrationField[];
   standingsByDivision: Record<string, Awaited<ReturnType<typeof getStandings>>>;
   /** Whether the org's plan includes fan push score alerts (Tournament Plus+).
@@ -119,7 +140,7 @@ export async function getPublicTournamentPageData(
       getVenues(tournament.id, { admin: true }),
       getDivisions(tournament.id, { admin: true }),
     ]);
-    return { ...base, games, teams: teams.filter(t => t.status === 'accepted'), venues, divisions };
+    return { ...base, games, teams: teams.filter(t => t.status === 'accepted').map(toPublicTeam), venues, divisions };
   }
 
   if (section === 'teams') {
@@ -128,7 +149,7 @@ export async function getPublicTournamentPageData(
       getDivisions(tournament.id, { admin: true }),
       getGames(tournament.id, { admin: true }),
     ]);
-    return { ...base, teams: teams.filter(t => t.status === 'accepted'), divisions, games };
+    return { ...base, teams: teams.filter(t => t.status === 'accepted').map(toPublicTeam), divisions, games };
   }
 
   if (section === 'standings') {
@@ -148,7 +169,7 @@ export async function getPublicTournamentPageData(
       ...base,
       divisions,
       games,
-      teams: teams.filter(t => t.status === 'accepted'),
+      teams: teams.filter(t => t.status === 'accepted').map(toPublicTeam),
       venues,
       standingsByDivision: Object.fromEntries(standingsEntries),
     };

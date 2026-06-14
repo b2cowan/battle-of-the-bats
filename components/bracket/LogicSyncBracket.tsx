@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Trophy, Minus, Plus, Maximize } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
 import { formatPoolName, formatTime } from '@/lib/utils';
-import type { Game, Team } from '@/lib/types';
+import type { Game, PublicTeam } from '@/lib/types';
 import type { BracketNode } from '@/lib/types/bracket';
 import { bracketRoundInfo, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
 import styles from './LogicSyncBracket.module.css';
@@ -71,7 +71,7 @@ function cleanPlaceholder(text: string): string {
   return `${m[1]} ${formatPoolName(m[2])}`;
 }
 
-function makeNode(game: Game, round: number, position: number, teams: Team[]): BracketNode {
+function makeNode(game: Game, round: number, position: number, teams: PublicTeam[]): BracketNode {
   const resolveName = (id: string, placeholder: string | undefined) =>
     isReal(id)
       ? (teams.find(t => t.id === id)?.name ?? (displayBracketRefs(placeholder) || 'TBD'))
@@ -104,7 +104,7 @@ function makeNode(game: Game, round: number, position: number, teams: Team[]): B
   };
 }
 
-function buildNodes(cols: { title: string; games: Game[] }[], teams: Team[]): BracketNode[] {
+function buildNodes(cols: { title: string; games: Game[] }[], teams: PublicTeam[]): BracketNode[] {
   return cols.flatMap((col, ci) => col.games.map((g, pi) => makeNode(g, ci, pi, teams)));
 }
 
@@ -449,7 +449,7 @@ function ScrollEdge({ side }: { side: 'left' | 'right' }) {
 
 interface LogicSyncBracketProps {
   games: Game[];
-  teams: Team[];
+  teams: PublicTeam[];
   tournamentId: string;
   highlightTeamId?: string;
   requireFinalization?: boolean;

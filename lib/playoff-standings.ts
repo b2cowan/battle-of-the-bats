@@ -8,7 +8,7 @@
  * ref to a team via the actual game results. Undecided games leave that place TBD.
  */
 
-import type { Game, Team } from '@/lib/types';
+import type { Game, PublicTeam } from '@/lib/types';
 import { placementPlaces } from '@/lib/playoff-bracket';
 
 export interface PlacementStandingRow {
@@ -34,7 +34,7 @@ function decidedWinnerLoser(g: Game): { winner: string | null; loser: string | n
  * ordered by place (1..N), with `teamName` null for places whose deciding game
  * is not yet final. Returns [] when there is no resolvable bracket.
  */
-export function computePlacementStandings(games: Game[], teams: Team[]): PlacementStandingRow[] {
+export function computePlacementStandings(games: Game[], teams: PublicTeam[]): PlacementStandingRow[] {
   const playoff = games.filter(g => g.isPlayoff && g.bracketCode);
   if (playoff.length === 0) return [];
 

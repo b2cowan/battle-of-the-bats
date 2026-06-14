@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Star, Clock, Calendar, Trophy, CalendarPlus } from 'lucide-react';
-import type { Game, Team, Division, Venue } from '@/lib/types';
+import type { Game, PublicTeam, Division, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { useFollowedTeam } from '@/lib/follow';
 import { downloadTeamScheduleICS } from '@/lib/team-calendar';
@@ -32,7 +32,7 @@ interface Props {
   tournamentSlug: string;
   tournamentId: string;
   tournamentName: string;
-  teams: Team[];
+  teams: PublicTeam[];
   games: Game[];
   divisions: Division[];
   venues: Venue[];
