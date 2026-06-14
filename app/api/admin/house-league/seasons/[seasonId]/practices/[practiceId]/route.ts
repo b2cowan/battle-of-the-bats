@@ -7,7 +7,8 @@ import { withObservability } from '@/lib/observability';
 export const PATCH = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ seasonId: string; practiceId: string }> },) => {
   const { practiceId } = await params;
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league'))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

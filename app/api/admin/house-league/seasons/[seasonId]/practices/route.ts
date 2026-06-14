@@ -33,7 +33,8 @@ function generateOccurrences(
 export const GET = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ seasonId: string }> },) => {
   await params;
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league'))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -48,7 +49,8 @@ export const GET = withObservability(async (req: NextRequest,
 export const POST = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ seasonId: string }> },) => {
   const { seasonId } = await params;
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!hasCapability(ctx.role, ctx.capabilities, 'module_house_league'))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

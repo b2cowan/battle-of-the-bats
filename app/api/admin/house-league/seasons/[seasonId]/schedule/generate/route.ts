@@ -60,7 +60,8 @@ function addDays(dateStr: string, days: number): string {
 
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ seasonId: string }> },) => {
-  const ctx = await getAuthContextWithRole();
+  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   const err = gate(ctx);
   if (err) return err;
 
