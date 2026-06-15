@@ -1,6 +1,6 @@
 # Platform-Admin Operator Polish (F5) — Backlog Plan
 
-> **Status:** Scoped 2026-06-13. **Priority: P3 — opportunistic polish backlog.**
+> **Status:** Scoped 2026-06-13. **Priority: P3 — opportunistic polish backlog.** **Batch 1 (Groups B + C + D) BUILT + COMMITTED 2026-06-14 (1ea63ec on feat/free-tier-coaches, not pushed)** — owner browser smoke-test pending. **Note:** PAG-004 (Group F, Action-Queue non-billing note) was already shipped as part of F4 (43f8cde) — drop it from F5 scope.
 > **Companion:** [PLATFORM_ADMIN_OPERATOR_POLISH_PM_BRIEF.md](PLATFORM_ADMIN_OPERATOR_POLISH_PM_BRIEF.md)
 > **Spun out of:** [Platform-Admin Employee Audit — SYNTHESIS.md](../archive/platform-admin-audit/SYNTHESIS.md) Theme F + unclaimed Low/Medium findings from PA1–PA6.
 
@@ -27,20 +27,20 @@ Items are grouped by theme. Finding ID · surface · file reference (where avail
 
 | ID | Surface | File / Line | Fix direction | Effort |
 |----|---------|-------------|---------------|--------|
-| PAS-010 / PAB-011 | Customer Users — Actions menu | `app/platform-admin/customer-users/CustomerUsersClient.tsx:541–543` | Reorder to triage sequence: Reset Password → Confirm Email → Revoke Sessions → [divider] → Edit Info → Notes → [divider] → Ban/Unban/Delete. Confirmed for both support (PAS-010) and billing (PAB-011). | XS |
+| PAS-010 / PAB-011 ✅ | Customer Users — Actions menu | `app/platform-admin/customer-users/CustomerUsersClient.tsx` | **DONE (1ea63ec).** Reordered to triage sequence: Reset Password → Confirm Email → Revoke Sessions → [divider] → Edit Info → Notes → [divider] → Ban/Unban/Delete. Confirmed for both support (PAS-010) and billing (PAB-011). | XS |
 
 ### Group C — League Starter / §13 badge on org detail (PF-4)
 
 | ID | Surface | File / Line | Fix direction | Effort |
 |----|---------|-------------|---------------|--------|
-| PAS-009 / PA0-004 | Org detail — hero badges area | `app/platform-admin/orgs/[id]/page.tsx` (no `free_floor` fetch); `app/platform-admin/orgs/[id]/OrgDetailClient.tsx` (no badge) | Fetch `free_floor` on the org detail server page and render a "League Starter" badge in the account hero section when true. Add per-org scope-wall hit count from `platform_events` in the Entitlements tab. Org list already has the badge — copy the pattern. | S |
+| PAS-009 / PA0-004 ✅ | Org detail — hero badges area | `app/platform-admin/orgs/[id]/page.tsx`, `OrgDetailClient.tsx`, `orgDetail.module.css` | **DONE (1ea63ec).** Server page now selects `free_floor` (`=== 'league_starter'`) and renders a `.leagueStarterBadge` in the hero; per-org all-time `scope_wall_hit` count (head/count query, only run when free-floor) shown read-only in the Entitlements tab with a HelpTooltip. | S |
 
 ### Group D — Org detail tab: URL-addressable
 
 | ID | Surface | File / Line | Fix direction | Effort |
 |----|---------|-------------|---------------|--------|
-| PAB-008 | Org detail | `app/platform-admin/orgs/[id]/OrgDetailClient.tsx:219` (`useState<TabId>('support')`) | Add `?tab=<tabId>` as a URL search param and read initial tab from `useSearchParams()`. Enables Retention row deep-links, cross-team URL sharing, and back-button tab restore. | S |
-| PAB-007 (partial) | Retention Queue → Org detail | `app/platform-admin/retention/RetentionQueueClient.tsx:163–165` | Change org name link in retention table to `/platform-admin/orgs/${id}?tab=billing` once PAB-008 is done. Depends on PAB-008. | XS |
+| PAB-008 ✅ | Org detail | `app/platform-admin/orgs/[id]/OrgDetailClient.tsx`, `page.tsx` | **DONE (1ea63ec).** `?tab=<tabId>` URL param; initial tab read from `useSearchParams()`, `selectTab()` does `router.replace(scroll:false)`. Client wrapped in `<Suspense>` in the server page (useSearchParams requirement). | S |
+| PAB-007 ✅ | Retention Queue → Org detail | `app/platform-admin/retention/RetentionQueueClient.tsx` | **DONE (1ea63ec).** Retention org link now targets `/platform-admin/orgs/${id}?tab=billing`. | XS |
 
 ### Group E — Billing surface polish
 
@@ -58,7 +58,7 @@ Items are grouped by theme. Finding ID · surface · file reference (where avail
 
 | ID | Surface | File / Line | Fix direction | Effort |
 |----|---------|-------------|---------------|--------|
-| PAG-004 | Overview — Action Queue | `app/platform-admin/page.tsx:143–158` | Add a one-line context note ("Contact billing for trial/retention items") on action queue alerts for areas growth cannot act on. Core link suppression for view-only roles is F2; this is the copy-only half. | XS |
+| PAG-004 ✅ | Overview — Action Queue | `app/platform-admin/page.tsx` | **ALREADY DONE in F4 (43f8cde).** The non-billing Action-Queue note ("Trials ending soon and expired overrides require billing access…") ships for all non-billing-action roles incl. growth. No further work. | XS |
 | PAG-005 | Email — preview modal | `app/platform-admin/email/EmailDashboardClient.tsx:218–221, 805` | Replace `[First Name]` / `[Org Name]` placeholder tokens in the `founding_welcome` static preview with sample values ("Hi Sarah," / "Demo Org"), matching the other nine email previews. | XS |
 | PAG-006 | Email — confirm-send modal | `app/platform-admin/email/EmailDashboardClient.tsx:454–465` | Wire per-email-key `recipientCounts` (already fetched by the server page) through the client to the confirm-send modal and table Recipient column. The server already returns them; the client ignores them. | S |
 | PAG-007 | Early Access — filter bar | `app/platform-admin/early-access/EarlyAccessClient.tsx:362–408` | Add a date-range filter (preset select: Last 7/30/90 days + Custom) to the filter bar. API already supports `dateFrom`/`dateTo` params. | S |
