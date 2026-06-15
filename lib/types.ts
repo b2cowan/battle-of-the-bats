@@ -623,7 +623,10 @@ export interface TournamentRegistrationFieldAnswer {
 // but the tie-breaker engine EXCLUDES forfeits from RF/RA/RD so invented margins
 // can't poison playoff seeding. See lib/tie-breakers.ts and advancePlayoffs.
 export type GameStatus = 'scheduled' | 'submitted' | 'completed' | 'cancelled' | 'forfeit';
-export type ScoreSubmissionSource = 'scorekeeper' | 'admin_results' | 'system';
+// 'forfeit' (as a source) marks a result entered as a forfeit. It rides the same
+// submit→finalize lifecycle as a score: a PENDING forfeit is status 'submitted'
+// with source 'forfeit'; once an admin approves it, it becomes status 'forfeit'.
+export type ScoreSubmissionSource = 'scorekeeper' | 'admin_results' | 'system' | 'forfeit';
 
 export interface Game {
   id: string;

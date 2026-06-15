@@ -677,7 +677,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 <!-- dict:col:games.score_submitted_by_email -->
 <!-- dict:col:games.score_submitted_at -->
 <!-- dict:col:games.score_submission_source -->
-**Score-submission audit block** — who/when/how a score was entered, written only via the scoring service ([lib/tournament-scoring-service.ts:121](../../../lib/tournament-scoring-service.ts#L121)) and cleared on revert. `score_submission_source` ∈ `scorekeeper | admin_results | system` (`ScoreSubmissionSource`, [lib/types.ts:452](../../../lib/types.ts#L452); app enum, no DB CHECK). Not a generic row-mtime (gotcha 7).
+**Score-submission audit block** — who/when/how a score was entered, written only via the scoring service ([lib/tournament-scoring-service.ts](../../../lib/tournament-scoring-service.ts)) and cleared on revert. `score_submission_source` ∈ `scorekeeper | admin_results | system | forfeit` (`ScoreSubmissionSource`, [lib/types.ts](../../../lib/types.ts); app enum, no DB CHECK). The `forfeit` value marks a result entered as a forfeit and persists through BOTH lifecycle states — a PENDING forfeit is `status='submitted'` with `source='forfeit'`, and finalize promotes it to `status='forfeit'` (not `completed`) so it advances the bracket but stays excluded from RF/RA/RD in tie-breakers (FP-5 / J1-091). Not a generic row-mtime (gotcha 7).
 
 ---
 

@@ -15,10 +15,10 @@ import {
   finalizeTournamentScore,
   loadTournamentScoreGame,
   revertTournamentScore,
+  submitForfeit,
   submitTournamentScore,
   TournamentScoringError,
 } from '@/lib/tournament-scoring-service';
-import { updateGame } from '@/lib/db';
 
 function tournamentLockedResponse() {
   return new Response(
@@ -631,11 +631,14 @@ export const PATCH = withObservability(async (req: Request) => {
     }
 
     // ── forfeit (no-show → present team wins) ────────────────────────────────
-    // Records status='forfeit' with a nominal win for the present team. The
-    // forfeit margin is excluded from RF/RA/RD in the tie-breaker engine so it
-    // can't poison seeding (J1-091), but still counts as a W/L. Routed through
-    // updateGame (not a raw status write) so playoff advancement / seed
-    // re-resolution fires, exactly like a completed game.
+    // Rides the SAME submit→finalize approval rule as a score (submitForfeit):
+    // a field volunteer's forfeit in an org that requires finalization lands as
+    // PENDING (status 'submitted', source 'forfeit') and does NOT advance the
+    // bracket until an owner/admin approves it via 'finalize'; an admin's forfeit
+    // — or any forfeit where the org doesn't require finalization — is final
+    // immediately (status 'forfeit'). 'submit_scores' is enough to PROPOSE; the
+    // approval gate is 'finalize' (seal_tournaments). Forfeits count W/L but are
+    // excluded from RF/RA/RD in the tie-breaker engine (J1-091).
     else if (action === 'forfeit') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) return forbidden();
       const winningSide = body.winningSide;
@@ -645,19 +648,25 @@ export const PATCH = withObservability(async (req: Request) => {
           headers: { 'Content-Type': 'application/json' },
         });
       }
-      // Nominal forfeit margin — cosmetic only, since RF/RA/RD ignore forfeits.
-      const FORFEIT_SCORE = 1;
-      await updateGame(id, {
-        status: 'forfeit',
-        homeScore: winningSide === 'home' ? FORFEIT_SCORE : 0,
-        awayScore: winningSide === 'away' ? FORFEIT_SCORE : 0,
-      }, { admin: true });
+      const { pending } = await submitForfeit({
+        gameId: id,
+        game: gameRow,
+        winningSide,
+        actor: {
+          userId: ctx.user.id,
+          email: ctx.user.email ?? null,
+          role: ctx.role,
+          orgRequireScoreFinalization: ctx.org.requireScoreFinalization,
+        },
+      });
       notify({
         orgId: ctx.org.id,
         tournamentId: gameRow.tournamentId,
         eventType: 'score_submitted',
-        title: 'Game forfeited',
-        body: `Marked forfeit by ${ctx.user.email ?? 'an admin'} (${winningSide} team advances)`,
+        title: pending ? 'Forfeit pending approval' : 'Game forfeited',
+        body: pending
+          ? `${ctx.user.email ?? 'A scorekeeper'} marked a forfeit (${winningSide} team) — needs admin approval`
+          : `Marked forfeit by ${ctx.user.email ?? 'an admin'} (${winningSide} team advances)`,
         link: `/${ctx.org.slug}/admin/tournaments/schedule?tournamentId=${gameRow.tournamentId}`,
         excludeUserIds: [ctx.user.id],
       }).catch(console.error);

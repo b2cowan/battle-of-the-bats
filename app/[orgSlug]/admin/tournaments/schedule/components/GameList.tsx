@@ -297,12 +297,16 @@ export default function GameList({
     return result;
   }, [expanded, editState, games, divisions, tournament, mode]);
 
-  function statusBadge(status: string) {
+  function statusBadge(status: string, source?: string | null) {
     // A passive status label — deliberately borderless (no button-like box) so it
     // never reads as the clickable Finalize control beside it.
+    // A PENDING forfeit is status 'submitted' with source 'forfeit' — label it as
+    // a forfeit awaiting approval so it never reads as a real played score.
+    const pendingForfeit = status === 'submitted' && source === 'forfeit';
     const cfg =
       status === 'completed' ? { label: '✓ Final', tone: 'completed' }
       : status === 'forfeit' ? { label: '⚑ Forfeit', tone: 'completed' }
+      : pendingForfeit ? { label: '⚑ Forfeit — Pending', tone: 'submitted' }
       : status === 'submitted' ? { label: '⚠ Pending Review', tone: 'submitted' }
       : status === 'cancelled' ? { label: '✕ Cancelled', tone: 'cancelled' }
       : { label: 'Scheduled', tone: 'scheduled' };
@@ -376,11 +380,13 @@ export default function GameList({
         }
       };
 
-      // Forfeit is offered only before a final result and only when both teams
-      // are known (a TBD/placeholder bracket slot can't forfeit). The winning
-      // side is the team that showed up; the loser is the no-show.
+      // Forfeit is offered only on a game with no recorded result yet (scheduled),
+      // and only when both teams are known (a TBD/placeholder bracket slot can't
+      // forfeit). A game that's already submitted/completed/forfeit is resolved via
+      // Finalize/Revert, not a fresh forfeit. The winning side is the team that
+      // showed up; the loser is the no-show.
       const canForfeit = Boolean(onForfeit) && !!g.homeTeamId && !!g.awayTeamId
-        && g.status !== 'completed' && g.status !== 'forfeit';
+        && g.status === 'scheduled';
       const homeLabel = resolveTeam(g.homeTeamId ?? '', g.homePlaceholder);
       const awayLabel = resolveTeam(g.awayTeamId ?? '', g.awayPlaceholder);
 
@@ -502,7 +508,7 @@ export default function GameList({
                 <span className="badge badge-neutral" style={{ fontSize: '0.65rem', letterSpacing: '0.05em' }}>SLOT</span>
               )}
               {/* Desktop-only status badge — hidden on mobile where scoringStatusRow renders it */}
-              <div className={`${s.gameStatusSlot} ${styles.desktopStatusSlot}`}>{statusBadge(g.status)}</div>
+              <div className={`${s.gameStatusSlot} ${styles.desktopStatusSlot}`}>{statusBadge(g.status, g.scoreSubmissionSource)}</div>
               {/* Finalize — quick-access, rendered only when relevant (no fixed-width wrapper) */}
               {!isExpanded && onFinalize && g.status === 'submitted' && (
                 <button className="btn btn-success btn-data" onClick={e => { e.stopPropagation(); onFinalize(g.id); }}>
@@ -697,7 +703,7 @@ export default function GameList({
           {/* Fixed-width status area — desktop badge only; mobile handled by mobileStatusTag in date cell */}
           <div className={styles.planningStatusCell}>
             {g.status !== 'scheduled' && (
-              <span className={styles.desktopStatusBadge}>{statusBadge(g.status)}</span>
+              <span className={styles.desktopStatusBadge}>{statusBadge(g.status, g.scoreSubmissionSource)}</span>
             )}
             {(g.homeSlotId || g.awaySlotId) && !g.isPlayoff && (
               <span className="badge badge-neutral" style={{ fontSize: '0.6rem', letterSpacing: '0.04em' }}>SLOT</span>
