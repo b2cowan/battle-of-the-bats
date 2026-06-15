@@ -276,7 +276,7 @@ function JoinForm() {
 
           {error && <div className={styles.error}>{error}</div>}
 
-          <button type="submit" className={styles.submitBtn} disabled={loading}>
+          <button type="submit" className="btn btn-lime" style={{ width: '100%' }} disabled={loading}>
             {loading ? 'Linking...' : 'Continue'}
           </button>
         </form>
@@ -380,7 +380,8 @@ function JoinForm() {
 
         <button
           type="submit"
-          className={styles.submitBtn}
+          className="btn btn-lime"
+          style={{ width: '100%' }}
           disabled={loading}
         >
           {loading ? 'Creating account...' : 'Create Account'}

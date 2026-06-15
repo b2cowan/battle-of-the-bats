@@ -2,13 +2,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Trophy, Users, LogOut, LayoutGrid } from 'lucide-react';
+import { Home, Trophy, Users, LogOut, LayoutGrid, X } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { teamColor } from '@/lib/team-color';
 import {
   COACHES_HOME_PATH,
   COACHES_TOURNAMENTS_PATH,
   COACHES_TEAMS_PATH,
+  COACHES_TEAM_PATH,
   coachTeamPath,
   isCoachPortalShellPath,
 } from '@/lib/coaches-portal-routes';
@@ -21,7 +22,15 @@ type BasicTeam = { id: string; name: string };
 const NAV: Array<{ label: string; href: string; icon: typeof Home; match: (p: string) => boolean }> = [
   { label: 'Home',        href: COACHES_HOME_PATH,        icon: Home,   match: p => p === COACHES_HOME_PATH },
   { label: 'Tournaments', href: COACHES_TOURNAMENTS_PATH, icon: Trophy, match: p => p.startsWith(COACHES_TOURNAMENTS_PATH) },
-  { label: 'Teams',       href: COACHES_TEAMS_PATH,       icon: Users,  match: p => p.startsWith(COACHES_TEAMS_PATH) },
+  {
+    label: 'My Teams',
+    href: COACHES_TEAMS_PATH,
+    icon: Users,
+    match: p =>
+      p.startsWith(COACHES_TEAMS_PATH) ||
+      p === COACHES_TEAM_PATH ||
+      p.startsWith(`${COACHES_TEAM_PATH}/`),
+  },
 ];
 
 /**
@@ -38,6 +47,7 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
 
   const [teams, setTeams] = useState<BasicTeam[]>([]);
   const [email, setEmail] = useState<string | null>(null);
+  const [acctOpen, setAcctOpen] = useState(false);
 
   useEffect(() => {
     if (!showShell) return;
@@ -126,10 +136,62 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
       {/* Mobile top bar (≤1023px) */}
       <header className={styles.topbar}>
         {brand}
-        <Link href="/home" className={styles.railSignOut} style={{ marginLeft: 'auto', padding: '0.4rem 0.6rem' }} aria-label="All workspaces">
-          <LayoutGrid size={16} aria-hidden />
-        </Link>
+        <button
+          type="button"
+          className={styles.acctChip}
+          style={{ marginLeft: 'auto' }}
+          onClick={() => setAcctOpen(true)}
+          aria-label="Account menu"
+          aria-haspopup="dialog"
+        >
+          {(email?.trim()[0] ?? '?').toUpperCase()}
+        </button>
       </header>
+
+      {/* Mobile account bottom-sheet (≤1023px) */}
+      {acctOpen && (
+        <div
+          className={styles.sheetOverlay}
+          role="presentation"
+          onClick={() => setAcctOpen(false)}
+        >
+          <div
+            className={styles.sheet}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Account"
+            onClick={e => e.stopPropagation()}
+          >
+            {email && (
+              <p className={styles.sheetEmail} title={email}>{email}</p>
+            )}
+            <Link href="/home" className={styles.sheetItem} onClick={() => setAcctOpen(false)}>
+              <LayoutGrid size={16} aria-hidden />
+              <span>All workspaces</span>
+            </Link>
+            <FeedbackLauncher className={styles.sheetItem} label="Send feedback" iconSize={16} />
+            <button
+              type="button"
+              className={styles.sheetItem}
+              onClick={() => {
+                setAcctOpen(false);
+                handleSignOut();
+              }}
+            >
+              <LogOut size={16} aria-hidden />
+              <span>Sign out</span>
+            </button>
+            <button
+              type="button"
+              className={styles.sheetItem}
+              onClick={() => setAcctOpen(false)}
+            >
+              <X size={16} aria-hidden />
+              <span>Close</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className={styles.content}>{children}</div>
 

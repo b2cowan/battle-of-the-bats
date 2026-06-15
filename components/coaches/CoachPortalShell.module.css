@@ -25,8 +25,8 @@
   width: 30px;
   height: 30px;
   border-radius: var(--radius-sm);
-  background: var(--primary);
-  color: var(--on-primary, #fff);
+  background: var(--logic-lime);
+  color: #0f1123;
   font-family: var(--font-data, monospace);
   font-weight: 800;
   font-size: 0.82rem;
@@ -116,7 +116,7 @@
   width: 3px;
   height: 1.1rem;
   border-radius: 2px;
-  background: var(--primary);
+  background: var(--logic-lime);
 }
 
 .railTeams {
@@ -234,6 +234,91 @@
   }
 }
 
+/* ── Mobile account chip + bottom-sheet (≤1023px) ─────────────────────────── */
+.acctChip {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: rgba(var(--logic-lime-rgb), 0.15);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  color: var(--logic-lime);
+  font-family: var(--font-data, monospace);
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  transition: background 0.15s;
+}
+
+.acctChip:hover {
+  background: rgba(var(--logic-lime-rgb), 0.22);
+}
+
+.sheetOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+}
+
+@media (min-width: 1024px) {
+  .sheetOverlay {
+    display: none;
+  }
+}
+
+.sheet {
+  width: 100%;
+  background: var(--surface);
+  border-top: 1px solid var(--border-2);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--highlight-top);
+  padding: 0.85rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sheetEmail {
+  margin: 0.25rem 0.25rem 0.6rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-2);
+  font-size: 0.82rem;
+  color: var(--white-60);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheetItem {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.7rem 0.5rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--white-80, var(--white));
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sheetItem:hover {
+  background: var(--white-05);
+  color: var(--white);
+}
+
 /* ── Content region ───────────────────────────────────────────────────────── */
 .content {
   padding-top: var(--coach-topbar-h);
@@ -297,5 +382,5 @@
 }
 
 .bottomTabActive {
-  color: var(--primary-light, var(--primary));
+  color: var(--logic-lime);
 }
