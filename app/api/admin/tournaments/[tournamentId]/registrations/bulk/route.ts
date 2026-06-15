@@ -13,6 +13,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
+import { markPaidInFullPatch } from '@/lib/mark-paid';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -256,10 +257,9 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
         patch.payment_status = 'paid';
       }
     } else if (bulkAction === 'mark_paid') {
-      const fee = effectiveFee(team, tournament, divisions);
-      patch.payment_status = 'paid';
-      if (fee.depositAmount != null) patch.deposit_paid = Math.max(Number(team.deposit_paid ?? 0), Number(fee.depositAmount));
-      if (fee.totalFeeAmount != null) patch.total_paid = Math.max(Number(team.total_paid ?? 0), Number(fee.totalFeeAmount));
+      // J5-026: canonical paid-in-full stamp, shared with the single-row toggle (/api/admin/teams)
+      // and the check-in gate so "Paid" reconciles to $0 owed on every surface.
+      Object.assign(patch, markPaidInFullPatch(team, effectiveFee(team, tournament, divisions)));
     }
     if (Object.keys(patch).length > 0) updates.push({ id: team.id, patch });
   }

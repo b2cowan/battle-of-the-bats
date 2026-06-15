@@ -13,6 +13,7 @@ import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
+import { effectiveFee, markPaidInFullPatch } from '@/lib/mark-paid';
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -182,8 +183,23 @@ export const POST = withObservability(async (req: Request) => {
       break;
     }
     case 'mark_paid': {
+      // J5-026: stamp the paid-in-full AMOUNTS (deposit_paid/total_paid), not just the raw status —
+      // otherwise the coach portal's resolver (paid requires total_paid >= total_fee when a fee
+      // schedule exists) still shows "OWED" while this gate says "Paid". Mirrors the bulk path.
+      const { data: feeTeam } = await supabaseAdmin
+        .from('teams').select('division_id, deposit_paid, total_paid').eq('id', teamId).single();
+      const { data: tourn } = await supabaseAdmin
+        .from('tournaments').select('fee_schedule_mode, deposit_amount, total_fee_amount').eq('id', tournamentId).single();
+      let divFee: { deposit_amount: number | null; total_fee_amount: number | null } | null = null;
+      if (tourn?.fee_schedule_mode === 'division' && feeTeam?.division_id) {
+        const { data } = await supabaseAdmin
+          .from('divisions').select('deposit_amount, total_fee_amount').eq('id', feeTeam.division_id).single();
+        divFee = data ?? null;
+      }
+      const fee = effectiveFee(feeTeam ?? { division_id: null, deposit_paid: null, total_paid: null }, tourn ?? { fee_schedule_mode: null, deposit_amount: null, total_fee_amount: null }, divFee);
+      const paidPatch = markPaidInFullPatch(feeTeam ?? { division_id: null, deposit_paid: null, total_paid: null }, fee);
       await supabaseAdmin.from('teams').update({
-        payment_status: 'paid', payment_collected_at: now,
+        ...paidPatch, payment_collected_at: now,
       }).eq('id', teamId);
       break;
     }

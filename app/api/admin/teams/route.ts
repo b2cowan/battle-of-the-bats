@@ -31,6 +31,7 @@ import {
 } from '@/lib/db';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { writePlatformEvent } from '@/lib/platform-events';
+import { effectiveFee, markPaidInFullPatch } from '@/lib/mark-paid';
 import { notify } from '@/lib/notify';
 import {
   duplicateTournamentTeamMessage,
@@ -411,6 +412,29 @@ export const POST = withObservability(async (req: Request) => {
       if (typeof raw === 'string') bulkPaymentInstructions = raw;
     }
 
+    // J5-026: when an update marks a team paid, stamp the paid-in-full AMOUNTS the same way the
+    // bulk "Mark Paid in Full" path does — not just the raw status. The single-row toggle posts
+    // { paymentStatus:'paid' } here; without the amounts the coach portal's resolver still shows
+    // "OWED" for fee-schedule teams. Load the tournament fee + division fee map once, only when a
+    // paid-mark is actually present, and only enrich updates that don't already pass amounts.
+    const marksPaid = items.some(i => i.updates?.paymentStatus === 'paid' || i.updates?.payment_status === 'paid');
+    let feeTournament: { fee_schedule_mode: string | null; deposit_amount: number | null; total_fee_amount: number | null } | null = null;
+    const divisionFeeMap = new Map<string, { deposit_amount: number | null; total_fee_amount: number | null }>();
+    if (marksPaid && bulkTournamentId) {
+      const { data: ft } = await supabaseAdmin
+        .from('tournaments').select('fee_schedule_mode, deposit_amount, total_fee_amount').eq('id', bulkTournamentId).single();
+      feeTournament = ft ?? null;
+      if (ft?.fee_schedule_mode === 'division') {
+        const divIds = [...new Set((currents as Array<{ division_id: string | null }>).map(t => t.division_id).filter(Boolean) as string[])];
+        if (divIds.length) {
+          const { data: divs } = await supabaseAdmin
+            .from('divisions').select('id, deposit_amount, total_fee_amount').in('id', divIds);
+          for (const d of divs ?? []) divisionFeeMap.set(d.id, { deposit_amount: d.deposit_amount, total_fee_amount: d.total_fee_amount });
+        }
+      }
+    }
+    const currentById = new Map((currents as any[]).map(t => [t.id, t]));
+
     const updateData = items.map(item => {
       const dbUpdates: any = { ...item.updates };
       if (dbUpdates.poolId !== undefined) {
@@ -444,6 +468,20 @@ export const POST = withObservability(async (req: Request) => {
       if (dbUpdates.seed !== undefined) {
         const n = Number(dbUpdates.seed);
         dbUpdates.seed = Number.isInteger(n) && n > 0 && n <= 999 ? n : null;
+      }
+      // J5-026: enrich a paid-mark with the paid-in-full amounts (unless the caller already passed
+      // them explicitly), so "Paid" reconciles to $0 owed on the coach side too.
+      if (
+        feeTournament &&
+        dbUpdates.payment_status === 'paid' &&
+        dbUpdates.total_paid === undefined &&
+        dbUpdates.deposit_paid === undefined
+      ) {
+        const current = currentById.get(item.id);
+        if (current) {
+          const fee = effectiveFee(current, feeTournament, divisionFeeMap.get(current.division_id) ?? null);
+          Object.assign(dbUpdates, markPaidInFullPatch(current, fee));
+        }
       }
       return { id: item.id, updates: dbUpdates };
     });
