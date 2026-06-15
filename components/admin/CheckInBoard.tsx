@@ -327,7 +327,9 @@ function CheckInSheet({ team, fee, divisionName, locked, busy, onAction, onClose
   function removeRow(i: number) { setRows(prev => prev.filter((_, idx) => idx !== i)); }
 
   async function saveRoster() {
-    await onAction('save_gate_roster', team.id, { players: rows.map(r => ({ name: r.name, jerseyNumber: r.jerseyNumber, dateOfBirth: r.dateOfBirth, position: r.position })) });
+    // J8-010: send each row's id so the server updates existing players in place (preserving coach
+    // provenance) and deletes only removed rows, instead of wiping + re-inserting the whole roster.
+    await onAction('save_gate_roster', team.id, { players: rows.map(r => ({ id: r.id, name: r.name, jerseyNumber: r.jerseyNumber, dateOfBirth: r.dateOfBirth, position: r.position })) });
     setEditing(false);
   }
 

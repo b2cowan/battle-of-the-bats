@@ -410,7 +410,17 @@
   font-weight: 700;
   cursor: pointer;
 }
-.editRosterBtn:disabled { opacity: 0.45; cursor: default; }
+/* J8-011: "Add roster at the gate" creates a new roster from scratch — a consequential gate action,
+   not a neutral label. Give it a clear, field-grade tappable affordance (solid fill, >=44px target)
+   distinct from the secondary "Edit" so a never-trained volunteer reads it as a real button. */
+.addRosterBtn {
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border-color: rgba(217, 249, 157, 0.5);
+  background: rgba(217, 249, 157, 0.12);
+  color: var(--logic-lime, #d9f99d);
+}
+.editRosterBtn:disabled, .addRosterBtn:disabled { opacity: 0.45; cursor: default; }
 
 /* roster editor */
 .rosterEditor { display: flex; flex-direction: column; gap: 0.45rem; }

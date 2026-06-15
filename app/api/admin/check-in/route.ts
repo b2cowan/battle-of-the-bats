@@ -137,7 +137,7 @@ export const POST = withObservability(async (req: Request) => {
     action?: string;
     teamId?: string;
     notes?: string;
-    players?: Array<{ name?: string; jerseyNumber?: string; dateOfBirth?: string; position?: string }>;
+    players?: Array<{ id?: string; name?: string; jerseyNumber?: string; dateOfBirth?: string; position?: string }>;
   };
   const { action, teamId } = body;
   if (!action || !teamId) return json({ error: 'Missing action or teamId' }, 400);
@@ -208,13 +208,50 @@ export const POST = withObservability(async (req: Request) => {
       break;
     }
     case 'save_gate_roster': {
+      // J8-010: NON-destructive save. The old path deleted the team's ENTIRE roster and re-inserted
+      // every row as source='gate' — wiping coach-submitted players' provenance (source / source_player_id)
+      // and dropping any data not carried in the editor. The editor pre-loads the existing roster with
+      // each row's `id`, so we diff instead: update rows that have an id (preserving their source),
+      // insert id-less rows as gate additions, and delete ONLY the rows the volunteer explicitly removed.
       const players = (body.players ?? [])
-        .map(p => ({ name: (p.name ?? '').trim(), jerseyNumber: (p.jerseyNumber ?? '').trim(), dateOfBirth: p.dateOfBirth || null, position: (p.position ?? '').trim() }))
+        .map(p => ({
+          id: typeof p.id === 'string' && p.id ? p.id : null,
+          name: (p.name ?? '').trim(),
+          jerseyNumber: (p.jerseyNumber ?? '').trim(),
+          dateOfBirth: p.dateOfBirth || null,
+          position: (p.position ?? '').trim(),
+        }))
         .filter(p => p.name.length > 0);
-      // Replace the team's roster with the gate-captured list.
-      await supabaseAdmin.from('tournament_roster_players').delete().eq('team_id', teamId);
-      if (players.length > 0) {
-        await supabaseAdmin.from('tournament_roster_players').insert(players.map(p => ({
+
+      // Existing rows for this team, to bound updates/deletes to this team (IDOR-safe).
+      const { data: existingRows } = await supabaseAdmin
+        .from('tournament_roster_players')
+        .select('id')
+        .eq('team_id', teamId);
+      const existingIds = new Set((existingRows ?? []).map(r => r.id as string));
+
+      const keptIds = new Set(players.filter(p => p.id && existingIds.has(p.id)).map(p => p.id as string));
+
+      // Delete only the rows the volunteer removed from the list (never a blanket wipe).
+      const removedIds = [...existingIds].filter(id => !keptIds.has(id));
+      if (removedIds.length > 0) {
+        await supabaseAdmin.from('tournament_roster_players').delete().eq('team_id', teamId).in('id', removedIds);
+      }
+
+      // Update existing rows in place — preserves source + source_player_id (coach provenance).
+      for (const p of players) {
+        if (p.id && existingIds.has(p.id)) {
+          await supabaseAdmin.from('tournament_roster_players')
+            .update({ name: p.name, jersey_number: p.jerseyNumber || null, date_of_birth: p.dateOfBirth, position: p.position || null })
+            .eq('team_id', teamId)
+            .eq('id', p.id);
+        }
+      }
+
+      // Insert genuinely-new (id-less) rows as gate additions.
+      const newRows = players.filter(p => !p.id || !existingIds.has(p.id));
+      if (newRows.length > 0) {
+        await supabaseAdmin.from('tournament_roster_players').insert(newRows.map(p => ({
           org_id: ctx.org.id,
           tournament_id: tournamentId,
           team_id: teamId,
@@ -226,6 +263,7 @@ export const POST = withObservability(async (req: Request) => {
           created_by_user_id: ctx.user.id,
         })));
       }
+
       await supabaseAdmin.from('teams').update({
         roster_submitted_at: now, roster_confirmed_at: now,
       }).eq('id', teamId);
