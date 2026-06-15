@@ -202,6 +202,22 @@ export async function userOwnsBasicCoachTeam(userId: string, basicCoachTeamId: s
 }
 
 /**
+ * Count ACTIVE members of a Basic coach team (J5-012). Ownership is membership-row-only (no email
+ * fallback since mig 092), so a team with zero active members is ORPHANED — its registrations are
+ * otherwise invisible to claim discovery and unclaimable ("already claimed by another account").
+ * Used to let a legitimate coach adopt such an orphan instead of dead-ending.
+ */
+export async function countActiveTeamMembers(basicCoachTeamId: string): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from('basic_coach_team_users')
+    .select('id', { count: 'exact', head: true })
+    .eq('basic_coach_team_id', basicCoachTeamId)
+    .eq('status', 'active');
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/**
  * Resolve a single org-less Basic coach team for the signed-in coach, ownership-checked
  * via `basic_coach_team_users`. Returns null when the team does not exist or the user is
  * not an active member — the org-less team-profile route (`/coaches/team/[basicTeamId]`)
@@ -390,7 +406,26 @@ export async function linkTournamentRegistrationToBasicCoachTeam(params: {
   // claimed" instead of a UNIQUE(tournament_team_id) violation that leaves an orphan team.
   const foreignLink = await findBasicCoachTeamIdForTournamentRegistration(params.registrationId);
   if (foreignLink) {
-    throw new Error('This registration has already been claimed by another account.');
+    // J5-012: if the linked team is ORPHANED (zero active members — e.g. a backfill team with no
+    // member row, or whose only owner's account was deleted), it isn't really "claimed by another
+    // account" — nobody can reach it. Let this legitimate coach ADOPT it (add themselves as active
+    // owner) and reuse the existing link, instead of dead-ending. A team with a live member stays
+    // protected.
+    const activeMembers = await countActiveTeamMembers(foreignLink);
+    if (activeMembers > 0) {
+      throw new Error('This registration has already been claimed by another account.');
+    }
+    const { error: adoptError } = await supabaseAdmin
+      .from('basic_coach_team_users')
+      .insert({ basic_coach_team_id: foreignLink, user_id: params.userId, role: 'owner', status: 'active' });
+    if (adoptError) {
+      // A concurrent adopter won the race — re-check; if someone is now active, it's genuinely taken.
+      if ((await countActiveTeamMembers(foreignLink)) > 0) {
+        throw new Error('This registration has already been claimed by another account.');
+      }
+      throw adoptError;
+    }
+    return { basicCoachTeamId: foreignLink, createdTeam: false };
   }
 
   let basicCoachTeamId = params.basicCoachTeamId ?? null;
@@ -717,4 +752,40 @@ export async function getClaimableRegistrationsForUser(
       };
     })
     .sort((a, b) => (a.tournament?.name ?? a.name).localeCompare(b.tournament?.name ?? b.name));
+}
+
+/**
+ * Pre-delete cleanup for a user account (J5-012). `basic_coach_team_users.user_id` is ON DELETE
+ * CASCADE, so deleting an auth user silently strips their team-membership rows — leaving any team
+ * they were the SOLE active member of orphaned (zero members → unreachable, unclaimable). Call this
+ * BEFORE `auth.admin.deleteUser` to delete those soon-to-be-orphaned teams outright (child rows —
+ * registrations/players/events/fees/announcements — all cascade on team delete). Teams with other
+ * active members are left intact; the departing user's row drops via the user-delete cascade.
+ *
+ * Returns the ids of teams deleted (for audit/logging). Safe to call for any user (no-op when they
+ * own no sole-member teams).
+ */
+export async function cleanupBasicCoachTeamsForUserDeletion(userId: string): Promise<string[]> {
+  // Teams this user is an active member of.
+  const { data: memberships, error: mErr } = await supabaseAdmin
+    .from('basic_coach_team_users')
+    .select('basic_coach_team_id')
+    .eq('user_id', userId)
+    .eq('status', 'active');
+  if (mErr) throw mErr;
+
+  const teamIds = [...new Set((memberships ?? []).map(r => r.basic_coach_team_id as string))];
+  const soleMemberTeamIds: string[] = [];
+  for (const teamId of teamIds) {
+    if ((await countActiveTeamMembers(teamId)) <= 1) soleMemberTeamIds.push(teamId);
+  }
+
+  if (soleMemberTeamIds.length > 0) {
+    const { error: delErr } = await supabaseAdmin
+      .from('basic_coach_teams')
+      .delete()
+      .in('id', soleMemberTeamIds);
+    if (delErr) throw delErr;
+  }
+  return soleMemberTeamIds;
 }

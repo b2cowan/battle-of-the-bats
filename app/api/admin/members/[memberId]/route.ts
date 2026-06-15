@@ -32,17 +32,22 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   const { org } = ctx;
   const { memberId } = await params;
 
-  // Confirm member belongs to this org
+  // Confirm member belongs to this org (need user_id for the cross-org + coaching impact, J4-036)
   const { data: target } = await supabaseAdmin
     .from('organization_members')
-    .select('id')
+    .select('id, user_id')
     .eq('id', memberId)
     .eq('organization_id', org.id)
     .single();
 
   if (!target) return NextResponse.json({ error: 'Member not found' }, { status: 404 });
 
-  const [{ count: tournamentCount }, { count: divisionCount }] = await Promise.all([
+  const [
+    { count: tournamentCount },
+    { count: divisionCount },
+    { count: otherOrgCount },
+    { count: coachingAssignmentCount },
+  ] = await Promise.all([
     supabaseAdmin
       .from('tournaments')
       .select('id', { count: 'exact', head: true })
@@ -52,9 +57,25 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
       .from('divisions')
       .select('id', { count: 'exact', head: true })
       .eq('contact_member_id', memberId),
+    // J4-036: other org memberships drive the "membership-only vs hard-delete" warning + behavior.
+    supabaseAdmin
+      .from('organization_members')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', target.user_id)
+      .neq('organization_id', org.id),
+    // Rep-team coaching assignments this person holds (also lost on removal).
+    supabaseAdmin
+      .from('rep_team_coaches')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', target.user_id),
   ]);
 
-  return NextResponse.json({ tournamentCount: tournamentCount ?? 0, divisionCount: divisionCount ?? 0 });
+  return NextResponse.json({
+    tournamentCount: tournamentCount ?? 0,
+    divisionCount: divisionCount ?? 0,
+    otherOrgCount: otherOrgCount ?? 0,
+    coachingAssignmentCount: coachingAssignmentCount ?? 0,
+  });
 }, { route: '/api/admin/members/[memberId]' });
 
 export const DELETE = withObservability(async (req: Request, { params }: Params) => {
@@ -94,12 +115,49 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
     );
   }
 
-  // Capture email before deleting the auth user (record is gone after deleteUser)
+  // Capture email before any deletion (the auth record is gone after deleteUser)
   const { data: { user: targetAuthUser } } = await supabaseAdmin.auth.admin.getUserById(target.user_id);
   const targetEmail = targetAuthUser?.email ?? null;
 
-  // Delete the auth user — ON DELETE CASCADE removes the organization_members row
-  // and transitively the org_member_tournament_assignments rows. Hard-delete (default).
+  // J4-036: does this user belong to OTHER organizations? "Remove member" used to call
+  // auth.admin.deleteUser unconditionally — destroying a multi-org person's entire account
+  // (their own free Coaches Portal workspace, every other club) and orphaning those orgs. When
+  // other memberships exist, remove ONLY this org's membership row + its scope rows; hard-delete
+  // the account ONLY when this is the user's sole membership (owner-approved: gated, not removed).
+  const { count: otherMembershipCount } = await supabaseAdmin
+    .from('organization_members')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', target.user_id)
+    .neq('organization_id', org.id);
+
+  if ((otherMembershipCount ?? 0) > 0) {
+    // Membership-only removal: drop this org's member row + its scope/assignment rows.
+    // (These FK to organization_members.id; delete them explicitly since we're not cascading
+    // via the auth user.)
+    await supabaseAdmin.from('org_member_tournament_assignments').delete().eq('org_member_id', memberId);
+    await supabaseAdmin.from('org_member_rep_group_scopes').delete().eq('member_id', memberId);
+    const { error: memberError } = await supabaseAdmin
+      .from('organization_members')
+      .delete()
+      .eq('id', memberId)
+      .eq('organization_id', org.id);
+    if (memberError) {
+      return NextResponse.json({ error: memberError.message }, { status: 500 });
+    }
+
+    void supabaseAdmin.from('org_audit_log').insert({
+      org_id: org.id,
+      actor_id: ctx.user.id,
+      target_id: target.user_id,
+      action: 'member_removed',
+      payload: { email: targetEmail, role: target.role, membershipOnly: true, otherOrgs: otherMembershipCount },
+    });
+
+    return NextResponse.json({ ok: true, membershipOnly: true });
+  }
+
+  // Sole membership → hard-delete the account (ON DELETE CASCADE removes the member row and
+  // org_member_tournament_assignments). Reached only after the other-membership check above.
   const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(target.user_id);
   if (authError) {
     return NextResponse.json({ error: authError.message }, { status: 500 });
@@ -110,10 +168,10 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
     actor_id: ctx.user.id,
     target_id: target.user_id,
     action: 'member_removed',
-    payload: { email: targetEmail, role: target.role },
+    payload: { email: targetEmail, role: target.role, membershipOnly: false },
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, membershipOnly: false });
 }, { route: '/api/admin/members/[memberId]' });
 
 export const PATCH = withObservability(async (req: Request, { params }: Params) => {

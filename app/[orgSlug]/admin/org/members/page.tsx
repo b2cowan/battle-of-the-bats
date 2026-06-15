@@ -200,7 +200,7 @@ export default function MembersPage() {
   const [reinvitingId, setReinvitingId] = useState<string | null>(null);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
-  const [removeImpact, setRemoveImpact] = useState<{ tournamentCount: number; divisionCount: number } | null>(null);
+  const [removeImpact, setRemoveImpact] = useState<{ tournamentCount: number; divisionCount: number; otherOrgCount: number; coachingAssignmentCount: number } | null>(null);
   const [capDraft, setCapDraft] = useState<Record<string, boolean>>({});
   const [capSaving, setCapSaving] = useState(false);
   const [manageDraftRepGroupIds, setManageDraftRepGroupIds] = useState<string[]>([]);
@@ -607,10 +607,25 @@ export default function MembersPage() {
                       )}
                       {confirmRemoveId === m.id ? (
                         <div className={styles.inlineConfirm}>
-                          <p className={styles.inlineConfirmText}>
-                            This will <strong>permanently delete</strong> their account.
-                            They must be re-invited to regain access.
-                          </p>
+                          {/* J4-036: membership-only vs full account deletion depends on whether the
+                              person belongs to other orgs. Until the impact loads, show the cautious
+                              (account-deletion) copy. */}
+                          {removeImpact && removeImpact.otherOrgCount > 0 ? (
+                            <p className={styles.inlineConfirmText}>
+                              This will <strong>remove them from this organization</strong>. Their account
+                              and access to their {removeImpact.otherOrgCount} other organization{removeImpact.otherOrgCount !== 1 ? 's' : ''} are kept.
+                            </p>
+                          ) : (
+                            <p className={styles.inlineConfirmText}>
+                              This will <strong>permanently delete</strong> their account.
+                              They must be re-invited to regain access.
+                            </p>
+                          )}
+                          {removeImpact && removeImpact.coachingAssignmentCount > 0 && (
+                            <p className={styles.inlineConfirmText} style={{ color: 'var(--logic-amber, #F59E0B)', marginTop: '0.35rem' }}>
+                              ⚠ They hold {removeImpact.coachingAssignmentCount} coaching assignment{removeImpact.coachingAssignmentCount !== 1 ? 's' : ''}, which {removeImpact.coachingAssignmentCount !== 1 ? 'are' : 'is'} lost on removal.
+                            </p>
+                          )}
                           {removeImpact && (removeImpact.tournamentCount > 0 || removeImpact.divisionCount > 0) && (
                             <p className={styles.inlineConfirmText} style={{ color: 'var(--logic-amber, #F59E0B)', marginTop: '0.35rem' }}>
                               ⚠ This member is the contact for{removeImpact.tournamentCount > 0 ? ` ${removeImpact.tournamentCount} tournament${removeImpact.tournamentCount !== 1 ? 's' : ''}` : ''}{removeImpact.tournamentCount > 0 && removeImpact.divisionCount > 0 ? ' and' : ''}{removeImpact.divisionCount > 0 ? ` ${removeImpact.divisionCount} division${removeImpact.divisionCount !== 1 ? 's' : ''}` : ''}. Those will reset to the tournament default on removal.
@@ -643,7 +658,7 @@ export default function MembersPage() {
                             setRemoveImpact(null);
                             const impactRes = await fetch(`/api/admin/members/${m.id}${orgQuery}`);
                             if (impactRes.ok) {
-                              const impactData = await impactRes.json() as { tournamentCount: number; divisionCount: number };
+                              const impactData = await impactRes.json() as { tournamentCount: number; divisionCount: number; otherOrgCount: number; coachingAssignmentCount: number };
                               setRemoveImpact(impactData);
                             }
                           }}

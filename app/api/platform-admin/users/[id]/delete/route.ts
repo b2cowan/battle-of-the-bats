@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireSuperAdmin } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
+import { cleanupBasicCoachTeamsForUserDeletion } from '@/lib/basic-coach-teams';
 import { withObservability } from '@/lib/observability';
 
 export const DELETE = withObservability(async (req: NextRequest,
@@ -13,6 +14,16 @@ export const DELETE = withObservability(async (req: NextRequest,
   const { id } = await params;
   const url   = new URL(req.url);
   const email = url.searchParams.get('email') ?? id;
+
+  // J5-012: before deleting the auth user (which CASCADE-strips their basic_coach_team_users rows),
+  // delete any Basic coach team they were the SOLE active member of — otherwise it becomes an
+  // orphan (zero members → unreachable + unclaimable). Best-effort: log but don't block the delete.
+  let cleanedTeamIds: string[] = [];
+  try {
+    cleanedTeamIds = await cleanupBasicCoachTeamsForUserDeletion(id);
+  } catch (e) {
+    console.error('[platform-admin] basic-coach-team cleanup failed (continuing with user delete):', e);
+  }
 
   const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
 
@@ -27,7 +38,7 @@ export const DELETE = withObservability(async (req: NextRequest,
     'delete_user',
     'user_id',
     email,
-    null,
+    cleanedTeamIds.length > 0 ? { cleanedBasicCoachTeams: cleanedTeamIds.length } : null,
   );
 
   return NextResponse.json({ ok: true });
