@@ -3,6 +3,13 @@
 > Branch: `fix/fp3-volunteer-dayof` (has the two-state code + migration 129). Dev DB already migrated.
 > Companion to `SCHEDULE_PUBLISH_SIMPLIFY_PLAN.md`.
 
+> **Verification status (2026-06-15):** Logic + data layer verified by agent — live DB constraint
+> rejects `published_teams`/`published_generic` and accepts `published` (check-violation 23514);
+> publish writes `is_closed:true` atomically; reopen clears visibility server-side; the publish
+> modal has zero `nameMode` refs (radio gone); public schedule/game-detail/OG/coach-portal have
+> zero `published_generic` branches. **Visual/pixel pass (modal layout, banner absence on the
+> rendered public page) is the remaining human step** — the agent confirmed behavior, not pixels.
+
 ## What you're verifying (one sentence)
 Publishing a schedule no longer offers a "placeholder names" choice — it always publishes real team names and closes registration, and reopening registration takes the schedule back offline.
 
