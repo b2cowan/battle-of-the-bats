@@ -188,6 +188,26 @@
 .notice_danger { border-color: rgba(239, 68, 68, 0.48); }
 .notice_info { border-color: rgba(59, 130, 246, 0.42); }
 
+/* J8-002: recovery CTA inside a notice (e.g. "Sign in" when the session lapses). Field-friendly
+   tap target, visually distinct from the body copy. */
+.noticeAction {
+  justify-self: start;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  background: #d9f99d;
+  color: #0a0a0a;
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
 .loadingState,
 .gameList {
   display: grid;

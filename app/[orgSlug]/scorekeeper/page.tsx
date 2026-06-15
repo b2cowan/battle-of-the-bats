@@ -65,6 +65,8 @@ type Notice = {
   kind: 'info' | 'success' | 'warning' | 'danger';
   title: string;
   message: string;
+  /** Optional recovery CTA (J8-002): e.g. a sign-in link when the session lapses mid-shift. */
+  action?: { label: string; href: string };
 };
 
 function todayString() {
@@ -157,10 +159,13 @@ export default function ScorekeeperPage() {
         setScorePolicies({});
 
         if (response.status === 401) {
+          // J8-002: a session that lapses mid-shift must offer a way back in, not a dead end.
+          // The sign-in link returns here after auth (login resolves a safe destination — FP-1).
           setNotice({
             kind: 'warning',
             title: 'Sign in required',
-            message: 'Sign in again to continue scorekeeping.',
+            message: 'Your session ended. Sign in again to continue scorekeeping.',
+            action: { label: 'Sign in', href: `/auth/login?next=/${orgSlug}/scorekeeper` },
           });
           return;
         }
@@ -334,6 +339,17 @@ export default function ScorekeeperPage() {
       const data = await response.json().catch(() => ({})) as { error?: string; status?: GameStatus };
 
       if (!response.ok) {
+        // J8-002: a lapsed session on save is recoverable, not a dead "Score not saved" error.
+        if (response.status === 401) {
+          setNotice({
+            kind: 'warning',
+            title: 'Sign in required',
+            message: 'Your session ended before the score saved. Sign in again, then re-enter it.',
+            action: { label: 'Sign in', href: `/auth/login?next=/${orgSlug}/scorekeeper` },
+          });
+          setScoreState('entering');
+          return;
+        }
         throw new Error(data.error ?? 'Failed to save score.');
       }
 
@@ -474,6 +490,11 @@ export default function ScorekeeperPage() {
         <div className={`${styles.notice} ${styles[`notice_${notice.kind}`] ?? ''}`}>
           <strong>{notice.title}</strong>
           <span>{notice.message}</span>
+          {notice.action && (
+            <a href={notice.action.href} className={styles.noticeAction}>
+              {notice.action.label}
+            </a>
+          )}
         </div>
       )}
 

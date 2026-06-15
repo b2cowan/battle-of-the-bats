@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { getAuthContextWithRole } from '@/lib/api-auth';
+import ShellSignOutButton from '@/components/volunteer/ShellSignOutButton';
 import { getOrganizationBySlug } from '@/lib/db';
 import { hasCapability } from '@/lib/roles';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
@@ -107,20 +107,7 @@ export default async function ScorekeeperLayout({
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexShrink: 0 }}>
           <FeedbackLauncher compact />
-          <Link
-            href="/auth/logout"
-            style={{
-              fontFamily: 'var(--font-data)',
-              fontSize: '0.7rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              color: '#94A3B8',
-              textDecoration: 'none',
-              flexShrink: 0,
-            }}
-          >
-            Sign Out
-          </Link>
+          <ShellSignOutButton />{/* J8-001: was a dead <Link href="/auth/logout"> (404) */}
         </div>
       </header>
 
