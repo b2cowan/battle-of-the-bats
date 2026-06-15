@@ -267,10 +267,22 @@ function fmtNullableDate(iso: string | null) {
   return iso ? fmtDate(iso) : 'Not set';
 }
 
+function stripeIsTestMode() {
+  // Match stripeCustomerUrl: derive mode from the secret-key prefix, not the ID
+  // (subscription IDs are `sub_...` in both modes).
+  return !(process.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_live_');
+}
+
 function stripeCustomerUrl(customerId: string | null) {
   if (!customerId) return null;
-  const modePath = (process.env.STRIPE_SECRET_KEY ?? '').startsWith('sk_live_') ? '' : '/test';
+  const modePath = stripeIsTestMode() ? '/test' : '';
   return `https://dashboard.stripe.com${modePath}/customers/${customerId}`;
+}
+
+function stripeSubscriptionUrl(subscriptionId: string | null) {
+  if (!subscriptionId) return null;
+  const modePath = stripeIsTestMode() ? '/test' : '';
+  return `https://dashboard.stripe.com${modePath}/subscriptions/${subscriptionId}`;
 }
 
 function isExpiredOverride(expiresAt: string | null) {
@@ -322,6 +334,8 @@ export default async function OrgDetailPage({
   const ownerSummary = ownerMembers.map(member => member.email).join(', ') || 'No owner found';
   const activeModules = [...new Set([...planModules, ...enabledAddons])];
   const stripeUrl = stripeCustomerUrl((org.stripe_customer_id as string | null) ?? null);
+  const stripeSubUrl = stripeSubscriptionUrl((org.stripe_subscription_id as string | null) ?? null);
+  const stripeTestMode = stripeIsTestMode();
   const subscriptionStatus = (org.subscription_status as string | null) ?? 'active';
   const effectiveTournamentLimit = planCfg
     ? getEffectiveTournamentLimit(org.plan_id as OrgPlan, org.tournament_limit as number | null)
@@ -470,7 +484,16 @@ export default async function OrgDetailPage({
           </div>
           <div className={styles.field}>
             <span className={styles.fieldLabel}>Stripe Subscription</span>
-            <span className={styles.mono}>{(org.stripe_subscription_id as string | null) ?? 'Not set'}</span>
+            {stripeSubUrl ? (
+              <span className={styles.mono}>
+                <a href={stripeSubUrl} target="_blank" rel="noreferrer" className={styles.inlineLink}>
+                  {org.stripe_subscription_id as string}
+                </a>
+                {stripeTestMode && <span className={styles.sandboxTag}> (Sandbox)</span>}
+              </span>
+            ) : (
+              <span className={styles.mono}>Not set</span>
+            )}
           </div>
           <div className={styles.field}>
             <span className={styles.fieldLabel}>Stripe Customer</span>

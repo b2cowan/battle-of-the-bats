@@ -131,6 +131,12 @@ const ADDON_MODULE_LABELS: Record<string, string> = {
   module_rep_teams:    'Rep Teams',
 };
 
+const OVERRIDE_TYPE_LABELS: Record<string, string> = {
+  subscription_status: 'Subscription Status',
+  comp_period:         'Comp Period',
+  module_addon:        'Module Add-on',
+};
+
 type ApiErrorBody = { error?: string };
 type ApiInternalNote = {
   id: string;
@@ -1367,7 +1373,7 @@ export default function OrgDetailClient({
                         </label>
                       ))}
                     </div>
-                    <p className={styles.warningNote}>Access turns on now and auto-reverts at the expiry below. Leave expiry blank for an open-ended grant.</p>
+                    <p className={styles.warningNote}>Access turns on now and auto-reverts at the expiry below. An expiry is strongly recommended — without one, access remains permanently until manually revoked.</p>
                   </div>
                 )}
 
@@ -1423,7 +1429,7 @@ export default function OrgDetailClient({
                 {activeOverrides.map(o => (
                   <div key={o.id} className={styles.overrideRow}>
                     <div className={styles.overrideMeta}>
-                      <span className={styles.overrideType}>{o.type.replace('_', ' ')}</span>
+                      <span className={styles.overrideType}>{OVERRIDE_TYPE_LABELS[o.type] ?? o.type.replace(/_/g, ' ')}</span>
                       {o.value && <span className={styles.overrideValue}>{o.value}</span>}
                       {o.type === 'module_addon' && o.target?.addons && o.target.addons.length > 0 && (
                         <span className={styles.overrideValue}>
@@ -1494,7 +1500,7 @@ export default function OrgDetailClient({
                     {historicalOverrides.map(o => (
                       <div key={o.id} className={`${styles.overrideRow} ${styles.overrideRowRevoked}`}>
                         <div className={styles.overrideMeta}>
-                          <span className={styles.overrideType}>{o.type.replace('_', ' ')}</span>
+                          <span className={styles.overrideType}>{OVERRIDE_TYPE_LABELS[o.type] ?? o.type.replace(/_/g, ' ')}</span>
                           {o.value && <span className={styles.overrideValue}>{o.value}</span>}
                           <span className={styles.overrideReason}>{o.reason}</span>
                           <span className={styles.overrideBy}>by {o.createdBy} - {fmtDateTime(o.createdAt)}</span>

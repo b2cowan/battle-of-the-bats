@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import RequiresAccess from '@/components/platform-admin/RequiresAccess';
+import HelpCallout from '@/components/help/HelpCallout';
 import styles from '../audit/audit.module.css';
 
 type RetentionRow = {
@@ -140,6 +141,13 @@ export default function RetentionQueueClient({ rows, canManageBilling }: { rows:
         </div>
       )}
 
+      {rows.length === 0 ? (
+        <HelpCallout
+          variant="tip"
+          title="Nothing approaching purge"
+          body="No retained records are approaching their purge deadline. Accounts appear here after cancellation or downgrade as their retention window counts down."
+        />
+      ) : (
       <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
@@ -156,11 +164,6 @@ export default function RetentionQueueClient({ rows, canManageBilling }: { rows:
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={9} className={styles.emptyCell}>No retained records are approaching purge.</td>
-              </tr>
-            )}
             {rows.map(row => (
               <tr key={row.id}>
                 <td>
@@ -172,7 +175,14 @@ export default function RetentionQueueClient({ rows, canManageBilling }: { rows:
                 <td className={styles.actionCell}>{row.recordType}</td>
                 <td className={styles.dimText}>{row.retainedState}</td>
                 <td className={styles.tsCell}>{fmtDate(row.retentionUntil)}</td>
-                <td>{row.daysRemaining}</td>
+                <td>
+                  {row.daysRemaining}
+                  {row.daysRemaining <= 0 ? (
+                    <span className="badge badge-danger" style={{ marginLeft: '0.4rem' }}>PAST DEADLINE</span>
+                  ) : row.daysRemaining <= 3 ? (
+                    <span className="badge badge-warning" style={{ marginLeft: '0.4rem' }}>URGENT</span>
+                  ) : null}
+                </td>
                 <td className={styles.tsCell}>{noticeLabel(row)}</td>
                 <td>
                   {row.extensionCount}
@@ -225,6 +235,7 @@ export default function RetentionQueueClient({ rows, canManageBilling }: { rows:
           </tbody>
         </table>
       </div>
+      )}
     </>
   );
 }

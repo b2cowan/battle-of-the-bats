@@ -140,6 +140,19 @@ export default function PlatformAdminHelpPage() {
       ],
     },
     {
+      title: 'Billing Specialist',
+      audience: 'Billing team',
+      badge: 'Employee',
+      desc: 'Start here for the core billing jobs: overrides, cancellations, retention deadlines, and multi-account billing changes.',
+      keywords: ['billing', 'override', 'comp period', 'cancel subscription', 'retention', 'bulk operations'],
+      steps: [
+        { label: 'Temporarily override billing access', href: '/platform-admin/help/platform-admin#billing-overrides' },
+        { label: 'Cancel a customer subscription', href: '/platform-admin/help/platform-admin#cancel-subscription' },
+        { label: 'Handle retained or at-risk accounts', href: '/platform-admin/help/platform-admin#retention' },
+        { label: 'Run guarded bulk operations', href: '/platform-admin/help/platform-admin#bulk-operations' },
+      ],
+    },
+    {
       title: 'Billing and Product Admin',
       audience: 'Billing/product team',
       badge: 'Employee',

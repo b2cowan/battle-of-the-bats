@@ -333,6 +333,24 @@
   overflow-wrap: anywhere;
 }
 
+.inlineLink {
+  color: var(--logic-lime);
+  text-decoration: none;
+}
+
+.inlineLink:hover {
+  text-decoration: underline;
+}
+
+.sandboxTag {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
 .adminLink {
   font-family: var(--font-data);
   font-size: 0.65rem;

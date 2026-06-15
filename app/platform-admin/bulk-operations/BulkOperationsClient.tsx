@@ -346,7 +346,9 @@ export default function BulkOperationsClient({
                 <option value="subscription_status_override">Subscription Status Override</option>
                 <option value="comp_period">Comp Period Grant</option>
                 <option value="plan_change">Plan Change</option>
-                <option value="module_addon_enablement">Module Add-On Enablement</option>
+                <option value="module_addon_enablement" disabled={!canManageProduct}>
+                  Module Add-On Enablement{canManageProduct ? '' : ' (requires product access)'}
+                </option>
               </select>
             </label>
 
@@ -522,6 +524,9 @@ export default function BulkOperationsClient({
               ))}
             </tbody>
           </table>
+        </div>
+        <div className={styles.panelFooterLink}>
+          <Link href="/platform-admin/audit?action=run_bulk_operation">View all bulk operations in Audit Log →</Link>
         </div>
       </section>
     </div>

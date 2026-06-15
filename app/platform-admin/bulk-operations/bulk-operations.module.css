@@ -329,6 +329,25 @@
   color: var(--data-gray);
 }
 
+.panelFooterLink {
+  margin-top: 0.85rem;
+  text-align: right;
+}
+
+.panelFooterLink a {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  text-decoration: none;
+}
+
+.panelFooterLink a:hover {
+  text-decoration: underline;
+}
+
 .selectedList {
   display: grid;
   gap: 0.5rem;
