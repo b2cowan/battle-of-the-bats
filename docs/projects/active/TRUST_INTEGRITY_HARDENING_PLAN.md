@@ -64,8 +64,10 @@ Each item notes the **UX change** it produces. Most are security/correctness: th
 
 ### Phase C — Auth loop forwards
 
-- [ ] **J8-018 + J10-019 — Login redirect loops** (forward an already-authenticated user to a stable destination; suspended → `/auth/suspended`). → *A cross-org volunteer or suspended member gets a clear destination/message instead of an infinite sign-in loop.*
-- [ ] **J5-035 — Metadata access gate** (Low; mirror the access check in `generateMetadata`). → *Closes a minor private-team-name leak; no visible change.*
+- [x] **J8-018 + J10-019 — Login redirect loops** (forward an already-authenticated user to a stable destination; suspended → `/auth/suspended`). → *A cross-org volunteer or suspended member gets a clear destination/message instead of an infinite sign-in loop.* — **DONE** a0a6183. Shared root = login page lacked an already-authenticated guard + pushed `next` unconditionally. Login now resolves a safe destination (`resolveLoginDestination`) honoring `next` only when it lands a real workspace (`/home`/`/platform-admin`), plus an already-auth guard that forwards on mount. **J10-019:** `getAuthDestination` detects a suspended membership (`findSuspendedMembershipOrg`, zero active contexts) → new static **`/auth/suspended`** page (org name + "contact your administrator" + sign-out; guards both ways) instead of `/start`/loop; **transactional suspension email** (`memberSuspendedHtml`) fires when an owner suspends a member (owner-approved). typecheck + lint + guard clean. **Browser regression pending.**
+- [x] **J5-035 — Metadata access gate** (Low; mirror the access check in `generateMetadata`). → *Closes a minor private-team-name leak; no visible change.* — **DONE** 388c5b9. `generateMetadata` in the coach tournament-record page now mirrors `canUserAccessTournamentRegistration` and returns a generic "Tournament Record" title when the viewer lacks access. **→ FP-1 Phase C COMPLETE.**
+
+> **FP-1 COMPLETE (Phases A + B + C) 2026-06-15** — pending: per-item browser regression + the migration-127 prod-apply (J4-020). This was the gate FP-2…FP-7 sit behind.
 
 > **Net effect of the first go:** the platform becomes safe to promote — no anonymous data harvesting, no wrong-org reads/writes, no corrupting buttons, no infinite loops, correct times/payment states, and the dead premium pages restored. Most legitimate users see no new screens; a whole class of trust-breaking failures stops happening. This is the gate FP-2…FP-7 sit behind (see [USER_JOURNEY_AUDIT_SYNTHESIS.md](USER_JOURNEY_AUDIT_SYNTHESIS.md) §6).
 
