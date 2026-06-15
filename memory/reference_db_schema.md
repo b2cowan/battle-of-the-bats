@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-06-14 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-06-15 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-06-14
+# DB Schema Reference — 2026-06-15
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -242,7 +242,7 @@ id (uuid), ledger_id (uuid) → accounting_ledgers.id NOT NULL, entry_date NOT N
 
 ### accounting_ledgers
 id (uuid), org_id (uuid) → organizations.id NOT NULL, entity_type NOT NULL, entity_id (uuid), name NOT NULL, currency, is_archived (boolean), created_at
-- Indexes: accounting_ledgers_org_id_entity_type_entity_id_key
+- Indexes: accounting_ledgers_one_org_general, accounting_ledgers_org_id_entity_type_entity_id_key
 
 ### billing_retained_records
 id (uuid), intent_id (uuid) → billing_retention_intents.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, record_type NOT NULL, record_id (uuid), display_name NOT NULL, retained_state, retained_at, retention_until NOT NULL, extension_count (integer), last_extended_at, last_extended_by, last_extension_reason, metadata (jsonb), warning_sent_at, pending_purge_at, purge_notice_sent_at
@@ -439,7 +439,7 @@ id (uuid), endpoint NOT NULL, keys_p256dh NOT NULL, keys_auth NOT NULL, tourname
 - Indexes: fan_push_subscriptions_endpoint_idx, fan_push_subscriptions_endpoint_tournament_id_key, fan_push_subscriptions_tournament_team_idx
 
 ### feedback_submissions
-id (uuid), org_id (uuid) → organizations.id, user_id (uuid), user_email, submitter_name, type, category, title, body NOT NULL, status, severity, context (jsonb), triaged_by, triaged_at, created_at, updated_at
+id (uuid), org_id (uuid) → organizations.id, user_id (uuid), user_email, submitter_name, type, category, title, body NOT NULL, status, severity, context (jsonb), triaged_by, triaged_at, created_at, updated_at, escalated_at, escalated_by
 - Indexes: idx_feedback_submissions_org_time, idx_feedback_submissions_status_time, idx_feedback_submissions_type
 
 ### import_batch_rows

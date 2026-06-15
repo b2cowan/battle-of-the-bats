@@ -2574,14 +2574,21 @@ export async function getArchiveById(id: string): Promise<TournamentArchive | nu
 // ── Accounting Module ─────────────────────────────────────────────────────────
 
 export async function getOrgLedger(orgId: string): Promise<AccountingLedger | null> {
+  // J4-020: the General ledger is the singular (org,'org',NULL) row. Migration 127 dedupes
+  // strays and a partial unique index keeps it singular, but DON'T use `.maybeSingle()` here —
+  // it throws on >1 row and the old code swallowed that to null, which made getOrCreateOrgLedger
+  // insert ANOTHER General on every call (the corruption snowball). Order by created_at and take
+  // the oldest (the canonical one the migration merges into) so a transient duplicate can never
+  // re-trigger create-on-read.
   const { data } = await supabaseAdmin
     .from('accounting_ledgers')
     .select('*')
     .eq('org_id', orgId)
     .eq('entity_type', 'org')
     .is('entity_id', null)
-    .maybeSingle();
-  return data ? mapLedger(data) : null;
+    .order('created_at', { ascending: true })
+    .limit(1);
+  return data && data.length ? mapLedger(data[0]) : null;
 }
 
 export async function getOrCreateOrgLedger(orgId: string, orgName: string): Promise<AccountingLedger> {

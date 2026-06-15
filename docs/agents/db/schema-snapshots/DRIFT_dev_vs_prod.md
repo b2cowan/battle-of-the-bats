@@ -1,14 +1,14 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-06-14 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-06-15 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 52 divergence(s)** across dev/prod.
+**⚠️ 53 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
 | Columns | 2 | 3 | 23 |
-| Indexes | 4 | 3 | 0 |
+| Indexes | 5 | 3 | 0 |
 | Constraints | 7 | 9 | — |
 | RLS / CHECK | 0 | 1 | 0 (RLS state) |
 
@@ -55,7 +55,8 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (4)
+### Only in DEV (5)
+- `accounting_ledgers_one_org_general`
 - `league_practices_recurrence_idx`
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`

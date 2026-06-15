@@ -13754,6 +13754,11 @@
       },
       {
         "tablename": "accounting_ledgers",
+        "indexname": "accounting_ledgers_one_org_general",
+        "indexdef": "CREATE UNIQUE INDEX accounting_ledgers_one_org_general ON public.accounting_ledgers USING btree (org_id) WHERE ((entity_type = 'org'::text) AND (entity_id IS NULL))"
+      },
+      {
+        "tablename": "accounting_ledgers",
         "indexname": "accounting_ledgers_org_id_entity_type_entity_id_key",
         "indexdef": "CREATE UNIQUE INDEX accounting_ledgers_org_id_entity_type_entity_id_key ON public.accounting_ledgers USING btree (org_id, entity_type, entity_id)"
       },

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
@@ -51,9 +52,18 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'entityType must be org or tournament' }, { status: 400 });
   }
 
+  // J4-020: a user-created org sub-ledger (sponsorships, operating costs) must NOT reuse the
+  // (org,'org',NULL) shape — that IS the singular auto-managed General ledger, and a second NULL
+  // row corrupted the books (duplicate-General snowball + scattered transfers). Give every
+  // user-created org ledger a distinct non-NULL entity_id so it's a real sub-ledger under the
+  // UNIQUE(org_id,entity_type,entity_id) index. The General stays the only NULL-entity org row
+  // (created/found by getOrCreateOrgLedger via .is('entity_id',null)); a partial unique index
+  // (migration 127) enforces that. Tournament ledgers keep their real entityId.
+  const resolvedEntityId = entityType === 'org' ? randomUUID() : entityId;
+
   const { data, error } = await supabaseAdmin
     .from('accounting_ledgers')
-    .insert({ org_id: ctx!.org.id, entity_type: entityType, entity_id: entityId, name })
+    .insert({ org_id: ctx!.org.id, entity_type: entityType, entity_id: resolvedEntityId, name })
     .select()
     .single();
 
