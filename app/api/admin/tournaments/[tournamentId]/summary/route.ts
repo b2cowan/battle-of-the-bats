@@ -104,7 +104,7 @@ function calculateStandings(teams: TeamRow[], games: GameRow[]): StandingRow[] {
   return acceptedTeams
     .map(team => {
       const teamGames = games.filter(game =>
-        (game.status === 'completed' || game.status === 'submitted') &&
+        (game.status === 'completed' || game.status === 'submitted' || game.status === 'forfeit') &&
         !game.is_playoff &&
         (game.home_team_id === team.id || game.away_team_id === team.id)
       );
@@ -118,8 +118,12 @@ function calculateStandings(teams: TeamRow[], games: GameRow[]): StandingRow[] {
         const isHome = game.home_team_id === team.id;
         const own = numberValue(isHome ? game.home_score : game.away_score);
         const opp = numberValue(isHome ? game.away_score : game.home_score);
-        rf += own;
-        ra += opp;
+        // Forfeits count for W/L but their nominal margin is excluded from RF/RA/RD,
+        // mirroring lib/tie-breakers.ts so a forfeit can't distort the summary standings.
+        if (game.status !== 'forfeit') {
+          rf += own;
+          ra += opp;
+        }
         if (own > opp) w++;
         else if (own < opp) l++;
         else t++;
@@ -142,8 +146,9 @@ function calculateStandings(teams: TeamRow[], games: GameRow[]): StandingRow[] {
 }
 
 function championFromFinal(games: GameRow[], teamNames: Map<string, string>) {
+  // A final decided by forfeit is a real champion — include 'forfeit' (FP-5).
   const final = games
-    .filter(game => game.status === 'completed' && game.is_playoff && game.bracket_code === 'FIN')
+    .filter(game => (game.status === 'completed' || game.status === 'forfeit') && game.is_playoff && game.bracket_code === 'FIN')
     .sort((a, b) => String(b.game_date ?? '').localeCompare(String(a.game_date ?? '')))[0];
   if (!final || final.home_score == null || final.away_score == null || final.home_score === final.away_score) return null;
 
@@ -283,7 +288,8 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
 
   const scheduleTotals = {
     total: typedGames.length,
-    completed: typedGames.filter(game => game.status === 'completed').length,
+    // Forfeits are finished games — count them as completed in the progress tally.
+    completed: typedGames.filter(game => game.status === 'completed' || game.status === 'forfeit').length,
     submitted: typedGames.filter(game => game.status === 'submitted').length,
     scheduled: typedGames.filter(game => game.status === 'scheduled').length,
     cancelled: typedGames.filter(game => game.status === 'cancelled').length,
@@ -308,7 +314,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
       },
       games: {
         total: groupGames.length,
-        completed: groupGames.filter(game => game.status === 'completed').length,
+        completed: groupGames.filter(game => game.status === 'completed' || game.status === 'forfeit').length,
       },
       standingsLeader: standings[0] ?? null,
       champion,
