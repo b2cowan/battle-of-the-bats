@@ -20,6 +20,8 @@ type CheckInTeam = {
   name: string;
   divisionId: string;
   paymentStatus: 'pending' | 'paid';
+  depositPaid: number | null;
+  totalPaid: number | null;
   checkInStatus: CheckInStatus;
   checkedInAt: string | null;
   checkedInByName: string | null;
@@ -52,6 +54,16 @@ function optimisticPatch(act: string, now: string, extra?: Record<string, unknow
     case 'no_show': return { checkInStatus: 'no_show', checkedInAt: null };
     case 'undo': return { checkInStatus: 'not_arrived', checkedInAt: null, checkedInByName: null };
     case 'mark_paid': return { paymentStatus: 'paid', paymentCollectedAt: now };
+    case 'unmark_paid': {
+      // J8-016: optimistic restore of the prior amounts the caller captured.
+      const prior = extra?.prior as Partial<CheckInTeam> | undefined;
+      return {
+        paymentStatus: prior?.paymentStatus === 'paid' ? 'paid' : 'pending',
+        depositPaid: typeof prior?.depositPaid === 'number' ? prior.depositPaid : 0,
+        totalPaid: typeof prior?.totalPaid === 'number' ? prior.totalPaid : 0,
+        paymentCollectedAt: typeof prior?.paymentCollectedAt === 'string' ? prior.paymentCollectedAt : null,
+      };
+    }
     case 'confirm_roster': return { rosterConfirmedAt: now };
     case 'save_gate_roster': {
       const players = (extra?.players as Array<{ name?: string; jerseyNumber?: string; dateOfBirth?: string; position?: string }> | undefined) ?? [];
@@ -264,7 +276,7 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked }: {
 
       {!loading && filtered.length === 0 && (
         <div className={styles.empty}>
-          {teams.length === 0 ? 'No accepted teams yet — accept registrations to check teams in.' : 'No teams match these filters.'}
+          {teams.length === 0 ? 'No teams to check in yet. Teams appear here once an admin accepts their registration.' : 'No teams match these filters.'}
         </div>
       )}
 
@@ -319,6 +331,22 @@ function CheckInSheet({ team, fee, divisionName, locked, busy, onAction, onClose
 }) {
   const [editing, setEditing] = useState(false);
   const [rows, setRows] = useState<RosterPlayer[]>(() => team.roster.length > 0 ? team.roster : []);
+  // J8-016: capture the team's payment state the moment "Mark paid" is tapped, so "Un-pay" can
+  // restore the prior amounts (not blanket-zero) even after a refetch overwrites the live values.
+  const [paidSnapshot, setPaidSnapshot] = useState<Partial<CheckInTeam> | null>(null);
+
+  function handleMarkPaid() {
+    setPaidSnapshot({
+      paymentStatus: team.paymentStatus,
+      depositPaid: team.depositPaid,
+      totalPaid: team.totalPaid,
+      paymentCollectedAt: team.paymentCollectedAt,
+    });
+    void onAction('mark_paid', team.id);
+  }
+  function handleUnmarkPaid() {
+    void onAction('unmark_paid', team.id, { prior: paidSnapshot ?? {} });
+  }
 
   function setRow(i: number, patch: Partial<RosterPlayer>) {
     setRows(prev => prev.map((r, idx) => idx === i ? { ...r, ...patch } : r));
@@ -368,9 +396,15 @@ function CheckInSheet({ team, fee, divisionName, locked, busy, onAction, onClose
       <div className={styles.sheetSection}>
         <span className={styles.sheetLabel}><DollarSign size={13} aria-hidden /> Payment</span>
         {team.paymentStatus === 'paid' ? (
-          <div className={styles.paidRow}><Check size={15} aria-hidden /> Paid{team.paymentCollectedAt ? ` · collected at gate ${timeOf(team.paymentCollectedAt)}` : ''}</div>
+          <div className={styles.paidRow}>
+            <span><Check size={15} aria-hidden /> Paid{team.paymentCollectedAt ? ` · collected at gate ${timeOf(team.paymentCollectedAt)}` : ''}</span>
+            {/* J8-016: gate mark-paid is now reversible like every other gate action. */}
+            <button type="button" className={styles.unpayBtn} disabled={locked || busy} onClick={handleUnmarkPaid}>
+              Un-pay
+            </button>
+          </div>
         ) : (
-          <button type="button" className={styles.markPaidBtn} disabled={locked || busy} onClick={() => onAction('mark_paid', team.id)}>
+          <button type="button" className={styles.markPaidBtn} disabled={locked || busy} onClick={handleMarkPaid}>
             Mark paid {fee ? `· ${formatMoney(fee)}` : ''}
           </button>
         )}

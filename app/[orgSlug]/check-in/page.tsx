@@ -45,24 +45,38 @@ export default function CheckInVolunteerPage() {
 
   const selected = tournaments.find(t => t.id === selectedId) ?? null;
 
+  // J8-015: surface tournament status in the picker so a volunteer isn't silently dropped on a
+  // draft/completed event. (Default already prefers an active event.)
+  const statusSuffix = (s: string) => (s === 'active' ? '' : ` (${s})`);
+  // J8-014: a completed (read-only) or not-yet-active (draft) event gets an explicit banner instead
+  // of a silently-dimmed board.
+  const banner = selected
+    ? selected.status === 'completed'
+      ? 'This tournament is completed — the board is read-only.'
+      : selected.status === 'draft'
+        ? 'This tournament is still in draft — check-in opens when it goes active.'
+        : null
+    : null;
+
   return (
     <div>
       <div className={styles.head}>
         <h1 className={styles.title}>Check-in</h1>
         {tournaments.length > 1 ? (
           <select className={styles.picker} value={selectedId ?? ''} onChange={e => setSelectedId(e.target.value)} aria-label="Tournament">
-            {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}{statusSuffix(t.status)}</option>)}
           </select>
         ) : tournaments.length === 1 && selected ? (
-          <span className={styles.single}>{selected.name}</span>
+          <span className={styles.single}>{selected.name}{statusSuffix(selected.status)}</span>
         ) : null}
       </div>
 
       {loading && <div className={styles.msg}>Loading…</div>}
       {error && <div className={styles.err}>{error}</div>}
       {!loading && !error && tournaments.length === 0 && <div className={styles.msg}>No tournaments to check in for right now.</div>}
+      {!loading && selected && banner && <div className={styles.banner}>{banner}</div>}
       {!loading && selected && (
-        <CheckInBoard orgSlug={orgSlug} tournamentId={selected.id} locked={selected.status === 'completed'} />
+        <CheckInBoard orgSlug={orgSlug} tournamentId={selected.id} locked={selected.status !== 'active'} />
       )}
     </div>
   );

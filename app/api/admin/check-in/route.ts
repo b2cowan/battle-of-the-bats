@@ -77,7 +77,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data: teamRows, error } = await supabaseAdmin
     .from('teams')
-    .select('id, name, division_id, status, payment_status, check_in_status, checked_in_at, checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes')
+    .select('id, name, division_id, status, payment_status, deposit_paid, total_paid, check_in_status, checked_in_at, checked_in_by_name, roster_submitted_at, roster_confirmed_at, payment_collected_at, check_in_notes')
     .eq('tournament_id', tournamentId)
     .eq('status', 'accepted')
     .order('name', { ascending: true });
@@ -104,6 +104,8 @@ export const GET = withObservability(async (req: Request) => {
     divisionId: t.division_id,
     status: t.status,
     paymentStatus: t.payment_status || 'pending',
+    depositPaid: t.deposit_paid ?? null,
+    totalPaid: t.total_paid ?? null,
     checkInStatus: t.check_in_status || 'not_arrived',
     checkedInAt: t.checked_in_at,
     checkedInByName: t.checked_in_by_name,
@@ -138,6 +140,7 @@ export const POST = withObservability(async (req: Request) => {
     teamId?: string;
     notes?: string;
     players?: Array<{ id?: string; name?: string; jerseyNumber?: string; dateOfBirth?: string; position?: string }>;
+    prior?: { paymentStatus?: string; depositPaid?: number | null; totalPaid?: number | null; paymentCollectedAt?: string | null };
   };
   const { action, teamId } = body;
   if (!action || !teamId) return json({ error: 'Missing action or teamId' }, 400);
@@ -200,6 +203,21 @@ export const POST = withObservability(async (req: Request) => {
       const paidPatch = markPaidInFullPatch(feeTeam ?? { division_id: null, deposit_paid: null, total_paid: null }, fee);
       await supabaseAdmin.from('teams').update({
         ...paidPatch, payment_collected_at: now,
+      }).eq('id', teamId);
+      break;
+    }
+    case 'unmark_paid': {
+      // J8-016: reverse a gate "Mark paid" misclick. The owner ruling is "restore the prior
+      // amounts" — the client captured the team's pre-mark { paymentStatus, depositPaid, totalPaid,
+      // paymentCollectedAt } and passes them here, so a team that had a real prior balance is
+      // restored exactly (not blanket-zeroed). Falls back to a clean unpaid state if absent.
+      const p = body.prior ?? {};
+      const restoreStatus = p.paymentStatus === 'paid' ? 'paid' : 'pending';
+      await supabaseAdmin.from('teams').update({
+        payment_status: restoreStatus,
+        deposit_paid: typeof p.depositPaid === 'number' ? p.depositPaid : 0,
+        total_paid: typeof p.totalPaid === 'number' ? p.totalPaid : 0,
+        payment_collected_at: typeof p.paymentCollectedAt === 'string' ? p.paymentCollectedAt : null,
       }).eq('id', teamId);
       break;
     }
