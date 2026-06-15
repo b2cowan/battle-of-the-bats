@@ -59,6 +59,9 @@ function JoinForm() {
   const [selectedBasicTeamId, setSelectedBasicTeamId] = useState('');
   const [checkingSession, setCheckingSession] = useState(Boolean(registrationId));
   const [redirecting, setRedirecting] = useState(false);
+  // Signed-out + an existing account for this registration's email → offer sign-in, not a
+  // redundant second "create account" form (the merged register+account flow already made it).
+  const [existingAccount, setExistingAccount] = useState<{ teamName: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +73,25 @@ function JoinForm() {
         const { getUser } = await import('@/lib/auth');
         const user = await getUser();
         if (!user?.email) {
+          // No session — if this registration's coach already has an account, the page should
+          // ask them to SIGN IN rather than re-collect name/password. Existence is scoped to the
+          // registration's own email (server-side), so this is not an enumeration oracle.
+          if (emailParam) {
+            try {
+              const statusRes = await fetch(
+                `/api/coaches/registration-account-status?registrationId=${encodeURIComponent(registrationId)}&email=${encodeURIComponent(emailParam)}`,
+                { cache: 'no-store' },
+              );
+              if (statusRes.ok) {
+                const status = await statusRes.json() as { accountExists?: boolean; teamName?: string };
+                if (!cancelled && status.accountExists) {
+                  setExistingAccount({ teamName: status.teamName ?? '' });
+                }
+              }
+            } catch {
+              // Fail open to the normal create-account form.
+            }
+          }
           if (!cancelled) setCheckingSession(false);
           return;
         }
@@ -109,7 +131,7 @@ function JoinForm() {
     return () => {
       cancelled = true;
     };
-  }, [registrationId, router, nextParam]);
+  }, [registrationId, router, nextParam, emailParam]);
 
   async function linkRegistrationToTeam(basicCoachTeamId?: string | null) {
     if (!registrationId) return;
@@ -212,6 +234,46 @@ function JoinForm() {
     return (
       <div className={styles.card}>
         <HudSkeleton message={redirecting ? 'OPENING YOUR TEAM...' : 'CHECKING ACCOUNT...'} rows={3} />
+      </div>
+    );
+  }
+
+  // Signed-out, but this registration's coach already has an account (merged register+account
+  // flow, or a returning coach on a new device). Offer SIGN IN — don't re-collect name/password.
+  // Sign-in lands straight on the team record (nextParam = /coaches/tournaments/{id}).
+  if (existingAccount && registrationId) {
+    const existingLoginHref = `/auth/login?next=${encodeURIComponent(nextParam)}${emailParam ? `&email=${encodeURIComponent(emailParam)}` : ''}`;
+    return (
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <div className={styles.iconWrap} style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' }}>
+            <CheckCircle size={20} style={{ color: 'var(--success, #22C55E)' }} />
+          </div>
+          <h1 className={styles.title}>You&apos;re Already Set Up</h1>
+          <p className={styles.sub}>
+            {existingAccount.teamName
+              ? <>Your Coaches Portal account is ready. Sign in to see <strong>{existingAccount.teamName}</strong> and track its status.</>
+              : <>Your Coaches Portal account is ready. Sign in to see your team and track its status.</>}
+          </p>
+        </div>
+        <div className={styles.form}>
+          <Link href={existingLoginHref} className="btn btn-lime" style={{ width: '100%', display: 'block', textAlign: 'center' }}>
+            Sign in to your Coaches Portal
+          </Link>
+        </div>
+        <div className={styles.footer}>
+          <p className={styles.footerText}>
+            Not you, or need a different account?{' '}
+            <button
+              type="button"
+              className={styles.footerLink}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+              onClick={() => setExistingAccount(null)}
+            >
+              Create a new account
+            </button>
+          </p>
+        </div>
       </div>
     );
   }

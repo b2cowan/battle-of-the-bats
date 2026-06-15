@@ -183,8 +183,8 @@ export function registrationConfirmationHtml(p: {
     <p style="color:rgba(241,245,249,0.7);">Your registration is currently <strong style="color:#F59E0B;">pending review</strong>. If payment is required, the organizer will share payment instructions directly. FieldLogicHQ does not process online payments.</p>
     <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Track your registration</p>
-      <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">Create a free FieldLogicHQ account to track your registration status, see your game schedule once it's published, and receive announcements from the organizer.</p>
-      <a href="${joinUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Create Account &amp; Track Registration →</a>
+      <p style="margin:0 0 1rem;color:rgba(241,245,249,0.72);line-height:1.6;">Your free FieldLogicHQ Coaches Portal account is ready. Open it to track your registration status, see your game schedule once it's published, and receive announcements from the organizer.</p>
+      <a href="${joinUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Open your Coaches Portal →</a>
     </div>
   `);
 }

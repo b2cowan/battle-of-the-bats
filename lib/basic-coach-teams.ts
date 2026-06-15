@@ -166,6 +166,50 @@ async function getAuthUserEmail(userId: string): Promise<string | null> {
   return data.user?.email ?? null;
 }
 
+/**
+ * Whether a confirmed auth account already exists for the given (already-normalized) email.
+ * Internal — callers MUST scope the email to something the caller already proved they hold
+ * (e.g. a tournament registration id) so this never becomes a public email-enumeration oracle.
+ */
+async function authAccountExistsForEmail(email: string): Promise<boolean> {
+  const target = normalizeEmail(email);
+  if (!target) return false;
+  // No admin getUserByEmail in this SDK version — list + filter (same pattern as team-org-links).
+  const { data, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+  if (error) throw error;
+  return (data.users ?? []).some(u => normalizeEmail(u.email) === target);
+}
+
+/**
+ * Signed-out-safe resolver for the /coaches/join landing: given a tournament registration id and
+ * the email the email-link asserts, return whether that registration's coach ALREADY has an
+ * account (so the page can offer "sign in" instead of a redundant "create account" form after the
+ * merged register+account flow). Security: the existence check is keyed on the registration's OWN
+ * stored email, and we only answer when the supplied email matches it — so this cannot probe
+ * arbitrary addresses (the caller must hold a real registrationId whose email they already know).
+ * Returns `null` when the registration/email don't line up (treated as "show the normal form").
+ */
+export async function getRegistrationAccountStatus(params: {
+  registrationId: string;
+  email: string;
+}): Promise<{ accountExists: boolean; teamName: string; email: string } | null> {
+  const registrationId = (params.registrationId ?? '').trim();
+  const suppliedEmail = normalizeEmail(params.email);
+  if (!registrationId || !suppliedEmail) return null;
+
+  const { data, error } = await supabaseAdmin
+    .from('teams')
+    .select('id, name, email')
+    .eq('id', registrationId)
+    .maybeSingle();
+  if (error) throw error;
+  // Only answer when the link's email matches the registration's own email — no enumeration.
+  if (!data || normalizeEmail(data.email) !== suppliedEmail) return null;
+
+  const accountExists = await authAccountExistsForEmail(suppliedEmail);
+  return { accountExists, teamName: data.name, email: suppliedEmail };
+}
+
 export async function getBasicCoachTeamsForUser(userId: string): Promise<BasicCoachTeam[]> {
   const { data: memberships, error: membershipError } = await supabaseAdmin
     .from('basic_coach_team_users')
