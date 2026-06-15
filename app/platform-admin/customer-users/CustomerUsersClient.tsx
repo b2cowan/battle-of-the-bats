@@ -553,13 +553,7 @@ export default function CustomerUsersClient({ initialRows, query, total, page, p
 
                       {menuOpen && (
                         <div className={styles.menuList}>
-                          <button className={styles.menuItem} type="button" onClick={() => openNotesModal(row)}>
-                            Notes
-                          </button>
-                          <div className={styles.menuDivider} />
-                          <button className={styles.menuItem} type="button" onClick={() => openEditModal(row)}>
-                            Edit Info
-                          </button>
+                          {/* Triage order: everyday/safe → edits → destructive (last). */}
                           <button className={styles.menuItem} type="button" onClick={() => generateReset(row)}>
                             Reset Password
                           </button>
@@ -574,6 +568,13 @@ export default function CustomerUsersClient({ initialRows, query, total, page, p
                             onClick={() => { setOpenMenuId(null); setConfirmModal({ userId: row.userId, email: row.email, action: 'revoke-sessions' }); }}
                           >
                             Revoke Sessions
+                          </button>
+                          <div className={styles.menuDivider} />
+                          <button className={styles.menuItem} type="button" onClick={() => openEditModal(row)}>
+                            Edit Info
+                          </button>
+                          <button className={styles.menuItem} type="button" onClick={() => openNotesModal(row)}>
+                            Notes
                           </button>
                           <div className={styles.menuDivider} />
                           {row.authStatus !== 'banned' ? (

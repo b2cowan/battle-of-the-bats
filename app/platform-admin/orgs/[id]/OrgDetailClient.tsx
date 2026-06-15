@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './orgDetail.module.css';
 import HelpTooltip from '@/components/help/HelpTooltip';
 
@@ -116,6 +116,8 @@ interface Props {
   stripeSubscriptionId: string | null;
   subscriptionStatus: string;
   isSuperAdmin: boolean;
+  isFreeFloor: boolean;
+  scopeWallHitCount: number;
 }
 
 type TabId = 'support' | 'billing' | 'entitlements' | 'people' | 'activity';
@@ -214,9 +216,25 @@ export default function OrgDetailClient({
   stripeSubscriptionId,
   subscriptionStatus,
   isSuperAdmin,
+  isFreeFloor,
+  scopeWallHitCount,
 }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabId>('support');
+  const searchParams = useSearchParams();
+  // Tab is URL-addressable (?tab=billing) so Retention/cross-team deep-links land on the
+  // right tab and the back button restores it. Falls back to the support tab.
+  const TAB_IDS: TabId[] = ['support', 'billing', 'entitlements', 'people', 'activity'];
+  const tabParam = searchParams.get('tab');
+  const initialTab: TabId = TAB_IDS.includes(tabParam as TabId) ? (tabParam as TabId) : 'support';
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
+
+  function selectTab(tab: TabId) {
+    setActiveTab(tab);
+    // Reflect the tab in the URL without a navigation/scroll jump.
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }
   const [identityName, setIdentityName] = useState(orgName);
   const [identitySlug, setIdentitySlug] = useState(orgSlug);
   const [identityReason, setIdentityReason] = useState('');
@@ -779,7 +797,7 @@ export default function OrgDetailClient({
             role="tab"
             aria-selected={activeTab === tab.id}
             className={`${styles.workflowTab} ${activeTab === tab.id ? styles.workflowTabActive : ''}`}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => selectTab(tab.id)}
           >
             <span>{tab.label}</span>
             {typeof tab.count === 'number' && <span className={styles.tabCount}>{tab.count}</span>}
@@ -1520,6 +1538,15 @@ export default function OrgDetailClient({
 
         {activeTab === 'entitlements' && (
           <section className={styles.section}>
+            {isFreeFloor && (
+              <div className={styles.field}>
+                <span className={styles.fieldLabel}>
+                  League Starter scope-wall hits
+                  <HelpTooltip title="Scope-wall hits" body="How many times this free-floor org hit a paid-tier scope wall — a cap-wall upgrade signal, all-time." />
+                </span>
+                <span className={styles.fieldValue}>{scopeWallHitCount}</span>
+              </div>
+            )}
             <h3 className={styles.sectionTitle}>Module Overrides</h3>
             {!canManageProduct && (
               <p className={styles.emptyNote}>Requires product access to change module overrides.</p>

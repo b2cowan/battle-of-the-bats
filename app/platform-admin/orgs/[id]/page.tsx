@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -53,13 +54,23 @@ async function getOrgDetail(id: string) {
   const { data: org, error } = await supabaseAdmin
     .from('organizations')
     .select(
-      'id, name, slug, plan_id, tournament_limit, subscription_status, subscription_period, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons'
+      'id, name, slug, plan_id, tournament_limit, subscription_status, subscription_period, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, free_floor'
     )
     .eq('id', id)
     .single();
 
   if (error || !org) return null;
   return org;
+}
+
+/** Lifetime scope-wall-hit count for one org (League Starter cap-wall upgrade signal). */
+async function getScopeWallHitCount(orgId: string): Promise<number> {
+  const { count } = await supabaseAdmin
+    .from('platform_events')
+    .select('id', { count: 'exact', head: true })
+    .eq('org_id', orgId)
+    .eq('event_type', 'scope_wall_hit');
+  return count ?? 0;
 }
 
 async function getMembers(orgId: string) {
@@ -296,6 +307,9 @@ export default async function OrgDetailPage({
 
   if (!org) notFound();
 
+  const isFreeFloor = (org.free_floor as string | null) === 'league_starter';
+  // Only pay for the scope-wall count query when the org is actually a free floor.
+  const scopeWallHitCount = isFreeFloor ? await getScopeWallHitCount(id) : 0;
   const enabledAddons = (org.enabled_addons as string[]) ?? [];
   const planCfg = PLAN_CONFIG[org.plan_id as keyof typeof PLAN_CONFIG];
   const planOptions = Object.entries(PLAN_CONFIG).map(([planId, config]) => ({
@@ -353,6 +367,11 @@ export default async function OrgDetailPage({
             <span className={`${styles.headerStatus} ${subscriptionStatus === 'active' ? styles.headerStatusActive : subscriptionStatus === 'trialing' ? styles.headerStatusTrialing : styles.headerStatusMuted}`}>
               {subscriptionStatus}
             </span>
+            {isFreeFloor && (
+              <span className={styles.leagueStarterBadge} title="Free League Starter floor (plan_id stays 'tournament')">
+                League Starter
+              </span>
+            )}
           </div>
           <Link
             href={`/${org.slug}/admin`}
@@ -484,6 +503,8 @@ export default async function OrgDetailPage({
         </div>
       </section>
 
+      {/* Suspense boundary required: OrgDetailClient reads ?tab via useSearchParams. */}
+      <Suspense fallback={null}>
       <OrgDetailClient
         orgId={id}
         orgName={org.name as string}
@@ -506,7 +527,10 @@ export default async function OrgDetailPage({
         stripeSubscriptionId={(org.stripe_subscription_id as string | null) ?? null}
         subscriptionStatus={subscriptionStatus}
         isSuperAdmin={auth?.role === 'super_admin'}
+        isFreeFloor={isFreeFloor}
+        scopeWallHitCount={scopeWallHitCount}
       />
+      </Suspense>
     </div>
   );
 }

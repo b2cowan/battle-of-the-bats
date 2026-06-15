@@ -55,6 +55,19 @@
   padding: 0.15rem 0.5rem;
 }
 
+.leagueStarterBadge {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+  padding: 0.15rem 0.5rem;
+  white-space: nowrap;
+}
+
 .headerStatus {
   font-family: var(--font-data);
   font-size: 0.55rem;

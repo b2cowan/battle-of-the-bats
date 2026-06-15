@@ -164,7 +164,7 @@ export default function RetentionQueueClient({ rows, canManageBilling }: { rows:
             {rows.map(row => (
               <tr key={row.id}>
                 <td>
-                  <Link href={`/platform-admin/orgs/${row.orgId}`} className={styles.orgLink}>
+                  <Link href={`/platform-admin/orgs/${row.orgId}?tab=billing`} className={styles.orgLink}>
                     {row.orgName}
                   </Link>
                 </td>
