@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard, CheckCircle, Calendar, Mail, Eye } from 'lucide-react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { Division, Tournament, TournamentRegistrationField } from '@/lib/types';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
@@ -184,6 +184,7 @@ function downloadTournamentCalendar(tournament: Tournament, url: string) {
  */
 export default function RegisterContent({ isPreview = false }: { isPreview?: boolean }) {
   const params         = useParams();
+  const router         = useRouter();
   const orgSlug        = params.orgSlug as string;
   const tournamentSlug = params.tournamentSlug as string;
 
@@ -447,7 +448,15 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
       const result = await res.json() as { id?: string; status?: 'pending' | 'waitlist' };
       const status = result.status === 'waitlist' ? 'waitlist' : isWaitlist ? 'waitlist' : 'pending';
       // After the merge the registrant is always signed in by this point (account created
-      // inline or already logged in), so their portal is ready and the registration linked.
+      // inline or already logged in) and the registration is linked — so instead of a separate
+      // success screen, drop them STRAIGHT into their Coaches Portal team record. The `welcome=1`
+      // flag triggers the first-run onboarding banner there (what the portal is + pending status
+      // + tournament resources), since most coaches don't know the portal exists until now.
+      // Preview (admin) has no real session/record → keep the inert success card.
+      if (result.id && !isPreview) {
+        router.push(`/coaches/tournaments/${result.id}?welcome=1`);
+        return;
+      }
       setConfirmation({ id: result.id, status, joinHref: '/coaches/tournaments' });
       setStep('success');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -462,6 +471,9 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
   // A logged-in coach registers as themselves — lock the registrant name to their account,
   // but only when the account actually has both name parts (else stay editable).
   const lockRegistrantName = !!signedInCoachEmail && accountHasName;
+  // Registering a SAVED Coaches Portal team — team name + registrant + email are all fixed, so the
+  // form collapses to a read-only summary + the division picker (the only new input).
+  const existingTeamSelected = !!signedInCoachEmail && coachTeamMode === 'existing' && !!selectedBasicTeamId;
 
   const selectedGroup = divisions.find(g => g.id === form.divisionId);
   const isClosed = selectedGroup?.isClosed;
@@ -841,69 +853,97 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
                     </div>
                   )}
 
-                  <div className="form-group" style={{ marginBottom: '1rem' }}>
-                    <label className="form-label">Team Name *</label>
-                    <input
-                      className="form-input"
-                      placeholder="e.g. Milton Thunder"
-                      value={form.teamName}
-                      onChange={e => setForm(f => ({ ...f, teamName: e.target.value }))}
-                      required
-                      disabled={coachTeamMode === 'existing'}
-                      id="reg-team-name"
-                    />
-                  </div>
+                  {/* Existing-team registration: every identity field (team name, registrant,
+                      email) is already locked to the saved team + account, so re-showing them as
+                      disabled inputs is just noise. Collapse to a read-only summary and ask only
+                      for the one thing that's actually new here — the division. */}
+                  {existingTeamSelected ? (
+                    <div className={styles.existingSummary}>
+                      <div className={styles.existingSummaryRow}>
+                        <span className={styles.existingSummaryLabel}>Team</span>
+                        <span className={styles.existingSummaryValue}>{form.teamName}</span>
+                      </div>
+                      <div className={styles.existingSummaryRow}>
+                        <span className={styles.existingSummaryLabel}>Registering as</span>
+                        <span className={styles.existingSummaryValue}>
+                          {`${form.firstName} ${form.lastName}`.trim()}
+                          {signedInCoachEmail ? ` · ${signedInCoachEmail}` : ''}
+                        </span>
+                      </div>
+                      <p className={styles.existingSummaryNote}>
+                        Registering an existing team — you can set the team&apos;s head coach and add
+                        contacts for your coaching staff anytime from your Coaches Portal.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="form-group" style={{ marginBottom: '1rem' }}>
+                        <label className="form-label">Team Name *</label>
+                        <input
+                          className="form-input"
+                          placeholder="e.g. Milton Thunder"
+                          value={form.teamName}
+                          onChange={e => setForm(f => ({ ...f, teamName: e.target.value }))}
+                          required
+                          id="reg-team-name"
+                        />
+                      </div>
 
-                  {/* Registrant — the account user. Their name defaults the team's head
-                      coach (reassignable later in the portal). Locked for logged-in coaches. */}
-                  <div className="form-row form-row-2" style={{ marginBottom: signedInCoachEmail ? '0.4rem' : '1rem' }}>
-                    <div className="form-group">
-                      <label className="form-label">First Name *</label>
-                      <input
-                        className="form-input"
-                        placeholder="First name"
-                        value={form.firstName}
-                        onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))}
-                        required
-                        disabled={lockRegistrantName}
-                        autoComplete="given-name"
-                        id="reg-first-name"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Last Name *</label>
-                      <input
-                        className="form-input"
-                        placeholder="Last name"
-                        value={form.lastName}
-                        onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))}
-                        required
-                        disabled={lockRegistrantName}
-                        autoComplete="family-name"
-                        id="reg-last-name"
-                      />
-                    </div>
-                  </div>
-                  {signedInCoachEmail && (
-                    <p style={{ fontSize: '0.72rem', color: 'var(--data-gray)', margin: '0 0 1rem', lineHeight: 1.5 }}>
-                      You&apos;re registering as yourself — you can set the team&apos;s head coach anytime from your Coaches Portal.
-                    </p>
+                      {/* Registrant — the account user. Their name defaults the team's head
+                          coach (reassignable later in the portal). Locked for logged-in coaches. */}
+                      <div className="form-row form-row-2" style={{ marginBottom: signedInCoachEmail ? '0.4rem' : '1rem' }}>
+                        <div className="form-group">
+                          <label className="form-label">First Name *</label>
+                          <input
+                            className="form-input"
+                            placeholder="First name"
+                            value={form.firstName}
+                            onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))}
+                            required
+                            disabled={lockRegistrantName}
+                            autoComplete="given-name"
+                            id="reg-first-name"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Last Name *</label>
+                          <input
+                            className="form-input"
+                            placeholder="Last name"
+                            value={form.lastName}
+                            onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))}
+                            required
+                            disabled={lockRegistrantName}
+                            autoComplete="family-name"
+                            id="reg-last-name"
+                          />
+                        </div>
+                      </div>
+                      {signedInCoachEmail && (
+                        <p style={{ fontSize: '0.72rem', color: 'var(--data-gray)', margin: '0 0 1rem', lineHeight: 1.5 }}>
+                          You&apos;re registering as yourself — you can set the team&apos;s head coach
+                          and add contacts for your coaching staff anytime from your Coaches Portal.
+                        </p>
+                      )}
+                    </>
                   )}
 
-                  <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
-                    <div className="form-group">
-                      <label className="form-label">Contact Email *</label>
-                      <input
-                        className="form-input"
-                        type="email"
-                        placeholder="coach@example.com"
-                        value={signedInCoachEmail || form.email}
-                        onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                        required
-                        disabled={!!signedInCoachEmail}
-                        id="reg-email"
-                      />
-                    </div>
+                  <div className={existingTeamSelected ? 'form-group' : 'form-row form-row-2'} style={{ marginBottom: '1rem' }}>
+                    {!existingTeamSelected && (
+                      <div className="form-group">
+                        <label className="form-label">Contact Email *</label>
+                        <input
+                          className="form-input"
+                          type="email"
+                          placeholder="coach@example.com"
+                          value={signedInCoachEmail || form.email}
+                          onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                          required
+                          disabled={!!signedInCoachEmail}
+                          id="reg-email"
+                        />
+                      </div>
+                    )}
                     <div className="form-group">
                       <label className="form-label">Division *</label>
                       <div className="select-wrapper">
