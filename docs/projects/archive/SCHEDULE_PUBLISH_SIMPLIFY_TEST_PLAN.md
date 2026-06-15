@@ -105,7 +105,14 @@ Note the test number + what you saw vs. expected. Most likely failure causes to 
 - Still seeing the placeholder radio → browser cached the old page (hard-refresh) OR not on `fix/fp3-volunteer-dayof`.
 - A division won't publish / 400 error → check the dev server log; the API now rejects any visibility other than `published`.
 
-## After QA passes — production apply (do NOT skip)
-- [ ] `node scripts/apply-migration-api.mjs supabase/migrations/129_schedule_visibility_two_state.sql --prod`
-- [ ] `node scripts/refresh-db-snapshots.mjs`
-- [ ] ⚠ `check:migrations` stays green whether or not prod is applied — it cannot see this migration. Apply it manually before the code reaches master, or the public schedule can leak names for any legacy `published_generic` row on prod.
+## Release sequence — migration + deploy MUST be tightly coupled (owner decision 2026-06-15)
+The live prod code (on `master`) still writes `published_teams`/`published_generic` on publish.
+Once mig 129 tightens the CHECK, those writes are **rejected** — so publishing a schedule on
+prod would FAIL in any window where the migration is applied but the new code isn't deployed yet.
+Prod currently has **1 division** (`published_teams`, low traffic), so the window risk is small,
+but the owner chose to **apply the migration at release time, immediately before the deploy**,
+not days ahead. Do these in order, back-to-back:
+- [ ] 1. Apply mig 129 to prod: `node scripts/apply-migration-api.mjs supabase/migrations/129_schedule_visibility_two_state.sql --prod`
+- [ ] 2. **Immediately** deploy the new code to master (the two steps should be seconds apart, not days).
+- [ ] 3. `node scripts/refresh-db-snapshots.mjs` (prod snapshot should now show `('unpublished','published')`).
+- [ ] ⚠ `check:migrations` stays GREEN whether or not mig 129 is applied — it diffs only tables/columns, NOT CHECK clauses, so it is BLIND to this migration. Do **not** rely on it; the apply is a deliberate manual step. Prod data impact when you do apply: 0 `published_generic` rows (nothing reverted), 1 `published_teams` → `published` (harmless rename).
