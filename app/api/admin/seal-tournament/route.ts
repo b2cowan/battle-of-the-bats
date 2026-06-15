@@ -157,15 +157,17 @@ export const POST = withObservability(async (req: Request) => {
     : null;
   const totalTeams = teams.length;
   const totalGames = games.filter((g: any) =>
-    g.status === 'completed' || g.status === 'submitted'
+    g.status === 'completed' || g.status === 'submitted' || g.status === 'forfeit'
   ).length;
 
   let winnerTeamId: string | null = null;
   let winnerTeamName: string | null = null;
   let runnerUpName: string | null = null;
 
+  // A championship final decided by forfeit is a real result — include 'forfeit'
+  // so the sealed archive records the champion instead of leaving it blank (FP-5).
   const finalGame = games.find((g: any) =>
-    g.is_playoff && g.bracket_code === 'FIN' && g.status === 'completed'
+    g.is_playoff && g.bracket_code === 'FIN' && (g.status === 'completed' || g.status === 'forfeit')
   );
 
   if (finalGame) {
