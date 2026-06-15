@@ -13,6 +13,7 @@ import {
   validateTierRanges,
   buildPlaceholderOptions,
   findBracketSchedulingViolations,
+  resolvePlayoffWinner,
   type GeneratedMatchup,
 } from '../../lib/playoff-bracket.ts';
 
@@ -616,5 +617,35 @@ describe('findBracketSchedulingViolations (dependent-before-feeder)', () => {
   it('ignores an unscheduled dependent (no date) — structure-only saves', () => {
     const fin = { code: 'FIN', home: 'Winner SF1', away: 'Winner SF2', date: null, time: null };
     assert.deepEqual(findBracketSchedulingViolations([sf1, sf2, fin]), []);
+  });
+});
+
+// ── resolvePlayoffWinner (J1-083 elimination tie guard) ──────────────────────
+
+describe('resolvePlayoffWinner', () => {
+  const g = (homeScore: number, awayScore: number, status = 'completed') =>
+    ({ homeTeamId: 'home', awayTeamId: 'away', homeScore, awayScore, status });
+
+  it('advances the higher score (home wins)', () => {
+    assert.deepEqual(resolvePlayoffWinner(g(5, 3)), { tie: false, winner: 'home', loser: 'away' });
+  });
+  it('advances the higher score (away wins)', () => {
+    assert.deepEqual(resolvePlayoffWinner(g(2, 7)), { tie: false, winner: 'away', loser: 'home' });
+  });
+  it('reports a tie on equal scores — does NOT silently advance the away team', () => {
+    // The bug: old `home > away ? home : away` advanced 'away' on a 4-4 tie.
+    assert.deepEqual(resolvePlayoffWinner(g(4, 4)), { tie: true });
+    assert.deepEqual(resolvePlayoffWinner(g(0, 0)), { tie: true });
+  });
+  it('a forfeit is never a tie even at equal raw scores (decisive by status)', () => {
+    // Forfeits carry a nominal margin, but assert the guard keys on status too.
+    assert.deepEqual(resolvePlayoffWinner(g(1, 0, 'forfeit')), { tie: false, winner: 'home', loser: 'away' });
+    assert.deepEqual(resolvePlayoffWinner(g(0, 1, 'forfeit')), { tie: false, winner: 'away', loser: 'home' });
+  });
+  it('treats null/undefined scores as 0 → tie', () => {
+    assert.deepEqual(
+      resolvePlayoffWinner({ homeTeamId: 'home', awayTeamId: 'away', homeScore: null, awayScore: null, status: 'completed' }),
+      { tie: true },
+    );
   });
 });

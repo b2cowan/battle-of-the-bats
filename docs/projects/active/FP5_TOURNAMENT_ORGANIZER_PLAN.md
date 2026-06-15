@@ -127,10 +127,10 @@ The J1 audit walked the code 2026-06-10; the tournament section has had heavy wo
 
 ## 5. Status ledger (tick on commit)
 
-- [ ] **J1-083** tie guard on elimination advance — _commit:_
-- [ ] **J1-084** coin-toss re-seed — _commit:_
-- [ ] **J1-091** forfeit action + RF/RA/RD exclusion — _commit:_
-- [ ] **Cluster 1 unit tests** (tie / re-seed / forfeit) — _commit:_
+- [x] **J1-083** tie guard on elimination advance — pure `resolvePlayoffWinner` returns `{tie:true}` on equal non-forfeit scores; `advancePlayoffs` bails (no silent away-advance). _commit: Cluster 1_
+- [x] **J1-084** coin-toss re-seed — extracted `resolveAndFillPlayoffSeeds`; `record-coin-toss` re-runs it so an already-filled bracket re-points. _commit: Cluster 1_
+- [x] **J1-091** forfeit action + RF/RA/RD exclusion — `status='forfeit'` (no migration), `Mark forfeit` in scoring UI, tie-breakers exclude forfeit RF/RA/RD but count W/L; advancement fires on forfeit. _commit: Cluster 1_
+- [x] **Cluster 1 unit tests** — forfeit exclusion (tie-breakers, 3 cases) + `resolvePlayoffWinner` tie guard (5 cases); 106/106 pass. _commit: Cluster 1_
 - [ ] **J1-043** Activate-modal Public URL — _commit:_
 - [ ] **J1-045** contact-privacy resolver on news/rules/home — _commit:_
 - [ ] **J1-103** Archive confirm copy — _commit:_

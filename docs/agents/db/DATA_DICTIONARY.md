@@ -650,7 +650,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`home_score` / `away_score`** (int, nullable until submitted) — setting both + `status='completed'` triggers `advancePlayoffs`.
 
 <!-- dict:col:games.status -->
-**`status`** (text, NOT NULL, default `'scheduled'`) — `scheduled | submitted | completed | cancelled` (`GameStatus`, [lib/types.ts:451](../../../lib/types.ts#L451); app-level enum, no DB CHECK). Advancement runs only when `completed`.
+**`status`** (text, NOT NULL, default `'scheduled'`) — `scheduled | submitted | completed | cancelled | forfeit` (`GameStatus`, [lib/types.ts](../../../lib/types.ts); app-level enum, no DB CHECK). Advancement runs on `completed` **or** `forfeit` (both terminal). A `forfeit` records a nominal win for the present team (higher score = winner, same as `completed`) but the tie-breaker engine excludes forfeits from RF/RA/RD so an invented margin can't poison playoff seeding (FP-5 / J1-091).
 
 <!-- dict:col:games.is_playoff -->
 **`is_playoff`** (bool, default false) — playoff vs round-robin; gates Winner/Loser routing. _Dev/prod drift:_ dev NOT NULL / prod nullable (gotcha 6).

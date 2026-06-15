@@ -151,7 +151,7 @@ export function computeTournamentStandings(
   const groupTeams = teams.filter(t => t.divisionId === divisionId && t.status === 'accepted');
   const groupGames = games.filter(g =>
     g.divisionId === divisionId &&
-    (g.status === 'completed' || g.status === 'submitted') &&
+    (g.status === 'completed' || g.status === 'submitted' || g.status === 'forfeit') &&
     !g.isPlayoff
   );
 
@@ -168,9 +168,16 @@ export function computeTournamentStandings(
       const tScore = isHome ? (g.homeScore || 0) : (g.awayScore || 0);
       const oScore = isHome ? (g.awayScore || 0) : (g.homeScore || 0);
 
-      rf += tScore;
-      ra += oScore;
-      cappedRd += cappedGameDiff(tScore - oScore, runDiffCap);
+      // Forfeits count for W/L (a no-show is a real loss) but the nominal
+      // forfeit margin is invented — excluding it from RF/RA/RD keeps the
+      // run-diff tie-breaker (and the displayed RD column) honest so a forfeit
+      // can't poison playoff seeding. The present team is still the winner
+      // (higher score), so the W/L branch below applies normally.
+      if (g.status !== 'forfeit') {
+        rf += tScore;
+        ra += oScore;
+        cappedRd += cappedGameDiff(tScore - oScore, runDiffCap);
+      }
       if (tScore > oScore) wins++;
       else if (tScore < oScore) losses++;
       else ties++;

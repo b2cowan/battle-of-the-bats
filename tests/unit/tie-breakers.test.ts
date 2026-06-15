@@ -151,6 +151,72 @@ describe('computeTournamentStandings — run-diff cap', () => {
   });
 });
 
+// ── computeTournamentStandings — forfeit (J1-091) ────────────────────────────
+
+describe('computeTournamentStandings — forfeit exclusion', () => {
+  // A forfeit records a nominal win for the present team. The win/loss must
+  // count, but the invented margin must NOT enter RF/RA/RD — otherwise a no-show
+  // would swing the run-diff tie-breaker that decides playoff seeding.
+  it('counts the forfeit as a W/L but excludes its score from RF/RA/RD', () => {
+    const teams = [team('Hawks'), team('Eagles')];
+    // Hawks present, Eagles no-show → status 'forfeit', nominal 1-0.
+    const games = [game('Hawks', 'Eagles', 1, 0, { status: 'forfeit' })];
+    const rows = computeTournamentStandings('D1', teams, games);
+    const hawks = rows.find(r => r.teamId === 'hawks')!;
+    const eagles = rows.find(r => r.teamId === 'eagles')!;
+
+    assert.equal(hawks.w, 1, 'forfeit win counts');
+    assert.equal(hawks.l, 0);
+    assert.equal(eagles.l, 1, 'no-show takes the loss');
+    assert.equal(hawks.gp, 1, 'forfeit counts as a game played');
+
+    assert.equal(hawks.rf, 0, 'forfeit RF excluded');
+    assert.equal(hawks.ra, 0, 'forfeit RA excluded');
+    assert.equal(hawks.rd, 0, 'forfeit RD excluded');
+    assert.equal(hawks.rdRaw, 0, 'forfeit excluded from rdRaw too');
+    assert.equal(eagles.rf, 0);
+    assert.equal(eagles.ra, 0);
+  });
+
+  it('a forfeit does not swing run-diff seeding between two 1-0 teams', () => {
+    // Hawks and Falcons each have one win. Hawks won a real blowout (10-0);
+    // Falcons won by forfeit. Hawks must rank ahead on RD — the forfeit margin
+    // must contribute nothing, so Falcons' RD stays 0 regardless of the nominal.
+    const teams = [team('Hawks'), team('Falcons'), team('Eagles'), team('Doves')];
+    const games = [
+      game('Hawks', 'Eagles', 10, 0),                       // real win
+      game('Falcons', 'Doves', 1, 0, { status: 'forfeit' }), // forfeit win
+    ];
+    const rows = computeTournamentStandings('D1', teams, games);
+    const hawks = rows.find(r => r.teamId === 'hawks')!;
+    const falcons = rows.find(r => r.teamId === 'falcons')!;
+
+    assert.equal(hawks.w, 1);
+    assert.equal(falcons.w, 1);
+    assert.equal(falcons.rd, 0, 'forfeit contributes no run-diff');
+    assert.equal(hawks.rd, 10, 'real win keeps its margin');
+    // Hawks ranks ahead of Falcons (more RD), so the forfeit did not inflate seeding.
+    const hawksIdx = rows.findIndex(r => r.teamId === 'hawks');
+    const falconsIdx = rows.findIndex(r => r.teamId === 'falcons');
+    assert.ok(hawksIdx < falconsIdx, 'Hawks (real blowout) seeds above Falcons (forfeit)');
+  });
+
+  it('includes forfeit games in standings alongside completed/submitted', () => {
+    // A team with one completed win and one forfeit win = 2 GP, 2 W.
+    const teams = [team('Hawks'), team('Eagles'), team('Doves')];
+    const games = [
+      game('Hawks', 'Eagles', 5, 3),                        // completed
+      game('Hawks', 'Doves', 1, 0, { status: 'forfeit' }),  // forfeit
+    ];
+    const rows = computeTournamentStandings('D1', teams, games);
+    const hawks = rows.find(r => r.teamId === 'hawks')!;
+    assert.equal(hawks.gp, 2);
+    assert.equal(hawks.w, 2);
+    assert.equal(hawks.rf, 5, 'only the completed game contributes RF');
+    assert.equal(hawks.ra, 3, 'only the completed game contributes RA');
+  });
+});
+
 // ── computeTournamentStandings — coin toss ───────────────────────────────────
 
 describe('computeTournamentStandings — coin toss', () => {

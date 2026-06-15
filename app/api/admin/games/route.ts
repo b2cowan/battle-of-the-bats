@@ -18,6 +18,7 @@ import {
   submitTournamentScore,
   TournamentScoringError,
 } from '@/lib/tournament-scoring-service';
+import { updateGame } from '@/lib/db';
 
 function tournamentLockedResponse() {
   return new Response(
@@ -627,6 +628,39 @@ export const PATCH = withObservability(async (req: Request) => {
       if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
       const { error } = await supabase.from('games').update({ status: 'scheduled' }).eq('id', id);
       if (error) throw error;
+    }
+
+    // ── forfeit (no-show → present team wins) ────────────────────────────────
+    // Records status='forfeit' with a nominal win for the present team. The
+    // forfeit margin is excluded from RF/RA/RD in the tie-breaker engine so it
+    // can't poison seeding (J1-091), but still counts as a W/L. Routed through
+    // updateGame (not a raw status write) so playoff advancement / seed
+    // re-resolution fires, exactly like a completed game.
+    else if (action === 'forfeit') {
+      if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) return forbidden();
+      const winningSide = body.winningSide;
+      if (winningSide !== 'home' && winningSide !== 'away') {
+        return new Response(JSON.stringify({ error: "winningSide must be 'home' or 'away'" }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      // Nominal forfeit margin — cosmetic only, since RF/RA/RD ignore forfeits.
+      const FORFEIT_SCORE = 1;
+      await updateGame(id, {
+        status: 'forfeit',
+        homeScore: winningSide === 'home' ? FORFEIT_SCORE : 0,
+        awayScore: winningSide === 'away' ? FORFEIT_SCORE : 0,
+      }, { admin: true });
+      notify({
+        orgId: ctx.org.id,
+        tournamentId: gameRow.tournamentId,
+        eventType: 'score_submitted',
+        title: 'Game forfeited',
+        body: `Marked forfeit by ${ctx.user.email ?? 'an admin'} (${winningSide} team advances)`,
+        link: `/${ctx.org.slug}/admin/tournaments/schedule?tournamentId=${gameRow.tournamentId}`,
+        excludeUserIds: [ctx.user.id],
+      }).catch(console.error);
     }
 
     // ── submit-score ─────────────────────────────────────────────────────────
