@@ -100,6 +100,8 @@ See `SCHEDULE_PUBLISH_SIMPLIFY_PM_BRIEF.md` (same folder).
 
 **⚠ Dev-server restart required before browser QA** — this change touches shared modules (`lib/types.ts`, `lib/email.ts`), `proxy`-independent API routes, and adds a migration. Stop the dev server, `rm -rf .next`, `npm run dev`, wait for "✓ Ready". (Migration 129 is already applied to dev.)
 
+**📋 Full step-by-step browser test plan:** `SCHEDULE_PUBLISH_SIMPLIFY_TEST_PLAN.md` (same folder) — 9 numbered tests with exact login (`owner@dev.local`), test tournament (Crimson Cup / `branded-light`), expected results, and the prod-apply checklist. Use that for the actual QA pass.
+
 ### Manual browser QA checklist (owner / user performs)
 Suggested test data: a tournament with at least one division that has **registration open** + accepted teams, and ideally a second **unpublished** division for the negative case. Free-tier login if needed: `free-owner@dev.local` / `devpass123`.
 
