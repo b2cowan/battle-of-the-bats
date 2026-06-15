@@ -445,9 +445,13 @@ export async function cancelScheduledEmailForRecipient(
 // Per-email recipient counts for the platform-admin Email dashboard. These mirror
 // the org-level filters the send route (app/api/admin/email/send) applies when it
 // resolves each audience, so the displayed count tracks the actual send. Like the
-// dashboard's existing global count, these are qualifying-ORG counts (founding
-// orgs minus opt-outs) and don't verify owner/email existence per org — the send
-// excludes the rare ownerless org, so the real send can be slightly lower.
+// dashboard's existing global count, these are qualifying counts that don't resolve
+// the recipient's email the way the send does: the founding/not-on-club counts
+// count orgs without verifying the owner has a resolvable email, and the coaches
+// count counts distinct coach users without verifying each has an auth email. The
+// send drops recipients with no resolvable email, so the real send can be slightly
+// LOWER than these counts — never higher. (An over-count is the safe direction:
+// the operator never under-estimates a blast.)
 
 const FOUNDING_SEASON_EXPIRES = '2027-01-01T00:00:00.000Z';
 

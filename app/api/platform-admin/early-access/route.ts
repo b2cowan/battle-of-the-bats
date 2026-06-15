@@ -22,8 +22,11 @@ export const GET = withObservability(async (req: NextRequest) => {
     .from('early_access_leads')
     .select(EARLY_ACCESS_SELECT, { count: 'exact' })
     // Overdue/soonest follow-ups first (nulls last), then newest leads.
+    // `id` is the final, unique tiebreaker so offset pagination is stable
+    // across requests when follow_up_due_at + created_at tie.
     .order('follow_up_due_at', { ascending: true, nullsFirst: false })
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: true });
 
   if (filters.q) {
     const pattern = `%${filters.q}%`;
