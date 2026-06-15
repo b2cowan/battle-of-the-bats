@@ -1016,7 +1016,7 @@ export function orgMemberAddedHtml(p: {
   scorekeeperNote?: boolean;
 }) {
   const note = p.scorekeeperNote
-    ? 'Sign in to open Scorekeeper View and submit assigned game results.'
+    ? 'Sign in to open Scorekeeper View and submit game results.'
     : 'No action is required — just sign in to get started.';
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">You've been added to ${p.orgName}</h2>

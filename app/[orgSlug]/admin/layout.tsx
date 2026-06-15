@@ -52,6 +52,14 @@ export default async function AdminLayout({
     redirect(`/${authCtx.org.slug}/admin`);
   }
 
+  // J8-019: an `official` (scorekeeper) has no admin module capabilities, so the admin hub renders
+  // a blank zero-tile dead-end for them. Send them to their actual surface instead of the empty
+  // shell. (Org-level role→surface routing for other roles is FP-7's call; this is the shell fix
+  // for the one role that can never use the admin hub.)
+  if (authCtx.role === 'official') {
+    redirect(`/${orgSlug}/scorekeeper`);
+  }
+
   return (
     <OrgProvider
       initialOrg={authCtx.org}

@@ -21,7 +21,7 @@ import styles from './members.module.css';
 const ROLE_INVITE_DESCRIPTIONS: Record<'admin' | 'staff' | 'official', string> = {
   admin: 'Tournament architect — can create tournaments, define divisions, manage registrations, build schedules, manage contacts and venues, post rules, send communications, and manage members. Cannot access org settings or subscription.',
   staff: 'Tournament operator — updates game times and venue assignments during events, submits scores, and posts announcements. Cannot create or delete tournaments, manage registrations, or send communications.',
-  official: 'Score entry only. Scorekeepers receive a direct link to the scorekeeper app and can submit results from their assigned fields. They do not access the main admin area.',
+  official: 'Score entry only. Scorekeepers receive a direct link to the scorekeeper app and submit game results there. They do not access the main admin area.',
 };
 
 const ROLE_MATRIX: { label: string; owner: boolean; admin: boolean; staff: boolean; official: boolean }[] = [
@@ -87,7 +87,7 @@ const ROLE_TOOLTIP: Record<OrgRole, string> = {
   league_admin:     'Manages house league seasons, registrations, teams, and schedules.',
   league_registrar: 'Reviews and processes house league registrations only.',
   coach:            'Accesses the Coaches Portal for their assigned rep team. Cannot access the admin panel.',
-  official:         'Submits scores for assigned games only through the scorekeeper app.',
+  official:         'Submits game scores through the scorekeeper app.',
 };
 
 const ROLE_BADGE: Record<OrgRole, string> = {

@@ -305,7 +305,7 @@ export async function getScore(req: Request, { params }: Params) {
       tournamentIds,
       emptyState(
         'no_games_today',
-        'No assigned games today',
+        'No games today',
         'Your tournament access is set, but there are no games scheduled for today.',
       ),
       scorePolicyByTournamentId,
