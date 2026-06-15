@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
+  Info,
   MapPin,
   RefreshCw,
   Save,
@@ -286,6 +287,14 @@ export default function ScorekeeperPage() {
     });
   }, [cards, divisionFilter, fieldFilter, statusFilter, teamSearch]);
 
+  // J8-006: the "now" signal. Cards are time-ordered; the first un-scored (scheduled) game is the
+  // one the volunteer should score next. Marking it gives a glance-able NOW indicator instead of an
+  // undifferentiated stack of identical cards.
+  const nowCardId = useMemo(
+    () => visibleCards.find(card => card.game.status === 'scheduled')?.game.id ?? null,
+    [visibleCards],
+  );
+
   const hasFilters = Boolean(fieldFilter || divisionFilter || teamSearch || statusFilter !== 'open');
   const selectedPolicyRequiresReview = editingCard
     ? scorePolicies[editingCard.game.tournamentId] ?? false
@@ -528,11 +537,13 @@ export default function ScorekeeperPage() {
               card.divisionName,
             ].filter(Boolean).join(' - ');
 
+            const isNow = game.id === nowCardId;
+
             return (
               <button
                 key={game.id}
                 type="button"
-                className={`${styles.gameCard} ${styles[`gameCard_${game.status}`] ?? ''}`}
+                className={`${styles.gameCard} ${styles[`gameCard_${game.status}`] ?? ''} ${isNow ? styles.gameCardNow : ''}`}
                 onClick={() => openScoreEntry(card)}
                 disabled={!editable}
               >
@@ -540,9 +551,13 @@ export default function ScorekeeperPage() {
                   <MapPin size={13} />
                   {meta}
                 </span>
-                <span className={`${styles.statusBadge} ${styles[`status_${game.status}`] ?? ''}`}>
-                  {statusLabel(game.status)}
-                </span>
+                {isNow
+                  ? <span className={styles.nowBadge}>Up next</span>
+                  : (
+                    <span className={`${styles.statusBadge} ${styles[`status_${game.status}`] ?? ''}`}>
+                      {statusLabel(game.status)}
+                    </span>
+                  )}
 
                 <span className={styles.matchup}>
                   <span className={styles.teamBlock}>
@@ -593,30 +608,44 @@ export default function ScorekeeperPage() {
               </button>
             </div>
 
+            {/* J8-007: high-contrast inputs + thumb steppers — the most critical field moment.
+                A never-trained volunteer can tap −/+ without a keyboard; the input stays editable. */}
             <div className={styles.scoreGrid}>
               <label>
                 <span>{editingCard.homeName}</span>
-                <input
-                  autoFocus
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  value={homeScore}
-                  onChange={event => setHomeScore(event.target.value.replace(/\D/g, ''))}
-                  className={showScoreErrors && homeScore === '' ? styles.inputError : ''}
-                />
+                <div className={styles.scoreStepper}>
+                  <button type="button" className={styles.stepBtn} aria-label={`Decrease ${editingCard.homeName} score`}
+                    onClick={() => setHomeScore(v => String(Math.max(0, (parseInt(v || '0', 10) || 0) - 1)))}>−</button>
+                  <input
+                    autoFocus
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    value={homeScore}
+                    onChange={event => setHomeScore(event.target.value.replace(/\D/g, ''))}
+                    className={`${styles.scoreInput} ${showScoreErrors && homeScore === '' ? styles.inputError : ''}`}
+                  />
+                  <button type="button" className={styles.stepBtn} aria-label={`Increase ${editingCard.homeName} score`}
+                    onClick={() => setHomeScore(v => String((parseInt(v || '0', 10) || 0) + 1))}>+</button>
+                </div>
               </label>
               <span className={styles.scoreDivider}>-</span>
               <label>
                 <span>{editingCard.awayName}</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  value={awayScore}
-                  onChange={event => setAwayScore(event.target.value.replace(/\D/g, ''))}
-                  className={showScoreErrors && awayScore === '' ? styles.inputError : ''}
-                />
+                <div className={styles.scoreStepper}>
+                  <button type="button" className={styles.stepBtn} aria-label={`Decrease ${editingCard.awayName} score`}
+                    onClick={() => setAwayScore(v => String(Math.max(0, (parseInt(v || '0', 10) || 0) - 1)))}>−</button>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    value={awayScore}
+                    onChange={event => setAwayScore(event.target.value.replace(/\D/g, ''))}
+                    className={`${styles.scoreInput} ${showScoreErrors && awayScore === '' ? styles.inputError : ''}`}
+                  />
+                  <button type="button" className={styles.stepBtn} aria-label={`Increase ${editingCard.awayName} score`}
+                    onClick={() => setAwayScore(v => String((parseInt(v || '0', 10) || 0) + 1))}>+</button>
+                </div>
               </label>
             </div>
 
@@ -624,12 +653,17 @@ export default function ScorekeeperPage() {
               <p className={styles.formError}>Both scores are required.</p>
             )}
 
-            <p className={styles.policyNote}>
-              {editingCard.game.status === 'submitted'
-                ? 'This replaces the pending score before an admin finalizes it.'
-                : selectedPolicyRequiresReview
-                  ? 'This tournament requires admin review before scores become final.'
-                  : 'This score becomes final immediately after saving.'}
+            {/* J8-008: the consequence note was grey body text wedged above the button — skippable
+                under pressure. Now an iconed, separated callout so the volunteer reads it before saving. */}
+            <p className={styles.policyNote} data-tone={selectedPolicyRequiresReview ? 'review' : 'final'}>
+              <Info size={15} aria-hidden />
+              <span>
+                {editingCard.game.status === 'submitted'
+                  ? 'This replaces the pending score before an admin finalizes it.'
+                  : selectedPolicyRequiresReview
+                    ? 'This tournament requires admin review before scores become final.'
+                    : 'This score becomes final immediately after saving.'}
+              </span>
             </p>
 
             <div className={styles.sheetActions}>
