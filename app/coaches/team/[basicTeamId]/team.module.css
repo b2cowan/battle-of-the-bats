@@ -45,6 +45,9 @@
   border-radius: var(--radius);
   box-shadow: var(--highlight-top);
   border: 1px solid color-mix(in srgb, var(--team-color, var(--logic-lime)) 30%, transparent);
+  /* Explicit surface base so the gradient's transparent zone reads as --surface
+     even if the band is ever placed on a non-surface parent. */
+  background-color: var(--surface);
   background-image: linear-gradient(
     135deg,
     color-mix(in srgb, var(--team-color, var(--logic-lime)) 18%, transparent),
@@ -128,6 +131,8 @@
   .identityMonogram {
     width: 44px;
     height: 44px;
+    /* Owner Decision 4: --font-display at >=52px, --font-data at <=44px. */
+    font-family: var(--font-data, monospace);
     font-size: 1.05rem;
   }
 
