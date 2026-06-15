@@ -122,7 +122,7 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
     history.length === 0;
 
   return (
-    <div className={shared.page}>
+    <div className={`${shared.page} ${styles.pageWide}`}>
       <nav className={styles.breadcrumb}>
         <Link href={COACHES_HOME_PATH}>Back to Coaches Portal</Link>
       </nav>
@@ -179,6 +179,9 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         </section>
       )}
 
+      {/* Theme 3 (density 4a): the four primary editors reflow 2-up on desktop
+          (Roster+Schedule, then Fees+Announcements); single-column ≤960px. */}
+      <div className={styles.contentGrid}>
       {/* Master roster — the coach's primary owned data; leads the page. Identity only
           (name / jersey / optional contact / consent-gated DOB) — attendance, lineups, and
           positions stay Premium. The per-tournament roster submission is a later phase. */}
@@ -230,6 +233,7 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
           initialRecipientSummary={announcementRecipientSummary}
         />
       </section>
+      </div>
 
       {/* Scope ceiling - no checkout or unlock. Coaches can flag interest in tools that stay outside Basic. */}
       <section className={shared.section}>

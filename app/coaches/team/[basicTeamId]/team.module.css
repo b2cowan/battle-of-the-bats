@@ -2,6 +2,37 @@
    Shipped design-system tokens only (no ghost --text-* / --surface-3). Shares the
    page/header/card primitives from ../../coaches-portal.module.css. */
 
+/* Theme 3 (density): widen the standalone home past the shared 960px so the
+   editors can reflow 2-up on desktop. Applied as a second class on the shared
+   .page element; the higher-specificity compound selector guarantees it wins
+   over coaches-portal's .page { max-width: 960px } regardless of module order. */
+.pageWide.pageWide {
+  max-width: 1200px;
+}
+
+/* Theme 3 (density 4a): pair the four editor sections 2-up on desktop. Roster +
+   Schedule (the primary objects) lead; Fees + Announcements (the derivatives)
+   follow. The first-run banner, scope-ceiling, and tournament history stay
+   full-width OUTSIDE this grid. 700–960px and mobile stay single-column. */
+.contentGrid {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 961px) {
+  .contentGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* The grid gap owns the spacing between editor sections — drop the per-section
+   bottom margin so 2-up rows don't accumulate a double gap. */
+.contentGrid > * {
+  margin-bottom: 0;
+}
+
 .breadcrumb {
   margin-bottom: 1rem;
   font-size: 0.82rem;

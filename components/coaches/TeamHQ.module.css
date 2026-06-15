@@ -66,6 +66,8 @@
   color: var(--white-60);
   font-size: 0.76rem;
   line-height: 1.35;
+  /* Theme 3 (D-1): long "Next event" labels must wrap, not clip the tile. */
+  overflow-wrap: anywhere;
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
@@ -79,6 +81,16 @@
 
   .hqItem {
     min-height: 0;
+  }
+
+  /* Theme 3 (D-1) legibility floor — on a 1-col mobile tile the value/label have
+     room to grow: value ≥1.25rem, label ≥0.7rem (was 1.08rem / 0.64rem). */
+  .hqLabel {
+    font-size: 0.7rem;
+  }
+
+  .hqItem strong {
+    font-size: 1.25rem;
   }
 }
 
@@ -269,6 +281,21 @@
   list-style: none;
 }
 
+/* Theme 3 (D-3): 2-up the checklist on desktop now that Theme 1 froze the per-phase
+   row counts (game-day = 3, result = none). Drop margin-left:auto in 2-col so the
+   state sits under its label; the 1-col rule below restores the right-alignment. */
+@media (min-width: 720px) {
+  .checklist {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem 1.5rem;
+  }
+
+  .checkState {
+    margin-left: 0;
+  }
+}
+
 .checkItem {
   display: flex;
   align-items: center;
@@ -298,7 +325,10 @@
 
 .checkState {
   margin-left: auto;
-  color: var(--white-40);
+  /* Theme 3 (D-3): never --white-40 for a value the coach must read + act on.
+     Not-started/owed reads at --white-60; done lifts to --white-60 too; an
+     awaiting (clock) milestone is the actionable one → --warning. */
+  color: var(--white-60);
   font-family: var(--font-data, monospace);
   font-size: 0.78rem;
   letter-spacing: 0.02em;
@@ -306,6 +336,10 @@
 
 .checkItemDone .checkState {
   color: var(--white-60);
+}
+
+.checkItemAwaiting .checkState {
+  color: var(--warning);
 }
 
 .heroContact {

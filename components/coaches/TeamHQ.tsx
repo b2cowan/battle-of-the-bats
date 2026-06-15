@@ -169,7 +169,10 @@ function Checklist({ items }: { items: ChecklistItem[] }) {
   return (
     <ul className={styles.checklist}>
       {items.map(item => (
-        <li key={item.key} className={`${styles.checkItem} ${item.done ? styles.checkItemDone : ''}`}>
+        <li
+          key={item.key}
+          className={`${styles.checkItem} ${item.done ? styles.checkItemDone : item.awaiting ? styles.checkItemAwaiting : ''}`}
+        >
           <span className={styles.checkIcon}>
             {item.done ? (
               <CheckCircle2 size={16} aria-hidden />
