@@ -223,4 +223,86 @@ test.describe('tournament scoring service', () => {
       },
     ])
   })
+
+  // ── Forfeit lifecycle (FP-5 / J1-091): rides the same submit→finalize rule ──
+
+  test('a field volunteer forfeit lands PENDING when finalization is required (does not advance)', async () => {
+    const { service, updates } = createHarness({
+      game: { tournamentId: 'tournament-1', status: 'scheduled', homeTeamId: 'home', awayTeamId: 'away' } as TournamentScoreGame,
+      requiresFinalization: true,
+    })
+
+    await expect(service.submitForfeit({
+      gameId: 'game-1',
+      winningSide: 'home',
+      actor: actor('official'),
+    })).resolves.toEqual({ status: 'submitted', pending: true })
+
+    // status 'submitted' (not 'forfeit') → advancePlayoffs won't fire yet.
+    expect(updates[0].game).toMatchObject({
+      status: 'submitted',
+      scoreSubmissionSource: 'forfeit',
+      homeScore: 1,
+      awayScore: 0,
+    })
+  })
+
+  test('an admin forfeit is final immediately even when finalization is required', async () => {
+    const { service, updates } = createHarness({
+      game: { tournamentId: 'tournament-1', status: 'scheduled', homeTeamId: 'home', awayTeamId: 'away' } as TournamentScoreGame,
+      requiresFinalization: true,
+    })
+
+    await expect(service.submitForfeit({
+      gameId: 'game-1',
+      winningSide: 'away',
+      actor: actor('admin', { email: 'admin@example.test' }),
+    })).resolves.toEqual({ status: 'forfeit', pending: false })
+
+    expect(updates[0].game).toMatchObject({ status: 'forfeit', awayScore: 1, homeScore: 0 })
+  })
+
+  test('forfeit is final immediately for everyone when finalization is disabled', async () => {
+    const { service, updates } = createHarness({
+      game: { tournamentId: 'tournament-1', status: 'scheduled', homeTeamId: 'home', awayTeamId: 'away' } as TournamentScoreGame,
+      requiresFinalization: false,
+    })
+
+    await expect(service.submitForfeit({
+      gameId: 'game-1',
+      winningSide: 'home',
+      actor: actor('official'),
+    })).resolves.toEqual({ status: 'forfeit', pending: false })
+
+    expect(updates[0].game.status).toBe('forfeit')
+  })
+
+  test('forfeit refuses a cancelled game, an already-final game, and a TBD matchup', async () => {
+    const cancelled = createHarness({ game: { tournamentId: 'tournament-1', status: 'cancelled', homeTeamId: 'h', awayTeamId: 'a' } as TournamentScoreGame })
+    await expect(cancelled.service.submitForfeit({ gameId: 'game-1', winningSide: 'home', actor: actor('admin') })).rejects.toThrow(/cancelled/)
+
+    const done = createHarness({ game: { tournamentId: 'tournament-1', status: 'completed', homeTeamId: 'h', awayTeamId: 'a' } as TournamentScoreGame })
+    await expect(done.service.submitForfeit({ gameId: 'game-1', winningSide: 'home', actor: actor('admin') })).rejects.toThrow(/finalized/)
+
+    const tbd = createHarness({ game: { tournamentId: 'tournament-1', status: 'scheduled', homeTeamId: null, awayTeamId: 'a' } as TournamentScoreGame })
+    await expect(tbd.service.submitForfeit({ gameId: 'game-1', winningSide: 'home', actor: actor('admin') })).rejects.toThrow(/Both teams/)
+  })
+
+  test('finalizing a PENDING forfeit promotes it to forfeit (not completed)', async () => {
+    const { service, updates } = createHarness({
+      game: { tournamentId: 'tournament-1', status: 'submitted', scoreSubmissionSource: 'forfeit' } as TournamentScoreGame,
+    })
+
+    await expect(service.finalizeTournamentScore('game-1')).resolves.toEqual({ status: 'forfeit' })
+    expect(updates[0].game.status).toBe('forfeit')
+  })
+
+  test('finalizing a normal submitted score still promotes it to completed', async () => {
+    const { service, updates } = createHarness({
+      game: { tournamentId: 'tournament-1', status: 'submitted', scoreSubmissionSource: 'scorekeeper' } as TournamentScoreGame,
+    })
+
+    await expect(service.finalizeTournamentScore('game-1')).resolves.toEqual({ status: 'completed' })
+    expect(updates[0].game.status).toBe('completed')
+  })
 })

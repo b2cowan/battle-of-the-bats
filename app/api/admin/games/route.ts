@@ -15,6 +15,7 @@ import {
   finalizeTournamentScore,
   loadTournamentScoreGame,
   revertTournamentScore,
+  submitForfeit,
   submitTournamentScore,
   TournamentScoringError,
 } from '@/lib/tournament-scoring-service';
@@ -627,6 +628,48 @@ export const PATCH = withObservability(async (req: Request) => {
       if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
       const { error } = await supabase.from('games').update({ status: 'scheduled' }).eq('id', id);
       if (error) throw error;
+    }
+
+    // ── forfeit (no-show → present team wins) ────────────────────────────────
+    // Rides the SAME submit→finalize approval rule as a score (submitForfeit):
+    // a field volunteer's forfeit in an org that requires finalization lands as
+    // PENDING (status 'submitted', source 'forfeit') and does NOT advance the
+    // bracket until an owner/admin approves it via 'finalize'; an admin's forfeit
+    // — or any forfeit where the org doesn't require finalization — is final
+    // immediately (status 'forfeit'). 'submit_scores' is enough to PROPOSE; the
+    // approval gate is 'finalize' (seal_tournaments). Forfeits count W/L but are
+    // excluded from RF/RA/RD in the tie-breaker engine (J1-091).
+    else if (action === 'forfeit') {
+      if (!hasCapability(ctx.role, ctx.capabilities, 'submit_scores')) return forbidden();
+      const winningSide = body.winningSide;
+      if (winningSide !== 'home' && winningSide !== 'away') {
+        return new Response(JSON.stringify({ error: "winningSide must be 'home' or 'away'" }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      const { pending } = await submitForfeit({
+        gameId: id,
+        game: gameRow,
+        winningSide,
+        actor: {
+          userId: ctx.user.id,
+          email: ctx.user.email ?? null,
+          role: ctx.role,
+          orgRequireScoreFinalization: ctx.org.requireScoreFinalization,
+        },
+      });
+      notify({
+        orgId: ctx.org.id,
+        tournamentId: gameRow.tournamentId,
+        eventType: 'score_submitted',
+        title: pending ? 'Forfeit pending approval' : 'Game forfeited',
+        body: pending
+          ? `${ctx.user.email ?? 'A scorekeeper'} marked a forfeit (${winningSide} team) — needs admin approval`
+          : `Marked forfeit by ${ctx.user.email ?? 'an admin'} (${winningSide} team advances)`,
+        link: `/${ctx.org.slug}/admin/tournaments/schedule?tournamentId=${gameRow.tournamentId}`,
+        excludeUserIds: [ctx.user.id],
+      }).catch(console.error);
     }
 
     // ── submit-score ─────────────────────────────────────────────────────────

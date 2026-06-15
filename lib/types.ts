@@ -617,8 +617,16 @@ export interface TournamentRegistrationFieldAnswer {
   field?: TournamentRegistrationField;
 }
 
-export type GameStatus = 'scheduled' | 'submitted' | 'completed' | 'cancelled';
-export type ScoreSubmissionSource = 'scorekeeper' | 'admin_results' | 'system';
+// 'forfeit' is a terminal, app-level status (no DB CHECK on games.status).
+// A forfeit records a nominal win for the present team (higher score = winner,
+// same as a completed game, so W/L and bracket advancement read it identically),
+// but the tie-breaker engine EXCLUDES forfeits from RF/RA/RD so invented margins
+// can't poison playoff seeding. See lib/tie-breakers.ts and advancePlayoffs.
+export type GameStatus = 'scheduled' | 'submitted' | 'completed' | 'cancelled' | 'forfeit';
+// 'forfeit' (as a source) marks a result entered as a forfeit. It rides the same
+// submit→finalize lifecycle as a score: a PENDING forfeit is status 'submitted'
+// with source 'forfeit'; once an admin approves it, it becomes status 'forfeit'.
+export type ScoreSubmissionSource = 'scorekeeper' | 'admin_results' | 'system' | 'forfeit';
 
 export interface Game {
   id: string;

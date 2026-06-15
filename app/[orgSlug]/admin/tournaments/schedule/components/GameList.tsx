@@ -29,6 +29,8 @@ interface GameListProps {
   onToggleGeneratorLock?: (id: string, nextLocked: boolean) => void;
   onSave?: (gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder: string; awayPlaceholder: string }) => Promise<void>;
   onSaveScore?: (gameId: string, homeScore: number, awayScore: number) => Promise<void>;
+  /** Mark a game a forfeit; winningSide is the team that showed up and advances. */
+  onForfeit?: (gameId: string, winningSide: 'home' | 'away') => Promise<void>;
   onCreateVenue?: () => void;
   mode: 'planning' | 'scoring';
   /** When true, only render games that currently have a venue conflict (planning triage). */
@@ -54,7 +56,7 @@ function parseGameStart(date?: string | null, time?: string | null): number {
 
 export default function GameList({
   games, teams, divisions, venues, viewMode, groupByPool, pools: poolsProp,
-  onEdit, onPlayoffEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onCreateVenue, mode, conflictsOnly = false, tournament
+  onEdit, onPlayoffEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onForfeit, onCreateVenue, mode, conflictsOnly = false, tournament
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editState, setEditState] = useState<Record<string, EditFields>>({});
@@ -295,11 +297,16 @@ export default function GameList({
     return result;
   }, [expanded, editState, games, divisions, tournament, mode]);
 
-  function statusBadge(status: string) {
+  function statusBadge(status: string, source?: string | null) {
     // A passive status label — deliberately borderless (no button-like box) so it
     // never reads as the clickable Finalize control beside it.
+    // A PENDING forfeit is status 'submitted' with source 'forfeit' — label it as
+    // a forfeit awaiting approval so it never reads as a real played score.
+    const pendingForfeit = status === 'submitted' && source === 'forfeit';
     const cfg =
       status === 'completed' ? { label: '✓ Final', tone: 'completed' }
+      : status === 'forfeit' ? { label: '⚑ Forfeit', tone: 'completed' }
+      : pendingForfeit ? { label: '⚑ Forfeit — Pending', tone: 'submitted' }
       : status === 'submitted' ? { label: '⚠ Pending Review', tone: 'submitted' }
       : status === 'cancelled' ? { label: '✕ Cancelled', tone: 'cancelled' }
       : { label: 'Scheduled', tone: 'scheduled' };
@@ -309,7 +316,7 @@ export default function GameList({
   const renderRow = (g: Game) => {
     const isExpanded = expanded.has(g.id);
     const hasScoredResult = mode === 'scoring'
-      && (g.status === 'completed' || g.status === 'submitted')
+      && (g.status === 'completed' || g.status === 'submitted' || g.status === 'forfeit')
       && g.homeScore != null
       && g.awayScore != null;
     const scoreAuditSummary = hasScoredResult
@@ -356,6 +363,32 @@ export default function GameList({
           setScoreSaving(prev => { const next = new Set(prev); next.delete(g.id); return next; });
         }
       };
+
+      const handleForfeit = async (winningSide: 'home' | 'away') => {
+        if (!onForfeit) return;
+        setScoreSaving(prev => new Set(prev).add(g.id));
+        setScoreErrors(prev => { const n = { ...prev }; delete n[g.id]; return n; });
+        try {
+          await onForfeit(g.id, winningSide);
+          setScoreState(prev => { const n = { ...prev }; delete n[g.id]; return n; });
+          setExpanded(prev => { const next = new Set(prev); next.delete(g.id); return next; });
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'Forfeit failed — please try again.';
+          setScoreErrors(prev => ({ ...prev, [g.id]: msg }));
+        } finally {
+          setScoreSaving(prev => { const next = new Set(prev); next.delete(g.id); return next; });
+        }
+      };
+
+      // Forfeit is offered only on a game with no recorded result yet (scheduled),
+      // and only when both teams are known (a TBD/placeholder bracket slot can't
+      // forfeit). A game that's already submitted/completed/forfeit is resolved via
+      // Finalize/Revert, not a fresh forfeit. The winning side is the team that
+      // showed up; the loser is the no-show.
+      const canForfeit = Boolean(onForfeit) && !!g.homeTeamId && !!g.awayTeamId
+        && g.status === 'scheduled';
+      const homeLabel = resolveTeam(g.homeTeamId ?? '', g.homePlaceholder);
+      const awayLabel = resolveTeam(g.awayTeamId ?? '', g.awayPlaceholder);
 
       return (
         <div key={g.id} className={`${s.row} ${styles.scoringRow}`} data-status={g.status} data-live={liveStates.get(g.id) ?? undefined}>
@@ -475,7 +508,7 @@ export default function GameList({
                 <span className="badge badge-neutral" style={{ fontSize: '0.65rem', letterSpacing: '0.05em' }}>SLOT</span>
               )}
               {/* Desktop-only status badge — hidden on mobile where scoringStatusRow renders it */}
-              <div className={`${s.gameStatusSlot} ${styles.desktopStatusSlot}`}>{statusBadge(g.status)}</div>
+              <div className={`${s.gameStatusSlot} ${styles.desktopStatusSlot}`}>{statusBadge(g.status, g.scoreSubmissionSource)}</div>
               {/* Finalize — quick-access, rendered only when relevant (no fixed-width wrapper) */}
               {!isExpanded && onFinalize && g.status === 'submitted' && (
                 <button className="btn btn-success btn-data" onClick={e => { e.stopPropagation(); onFinalize(g.id); }}>
@@ -505,6 +538,31 @@ export default function GameList({
                   <button className="btn btn-ghost btn-data" style={{ color: 'rgba(var(--warning-rgb), 0.8)', flexShrink: 0 }} onClick={e => { e.stopPropagation(); onSchedule(g.id); }}>
                     <X size={13} /> Revert Score
                   </button>
+                )}
+                {canForfeit && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--data-gray)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>No-show:</span>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-data"
+                      style={{ color: 'rgba(var(--warning-rgb), 0.85)' }}
+                      disabled={isScoringBusy}
+                      title={`${awayLabel} forfeits — ${homeLabel} advances`}
+                      onClick={e => { e.stopPropagation(); void handleForfeit('home'); }}
+                    >
+                      {awayLabel}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-data"
+                      style={{ color: 'rgba(var(--warning-rgb), 0.85)' }}
+                      disabled={isScoringBusy}
+                      title={`${homeLabel} forfeits — ${awayLabel} advances`}
+                      onClick={e => { e.stopPropagation(); void handleForfeit('away'); }}
+                    >
+                      {homeLabel}
+                    </button>
+                  </span>
                 )}
                 {hasExistingScore && scoreAuditSummary && (
                   <span className={styles.scoreActionBarAudit}>{scoreAuditSummary}</span>
@@ -645,7 +703,7 @@ export default function GameList({
           {/* Fixed-width status area — desktop badge only; mobile handled by mobileStatusTag in date cell */}
           <div className={styles.planningStatusCell}>
             {g.status !== 'scheduled' && (
-              <span className={styles.desktopStatusBadge}>{statusBadge(g.status)}</span>
+              <span className={styles.desktopStatusBadge}>{statusBadge(g.status, g.scoreSubmissionSource)}</span>
             )}
             {(g.homeSlotId || g.awaySlotId) && !g.isPlayoff && (
               <span className="badge badge-neutral" style={{ fontSize: '0.6rem', letterSpacing: '0.04em' }}>SLOT</span>

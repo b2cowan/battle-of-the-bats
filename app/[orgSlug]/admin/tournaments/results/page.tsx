@@ -227,6 +227,11 @@ export default function AdminResultsPage() {
     refresh();
   }
 
+  async function handleForfeit(id: string, winningSide: 'home' | 'away') {
+    await patchGame({ action: 'forfeit', id, winningSide });
+    refresh();
+  }
+
   async function markScheduled(id: string) {
     setFeedback({
       isOpen: true,
@@ -253,7 +258,8 @@ export default function AdminResultsPage() {
   });
   const pendingCount   = divisionGames.filter(g => g.status === 'scheduled').length;
   const submittedCount = divisionGames.filter(g => g.status === 'submitted').length;
-  const completedCount = divisionGames.filter(g => g.status === 'completed').length;
+  // Forfeits are a final result — group them with completed for counts/filters.
+  const completedCount = divisionGames.filter(g => g.status === 'completed' || g.status === 'forfeit').length;
 
   // Venue filter options — built from games in the current division + view mode
   const venueFilterOptions = Array.from(
@@ -277,7 +283,7 @@ export default function AdminResultsPage() {
       selectedStatuses.some(sf =>
         sf === 'pending'    ? g.status === 'scheduled' :
         sf === 'submitted'  ? g.status === 'submitted' :
-        g.status === 'completed'
+        (g.status === 'completed' || g.status === 'forfeit')
       );
 
     const hName = getTeamName(g.homeTeamId).toLowerCase();
@@ -337,7 +343,7 @@ export default function AdminResultsPage() {
     // Build groups: one table per division (all games for that division)
     const allFiltered = games.filter(g => {
       const matchesView = viewMode === 'pool' ? !g.isPlayoff : g.isPlayoff;
-      return matchesView && (g.status === 'completed' || g.status === 'submitted' || g.status === 'scheduled');
+      return matchesView && (g.status === 'completed' || g.status === 'submitted' || g.status === 'scheduled' || g.status === 'forfeit');
     });
 
     const groupMap = new Map<string, typeof allFiltered>();
@@ -351,7 +357,7 @@ export default function AdminResultsPage() {
     // Champions callout: find winner of the last completed game per division
     const champLines: string[] = [];
     for (const ag of divisions) {
-      const divGames = (groupMap.get(ag.id) ?? []).filter(g => g.status === 'completed');
+      const divGames = (groupMap.get(ag.id) ?? []).filter(g => g.status === 'completed' || g.status === 'forfeit');
       if (divGames.length === 0) continue;
       const last = divGames[divGames.length - 1];
       if (last.homeScore != null && last.awayScore != null) {
@@ -788,6 +794,7 @@ export default function AdminResultsPage() {
             viewMode={viewMode}
             groupByPool={groupMode === 'pools'}
             onSaveScore={handleSaveScore}
+            onForfeit={handleForfeit}
             onFinalize={finalizeGame}
             onSchedule={markScheduled}
             mode="scoring"

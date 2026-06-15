@@ -6,6 +6,7 @@ import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
 import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
+import { resolvePlayoffWinner } from './playoff-bracket';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
 export type { DivisionStandingRow } from './tie-breakers';
@@ -1604,10 +1605,15 @@ export async function updateGame(id: string, g: Partial<Game>, options: ReadOpti
     throw new Error("Couldn't update the game — you may not have permission to modify this tournament.");
   }
 
-  // Trigger advancement
-  if (g.status === 'completed' || (g.homeScore !== undefined && g.awayScore !== undefined)) {
+  // Trigger advancement. A forfeit is terminal like 'completed', so it must also
+  // advance the bracket / re-resolve seeds — otherwise marking a forfeit would
+  // leave the downstream slot stuck on a placeholder (J1-091).
+  if (g.status === 'completed' || g.status === 'forfeit'
+    || (g.homeScore !== undefined && g.awayScore !== undefined)) {
     const fullGame = (await getGames(undefined, options)).find(x => x.id === id);
-    if (fullGame?.status === 'completed') await advancePlayoffs(fullGame, options);
+    if (fullGame?.status === 'completed' || fullGame?.status === 'forfeit') {
+      await advancePlayoffs(fullGame, options);
+    }
   }
 }
 
@@ -1788,7 +1794,9 @@ export async function seedTournamentData(tid: string, options: {
 }
 
 export async function advancePlayoffs(game: Game, options: ReadOptions = {}) {
-  if (game.status !== 'completed') return;
+  // A forfeit is terminal too — it advances the present (winning) team just like
+  // a completed game. Anything else (scheduled/submitted/cancelled) does not advance.
+  if (game.status !== 'completed' && game.status !== 'forfeit') return;
 
   const games = await getGames(game.tournamentId, options);
   const playoffGames = games.filter(g => g.isPlayoff && g.divisionId === game.divisionId);
@@ -1797,8 +1805,16 @@ export async function advancePlayoffs(game: Game, options: ReadOptions = {}) {
 
   // 1. Advance winners/losers within the bracket
   if (game.isPlayoff && game.bracketCode) {
-    const winnerId = (game.homeScore || 0) > (game.awayScore || 0) ? game.homeTeamId : game.awayTeamId;
-    const loserId = (game.homeScore || 0) > (game.awayScore || 0) ? game.awayTeamId : game.homeTeamId;
+    // An elimination game CANNOT end in a tie — a tied score has no winner, so
+    // advancing either side would silently (and arbitrarily) crown a team (J1-083).
+    // On a tie, do NOT advance: leave the downstream "Winner/Loser <code>"
+    // placeholders intact so the bracket visibly stalls until the organizer
+    // resolves it (re-score, extra inning, or forfeit). Forfeits always carry a
+    // decisive nominal margin, so resolvePlayoffWinner never reads them as a tie.
+    const outcome = resolvePlayoffWinner(game);
+    if (outcome.tie) return;
+    const winnerId = outcome.winner;
+    const loserId = outcome.loser;
 
     for (const pg of playoffGames) {
       // Scope advancement to the SAME bracket. Split-pool (crossover='none')
@@ -1839,51 +1855,81 @@ export async function advancePlayoffs(game: Game, options: ReadOptions = {}) {
     }
   }
 
-  // 2. Check if all pool games are done to fill initial seeds
-  const poolGames = games.filter(g => g.divisionId === game.divisionId && !g.isPlayoff);
-  const allPoolDone = poolGames.every(g => g.status === 'completed');
+  // 2. Once pool play is decided, (re-)fill the seed/pool-rank placeholders.
+  await resolveAndFillPlayoffSeeds(game.tournamentId, game.divisionId, options);
+}
 
-  if (allPoolDone && poolGames.length > 0) {
-    const division = (await getDivisions(game.tournamentId, options)).find(g => g.id === game.divisionId);
-    // Pass tournament settings so the tournament-level tie-breaker order + run-diff cap
-    // apply to playoff SEEDING (not just the public standings view). Division-level
-    // playoffConfig still takes priority inside getStandings.
-    const tournament = await getTournament(game.tournamentId);
-    const standings = await getStandings(game.divisionId, division?.playoffConfig, options, tournament?.settings);
-    const pools = division?.pools || [];
+/**
+ * Resolve standings-based playoff placeholders ("Seed #N", "Nth Pool X") into
+ * real team ids once pool play is decided, and write them onto the bracket's
+ * first-round games. Safe to re-run: a first-round game that has ALREADY started
+ * (submitted / completed / forfeit) is skipped, so re-seeding never retroactively
+ * swaps the participants of a game that was already played — the placeholder
+ * string (e.g. 'Seed #1') is a descriptor that is never cleared, so without this
+ * guard a re-run would clobber live results.
+ *
+ * Extracted from advancePlayoffs so the coin-toss record action can re-run seed
+ * resolution after an organizer breaks an unresolved tie — otherwise the toss
+ * persists but the bracket, already filled in arbitrary tied order, never updates
+ * (J1-084). A forfeited pool game counts as decided, so it satisfies allPoolDone.
+ */
+export async function resolveAndFillPlayoffSeeds(
+  tournamentId: string,
+  divisionId: string,
+  options: ReadOptions = {},
+) {
+  const games = await getGames(tournamentId, options);
+  const playoffGames = games.filter(g => g.isPlayoff && g.divisionId === divisionId);
+  if (playoffGames.length === 0) return;
 
-    for (const pg of playoffGames) {
-      const updates: Partial<Game> = {};
+  const poolGames = games.filter(g => g.divisionId === divisionId && !g.isPlayoff);
+  const allPoolDone = poolGames.every(g => g.status === 'completed' || g.status === 'forfeit');
+  if (!allPoolDone || poolGames.length === 0) return;
 
-      const resolvePlaceholder = (ph?: string) => {
-        if (!ph) return null;
+  const division = (await getDivisions(tournamentId, options)).find(g => g.id === divisionId);
+  // Pass tournament settings so the tournament-level tie-breaker order + run-diff cap
+  // apply to playoff SEEDING (not just the public standings view). Division-level
+  // playoffConfig still takes priority inside getStandings.
+  const tournament = await getTournament(tournamentId);
+  const standings = await getStandings(divisionId, division?.playoffConfig, options, tournament?.settings);
+  const pools = division?.pools || [];
 
-        if (ph.startsWith('Seed #')) {
-          const rank = parseInt(ph.replace('Seed #', ''));
-          return standings[rank - 1]?.teamId;
-        }
+  for (const pg of playoffGames) {
+    // Never re-point a game that has already started/finished — a re-seed (e.g.
+    // after a coin toss) must not retroactively swap the participants of a played
+    // game. Only fill slots that are still waiting (scheduled / cancelled).
+    if (pg.status === 'submitted' || pg.status === 'completed' || pg.status === 'forfeit') continue;
 
-        const match = ph.match(/(\d+)\w+ Pool (.+)/);
-        if (match) {
-          const rank = parseInt(match[1]);
-          const poolName = match[2];
-          const pool = pools.find(p => p.name === poolName);
-          const poolStandings = standings.filter(s => s.poolId === pool?.id);
-          return poolStandings[rank - 1]?.teamId;
-        }
+    const updates: Partial<Game> = {};
 
-        return null;
-      };
+    const resolvePlaceholder = (ph?: string) => {
+      if (!ph) return null;
 
-      const hId = resolvePlaceholder(pg.homePlaceholder);
-      const aId = resolvePlaceholder(pg.awayPlaceholder);
-
-      if (hId) updates.homeTeamId = hId;
-      if (aId) updates.awayTeamId = aId;
-
-      if (Object.keys(updates).length > 0) {
-        await updateGame(pg.id, updates, options);
+      if (ph.startsWith('Seed #')) {
+        const rank = parseInt(ph.replace('Seed #', ''));
+        return standings[rank - 1]?.teamId;
       }
+
+      const match = ph.match(/(\d+)\w+ Pool (.+)/);
+      if (match) {
+        const rank = parseInt(match[1]);
+        const poolName = match[2];
+        const pool = pools.find(p => p.name === poolName);
+        const poolStandings = standings.filter(s => s.poolId === pool?.id);
+        return poolStandings[rank - 1]?.teamId;
+      }
+
+      return null;
+    };
+
+    const hId = resolvePlaceholder(pg.homePlaceholder);
+    const aId = resolvePlaceholder(pg.awayPlaceholder);
+
+    if (hId) updates.homeTeamId = hId;
+    if (aId) updates.awayTeamId = aId;
+
+    if (Object.keys(updates).length > 0) {
+      await updateGame(pg.id, updates, options);
     }
   }
 }

@@ -650,7 +650,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`home_score` / `away_score`** (int, nullable until submitted) — setting both + `status='completed'` triggers `advancePlayoffs`.
 
 <!-- dict:col:games.status -->
-**`status`** (text, NOT NULL, default `'scheduled'`) — `scheduled | submitted | completed | cancelled` (`GameStatus`, [lib/types.ts:451](../../../lib/types.ts#L451); app-level enum, no DB CHECK). Advancement runs only when `completed`.
+**`status`** (text, NOT NULL, default `'scheduled'`) — `scheduled | submitted | completed | cancelled | forfeit` (`GameStatus`, [lib/types.ts](../../../lib/types.ts); app-level enum, no DB CHECK). Advancement runs on `completed` **or** `forfeit` (both terminal). A `forfeit` records a nominal win for the present team (higher score = winner, same as `completed`) but the tie-breaker engine excludes forfeits from RF/RA/RD so an invented margin can't poison playoff seeding (FP-5 / J1-091).
 
 <!-- dict:col:games.is_playoff -->
 **`is_playoff`** (bool, default false) — playoff vs round-robin; gates Winner/Loser routing. _Dev/prod drift:_ dev NOT NULL / prod nullable (gotcha 6).
@@ -677,7 +677,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 <!-- dict:col:games.score_submitted_by_email -->
 <!-- dict:col:games.score_submitted_at -->
 <!-- dict:col:games.score_submission_source -->
-**Score-submission audit block** — who/when/how a score was entered, written only via the scoring service ([lib/tournament-scoring-service.ts:121](../../../lib/tournament-scoring-service.ts#L121)) and cleared on revert. `score_submission_source` ∈ `scorekeeper | admin_results | system` (`ScoreSubmissionSource`, [lib/types.ts:452](../../../lib/types.ts#L452); app enum, no DB CHECK). Not a generic row-mtime (gotcha 7).
+**Score-submission audit block** — who/when/how a score was entered, written only via the scoring service ([lib/tournament-scoring-service.ts](../../../lib/tournament-scoring-service.ts)) and cleared on revert. `score_submission_source` ∈ `scorekeeper | admin_results | system | forfeit` (`ScoreSubmissionSource`, [lib/types.ts](../../../lib/types.ts); app enum, no DB CHECK). The `forfeit` value marks a result entered as a forfeit and persists through BOTH lifecycle states — a PENDING forfeit is `status='submitted'` with `source='forfeit'`, and finalize promotes it to `status='forfeit'` (not `completed`) so it advances the bracket but stays excluded from RF/RA/RD in tie-breakers (FP-5 / J1-091). Not a generic row-mtime (gotcha 7).
 
 ---
 

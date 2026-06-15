@@ -552,6 +552,41 @@ export function buildPlaceholderOptions(
   };
 }
 
+/**
+ * Resolve the outcome of an elimination game (pure; J1-083).
+ *
+ * An elimination game CANNOT end in a tie — a tied score has no winner, so the
+ * old `home > away ? home : away` logic silently (and arbitrarily) advanced the
+ * away team. This returns:
+ *   - { tie: true }                              when scores are equal and the
+ *                                                game is NOT a forfeit → caller
+ *                                                must NOT advance anyone.
+ *   - { tie: false, winner, loser }              otherwise.
+ *
+ * Forfeits always have a decisive nominal margin (the present team's score is
+ * higher), so they never read as a tie. `advancePlayoffs` calls this and bails
+ * on a tie, leaving the bracket visibly stalled until the organizer resolves it.
+ */
+export function resolvePlayoffWinner(g: {
+  homeTeamId: string;
+  awayTeamId: string;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  status?: string;
+}):
+  | { tie: true }
+  | { tie: false; winner: string; loser: string } {
+  const home = g.homeScore || 0;
+  const away = g.awayScore || 0;
+  if (g.status !== 'forfeit' && home === away) return { tie: true };
+  const homeWon = home > away;
+  return {
+    tie: false,
+    winner: homeWon ? g.homeTeamId : g.awayTeamId,
+    loser: homeWon ? g.awayTeamId : g.homeTeamId,
+  };
+}
+
 export interface LoadableBracketGame {
   id: string;
   bracketCode?: string | null;

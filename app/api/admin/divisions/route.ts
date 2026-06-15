@@ -2,6 +2,7 @@ import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTo
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { coinTossKey } from '@/lib/tie-breakers';
+import { resolveAndFillPlayoffSeeds } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 
 function tournamentLockedResponse() {
@@ -304,6 +305,9 @@ export const POST = withObservability(async (req: Request) => {
       if (denied) return denied;
       const wrongOrg = await requireTournamentInOrg(ctx, div.tournament_id);
       if (wrongOrg) return wrongOrg;
+      // Match every other mutating action here: a locked (completed) tournament
+      // must not have its bracket re-seeded by a late coin toss.
+      if (await isTournamentLocked(div.tournament_id)) return tournamentLockedResponse();
 
       if (typeof groupKey !== 'string' || !groupKey) {
         return Response.json({ error: 'groupKey required' }, { status: 400 });
@@ -345,6 +349,19 @@ export const POST = withObservability(async (req: Request) => {
         .update({ playoff_config: { ...playoffConfig, coinTossResults: results } })
         .eq('id', id);
       if (error) throw error;
+
+      // Re-run seed resolution so an already-filled bracket re-points its
+      // first-round slots to the coin-toss-resolved order. Without this the toss
+      // is persisted but inert — the bracket, filled earlier in arbitrary tied
+      // order, never updates and the toss appears to do nothing (J1-084). Only
+      // re-points slots still carrying a standings placeholder, so games already
+      // played are untouched. Best-effort: a failure here must not roll back the
+      // recorded toss (which is the source of truth for standings either way).
+      try {
+        await resolveAndFillPlayoffSeeds(div.tournament_id, id, { admin: true });
+      } catch (reseedErr) {
+        console.error('[record-coin-toss] re-seed failed (toss saved):', reseedErr);
+      }
     }
 
     else if (action === 'set-visibility') {
