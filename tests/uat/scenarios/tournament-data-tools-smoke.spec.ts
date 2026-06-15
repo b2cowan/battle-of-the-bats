@@ -229,7 +229,7 @@ async function createSmokeState(): Promise<SmokeState> {
       tournament_id: tournament.id,
       name: divisionName,
       display_order: 1,
-      schedule_visibility: 'published_teams',
+      schedule_visibility: 'published',
       settings: { game_duration_minutes: 90, buffer_minutes: 15 },
     })
     .select('id, name')

@@ -377,10 +377,12 @@ export default function AdminSchedulePage() {
     finally { setModalSlotsLoading(false); }
   }
 
-  function handlePublishDone(updates: { id: string; scheduleVisibility: 'published_generic' | 'published_teams' }[]) {
+  function handlePublishDone(updates: { id: string; scheduleVisibility: 'published' }[]) {
+    // Publishing closes registration server-side too (atomic) — reflect both so the UI
+    // matches even if the optimistic pre-close was skipped or failed.
     setDivisions(prev => prev.map(g => {
       const u = updates.find(u => u.id === g.id);
-      return u ? { ...g, scheduleVisibility: u.scheduleVisibility } : g;
+      return u ? { ...g, scheduleVisibility: u.scheduleVisibility, isClosed: true } : g;
     }));
     // Modal stays open to show success state; user closes it with "Done"
   }
@@ -1192,17 +1194,10 @@ export default function AdminSchedulePage() {
           return (
             <span
               className={styles.publishStatusText}
-              // Generic mode hides matchups on the public page — the only published
-              // sub-state worth flagging. "Teams" mode is the plain, expected case.
-              title={vis === 'published_teams'
-                ? 'Published with real team names'
-                : 'Published — game times and fields are public, but matchups are hidden (shown as TBD)'}
+              title="Published with real team names"
             >
               <span className={styles.publishStatusDot} aria-hidden />
               Published
-              {vis === 'published_generic' && (
-                <span className={styles.publishStatusFlag}> · names hidden</span>
-              )}
             </span>
           );
         })()}
@@ -2444,13 +2439,12 @@ function PublishScheduleModal({
   canNotify: boolean;
   orgSlug: string;
   onClose: () => void;
-  onPublished: (updates: { id: string; scheduleVisibility: 'published_generic' | 'published_teams' }[]) => void;
+  onPublished: (updates: { id: string; scheduleVisibility: 'published' }[]) => void;
   onDivisionClosed: (id: string) => void;
 }) {
   const publishable = divisions.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
 
   const [selectedIds, setSelectedIds] = React.useState<string[]>([defaultDivisionId]);
-  const [nameMode, setNameMode] = React.useState<'generic' | 'teams'>('generic');
   const [notify, setNotify] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -2459,8 +2453,10 @@ function PublishScheduleModal({
 
   const targets = publishable.filter(g => selectedIds.includes(g.id));
   const allUnpublishedSelected = publishable.length > 0 && publishable.every(d => selectedIds.includes(d.id));
+  // Publishing always uses real names and closes the division (mig 129). Any still-open
+  // selected division will be closed as part of publishing.
   const openTargets = targets.filter(g => !g.isClosed);
-  const willCloseOnPublish = nameMode === 'teams' && openTargets.length > 0;
+  const willCloseOnPublish = openTargets.length > 0;
 
   function toggleDivision(id: string) {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -2472,10 +2468,10 @@ function PublishScheduleModal({
     try {
       const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
       const divisionIds = targets.map(g => g.id);
-      const visibility = nameMode === 'teams' ? 'published_teams' : 'published_generic';
 
-      // Close any still-open divisions before publishing with real names
-      if (nameMode === 'teams' && openTargets.length > 0) {
+      // Publishing always uses real team names, so close any still-open selected
+      // divisions first — stopping new public submissions.
+      if (openTargets.length > 0) {
         await Promise.all(openTargets.map(g =>
           fetch(`/api/admin/divisions${orgQuery}`, {
             method: 'POST',
@@ -2489,12 +2485,12 @@ function PublishScheduleModal({
       const res = await fetch(`/api/admin/schedule-publish${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tournamentId: tournament.id, divisionIds, visibility, notify }),
+        body: JSON.stringify({ tournamentId: tournament.id, divisionIds, visibility: 'published', notify }),
       });
       if (!res.ok) throw new Error((await res.json()).error ?? 'Failed to publish');
       const data = await res.json();
       setResult({ notified: data.notified ?? 0 });
-      onPublished(divisionIds.map(id => ({ id, scheduleVisibility: visibility })));
+      onPublished(divisionIds.map(id => ({ id, scheduleVisibility: 'published' as const })));
     } catch (e: any) {
       setError(e.message ?? 'Something went wrong');
       setShowRegCloseWarning(false);
@@ -2552,8 +2548,8 @@ function PublishScheduleModal({
               </p>
               <p style={{ fontSize: '0.85rem', color: 'var(--white-60)', lineHeight: 1.55, marginBottom: openTargets.length > 1 ? '0.75rem' : '1.25rem' }}>
                 {openTargets.length === 1
-                  ? `Registration for ${openTargets[0].name} is still open. Publishing with real team names will close it — stopping new submissions from the public page.`
-                  : `Registration is still open for ${openTargets.length} divisions. Publishing with real team names will close them — stopping new submissions from the public page.`}
+                  ? `Registration for ${openTargets[0].name} is still open. Publishing will close it — stopping new submissions from the public page.`
+                  : `Registration is still open for ${openTargets.length} divisions. Publishing will close them — stopping new submissions from the public page.`}
               </p>
               {openTargets.length > 1 && (
                 <div style={{ marginBottom: '1.25rem', background: 'var(--white-5)', border: '1px solid var(--white-8)', borderRadius: '2px', padding: '0.5rem 0.75rem' }}>
@@ -2631,50 +2627,29 @@ function PublishScheduleModal({
                 </div>
               )}
 
-              <p style={{ color: 'var(--white-70)', fontSize: '0.88rem', marginBottom: '1.25rem', lineHeight: 1.55 }}>
+              <p style={{ color: 'var(--white-70)', fontSize: '0.88rem', marginBottom: willCloseOnPublish ? '0.85rem' : '1.25rem', lineHeight: 1.55 }}>
                 {targets.length === 0
                   ? 'Select at least one division to publish.'
                   : targets.length === 1
-                    ? 'This division\'s schedule will appear on your public tournament page. Saved edits are visible automatically after publishing.'
-                    : `${targets.length} division${targets.length !== 1 ? 's' : ''} will appear on your public tournament page. Saved edits are visible automatically after publishing.`}
+                    ? 'This division\'s schedule will appear on your public tournament page with real team names. Saved edits are visible automatically after publishing.'
+                    : `${targets.length} division${targets.length !== 1 ? 's' : ''} will appear on your public tournament page with real team names. Saved edits are visible automatically after publishing.`}
               </p>
 
-              <div style={{ marginBottom: '1.25rem' }}>
-                <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--white-50)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.6rem' }}>
-                  Team Names
-                </p>
-                <label style={{
-                  display: 'flex', alignItems: 'flex-start', gap: '0.65rem',
-                  padding: '0.75rem', borderRadius: '2px', cursor: 'pointer',
-                  background: nameMode === 'generic' ? 'rgba(var(--blueprint-blue-rgb),0.08)' : 'transparent',
-                  border: nameMode === 'generic' ? '1px solid rgba(var(--blueprint-blue-rgb),0.3)' : '1px solid transparent',
-                  marginBottom: '0.4rem',
+              {willCloseOnPublish && (
+                <div style={{
+                  display: 'flex', alignItems: 'flex-start', gap: '0.55rem',
+                  marginBottom: '1.25rem', padding: '0.6rem 0.75rem',
+                  background: 'rgba(var(--logic-lime-rgb),0.06)',
+                  border: '1px solid rgba(var(--logic-lime-rgb),0.25)', borderRadius: '2px',
                 }}>
-                  <input type="radio" checked={nameMode === 'generic'} onChange={() => setNameMode('generic')} style={{ marginTop: '2px', flexShrink: 0 }} />
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '0.2rem' }}>Placeholder names</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', lineHeight: 1.45 }}>
-                      Teams appear as "Team 1", "Team 2", etc. Registration stays open.
-                    </div>
+                  <AlertCircle size={14} style={{ color: 'var(--logic-lime)', marginTop: '2px', flexShrink: 0 }} />
+                  <div style={{ fontSize: '0.8rem', color: 'var(--white-70)', lineHeight: 1.45 }}>
+                    {openTargets.length === 1
+                      ? `Registration for ${openTargets[0].name} is still open and will be closed when you publish.`
+                      : `Registration is still open for ${openTargets.length} of the selected divisions and will be closed when you publish.`}
                   </div>
-                </label>
-                <label style={{
-                  display: 'flex', alignItems: 'flex-start', gap: '0.65rem',
-                  padding: '0.75rem', borderRadius: '2px', cursor: 'pointer',
-                  background: nameMode === 'teams' ? 'rgba(var(--logic-lime-rgb),0.06)' : 'transparent',
-                  border: nameMode === 'teams' ? '1px solid rgba(var(--logic-lime-rgb),0.25)' : '1px solid transparent',
-                }}>
-                  <input type="radio" checked={nameMode === 'teams'} onChange={() => setNameMode('teams')} style={{ marginTop: '2px', flexShrink: 0 }} />
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.88rem', marginBottom: '0.2rem' }}>Real team names</div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', lineHeight: 1.45 }}>
-                      {willCloseOnPublish
-                        ? 'Registration will be closed when you publish.'
-                        : 'Registered team names will be visible on the public schedule.'}
-                    </div>
-                  </div>
-                </label>
-              </div>
+                </div>
+              )}
 
               <div style={{
                 borderTop: '1px solid var(--white-8)', paddingTop: '1rem', marginBottom: '1rem',

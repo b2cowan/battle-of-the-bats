@@ -28,7 +28,7 @@ export type CoachTournamentPhase =
 export type DeriveCoachTournamentPhaseInput = {
   /** teams.status — the registration membership status. */
   registrationStatus: string | null;
-  /** True when the coach's division schedule is published (published_teams|published_generic). */
+  /** True when the coach's division schedule is published (schedule_visibility === 'published'). */
   scheduleVisible: boolean;
   /** tournaments.status (draft|active|completed|archived). */
   tournamentStatus: string | null;

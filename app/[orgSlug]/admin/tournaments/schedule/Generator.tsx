@@ -1206,8 +1206,8 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
                 ) : (
                   <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--white-40)', lineHeight: 1.5 }}>
                     {poolList.length > 0
-                      ? <>Creates a schedule using placeholder names (e.g. &quot;Pool A Team 1&quot;). Team names appear publicly once all slots in a pool are assigned.</>
-                      : <>Creates a division-wide schedule using placeholder names (e.g. &quot;{currentGroup?.name ?? 'Division'} Team 1&quot;) without requiring pools.</>
+                      ? <>Builds a draft schedule using placeholder names (e.g. &quot;Pool A Team 1&quot;) so you can lay out the bracket before teams are final. Assign real teams to the slots, then publish with real names once registration closes.</>
+                      : <>Builds a division-wide draft schedule using placeholder names (e.g. &quot;{currentGroup?.name ?? 'Division'} Team 1&quot;) without requiring pools. Assign real teams, then publish with real names once registration closes.</>
                     }
                   </p>
                 )}
@@ -1607,7 +1607,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.65rem 0.85rem', background: 'var(--white-5)', borderRadius: '2px', margin: '0.65rem 0', fontSize: '0.75rem', color: 'var(--white-60)', lineHeight: 1.5 }}>
                 <Info size={13} style={{ marginTop: '1px', flexShrink: 0, color: 'var(--blueprint-blue)' }} />
                 {poolList.length > 0
-                  ? 'Team names will appear publicly only once all slots in each pool are assigned via the Slot Assignments tab.'
+                  ? 'This is a draft. Assign real teams to the slots via the Slot Assignments tab, then publish with real names once registration closes — placeholder names are never shown publicly.'
                   : 'This division-wide draft uses placeholders and does not require pools. Save it now, then assign real teams manually or regenerate team-based when teams are final.'
                 }
               </div>
@@ -1694,7 +1694,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
               {generationScope === 'build'
                 ? <>This will keep <strong>{preservedGameCount}</strong> protected games{lockedGameCount > 0 ? <> (<strong>{lockedGameCount}</strong> manually kept)</> : null}, replace <strong>{replacementGameCount}</strong> scheduled round-robin games, and save <strong>{previewGeneratedCount}</strong> newly generated games for <strong>{divisionName}</strong>.</>
                 : generationMode === 'slot'
-                  ? <>This will save a slot-based schedule and <strong style={{ color: 'var(--danger)' }}>permanently clear</strong> any existing games for <strong>{divisionName}</strong>{replaceAllClearsLockedGames ? <>, including <strong style={{ color: 'var(--warning)' }}>{lockedGameLabel}</strong></> : null}. {poolList.length > 0 ? 'Team names will appear publicly once all slots are assigned.' : 'Division-wide placeholders will be saved without pool assignments.'}</>
+                  ? <>This will save a slot-based schedule and <strong style={{ color: 'var(--danger)' }}>permanently clear</strong> any existing games for <strong>{divisionName}</strong>{replaceAllClearsLockedGames ? <>, including <strong style={{ color: 'var(--warning)' }}>{lockedGameLabel}</strong></> : null}. {poolList.length > 0 ? 'This is a draft — assign real teams to the slots, then publish with real names once registration closes.' : 'Division-wide placeholders will be saved without pool assignments.'}</>
                   : <>This will save the generated schedule and <strong style={{ color: 'var(--danger)' }}>permanently clear</strong> any existing games for the <strong>{divisionName}</strong> division{replaceAllClearsLockedGames ? <>, including <strong style={{ color: 'var(--warning)' }}>{lockedGameLabel}</strong></> : null}.</>
               }
             </p>

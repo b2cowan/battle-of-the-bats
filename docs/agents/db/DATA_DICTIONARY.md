@@ -471,7 +471,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 2. **`contact_id` was DROPPED → use `contact_member_id`** (FK `organization_members`). `contact_id` is absent from both snapshots; there's a dropped-column hole where it sat (ordinal **7 in dev, 6 in prod**).
 3. **Four real dev/prod drift columns** — `display_order` (dev default 0 / prod no default, both NOT NULL → a raw insert omitting it **fails on prod**), `playoff_config` (prod has a default JSON, dev none — Finding #25), `pool_count` (prod default 1, dev none; code papers over with `|| 1`), `requires_pool_selection` (dev NOT NULL / prod nullable). Plus many columns differ only in **ordinal position** — never `SELECT *` on column order.
 4. **`pool_names` is a comma-string, not JSON** — despite the plural; parsed `.split(',')`. The `pools` table is the real per-pool store.
-5. **`schedule_visibility` is a 3-state enum, not a boolean** (`unpublished|published_teams|published_generic`).
+5. **`schedule_visibility` is a 2-state enum, not a boolean** (`unpublished|published`) — was 3-state until mig 129 removed `published_generic` (placeholder publishing) and renamed `published_teams`→`published`.
 6. **Division-level fees apply only when the parent's `fee_schedule_mode='division'`.**
 
 **Fields** (boilerplate `id` omitted; this table has no `created_at`/`updated_at`):
@@ -516,7 +516,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **Division-level fee block** — same four fields as `tournaments`, applied **only** when the parent's `fee_schedule_mode='division'` (gotcha 6); copy ops gate them behind `includeFeeSchedule` ([lib/db.ts:346](../../../lib/db.ts#L346)). Read by `lib/registration-attention.ts:165`.
 
 <!-- dict:col:divisions.schedule_visibility -->
-**`schedule_visibility`** (text, NOT NULL, default `'unpublished'`) — 3-state: `unpublished` (hidden) / `published_teams` (full) / `published_generic` (anonymized). Coach + public visibility needs `published_teams` OR `published_generic` ([coaches/tournaments/[teamId]/page.tsx:140](../../../app/coaches/tournaments/[teamId]/page.tsx#L140)). Gotcha 5.
+**`schedule_visibility`** (text, NOT NULL, default `'unpublished'`) — 2-state (mig 129): `unpublished` (hidden / "schedule coming soon" publicly) / `published` (public schedule live with REAL team names; publishing also closes the division's registration). Coach + public visibility needs `published`. CHECK constraint name is the legacy `age_groups_schedule_visibility_check` (table renamed from `age_groups`). Before mig 129 this was 3-state (`published_teams` = renamed→`published`; `published_generic` = placeholder publishing, removed → reverted to `unpublished`). Gotcha 5.
 
 <!-- dict:col:divisions.contact_member_id -->
 **`contact_member_id`** (FK → `organization_members.id`) — per-division reg contact; **successor to the dropped `contact_id`** (gotcha 2). Resolved to an email only when the tournament's `notify_mode='assigned'` ([register/route.ts:311](../../../app/api/register/route.ts#L311)).

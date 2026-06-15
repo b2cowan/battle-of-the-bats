@@ -81,7 +81,7 @@ async function createSmokeTournament(input: {
       tournament_id: tournament.id,
       name: `UAT ${input.label}`,
       display_order: 1,
-      schedule_visibility: 'published_teams',
+      schedule_visibility: 'published',
     })
     .select('id')
     .single()

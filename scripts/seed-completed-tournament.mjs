@@ -82,11 +82,11 @@ const newT = { ...srcT,
 delete newT.created_at; delete newT.results_notified_at; delete newT.results_notification_sent_count;
 await chk('insert tournament', await db.from('tournaments').insert(newT));
 
-// ── divisions (force published_teams so completed results are publicly visible) ─
+// ── divisions (force published so completed results are publicly visible) ─
 const divMap = {};
 for (const d of srcDivs) {
   const nid = randomUUID(); divMap[d.id] = nid;
-  const row = { ...d, id: nid, tournament_id: newTid, schedule_visibility: 'published_teams' };
+  const row = { ...d, id: nid, tournament_id: newTid, schedule_visibility: 'published' };
   delete row.created_at;
   await chk('insert division', await db.from('divisions').insert(row));
 }

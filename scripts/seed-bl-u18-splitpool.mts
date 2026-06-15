@@ -67,7 +67,7 @@ fail('create division', (await db.from('divisions').insert({
   pool_count: 2,
   requires_pool_selection: true,
   is_closed: false,
-  schedule_visibility: 'published_teams',
+  schedule_visibility: 'published',
   playoff_config: { type: 'single', format: 'single', crossover: 'none', teamsQualifying: 4, hasThirdPlace: false, tieBreakers: ['h2h', 'rd', 'rf', 'ra'] },
 }).select().single()).error);
 

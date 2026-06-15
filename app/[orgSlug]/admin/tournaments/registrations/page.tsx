@@ -994,7 +994,11 @@ export default function UnifiedTeamsPage() {
         body: JSON.stringify({ action: 'set-closed', id: selectedDivisionId, data: { isClosed: nextClosed } }),
       });
       if (!res.ok) throw new Error('Failed to update registration status');
-      setDivisions(prev => prev.map(d => d.id === selectedDivisionId ? { ...d, isClosed: nextClosed } : d));
+      // Reopening registration also takes the public schedule offline (the server does
+      // this atomically) — mirror that in local state so the UI matches.
+      setDivisions(prev => prev.map(d => d.id === selectedDivisionId
+        ? { ...d, isClosed: nextClosed, scheduleVisibility: nextClosed ? d.scheduleVisibility : 'unpublished' }
+        : d));
     } catch {
       // silent — user can retry
     } finally {
@@ -1005,14 +1009,15 @@ export default function UnifiedTeamsPage() {
   function handleToggleRegistration() {
     if (!selectedDivisionId || closingDivision) return;
     const nextClosed = !selectedGroup?.isClosed;
-    // Warn before reopening a division whose schedule is already published with real names
-    if (!nextClosed && selectedGroup?.scheduleVisibility === 'published_teams') {
+    // Warn before reopening a division whose schedule is already published — reopening
+    // takes the public schedule back offline so the two states never conflict.
+    if (!nextClosed && selectedGroup?.scheduleVisibility === 'published') {
       setFeedback({
         isOpen: true,
         title: 'Reopen Registration?',
-        message: 'The public schedule for this division is already showing real team names. Newly accepted teams won\'t appear on the schedule until they\'re assigned to games.',
+        message: 'This division\'s schedule is published. Reopening registration will take the public schedule offline (back to "coming soon"). You can publish it again after registration closes.',
         type: 'warning',
-        confirmText: 'Reopen Registration',
+        confirmText: 'Reopen & Unpublish',
         onConfirm: () => doToggleRegistration(false),
       });
       return;

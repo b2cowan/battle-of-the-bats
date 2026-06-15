@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { Calendar, CalendarPlus, Trophy, List, LayoutTemplate, Search, ChevronDown, Star, X, Info } from 'lucide-react';
+import { Calendar, CalendarPlus, Trophy, List, LayoutTemplate, Search, ChevronDown, Star, X } from 'lucide-react';
 import { Game, PublicTeam, Division, Tournament } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
@@ -201,8 +201,9 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   const getTeamDisplay = (game: Game, isHome: boolean) => {
     const id = isHome ? game.homeTeamId : game.awayTeamId;
     const ph = isHome ? game.homePlaceholder : game.awayPlaceholder;
-    const vis = divisions.find(g => g.id === game.divisionId)?.scheduleVisibility ?? 'unpublished';
-    if (vis !== 'published_generic' && id && id !== NIL_UUID) {
+    // Published schedules always show real team names (mig 129). Fall back to the
+    // placeholder only for a genuinely unassigned slot (bye / unseeded bracket spot).
+    if (id && id !== NIL_UUID) {
       return teams.find(t => t.id === id)?.name ?? ph ?? 'TBD';
     }
     return ph ?? 'TBD';
@@ -1117,15 +1118,6 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
               </div>
             );
           })()}
-
-          {/* Placeholder-published: times/fields are committed, matchups are not.
-             Set expectations so a TBD grid isn't read as a finalized schedule. */}
-          {activeVisibility === 'published_generic' && (
-            <div className={styles.tbaNotice}>
-              <Info size={16} />
-              <span>Game times and locations are set — matchups will be announced soon.</span>
-            </div>
-          )}
 
           {/* ── main content ── */}
           {activeVisibility === 'unpublished' ? (

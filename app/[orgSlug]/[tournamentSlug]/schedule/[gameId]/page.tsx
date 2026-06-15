@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, Calendar, Clock, ExternalLink, Info, MapPin, Navigation, Trophy } from 'lucide-react';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
-import type { Division, Game, PublicTeam, Venue } from '@/lib/types';
+import type { Game, PublicTeam, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { bracketRoundInfo } from '@/lib/playoff-bracket';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
@@ -47,12 +47,13 @@ function formatFullDate(date?: string) {
   });
 }
 
-function getTeamDisplay(game: Game, isHome: boolean, teams: PublicTeam[], divisions: Division[]) {
+function getTeamDisplay(game: Game, isHome: boolean, teams: PublicTeam[]) {
   const id = isHome ? game.homeTeamId : game.awayTeamId;
   const placeholder = isHome ? game.homePlaceholder : game.awayPlaceholder;
-  const visibility = divisions.find(group => group.id === game.divisionId)?.scheduleVisibility ?? 'unpublished';
 
-  if (visibility !== 'published_generic' && id && id !== NIL_UUID) {
+  // Published schedules always show real team names (mig 129). Fall back to the
+  // placeholder only for a genuinely unassigned slot (bye / unseeded bracket spot).
+  if (id && id !== NIL_UUID) {
     return teams.find(team => team.id === id)?.name ?? placeholder ?? 'TBD';
   }
 
@@ -163,8 +164,8 @@ export async function generateMetadata({ params }: { params: GameDetailParams })
     const game = data?.games.find(item => item.id === gameId);
     if (!data?.tournament || !game) return {};
 
-    const away = getTeamDisplay(game, false, data.teams, data.divisions);
-    const home = getTeamDisplay(game, true, data.teams, data.divisions);
+    const away = getTeamDisplay(game, false, data.teams);
+    const home = getTeamDisplay(game, true, data.teams);
     const hasScore = (game.status === 'completed' || game.status === 'submitted') &&
       game.homeScore != null && game.awayScore != null;
     const requireFinalization = data.organization.requireScoreFinalization ?? true;
@@ -225,8 +226,8 @@ export default async function PublicGameDetailsPage({
   const hasScore = (game.status === 'completed' || game.status === 'submitted') &&
     game.homeScore != null && game.awayScore != null;
   const winner = getWinner(game);
-  const awayName = getTeamDisplay(game, false, data.teams, data.divisions);
-  const homeName = getTeamDisplay(game, true, data.teams, data.divisions);
+  const awayName = getTeamDisplay(game, false, data.teams);
+  const homeName = getTeamDisplay(game, true, data.teams);
   const awayOutcome = !hasScore ? null : winner === 'tie' ? 'T' : winner === 'away' ? 'W' : 'L';
   const homeOutcome = !hasScore ? null : winner === 'tie' ? 'T' : winner === 'home' ? 'W' : 'L';
   let gameType = 'Pool Play';

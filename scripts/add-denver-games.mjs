@@ -1,6 +1,7 @@
-/** Give denver bobcats (U13, published_generic) a couple of games vs real U13 teams
- * so the 5i bridge has something to render — opponents must display as "TBD".
- * Idempotent (clears denver's games first). Run AFTER the live-demo seed.
+/** Give denver bobcats (U13) a couple of games vs real U13 teams so the 5i coach
+ * bridge has something to render. Once the U13 division is published, opponents show
+ * real team names (mig 129 — two-state schedule; the old placeholder/TBD publish mode
+ * was removed). Idempotent (clears denver's games first). Run AFTER the live-demo seed.
  * Run: node --env-file=.env.local scripts/add-denver-games.mjs */
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
@@ -50,5 +51,5 @@ if (error) { console.error('insert failed:', error.message); process.exit(1); }
 console.log(`✅ Added 2 U13 games for denver bobcats:`);
 console.log(`   • vs ${oppA.name} — 11:00 today (scheduled)`);
 console.log(`   • @ ${oppB.name} — 15:30 today (final, denver won 6-3)`);
-console.log(`   Refresh /coaches/tournaments/${denver.id} — both opponents must show "TBD" (U13 = published_generic),`);
-console.log(`   each row deep-links to a public game page that also shows TBD.`);
+console.log(`   Refresh /coaches/tournaments/${denver.id} — once U13 is published, opponents show real names;`);
+console.log(`   each row deep-links to a public game page with the same matchup.`);

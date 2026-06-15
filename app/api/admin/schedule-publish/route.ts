@@ -12,7 +12,9 @@ import { withObservability } from '@/lib/observability';
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
 // POST /api/admin/schedule-publish
-// Body: { tournamentId, divisionIds: string[], visibility: 'published_generic' | 'published_teams', notify: boolean }
+// Body: { tournamentId, divisionIds: string[], visibility: 'published', notify: boolean }
+// Two-state schedule (mig 129): publishing always uses REAL team names. The old
+// placeholder/anonymized publish mode ('published_generic') was removed.
 export const POST = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
@@ -23,12 +25,17 @@ export const POST = withObservability(async (req: Request) => {
     const { tournamentId, divisionIds, visibility, notify } = await req.json() as {
       tournamentId: string;
       divisionIds: string[];
-      visibility: 'published_generic' | 'published_teams';
+      visibility: 'published';
       notify: boolean;
     };
 
     if (!tournamentId || !divisionIds?.length || !visibility) {
       return Response.json({ error: 'tournamentId, divisionIds, and visibility are required' }, { status: 400 });
+    }
+
+    // Two-state only (mig 129): the sole publishable value is 'published' (real names).
+    if (visibility !== 'published') {
+      return Response.json({ error: 'visibility must be "published"' }, { status: 400 });
     }
 
     const denied = scopeGuard(ctx, tournamentId);
@@ -37,10 +44,14 @@ export const POST = withObservability(async (req: Request) => {
     const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
     if (wrongOrg) return wrongOrg;
 
-    // Update schedule_visibility for all specified divisions.
+    // Publish = real names live AND registration closed, written atomically so the two
+    // can never disagree (mig 129). Closing here on the server is the guarantee — the
+    // admin client also pre-closes for snappy UI, but a failed client pre-close can no
+    // longer leave a division published-but-still-open. Mirrors the reopen→unpublish
+    // coupling in /api/admin/divisions (set-closed).
     const { error: updateError } = await supabaseAdmin
       .from('divisions')
-      .update({ schedule_visibility: visibility })
+      .update({ schedule_visibility: visibility, is_closed: true })
       .in('id', divisionIds)
       .eq('tournament_id', tournamentId);
 
@@ -85,7 +96,6 @@ export const POST = withObservability(async (req: Request) => {
     // resolves the selected contact member. Off → no contact shown.
     const scheduleFallback = (await getOrgOwnerEmail(ctx.org.id)) ?? ctx.org.contactEmail ?? null;
     const contactEmail = (await resolveTournamentContactEmail(tournamentId, scheduleFallback, 'coach')) ?? undefined;
-    const showTeamNames = visibility === 'published_teams';
 
     let notified = 0;
     // 5n: the organizer can disable the schedule-published email (or pause all automatic coach
@@ -101,7 +111,6 @@ export const POST = withObservability(async (req: Request) => {
           tournamentName: tournament.name,
           coachName: team.coach || team.name,
           divisions,
-          showTeamNames,
           scheduleUrl,
           contactEmail,
           registrationId: team.id,
@@ -175,11 +184,11 @@ export const POST = withObservability(async (req: Request) => {
             : null;
           const firstGameLabel = timeLabel ? `${dateLabel} · ${timeLabel}` : dateLabel;
 
-          // Opponent honesty-gated: only when matchups are public (published_teams) AND it's a real
-          // assigned team we can name. Otherwise omit (the email simply doesn't mention an opponent).
+          // Name the opponent only when it's a real assigned team (not a bye / unseeded
+          // slot). Otherwise omit it — the email simply doesn't mention an opponent.
           const opponentId = g.home_team_id === team.id ? g.away_team_id : g.home_team_id;
           const realOpponentId = opponentId && opponentId !== NIL_UUID ? opponentId : null;
-          const opponentName = showTeamNames && realOpponentId ? teamNameById.get(realOpponentId) ?? null : null;
+          const opponentName = realOpponentId ? teamNameById.get(realOpponentId) ?? null : null;
 
           await sendMarketingEmail({
             emailKey: COACH_GAME_DAY_REMINDER_EMAIL_KEY,

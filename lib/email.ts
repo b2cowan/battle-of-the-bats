@@ -837,16 +837,14 @@ export function schedulePublishedHtml(p: {
   tournamentName: string;
   coachName: string;
   divisions: string[];
-  showTeamNames: boolean;
   scheduleUrl: string;
   contactEmail?: string;
   registrationId?: string;
   coachEmail?: string;
 }) {
   const divisionList = p.divisions.map(d => `<li style="margin-bottom:0.25rem;">${d}</li>`).join('');
-  const nameNote = p.showTeamNames
-    ? 'Your team name appears on the public schedule.'
-    : 'Team names are displayed as placeholders until registration closes. Your team name will appear once the organizer finalizes the roster.';
+  // Published schedules always show real team names (mig 129).
+  const nameNote = 'Your team name appears on the public schedule.';
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your Schedule is Live!</h2>
     <p>Hi <strong>${p.coachName}</strong>,</p>

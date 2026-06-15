@@ -29,9 +29,10 @@ function teamName(
   id: string | null | undefined,
   placeholder: string | null | undefined,
   teams: { id: string; name: string }[],
-  generic: boolean,
 ) {
-  if (!generic && id && id !== NIL_UUID) {
+  // Published schedules always show real team names (mig 129); placeholder only for
+  // a genuinely unassigned slot (bye / unseeded bracket spot).
+  if (id && id !== NIL_UUID) {
     return teams.find(t => t.id === id)?.name ?? placeholder ?? 'TBD';
   }
   return placeholder ?? 'TBD';
@@ -46,11 +47,9 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     const game = data.games.find(g => g.id === gameId);
     if (!game) return null;
 
-    const division = data.divisions.find(d => d.id === game.divisionId) ?? null;
-    const generic = (division?.scheduleVisibility ?? 'unpublished') === 'published_generic';
     const teams = data.teams.map(t => ({ id: t.id, name: t.name }));
-    const away = teamName(game.awayTeamId, game.awayPlaceholder, teams, generic);
-    const home = teamName(game.homeTeamId, game.homePlaceholder, teams, generic);
+    const away = teamName(game.awayTeamId, game.awayPlaceholder, teams);
+    const home = teamName(game.homeTeamId, game.homePlaceholder, teams);
 
     const hasScore = (game.status === 'completed' || game.status === 'submitted') &&
       game.homeScore != null && game.awayScore != null;

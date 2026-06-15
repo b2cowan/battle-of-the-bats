@@ -352,6 +352,12 @@ export const POST = withObservability(async (req: Request) => {
       // Body: { action, id?, tournamentId?, scheduleVisibility }
       const { id: agId, tournamentId: tId, scheduleVisibility: vis } = data ?? {};
       if (!vis) throw new Error('scheduleVisibility required');
+      // Two-state only (mig 129): reject the removed/legacy values fast with a clear
+      // 400 instead of letting the DB CHECK surface a raw error. Real names are the
+      // only published mode now.
+      if (vis !== 'unpublished' && vis !== 'published') {
+        return Response.json({ error: 'scheduleVisibility must be "unpublished" or "published"' }, { status: 400 });
+      }
 
       if (agId) {
         const { data: ag } = await supabaseAdmin.from('divisions').select('tournament_id').eq('id', agId).single();
@@ -386,7 +392,14 @@ export const POST = withObservability(async (req: Request) => {
         if (wrongOrg) return wrongOrg;
         if (await isTournamentLocked(ag.tournament_id)) return tournamentLockedResponse();
       }
-      const { error } = await supabaseAdmin.from('divisions').update({ is_closed: data.isClosed }).eq('id', id);
+      // Reopening registration (isClosed → false) atomically takes the public schedule
+      // back offline: a division can never be open for registration AND showing a live
+      // schedule at the same time. Both columns update in one write so the two states
+      // can never drift, even if the request is retried. (Closing does not touch
+      // visibility — publishing is a separate, explicit action.)
+      const updates: { is_closed: boolean; schedule_visibility?: string } = { is_closed: data.isClosed };
+      if (data.isClosed === false) updates.schedule_visibility = 'unpublished';
+      const { error } = await supabaseAdmin.from('divisions').update(updates).eq('id', id);
       if (error) throw error;
     }
 

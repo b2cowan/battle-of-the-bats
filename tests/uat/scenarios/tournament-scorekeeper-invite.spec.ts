@@ -73,7 +73,7 @@ async function createAssignedGame(input: {
       tournament_id: tournament.id,
       name: 'UAT Invite Division',
       display_order: 1,
-      schedule_visibility: 'published_teams',
+      schedule_visibility: 'published',
     })
     .select('id')
     .single()

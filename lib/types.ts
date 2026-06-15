@@ -487,7 +487,7 @@ export interface Division {
   depositDueDate?: string | null;
   totalFeeAmount?: number | null;
   totalFeeDueDate?: string | null;
-  scheduleVisibility?: 'unpublished' | 'published_generic' | 'published_teams';
+  scheduleVisibility?: 'unpublished' | 'published';
   /** Per-division game timing overrides. See DivisionSettings. */
   settings?: DivisionSettings;
 }

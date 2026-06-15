@@ -169,9 +169,8 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     return team.division_id && a.division_ids.includes(team.division_id);
   });
 
-  const scheduleVisible =
-    division?.schedule_visibility === 'published_teams' ||
-    division?.schedule_visibility === 'published_generic';
+  // Two-state schedule (mig 129): a published division always shows real team names.
+  const scheduleVisible = division?.schedule_visibility === 'published';
 
   const teamGames = (games ?? []) as Array<{
     id: string;
@@ -195,13 +194,6 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     ((acceptedTeams ?? []) as Array<{ id: string; name: string }>).map(t => [t.id, t.name] as const),
   );
 
-  // Matchups are public ONLY under 'published_teams'. 'published_generic' means the
-  // organizer published times/locations but deliberately HID who-plays-who — so the
-  // coach bridge must mirror the public game page (getTeamDisplay): show the
-  // placeholder/TBD, never the real opponent name, or it would leak the hidden
-  // identity AND mismatch the page it links to.
-  const namesPublished = division?.schedule_visibility === 'published_teams';
-
   // The live bridge (public deep-links, live scorebug, Follow) additionally
   // requires the tournament to be publicly visible (active|completed) — the public
   // game page + follow dock don't exist for a draft tournament. When the division
@@ -214,11 +206,11 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     const isHome = g.home_team_id === teamId;
     const opponentId = isHome ? g.away_team_id : g.home_team_id;
     const opponentPlaceholder = isHome ? g.away_placeholder : g.home_placeholder;
-    // Reveal a real opponent name only when matchups are published AND a real team
+    // Reveal a real opponent name only when the schedule is published AND a real team
     // is assigned; otherwise fall back to the game's placeholder/TBD with a neutral
-    // monogram (mirrors the public game page — never leaks a hidden/undecided team).
+    // monogram (mirrors the public game page — never names an undecided team/bye).
     const realOpponentId = opponentId && opponentId !== NIL_UUID ? opponentId : null;
-    const realOpponentName = namesPublished && realOpponentId ? teamNameById.get(realOpponentId) : undefined;
+    const realOpponentName = scheduleVisible && realOpponentId ? teamNameById.get(realOpponentId) : undefined;
     const revealed = Boolean(realOpponentName);
     const opponentName = realOpponentName ?? opponentPlaceholder ?? 'TBD';
     return {
