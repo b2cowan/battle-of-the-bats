@@ -4,6 +4,98 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-15 — Schedule toolbar (rev 7): dropdown-overlap bug fixed; narrower division select; actions stay pinned right
+
+**Decision:** Two real fixes + one reverted experiment, all MEASURED in Playwright.
+1. **Dropdown menus were visually broken (rows overlapping).** Root cause MEASURED: the rev-5 height rule `.scheduleEndGroup :global(button){height:28px}` is a *descendant* selector, so it also clamped the **dropdown `[role=menuitem]` buttons** (Auto / Unpublish menus render inside `.scheduleEndGroup`) to 28px — crushing each item's two-line title+subtitle (measured 28px, overlapping). Fix: scope both the desktop (28px) and mobile (34px) height rules to `:global(button:not([role="menuitem"]))` so only trigger buttons are pinned; menu items size to content (measured 48px after). Also widened the Auto menu to `minWidth:250px` + `whiteSpace:nowrap` so its short titles ("Round-Robin Generator") stop wrapping. **Binding rule: never use a bare descendant `:global(button)` height/size rule on a container that also holds a dropdown menu — exclude `[role=menuitem]`.**
+2. **Division select was gratuitously wide** (shared `ToolbarSelect` defaults `min-width:13rem` ≈ 208px; with label ≈ 270px). Added `className={styles.scheduleDivisionSelect}` to the Division select and `@media (min-width:769px) .scheduleDivisionSelect :global(select){ min-width:9rem }` — fits the longest realistic division name, tightens the left group, reduces premature wrapping.
+3. **Reverted:** an experiment to cluster all controls left (drop `space-between`, `margin-left:0` on the action group, `flex:0 1 auto` on the left group). It closed the middle gap but moved the emptiness to the right edge. Owner chose **actions pinned right** (original `space-between`) — the middle gap reads as intentional "what you're viewing" (left) vs "actions" (right) separation. So the toolbar keeps `space-between` + grown left group + right-aligned action cluster.
+
+**Rationale:** Owner: dropdowns "look visually broken" (the overlap bug — real, fixed) and "weird spacing" (the wide select + the gap). Turned out the gap itself was wanted; the wide division select was the avoidable part. The dropdown bug was a self-inflicted regression from the rev-5 height fix — caught only by measuring menu-item heights, not by eye.
+
+**Applies to:** `schedule-admin.module.css` (height rules now `:not([role=menuitem])`; new desktop `.scheduleDivisionSelect` min-width), `page.tsx` (Auto menu `minWidth`/`nowrap`; `className` on the Division `ToolbarSelect`). The rev-6 `align-items:flex-start` stands; the rev-7 clustering experiment is NOT in the codebase.
+
+---
+
+### 2026-06-15 — Schedule toolbar (rev 6): top-align groups so the action cluster doesn't float between wrapped left rows
+
+**Decision:** `.scheduleToolbar.scheduleToolbar { align-items: flex-start }` (desktop; double-class for specificity over the shared `.toolbar { align-items:center }`). MEASURED root cause via Playwright (y-centers, not eyeballed): the left toolbar group (Division + Stage + View) wraps to **two rows** on a narrow desktop / with devtools open — Division+Stage at y-mid 98, View toggle at y-mid 134 (group height 64px). The right action cluster (Build Bracket / Publish / Auto, 28px) was centered by the parent's `align-items:center` to y-mid **116** — exactly halfway between the two left rows, so it visually floated in the gap (user: "the buttons on the right are in between the 2 sets of buttons on the left"). Top-aligning pulls the cluster to y-mid **98**, level with the FIRST left row (Division/Stage). Verified before/after by measurement + screenshot; mobile unaffected (its `@media` `align-items:flex-end` rule still wins).
+
+**Rationale:** Six revisions in, the persistent "not aligned" complaint was never about button *height* (rev 5 fixed that) — it was vertical *anchoring* against a wrapping multi-row sibling. `align-items:center` + a wrapping neighbor = the classic "short element floats to the centroid of the tall element" trap. flex-start is the correct anchor whenever a toolbar's groups can wrap to differing row counts.
+
+**Applies to:** `schedule-admin.module.css` (`.scheduleToolbar.scheduleToolbar` align-items). No page.tsx change. Pattern: any space-between toolbar whose groups can wrap to different heights should top-align, not center.
+
+---
+
+### 2026-06-15 — Schedule toolbar (rev 5): button-height consistency, MEASURED via Playwright
+
+**Decision:** Pinned consistent button heights in the schedule toolbar, verified by driving the page in Playwright and reading computed `getBoundingClientRect().height` (not by eye). Measured before/after:
+- **Mobile Row 2** (Publish + wrench Tools, beside search): were **32px (Publish, `.mobileIconButton`) vs 24px (Tools, default `.btn-data`)**. The old `.scheduleEndGroup :global(button){height:38px}` rule only hit the desktop group (hidden on mobile), so the mobile controls had no shared height. Fixed: `@media (max-width:768px) .scheduleMobilePublish :global(button), .scheduleMobileTools :global(button) { height:34px }` — matches the 34px division select + stage toggle. After: **all 34px.**
+- **Desktop Row 1 action cluster** (Build Bracket / Publish / Auto): were **22–25px ragged** (`.btn-data` ~22–23px, ghost dropdown triggers ~25px). Fixed: `@media (min-width:769px) .scheduleEndGroup :global(button){ height:28px }` — matches the adjacent venue button + filter chips (28px). After: **all 28px.** The Stage/View segmented toggles stay 22px deliberately — a distinct control family in their own zone, reads as grouping not misalignment.
+
+**Process note (binding for future visual work):** stop iterating blind on screenshots. The repo has a Playwright UAT harness (`tests/uat/`, saved sessions in `.auth/`); a throwaway spec that loads a session, sets the viewport, drives the control, and dumps computed heights + a screenshot gives exact numbers to fix against and confirms the fix landed. Several prior revs missed the height bug because it was eyeballed. Measure, fix, re-measure, then delete the temp spec.
+
+**Applies to:** `schedule-admin.module.css` (mobile `.scheduleMobilePublish`/`.scheduleMobileTools` height; desktop `.scheduleEndGroup` button height; retired the stale mobile 38px rule). No page.tsx change.
+
+---
+
+### 2026-06-15 — Schedule toolbar (rev 4): mobile publish = sibling beside Tools (not inside); bracket actions join the right action cluster
+
+**Decision:** Two corrections to rev 3 after testing.
+1. **Mobile Publish/Unpublish is a standalone button BESIDE the Tools menu**, not a section inside it. Rendered as `.scheduleMobilePublish` (a sibling on Row 2, `order:2`, just left of the wrench Tools menu `order:3`; `margin-left:auto` pushes the publish+tools pair to the right edge). The Publish section was removed from `MobileToolsMenu` again (its publish props dropped) — the Tools menu now holds only Playoffs + Generate. Reuses the lime `.publishButton` / `UnpublishControl`, both icon-collapsing via `.mobileIconButton`.
+2. **Bracket actions (Build / Edit + Clear) live in the RIGHT action cluster**, not the left view group. In rev 3 they sat in the grown left group and **wrapped to a second line** in desktop Playoffs (3-option View toggle + 2 bracket buttons exceeded the row), orphaning them. They're now the lead of the right `align="end"` cluster: `[Edit][Clear] · [Publish/Unpublish] · [Auto]`, all right-aligned in one `nowrap` group. This matches the Round Robin look the owner approved (right-aligned action cluster) and removes both the mid-row gap and the wrapping. The left group reverts to just Division + Stage + View.
+
+**Rationale:** Owner: "didn't want publish inside Tools on mobile — put it beside it"; and desktop Playoffs alignment "still off" because the bracket buttons had wrapped below. One coherent right-aligned action cluster in both stages is the consistent, non-wrapping answer; mobile keeps publish as a visible peer of Tools rather than buried a tap deep.
+
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/page.tsx` (`.scheduleMobilePublish` sibling, bracket `.bracketActions` moved into the right `ToolbarGroup`, `MobileToolsMenu` publish section removed again), `schedule-admin.module.css` (`.scheduleMobilePublish` show/hide + order, `.scheduleMobileTools` margin removed, `.bracketActions` mobile-hide dropped since it now lives in the mobile-hidden `.scheduleEndGroup`). Supersedes rev 3's "bracket actions in left group" and rev 1/rev 3's mobile-publish placement. Header `meta` status + "Published / · names hidden" wording (rev 2) still stand.
+
+---
+
+### 2026-06-15 — Schedule toolbar (rev 3): publish ACTION back in toolbar, bracket actions grouped left, mobile Tools = wrench-only
+
+**Decision:** Final layout after browser testing rev 2. The split is now: **status = header meta (left, under subtitle)**; **action = toolbar Row 1**, not the header actions row.
+1. **Publish/Unpublish ACTION moved back to the toolbar Row 1 right group** (with the Auto menu). The header actions row carries only Export + Add Game. The published *status* (dot + "Published" / "· names hidden") stays in the header `meta` slot from rev 2 — status and action are now in different rows, which is fine: status orients (left, under title), action sits with the other toolbar actions (right).
+2. **Mobile: publish lives in the Tools menu again.** The desktop Row-1 group is `display:none` on mobile, so the Publish section was restored to `MobileToolsMenu` (sits next to search on Row 2). This reverses rev 1's "header-only / not in Tools" call — owner preferred publish next to Tools on mobile.
+3. **Mobile Tools trigger = wrench icon only.** Dropped the "Tools" word from the `MobileToolsMenu` button (kept the chevron + `aria-label`/`title`) to save row space. The menu only renders on mobile, so this is mobile-only by construction.
+4. **Bracket actions (Build / Edit + Clear) grouped with the view controls (left), not the right action group.** They're contextual to the playoff view; wrapped in a desktop-only `.bracketActions` flex group placed immediately after the View toggle. This removes the large empty gap that appeared in desktop Playoffs view — previously they sat in the right `align="end"` group and got stranded across the `space-between` gap from the grown left group. Mobile reaches bracket build/edit via the Tools menu's Playoffs section (unchanged); `.bracketActions` hides on mobile.
+
+**Rationale:** Owner, after testing rev 2: wanted the publish action back with the toolbar button cluster (not header); the mobile Tools button label wasted space; and desktop Playoffs showed "a lot of empty space" between the view controls and the stranded Edit/Clear/Auto buttons. Grouping bracket actions with the view they belong to (left) collapses the gap and reads as a coherent cluster.
+
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/page.tsx` (toolbar Row 1 publish action, `.bracketActions` wrapper in left group, `MobileToolsMenu` publish section + wrench-only trigger restored), `schedule-admin.module.css` (`.bracketActions` + its mobile hide). Amends rev 2 (action is in the toolbar, not header actions) and rev 1 (publish IS in the mobile Tools menu). The header `meta` status (rev 2) and "Published / · names hidden" wording stand.
+
+---
+
+### 2026-06-15 — Schedule publish (rev 2): status moved to header meta (left), "Published / · names hidden" wording, full-width mobile stage toggle
+
+**Decision:** Same-day follow-up after browser testing the rev-1 control (below). Three fixes:
+1. **Status moved OUT of the actions row into the header `meta` slot** (`TournamentAdminHeader meta`, rendered in `.headerMeta` under the subtitle, left-aligned). It was sharing the actions row with the Export / Unpublish / Add Game buttons, where a height-less text span never aligned cleanly with the ~34–38px buttons. The actions row now carries **only the action** (Publish button when unpublished, `UnpublishControl` when published); status is pure orientation on the left. Fixes the desktop + mobile alignment complaint outright.
+2. **Wording: drop "Teams".** Published status now reads **`● Published`** in the common (real-names) case, and **`● Published · names hidden`** only in `published_generic` mode (`.publishStatusFlag`, `--white-40`, lighter weight). "Teams" was unclear and only the matchups-hidden state actually warrants a flag. Full meaning stays in the `title` tooltip on both modes.
+3. **Locked tournament:** actions render nothing (read-only); if published, status still shows in meta. The old locked "Not Published" pill in actions was removed.
+4. **Mobile stage toggle is now full-width** on its own row (`.mobileStageToggle { flex: 1 1 100% }`, buttons `flex: 1 1 0`), and `.scheduleStartGroup` wraps with the division select at `flex: 1 1 100%`. Eliminates the dead space that sat to the right of the Round Robin/Playoffs toggle when it hugged its content width.
+
+**Rationale:** User-reported after rev 1: status "looks like a button / takes too much space," misaligned with adjacent buttons on both breakpoints; "why Teams?"; empty space beside the mobile stage toggle. Putting status in the orientation layer (left, under title) and keeping only actions on the right is the clean separation the 2026-06-01 decision intended; the meta slot already exists for exactly this.
+
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/page.tsx` (`TournamentAdminHeader meta`, simplified `actions`), `schedule-admin.module.css` (`.publishStatusText` no longer flex-shrink-pinned, new `.publishStatusFlag`, retired `.publishGroup`, full-width `.mobileStageToggle`/`.mobileStageBtn`, `.scheduleStartGroup` wrap). Amends the rev-1 entry below: status lives in header meta (not the actions row), wording is "Published / · names hidden" (not "Published · Teams/Placeholder").
+
+---
+
+### 2026-06-15 — Schedule publish: dual-state header control, plain-text status, both stages, single mobile home
+
+**Decision:** Reworked the schedule publish control into a single dual-state element in `TournamentAdminHeader.actions` (left of Export), shown in **both** Round Robin and Playoffs stages (publish is division-scoped — it covers the whole division's schedule, so hiding it in Playoffs was misleading):
+1. **Unpublished → the control IS the action:** a lime `.publishButton` (Globe + "Publish"). On a locked tournament it falls back to the read-only `.publishStatusDraft` "Not Published" pill (no action).
+2. **Published → plain text + leading dot, NO box** (`.publishStatusText` + `.publishStatusDot`): a 6px lime dot followed by neutral `--data-gray` uppercase "Published · Teams / · Placeholder", with the existing `UnpublishControl` chevron beside it. Mirrors the sidebar's `● Live / ● Open` indicators. Lime is carried only by the dot — the lime *fill/border* pill (`.publishStatus`) is retired for the published state so status never reads as a CTA next to real buttons.
+3. **Visible on mobile.** The old `.publishStatus { display:none }` mobile rule left no published signal in the visible chrome (user couldn't tell if a division was published); `.publishStatusText` stays shown on mobile (slightly smaller), so state is always glanceable.
+4. **Single action home on mobile.** Publish/Unpublish is header-only on every breakpoint. The **Publish section was removed from `MobileToolsMenu`** (and its now-dead props dropped) — that menu carries only Playoffs + Generate. No more two-paths-to-publish.
+5. **Stage toggle de-duplicated.** The **Stage (Round Robin / Playoffs)** section was removed from the mobile view-settings bottom sheet; the always-visible on-screen `.mobileStageToggle` is the single home. Stage is the primary context switch, not passive view config (the sheet keeps View / Venue / Game Status).
+
+**Rationale:** User-reported: published pill "looks like a button and takes up too much space" on desktop; "can't see if it's published or not" on mobile; publish appeared in both header and Tools menu; Stage toggle appeared twice. Confirms the standing "status = quiet orientation / action = lime button" hierarchy (dashboard metric-strip + 2026-06-01 publish-status decisions). Publish being division-scoped means it must appear in both stages.
+
+**Supersedes / amends:** the 2026-06-01 "publish status moved to header" entry (status is now plain dot+text, not the lime `.publishStatus` pill, and is visible on mobile) and the 2026-06-01 "mobile Tools menu" entry's Publish section (publish is now header-only on mobile, not in the Tools menu — Generate/Playoffs remain).
+
+**Applies to:** `app/[orgSlug]/admin/tournaments/schedule/page.tsx` (header dual-state control, `MobileToolsMenu` signature + body, bottom-sheet Stage removal), `schedule-admin.module.css` (`.publishStatusText`, `.publishStatusDot`, `.publishGroup`; mobile `.publishStatusText` override). Pattern for any future per-division publish control: dual-state header element, plain dot+text status, single action home across breakpoints.
+
+---
+
 ### 2026-06-12 — Schedule toolbar: destructive "Clear Bracket" de-emphasized vs neutral "Auto" menu
 
 **Decision:** In the Schedule admin toolbar's Row 1 right action group, the new **Clear Bracket** button (shown in Playoffs view once a bracket exists, beside the **Auto ▾** tools menu) drops `btn-ghost` and adopts a new recessive/tertiary treatment (`.clearBracketBtn` in `schedule-admin.module.css`): transparent fill + `var(--data-gray)` text/icon at rest, with a danger reveal on hover (`rgba(var(--danger-rgb),0.12)` bg, `0.3` border, `--danger` text). It keeps `btn-data` sizing **and a 1px transparent border** so its box height matches the bordered `.btn-ghost` Auto trigger exactly (a borderless button would render 2px shorter — `.btn` is `border:none`, `.btn-ghost` adds 1px). Double-class selector (`.clearBracketBtn.clearBracketBtn`) for specificity over the global `.btn`/`.btn-ghost`. Auto stays the neutral ghost pill, unchanged. Establishes a 3-tier action hierarchy in this cluster: **create = prominent** (Build Bracket `btn-lime`), **everyday tool = secondary** (Auto `btn-ghost`), **destroy = recessive** (Clear Bracket transparent→danger-on-hover).

@@ -1775,12 +1775,31 @@
   display: inline;
 }
 
-.scheduleToolbar {
-  align-items: center;
+/* Double-class for specificity over the shared .toolbar { align-items:center }
+   (same single-class weight, cross-file source order is unreliable).
+   Top-align the toolbar groups: the left group (Division + Stage + View) can wrap
+   to two rows on a narrow desktop / with devtools open; with align-items:center
+   the short right action cluster floats to the vertical CENTER of that 2-row block
+   — landing in the gap between the two left rows. flex-start lines the action
+   cluster up with the FIRST left row instead. */
+.scheduleToolbar.scheduleToolbar {
+  align-items: flex-start;
 }
 
 .scheduleDivisionGroup {
   min-width: 0;
+}
+
+/* The shared ToolbarSelect defaults to min-width:13rem (≈208px) — far wider than
+   a division dropdown needs ("U12", "Open Division"). At 13rem the division
+   select alone made the left view-group ≈654px, which (with no grow) still left a
+   visible gap before the action cluster and could push it to a 2nd row. 9rem fits
+   the longest realistic division name and tightens the whole row. Desktop only;
+   mobile keeps its own full-width rule. */
+@media (min-width: 769px) {
+  .scheduleDivisionSelect :global(select) {
+    min-width: 9rem;
+  }
 }
 
 .scheduleActionsGroup {
@@ -1793,8 +1812,25 @@
   display: none;
 }
 
+/* Mobile-only Publish/Unpublish control — sits BESIDE the Tools menu on Row 2.
+   Hidden on desktop (publish lives in the Row 1 action group there). */
+.scheduleMobilePublish {
+  display: none;
+}
+
 .scheduleExportButton,
 .scheduleToolsMenu {
+  flex-shrink: 0;
+}
+
+/* Playoff bracket actions (Build / Edit + Clear) — sit with the view controls in
+   the left group, immediately after the View toggle, so they read as part of the
+   playoff view and don't strand across the space-between gap. Desktop-only; mobile
+   reaches these via the Tools menu's Playoffs section. */
+.bracketActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   flex-shrink: 0;
 }
 
@@ -1896,6 +1932,40 @@
   color: var(--data-gray);
 }
 
+/* Published status — plain text + leading dot, NO box. Lives in the header
+   `meta` row (under the subtitle, left), the orientation layer — NOT among the
+   action buttons, so there's no height-mismatch to align. Mirrors the sidebar's
+   tournament status indicators (● Live / ● Open): lime is carried only by the
+   dot, text stays neutral. Lime fill/border is reserved for the Publish ACTION
+   (.publishButton, unpublished state). */
+.publishStatusText {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.publishStatusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--logic-lime);
+  flex-shrink: 0;
+}
+
+/* The generic-mode flag ("· names hidden") — quieter than the primary word so
+   "Published" stays the headline and the sub-state recedes. */
+.publishStatusFlag {
+  color: var(--white-40);
+  font-weight: 600;
+}
+
 .publishButton:disabled {
   border-color: rgba(148, 163, 184, 0.18) !important;
   background: rgba(148, 163, 184, 0.08) !important;
@@ -1956,6 +2026,9 @@
   /* Desktop action cluster (Publish/Auto/Export) is hidden on mobile — these
      collapse into the single Tools menu on Row 2. With this gone, the division
      selector reclaims the full first row. */
+  /* Desktop action cluster (bracket actions · Publish · Auto) is hidden on
+     mobile — Publish becomes a sibling beside the Tools menu, and bracket
+     build/edit lives in the Tools menu's Playoffs section. */
   .scheduleEndGroup {
     display: none !important;
   }
@@ -1964,11 +2037,19 @@
      order:3 keeps it last even though .scheduleSearch is order:1 at ≤640px —
      otherwise the default order:0 placed Tools before search (far left) and its
      right-anchored dropdown opened off the left edge of the screen. */
+  /* Publish sits between search and Tools (order 2). margin-left:auto on it
+     pushes both it and Tools to the right edge as a pair. */
+  .scheduleMobilePublish {
+    display: inline-flex;
+    flex: 0 0 auto;
+    order: 2;
+    margin-left: auto;
+  }
+
   .scheduleMobileTools {
     display: inline-flex;
     flex: 0 0 auto;
     order: 3;
-    margin-left: auto;
   }
 
   /* Match action button height to the select (38px).
@@ -2081,8 +2162,17 @@
     letter-spacing: 0.03em;
   }
 
+  /* .publishStatus (the old lime pill) is retired for the published state — the
+     status now renders as plain dot+text in the header meta row (under the
+     subtitle), which is naturally visible on mobile. Keep the hide for the
+     locked "Not Published" pill, which still uses .publishStatus. */
   .publishStatus {
     display: none;
+  }
+
+  .publishStatusText {
+    font-size: 0.58rem;
+    letter-spacing: 0.03em;
   }
 
   .desktopTitle {
@@ -2102,11 +2192,32 @@
   }
 }
 
-/* Height override for action buttons — at 768px to beat .mobileIconButton */
+/* Consistent height for the mobile Row-2 action controls (Publish + Tools).
+   They sit beside the search field, which is the 34px control height used by the
+   division select + stage toggle — so match 34px across the board. Targets both
+   the publish/unpublish button and the wrench Tools trigger (and the unpublish
+   split-button + its chevron). At 768px to beat .mobileIconButton's 32px. */
 @media (max-width: 768px) {
-  .scheduleEndGroup :global(button) {
-    height: 38px !important;
-    min-height: 38px !important;
+  /* Trigger buttons only — NOT the dropdown menu items ([role=menuitem]), which
+     are multi-line and must size to their content (a fixed height crushes the
+     title+subtitle onto one another). */
+  .scheduleMobilePublish :global(button:not([role="menuitem"])),
+  .scheduleMobileTools :global(button:not([role="menuitem"])) {
+    height: 34px !important;
+    min-height: 34px !important;
+    min-width: 34px;
+  }
+}
+
+/* Desktop: normalize the Row-1 action cluster to one height. The .btn-data
+   buttons render ~22–23px but the ghost dropdown triggers (Auto, Unpublish)
+   come out ~25px, so the cluster looked ragged. Pin every TRIGGER button in the
+   cluster to 28px — but exclude [role=menuitem] (the dropdown rows are multi-line
+   and must keep their content height; a 28px clamp made their text overlap). */
+@media (min-width: 769px) {
+  .scheduleEndGroup :global(button:not([role="menuitem"])) {
+    height: 28px;
+    min-height: 28px;
   }
 }
 
@@ -3789,9 +3900,12 @@
 
 @media (max-width: 900px) {
   .mobileStageToggle {
-    display: inline-flex;
-    flex: 0 0 auto;
-    align-self: flex-end;
+    /* Full-width segmented control on its own row — stretches edge to edge so
+       there's no trailing dead space (the toggle previously hugged its content
+       and left the rest of the row blank). Each option splits the width evenly. */
+    display: flex;
+    flex: 1 1 100%;
+    width: 100%;
     overflow: hidden;
     border: 1px solid var(--border-2);
     border-radius: 4px;
@@ -3799,6 +3913,10 @@
   }
 
   .mobileStageBtn {
+    flex: 1 1 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     height: 34px;
     padding: 0 0.6rem;
     border: none;
@@ -3823,15 +3941,17 @@
     color: var(--logic-lime);
   }
 
-  /* Keep Division + Stage on one row */
+  /* Division selector takes the full first row; the Stage segmented control
+     wraps to its own full-width row beneath it (flex: 1 1 100%), so it stretches
+     edge-to-edge with no trailing dead space. */
   .scheduleStartGroup {
-    flex-wrap: nowrap;
-    align-items: flex-end;
+    flex-wrap: wrap;
+    align-items: stretch;
     gap: 0.5rem;
   }
 
   .scheduleStartGroup .scheduleDivisionSelect {
-    flex: 1 1 auto;
+    flex: 1 1 100%;
     min-width: 0;
   }
 }

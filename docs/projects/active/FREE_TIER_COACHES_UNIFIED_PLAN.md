@@ -174,6 +174,8 @@ Both projects touch the **same coach surface** — `app/coaches/*`, the `basic_c
 **Detail:** FT §5 Phase 8, §15.
 **Exit:** every "start free" CTA maps to a working flow.
 
+**BUILD — item #1 (Tournament slice) DONE 2026-06-13** (owner: "go with #1 only; the rest still have work before they're customer-ready"; typecheck + focused lint clean; on `feat/free-tier-coaches`, NOT yet deployed). The J1-024 fix: `/start` (the create-picker) was only linked from `/home` (signed-in) — never from public marketing (every CTA → `/auth/signup`). Owner chose **secondary-link** prominence (not a primary funnel): the proven primary "Start free" CTA still goes straight to the Tournament flow (`/auth/signup`); added a muted "**Not running a tournament? See your options →**" link to `/start` in the landing hero footer note (`app/page.tsx`). Pricing skipped (it already has its own segment picker + "Get Started Free"/"Express interest" CTA — a `/start` link there is redundant). **Picker honesty for only-Tournament-live:** Tournament = live "Free"; League already "Coming soon" (flag-gated); Club "Talk to us"; **flipped the Coach card** from a live `/start/team` "Free" start → "Coming soon" routing to `/for-coaches` express-interest (the Basic coach floor is built but owner-deemed not customer-ready). Flip the Coach card back to `/start/team` + "Free" when Coaches launches (item #2). **Items #2 (Coaches flip), #3 (League flip + free-"League" pricing card + flag-on), #4 (Club consultative) DEFERRED** — each gated on its floor being customer-ready + the branch deployed to master.
+
 ---
 
 ## Future Rail — deferred, NOT part of this MVP

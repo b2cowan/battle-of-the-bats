@@ -1,5 +1,6 @@
 # FieldLogicHQ Memory Index
 
+- [Iterate visual fixes with Playwright](feedback_iterate_visual_with_playwright.md) — for CSS/alignment bugs, drive the app + measure computed heights/screenshot, don't fix blind on user screenshots
 - [Agent review workflow](agents/codex-subagent-coordination.md)
 - [Agent verification workflow](agent-verification-workflow.md)
 - [League onboarding wizard](league-onboarding-wizard.md)

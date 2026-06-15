@@ -1162,8 +1162,6 @@ export default function AdminSchedulePage() {
   // The division the manual bracket builder targets (selected division, else the first without a bracket).
   const playoffBuilderDivisionId = playoffDefaultDivisionId;
   const playoffBuilderDivision = divisions.find(d => d.id === playoffBuilderDivisionId) ?? null;
-  const publishedDivisionCount = divisions.filter(g => g.scheduleVisibility && g.scheduleVisibility !== 'unpublished').length;
-  const activeDivisionPublished = (activeDivision?.scheduleVisibility ?? 'unpublished') !== 'unpublished';
 
   return (
     <div className={s.page}>
@@ -1181,35 +1179,40 @@ export default function AdminSchedulePage() {
             <span className={styles.mobileSubtitle}>{currentTournament.name}</span>
           </>
         ) : 'Plan tournament games'}
+        meta={(() => {
+          // Per-division publish STATUS — lives under the subtitle (left), the
+          // orientation layer. Plain dot + text, never a button: it shares no row
+          // with the action buttons, which fixes the prior height-mismatch. Only
+          // rendered once a division is published (the unpublished resting state
+          // has no status to report — its action sits in `actions`).
+          const ag = divisions.find(g => g.id === filterGroup);
+          if (!ag) return null;
+          const vis = ag.scheduleVisibility ?? 'unpublished';
+          if (vis === 'unpublished') return null;
+          return (
+            <span
+              className={styles.publishStatusText}
+              // Generic mode hides matchups on the public page — the only published
+              // sub-state worth flagging. "Teams" mode is the plain, expected case.
+              title={vis === 'published_teams'
+                ? 'Published with real team names'
+                : 'Published — game times and fields are public, but matchups are hidden (shown as TBD)'}
+            >
+              <span className={styles.publishStatusDot} aria-hidden />
+              Published
+              {vis === 'published_generic' && (
+                <span className={styles.publishStatusFlag}> · names hidden</span>
+              )}
+            </span>
+          );
+        })()}
         mobileActionsInline
         locked={isLocked}
         actions={(
           <>
-            {(() => {
-              // Per-division publish status — read-only orientation, lives in the
-              // header (not the toolbar) so it doesn't compete with the view/action
-              // controls. "Published · …" (not "Live") to avoid colliding with the
-              // sidebar's tournament-level LIVE dot.
-              const ag = divisions.find(g => g.id === filterGroup);
-              // No single division selected (e.g. "All Divisions") → no single
-              // publish state to report, so show nothing.
-              if (!ag) return null;
-              const vis = ag.scheduleVisibility ?? 'unpublished';
-              if (vis === 'unpublished') {
-                return (
-                  <span className={`${styles.publishStatus} ${styles.publishStatusDraft}`}>
-                    <EyeOff size={10} />
-                    Not Published
-                  </span>
-                );
-              }
-              return (
-                <span className={styles.publishStatus}>
-                  <Globe size={10} />
-                  {vis === 'published_teams' ? 'Published · Teams' : 'Published · Placeholder'}
-                </span>
-              );
-            })()}
+            {/* Publish/Unpublish ACTION lives in the toolbar Row 1 right group
+                (with Auto); the read-only status lives in `meta` (under the
+                subtitle). The header actions row carries only Export + Add Game. */}
             <ExportMenu
               className={styles.scheduleExportButton}
               formats={['xlsx', 'csv', 'pdf']}
@@ -1246,6 +1249,7 @@ export default function AdminSchedulePage() {
         <ToolbarGroup grow className={`${styles.scheduleDivisionGroup} ${styles.scheduleStartGroup}`}>
           {divisions.length > 0 && !editingBracket && (
             <ToolbarSelect<string>
+              className={styles.scheduleDivisionSelect}
               label="Division"
               value={filterGroup !== 'all' ? filterGroup : (divisions[0]?.id ?? '')}
               options={divisions.map(d => ({ value: d.id, label: d.name }))}
@@ -1300,85 +1304,84 @@ export default function AdminSchedulePage() {
           )}
         </ToolbarGroup>
 
-        {/* ── Row 1 right: utility actions — Publish · Tools ── */}
+        {/* ── Row 1 right: action cluster — [bracket actions ·] Publish · Auto ──
+            All actions are one right-aligned cluster (matches the Round Robin look,
+            which the owner approved); bracket Build/Edit/Clear lead it in Playoffs.
+            Single nowrap group → no mid-row gap, no wrapping to a second line. */}
         <ToolbarGroup align="end" className={`${styles.scheduleActionsGroup} ${styles.scheduleEndGroup}`}>
-          {/* Publish control — only for round-robin view */}
-          {viewMode === 'pool' && filterGroup !== 'all' && (() => {
-            const ag = divisions.find(g => g.id === filterGroup);
-            const vis = ag?.scheduleVisibility ?? 'unpublished';
-            const isPublished = vis !== 'unpublished';
-            return (
-              <>
-                {/* Status display moved to the page header (left of Add Game).
-                    The toolbar keeps only the Publish/Unpublish action. The
-                    Unpublish control splits into a menu (this division / all
-                    published) when 2+ divisions are live. */}
-                {!isLocked && isPublished && (
-                  <UnpublishControl
-                    className={styles.mobileIconButton}
-                    publishedCount={divisions.filter(g => g.scheduleVisibility && g.scheduleVisibility !== 'unpublished').length}
-                    currentLabel={ag?.name ?? 'this division'}
-                    onUnpublishOne={() => handleUnpublish(filterGroup)}
-                    onUnpublishAll={handleUnpublishAll}
-                  />
-                )}
-                {!isLocked && !isPublished && (
+          {/* Bracket actions — Playoffs view only. "Build Bracket" when empty;
+              "Edit Bracket" + "Clear" when one exists. Desktop-only (mobile reaches
+              these via the Tools menu's Playoffs section). Hidden while editing /
+              on a locked tournament. */}
+          {viewMode === 'playoff' && canBuildPlayoffsManually && !isLocked && !editingBracket && (
+            <div className={styles.bracketActions}>
+              {!games.some(g => g.isPlayoff && g.divisionId === playoffBuilderDivisionId) ? (
+                <button
+                  type="button"
+                  className="btn btn-lime btn-data"
+                  disabled={!currentTournament}
+                  onClick={() => enterBracketEditor()}
+                  title="Build the playoff bracket manually"
+                >
+                  <Trophy size={12} />
+                  <span>Build Bracket</span>
+                </button>
+              ) : (
+                <>
                   <button
-                    className={`btn btn-lime btn-data ${styles.publishButton} ${styles.mobileIconButton}`}
-                    onClick={() => setPublishModal({ divisionId: filterGroup })}
+                    type="button"
+                    className="btn btn-lime btn-data"
                     disabled={!currentTournament}
-                    aria-label="Publish schedule"
-                    title="Publish schedule"
+                    onClick={() => enterBracketEditor()}
+                    title="Edit the playoff bracket"
                   >
-                    <Globe size={10} />
-                    <span className={styles.mobileButtonLabel}>Publish</span>
+                    <Pencil size={12} />
+                    <span>Edit Bracket</span>
                   </button>
-                )}
-              </>
+                  <button
+                    type="button"
+                    className={`btn btn-data ${styles.clearBracketBtn}`}
+                    disabled={!currentTournament}
+                    onClick={handleClearBracket}
+                    title="Delete the whole playoff bracket for this division"
+                  >
+                    <Trash2 size={12} />
+                    <span>Clear Bracket</span>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+          {/* Publish/Unpublish ACTION — division-scoped (covers both stages). The
+              read-only status lives in the header meta row (under the subtitle). */}
+          {(() => {
+            const ag = divisions.find(g => g.id === filterGroup);
+            if (!ag || isLocked) return null;
+            const vis = ag.scheduleVisibility ?? 'unpublished';
+            if (vis === 'unpublished') {
+              return (
+                <button
+                  className={`btn btn-lime btn-data ${styles.publishButton} ${styles.mobileIconButton}`}
+                  onClick={() => setPublishModal({ divisionId: filterGroup })}
+                  disabled={!currentTournament}
+                  aria-label="Publish schedule"
+                  title="Publish schedule"
+                >
+                  <Globe size={10} />
+                  <span className={styles.mobileButtonLabel}>Publish</span>
+                </button>
+              );
+            }
+            return (
+              <UnpublishControl
+                className={styles.mobileIconButton}
+                publishedCount={divisions.filter(g => g.scheduleVisibility && g.scheduleVisibility !== 'unpublished').length}
+                currentLabel={ag.name ?? 'this division'}
+                onUnpublishOne={() => handleUnpublish(filterGroup)}
+                onUnpublishAll={handleUnpublishAll}
+              />
             );
           })()}
-          {/* Playoffs: enter the inline MANUAL editor (the single editing surface, on
-              the main screen). "Build Bracket" when empty; "Edit Bracket" + "Clear"
-              when one exists. Hidden while editing (the editor has its own Save/Cancel)
-              and on a locked tournament. */}
-          {viewMode === 'playoff' && canBuildPlayoffsManually && !isLocked && !editingBracket
-            && !games.some(g => g.isPlayoff && g.divisionId === playoffBuilderDivisionId) && (
-            <button
-              type="button"
-              className={`btn btn-lime btn-data ${styles.scheduleToolsMenu}`}
-              disabled={!currentTournament}
-              onClick={() => enterBracketEditor()}
-              title="Build the playoff bracket manually"
-            >
-              <Trophy size={12} />
-              <span className={styles.mobileButtonLabel}>Build Bracket</span>
-            </button>
-          )}
-          {viewMode === 'playoff' && canBuildPlayoffsManually && !isLocked && !editingBracket
-            && games.some(g => g.isPlayoff && g.divisionId === playoffBuilderDivisionId) && (
-            <>
-              <button
-                type="button"
-                className={`btn btn-lime btn-data ${styles.scheduleToolsMenu}`}
-                disabled={!currentTournament}
-                onClick={() => enterBracketEditor()}
-                title="Edit the playoff bracket"
-              >
-                <Pencil size={12} />
-                <span className={styles.mobileButtonLabel}>Edit Bracket</span>
-              </button>
-              <button
-                type="button"
-                className={`btn btn-data ${styles.scheduleToolsMenu} ${styles.clearBracketBtn}`}
-                disabled={!currentTournament}
-                onClick={handleClearBracket}
-                title="Delete the whole playoff bracket for this division"
-              >
-                <Trash2 size={12} />
-                <span className={styles.mobileButtonLabel}>Clear Bracket</span>
-              </button>
-            </>
-          )}
           <ScheduleToolsMenu
             className={styles.scheduleToolsMenu}
             disabled={!currentTournament}
@@ -1393,19 +1396,40 @@ export default function AdminSchedulePage() {
         {layout !== 'timeline' && !editingBracket && (
         <ToolbarGroup fullWidth className={styles.scheduleFilterGroup}>
           <ToolbarSearch className={styles.scheduleSearch} value={search} onChange={setSearch} placeholder="Search teams..." label="Search games" />
-          {/* Mobile-only: publish/generate tools stay in one menu so
-              the division selector can take the full first row. Hidden on desktop,
-              where those controls remain separate (Row 1 right). */}
+          {/* Mobile-only: Publish/Unpublish sits BESIDE the Tools menu (not inside
+              it), next to search, so the division selector keeps the full first row.
+              The desktop Row-1 action group is hidden on mobile. */}
+          {!isLocked && (() => {
+            const ag = divisions.find(g => g.id === filterGroup);
+            if (!ag) return null;
+            const isPub = (ag.scheduleVisibility ?? 'unpublished') !== 'unpublished';
+            return (
+              <span className={styles.scheduleMobilePublish}>
+                {isPub ? (
+                  <UnpublishControl
+                    className={styles.mobileIconButton}
+                    publishedCount={divisions.filter(g => g.scheduleVisibility && g.scheduleVisibility !== 'unpublished').length}
+                    currentLabel={ag.name ?? 'this division'}
+                    onUnpublishOne={() => handleUnpublish(filterGroup)}
+                    onUnpublishAll={handleUnpublishAll}
+                  />
+                ) : (
+                  <button
+                    className={`btn btn-lime btn-data ${styles.publishButton} ${styles.mobileIconButton}`}
+                    onClick={() => setPublishModal({ divisionId: filterGroup })}
+                    disabled={!currentTournament}
+                    aria-label="Publish schedule"
+                    title="Publish schedule"
+                  >
+                    <Globe size={10} />
+                    <span className={styles.mobileButtonLabel}>Publish</span>
+                  </button>
+                )}
+              </span>
+            );
+          })()}
           <MobileToolsMenu
             className={styles.scheduleMobileTools}
-            showPublishSection={!isLocked && viewMode === 'pool' && filterGroup !== 'all'}
-            isPublished={activeDivisionPublished}
-            publishedCount={publishedDivisionCount}
-            currentDivisionLabel={activeDivision?.name ?? 'this division'}
-            canPublish={!!currentTournament}
-            onPublish={() => setPublishModal({ divisionId: filterGroup })}
-            onUnpublishOne={() => handleUnpublish(filterGroup)}
-            onUnpublishAll={handleUnpublishAll}
             canAutoGenerate={canAutoGenerateSchedule && !isPlayoffOnly}
             canPlayoffWizard={canBuildPlayoffsManually && !isLocked && !editingBracket}
             onAutoGenerate={openGenerator}
@@ -1478,19 +1502,9 @@ export default function AdminSchedulePage() {
           <div className={styles.sheet} role="dialog" aria-modal="true" aria-label="View settings">
             <div className={styles.sheetHandle} />
             <div className={styles.sheetBody}>
-              <div className={styles.sheetSection}>
-                <div className={styles.sheetSectionLabel}>Stage</div>
-                <div className={styles.sheetSegments}>
-                  {(['pool', 'playoff'] as const).map(v => (
-                    <button key={v} type="button"
-                      className={`${styles.sheetSeg} ${viewMode === v ? styles.sheetSegActive : ''}`}
-                      onClick={() => setViewMode(v)}
-                    >
-                      {v === 'pool' ? 'Round Robin' : 'Playoffs'}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Stage (Round Robin / Playoffs) is the primary context switch and
+                  lives on-screen via .mobileStageToggle — not duplicated here
+                  (this sheet is for passive view config only). */}
               <div className={styles.sheetSection}>
                 <div className={styles.sheetSectionLabel}>View</div>
                 <div className={styles.sheetSegments}>
@@ -2832,14 +2846,6 @@ function UnpublishControl({
 
 function MobileToolsMenu({
   className,
-  showPublishSection,
-  isPublished,
-  publishedCount,
-  currentDivisionLabel,
-  canPublish,
-  onPublish,
-  onUnpublishOne,
-  onUnpublishAll,
   canAutoGenerate,
   canPlayoffWizard,
   onAutoGenerate,
@@ -2848,14 +2854,6 @@ function MobileToolsMenu({
   onAutoBracket,
 }: {
   className?: string;
-  showPublishSection: boolean;
-  isPublished: boolean;
-  publishedCount: number;
-  currentDivisionLabel: string;
-  canPublish: boolean;
-  onPublish: () => void;
-  onUnpublishOne: () => void;
-  onUnpublishAll: () => void;
   canAutoGenerate: boolean;
   canPlayoffWizard: boolean;
   onAutoGenerate: () => void;
@@ -2940,10 +2938,12 @@ function MobileToolsMenu({
         onClick={() => setOpen(v => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label="Schedule tools"
         title="Schedule tools"
       >
+        {/* Wrench icon only — drops the "Tools" word to save row space on mobile
+            (this menu only renders on mobile). Chevron keeps the menu affordance. */}
         <Wrench size={12} />
-        <span>Tools</span>
         <ChevronDown size={10} style={{ opacity: 0.6 }} />
       </button>
       {open && (
@@ -2957,37 +2957,8 @@ function MobileToolsMenu({
             paddingBottom: '0.35rem', maxHeight: '70vh', overflowY: 'auto',
           }}
         >
-          {showPublishSection && (
-            <>
-              <div style={sectionLabel}>Publish</div>
-              {!isPublished
-                ? row({
-                    icon: <Globe size={13} style={{ color: canPublish ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
-                    label: 'Publish schedule',
-                    sub: 'Make this division public',
-                    disabled: !canPublish,
-                    onClick: () => act(onPublish),
-                  })
-                : (
-                  <>
-                    {row({
-                      icon: <EyeOff size={13} style={{ color: 'var(--data-gray)' }} />,
-                      label: 'Unpublish this division',
-                      sub: currentDivisionLabel,
-                      onClick: () => act(onUnpublishOne),
-                    })}
-                    {publishedCount >= 2 && row({
-                      icon: <EyeOff size={13} style={{ color: 'var(--data-gray)' }} />,
-                      label: `Unpublish all (${publishedCount})`,
-                      sub: 'Remove every division from the public page',
-                      onClick: () => act(onUnpublishAll),
-                    })}
-                  </>
-                )}
-              {divider}
-            </>
-          )}
-
+          {/* Publish/Unpublish is a sibling button beside this menu (not inside) —
+              see .scheduleMobilePublish in the toolbar. */}
           {canPlayoffWizard && (
             <>
               <div style={sectionLabel}>Playoffs</div>
@@ -3086,7 +3057,7 @@ function ScheduleToolsMenu({
           style={{
             position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 100,
             background: 'var(--surface)', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.3)',
-            borderRadius: '2px', minWidth: '210px', boxShadow: 'var(--shadow)',
+            borderRadius: '2px', minWidth: '250px', whiteSpace: 'nowrap', boxShadow: 'var(--shadow)',
           }}
         >
           <button
