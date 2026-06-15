@@ -1,6 +1,6 @@
 # Platform-Admin Operator Polish (F5) — Backlog Plan
 
-> **Status:** Scoped 2026-06-13. **Priority: P3 — opportunistic polish backlog.** **Batch 1 (Groups B + C + D) BUILT + COMMITTED 2026-06-14 (1ea63ec, not pushed).** **Batch 2 (Group E, all 7 billing items PAB-005/006/009/010/012/013/014) BUILT + COMMITTED 2026-06-14 (546f683, not pushed).** Both pending owner browser smoke-test. **Note:** PAG-004 (Group F, Action-Queue non-billing note) was already shipped as part of F4 (43f8cde) — drop it from F5 scope. **Remaining: Groups A, F (minus PAG-004), G, H, I.**
+> **Status:** Scoped 2026-06-13. **Priority: P3 — opportunistic polish backlog.** **Batch 1 (Groups B + C + D) BUILT + COMMITTED 2026-06-14 (1ea63ec, not pushed).** **Batch 2 (Group E, all 7 billing items PAB-005/006/009/010/012/013/014) BUILT + COMMITTED 2026-06-14 (546f683, not pushed).** Both pending owner browser smoke-test. **Note:** PAG-004 (Group F, Action-Queue non-billing note) was already shipped as part of F4 (43f8cde) — drop it from F5 scope. **Group A ✅ verified already-done (no-op, 2026-06-14).** **Remaining: Groups F (minus PAG-004), G, H, I.**
 > **Companion:** [PLATFORM_ADMIN_OPERATOR_POLISH_PM_BRIEF.md](PLATFORM_ADMIN_OPERATOR_POLISH_PM_BRIEF.md)
 > **Spun out of:** [Platform-Admin Employee Audit — SYNTHESIS.md](../archive/platform-admin-audit/SYNTHESIS.md) Theme F + unclaimed Low/Medium findings from PA1–PA6.
 
@@ -20,8 +20,10 @@ Items are grouped by theme. Finding ID · surface · file reference (where avail
 
 | ID | Surface | File / Line | Fix direction | Effort |
 |----|---------|-------------|---------------|--------|
-| PAR-003 (partial) | Overview — Action Queue | `app/platform-admin/page.tsx:149–158` | For the `expired_overrides` count specifically: make the link go to `?filter=expired_overrides` on the Orgs list instead of the unfiltered list. The dead-link suppression for non-billing roles (PAR-003 core) belongs to F2; this item is the "link destination is wrong even for billing" half. | XS |
-| PAB-002 | Overview → Orgs list | `app/platform-admin/page.tsx` (action queue count) + `app/platform-admin/orgs/page.tsx` (filter chips) | Add an `expired_overrides` attention filter to the Orgs list so the dashboard count is a live drill-through, not a dead count. Billing loses the "hunt org-by-org" pain. | S |
+| PAR-003 (partial) ✅ | Overview — Action Queue | `app/platform-admin/page.tsx` | **ALREADY DONE (verified 2026-06-14).** The "Expired overrides" tile already links to `?filter=expired_overrides` (page.tsx:212). No work needed. (Non-billing dead-link suppression = F2 ✅; F4 added the "requires billing access" note beneath the tile.) | XS |
+| PAB-002 ✅ | Overview → Orgs list | `app/platform-admin/orgs/page.tsx`, `OrgsClient.tsx` | **ALREADY DONE (verified 2026-06-14).** Orgs server page computes `expiredOverrideOrgIds`/`expiredOverride` (page.tsx:72,104); client supports the `expired_overrides` attention filter, reads it from the URL, filters on it, and renders a dismissible "Expired overrides ✕" chip (OrgsClient.tsx:51,58,118,276). Live drill-through already works. No work needed. | S |
+
+> **Group A status:** ✅ **No-op — already fully implemented before this batch (verified 2026-06-14).** Stale findings; the drill-through shipped between the audit and F5. Nothing built.
 
 ### Group B — Customer Users menu ordering
 
