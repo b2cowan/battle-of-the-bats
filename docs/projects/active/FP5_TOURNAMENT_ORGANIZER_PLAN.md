@@ -1,7 +1,7 @@
 # FP-5 — Tournament Organizer Experience (Implementation Plan)
 
-**Branch:** `fix/fp5-tournament-organizer` (off `origin/master`)
-**Status:** Planning complete — awaiting go-ahead to build Cluster 1.
+**Branch:** `dev` — the single shared branch for ALL chats (owner decision 2026-06-15; FP-5 was consolidated onto `dev` by merging `fix/fp3-volunteer-dayof` in). No per-initiative branches; see `AGENCY_RULES.md` → Branch and Deployment Policy.
+**Status:** Cluster 1 (bracket-math trust) BUILT + reviewed + forfeit lifecycle reworked + close-out gaps fixed, all on `dev`. Cluster 2 (false strings) next.
 **Source of truth:** `docs/projects/active/journeys/JOURNEY_J1_TOURNAMENT_ORGANIZER.md` (118 findings) + `docs/projects/active/USER_JOURNEY_AUDIT_SYNTHESIS.md` (§FP-5).
 **Wave:** Audit Wave-2. FP-1 (Trust & Integrity) and FP-3 (Volunteer Day-of) complete; FP-5 is the largest Wave-2 project.
 
@@ -115,7 +115,7 @@ The J1 audit walked the code 2026-06-10; the tournament section has had heavy wo
 
 ## 4. Operational rules (per project brief)
 
-- **Branch:** `fix/fp5-tournament-organizer` off `origin/master`; verified `git rev-list --count origin/master..HEAD == 0` at start. Never use `feat/free-tier-coaches`.
+- **Branch:** `dev` — the SINGLE shared branch for all chats (2026-06-15). Before each commit re-check `git rev-parse --abbrev-ref HEAD`; if not `dev`, `git checkout dev`. Never `git checkout -b`, never `feat/free-tier-coaches`.
 - **Concurrent-work hazard:** after EVERY commit run `git show --stat HEAD`; stage explicit pathspecs (never `git add -A`); split foreign files with `git reset --soft HEAD~1` + `git restore --staged <file>`. System-reminder diffs can be STALE — verify actual file state.
 - **Next 16:** read `node_modules/next/dist/docs` before route/params/proxy changes (`params` is a Promise; `proxy.ts` not `middleware.ts`).
 - **Schema:** forfeit needs **no migration** (status enum is app-level). Dictionary `games.status` enum note still gets the `forfeit` value added (doc edit). If any field IS added later → migration #131 dev-first via `scripts/apply-migration-api.mjs`, update DATA_DICTIONARY + `npm run refresh:snapshots`; decide column existence from live snapshots, never migration files.

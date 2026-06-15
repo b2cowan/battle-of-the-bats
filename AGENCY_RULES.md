@@ -45,10 +45,13 @@ All planning and reference documentation follows a three-tier structure:
 When an agent is asked to write up an implementation plan, it must create a new dedicated file at `docs/projects/active/<PLAN_NAME>.md` and add only a summary line to `TODO.md` that links to it.
 
 ## Branch and Deployment Policy
-- **CRITICAL**: All commits go to the `dev` branch by default. Never commit or push to `master` unless the user explicitly requests a deployment.
-- `dev` → active development branch (default for all AI-generated commits)
-- `master` → production branch, triggers Amplify CI/CD deploy. Only push when user says so.
-- If the current branch is `master` when starting work, ask the user to confirm before committing there.
+- **CRITICAL — ONE SHARED BRANCH: `dev`.** Every chat / agent works on the **`dev`** branch. Do **not** create per-initiative or per-feature branches; do **not** start work on `fix/*`, `feat/*`, or any other branch. This is a deliberate change (2026-06-15) to stop concurrent agents colliding across divergent branches. If you find yourself on any branch other than `dev` when starting or resuming work, switch to `dev` first (`git checkout dev`) before committing.
+- `dev` → the single active development branch for ALL AI-generated commits.
+- `master` → production branch, triggers Amplify CI/CD deploy. **Never** commit or push to `master` unless the user explicitly requests a deployment. If the current branch is `master` when starting work, switch to `dev`.
+- **Concurrent-work safety (multiple agents share this one working copy):**
+  - Another agent may switch the branch or leave files staged/modified mid-session. Re-check `git rev-parse --abbrev-ref HEAD` before committing — if it's not `dev`, switch back.
+  - Stage **explicit pathspecs only** — never `git add -A`/`git add .`. After every commit, run `git show --stat HEAD` and confirm only your files landed; if foreign files slipped in, `git reset --soft HEAD~1` + `git restore --staged <file>` and re-commit.
+  - `<system-reminder>` file snapshots can be **stale** (showing pre-edit content). Verify actual file state from `git show <ref>:<path>` or a fresh Read before reacting — do not assume a reminder reflects the committed truth.
 
 ## Technical Context
 - Refer to `AGENTS.md` for Next.js specific version rules.
