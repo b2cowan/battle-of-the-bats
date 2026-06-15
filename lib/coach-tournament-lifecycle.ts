@@ -49,13 +49,9 @@ export function deriveCoachLifecycleChip(
   // Complete: the event is over.
   if (today > end) return { state: 'complete', label: 'Complete', rank: 4 };
 
-  // Live: today falls within the event window (and it's multi-day or we're mid-event).
+  // Inside the event window: the opening day (single- or multi-day) reads as "game day";
+  // any later day of a multi-day event whose window straddles today reads as "live".
   if (today >= startDate && today <= end) {
-    // start === today AND it's a single-day (or first-day) event reads as "game day";
-    // a multi-day event whose window straddles today reads as "live".
-    if (today === startDate && startDate === end) {
-      return { state: 'game_day', label: 'Game Day', rank: 1 };
-    }
     if (today === startDate) return { state: 'game_day', label: 'Game Day', rank: 1 };
     return { state: 'live', label: 'Live', rank: 0 };
   }

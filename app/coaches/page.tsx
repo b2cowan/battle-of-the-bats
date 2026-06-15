@@ -56,7 +56,10 @@ export default async function CoachesPortalPage() {
   // state owns that), or coaches who already run BOTH a free team home + tournaments.
   const hasStandalone = basicTeams.length > 0;
   const pitch =
-    workspaceContexts.length > 0 || isEmpty || (hasStandalone && hasTournamentRecords)
+    // No pitch for: Premium-workspace coaches, the truly-empty (the empty state owns
+    // it), coaches with a pending claim (the claim prompt is the action — don't add a
+    // competing CTA), or coaches who already run BOTH a free team home + tournaments.
+    workspaceContexts.length > 0 || isEmpty || claimable.length > 0 || (hasStandalone && hasTournamentRecords)
       ? null
       : hasStandalone
         ? {
@@ -174,7 +177,8 @@ export default async function CoachesPortalPage() {
         <section className={styles.section}>
           <div className={styles.empty}>
             <p>Your teams show up here. Register a team for a tournament, or start a free team home to manage your season.</p>
-            <Link href={COACHES_START_PATH} className="btn btn-ghost btn-sm">Express interest</Link>
+            {/* Hub empty-state primary CTA → btn-lime (CP-4/CP-10); CP-1 bans btn-sm as a primary size. */}
+            <Link href={COACHES_START_PATH} className="btn btn-lime">Start free team home</Link>
           </div>
         </section>
       )}

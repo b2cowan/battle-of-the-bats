@@ -53,7 +53,11 @@ type CoachTeamGroup = BasicCoachTournamentTeam & {
 function isActive(tournament: TournamentRow | null): boolean {
   if (!tournament) return false;
   const now = new Date().toISOString().split('T')[0];
-  if (tournament.end_date && now > tournament.end_date) return false;
+  // A single-day event (no end_date) ends on its start_date — otherwise it would
+  // sit in "Active & Upcoming" forever while its lifecycle chip reads "Complete"
+  // (deriveCoachLifecycleChip uses `end = endDate ?? startDate`). Keep them aligned.
+  const effectiveEnd = tournament.end_date ?? tournament.start_date;
+  if (effectiveEnd && now > effectiveEnd) return false;
   return true;
 }
 
