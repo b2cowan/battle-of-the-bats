@@ -16,7 +16,9 @@
    full-width OUTSIDE this grid. 700–960px and mobile stay single-column. */
 .contentGrid {
   display: grid;
-  gap: 1.5rem;
+  /* 2rem matches the out-of-grid .section margin so single-column spacing is even
+     across the whole page (not tighter inside the editor cluster). */
+  gap: 2rem;
   align-items: start;
   margin-bottom: 2rem;
 }
@@ -28,8 +30,11 @@
 }
 
 /* The grid gap owns the spacing between editor sections — drop the per-section
-   bottom margin so 2-up rows don't accumulate a double gap. */
-.contentGrid > * {
+   bottom margin so 2-up rows don't accumulate a double gap. Targets the `<section>`
+   ELEMENT (specificity 0,1,1) so it beats coaches-portal's `.section { margin-bottom }`
+   (0,1,0) regardless of CSS-module import order — not a source-order tie. The grid
+   children are <section> elements carrying the hashed shared.section class. */
+.contentGrid > section {
   margin-bottom: 0;
 }
 

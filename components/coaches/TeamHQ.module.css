@@ -291,6 +291,12 @@
     gap: 0.4rem 1.5rem;
   }
 
+  /* Odd-count checklists (game-day = 3 rows, accepted_prep + a single fee/roster)
+     would orphan the last item in a half-width cell — stretch it full-width. */
+  .checkItem:last-child:nth-child(odd) {
+    grid-column: span 2;
+  }
+
   .checkState {
     margin-left: 0;
   }
