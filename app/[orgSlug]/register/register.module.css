@@ -155,13 +155,89 @@
 }
 
 /* Review state */
+/* Review summary — a clean label → value list (no nested boxes). Each row is a left-aligned
+   uppercase label and a right-aligned value, separated by a hairline divider. Reads as a concise
+   recap rather than a grid of cards. */
 .reviewSummary {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
 }
 
-.reviewSummary > div,
+.reviewRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border-2);
+}
+.reviewRow:last-child {
+  border-bottom: none;
+}
+
+.reviewSummary dt {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--white-60);
+}
+
+.reviewSummary dd {
+  margin: 0;
+  text-align: right;
+  color: var(--white);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* Status banner — the "what happens when you submit" outcome, set apart from the factual list. */
+.reviewStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 1.1rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  background: rgba(var(--warning-rgb), 0.1);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
+}
+.reviewStatusWaitlist {
+  background: rgba(var(--primary-rgb), 0.1);
+  border-color: rgba(var(--primary-rgb), 0.3);
+}
+.reviewStatusDot {
+  flex-shrink: 0;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: var(--warning);
+}
+.reviewStatusWaitlist .reviewStatusDot {
+  background: var(--primary);
+}
+.reviewStatusLabel {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--white-60);
+  margin-bottom: 0.1rem;
+}
+.reviewStatusValue {
+  display: block;
+  color: var(--white);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* Custom-field answers keep the original boxed-row treatment (distinct from the summary list). */
 .reviewAnswers > div {
   min-width: 0;
   border: 1px solid var(--border-2);
@@ -170,7 +246,6 @@
   padding: 0.85rem;
 }
 
-.reviewSummary span,
 .reviewAnswers span {
   display: block;
   margin-bottom: 0.3rem;
@@ -181,7 +256,6 @@
   color: var(--white-40);
 }
 
-.reviewSummary strong,
 .reviewAnswers strong {
   display: block;
   color: var(--white);
@@ -212,6 +286,9 @@
   justify-content: flex-end;
   gap: 0.75rem;
   flex-wrap: wrap;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-2);
 }
 
 .successActions {
@@ -414,8 +491,14 @@
     max-width: 22px;
   }
 
-  .reviewSummary {
-    grid-template-columns: 1fr;
+  /* Stack label over value on narrow screens so long values (emails) don't crowd the label. */
+  .reviewRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.2rem;
+  }
+  .reviewSummary dd {
+    text-align: left;
   }
 
   .reviewActions,
