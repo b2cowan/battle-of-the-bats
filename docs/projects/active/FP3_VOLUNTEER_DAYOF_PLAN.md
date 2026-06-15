@@ -16,32 +16,35 @@ Fix the two least-trained personas' day-of surfaces (`app/[orgSlug]/scorekeeper/
 
 ## Phases (one reviewable commit per group; lead with the Blocker)
 
-### Phase 1 — Exits & recovery (the "stranded with no exit" cluster)
-- [ ] **J8-001 (Blocker) — Sign Out is a dead 404 on both shells.** Both headers render `<Link href="/auth/logout">` but no such route exists; every other shell uses the `signOut()` client call (`lib/auth.ts:40-43`). → *A volunteer on a borrowed/shared phone can finally end their session.* Refs: `scorekeeper/layout.tsx:110-123`, `check-in/layout.tsx:85-90`. **Fix:** shared client `SignOutButton` (signOut → `/auth/login`), drop the dead Link in both shells.
-- [ ] **J8-002 — Session-expiry mid-shift dead-ends with no sign-in control.** Idle phone → games fetch + score PATCH 401 → "Sign in required" with no link/button/redirect. → *A lapsed session offers a clear way back in.* **Fix:** the 401/"sign in required" state renders a sign-in link/redirect to `/auth/login?next=<this shell>`.
+### Phase 1 — Exits & recovery (the "stranded with no exit" cluster) — **DONE 99e06b2**
+- [x] **J8-001 (Blocker) — Sign Out is a dead 404 on both shells.** → *A volunteer on a borrowed/shared phone can finally end their session.* — **DONE.** Shared client `components/volunteer/ShellSignOutButton.tsx` (uses `signOut()` → `/auth/login`, styled to match the header link); dead `<Link href="/auth/logout">` removed from both shells.
+- [x] **J8-002 — Session-expiry mid-shift dead-ends with no sign-in control.** → *A lapsed session offers a clear way back in.* — **DONE.** Scorekeeper `Notice` gains an optional `action` CTA; the 401 on BOTH the games fetch and the score-save PATCH now shows a "Sign in" button → `/auth/login?next=/<org>/scorekeeper` (forwards back after auth via FP-1's login fix); new `.noticeAction` tap target.
 
-### Phase 2 — Gate roster safety
-- [ ] **J8-010 — Gate roster Edit is a destructive delete-all + re-insert** that rewrites coach provenance (`source='gate'`) and drops data. → *Editing at the gate no longer wipes what the coach submitted.* **Fix:** non-destructive upsert preserving coach-sourced rows / provenance.
-- [ ] **J8-011 — "+ Add roster at the gate" is a faint text link** that looks like a label, not the destructive action it triggers. → *The destructive action looks like one.* **Fix:** real button affordance.
+### Phase 2 — Gate roster safety — **DONE a1eafe3**
+- [x] **J8-010 — Gate roster Edit is a destructive delete-all + re-insert.** → *Editing at the gate no longer wipes what the coach submitted.* — **DONE.** `save_gate_roster` now diffs: id'd rows update in place (source/source_player_id preserved), id-less rows insert as `source='gate'`, only explicitly-removed rows delete (team-bounded, IDOR-safe). Client sends row ids.
+- [x] **J8-011 — "Add roster at the gate" looked like a faint label.** → *The destructive action looks like one.* — **DONE.** `.addRosterBtn` given a distinct field-grade affordance (solid lime fill, ≥44px tap target) vs the neutral Edit.
 
-### Phase 3 — Score-entry ergonomics
-- [ ] **J8-006 — No "now" signal; all To-Score cards identical.** → *The current game is obvious at a glance.* **Fix:** now-stripe / time-left chip on the soonest/current game.
-- [ ] **J8-007 — Score inputs invisible, tiny, no steppers.** → *Usable without training.* **Fix:** high-contrast inputs + −/+ thumb steppers (reuse the admin GameList stepper pattern).
-- [ ] **J8-008 — Policy-consequence note is skippable grey body text.** → *The "needs admin review" note is visible.* **Fix:** colour/icon/separation on the finalization note.
+### Phase 3 — Score-entry ergonomics — **DONE 70ce26c**
+- [x] **J8-006 — No "now" signal; all To-Score cards identical.** → *The current game is obvious at a glance.* — **DONE.** First un-scored card gets an "Up next" lime chip + left stripe (`nowCardId`).
+- [x] **J8-007 — Score inputs invisible, tiny, no steppers.** → *Usable without training.* — **DONE.** Each input wrapped in a −/+ thumb stepper (≥48px) + brighter input border.
+- [x] **J8-008 — Policy-consequence note is skippable grey body text.** → *The "needs admin review" note is visible.* — **DONE.** Iconed, bordered, consequence-toned callout (amber review / lime final).
 
-### Phase 4 — Gate honesty
-- [ ] **J8-014 — Completed event dims the board with no read-only banner.** **Fix:** status banner when `locked` (mirror the admin board's completed/read-only treatment).
-- [ ] **J8-015 — Picker never shows tournament status; default can land on a DRAFT.** **Fix:** show status in the picker/label; prefer active.
-- [ ] **J8-016 — Mark paid is irreversible from the gate** while every other gate action is undoable. **Fix:** un-pay/undo affordance (reuses FP-1 `lib/mark-paid.ts`).
-- [ ] **J8-017 (Low) — Empty-board copy tells the volunteer to "accept registrations"** — agency they lack. **Fix:** volunteer-appropriate empty copy.
+### Phase 4 — Gate honesty — **DONE 01243f5**
+- [x] **J8-014 — Completed event dims the board with no read-only banner.** — **DONE.** Volunteer page shows a banner (completed read-only / draft not-yet-open) + locks the board for any non-active status.
+- [x] **J8-015 — Picker never shows tournament status; default can land on a DRAFT.** — **DONE.** Picker/label append `(status)`; default still prefers active.
+- [x] **J8-016 — Mark paid is irreversible from the gate.** — **DONE.** "Un-pay" restores PRIOR amounts (owner ruling): sheet snapshots payment state on Mark-paid, replays on undo; server `unmark_paid` + GET exposes deposit_paid/total_paid.
+- [x] **J8-017 (Low) — Empty-board copy assumed admin agency.** — **DONE.** "Teams appear here once an admin accepts their registration."
 
-### Phase 5 — Right-door wayfinding (shell half; FP-7 owns org-routing)
-- [ ] **J8-003 — "Assigned games/fields" copy promises a model that doesn't exist** (5 touchpoints; an unassigned official is UNRESTRICTED). **Fix:** drop/correct the "assigned" language.
-- [ ] **J8-019/020/021 — Role→surface mapping is backwards** (`official` → blank admin hub dead-end; `staff` gate volunteer → full admin dashboard; `/home` gives the official no gate path). **Fix (shell half):** right-door routing for the volunteer roles; honest `/home` destinations.
+### Phase 5 — Right-door wayfinding (shell half; FP-7 owns org-routing) — **DONE e567124**
+- [x] **J8-003 — "Assigned games/fields" copy promises a model that doesn't exist.** — **DONE.** Dropped game-level "assigned" from the 4 false touchpoints (added-user email, 2 role descriptions, scorekeeper empty state → "No games today"). Tournament-scope wording kept (it's real).
+- [x] **J8-019 — `official` → blank admin hub dead-end.** — **DONE.** Admin layout redirects an `official` to `/{org}/scorekeeper`.
+- [ ] **J8-020 (Med) — `/home` gives the official no gate path** + **J8-021 (Med) — `staff` gate volunteer → full admin dashboard.** → **DEFERRED to FP-7** per the coordination seam (org-level role→surface routing is FP-7's; FP-3 owns the shell dead-end, fixed above). These need capability-aware `/home` destination logic + the role-mapping decision FP-7 owns.
 
-### Phase 6 — Polish
-- [ ] **J8-004 — PWA install lands on `/home`, not the field surface** (`start_url`). **Fix:** field-scoped start_url / scope.
-- [ ] **J8-005 — "list self-updates" no-ops — `games` not in `supabase_realtime` publication.** **Fix:** migration adds `games` to the publication (+ DATA_DICTIONARY + snapshots).
+### Phase 6 — Polish — **DONE 9762a2e**
+- [x] **J8-004 — PWA install lands on `/home`, not the field surface.** — **DONE.** New per-org scorekeeper manifest route (`start_url` scoped to `/{org}/scorekeeper`); layout references it.
+- [x] **J8-005 — "list self-updates" no-ops — `games` not in `supabase_realtime`.** — **DONE.** Migration 130 adds `games` to the publication (idempotent, dev-applied, watermark #130; RLS-disabled table so anon realtime can read). **⚠ DEPLOY GATE: mig 130 dev-only — apply `--prod` before promoting.**
+
+> **FP-3 COMPLETE 2026-06-15** (Blocker + 14 findings; J8-018 was done in FP-1; **J8-020/J8-021 deferred to FP-7** per the wrong-door seam). **Pending:** real-device browser verification + migration-130 prod-apply. Branch `fix/fp3-volunteer-dayof` (off origin/master) — collision-free.
 
 ## Verification
 `npm run typecheck` (shared-module touches), `npm run lint:focused -- <files>` per phase. Migration (J8-005) dev-first + dictionary + snapshots. Restart dev server after shared/new/proxy changes. Browser/field testing = user (real-device ergonomics).
