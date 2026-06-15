@@ -12,7 +12,9 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
-import { getUserAccessContexts, findInvitedMembershipSlug, type UserAccessContext } from '@/lib/user-contexts';
+import { getUserAccessContexts, type UserAccessContext } from '@/lib/user-contexts';
+import { reconcilePendingInvitesForUser, listPendingInvitesForUser } from '@/lib/invite-reconciliation';
+import PendingInvitationsCard from '@/components/home/PendingInvitationsCard';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from './home.module.css';
 
@@ -53,17 +55,25 @@ export default async function UserHomePage() {
     redirect('/platform-admin');
   }
 
-  const contexts = await getUserAccessContexts({
-    id: user.id,
-    email: user.email,
-  });
+  // Reconcile pending invites onto this identity before resolving contexts, so a
+  // self-registered/logged-in invitee's orphaned invite is re-pointed and surfaces
+  // (mig 128). Mirrors getAuthDestination for direct /home navigation.
+  await reconcilePendingInvitesForUser({ id: user.id, email: user.email, emailConfirmedAt: user.email_confirmed_at });
 
-  if (contexts.length === 0) {
-    // A pending invitee (status='invited') has no active context yet — route them to
-    // finish accepting the invite instead of the zero-context org-creation front door.
-    const invitedSlug = await findInvitedMembershipSlug(user.id);
-    redirect(invitedSlug ? `/auth/accept-invite?org=${invitedSlug}` : '/start');
+  const [contexts, pendingInvites] = await Promise.all([
+    getUserAccessContexts({ id: user.id, email: user.email }),
+    listPendingInvitesForUser(user.id),
+  ]);
+
+  if (contexts.length === 0 && pendingInvites.length === 0) {
+    // No active context AND no pending invite — send to the account-first front door,
+    // not straight into org-creation.
+    redirect('/start');
   }
+
+  // If they have ONLY pending invites (no active context), we now render /home with the
+  // PendingInvitationsCard so they can Accept/Decline in place — replacing the old
+  // context-free bounce into the accept-invite form.
 
   // Note: single-context users are intentionally NOT auto-redirected here. Landing on
   // /home (on a base-URL login) lets them see the switcher + "Start something new" so
@@ -79,9 +89,13 @@ export default async function UserHomePage() {
           </div>
           <h1 className={styles.title}>Home</h1>
           <p className={styles.sub}>
-            {contexts.length} access {contexts.length === 1 ? 'area' : 'areas'} for {user.email}
+            {contexts.length > 0
+              ? `${contexts.length} access ${contexts.length === 1 ? 'area' : 'areas'} for ${user.email}`
+              : `Signed in as ${user.email}`}
           </p>
         </header>
+
+        <PendingInvitationsCard invitations={pendingInvites} />
 
         <div className={styles.contextList}>
           {contexts.map(context => (

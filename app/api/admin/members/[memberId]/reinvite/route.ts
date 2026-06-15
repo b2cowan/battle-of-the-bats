@@ -43,6 +43,9 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   }
 
   const email = authUser.email;
+  // Lowercased form for invited_email so it matches reconciliation's normalized lookup
+  // (mig 128); the send-to `email` above keeps the auth-user's original casing.
+  const invitedEmail = email.trim().toLowerCase();
   const role = member.role as string;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
@@ -70,10 +73,11 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
       `You've been invited to ${org.name} on FieldLogicHQ`,
       orgInviteHtml({ orgName: org.name, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: inviteAction, scorekeeperNote: role === 'official' }),
     );
-    // Refresh invited_at timestamp
+    // Refresh invited_at; backfill invited_email so legacy/pre-128 rows become
+    // reconcilable by email (mig 128).
     await supabaseAdmin
       .from('organization_members')
-      .update({ invited_at: new Date().toISOString() })
+      .update({ invited_at: new Date().toISOString(), invited_email: invitedEmail })
       .eq('id', memberId);
     return NextResponse.json({ ok: true });
   }
@@ -88,10 +92,11 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     return NextResponse.json({ error: linkError?.message ?? 'Failed to generate invite link' }, { status: 500 });
   }
 
-  // Refresh invited_at so the admin can see the re-invite timestamp
+  // Refresh invited_at so the admin can see the re-invite timestamp; backfill
+  // invited_email so legacy/pre-128 rows become reconcilable by email (mig 128).
   await supabaseAdmin
     .from('organization_members')
-    .update({ invited_at: new Date().toISOString() })
+    .update({ invited_at: new Date().toISOString(), invited_email: email })
     .eq('id', memberId);
 
   const inviteUrl = getActionLink(linkData);

@@ -1,0 +1,116 @@
+.wrap {
+  margin-bottom: 1.25rem;
+  padding: 1.1rem 1.15rem 1.2rem;
+  border: 1px solid rgba(217, 249, 157, 0.35);
+  background: rgba(217, 249, 157, 0.05);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  margin-bottom: 0.85rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 0.95rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info {
+  min-width: 0;
+}
+
+.orgName {
+  font-family: var(--font-data);
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--fl-text);
+  overflow-wrap: anywhere;
+}
+
+.roleLine {
+  margin-top: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--data-gray);
+}
+
+.roleLine strong {
+  color: var(--fl-text);
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.accept,
+.decline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.5rem 0.8rem;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.accept {
+  color: var(--pitch-black);
+  background: var(--logic-lime);
+  border: 1px solid var(--logic-lime);
+}
+
+.accept:hover:not(:disabled) {
+  background: #c7ed6f;
+}
+
+.decline {
+  color: var(--data-gray);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.decline:hover:not(:disabled) {
+  color: var(--fl-text);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.accept:disabled,
+.decline:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.error {
+  font-size: 0.75rem;
+  color: #fca5a5;
+  margin-bottom: 0.7rem;
+}

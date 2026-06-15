@@ -96,11 +96,15 @@ export const POST = withObservability(async (req: Request) => {
       return NextResponse.json({ error: 'This user is already a member of this organization' }, { status: 409 });
     }
 
-    // One-org constraint: reject if they belong to any other org
+    // One-org constraint: reject if they genuinely belong to another org. A PENDING
+    // invite elsewhere (status='invited') does NOT count — the person never accepted it,
+    // so it shouldn't false-block a real invite here (J10-001). Only active/suspended
+    // memberships mean they're actually attached to another org.
     const { data: otherMembers } = await supabaseAdmin
       .from('organization_members')
       .select('id')
       .eq('user_id', existingUser.id)
+      .neq('status', 'invited')
       .limit(1);
 
     if (otherMembers && otherMembers.length > 0) {
@@ -167,6 +171,9 @@ export const POST = withObservability(async (req: Request) => {
         role,
         status: 'invited',
         invited_at: new Date().toISOString(),
+        // Persist the invited email so reconciliation can re-attach this pending row
+        // if the user self-registers/logs in instead of clicking the email link (mig 128).
+        invited_email: email,
       });
 
     void supabaseAdmin.from('org_audit_log').insert({
