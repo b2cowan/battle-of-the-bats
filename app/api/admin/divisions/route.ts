@@ -305,6 +305,9 @@ export const POST = withObservability(async (req: Request) => {
       if (denied) return denied;
       const wrongOrg = await requireTournamentInOrg(ctx, div.tournament_id);
       if (wrongOrg) return wrongOrg;
+      // Match every other mutating action here: a locked (completed) tournament
+      // must not have its bracket re-seeded by a late coin toss.
+      if (await isTournamentLocked(div.tournament_id)) return tournamentLockedResponse();
 
       if (typeof groupKey !== 'string' || !groupKey) {
         return Response.json({ error: 'groupKey required' }, { status: 400 });

@@ -1862,9 +1862,11 @@ export async function advancePlayoffs(game: Game, options: ReadOptions = {}) {
 /**
  * Resolve standings-based playoff placeholders ("Seed #N", "Nth Pool X") into
  * real team ids once pool play is decided, and write them onto the bracket's
- * first-round games. Idempotent and safe to re-run: it only re-points slots that
- * still carry a standings placeholder (it reads pg.homePlaceholder/awayPlaceholder,
- * not the live team ids), so games already played keep their result.
+ * first-round games. Safe to re-run: a first-round game that has ALREADY started
+ * (submitted / completed / forfeit) is skipped, so re-seeding never retroactively
+ * swaps the participants of a game that was already played — the placeholder
+ * string (e.g. 'Seed #1') is a descriptor that is never cleared, so without this
+ * guard a re-run would clobber live results.
  *
  * Extracted from advancePlayoffs so the coin-toss record action can re-run seed
  * resolution after an organizer breaks an unresolved tie — otherwise the toss
@@ -1893,6 +1895,11 @@ export async function resolveAndFillPlayoffSeeds(
   const pools = division?.pools || [];
 
   for (const pg of playoffGames) {
+    // Never re-point a game that has already started/finished — a re-seed (e.g.
+    // after a coin toss) must not retroactively swap the participants of a played
+    // game. Only fill slots that are still waiting (scheduled / cancelled).
+    if (pg.status === 'submitted' || pg.status === 'completed' || pg.status === 'forfeit') continue;
+
     const updates: Partial<Game> = {};
 
     const resolvePlaceholder = (ph?: string) => {
