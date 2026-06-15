@@ -5,8 +5,11 @@ import styles from './overview.module.css';
 
 type State = 'idle' | 'saving' | 'saved' | 'error';
 
-export default function MetricSnapshotButton() {
+export default function MetricSnapshotButton({ canSnapshot = true }: { canSnapshot?: boolean }) {
   const [state, setState] = useState<State>('idle');
+
+  // View-only roles can't write a snapshot (the API rejects it) — don't show the button.
+  if (!canSnapshot) return null;
 
   async function handleClick() {
     setState('saving');

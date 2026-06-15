@@ -16,7 +16,7 @@ import {
   UsersRound,
 } from 'lucide-react';
 import { PLAN_CONFIG } from '@/lib/plan-config';
-import { getPlatformAdminContext } from '@/lib/platform-auth';
+import { getPlatformAdminContext, hasPlatformPermission } from '@/lib/platform-auth';
 import { canViewPlatformArea, canWritePlatformArea } from '@/lib/platform-areas';
 import HelpCallout from '@/components/help/HelpCallout';
 import { getPreviousPlatformAdminVisit } from '@/lib/platform-admin-visits';
@@ -145,6 +145,8 @@ export default async function PlatformOverviewPage() {
   // Trial-ending and expired-override alerts are billing-team work; retention writers
   // (super_admin + billing) are the roles that can actually action them.
   const canActionBillingAlerts = canWritePlatformArea(role, 'retention');
+  // Snapshot is a product write — only show the button to roles the API will accept.
+  const canSnapshot = hasPlatformPermission(role, 'manage_product');
   const previousVisit = platformUser?.email ? await getPreviousPlatformAdminVisit(platformUser.email) : null;
   // First-login orientation: shows once, then a localStorage flag keeps it dismissed.
   const orientation = previousVisit === null ? ORIENTATION_BY_ROLE[role] : null;
@@ -455,7 +457,7 @@ export default async function PlatformOverviewPage() {
                 Latest daily snapshot: {latestSnapshot ? `${latestSnapshot.snapshot_date} (${latestSnapshot.source})` : 'none recorded yet'}.
               </p>
               <div className={styles.snapshotActions}>
-                <MetricSnapshotButton />
+                <MetricSnapshotButton canSnapshot={canSnapshot} />
               </div>
             </section>
           </div>

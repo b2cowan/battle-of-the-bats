@@ -1268,6 +1268,10 @@ export default function OrgDetailClient({
                   </div>
                 </div>
 
+                {/* Editable controls only for billing roles; observers see the read-only
+                    summary above instead of a form full of disabled fields (PAR-007). */}
+                {canManageBilling && (
+                <>
                 <div className={styles.formRow}>
                   <label className={styles.formLabel}>Plan</label>
                   <select
@@ -1319,10 +1323,10 @@ export default function OrgDetailClient({
 
                 {planError && <div className={styles.rowError}>{planError}</div>}
 
-                {canManageBilling && (
-                  <button type="submit" className={styles.saveBtn} disabled={planSaving || !planChanged}>
+                <button type="submit" className={styles.saveBtn} disabled={planSaving || !planChanged}>
                   {planSaving ? 'Saving...' : 'Review Change'}
-                  </button>
+                </button>
+                </>
                 )}
               </form>
             </section>

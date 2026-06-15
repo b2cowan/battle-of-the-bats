@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
-import { requirePlatformAdmin } from '@/lib/platform-auth';
+import { requirePlatformPermission } from '@/lib/platform-auth';
 import { writeTodayPlatformMetricSnapshot } from '@/lib/platform-metrics';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { withObservability } from '@/lib/observability';
 
 export const POST = withObservability(async () => {
-  const auth = await requirePlatformAdmin();
+  // Writing a metric snapshot is a product action — gate it so view-only roles
+  // (read_only, support, billing, growth) can't trigger the write.
+  const auth = await requirePlatformPermission('manage_product');
   if (auth.response) return auth.response;
 
   try {
