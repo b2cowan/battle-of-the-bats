@@ -221,6 +221,7 @@ export default async function PlatformOverviewPage() {
       </section>
 
       <OverviewTabs
+        defaultTab={role === 'growth' ? 'growth' : 'subscription'}
         subscription={
           <div className={styles.dashboardGrid}>
             <section className={styles.panel}>

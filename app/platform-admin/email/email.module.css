@@ -32,11 +32,22 @@
 }
 
 /* ── Stats row ───────────────────────────────────────────────────────────── */
+.statsSubtitle {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--data-gray);
+}
+
 .statsRow {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
   margin-bottom: 2rem;
+}
+
+.statCard[title] {
+  cursor: help;
 }
 
 .statCard {

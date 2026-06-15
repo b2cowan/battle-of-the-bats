@@ -83,12 +83,15 @@ function statusLabel(value: string) {
   return EARLY_ACCESS_STATUS_LABELS[value as EarlyAccessStatus] ?? value.replace(/_/g, ' ');
 }
 
-function buildQuery(filters: Record<string, string>) {
+const PAGE_SIZE = 100;
+
+function buildQuery(filters: Record<string, string>, offset = 0) {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
     if (value) params.set(key, value);
   });
-  params.set('limit', '100');
+  params.set('limit', String(PAGE_SIZE));
+  if (offset > 0) params.set('offset', String(offset));
   return params;
 }
 
@@ -131,17 +134,22 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
     q: '',
     plan: '',
     feature: '',
-    status: '',
+    // Default to the actionable queue (New) on first load; "All statuses" clears it.
+    status: 'new',
     consent: '',
+    dateFrom: '',
+    dateTo: '',
   });
   const [leads, setLeads] = useState<Lead[]>([]);
   const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftStatus, setDraftStatus] = useState<EarlyAccessStatus>('new');
   const [draftNotes, setDraftNotes] = useState('');
   const [draftConvertedOrgId, setDraftConvertedOrgId] = useState('');
   const [draftFollowUpDueAt, setDraftFollowUpDueAt] = useState('');
   const [draftNextAction, setDraftNextAction] = useState('');
+  const [dateRangePreset, setDateRangePreset] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -156,7 +164,9 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
     [organizations],
   );
 
-  const queryString = useMemo(() => buildQuery(filters).toString(), [filters]);
+  const queryString = useMemo(() => buildQuery(filters, offset).toString(), [filters, offset]);
+  // Export should reflect the active filters but not the page offset (full filtered set).
+  const exportQueryString = useMemo(() => buildQuery(filters).toString(), [filters]);
 
   const summary = useMemo(() => ({
     newLeads: leads.filter(lead => lead.internal_status === 'new').length,
@@ -203,7 +213,22 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
   }, [queryString]);
 
   function updateFilter(key: keyof typeof filters, value: string) {
+    setOffset(0); // any filter change returns to the first page
     setFilters(current => ({ ...current, [key]: value }));
+  }
+
+  function applyDatePreset(preset: string) {
+    setDateRangePreset(preset);
+    setOffset(0);
+    if (preset === '' ) {
+      setFilters(current => ({ ...current, dateFrom: '', dateTo: '' }));
+    } else if (preset === 'custom') {
+      // Reveal the custom inputs; keep whatever is already set.
+    } else {
+      const days = Number(preset);
+      const from = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+      setFilters(current => ({ ...current, dateFrom: from, dateTo: '' }));
+    }
   }
 
   function openLead(lead: Lead) {
@@ -219,7 +244,9 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
   }
 
   function resetFilters() {
-    setFilters({ q: '', plan: '', feature: '', status: '', consent: '' });
+    setOffset(0);
+    setDateRangePreset('');
+    setFilters({ q: '', plan: '', feature: '', status: '', consent: '', dateFrom: '', dateTo: '' });
   }
 
   async function copyText(text: string, success: string) {
@@ -283,11 +310,11 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
   }
 
   function handleExportXLSX() {
-    window.location.href = `/api/platform-admin/early-access/export?${queryString}&format=xlsx`;
+    window.location.href = `/api/platform-admin/early-access/export?${exportQueryString}&format=xlsx`;
   }
 
   function handleExportCSV() {
-    window.location.href = `/api/platform-admin/early-access/export?${queryString}&format=csv`;
+    window.location.href = `/api/platform-admin/early-access/export?${exportQueryString}&format=csv`;
   }
 
   return (
@@ -301,8 +328,8 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
       </header>
 
       <section className={styles.summaryGrid} aria-label="Early access summary">
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>Loaded</span>
+        <div className={styles.metric} title="Counts below reflect the leads currently in view (this page), not the full pipeline total shown in the header.">
+          <span className={styles.metricLabel}>In view</span>
           <strong>{leads.length}</strong>
         </div>
         <div className={styles.metric}>
@@ -391,6 +418,31 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
           <option value="yes">Consented</option>
           <option value="no">No updates</option>
         </select>
+        <select value={dateRangePreset} onChange={event => applyDatePreset(event.target.value)} title="Filter by signup date">
+          <option value="">Any date</option>
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="custom">Custom…</option>
+        </select>
+        {dateRangePreset === 'custom' && (
+          <>
+            <input
+              type="date"
+              value={filters.dateFrom}
+              max={filters.dateTo || undefined}
+              onChange={event => updateFilter('dateFrom', event.target.value)}
+              title="From date"
+            />
+            <input
+              type="date"
+              value={filters.dateTo}
+              min={filters.dateFrom || undefined}
+              onChange={event => updateFilter('dateTo', event.target.value)}
+              title="To date"
+            />
+          </>
+        )}
         <button className={styles.iconButton} onClick={resetFilters} title="Clear filters" type="button">
           <X size={14} />
           Clear
@@ -486,6 +538,29 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
               ))}
             </tbody>
           </table>
+          {total > PAGE_SIZE && (
+            <div className={styles.pagination}>
+              <button
+                className={styles.pageButton}
+                onClick={() => setOffset(o => Math.max(0, o - PAGE_SIZE))}
+                disabled={offset === 0 || loading}
+                type="button"
+              >
+                Previous
+              </button>
+              <span className={styles.pageInfo}>
+                {leads.length > 0 ? `${offset + 1}–${offset + leads.length}` : '0'} of {total}
+              </span>
+              <button
+                className={styles.pageButton}
+                onClick={() => setOffset(o => o + PAGE_SIZE)}
+                disabled={offset + leads.length >= total || loading}
+                type="button"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
 
         <aside className={styles.detailPanel} aria-label="Lead detail">

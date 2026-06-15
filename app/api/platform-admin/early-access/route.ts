@@ -21,6 +21,8 @@ export const GET = withObservability(async (req: NextRequest) => {
   let query = supabaseAdmin
     .from('early_access_leads')
     .select(EARLY_ACCESS_SELECT, { count: 'exact' })
+    // Overdue/soonest follow-ups first (nulls last), then newest leads.
+    .order('follow_up_due_at', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false });
 
   if (filters.q) {

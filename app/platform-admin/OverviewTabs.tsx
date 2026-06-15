@@ -11,6 +11,7 @@ type Props = {
   growth: ReactNode;
   usage: ReactNode;
   notes: ReactNode;
+  defaultTab?: TabId;
 };
 
 const TABS: { id: TabId; label: string }[] = [
@@ -20,8 +21,8 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'notes', label: 'Metric Notes' },
 ];
 
-export default function OverviewTabs({ subscription, growth, usage, notes }: Props) {
-  const [activeTab, setActiveTab] = useState<TabId>('subscription');
+export default function OverviewTabs({ subscription, growth, usage, notes, defaultTab = 'subscription' }: Props) {
+  const [activeTab, setActiveTab] = useState<TabId>(defaultTab);
   const panels: Record<TabId, ReactNode> = { subscription, growth, usage, notes };
 
   return (

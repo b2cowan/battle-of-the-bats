@@ -317,12 +317,14 @@ export default function EmailDashboardClient({
   initialOptOuts,
   recipientCount,
   optOutCount,
+  recipientCounts,
   adminEmail,
 }: {
   initialBatches: EmailBatch[];
   initialOptOuts: OptOutOrg[];
   recipientCount: number;
   optOutCount: number;
+  recipientCounts: Record<string, number>;
   adminEmail: string;
 }) {
   const [batches, setBatches] = useState<EmailBatch[]>(initialBatches);
@@ -413,16 +415,19 @@ export default function EmailDashboardClient({
       )}
 
       {/* Stats */}
+      <p className={styles.statsSubtitle}>
+        Founding season organizations with active marketing email consent. Counts exclude opted-out orgs.
+      </p>
       <div className={styles.statsRow}>
-        <div className={styles.statCard}>
+        <div className={styles.statCard} title="All organizations on a founding-season comp period (expiring Jan 1, 2027), including opted-out.">
           <div className={styles.statValue}>{recipientCount + optOutCount}</div>
           <div className={styles.statLabel}>Founding Season Orgs</div>
         </div>
-        <div className={styles.statCard}>
+        <div className={styles.statCard} title="Founding-season orgs that have NOT opted out of marketing email — the default 'founding' send audience.">
           <div className={styles.statValue}>{recipientCount}</div>
           <div className={styles.statLabel}>Active Recipients</div>
         </div>
-        <div className={styles.statCard}>
+        <div className={styles.statCard} title="Founding-season orgs that opted out of marketing email and are suppressed from every send.">
           <div className={styles.statValue}>{optOutCount}</div>
           <div className={styles.statLabel}>Opted Out</div>
         </div>
@@ -450,7 +455,7 @@ export default function EmailDashboardClient({
             {SCHEDULED_EMAILS.map(email => {
               const sentBatch = getBatchForKey(email.emailKey);
               const status = sentBatch ? 'sent' : email.templateBuilt ? 'scheduled' : 'not built';
-              const count = email.isTransactional ? null : recipientCount;
+              const count = email.isTransactional ? null : (recipientCounts[email.emailKey] ?? recipientCount);
 
               return (
                 <tr key={email.emailKey}>
@@ -609,7 +614,7 @@ export default function EmailDashboardClient({
       {sendTarget && (
         <SendConfirmModal
           email={sendTarget}
-          recipientCount={recipientCount}
+          recipientCount={recipientCounts[sendTarget.emailKey] ?? recipientCount}
           onConfirm={handleSend}
           onCancel={() => setSendTarget(null)}
           sending={sending}
@@ -808,8 +813,8 @@ const FOUNDING_WELCOME_PREVIEW = `
     <span style="font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;">FIELDLOGICHQ</span>
   </div>
   <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;">Your founding season starts now.</h2>
-  <p style="margin:0 0 1rem;">Hi [First Name],</p>
-  <p style="margin:0 0 1.25rem;line-height:1.7;">You're in. <strong>[Org Name]</strong> is set up on FieldLogicHQ and running <strong>Tournament Plus free through December 31, 2026</strong> as a founding organization.</p>
+  <p style="margin:0 0 1rem;">Hi Demo User,</p>
+  <p style="margin:0 0 1.25rem;line-height:1.7;">You're in. <strong>Demo Org</strong> is set up on FieldLogicHQ and running <strong>Tournament Plus free through December 31, 2026</strong> as a founding organization.</p>
   <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
     <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Tournament Plus ($39/month) gives you</p>
     <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">

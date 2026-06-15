@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getPlatformAdminContext, requirePlatformAreaView } from '@/lib/platform-auth';
+import { getMarketingAudienceCounts, MARKETING_EMAIL_AUDIENCE } from '@/lib/email-sender';
 import EmailDashboardClient from './EmailDashboardClient';
 
 export const metadata: Metadata = {
@@ -67,11 +68,21 @@ async function getInitialData() {
     })
   );
 
+  // Per-audience recipient counts (founding / not-on-club / coaches), then flatten
+  // to a per-email-key map so the client shows each email's true audience size
+  // without importing the server-only audience logic.
+  const audienceCounts = await getMarketingAudienceCounts();
+  const recipientCounts: Record<string, number> = {};
+  for (const [emailKey, audience] of Object.entries(MARKETING_EMAIL_AUDIENCE)) {
+    recipientCounts[emailKey] = audienceCounts[audience];
+  }
+
   return {
     batches: (batchesResult.data ?? []) as EmailBatch[],
     optOuts: enrichedOptOuts,
     recipientCount,
     optOutCount,
+    recipientCounts,
   };
 }
 
@@ -101,7 +112,7 @@ export type OptOutOrg = {
 export default async function EmailDashboardPage() {
   await requirePlatformAreaView('email');
   const auth = await getPlatformAdminContext();
-  const { batches, optOuts, recipientCount, optOutCount } = await getInitialData();
+  const { batches, optOuts, recipientCount, optOutCount, recipientCounts } = await getInitialData();
 
   return (
     <EmailDashboardClient
@@ -109,6 +120,7 @@ export default async function EmailDashboardPage() {
       initialOptOuts={optOuts}
       recipientCount={recipientCount}
       optOutCount={optOutCount}
+      recipientCounts={recipientCounts}
       adminEmail={auth?.user.email ?? ''}
     />
   );
