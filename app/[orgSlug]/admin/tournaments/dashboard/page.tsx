@@ -805,6 +805,21 @@ export default function AdminDashboard() {
   ];
   const optionalDoneCount = optionalItems.filter(i => i.done).length;
 
+  // Schedule row — flag colored/iconed by schedule health rather than a simple done/pending.
+  const scheduleHealth = visibleStats.scheduleHealth;
+  const scheduleIsSetUp = scheduleHealth.timedGames > 0;
+  const scheduleStatus: {
+    tone: 'good' | 'warning' | 'danger' | 'neutral';
+    statusText: string;
+    desc: string;
+  } = !scheduleIsSetUp
+    ? { tone: 'neutral', statusText: 'Not set up', desc: 'Build a timed schedule so teams know when and where they play.' }
+    : scheduleHealth.tone === 'danger'
+      ? { tone: 'danger', statusText: 'Needs work', desc: `${scheduleHealth.timedGames}/${scheduleHealth.totalGames} timed · ${scheduleHealth.issueCount} issue${scheduleHealth.issueCount === 1 ? '' : 's'} to resolve.` }
+      : scheduleHealth.tone === 'warning'
+        ? { tone: 'warning', statusText: 'Review', desc: `${scheduleHealth.timedGames}/${scheduleHealth.totalGames} timed · ${scheduleHealth.issueCount} issue${scheduleHealth.issueCount === 1 ? '' : 's'} to review.` }
+        : { tone: 'good', statusText: 'Healthy', desc: `${scheduleHealth.timedGames}/${scheduleHealth.totalGames} timed games · no major issues.` };
+
   // ── Compact metric strip (replaces stat cards on active/completed) ──────
   function renderMetricStrip() {
     const items: Array<{ value: number; label: string }> = [
@@ -1330,12 +1345,6 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {visibleStats.scheduleHealth.timedGames > 0 && (
-            <div className={styles.analyticsGrid}>
-              {renderScheduleHealthPanel()}
-            </div>
-          )}
-
           <section className={`${styles.publishChecklist} ${completedCount === checklistItems.length ? styles.checklistReady : ''}`}>
             <div className={styles.checklistHeader}>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -1379,6 +1388,18 @@ export default function AdminDashboard() {
 
             {showOptionalItems && (
               <div className={styles.checklistList} style={{ marginTop: '0.5rem' }}>
+                <Link
+                  href={`${base}/schedule`}
+                  className={`${styles.checklistRow} ${scheduleStatus.tone === 'good' ? styles.checklistRowDone : styles.checklistRowPending}`}
+                >
+                  <span className={styles.rowIcon} data-sched-tone={scheduleStatus.tone}>
+                    {scheduleStatus.tone === 'good' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                  </span>
+                  <span className={styles.rowLabel}>Tournament schedule</span>
+                  <span className={styles.rowOptTag}>Optional</span>
+                  <span className={styles.rowStatus} data-sched-tone={scheduleStatus.tone}>{scheduleStatus.statusText}</span>
+                  <span className={styles.rowDesc}>{scheduleStatus.desc}</span>
+                </Link>
                 {optionalItems.map(item => {
                   const Icon = item.done ? CheckCircle2 : Info;
                   return (

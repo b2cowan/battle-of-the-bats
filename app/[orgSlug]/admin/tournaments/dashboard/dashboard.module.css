@@ -377,6 +377,18 @@
   color: var(--logic-lime);
 }
 
+/* Schedule row — tone-driven flag (overrides the done/pending icon + status colors).
+   Scoped under .checklistRow to outrank .checklistRowDone/.checklistRowPending overrides. */
+.checklistRow .rowIcon[data-sched-tone='neutral'] { color: var(--data-gray); }
+.checklistRow .rowIcon[data-sched-tone='good']    { color: var(--logic-lime); }
+.checklistRow .rowIcon[data-sched-tone='warning'] { color: var(--warning); }
+.checklistRow .rowIcon[data-sched-tone='danger']  { color: var(--danger); }
+
+.checklistRow .rowStatus[data-sched-tone='neutral'] { color: var(--data-gray); }
+.checklistRow .rowStatus[data-sched-tone='good']    { color: rgba(var(--logic-lime-rgb), 0.85); }
+.checklistRow .rowStatus[data-sched-tone='warning'] { color: var(--warning); }
+.checklistRow .rowStatus[data-sched-tone='danger']  { color: var(--danger); }
+
 .rowOptTag {
   font-family: var(--font-data);
   font-size: 0.55rem;
