@@ -618,35 +618,43 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
                   </div>
                 </div>
 
-                <div className={styles.reviewSummary}>
-                  <div>
-                    <span>Team</span>
-                    <strong>{form.teamName}</strong>
+                <dl className={styles.reviewSummary}>
+                  <div className={styles.reviewRow}>
+                    <dt>Team</dt>
+                    <dd>{form.teamName}</dd>
                   </div>
-                  <div>
-                    <span>Registered by</span>
-                    <strong>{`${form.firstName} ${form.lastName}`.trim()}</strong>
+                  <div className={styles.reviewRow}>
+                    <dt>Registered by</dt>
+                    <dd>{`${form.firstName} ${form.lastName}`.trim()}</dd>
                   </div>
-                  <div>
-                    <span>Email</span>
-                    <strong>{signedInCoachEmail || form.email}</strong>
+                  <div className={styles.reviewRow}>
+                    <dt>Email</dt>
+                    <dd>{signedInCoachEmail || form.email}</dd>
                   </div>
-                  <div>
-                    <span>Division</span>
-                    <strong>{selectedGroup.name}</strong>
-                  </div>
-                  <div>
-                    <span>Status after submit</span>
-                    <strong>{isWaitlist ? 'Waitlist' : 'Pending organizer review'}</strong>
+                  <div className={styles.reviewRow}>
+                    <dt>Division</dt>
+                    <dd>{selectedGroup.name}</dd>
                   </div>
                   {/* Fee lives in the richer payment panel below (deposit + due dates +
-                      organizer context) — no duplicate summary card. */}
+                      organizer context) — no duplicate summary row. */}
                   {contactEmail ? (
-                    <div>
-                      <span>Organizer Contact</span>
-                      <strong>{contactEmail}</strong>
+                    <div className={styles.reviewRow}>
+                      <dt>Organizer contact</dt>
+                      <dd>{contactEmail}</dd>
                     </div>
                   ) : null}
+                </dl>
+
+                {/* Status is an outcome, not a fact — pull it out of the field list and give it an
+                    accented banner so "here's what happens when you submit" reads clearly. */}
+                <div className={`${styles.reviewStatus} ${isWaitlist ? styles.reviewStatusWaitlist : ''}`}>
+                  <span className={styles.reviewStatusDot} aria-hidden />
+                  <div>
+                    <span className={styles.reviewStatusLabel}>Status after you submit</span>
+                    <strong className={styles.reviewStatusValue}>
+                      {isWaitlist ? 'Added to the waitlist' : 'Pending organizer review'}
+                    </strong>
+                  </div>
                 </div>
 
                 {isWaitlist && !isClosed && (
