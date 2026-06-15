@@ -418,6 +418,29 @@ export async function findInvitedMembershipSlug(userId: string): Promise<string 
   return org?.slug ?? null;
 }
 
+/**
+ * A suspended membership for this user, if any (J10-019). `getActiveMembershipRows` filters
+ * `.eq('status','active')`, so a suspended member resolves to ZERO contexts and the destination
+ * resolver would otherwise route them to `/start` (org-creation) — and any layout `next` re-loops
+ * them through login forever. Callers detect suspension here to route to `/auth/suspended` instead.
+ * Returns the org name/slug for the suspended page's "contact your admin" message, or null.
+ */
+export async function findSuspendedMembershipOrg(userId: string): Promise<{ name: string | null; slug: string | null } | null> {
+  const { data } = await supabaseAdmin
+    .from('organization_members')
+    .select('organizations(name, slug)')
+    .eq('user_id', userId)
+    .eq('status', 'suspended')
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) return null;
+  const relation = (data as { organizations: OrgRelation | OrgRelation[] | null }).organizations;
+  const org = Array.isArray(relation) ? relation[0] : relation;
+  if (!org) return null;
+  return { name: org.name ?? null, slug: org.slug ?? null };
+}
+
 export async function getUserAccessContexts(user: {
   id: string;
   email?: string | null;

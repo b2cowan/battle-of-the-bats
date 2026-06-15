@@ -813,15 +813,21 @@ export function platformPasswordResetHtml(resetLink: string) {
 }
 
 export function signupVerificationHtml(p: {
-  orgName: string;
+  // orgName is omitted for account-only signups (decoupled flow): the person is
+  // creating an account before any org exists (e.g. to accept an invite), so there
+  // is nothing to "continue setting up" yet — use neutral copy in that case.
+  orgName?: string | null;
   verifyUrl: string;
   firstName?: string;
 }) {
   const greeting = p.firstName ? `Hi ${p.firstName} — welcome to <strong>FieldLogicHQ</strong>.` : 'Welcome to <strong>FieldLogicHQ</strong>.';
+  const continueLine = p.orgName
+    ? `Confirm your email address to continue setting up <strong>${p.orgName}</strong>.`
+    : 'Confirm your email address to finish creating your account.';
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Verify Your Email</h2>
     <p>${greeting}</p>
-    <p>Confirm your email address to continue setting up <strong>${p.orgName}</strong>.</p>
+    <p>${continueLine}</p>
     <a href="${p.verifyUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.5rem 0;">Verify Email &rarr;</a>
     <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">If you did not create this account, you can safely ignore this email.</p>
   `);
@@ -1018,6 +1024,22 @@ export function orgMemberAddedHtml(p: {
     <p style="color:rgba(241,245,249,0.7);">${note}</p>
     <a href="${p.signInUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">${p.ctaLabel} &rarr;</a>
     <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">If you weren't expecting this, you can safely ignore this email.</p>
+  `);
+}
+
+/**
+ * member_suspended — sent when an org owner suspends a member (J10-019). Transactional
+ * account-state notice (not marketing): tells the person their access was suspended, by which org,
+ * and what to do. Pairs with the /auth/suspended page they hit on next sign-in.
+ */
+export function memberSuspendedHtml(p: {
+  orgName: string;
+}) {
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your access to ${p.orgName} was suspended</h2>
+    <p>An administrator at <strong>${p.orgName}</strong> has suspended your access on <strong>FieldLogicHQ</strong>.</p>
+    <p style="color:rgba(241,245,249,0.7);">You won't be able to sign in to this workspace until your access is restored. If you think this was a mistake, please contact an administrator at ${p.orgName} directly.</p>
+    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This message is about your access to ${p.orgName} only; any other organizations or workspaces on your account are unaffected.</p>
   `);
 }
 

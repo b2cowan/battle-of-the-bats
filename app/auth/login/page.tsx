@@ -1,11 +1,29 @@
 'use client';
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
-import { signIn } from '@/lib/auth';
+import { signIn, getUser } from '@/lib/auth';
 import { HudSkeleton } from '@/components/ui/HudSkeleton';
 import styles from '../auth.module.css';
+
+/**
+ * Resolve the post-login destination. Honors `next` ONLY when the resolver lands the user in a
+ * real workspace (/home or /platform-admin); a recovery destination (/auth/suspended, /start)
+ * always wins over a `next` the session can't reach. Shared by the submit handler and the
+ * already-authenticated guard so both break the J8-018 / J10-019 login loops the same way.
+ */
+async function resolveLoginDestination(next: string | null): Promise<string> {
+  let destination = '/home';
+  try {
+    const res = await fetch('/api/auth/destination');
+    destination = (await res.json()).destination ?? '/home';
+  } catch {
+    destination = '/home';
+  }
+  const resolverIsWorkspace = destination === '/home' || destination === '/platform-admin';
+  return next && resolverIsWorkspace ? next : destination;
+}
 
 const AUTH_ERRORS: Record<string, string> = {
   'invalid_credentials': 'Incorrect email or password. Please try again.',
@@ -24,6 +42,26 @@ function LoginForm() {
   const [showPw, setShowPw]     = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // J8-018: already-authenticated guard. If a signed-in user lands on /auth/login (e.g. a layout
+  // redirected them here with a `next` they can't access), forward them to a safe destination
+  // instead of leaving them to re-enter credentials into a loop. Recovery destinations
+  // (/auth/suspended, /start) win over an unreachable `next`.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const user = await getUser();
+      if (!active) return;
+      if (user) {
+        const dest = await resolveLoginDestination(searchParams.get('next'));
+        if (active) router.replace(dest);
+        return;
+      }
+      setCheckingAuth(false);
+    })();
+    return () => { active = false; };
+  }, [router, searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,16 +72,21 @@ function LoginForm() {
       setError(AUTH_ERRORS[err] ?? err);
       setLoading(false);
     } else {
-      const next = searchParams.get('next');
-      if (next) {
-        router.push(next);
-      } else {
-        const res = await fetch('/api/auth/destination');
-        const { destination } = await res.json();
-        router.push(destination);
-      }
+      // J8-018 / J10-019: resolve a safe destination — never blindly push `next` (a URL the
+      // session may not be able to access → redirect back to login → loop). See
+      // resolveLoginDestination.
+      const dest = await resolveLoginDestination(searchParams.get('next'));
+      router.push(dest);
       router.refresh();
     }
+  }
+
+  if (checkingAuth) {
+    return (
+      <div className={styles.card}>
+        <HudSkeleton message="CHECKING SESSION..." rows={3} />
+      </div>
+    );
   }
 
   return (
@@ -114,6 +157,10 @@ function LoginForm() {
         <p className={styles.footerText}>
           New organization?{' '}
           <Link href="/auth/signup" className={styles.footerLink}>Create account</Link>
+        </p>
+        <p className={styles.footerText} style={{ marginTop: '0.4rem' }}>
+          Invited by an organization? Finish setup using the link in your
+          invitation email — don&apos;t create a new account here.
         </p>
       </div>
     </div>

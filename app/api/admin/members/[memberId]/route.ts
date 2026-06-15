@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { ALL_CAPABILITY_KEYS, hasCapability } from '@/lib/roles';
 import type { OrgRole } from '@/lib/types';
+import { sendEmail, memberSuspendedHtml } from '@/lib/email';
 import { withObservability } from '@/lib/observability';
 
 const VALID_CAPABILITIES = new Set<string>(ALL_CAPABILITY_KEYS);
@@ -342,6 +343,25 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       action: update.status === 'suspended' ? 'member_suspended' : 'member_reinstated',
       payload: {},
     });
+
+    // J10-019: notify a newly-suspended member by email (transactional account-state notice) so the
+    // /auth/suspended wall they'll hit on next sign-in isn't their first signal. Best-effort.
+    if (update.status === 'suspended') {
+      void (async () => {
+        try {
+          const { data: { user: suspendedUser } } = await supabaseAdmin.auth.admin.getUserById(target.user_id);
+          if (suspendedUser?.email) {
+            await sendEmail(
+              suspendedUser.email,
+              `Your access to ${org.name} was suspended`,
+              memberSuspendedHtml({ orgName: org.name }),
+            );
+          }
+        } catch (e) {
+          console.error('[members] suspension email failed:', e);
+        }
+      })();
+    }
   }
 
   return NextResponse.json({ ok: true, ...(hasRoleUpdate ? { role: update.role } : {}) });
