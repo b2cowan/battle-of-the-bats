@@ -95,9 +95,10 @@
    Theme 4 (team-colour identity): the CELEBRATION phases (accepted / prep /
    schedule-live) carry the 18% team-hue wash + 30% team-hue border + watermark,
    matching the public team page; `.heroCelebration` layers that on the base.
-   Non-celebration phases keep the faint base until Theme 1 (the phase-adaptive
-   hero) themes them with their own phase-semantic washes — both restyle `.hero`,
-   so Theme 4 owns the base and Theme 1's overrides will sit on top. */
+   Theme 1 (phase-adaptive hero): every phase adds a 3px left-border accent
+   (`.heroAccent*`); game_day/pending/rejected also get a phase-semantic wash that
+   overrides the faint base. The celebration team-hue wash + the phase accents
+   compose — Theme 4 owns the base, Theme 1 layers accent + (non-celebration) wash. */
 .hero {
   position: relative;
   overflow: hidden;
@@ -113,6 +114,32 @@
     color-mix(in srgb, var(--team-color, var(--logic-lime)) 9%, transparent),
     transparent 62%
   );
+}
+
+/* Theme 1 — per-phase left-border accent (3px). Overrides only the left edge;
+   top/right/bottom stay 1px (or the celebration 30% mix). */
+.heroAccentInfo,
+.heroAccentDanger,
+.heroAccentSuccess,
+.heroAccentLime {
+  border-left-width: 3px;
+}
+.heroAccentInfo { border-left-color: var(--info); }
+.heroAccentDanger { border-left-color: var(--danger); }
+.heroAccentSuccess { border-left-color: var(--success); }
+.heroAccentLime { border-left-color: var(--logic-lime); }
+
+/* Pending / rejected / game-day carry phase-semantic washes (lower intensity than
+   the 18% celebration wash) that override the faint team-hue base. */
+.heroAccentInfo {
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--info) 7%, transparent), transparent 62%);
+}
+.heroAccentDanger {
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--danger) 6%, transparent), transparent 62%);
+}
+/* game_day is the only non-celebration accepted phase → success wash (not team-hue). */
+.heroAccentSuccess {
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--success) 8%, transparent), transparent 62%);
 }
 
 /* Celebration wash — accepted / prep / schedule-live. 18% team-hue (matches the
@@ -292,42 +319,203 @@
   color: var(--logic-lime);
 }
 
-/* ── 5m afterglow (result phase) ── */
-.afterglow {
+/* ── Theme 1 inner content zones ──────────────────────────────────────────── */
+
+/* Past-due micro-note next to the Fee checklist badge. */
+.checkNote {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--danger);
+  font-family: var(--font-data, monospace);
+  font-size: 0.72rem;
+}
+
+/* Pending entry-fee preview (5h). */
+.heroFeePreview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0 0 0.7rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--info) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--info) 20%, transparent);
+}
+
+.heroFeePreviewLabel {
+  color: var(--white-40);
+  font-family: var(--font-data, monospace);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heroFeePreviewAmount {
+  color: var(--white-80);
+  font-family: var(--font-data, monospace);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+/* Fee glance strip (5h) — owed (amber) / past-due (red). */
+.heroFeeStrip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0 0 0.7rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+}
+
+.heroFeeStripWarn {
+  background: color-mix(in srgb, var(--warning) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+}
+
+.heroFeeStripDanger {
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+}
+
+.heroFeeStripIcon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  padding-top: 0.05rem;
+}
+
+.heroFeeStripWarn .heroFeeStripIcon {
+  color: var(--warning);
+}
+
+.heroFeeStripDanger .heroFeeStripIcon {
+  color: var(--danger);
+}
+
+.heroFeeStripText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.heroFeeStripHead {
+  font-family: var(--font-data, monospace);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.heroFeeStripWarn .heroFeeStripHead {
+  color: var(--warning);
+}
+
+.heroFeeStripDanger .heroFeeStripHead {
+  color: var(--danger);
+}
+
+.heroFeeStripSub {
+  color: var(--white-60);
+  font-size: 0.78rem;
+}
+
+.heroFeeStripSub a {
+  color: var(--logic-lime);
+}
+
+/* Game-day Today card (5i). */
+.heroTodayCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0 0 0.7rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--success) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+.heroTodayLabel {
+  color: var(--success);
+  font-family: var(--font-data, monospace);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heroTodayCount {
+  color: var(--white);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.heroTodayNext {
+  color: var(--white-70);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.heroTodaySide {
+  color: var(--white-40);
+}
+
+/* Result trophy / record card (5m — replaces the old .afterglow). */
+.heroResultCard {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
   margin: 0.5rem 0 0.6rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--logic-lime) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--logic-lime) 20%, transparent);
 }
 
-.afterglowLead {
+.heroResultLead {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
   margin: 0;
-  color: var(--white-80);
-  font-size: 0.92rem;
-  font-weight: 700;
+  color: var(--white);
+  font-size: 0.95rem;
+  font-weight: 800;
 }
 
-.afterglowLead svg {
+.heroResultLead svg {
   color: var(--logic-lime);
 }
 
-.afterglowRecord {
+.heroResultRecord {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
   margin: 0;
-  color: var(--white-60);
-  font-size: 0.86rem;
 }
 
-.afterglowRecord strong {
+.heroResultRecordLabel {
+  color: var(--white-40);
+  font-family: var(--font-data, monospace);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heroResultRecord strong {
   color: var(--logic-lime);
   font-family: var(--font-data, monospace);
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
 }
 
-.afterglowLink {
+.heroResultNote {
+  margin: 0;
+  color: var(--white-60);
+  font-size: 0.85rem;
+}
+
+.heroResultLink {
   align-self: flex-start;
   color: var(--logic-lime);
   font-size: 0.85rem;
@@ -335,6 +523,6 @@
   text-decoration: none;
 }
 
-.afterglowLink:hover {
+.heroResultLink:hover {
   text-decoration: underline;
 }

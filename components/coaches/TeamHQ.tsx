@@ -1,4 +1,4 @@
-import { CalendarClock, CheckCircle2, Circle, CircleDollarSign, Clock, Megaphone, Trophy, Users } from 'lucide-react';
+import { CalendarClock, CheckCircle2, Circle, CircleDollarSign, Clock, Megaphone, TriangleAlert, Trophy, Users, XCircle } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import LocalDateTime from './LocalDateTime';
 import Countdown from '@/components/public/Countdown';
@@ -55,6 +55,20 @@ type TournamentTeamHQProps = {
   record?: { wins: number; losses: number; ties: number } | null;
   /** 5m afterglow — public standings link, present only when the tournament is public. */
   standingsHref?: string | null;
+  /** Theme 1 (5h) pending entry-fee preview — the organizer's fee schedule amount, shown
+   *  on the pending phase as "$N · due if accepted". Null when no fee schedule is set. */
+  pendingFeeAmount?: number | null;
+  /** Theme 1 (5i) game-day Today card — games happening today, server-derived (no poll
+   *  in the hero; the live scorebug lives in CoachLiveSchedule below). */
+  todayGames?: HeroTodayGame[];
+};
+
+/** Minimal shape the game-day Today card needs (a server-derived slice of the schedule). */
+export type HeroTodayGame = {
+  timeLabel: string | null;
+  location: string | null;
+  opponentName: string;
+  isHome: boolean;
 };
 
 type TeamHQProps = StandaloneTeamHQProps | TournamentTeamHQProps;
@@ -67,6 +81,16 @@ function formatMoney(amount: number): string {
     currency: 'CAD',
     maximumFractionDigits: 2,
   }).format(amount);
+}
+
+// Date-only (YYYY-MM-DD) due dates render as the literal calendar day (T00:00:00),
+// matching TournamentStatusBlock so the glance strip + detail block agree.
+function formatDateOnly(value: string | null): string | null {
+  if (!value) return null;
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+  const date = dateOnly ? new Date(value + 'T00:00:00') : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function StandaloneTeamHQ({
@@ -137,6 +161,8 @@ type ChecklistItem = {
   done: boolean;
   /** Renders the clock (awaiting) icon instead of the empty circle when not done. */
   awaiting?: boolean;
+  /** When set, the state renders as a coloured badge + optional micro-note (e.g. past-due Fee). */
+  badge?: { className: string; label: string; note?: string };
 };
 
 function Checklist({ items }: { items: ChecklistItem[] }) {
@@ -154,7 +180,14 @@ function Checklist({ items }: { items: ChecklistItem[] }) {
             )}
           </span>
           <span className={styles.checkLabel}>{item.label}</span>
-          <span className={styles.checkState}>{item.state}</span>
+          {item.badge ? (
+            <span className={styles.checkState}>
+              <span className={`badge ${item.badge.className}`}>{item.badge.label}</span>
+              {item.badge.note ? <span className={styles.checkNote}>{item.badge.note}</span> : null}
+            </span>
+          ) : (
+            <span className={styles.checkState}>{item.state}</span>
+          )}
         </li>
       ))}
     </ul>
@@ -179,15 +212,36 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
     rosterRequired,
     record,
     standingsHref,
+    pendingFeeAmount,
+    todayGames,
   } = props;
 
   const heroStyle = { '--team-color': teamColor(teamName) } as CSSProperties;
   const monogram = teamInitials(teamName);
   const accepted = phase !== 'pending' && phase !== 'rejected';
   // Theme 4: the celebration phases (accepted / prep / schedule-live) wear the
-  // 18% team-hue wash + watermark. game_day + result get phase-semantic washes
-  // from Theme 1 (not built yet), so they stay on the faint base for now.
+  // 18% team-hue wash + watermark. game_day + result carry their own phase-semantic
+  // washes (Theme 1, via the accent class below), so they skip the team-hue wash.
   const celebration = accepted && phase !== 'game_day' && phase !== 'result';
+
+  // Theme 1: per-phase left-border accent. The chip itself reuses the registration
+  // status badge (statusBadgeClass) passed by the caller — one source for the label.
+  const phaseAccentClass =
+    phase === 'pending'
+      ? styles.heroAccentInfo
+      : phase === 'rejected'
+        ? styles.heroAccentDanger
+        : phase === 'game_day'
+          ? styles.heroAccentSuccess
+          : styles.heroAccentLime; // accepted_prep / schedule_live / result
+
+  // Fee glance strip (accepted, fee scheduled + unpaid). The amount/due/contact live
+  // here as the GLANCE layer; the process note ("organizer records payment manually")
+  // stays in the detail status block below — never duplicated here.
+  const feeDueLabel = formatDateOnly(status?.fee.dueDate ?? null);
+  const feeAmountLabel = status?.fee.amountDue != null ? formatMoney(status.fee.amountDue) : null;
+  const showFeeStrip = Boolean(accepted && status?.fee.hasSchedule && !status?.fee.isPaid);
+  const feePastDue = status?.fee.state === 'past-due';
 
   // Headline + sub per phase. Pending/waitlist/rejected reuse the existing
   // registration-status copy (statusDesc); accepted gets the prep narrative.
@@ -224,7 +278,18 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
     // Fee — only when the organizer set a fee schedule; read-only state, no amount
     // (the detailed amount/due/contact lives in the status block below).
     if (status?.fee.hasSchedule) {
-      checklist.push({ key: 'fee', label: 'Fee', state: status.fee.isPaid ? 'Paid' : 'Owed', done: status.fee.isPaid });
+      // Past-due (J5-034): a danger badge + "Was due" micro-note. Merely owed → plain
+      // "Owed". Binary by design (no third state) — mirrors the locked fee vocabulary.
+      checklist.push({
+        key: 'fee',
+        label: 'Fee',
+        state: status.fee.isPaid ? 'Paid' : 'Owed',
+        done: status.fee.isPaid,
+        badge:
+          !status.fee.isPaid && status.fee.state === 'past-due'
+            ? { className: 'badge-danger', label: 'Past due', note: feeDueLabel ? `Was due ${feeDueLabel}` : undefined }
+            : undefined,
+      });
     }
     // Roster — shown when the organizer requires one (5f) OR once the coach has
     // submitted. "Not submitted" (awaiting) → "Submitted" → "Confirmed". The actionable
@@ -253,9 +318,12 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
     }
   }
 
+  const todayGameCount = todayGames?.length ?? 0;
+  const nextTodayGame = todayGames?.[0] ?? null;
+
   return (
     <div
-      className={`${styles.hero}${celebration ? ` ${styles.heroCelebration}` : ''}`}
+      className={`${styles.hero} ${phaseAccentClass}${celebration ? ` ${styles.heroCelebration}` : ''}`}
       style={heroStyle}
       aria-label="Tournament status"
     >
@@ -269,29 +337,88 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
         <span className={`badge ${statusBadgeClass}`}>{statusLabel}</span>
       </div>
 
+      {/* Pending entry-fee preview (5h) — only when the organizer set a fee schedule.
+          "due if accepted" keeps it honest: nothing is owed until the team is in. */}
+      {phase === 'pending' && pendingFeeAmount != null && pendingFeeAmount > 0 && (
+        <div className={styles.heroFeePreview}>
+          <span className={styles.heroFeePreviewLabel}>Entry fee preview</span>
+          <span className={styles.heroFeePreviewAmount}>{formatMoney(pendingFeeAmount)} · due if accepted</span>
+        </div>
+      )}
+
+      {/* Fee glance strip (5h) — accepted + fee scheduled + unpaid. Owed (amber) vs
+          past-due (red, role=alert). Process note stays in the detail block below. */}
+      {showFeeStrip && (
+        <div
+          className={`${styles.heroFeeStrip} ${feePastDue ? styles.heroFeeStripDanger : styles.heroFeeStripWarn}`}
+          role={feePastDue ? 'alert' : undefined}
+        >
+          <span className={styles.heroFeeStripIcon}>
+            {feePastDue ? <XCircle size={15} aria-hidden /> : <TriangleAlert size={15} aria-hidden />}
+          </span>
+          <div className={styles.heroFeeStripText}>
+            <span className={styles.heroFeeStripHead}>
+              {feePastDue
+                ? `Fee past due${feeAmountLabel ? ` · ${feeAmountLabel}` : ''}`
+                : `Fee owed${feeAmountLabel ? ` · ${feeAmountLabel}` : ''}${!feePastDue && feeDueLabel ? ` · due ${feeDueLabel}` : ''}`}
+            </span>
+            {feePastDue && feeDueLabel && <span className={styles.heroFeeStripSub}>Was due {feeDueLabel}</span>}
+            {contactEmail && (
+              <span className={styles.heroFeeStripSub}>
+                Contact <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {accepted && beforeStart && startDate && (
         <p className={styles.heroCountdown}>
           <Countdown target={`${startDate}T00:00:00`} prefix="First game in " whenPast={null} />
         </p>
       )}
-      {/* game_day always has a non-null startDate (derivation requires today >= startDate),
-          so "Event underway" never renders for a date-less event. schedule_live with a future
-          date shows the countdown above; schedule_live with no dates shows neither (honest). */}
+
+      {/* Game-day Today card (5i) — a server-derived summary that points DOWN to the
+          CoachLiveSchedule scorebug below (it does NOT poll). Falls back to the plain
+          "Event underway" line when no games are scheduled for today. */}
       {phase === 'game_day' && (
-        <p className={styles.heroCountdown}><strong>Event underway</strong></p>
+        todayGameCount > 0 ? (
+          <div className={styles.heroTodayCard}>
+            <span className={styles.heroTodayLabel}>Today</span>
+            <span className={styles.heroTodayCount}>
+              {todayGameCount === 1 ? '1 game today' : `${todayGameCount} games today`}
+            </span>
+            {nextTodayGame && (
+              <span className={styles.heroTodayNext}>
+                Next: {nextTodayGame.timeLabel ?? 'TBD'}
+                {nextTodayGame.location ? ` · ${nextTodayGame.location}` : ''} · vs {nextTodayGame.opponentName}{' '}
+                <span className={styles.heroTodaySide}>({nextTodayGame.isHome ? 'Home' : 'Away'})</span>
+              </span>
+            )}
+          </div>
+        ) : (
+          <p className={styles.heroCountdown}><strong>Event underway</strong></p>
+        )
       )}
+      {/* Result trophy card (5m). Champion styling ("Champions!" + Trophy) is gated on a
+          placement source — not wired yet, so every team gets the clean "Event complete"
+          record card. When placement lands, branch the lead row on placement === 1. */}
       {phase === 'result' && (
-        <div className={styles.afterglow}>
-          <p className={styles.afterglowLead}>
-            <Trophy size={15} aria-hidden /> Event complete — thanks for playing.
+        <div className={styles.heroResultCard}>
+          <p className={styles.heroResultLead}>
+            <Trophy size={16} aria-hidden />
+            <span>Event complete{dateRangeLabel ? ` · ${dateRangeLabel}` : ''}</span>
           </p>
-          {record && (record.wins + record.losses + record.ties) > 0 && (
-            <p className={styles.afterglowRecord}>
-              Final record <strong>{record.wins}-{record.losses}-{record.ties}</strong>
+          {record && (record.wins + record.losses + record.ties) > 0 ? (
+            <p className={styles.heroResultRecord}>
+              <span className={styles.heroResultRecordLabel}>Final record</span>
+              <strong>{record.wins}-{record.losses}-{record.ties}</strong>
             </p>
+          ) : (
+            <p className={styles.heroResultNote}>No completed game scores recorded for your team.</p>
           )}
           {standingsHref && (
-            <a className={styles.afterglowLink} href={standingsHref}>View final standings →</a>
+            <a className={styles.heroResultLink} href={standingsHref}>View final standings →</a>
           )}
         </div>
       )}

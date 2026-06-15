@@ -298,6 +298,30 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     ? new Date(team.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
 
+  // Theme 1 (5h) pending entry-fee preview — the organizer's scheduled fee, shown on the
+  // pending phase as "due if accepted". Prefer the division fee, fall back to the
+  // tournament total; PostgREST returns numerics as strings so coerce before the check.
+  const pendingFeeRaw = division?.total_fee_amount ?? tournament?.total_fee_amount ?? null;
+  const pendingFeeNum = pendingFeeRaw != null ? Number(pendingFeeRaw) : null;
+  const pendingFeeAmount =
+    coachPhase === 'pending' && pendingFeeNum != null && Number.isFinite(pendingFeeNum) && pendingFeeNum > 0
+      ? pendingFeeNum
+      : null;
+
+  // Theme 1 (5i) game-day Today card — games scheduled for today, server-derived
+  // (the hero card does NOT poll; the live scorebug lives in CoachLiveSchedule below).
+  const todayGames =
+    coachPhase === 'game_day'
+      ? initialGames
+          .filter(g => g.date === today)
+          .map(g => ({
+            timeLabel: g.timeLabel,
+            location: g.location,
+            opponentName: g.opponentName,
+            isHome: g.isHome,
+          }))
+      : undefined;
+
   // 5k roster submit. The organizer's requirements (5f) drive whether the Roster milestone
   // shows in the hero checklist and whether the submit card appears. Show the card for an
   // accepted team when a roster is required OR one was already submitted (so a coach can still
@@ -376,6 +400,8 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
         rosterRequired={rosterRequirements.required}
         record={record}
         standingsHref={standingsHref}
+        pendingFeeAmount={pendingFeeAmount}
+        todayGames={todayGames}
       />
 
       {/* 5i game-day bridge — placed directly under the hero so the live scorebug
