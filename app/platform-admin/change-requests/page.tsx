@@ -3,7 +3,7 @@ import { getPlatformAdminContext, hasPlatformPermission, requirePlatformAreaView
 import ChangeRequestsClient from './ChangeRequestsClient';
 import type { PlatformChangeApplicationRow, PlatformChangeRequestRow } from './types';
 
-export const metadata = { title: 'Change Requests - Platform Admin' };
+export const metadata = { title: 'Approval Queue - Platform Admin' };
 
 export default async function ChangeRequestsPage() {
   await requirePlatformAreaView('change_requests');

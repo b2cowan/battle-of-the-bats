@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Check, Loader, X } from 'lucide-react';
+import HelpCallout from '@/components/help/HelpCallout';
 import type { PlatformChangeApplicationRow, PlatformChangeRequestRow } from './types';
 import styles from './change-requests.module.css';
 
@@ -526,14 +527,21 @@ export default function ChangeRequestsClient({
     <div className={styles.page}>
       <header className={styles.pageHeader}>
         <div>
-          <div className={styles.headerLabel}>Platform Admin</div>
-          <h1 className={styles.title}>Change Requests</h1>
+          <div className={styles.headerLabel}>Billing &amp; Product</div>
+          <h1 className={styles.title}>Approval Queue</h1>
         </div>
         <p className={styles.pageIntro}>
           Review product, pricing, entitlement, campaign, and approval requests from one queue.
           The default view shows action-needed requests only; generated plan and price approvals apply immediately.
         </p>
       </header>
+
+      <HelpCallout
+        variant="info"
+        title="How the Approval Queue relates to Plans & Pricing"
+        body="Most requests here are created automatically by the Plans & Pricing catalog flow (and billing-initiated catalog actions) — this queue is where you review and move them forward. Approving a generated price, gating, or config change applies it immediately to the catalog; every transition is audit-logged."
+        cta={{ label: 'Open Plans & Pricing', href: '/platform-admin/plans-pricing' }}
+      />
 
       <section className={styles.summaryGrid} aria-label="Change request summary">
         <div>
@@ -691,7 +699,7 @@ export default function ChangeRequestsClient({
           >
             <div className={styles.modalHeader}>
               <div>
-                <div className={styles.headerLabel}>Change Request Detail</div>
+                <div className={styles.headerLabel}>Approval Detail</div>
                 <h2 id="change-request-detail-title" className={styles.modalTitle}>{selectedRequest.title}</h2>
               </div>
               <button

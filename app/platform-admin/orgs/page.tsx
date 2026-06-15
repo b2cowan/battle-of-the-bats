@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { requirePlatformAreaView } from '@/lib/platform-auth';
 import OrgsClient from './OrgsClient';
 
 async function getFoundingSeasonOrgIds(): Promise<Set<string>> {
@@ -112,6 +113,10 @@ export default async function OrgsPage({
 }: {
   searchParams: Promise<{ status?: string; filter?: string }>;
 }) {
+  // Defensive area guard — `organizations` is currently visible to every platform role
+  // (the layout already enforces "is a platform admin"), so this is a no-op today. It
+  // future-proofs the page: tightening the access matrix later can't silently leave it ungated.
+  await requirePlatformAreaView('organizations');
   const { status, filter } = await searchParams;
   const orgs = await getOrgs();
 

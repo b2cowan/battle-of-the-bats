@@ -142,7 +142,7 @@ export default async function FeedbackTriagePage({
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headerLabel}>System</div>
+        <div className={styles.headerLabel}>Support &amp; Diagnostics</div>
         <h1 className={styles.title}>Feedback</h1>
         <div className={styles.count}>{rows.length} shown</div>
       </header>

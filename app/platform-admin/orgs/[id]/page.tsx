@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from '@/lib/plan-config';
-import { getPlatformAdminContext, hasPlatformPermission } from '@/lib/platform-auth';
+import { hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
 import type { OrgPlan } from '@/lib/types';
 import OrgDetailClient from './OrgDetailClient';
 import styles from './orgDetail.module.css';
@@ -306,8 +306,11 @@ export default async function OrgDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  // Defensive area guard — `organizations` is currently visible to every platform role
+  // (the layout already enforces the platform-admin session), so this is a no-op today. It
+  // also yields the auth context used for the permission props below.
   const [auth, org, members, tournaments, overrides, auditEvents, internalNotes, pendingOwnershipTransfers] = await Promise.all([
-    getPlatformAdminContext(),
+    requirePlatformAreaView('organizations'),
     getOrgDetail(id),
     getMembers(id),
     getTournaments(id),

@@ -1723,7 +1723,7 @@ export default function PlansPricingClient({
                   <>
                     <strong className={styles.pendingPlanCount}>{selectedPlanPendingRequests.length} pending</strong>
                     <Link className={styles.secondaryLink} href="/platform-admin/change-requests">
-                      Open Change Requests
+                      Open Approval Queue
                     </Link>
                   </>
                 ) : (
@@ -1839,7 +1839,7 @@ export default function PlansPricingClient({
             <strong>{featureMatrixRows.length}</strong>
           </div>
           <div>
-            <span>Change Requests</span>
+            <span>Approval Queue</span>
             <strong>{catalogChangeRequests.length}</strong>
           </div>
           <div>
@@ -1889,9 +1889,9 @@ export default function PlansPricingClient({
 
             <div className={styles.inlineNotice}>
               <strong>Change approvals moved</strong>
-              <span>Review, approve, reject, and apply catalog requests from the central Change Requests queue.</span>
+              <span>Review, approve, reject, and apply catalog requests from the central Approval Queue.</span>
               <Link className={styles.secondaryLink} href="/platform-admin/change-requests">
-                Open Change Requests
+                Open Approval Queue
               </Link>
             </div>
 
@@ -2183,7 +2183,7 @@ export default function PlansPricingClient({
               <h2 className={styles.sectionTitle}>Add-on Stripe Prices</h2>
               <p className={styles.sectionDesc}>
                 Add-on price slots stay with Product Catalog because they are not standalone plan rows.
-                Price edits still create review requests in Change Requests.
+                Price edits still create review requests in the Approval Queue.
               </p>
             </div>
             <div className={styles.inlineTabs} role="tablist" aria-label="Add-on price environment">

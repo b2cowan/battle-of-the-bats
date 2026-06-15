@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Check, ChevronDown, Copy, KeyRound, Search, Trash2 } from 'lucide-react';
 import ExportMenu from '@/components/admin/ExportMenu';
+import HelpCallout from '@/components/help/HelpCallout';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -433,6 +434,14 @@ export default function CustomerUsersClient({ initialRows, query, total, page, p
           </div>
         </div>
       </header>
+
+      <HelpCallout
+        variant="info"
+        title="This is the customer directory only"
+        body="Platform employees are excluded from this list. To manage platform staff (roles, access, and accounts), use Platform Users."
+        dismissible
+        {...(canDelete ? { cta: { label: 'Open Platform Users', href: '/platform-admin/users' } } : {})}
+      />
 
       {!canManageUsers && (
         <div className={styles.viewOnlyBanner}>

@@ -274,6 +274,32 @@
   background: rgba(var(--logic-lime-rgb), 0.015);
 }
 
+/* Danger-zone variant — destructive cards (Delete Organization) read as destructive
+   at a glance and are visually separated from routine support cards. */
+.dangerDivider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0 0.25rem;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--danger);
+}
+.dangerDivider::before,
+.dangerDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(var(--danger-rgb), 0.3);
+}
+.dangerSection {
+  border-color: rgba(var(--danger-rgb), 0.35);
+  background: rgba(var(--danger-rgb), 0.04);
+}
+
 .sectionHeader {
   display: flex;
   align-items: flex-start;

@@ -516,18 +516,18 @@ const platformAdminHelp: HelpPageContent = {
     {
       id: 'change-requests',
       group: 'Product SOP',
-      heading: 'How to review and action change requests',
-      summary: 'Work the catalog change-request queue: submit, approve, and apply pricing, gating, and config changes.',
-      keywords: ['change requests', 'approval', 'pricing change', 'stripe price', 'plan gating', 'plan config', 'needs review', 'apply', 'implemented'],
-      searchText: 'how do i review action change requests approve apply pricing gating config draft needs review approved implemented stripe price update auto apply',
+      heading: 'How to review and action the Approval Queue',
+      summary: 'Work the catalog approval queue: submit, approve, and apply pricing, gating, and config changes.',
+      keywords: ['approval queue', 'change requests', 'approval', 'pricing change', 'stripe price', 'plan gating', 'plan config', 'needs review', 'apply', 'implemented'],
+      searchText: 'how do i review action the approval queue change requests approve apply pricing gating config draft needs review approved implemented stripe price update auto apply',
       links: [
-        { label: 'Change Requests', href: '/platform-admin/change-requests' },
+        { label: 'Approval Queue', href: '/platform-admin/change-requests' },
         { label: 'Plans & Pricing', href: '/platform-admin/plans-pricing' },
         { label: 'Audit Log', href: '/platform-admin/audit' },
       ],
       content: (
         <>
-          <p><strong>Change Requests</strong> is the single review queue for product, pricing, entitlement, campaign, and approval changes. Requests are <strong>created from the Plans &amp; Pricing catalog flow</strong> (and billing-initiated catalog actions), not from this page — here you review and move them forward. The queue opens on <strong>Action Needed</strong> (items in needs review or approved).</p>
+          <p>The <strong>Approval Queue</strong> is the single review queue for product, pricing, entitlement, campaign, and approval changes. Requests are <strong>created from the Plans &amp; Pricing catalog flow</strong> (and billing-initiated catalog actions), not from this page — here you review and move them forward. The queue opens on <strong>Action Needed</strong> (items in needs review or approved).</p>
           <ol>
             <li>Open a request to read its summary, the human-readable proposal, the raw proposal payload, and the stage history (created / submitted / reviewed / applied).</li>
             <li>Move it through the lifecycle: <strong>Draft → Needs Review → Approved → Implemented</strong> (or <strong>Rejected / Canceled</strong>). The detail footer shows only the actions valid for the current status.</li>
@@ -535,7 +535,7 @@ const platformAdminHelp: HelpPageContent = {
             <li>For a <strong>manual</strong> request (e.g. a feature-matrix publish), approval sets it to <strong>Approved</strong> and leaves a separate <strong>Mark Implemented</strong> step for the implementer to take after doing the manual work.</li>
           </ol>
           <p><strong>Safe-harbour for price changes:</strong> a generated change captures the slot&apos;s current value when the request was created. If the slot changed since then, applying it is blocked with a 409 that names the current vs. expected value — create a fresh request from the current row rather than forcing it. Stripe price IDs must start with <code>price_</code>, and when the environment matches the change is live-validated against Stripe (an inactive price is rejected). Always confirm the price ID is from the correct Stripe environment (sandbox vs. live) before approving.</p>
-          <p>Every transition and every auto-apply is audit-logged. Change Requests also surface as a queue you reach from Plans &amp; Pricing.</p>
+          <p>Every transition and every auto-apply is audit-logged. The Approval Queue also surfaces as a queue you reach from Plans &amp; Pricing.</p>
           <p><strong>Permission boundary:</strong> super admin and product can submit, approve, and apply. Billing can <em>view</em> the queue (actions show <em>Read only</em>). Support and growth do not see this surface.</p>
         </>
       ),
@@ -607,7 +607,7 @@ const platformAdminHelp: HelpPageContent = {
       keywords: ['plans pricing', 'product catalog', 'feature matrix', 'stripe price', 'approval', 'campaign', 'risk ladder', 'plan config', 'gating'],
       links: [
         { label: 'Plans & Pricing', href: '/platform-admin/plans-pricing' },
-        { label: 'Change Requests', href: '/platform-admin/change-requests' },
+        { label: 'Approval Queue', href: '/platform-admin/change-requests' },
         { label: 'Bulk Operations', href: '/platform-admin/bulk-operations' },
       ],
       content: (
@@ -619,7 +619,7 @@ const platformAdminHelp: HelpPageContent = {
             <li><strong>Stripe price IDs</strong> — affects real billing; a wrong ID can break checkout or charge the wrong amount.</li>
             <li><strong>Feature matrix</strong> — the public plan comparison; highest blast radius and least immediately reversible.</li>
           </ol>
-          <p><strong>Recommended sequence for any change:</strong> verify subscriber impact (use the impact summaries) → create a change request → get it approved → apply. Generated price, gating, and config changes auto-apply on approval through <strong>Change Requests</strong> (see <em>How to review and action change requests</em>).</p>
+          <p><strong>Recommended sequence for any change:</strong> verify subscriber impact (use the impact summaries) → create a change request → get it approved → apply. Generated price, gating, and config changes auto-apply on approval through the <strong>Approval Queue</strong> (see <em>How to review and action the Approval Queue</em>).</p>
           <p><strong>Stripe price change checklist:</strong></p>
           <ul>
             <li>Confirm the <code>price_...</code> ID is from the correct Stripe environment — sandbox vs. live.</li>

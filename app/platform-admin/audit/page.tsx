@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { requirePlatformAreaView } from '@/lib/platform-auth';
 import styles from './audit.module.css';
 import HelpCallout from '@/components/help/HelpCallout';
 import AuditExportClient from './AuditExportClient';
@@ -149,6 +150,10 @@ export default async function AuditLogPage({
 }: {
   searchParams: Promise<{ q?: string; from?: string; to?: string; action?: string; orgId?: string; offset?: string }>;
 }) {
+  // Defensive area guard — `audit` is currently visible to every platform role (the layout
+  // already enforces the platform-admin session), so this is a no-op today. It future-proofs
+  // the page so a later tightening of the access matrix can't silently leave it ungated.
+  await requirePlatformAreaView('audit');
   const sp = await searchParams;
   const offset = Math.max(0, parseInt(sp.offset ?? '0', 10));
   const filters: Filters = {

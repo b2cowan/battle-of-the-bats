@@ -152,7 +152,7 @@ export default async function ObservabilityDashboardPage({
       {/* ── Header + toolbar ───────────────────────────────────────────── */}
       <header className={styles.header}>
         <div>
-          <div className={styles.headerLabel}>System</div>
+          <div className={styles.headerLabel}>Support &amp; Diagnostics</div>
           <h1 className={styles.title}>Observability</h1>
         </div>
         <div className={styles.toolbar}>

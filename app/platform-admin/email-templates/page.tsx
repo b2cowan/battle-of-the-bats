@@ -48,7 +48,7 @@ export default async function EmailTemplatesPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headerLabel}>Platform Admin</div>
+        <div className={styles.headerLabel}>Billing &amp; Product</div>
         <h1 className={styles.title}>Email Templates</h1>
       </header>
 

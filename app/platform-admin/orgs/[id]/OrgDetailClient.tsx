@@ -1081,8 +1081,10 @@ export default function OrgDetailClient({
               )}
             </section>
 
+            <div className={styles.dangerDivider}>Danger Zone</div>
+
             {isSuperAdmin && (
-              <section className={styles.section}>
+              <section className={`${styles.section} ${styles.dangerSection}`}>
                 <div className={styles.sectionHeader}>
                   <h3 className={styles.sectionTitle}>Delete Organization</h3>
                   <span className={styles.overrideType}>super admin only</span>
@@ -1221,7 +1223,7 @@ export default function OrgDetailClient({
             )}
 
             {!isSuperAdmin && (
-              <section className={styles.section}>
+              <section className={`${styles.section} ${styles.dangerSection}`}>
                 <div className={styles.sectionHeader}>
                   <h3 className={styles.sectionTitle}>Delete Organization</h3>
                   <span className={styles.overrideType}>super admin only</span>

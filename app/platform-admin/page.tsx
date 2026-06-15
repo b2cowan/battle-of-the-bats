@@ -111,11 +111,11 @@ const ORIENTATION_BY_ROLE: Record<string, { body: string; cta: { label: string; 
     cta: { label: 'Open the Billing SOP', href: '/platform-admin/help/platform-admin#billing-overrides' },
   },
   product: {
-    body: 'You have write access to Feedback, Change Requests, Email Templates, Email, Plans & Pricing, and Observability. Start with the Product Operator path.',
+    body: 'You have write access to Feedback, the Approval Queue, Email Templates, Email Campaigns, Plans & Pricing, and Observability. Start with the Product Operator path.',
     cta: { label: 'Open the Product Operator path', href: '/platform-admin/help/platform-admin#change-requests' },
   },
   growth: {
-    body: 'Your surfaces are Early Access and Email. Start with the Growth Operator path for the lead pipeline and batch marketing sends.',
+    body: 'Your surfaces are Early Access and Email Campaigns. Start with the Growth Operator path for the lead pipeline and batch marketing sends.',
     cta: { label: 'Open the Growth Operator path', href: '/platform-admin/help/platform-admin#early-access-pipeline' },
   },
   read_only: {

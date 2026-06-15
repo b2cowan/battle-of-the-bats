@@ -73,7 +73,7 @@ export default function PlatformAdminHelpPage() {
   const internalCards: HelpHubCard[] = [
     {
       title: 'Platform Admin Operations',
-      desc: 'Employee-only SOPs for password resets, module overrides, comp periods, plan changes, audit review, retention, feedback triage, observability, change requests, email templates, batch email, and the early-access pipeline.',
+      desc: 'Employee-only SOPs for password resets, module overrides, comp periods, plan changes, audit review, retention, feedback triage, observability, the approval queue, email templates, batch email, and the early-access pipeline.',
       href: '/platform-admin/help/platform-admin',
       category: 'Employee-Only Guides',
       audience: 'Platform admins',
@@ -90,7 +90,7 @@ export default function PlatformAdminHelpPage() {
     { label: 'Run a bulk comp period or module update', href: '/platform-admin/help/platform-admin#bulk-operations', category: 'Bulk Operations', keywords: ['bulk', 'comp period', 'module addon', 'plan change'] },
     { label: 'Investigate account changes in the audit log', href: '/platform-admin/help/platform-admin#audit-investigation', category: 'Audit', keywords: ['audit', 'logs', 'actor', 'before after'] },
     { label: 'Triage customer feedback and find error groups', href: '/platform-admin/help/platform-admin#feedback-triage', category: 'Support', keywords: ['feedback', 'triage', 'bug report', 'escalate', 'error group'] },
-    { label: 'Review and approve a change request', href: '/platform-admin/help/platform-admin#change-requests', category: 'Product', keywords: ['change request', 'approve', 'pricing', 'apply'] },
+    { label: 'Review and approve a request in the Approval Queue', href: '/platform-admin/help/platform-admin#change-requests', category: 'Product', keywords: ['approval queue', 'change request', 'approve', 'pricing', 'apply'] },
     { label: 'Edit an email template safely', href: '/platform-admin/help/platform-admin#email-templates', category: 'Product', keywords: ['email template', 'variable token', 'test send', 'transactional'] },
     { label: 'Send a batch marketing email', href: '/platform-admin/help/platform-admin#email-batch-send', category: 'Growth', keywords: ['email', 'batch send', 'marketing', 'founding season'] },
     { label: 'Manage the early-access lead pipeline', href: '/platform-admin/help/platform-admin#early-access-pipeline', category: 'Growth', keywords: ['early access', 'leads', 'pipeline', 'convert', 'outreach'] },
@@ -117,11 +117,11 @@ export default function PlatformAdminHelpPage() {
       title: 'Product Operator',
       audience: 'Product team',
       badge: 'Employee',
-      desc: 'Start here for the product write surfaces: feedback triage, change requests, email templates, batch email, and plans & pricing.',
-      keywords: ['product', 'feedback', 'change requests', 'email templates', 'plans pricing', 'observability', 'pricing'],
+      desc: 'Start here for the product write surfaces: feedback triage, the approval queue, email templates, batch email, and plans & pricing.',
+      keywords: ['product', 'feedback', 'approval queue', 'change requests', 'email templates', 'plans pricing', 'observability', 'pricing'],
       steps: [
         { label: 'Triage feedback and find related error groups', href: '/platform-admin/help/platform-admin#feedback-triage' },
-        { label: 'Review and action change requests', href: '/platform-admin/help/platform-admin#change-requests' },
+        { label: 'Review and action the Approval Queue', href: '/platform-admin/help/platform-admin#change-requests' },
         { label: 'Edit an email template safely', href: '/platform-admin/help/platform-admin#email-templates' },
         { label: 'Send a batch marketing email', href: '/platform-admin/help/platform-admin#email-batch-send' },
         { label: 'Work with plans, pricing, and the feature matrix', href: '/platform-admin/help/platform-admin#plans-pricing' },
