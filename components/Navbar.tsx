@@ -110,7 +110,7 @@ export default function Navbar() {
                 </Link>
               )}
               <Link
-                href={isProtectedCoachesPortalPath ? '/coaches/start' : '/auth/signup'}
+                href={isProtectedCoachesPortalPath ? '/coaches/start' : '/start'}
                 className="font-mono text-xs uppercase tracking-widest font-bold bg-logic-lime text-pitch-black px-4 py-2 hover:bg-white transition-colors"
               >
                 {isProtectedCoachesPortalPath ? 'Upgrade' : 'Get Started'}

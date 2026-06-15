@@ -143,9 +143,9 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 1. **`role` has no DB CHECK — the enum is `OrgRole` in code** (8 values: `owner|admin|staff|official|league_admin|league_registrar|treasurer|coach`, [lib/types.ts:12](../../../lib/types.ts#L12)). DB default `'admin'` is effectively dead (every insert passes an explicit role). The **invitable** subset is narrower (`admin|staff|official|league_admin|league_registrar|treasurer`); `owner`/`coach` are set by other flows.
 2. **`role='owner'` short-circuits authorization before capabilities are read** — `hasCapability` returns true unconditionally ([lib/roles.ts:82](../../../lib/roles.ts#L82)), and owners skip both scope tables (unrestricted).
 3. **`capabilities` is additive *and subtractive*.** An explicit `capabilities[cap]` (true OR false) **wins** over the role default; absent → role default ([lib/roles.ts:83-85](../../../lib/roles.ts#L83)). Owner-only to edit.
-4. **`mapMember` maps only 6 of 10 columns** ([lib/db.ts:2504](../../../lib/db.ts#L2504)) — it drops `capabilities`, `status`, `display_name`, `title`; the `OrganizationMember` type lacks them too. The members admin API reads them via its own select.
+4. **`mapMember` maps only 6 of 11 columns** ([lib/db.ts:2504](../../../lib/db.ts#L2504)) — it drops `capabilities`, `status`, `display_name`, `title`, `invited_email`; the `OrganizationMember` type lacks them too. The members admin API reads what it needs via its own select.
 5. **Suspended = unauthenticated platform-wide.** `getAuthContext` filters `.neq('status','suspended')` ([lib/api-auth.ts:87](../../../lib/api-auth.ts#L87)) → a suspended member gets 401 (not 403) on every `/api/admin/*` route. **Last-owner protection** blocks deleting/demoting/suspending the final owner.
-6. **One-org-per-user is enforced in app code, not schema** — invite rejects a user already in any other org. The DB UNIQUE is only `(organization_id, user_id)`.
+6. **One-org-per-user is enforced in app code, not schema** — invite rejects a user already in any other org. The DB UNIQUE is only `(organization_id, user_id)`. Pending invites can also be **reconciled by `invited_email`** (mig 128) when the invitee authenticates under a different identity than the one the invite minted.
 
 **Fields** (boilerplate `id` omitted):
 
@@ -167,6 +167,9 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 <!-- dict:col:organization_members.invited_at -->
 <!-- dict:col:organization_members.accepted_at -->
 **`invited_at`** (timestamptz, NOT NULL, default now()) / **`accepted_at`** (timestamptz, nullable) — invite-sent (refreshed on re-invite) / invite-accepted (NULL = pending; set on accept or immediate direct-add).
+
+<!-- dict:col:organization_members.invited_email -->
+**`invited_email`** (text, nullable; indexed `lower(invited_email) WHERE status='invited'`, mig 128) — the email a pending invite was sent to, persisted so **invite reconciliation** ([lib/invite-reconciliation.ts](../../../lib/invite-reconciliation.ts)) can match a freshly-authenticated user by email and re-point the orphaned `status='invited'` row to their real `user_id` — the fix for invitees who self-register/log in instead of clicking the email link. NULL = legacy/pre-128 row or a direct existing-user add (`user_id` already correct, no reconciliation needed). Written lowercased by the invite route; matched case-insensitively via `lower()`. **Not an identity key** (`user_id` still is) — purely the reconciliation match key.
 
 <!-- dict:col:organization_members.display_name -->
 <!-- dict:col:organization_members.title -->

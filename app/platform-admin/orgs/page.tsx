@@ -56,6 +56,40 @@ async function getOrgs() {
     noteCounts.set(orgId, (noteCounts.get(orgId) ?? 0) + 1);
   }
 
+  // ── Empty-org detection ───────────────────────────────────────────────────
+  // An "empty org" has no real work in it: no tournaments, no league seasons, no rep
+  // teams, and no members beyond the single owner. These are the junk-org residue left
+  // by an owner who created an account/org but never populated it (the signup flow keeps
+  // org-create pre-verify by decision, so unverified/abandoned owners keep producing
+  // them). Support surfaces + manually cleans these — we never auto-delete.
+  // Batched .in() lookups (one query per content table) — no per-org N+1.
+  // CRITICAL: these select one row PER content row (not per org), so without an explicit
+  // limit they hit PostgREST's default 1000-row cap. A truncated result would drop a real
+  // org from `orgsWithContent`/`memberCounts` and FALSELY label it "Empty" — a
+  // delete-the-wrong-thing hazard for support. We cap high (50k, matching the .limit(5000)
+  // idiom on the owner/override queries above, sized up for row-per-content) so truncation
+  // can't happen at realistic platform scale. If a single table ever exceeds 50k rows,
+  // revisit with a per-org aggregate; until then this is the safe, simple bound.
+  const CONTENT_ROW_CAP = 50000;
+  const [tournamentRows, leagueSeasonRows, repTeamRows, memberRows] = orgIds.length > 0
+    ? await Promise.all([
+        supabaseAdmin.from('tournaments').select('org_id').in('org_id', orgIds).limit(CONTENT_ROW_CAP),
+        supabaseAdmin.from('league_seasons').select('org_id').in('org_id', orgIds).limit(CONTENT_ROW_CAP),
+        supabaseAdmin.from('rep_teams').select('org_id').in('org_id', orgIds).limit(CONTENT_ROW_CAP),
+        supabaseAdmin.from('organization_members').select('organization_id').in('organization_id', orgIds).limit(CONTENT_ROW_CAP),
+      ])
+    : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }];
+
+  const orgsWithContent = new Set<string>();
+  for (const r of (tournamentRows.data ?? []) as Array<{ org_id: string }>) orgsWithContent.add(r.org_id);
+  for (const r of (leagueSeasonRows.data ?? []) as Array<{ org_id: string }>) orgsWithContent.add(r.org_id);
+  for (const r of (repTeamRows.data ?? []) as Array<{ org_id: string }>) orgsWithContent.add(r.org_id);
+
+  const memberCounts = new Map<string, number>();
+  for (const r of (memberRows.data ?? []) as Array<{ organization_id: string }>) {
+    memberCounts.set(r.organization_id, (memberCounts.get(r.organization_id) ?? 0) + 1);
+  }
+
   // ── Attention sets (match the dashboard Action Queue definitions) ─────────
   const ownerRows = (ownersResult.data ?? []) as Array<{ organization_id: string; user_id: string; status: string | null }>;
   const ownerOrgIds = new Set(
@@ -104,6 +138,8 @@ async function getOrgs() {
       ownerInactive:      ownerIds.length > 0 && (!mostRecentOwnerSignIn || mostRecentOwnerSignIn < inactiveOwnerCutoff),
       expiredOverride:    expiredOverrideOrgIds.has(id),
       trialEndingSoon:    status === 'trialing' && Boolean(currentPeriodEnd) && (currentPeriodEnd as string) <= trialWindowEnd,
+      // Empty = no content of any kind AND at most the single owner as a member.
+      emptyOrg:           !orgsWithContent.has(id) && (memberCounts.get(id) ?? 0) <= 1,
     };
   });
 }

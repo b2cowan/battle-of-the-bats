@@ -7,6 +7,7 @@ import {
   CalendarDays,
   Compass,
   Trophy,
+  UserPlus,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -65,6 +66,16 @@ const OPTIONS: StartOption[] = [
     title: 'Explore Club',
     body: 'Everything in one place for multi-team clubs. Talk to us about a guided setup for your organization.',
     tag: { text: 'Talk to us', tone: 'soon' },
+  },
+  {
+    // Invited / joining branch (signup-org decoupling): create an ACCOUNT only — no org.
+    // After verifying, they land on /home where the pending-invite card lets them accept.
+    // This is the account-first path; the options above create an organization.
+    href: '/auth/signup?account=1',
+    icon: UserPlus,
+    label: 'Joining a team',
+    title: 'I was invited',
+    body: 'Someone invited you to their organization? Create an account to accept your invitation — no organization needed.',
   },
 ];
 

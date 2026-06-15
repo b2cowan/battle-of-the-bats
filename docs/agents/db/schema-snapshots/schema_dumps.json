@@ -5267,6 +5267,15 @@
         "column_default": null
       },
       {
+        "table_name": "organization_members",
+        "pos": 11,
+        "column_name": "invited_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "organizations",
         "pos": 1,
         "column_name": "id",
@@ -14484,6 +14493,11 @@
       },
       {
         "tablename": "organization_members",
+        "indexname": "organization_members_invited_email_idx",
+        "indexdef": "CREATE INDEX organization_members_invited_email_idx ON public.organization_members USING btree (lower(invited_email)) WHERE (status = 'invited'::text)"
+      },
+      {
+        "tablename": "organization_members",
         "indexname": "organization_members_organization_id_user_id_key",
         "indexdef": "CREATE UNIQUE INDEX organization_members_organization_id_user_id_key ON public.organization_members USING btree (organization_id, user_id)"
       },
@@ -22104,6 +22118,15 @@
         "table_name": "organization_members",
         "pos": 10,
         "column_name": "title",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_members",
+        "pos": 11,
+        "column_name": "invited_email",
         "data_type": "text",
         "udt_name": "text",
         "is_nullable": "YES",
@@ -31355,6 +31378,11 @@
         "tablename": "org_venues",
         "indexname": "org_venues_pkey",
         "indexdef": "CREATE UNIQUE INDEX org_venues_pkey ON public.org_venues USING btree (id)"
+      },
+      {
+        "tablename": "organization_members",
+        "indexname": "organization_members_invited_email_idx",
+        "indexdef": "CREATE INDEX organization_members_invited_email_idx ON public.organization_members USING btree (lower(invited_email)) WHERE (status = 'invited'::text)"
       },
       {
         "tablename": "organization_members",

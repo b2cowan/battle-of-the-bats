@@ -216,7 +216,7 @@ export default async function HomePage() {
               Already know what you need?
             </span>
             <Link
-              href="/auth/signup"
+              href="/start"
               className="font-mono text-xs uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors"
             >
               Start free →
@@ -337,7 +337,7 @@ export default async function HomePage() {
               Sign up today and run Tournament Plus at no cost through December 31.
             </p>
             <Link
-              href="/auth/signup"
+              href="/start"
               className="font-mono text-xs font-bold uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors self-start"
             >
               Start your organization →
@@ -421,7 +421,7 @@ export default async function HomePage() {
           </h2>
           <div className={styles.ctaActions}>
             <Link
-              href="/auth/signup"
+              href="/start"
               className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
             >
               Start Your Organization

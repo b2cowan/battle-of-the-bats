@@ -18,6 +18,11 @@ function slugify(name: string) {
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Account-only mode (signup/org decoupling): reached as /auth/signup?account=1 from the
+  // "I was invited / joining a team" option on /start. No org is created — the user makes
+  // an account, verifies, lands on /home, and accepts their pending invite there. The
+  // default (no ?account) is the owner path: org name field + org created at signup.
+  const accountOnly = searchParams.get('account') === '1';
   const [orgName, setOrgName]   = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName]   = useState('');
@@ -35,7 +40,7 @@ function SignupForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!orgName.trim()) {
+    if (!accountOnly && !orgName.trim()) {
       setError('Enter an organization name.');
       return;
     }
@@ -48,13 +53,25 @@ function SignupForm() {
       return;
     }
 
+    await submitSignup();
+  }
+
+  async function submitSignup() {
     setError('');
     setLoading(true);
 
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, orgName, firstName: firstName.trim(), lastName: lastName.trim() }),
+      // Account-only mode omits orgName — the server creates no org. The owner path
+      // sends the org name and gets an org created in one shot.
+      body: JSON.stringify({
+        email,
+        password,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        ...(accountOnly ? {} : { orgName }),
+      }),
     });
 
     const json = await res.json();
@@ -77,6 +94,14 @@ function SignupForm() {
       return;
     }
 
+    // Account-only (dev / verification-off): land on /home, where reconciliation +
+    // the pending-invite card take over.
+    if (accountOnly) {
+      router.push('/home');
+      router.refresh();
+      return;
+    }
+
     const plan = searchParams.get('plan');
     const billing = searchParams.get('billing') === 'annual' ? 'annual' : searchParams.get('billing') === 'monthly' ? 'monthly' : null;
     const onboardingParams = new URLSearchParams({ choosePlan: '1' });
@@ -96,20 +121,28 @@ function SignupForm() {
               <path d="M3 21h18M9 21V7l3-3 3 3v14M9 12h6" />
             </svg>
           </div>
-          <h1 className={styles.title}>Create Your Organization</h1>
-          <p className={styles.sub}>FieldLogicHQ — run your tournament, league, or club</p>
+          <h1 className={styles.title}>{accountOnly ? 'Create your account' : 'Create Your Organization'}</h1>
+          <p className={styles.sub}>
+            {accountOnly
+              ? 'FieldLogicHQ — make an account to accept your invitation'
+              : 'FieldLogicHQ — run your tournament, league, or club'}
+          </p>
         </div>
 
         {verificationEmail ? (
           <>
             <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--fl-text)', lineHeight: 1.65, marginBottom: '1rem' }}>
-              Your organization has been created. For security, verify your email before choosing a plan and opening onboarding.
+              {accountOnly
+                ? 'Your account is almost ready. For security, verify your email to finish.'
+                : 'Your organization has been created. For security, verify your email before choosing a plan and opening onboarding.'}
             </p>
             <div className={styles.error} style={{ color: 'var(--logic-lime)', borderColor: 'rgba(163,230,53,0.28)', background: 'rgba(163,230,53,0.08)' }}>
               Verification email sent to {verificationEmail}.
             </div>
             <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)', lineHeight: 1.6, marginTop: '1rem' }}>
-              After you confirm, FieldLogicHQ will bring you back to start on the free Tournament plan or choose an upgrade.
+              {accountOnly
+                ? 'After you confirm, FieldLogicHQ will take you to your home screen, where you can accept your invitation.'
+                : 'After you confirm, FieldLogicHQ will bring you back to start on the free Tournament plan or choose an upgrade.'}
             </p>
             <div className={styles.footer}>
               <p className={styles.footerText}>
@@ -127,24 +160,30 @@ function SignupForm() {
           </>
         ) : (
         <form onSubmit={handleSubmit} className={styles.form}>
-          <div className="form-group">
-            <label className="form-label" htmlFor="signup-org">Organization Name</label>
-            <input
-              id="signup-org"
-              type="text"
-              className="form-input"
-              value={orgName}
-              onChange={e => setOrgName(e.target.value)}
-              placeholder="e.g. Milton Softball Association"
-              required
-              autoComplete="organization"
-            />
-            <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', marginTop: '0.35rem' }}>
-              Your public address: <span style={{ color: 'var(--logic-lime)' }}>fieldlogichq.ca/{previewSlug}</span> — you can change this later.
-            </p>
-          </div>
+          {/* Account-only mode (invited users) creates no org, so there's no org-name
+              field. The owner path collects it and creates the org at signup. */}
+          {!accountOnly && (
+            <>
+              <div className="form-group">
+                <label className="form-label" htmlFor="signup-org">Organization Name</label>
+                <input
+                  id="signup-org"
+                  type="text"
+                  className="form-input"
+                  value={orgName}
+                  onChange={e => setOrgName(e.target.value)}
+                  placeholder="e.g. Milton Softball Association"
+                  required
+                  autoComplete="organization"
+                />
+                <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', marginTop: '0.35rem' }}>
+                  Your public address: <span style={{ color: 'var(--logic-lime)' }}>fieldlogichq.ca/{previewSlug}</span> — you can change this later.
+                </p>
+              </div>
 
-          <div className={styles.divider}>account credentials</div>
+              <div className={styles.divider}>account credentials</div>
+            </>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
             <div className="form-group">
@@ -217,11 +256,13 @@ function SignupForm() {
             disabled={loading}
             id="signup-submit"
           >
-            {loading ? 'Creating…' : 'Create Organization'}
+            {loading ? 'Creating…' : accountOnly ? 'Create account' : 'Create Organization'}
           </button>
 
           <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--data-gray)', textAlign: 'center' }}>
-            Start on the free Tournament plan. No credit card required.
+            {accountOnly
+              ? 'Free to join. No credit card required.'
+              : 'Start on the free Tournament plan. No credit card required.'}
           </p>
         </form>
         )}

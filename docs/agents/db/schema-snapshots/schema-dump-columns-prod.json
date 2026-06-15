@@ -5247,6 +5247,15 @@
     "ordinal_position": 10
   },
   {
+    "table_name": "organization_members",
+    "column_name": "invited_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
     "table_name": "organizations",
     "column_name": "id",
     "data_type": "uuid",

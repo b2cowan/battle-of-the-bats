@@ -3,6 +3,15 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { sendEmail, signupVerificationHtml } from '@/lib/email';
 import { captureError, withObservability } from '@/lib/observability';
+import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
+
+// Abuse controls: signup is unauthenticated and fires Supabase admin calls + a Resend
+// email per attempt; Supabase's built-in auth limits DON'T cover admin-API calls, so this
+// route is the unprotected path. No signed-in identity yet → IP tier + a spoofing-proof
+// global ceiling (mirrors app/api/league/create). Best-effort, per-Lambda-instance.
+const MINUTE = 60_000;
+const ipLimiter = new FixedWindowRateLimiter(60 * MINUTE, 6);      // per source IP (spoofable → global backstop)
+const globalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 40);  // spoofing-proof ceiling across all callers
 
 function slugify(name: string) {
   return name
@@ -39,6 +48,17 @@ async function rollbackAuthUser(id: string) {
   if (error) console.error('Signup rollback auth user error:', error);
 }
 
+// Does a Supabase auth user already exist for this email? Used by the account-only branch
+// to reject signup for an existing (esp. invited/unconfirmed) email — otherwise
+// generateLink({type:'signup'}) would overwrite that pending account's password + rotate
+// its confirmation token (account-state tampering / DoS on an invited member). The owner
+// path relies on createOrganization/createUser erroring on collision; account-only has no
+// such downstream guard, so it checks up front. (listUsers cap mirrors invite/route.ts.)
+async function authUserExistsForEmail(email: string): Promise<boolean> {
+  const { data } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+  return Boolean(data?.users.some(u => u.email?.toLowerCase() === email));
+}
+
 export const POST = withObservability(async (req: Request) => {
   let userId: string | null = null;
   let orgId: string | null = null;
@@ -46,19 +66,47 @@ export const POST = withObservability(async (req: Request) => {
   try {
     const { email, password, orgName, orgSlug, firstName, lastName } = await req.json();
 
-    if (!email || !password || !orgName || !firstName || !lastName) {
+    // Account-only mode (signup/org decoupling): when the orgName KEY is omitted entirely,
+    // this creates the auth user WITHOUT an org or membership. The decoupled invited-user
+    // branch uses this — they verify, land on /home, and accept their pending invite there
+    // (reconciliation + PendingInvitationsCard). The owner path passes an orgName and gets
+    // an org created in one shot, exactly as before (no regression).
+    //
+    // Distinguish "key omitted" (intentional account-only) from "key present but blank"
+    // (owner intent, malformed) — the latter is a validation error, NOT a silent downgrade
+    // to account-only (which would hand an org-intending caller an orgless account).
+    const orgNameProvided = orgName !== undefined && orgName !== null;
+    const accountOnly = !orgNameProvided;
+    if (orgNameProvided && !(typeof orgName === 'string' && orgName.trim())) {
+      return NextResponse.json({ error: 'Enter an organization name.' }, { status: 400 });
+    }
+
+    if (!email || !password || !firstName || !lastName) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
     const normalizedPassword = String(password);
-    const normalizedOrgName = String(orgName).trim();
+    const normalizedOrgName = accountOnly ? '' : String(orgName).trim();
     const normalizedFirstName = String(firstName).trim();
     const normalizedLastName = String(lastName).trim();
     const fullName = `${normalizedFirstName} ${normalizedLastName}`.trim();
 
-    if (!normalizedEmail || !normalizedOrgName || !normalizedFirstName || !normalizedLastName) {
+    if (!normalizedEmail || !normalizedFirstName || !normalizedLastName) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
+    }
+
+    // Rate-limit only once the request is well-formed, so a typo'd/empty submission doesn't
+    // burn an honest user's budget. Most-specific (IP) → global, so a throttled abuser can't
+    // spend the shared global allowance for everyone else. Blocks scripted email-send abuse
+    // (Resend cost/reputation) + mass unconfirmed-account creation.
+    const ip = clientIpFrom(req);
+    if (!ipLimiter.take(ip) || !globalLimiter.take('global')) {
+      console.warn(`[auth/signup] rate-limited signup attempt ip=${ip}`);
+      return NextResponse.json(
+        { error: 'Too many sign-up attempts. Please wait a few minutes and try again.' },
+        { status: 429 },
+      );
     }
 
     // Stored on the auth user so platform-admin support views (which read
@@ -74,6 +122,86 @@ export const POST = withObservability(async (req: Request) => {
       return NextResponse.json({ error: 'Password must be at least 8 characters.' }, { status: 400 });
     }
 
+    const requireVerification = shouldRequireEmailVerification();
+    const origin =
+      req.headers.get('origin') ??
+      process.env.NEXT_PUBLIC_APP_URL ??
+      'https://www.fieldlogichq.ca';
+
+    if (requireVerification && !process.env.RESEND_API_KEY) {
+      return NextResponse.json({ error: 'Email verification is not configured.' }, { status: 500 });
+    }
+
+    // ── Account-only branch (signup/org decoupling) ──────────────────────────────
+    // No org is created. The user verifies (or is auto-confirmed in dev) and lands on
+    // /home, which reconciles any pending invite addressed to their email and shows the
+    // PendingInvitationsCard. This REPLACES the minimal Phase 3 interstitial: the
+    // invite-vs-create-your-own choice now happens naturally at /home, so signup no
+    // longer needs a pending-invite pre-check (which also removes that lookup entirely).
+    if (accountOnly) {
+      // Reject if an account already exists for this email. Neutral message (no
+      // confirmed-vs-unconfirmed distinction) avoids both account-state tampering on an
+      // invited/pending user and email enumeration. An existing user who was invited
+      // should sign in (login → reconciliation + pending-invite card), not re-sign-up.
+      if (await authUserExistsForEmail(normalizedEmail)) {
+        return NextResponse.json(
+          { error: 'An account already exists for this email. Please sign in instead.' },
+          { status: 409 },
+        );
+      }
+
+      if (requireVerification) {
+        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'signup',
+          email: normalizedEmail,
+          password: normalizedPassword,
+          options: {
+            data: userMetadata,
+            redirectTo: `${origin}/auth/callback?next=${encodeURIComponent('/home')}`,
+          },
+        });
+
+        if (linkError || !linkData?.user || !linkData.properties?.action_link) {
+          const msg = linkError?.message ?? 'Failed to create verification link.';
+          return NextResponse.json({ error: msg }, { status: 400 });
+        }
+
+        userId = linkData.user.id;
+
+        const verifyUrl = `${origin}/auth/signup-confirm?link=${encodeURIComponent(linkData.properties.action_link)}`;
+        await sendEmail(
+          normalizedEmail,
+          'Verify your FieldLogicHQ email',
+          // No orgName — account-only verification uses neutral copy.
+          signupVerificationHtml({ verifyUrl, firstName: normalizedFirstName }),
+        );
+
+        return NextResponse.json({
+          success: true,
+          requiresEmailVerification: true,
+          email: normalizedEmail,
+          accountOnly: true,
+        });
+      }
+
+      // Dev / verification-off: auto-confirm and let the client land on /home.
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email: normalizedEmail,
+        password: normalizedPassword,
+        email_confirm: true,
+        user_metadata: userMetadata,
+      });
+
+      if (authError || !authData.user) {
+        const msg = authError?.message ?? 'Failed to create user account.';
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+
+      userId = authData.user.id;
+      return NextResponse.json({ success: true, requiresEmailVerification: false, accountOnly: true });
+    }
+
+    // ── Owner branch (org created with the account, unchanged) ────────────────────
     // The public URL is no longer collected at signup — auto-generate a unique slug from
     // the org name (the user refines it later in settings). A caller MAY still pass an
     // explicit orgSlug (e.g. a future custom flow); honor + validate it when present.
@@ -88,16 +216,6 @@ export const POST = withObservability(async (req: Request) => {
       }
     } else {
       slug = await generateUniqueOrgSlug(normalizedOrgName);
-    }
-
-    const requireVerification = shouldRequireEmailVerification();
-    const origin =
-      req.headers.get('origin') ??
-      process.env.NEXT_PUBLIC_APP_URL ??
-      'https://www.fieldlogichq.ca';
-
-    if (requireVerification && !process.env.RESEND_API_KEY) {
-      return NextResponse.json({ error: 'Email verification is not configured.' }, { status: 500 });
     }
 
     let actionLink: string | null = null;

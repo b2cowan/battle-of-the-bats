@@ -45,6 +45,7 @@ function userMatches(user: User, query: string) {
 async function getCustomerUsers(
   query: string,
   page: number,
+  authStatusFilter: string,
 ): Promise<{ rows: CustomerUserRow[]; total: number }> {
   const [authRes, membersRes, platformUsers] = await Promise.all([
     supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
@@ -119,24 +120,35 @@ async function getCustomerUsers(
 
   for (const userId of matchingAuthIds) ensureRow(userId);
 
-  const allRows = [...rowsByUser.values()].sort((a, b) =>
+  let allRows = [...rowsByUser.values()].sort((a, b) =>
     a.email.localeCompare(b.email, undefined, { sensitivity: 'base' }),
   );
+
+  // Bulk auth-status filter (e.g. ?authStatus=unconfirmed) — lets support isolate every
+  // account that never verified its email, the residue the decoupled signup flow can leave
+  // (account created, never confirmed). Applied after the per-user rows are built.
+  if (authStatusFilter) {
+    allRows = allRows.filter(row => row.authStatus === authStatusFilter);
+  }
+
   const total = allRows.length;
   const start = (page - 1) * PAGE_SIZE;
   return { rows: allRows.slice(start, start + PAGE_SIZE), total };
 }
 
+const AUTH_STATUS_FILTERS = ['unconfirmed', 'banned', 'active'];
+
 export default async function CustomerUsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; authStatus?: string }>;
 }) {
   const auth = await requirePlatformAreaView('customer_users');
   const sp = await searchParams;
   const query = cleanQuery(sp.q);
   const page = Math.max(1, parseInt(sp.page ?? '1', 10) || 1);
-  const { rows, total } = await getCustomerUsers(query, page);
+  const authStatusFilter = AUTH_STATUS_FILTERS.includes(sp.authStatus ?? '') ? sp.authStatus! : '';
+  const { rows, total } = await getCustomerUsers(query, page, authStatusFilter);
 
   // Write actions (reset/ban/edit/notes/etc.) need manage_support; permanent
   // delete is super_admin-only (matches the F1 API guard on the delete route).
@@ -147,6 +159,7 @@ export default async function CustomerUsersPage({
     <CustomerUsersClient
       initialRows={rows}
       query={sp.q ?? ''}
+      authStatusFilter={authStatusFilter}
       total={total}
       page={page}
       pageSize={PAGE_SIZE}

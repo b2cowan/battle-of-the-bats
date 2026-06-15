@@ -746,6 +746,11 @@
   },
   {
     "tablename": "organization_members",
+    "indexname": "organization_members_invited_email_idx",
+    "indexdef": "CREATE INDEX organization_members_invited_email_idx ON public.organization_members USING btree (lower(invited_email)) WHERE (status = 'invited'::text)"
+  },
+  {
+    "tablename": "organization_members",
     "indexname": "organization_members_organization_id_user_id_key",
     "indexdef": "CREATE UNIQUE INDEX organization_members_organization_id_user_id_key ON public.organization_members USING btree (organization_id, user_id)"
   },
