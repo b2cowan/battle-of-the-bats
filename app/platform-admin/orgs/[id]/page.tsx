@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from '@/lib/plan-config';
 import { hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
+import { fmtAbsoluteDate } from '@/lib/format-date';
 import type { OrgPlan } from '@/lib/types';
 import OrgDetailClient from './OrgDetailClient';
 import styles from './orgDetail.module.css';
@@ -257,15 +258,8 @@ async function getPendingOwnershipTransfers(orgId: string) {
   });
 }
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-CA', {
-    year: 'numeric', month: 'short', day: 'numeric',
-  });
-}
-
-function fmtNullableDate(iso: string | null) {
-  return iso ? fmtDate(iso) : 'Not set';
-}
+const fmtDate = (iso: string) => fmtAbsoluteDate(iso);
+const fmtNullableDate = (iso: string | null) => fmtAbsoluteDate(iso, 'Not set');
 
 function stripeIsTestMode() {
   // Match stripeCustomerUrl: derive mode from the secret-key prefix, not the ID

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './orgDetail.module.css';
 import HelpTooltip from '@/components/help/HelpTooltip';
+import { fmtAbsoluteDate, fmtAbsoluteDateTime, fmtSince, fmtDaysLeft } from '@/lib/format-date';
 
 interface Override {
   id: string;
@@ -147,18 +148,8 @@ type ApiInternalNote = {
   updated_at: string;
 };
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-CA', {
-    year: 'numeric', month: 'short', day: 'numeric',
-  });
-}
-
-function fmtDateTime(iso: string) {
-  return new Date(iso).toLocaleString('en-CA', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  });
-}
+const fmtDate = (iso: string) => fmtAbsoluteDate(iso);
+const fmtDateTime = (iso: string) => fmtAbsoluteDateTime(iso);
 
 function mapApiNote(note: ApiInternalNote | InternalNote | undefined): InternalNote | null {
   if (!note) return null;
@@ -188,10 +179,7 @@ function isExpired(expiresAt: string | null) {
   return new Date(expiresAt) < new Date();
 }
 
-function daysLeftLabel(iso: string) {
-  const days = Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
-  return days > 0 ? ` (${days}d left)` : '';
-}
+const daysLeftLabel = (iso: string) => fmtDaysLeft(iso);
 
 function tournamentStatusClass(status: string, styles: Record<string, string>) {
   if (status === 'active') return styles.badgeActive;
@@ -1631,7 +1619,9 @@ export default function OrgDetailClient({
                           <td className={styles.capText}>{m.role}</td>
                           <td className={styles.capText}>{m.status}</td>
                           <td className={styles.dimText}>
-                            {m.lastSignIn ? fmtDate(m.lastSignIn) : '-'}
+                            <span title={m.lastSignIn ? fmtAbsoluteDateTime(m.lastSignIn) : undefined}>
+                              {fmtSince(m.lastSignIn, '-')}
+                            </span>
                           </td>
                           <td>
                             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>

@@ -113,6 +113,9 @@ async function getDistinctActions(): Promise<string[]> {
   return [...new Set(((data ?? []) as AuditActionRow[]).map(r => r.action))];
 }
 
+// Intentional local exception to the shared lib/format-date.ts helpers: the
+// audit log keeps SECOND-level precision (forensic accuracy) which the shared
+// fmtAbsoluteDateTime deliberately omits. Always absolute, never relative.
 function fmtDateTime(iso: string) {
   return new Date(iso).toLocaleString('en-CA', {
     year: 'numeric', month: 'short', day: 'numeric',

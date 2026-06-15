@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Check, Loader, X } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
+import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import type { PlatformChangeApplicationRow, PlatformChangeRequestRow } from './types';
 import styles from './change-requests.module.css';
 
@@ -133,16 +134,7 @@ function statusViewStatuses(value: string): string[] | null {
   return CHANGE_REQUEST_STATUSES.some(option => option.value === value) ? [value] : null;
 }
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return 'Not set';
-  return new Intl.DateTimeFormat('en-CA', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value));
-}
+const formatDate = (value: string | null | undefined) => fmtAbsoluteDateTime(value, 'Not set');
 
 function getStripePriceProposal(request: PlatformChangeRequestRow): StripePriceUpdateProposal | null {
   if (!request.proposal || typeof request.proposal !== 'object') return null;

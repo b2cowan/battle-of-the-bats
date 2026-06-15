@@ -20,6 +20,7 @@ import { getPlatformAdminContext, hasPlatformPermission } from '@/lib/platform-a
 import { canViewPlatformArea, canWritePlatformArea } from '@/lib/platform-areas';
 import HelpCallout from '@/components/help/HelpCallout';
 import { getPreviousPlatformAdminVisit } from '@/lib/platform-admin-visits';
+import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
   getCommandCenterStats,
@@ -124,15 +125,7 @@ const ORIENTATION_BY_ROLE: Record<string, { body: string; cta: { label: string; 
   },
 };
 
-function fmtDateTime(iso: string) {
-  return new Date(iso).toLocaleString('en-CA', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+const fmtDateTime = (iso: string) => fmtAbsoluteDateTime(iso);
 
 export default async function PlatformOverviewPage() {
   const auth = await getPlatformAdminContext();

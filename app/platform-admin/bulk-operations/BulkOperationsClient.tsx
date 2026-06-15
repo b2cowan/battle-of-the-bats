@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Loader } from 'lucide-react';
 import type { BulkOperationRow, BulkOrgRow } from './page';
+import { fmtAbsoluteDate } from '@/lib/format-date';
 import styles from './bulk-operations.module.css';
 
 type BulkActionType = 'subscription_status_override' | 'comp_period' | 'plan_change' | 'module_addon_enablement';
@@ -52,14 +53,7 @@ const MODULE_OPERATION_LABELS: Record<ModuleOperation, string> = {
   disable: 'Remove',
 };
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return 'Not set';
-  return new Intl.DateTimeFormat('en-CA', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date(value));
-}
+const formatDate = (value: string | null | undefined) => fmtAbsoluteDate(value, 'Not set');
 
 function statusClass(status: string) {
   if (status === 'completed' || status === 'active') return styles.badgeGood;

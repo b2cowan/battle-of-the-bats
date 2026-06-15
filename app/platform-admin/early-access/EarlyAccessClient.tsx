@@ -11,6 +11,7 @@ import {
   EARLY_ACCESS_STATUSES,
   type EarlyAccessStatus,
 } from '@/lib/early-access-admin';
+import { fmtAbsoluteDate } from '@/lib/format-date';
 import styles from './early-access.module.css';
 
 type Lead = {
@@ -65,14 +66,7 @@ const TEMPLATE_COPY = {
   feedback: `Subject: Quick FieldLogicHQ feedback call\n\nHi {{name}},\n\nI saw your early-access request for {{organization}} and wanted to ask a few questions about what would make FieldLogicHQ useful for your program.\n\nWould a 20-minute call work sometime next week?`,
 };
 
-function formatDate(value: string | null) {
-  if (!value) return 'Never';
-  return new Intl.DateTimeFormat('en-CA', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date(value));
-}
+const formatDate = (value: string | null) => fmtAbsoluteDate(value, 'Never');
 
 function labelList(values: string[], labels: Record<string, string>) {
   if (!values.length) return 'None selected';

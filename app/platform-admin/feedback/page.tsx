@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { isPlatformAreaReadOnly } from '@/lib/platform-areas';
 import HelpCallout from '@/components/help/HelpCallout';
+import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import StatusControls from './[id]/StatusControls';
 import EscalateControls from './[id]/EscalateControls';
 import FeedbackExportClient from './FeedbackExportClient';
@@ -96,11 +97,6 @@ async function getIssueLinks(rows: FeedbackRow[]): Promise<Map<string, string>> 
   return map;
 }
 
-function fmtDateTime(iso: string) {
-  return new Date(iso).toLocaleString('en-CA', {
-    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-  });
-}
 
 function buildHref(filters: Filters, extra: Partial<Filters> = {}) {
   const next = { ...filters, ...extra };
@@ -198,7 +194,7 @@ export default async function FeedbackTriagePage({
               const groupId = reqId ? issueLinks.get(reqId) : undefined;
               return (
                 <tr key={row.id}>
-                  <td className={styles.tsCell}>{fmtDateTime(row.created_at)}</td>
+                  <td className={styles.tsCell}>{fmtAbsoluteDateTime(row.created_at)}</td>
                   <td>
                     <span className={`badge ${TYPE_BADGE[row.type] ?? 'badge-neutral'}`}>{row.type}</span>
                   </td>

@@ -10,6 +10,7 @@ import {
   normalizeEnv, normalizeWindow, OBS_WINDOWS, ISSUES_PAGE_SIZE,
   type ObsEnv, type ObsWindowKey,
 } from '@/lib/observability/dashboard';
+import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import CallsVsErrorsChart from './CallsVsErrorsChart';
 import IssuesExportClient from './IssuesExportClient';
 import styles from './observability.module.css';
@@ -69,11 +70,8 @@ function buildHref(p: ResolvedParams, extra: Partial<ResolvedParams> = {}): stri
   return `/platform-admin/observability${qs ? `?${qs}` : ''}`;
 }
 
-function fmtDateTime(iso: string) {
-  return new Date(iso).toLocaleString('en-CA', {
-    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-  });
-}
+// Was missing the year (PF-5 drift fix); now normalized via the shared helper.
+const fmtDateTime = (iso: string) => fmtAbsoluteDateTime(iso);
 
 function fmtMttr(hours: number | null): string {
   if (hours === null) return '—';

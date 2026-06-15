@@ -15,6 +15,7 @@ import type {
 } from './page';
 import styles from './plans-pricing.module.css';
 import { pluralize } from '@/lib/utils';
+import { fmtAbsoluteDate, fmtAbsoluteDateTime } from '@/lib/format-date';
 
 type Tab = 'plans' | 'catalog';
 type PriceEnvironmentTab = 'live' | 'sandbox';
@@ -229,17 +230,7 @@ function sortPriceRows(rows: StripePriceRow[]): StripePriceRow[] {
   });
 }
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return 'Not changed yet';
-  return new Intl.DateTimeFormat('en-CA', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  }).format(new Date(value));
-}
+const formatDate = (value: string | null | undefined) => fmtAbsoluteDateTime(value, 'Not changed yet');
 
 function impactSummary(impact: PlanImpact | undefined) {
   if (!impact) return '0 accounts';
@@ -296,22 +287,11 @@ function formatPlanList(planIds: string[] | null | undefined) {
   return planIds.map(planLabel).join(', ');
 }
 
-function formatDateOnly(value: string | null | undefined) {
-  if (!value) return 'Not scheduled';
-  return new Intl.DateTimeFormat('en-CA', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date(value));
-}
+const formatDateOnly = (value: string | null | undefined) => fmtAbsoluteDate(value, 'Not scheduled');
 
-function formatMonthDay(value: string | null | undefined) {
-  if (!value) return 'Not changed';
-  return new Intl.DateTimeFormat('en-CA', {
-    month: 'short',
-    day: 'numeric',
-  }).format(new Date(value));
-}
+// Was month+day with no year (PF-5 drift); now includes the year via the
+// shared helper for consistency with the rest of the console.
+const formatMonthDay = (value: string | null | undefined) => fmtAbsoluteDate(value, 'Not changed');
 
 function optionLabel(options: { value: string; label: string }[], value: string | null | undefined) {
   return options.find(option => option.value === value)?.label ?? value ?? 'Not set';

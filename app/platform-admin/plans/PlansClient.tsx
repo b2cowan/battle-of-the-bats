@@ -2,6 +2,7 @@
 
 import { Fragment, useState } from 'react';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import { Loader } from 'lucide-react';
 // This file is kept for reference only — the page now redirects to /platform-admin/plans-pricing
 type PlanGatingRow = {
@@ -22,13 +23,9 @@ const PLAN_META: Record<string, { label: string; price: string }> = {
 
 const ORDER = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
 
-function formatDate(value: string | null) {
-  if (!value) return '—';
-  return new Intl.DateTimeFormat('en-CA', {
-    month: 'short', day: 'numeric', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', timeZoneName: 'short',
-  }).format(new Date(value));
-}
+// Dead code (page redirects to /platform-admin/plans-pricing) — routed through
+// the shared helper for consistency.
+const formatDate = (value: string | null) => fmtAbsoluteDateTime(value);
 
 export default function PlansClient({ rows }: { rows: PlanGatingRow[] }) {
   const [plans, setPlans] = useState<PlanGatingRow[]>(rows);

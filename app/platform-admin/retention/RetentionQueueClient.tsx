@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import RequiresAccess from '@/components/platform-admin/RequiresAccess';
 import HelpCallout from '@/components/help/HelpCallout';
+import { fmtAbsoluteDate } from '@/lib/format-date';
 import styles from '../audit/audit.module.css';
 
 type RetentionRow = {
@@ -23,13 +24,7 @@ type RetentionRow = {
   lastExtensionReason: string | null;
 };
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-CA', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
+const fmtDate = (iso: string) => fmtAbsoluteDate(iso);
 
 function noticeLabel(row: RetentionRow) {
   const notices: string[] = [];

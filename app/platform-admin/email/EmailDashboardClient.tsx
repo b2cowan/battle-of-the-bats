@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, Fragment } from 'react';
 import { Send, Eye, ChevronDown, ChevronRight, X, RotateCcw } from 'lucide-react';
 import type { EmailBatch, OptOutOrg } from './page';
+import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import styles from './email.module.css';
 
 // ── Founding season email schedule ────────────────────────────────────────────
@@ -103,13 +104,9 @@ const SCHEDULED_EMAILS: ScheduledEmail[] = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function formatDate(iso: string | null): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-CA', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
-  });
-}
+// Was calling toLocaleDateString() with time options (wrong API — PF-5 fix);
+// now routed through the shared date+time helper.
+const formatDate = (iso: string | null): string => fmtAbsoluteDateTime(iso);
 
 function StatusBadge({ status }: { status: string }) {
   const cls = {

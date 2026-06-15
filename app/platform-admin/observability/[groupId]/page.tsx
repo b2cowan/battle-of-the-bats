@@ -4,6 +4,7 @@ import { requirePlatformAreaView } from '@/lib/platform-auth';
 import { isPlatformAreaReadOnly } from '@/lib/platform-areas';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import { getErrorGroupDetail, type EventSample } from '@/lib/observability/dashboard';
+import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import StatusControls from './StatusControls';
 import styles from '../observability.module.css';
@@ -49,12 +50,7 @@ async function getRelatedFeedback(groupId: string): Promise<RelatedFeedback[]> {
   return (data ?? []) as RelatedFeedback[];
 }
 
-function fmtDateTime(iso: string | null) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleString('en-CA', {
-    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-  });
-}
+const fmtDateTime = (iso: string | null) => fmtAbsoluteDateTime(iso);
 
 function jsonPretty(v: unknown): string {
   if (v === null || v === undefined) return '—';

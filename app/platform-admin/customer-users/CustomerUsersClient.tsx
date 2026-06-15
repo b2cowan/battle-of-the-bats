@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Check, ChevronDown, Copy, KeyRound, Search, Trash2 } from 'lucide-react';
 import ExportMenu from '@/components/admin/ExportMenu';
 import HelpCallout from '@/components/help/HelpCallout';
+import { fmtAbsoluteDate, fmtAbsoluteDateTime, fmtSince } from '@/lib/format-date';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -45,6 +46,8 @@ export type CustomerUserRow = {
 type Props = {
   initialRows: CustomerUserRow[];
   query: string;
+  /** Active bulk auth-status filter ('' = all). Currently surfaced: 'unconfirmed'. */
+  authStatusFilter: string;
   total: number;
   page: number;
   pageSize: number;
@@ -92,25 +95,6 @@ type NoteRow = {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function fmtDate(value: string | null) {
-  if (!value) return '-';
-  return new Date(value).toLocaleDateString('en-CA', {
-    year: 'numeric', month: 'short', day: 'numeric',
-  });
-}
-
-function fmtRelative(value: string) {
-  const diff = Date.now() - new Date(value).getTime();
-  const mins  = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days  = Math.floor(diff / 86400000);
-  if (mins  < 2)   return 'just now';
-  if (mins  < 60)  return `${mins}m ago`;
-  if (hours < 24)  return `${hours}h ago`;
-  if (days  < 30)  return `${days}d ago`;
-  return fmtDate(value);
-}
-
 function statusClass(value: string, s: Record<string, string>) {
   if (value === 'active') return s.badgeActive;
   if (value === 'banned' || value === 'canceled') return s.badgeDanger;
@@ -120,7 +104,7 @@ function statusClass(value: string, s: Record<string, string>) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function CustomerUsersClient({ initialRows, query, total, page, pageSize, canManageUsers, canDelete }: Props) {
+export default function CustomerUsersClient({ initialRows, query, authStatusFilter, total, page, pageSize, canManageUsers, canDelete }: Props) {
   const router = useRouter();
 
   // ── Core busy / error state ───────────────────────────────────────────────
@@ -388,7 +372,7 @@ export default function CustomerUsersClient({ initialRows, query, total, page, p
       displayName: row.displayName || '',
       userId:      row.userId,
       authStatus:  row.authStatus,
-      lastSignIn:  fmtDate(row.lastSignIn),
+      lastSignIn:  fmtAbsoluteDate(row.lastSignIn, '-'),
       orgs:        row.memberships.map(m => `${m.orgName} (${m.role})`).join('; '),
     }));
   }
@@ -460,9 +444,31 @@ export default function CustomerUsersClient({ initialRows, query, total, page, p
             minLength={2}
           />
         </label>
+        {/* Preserve the active auth-status filter when searching. */}
+        {authStatusFilter && <input type="hidden" name="authStatus" value={authStatusFilter} />}
         <button className={styles.searchBtn} type="submit">Search</button>
-        {query && <Link href="/platform-admin/customer-users" className={styles.clearLink}>Clear</Link>}
+        {(query || authStatusFilter) && <Link href="/platform-admin/customer-users" className={styles.clearLink}>Clear</Link>}
       </form>
+
+      {/* ── Bulk filters ───────────────────────────────────────────────────── */}
+      {/* Isolate every account that never confirmed its email — the residue the
+          decoupled signup flow can leave (account created, never verified). */}
+      <div className={styles.filterRow}>
+        <Link
+          href={`/platform-admin/customer-users${query ? `?q=${encodeURIComponent(query)}` : ''}`}
+          className={`${styles.filterChip} ${!authStatusFilter ? styles.filterChipActive : ''}`}
+          aria-pressed={!authStatusFilter}
+        >
+          All
+        </Link>
+        <Link
+          href={`/platform-admin/customer-users?authStatus=unconfirmed${query ? `&q=${encodeURIComponent(query)}` : ''}`}
+          className={`${styles.filterChip} ${authStatusFilter === 'unconfirmed' ? styles.filterChipActive : ''}`}
+          aria-pressed={authStatusFilter === 'unconfirmed'}
+        >
+          Unconfirmed
+        </Link>
+      </div>
 
       {/* ── Table ──────────────────────────────────────────────────────────── */}
       <div className={styles.tableWrap}>
@@ -516,7 +522,11 @@ export default function CustomerUsersClient({ initialRows, query, total, page, p
                     </span>
                   </td>
 
-                  <td className={styles.dateCell}>{fmtDate(row.lastSignIn)}</td>
+                  <td className={styles.dateCell}>
+                    <span title={row.lastSignIn ? fmtAbsoluteDateTime(row.lastSignIn) : undefined}>
+                      {fmtSince(row.lastSignIn, '-')}
+                    </span>
+                  </td>
 
                   <td>
                     <div className={styles.membershipList}>
@@ -630,6 +640,7 @@ export default function CustomerUsersClient({ initialRows, query, total, page, p
         const buildHref = (p: number) => {
           const params = new URLSearchParams();
           if (query) params.set('q', query);
+          if (authStatusFilter) params.set('authStatus', authStatusFilter);
           params.set('page', String(p));
           return `/platform-admin/customer-users?${params.toString()}`;
         };
@@ -825,7 +836,7 @@ export default function CustomerUsersClient({ initialRows, query, total, page, p
                   <div className={styles.noteMeta}>
                     <span>{note.created_by_email}</span>
                     <span>·</span>
-                    <span>{fmtRelative(note.created_at)}</span>
+                    <span title={fmtAbsoluteDateTime(note.created_at)}>{fmtSince(note.created_at)}</span>
                     <button
                       className={styles.noteDeleteBtn}
                       type="button"

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { UserPlus, Check, Copy } from 'lucide-react';
 import type { PlatformUser } from '@/lib/types';
+import { fmtAbsoluteDate } from '@/lib/format-date';
 import styles from './users.module.css';
 
 interface Props {
@@ -10,10 +11,7 @@ interface Props {
   canManageUsers: boolean;
 }
 
-function fmtDate(iso: string | null) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
-}
+const fmtDate = (iso: string | null) => fmtAbsoluteDate(iso);
 
 const PLATFORM_ROLES = [
   { value: 'support', label: 'Support' },
