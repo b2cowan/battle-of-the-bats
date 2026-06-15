@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { CalendarDays, Inbox, ShieldCheck, Trophy, Users } from 'lucide-react';
+import { Inbox, ShieldCheck, Trophy, Users } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { getUserAccessContexts } from '@/lib/user-contexts';
@@ -50,6 +50,31 @@ export default async function CoachesPortalPage() {
   const workspaceContexts = contexts.filter(context => context.kind === 'coaches_premium');
   const hasTournamentRecords = contexts.some(context => context.id === 'coaches-basic:tournament-records');
   const isEmpty = basicTeams.length === 0 && workspaceContexts.length === 0 && !hasTournamentRecords && claimable.length === 0;
+
+  // Persona-conditional pitch (CP-10): only nudge a coach toward something they don't
+  // already have. No pitch for Premium-workspace coaches, the truly-empty (the empty
+  // state owns that), or coaches who already run BOTH a free team home + tournaments.
+  const hasStandalone = basicTeams.length > 0;
+  const pitch =
+    workspaceContexts.length > 0 || isEmpty || (hasStandalone && hasTournamentRecords)
+      ? null
+      : hasStandalone
+        ? {
+            // standalone-only → premium upsell (ghost; lower-priority secondary action)
+            title: 'Take your team further',
+            body: 'Premium adds the serious-operator tools — lineup builder, dues automation, team budget, and document storage. It carries over automatically if your organization joins FieldLogicHQ.',
+            href: COACHES_START_PATH,
+            label: 'Express interest',
+            primary: false,
+          }
+        : {
+            // tournament-only → the thing they're missing: a free team home (btn-lime)
+            title: 'Start a free team home',
+            body: 'Manage your roster, schedule, fees, and parent announcements year-round — free between tournaments.',
+            href: COACHES_START_PATH,
+            label: 'Start free team home',
+            primary: true,
+          };
 
   return (
     <div className={styles.page}>
@@ -181,40 +206,27 @@ export default async function CoachesPortalPage() {
         </section>
       )}
 
-      {/* Premium upgrade — additive, availability-aware; only when no workspace yet */}
-      {workspaceContexts.length === 0 && (
-        <section className={styles.section}>
-          <div className={styles.grid}>
-            <div className={styles.card}>
-              <div className={styles.cardTop}>
-                <div className={styles.cardIcon}><Users size={18} /></div>
-              </div>
-              <div>
-                <h3 className={styles.cardTitle}>Take your team further</h3>
-                <p className={styles.cardText}>
-                  Premium adds the serious-operator tools — a lineup builder, dues automation, team budget, and document storage. It carries over automatically if your organization joins FieldLogicHQ.
-                </p>
-              </div>
-              <Link href={COACHES_START_PATH} className="btn btn-ghost btn-sm" style={{ marginTop: 'auto' }}>
-                Express interest
-              </Link>
-            </div>
-            <div className={styles.card}>
-              <div className={styles.cardTop}>
-                <div className={styles.cardIcon}><CalendarDays size={18} /></div>
-              </div>
-              <div>
-                <h3 className={styles.cardTitle}>Run your own tournament</h3>
-                <p className={styles.cardText}>
-                  FieldLogicHQ runs divisions, pools, schedules, and registration from one dashboard.
-                </p>
-              </div>
-              <Link href="/pricing" className="btn btn-ghost btn-sm" style={{ marginTop: 'auto' }}>
-                See tournament plans
-              </Link>
-            </div>
+      {/* Persona-conditional pitch (Rule CP-10), demoted to a compact ruled banner
+          (CP-4) — never a card at the coach's-own-content weight, and never shown to a
+          coach who already has everything:
+            - workspace (Premium)         → no pitch
+            - has BOTH standalone + tournaments → no pitch (nothing left to nudge)
+            - standalone-only             → "take your team further" (ghost)
+            - tournament-only             → "start a free team home" (btn-lime — the
+                                            thing they're missing)
+          The empty state above owns the truly-empty case. */}
+      {pitch && (
+        <div className={styles.pitchBanner}>
+          <div className={styles.pitchBannerText}>
+            <p className={styles.pitchBannerTitle}>{pitch.title}</p>
+            <p className={styles.pitchBannerBody}>{pitch.body}</p>
           </div>
-        </section>
+          <div className={styles.pitchBannerActions}>
+            <Link href={pitch.href} className={pitch.primary ? 'btn btn-lime btn-sm' : 'btn btn-ghost btn-sm'}>
+              {pitch.label}
+            </Link>
+          </div>
+        </div>
       )}
     </div>
   );

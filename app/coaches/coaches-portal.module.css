@@ -225,3 +225,46 @@ a.card:active {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.4; }
 }
+
+/* ── Demoted upsell banner (Rule CP-4 / CP-10) ────────────────────────────────
+   When a coach has real content, the pitch is a compact inline ruled banner below
+   a divider — NOT a styles.card at the same weight as the team/claim cards. No card
+   surface / min-height / box-shadow. Persona-conditional content is chosen by the
+   page (CP-10): standalone-only → "take it further"; tournament-only → "start free
+   team home" (btn-lime); both → no pitch at all. */
+.pitchBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-2);
+}
+
+.pitchBannerText {
+  min-width: 0;
+  flex: 1 1 280px;
+}
+
+.pitchBannerTitle {
+  margin: 0 0 0.2rem;
+  color: var(--white-80);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.pitchBannerBody {
+  margin: 0;
+  color: var(--white-40);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.pitchBannerActions {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

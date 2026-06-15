@@ -12,6 +12,12 @@ import {
   COACHES_TOURNAMENTS_PATH,
 } from '@/lib/coaches-portal-routes';
 import { registrationStatusBadge, registrationStatusLabel } from '@/lib/coaches-status';
+import {
+  deriveCoachLifecycleChip,
+  lifecycleChipClassKey,
+  type CoachLifecycleChip,
+} from '@/lib/coach-tournament-lifecycle';
+import portalStyles from '../coaches-portal.module.css';
 import styles from './tournaments.module.css';
 
 export const metadata = { title: 'Coaches Portal - Tournament Records' };
@@ -126,15 +132,34 @@ export default async function CoachTournamentRecordsPage() {
     registrationMap.set(team.id, { team, tournament, org });
   }
 
+  // Live-first sort (§3c/§3d): order Active & Upcoming by the lifecycle chip rank
+  // (live → game-day → upcoming → future), so a coach opening the portal on game day
+  // sees today's event first, not buried under later registrations. Ties keep the
+  // soonest start date first. The chip itself is rendered per card below.
+  const today = new Date().toISOString().split('T')[0];
+  const chipFor = (r: Registration): CoachLifecycleChip =>
+    deriveCoachLifecycleChip(r.tournament?.start_date ?? null, r.tournament?.end_date ?? null, today);
+
   const teamGroups: CoachTeamGroup[] = coachTeams
     .map(team => {
       const registrations = team.registrations
         .map(registration => registrationMap.get(registration.id))
         .filter(Boolean) as Registration[];
 
+      const active = registrations
+        .filter(r => isActive(r.tournament))
+        .sort((a, b) => {
+          const rankDiff = chipFor(a).rank - chipFor(b).rank;
+          if (rankDiff !== 0) return rankDiff;
+          // Same lifecycle bucket → soonest start first (null dates sort last).
+          const aStart = a.tournament?.start_date ?? '9999-12-31';
+          const bStart = b.tournament?.start_date ?? '9999-12-31';
+          return aStart.localeCompare(bStart);
+        });
+
       return {
         ...team,
-        active: registrations.filter(r => isActive(r.tournament)),
+        active,
         past: registrations.filter(r => !isActive(r.tournament)),
       };
     })
@@ -165,7 +190,7 @@ export default async function CoachTournamentRecordsPage() {
                 <h3 className={styles.sectionTitle}>Active &amp; Upcoming</h3>
                 <div className={styles.list}>
                   {team.active.map(r => (
-                    <RegistrationCard key={r.team.id} reg={r} />
+                    <RegistrationCard key={r.team.id} reg={r} today={today} />
                   ))}
                 </div>
               </div>
@@ -176,7 +201,7 @@ export default async function CoachTournamentRecordsPage() {
                 <h3 className={styles.sectionTitle}>Past Tournaments</h3>
                 <div className={styles.list}>
                   {team.past.map(r => (
-                    <RegistrationCard key={r.team.id} reg={r} />
+                    <RegistrationCard key={r.team.id} reg={r} today={today} />
                   ))}
                 </div>
               </div>
@@ -188,11 +213,17 @@ export default async function CoachTournamentRecordsPage() {
   );
 }
 
-function RegistrationCard({ reg }: { reg: Registration }) {
+function RegistrationCard({ reg, today }: { reg: Registration; today: string }) {
   const { team, tournament, org } = reg;
   const statusBadge = registrationStatusBadge(team.status);
   const statusLabel = registrationStatusLabel(team.status);
   const detailHref  = `${COACHES_TOURNAMENTS_PATH}/${team.id}`;
+
+  const chip = deriveCoachLifecycleChip(tournament?.start_date ?? null, tournament?.end_date ?? null, today);
+  const chipClassKey = lifecycleChipClassKey(chip.state);
+  const hasChip = chip.state !== 'unknown' && chipClassKey !== '';
+  const isLive = chip.state === 'live';
+  const withDot = chip.state === 'live' || chip.state === 'game_day';
 
   const dateRange = tournament?.start_date
     ? tournament.end_date
@@ -209,11 +240,21 @@ function RegistrationCard({ reg }: { reg: Registration }) {
             <span>{team.name}</span>
             {org && <span>{org.name}</span>}
             {dateRange && <span>{dateRange}</span>}
+            {/* When a lifecycle chip is present, the registration status demotes to
+                trailing meta — and is hidden entirely on LIVE rows (the chip wins). */}
+            {hasChip && !isLive && <span>{statusLabel}</span>}
           </div>
         )}
       </div>
       <div className={styles.cardStatus}>
-        <span className={`badge ${statusBadge}`}>{statusLabel}</span>
+        {hasChip ? (
+          <span className={`${portalStyles.coachLifecycleChip} ${portalStyles[`coachLifecycleChip${chipClassKey}`]}`}>
+            {withDot && <span className={portalStyles.coachLifecycleChipDot} aria-hidden />}
+            {chip.label}
+          </span>
+        ) : (
+          <span className={`badge ${statusBadge}`}>{statusLabel}</span>
+        )}
       </div>
     </Link>
   );
