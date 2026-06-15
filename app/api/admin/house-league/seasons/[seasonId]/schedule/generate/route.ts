@@ -7,6 +7,7 @@ import { isFreeFloorLeague } from '@/lib/free-floor';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { zonedWallClockToUtc } from '@/lib/timezone';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -88,7 +89,10 @@ export const POST = withObservability(async (req: Request,
   const preview: PreviewGame[] = rounds.flatMap((pairs, roundIndex) => {
     const weekOffset = Math.floor(roundIndex / gamesPerWeek);
     const gameDate = addDays(startDate, weekOffset * 7);
-    const scheduledAt = new Date(`${gameDate}T${gameTime}`).toISOString();
+    // J3-047: interpret the wall-clock game time in the org's zone (America/Toronto V1),
+    // not the server's runtime zone — `new Date(`${date}T${time}`)` on UTC Amplify shifted
+    // every game 4–5h. Falls back to the naive instant only if the time is malformed.
+    const scheduledAt = zonedWallClockToUtc(gameDate, gameTime) ?? new Date(`${gameDate}T${gameTime}`).toISOString();
 
     return pairs.map(([homeTeamId, awayTeamId]) => ({
       round: roundIndex + 1,

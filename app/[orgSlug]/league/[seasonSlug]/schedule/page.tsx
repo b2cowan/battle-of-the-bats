@@ -7,16 +7,20 @@ import {
   getGamesForSeason,
 } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
+import { ORG_TIME_ZONE } from '@/lib/timezone';
 import type { LeagueDivision, LeagueTeam, LeagueGame } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
 function formatDateTime(iso: string | null): { date: string; time: string } | null {
   if (!iso) return null;
+  // J3-047: this is a SERVER component — without an explicit timeZone, toLocale* renders in
+  // the server's zone (UTC on Amplify), so parents saw game times 4–5h off. Pin to the org
+  // zone (America/Toronto V1) so 6:00 PM reads as 6:00 PM for every family.
   const d = new Date(iso);
   return {
-    date: d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }),
-    time: d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true }),
+    date: d.toLocaleDateString('en-CA', { timeZone: ORG_TIME_ZONE, weekday: 'short', month: 'short', day: 'numeric' }),
+    time: d.toLocaleTimeString('en-CA', { timeZone: ORG_TIME_ZONE, hour: 'numeric', minute: '2-digit', hour12: true }),
   };
 }
 

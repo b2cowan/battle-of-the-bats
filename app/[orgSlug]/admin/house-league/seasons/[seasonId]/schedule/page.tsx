@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { Calendar, ChevronLeft, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
+import { ORG_TIME_ZONE, utcToZonedInputs } from '@/lib/timezone';
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -79,19 +80,23 @@ interface FeedbackState {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function formatDateTime(iso: string): { date: string; time: string } {
+  // J3-047: render in the org zone (America/Toronto V1) so every admin sees the same
+  // wall-clock that was set, regardless of their browser's timezone.
   const d = new Date(iso);
   return {
-    date: d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }),
-    time: d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true }),
+    date: d.toLocaleDateString('en-CA', { timeZone: ORG_TIME_ZONE, weekday: 'short', month: 'short', day: 'numeric' }),
+    time: d.toLocaleTimeString('en-CA', { timeZone: ORG_TIME_ZONE, hour: 'numeric', minute: '2-digit', hour12: true }),
   };
 }
 
 function isoToDateInput(iso: string): string {
-  return new Date(iso).toISOString().slice(0, 10);
+  // J3-047: prefill in the org zone (America/Toronto V1), not UTC/browser-local, so the
+  // reschedule form round-trips the wall-clock the admin set (matches zonedWallClockToUtc).
+  return utcToZonedInputs(iso).date;
 }
 
 function isoToTimeInput(iso: string): string {
-  return new Date(iso).toTimeString().slice(0, 5);
+  return utcToZonedInputs(iso).time;
 }
 
 function weekKey(iso: string): string {

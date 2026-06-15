@@ -5,6 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, updateLeagueGame } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { zonedWallClockToUtc } from '@/lib/timezone';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -42,9 +43,12 @@ export const PATCH = withObservability(async (req: Request,
   const body = await req.json();
   const patch: Parameters<typeof updateLeagueGame>[1] = {};
 
-  // Combine date + time into ISO timestamp if provided separately
+  // Combine date + time into ISO timestamp if provided separately.
+  // J3-047: interpret the wall-clock in the org's zone (America/Toronto V1), not the
+  // server's runtime zone, so a rescheduled game keeps the time the admin typed.
   if (body.scheduledDate && body.scheduledTime) {
-    patch.scheduledAt = new Date(`${body.scheduledDate}T${body.scheduledTime}`).toISOString();
+    patch.scheduledAt = zonedWallClockToUtc(body.scheduledDate, body.scheduledTime)
+      ?? new Date(`${body.scheduledDate}T${body.scheduledTime}`).toISOString();
   } else if ('scheduledAt' in body) {
     patch.scheduledAt = body.scheduledAt ?? null;
   }

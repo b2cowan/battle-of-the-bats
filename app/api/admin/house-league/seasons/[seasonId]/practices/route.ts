@@ -5,6 +5,7 @@ import { getAuthContextWithRole } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { getPracticesForTeam, createPractices } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { zonedWallClockToUtc } from '@/lib/timezone';
 
 function generateOccurrences(
   startDate: string,
@@ -21,9 +22,12 @@ function generateOccurrences(
 
   while (current <= end) {
     const dateStr = current.toISOString().slice(0, 10);
+    // J3-047: convert each occurrence's wall-clock (org zone, America/Toronto V1) to a
+    // correct UTC instant before it lands in timestamptz — naive strings were previously
+    // interpreted in the DB session zone (UTC on prod), shifting every practice 4–5h.
     result.push({
-      scheduledAt: `${dateStr}T${startTime}:00`,
-      endsAt:      `${dateStr}T${endTime}:00`,
+      scheduledAt: zonedWallClockToUtc(dateStr, startTime) ?? `${dateStr}T${startTime}:00`,
+      endsAt:      zonedWallClockToUtc(dateStr, endTime)   ?? `${dateStr}T${endTime}:00`,
     });
     current.setDate(current.getDate() + 7);
   }
@@ -92,8 +96,9 @@ export const POST = withObservability(async (req: NextRequest,
     if (!scheduledDate || !startTime)
       return NextResponse.json({ error: 'scheduledDate and startTime required' }, { status: 400 });
 
-    const scheduledAt = `${scheduledDate}T${startTime}:00`;
-    const endsAt = endTime ? `${scheduledDate}T${endTime}:00` : null;
+    // J3-047: org-zone wall-clock → UTC (see generateOccurrences).
+    const scheduledAt = zonedWallClockToUtc(scheduledDate, startTime) ?? `${scheduledDate}T${startTime}:00`;
+    const endsAt = endTime ? (zonedWallClockToUtc(scheduledDate, endTime) ?? `${scheduledDate}T${endTime}:00`) : null;
     inputs.push({ orgId: ctx.org.id, seasonId, divisionId, teamId, scheduledAt, endsAt, location, notes });
   }
 
