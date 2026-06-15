@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, Trophy, Users, LogOut, LayoutGrid, X } from 'lucide-react';
@@ -48,6 +48,20 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
   const [teams, setTeams] = useState<BasicTeam[]>([]);
   const [email, setEmail] = useState<string | null>(null);
   const [acctOpen, setAcctOpen] = useState(false);
+  const acctChipRef = useRef<HTMLButtonElement>(null);
+  const acctSheetRef = useRef<HTMLDivElement>(null);
+  const [lastPath, setLastPath] = useState(pathname);
+
+  const closeAcct = useCallback(() => setAcctOpen(false), []);
+
+  // Close the account sheet on any route change (the shell persists across soft-nav, so a
+  // Back-button / out-of-sheet navigation would otherwise leave it open). Adjusting state
+  // during render — React's endorsed pattern for resetting state when a value changes —
+  // avoids the cascading re-render of a setState-in-effect.
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
+    if (acctOpen) setAcctOpen(false);
+  }
 
   useEffect(() => {
     if (!showShell) return;
@@ -68,6 +82,23 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
       cancelled = true;
     };
   }, [showShell]);
+
+  // Account sheet a11y: move focus into the dialog on open, restore it to the chip on
+  // close, and close on Escape. Sibling content is marked `inert` while open (below),
+  // which keeps focus trapped inside the modal.
+  useEffect(() => {
+    if (!acctOpen) return;
+    const chip = acctChipRef.current;
+    acctSheetRef.current?.focus();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeAcct();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      chip?.focus();
+    };
+  }, [acctOpen, closeAcct]);
 
   if (!showShell) return <>{children}</>;
 
@@ -137,12 +168,14 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
       <header className={styles.topbar}>
         {brand}
         <button
+          ref={acctChipRef}
           type="button"
           className={styles.acctChip}
           style={{ marginLeft: 'auto' }}
           onClick={() => setAcctOpen(true)}
           aria-label="Account menu"
           aria-haspopup="dialog"
+          aria-expanded={acctOpen}
         >
           {(email?.trim()[0] ?? '?').toUpperCase()}
         </button>
@@ -153,19 +186,21 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
         <div
           className={styles.sheetOverlay}
           role="presentation"
-          onClick={() => setAcctOpen(false)}
+          onClick={closeAcct}
         >
           <div
+            ref={acctSheetRef}
             className={styles.sheet}
             role="dialog"
             aria-modal="true"
             aria-label="Account"
+            tabIndex={-1}
             onClick={e => e.stopPropagation()}
           >
             {email && (
               <p className={styles.sheetEmail} title={email}>{email}</p>
             )}
-            <Link href="/home" className={styles.sheetItem} onClick={() => setAcctOpen(false)}>
+            <Link href="/home" className={styles.sheetItem} onClick={closeAcct}>
               <LayoutGrid size={16} aria-hidden />
               <span>All workspaces</span>
             </Link>
@@ -174,7 +209,7 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
               type="button"
               className={styles.sheetItem}
               onClick={() => {
-                setAcctOpen(false);
+                closeAcct();
                 handleSignOut();
               }}
             >
@@ -184,7 +219,7 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
             <button
               type="button"
               className={styles.sheetItem}
-              onClick={() => setAcctOpen(false)}
+              onClick={closeAcct}
             >
               <X size={16} aria-hidden />
               <span>Close</span>
@@ -193,10 +228,10 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
         </div>
       )}
 
-      <div className={styles.content}>{children}</div>
+      <div className={styles.content} inert={acctOpen ? true : undefined}>{children}</div>
 
       {/* Mobile bottom nav (≤1023px) */}
-      <nav className={styles.bottomNav} aria-label="Coaches Portal">
+      <nav className={styles.bottomNav} aria-label="Coaches Portal" inert={acctOpen ? true : undefined}>
         {NAV.map(({ label, href, icon: Icon, match }) => {
           const active = match(pathname);
           return (
