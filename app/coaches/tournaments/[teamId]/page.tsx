@@ -21,6 +21,7 @@ import CoachLiveSchedule, { type CoachScheduleGame } from '@/components/coaches/
 import TournamentRosterSubmit from '@/components/coaches/TournamentRosterSubmit';
 import HeadCoachEditor from '@/components/coaches/HeadCoachEditor';
 import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
+import CoachWelcomeBanner from '@/components/coaches/CoachWelcomeBanner';
 import SharePageButton from '@/components/public/SharePageButton';
 import { parseRosterRequirements } from '@/lib/roster-requirements';
 import type { GameStatus, TournamentSettings } from '@/lib/types';
@@ -30,7 +31,10 @@ import styles from './detail.module.css';
 // (matches the public game page / opengraph image resolution).
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
-type RouteParams = { params: Promise<{ teamId: string }> };
+type RouteParams = {
+  params: Promise<{ teamId: string }>;
+  searchParams?: Promise<{ welcome?: string }>;
+};
 
 export async function generateMetadata({ params }: RouteParams) {
   const { teamId } = await params;
@@ -56,8 +60,9 @@ export async function generateMetadata({ params }: RouteParams) {
   return { title: team?.name ?? 'Tournament Record' };
 }
 
-export default async function CoachTournamentRecordDetailPage({ params }: RouteParams) {
+export default async function CoachTournamentRecordDetailPage({ params, searchParams }: RouteParams) {
   const { teamId } = await params;
+  const { welcome } = (await searchParams) ?? {};
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -98,7 +103,7 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     team.tournament_id
       ? supabaseAdmin
           .from('tournaments')
-          .select('id, name, slug, year, start_date, end_date, org_id, status, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, settings')
+          .select('id, name, slug, year, start_date, end_date, org_id, status, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, settings, public_hidden_pages')
           .eq('id', team.tournament_id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -369,11 +374,37 @@ export default async function CoachTournamentRecordDetailPage({ params }: RouteP
     ? await findLinkedBasicTeamForRegistration(user.id, teamId)
     : null;
 
+  // First-run onboarding banner: the register flow redirects here with `?welcome=1` immediately
+  // after registering. Only show it while the registration is still pending/waitlist (the moment
+  // the coach first meets the portal) — never re-shown after they navigate away (no `welcome`
+  // param). Resource links respect the organizer's public-page visibility.
+  const hiddenPages: string[] = Array.isArray(tournament?.public_hidden_pages)
+    ? (tournament!.public_hidden_pages as string[])
+    : [];
+  const showWelcome =
+    welcome === '1' && (team.status === 'pending' || team.status === 'waitlist') && Boolean(org?.slug && tournament?.slug);
+  const welcomeResources: Array<{ href: string; label: string }> = [];
+  if (showWelcome && org?.slug && tournament?.slug) {
+    const base = `/${org.slug}/${tournament.slug}`;
+    welcomeResources.push({ href: base, label: 'Tournament Home' });
+    if (!hiddenPages.includes('schedule')) welcomeResources.push({ href: `${base}/schedule`, label: 'Schedule' });
+    if (!hiddenPages.includes('rules')) welcomeResources.push({ href: `${base}/rules`, label: 'Tournament Rules' });
+  }
+
   return (
     <div className={styles.page}>
       <nav className={styles.breadcrumb}>
         <Link href={COACHES_TOURNAMENTS_PATH}>Back to Coaches Portal</Link>
       </nav>
+
+      {showWelcome && (
+        <CoachWelcomeBanner
+          teamName={team.name}
+          tournamentName={tournament?.name ?? null}
+          status={team.status === 'waitlist' ? 'waitlist' : 'pending'}
+          resources={welcomeResources}
+        />
+      )}
 
       <div className={styles.header}>
         <div className={styles.headerMain}>

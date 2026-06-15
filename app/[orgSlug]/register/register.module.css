@@ -436,3 +436,41 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+
+/* Existing-team registration summary — replaces the locked team/registrant/email inputs with a
+   compact read-only recap, leaving just the division picker as the active field. */
+.existingSummary {
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  background: var(--bg-2, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 8px);
+}
+.existingSummaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.25rem 0;
+}
+.existingSummaryLabel {
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-40);
+  flex-shrink: 0;
+}
+.existingSummaryValue {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--white);
+  text-align: right;
+}
+.existingSummaryNote {
+  margin: 0.55rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--white-40);
+}
