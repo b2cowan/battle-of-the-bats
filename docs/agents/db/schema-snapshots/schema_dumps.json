@@ -15676,7 +15676,7 @@
         "kind": "CHECK",
         "table_name": "divisions",
         "detail": "age_groups_schedule_visibility_check",
-        "check_clause": "(schedule_visibility = ANY (ARRAY['unpublished'::text, 'published_generic'::text, 'published_teams'::text]))"
+        "check_clause": "(schedule_visibility = ANY (ARRAY['unpublished'::text, 'published'::text]))"
       },
       {
         "kind": "RLS",

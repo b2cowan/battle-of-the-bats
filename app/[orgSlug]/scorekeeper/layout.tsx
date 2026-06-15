@@ -17,7 +17,8 @@ export async function generateMetadata({
   const org = await getOrganizationBySlug(orgSlug);
   return {
     title: org?.name ? `${org.name} Scorekeeper` : 'Scorekeeper',
-    manifest: '/manifest.json',
+    // J8-004: scorekeeper-scoped manifest so an installed PWA opens the scoring screen, not /home.
+    manifest: `/${orgSlug}/scorekeeper/manifest.webmanifest`,
     other: {
       'mobile-web-app-capable': 'yes',
       'apple-mobile-web-app-capable': 'yes',
