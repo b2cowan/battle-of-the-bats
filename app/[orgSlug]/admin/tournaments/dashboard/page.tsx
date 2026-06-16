@@ -1485,25 +1485,25 @@ export default function AdminDashboard() {
                     <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Now Playing</h2>
                     <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <div className={styles.liveList}>
                     {gd.liveGames.map(lg => (
-                      <Link
-                        key={lg.id}
-                        href={`${base}/results`}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0.6rem', borderRadius: 6, background: 'var(--surface-2, rgba(255,255,255,0.03))', textDecoration: 'none', color: 'inherit' }}
-                      >
-                        <span className={`badge ${lg.status === 'submitted' ? 'badge-warning' : 'badge-primary'}`} style={{ fontSize: '0.6rem', flexShrink: 0 }}>
-                          {lg.status === 'submitted' ? 'IN REVIEW' : 'LIVE'}
-                        </span>
-                        <span style={{ flex: 1, minWidth: 0, fontSize: '0.82rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {lg.awayTeamName} <span style={{ color: 'var(--data-gray)', fontWeight: 400 }}>@</span> {lg.homeTeamName}
-                        </span>
-                        <span style={{ fontFamily: 'var(--font-data)', fontWeight: 800, fontSize: '0.9rem', flexShrink: 0 }}>
-                          {(lg.awayScore ?? 0)}–{(lg.homeScore ?? 0)}
-                        </span>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--data-gray)', flexShrink: 0, maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {lg.location ?? (lg.divisionName ?? '')}
-                        </span>
+                      <Link key={lg.id} href={`${base}/results`} className={styles.liveRow}>
+                        {/* Line 1: status + matchup (teams wrap, never cut) + score */}
+                        <div className={styles.liveRowMain}>
+                          <span className={`badge ${lg.status === 'submitted' ? 'badge-warning' : 'badge-primary'} ${styles.liveBadge}`}>
+                            {lg.status === 'submitted' ? 'IN REVIEW' : 'LIVE'}
+                          </span>
+                          <span className={styles.liveMatchup}>
+                            {lg.awayTeamName} <span className={styles.liveAt}>@</span> {lg.homeTeamName}
+                          </span>
+                          <span className={styles.liveScore}>{lg.awayScore ?? 0}–{lg.homeScore ?? 0}</span>
+                        </div>
+                        {/* Line 2: venue · division (its own line so nothing is cut) */}
+                        {(lg.location || lg.divisionName) && (
+                          <div className={styles.liveMeta}>
+                            {[lg.location, lg.divisionName].filter(Boolean).join(' · ')}
+                          </div>
+                        )}
                       </Link>
                     ))}
                   </div>
