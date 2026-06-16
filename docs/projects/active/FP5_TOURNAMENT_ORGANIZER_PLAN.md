@@ -135,10 +135,10 @@ The J1 audit walked the code 2026-06-10; the tournament section has had heavy wo
 - [x] **J1-045** contact-privacy resolver on news/rules/home — all three now `resolveTournamentContactEmail(…, 'public')`; hidden email stays hidden, designated contact resolved. _commit: 3794856 (Cluster 2)_
 - [x] **J1-103** Archive confirm copy — honest "moves to Past Tournaments, read-only, restorable"; dropped false "seals permanently / cannot be undone". _commit: 3794856 (Cluster 2)_
 - [x] **J1-087** results empty-state — `games.length===0` now reads "No schedule built yet" + links to Schedule; live-scores reassurance only when games exist. _commit: 3794856 (Cluster 2)_
-- [ ] **J1-100** live champion on admin game-day board — _commit:_
-- [ ] **J1-085** live now-board scorecard — _commit:_
-- [ ] **J1-086** game-day auto-refresh — _commit:_
-- [ ] **J1-047/097** admin-scope live surfaces (confirm FP-2 boundary) — _commit:_
+- [x] **J1-100** live champion on admin game-day board — By Division panel crowns the champion the moment the final goes final (was gated behind isCompleted); API champion now forfeit-aware too. _commit: 71d9622 (Cluster 3)_
+- [x] **J1-085** live now-board scorecard — new "Now Playing" panel (in-review + started-unscored games, score/teams/venue, most-urgent first); API returns capped liveGames. _commit: 71d9622 (Cluster 3)_
+- [x] **J1-086** game-day auto-refresh — fetchStats polls every 30s, visibility-gated + refetch on refocus; gauges no longer freeze. _commit: 71d9622 (Cluster 3)_
+- [x] **J1-047/097** — confirmed PUBLIC/fan surfaces (public home scorebug, public mobile "today" view) → **FP-2's domain, trimmed from FP-5**. No admin-side equivalent beyond J1-085 (Now Playing), which is built.
 - [ ] **J1-028** venue/lane count in wizard — _commit:_
 - [ ] **J1-029** Event Settings collapsed summaries — _commit:_
 - [ ] **J1-030/032** consistent fee/activation gate — _commit:_
