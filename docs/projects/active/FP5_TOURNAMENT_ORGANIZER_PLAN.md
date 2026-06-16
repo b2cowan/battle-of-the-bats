@@ -131,10 +131,10 @@ The J1 audit walked the code 2026-06-10; the tournament section has had heavy wo
 - [x] **J1-084** coin-toss re-seed — extracted `resolveAndFillPlayoffSeeds`; `record-coin-toss` re-runs it so an already-filled bracket re-points. _commit: Cluster 1_
 - [x] **J1-091** forfeit action + RF/RA/RD exclusion — `status='forfeit'` (no migration), `Mark forfeit` in scoring UI, tie-breakers exclude forfeit RF/RA/RD but count W/L; advancement fires on forfeit. _commit: Cluster 1_
 - [x] **Cluster 1 unit tests** — forfeit exclusion (tie-breakers, 3 cases) + `resolvePlayoffWinner` tie guard (5 cases); 106/106 pass. _commit: Cluster 1_
-- [ ] **J1-043** Activate-modal Public URL — _commit:_
-- [ ] **J1-045** contact-privacy resolver on news/rules/home — _commit:_
-- [ ] **J1-103** Archive confirm copy — _commit:_
-- [ ] **J1-087** results empty-state (no-schedule vs unscored) — _commit:_
+- [x] **J1-043** Activate-modal Public URL — dropped the `/tournaments/` segment → canonical `/{org}/{slug}`. _commit: 3794856 (Cluster 2)_
+- [x] **J1-045** contact-privacy resolver on news/rules/home — all three now `resolveTournamentContactEmail(…, 'public')`; hidden email stays hidden, designated contact resolved. _commit: 3794856 (Cluster 2)_
+- [x] **J1-103** Archive confirm copy — honest "moves to Past Tournaments, read-only, restorable"; dropped false "seals permanently / cannot be undone". _commit: 3794856 (Cluster 2)_
+- [x] **J1-087** results empty-state — `games.length===0` now reads "No schedule built yet" + links to Schedule; live-scores reassurance only when games exist. _commit: 3794856 (Cluster 2)_
 - [ ] **J1-100** live champion on admin game-day board — _commit:_
 - [ ] **J1-085** live now-board scorecard — _commit:_
 - [ ] **J1-086** game-day auto-refresh — _commit:_
