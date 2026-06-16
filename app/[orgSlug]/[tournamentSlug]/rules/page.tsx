@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { getOrganizationBySlug, getPublicTournamentBySlug, getRules, getResources, getDivisions } from '@/lib/db';
+import { getOrganizationBySlug, getPublicTournamentBySlug, getRules, getResources, getDivisions, resolveTournamentContactEmail } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import type { Division, Resource, RuleSection } from '@/lib/types';
@@ -24,7 +24,9 @@ export default async function RulesPage({
   const tournament = org ? await getPublicTournamentBySlug(org.id, tournamentSlug) : null;
   if (!tournament) notFound();
 
-  const contactEmail = tournament.contactEmail ?? org?.contactEmail ?? null;
+  // Honor the "show contact email publicly" toggle + resolve the designated
+  // contact, instead of the raw fallback that bypassed both (J1-045).
+  const contactEmail = await resolveTournamentContactEmail(tournament.id, org?.contactEmail ?? null, 'public');
   const pageEnabled = isPublicPageEnabled(tournament, 'rules');
 
   let rules: RuleSection[] = [];

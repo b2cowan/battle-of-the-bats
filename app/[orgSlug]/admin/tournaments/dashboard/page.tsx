@@ -1773,7 +1773,7 @@ export default function AdminDashboard() {
               <button className="btn btn-ghost btn-data" onClick={() => setShowArchiveConfirm(false)}>✕</button>
             </div>
             <p style={{ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.75rem' }}>
-              Archiving seals this tournament permanently. Archived tournaments are read-only and appear under Past Tournaments. <strong>This cannot be undone.</strong>
+              Archiving moves this tournament to <strong>Past Tournaments</strong> and makes it read-only — it stops appearing in your active list and frees up a tournament slot. You can restore it later from Past Tournaments (subject to your plan&rsquo;s tournament limit).
             </p>
             {archiveError && <p style={{ fontSize: '0.8rem', color: 'var(--danger)', margin: '0 0 0.5rem' }}>{archiveError}</p>}
             <div className="modal-footer">
@@ -1798,7 +1798,7 @@ export default function AdminDashboard() {
               <p style={{ fontSize: '0.8rem', color: 'var(--white-40)', margin: '0 0 0.5rem', wordBreak: 'break-all' }}>
                 Public URL:{' '}
                 <span style={{ color: 'var(--white-60)', fontFamily: 'monospace' }}>
-                  {typeof window !== 'undefined' ? window.location.origin : ''}/{currentOrg?.slug}/tournaments/{currentTournament.slug}
+                  {typeof window !== 'undefined' ? window.location.origin : ''}/{currentOrg?.slug}/{currentTournament.slug}
                 </span>
               </p>
             )}

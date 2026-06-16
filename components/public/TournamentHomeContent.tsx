@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Calendar, Trophy, ChevronRight, Megaphone, Star, Eye, Clock, MapPin, CheckCircle } from 'lucide-react';
-import { getAnnouncements, getGames, getTeams, getDivisions, getVenues, getStandings } from '@/lib/db';
+import { getAnnouncements, getGames, getTeams, getDivisions, getVenues, getStandings, resolveTournamentContactEmail } from '@/lib/db';
 import type { Organization, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { isPublicPageEnabled } from '@/lib/public-pages';
@@ -59,7 +59,10 @@ export default async function TournamentHomeContent({
   const showNewsPage = isPublicPageEnabled(tournament, 'news');
   const showSchedulePage = isPublicPageEnabled(tournament, 'schedule');
   const showStandingsPage = isPublicPageEnabled(tournament, 'standings');
-  const contactEmail = tournament.contactEmail ?? org.contactEmail ?? null;
+  // Honor the tournament's "show contact email publicly" privacy toggle and resolve
+  // the designated contact (member email) — the raw `tournament.contactEmail ?? org`
+  // fallback skipped both (J1-045). Returns null when the organizer hid it.
+  const contactEmail = await resolveTournamentContactEmail(tournament.id, org.contactEmail ?? null, 'public');
   const standingsEntries = showStandingsPage
     ? await Promise.all(
         divisions.map(async division => [
