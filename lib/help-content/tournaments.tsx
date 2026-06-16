@@ -38,11 +38,11 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-publish-tournament',
           question: 'How do I publish a tournament?',
-          answerText: 'Use Manage Tournaments or the dashboard activation button. A tournament must have dates, divisions, public contact, and at least one open division before activation.',
+          answerText: 'Use Manage Tournaments or the dashboard activation button. A tournament must have dates, divisions, a public contact, and at least one open division before activation.',
           keywords: ['publish', 'activate', 'go live', 'registration open'],
           popular: true,
           answer: (
-            <p>Open <strong>Manage Tournaments</strong>, change the tournament status to <strong>Active</strong>, and confirm the activation prompt. Activation is blocked until required launch items are complete: dates, at least one division, a public contact email, and at least one division open for registration.</p>
+            <p>Open <strong>Manage Tournaments</strong>, change the tournament status to <strong>Active</strong>, and confirm the activation prompt. Activation is blocked until required launch items are complete: dates, at least one division, a public contact (a selected contact member or a contact email), and at least one division open for registration.</p>
           ),
         },
         {

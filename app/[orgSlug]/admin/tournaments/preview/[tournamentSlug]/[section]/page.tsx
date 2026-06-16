@@ -8,6 +8,7 @@ import {
   getRules,
   getStandings,
   getTeams,
+  resolveTournamentContactEmail,
 } from '@/lib/db';
 import { getTournamentPreviewContext } from '@/lib/tournament-preview';
 import { isPublicPageEnabled, type PublicPageKey } from '@/lib/public-pages';
@@ -35,7 +36,9 @@ export default async function TournamentPreviewSectionPage({
   const readOptions = { admin: true };
   if (!isPublicPageEnabled(tournament, section as PublicPageKey)) notFound();
 
-  const contactEmail = tournament.contactEmail ?? org.contactEmail ?? null;
+  // Resolve the contact the same way the live public pages do (member → tournament
+  // email → org fallback, honoring visibility) so the preview shows what the public sees.
+  const contactEmail = await resolveTournamentContactEmail(tournament.id, org.contactEmail ?? null, 'public');
 
   // ── Schedule ──────────────────────────────────────────────────────────────
   if (section === 'schedule') {

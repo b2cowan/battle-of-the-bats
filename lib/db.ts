@@ -642,6 +642,10 @@ export async function populateTournamentFrom(
   // ── Copy tournament-level fields from source ───────────────────────────────
   const { error: updateError } = await supabaseAdmin.from('tournaments').update({
     contact_email: source.contact_email ?? null,
+    // Carry the selected contact member too (source & destination are same-org, so the
+    // member id is valid here) — without it, populating drops the primary contact and the
+    // launch checklist/activation would flag "no contact" even though the source had one.
+    default_contact_member_id: source.default_contact_member_id ?? null,
     // Carry per-audience contact visibility (mig 120) so populating from a source can't silently
     // re-expose a contact the organizer had hidden.
     contact_show_to_coaches: source.contact_show_to_coaches ?? true,
