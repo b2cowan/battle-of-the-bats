@@ -194,18 +194,23 @@ const AVAILABLE_ICONS = Object.keys(ICON_MAP) as IconKey[];
 
 type StatCardId = 'teams' | 'scheduled' | 'completed' | 'days';
 type PanelId = 'registration' | 'payment' | 'communications' | 'scheduleHealth';
+// Game-day board panels — a SEPARATE customizable set from the pre-event panels
+// (they show different content; hiding one board's panel never affects the other).
+type GameDayPanelId = 'nowPlaying' | 'gamesProgress' | 'checkIn' | 'gdScheduleHealth' | 'byDivision';
 
 type StatCardConfig = { id: StatCardId; label: string; icon: IconKey; visible: boolean; order: number };
 type PanelConfig    = { id: PanelId;   label: string;                  visible: boolean; order: number };
+type GameDayPanelConfig = { id: GameDayPanelId; label: string; visible: boolean; order: number };
 
 type DashboardLayout = {
-  version: 1;
+  version: 2;
   statCards: StatCardConfig[];
   panels: PanelConfig[];
+  gameDayPanels: GameDayPanelConfig[];
 };
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  version: 1,
+  version: 2,
   statCards: [
     { id: 'teams',     label: 'Teams',     icon: 'Users',    visible: true, order: 0 },
     { id: 'scheduled', label: 'Scheduled', icon: 'Calendar', visible: true, order: 1 },
@@ -218,6 +223,13 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: 'communications', label: 'Communications', visible: true, order: 2 },
     { id: 'scheduleHealth', label: 'Schedule Health', visible: true, order: 3 },
   ],
+  gameDayPanels: [
+    { id: 'nowPlaying',       label: 'Now Playing',     visible: true, order: 0 },
+    { id: 'gamesProgress',    label: 'Games Progress',  visible: true, order: 1 },
+    { id: 'checkIn',          label: 'Team Check-in',   visible: true, order: 2 },
+    { id: 'gdScheduleHealth', label: 'Schedule Health', visible: true, order: 3 },
+    { id: 'byDivision',       label: 'By Division',     visible: true, order: 4 },
+  ],
 };
 
 function layoutKey(orgSlug: string) { return `fl_dash_v1_${orgSlug}`; }
@@ -227,17 +239,26 @@ function loadLayout(orgSlug: string): DashboardLayout {
   try {
     const raw = localStorage.getItem(layoutKey(orgSlug));
     if (!raw) return DEFAULT_LAYOUT;
-    const p = JSON.parse(raw) as Partial<DashboardLayout>;
-    if (p.version !== 1) return DEFAULT_LAYOUT;
-    const mergedCards = DEFAULT_LAYOUT.statCards.map(def => {
-      const saved = (p.statCards ?? []).find(c => c.id === def.id);
-      return saved ? { ...def, ...saved } : def;
-    });
-    const mergedPanels = DEFAULT_LAYOUT.panels.map(def => {
-      const saved = (p.panels ?? []).find(c => c.id === def.id);
-      return saved ? { ...def, ...saved } : def;
-    });
-    return { version: 1, statCards: mergedCards, panels: mergedPanels };
+    const p = JSON.parse(raw) as {
+      version?: number;
+      statCards?: StatCardConfig[];
+      panels?: PanelConfig[];
+      gameDayPanels?: GameDayPanelConfig[];
+    };
+    // Accept v1 (no gameDayPanels) and v2 — default-merge fills any missing set,
+    // so an older saved layout gains the game-day panels without being discarded.
+    if (p.version !== 1 && p.version !== 2) return DEFAULT_LAYOUT;
+    const mergeBy = <T extends { id: string }>(defs: T[], saved: T[] | undefined): T[] =>
+      defs.map(def => {
+        const hit = (saved ?? []).find(c => c.id === def.id);
+        return hit ? { ...def, ...hit } : def;
+      });
+    return {
+      version: 2,
+      statCards: mergeBy(DEFAULT_LAYOUT.statCards, p.statCards),
+      panels: mergeBy(DEFAULT_LAYOUT.panels, p.panels),
+      gameDayPanels: mergeBy(DEFAULT_LAYOUT.gameDayPanels, p.gameDayPanels),
+    };
   } catch { return DEFAULT_LAYOUT; }
 }
 
@@ -462,7 +483,7 @@ function SortableStatCard({
 
 /** A sortable analytics panel in edit mode: grip + remove overlay; body is inert. */
 function SortablePanel({ id, label, onRemove, children }: {
-  id: PanelId;
+  id: PanelId | GameDayPanelId;
   label: string;
   onRemove: () => void;
   children: React.ReactNode;
@@ -548,7 +569,7 @@ export default function AdminDashboard() {
   const [layout, setLayout] = useState<DashboardLayout>(DEFAULT_LAYOUT);
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [expandedIconPicker, setExpandedIconPicker] = useState<StatCardId | null>(null);
-  const [addMenuZone, setAddMenuZone] = useState<'stat' | 'panel' | null>(null);
+  const [addMenuZone, setAddMenuZone] = useState<'stat' | 'panel' | 'gameday' | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -570,6 +591,8 @@ export default function AdminDashboard() {
     updateLayout({ ...layout, statCards: layout.statCards.map(c => c.id === id ? { ...c, visible } : c) });
   const togglePanelVisible = (id: PanelId, visible: boolean) =>
     updateLayout({ ...layout, panels: layout.panels.map(p => p.id === id ? { ...p, visible } : p) });
+  const toggleGameDayPanelVisible = (id: GameDayPanelId, visible: boolean) =>
+    updateLayout({ ...layout, gameDayPanels: layout.gameDayPanels.map(p => p.id === id ? { ...p, visible } : p) });
   const setCardIcon = (id: StatCardId, icon: IconKey) =>
     updateLayout({ ...layout, statCards: layout.statCards.map(c => c.id === id ? { ...c, icon } : c) });
 
@@ -589,6 +612,11 @@ export default function AdminDashboard() {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
     updateLayout({ ...layout, panels: reorderById(layout.panels, String(active.id), String(over.id)) });
+  };
+  const onGameDayPanelDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    updateLayout({ ...layout, gameDayPanels: reorderById(layout.gameDayPanels, String(active.id), String(over.id)) });
   };
   const exitCustomize = () => { setIsCustomizing(false); setExpandedIconPicker(null); setAddMenuZone(null); };
 
@@ -815,6 +843,9 @@ export default function AdminDashboard() {
   const hiddenStatCards = [...layout.statCards].filter(c => !c.visible).sort((a, b) => a.order - b.order)
     .map(c => ({ id: c.id, label: c.label, icon: c.icon }));
   const hiddenPanels = [...layout.panels].filter(p => !p.visible).sort((a, b) => a.order - b.order)
+    .map(p => ({ id: p.id, label: p.label }));
+  const sortedGameDayPanels = [...layout.gameDayPanels].sort((a, b) => a.order - b.order).filter(p => p.visible);
+  const hiddenGameDayPanels = [...layout.gameDayPanels].filter(p => !p.visible).sort((a, b) => a.order - b.order)
     .map(p => ({ id: p.id, label: p.label }));
 
   // Checklist
@@ -1236,6 +1267,214 @@ export default function AdminDashboard() {
     );
   }
 
+  // ── Game-day panels (each extracted so the live board can be customized) ──
+  // Panels that have nothing to show return null; the zone skips them so an empty
+  // box never renders (and an empty-data panel isn't draggable when not customizing).
+  function renderNowPlayingPanel() {
+    if (gd.liveGames.length === 0) return null;
+    return (
+      <section className={styles.analyticsPanel}>
+        <div className={styles.panelHeader}>
+          <Activity size={16} style={{ color: 'var(--logic-lime)' }} />
+          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Now Playing</h2>
+          <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
+        </div>
+        <div className={styles.liveList}>
+          {gd.liveGames.map(lg => (
+            <Link key={lg.id} href={`${base}/results`} className={styles.liveRow}>
+              <div className={styles.liveRowMain}>
+                <span className={`badge ${lg.status === 'submitted' ? 'badge-warning' : 'badge-primary'} ${styles.liveBadge}`}>
+                  {lg.status === 'submitted' ? 'IN REVIEW' : 'LIVE'}
+                </span>
+                <span className={styles.liveMatchup}>
+                  {lg.awayTeamName} <span className={styles.liveAt}>@</span> {lg.homeTeamName}
+                </span>
+                <span className={styles.liveScore}>{lg.awayScore ?? 0}–{lg.homeScore ?? 0}</span>
+              </div>
+              {(lg.location || lg.divisionName) && (
+                <div className={styles.liveMeta}>
+                  {[lg.location, lg.divisionName].filter(Boolean).join(' · ')}
+                </div>
+              )}
+            </Link>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  function renderGamesProgressPanel() {
+    return (
+      <section className={styles.analyticsPanel}>
+        <div className={styles.panelHeader}>
+          <Zap size={16} style={{ color: 'var(--logic-lime)' }} />
+          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Games Progress</h2>
+          <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
+        </div>
+        {gd.totalGames > 0 ? (
+          <>
+            <div className={styles.mainGauge}>
+              <div className={styles.gaugeFigures}>
+                <span className={styles.gaugeMain}><CountUp value={gd.completed} /></span>
+                <span className={styles.gaugeOf}>/ {gd.totalGames}</span>
+                <span className={styles.gaugeLabel}>games complete</span>
+              </div>
+              <GaugeBar value={gd.completed} max={gd.totalGames} />
+            </div>
+            <div className={styles.subStats}>
+              {gd.inProgress > 0 && <span className={styles.subStat}><span className="badge badge-warning">{gd.inProgress}</span> In review</span>}
+              {gd.poolGamesTotal > 0 && <span className={styles.subStat}><span className="badge badge-neutral">{gd.poolGamesCompleted}/{gd.poolGamesTotal}</span> Pool games</span>}
+              {gd.playoffStarted && <span className={styles.subStat}><span className="badge badge-primary">{gd.playoffGamesCompleted}/{gd.playoffGamesTotal}</span> Playoff games</span>}
+            </div>
+          </>
+        ) : (
+          <div className={styles.emptyPanel}>
+            <span>No games scheduled yet.</span>
+            <Link href={`${base}/schedule`} className={styles.panelLink}>Build schedule →</Link>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  function renderCheckInPanel() {
+    if (checkIn.accepted === 0) return null;
+    return (
+      <section className={styles.analyticsPanel}>
+        <div className={styles.panelHeader}>
+          <UserCheck size={16} style={{ color: 'var(--logic-lime)' }} />
+          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Team Check-in</h2>
+          <Link href={`${base}/check-in`} className={styles.panelLink}>Open board →</Link>
+        </div>
+        <div className={styles.mainGauge}>
+          <div className={styles.gaugeFigures}>
+            <span className={styles.gaugeMain}><CountUp value={checkIn.checkedIn} /></span>
+            <span className={styles.gaugeOf}>/ {checkIn.accepted}</span>
+            <span className={styles.gaugeLabel}>teams arrived</span>
+          </div>
+          <GaugeBar value={checkIn.checkedIn} max={checkIn.accepted} />
+        </div>
+        {checkIn.noShow > 0 && (
+          <div className={styles.subStats}>
+            <span className={styles.subStat}><span className="badge badge-danger">{checkIn.noShow}</span> No-show{checkIn.noShow !== 1 ? 's' : ''}</span>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  function renderByDivisionPanel() {
+    if (gd.byDivision.length === 0) return null;
+    return (
+      <section className={styles.analyticsPanel}>
+        <div className={styles.panelHeader}>
+          <Flag size={16} style={{ color: 'var(--logic-lime)' }} />
+          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>By Division</h2>
+        </div>
+        <div className={styles.divisionTable}>
+          {gd.byDivision.map(d => {
+            const poolPct = d.poolTotal > 0 ? Math.round((d.poolCompleted / d.poolTotal) * 100) : 0;
+            // J1-100: crown the champion the moment the final goes final — live.
+            const champ = champions.find(c => c.divisionId === d.id);
+            return (
+              <div key={d.id} className={styles.divisionRow}>
+                <span className={styles.divisionName}>{d.name}</span>
+                <span className={styles.divisionCount}>
+                  {champ ? 'Champion' : d.playoffStarted ? (d.latestRound ?? 'Playoffs') : `${d.poolCompleted}/${d.poolTotal}`}
+                </span>
+                {champ ? (
+                  <div className={styles.gaugeWrap}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--logic-lime)', fontWeight: 700, fontSize: '0.82rem' }}>
+                      <Trophy size={13} aria-hidden /> {champ.championTeamName}
+                    </span>
+                  </div>
+                ) : (
+                  <div className={styles.gaugeWrap}>
+                    <div className={styles.gaugeTrack}>
+                      <div className={styles.gaugeFill} style={{ width: `${d.playoffStarted ? 100 : poolPct}%`, background: d.playoffStarted ? 'var(--warning)' : poolPct >= 100 ? 'var(--logic-lime)' : 'var(--blueprint-blue)' }} />
+                    </div>
+                    <span className={styles.gaugePct} style={{ color: d.playoffStarted ? 'var(--warning)' : 'var(--data-gray)' }}>
+                      {d.playoffStarted ? (d.nextRound ? `→ ${d.nextRound}` : 'Done') : `${poolPct}%`}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {gd.playoffStarted && (
+          <div className={styles.subStats} style={{ marginTop: '0.5rem' }}>
+            <span className={styles.subStat} style={{ color: 'var(--warning)' }}><Trophy size={12} /> Playoffs underway</span>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  function gameDayPanelNode(id: GameDayPanelId) {
+    switch (id) {
+      case 'nowPlaying':       return renderNowPlayingPanel();
+      case 'gamesProgress':    return renderGamesProgressPanel();
+      case 'checkIn':          return renderCheckInPanel();
+      case 'gdScheduleHealth': return renderScheduleHealthPanel();
+      case 'byDivision':       return renderByDivisionPanel();
+      default:                 return null;
+    }
+  }
+
+  // Game-day board zone — edit-aware, mirrors renderPanelZone but with the
+  // separate gameDayPanels set. Panels whose data is empty (null node) are
+  // skipped when NOT customizing; in customize mode they still render their
+  // (possibly empty) shell so they can be reordered/hidden.
+  function renderGameDayZone() {
+    if (!isCustomizing) {
+      const nodes = sortedGameDayPanels
+        .map(p => ({ p, node: gameDayPanelNode(p.id) }))
+        .filter(x => x.node != null);
+      return (
+        <div className={styles.analyticsGrid}>
+          {nodes.map(({ p, node }) => (
+            <div key={p.id} style={{ display: 'contents' }}>{node}</div>
+          ))}
+          {nodes.length === 0 && (
+            <div style={{ color: 'var(--data-gray)', fontSize: '0.8rem' }}>
+              All panels are hidden. Click <strong>Customize</strong> to restore them.
+            </div>
+          )}
+        </div>
+      );
+    }
+    return (
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onGameDayPanelDragEnd}>
+        <SortableContext items={sortedGameDayPanels.map(p => p.id)} strategy={rectSortingStrategy}>
+          <div className={styles.analyticsGrid}>
+            {sortedGameDayPanels.map(panel => (
+              <SortablePanel key={panel.id} id={panel.id} label={panel.label} onRemove={() => toggleGameDayPanelVisible(panel.id, false)}>
+                {gameDayPanelNode(panel.id) ?? (
+                  <section className={styles.analyticsPanel}>
+                    <div className={styles.panelHeader}>
+                      <h2 className={styles.sectionTitle} style={{ margin: 0 }}>{panel.label}</h2>
+                    </div>
+                    <div className={styles.emptyPanel}><span>Nothing to show right now.</span></div>
+                  </section>
+                )}
+              </SortablePanel>
+            ))}
+            {hiddenGameDayPanels.length > 0 && (
+              <AddTile
+                kind="panel"
+                items={hiddenGameDayPanels}
+                open={addMenuZone === 'gameday'}
+                onToggle={() => { setExpandedIconPicker(null); setAddMenuZone(z => z === 'gameday' ? null : 'gameday'); }}
+                onAdd={(id) => { toggleGameDayPanelVisible(id as GameDayPanelId, true); setAddMenuZone(null); }}
+              />
+            )}
+          </div>
+        </SortableContext>
+      </DndContext>
+    );
+  }
+
   // ── Analytics-panel zone (edit-aware) — pre/post-event only ───────────────
   function panelNode(id: PanelId) {
     switch (id) {
@@ -1300,7 +1539,7 @@ export default function AdminDashboard() {
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
-          {((isActive && !isGameDay) || isCompleted) && currentTournament?.id && !isCustomizing && (
+          {(isActive || isCompleted) && currentTournament?.id && !isCustomizing && (
             <button
               type="button"
               className={`btn btn-ghost btn-data ${styles.customizeToggleBtn}`}
@@ -1474,148 +1713,8 @@ export default function AdminDashboard() {
           {/* Compact metric strip — absent on game day where the board gives richer context */}
           {!isGameDay && renderMetricStrip()}
 
-          {/* ── GAME DAY: game-by-game metrics (within dates OR first game started) ── */}
-          {isGameDay ? (
-            <div className={styles.analyticsGrid}>
-              {/* ── NOW PLAYING (J1-085): live "what's on right now" command view ── */}
-              {gd.liveGames.length > 0 && (
-                <section className={styles.analyticsPanel}>
-                  <div className={styles.panelHeader}>
-                    <Activity size={16} style={{ color: 'var(--logic-lime)' }} />
-                    <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Now Playing</h2>
-                    <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
-                  </div>
-                  <div className={styles.liveList}>
-                    {gd.liveGames.map(lg => (
-                      <Link key={lg.id} href={`${base}/results`} className={styles.liveRow}>
-                        {/* Line 1: status + matchup (teams wrap, never cut) + score */}
-                        <div className={styles.liveRowMain}>
-                          <span className={`badge ${lg.status === 'submitted' ? 'badge-warning' : 'badge-primary'} ${styles.liveBadge}`}>
-                            {lg.status === 'submitted' ? 'IN REVIEW' : 'LIVE'}
-                          </span>
-                          <span className={styles.liveMatchup}>
-                            {lg.awayTeamName} <span className={styles.liveAt}>@</span> {lg.homeTeamName}
-                          </span>
-                          <span className={styles.liveScore}>{lg.awayScore ?? 0}–{lg.homeScore ?? 0}</span>
-                        </div>
-                        {/* Line 2: venue · division (its own line so nothing is cut) */}
-                        {(lg.location || lg.divisionName) && (
-                          <div className={styles.liveMeta}>
-                            {[lg.location, lg.divisionName].filter(Boolean).join(' · ')}
-                          </div>
-                        )}
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              <section className={styles.analyticsPanel}>
-                <div className={styles.panelHeader}>
-                  <Zap size={16} style={{ color: 'var(--logic-lime)' }} />
-                  <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Games Progress</h2>
-                  <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
-                </div>
-                {gd.totalGames > 0 ? (
-                  <>
-                    <div className={styles.mainGauge}>
-                      <div className={styles.gaugeFigures}>
-                        <span className={styles.gaugeMain}><CountUp value={gd.completed} /></span>
-                        <span className={styles.gaugeOf}>/ {gd.totalGames}</span>
-                        <span className={styles.gaugeLabel}>games complete</span>
-                      </div>
-                      <GaugeBar value={gd.completed} max={gd.totalGames} />
-                    </div>
-                    <div className={styles.subStats}>
-                      {gd.inProgress > 0 && <span className={styles.subStat}><span className="badge badge-warning">{gd.inProgress}</span> In review</span>}
-                      {gd.poolGamesTotal > 0 && <span className={styles.subStat}><span className="badge badge-neutral">{gd.poolGamesCompleted}/{gd.poolGamesTotal}</span> Pool games</span>}
-                      {gd.playoffStarted && <span className={styles.subStat}><span className="badge badge-primary">{gd.playoffGamesCompleted}/{gd.playoffGamesTotal}</span> Playoff games</span>}
-                    </div>
-                  </>
-                ) : (
-                  <div className={styles.emptyPanel}>
-                    <span>No games scheduled yet.</span>
-                    <Link href={`${base}/schedule`} className={styles.panelLink}>Build schedule →</Link>
-                  </div>
-                )}
-              </section>
-
-              {checkIn.accepted > 0 && (
-                <section className={styles.analyticsPanel}>
-                  <div className={styles.panelHeader}>
-                    <UserCheck size={16} style={{ color: 'var(--logic-lime)' }} />
-                    <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Team Check-in</h2>
-                    <Link href={`${base}/check-in`} className={styles.panelLink}>Open board →</Link>
-                  </div>
-                  <div className={styles.mainGauge}>
-                    <div className={styles.gaugeFigures}>
-                      <span className={styles.gaugeMain}><CountUp value={checkIn.checkedIn} /></span>
-                      <span className={styles.gaugeOf}>/ {checkIn.accepted}</span>
-                      <span className={styles.gaugeLabel}>teams arrived</span>
-                    </div>
-                    <GaugeBar value={checkIn.checkedIn} max={checkIn.accepted} />
-                  </div>
-                  {checkIn.noShow > 0 && (
-                    <div className={styles.subStats}>
-                      <span className={styles.subStat}><span className="badge badge-danger">{checkIn.noShow}</span> No-show{checkIn.noShow !== 1 ? 's' : ''}</span>
-                    </div>
-                  )}
-                </section>
-              )}
-
-              {renderScheduleHealthPanel()}
-
-              {gd.byDivision.length > 0 && (
-                <section className={styles.analyticsPanel}>
-                  <div className={styles.panelHeader}>
-                    <Flag size={16} style={{ color: 'var(--logic-lime)' }} />
-                    <h2 className={styles.sectionTitle} style={{ margin: 0 }}>By Division</h2>
-                  </div>
-                  <div className={styles.divisionTable}>
-                    {gd.byDivision.map(d => {
-                      const poolPct = d.poolTotal > 0 ? Math.round((d.poolCompleted / d.poolTotal) * 100) : 0;
-                      // J1-100: crown the champion the moment the final goes final —
-                      // live on the active board, not only after the org is marked
-                      // completed. champions is recomputed each poll from the API.
-                      const champ = champions.find(c => c.divisionId === d.id);
-                      return (
-                        <div key={d.id} className={styles.divisionRow}>
-                          <span className={styles.divisionName}>{d.name}</span>
-                          <span className={styles.divisionCount}>
-                            {champ ? 'Champion' : d.playoffStarted ? (d.latestRound ?? 'Playoffs') : `${d.poolCompleted}/${d.poolTotal}`}
-                          </span>
-                          {champ ? (
-                            <div className={styles.gaugeWrap}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--logic-lime)', fontWeight: 700, fontSize: '0.82rem' }}>
-                                <Trophy size={13} aria-hidden /> {champ.championTeamName}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className={styles.gaugeWrap}>
-                              <div className={styles.gaugeTrack}>
-                                <div className={styles.gaugeFill} style={{ width: `${d.playoffStarted ? 100 : poolPct}%`, background: d.playoffStarted ? 'var(--warning)' : poolPct >= 100 ? 'var(--logic-lime)' : 'var(--blueprint-blue)' }} />
-                              </div>
-                              <span className={styles.gaugePct} style={{ color: d.playoffStarted ? 'var(--warning)' : 'var(--data-gray)' }}>
-                                {d.playoffStarted ? (d.nextRound ? `→ ${d.nextRound}` : 'Done') : `${poolPct}%`}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {gd.playoffStarted && (
-                    <div className={styles.subStats} style={{ marginTop: '0.5rem' }}>
-                      <span className={styles.subStat} style={{ color: 'var(--warning)' }}><Trophy size={12} /> Playoffs underway</span>
-                    </div>
-                  )}
-                </section>
-              )}
-            </div>
-          ) : (
-            /* ── PRE/POST TOURNAMENT DAY: registration + payment ── */
-            renderPanelZone()
-          )}
+          {/* ── GAME DAY board (customizable) vs PRE/POST event panels ── */}
+          {isGameDay ? renderGameDayZone() : renderPanelZone()}
 
           {/* Post-event nudge: suggest marking complete */}
           {isPostEventActive && (
