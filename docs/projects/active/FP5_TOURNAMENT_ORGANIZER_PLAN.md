@@ -1,7 +1,7 @@
 # FP-5 — Tournament Organizer Experience (Implementation Plan)
 
 **Branch:** `dev` — the single shared branch for ALL chats (owner decision 2026-06-15; FP-5 was consolidated onto `dev` by merging `fix/fp3-volunteer-dayof` in). No per-initiative branches; see `AGENCY_RULES.md` → Branch and Deployment Policy.
-**Status:** Clusters 1 (bracket-math trust), 2 (false strings), 3 (live game day), and 4 (wizard / Event Settings mental model) BUILT on `dev`. Cluster 4 chose **fees OPTIONAL to activate** (owner 2026-06-16). Cluster 5 (registrations + staffing + discovery) next.
+**Status:** Clusters 1 (bracket-math trust), 2 (false strings), 3 (live game day), and 4 (wizard / Event Settings mental model) BUILT on `dev`; **Cluster 4 browser-verified COMPLETE 2026-06-16** (fees OPTIONAL to activate + UX refinements + orgSlug-save + contact-gate consistency fixes). **Cluster 5 (registrations + staffing + discovery) is NEXT.**
 **Source of truth:** `docs/projects/active/journeys/JOURNEY_J1_TOURNAMENT_ORGANIZER.md` (118 findings) + `docs/projects/active/USER_JOURNEY_AUDIT_SYNTHESIS.md` (§FP-5).
 **Wave:** Audit Wave-2. FP-1 (Trust & Integrity) and FP-3 (Volunteer Day-of) complete; FP-5 is the largest Wave-2 project.
 
@@ -146,6 +146,12 @@ The J1 audit walked the code 2026-06-10; the tournament section has had heavy wo
   **Cluster 4 `/review` (high-risk, 4 lenses) — 0 confirmed defects.** Two finder-flagged "gaps" were investigated and intentionally NOT fixed after blast-radius analysis:
   - `save-venue` action creates zero facilities — **correct by design**: the org-level Venues page (`org/venues/page.tsx`) manages facilities explicitly via its own `add-facility` UI, so a generic venue-create deliberately doesn't auto-fan-out lanes.
   - AddVenueModal has no field/diamond count — **intentionally left alone**: the tournament Venues page (`tournaments/venues/page.tsx`) already renders a full per-facility add/edit UI beside the modal ("No facilities yet — add one below…"). Adding a count input there would duplicate the facility-creation path and risk double-creating lanes. The wizard needs the count only because it has NO facility UI (fire-and-forget setup); the Venues page is the deliberate, per-facility surface.
+
+  **Cluster 4 UX refinements + bug fixes shipped during browser testing (all on `dev`, browser-verified 2026-06-16):**
+  - Wizard venue step: added **Surface type** picker (Diamond/Field/Court/Rink/Gym) feeding `facility_type` + type-based lane naming; facility explainer; **`*`-required / no-"optional"** convention across all wizard steps; added venues now render as **concise read-only rows with Edit** (not a form stack); actionable **unsaved-venue banner** (Add it / Clear form) replacing the dead-end error; composer spacing.
+  - **orgSlug on wizard save calls** — `setup-tournament`/`venues`/`complete-onboarding`/`onboarding-plan`/league-save were org-context fail-closed routes called without `?orgSlug=` → 401 at Review→Save; now threaded. (`fc65306`)
+  - **Contact gate consistency** — the launch checklist, server activation blocker, AND the Manage Tournaments client pre-flight all ignored `default_contact_member_id` (the primary contact mechanism per `resolveTournamentContactEmail`), falsely blocking activation for a tournament with a selected contact member. Fixed all three to accept member OR tournament email OR org fallback; also closed 3 pre-existing parity gaps (admin preview resolver bypass, populate-from-source dropping the member id, help copy). (`a3cb91e`/`d343100`/`7414d39`)
+  - Test fixture: `scripts/seed-fp5-cluster4.mjs` — two-org fixture (tournament-less wizard org + draft org with member-contact-only Draft Cup); browser-verified the full Cluster 4 surface.
 - [ ] **J1-066** slot-claim on accept — _commit:_
 - [ ] **J1-067** `payment=` deep-link param — _commit:_
 - [ ] **J1-068** render payment money-strip — _commit:_
