@@ -577,8 +577,10 @@
   background: rgba(var(--blueprint-blue-rgb), 0.045);
 }
 
-/* "+ Add venue" sits below the Notes field — give it clear separation. */
+/* "+ Add venue" / Save+Cancel sit below the Notes field — clear separation. */
 .venueComposerAction {
+  display: flex;
+  gap: 0.5rem;
   margin-top: 1rem;
 }
 
@@ -651,7 +653,64 @@
 .venueList {
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Added venues render as concise, read-only summary rows (name · count · address)
+   with Edit + remove actions — Edit loads the venue back into the composer. */
+.venueSummaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 2px;
+  background: rgba(255,255,255,0.025);
+}
+
+.venueSummaryRowEditing {
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+}
+
+.venueSummaryText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.venueSummaryName {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--white, #fff);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.venueSummaryMeta {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--data-gray, rgba(255,255,255,0.45));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.venueSummaryActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.venueSummaryEditingTag {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--logic-lime, #c5f955);
 }
 
 .venueCard {

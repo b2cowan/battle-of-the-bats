@@ -319,6 +319,13 @@ function formatVenueAddress(venue: VenueFields) {
   return [normalized.street, cityLine, normalized.country].filter(Boolean).join(', ');
 }
 
+/** Concise "3 Diamonds" style count for an added-venue summary row. */
+function venueFacilitySummary(venue: VenueFields): string {
+  const n = Number(normalizeFieldCount(venue.fieldCount));
+  const label = FACILITY_TYPE_LABELS[venue.facilityType] ?? 'Field';
+  return `${n} ${label}${n === 1 ? '' : 's'}`;
+}
+
 function normalizePlanId(planId: string): OrgPlan {
   return PLAN_ORDER.includes(planId as OrgPlan) ? planId as OrgPlan : 'tournament';
 }
@@ -408,6 +415,9 @@ export default function OnboardingPage() {
 
   const [venueDraft, setVenueDraft] = useState<VenueFields>(buildVenueDraft);
   const [venueRows, setVenueRows] = useState<VenueRow[]>([]);
+  // When set, the composer is editing an already-added venue (loaded into the
+  // draft) rather than adding a new one. Added venues render as read-only rows.
+  const [editingVenueId, setEditingVenueId] = useState<string | null>(null);
   const [leagueSeasonForm, setLeagueSeasonForm] = useState<LeagueSeasonForm>(getDefaultLeagueSeasonForm);
   const [leagueDivisionPreset, setLeagueDivisionPreset] = useState<LeagueDivisionPreset>('youth');
   const [leagueDivisionRows, setLeagueDivisionRows] = useState<LeagueDivisionRow[]>(() => buildLeagueDivisionRows(LEAGUE_DIVISION_PRESETS.youth));
@@ -883,24 +893,50 @@ export default function OnboardingPage() {
     setVenueDraft(draft => ({ ...draft, facilityType: value }));
   }
 
-  function updateVenueRowType(id: string, value: FacilityType) {
-    setVenueRows(prev => prev.map(row => row.id === id ? { ...row, facilityType: value } : row));
-  }
-
-  function updateVenueRow(id: string, field: keyof VenueFields, value: string) {
-    setVenueRows(prev => prev.map(row => row.id === id ? { ...row, [field]: value } : row));
-  }
-
   function addVenueDraft() {
     if (!isVenueReady(venueDraft)) {
       setStepError('Add a venue name before adding it to the list. Address details are optional.');
       return;
     }
 
-    const nextIndex = Date.now();
-    setVenueRows(prev => [...prev, buildVenueRow(nextIndex, normalizeVenueFields(venueDraft))]);
+    const normalized = normalizeVenueFields(venueDraft);
+    if (editingVenueId) {
+      // Saving an edit — update the existing row in place, keep its position.
+      setVenueRows(prev => prev.map(row => row.id === editingVenueId ? { ...normalized, id: row.id } : row));
+      setEditingVenueId(null);
+    } else {
+      setVenueRows(prev => [...prev, buildVenueRow(Date.now(), normalized)]);
+    }
     setVenueDraft(buildVenueDraft());
     setStepError('');
+  }
+
+  function editVenueRow(id: string) {
+    const row = venueRows.find(r => r.id === id);
+    if (!row) return;
+    // If a half-filled new draft is in the composer, don't silently lose it.
+    if (!editingVenueId && hasVenueContent(venueDraft)) {
+      setStepError('Finish or clear the venue you’re adding before editing another.');
+      return;
+    }
+    setVenueDraft({
+      name: row.name, street: row.street, city: row.city, province: row.province,
+      postalCode: row.postalCode, country: row.country, notes: row.notes,
+      fieldCount: row.fieldCount, facilityType: row.facilityType,
+    });
+    setEditingVenueId(id);
+    setStepError('');
+  }
+
+  function cancelVenueEdit() {
+    setVenueDraft(buildVenueDraft());
+    setEditingVenueId(null);
+    setStepError('');
+  }
+
+  function removeVenueRow(id: string) {
+    setVenueRows(prev => prev.filter(item => item.id !== id));
+    if (editingVenueId === id) cancelVenueEdit();
   }
 
   function getTournamentDraft() {
@@ -977,7 +1013,9 @@ export default function OnboardingPage() {
       if (!isVenueReady(venueDraft)) {
         throw new Error('Add a venue name before continuing, or clear the venue form.');
       }
-      throw new Error('Click Add venue before continuing, or clear the venue form.');
+      throw new Error(editingVenueId
+        ? 'Save or cancel the venue you’re editing before continuing.'
+        : 'Click Add venue before continuing, or clear the venue form.');
     }
 
     const rows = venueRows
@@ -2146,7 +2184,7 @@ export default function OnboardingPage() {
           <div className={styles.inlineList}>
             <div className={styles.venueComposer}>
               <div className={styles.setupBlockHeader}>
-                <span>Add one venue</span>
+                <span>{editingVenueId ? 'Edit venue' : 'Add one venue'}</span>
                 <small>Country defaults to Canada.</small>
               </div>
               <div className={styles.venueDraftGrid}>
@@ -2223,9 +2261,16 @@ export default function OnboardingPage() {
                 Notes
                 <input className="form-input" value={venueDraft.notes} onChange={e => updateVenueDraft('notes', e.target.value)} placeholder="Parking, entrance, field number" style={{ marginTop: '0.35rem' }} />
               </label>
-              <button type="button" className={`btn btn-outline btn-sm ${styles.venueComposerAction}`} onClick={addVenueDraft}>
-                <Plus size={14} /> Add venue
-              </button>
+              <div className={styles.venueComposerAction}>
+                <button type="button" className="btn btn-outline btn-sm" onClick={addVenueDraft}>
+                  {editingVenueId ? <><CheckCircle2 size={14} /> Save changes</> : <><Plus size={14} /> Add venue</>}
+                </button>
+                {editingVenueId && (
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={cancelVenueEdit}>
+                    Cancel
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className={styles.setupBlock}>
@@ -2240,79 +2285,32 @@ export default function OnboardingPage() {
                 </div>
               ) : (
                 <div className={styles.venueList}>
-                  {venueRows.map((row, index) => (
-                    <div key={row.id} className={styles.venueCard}>
-                      <div className={styles.venueCardHeader}>
-                        <strong>Venue {index + 1}</strong>
-                        <button type="button" className={styles.iconOnlyButton} onClick={() => setVenueRows(prev => prev.filter(item => item.id !== row.id))} aria-label={`Remove venue ${index + 1}`}>
-                          <Trash2 size={14} />
-                        </button>
+                  {venueRows.map((row) => {
+                    const address = formatVenueAddress(row);
+                    const isEditing = editingVenueId === row.id;
+                    return (
+                      <div key={row.id} className={`${styles.venueSummaryRow} ${isEditing ? styles.venueSummaryRowEditing : ''}`}>
+                        <div className={styles.venueSummaryText}>
+                          <strong className={styles.venueSummaryName}>{row.name}</strong>
+                          <span className={styles.venueSummaryMeta}>
+                            {venueFacilitySummary(row)}{address ? ` · ${address}` : ''}
+                          </span>
+                        </div>
+                        <div className={styles.venueSummaryActions}>
+                          {isEditing ? (
+                            <span className={styles.venueSummaryEditingTag}>Editing above…</span>
+                          ) : (
+                            <button type="button" className="btn btn-ghost btn-sm" onClick={() => editVenueRow(row.id)}>
+                              Edit
+                            </button>
+                          )}
+                          <button type="button" className={styles.iconOnlyButton} onClick={() => removeVenueRow(row.id)} aria-label={`Remove ${row.name}`}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
-                      <div className={styles.venueCardGrid}>
-                        <label className={styles.fieldLabel}>
-                          Venue name *
-                          <input className="form-input" value={row.name} onChange={e => updateVenueRow(row.id, 'name', e.target.value)} />
-                        </label>
-                        <label className={styles.fieldLabel}>
-                          Street address
-                          <input className="form-input" value={row.street} onChange={e => updateVenueRow(row.id, 'street', e.target.value)} />
-                        </label>
-                        <label className={styles.fieldLabel}>
-                          City
-                          <input className="form-input" value={row.city} onChange={e => updateVenueRow(row.id, 'city', e.target.value)} />
-                        </label>
-                        <label className={styles.fieldLabel}>
-                          Province
-                          <select className="form-select" value={row.province} onChange={e => updateVenueRow(row.id, 'province', e.target.value)}>
-                            <option value="">Select province</option>
-                            {CANADIAN_PROVINCES.map(province => (
-                              <option key={province} value={province}>{province}</option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className={styles.fieldLabel}>
-                          Postal code
-                          <input className="form-input" value={row.postalCode} onChange={e => updateVenueRow(row.id, 'postalCode', e.target.value.toUpperCase())} />
-                        </label>
-                        <label className={styles.fieldLabel}>
-                          Country
-                          <input className="form-input" value={row.country} onChange={e => updateVenueRow(row.id, 'country', e.target.value)} />
-                        </label>
-                      </div>
-
-                      <div className={styles.venueSurfaceRow} style={{ marginTop: '0.65rem' }}>
-                        <label className={styles.fieldLabel}>
-                          How many *
-                          <input
-                            className="form-input"
-                            type="number"
-                            min={1}
-                            max={30}
-                            step={1}
-                            value={row.fieldCount}
-                            onChange={e => updateVenueRow(row.id, 'fieldCount', e.target.value)}
-                          />
-                        </label>
-                        <label className={styles.fieldLabel}>
-                          Surface type *
-                          <select
-                            className="form-select"
-                            value={row.facilityType}
-                            onChange={e => updateVenueRowType(row.id, e.target.value as FacilityType)}
-                          >
-                            {WIZARD_FACILITY_TYPES.map(t => (
-                              <option key={t} value={t}>{FACILITY_TYPE_LABELS[t]}</option>
-                            ))}
-                          </select>
-                        </label>
-                      </div>
-
-                      <label className={`${styles.fieldLabel} ${styles.venueNotesField}`} style={{ display: 'block', marginTop: '0.65rem' }}>
-                        Notes
-                        <input className="form-input" value={row.notes} onChange={e => updateVenueRow(row.id, 'notes', e.target.value)} style={{ marginTop: '0.35rem' }} />
-                      </label>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
