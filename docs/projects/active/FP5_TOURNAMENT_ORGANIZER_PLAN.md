@@ -1,7 +1,7 @@
 # FP-5 — Tournament Organizer Experience (Implementation Plan)
 
 **Branch:** `dev` — the single shared branch for ALL chats (owner decision 2026-06-15; FP-5 was consolidated onto `dev` by merging `fix/fp3-volunteer-dayof` in). No per-initiative branches; see `AGENCY_RULES.md` → Branch and Deployment Policy.
-**Status:** Cluster 1 (bracket-math trust) BUILT + reviewed + forfeit lifecycle reworked + close-out gaps fixed, all on `dev`. Cluster 2 (false strings) next.
+**Status:** Clusters 1 (bracket-math trust), 2 (false strings), 3 (live game day), and 4 (wizard / Event Settings mental model) BUILT on `dev`. Cluster 4 chose **fees OPTIONAL to activate** (owner 2026-06-16). Cluster 5 (registrations + staffing + discovery) next.
 **Source of truth:** `docs/projects/active/journeys/JOURNEY_J1_TOURNAMENT_ORGANIZER.md` (118 findings) + `docs/projects/active/USER_JOURNEY_AUDIT_SYNTHESIS.md` (§FP-5).
 **Wave:** Audit Wave-2. FP-1 (Trust & Integrity) and FP-3 (Volunteer Day-of) complete; FP-5 is the largest Wave-2 project.
 
@@ -139,9 +139,9 @@ The J1 audit walked the code 2026-06-10; the tournament section has had heavy wo
 - [x] **J1-085** live now-board scorecard — new "Now Playing" panel (in-review + started-unscored games, score/teams/venue, most-urgent first); API returns capped liveGames. _commit: 71d9622 (Cluster 3)_
 - [x] **J1-086** game-day auto-refresh — fetchStats polls every 30s, visibility-gated + refetch on refocus; gauges no longer freeze. _commit: 71d9622 (Cluster 3)_
 - [x] **J1-047/097** — confirmed PUBLIC/fan surfaces (public home scorebug, public mobile "today" view) → **FP-2's domain, trimmed from FP-5**. No admin-side equivalent beyond J1-085 (Now Playing), which is built.
-- [ ] **J1-028** venue/lane count in wizard — _commit:_
-- [ ] **J1-029** Event Settings collapsed summaries — _commit:_
-- [ ] **J1-030/032** consistent fee/activation gate — _commit:_
+- [x] **J1-028** venue/lane count in wizard — wizard venue step now asks "Fields / diamonds at this venue?"; `save` action auto-creates Diamond 1…N lanes (single surface keeps the venue-named lane); generator "not enough slots" errors now point to adding fields, widening the day, or shortening games. _commit: Cluster 4_
+- [x] **J1-029** Event Settings collapsed summaries — all six cards now show a current-value summary in the collapsed header via the existing `meta` slot (status/dates, format/timing, fee model, routing+contact visibility, roster, registration questions). _commit: Cluster 4_
+- [x] **J1-030/032** consistent fee/activation gate — **fees OPTIONAL** (owner decision 2026-06-16): dropped `hasFees` from the dashboard `ready` gate and moved the fee item to the optional list; server activation blocker already never enforced fees and the wizard never asked — all three surfaces now agree. _commit: Cluster 4_
 - [ ] **J1-066** slot-claim on accept — _commit:_
 - [ ] **J1-067** `payment=` deep-link param — _commit:_
 - [ ] **J1-068** render payment money-strip — _commit:_

@@ -27,6 +27,11 @@ After FP-5: ties on elimination games are caught and held for a decision instead
 **3. Day-one mental model + live game day feel finished.**
 The setup wizard / Event Settings wall (fees missing from the wizard yet inconsistently gating activation; settings cards that hide their values), the live game-day board (no "what's on right now," frozen live numbers, champion not crowned the instant the final ends), the registrations workflow (a built-but-hidden payment money-strip, broken filter deep-links, generic payment instructions), and volunteer staffing get the polish that makes the product feel complete.
 
+*Update (2026-06-16) — the wizard / Event Settings piece (Cluster 4) is BUILT:*
+- The setup wizard now asks **how many fields/diamonds** each venue has, so the first generated schedule uses the real number of playing surfaces instead of cramming everything onto one. The schedule generator's "not enough room" message now tells the organizer how to fix it (add fields, lengthen the day, or shorten games).
+- **Event Settings is scannable** — each collapsed card now shows its current values in the header.
+- **One activation rule:** fees are **optional** to go live (owner decision). The launch checklist, the wizard, and the server's go-live check now agree — fees moved to the optional list, and the organizer can activate without setting them. (A "Free" or per-team fee is still configurable in Event Settings anytime.)
+
 ---
 
 ## Why it matters / customer impact

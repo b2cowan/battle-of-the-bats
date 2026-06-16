@@ -405,14 +405,25 @@ export const POST = withObservability(async (req: Request) => {
         notes:         data.notes   ?? null,
       }).select('*').single();
       if (error) throw error;
-      // Auto-create one facility with the same name (type = 'other')
-      await supabaseAdmin.from('venue_facilities').insert({
-        venue_id:      newVenue.id,
-        tournament_id: data.tournamentId,
-        name:          data.name,
-        facility_type: 'other',
-        display_order: 0,
-      });
+      // Auto-create scheduling lanes (facilities). A venue with N fields/diamonds
+      // (J1-028) gets N lanes so the generator can run games in parallel; a single
+      // surface keeps the original venue-named lane.
+      const fieldCount = Math.max(1, Math.min(30, Math.floor(Number(data.fieldCount) || 1)));
+      const facilityRows = fieldCount === 1
+        ? [{ name: data.name, display_order: 0 }]
+        : Array.from({ length: fieldCount }, (_, i) => ({
+            name:          `${data.name} — Diamond ${i + 1}`,
+            display_order: i,
+          }));
+      await supabaseAdmin.from('venue_facilities').insert(
+        facilityRows.map(f => ({
+          venue_id:      newVenue.id,
+          tournament_id: data.tournamentId,
+          name:          f.name,
+          facility_type: 'other',
+          display_order: f.display_order,
+        }))
+      );
       return NextResponse.json({ success: true });
     }
 

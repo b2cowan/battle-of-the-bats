@@ -780,6 +780,47 @@ export default function TournamentEventSettingsPage() {
     return null;
   })();
 
+  // ── Collapsed-header value summaries (J1-029) ───────────────────────────────
+  // Each CollapsibleCard renders the matching string in its `meta` slot so the
+  // page is scannable without opening every card. Keep these terse — the meta
+  // slot sits beside the title and does not truncate.
+  const overviewSummary = (() => {
+    const status = tournamentStatus === 'active' ? 'Active'
+      : tournamentStatus === 'completed' ? 'Completed' : 'Draft';
+    return startDate && endDate ? `${status} · dates set` : `${status} · dates not set`;
+  })();
+
+  const scheduleRulesSummary = (() => {
+    const fmt = tournamentFormat === 'playoff_only' ? 'Bracket only' : 'Round robin + playoffs';
+    const timing = gameTimingScope === 'per_division' ? 'per-division timing'
+      : `${gameDurationMinutes}m games`;
+    return `${fmt} · ${timing}`;
+  })();
+
+  const feeSummary = (() => {
+    if (feeScope === 'free') return 'Free';
+    if (feeScope === 'per_division') return 'Per division';
+    if (feeScope === 'allow_override') return 'Default + overrides';
+    if (feeScope === 'tournament') {
+      return totalFeeAmount ? `$${totalFeeAmount} / team` : 'Tournament-wide';
+    }
+    return 'Not set';
+  })();
+
+  const notificationsSummary = (() => {
+    if (coachEmailPauseAll) return 'Coach emails paused';
+    const visibility = contactShowOnPublic ? 'contact public' : 'contact hidden';
+    return `${notifyMode === 'all' ? 'All registrations' : 'Assigned only'} · ${visibility}`;
+  })();
+
+  const rosterSummary = rosterRequire
+    ? `Required${rosterSizeSummary ? ` · ${rosterSizeSummary}` : ''}`
+    : 'Not required';
+
+  const registrationQuestionsSummary = canUseRegistrationQuestions
+    ? 'Custom sign-up questions'
+    : 'Tournament Plus';
+
   return (
     <div className={styles.page}>
       <div className={styles.settingsContent}>
@@ -794,7 +835,7 @@ export default function TournamentEventSettingsPage() {
         <div className={styles.cardStack}>
 
         {/* ── Card 1: Tournament Overview ── */}
-        <CollapsibleCard title="Tournament Overview" defaultOpen={false}>
+        <CollapsibleCard title="Tournament Overview" defaultOpen={false} meta={overviewSummary}>
 
           <div className="form-group">
             <label className="form-label">Tournament Name</label>
@@ -971,7 +1012,7 @@ export default function TournamentEventSettingsPage() {
         </CollapsibleCard>
 
         {/* ── Card 2: Schedule Rules ── */}
-        <CollapsibleCard title="Schedule Rules" defaultOpen={false}>
+        <CollapsibleCard title="Schedule Rules" defaultOpen={false} meta={scheduleRulesSummary}>
 
           {/* Tournament Format */}
           <div style={{ marginBottom: '1.25rem' }}>
@@ -1146,7 +1187,7 @@ export default function TournamentEventSettingsPage() {
         </CollapsibleCard>
 
         {/* ── Card 3: Fee Schedule ── */}
-        <CollapsibleCard title="Fee Schedule" defaultOpen={false}>
+        <CollapsibleCard title="Fee Schedule" defaultOpen={false} meta={feeSummary}>
           <p className={styles.subSectionLabel}>Fee model</p>
           <div className={styles.segmentedControl} style={{ marginBottom: '1rem' }}>
             {([
@@ -1268,7 +1309,7 @@ export default function TournamentEventSettingsPage() {
         </CollapsibleCard>
 
         {/* ── Card 4: Notifications & Contact ── */}
-        <CollapsibleCard title="Notifications & Contact" defaultOpen={false}>
+        <CollapsibleCard title="Notifications & Contact" defaultOpen={false} meta={notificationsSummary}>
 
           {/* Public Contact */}
           <div>
@@ -1535,7 +1576,7 @@ export default function TournamentEventSettingsPage() {
         {/* ── Card 5: Roster Requirements (Phase 5f) — read by the Coaches Portal
             event-roster submission (5h/5k). Applies to the per-event snapshot only,
             never to a coach's master roster. ── */}
-        <CollapsibleCard title="Roster Requirements" defaultOpen={false}>
+        <CollapsibleCard title="Roster Requirements" defaultOpen={false} meta={rosterSummary}>
           <div className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem', marginBottom: '0.5rem' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p className={styles.subSectionLabel} style={{ margin: 0 }}>Event roster</p>
@@ -1717,7 +1758,7 @@ export default function TournamentEventSettingsPage() {
         </CollapsibleCard>
 
         {/* Registration Questions */}
-        <CollapsibleCard title="Registration Questions" defaultOpen={false}>
+        <CollapsibleCard title="Registration Questions" defaultOpen={false} meta={registrationQuestionsSummary}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             <p className={styles.descriptionText}>
               Add custom questions to the team registration form — collect confirmations, dropdowns, text answers, and file uploads from coaches during sign-up.

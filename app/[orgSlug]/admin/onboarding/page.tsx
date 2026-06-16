@@ -81,6 +81,8 @@ type VenueFields = {
   postalCode: string;
   country: string;
   notes: string;
+  /** How many fields/diamonds this venue has — drives auto-created scheduling lanes (J1-028). */
+  fieldCount: string;
 };
 
 type VenueRow = VenueFields & {
@@ -261,6 +263,7 @@ function buildVenueDraft(): VenueFields {
     postalCode: '',
     country: 'Canada',
     notes: '',
+    fieldCount: '1',
   };
 }
 
@@ -277,7 +280,15 @@ function normalizeVenueFields(venue: VenueFields): VenueFields {
     postalCode: venue.postalCode.trim(),
     country: venue.country.trim() || 'Canada',
     notes: venue.notes.trim(),
+    fieldCount: normalizeFieldCount(venue.fieldCount),
   };
+}
+
+/** Clamp the field/diamond count to a sane 1–30 and default to '1'. */
+function normalizeFieldCount(raw: string): string {
+  const n = parseInt(raw, 10);
+  if (isNaN(n) || n < 1) return '1';
+  return String(Math.min(n, 30));
 }
 
 function hasVenueContent(venue: VenueFields) {
@@ -1236,6 +1247,7 @@ export default function OnboardingPage() {
             name: row.name,
             address: formatVenueAddress(row),
             notes: row.notes || undefined,
+            fieldCount: Number(normalizeFieldCount(row.fieldCount)),
           },
         }),
       })));
@@ -2144,6 +2156,22 @@ export default function OnboardingPage() {
                   Country optional
                   <input className="form-input" value={venueDraft.country} onChange={e => updateVenueDraft('country', e.target.value)} />
                 </label>
+                <label className={styles.fieldLabel}>
+                  Fields / diamonds at this venue
+                  <input
+                    className="form-input"
+                    type="number"
+                    min={1}
+                    max={30}
+                    step={1}
+                    value={venueDraft.fieldCount}
+                    onChange={e => updateVenueDraft('fieldCount', e.target.value)}
+                    placeholder="1"
+                  />
+                  <small className={styles.fieldHint}>
+                    How many playable surfaces here? We&apos;ll set up Diamond&nbsp;1…N so the schedule can run games in parallel.
+                  </small>
+                </label>
                 <label className={`${styles.fieldLabel} ${styles.venueNotesField}`}>
                   Notes
                   <input className="form-input" value={venueDraft.notes} onChange={e => updateVenueDraft('notes', e.target.value)} placeholder="Parking, entrance, field number" />
@@ -2203,6 +2231,18 @@ export default function OnboardingPage() {
                         <label className={styles.fieldLabel}>
                           Country optional
                           <input className="form-input" value={row.country} onChange={e => updateVenueRow(row.id, 'country', e.target.value)} />
+                        </label>
+                        <label className={styles.fieldLabel}>
+                          Fields / diamonds
+                          <input
+                            className="form-input"
+                            type="number"
+                            min={1}
+                            max={30}
+                            step={1}
+                            value={row.fieldCount}
+                            onChange={e => updateVenueRow(row.id, 'fieldCount', e.target.value)}
+                          />
                         </label>
                         <label className={`${styles.fieldLabel} ${styles.venueNotesField}`}>
                           Notes

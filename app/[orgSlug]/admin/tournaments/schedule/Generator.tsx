@@ -732,7 +732,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
 
     const totalSlots = buildTimeSlots(resourceList);
     if (totalSlots.length < matchupsToGenerate.length) {
-      setError(`Not enough time slots to schedule ${matchupsToGenerate.length} games. Need ${matchupsToGenerate.length} slots, but only have ${totalSlots.length} available.`);
+      setError(`Not enough time slots to schedule ${matchupsToGenerate.length} games. Need ${matchupsToGenerate.length} slots, but only have ${totalSlots.length} available. Add more fields/diamonds to a venue (each one runs games in parallel), widen the playing window, or shorten game length.`);
       return;
     }
 
@@ -892,7 +892,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
 
     const totalSlots = buildTimeSlots(resourceList);
     if (totalSlots.length < matchupsToGenerate.length) {
-      setError(`Not enough time slots for ${matchupsToGenerate.length} games. Need ${matchupsToGenerate.length} slots but have ${totalSlots.length}.`);
+      setError(`Not enough time slots for ${matchupsToGenerate.length} games. Need ${matchupsToGenerate.length} slots but have ${totalSlots.length}. Add more fields/diamonds to a venue (each one runs games in parallel), widen the playing window, or shorten game length.`);
       return;
     }
 
