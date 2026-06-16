@@ -577,6 +577,11 @@
   background: rgba(var(--blueprint-blue-rgb), 0.045);
 }
 
+/* "+ Add venue" sits below the Notes field — give it clear separation. */
+.venueComposerAction {
+  margin-top: 1rem;
+}
+
 .venueDraftGrid,
 .venueCardGrid {
   display: grid;
@@ -613,7 +618,7 @@
 /* Surface row — the "what do you play on" block (count + type + explainer),
    set apart from the address grid so the scheduling model reads clearly. */
 .venueSurfaceBlock {
-  margin: 0.2rem 0 0.8rem;
+  margin: 0.85rem 0 0.85rem;
   padding: 0.8rem;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   border-radius: 2px;

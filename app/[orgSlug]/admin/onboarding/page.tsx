@@ -2213,7 +2213,7 @@ export default function OnboardingPage() {
                 <p className={styles.venueSurfaceExplain}>
                   A <strong>facility</strong> is one playable surface — a diamond, field, court, rink, or gym.
                   The scheduler books one game per facility at a time, so entering{' '}
-                  <strong>{normalizeFieldCount(venueDraft.fieldCount)}</strong> lets that many games run in
+                  <strong>{normalizeFieldCount(venueDraft.fieldCount)}</strong>{' '}lets that many games run in
                   parallel here. We&apos;ll create {FACILITY_TYPE_LABELS[venueDraft.facilityType]}&nbsp;1…N
                   automatically — you can rename them or add more on the Venues page anytime.
                 </p>
@@ -2223,7 +2223,7 @@ export default function OnboardingPage() {
                 Notes
                 <input className="form-input" value={venueDraft.notes} onChange={e => updateVenueDraft('notes', e.target.value)} placeholder="Parking, entrance, field number" style={{ marginTop: '0.35rem' }} />
               </label>
-              <button type="button" className="btn btn-outline btn-sm" onClick={addVenueDraft}>
+              <button type="button" className={`btn btn-outline btn-sm ${styles.venueComposerAction}`} onClick={addVenueDraft}>
                 <Plus size={14} /> Add venue
               </button>
             </div>
