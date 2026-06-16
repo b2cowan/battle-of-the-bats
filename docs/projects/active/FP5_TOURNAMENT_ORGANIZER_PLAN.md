@@ -1,7 +1,7 @@
 # FP-5 — Tournament Organizer Experience (Implementation Plan)
 
 **Branch:** `dev` — the single shared branch for ALL chats (owner decision 2026-06-15; FP-5 was consolidated onto `dev` by merging `fix/fp3-volunteer-dayof` in). No per-initiative branches; see `AGENCY_RULES.md` → Branch and Deployment Policy.
-**Status:** Clusters 1 (bracket-math trust), 2 (false strings), 3 (live game day), and 4 (wizard / Event Settings mental model) BUILT on `dev`; **Cluster 4 browser-verified COMPLETE 2026-06-16** (fees OPTIONAL to activate + UX refinements + orgSlug-save + contact-gate consistency fixes). **Cluster 5 (registrations + staffing + discovery) is NEXT.**
+**Status:** Clusters 1 (bracket-math trust), 2 (false strings), 3 (live game day), and 4 (wizard / Event Settings mental model) BUILT on `dev`; **Cluster 4 browser-verified COMPLETE 2026-06-16** (fees OPTIONAL to activate + UX refinements + orgSlug-save + contact-gate consistency fixes). **Cluster 5 (registrations + staffing + discovery) IN PROGRESS — Registrations sub-cluster (J1-066/067/068/069) BUILT 2026-06-16 (`f4513c0`), browser-verify pending; staffing (J1-077/078/080) + discovery (J1-001–004) NEXT.**
 **Source of truth:** `docs/projects/active/journeys/JOURNEY_J1_TOURNAMENT_ORGANIZER.md` (118 findings) + `docs/projects/active/USER_JOURNEY_AUDIT_SYNTHESIS.md` (§FP-5).
 **Wave:** Audit Wave-2. FP-1 (Trust & Integrity) and FP-3 (Volunteer Day-of) complete; FP-5 is the largest Wave-2 project.
 
@@ -152,10 +152,12 @@ The J1 audit walked the code 2026-06-10; the tournament section has had heavy wo
   - **orgSlug on wizard save calls** — `setup-tournament`/`venues`/`complete-onboarding`/`onboarding-plan`/league-save were org-context fail-closed routes called without `?orgSlug=` → 401 at Review→Save; now threaded. (`fc65306`)
   - **Contact gate consistency** — the launch checklist, server activation blocker, AND the Manage Tournaments client pre-flight all ignored `default_contact_member_id` (the primary contact mechanism per `resolveTournamentContactEmail`), falsely blocking activation for a tournament with a selected contact member. Fixed all three to accept member OR tournament email OR org fallback; also closed 3 pre-existing parity gaps (admin preview resolver bypass, populate-from-source dropping the member id, help copy). (`a3cb91e`/`d343100`/`7414d39`)
   - Test fixture: `scripts/seed-fp5-cluster4.mjs` — two-org fixture (tournament-less wizard org + draft org with member-contact-only Draft Cup); browser-verified the full Cluster 4 surface.
-- [ ] **J1-066** slot-claim on accept — _commit:_
-- [ ] **J1-067** `payment=` deep-link param — _commit:_
-- [ ] **J1-068** render payment money-strip — _commit:_
-- [ ] **J1-069** load real payment instructions — _commit:_
+- [x] **J1-066** slot-claim on accept — accept (bulk + single) now claims the next open pool slot via new `lib/slot-claim.ts`; `unplaced` bucket no longer `plusOnly`; slot board always shows an "Accepted — needs a spot" section so an accepted team can never silently fall off the board on any plan. Manual slot-pick stays Plus. _commit: f4513c0_
+- [x] **J1-067** `payment=` deep-link param — page now reads `?payment=paid|deposit|pending` and maps onto the payment filter (`pending`→`unpaid`); previously dropped to the unfiltered list. _commit: f4513c0_
+- [x] **J1-068** render payment money-strip — `paymentSummary` now rendered via the previously-orphaned `.paymentPanel`/`.paymentMetric` CSS (with-a-fee / expected / collected / outstanding / past-due); payment-tool-gated, shown only when a fee schedule applies. _commit: f4513c0_
+- [x] **J1-069** load real payment instructions — reminder message pre-fills from saved `tournament.settings.payment_instructions` (the field the email actually sends), generic fallback only when unset. _commit: f4513c0_
+
+  **Re-verified 2026-06-16 against current code (all four still PRESENT before fix):** single+bulk accept set `status='accepted'` but never claimed a slot, and the only recovery (`unplaced` bucket + `promote-from-waitlist`) was Plus-gated → free-tier teams vanished (J1-066); page read only `attention`/`division`, dashboard emitted `payment=paid/deposit/pending` (J1-067); `.paymentPanel`/`.paymentMetric` CSS had 0 JSX references while `paymentSummary` computed all 5 metrics (J1-068); reminder textarea defaulted to a generic placeholder, never reading the saved instructions (J1-069). Owner decision 2026-06-16: J1-066 = **Option 1** (auto-claim on accept + always-visible unplaced safety net on every plan). Typecheck clean; focused lint 0 errors; dev server restarted (new `lib/slot-claim.ts`) + login route 200.
 - [ ] **J1-077** staffing purpose-picker on invite — _commit:_
 - [ ] **J1-078** scorekeeper seat policy (coordinate /billing) — _commit:_ / defer
 - [ ] **J1-080** day-of staff kit panel — _commit:_ / triage
