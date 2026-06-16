@@ -712,6 +712,7 @@ export default function OnboardingPage() {
     setVenueDraft(buildVenueDraft());
     setVenueRows([]);
     setStepError('');
+    setStepErrorActions([]);
   }
 
   function resetLeagueSetupDraft() {
@@ -723,9 +724,16 @@ export default function OnboardingPage() {
     setLeagueDraftSkipped(getDefaultLeagueDraftSkipped());
   }
 
-  async function showWizardStep(stepId: Exclude<ActiveModal, null>) {
+  // Clear the step-error banner AND any inline action buttons together. The two
+  // pieces of state must always be cleared as a unit, or stale venue-step action
+  // buttons can render on an unrelated step's error.
+  function clearStepError() {
     setStepError('');
     setStepErrorActions([]);
+  }
+
+  async function showWizardStep(stepId: Exclude<ActiveModal, null>) {
+    clearStepError();
     setActiveModal(stepId);
   }
 
@@ -734,7 +742,7 @@ export default function OnboardingPage() {
       const activePlan = normalizePlanId(currentOrg.planId);
       const isGuidedTournamentPlan = activePlan === 'tournament' || activePlan === 'tournament_plus';
       if (isGuidedTournamentPlan) {
-        setStepError('');
+        clearStepError();
         setWorkflowRedirecting(true);
         router.replace(getPostOnboardingHref(currentOrg, { hasTournament: Boolean(startupProgress?.firstTournament) }));
         return;
@@ -742,7 +750,7 @@ export default function OnboardingPage() {
     }
 
     setActiveModal(null);
-    setStepError('');
+    clearStepError();
     setWizardDismissed(true);
   }
 
@@ -1624,7 +1632,9 @@ export default function OnboardingPage() {
             <div className={styles.planError}>
               <AlertCircle size={14} />
               <span className={styles.planErrorText}>{stepError}</span>
-              {stepErrorActions.length > 0 && (
+              {/* Inline actions only ever belong to the venues step — gate on it so
+                  stale actions can never render on another step's error banner. */}
+              {options.stepId === 'venues' && stepErrorActions.length > 0 && (
                 <span className={styles.planErrorActions}>
                   {stepErrorActions.map(action => (
                     <button
