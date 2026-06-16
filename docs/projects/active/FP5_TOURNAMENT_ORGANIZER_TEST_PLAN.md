@@ -1,4 +1,4 @@
-# FP-5 Tournament Organizer — Browser Test Plan (Clusters 1–3)
+# FP-5 Tournament Organizer — Browser Test Plan (Clusters 1–4)
 
 Covers everything built this session on the `dev` branch:
 - **Cluster 1** — bracket-math trust: tie guard, coin-toss re-seed, forfeit (J1-083/084/091)
@@ -6,6 +6,7 @@ Covers everything built this session on the `dev` branch:
 - **Close-out** — forfeit-aware seal/summary (champion + standings)
 - **Cluster 2** — false strings: go-live URL, contact privacy, archive copy, results empty-state (J1-043/045/103/087)
 - **Cluster 3** — live game day: Now Playing, auto-refresh, live champion (J1-085/086/100)
+- **Cluster 4** — wizard / Event Settings mental model: venue surface type + lane count, settings summaries, fees-optional activation (J1-028/029/030/032) — see §8
 
 ---
 
@@ -167,6 +168,79 @@ Covers everything built this session on the `dev` branch:
 - **Normal finalize flow:** with finalization ON, a scorekeeper's **normal** submitted score still becomes **"Final"** (completed) when an admin finalizes — NOT a forfeit.
 - **Revert:** reverting a forfeited or scored game returns it to **Scheduled** and clears the result.
 - **Non-game-day dashboard:** for a tournament whose dates are in the future, the dashboard shows the **pre-event** view (no Now Playing panel, no live polling churn) and still loads cleanly.
+
+---
+
+## 8. Cluster 4 — Wizard / Event Settings mental model (J1-028/029/030/032)
+
+### 8.0 Seed the Cluster 4 fixtures (does not touch other fixtures)
+
+```bash
+node --env-file=.env.local scripts/seed-fp5-cluster4.mjs
+```
+
+Idempotent. One shared owner login across two orgs, each pre-staged:
+
+| | |
+|---|---|
+| **Login** (both orgs) | `fp5-owner@dev.local` / `devpass123` — sign in at `/auth/login` |
+| **Part A org** | **`fp5-wizard-test`** — plan Tournament (FREE), **no tournament** → the setup wizard runs clean here |
+| **Parts B + C org** | **`fp5-draft-test`** — plan Tournament Plus, one **draft** tournament "Draft Cup" |
+| **Draft Cup state** | status **draft**, dates set, 1 **open** division (U13), **no fee approach** (fee summary = "Not set"); venues pre-built: **Riverside Park = 3 facilities (Diamond 1/2/3)**, **Single Field = 1 facility** |
+
+> Re-running resets Draft Cup (so you can repeat the activate test) and keeps the wizard org tournament-less. Because an org already set up redirects away from `/admin/onboarding`, **use the tournament-less `fp5-wizard-test` org for the wizard** — do not try to re-enter setup on an org that already has a tournament.
+
+> **Restart note:** Cluster 4 changed a shared API route (venue lane creation) and added a wizard field, so if you haven't restarted since pulling these commits, do the stop → `rm -rf .next` → `npm run dev` dance once before testing.
+
+### 8a. Wizard venue step — surface type + lane count + facility explainer (J1-028)
+
+Logged in as `fp5-owner@dev.local`, go to **`/fp5-wizard-test/admin/onboarding`** and walk the **tournament** path to the **Add venues** step.
+
+1. ✅ The "Add one venue" form shows, in a bordered surface block: **How many \*** (number, default 1) + **Surface type \*** (Diamond / Field / Court / Rink / Gym), and an explainer — *"A facility is one playable surface… the scheduler books one game per facility at a time, so entering 3 lets that many games run in parallel… We'll create Diamond 1…N automatically…"*. The count + type in that sentence **update live** as you change the inputs.
+2. ✅ **Required markers:** required fields use **`*`** (Venue name, How many, Surface type — and on earlier steps Tournament name, Start/End date). The big uppercase **"optional"** word is **gone** from street/city/province/postal/country/notes. A small **"\* required"** legend sits at the bottom of the step.
+3. Add **"Riverside Park"**, **How many = 3**, **Surface type = Diamond**, click **Add venue**.
+4. ✅ **Added venues** shows a **single concise read-only row**: **"Riverside Park · 3 Diamonds · …"** — NOT a stack of editable fields. It has an **Edit** button and a remove (trash) icon.
+5. **Edit flow:** click **Edit** → the venue loads back into the composer (header → **"Edit venue"**, button → **"Save changes"** + **Cancel**); the row shows an **"Editing above…"** tag with a highlighted border. Change the count to 2, **Save changes** → the row updates in place to "2 Diamonds". **Cancel** on a fresh edit leaves the row unchanged.
+6. **Clamp checks** (in the composer count): empty/`0`/`-2` → **1**, `99` → **30**, `2.5` → **2**.
+7. Finish the wizard, then open **`/fp5-wizard-test/admin/tournaments/venues`**.
+   - ✅ Riverside Park (count 3, type Diamond) lists **3 facilities named "Riverside Park — Diamond 1/2/3"**.
+   - Add another venue in the wizard with type **Court**, count **2** → its facilities are **"… — Court 1/2"** (naming follows the chosen type).
+   - A **count-1** venue gets a **single venue-named** facility (no "— Diamond 1" suffix).
+8. **Generator fix-path:** in Schedule → Generate, a multi-surface venue exposes **one lane per facility** (parallel games). Force a too-small window/long game length → the error names the fix: *"Add more fields/diamonds… widen the playing window, or shorten game length."*
+
+> Compare-without-the-wizard: the **`fp5-draft-test`** org already has **Riverside Park (3) / Single Field (1)** seeded — open its Venues page to see the expected facility end-state.
+
+### 8b. Event Settings — collapsed cards show their values (J1-029)
+
+Go to **`/fp5-draft-test/admin/tournaments/settings/event`** (Draft Cup). All six cards start collapsed.
+
+1. ✅ Each collapsed header shows a value summary on the right:
+
+| Card | Example |
+|---|---|
+| Tournament Overview | `Draft · dates set` |
+| Schedule Rules | `Round robin + playoffs · 90m games` |
+| Fee Schedule | `Not set` |
+| Notifications & Contact | `All registrations · contact public` |
+| Roster Requirements | `Not required` |
+| Registration Questions | `Custom sign-up questions` / `Tournament Plus` |
+
+2. **Live updates:** open Fee Schedule → set **Free**, save, collapse → header reads **`Free`**; set **Tournament-wide** + Total Fee **200** → **`$200 / team`**. Toggle **Show on public site = Off** in Notifications → header shows **`… · contact hidden`**. Turn the roster **On** → `Required…`.
+3. ✅ No email address or other PII ever appears in a collapsed header. On a narrow window the summary doesn't clip the title; the chevron still toggles.
+
+### 8c. Fees are OPTIONAL to activate — all three surfaces agree (J1-030/032)
+
+Draft Cup is pre-staged for this: **draft**, dates + open division set, **no fees**. Go to **`/fp5-draft-test/admin/tournaments/dashboard`**.
+
+1. ✅ **Required** checklist items are exactly **Tournament dates · At least one division · Registration open for at least one division** — **no "Fee approach" in the required list**. "Fee approach" sits in the **optional** section ("Optional… You can activate without this").
+2. ✅ The checklist shows **ready** despite no fee approach set.
+3. ✅ Click **Activate** → it **succeeds** with no "configure fees" error.
+4. **Negative control:** set back to draft, clear the dates, try to activate → **blocked** on *add tournament dates* (proves the gate still enforces the genuinely-required items; only fees were dropped).
+5. ✅ Wizard parity: walking the wizard (Part A org) never demands a fee step.
+
+### 8d. Regression (Cluster 4)
+- ✅ Adding a venue via the **Venues page "Add Venue" modal** still creates the usual single facility (the modal has no field-count input by design — extra facilities are added inline on the venue card).
+- ✅ A tournament with a fee approach set still shows it (`$X / team`) and still activates.
 
 ---
 
