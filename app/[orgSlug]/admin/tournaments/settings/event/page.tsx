@@ -807,10 +807,20 @@ export default function TournamentEventSettingsPage() {
     return 'Not set';
   })();
 
-  const notificationsSummary = (() => {
-    if (coachEmailPauseAll) return 'Coach emails paused';
+  // Contact card — who people reach / who you notify.
+  const contactSummary = (() => {
     const visibility = contactShowOnPublic ? 'contact public' : 'contact hidden';
     return `${notifyMode === 'all' ? 'All registrations' : 'Assigned only'} · ${visibility}`;
+  })();
+
+  // Coach Emails card — what the system auto-sends.
+  const coachEmailsSummary = (() => {
+    if (coachEmailPauseAll) return 'Auto emails off';
+    const offCount = [
+      coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection,
+      coachEmailPayment, coachEmailSchedule, coachEmailGameDay,
+    ].filter(v => v === false).length;
+    return offCount > 0 ? `Auto emails on · ${offCount} off` : 'Auto emails on';
   })();
 
   const rosterSummary = rosterRequire
@@ -835,7 +845,7 @@ export default function TournamentEventSettingsPage() {
         <div className={styles.cardStack}>
 
         {/* ── Card 1: Tournament Overview ── */}
-        <CollapsibleCard title="Tournament Overview" defaultOpen={false} meta={overviewSummary}>
+        <CollapsibleCard title="Tournament Overview" sectionId="overview" defaultOpen={false} meta={overviewSummary}>
 
           <div className="form-group">
             <label className="form-label">Tournament Name</label>
@@ -1011,572 +1021,29 @@ export default function TournamentEventSettingsPage() {
           )}
         </CollapsibleCard>
 
-        {/* ── Card 2: Schedule Rules ── */}
-        <CollapsibleCard title="Schedule Rules" defaultOpen={false} meta={scheduleRulesSummary}>
-
-          {/* Tournament Format */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Tournament Format</p>
-              <div className={styles.segmentedControl}>
-                {(['round_robin_playoffs', 'playoff_only'] as const).map(fmt => (
-                  <button
-                    key={fmt}
-                    type="button"
-                    disabled={formatLocked || formatBusy}
-                    onClick={() => requestFormatChange(fmt)}
-                    className={`${styles.segmentButton} ${tournamentFormat === fmt ? styles.segmentButtonActive : ''}`}
-                    style={formatLocked ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
-                  >
-                    {fmt === 'round_robin_playoffs' ? 'Round robin + playoffs' : 'Bracket only'}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className={styles.descriptionText} style={{ marginTop: '0.5rem' }}>
-              {tournamentFormat === 'round_robin_playoffs'
-                ? 'Teams play a round robin, then the top teams advance to a playoff bracket seeded from the standings.'
-                : 'No round robin — the event starts straight with a playoff bracket. You seed teams into the first round yourself (manually or randomized) in the Playoff Bracket Builder.'}
+        {/* ── Card 2: Registration Questions ── */}
+        <CollapsibleCard title="Registration Questions" sectionId="questions" defaultOpen={false} meta={registrationQuestionsSummary}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <p className={styles.descriptionText}>
+              Add custom questions to the team registration form — collect confirmations, dropdowns, text answers, and file uploads from coaches during sign-up.
             </p>
-            {formatLocked && (
-              <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
-                The tournament format is locked once the event leaves Draft. Set the status back to Draft to change it.
-              </p>
-            )}
-          </div>
-
-          {/* Game Timing */}
-          <div>
-            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Game Timing</p>
-              <div className={styles.segmentedControl}>
-                {(['tournament', 'allow_override', 'per_division'] as const).map(scope => (
-                  <button
-                    key={scope}
-                    type="button"
-                    onClick={() => setGameTimingScope(scope)}
-                    className={`${styles.segmentButton} ${gameTimingScope === scope ? styles.segmentButtonActive : ''}`}
-                  >
-                    {scope === 'tournament' ? 'Tournament-wide'
-                      : scope === 'allow_override' ? 'Allow override'
-                      : 'Per division'}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {showTimingInputs ? (
-              <>
-                <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
-                  <div className="form-group">
-                    <label className="form-label">Game Duration (minutes)</label>
-                    <input
-                      className="form-input"
-                      type="number"
-                      min="1" max="600" step="5"
-                      value={gameDurationMinutes}
-                      onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n > 0) setGameDurationMinutes(n); }}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Buffer Between Games (minutes)</label>
-                    <input
-                      className="form-input"
-                      type="number"
-                      min="0" max="120" step="5"
-                      value={bufferMinutes}
-                      onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setBufferMinutes(n); }}
-                    />
-                  </div>
-                </div>
-                <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
-                  Example: a {gameDurationMinutes}-minute game at 8:00 AM → next game at that venue no earlier than {(() => {
-                    const total = 8 * 60 + gameDurationMinutes + bufferMinutes;
-                    const h = Math.floor(total / 60) % 24;
-                    const m = total % 60;
-                    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                  })()}.
-                  {gameTimingScope === 'allow_override' && ' Divisions can set their own values.'}
-                </p>
-              </>
+            {canUseRegistrationQuestions ? (
+              <Link href={registrationFieldsHref} className="btn btn-outline btn-data" style={{ alignSelf: 'flex-start' }}>
+                Manage questions →
+              </Link>
             ) : (
-              <p className={styles.descriptionText} style={{ marginTop: '0.5rem' }}>
-                Each division must configure its own game timing before the tournament can be activated.
-              </p>
+              <div className={styles.inlineUpsell}>
+                <p>{requiresTournamentPlusCopy('custom_registration_fields')}</p>
+                <Link href={subscriptionHref} className="btn btn-outline btn-data">Review Tournament Plus</Link>
+              </div>
             )}
-
-            <div style={{ marginTop: '1rem' }}>
-              <p className={styles.subSectionLabel}>Travel &amp; Setup Buffers</p>
-              <p className={styles.descriptionText}>
-                Optional organizer-entered estimates used by Schedule Health and the generator when teams move between facilities. FieldLogicHQ does not calculate drive time.
-              </p>
-              <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Venue Move Buffer (minutes)</label>
-                  <input
-                    className="form-input"
-                    type="number"
-                    min="0"
-                    max="240"
-                    step="5"
-                    value={venueMoveBufferMinutes}
-                    onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setVenueMoveBufferMinutes(n); }}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Facility Move Buffer (minutes)</label>
-                  <input
-                    className="form-input"
-                    type="number"
-                    min="0"
-                    max="240"
-                    step="5"
-                    value={facilityMoveBufferMinutes}
-                    onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setFacilityMoveBufferMinutes(n); }}
-                  />
-                </div>
-              </div>
-              <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
-                Set 0 to ignore that move type. These buffers score tight team moves; they do not create hard venue conflicts.
-              </p>
-            </div>
-          </div>
-
-          <hr className={styles.cardDivider} />
-
-          {/* Tie-Breaker Rules */}
-          <div>
-            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Tie-Breaker Rules</p>
-              <div className={styles.segmentedControl}>
-                {(['tournament', 'allow_override', 'per_division'] as const).map(scope => (
-                  <button
-                    key={scope}
-                    type="button"
-                    onClick={() => setTieBreakerScope(scope)}
-                    className={`${styles.segmentButton} ${tieBreakerScope === scope ? styles.segmentButtonActive : ''}`}
-                  >
-                    {scope === 'tournament' ? 'Tournament-wide'
-                      : scope === 'allow_override' ? 'Allow override'
-                      : 'Per division'}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {showTieBreakerList ? (
-              <div style={{ marginTop: '0.75rem' }}>
-                <TieBreakerEditor
-                  idPrefix="event"
-                  value={tieBreakers}
-                  onChange={setTieBreakers}
-                  cap={runDiffCap}
-                  onCapChange={setRunDiffCap}
-                />
-                {tieBreakerScope === 'allow_override' && (
-                  <p className={styles.inheritNote} style={{ marginTop: '0.5rem' }}>
-                    Divisions can reorder, add/remove, and cap tie-breakers individually.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className={styles.descriptionText} style={{ marginTop: '0.5rem' }}>
-                Each division must set its own tie-breaker order before the tournament can be activated.
-              </p>
-            )}
-          </div>
-
-        </CollapsibleCard>
-
-        {/* ── Card 3: Fee Schedule ── */}
-        <CollapsibleCard title="Fee Schedule" defaultOpen={false} meta={feeSummary}>
-          <p className={styles.subSectionLabel}>Fee model</p>
-          <div className={styles.segmentedControl} style={{ marginBottom: '1rem' }}>
-            {([
-              ['tournament',    'Tournament-wide'],
-              ['allow_override','Allow override'],
-              ['per_division',  'Per division'],
-              ['free',          'Free'],
-            ] as const).map(([scope, label]) => (
-              <button
-                key={scope}
-                type="button"
-                onClick={() => setFeeScope(scope)}
-                className={`${styles.segmentButton} ${feeScope === scope ? styles.segmentButtonActive : ''}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          {feeScope === 'free' ? (
-            <p className={styles.descriptionText}>
-              No payment schedule — teams are not charged a registration fee for this tournament.
-            </p>
-          ) : feeScope === 'per_division' ? (
-            <p className={styles.descriptionText}>
-              Fee amounts and due dates are set per division. Edit each division to configure its fee schedule.
-            </p>
-          ) : (
-            <>
-              {feeScope === 'allow_override' && (
-                <p className={styles.inheritNote} style={{ marginBottom: '0.75rem' }}>
-                  These are the default fee amounts. Divisions can override them individually.
-                </p>
-              )}
-              <div className="form-row form-row-2">
-                <div className="form-group">
-                  <label className="form-label">Deposit Amount ($)</label>
-                  <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 200" value={depositAmount} onChange={e => setDepositAmount(e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Deposit Due Date</label>
-                  <input className="form-input" type="date" value={depositDueDate} onChange={e => setDepositDueDate(e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Total Fee ($)</label>
-                  <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 500" value={totalFeeAmount} onChange={e => setTotalFeeAmount(e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Total Fee Due Date</label>
-                  <input className="form-input" type="date" value={totalFeeDueDate} onChange={e => setTotalFeeDueDate(e.target.value)} />
-                </div>
-              </div>
-            </>
-          )}
-          {showFeeInputs && !feeScope && (
-            <p className={styles.descriptionText}>
-              Choose a payment configuration above to confirm how fees are handled for this tournament.
-            </p>
-          )}
-
-          {feeScope && feeScope !== 'free' && (
-            <>
-              <hr className={styles.cardDivider} />
-
-              {/* Public registration form — fee display + how-to-pay instructions */}
-              <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-                <p className={styles.subSectionLabel} style={{ margin: 0 }}>Fee details on registration form</p>
-                <div className={styles.segmentedControl}>
-                  {([
-                    [true,  'Show'],
-                    [false, 'Hide'],
-                  ] as const).map(([val, label]) => (
-                    <button
-                      key={String(val)}
-                      type="button"
-                      onClick={() => setShowFeesOnRegister(val)}
-                      className={`${styles.segmentButton} ${showFeesOnRegister === val ? styles.segmentButtonActive : ''}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <p className={styles.descriptionText}>
-                When hidden, fee amounts and due dates stay in admin only — coaches won&apos;t see a payment panel on the public registration form.
-              </p>
-
-              <p className={styles.subSectionLabel} style={{ marginTop: '1rem' }}>Payment instructions</p>
-              <textarea
-                className="form-textarea"
-                rows={3}
-                maxLength={1000}
-                placeholder="e.g. E-transfer to treasurer@club.ca with your team name in the memo. Balance due by the date above."
-                value={paymentInstructions}
-                onChange={e => setPaymentInstructions(e.target.value)}
-              />
-              <div className={styles.cardHeaderRow} style={{ marginTop: '0.75rem' }}>
-                <p className={styles.descriptionText} style={{ margin: 0 }}>Where these appear</p>
-                <div className={styles.segmentedControl}>
-                  {([
-                    [false, 'Email only'],
-                    [true,  'Form & email'],
-                  ] as const).map(([val, label]) => (
-                    <button
-                      key={String(val)}
-                      type="button"
-                      onClick={() => setPaymentInstructionsOnForm(val)}
-                      className={`${styles.segmentButton} ${paymentInstructionsOnForm === val ? styles.segmentButtonActive : ''}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <p className={styles.descriptionText} style={{ marginTop: '0.4rem' }}>
-                Payment instructions are always included in the acceptance email. Choose &ldquo;Form &amp; email&rdquo; to also show them on the public registration form.
-              </p>
-            </>
-          )}
-        </CollapsibleCard>
-
-        {/* ── Card 4: Notifications & Contact ── */}
-        <CollapsibleCard title="Notifications & Contact" defaultOpen={false} meta={notificationsSummary}>
-
-          {/* Public Contact */}
-          <div>
-            <p className={styles.subSectionLabel}>Public Contact</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              <p className={styles.descriptionText}>
-                Who coaches and visitors can reach with questions. Defaults to the organization owner if not set.
-                Use the toggles below to control where this email is shown.
-              </p>
-              <div className="form-group">
-                <label className="form-label">Contact Member</label>
-                <select
-                  className="form-input"
-                  value={defaultContactMemberId ?? ''}
-                  onChange={e => setDefaultContactMemberId(e.target.value || null)}
-                  aria-label="Default contact member"
-                >
-                  <option value="">
-                    {ownerMember
-                      ? `${ownerMember.displayName ?? ownerMember.email} (owner)`
-                      : 'Organization Owner'}
-                  </option>
-                  {orgMembers.map(m => (
-                    <option key={m.id} value={m.id}>
-                      {m.displayName ?? m.email}
-                      {m.title ? ` — ${m.title}` : ''}
-                      {' '}({m.role === 'owner' ? 'owner' : m.role})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {defaultContactMemberId && (() => {
-                const selected = orgMembers.find(m => m.id === defaultContactMemberId);
-                return selected ? (
-                  <p className={styles.inheritNote}>
-                    Selected contact: <strong style={{ color: 'var(--white-70)' }}>{selected.email}</strong>
-                  </p>
-                ) : null;
-              })()}
-
-              {/* Per-audience visibility toggles (migration 120) */}
-              {([
-                ['Communication with coaches', 'Show this email to registered coaches — in coach-facing emails (registration, acceptance, payment) and in the Coaches Portal.', contactShowToCoaches, setContactShowToCoaches] as const,
-                ['Show on public site', 'Display this email on your public tournament pages. Turn off to keep it out of reach of spam bots.', contactShowOnPublic, setContactShowOnPublic] as const,
-              ]).map(([label, desc, value, setValue]) => (
-                <div key={label} className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p className={styles.subSectionLabel} style={{ margin: 0 }}>{label}</p>
-                    <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>{desc}</p>
-                  </div>
-                  <div className={styles.segmentedControl} role="radiogroup" aria-label={label}>
-                    {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
-                      <button
-                        key={String(val)}
-                        type="button"
-                        role="radio"
-                        aria-checked={value === val}
-                        onClick={() => setValue(val)}
-                        className={`${styles.segmentButton} ${value === val ? styles.segmentButtonActive : ''}`}
-                      >
-                        {lbl}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              {!contactShowToCoaches && !contactShowOnPublic && (
-                <p className={styles.inheritNote} style={{ color: 'var(--warning, var(--white-70))' }}>
-                  This contact email is hidden everywhere. Coaches won&apos;t see a reply-to address and no contact appears publicly.
-                </p>
-              )}
-            </div>
-          </div>
-
-          <hr className={styles.cardDivider} />
-
-          {/* Registration Alert Routing */}
-          <div>
-            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Registration Alert Routing</p>
-              <div className={styles.segmentedControl} role="radiogroup" aria-label="Notification routing mode">
-                {([
-                  ['all',      'All Registrations'],
-                  ['assigned', 'Assigned Only'],
-                ] as const).map(([mode, label]) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    role="radio"
-                    aria-checked={notifyMode === mode}
-                    onClick={() => setNotifyMode(mode)}
-                    className={`${styles.segmentButton} ${notifyMode === mode ? styles.segmentButtonActive : ''}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              <p className={styles.descriptionText}>
-                {notifyMode === 'all'
-                  ? 'Organization owners and admins are notified for every registration. If a division has an assigned contact, they are notified too.'
-                  : "Only the division-assigned contact is notified. Owners and admins are not notified for divisions they've delegated."}
-              </p>
-              <p className={styles.inheritNote}>
-                Divisions without an assigned contact always notify tournament admins regardless of this setting.
-              </p>
-            </div>
-          </div>
-
-          <hr className={styles.cardDivider} />
-
-          {/* Automatic Coach Emails */}
-          <div>
-            <p className={styles.subSectionLabel}>Automatic Coach Emails</p>
-            <p className={styles.descriptionText} style={{ marginBottom: '0.85rem' }}>
-              These transactional emails are sent automatically to a team&apos;s coach/contact. Turn any off to manage that
-              communication yourself — your manual tools (announcements, payment reminders, resend access) are unaffected.
-            </p>
-            <div
-              style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', opacity: coachEmailPauseAll ? 0.5 : 1 }}
-              aria-disabled={coachEmailPauseAll}
-            >
-              {([
-                ['Registration received', 'Sent to the coach when they submit a registration (confirmation or waitlist receipt).', coachEmailConfirmation, setCoachEmailConfirmation] as const,
-                ['Team accepted', 'Sent when a team is accepted into the tournament.', coachEmailAcceptance, setCoachEmailAcceptance] as const,
-                ['Registration declined', 'Sent when a registration is declined.', coachEmailRejection, setCoachEmailRejection] as const,
-                ['Payment recorded', 'Sent when a team is marked as paid.', coachEmailPayment, setCoachEmailPayment] as const,
-                ['Schedule published', 'Sent to accepted teams when you publish a schedule.', coachEmailSchedule, setCoachEmailSchedule] as const,
-                ['Game-day reminder', "Sent the evening before each team's first game.", coachEmailGameDay, setCoachEmailGameDay] as const,
-              ]).map(([label, desc, value, setValue]) => (
-                <div key={label} className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p className={styles.subSectionLabel} style={{ margin: 0 }}>{label}</p>
-                    <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>{desc}</p>
-                  </div>
-                  <div className={styles.segmentedControl} role="radiogroup" aria-label={`${label} email`}>
-                    {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
-                      <button
-                        key={String(val)}
-                        type="button"
-                        role="radio"
-                        aria-checked={value === val}
-                        onClick={() => setValue(val)}
-                        className={`${styles.segmentButton} ${value === val ? styles.segmentButtonActive : ''}`}
-                      >
-                        {lbl}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Master kill-switch — overrides every per-type toggle above (5n). */}
-            <div
-              className={styles.cardHeaderRow}
-              style={{ alignItems: 'flex-start', gap: '1rem', marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '1px solid var(--border, rgba(255,255,255,0.08))' }}
-            >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p className={styles.subSectionLabel} style={{ margin: 0 }}>Pause all automatic emails</p>
-                <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>
-                  Stop every automatic coach email for this tournament — including acceptances, the schedule, game-day reminders
-                  and final results. Turn this on when you&apos;re handling all coach communication yourself.
-                </p>
-              </div>
-              <div className={styles.segmentedControl} role="radiogroup" aria-label="Pause all automatic coach emails">
-                {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
-                  <button
-                    key={String(val)}
-                    type="button"
-                    role="radio"
-                    aria-checked={coachEmailPauseAll === val}
-                    onClick={() => setCoachEmailPauseAll(val)}
-                    className={`${styles.segmentButton} ${coachEmailPauseAll === val ? styles.segmentButtonActive : ''}`}
-                  >
-                    {lbl}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {coachEmailPauseAll && (
-              <p className={styles.inheritNote} style={{ color: 'var(--warning, var(--white-70))', marginTop: '0.5rem' }}>
-                All automatic coach emails are paused. The individual settings above are ignored until you turn this off.
-              </p>
-            )}
-          </div>
-
-          <hr className={styles.cardDivider} />
-
-          {/* Score Finalization — moved here from Schedule Rules: it's a results-management
-              decision (who approves scores) not a scheduling rule. */}
-          <div>
-            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Score Finalization</p>
-              <div className={styles.segmentedControl} role="radiogroup" aria-label="Score finalization policy">
-                {([
-                  ['review', 'Admin Review'],
-                  ['final',  'Final Immediately'],
-                ] as const).map(([mode, label]) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    role="radio"
-                    aria-checked={scorePolicyMode === mode}
-                    onClick={() => setScorePolicyMode(mode)}
-                    className={`${styles.segmentButton} ${scorePolicyMode === mode ? styles.segmentButtonActive : ''}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className={styles.descriptionText}>
-              Admin review sends scorekeeper submissions to Pending Review until an admin finalizes them in Results.
-              Final immediately makes scorekeeper submissions final as soon as they are saved.
-            </p>
-          </div>
-
-          <hr className={styles.cardDivider} />
-
-          {/* Post-Event Results */}
-          <div>
-            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
-              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Post-Event Results</p>
-              <div className={styles.segmentedControl}>
-                {([
-                  [true,  'Enabled'],
-                  [false, 'Disabled'],
-                ] as const).map(([val, label]) => (
-                  <button
-                    key={String(val)}
-                    type="button"
-                    onClick={() => { if (canUsePostEventNotifications) setNotifyTeamsOnComplete(val); }}
-                    className={`${styles.segmentButton} ${notifyTeamsOnComplete === val ? styles.segmentButtonActive : ''}`}
-                    disabled={!canUsePostEventNotifications}
-                    style={!canUsePostEventNotifications ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-              <p className={styles.descriptionText}>
-                When enabled, accepted team contacts receive one email with public standings, schedule, and team links the first time this tournament is marked completed.
-              </p>
-              {resultsNotifiedAt && (
-                <p style={{ fontSize: '0.72rem', fontFamily: 'var(--font-data)', color: 'var(--logic-lime)', lineHeight: 1.5, margin: 0 }}>
-                  Results notification sent to {resultsNotificationSentCount} team contact{resultsNotificationSentCount === 1 ? '' : 's'} on {resultsNotifiedAt.slice(0, 10)}.
-                </p>
-              )}
-              {!canUsePostEventNotifications && (
-                <div className={styles.inlineUpsell}>
-                  <p>{requiresTournamentPlusCopy('post_tournament_summary')}</p>
-                  <Link href={subscriptionHref} className="btn btn-outline btn-data">Review Tournament Plus</Link>
-                </div>
-              )}
-            </div>
           </div>
         </CollapsibleCard>
 
-        {/* ── Card 5: Roster Requirements (Phase 5f) — read by the Coaches Portal
+        {/* ── Card 3: Roster Requirements (Phase 5f) — read by the Coaches Portal
             event-roster submission (5h/5k). Applies to the per-event snapshot only,
             never to a coach's master roster. ── */}
-        <CollapsibleCard title="Roster Requirements" defaultOpen={false} meta={rosterSummary}>
+        <CollapsibleCard title="Roster Requirements" sectionId="roster" defaultOpen={false} meta={rosterSummary}>
           <div className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem', marginBottom: '0.5rem' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p className={styles.subSectionLabel} style={{ margin: 0 }}>Event roster</p>
@@ -1757,23 +1224,561 @@ export default function TournamentEventSettingsPage() {
           )}
         </CollapsibleCard>
 
-        {/* Registration Questions */}
-        <CollapsibleCard title="Registration Questions" defaultOpen={false} meta={registrationQuestionsSummary}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+        {/* ── Card 4: Fees & Payments ── */}
+        <CollapsibleCard title="Fees & Payments" sectionId="fees" defaultOpen={false} meta={feeSummary}>
+          <p className={styles.subSectionLabel}>Fee model</p>
+          <div className={styles.segmentedControl} style={{ marginBottom: '1rem' }}>
+            {([
+              ['tournament',    'Tournament-wide'],
+              ['allow_override','Allow override'],
+              ['per_division',  'Per division'],
+              ['free',          'Free'],
+            ] as const).map(([scope, label]) => (
+              <button
+                key={scope}
+                type="button"
+                onClick={() => setFeeScope(scope)}
+                className={`${styles.segmentButton} ${feeScope === scope ? styles.segmentButtonActive : ''}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {feeScope === 'free' ? (
             <p className={styles.descriptionText}>
-              Add custom questions to the team registration form — collect confirmations, dropdowns, text answers, and file uploads from coaches during sign-up.
+              No payment schedule — teams are not charged a registration fee for this tournament.
             </p>
-            {canUseRegistrationQuestions ? (
-              <Link href={registrationFieldsHref} className="btn btn-outline btn-data" style={{ alignSelf: 'flex-start' }}>
-                Manage questions →
-              </Link>
-            ) : (
-              <div className={styles.inlineUpsell}>
-                <p>{requiresTournamentPlusCopy('custom_registration_fields')}</p>
-                <Link href={subscriptionHref} className="btn btn-outline btn-data">Review Tournament Plus</Link>
+          ) : feeScope === 'per_division' ? (
+            <p className={styles.descriptionText}>
+              Fee amounts and due dates are set per division. Edit each division to configure its fee schedule.
+            </p>
+          ) : (
+            <>
+              {feeScope === 'allow_override' && (
+                <p className={styles.inheritNote} style={{ marginBottom: '0.75rem' }}>
+                  These are the default fee amounts. Divisions can override them individually.
+                </p>
+              )}
+              <div className="form-row form-row-2">
+                <div className="form-group">
+                  <label className="form-label">Deposit Amount ($)</label>
+                  <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 200" value={depositAmount} onChange={e => setDepositAmount(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Deposit Due Date</label>
+                  <input className="form-input" type="date" value={depositDueDate} onChange={e => setDepositDueDate(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Total Fee ($)</label>
+                  <input className="form-input" type="number" min="0" step="0.01" placeholder="e.g. 500" value={totalFeeAmount} onChange={e => setTotalFeeAmount(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Total Fee Due Date</label>
+                  <input className="form-input" type="date" value={totalFeeDueDate} onChange={e => setTotalFeeDueDate(e.target.value)} />
+                </div>
               </div>
+            </>
+          )}
+          {showFeeInputs && !feeScope && (
+            <p className={styles.descriptionText}>
+              Choose a payment configuration above to confirm how fees are handled for this tournament.
+            </p>
+          )}
+
+          {feeScope && feeScope !== 'free' && (
+            <>
+              <hr className={styles.cardDivider} />
+
+              {/* Public registration form — fee display + how-to-pay instructions */}
+              <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
+                <p className={styles.subSectionLabel} style={{ margin: 0 }}>Fee details on registration form</p>
+                <div className={styles.segmentedControl}>
+                  {([
+                    [true,  'Show'],
+                    [false, 'Hide'],
+                  ] as const).map(([val, label]) => (
+                    <button
+                      key={String(val)}
+                      type="button"
+                      onClick={() => setShowFeesOnRegister(val)}
+                      className={`${styles.segmentButton} ${showFeesOnRegister === val ? styles.segmentButtonActive : ''}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className={styles.descriptionText}>
+                When hidden, fee amounts and due dates stay in admin only — coaches won&apos;t see a payment panel on the public registration form.
+              </p>
+
+              <p className={styles.subSectionLabel} style={{ marginTop: '1rem' }}>Payment instructions</p>
+              <textarea
+                className="form-textarea"
+                rows={3}
+                maxLength={1000}
+                placeholder="e.g. E-transfer to treasurer@club.ca with your team name in the memo. Balance due by the date above."
+                value={paymentInstructions}
+                onChange={e => setPaymentInstructions(e.target.value)}
+              />
+              <div className={styles.cardHeaderRow} style={{ marginTop: '0.75rem' }}>
+                <p className={styles.descriptionText} style={{ margin: 0 }}>Where these appear</p>
+                <div className={styles.segmentedControl}>
+                  {([
+                    [false, 'Email only'],
+                    [true,  'Form & email'],
+                  ] as const).map(([val, label]) => (
+                    <button
+                      key={String(val)}
+                      type="button"
+                      onClick={() => setPaymentInstructionsOnForm(val)}
+                      className={`${styles.segmentButton} ${paymentInstructionsOnForm === val ? styles.segmentButtonActive : ''}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className={styles.descriptionText} style={{ marginTop: '0.4rem' }}>
+                Payment instructions are always included in the acceptance email. Choose &ldquo;Form &amp; email&rdquo; to also show them on the public registration form.
+              </p>
+            </>
+          )}
+        </CollapsibleCard>
+
+        {/* ── Card 5: Contact ── */}
+        <CollapsibleCard title="Contact" sectionId="contact" defaultOpen={false} meta={contactSummary}>
+
+          {/* Public Contact */}
+          <div>
+            <p className={styles.subSectionLabel}>Public Contact</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              <p className={styles.descriptionText}>
+                Who coaches and visitors reach with questions. Defaults to the org owner. The toggles set where it shows.
+              </p>
+              <div className="form-group">
+                <label className="form-label">Contact Member</label>
+                <select
+                  className="form-input"
+                  value={defaultContactMemberId ?? ''}
+                  onChange={e => setDefaultContactMemberId(e.target.value || null)}
+                  aria-label="Default contact member"
+                >
+                  <option value="">
+                    {ownerMember
+                      ? `${ownerMember.displayName ?? ownerMember.email} (owner)`
+                      : 'Organization Owner'}
+                  </option>
+                  {orgMembers.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.displayName ?? m.email}
+                      {m.title ? ` — ${m.title}` : ''}
+                      {' '}({m.role === 'owner' ? 'owner' : m.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {defaultContactMemberId && (() => {
+                const selected = orgMembers.find(m => m.id === defaultContactMemberId);
+                return selected ? (
+                  <p className={styles.inheritNote}>
+                    Selected contact: <strong style={{ color: 'var(--white-70)' }}>{selected.email}</strong>
+                  </p>
+                ) : null;
+              })()}
+
+              {/* Per-audience visibility toggles (migration 120) */}
+              {([
+                ['Communication with coaches', 'Show this email to registered coaches — in coach-facing emails (registration, acceptance, payment) and in the Coaches Portal.', contactShowToCoaches, setContactShowToCoaches] as const,
+                ['Show on public site', 'Display this email on your public tournament pages. Turn off to keep it out of reach of spam bots.', contactShowOnPublic, setContactShowOnPublic] as const,
+              ]).map(([label, desc, value, setValue]) => (
+                <div key={label} className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className={styles.subSectionLabel} style={{ margin: 0 }}>{label}</p>
+                    <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>{desc}</p>
+                  </div>
+                  <div className={styles.segmentedControl} role="radiogroup" aria-label={label}>
+                    {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
+                      <button
+                        key={String(val)}
+                        type="button"
+                        role="radio"
+                        aria-checked={value === val}
+                        onClick={() => setValue(val)}
+                        className={`${styles.segmentButton} ${value === val ? styles.segmentButtonActive : ''}`}
+                      >
+                        {lbl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {!contactShowToCoaches && !contactShowOnPublic && (
+                <p className={styles.inheritNote} style={{ color: 'var(--warning, var(--white-70))' }}>
+                  This contact email is hidden everywhere. Coaches won&apos;t see a reply-to address and no contact appears publicly.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <hr className={styles.cardDivider} />
+
+          {/* Registration Alert Routing */}
+          <div>
+            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
+              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Registration Alert Routing</p>
+              <div className={styles.segmentedControl} role="radiogroup" aria-label="Notification routing mode">
+                {([
+                  ['all',      'All Registrations'],
+                  ['assigned', 'Assigned Only'],
+                ] as const).map(([mode, label]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    role="radio"
+                    aria-checked={notifyMode === mode}
+                    onClick={() => setNotifyMode(mode)}
+                    className={`${styles.segmentButton} ${notifyMode === mode ? styles.segmentButtonActive : ''}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              <p className={styles.descriptionText}>
+                {notifyMode === 'all'
+                  ? 'Organization owners and admins are notified for every registration. If a division has an assigned contact, they are notified too.'
+                  : "Only the division-assigned contact is notified. Owners and admins are not notified for divisions they've delegated."}
+              </p>
+              <p className={styles.inheritNote}>
+                Divisions without an assigned contact always notify tournament admins regardless of this setting.
+              </p>
+            </div>
+          </div>
+        </CollapsibleCard>
+
+        {/* ── Card 6: Coach Emails ── */}
+        <CollapsibleCard title="Coach Emails" sectionId="coach-emails" defaultOpen={false} meta={coachEmailsSummary}>
+
+          {/* Master switch — positive On/Off at the top. Persisted as
+              coach_email_pause_all (true = off); the UI binds to its inverse so
+              "On" reads as "sending" (no double-negative). */}
+          <div className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem', marginBottom: '0.85rem' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Automatic coach emails</p>
+              <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>
+                When on, the emails below send automatically to each team&apos;s coach/contact. Turn off to handle all coach
+                communication yourself — your manual tools (announcements, payment reminders, resend access) are unaffected.
+              </p>
+            </div>
+            <div className={styles.segmentedControl} role="radiogroup" aria-label="Automatic coach emails">
+              {([[false, 'On'], [true, 'Off']] as const).map(([pausedVal, lbl]) => (
+                <button
+                  key={lbl}
+                  type="button"
+                  role="radio"
+                  aria-checked={coachEmailPauseAll === pausedVal}
+                  onClick={() => setCoachEmailPauseAll(pausedVal)}
+                  className={`${styles.segmentButton} ${coachEmailPauseAll === pausedVal ? styles.segmentButtonActive : ''}`}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          </div>
+          {coachEmailPauseAll && (
+            <p className={styles.inheritNote} style={{ color: 'var(--warning, var(--white-70))', marginBottom: '0.85rem' }}>
+              Automatic coach emails are off. The individual settings below are ignored until you turn this on.
+            </p>
+          )}
+
+          {/* Per-type toggles */}
+          <div>
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', opacity: coachEmailPauseAll ? 0.5 : 1 }}
+              aria-disabled={coachEmailPauseAll}
+            >
+              {([
+                ['Registration received', 'Sent to the coach when they submit a registration (confirmation or waitlist receipt).', coachEmailConfirmation, setCoachEmailConfirmation] as const,
+                ['Team accepted', 'Sent when a team is accepted into the tournament.', coachEmailAcceptance, setCoachEmailAcceptance] as const,
+                ['Registration declined', 'Sent when a registration is declined.', coachEmailRejection, setCoachEmailRejection] as const,
+                ['Payment recorded', 'Sent when a team is marked as paid.', coachEmailPayment, setCoachEmailPayment] as const,
+                ['Schedule published', 'Sent to accepted teams when you publish a schedule.', coachEmailSchedule, setCoachEmailSchedule] as const,
+                ['Game-day reminder', "Sent the evening before each team's first game.", coachEmailGameDay, setCoachEmailGameDay] as const,
+              ]).map(([label, desc, value, setValue]) => (
+                <div key={label} className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className={styles.subSectionLabel} style={{ margin: 0 }}>{label}</p>
+                    <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>{desc}</p>
+                  </div>
+                  <div className={styles.segmentedControl} role="radiogroup" aria-label={`${label} email`}>
+                    {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
+                      <button
+                        key={String(val)}
+                        type="button"
+                        role="radio"
+                        aria-checked={value === val}
+                        onClick={() => setValue(val)}
+                        className={`${styles.segmentButton} ${value === val ? styles.segmentButtonActive : ''}`}
+                      >
+                        {lbl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <hr className={styles.cardDivider} />
+
+          {/* Post-Event Results */}
+          <div>
+            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
+              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Post-Event Results</p>
+              <div className={styles.segmentedControl}>
+                {([
+                  [true,  'Enabled'],
+                  [false, 'Disabled'],
+                ] as const).map(([val, label]) => (
+                  <button
+                    key={String(val)}
+                    type="button"
+                    onClick={() => { if (canUsePostEventNotifications) setNotifyTeamsOnComplete(val); }}
+                    className={`${styles.segmentButton} ${notifyTeamsOnComplete === val ? styles.segmentButtonActive : ''}`}
+                    disabled={!canUsePostEventNotifications}
+                    style={!canUsePostEventNotifications ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              <p className={styles.descriptionText}>
+                When enabled, accepted team contacts receive one email with public standings, schedule, and team links the first time this tournament is marked completed.
+              </p>
+              {resultsNotifiedAt && (
+                <p style={{ fontSize: '0.72rem', fontFamily: 'var(--font-data)', color: 'var(--logic-lime)', lineHeight: 1.5, margin: 0 }}>
+                  Results notification sent to {resultsNotificationSentCount} team contact{resultsNotificationSentCount === 1 ? '' : 's'} on {resultsNotifiedAt.slice(0, 10)}.
+                </p>
+              )}
+              {!canUsePostEventNotifications && (
+                <div className={styles.inlineUpsell}>
+                  <p>{requiresTournamentPlusCopy('post_tournament_summary')}</p>
+                  <Link href={subscriptionHref} className="btn btn-outline btn-data">Review Tournament Plus</Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </CollapsibleCard>
+
+        {/* ── Card 7: Schedule Rules ── */}
+        <CollapsibleCard title="Schedule Rules" sectionId="schedule" defaultOpen={false} meta={scheduleRulesSummary}>
+
+          {/* Tournament Format */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
+              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Tournament Format</p>
+              <div className={styles.segmentedControl}>
+                {(['round_robin_playoffs', 'playoff_only'] as const).map(fmt => (
+                  <button
+                    key={fmt}
+                    type="button"
+                    disabled={formatLocked || formatBusy}
+                    onClick={() => requestFormatChange(fmt)}
+                    className={`${styles.segmentButton} ${tournamentFormat === fmt ? styles.segmentButtonActive : ''}`}
+                    style={formatLocked ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
+                  >
+                    {fmt === 'round_robin_playoffs' ? 'Round robin + playoffs' : 'Bracket only'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className={styles.descriptionText} style={{ marginTop: '0.5rem' }}>
+              {tournamentFormat === 'round_robin_playoffs'
+                ? 'Teams play a round robin, then the top teams advance to a playoff bracket seeded from the standings.'
+                : 'No round robin — the event starts straight with a playoff bracket. You seed teams into the first round yourself (manually or randomized) in the Playoff Bracket Builder.'}
+            </p>
+            {formatLocked && (
+              <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
+                The tournament format is locked once the event leaves Draft. Set the status back to Draft to change it.
+              </p>
             )}
           </div>
+
+          {/* Game Timing */}
+          <div>
+            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
+              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Game Timing</p>
+              <div className={styles.segmentedControl}>
+                {(['tournament', 'allow_override', 'per_division'] as const).map(scope => (
+                  <button
+                    key={scope}
+                    type="button"
+                    onClick={() => setGameTimingScope(scope)}
+                    className={`${styles.segmentButton} ${gameTimingScope === scope ? styles.segmentButtonActive : ''}`}
+                  >
+                    {scope === 'tournament' ? 'Tournament-wide'
+                      : scope === 'allow_override' ? 'Allow override'
+                      : 'Per division'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {showTimingInputs ? (
+              <>
+                <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">Game Duration (minutes)</label>
+                    <input
+                      className="form-input"
+                      type="number"
+                      min="1" max="600" step="5"
+                      value={gameDurationMinutes}
+                      onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n > 0) setGameDurationMinutes(n); }}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Buffer Between Games (minutes)</label>
+                    <input
+                      className="form-input"
+                      type="number"
+                      min="0" max="120" step="5"
+                      value={bufferMinutes}
+                      onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setBufferMinutes(n); }}
+                    />
+                  </div>
+                </div>
+                <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
+                  Example: a {gameDurationMinutes}-minute game at 8:00 AM → next game at that venue no earlier than {(() => {
+                    const total = 8 * 60 + gameDurationMinutes + bufferMinutes;
+                    const h = Math.floor(total / 60) % 24;
+                    const m = total % 60;
+                    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                  })()}.
+                  {gameTimingScope === 'allow_override' && ' Divisions can set their own values.'}
+                </p>
+              </>
+            ) : (
+              <p className={styles.descriptionText} style={{ marginTop: '0.5rem' }}>
+                Each division must configure its own game timing before the tournament can be activated.
+              </p>
+            )}
+
+            <div style={{ marginTop: '1rem' }}>
+              <p className={styles.subSectionLabel}>Travel &amp; Setup Buffers</p>
+              <p className={styles.descriptionText}>
+                Optional organizer-entered estimates used by Schedule Health and the generator when teams move between facilities. FieldLogicHQ does not calculate drive time.
+              </p>
+              <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
+                <div className="form-group">
+                  <label className="form-label">Venue Move Buffer (minutes)</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    max="240"
+                    step="5"
+                    value={venueMoveBufferMinutes}
+                    onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setVenueMoveBufferMinutes(n); }}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Facility Move Buffer (minutes)</label>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    max="240"
+                    step="5"
+                    value={facilityMoveBufferMinutes}
+                    onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n >= 0) setFacilityMoveBufferMinutes(n); }}
+                  />
+                </div>
+              </div>
+              <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>
+                Set 0 to ignore that move type. These buffers score tight team moves; they do not create hard venue conflicts.
+              </p>
+            </div>
+          </div>
+
+          <hr className={styles.cardDivider} />
+
+          {/* Tie-Breaker Rules */}
+          <div>
+            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
+              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Tie-Breaker Rules</p>
+              <div className={styles.segmentedControl}>
+                {(['tournament', 'allow_override', 'per_division'] as const).map(scope => (
+                  <button
+                    key={scope}
+                    type="button"
+                    onClick={() => setTieBreakerScope(scope)}
+                    className={`${styles.segmentButton} ${tieBreakerScope === scope ? styles.segmentButtonActive : ''}`}
+                  >
+                    {scope === 'tournament' ? 'Tournament-wide'
+                      : scope === 'allow_override' ? 'Allow override'
+                      : 'Per division'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {showTieBreakerList ? (
+              <div style={{ marginTop: '0.75rem' }}>
+                <TieBreakerEditor
+                  idPrefix="event"
+                  value={tieBreakers}
+                  onChange={setTieBreakers}
+                  cap={runDiffCap}
+                  onCapChange={setRunDiffCap}
+                />
+                {tieBreakerScope === 'allow_override' && (
+                  <p className={styles.inheritNote} style={{ marginTop: '0.5rem' }}>
+                    Divisions can reorder, add/remove, and cap tie-breakers individually.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className={styles.descriptionText} style={{ marginTop: '0.5rem' }}>
+                Each division must set its own tie-breaker order before the tournament can be activated.
+              </p>
+            )}
+          </div>
+
+          <hr className={styles.cardDivider} />
+
+          {/* Score Finalization — a results-management rule (who approves scores),
+              grouped here with the other game-results decisions. */}
+          <div>
+            <div className={styles.cardHeaderRow} style={{ marginBottom: '0.5rem' }}>
+              <p className={styles.subSectionLabel} style={{ margin: 0 }}>Score Finalization</p>
+              <div className={styles.segmentedControl} role="radiogroup" aria-label="Score finalization policy">
+                {([
+                  ['review', 'Admin Review'],
+                  ['final',  'Final Immediately'],
+                ] as const).map(([mode, label]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    role="radio"
+                    aria-checked={scorePolicyMode === mode}
+                    onClick={() => setScorePolicyMode(mode)}
+                    className={`${styles.segmentButton} ${scorePolicyMode === mode ? styles.segmentButtonActive : ''}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className={styles.descriptionText}>
+              Admin review holds scorekeeper submissions in Pending Review until an admin finalizes them in Results.
+              Final immediately makes a submission final as soon as it&apos;s saved.
+            </p>
+          </div>
+
         </CollapsibleCard>
 
         </div>{/* .cardStack */}
