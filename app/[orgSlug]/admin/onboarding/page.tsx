@@ -637,7 +637,7 @@ export default function OnboardingPage() {
     if (planKey === 'tournament') {
       setPlanLoading(planKey);
       try {
-        await requestJson<{ success: boolean }>('/api/admin/org/onboarding-plan', {
+        await requestJson<{ success: boolean }>(`/api/admin/org/onboarding-plan?orgSlug=${encodeURIComponent(currentOrg.slug)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ planKey }),
@@ -1369,12 +1369,16 @@ export default function OnboardingPage() {
     setStepError('');
     setStepSaving(true);
 
+    // These admin routes are org-context fail-closed (requireOrgSlug) — always
+    // pass the active org slug so a multi-membership session resolves the right org.
+    const orgParam = `?orgSlug=${encodeURIComponent(currentOrg.slug)}`;
+
     try {
       if (draftSkipped.tournament) {
         for (const taskId of STARTUP_ORDER) {
           await markStartupTask(taskId, 'skipped', currentOrg?.slug);
         }
-        await requestJson<{ ok: boolean }>('/api/admin/org/complete-onboarding', { method: 'POST' });
+        await requestJson<{ ok: boolean }>(`/api/admin/org/complete-onboarding${orgParam}`, { method: 'POST' });
         await refreshOrgContext();
         setWorkflowRedirecting(true);
         router.replace(getPostOnboardingHref(currentOrg, { hasTournament: false }));
@@ -1386,7 +1390,7 @@ export default function OnboardingPage() {
       const announcement = !draftSkipped.welcome && useWelcomeMsg ? { body: welcomeMsg.trim() } : null;
       const venues = draftSkipped.venues ? [] : getVenueDraftRows();
 
-      const created = await requestJson<{ success: boolean; id: string; slug: string; name: string }>('/api/admin/setup-tournament', {
+      const created = await requestJson<{ success: boolean; id: string; slug: string; name: string }>(`/api/admin/setup-tournament${orgParam}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1397,7 +1401,7 @@ export default function OnboardingPage() {
         }),
       });
 
-      await Promise.all(venues.map(row => requestJson<{ success: boolean }>('/api/admin/venues', {
+      await Promise.all(venues.map(row => requestJson<{ success: boolean }>(`/api/admin/venues${orgParam}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1415,14 +1419,14 @@ export default function OnboardingPage() {
 
       // Bracket-only is stored as a tournament setting (default round-robin needs no write).
       if (tournamentForm.format === 'playoff_only') {
-        await requestJson<{ success: boolean }>('/api/admin/tournaments', {
+        await requestJson<{ success: boolean }>(`/api/admin/tournaments${orgParam}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'patch-settings', id: created.id, data: { settings: { format: 'playoff_only' } } }),
         }).catch(() => { /* non-fatal: format can still be set in Event Settings */ });
       }
 
-      await requestJson<{ ok: boolean }>('/api/admin/org/complete-onboarding', { method: 'POST' });
+      await requestJson<{ ok: boolean }>(`/api/admin/org/complete-onboarding${orgParam}`, { method: 'POST' });
       await refreshTournamentContext();
       await refreshOrgContext();
       await refreshStartup();
@@ -1440,12 +1444,15 @@ export default function OnboardingPage() {
     setStepError('');
     setStepSaving(true);
 
+    // Org-context fail-closed routes (requireOrgSlug) — pass the active org slug.
+    const orgParam = `?orgSlug=${encodeURIComponent(currentOrg.slug)}`;
+
     try {
       if (leagueDraftSkipped.league_season) {
         for (const taskId of LEAGUE_STARTUP_ORDER) {
           await markStartupTask(taskId, 'skipped', currentOrg?.slug);
         }
-        await requestJson<{ ok: boolean }>('/api/admin/org/complete-onboarding', { method: 'POST' });
+        await requestJson<{ ok: boolean }>(`/api/admin/org/complete-onboarding${orgParam}`, { method: 'POST' });
         await refreshOrgContext();
         setWorkflowRedirecting(true);
         router.replace(`/${currentOrg.slug}/admin`);
@@ -1455,13 +1462,13 @@ export default function OnboardingPage() {
       const season = getLeagueSeasonDraft();
       const divisions = leagueDraftSkipped.league_divisions ? [] : getLeagueDivisionDraftRows();
 
-      const createdSeason = await requestJson<{ id: string }>('/api/admin/house-league/seasons', {
+      const createdSeason = await requestJson<{ id: string }>(`/api/admin/house-league/seasons${orgParam}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(season),
       });
 
-      await Promise.all(divisions.map(row => requestJson<{ id: string }>(`/api/admin/house-league/seasons/${createdSeason.id}/divisions`, {
+      await Promise.all(divisions.map(row => requestJson<{ id: string }>(`/api/admin/house-league/seasons/${createdSeason.id}/divisions${orgParam}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1474,7 +1481,7 @@ export default function OnboardingPage() {
       await markStartupTask('league_divisions', divisions.length > 0 ? 'complete' : 'skipped', currentOrg?.slug);
       await markStartupTask('league_registration', leagueDraftSkipped.league_registration ? 'skipped' : 'complete', currentOrg?.slug);
       await markStartupTask('league_tournament', 'skipped', currentOrg?.slug);
-      await requestJson<{ ok: boolean }>('/api/admin/org/complete-onboarding', { method: 'POST' });
+      await requestJson<{ ok: boolean }>(`/api/admin/org/complete-onboarding${orgParam}`, { method: 'POST' });
       await refreshStartup();
       await refreshOrgContext();
 
