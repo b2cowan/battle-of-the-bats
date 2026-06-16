@@ -14,6 +14,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
 import { markPaidInFullPatch } from '@/lib/mark-paid';
+import { claimNextOpenSlot } from '@/lib/slot-claim';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -267,6 +268,18 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   for (const update of updates) {
     const { error } = await supabaseAdmin.from('teams').update(update.patch).eq('id', update.id);
     if (error) return json({ error: error.message }, 500);
+  }
+
+  // J1-066: when a team is accepted into a slot-configured division, drop it into
+  // the next open slot so it stays on the board (the board IS the slots). No-op
+  // when the division has no empty slot — the team then surfaces in the always-on
+  // "Unplaced" attention list rather than vanishing. Sequential so multiple
+  // accepts fill consecutive slots.
+  if (bulkAction === 'accept') {
+    for (const team of selectedTeams) {
+      if (team.slot_id) continue;
+      await claimNextOpenSlot(team.id, team.division_id);
+    }
   }
 
   const paymentInstructions = typeof tournament.settings?.payment_instructions === 'string'

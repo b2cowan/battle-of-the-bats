@@ -282,6 +282,7 @@ export default function UnifiedTeamsPage() {
   const [activeAttentionKey, setActiveAttentionKey] = useState<RegistrationAttentionKey | null>(null);
   const attentionQueryAppliedRef = useRef<string | null>(null);
   const divisionQueryAppliedRef = useRef<string | null>(null);
+  const paymentQueryAppliedRef = useRef<string | null>(null);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [paymentInstructions, setPaymentInstructions] = useState('');
   const [editingTeam, setEditingTeam] = useState<TeamRecord | null>(null);
@@ -425,8 +426,18 @@ export default function UnifiedTeamsPage() {
     });
   }, [regs, selectedDivisionId]);
 
+  // J1-069: pre-fill the reminder message with the payment instructions the
+  // organizer already saved in Event Settings (tournament.settings.payment_instructions
+  // — the exact field the reminder email sends), so they don't retype their
+  // e-transfer details every send. Fall back to a generic prompt only when none
+  // is saved. Still editable per send.
   useEffect(() => {
     if (paymentInstructions || !currentTournament) return;
+    const saved = currentTournament.settings?.payment_instructions;
+    if (typeof saved === 'string' && saved.trim()) {
+      setPaymentInstructions(saved.trim());
+      return;
+    }
     setPaymentInstructions(`Please send payment for ${currentTournament.name} using the payment instructions provided by the tournament organizer. Include your team name and division in the memo or note.`);
   }, [currentTournament, paymentInstructions]);
 
@@ -1068,6 +1079,13 @@ export default function UnifiedTeamsPage() {
   const waitlistTeams = divRegs.filter(r => r.waitlistPosition != null).sort((a, b) => (a.waitlistPosition ?? 0) - (b.waitlistPosition ?? 0));
   const filledSlotCount = poolSlots.filter(s => s.teamId !== null).length;
   const pendingCount = divRegs.filter(r => r.status === 'pending').length;
+  // J1-066: accepted teams in this slot-configured division that hold no slot and
+  // aren't waitlisted — the always-on safety net so an accepted team can never
+  // silently fall off the slot board (auto-claim on accept covers the common case;
+  // this catches the leftover when the division was full at accept time).
+  const placedTeamIds = new Set(poolSlots.map(s => s.teamId).filter(Boolean) as string[]);
+  const unplacedTeams = divRegs.filter(r =>
+    r.status === 'accepted' && r.waitlistPosition == null && !placedTeamIds.has(r.id));
   const paymentSummary = useMemo(() => {
     const accepted = divRegs.filter(team => team.status === 'accepted');
     let expected = 0;
@@ -1392,6 +1410,28 @@ export default function UnifiedTeamsPage() {
     attentionQueryAppliedRef.current = token;
     focusAttentionBucket(attentionParam, validDivisionParam);
   }, [attentionParam, currentTournament?.id, divisionParam, divisions, focusAttentionBucket, hasLoadedInitial]);
+
+  // J1-067: honor dashboard payment deep-links (?payment=paid|deposit|pending).
+  // The dashboard's per-division payment cells link here; the page previously read
+  // only attention/division, so these landed on the unfiltered list. Map the
+  // dashboard tokens onto the page's payment filter (pending → unpaid).
+  const paymentParam = searchParams.get('payment');
+  useEffect(() => {
+    if (!hasLoadedInitial || !currentTournament?.id || !paymentParam || !paymentToolsAvailable) return;
+    const filter: ActivePaymentFilter | null =
+      paymentParam === 'paid' ? 'paid'
+      : paymentParam === 'deposit' ? 'deposit-paid'
+      : paymentParam === 'pending' ? 'unpaid'
+      : paymentParam === 'past-due' ? 'past-due'
+      : null;
+    if (!filter) return;
+    const token = `${currentTournament.id}:${paymentParam}`;
+    if (paymentQueryAppliedRef.current === token) return;
+    paymentQueryAppliedRef.current = token;
+    setActiveAttentionKey(null);
+    setSelectedStatuses(['accepted']);
+    setPaymentFilters([filter]);
+  }, [currentTournament?.id, hasLoadedInitial, paymentParam, paymentToolsAvailable]);
 
   const hasNonDefaultFilters = paymentFilters.length > 0 ||
     selectedStatuses.length !== 3 ||
@@ -1774,6 +1814,38 @@ export default function UnifiedTeamsPage() {
         );
       })()}
 
+      {/* ── Payment money strip (J1-068) ─────────────────────────────────────────
+          paymentSummary was computed but never rendered; the .paymentPanel/.paymentMetric
+          CSS sat orphaned. Render the per-division money roll-up so the organizer sees
+          totals here instead of bouncing to the dashboard. Payment-tool surface, so
+          gated like the existing payment filters; only shown when a fee schedule applies. */}
+      {paymentToolsAvailable && currentTournament && selectedGroup && !isLocked && paymentSummary.scheduled > 0 && (
+        <div className={styles.paymentPanel}>
+          <div className={styles.paymentMetrics}>
+            <div className={styles.paymentMetric}>
+              <span>With a fee</span>
+              <strong>{paymentSummary.scheduled}</strong>
+            </div>
+            <div className={styles.paymentMetric}>
+              <span>Expected</span>
+              <strong>{formatMoney(paymentSummary.expected)}</strong>
+            </div>
+            <div className={styles.paymentMetric}>
+              <span>Collected</span>
+              <strong>{formatMoney(paymentSummary.collected)}</strong>
+            </div>
+            <div className={styles.paymentMetric} data-variant={paymentSummary.outstanding > 0 ? 'danger' : undefined}>
+              <span>Outstanding</span>
+              <strong>{formatMoney(paymentSummary.outstanding)}</strong>
+            </div>
+            <div className={styles.paymentMetric} data-variant={paymentSummary.pastDue > 0 ? 'danger' : undefined}>
+              <span>Past due</span>
+              <strong>{paymentSummary.pastDue}</strong>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Filters / settings bottom sheet ─────────────────── */}
       {mobileSettingsOpen && (
         <>
@@ -2018,6 +2090,56 @@ export default function UnifiedTeamsPage() {
                     disabled={working === team.id || (waitlistAutomationAvailable && filledSlotCount >= poolSlots.length)}
                   >
                     {!waitlistAutomationAvailable ? 'Tournament Plus' : filledSlotCount >= poolSlots.length ? 'No Slots' : 'Promote'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* J1-066: Accepted teams not in a slot — always visible (every plan) so an
+              accepted team can never silently fall off the board. Auto-claim on accept
+              handles the common case; this lists the leftover (division was full). */}
+          {unplacedTeams.length > 0 && (
+            <div className={styles.waitlistSection}>
+              <div className={styles.waitlistHeader} data-tone="warning">
+                <span>Accepted — needs a spot</span>
+                <span className={styles.slotPoolCount}>{unplacedTeams.length} team{unplacedTeams.length !== 1 ? 's' : ''}</span>
+              </div>
+              {unplacedTeams.map(team => (
+                <div key={team.id} className={`${styles.waitlistRow} ${selectedRegistrationIds.has(team.id) ? s.rowSelected : ''}`}>
+                  {selectionModeActive && (
+                    <input
+                      type="checkbox"
+                      className={styles.selectionCheckbox}
+                      checked={selectedRegistrationIds.has(team.id)}
+                      onChange={() => toggleRegistrationSelection(team.id)}
+                      aria-label={`Select ${team.name}`}
+                    />
+                  )}
+                  <span className={styles.slotTeamName}>{team.name}</span>
+                  <span className={styles.slotCoach}>{team.coach}</span>
+                  <button
+                    className="btn btn-lime btn-data"
+                    onClick={() => !waitlistAutomationAvailable
+                      ? setFeedback({
+                        isOpen: true,
+                        title: 'Add more slots',
+                        message: filledSlotCount >= poolSlots.length
+                          ? 'Every slot in this division is full. Add another pool slot in Divisions to make room, then accepting a team will place it automatically.'
+                          : 'Choosing a specific slot is a Tournament Plus feature. On your plan, accepting a team auto-fills the next open slot — open a slot (or add one in Divisions) and this team will drop in on the next accept.',
+                        type: 'warning',
+                      })
+                      : filledSlotCount >= poolSlots.length
+                        ? setFeedback({
+                          isOpen: true,
+                          title: 'No open slots',
+                          message: 'Every slot in this division is full. Add another pool slot in Divisions to make room.',
+                          type: 'warning',
+                        })
+                        : handlePromote(team.id, team.name)}
+                    disabled={working === team.id}
+                  >
+                    {!waitlistAutomationAvailable ? 'Needs a slot' : filledSlotCount >= poolSlots.length ? 'No Slots' : 'Place'}
                   </button>
                 </div>
               ))}

@@ -132,10 +132,14 @@ export const REGISTRATION_ATTENTION_BUCKETS: BucketDefinition[] = [
   },
   {
     key: 'unplaced',
+    // J1-066: visible on every plan (NOT plusOnly). Accepting a team into a
+    // slot-configured division marks it accepted without claiming a slot; this
+    // always-on list is the safety net so an accepted team can never silently
+    // fall off the board on free tier. (Manual placement / promote-from-waitlist
+    // stays Plus via waitlist_automation — only *visibility* of the gap is free.)
     label: 'Unplaced',
     shortLabel: 'Unplaced',
     tone: 'neutral',
-    plusOnly: true,
     description: 'Accepted teams not assigned into configured pool or bracket slots.',
     actionLabel: 'Place teams',
   },

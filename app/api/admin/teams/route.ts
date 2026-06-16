@@ -37,6 +37,7 @@ import {
   duplicateTournamentTeamMessage,
   findDuplicateTournamentTeam,
 } from '@/lib/team-registration-duplicates';
+import { claimNextOpenSlot } from '@/lib/slot-claim';
 
 export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
@@ -501,6 +502,19 @@ export const POST = withObservability(async (req: Request) => {
       if (!current || current.status === 'rejected' || !current.slot_id) continue;
       await supabaseAdmin.from('pool_slots').update({ team_id: null }).eq('id', current.slot_id);
       await supabaseAdmin.from('teams').update({ slot_id: null }).eq('id', item.id);
+    }
+
+    // J1-066: claim a slot for teams transitioning into 'accepted' in a
+    // slot-configured division, so they stay on the board instead of vanishing.
+    // No-op when the division has no empty slot — the team then surfaces in the
+    // always-on "Unplaced" attention list. Skip teams the same update already
+    // placed into a slot (item carried an explicit slotId).
+    for (const item of items) {
+      if (item.updates.status !== 'accepted') continue;
+      const current = currents.find((c: any) => c.id === item.id);
+      if (!current || current.status === 'accepted') continue;
+      if (current.slot_id || item.updates.slotId || item.updates.slot_id) continue;
+      await claimNextOpenSlot(item.id, current.division_id);
     }
 
     // Handle Emails
