@@ -383,6 +383,20 @@
   letter-spacing: 0;
 }
 
+.requiredLegend {
+  margin: 0.85rem 0 0;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.requiredLegend span {
+  color: var(--logic-lime, #c5f955);
+  font-weight: 700;
+}
+
 .setupBlock {
   padding: 1rem;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
@@ -594,6 +608,39 @@
 
 .venueNotesField {
   grid-column: 1 / -1;
+}
+
+/* Surface row — the "what do you play on" block (count + type + explainer),
+   set apart from the address grid so the scheduling model reads clearly. */
+.venueSurfaceBlock {
+  margin: 0.2rem 0 0.8rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 2px;
+  background: rgba(255,255,255,0.025);
+}
+
+.venueSurfaceRow {
+  display: grid;
+  grid-template-columns: minmax(0, 120px) minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.venueSurfaceExplain {
+  margin: 0.6rem 0 0;
+  color: var(--white-50, rgba(255,255,255,0.5));
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+@media (max-width: 560px) {
+  .venueSurfaceRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 .venueList {

@@ -16,7 +16,8 @@ import { useTournament } from '@/lib/tournament-context';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/lib/free-floor';
-import type { FreeFloor, OrgPlan, TournamentFormat } from '@/lib/types';
+import type { FreeFloor, OrgPlan, TournamentFormat, FacilityType } from '@/lib/types';
+import { FACILITY_TYPE_LABELS } from '@/lib/types';
 import PricingSection from '@/components/PricingSection';
 import styles from './onboarding.module.css';
 
@@ -83,7 +84,13 @@ type VenueFields = {
   notes: string;
   /** How many fields/diamonds this venue has — drives auto-created scheduling lanes (J1-028). */
   fieldCount: string;
+  /** The kind of playing surface — sets the facility type + auto-names (Diamond 1…N). */
+  facilityType: FacilityType;
 };
+
+/** Surface types offered in the wizard (the in-app editor also has "other"; the
+ *  wizard keeps it to the concrete surfaces and defaults to diamond). */
+const WIZARD_FACILITY_TYPES: FacilityType[] = ['diamond', 'field', 'court', 'rink', 'gym'];
 
 type VenueRow = VenueFields & {
   id: string;
@@ -264,6 +271,7 @@ function buildVenueDraft(): VenueFields {
     country: 'Canada',
     notes: '',
     fieldCount: '1',
+    facilityType: 'diamond',
   };
 }
 
@@ -281,6 +289,7 @@ function normalizeVenueFields(venue: VenueFields): VenueFields {
     country: venue.country.trim() || 'Canada',
     notes: venue.notes.trim(),
     fieldCount: normalizeFieldCount(venue.fieldCount),
+    facilityType: venue.facilityType,
   };
 }
 
@@ -870,6 +879,14 @@ export default function OnboardingPage() {
     setVenueDraft(draft => ({ ...draft, [field]: value }));
   }
 
+  function updateVenueDraftType(value: FacilityType) {
+    setVenueDraft(draft => ({ ...draft, facilityType: value }));
+  }
+
+  function updateVenueRowType(id: string, value: FacilityType) {
+    setVenueRows(prev => prev.map(row => row.id === id ? { ...row, facilityType: value } : row));
+  }
+
   function updateVenueRow(id: string, field: keyof VenueFields, value: string) {
     setVenueRows(prev => prev.map(row => row.id === id ? { ...row, [field]: value } : row));
   }
@@ -1248,6 +1265,7 @@ export default function OnboardingPage() {
             address: formatVenueAddress(row),
             notes: row.notes || undefined,
             fieldCount: Number(normalizeFieldCount(row.fieldCount)),
+            facilityType: row.facilityType,
           },
         }),
       })));
@@ -1412,6 +1430,8 @@ export default function OnboardingPage() {
     saveDisabled?: boolean;
     hidePrimaryAction?: boolean;
     wide?: boolean;
+    /** Show a "* required" legend when the step has required fields. */
+    requiredHint?: boolean;
   }) {
     const wizardOrder = getWizardOrder(options.stepId);
     const stepNumber = (wizardOrder as readonly string[]).indexOf(options.stepId) + 1;
@@ -1445,6 +1465,9 @@ export default function OnboardingPage() {
 
           <div key={options.stepId} className={styles.workflowSlide}>
             <div className={styles.workflowModalBody}>{children}</div>
+            {options.requiredHint && (
+              <p className={styles.requiredLegend}><span aria-hidden="true">*</span> required</p>
+            )}
           </div>
 
           {stepError && (
@@ -1540,7 +1563,7 @@ export default function OnboardingPage() {
           <div className={styles.inlineList}>
             <div className={styles.modalGridTwo}>
               <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
-                Season name
+                Season name *
                 <input
                   className="form-input"
                   value={leagueSeasonForm.name}
@@ -1568,7 +1591,7 @@ export default function OnboardingPage() {
                 </select>
               </label>
               <label className={styles.fieldLabel}>
-                Division optional
+                Division
                 <input
                   className="form-input"
                   value={leagueSeasonForm.division}
@@ -1577,7 +1600,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={styles.fieldLabel}>
-                Season starts optional
+                Season starts
                 <input
                   className="form-input"
                   type="date"
@@ -1587,7 +1610,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={styles.fieldLabel}>
-                Season ends optional
+                Season ends
                 <input
                   className="form-input"
                   type="date"
@@ -1597,7 +1620,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
-                Public description optional
+                Public description
                 <textarea
                   className="form-textarea"
                   rows={3}
@@ -1609,7 +1632,7 @@ export default function OnboardingPage() {
             </div>
           </div>
         ),
-        { stepId: 'league-season', saveLabel: 'Next', onSave: saveLeagueSeasonStep, taskId: 'league_season', allowSkip: true }
+        { stepId: 'league-season', saveLabel: 'Next', onSave: saveLeagueSeasonStep, taskId: 'league_season', allowSkip: true, requiredHint: true }
       );
     }
 
@@ -1700,7 +1723,7 @@ export default function OnboardingPage() {
           <div className={styles.inlineList}>
             <div className={styles.modalGridTwo}>
               <label className={styles.fieldLabel}>
-                Registration opens optional
+                Registration opens
                 <input
                   className="form-input"
                   type="datetime-local"
@@ -1709,7 +1732,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={styles.fieldLabel}>
-                Registration closes optional
+                Registration closes
                 <input
                   className="form-input"
                   type="datetime-local"
@@ -1718,7 +1741,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
-                Registration fee optional
+                Registration fee
                 <input
                   className="form-input"
                   type="number"
@@ -1730,7 +1753,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
-                Waiver text optional
+                Waiver text
                 <textarea
                   className="form-textarea"
                   rows={4}
@@ -1854,7 +1877,7 @@ export default function OnboardingPage() {
         (
           <>
             <label className={styles.fieldLabel}>
-              Tournament name
+              Tournament name *
               <input
                 className="form-input"
                 value={tournamentForm.name}
@@ -1871,7 +1894,7 @@ export default function OnboardingPage() {
 
             <div className={styles.modalGridTwo}>
               <label className={styles.fieldLabel}>
-                Start date
+                Start date *
                 <input
                   className="form-input"
                   type="date"
@@ -1881,7 +1904,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={styles.fieldLabel}>
-                End date
+                End date *
                 <input
                   className="form-input"
                   type="date"
@@ -1937,7 +1960,7 @@ export default function OnboardingPage() {
             </label>
           </>
         ),
-        { stepId: 'tournament', saveLabel: 'Next', onSave: saveTournamentStep, taskId: 'tournament', allowSkip: true }
+        { stepId: 'tournament', saveLabel: 'Next', onSave: saveTournamentStep, taskId: 'tournament', allowSkip: true, requiredHint: true }
       );
     }
 
@@ -2128,19 +2151,19 @@ export default function OnboardingPage() {
               </div>
               <div className={styles.venueDraftGrid}>
                 <label className={styles.fieldLabel}>
-                  Venue name
+                  Venue name *
                   <input className="form-input" value={venueDraft.name} onChange={e => updateVenueDraft('name', e.target.value)} placeholder="Lions Field" />
                 </label>
                 <label className={styles.fieldLabel}>
-                  Street address optional
+                  Street address
                   <input className="form-input" value={venueDraft.street} onChange={e => updateVenueDraft('street', e.target.value)} placeholder="123 Main St" />
                 </label>
                 <label className={styles.fieldLabel}>
-                  City optional
+                  City
                   <input className="form-input" value={venueDraft.city} onChange={e => updateVenueDraft('city', e.target.value)} placeholder="Milton" />
                 </label>
                 <label className={styles.fieldLabel}>
-                  Province optional
+                  Province
                   <select className="form-select" value={venueDraft.province} onChange={e => updateVenueDraft('province', e.target.value)}>
                     <option value="">Select province</option>
                     {CANADIAN_PROVINCES.map(province => (
@@ -2149,34 +2172,57 @@ export default function OnboardingPage() {
                   </select>
                 </label>
                 <label className={styles.fieldLabel}>
-                  Postal code optional
+                  Postal code
                   <input className="form-input" value={venueDraft.postalCode} onChange={e => updateVenueDraft('postalCode', e.target.value.toUpperCase())} placeholder="A1A 1A1" />
                 </label>
                 <label className={styles.fieldLabel}>
-                  Country optional
+                  Country
                   <input className="form-input" value={venueDraft.country} onChange={e => updateVenueDraft('country', e.target.value)} />
                 </label>
-                <label className={styles.fieldLabel}>
-                  Fields / diamonds at this venue
-                  <input
-                    className="form-input"
-                    type="number"
-                    min={1}
-                    max={30}
-                    step={1}
-                    value={venueDraft.fieldCount}
-                    onChange={e => updateVenueDraft('fieldCount', e.target.value)}
-                    placeholder="1"
-                  />
-                  <small className={styles.fieldHint}>
-                    How many playable surfaces here? We&apos;ll set up Diamond&nbsp;1…N so the schedule can run games in parallel.
-                  </small>
-                </label>
-                <label className={`${styles.fieldLabel} ${styles.venueNotesField}`}>
-                  Notes
-                  <input className="form-input" value={venueDraft.notes} onChange={e => updateVenueDraft('notes', e.target.value)} placeholder="Parking, entrance, field number" />
-                </label>
               </div>
+
+              {/* Surface block — the scheduling model: how many playable surfaces and of what kind. */}
+              <div className={styles.venueSurfaceBlock}>
+                <div className={styles.venueSurfaceRow}>
+                  <label className={styles.fieldLabel}>
+                    How many *
+                    <input
+                      className="form-input"
+                      type="number"
+                      min={1}
+                      max={30}
+                      step={1}
+                      value={venueDraft.fieldCount}
+                      onChange={e => updateVenueDraft('fieldCount', e.target.value)}
+                      placeholder="1"
+                    />
+                  </label>
+                  <label className={styles.fieldLabel}>
+                    Surface type *
+                    <select
+                      className="form-select"
+                      value={venueDraft.facilityType}
+                      onChange={e => updateVenueDraftType(e.target.value as FacilityType)}
+                    >
+                      {WIZARD_FACILITY_TYPES.map(t => (
+                        <option key={t} value={t}>{FACILITY_TYPE_LABELS[t]}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <p className={styles.venueSurfaceExplain}>
+                  A <strong>facility</strong> is one playable surface — a diamond, field, court, rink, or gym.
+                  The scheduler books one game per facility at a time, so entering{' '}
+                  <strong>{normalizeFieldCount(venueDraft.fieldCount)}</strong> lets that many games run in
+                  parallel here. We&apos;ll create {FACILITY_TYPE_LABELS[venueDraft.facilityType]}&nbsp;1…N
+                  automatically — you can rename them or add more on the Venues page anytime.
+                </p>
+              </div>
+
+              <label className={`${styles.fieldLabel} ${styles.venueNotesField}`} style={{ display: 'block' }}>
+                Notes
+                <input className="form-input" value={venueDraft.notes} onChange={e => updateVenueDraft('notes', e.target.value)} placeholder="Parking, entrance, field number" style={{ marginTop: '0.35rem' }} />
+              </label>
               <button type="button" className="btn btn-outline btn-sm" onClick={addVenueDraft}>
                 <Plus size={14} /> Add venue
               </button>
@@ -2204,19 +2250,19 @@ export default function OnboardingPage() {
                       </div>
                       <div className={styles.venueCardGrid}>
                         <label className={styles.fieldLabel}>
-                          Venue name
+                          Venue name *
                           <input className="form-input" value={row.name} onChange={e => updateVenueRow(row.id, 'name', e.target.value)} />
                         </label>
                         <label className={styles.fieldLabel}>
-                          Street address optional
+                          Street address
                           <input className="form-input" value={row.street} onChange={e => updateVenueRow(row.id, 'street', e.target.value)} />
                         </label>
                         <label className={styles.fieldLabel}>
-                          City optional
+                          City
                           <input className="form-input" value={row.city} onChange={e => updateVenueRow(row.id, 'city', e.target.value)} />
                         </label>
                         <label className={styles.fieldLabel}>
-                          Province optional
+                          Province
                           <select className="form-select" value={row.province} onChange={e => updateVenueRow(row.id, 'province', e.target.value)}>
                             <option value="">Select province</option>
                             {CANADIAN_PROVINCES.map(province => (
@@ -2225,15 +2271,18 @@ export default function OnboardingPage() {
                           </select>
                         </label>
                         <label className={styles.fieldLabel}>
-                          Postal code optional
+                          Postal code
                           <input className="form-input" value={row.postalCode} onChange={e => updateVenueRow(row.id, 'postalCode', e.target.value.toUpperCase())} />
                         </label>
                         <label className={styles.fieldLabel}>
-                          Country optional
+                          Country
                           <input className="form-input" value={row.country} onChange={e => updateVenueRow(row.id, 'country', e.target.value)} />
                         </label>
+                      </div>
+
+                      <div className={styles.venueSurfaceRow} style={{ marginTop: '0.65rem' }}>
                         <label className={styles.fieldLabel}>
-                          Fields / diamonds
+                          How many *
                           <input
                             className="form-input"
                             type="number"
@@ -2244,11 +2293,24 @@ export default function OnboardingPage() {
                             onChange={e => updateVenueRow(row.id, 'fieldCount', e.target.value)}
                           />
                         </label>
-                        <label className={`${styles.fieldLabel} ${styles.venueNotesField}`}>
-                          Notes
-                          <input className="form-input" value={row.notes} onChange={e => updateVenueRow(row.id, 'notes', e.target.value)} />
+                        <label className={styles.fieldLabel}>
+                          Surface type *
+                          <select
+                            className="form-select"
+                            value={row.facilityType}
+                            onChange={e => updateVenueRowType(row.id, e.target.value as FacilityType)}
+                          >
+                            {WIZARD_FACILITY_TYPES.map(t => (
+                              <option key={t} value={t}>{FACILITY_TYPE_LABELS[t]}</option>
+                            ))}
+                          </select>
                         </label>
                       </div>
+
+                      <label className={`${styles.fieldLabel} ${styles.venueNotesField}`} style={{ display: 'block', marginTop: '0.65rem' }}>
+                        Notes
+                        <input className="form-input" value={row.notes} onChange={e => updateVenueRow(row.id, 'notes', e.target.value)} style={{ marginTop: '0.35rem' }} />
+                      </label>
                     </div>
                   ))}
                 </div>
@@ -2256,7 +2318,7 @@ export default function OnboardingPage() {
             </div>
           </div>
         ),
-        { stepId: 'venues', saveLabel: 'Next', onSave: saveVenuesStep, taskId: 'venues', allowSkip: true }
+        { stepId: 'venues', saveLabel: 'Next', onSave: saveVenuesStep, taskId: 'venues', allowSkip: true, requiredHint: true }
       );
     }
 

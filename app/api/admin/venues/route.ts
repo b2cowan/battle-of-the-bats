@@ -407,12 +407,20 @@ export const POST = withObservability(async (req: Request) => {
       if (error) throw error;
       // Auto-create scheduling lanes (facilities). A venue with N fields/diamonds
       // (J1-028) gets N lanes so the generator can run games in parallel; a single
-      // surface keeps the original venue-named lane.
+      // surface keeps the original venue-named lane. The surface type (diamond /
+      // field / court / rink / gym) is carried from the wizard and used both as
+      // the facility_type and to auto-name the lanes (e.g. "Field 1"). Legacy
+      // callers that omit it fall back to 'other' + the prior single-lane shape.
+      const ALLOWED_FACILITY_TYPES = ['diamond', 'field', 'court', 'rink', 'gym', 'other'];
+      const facilityType: string = ALLOWED_FACILITY_TYPES.includes(data.facilityType) ? data.facilityType : 'other';
+      const typeLabel: Record<string, string> = {
+        diamond: 'Diamond', field: 'Field', court: 'Court', rink: 'Rink', gym: 'Gym', other: 'Field',
+      };
       const fieldCount = Math.max(1, Math.min(30, Math.floor(Number(data.fieldCount) || 1)));
       const facilityRows = fieldCount === 1
         ? [{ name: data.name, display_order: 0 }]
         : Array.from({ length: fieldCount }, (_, i) => ({
-            name:          `${data.name} — Diamond ${i + 1}`,
+            name:          `${data.name} — ${typeLabel[facilityType]} ${i + 1}`,
             display_order: i,
           }));
       await supabaseAdmin.from('venue_facilities').insert(
@@ -420,7 +428,7 @@ export const POST = withObservability(async (req: Request) => {
           venue_id:      newVenue.id,
           tournament_id: data.tournamentId,
           name:          f.name,
-          facility_type: 'other',
+          facility_type: facilityType,
           display_order: f.display_order,
         }))
       );
