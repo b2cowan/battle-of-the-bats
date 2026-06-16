@@ -53,6 +53,22 @@ Make the **game-day board** customizable with the same affordances as the pre-ev
 
 - **Medium.** Touches the dashboard's core layout/persistence. Main risks: the `version` migration (mitigated by default-merge fallback), and accidentally coupling the two panel sets (mitigated by a separate `gameDayPanels` array + registry). Behind no flag, but localStorage-only and reversible (clearing the key resets).
 
+## Browser test steps (owner)
+
+On a tournament in **game-day** mode (status active, start date today — the "Live" chip shows):
+1. **Customize appears.** The **Customize** button is visible in the header (it used to vanish on game day). Click it.
+2. **Reorder.** Drag a panel (e.g. drag "Team Check-in" above "Games Progress"). ✅ Order changes.
+3. **Hide.** Click the **✕** on a panel (e.g. "By Division"). ✅ It's removed from the board.
+4. **Re-add.** Use the **+Add** tile → pick the hidden panel back. ✅ It returns.
+5. **Persist.** Click **Done**, then **reload the page**. ✅ Your arrangement is remembered.
+6. **Hide-all guard.** Hide every panel → ✅ shows "All panels are hidden. Click **Customize** to restore them."
+7. **Independence.** Change the **pre-event** board layout (open a non-game-day tournament, hide/reorder there). Return to the game-day tournament. ✅ The two layouts are independent — neither affected the other.
+8. **Migration.** If you had a saved dashboard layout from before this change, it should still load (you just gain the new game-day panels at defaults) — no reset, no error.
+9. **Mobile.** On a narrow screen the board is single-column and the panels fit (Now Playing rows wrap, nothing cut off).
+10. **Live data still correct.** Now Playing still lists live games, the champion still appears the moment a final ends, gauges still auto-refresh.
+
+> Reset if needed: the "Reset to default" control in the customize toolbar restores the default layout. (Or clear `localStorage` key `fl_dash_v1_{orgSlug}`.)
+
 ## Rollback
 
 Revert the commit; saved layouts with `version: 2` fall back to default on load under the older `version: 1` check (graceful).
