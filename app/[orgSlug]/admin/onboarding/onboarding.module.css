@@ -1080,6 +1080,27 @@
   padding: 0.8rem 0.9rem;
 }
 
+.planErrorText {
+  flex: 1;
+  min-width: 0;
+}
+
+.planErrorActions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 560px) {
+  .planError {
+    flex-wrap: wrap;
+  }
+  .planErrorActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
 @media (max-width: 900px) {
   .planGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

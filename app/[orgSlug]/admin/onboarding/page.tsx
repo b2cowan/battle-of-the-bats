@@ -392,6 +392,9 @@ export default function OnboardingPage() {
   const [workflowRedirecting, setWorkflowRedirecting] = useState(false);
   const [stepSaving, setStepSaving] = useState(false);
   const [stepError, setStepError] = useState('');
+  // Optional inline action buttons rendered inside the step-error banner (used by
+  // the venue step to offer "Add it" / "Clear form" when the composer is dirty).
+  const [stepErrorActions, setStepErrorActions] = useState<Array<{ label: string; onClick: () => void; primary?: boolean }>>([]);
   const [gatingMap, setGatingMap] = useState<Record<OrgPlan, boolean>>(() => ({
     tournament: PLAN_CONFIG.tournament.gatingStatus === 'early_access',
     team: PLAN_CONFIG.team.gatingStatus === 'early_access',
@@ -722,6 +725,7 @@ export default function OnboardingPage() {
 
   async function showWizardStep(stepId: Exclude<ActiveModal, null>) {
     setStepError('');
+    setStepErrorActions([]);
     setActiveModal(stepId);
   }
 
@@ -893,45 +897,86 @@ export default function OnboardingPage() {
     setVenueDraft(draft => ({ ...draft, facilityType: value }));
   }
 
-  function addVenueDraft() {
-    if (!isVenueReady(venueDraft)) {
-      setStepError('Add a venue name before adding it to the list. Address details are optional.');
-      return;
-    }
+  function clearVenueError() {
+    setStepError('');
+    setStepErrorActions([]);
+  }
 
+  /** Commit the composer draft (add new or save edit). Returns false if invalid. */
+  function commitVenueDraft(): boolean {
+    if (!isVenueReady(venueDraft)) return false;
     const normalized = normalizeVenueFields(venueDraft);
     if (editingVenueId) {
-      // Saving an edit — update the existing row in place, keep its position.
       setVenueRows(prev => prev.map(row => row.id === editingVenueId ? { ...normalized, id: row.id } : row));
       setEditingVenueId(null);
     } else {
       setVenueRows(prev => [...prev, buildVenueRow(Date.now(), normalized)]);
     }
     setVenueDraft(buildVenueDraft());
-    setStepError('');
+    return true;
   }
 
-  function editVenueRow(id: string) {
-    const row = venueRows.find(r => r.id === id);
-    if (!row) return;
-    // If a half-filled new draft is in the composer, don't silently lose it.
-    if (!editingVenueId && hasVenueContent(venueDraft)) {
-      setStepError('Finish or clear the venue you’re adding before editing another.');
-      return;
-    }
+  function loadVenueIntoComposer(row: VenueRow) {
     setVenueDraft({
       name: row.name, street: row.street, city: row.city, province: row.province,
       postalCode: row.postalCode, country: row.country, notes: row.notes,
       fieldCount: row.fieldCount, facilityType: row.facilityType,
     });
-    setEditingVenueId(id);
-    setStepError('');
+    setEditingVenueId(row.id);
+  }
+
+  // Inline-banner guard: the composer holds an unsaved venue. Offer actionable
+  // buttons (Add it / Clear form) right in the error banner instead of a dead end.
+  function flagDirtyComposer(message: string, afterResolve?: () => void) {
+    const valid = isVenueReady(venueDraft);
+    const actions: Array<{ label: string; onClick: () => void; primary?: boolean }> = [];
+    if (valid) {
+      actions.push({
+        label: editingVenueId ? 'Save changes' : 'Add it',
+        primary: true,
+        onClick: () => { if (commitVenueDraft()) { clearVenueError(); afterResolve?.(); } },
+      });
+    }
+    actions.push({
+      label: editingVenueId ? 'Cancel edit' : 'Clear form',
+      onClick: () => { setVenueDraft(buildVenueDraft()); setEditingVenueId(null); clearVenueError(); afterResolve?.(); },
+    });
+    setStepError(message);
+    setStepErrorActions(actions);
+  }
+
+  function addVenueDraft() {
+    if (!isVenueReady(venueDraft)) {
+      setStepError('Add a venue name before adding it to the list. Address details are optional.');
+      setStepErrorActions([]);
+      return;
+    }
+    commitVenueDraft();
+    clearVenueError();
+  }
+
+  function editVenueRow(id: string) {
+    const row = venueRows.find(r => r.id === id);
+    if (!row) return;
+    // If a draft is already in the composer (new or another edit), don't lose it
+    // silently — offer to add/save or clear it, then open the requested edit.
+    if (row.id !== editingVenueId && hasVenueContent(venueDraft)) {
+      flagDirtyComposer(
+        editingVenueId
+          ? 'You’re editing a venue. Save or cancel it first, then edit “' + row.name + '”.'
+          : 'You have an unsaved venue. Add it or clear the form, then edit “' + row.name + '”.',
+        () => loadVenueIntoComposer(row),
+      );
+      return;
+    }
+    loadVenueIntoComposer(row);
+    clearVenueError();
   }
 
   function cancelVenueEdit() {
     setVenueDraft(buildVenueDraft());
     setEditingVenueId(null);
-    setStepError('');
+    clearVenueError();
   }
 
   function removeVenueRow(id: string) {
@@ -1137,15 +1182,75 @@ export default function OnboardingPage() {
     }
   }
 
+  // The committed venue rows (excluding the composer draft) — pass an extra row
+  // when the caller has just committed a draft whose state hasn't flushed yet.
+  function finalizeVenueRows(extra?: VenueRow): { rows: ReturnType<typeof normalizeVenueFields>[]; error?: string } {
+    const all = extra ? [...venueRows, extra] : venueRows;
+    const rows = all.map(row => normalizeVenueFields(row)).filter(hasVenueContent);
+    if (rows.length === 0) return { rows, error: 'Add at least one venue name, or skip this step.' };
+    if (rows.some(row => !isVenueReady(row))) return { rows, error: 'Each added venue needs a venue name. Address details are optional.' };
+    return { rows };
+  }
+
+  async function advanceVenues(extra?: VenueRow) {
+    const { error } = finalizeVenueRows(extra);
+    if (error) { setStepError(error); setStepErrorActions([]); return; }
+    setDraftSkipped(prev => ({ ...prev, venues: false }));
+    clearVenueError();
+    await advanceWizard('venues');
+  }
+
   async function saveVenuesStep() {
-    try {
-      getVenueDraftRows();
-      setDraftSkipped(prev => ({ ...prev, venues: false }));
-      setStepError('');
-      await advanceWizard('venues');
-    } catch (err) {
-      setStepError(err instanceof Error ? err.message : 'Unable to continue.');
+    // Unsaved composer content blocks Next — offer actionable buttons inline.
+    if (hasVenueContent(venueDraft)) {
+      if (!isVenueReady(venueDraft)) {
+        // Invalid (no name): can only clear. Clearing then continues.
+        flagDirtyComposer(
+          'You started a venue but it has no name. Add a name, or clear the form to continue.',
+          () => { void advanceVenues(); },
+        );
+      } else {
+        // Valid: "Add it" commits the draft and continues with that row included
+        // (state hasn't flushed, so pass it explicitly); "Clear form" drops it.
+        const committed = buildVenueRow(Date.now(), normalizeVenueFields(venueDraft));
+        flagDirtyComposerForNext(committed);
+      }
+      return;
     }
+    await advanceVenues();
+  }
+
+  // Specialized dirty-banner for the Next action with a valid draft: Add-it path
+  // must carry the just-built row forward (React state not yet flushed).
+  function flagDirtyComposerForNext(committed: VenueRow) {
+    const isEdit = !!editingVenueId;
+    setStepError(isEdit
+      ? 'You’re still editing a venue. Save or cancel it to continue.'
+      : 'You have an unsaved venue. Add it, or clear the form, to continue.');
+    setStepErrorActions([
+      {
+        label: isEdit ? 'Save changes' : 'Add it',
+        primary: true,
+        onClick: () => {
+          if (isEdit) {
+            setVenueRows(prev => prev.map(row => row.id === editingVenueId ? { ...committed, id: row.id } : row));
+            setEditingVenueId(null);
+            setVenueDraft(buildVenueDraft());
+            clearVenueError();
+            void advanceVenues();
+          } else {
+            setVenueRows(prev => [...prev, committed]);
+            setVenueDraft(buildVenueDraft());
+            clearVenueError();
+            void advanceVenues(committed);
+          }
+        },
+      },
+      {
+        label: isEdit ? 'Cancel edit' : 'Clear form',
+        onClick: () => { setVenueDraft(buildVenueDraft()); setEditingVenueId(null); clearVenueError(); void advanceVenues(); },
+      },
+    ]);
   }
 
   async function saveLeagueSeasonStep() {
@@ -1511,7 +1616,21 @@ export default function OnboardingPage() {
           {stepError && (
             <div className={styles.planError}>
               <AlertCircle size={14} />
-              {stepError}
+              <span className={styles.planErrorText}>{stepError}</span>
+              {stepErrorActions.length > 0 && (
+                <span className={styles.planErrorActions}>
+                  {stepErrorActions.map(action => (
+                    <button
+                      key={action.label}
+                      type="button"
+                      className={`btn btn-sm ${action.primary ? 'btn-outline' : 'btn-ghost'}`}
+                      onClick={action.onClick}
+                    >
+                      {action.label}
+                    </button>
+                  ))}
+                </span>
+              )}
             </div>
           )}
 
