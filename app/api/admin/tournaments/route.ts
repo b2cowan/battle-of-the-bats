@@ -333,7 +333,7 @@ export const POST = withObservability(async (req: Request) => {
       if (newStatus === 'active') {
         const { data: tournamentRow, error: tournamentError } = await supabase
           .from('tournaments')
-          .select('start_date, end_date, contact_email')
+          .select('start_date, end_date, contact_email, default_contact_member_id')
           .eq('id', id)
           .eq('org_id', ctx.org.id)
           .single();
@@ -348,7 +348,12 @@ export const POST = withObservability(async (req: Request) => {
         const blockers: string[] = [];
         if (!tournamentRow?.start_date || !tournamentRow?.end_date) blockers.push('add tournament dates');
         if (!divisions?.length) blockers.push('add at least one division');
-        if (!tournamentRow?.contact_email && !ctx.org.contactEmail) blockers.push('add a public contact email');
+        // A contact is satisfied by a selected contact member, a tournament-level
+        // contact email, OR the org fallback — mirror resolveTournamentContactEmail
+        // (lib/db.ts) so a tournament with a chosen contact member isn't falsely blocked.
+        if (!tournamentRow?.default_contact_member_id && !tournamentRow?.contact_email && !ctx.org.contactEmail) {
+          blockers.push('add a public contact email');
+        }
         if (divisions?.length && divisions.every(g => g.is_closed)) blockers.push('open at least one division');
         if (blockers.length > 0) {
           return Response.json(

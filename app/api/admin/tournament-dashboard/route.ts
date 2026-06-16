@@ -68,6 +68,7 @@ type TournamentFeeRow = {
   start_date: string | null;
   end_date: string | null;
   contact_email: string | null;
+  default_contact_member_id: string | null;
   fee_schedule_mode: string | null;
   deposit_amount: number | null;
   deposit_due_date: string | null;
@@ -119,7 +120,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data: tournament, error: tournamentError } = await supabaseAdmin
     .from('tournaments')
-    .select('start_date, end_date, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, settings, status')
+    .select('start_date, end_date, contact_email, default_contact_member_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, settings, status')
     .eq('id', tournamentId)
     .eq('org_id', ctx.org.id)
     .maybeSingle();
@@ -212,7 +213,10 @@ export const GET = withObservability(async (req: Request) => {
 
   const hasDates = Boolean(t.start_date && t.end_date);
   const hasDivisions = divisions.length > 0;
-  const hasPublicContact = Boolean(t.contact_email || ctx.org.contactEmail);
+  // A contact is satisfied by a selected contact member, a tournament-level
+  // contact email, OR the org fallback — mirror resolveTournamentContactEmail
+  // and the activation blocker so the checklist agrees with what activates.
+  const hasPublicContact = Boolean(t.default_contact_member_id || t.contact_email || ctx.org.contactEmail);
   const hasOpenDivision = hasDivisions && divisions.some(group => !group.is_closed);
   const hasBranding = Boolean(t.logo_url || t.hero_banner_url || t.theme_preset || t.theme_primary);
   const hasVenues   = (venuesRes.count ?? 0) > 0;
