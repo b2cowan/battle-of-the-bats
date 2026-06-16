@@ -312,7 +312,7 @@ export const GET = withObservability(async (req: Request) => {
   // urgent first: in-review (submitted) before overdue-scheduled, then by start
   // time. Capped so the board panel stays compact.
   const divisionNameById = new Map(divisions.map(d => [d.id, d.name] as const));
-  const liveGames = activeGames
+  const allLiveGames = activeGames
     .filter(g => {
       if (g.status === 'submitted') return true;
       if (g.status !== 'scheduled') return false;
@@ -326,7 +326,9 @@ export const GET = withObservability(async (req: Request) => {
       if (a.status !== b.status) return a.status === 'submitted' ? -1 : 1;
       return String(a.game_date ?? '').localeCompare(String(b.game_date ?? ''))
         || String(a.game_time ?? '').localeCompare(String(b.game_time ?? ''));
-    })
+    });
+  const liveGamesTotal = allLiveGames.length;
+  const liveGames = allLiveGames
     .slice(0, 6)
     .map(g => ({
       id: g.id,
@@ -353,6 +355,7 @@ export const GET = withObservability(async (req: Request) => {
     playoffGamesCompleted: playoffGames.filter(g => g.status === 'completed').length,
     byDivision: gameDayByDivision,
     liveGames,
+    liveGamesTotal,
   };
 
   // ── Registration stats ────────────────────────────────────────────

@@ -101,6 +101,7 @@ type GameDayStats = {
   playoffGamesCompleted: number;
   byDivision: GameDayDivisionStat[];
   liveGames: LiveGameStat[];
+  liveGamesTotal: number;
 };
 
 type ScheduleHealthDashboardStats = {
@@ -274,6 +275,7 @@ const EMPTY_GAME_DAY: GameDayStats = {
   playoffStarted: false, playoffGamesTotal: 0, playoffGamesCompleted: 0,
   byDivision: [],
   liveGames: [],
+  liveGamesTotal: 0,
 };
 
 const EMPTY_STATS: DashboardStats = {
@@ -1272,8 +1274,10 @@ export default function AdminDashboard() {
   // box never renders (and an empty-data panel isn't draggable when not customizing).
   function renderNowPlayingPanel() {
     if (gd.liveGames.length === 0) return null;
+    const moreCount = Math.max(0, gd.liveGamesTotal - gd.liveGames.length);
     return (
-      <section className={styles.analyticsPanel}>
+      // Full-width command strip across the board (not a uniform gauge cell).
+      <section className={`${styles.analyticsPanel} ${styles.liveStripPanel}`}>
         <div className={styles.panelHeader}>
           <Activity size={16} style={{ color: 'var(--logic-lime)' }} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Now Playing</h2>
@@ -1281,7 +1285,12 @@ export default function AdminDashboard() {
         </div>
         <div className={styles.liveList}>
           {gd.liveGames.map(lg => (
-            <Link key={lg.id} href={`${base}/results`} className={styles.liveRow}>
+            <Link
+              key={lg.id}
+              href={`${base}/results`}
+              className={styles.liveRow}
+              data-live={lg.status === 'submitted' ? 'review' : 'live'}
+            >
               <div className={styles.liveRowMain}>
                 <span className={`badge ${lg.status === 'submitted' ? 'badge-warning' : 'badge-primary'} ${styles.liveBadge}`}>
                   {lg.status === 'submitted' ? 'IN REVIEW' : 'LIVE'}
@@ -1298,6 +1307,11 @@ export default function AdminDashboard() {
               )}
             </Link>
           ))}
+          {moreCount > 0 && (
+            <Link href={`${base}/results`} className={styles.liveMoreTile}>
+              +{moreCount} more →
+            </Link>
+          )}
         </div>
       </section>
     );

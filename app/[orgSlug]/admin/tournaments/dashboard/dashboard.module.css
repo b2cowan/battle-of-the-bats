@@ -469,26 +469,41 @@
 
 .panelLink:hover { color: var(--logic-lime); }
 
-/* ── Now Playing (live game-day list) ─────────────────────────────────────── */
+/* ── Now Playing (live game-day command strip) ────────────────────────────── */
+/* Now Playing is the live operating focus, so it spans the full board width
+   (like the public broadcast marquee) instead of competing in the uniform gauge
+   grid — which otherwise stranded whitespace beside the short gauge panels.
+   See design decision 2026-06-15. */
+.liveStripPanel {
+  grid-column: 1 / -1;
+}
+
+/* Games tile horizontally and wrap, rather than stacking into a tall column. */
 .liveList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.5rem;
 }
 
 .liveRow {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  padding: 0.5rem 0.6rem;
+  padding: 0.5rem 0.6rem 0.5rem 0.7rem;
   border-radius: 6px;
   background: rgba(var(--blueprint-blue-rgb), 0.06);
+  /* 3px accent stripe — reuses the GameList live-row system (B3 2026-06-03). */
+  border-left: 3px solid var(--data-gray);
   text-decoration: none;
   color: inherit;
   transition: background 0.15s;
 }
 
 .liveRow:hover { background: rgba(var(--blueprint-blue-rgb), 0.12); }
+
+/* LIVE = lime heartbeat, IN REVIEW = amber (paired with the badge, never colour-only). */
+.liveRow[data-live='live']   { border-left-color: var(--logic-lime); }
+.liveRow[data-live='review'] { border-left-color: var(--warning); }
 
 .liveRowMain {
   display: flex;
@@ -531,6 +546,28 @@
   color: var(--data-gray);
   padding-left: 0.1rem;
   overflow-wrap: anywhere;
+}
+
+/* "+N more" tile — same footprint as a game tile, links to Results. */
+.liveMoreTile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  border: 1px dashed rgba(var(--blueprint-blue-rgb), 0.35);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(var(--logic-lime-rgb), 0.7);
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.liveMoreTile:hover {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
 }
 
 .mainGauge {
