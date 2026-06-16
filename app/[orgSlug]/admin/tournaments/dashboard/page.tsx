@@ -76,6 +76,19 @@ type GameDayDivisionStat = {
   nextRound: string | null;
 };
 
+type LiveGameStat = {
+  id: string;
+  homeTeamName: string;
+  awayTeamName: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  status: string;
+  time: string | null;
+  location: string | null;
+  divisionName: string | null;
+  isPlayoff: boolean;
+};
+
 type GameDayStats = {
   totalGames: number;
   completed: number;
@@ -87,6 +100,7 @@ type GameDayStats = {
   playoffGamesTotal: number;
   playoffGamesCompleted: number;
   byDivision: GameDayDivisionStat[];
+  liveGames: LiveGameStat[];
 };
 
 type ScheduleHealthDashboardStats = {
@@ -238,6 +252,7 @@ const EMPTY_GAME_DAY: GameDayStats = {
   poolGamesTotal: 0, poolGamesCompleted: 0,
   playoffStarted: false, playoffGamesTotal: 0, playoffGamesCompleted: 0,
   byDivision: [],
+  liveGames: [],
 };
 
 const EMPTY_STATS: DashboardStats = {
@@ -647,7 +662,23 @@ export default function AdminDashboard() {
       }
     }
     void fetchStats(tournamentId);
-    return () => controller.abort();
+
+    // Live auto-refresh (J1-086): the board's gauges were one-shot and froze on a
+    // live game day. Poll every 30s so games-complete / check-in / live-now numbers
+    // move on their own. Gated on tab visibility so a backgrounded tab doesn't poll,
+    // and re-fetches immediately when the tab is refocused. Cheap (one cached GET).
+    const POLL_MS = 30_000;
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void fetchStats(tournamentId);
+    }, POLL_MS);
+    const onVisible = () => { if (document.visibilityState === 'visible') void fetchStats(tournamentId); };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      controller.abort();
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [currentTournament?.id, orgParam]);
 
   // Fetch other tournaments for populate-from
@@ -1446,6 +1477,39 @@ export default function AdminDashboard() {
           {/* ── GAME DAY: game-by-game metrics (within dates OR first game started) ── */}
           {isGameDay ? (
             <div className={styles.analyticsGrid}>
+              {/* ── NOW PLAYING (J1-085): live "what's on right now" command view ── */}
+              {gd.liveGames.length > 0 && (
+                <section className={styles.analyticsPanel}>
+                  <div className={styles.panelHeader}>
+                    <Activity size={16} style={{ color: 'var(--logic-lime)' }} />
+                    <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Now Playing</h2>
+                    <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    {gd.liveGames.map(lg => (
+                      <Link
+                        key={lg.id}
+                        href={`${base}/results`}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.5rem 0.6rem', borderRadius: 6, background: 'var(--surface-2, rgba(255,255,255,0.03))', textDecoration: 'none', color: 'inherit' }}
+                      >
+                        <span className={`badge ${lg.status === 'submitted' ? 'badge-warning' : 'badge-primary'}`} style={{ fontSize: '0.6rem', flexShrink: 0 }}>
+                          {lg.status === 'submitted' ? 'IN REVIEW' : 'LIVE'}
+                        </span>
+                        <span style={{ flex: 1, minWidth: 0, fontSize: '0.82rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {lg.awayTeamName} <span style={{ color: 'var(--data-gray)', fontWeight: 400 }}>@</span> {lg.homeTeamName}
+                        </span>
+                        <span style={{ fontFamily: 'var(--font-data)', fontWeight: 800, fontSize: '0.9rem', flexShrink: 0 }}>
+                          {(lg.awayScore ?? 0)}–{(lg.homeScore ?? 0)}
+                        </span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--data-gray)', flexShrink: 0, maxWidth: 120, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {lg.location ?? (lg.divisionName ?? '')}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              )}
+
               <section className={styles.analyticsPanel}>
                 <div className={styles.panelHeader}>
                   <Zap size={16} style={{ color: 'var(--logic-lime)' }} />
@@ -1510,20 +1574,32 @@ export default function AdminDashboard() {
                   <div className={styles.divisionTable}>
                     {gd.byDivision.map(d => {
                       const poolPct = d.poolTotal > 0 ? Math.round((d.poolCompleted / d.poolTotal) * 100) : 0;
+                      // J1-100: crown the champion the moment the final goes final —
+                      // live on the active board, not only after the org is marked
+                      // completed. champions is recomputed each poll from the API.
+                      const champ = champions.find(c => c.divisionId === d.id);
                       return (
                         <div key={d.id} className={styles.divisionRow}>
                           <span className={styles.divisionName}>{d.name}</span>
                           <span className={styles.divisionCount}>
-                            {d.playoffStarted ? (d.latestRound ?? 'Playoffs') : `${d.poolCompleted}/${d.poolTotal}`}
+                            {champ ? 'Champion' : d.playoffStarted ? (d.latestRound ?? 'Playoffs') : `${d.poolCompleted}/${d.poolTotal}`}
                           </span>
-                          <div className={styles.gaugeWrap}>
-                            <div className={styles.gaugeTrack}>
-                              <div className={styles.gaugeFill} style={{ width: `${d.playoffStarted ? 100 : poolPct}%`, background: d.playoffStarted ? 'var(--warning)' : poolPct >= 100 ? 'var(--logic-lime)' : 'var(--blueprint-blue)' }} />
+                          {champ ? (
+                            <div className={styles.gaugeWrap}>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--logic-lime)', fontWeight: 700, fontSize: '0.82rem' }}>
+                                <Trophy size={13} aria-hidden /> {champ.championTeamName}
+                              </span>
                             </div>
-                            <span className={styles.gaugePct} style={{ color: d.playoffStarted ? 'var(--warning)' : 'var(--data-gray)' }}>
-                              {d.playoffStarted ? (d.nextRound ? `→ ${d.nextRound}` : 'Done') : `${poolPct}%`}
-                            </span>
-                          </div>
+                          ) : (
+                            <div className={styles.gaugeWrap}>
+                              <div className={styles.gaugeTrack}>
+                                <div className={styles.gaugeFill} style={{ width: `${d.playoffStarted ? 100 : poolPct}%`, background: d.playoffStarted ? 'var(--warning)' : poolPct >= 100 ? 'var(--logic-lime)' : 'var(--blueprint-blue)' }} />
+                              </div>
+                              <span className={styles.gaugePct} style={{ color: d.playoffStarted ? 'var(--warning)' : 'var(--data-gray)' }}>
+                                {d.playoffStarted ? (d.nextRound ? `→ ${d.nextRound}` : 'Done') : `${poolPct}%`}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       );
                     })}

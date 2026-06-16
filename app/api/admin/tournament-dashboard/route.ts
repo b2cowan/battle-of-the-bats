@@ -292,7 +292,7 @@ export const GET = withObservability(async (req: Request) => {
   const champions = divisions
     .map(div => {
       const final = playoffGames
-        .filter(g => g.division_id === div.id && g.status === 'completed' && g.bracket_code === 'FIN')
+        .filter(g => g.division_id === div.id && (g.status === 'completed' || g.status === 'forfeit') && g.bracket_code === 'FIN')
         .sort((a, b) => String(b.game_date ?? '').localeCompare(String(a.game_date ?? '')))[0];
       if (!final || final.home_score == null || final.away_score == null || final.home_score === final.away_score) return null;
       const winnerId = final.home_score > final.away_score ? final.home_team_id : final.away_team_id;
@@ -306,6 +306,41 @@ export const GET = withObservability(async (req: Request) => {
   const inProgressGames = activeGames.filter(g => g.status === 'submitted').length;
   const completedPct   = totalGames > 0 ? Math.round((completedGames / totalGames) * 100) : 0;
 
+  // ── Live "what's on now" list (J1-085) ────────────────────────────
+  // A game is "live now" if it's being scored (submitted) or it was scheduled to
+  // have started by now but isn't finished — i.e. it's on a field right now. Most
+  // urgent first: in-review (submitted) before overdue-scheduled, then by start
+  // time. Capped so the board panel stays compact.
+  const divisionNameById = new Map(divisions.map(d => [d.id, d.name] as const));
+  const liveGames = activeGames
+    .filter(g => {
+      if (g.status === 'submitted') return true;
+      if (g.status !== 'scheduled') return false;
+      // Scheduled and its start time has passed (started but no score yet).
+      if (g.game_date == null) return false;
+      if (g.game_date < today) return true;
+      return g.game_date === today && g.game_time != null && g.game_time <= nowTime;
+    })
+    .sort((a, b) => {
+      // submitted (being scored) first, then by start date/time ascending.
+      if (a.status !== b.status) return a.status === 'submitted' ? -1 : 1;
+      return String(a.game_date ?? '').localeCompare(String(b.game_date ?? ''))
+        || String(a.game_time ?? '').localeCompare(String(b.game_time ?? ''));
+    })
+    .slice(0, 6)
+    .map(g => ({
+      id: g.id,
+      homeTeamName: g.home_team_id ? (teamNameById.get(g.home_team_id) ?? 'TBD') : 'TBD',
+      awayTeamName: g.away_team_id ? (teamNameById.get(g.away_team_id) ?? 'TBD') : 'TBD',
+      homeScore: g.home_score,
+      awayScore: g.away_score,
+      status: g.status,
+      time: g.game_time,
+      location: g.location,
+      divisionName: g.division_id ? (divisionNameById.get(g.division_id) ?? null) : null,
+      isPlayoff: g.is_playoff,
+    }));
+
   const gameDay = {
     totalGames,
     completed:            completedGames,
@@ -317,6 +352,7 @@ export const GET = withObservability(async (req: Request) => {
     playoffGamesTotal:    playoffGames.length,
     playoffGamesCompleted: playoffGames.filter(g => g.status === 'completed').length,
     byDivision: gameDayByDivision,
+    liveGames,
   };
 
   // ── Registration stats ────────────────────────────────────────────
