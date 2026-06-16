@@ -478,11 +478,26 @@
   grid-column: 1 / -1;
 }
 
-/* Games tile horizontally and wrap, rather than stacking into a tall column. */
+/* Games tile horizontally in a single row that fills the strip. JS measures how
+   many whole tiles fit (min 4) and renders that many + a "+N more" tile; below
+   the 4-tile width it switches to wrap so tiles stack on narrow/mobile instead
+   of shrinking unusably. */
 .liveList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  display: flex;
+  flex-wrap: nowrap;
   gap: 0.5rem;
+}
+
+/* Narrow screens (can't fit 4 tiles): wrap to multiple rows. JS sets data-wrap. */
+.liveList[data-wrap='true'] {
+  flex-wrap: wrap;
+}
+
+/* Each tile shares the row equally; min-width keeps them from getting too narrow
+   (and is the basis the JS fit-math uses). */
+.liveList > * {
+  flex: 1 1 0;
+  min-width: 200px;
 }
 
 .liveRow {

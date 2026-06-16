@@ -328,8 +328,10 @@ export const GET = withObservability(async (req: Request) => {
         || String(a.game_time ?? '').localeCompare(String(b.game_time ?? ''));
     });
   const liveGamesTotal = allLiveGames.length;
+  // Load up to 8 so a wide screen can fill a single row; the board picks how many
+  // to actually show based on measured fit, and "+N more" covers the rest.
   const liveGames = allLiveGames
-    .slice(0, 6)
+    .slice(0, 8)
     .map(g => ({
       id: g.id,
       homeTeamName: g.home_team_id ? (teamNameById.get(g.home_team_id) ?? 'TBD') : 'TBD',

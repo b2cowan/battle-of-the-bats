@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, Fragment } from 'react';
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import CountUp from '@/components/admin/CountUp';
 import { useRouter } from 'next/navigation';
 import {
@@ -566,6 +566,40 @@ export default function AdminDashboard() {
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [archiveError, setArchiveError] = useState('');
   const [showOptionalItems, setShowOptionalItems] = useState(false);
+
+  // ── Now Playing one-row fit ───────────────────────────────────────────────
+  // Measure the live-games strip and show exactly as many tiles as fit in ONE row
+  // (floor of width / tile-width, min 4), with the remainder collapsing into a
+  // "+N more" tile. Below the width where 4 tiles fit, wrap to multiple rows so
+  // tiles stack on narrow/mobile instead of shrinking unusably.
+  const LIVE_TILE_MIN = 200; // must match .liveList > * min-width (px)
+  const LIVE_TILE_GAP = 8;   // must match .liveList gap (0.5rem)
+  const LIVE_MIN_TILES = 4;
+  const liveStripRef = useRef<HTMLDivElement | null>(null);
+  const [liveFit, setLiveFit] = useState<{ cols: number; wrap: boolean }>({ cols: LIVE_MIN_TILES, wrap: false });
+
+  useEffect(() => {
+    const el = liveStripRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const measure = () => {
+      const w = el.clientWidth;
+      if (w <= 0) return;
+      // How many whole tiles fit: (w + gap) / (tile + gap).
+      const fit = Math.floor((w + LIVE_TILE_GAP) / (LIVE_TILE_MIN + LIVE_TILE_GAP));
+      if (fit < LIVE_MIN_TILES) {
+        // Can't fit the 4-tile floor → let the row wrap and show everything.
+        setLiveFit({ cols: LIVE_MIN_TILES, wrap: true });
+      } else {
+        setLiveFit({ cols: fit, wrap: false });
+      }
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+    // Re-attach when the strip appears/disappears or the live count changes, so the
+    // observer binds to the live node (stats is the early useState source of truth).
+  }, [stats.gameDay.liveGames.length, stats.isGameDay]);
 
   // ── Layout customization ──────────────────────────────────────────────────
   const [layout, setLayout] = useState<DashboardLayout>(DEFAULT_LAYOUT);
@@ -1274,7 +1308,27 @@ export default function AdminDashboard() {
   // box never renders (and an empty-data panel isn't draggable when not customizing).
   function renderNowPlayingPanel() {
     if (gd.liveGames.length === 0) return null;
-    const moreCount = Math.max(0, gd.liveGamesTotal - gd.liveGames.length);
+
+    // total = real live count (API caps the loaded list at 6, liveGamesTotal is the
+    // true count). Decide how many tiles to show so the row stays ONE line on wide
+    // screens; the "+N more" tile occupies one of the row's slots when it appears.
+    const total = Math.max(gd.liveGamesTotal, gd.liveGames.length);
+    let shown = gd.liveGames;
+    let moreCount = total - gd.liveGames.length; // overflow beyond what the API loaded
+
+    if (!liveFit.wrap) {
+      // One-row mode: fit `cols` items total. If everything fits, show it; otherwise
+      // reserve the last slot for "+N more" and show cols-1 games.
+      if (total > liveFit.cols) {
+        const gamesToShow = Math.max(0, liveFit.cols - 1);
+        shown = gd.liveGames.slice(0, gamesToShow);
+        moreCount = total - gamesToShow;
+      } else {
+        shown = gd.liveGames.slice(0, liveFit.cols);
+        moreCount = total - shown.length;
+      }
+    }
+
     return (
       // Full-width command strip across the board (not a uniform gauge cell).
       <section className={`${styles.analyticsPanel} ${styles.liveStripPanel}`}>
@@ -1283,8 +1337,8 @@ export default function AdminDashboard() {
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Now Playing</h2>
           <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
         </div>
-        <div className={styles.liveList}>
-          {gd.liveGames.map(lg => (
+        <div className={styles.liveList} data-wrap={liveFit.wrap ? 'true' : 'false'} ref={liveStripRef}>
+          {shown.map(lg => (
             <Link
               key={lg.id}
               href={`${base}/results`}
