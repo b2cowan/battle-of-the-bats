@@ -214,8 +214,9 @@ export const GET = withObservability(async (req: Request) => {
   const hasDates = Boolean(t.start_date && t.end_date);
   const hasDivisions = divisions.length > 0;
   // A contact is satisfied by a selected contact member, a tournament-level
-  // contact email, OR the org fallback — mirror resolveTournamentContactEmail
-  // and the activation blocker so the checklist agrees with what activates.
+  // contact email, OR the org fallback (the three sources resolveTournamentContactEmail
+  // draws from) — kept in lockstep with the activation blocker so the checklist
+  // never claims "ready" while activation 400s, or vice versa.
   const hasPublicContact = Boolean(t.default_contact_member_id || t.contact_email || ctx.org.contactEmail);
   const hasOpenDivision = hasDivisions && divisions.some(group => !group.is_closed);
   const hasBranding = Boolean(t.logo_url || t.hero_banner_url || t.theme_preset || t.theme_primary);

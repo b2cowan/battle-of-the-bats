@@ -513,7 +513,10 @@ export default function AdminTournamentsPage({
 
       if (!tournament.startDate || !tournament.endDate) blockers.push('Add tournament start and end dates.');
       if (divisions.length === 0) blockers.push('Add at least one division.');
-      if (!tournament.contactEmail && !currentOrg?.contactEmail) blockers.push('Add a public contact email.');
+      // Contact is intentionally NOT pre-checked here: a contact can also come from
+      // a selected contact member (default_contact_member_id), which this client row
+      // doesn't carry. The server activation gate is authoritative and returns a
+      // precise blocker if no contact resolves — don't duplicate (and disagree with) it.
       if (divisions.length > 0 && divisions.every(g => g.isClosed)) blockers.push('Open at least one division for registration.');
       if (divisions.some(g => !g.capacity)) reminders.push('Review division capacities.');
 

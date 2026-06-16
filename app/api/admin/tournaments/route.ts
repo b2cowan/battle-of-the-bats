@@ -349,8 +349,10 @@ export const POST = withObservability(async (req: Request) => {
         if (!tournamentRow?.start_date || !tournamentRow?.end_date) blockers.push('add tournament dates');
         if (!divisions?.length) blockers.push('add at least one division');
         // A contact is satisfied by a selected contact member, a tournament-level
-        // contact email, OR the org fallback — mirror resolveTournamentContactEmail
-        // (lib/db.ts) so a tournament with a chosen contact member isn't falsely blocked.
+        // contact email, OR the org fallback (the three sources resolveTournamentContactEmail
+        // draws from). We gate on a contact existing at all — not on the public-visibility
+        // toggle, since an organizer may deliberately hide the email from the public site
+        // while still reaching coaches/admins.
         if (!tournamentRow?.default_contact_member_id && !tournamentRow?.contact_email && !ctx.org.contactEmail) {
           blockers.push('add a public contact email');
         }
