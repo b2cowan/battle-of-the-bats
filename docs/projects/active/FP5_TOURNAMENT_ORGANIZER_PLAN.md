@@ -142,6 +142,10 @@ The J1 audit walked the code 2026-06-10; the tournament section has had heavy wo
 - [x] **J1-028** venue/lane count in wizard — wizard venue step now asks "Fields / diamonds at this venue?"; `save` action auto-creates Diamond 1…N lanes (single surface keeps the venue-named lane); generator "not enough slots" errors now point to adding fields, widening the day, or shortening games. _commit: Cluster 4_
 - [x] **J1-029** Event Settings collapsed summaries — all six cards now show a current-value summary in the collapsed header via the existing `meta` slot (status/dates, format/timing, fee model, routing+contact visibility, roster, registration questions). _commit: Cluster 4_
 - [x] **J1-030/032** consistent fee/activation gate — **fees OPTIONAL** (owner decision 2026-06-16): dropped `hasFees` from the dashboard `ready` gate and moved the fee item to the optional list; server activation blocker already never enforced fees and the wizard never asked — all three surfaces now agree. _commit: Cluster 4_
+
+  **Cluster 4 `/review` (high-risk, 4 lenses) — 0 confirmed defects.** Two finder-flagged "gaps" were investigated and intentionally NOT fixed after blast-radius analysis:
+  - `save-venue` action creates zero facilities — **correct by design**: the org-level Venues page (`org/venues/page.tsx`) manages facilities explicitly via its own `add-facility` UI, so a generic venue-create deliberately doesn't auto-fan-out lanes.
+  - AddVenueModal has no field/diamond count — **intentionally left alone**: the tournament Venues page (`tournaments/venues/page.tsx`) already renders a full per-facility add/edit UI beside the modal ("No facilities yet — add one below…"). Adding a count input there would duplicate the facility-creation path and risk double-creating lanes. The wizard needs the count only because it has NO facility UI (fire-and-forget setup); the Venues page is the deliberate, per-facility surface.
 - [ ] **J1-066** slot-claim on accept — _commit:_
 - [ ] **J1-067** `payment=` deep-link param — _commit:_
 - [ ] **J1-068** render payment money-strip — _commit:_
