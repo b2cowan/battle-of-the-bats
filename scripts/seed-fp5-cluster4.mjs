@@ -16,6 +16,9 @@
  *       - start/end dates set
  *       - 1 division (U13), OPEN for registration
  *       - settings = {} → NO fee approach (fee_scope unset) → fees-optional path
+ *       - NO typed contact_email, but a SELECTED contact member (the owner) via
+ *         default_contact_member_id → exercises the contact-gate fix (activation
+ *         must succeed off the member contact alone)
  *   • Two venues already created with multiple facilities so the venue/lane
  *     model is visible immediately:
  *       - "Riverside Park" → 3 facilities (Diamond 1/2/3)
@@ -82,20 +85,22 @@ async function ensureOrg({ slug, name, plan }) {
     }
     console.log(`org exists ${slug} (plan_id=${plan})`);
   }
-  const member = (await db.from('organization_members')
+  let member = (await db.from('organization_members')
     .select('id').eq('organization_id', org.id).eq('user_id', owner.id).maybeSingle()).data;
   if (!member) {
+    const memberId = randomUUID();
     die(`insert member ${slug}`, (await db.from('organization_members').insert({
-      organization_id: org.id, user_id: owner.id, role: 'owner', status: 'active',
+      id: memberId, organization_id: org.id, user_id: owner.id, role: 'owner', status: 'active',
       accepted_at: new Date().toISOString(),
     })).error);
+    member = { id: memberId };
     console.log(`linked ${OWNER_EMAIL} as owner of ${slug}`);
   }
-  return org;
+  return { org, ownerMemberId: member.id };
 }
 
 // ── 2. Org 1 — wizard org (no tournament) ─────────────────────────────────────
-const wizardOrg = await ensureOrg(WIZARD_ORG);
+const { org: wizardOrg } = await ensureOrg(WIZARD_ORG);
 // Make sure it stays tournament-less so the wizard runs clean for Part A.
 const wizPrior = (await db.from('tournaments').select('id').eq('org_id', wizardOrg.id)).data ?? [];
 for (const t of wizPrior) {
@@ -111,7 +116,7 @@ for (const t of wizPrior) {
 if (wizPrior.length) console.log('cleared tournaments from wizard org (kept tournament-less)');
 
 // ── 3. Org 2 — draft org ──────────────────────────────────────────────────────
-const draftOrg = await ensureOrg(DRAFT_ORG);
+const { org: draftOrg, ownerMemberId: draftOwnerMemberId } = await ensureOrg(DRAFT_ORG);
 
 // wipe prior Draft Cup (idempotent)
 const prior = (await db.from('tournaments').select('id').eq('org_id', draftOrg.id).eq('slug', DRAFT_TOURN_SLUG)).data ?? [];
@@ -127,11 +132,15 @@ for (const t of prior) {
   console.log('wiped prior Draft Cup');
 }
 
-// tournament — DRAFT, dates set, NO fee approach (settings = {})
+// tournament — DRAFT, dates set, NO fee approach (settings = {}), NO typed
+// contact_email, but a SELECTED contact member (the owner). This is the exact
+// state that exercises the contact-gate fix: activation must succeed because a
+// contact resolves from default_contact_member_id even with no typed email.
 const tid = randomUUID();
 die('insert draft tournament', (await db.from('tournaments').insert({
   id: tid, org_id: draftOrg.id, slug: DRAFT_TOURN_SLUG, name: DRAFT_TOURN_NAME, year: 2026,
   status: 'draft', is_active: false, start_date: startDate, end_date: endDate, settings: {},
+  contact_email: null, default_contact_member_id: draftOwnerMemberId,
 })).error);
 
 // division — OPEN for registration (is_closed = false)
