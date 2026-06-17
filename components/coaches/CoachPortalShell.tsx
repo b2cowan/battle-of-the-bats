@@ -67,11 +67,13 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
   const [moreOpen, setMoreOpen] = useState(false);
   const moreBtnRef = useRef<HTMLButtonElement>(null);
   const moreSheetRef = useRef<HTMLDivElement>(null);
-  const [lastPath, setLastPath] = useState(pathname);
 
+  const [lastPath, setLastPath] = useState(pathname);
   const closeMore = useCallback(() => setMoreOpen(false), []);
 
-  // Close the More sheet on any route change (the shell persists across soft-nav).
+  // Close the More sheet on any route change (the shell persists across soft-nav). React's
+  // endorsed "adjust state during render" pattern (guarded by the path-changed check, so it
+  // can't loop) — also covers the currentTeam→null mid-nav case so the sheet can't ghost-reopen.
   if (lastPath !== pathname) {
     setLastPath(pathname);
     if (moreOpen) setMoreOpen(false);
@@ -307,7 +309,7 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
 
       {/* Mobile bottom nav (≤1023px): 4 primary section tabs + a "More" overflow tab that holds
           the team switcher, any overflow sections, and account utilities (mirrors AdminBottomNav). */}
-      <nav className={styles.bottomNav} aria-label="Coaches Portal">
+      <nav className={styles.bottomNav} aria-label="Coaches Portal" inert={moreOpen ? true : undefined}>
         {currentTeam ? (
           <>
             {primarySections.map(({ key, label, icon: Icon, sub }) => {

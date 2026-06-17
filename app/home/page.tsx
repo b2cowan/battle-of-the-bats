@@ -90,7 +90,9 @@ export default async function UserHomePage({
   // to act on, redirect to that context's canonical destination (the same href the card
   // would link to). Users with >1 context, or any pending invite, still land on the /home
   // launchpad (switcher + "Start something new"). "All workspaces" remains the way back here.
-  if (!forcePicker && contexts.length === 1 && pendingInvites.length === 0) {
+  // Guard on a non-empty destination — some contexts (e.g. `organization`) currently carry an
+  // empty `destination`; never `redirect('')` (it would loop/error). Those fall through to /home.
+  if (!forcePicker && contexts.length === 1 && pendingInvites.length === 0 && contexts[0].destination) {
     redirect(contexts[0].destination);
   }
 
