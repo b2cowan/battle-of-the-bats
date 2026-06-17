@@ -242,7 +242,8 @@ export default function AdminSidebar() {
       {/* Logo */}
       <div className={styles.logo}>
         <div className={styles.logoLockup}>
-          <div className={styles.brandSquare} aria-hidden>FL</div>
+          {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG logo */}
+          <img className={styles.brandLogo} src="/favicon.svg" alt="" width={30} height={30} aria-hidden />
           <div>
             <div className={styles.logoMain}>
               <span className={styles.logoField}>Field</span>

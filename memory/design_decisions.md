@@ -4,6 +4,22 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-17 — Real logo mark in both shells + coach upsell as a quiet page-footer
+
+**Decision (owner-driven revisions to the COACH_PORTAL_GROWTH Phase-1 quick wins):**
+
+1. **The real brand mark replaces the typed "FL" square in BOTH shells.** The coach `CoachPortalShell` `.brandMark` (solid lime "FL" text square) and the admin `AdminSidebar` `.brandSquare` are both replaced by the actual logo asset — **`/favicon.svg` (the ">" "logic mark": lime chevron on a dark blueprint square)** rendered at 30px via a decorative `<img alt="" aria-hidden>` (accessible name comes from the wrapping link/wordmark), **identical in both shells** (the logo is the cross-shell continuity anchor — exempt from the per-shell radius dialect). Owner chose the ">" logic mark over the FL lettermark (the FL lettermark assets are font-dependent / detailed and don't render crisply at 30px; the favicon is pure geometry, font-independent, the official app icon). New `.brandLogo` class (30×30 block) in both modules; the old text-square rules (incl. their `#0f1123`) removed.
+
+2. **The per-page coach upsell (`ScopeShelf`) is a quiet page-FOOTER, not a card or a one-line footnote.** Evolution this session: dismissible card → one-line footnote → (final) a divider-separated **page-footer zone** at the bottom of each Tier-2 section page (Roster/Schedule/Fees/Announcements). Treatment: `border-top: 1px var(--border-2)` + `2rem` top margin (**not** viewport-pinned — avoids a stranded footer on short pages); three muted tiers — `--font-data` uppercase `--white-40` eyebrow **"Premium Coaches Portal"** → `--white-40` 0.8rem body (`max-width:72ch`) carrying the section value + a whole-team teaser + **"Your free tools stay free."** → a quiet `--white-40`→`--logic-lime`-hover link **"See everything it includes →"** (`/for-coaches?source=coach_footer_{section}`). **Info-first, NOT "express interest"** — the lead-capture ask lives on the `/for-coaches` marketing page; the in-product footer only routes to info. No icon, no card, no button, no dismiss; lime reserved to the link hover (CP-1). Stays per-page, content-gated; now a plain server-renderable component (no `'use client'`/localStorage).
+
+3. **Naming canon enforced** (per the Brand Strategy Coaches Portal Unification Addendum 2026-05-25): the paid tier is **"Premium Coaches Portal"** (Premium as prefix, mirroring "Basic Coaches Portal"), the product is **"Coaches Portal"** — never "Coaches Portal Premium" / "Coach Portal" / "Team plan". Recorded in `docs/agents/brand/PRICING_PAGE_COPY.md`.
+
+**Rationale:** Owner: the typed "FL" wasn't the real logo; "express interest" implied an ask when the goal is to lead coaches to *information*; and the upsell should be a non-intrusive page footer that "can include more information." Using the official mark gives true cross-shell brand identity; routing the in-product upsell to the `/for-coaches` explainer (info-first) with the ask deferred to that page is the correct funnel split; a divider-separated footer reads as the page's end without competing with the working content.
+
+**Applies to:** `components/coaches/CoachPortalShell.tsx` + `.module.css` (`.brandLogo` replaces `.brandMark`), `components/admin/AdminSidebar.tsx` + `.module.css` (`.brandLogo` replaces `.brandSquare`), `components/coaches/ScopeShelf.tsx` + `.module.css` (card → `.footer`/`.footerEyebrow`/`.footerBody`/`.footerLink`), `docs/agents/brand/PRICING_PAGE_COPY.md` (naming canon). No new tokens; no literal hex in our CSS (favicon's hex lives in the asset). **Generalizes:** the logo is the one device that stays identical across shells (continuity anchor, exempt from dialect rules); an always-present informational upsell is a divider-separated footer zone (eyebrow + capped-width muted body + quiet info link → marketing explainer), distinct from a dismissible nudge card, and routes to *info* not an *ask*.
+
+---
+
 ### 2026-06-17 — Coach Fees: two-type model (Everyone / One player) + atomic bulk-create + one add button
 
 **Decision (model + flow redesign on `components/coaches/FeeEditor.tsx`; supersedes the same-day "whole-team fee type" framing):**

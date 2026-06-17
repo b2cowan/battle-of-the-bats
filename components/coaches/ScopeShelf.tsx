@@ -1,111 +1,59 @@
-'use client';
-
-import { useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, Compass, X } from 'lucide-react';
 import styles from './ScopeShelf.module.css';
 
 /**
- * Per-page feature-education strip for the FREE Coaches Portal (COACH_PORTAL_GROWTH_PLAN Phase 1).
+ * Per-page feature-education PAGE FOOTER for the FREE Coaches Portal (COACH_PORTAL_GROWTH Phase 1).
  *
- * A QUIET upsell footnote anchored at the BOTTOM of a Tier-2 section page, below the coach's
- * working content — never a modal, never a gate, never top-of-page. It names what the paid
- * Coaches Portal Premium adds on THIS surface, always validates the free tool ("…is free
- * forever"), and offers a single "express interest" link (self-serve coach checkout is gated,
- * so we capture a lead, not sell).
+ * A quiet, always-present, divider-separated footer zone at the bottom of a Tier-2 section page —
+ * never a card, never a dismiss, never a CTA. It names what the paid Premium Coaches Portal adds
+ * on THIS surface (+ a whole-team teaser), reassures the free tools stay free, and links to the
+ * public explainer (info-first — the "express interest" ask lives on /for-coaches, not here).
  *
- * Dismiss mirrors CoachOverviewInvite: per-team, per-section localStorage via useSyncExternalStore
- * (hydration-safe, cross-tab). Dismissing does NOT erase discovery — it degrades to a single faint
- * "what this adds →" line. Only render this when the section has real content (the caller gates it).
+ * Owner direction (2026-06-17): a page-footer "tied to the bottom", richer than one line, but
+ * non-intrusive. Naming canon (brand Unification Addendum): "Premium Coaches Portal" / "Basic
+ * Coaches Portal" — never "Coaches Portal Premium" / "Coach Portal". Only render when the section
+ * has real content (the caller gates it).
  */
 
 type Section = 'roster' | 'schedule' | 'fees' | 'announcements';
 
-const COPY: Record<Section, { heading: string; bullets: string[]; free: string }> = {
+// Per-section value phrase + a whole-team teaser (de-duped per section so nothing repeats).
+const COPY: Record<Section, { value: string; teaser: string }> = {
   roster: {
-    heading: 'Positions, attendance & game lineups',
-    bullets: [
-      'Track positions and availability for every player',
-      'Take attendance at each practice and game',
-      'Build batting orders and game-day lineups',
-    ],
-    free: 'Your free roster stays free — Coaches Portal Premium adds the game-day tools on top.',
+    value: 'positions, availability, attendance & game lineups',
+    teaser: 'plus a season budget and documents for your whole team',
   },
   schedule: {
-    heading: 'Recurring events, attendance & calendar sync',
-    bullets: [
-      'Set repeating practices once instead of one at a time',
-      'Take attendance straight from each event',
-      "Sync your team schedule to your phone's calendar",
-    ],
-    free: 'Your free schedule stays free — Coaches Portal Premium adds the rest.',
+    value: 'recurring events, attendance & calendar sync',
+    teaser: 'plus lineups, a season budget and documents for your whole team',
   },
   fees: {
-    heading: 'Dues automation & a full season budget',
-    bullets: [
-      'Installment schedules with due dates, tracked per player',
-      'Overdue reminders sent by email — no chasing',
-      'Budget vs. actual across the season, with expenses and fundraiser credits',
-    ],
-    free: 'This manual ledger is free forever — Coaches Portal Premium adds the automation.',
+    value: 'dues schedules with due dates, email reminders & a season budget',
+    teaser: 'plus lineups, attendance and documents for your whole team',
   },
   announcements: {
-    heading: 'Scheduled sends & delivery tracking',
-    bullets: [
-      'Schedule announcements ahead of time',
-      'Send dues and event reminders automatically',
-      "See who's received each message",
-    ],
-    free: 'Your free announcements stay free — Coaches Portal Premium adds scheduling and tracking.',
+    value: 'scheduled sends, automatic reminders & delivery tracking',
+    teaser: 'plus lineups, attendance, a season budget and documents for your whole team',
   },
 };
 
-export default function ScopeShelf({ basicTeamId, section }: { basicTeamId: string; section: Section }) {
+const SECTION_LABEL: Record<Section, string> = {
+  roster: 'roster',
+  schedule: 'schedule',
+  fees: 'fees',
+  announcements: 'announcements',
+};
+
+export default function ScopeShelf({ section }: { basicTeamId: string; section: Section }) {
   const copy = COPY[section];
-  const storageKey = `fl_coach_scope_shelf:${basicTeamId}:${section}`;
-  const startHref = `/coaches/start?source=scope_shelf_${section}`;
-
-  const dismissed = useSyncExternalStore(
-    (onChange) => {
-      window.addEventListener('storage', onChange);
-      return () => window.removeEventListener('storage', onChange);
-    },
-    () => {
-      try { return localStorage.getItem(storageKey) === '1'; } catch { return false; }
-    },
-    () => false, // server snapshot — never dismissed during SSR
-  );
-
-  function dismiss() {
-    try {
-      localStorage.setItem(storageKey, '1');
-      window.dispatchEvent(new StorageEvent('storage', { key: storageKey }));
-    } catch { /* ignore */ }
-  }
-
-  if (dismissed) {
-    return (
-      <Link href={startHref} className={styles.faintLine}>
-        <Compass size={13} aria-hidden />
-        What Coaches Portal Premium adds here →
-      </Link>
-    );
-  }
-
+  const href = `/for-coaches?source=coach_footer_${section}`;
   return (
-    <aside className={styles.shelf} aria-label="What Coaches Portal Premium adds here">
-      <button type="button" className={styles.dismiss} onClick={dismiss} aria-label="Dismiss">
-        <X size={15} aria-hidden />
-      </button>
-      <p className={styles.eyebrow}>Coaches Portal Premium</p>
-      <h3 className={styles.heading}>{copy.heading}</h3>
-      <ul className={styles.bullets}>
-        {copy.bullets.map(b => <li key={b}>{b}</li>)}
-      </ul>
-      <p className={styles.free}>{copy.free}</p>
-      <Link href={startHref} className={`btn btn-ghost btn-sm ${styles.cta}`}>
-        Express interest <ArrowUpRight size={14} aria-hidden />
-      </Link>
-    </aside>
+    <footer className={styles.footer}>
+      <p className={styles.footerEyebrow}>Premium Coaches Portal</p>
+      <p className={styles.footerBody}>
+        On {SECTION_LABEL[section]}: {copy.value} — {copy.teaser}. Your free tools stay free.
+      </p>
+      <Link href={href} className={styles.footerLink}>See everything it includes →</Link>
+    </footer>
   );
 }

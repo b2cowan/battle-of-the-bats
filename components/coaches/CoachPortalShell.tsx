@@ -148,7 +148,8 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
 
   const brand = (
     <Link href={currentTeam ? coachTeamPath(currentTeam.id) : COACHES_HOME_PATH} className={styles.brand}>
-      <span className={styles.brandMark}>FL</span>
+      {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG logo; next/image gives no benefit + needs dangerouslyAllowSVG */}
+      <img className={styles.brandLogo} src="/favicon.svg" alt="" width={30} height={30} aria-hidden />
       <span className={styles.brandLockup}>
         <span className={styles.brandText}>Coaches Portal</span>
         <span className={styles.brandSub}>Your team, every tournament</span>
@@ -285,7 +286,8 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
           chip; account + switcher live in the "More" sheet on the bottom nav). */}
       <header className={styles.topbar}>
         <Link href={currentTeam ? coachTeamPath(currentTeam.id) : COACHES_HOME_PATH} className={styles.topbarMark} aria-label="Coaches Portal home">
-          <span className={styles.brandMark}>FL</span>
+          {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG logo */}
+          <img className={styles.brandLogo} src="/favicon.svg" alt="" width={30} height={30} aria-hidden />
         </Link>
         {currentTeam ? (
           <div className={styles.topbarTeam}>
