@@ -160,9 +160,11 @@ The J1 audit walked the code 2026-06-10; the tournament section has had heavy wo
   **Browser-verified 2026-06-16** (owner confirmed). Test fixture: `scripts/seed-fp5-cluster5.mjs` (separate from the Cluster-4 fixture — provisions a Plus org `fp5-c5-test` with an active "Slot Cup": 2 pools × 3 slots, 4 filled / 2 open / 2 waitlisted / 1 pending, $100/$500 fee + saved payment instructions, and an invited official for staffing).
 
   **Re-verified 2026-06-16 against current code (all four still PRESENT before fix):** single+bulk accept set `status='accepted'` but never claimed a slot, and the only recovery (`unplaced` bucket + `promote-from-waitlist`) was Plus-gated → free-tier teams vanished (J1-066); page read only `attention`/`division`, dashboard emitted `payment=paid/deposit/pending` (J1-067); `.paymentPanel`/`.paymentMetric` CSS had 0 JSX references while `paymentSummary` computed all 5 metrics (J1-068); reminder textarea defaulted to a generic placeholder, never reading the saved instructions (J1-069). Owner decision 2026-06-16: J1-066 = **Option 1** (auto-claim on accept + always-visible unplaced safety net on every plan). Typecheck clean; focused lint 0 errors; dev server restarted (new `lib/slot-claim.ts`) + login route 200.
-- [ ] **J1-077** staffing purpose-picker on invite — _commit:_
-- [ ] **J1-078** scorekeeper seat policy (coordinate /billing) — _commit:_ / defer
-- [ ] **J1-080** day-of staff kit panel — _commit:_ / triage
+- [x] **J1-077** staffing purpose-picker on invite — volunteer invite now offers a **Scorekeeping / Gate / Both** purpose (no new role/migration — officials already permit both surfaces); the invite email + landing route to the chosen screen; scorekeeper⇄check-in **cross-link** added to both volunteer shells (capability-gated). _commit: (staffing)_ — browser-verify pending.
+- [ ] **J1-078** scorekeeper seat policy — **DOCUMENTED & DEFERRED to /billing** (owner decision 2026-06-16): pricing decision owned by `FREE_TIER_STRATEGY`, not an FP-5 bug. Recommendation to surface: free official/volunteer seats on all tiers, cap admin/staff only. Not built here.
+- [x] **J1-080** day-of staff kit — new **Staff Kit** admin page (Operations nav) handing out Scorekeeper + Gate/Check-in as **QR codes + copy-links** with a printable one-pager; `qrcode` dep added (client-side render, no URL leaves the browser). _commit: (staffing)_ — browser-verify pending.
+
+  **Staffing plan + brief:** `docs/projects/active/FP5_STAFFING_{PLAN,PM_BRIEF}.md`. Built 2026-06-16; typecheck clean, focused lint 0 errors; dev server restarted (new files + invite-route + shared nav). Fixture `seed-fp5-cluster5.mjs` provisions an invited official.
 - [ ] **J1-001/002/003/004** discovery footer/motion/wordmark/imagery (coordinate marketing) — _commit:_
 
 **Dropped (already fixed, verified 2026-06-15):** J1-065, J1-076.
