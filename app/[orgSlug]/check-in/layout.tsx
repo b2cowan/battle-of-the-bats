@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import ShellSignOutButton from '@/components/volunteer/ShellSignOutButton';
@@ -81,6 +82,15 @@ export default async function CheckInVolunteerLayout({
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexShrink: 0 }}>
+          {/* J1-077: one-tap hop to the scorekeeper screen for volunteers who also score. */}
+          {hasCapability(authCtx.role, authCtx.capabilities, 'submit_scores') && (
+            <Link
+              href={`/${orgSlug}/scorekeeper`}
+              style={{ color: '#D9F99D', fontFamily: 'var(--font-data)', fontSize: '0.7rem', letterSpacing: '0.06em', textTransform: 'uppercase', textDecoration: 'none', whiteSpace: 'nowrap' }}
+            >
+              Scorekeeper →
+            </Link>
+          )}
           <FeedbackLauncher compact />
           <ShellSignOutButton />{/* J8-001: was a dead <Link href="/auth/logout"> (404) */}
         </div>

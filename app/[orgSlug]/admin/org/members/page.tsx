@@ -21,8 +21,18 @@ import styles from './members.module.css';
 const ROLE_INVITE_DESCRIPTIONS: Record<'admin' | 'staff' | 'official', string> = {
   admin: 'Tournament architect — can create tournaments, define divisions, manage registrations, build schedules, manage contacts and venues, post rules, send communications, and manage members. Cannot access org settings or subscription.',
   staff: 'Tournament operator — updates game times and venue assignments during events, submits scores, and posts announcements. Cannot create or delete tournaments, manage registrations, or send communications.',
-  official: 'Score entry only. Scorekeepers receive a direct link to the scorekeeper app and submit game results there. They do not access the main admin area.',
+  official: 'Day-of volunteer. Can submit game scores and check teams in at the gate — no access to the main admin area. The invite link opens the screen you choose below.',
 };
+
+// J1-077: what the volunteer is helping with. Drives ONLY where the invite link lands
+// (officials already permit both scoring and gate); they can hop between the two
+// screens via the in-app cross-link, so this is a routing hint, not a permission.
+const INVITE_PURPOSES = [
+  { value: 'both', label: 'Both', hint: 'Opens the scorekeeper screen, with a one-tap link to the gate board.' },
+  { value: 'scorekeeping', label: 'Scorekeeping', hint: 'Opens the scorekeeper screen to submit game scores.' },
+  { value: 'gate', label: 'Gate / check-in', hint: 'Opens the gate board to check teams in.' },
+] as const;
+type InvitePurpose = typeof INVITE_PURPOSES[number]['value'];
 
 const ROLE_MATRIX: { label: string; owner: boolean; admin: boolean; staff: boolean; official: boolean }[] = [
   { label: 'Create / delete tournaments',       owner: true,  admin: true,  staff: false, official: false },
@@ -187,6 +197,7 @@ export default function MembersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'admin' | 'staff' | 'official'>('staff');
+  const [invitePurpose, setInvitePurpose] = useState<InvitePurpose>('both');
   const [inviting, setInviting] = useState(false);
 
   // Manage modal — replaces the separate assignment, cap-override, remove, and reinvite modals
@@ -270,13 +281,18 @@ export default function MembersPage() {
       const res = await fetch(`/api/admin/members/invite${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+        body: JSON.stringify({
+          email: inviteEmail,
+          role: inviteRole,
+          ...(inviteRole === 'official' ? { purpose: invitePurpose } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Invite failed');
       setInviteOpen(false);
       setInviteEmail('');
       setInviteRole('staff');
+      setInvitePurpose('both');
       showSuccess(data.added
         ? `${inviteEmail} has been added to the organization.`
         : `Invite sent to ${inviteEmail}.`
@@ -885,10 +901,27 @@ export default function MembersPage() {
                 >
                   <option value="admin">Admin</option>
                   <option value="staff">Staff</option>
-                  <option value="official">Scorekeeper</option>
+                  <option value="official">Volunteer (scorekeeper / gate)</option>
                 </select>
                 <p className={styles.roleHint}>{ROLE_INVITE_DESCRIPTIONS[inviteRole]}</p>
               </div>
+              {/* J1-077: purpose picker — only for volunteers; sets where the invite link lands. */}
+              {inviteRole === 'official' && (
+                <div className={styles.field}>
+                  <label className={styles.label} htmlFor="invite-purpose">Helping with</label>
+                  <select
+                    id="invite-purpose"
+                    className={styles.input}
+                    value={invitePurpose}
+                    onChange={e => setInvitePurpose(e.target.value as InvitePurpose)}
+                  >
+                    {INVITE_PURPOSES.map(p => (
+                      <option key={p.value} value={p.value}>{p.label}</option>
+                    ))}
+                  </select>
+                  <p className={styles.roleHint}>{INVITE_PURPOSES.find(p => p.value === invitePurpose)?.hint}</p>
+                </div>
+              )}
               <div className={styles.modalFooter}>
                 <button type="button" className="btn btn-outline" onClick={() => setInviteOpen(false)}>
                   Cancel

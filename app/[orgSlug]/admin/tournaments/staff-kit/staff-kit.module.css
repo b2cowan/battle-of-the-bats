@@ -1,0 +1,121 @@
+.empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--white-50);
+  font-family: var(--font-data);
+}
+
+.intro {
+  margin: 0 0 1.25rem;
+  max-width: 640px;
+  color: var(--white-60);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.card {
+  border: 1px solid var(--border-2);
+  background: var(--hud-surface);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cardHead {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  color: var(--logic-lime);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.cardBlurb {
+  margin: 0.15rem 0 0;
+  color: var(--white-50);
+  font-size: 0.82rem;
+}
+
+.qrWrap {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem;
+  background: var(--white);
+  border-radius: 2px;
+}
+
+.qr {
+  width: 220px;
+  height: 220px;
+  display: block;
+}
+
+.qrPlaceholder {
+  width: 220px;
+  height: 220px;
+  background: repeating-linear-gradient(45deg, rgba(0,0,0,0.04), rgba(0,0,0,0.04) 6px, rgba(0,0,0,0.08) 6px, rgba(0,0,0,0.08) 12px);
+}
+
+.urlRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.url {
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  color: var(--white-60);
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+.urlActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.note {
+  margin: 1.5rem 0 0;
+  max-width: 640px;
+  color: var(--white-50);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.note strong {
+  color: var(--white-70);
+}
+
+/* Printable one-pager — drop the app chrome, lay the two cards out for the gate table. */
+@media print {
+  .intro,
+  .note {
+    color: #333;
+  }
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  .card {
+    border: 1px solid #ccc;
+    background: #fff;
+    break-inside: avoid;
+  }
+  .cardTitle { color: #000; }
+  .cardBlurb,
+  .url { color: #333; }
+  .urlActions { display: none; }
+}

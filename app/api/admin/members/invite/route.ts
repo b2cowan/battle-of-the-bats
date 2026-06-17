@@ -36,6 +36,13 @@ export const POST = withObservability(async (req: Request) => {
   const body = await req.json();
   const email: string = String(body.email ?? '').trim().toLowerCase();
   const role: OrgRole = INVITABLE_ROLES.includes(body.role) ? (body.role as OrgRole) : 'staff';
+  // J1-077: where the volunteer invite link lands. Officials already permit both
+  // scoring and gate; this only routes the link (default 'both' → scorekeeper +
+  // in-app cross-link to the gate). Ignored for non-official roles.
+  const VOLUNTEER_PURPOSES = ['scorekeeping', 'gate', 'both'] as const;
+  type VolunteerPurpose = typeof VOLUNTEER_PURPOSES[number];
+  const purpose: VolunteerPurpose =
+    role === 'official' && VOLUNTEER_PURPOSES.includes(body.purpose) ? body.purpose : 'both';
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: 'Valid email required' }, { status: 400 });
@@ -77,11 +84,16 @@ export const POST = withObservability(async (req: Request) => {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
   const roleLabel = ROLE_EMAIL_LABEL[role] ?? role;
+  // J1-077: officials land on the screen matching their purpose. 'gate' → check-in,
+  // otherwise the scorekeeper screen (which carries a cross-link to the gate).
+  const volunteerLanding = purpose === 'gate' ? `/${org.slug}/check-in` : `/${org.slug}/scorekeeper`;
   const signInPath = role === 'official'
-    ? `/auth/login?next=${encodeURIComponent(`/${org.slug}/scorekeeper`)}`
+    ? `/auth/login?next=${encodeURIComponent(volunteerLanding)}`
     : '/auth/login';
   const signInUrl = `${appUrl}${signInPath}`;
-  const signInAction = role === 'official' ? 'Open Scorekeeper View' : 'Sign In';
+  const signInAction = role === 'official'
+    ? (purpose === 'gate' ? 'Open Check-In' : purpose === 'scorekeeping' ? 'Open Scorekeeper' : 'Open Volunteer View')
+    : 'Sign In';
 
   if (existingUser) {
     // Check they're not already in THIS org
@@ -132,7 +144,7 @@ export const POST = withObservability(async (req: Request) => {
 
     void supabaseAdmin.from('org_audit_log').insert({
       org_id: org.id, actor_id: user.id, target_id: existingUser.id,
-      action: 'member_invited', payload: { email, role },
+      action: 'member_invited', payload: { email, role, ...(role === 'official' ? { purpose } : {}) },
     });
 
     // Notify the existing user that they now have access to this org.
@@ -178,14 +190,16 @@ export const POST = withObservability(async (req: Request) => {
 
     void supabaseAdmin.from('org_audit_log').insert({
       org_id: org.id, actor_id: user.id, target_id: newUserId,
-      action: 'member_invited', payload: { email, role },
+      action: 'member_invited', payload: { email, role, ...(role === 'official' ? { purpose } : {}) },
     });
   }
 
   // Send invite email via Resend
   const inviteUrl = getActionLink(linkData);
 
-  const inviteAction = role === 'official' ? 'Accept Scorekeeper Invite' : 'Accept Invitation';
+  const inviteAction = role === 'official'
+    ? (purpose === 'gate' ? 'Accept Gate Volunteer Invite' : purpose === 'scorekeeping' ? 'Accept Scorekeeper Invite' : 'Accept Volunteer Invite')
+    : 'Accept Invitation';
   await sendEmail(
     email,
     `You've been invited to ${org.name} on FieldLogicHQ`,
