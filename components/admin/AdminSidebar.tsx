@@ -241,13 +241,16 @@ export default function AdminSidebar() {
     <aside className={styles.sidebar}>
       {/* Logo */}
       <div className={styles.logo}>
-        <div>
-          <div className={styles.logoMain}>
-            <span className={styles.logoField}>Field</span>
-            <span className={styles.logoLogic}>Logic</span>
-            <span className={styles.logoHq}>HQ</span>
+        <div className={styles.logoLockup}>
+          <div className={styles.brandSquare} aria-hidden>FL</div>
+          <div>
+            <div className={styles.logoMain}>
+              <span className={styles.logoField}>Field</span>
+              <span className={styles.logoLogic}>Logic</span>
+              <span className={styles.logoHq}>HQ</span>
+            </div>
+            <div className={styles.logoSub}>{currentOrg?.name ?? 'Admin'}</div>
           </div>
-          <div className={styles.logoSub}>{currentOrg?.name ?? 'Admin'}</div>
         </div>
         {currentOrg?.id && <NotificationBell orgId={currentOrg.id} />}
       </div>
@@ -590,6 +593,11 @@ export default function AdminSidebar() {
           ) : !isOrgAdmin && (
             <Link href={`/${currentOrg?.slug ?? 'milton-bats'}`} className={styles.footerLink} id="admin-back-site">
               <Home size={15} /> Back to Site
+            </Link>
+          )}
+          {hasCurrentOrgCoachAccess && currentOrgSlug && (
+            <Link href={`/${currentOrgSlug}/coaches`} className={styles.footerLink} id="admin-coaches-portal">
+              <Users2 size={15} /> Coaches Portal
             </Link>
           )}
           <Link href="/home?pick=1" className={styles.footerLink} id="admin-all-workspaces">

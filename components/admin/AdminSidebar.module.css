@@ -138,9 +138,35 @@
 .logo {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
   padding: 1.25rem;
   border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+}
+
+/* Brand lockup: the lime "FL" mark + the FieldLogicHQ wordmark. The mark is the
+   same device as the coach portal's brandMark (cross-shell brand continuity);
+   admin dialect uses 2px corners to match the cockpit's sharp radius system. */
+.logoLockup {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.brandSquare {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 2px;
+  background: var(--logic-lime);
+  color: #0f1123;
+  font-family: var(--font-data, monospace);
+  font-weight: 900;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
 }
 
 .logoIcon {
