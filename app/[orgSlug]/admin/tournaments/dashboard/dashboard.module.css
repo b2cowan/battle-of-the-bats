@@ -321,7 +321,23 @@
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  overflow: hidden;
+  /* visible (not hidden) so concept HelpTooltip popovers on default-group rows aren't clipped.
+     The list has no border-radius, so nothing relies on overflow:hidden for corner clipping. */
+  overflow: visible;
+}
+
+/* Group divider micro-label inside the optional drawer (Recommended / Defaults / Your call). */
+.checklistDivider {
+  width: 100%;
+  padding: 0.5rem 0.85rem 0.35rem;
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-40);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
 }
 
 
@@ -336,6 +352,8 @@
   transition: background 0.15s;
   min-height: 40px;
   flex-wrap: wrap;
+  /* Positioning context for the stretched label-link overlay (whole-card click target). */
+  position: relative;
 }
 
 .checklistRow:last-child {
@@ -375,6 +393,47 @@
 
 .checklistRowDone .rowLabel {
   color: var(--logic-lime);
+}
+
+/* Label-as-link: rows that carry a concept "?" tooltip make the LABEL the <a> (the row is a <div>)
+   so a <button> isn't nested inside an <a>. A stretched ::after overlay makes the WHOLE card the
+   click target (status arrow, badge, sub-label all included) while the tooltip floats above it. */
+.rowLabelLink {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fl-text);
+  text-decoration: none;
+}
+.rowLabelLink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.rowLabelLink:hover {
+  text-decoration: underline;
+}
+.checklistRowDone .rowLabelLink {
+  color: var(--logic-lime);
+}
+
+/* The "?" tooltip sits above the stretched link overlay so it stays independently clickable
+   (tap = open tooltip, not navigate) on both desktop and mobile. */
+.rowHelp {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Neutralize the pending-icon amber on default-backed rows — they have working values, not warnings. */
+.checklistRow .rowIconMuted {
+  color: var(--data-gray);
 }
 
 /* Schedule row — tone-driven flag (overrides the done/pending icon + status colors).
@@ -1945,6 +2004,46 @@
 .optionalToggle:hover {
   border-color: rgba(var(--blueprint-blue-rgb), 0.55);
   color: var(--white-70);
+}
+
+/* Named drawer label truncates gracefully on narrow screens; the count stays visible. */
+.optionalToggleLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Activate-confirm "going live with these gaps" summary (read-only, non-blocking). */
+.activateSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0 0 0.75rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  background: rgba(var(--blueprint-blue-rgb), 0.05);
+}
+.activateSummaryBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.activateSummaryHead {
+  display: block;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-50);
+}
+.activateSummaryList {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.78rem;
+  color: var(--data-gray);
+  line-height: 1.5;
 }
 
 /* ── Checklist error footer ──────────────────────────── */

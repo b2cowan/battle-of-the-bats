@@ -25,6 +25,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import type { RegistrationAttentionSummary } from '@/lib/registration-attention';
 import { LiveEventLog } from '@/components/admin/LiveEventLog';
+import HelpTooltip from '@/components/help/HelpTooltip';
 import styles from './dashboard.module.css';
 import { copiedSummary } from '@/lib/utils';
 import type { CloneCopiedCounts } from '@/lib/types';
@@ -885,23 +886,46 @@ export default function AdminDashboard() {
     .map(p => ({ id: p.id, label: p.label }));
 
   // Checklist
-  const checklistItems = [
+  type ChecklistItem = { key: string; done: boolean; label: string; desc: string; href: string; action: string; help?: { title: string; body: string } };
+  const checklistItems: ChecklistItem[] = [
     { key: 'dates',         done: checklist.hasDates,        label: 'Tournament dates',                            desc: 'Set a start and end date so teams know when the event runs.',     href: `${base}/settings/event?section=overview`, action: 'Edit dates'     },
-    { key: 'divisions',     done: checklist.hasDivisions,    label: 'At least one division',                       desc: 'Create the divisions teams can register for.',                     href: `${base}/divisions`,      action: 'Add divisions'  },
+    { key: 'divisions',     done: checklist.hasDivisions,    label: 'At least one division',                       desc: 'Create the divisions teams can register for.',                     href: `${base}/divisions`,      action: 'Add divisions',  help: { title: 'Divisions', body: 'The group teams register into — usually by age or skill, e.g. U12 Boys or Competitive. You need at least one before going live.' } },
   ];
   const completedCount = checklistItems.filter(i => i.done).length;
 
-  const optionalItems = [
-    { key: 'open-division', done: checklist.hasOpenDivision, label: 'Open public registration', desc: checklist.hasOpenDivision ? 'At least one division is open for teams to register online.' : 'Optional. Open a division when you want teams to register online — skip this if you are loading or inviting teams yourself.', href: `${base}/divisions`, action: 'Open divisions →' },
-    { key: 'fees',         done: checklist.hasFees,          label: 'Fee approach',      desc: checklist.hasFees          ? 'A fee approach is set for this tournament.' : 'Optional. Confirm how registration fees work — or mark the event as free. You can activate without this.',           href: `${base}/settings/event?section=fees`, action: 'Configure fees →'   },
-    { key: 'contact',      done: checklist.hasPublicContact, label: 'Contact email',     desc: checklist.hasPublicContact ? 'A contact email is set for this tournament.' : 'Defaults to your org contact email. Override with a tournament-specific address.',                    href: `${base}/settings/event?section=contact`, action: 'Review contact →'   },
-    { key: 'game-timing',  done: checklist.hasGameTiming,    label: 'Game timing',       desc: checklist.hasGameTiming    ? 'Game timing is configured for this tournament.' : 'Defaults to 90 min games / 15 min buffer, tournament-wide. Customize before building the schedule.', href: `${base}/settings/event?section=schedule`, action: 'Configure timing →' },
-    { key: 'tie-breakers', done: checklist.hasTieBreakers,   label: 'Tie-breaker rules', desc: checklist.hasTieBreakers   ? 'Tie-breaker rules are configured for this tournament.' : 'Defaults to H2H → Run Diff → Runs For → Runs Against. Customize before playoffs.',          href: `${base}/settings/event?section=schedule`, action: 'Configure rules →'  },
-    { key: 'venues',       done: checklist.hasVenues,        label: 'Venues & fields',   desc: checklist.hasVenues        ? 'Playing fields are set up for this tournament.' : 'Add your playing fields so teams know where to show up.',                                          href: `${base}/venues`,         action: 'Add venues →'       },
-    { key: 'rules',        done: checklist.hasRules,         label: 'Rules & resources', desc: checklist.hasRules         ? 'Tournament rules and documents are published.' : 'Upload rulebooks or documents teams need before the tournament.',                                   href: `${base}/rules`,          action: 'Add rules →'        },
-    { key: 'branding',     done: checklist.hasBranding,      label: 'Public page',       desc: checklist.hasBranding      ? 'Your public tournament page is live and customized.' : 'Control visibility and public presentation of your tournament page.',                        href: `${base}/branding`,       action: 'Manage page →'      },
+  // Optional items are grouped into three tiers so the drawer reads as guidance, not a junk drawer:
+  //   recommended — worth doing before go-live (no defaults; skipping leaves a real gap)
+  //   defaults    — already work out of the box; always show the current value so it's discoverable + tunable
+  //   choice      — genuine workflow forks (open online vs. load teams yourself; fees), not chores
+  type OptionalItem = {
+    key: string;
+    group: 'recommended' | 'defaults' | 'choice';
+    done: boolean;
+    label: string;
+    href: string;
+    desc?: string;
+    subLabel?: string;
+    action?: string;
+    help?: { title: string; body: string };
+  };
+  const optionalItems: OptionalItem[] = [
+    // ── Recommended before go-live ──────────────────────────────────────────
+    { key: 'venues',   group: 'recommended', done: checklist.hasVenues,   label: 'Venues & fields',   desc: 'Add your playing fields so teams know where to show up.',                 href: `${base}/venues`,   action: 'Add venues →',  help: { title: 'Venues & fields', body: "Save your fields once and reuse them across games. They appear on the public schedule and each game so teams and fans know where to go — you can still type a one-off location on a single game." } },
+    { key: 'branding', group: 'recommended', done: checklist.hasBranding, label: 'Public page',       desc: 'Control visibility and public presentation of your tournament page.',    href: `${base}/branding`, action: 'Manage page →', help: { title: 'Public page', body: "The page fans and teams see — schedule, standings, teams, and news. Control what's visible, and (on Tournament Plus) its branding." } },
+    { key: 'rules',    group: 'recommended', done: checklist.hasRules,    label: 'Rules & resources', desc: 'Upload rulebooks or documents teams need before the tournament.',         href: `${base}/rules`,    action: 'Add rules →',   help: { title: 'Rules & resources', body: 'Post rulebooks, waivers, or documents teams need. They show on your public tournament site.' } },
+    // ── Defaults you can fine-tune (always show the value in the sub-label) ──
+    { key: 'game-timing',  group: 'defaults', done: checklist.hasGameTiming,  label: 'Game timing',       subLabel: '90 min games / 15 min buffer, tournament-wide', href: `${base}/settings/event?section=schedule`, help: { title: 'Game timing', body: 'Sets the default game length and the buffer between games — used when the schedule is built. The default is 90-minute games with a 15-minute turnaround.' } },
+    { key: 'tie-breakers', group: 'defaults', done: checklist.hasTieBreakers, label: 'Tie-breaker rules', subLabel: 'H2H → Run Diff → Runs For → Runs Against',      href: `${base}/settings/event?section=schedule`, help: { title: 'Tie-breaker rules', body: 'When teams finish with the same record, these rules decide their ranking — head-to-head first, then run differential, and so on. The defaults suit most tournaments.' } },
+    { key: 'contact',      group: 'defaults', done: checklist.hasPublicContact, label: 'Contact email',   subLabel: 'Defaults to your org contact email — override optional', href: `${base}/settings/event?section=contact`, help: { title: 'Contact email', body: "The address teams reach you at. It shows on the public tournament page and is included in emails to coaches and teams. Defaults to your organization's contact email if you don't set a specific one." } },
+    // ── Registration & fees — your call ─────────────────────────────────────
+    { key: 'open-division', group: 'choice', done: checklist.hasOpenDivision, label: 'Open public registration', desc: 'Open a division when you want teams to register online — skip this if you are loading or inviting teams yourself.', href: `${base}/divisions`, action: 'Open divisions →', help: { title: 'Open public registration', body: "Open a division to let teams sign up through your public registration form. Skip it if you're adding or inviting teams yourself." } },
+    { key: 'fees',          group: 'choice', done: checklist.hasFees,          label: 'Fee approach',             desc: 'Confirm how registration fees work — or mark the event as free. You can activate without this.',                href: `${base}/settings/event?section=fees`, action: 'Configure fees →', help: { title: 'Fee approach', body: 'Choose how teams pay — a single fee, a deposit plus balance, or free. Teams see this at registration; you can activate without setting it.' } },
   ];
-  const optionalDoneCount = optionalItems.filter(i => i.done).length;
+  const optionalGroups = [
+    { key: 'recommended', label: 'Recommended before go-live',         tag: 'Recommended' },
+    { key: 'defaults',    label: 'Defaults you can fine-tune',         tag: 'Default'     },
+    { key: 'choice',      label: 'Registration & fees — your call',    tag: 'Your call'   },
+  ] as const;
 
   // Schedule row — flag colored/iconed by schedule health rather than a simple done/pending.
   const scheduleHealth = visibleStats.scheduleHealth;
@@ -917,6 +941,70 @@ export default function AdminDashboard() {
       : scheduleHealth.tone === 'warning'
         ? { tone: 'warning', statusText: 'Review', desc: `${scheduleHealth.timedGames}/${scheduleHealth.totalGames} timed · ${scheduleHealth.issueCount} issue${scheduleHealth.issueCount === 1 ? '' : 's'} to review.` }
         : { tone: 'good', statusText: 'Healthy', desc: `${scheduleHealth.timedGames}/${scheduleHealth.totalGames} timed games · no major issues.` };
+
+  // A built schedule with real conflicts is the most consequential pre-launch gap — lift it
+  // out of the collapsed drawer to above the toggle, but ONLY when it's actually broken.
+  const scheduleFloatsUp = scheduleIsSetUp && (scheduleStatus.tone === 'warning' || scheduleStatus.tone === 'danger');
+
+  // Drawer "N reviewed" count includes the schedule row (named in the toggle label), so the
+  // count stays honest with what the drawer contains. Schedule counts once it's been built.
+  const optionalTotalCount = optionalItems.length + 1;
+  const optionalReviewedCount = optionalItems.filter(i => i.done).length + (scheduleIsSetUp ? 1 : 0);
+
+  // Activate-confirm summary: recommended items still missing + defaults that will apply as-is.
+  const recommendedGaps = [
+    !scheduleIsSetUp ? 'Tournament schedule' : scheduleFloatsUp ? 'Tournament schedule — review issues' : null,
+    !checklist.hasVenues ? 'Venues & fields' : null,
+    !checklist.hasBranding ? 'Public page' : null,
+    !checklist.hasRules ? 'Rules & resources' : null,
+  ].filter((g): g is string => g !== null);
+  const defaultsApplying = [
+    !checklist.hasGameTiming ? 'Game timing: 90 min games / 15 min buffer' : null,
+    !checklist.hasTieBreakers ? 'Tie-breakers: H2H → Run Diff → Runs For → Runs Against' : null,
+  ].filter((d): d is string => d !== null);
+
+  // Schedule row — shared between the float-up slot and the in-drawer Recommended group.
+  // Label-as-link (row is a <div>) so the concept tooltip's <button> isn't nested in an <a>.
+  function renderScheduleRow() {
+    return (
+      <div
+        key="schedule"
+        className={`${styles.checklistRow} ${scheduleStatus.tone === 'good' ? styles.checklistRowDone : styles.checklistRowPending}`}
+      >
+        <span className={styles.rowIcon} data-sched-tone={scheduleStatus.tone}>
+          {scheduleStatus.tone === 'good' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+        </span>
+        <Link href={`${base}/schedule`} className={styles.rowLabelLink}>Tournament schedule</Link>
+        <span className={styles.rowHelp}><HelpTooltip title="Tournament schedule" body="Build the games teams play — a round robin, pool play, or a playoff bracket. Teams and fans see it on the public schedule with times and locations." /></span>
+        <span className={styles.rowOptTag}>Recommended</span>
+        <span className={styles.rowStatus} data-sched-tone={scheduleStatus.tone}>{scheduleStatus.statusText}</span>
+        <span className={styles.rowDesc}>{scheduleStatus.desc}</span>
+      </div>
+    );
+  }
+
+  // One optional row. Every row makes the LABEL the link (so a concept "?" tooltip can sit beside
+  // it without nesting a <button> in an <a>); the tooltip carries the "what/why/where" context,
+  // distinct from the short action nudge shown while the item is undone.
+  function renderOptionalRow(item: OptionalItem, tag: string) {
+    const isDefault = item.group === 'defaults';
+    const Icon = item.done ? CheckCircle2 : isDefault ? Settings : item.group === 'recommended' ? AlertCircle : Info;
+    // Amber only for recommended gaps; defaults + "your call" stay neutral (no nag tone).
+    const muteIcon = !item.done && item.group !== 'recommended';
+    const statusText = item.done ? (isDefault ? 'Customized' : 'Done') : isDefault ? 'Review →' : item.action;
+    return (
+      <div key={item.key} className={`${styles.checklistRow} ${item.done ? styles.checklistRowDone : styles.checklistRowPending}`}>
+        <span className={`${styles.rowIcon} ${muteIcon ? styles.rowIconMuted : ''}`}><Icon size={16} /></span>
+        <Link href={item.href} className={styles.rowLabelLink}>{item.label}</Link>
+        {item.help && <span className={styles.rowHelp}><HelpTooltip title={item.help.title} body={item.help.body} /></span>}
+        <span className={styles.rowOptTag}>{tag}</span>
+        <span className={styles.rowStatus}>{statusText}</span>
+        {item.subLabel
+          ? <span className={styles.rowDesc}>{item.subLabel}</span>
+          : (!item.done && item.desc) ? <span className={styles.rowDesc}>{item.desc}</span> : null}
+      </div>
+    );
+  }
 
   // ── Compact metric strip (replaces stat cards on active/completed) ──────
   function renderMetricStrip() {
@@ -1702,6 +1790,19 @@ export default function AdminDashboard() {
             <div className={styles.checklistList}>
               {checklistItems.map(item => {
                 const Icon = item.done ? CheckCircle2 : AlertCircle;
+                // Rows with a concept tooltip use label-as-link (a <div>) so the "?" <button>
+                // isn't nested in an <a>; the rest stay full-row links.
+                if (item.help) {
+                  return (
+                    <div key={item.key} className={`${styles.checklistRow} ${item.done ? styles.checklistRowDone : styles.checklistRowPending}`}>
+                      <span className={styles.rowIcon}><Icon size={16} /></span>
+                      <Link href={item.href} className={styles.rowLabelLink}>{item.label}</Link>
+                      <span className={styles.rowHelp}><HelpTooltip title={item.help.title} body={item.help.body} /></span>
+                      <span className={styles.rowStatus}>{item.done ? 'Complete' : item.action}</span>
+                      {!item.done && <span className={styles.rowDesc}>{item.desc}</span>}
+                    </div>
+                  );
+                }
                 return (
                   <Link key={item.key} href={item.href} className={`${styles.checklistRow} ${item.done ? styles.checklistRowDone : styles.checklistRowPending}`}>
                     <span className={styles.rowIcon}><Icon size={16} /></span>
@@ -1713,12 +1814,19 @@ export default function AdminDashboard() {
               })}
             </div>
 
+            {/* Broken-schedule float-up: surfaces above the drawer only when there's a real conflict */}
+            {scheduleFloatsUp && (
+              <div className={styles.checklistList} style={{ marginTop: '0.5rem' }}>
+                {renderScheduleRow()}
+              </div>
+            )}
+
             <button type="button" onClick={() => setShowOptionalItems(open => !open)} className={styles.optionalToggle}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Info size={13} />
-                Optional setup
-                <span style={{ color: optionalDoneCount === optionalItems.length ? 'var(--logic-lime)' : 'var(--data-gray)', marginLeft: '0.15rem' }}>
-                  — {optionalDoneCount} of {optionalItems.length} complete
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
+                <Settings size={13} style={{ flexShrink: 0 }} />
+                <span className={styles.optionalToggleLabel}>Schedule, venues, tie-breakers &amp; more</span>
+                <span style={{ color: optionalReviewedCount === optionalTotalCount ? 'var(--logic-lime)' : 'var(--data-gray)', marginLeft: '0.15rem', flexShrink: 0 }}>
+                  — {optionalReviewedCount} of {optionalTotalCount} reviewed
                 </span>
               </span>
               {showOptionalItems ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -1726,30 +1834,13 @@ export default function AdminDashboard() {
 
             {showOptionalItems && (
               <div className={styles.checklistList} style={{ marginTop: '0.5rem' }}>
-                <Link
-                  href={`${base}/schedule`}
-                  className={`${styles.checklistRow} ${scheduleStatus.tone === 'good' ? styles.checklistRowDone : styles.checklistRowPending}`}
-                >
-                  <span className={styles.rowIcon} data-sched-tone={scheduleStatus.tone}>
-                    {scheduleStatus.tone === 'good' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                  </span>
-                  <span className={styles.rowLabel}>Tournament schedule</span>
-                  <span className={styles.rowOptTag}>Optional</span>
-                  <span className={styles.rowStatus} data-sched-tone={scheduleStatus.tone}>{scheduleStatus.statusText}</span>
-                  <span className={styles.rowDesc}>{scheduleStatus.desc}</span>
-                </Link>
-                {optionalItems.map(item => {
-                  const Icon = item.done ? CheckCircle2 : Info;
-                  return (
-                    <Link key={item.key} href={item.href} className={`${styles.checklistRow} ${item.done ? styles.checklistRowDone : styles.checklistRowPending}`}>
-                      <span className={styles.rowIcon}><Icon size={16} /></span>
-                      <span className={styles.rowLabel}>{item.label}</span>
-                      <span className={styles.rowOptTag}>Optional</span>
-                      <span className={styles.rowStatus}>{item.done ? 'Complete' : item.action}</span>
-                      {!item.done && <span className={styles.rowDesc}>{item.desc}</span>}
-                    </Link>
-                  );
-                })}
+                {optionalGroups.map(group => (
+                  <Fragment key={group.key}>
+                    <span className={styles.checklistDivider}>{group.label}</span>
+                    {group.key === 'recommended' && !scheduleFloatsUp && renderScheduleRow()}
+                    {optionalItems.filter(i => i.group === group.key).map(item => renderOptionalRow(item, group.tag))}
+                  </Fragment>
+                ))}
               </div>
             )}
 
@@ -2044,6 +2135,26 @@ export default function AdminDashboard() {
                   {typeof window !== 'undefined' ? window.location.origin : ''}/{currentOrg?.slug}/{currentTournament.slug}
                 </span>
               </p>
+            )}
+            {(recommendedGaps.length > 0 || defaultsApplying.length > 0) && (
+              <div className={styles.activateSummary}>
+                {recommendedGaps.length > 0 && (
+                  <div className={styles.activateSummaryBlock}>
+                    <span className={styles.activateSummaryHead}>Not yet set up</span>
+                    <ul className={styles.activateSummaryList}>
+                      {recommendedGaps.map(g => <li key={g}>{g}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {defaultsApplying.length > 0 && (
+                  <div className={styles.activateSummaryBlock}>
+                    <span className={styles.activateSummaryHead}>Defaults that will apply</span>
+                    <ul className={styles.activateSummaryList}>
+                      {defaultsApplying.map(d => <li key={d}>{d}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
             )}
             {activateError && <p style={{ fontSize: '0.8rem', color: 'var(--danger)', margin: '0 0 0.5rem' }}>{activateError}</p>}
             <div className="modal-footer">

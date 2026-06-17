@@ -603,8 +603,8 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Admin and Settings',
       heading: 'Settings, branding, scoring, and access',
       summary: 'Review tournament-specific controls that affect public appearance, scoring rules, billing visibility, and who can help administer the event.',
-      keywords: ['settings', 'branding', 'scoring', 'subscription', 'members', 'access', 'scorekeepers'],
-      searchText: 'settings access members branding logo hero banner scoring finalization subscription plan tournament settings scorekeeper score finalization role members permissions public appearance',
+      keywords: ['settings', 'branding', 'scoring', 'subscription', 'members', 'access', 'scorekeepers', 'tie-breaker', 'game timing'],
+      searchText: 'settings access members branding logo hero banner scoring finalization subscription plan tournament settings scorekeeper score finalization role members permissions public appearance tie-breaker tiebreaker ranking standings head to head run differential coin toss game timing game length duration buffer turnaround',
       links: [
         { label: 'Settings', href: '../tournaments/settings' },
         { label: 'Branding', href: '../tournaments/branding' },
@@ -646,6 +646,25 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['post-event email', 'results notification', 'completed tournament', 'Tournament Plus'],
           answer: (
             <p>Open <strong>Event Settings</strong> and enable the post-event results notification. The email sends once when the tournament changes to Completed, and FieldLogicHQ records that it was sent so it is not resent by accident.</p>
+          ),
+        },
+        {
+          id: 'faq-tie-breaker-rules',
+          question: 'How do tie-breaker rules work?',
+          answerText: 'When teams finish with the same record, tie-breaker rules decide their standings ranking. The default order is head-to-head, then run differential, then runs scored, then runs allowed. You can customize the order before playoffs.',
+          keywords: ['tie-breaker', 'tiebreaker', 'ranking', 'standings', 'h2h', 'head to head', 'run differential', 'coin toss'],
+          popular: true,
+          answer: (
+            <p>When two or more teams finish pool play with the same record, <strong>tie-breaker rules</strong> decide who ranks higher in the standings. The default order is head-to-head result, then run differential, then runs scored, then runs allowed — which suits most tournaments. Open <strong>Event Settings</strong> to change the order, set a per-game run-differential cap, or add a coin-toss step before playoffs.</p>
+          ),
+        },
+        {
+          id: 'faq-game-timing',
+          question: 'What is game timing and what is the default?',
+          answerText: 'Game timing sets the default game length and the buffer between games, used when the schedule is built. The default is 90-minute games with a 15-minute turnaround, applied tournament-wide.',
+          keywords: ['game timing', 'game length', 'duration', 'buffer', 'turnaround', 'schedule timing'],
+          answer: (
+            <p><strong>Game timing</strong> sets the default game length and the buffer between games — FieldLogicHQ uses these when it builds the schedule. The default is 90-minute games with a 15-minute turnaround, applied tournament-wide. Open <strong>Event Settings</strong> to change it before building the schedule; individual games can still be adjusted afterward.</p>
           ),
         },
       ],
