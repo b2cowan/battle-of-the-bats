@@ -19,6 +19,8 @@ type FeeInput = {
   label: string;
   amount: string;
   notes: string | null;
+  /** Add-mode only: create one independent fee for EVERY roster player. */
+  applyToAll?: boolean;
 };
 
 type Totals = {
@@ -26,8 +28,6 @@ type Totals = {
   paid: number;
   unpaid: number;
 };
-
-const TEAM_WIDE = '__team_wide__';
 
 function byLedgerOrder(a: BasicCoachTeamFee, b: BasicCoachTeamFee) {
   if (a.displayOrder !== b.displayOrder) return a.displayOrder - b.displayOrder;
@@ -113,24 +113,9 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
   const playersWithoutFeesCount = players.length - playersWithFees.length;
 
   async function addFee(input: FeeInput) {
+    if (input.applyToAll) return addFeeForEveryone(input);
     setBusy(true);
     setError(null);
-    const now = new Date().toISOString();
-    const temp: BasicCoachTeamFee = {
-      id: `temp-${Date.now()}`,
-      basicCoachTeamId: basicTeamId,
-      playerId: input.playerId,
-      label: input.label,
-      amount: amountNumber(input.amount),
-      status: 'unpaid',
-      markedPaidAt: null,
-      notes: input.notes,
-      displayOrder: Math.max(-1, ...fees.map(fee => fee.displayOrder)) + 1,
-      createdAt: now,
-      updatedAt: now,
-    };
-    setFees(prev => [...prev, temp].sort(byLedgerOrder));
-    setAdding(false);
     try {
       const res = await fetch(base, {
         method: 'POST',
@@ -138,12 +123,34 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
         body: JSON.stringify(input),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'Could not add the fee.');
-      setFees(prev => prev.map(fee => (fee.id === temp.id ? (data.fee as BasicCoachTeamFee) : fee)).sort(byLedgerOrder));
+      if (!res.ok || !data.fee) throw new Error(data.error ?? 'Could not add the fee.');
+      setFees(prev => [...prev, data.fee as BasicCoachTeamFee].sort(byLedgerOrder));
+      setAdding(false);
     } catch (e) {
-      setFees(prev => prev.filter(fee => fee.id !== temp.id));
-      setAdding(true);
       setError(e instanceof Error ? e.message : 'Could not add the fee.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // "Everyone" — bulk-create one independent fee per roster player. The server
+  // insert is atomic (all-or-nothing); on success we append every returned fee,
+  // so the ledger is never half-populated.
+  async function addFeeForEveryone(input: FeeInput) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`${base}/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label: input.label, amount: input.amount, notes: input.notes }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !Array.isArray(data.fees)) throw new Error(data.error ?? 'Could not add the fee to your roster.');
+      setFees(prev => [...prev, ...(data.fees as BasicCoachTeamFee[])].sort(byLedgerOrder));
+      setAdding(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not add the fee to your roster.');
     } finally {
       setBusy(false);
     }
@@ -238,8 +245,8 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
         <Wallet size={18} className={styles.purposeIcon} aria-hidden />
         <div className={styles.purposeText}>
           <p className={styles.purposeLead}>
-            <strong>Track what your team owes you</strong> — each player&apos;s dues and jerseys, or a
-            cost split across the whole group. Record each fee and check it off as you collect it.
+            <strong>Track what your players owe you</strong> — season fees, dues, a cost you&apos;re
+            splitting. Charge everyone at once or one player at a time, and check each off as you collect it.
           </p>
           <p className={styles.purposeAside}>
             Everything here is money owed <em>to you</em> — your private record of what to collect.
@@ -260,7 +267,7 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
         <CoachEmptyState
           icon={<CircleDollarSign size={22} aria-hidden />}
           headline="No fees yet"
-          description="Add a fee to start tracking what a player — or the whole team — owes. You'll mark each one paid as you collect it."
+          description="Charge your whole roster a season fee, or bill one player. You'll mark each off as you collect it."
           primaryAction={{
             label: 'Add your first fee',
             icon: <Plus size={15} aria-hidden />,
@@ -305,7 +312,7 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
                   <div className={styles.blockTitleWrap}>
                     <h3 className={styles.blockTitle}>Roster fees</h3>
                     {playersWithFees.length > 0 && (
-                      <p className={styles.blockSub}>What each player owes you individually.</p>
+                      <p className={styles.blockSub}>What each player owes you. Charge everyone at once, or one player at a time.</p>
                     )}
                   </div>
                 </div>
@@ -344,50 +351,30 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
                       })}
                     </div>
                     {playersWithoutFeesCount > 0 && (
-                      <div className={styles.remainderRow}>
-                        <span>
-                          {playersWithoutFeesCount === 1
-                            ? '1 more player has no individual fee'
-                            : `${playersWithoutFeesCount} more players have no individual fee`}
-                        </span>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-data"
-                          onClick={() => { setEditingId(null); setAdding(true); }}
-                          disabled={locked}
-                        >
-                          <Plus size={14} aria-hidden /> Add a player fee
-                        </button>
-                      </div>
+                      <p className={styles.remainderRow}>
+                        {playersWithoutFeesCount === 1
+                          ? '1 player has no fee yet.'
+                          : `${playersWithoutFeesCount} players have no fee yet.`}
+                      </p>
                     )}
                   </>
                 ) : (
-                  <div className={styles.playerFeesEmpty}>
-                    <p>No player fees yet — add one when a player owes you on their own, separate from a whole-team fee.</p>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-data"
-                      onClick={() => { setEditingId(null); setAdding(true); }}
-                      disabled={locked}
-                    >
-                      <Plus size={14} aria-hidden /> Add a player fee
-                    </button>
-                  </div>
+                  <p className={styles.playerFeesEmpty}>
+                    No player fees yet — use <strong>Add fee</strong> above to charge your whole roster at once, or bill one player.
+                  </p>
                 )}
               </div>
               )}
 
-              <div className={styles.block}>
-                <div className={styles.blockHeader}>
-                  <div className={styles.blockTitleWrap}>
-                    <h3 className={styles.blockTitle}>Whole-team fees</h3>
-                    <p className={styles.blockSub}>A shared amount the whole team owes you — tracked once, not split between players.</p>
+              {grouped.teamWide.length > 0 && (
+                <div className={`${styles.block} ${styles.legacyBlock}`}>
+                  <div className={styles.blockHeader}>
+                    <div className={styles.blockTitleWrap}>
+                      <h3 className={styles.legacyTitle}>Other fees</h3>
+                      <p className={styles.blockSub}>Older fees that aren&apos;t linked to a player. Mark them paid or remove them — new fees now go to your whole roster or one player.</p>
+                    </div>
+                    <span className={styles.blockMeta}>{grouped.teamWide.length}</span>
                   </div>
-                  <span className={styles.blockMeta}>{grouped.teamWide.length}</span>
-                </div>
-                {grouped.teamWide.length === 0 ? (
-                  <p className={styles.noFees}>No whole-team fees yet.</p>
-                ) : (
                   <FeeList
                     fees={grouped.teamWide}
                     editingId={editingId}
@@ -400,8 +387,8 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
                     onTogglePaid={togglePaid}
                     onRequestRemove={setConfirmFee}
                   />
-                )}
-              </div>
+                </div>
+              )}
             </>
           )}
         </>
@@ -544,47 +531,83 @@ function FeeForm({
   onSubmit: (input: FeeInput) => void;
   onCancel: () => void;
 }) {
+  const isEdit = !!fee;
+  const [scope, setScope] = useState<'all' | 'one'>(isEdit ? 'one' : 'all');
   const [playerId, setPlayerId] = useState(fee?.playerId ?? '');
   const [label, setLabel] = useState(fee?.label ?? '');
   const [amount, setAmount] = useState(fee ? amountInput(fee.amount) : '');
   const [notes, setNotes] = useState(fee?.notes ?? '');
   const [showNotes, setShowNotes] = useState(!!fee?.notes);
 
-  const canSave = label.trim().length > 0 && moneyLooksValid(amount) && !busy;
+  const amountValid = moneyLooksValid(amount);
+  const needsPlayer = !isEdit && scope === 'one';
+  const canSave =
+    label.trim().length > 0 && amountValid && (!needsPlayer || playerId.length > 0) && !busy;
+
+  const playerCount = players.length;
+  const amountNum = amountValid ? amountNumber(amount) : 0;
+  const everyoneActive = !isEdit && scope === 'all';
 
   function submit() {
     if (!canSave) return;
     onSubmit({
-      playerId: playerId || null,
+      playerId: everyoneActive ? null : (playerId || (isEdit ? (fee?.playerId ?? null) : null)),
       label: label.trim(),
       amount: amount.trim(),
       notes: notes.trim() || null,
+      applyToAll: everyoneActive || undefined,
     });
   }
 
   return (
     <div className={styles.form}>
-      <select
-        className={styles.input}
-        value={playerId || TEAM_WIDE}
-        onChange={e => setPlayerId(e.target.value === TEAM_WIDE ? '' : e.target.value)}
-        aria-label="Who owes this fee"
-      >
-        <option value={TEAM_WIDE}>The whole team (one shared fee)</option>
-        {players.length > 0 && (
-          <optgroup label="One player owes this">
-            {players.map(player => (
-              <option key={player.id} value={player.id}>
-                {player.jerseyNumber ? `#${player.jerseyNumber} ` : ''}{player.name}
-              </option>
-            ))}
-          </optgroup>
-        )}
-      </select>
-      <p className={styles.assignNote}>
-        Bill one player, or the whole team as a single shared fee — a whole-team fee isn&apos;t
-        split between players. Either way, it&apos;s money owed to you.
-      </p>
+      {!isEdit && (
+        <>
+          <span className={styles.fieldLabel}>Who owes this?</span>
+          <div className={styles.segmented} role="group" aria-label="Who owes this fee">
+            <button
+              type="button"
+              className={styles.segmentBtn}
+              data-active={scope === 'all'}
+              onClick={() => setScope('all')}
+            >
+              Everyone
+            </button>
+            <button
+              type="button"
+              className={styles.segmentBtn}
+              data-active={scope === 'one'}
+              onClick={() => setScope('one')}
+            >
+              One player
+            </button>
+          </div>
+          {scope === 'one' && (
+            <select
+              className={styles.input}
+              value={playerId}
+              onChange={e => setPlayerId(e.target.value)}
+              aria-label="Player who owes this fee"
+            >
+              <option value="">Choose a player…</option>
+              {players.map(player => (
+                <option key={player.id} value={player.id}>
+                  {player.jerseyNumber ? `#${player.jerseyNumber} ` : ''}{player.name}
+                </option>
+              ))}
+            </select>
+          )}
+          <p className={styles.assignNote}>
+            {scope === 'all'
+              ? amountValid
+                ? `Adds a ${formatMoney(amountNum)} fee to ${playerCount === 1 ? 'your 1 player' : `all ${playerCount} players`}${playerCount > 1 ? ` — ${formatMoney(amountNum * playerCount)} total` : ''}.`
+                : `Adds this fee to ${playerCount === 1 ? 'your 1 player' : `every player on your roster (${playerCount})`} — each pays their own.`
+              : playerId
+                ? 'Only this player owes it.'
+                : 'Pick the player who owes this.'}
+          </p>
+        </>
+      )}
 
       <div className={styles.formTopRow}>
         <input
@@ -628,7 +651,13 @@ function FeeForm({
           <X size={14} aria-hidden /> Cancel
         </button>
         <button type="button" className={styles.saveBtn} onClick={submit} disabled={!canSave}>
-          <Check size={14} aria-hidden /> {busy ? 'Saving...' : fee ? 'Save' : 'Add fee'}
+          <Check size={14} aria-hidden /> {busy
+            ? 'Saving...'
+            : isEdit
+              ? 'Save'
+              : everyoneActive && playerCount > 1
+                ? `Add fee for ${playerCount} players`
+                : 'Add fee'}
         </button>
       </div>
     </div>

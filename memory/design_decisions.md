@@ -4,6 +4,19 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-17 — Coach Fees: two-type model (Everyone / One player) + atomic bulk-create + one add button
+
+**Decision (model + flow redesign on `components/coaches/FeeEditor.tsx`; supersedes the same-day "whole-team fee type" framing):**
+
+1. **Two fee types only, via a segmented "Who owes this?" control** in the add form (reuses the established `.segmented`/`.segmentBtn` lime-active pattern from `ScheduleEditor` EventForm — selection-state lime, distinct from the submit action, CP-1 holds): **Everyone** (default) bulk-creates one independent per-player fee for every roster player; **One player** reveals a player picker. The old "whole team / one shared amount" type is **dropped from the add flow**. A quiet `.assignNote` **impact-preview** states the blast radius ("Adds a $200 fee to all 15 players — $3,000 total"); the lime submit label is **dynamic** ("Add fee for N players"). Edit mode hides the segmented control (edits label/amount/notes; keeps the existing assignment). The `.form` is **de-glowed** to neutral.
+2. **Bulk-create is a new atomic write path** — `createBasicCoachTeamFeesForAllPlayers` (single N-row `.insert`, owner-guarded `POST .../fees/bulk`, player_ids server-derived so no cross-team smuggling, capped at 200). Client add paths **de-optimized** to match `ScheduleEditor` (await POST → append real rows; removed the `Date.now()` that newly tripped `react-hooks/purity`).
+3. **Existing player-less fees survive in a demoted, conditional "Other fees" section** (`.legacyBlock` top-divider + `.legacyTitle` `--white-60`/0.86rem + cleanup note), only when such fees exist — never hide recorded money; self-retires when cleared.
+4. **One add button per page.** The top "Add fee" is the single add entry; the "Roster fees" empty/remainder prompts are **explain-only text** (no buttons) that point at "Add fee" above — fixes "two buttons doing the same thing." Copy reframed to "Charge everyone at once or one player at a time."
+
+**Rationale:** Owner: the common case (every player owes the same season fee/installment) had no option — you'd add it N times by hand; "whole team" was confusing (sounded like an expense); and two add buttons did the same thing. Naming exactly two who-owes choices, defaulting to the common "Everyone" with a per-player bulk-create + impact preview, demoting the deprecated type to a self-retiring legacy section, and collapsing to one add button resolves it without expanding scope into debit/credit (Premium).
+
+**Applies to:** `components/coaches/FeeEditor.tsx` + `FeeEditor.module.css` (`.segmented`/`.segmentBtn`/`.fieldLabel`/`.legacyBlock`/`.legacyTitle`; de-glowed `.form`; `.remainderRow`/`.playerFeesEmpty` → text-only; removed `TEAM_WIDE`), `lib/basic-coach-fees.ts` (`createBasicCoachTeamFeesForAllPlayers` + error constants), new `app/api/coaches/teams/[basicTeamId]/fees/bulk/route.ts`. No new tokens; `#0f1123` is the established dark-on-lime literal. **Generalizes:** a small fixed choice set uses the established segmented control (not a select); a fan-out action shows a quiet impact-preview + a blast-radius-naming submit label (no modal) and bulk-creates atomically server-side; deprecating a data type keeps existing records in a demoted self-retiring legacy section; and a page has exactly one button per action (contextual empties explain + point at it, they don't duplicate it).
+
 ### 2026-06-17 — Coach Fees ledger: single-direction framing + legible paid-action + shared delete modal
 
 **Decision (operability + clarity pass on `components/coaches/FeeEditor.tsx`, building on the same-day purpose-strip/gating decision):**

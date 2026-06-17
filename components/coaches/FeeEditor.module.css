@@ -129,6 +129,22 @@
   font-weight: 700;
 }
 
+/* "Other fees" legacy section — demoted below the primary Roster fees: a top
+   divider + a dimmer/smaller heading so it reads as cleanup, not a fee TYPE the
+   coach picks. Only renders when player-less legacy fees exist. (2026-06-17) */
+.legacyBlock {
+  margin-top: 0.4rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border-2);
+}
+
+.legacyTitle {
+  margin: 0;
+  color: var(--white-60);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
 /* Persistent one-line model explainer under each section title (metric-strip
    register). Names the team-wide-vs-per-player distinction so it never reads
    as a phantom split. (2026-06-17) */
@@ -230,42 +246,31 @@
 /* Remainder line when SOME players have fees: quiet count + a real (app-standard
    btn-ghost) "Add a player fee" action. When NO player has fees, the section
    shows a compact CoachEmptyState instead — never two stray gray lines. (2026-06-17) */
+/* Quiet info line (no button — the one "Add fee" lives at the top of the page). */
 .remainderRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
+  margin: 0.1rem 0 0;
   padding: 0.35rem 0.1rem 0.1rem;
   color: var(--white-40);
   font-size: 0.8rem;
 }
 
-/* No player fees yet (but a whole-team fee exists): a left-aligned inline prompt
-   with a real app-standard button — not a floaty centered card, not two gray
-   lines. Matches the fee-row surface. (2026-06-17) */
+/* No player fees yet (but a legacy "Other fee" exists): a quiet explain-only
+   note on the fee-row surface. No button — the single "Add fee" is at the top
+   of the page (avoids two add buttons doing the same thing). (2026-06-17) */
 .playerFeesEmpty {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.9rem;
+  margin: 0;
   padding: 0.8rem 0.9rem;
   background: var(--surface-2);
   border: 1px solid var(--border-2);
   border-radius: var(--radius-sm);
-}
-
-.playerFeesEmpty p {
-  margin: 0;
   color: var(--white-60);
   font-size: 0.82rem;
   line-height: 1.45;
 }
 
-@media (max-width: 560px) {
-  .playerFeesEmpty {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.playerFeesEmpty strong {
+  color: var(--white);
+  font-weight: 700;
 }
 
 .row {
@@ -447,15 +452,55 @@
   list-style: none;
 }
 
+/* Neutral card — the form earns prominence by position; lime is reserved for the
+   active segment + the submit, not the card border (de-glowed 2026-06-17). */
 .form {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
   padding: 0.9rem;
   background: var(--surface);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--glow-sm), var(--highlight-top);
+  box-shadow: var(--highlight-top);
+}
+
+.fieldLabel {
+  color: var(--white-60);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+/* "Who owes this?" segmented control — copied from ScheduleEditor's EventForm
+   for cross-editor consistency. Lime-active is a SELECTION-state role (distinct
+   from the lime submit ACTION), the established coach-form pattern. #0f1123 is
+   the existing dark-on-lime text literal already used by .saveBtn here. */
+.segmented {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+}
+
+.segmentBtn {
+  flex: 1;
+  height: 34px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--white-60);
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 1px);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.segmentBtn[data-active='true'] {
+  color: #0f1123;
+  background: var(--logic-lime);
 }
 
 /* Helper under the assignment select — explains team-wide vs per-player at the

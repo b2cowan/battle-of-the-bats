@@ -224,6 +224,70 @@ export async function createBasicCoachTeamFee(params: {
   return mapFee(data);
 }
 
+export const BASIC_COACH_FEE_NO_PLAYERS_ERROR = 'Add players to your roster before charging everyone.';
+export const BASIC_COACH_FEE_TOO_MANY_PLAYERS_ERROR = 'That roster is too large for a single bulk fee.';
+const MAX_BULK_PLAYERS = 200;
+
+/**
+ * Convenience bulk-create: add the SAME fee to EVERY player on the roster as
+ * independent per-player rows (one fee each, marked paid individually later).
+ * The N-row insert is a single statement, so it's atomic — either every player
+ * gets the fee or none do (no half-populated ledger on failure). Still scoped
+ * to manual ledger fields only; no installment/automation semantics.
+ */
+export async function createBasicCoachTeamFeesForAllPlayers(params: {
+  basicCoachTeamId: string;
+  createdByUserId: string;
+  input: BasicCoachTeamFeeInput;
+}): Promise<BasicCoachTeamFee[]> {
+  const label = (params.input.label ?? '').trim();
+  if (!label) throw new Error('A fee label is required.');
+  if (params.input.amount === undefined) throw new Error('A fee amount is required.');
+
+  const { data: players, error: playersError } = await supabaseAdmin
+    .from('basic_coach_team_players')
+    .select('id')
+    .eq('basic_coach_team_id', params.basicCoachTeamId);
+  if (playersError) throw playersError;
+  const playerIds = (players ?? []).map(row => (row as { id: string }).id);
+  if (playerIds.length === 0) throw new Error(BASIC_COACH_FEE_NO_PLAYERS_ERROR);
+  if (playerIds.length > MAX_BULK_PLAYERS) throw new Error(BASIC_COACH_FEE_TOO_MANY_PLAYERS_ERROR);
+
+  const { data: top, error: topError } = await supabaseAdmin
+    .from('basic_coach_team_fees')
+    .select('display_order')
+    .eq('basic_coach_team_id', params.basicCoachTeamId)
+    .order('display_order', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (topError) throw topError;
+  let nextOrder = (top?.display_order ?? -1) + 1;
+
+  const status = params.input.status ?? 'unpaid';
+  const markedPaidAt = status === 'paid' ? new Date().toISOString() : null;
+  const notes = params.input.notes ?? null;
+  const rows = playerIds.map(playerId => ({
+    basic_coach_team_id: params.basicCoachTeamId,
+    player_id: playerId,
+    label,
+    amount: params.input.amount,
+    status,
+    marked_paid_at: markedPaidAt,
+    notes,
+    created_by_user_id: params.createdByUserId,
+    display_order: nextOrder++,
+  }));
+
+  const { data, error } = await supabaseAdmin
+    .from('basic_coach_team_fees')
+    .insert(rows)
+    .select(FEE_COLUMNS);
+  if (error) throw error;
+  return (data ?? [])
+    .map(row => mapFee(row as BasicCoachTeamFeeRow))
+    .sort((a, b) => a.displayOrder - b.displayOrder);
+}
+
 /** Edit a fee. Scoped by team id. Returns null if no such row in the team. */
 export async function updateBasicCoachTeamFee(params: {
   feeId: string;
