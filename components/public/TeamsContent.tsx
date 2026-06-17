@@ -12,6 +12,8 @@ import styles from '@/app/[orgSlug]/teams/teams.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { readFollowedTeamId, saveFollowedTeam, clearFollowedTeam, isTournamentInProgress } from '@/lib/follow';
+import { isGameLive, gameStartMs, isGameUpcoming } from '@/lib/game-status';
+import { tournamentToday } from '@/lib/timezone';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { teamColor, teamInitials } from '@/lib/team-color';
 
@@ -80,23 +82,6 @@ function getGameDuration(division: Division, tournament: Tournament | null): num
     ?? 90;
 }
 
-function isGameLive(game: Game, durationMinutes: number): boolean {
-  if (game.status !== 'scheduled') return false;
-  if (game.homeScore != null || game.awayScore != null) return false;
-  if (!game.time) return false;
-
-  const now = new Date();
-  const today = now.toISOString().split('T')[0];
-  if (game.date !== today) return false;
-
-  const [h, m] = game.time.split(':').map(Number);
-  const start = new Date(now);
-  start.setHours(h, m, 0, 0);
-  const end = new Date(start.getTime() + durationMinutes * 60_000);
-
-  return now >= start && now < end;
-}
-
 // ── Team Avatar ───────────────────────────────────────────────────────────────
 
 function TeamAvatar({ name, size = 48 }: { name: string; size?: number }) {
@@ -163,11 +148,16 @@ function TeamCard({
   // Live / next game
   const durationMin = getGameDuration(division, tournament);
   const teamGames = games.filter(g => g.homeTeamId === team.id || g.awayTeamId === team.id);
-  const liveGame = teamGames.find(g => isGameLive(g, durationMin));
-  const today = new Date().toISOString().split('T')[0];
+  // Per-game duration override wins over the division/tournament default, so the live
+  // window matches every other surface (which all key off game.durationMinutes first).
+  const liveGame = teamGames.find(g => isGameLive(g, g.durationMinutes ?? durationMin));
+  const today = tournamentToday();
   const nextGame = !liveGame
     ? teamGames
-        .filter(g => g.status === 'scheduled' && g.date >= today)
+        .filter(g => {
+          if (g.status !== 'scheduled') return false;
+          return gameStartMs(g) == null ? g.date >= today : isGameUpcoming(g);
+        })
         .sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''))[0]
     : null;
 

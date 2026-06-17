@@ -10,6 +10,7 @@ import { linkTournamentRegistrationToBasicCoachTeam } from '@/lib/basic-coach-te
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { notify } from '@/lib/notify';
 import { captureError, withObservability } from '@/lib/observability';
+import { tournamentToday } from '@/lib/timezone';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
 import {
   duplicateTournamentTeamMessage,
@@ -35,6 +36,7 @@ type TournamentRow = {
   contact_email: string | null;
   org_id: string | null;
   status: string | null;
+  start_date: string | null;
   public_hidden_pages: unknown;
   default_contact_member_id: string | null;
   notify_mode: string | null;
@@ -238,7 +240,7 @@ export const POST = withObservability(async (req: NextRequest) => {
         .maybeSingle<DivisionRow>(),
       supabaseAdmin
         .from('tournaments')
-        .select('id, name, contact_email, org_id, status, public_hidden_pages, default_contact_member_id, notify_mode, contact_show_to_coaches, settings')
+        .select('id, name, contact_email, org_id, status, start_date, public_hidden_pages, default_contact_member_id, notify_mode, contact_show_to_coaches, settings')
         .eq('id', tournamentId)
         .maybeSingle<TournamentRow>(),
     ]);
@@ -253,6 +255,13 @@ export const POST = withObservability(async (req: NextRequest) => {
     }
     if (!tournament || tournament.status !== 'active') {
       return NextResponse.json({ error: 'Tournament registration is not open.' }, { status: 403 });
+    }
+    // Lifecycle gate (mirrors lib/registration-state.ts): once the event is underway
+    // (today ≥ start date) registration is closed even while the row is still "active",
+    // so a stale mid-tournament link can't mint a junk registration + coach account (J6-035).
+    const todayISO = tournamentToday();
+    if (tournament.start_date && todayISO >= tournament.start_date) {
+      return NextResponse.json({ error: 'Registration is closed — the tournament is underway.' }, { status: 403 });
     }
     if (!division || division.tournament_id !== tournamentId) {
       return NextResponse.json({ error: 'Invalid division for this tournament.' }, { status: 400 });

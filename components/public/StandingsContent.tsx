@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Calendar, CheckCircle, ChevronDown, Clock, Star, Trophy } from 'lucide-react';
 import CoinTossRecorder from '@/components/admin/CoinTossRecorder';
-import { normalizeTieBreakers } from '@/lib/tie-breakers';
+import { normalizeTieBreakers, BREAKER_LABELS } from '@/lib/tie-breakers';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { Division, Game, PublicTeam, Tournament, Venue } from '@/lib/types';
@@ -16,6 +16,9 @@ import styles from '@/app/[orgSlug]/standings/standings.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { readFollowedTeamId, isTournamentInProgress } from '@/lib/follow';
+import { isGameLive, isGameUpcoming, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { tournamentToday } from '@/lib/timezone';
+import MyTeamStandingsStrip from '@/components/public/MyTeamStandingsStrip';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 
 type StandingResult = {
@@ -245,13 +248,19 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
           return (a.time || '').localeCompare(b.time || '');
         })
     : [];
-  const today = new Date().toISOString().split('T')[0];
-  const nextFollowedGame = followedGames.find(game => game.status === 'scheduled' && game.date >= today);
+  const today = tournamentToday();
+  const liveFollowedGame = followedGames.find(
+    game => isGameLive(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES),
+  ) ?? null;
+  const nextFollowedGame = followedGames.find(
+    game => game.status === 'scheduled' && (gameStartMs(game) == null ? game.date >= today : isGameUpcoming(game)),
+  );
   const latestFollowedScore = [...followedGames]
     .filter(game =>
       (game.status === 'completed' || game.status === 'submitted') &&
       game.homeScore != null &&
-      game.awayScore != null
+      game.awayScore != null &&
+      !isGameLive(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES)
     )
     .sort((a, b) => {
       if (a.date !== b.date) return b.date.localeCompare(a.date);
@@ -264,7 +273,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
   }
 
   function getResultStatusLabel(game: Game) {
-    if (game.status === 'submitted' && requireFinalization) return 'Pending Review';
+    if (game.status === 'submitted' && requireFinalization) return 'Unofficial';
     return 'Final';
   }
 
@@ -351,7 +360,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
         games={activeGames.filter(g => g.isPlayoff)}
         teams={teams}
         tournamentId={selectedTournament!.id}
-        highlightTeamId={undefined}
+        highlightTeamId={followedTeamId ?? undefined}
         requireFinalization={requireFinalization}
       />
     </div>
@@ -366,7 +375,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
           <p className="text-muted">
             {isCompletedTournament
               ? 'Review the final public record by division.'
-              : 'Track final scores, pending score review, and live pool standings.'}
+              : 'Track final scores, unofficial results, and live pool standings.'}
           </p>
         </div>
       </div>
@@ -398,6 +407,20 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
               </div>
 
             </div>
+          )}
+
+          {followedTeam && (
+            <MyTeamStandingsStrip
+              team={followedTeam}
+              rank={followedRank}
+              division={followedDivision}
+              liveGame={liveFollowedGame}
+              nextGame={nextFollowedGame}
+              latestScore={latestFollowedScore}
+              today={today}
+              showJump={!!followedDivision && activeGroup !== followedDivision.id}
+              onJump={showFollowedDivision}
+            />
           )}
 
           {activeGroup && (
@@ -440,7 +463,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                     // Mirror getStandings exactly (division override → tournament default → legacy,
                     // coin pinned last) so the displayed order matches the order actually applied.
                     const tieBreakerOrder = normalizeTieBreakers(currentGroup?.playoffConfig?.tieBreakers || selectedTournament?.settings?.tie_breakers)
-                      .map(b => (b === 'coin' ? 'COIN TOSS' : b.toUpperCase()));
+                      .map(b => BREAKER_LABELS[b]);
                     const activeRunDiffCap = poolStandings.find(s => s.runDiffCap)?.runDiffCap ?? null;
                     // Tied groups awaiting a coin toss (admin only), keyed by coinTossGroupKey.
                     const coinTossGroups: Record<string, StandingRow[]> = {};
@@ -558,7 +581,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                           ) : null}
                           {hasPendingStandings && (
                             <p className={styles.pendingNote}>
-                              Pending Review scores are included here for visibility. Standings may change after admin finalization.
+                              Unofficial scores are included here for visibility. Standings may change once the organizer confirms them.
                             </p>
                           )}
                         </div>
@@ -606,7 +629,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                       <p>
                         {recentScores.length > 0
                           ? standingsPending
-                            ? 'Scores marked Pending Review are visible, but not final until the organizer reviews them.'
+                            ? 'Scores marked Unofficial are visible, but not final until the organizer confirms them.'
                             : 'Final scores for this division are listed from newest to oldest.'
                           : 'Final scores will appear here once games are completed.'}
                       </p>

@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { resolveTheme } from '@/lib/themes';
 import { teamColor, teamInitials } from '@/lib/team-color';
+import { publicGameStatus, publicGameStatusLabel, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 
 export const alt = 'Tournament score';
 export const size = { width: 1200, height: 630 };
@@ -20,6 +21,7 @@ interface CardData {
   homeWin: boolean;
   statusLabel: string;
   isLive: boolean;
+  isUnofficial: boolean;
   primary: string;
   rgb: string;
   metaLine: string;
@@ -57,12 +59,12 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     const homeScore = game.homeScore ?? 0;
 
     const requireFinalization = data.organization.requireScoreFinalization ?? true;
-    const todayISO = new Date().toISOString().split('T')[0];
-    const isLive = game.status === 'submitted' && game.date === todayISO;
-    const statusLabel = !hasScore ? (game.status === 'cancelled' ? 'CANCELLED' : 'UPCOMING')
-      : game.status === 'completed' ? 'FINAL'
-      : isLive ? 'LIVE'
-      : requireFinalization ? 'PENDING' : 'FINAL';
+    // One shared definition (J6-013): a game in its time-window is LIVE; a submitted
+    // score awaiting confirmation is UNOFFICIAL, never "PENDING" on a share card (J6-015).
+    const state = publicGameStatus(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES, requireFinalization);
+    const isLive = state === 'live';
+    const isUnofficial = state === 'unofficial';
+    const statusLabel = publicGameStatusLabel(state).toUpperCase();
 
     const t = data.tournament;
     const theme = resolveTheme(t.themePreset, t.themePrimary, t.themeAccent);
@@ -77,7 +79,7 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
       away, home, awayScore, homeScore, hasScore,
       awayWin: hasScore && awayScore > homeScore,
       homeWin: hasScore && homeScore > awayScore,
-      statusLabel, isLive,
+      statusLabel, isLive, isUnofficial,
       primary: theme.primary,
       rgb: theme.primaryRgb,
       metaLine: [dateLabel, gameType, game.location].filter(Boolean).join('  ·  '),
@@ -140,9 +142,9 @@ export default async function Image({
           </div>
           <div style={{
             display: 'flex', alignItems: 'center', padding: '10px 22px', borderRadius: 12, fontSize: 26, fontWeight: 800,
-            color: c.isLive ? '#FCA5A5' : '#86EFAC',
-            background: c.isLive ? 'rgba(239,68,68,0.16)' : 'rgba(34,197,94,0.16)',
-            border: `2px solid ${c.isLive ? 'rgba(239,68,68,0.5)' : 'rgba(34,197,94,0.5)'}`,
+            color: c.isLive ? '#FCA5A5' : c.isUnofficial ? '#FCD34D' : '#86EFAC',
+            background: c.isLive ? 'rgba(239,68,68,0.16)' : c.isUnofficial ? 'rgba(245,158,11,0.16)' : 'rgba(34,197,94,0.16)',
+            border: `2px solid ${c.isLive ? 'rgba(239,68,68,0.5)' : c.isUnofficial ? 'rgba(245,158,11,0.5)' : 'rgba(34,197,94,0.5)'}`,
           }}>
             {c.statusLabel}
           </div>

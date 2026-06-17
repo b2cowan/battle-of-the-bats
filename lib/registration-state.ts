@@ -8,6 +8,7 @@
  * block and the public nav Register CTA.
  */
 import type { Tournament, Division, Team } from '@/lib/types';
+import { tournamentToday } from '@/lib/timezone';
 
 export type RegistrationState = 'open' | 'waitlist' | 'closed' | 'not-open' | 'completed';
 
@@ -45,7 +46,8 @@ export function getRegistrationState(
 
   // Event underway (or past) → registration is closed even if the tournament row
   // is still "active". Games are happening; lead with the schedule/results.
-  const today = new Date().toISOString().split('T')[0];
+  // Tournament-local date so this closes at the venue's midnight, not UTC's (J6-056).
+  const today = tournamentToday();
   if (tournament.startDate && today >= tournament.startDate) {
     return {
       state: 'closed',

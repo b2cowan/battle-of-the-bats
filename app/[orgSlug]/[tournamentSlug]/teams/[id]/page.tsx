@@ -5,6 +5,9 @@ import { ChevronLeft, Star, AlertTriangle, Users, Clock } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import SharePageButton from '@/components/public/SharePageButton';
+import { useFollowedTeam } from '@/lib/follow';
+import { isGameLive, gameStartMs, isGameUpcoming } from '@/lib/game-status';
+import { tournamentToday } from '@/lib/timezone';
 import styles from '../../../../teams/[id]/team-profile.module.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -45,56 +48,10 @@ interface TeamProfileData {
   }[];
 }
 
-// ── localStorage follow helpers ───────────────────────────────────────────────
-
-function followKey(orgSlug: string, tournamentSlug: string) {
-  return `fl_follow_team_${orgSlug}_${tournamentSlug}`;
-}
-
-function readFollowedTeamId(orgSlug: string, tournamentSlug: string) {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(followKey(orgSlug, tournamentSlug));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { id?: string };
-    return parsed.id ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function saveFollowedTeam(orgSlug: string, tournamentSlug: string, id: string, name: string) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(followKey(orgSlug, tournamentSlug), JSON.stringify({ id, name }));
-}
-
-function clearFollowedTeam(orgSlug: string, tournamentSlug: string) {
-  if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(followKey(orgSlug, tournamentSlug));
-}
-
 // ── Avatar helpers ────────────────────────────────────────────────────────────
 
 function cleanName(name: string) {
   return name.replace(/\s*\(.*?\)\s*/g, '').trim();
-}
-
-// ── Live detection ────────────────────────────────────────────────────────────
-
-function isGameLive(game: TeamProfileData['games'][0], durationMinutes: number): boolean {
-  if (game.status !== 'scheduled') return false;
-  if (game.homeScore != null || game.awayScore != null) return false;
-  if (!game.time) return false;
-
-  const now = new Date();
-  const today = now.toISOString().split('T')[0];
-  if (game.date !== today) return false;
-
-  const [h, m] = game.time.split(':').map(Number);
-  const start = new Date(now);
-  start.setHours(h, m, 0, 0);
-  const end = new Date(start.getTime() + durationMinutes * 60_000);
-  return now >= start && now < end;
 }
 
 // ── Main page ────────────────────────────────────────────────────────────────
@@ -109,28 +66,39 @@ export default function TeamProfilePage({
   const [data, setData]       = useState<TeamProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
-  const [followedTeamId, setFollowedTeamId] = useState<string | null>(null);
+  const { followedTeamId, follow, unfollow } = useFollowedTeam(orgSlug, tournamentSlug);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setFollowedTeamId(readFollowedTeamId(orgSlug, tournamentSlug));
-  }, [orgSlug, tournamentSlug]);
+    let cancelled = false;
+    let inFlight = false;
 
-  useEffect(() => {
-    async function load() {
+    async function load(initial: boolean) {
+      if (inFlight) return; // don't let a slow poll overlap and overwrite fresher data with stale
+      inFlight = true;
       try {
-        const params = new URLSearchParams({ teamId: id, orgSlug, tournamentSlug });
-        const res = await fetch(`/api/public/team-profile?${params}`);
+        const qp = new URLSearchParams({ teamId: id, orgSlug, tournamentSlug });
+        const res = await fetch(`/api/public/team-profile?${qp}`);
         if (!res.ok) throw new Error('Not found');
         const json = await res.json();
+        if (cancelled) return;
         setData(json);
       } catch {
-        setError('Team not found.');
+        if (!cancelled && initial) setError('Team not found.');
       } finally {
-        setLoading(false);
+        inFlight = false;
+        if (!cancelled && initial) setLoading(false);
       }
     }
-    load();
+
+    load(true);
+    // Poll while the page is open so a live game's score refreshes here too — the
+    // profile is the page coach-texted links land on (J6-022). 30s cadence, paused
+    // when the tab is hidden to spare battery/data at the diamond.
+    const timer = setInterval(() => {
+      if (typeof document === 'undefined' || document.visibilityState === 'visible') load(false);
+    }, 30_000);
+
+    return () => { cancelled = true; clearInterval(timer); };
   }, [id, orgSlug, tournamentSlug]);
 
   if (loading) {
@@ -167,17 +135,15 @@ export default function TeamProfilePage({
 
   function toggleFollow() {
     if (isFollowed) {
-      clearFollowedTeam(orgSlug, tournamentSlug);
-      setFollowedTeamId(null);
+      unfollow();
     } else {
-      saveFollowedTeam(orgSlug, tournamentSlug, team.id, team.name);
-      setFollowedTeamId(team.id);
+      follow({ id: team.id, name: team.name, divisionId: team.divisionId });
     }
   }
 
   // Form: pool play + playoffs, sorted chronologically
   const completedGames = games.filter(
-    g => g.status === 'completed' || g.status === 'submitted',
+    g => (g.status === 'completed' || g.status === 'submitted') && !isGameLive(g, gameDurationMinutes),
   );
   const formBubbles = completedGames.slice(-5).map(g => {
     const isHome = g.homeTeamId === team.id;
@@ -189,10 +155,10 @@ export default function TeamProfilePage({
   });
 
   // Next game
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
   const liveGame = games.find(g => isGameLive(g, gameDurationMinutes));
   const nextGame = !liveGame
-    ? games.find(g => g.status === 'scheduled' && g.date >= today)
+    ? games.find(g => g.status === 'scheduled' && (gameStartMs(g) == null ? g.date >= today : isGameUpcoming(g)))
     : null;
 
   const focusGame = liveGame ?? nextGame ?? null;
@@ -243,7 +209,7 @@ export default function TeamProfilePage({
                   {isFollowed ? 'Following' : 'Follow'}
                 </button>
                 <SharePageButton
-                  url={`/${orgSlug}/${tournamentSlug}/teams/${id}`}
+                  url={`/${orgSlug}/${tournamentSlug}/teams/${id}?follow=${id}`}
                   title={cleanedName}
                   text={`Follow ${cleanedName} on FieldLogicHQ`}
                   label="Share team"

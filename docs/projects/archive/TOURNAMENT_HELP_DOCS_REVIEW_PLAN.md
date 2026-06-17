@@ -1,6 +1,11 @@
 # Tournament Help Documentation Review and Upgrade Plan
 
-Status: Proposed
+> **SUPERSEDED 2026-06-17** by `docs/projects/active/HELP_SYSTEM_REDESIGN_PLAN.md`.
+> This plan's IA (in-guide search + Popular Questions rail + grouped Topics + one-topic-at-a-time
+> article + FAQs) was **built and shipped**. The operator subsequently found the result cluttered
+> and hard to navigate; the v2 redesign plan critiques and replaces this layout. Kept for history.
+
+Status: Superseded (its layout shipped; replaced by the v2 redesign plan)
 Created: 2026-05-15
 Scope: Tournament module help experience for org owners and tournament admins
 

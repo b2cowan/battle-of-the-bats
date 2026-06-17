@@ -1,0 +1,93 @@
+/* components/public/DesktopMyTeamRailCard.module.css — persistent desktop my-team card (J6-042). Token-only. */
+
+.card {
+  margin: 0.6rem 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  border-radius: var(--radius-md);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--fl-text);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.star {
+  flex-shrink: 0;
+  color: var(--logic-lime);
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--danger);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  display: inline-block;
+}
+
+.score {
+  color: var(--fl-text);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.nextLabel {
+  color: var(--logic-lime);
+  font-weight: 800;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+
+.nextVal {
+  color: var(--fl-text);
+  font-weight: 700;
+}
+
+.opp {
+  width: 100%;
+}
+
+.link {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--primary-light);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

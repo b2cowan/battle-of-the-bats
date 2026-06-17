@@ -7,6 +7,7 @@ import { isPublicPageEnabled } from '@/lib/public-pages';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { getRegistrationState } from '@/lib/registration-state';
+import { tournamentToday } from '@/lib/timezone';
 import LocationLink from '@/components/LocationLink';
 import MyTournamentCard from '@/components/public/MyTournamentCard';
 import { toPublicTeam } from '@/lib/public-tournament-data';
@@ -34,7 +35,7 @@ export default async function TournamentHomeContent({
   const announcements = allAnnouncements.slice(0, 3);
 
   const allGames = await getGames(tournament.id, readOptions);
-  const now = new Date().toISOString().split('T')[0];
+  const now = tournamentToday();
   const sortedGames = [...allGames].sort((a, b) => {
     if (a.date !== b.date) return (a.date || '').localeCompare(b.date || '');
     return (a.time || '').localeCompare(b.time || '');
@@ -104,7 +105,7 @@ export default async function TournamentHomeContent({
 
   let countdownText = '';
   if (startDate && endDate) {
-    const today = new Date().toISOString().split('T')[0];
+    const today = tournamentToday();
     if (today < startDate) {
       const msPerDay = 24 * 60 * 60 * 1000;
       const diffDays = Math.ceil(
@@ -191,7 +192,7 @@ export default async function TournamentHomeContent({
 
   function gameStatusLabel(status: string) {
     if (status === 'completed') return 'Final';
-    if (status === 'submitted') return 'Pending';
+    if (status === 'submitted') return 'Unofficial';
     return 'Scheduled';
   }
 
@@ -317,7 +318,7 @@ export default async function TournamentHomeContent({
                 <strong>Schedule</strong>
               </div>
               <div className={styles.statusItem}>
-                <span>{latestResults.length > 0 ? `${latestResults.length} recent` : 'Awaiting finals'}</span>
+                <span>{latestResults.length > 0 ? `${latestResults.length} recent` : 'No results yet'}</span>
                 <strong>Results</strong>
               </div>
             </div>
@@ -369,11 +370,11 @@ export default async function TournamentHomeContent({
               </div>
               <div>
                 <strong>{pendingScoreGames.length}</strong>
-                <span>pending review</span>
+                <span>unconfirmed</span>
               </div>
               <div>
                 <strong>{remainingScheduledGames.length}</strong>
-                <span>unscored games</span>
+                <span>not played</span>
               </div>
               <div>
                 <strong>{teams.length}</strong>

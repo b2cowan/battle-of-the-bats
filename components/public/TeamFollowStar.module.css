@@ -1,0 +1,26 @@
+/* components/public/TeamFollowStar.module.css — token-only follow star (J6-011). */
+
+.star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  color: var(--white-40);
+  transition: color 0.15s ease, transform 0.1s ease;
+}
+
+.star:hover {
+  color: var(--logic-lime);
+}
+
+.star:active {
+  transform: scale(0.9);
+}
+
+.active {
+  color: var(--logic-lime);
+}

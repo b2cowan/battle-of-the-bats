@@ -5,10 +5,13 @@ import { ArrowLeft, Calendar, Clock, ExternalLink, Info, MapPin, Navigation, Tro
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import type { Game, PublicTeam, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
+import { isGameLive, publicGameStatus, publicGameStatusLabel, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { tournamentToday } from '@/lib/timezone';
 import { bracketRoundInfo } from '@/lib/playoff-bracket';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import GameDetailLiveRefresher from '@/components/public/GameDetailLiveRefresher';
 import ShareScoreButton from '@/components/public/ShareScoreButton';
+import TeamFollowStar from '@/components/public/TeamFollowStar';
 import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
 
 const outcomeColors: Record<string, string> = {
@@ -92,21 +95,23 @@ function getPlayoffStakes(game: Game, allGames: Game[]): string | null {
   return null;
 }
 
-function getStatusBadge(game: Game, requireFinalization: boolean) {
+function getStatusBadge(game: Game, requireFinalization: boolean, isLive: boolean) {
+  if (isLive) return <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>;
   if (game.status === 'cancelled') return <span className="badge badge-danger">Cancelled</span>;
   if (game.status === 'completed') return <span className="badge badge-success">Final</span>;
   if (game.status === 'submitted') {
     return requireFinalization
-      ? <span className="badge badge-warning">Pending</span>
+      ? <span className="badge badge-warning">Unofficial</span>
       : <span className="badge badge-success">Final</span>;
   }
   return <span className="badge">Scheduled</span>;
 }
 
-function getStatusText(game: Game, requireFinalization: boolean) {
+function getStatusText(game: Game, requireFinalization: boolean, isLive: boolean) {
+  if (isLive) return 'Live';
   if (game.status === 'cancelled') return 'Cancelled';
   if (game.status === 'completed') return 'Final';
-  if (game.status === 'submitted') return requireFinalization ? 'Pending score review' : 'Final';
+  if (game.status === 'submitted') return requireFinalization ? 'Unofficial' : 'Final';
   return 'Scheduled';
 }
 
@@ -169,7 +174,8 @@ export async function generateMetadata({ params }: { params: GameDetailParams })
     const hasScore = (game.status === 'completed' || game.status === 'submitted') &&
       game.homeScore != null && game.awayScore != null;
     const requireFinalization = data.organization.requireScoreFinalization ?? true;
-    const statusText = getStatusText(game, requireFinalization);
+    const isLive = isGameLive(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES);
+    const statusText = getStatusText(game, requireFinalization, isLive);
     const title = hasScore
       ? `${away} ${game.awayScore} – ${game.homeScore} ${home} · ${statusText}`
       : `${away} vs ${home}`;
@@ -228,6 +234,9 @@ export default async function PublicGameDetailsPage({
   const winner = getWinner(game);
   const awayName = getTeamDisplay(game, false, data.teams);
   const homeName = getTeamDisplay(game, true, data.teams);
+  // Resolve real (non-placeholder) teams so fans can follow either side inline (J6-011).
+  const awayTeam = game.awayTeamId && game.awayTeamId !== NIL_UUID ? data.teams.find(t => t.id === game.awayTeamId) ?? null : null;
+  const homeTeam = game.homeTeamId && game.homeTeamId !== NIL_UUID ? data.teams.find(t => t.id === game.homeTeamId) ?? null : null;
   const awayOutcome = !hasScore ? null : winner === 'tie' ? 'T' : winner === 'away' ? 'W' : 'L';
   const homeOutcome = !hasScore ? null : winner === 'tie' ? 'T' : winner === 'home' ? 'W' : 'L';
   let gameType = 'Pool Play';
@@ -240,16 +249,17 @@ export default async function PublicGameDetailsPage({
   // Live refresh on game day — re-render this server page when the score changes.
   const liveSignature = `${game.homeScore ?? ''}:${game.awayScore ?? ''}:${game.status}`;
   const t = data.tournament;
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
   const liveEnabled = Boolean(
     t.status === 'active' && t.startDate && t.endDate && today >= t.startDate && today <= t.endDate,
   );
-  const isLiveGame = game.status === 'submitted' && game.date === today;
+  const liveWindowMinutes = game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES;
+  const isLiveGame = isGameLive(game, liveWindowMinutes);
 
-  const shareStatusLabel = isLiveGame ? 'LIVE'
-    : game.status === 'completed' ? 'FINAL'
-    : (game.status === 'submitted' && !requireFinalization) ? 'FINAL'
-    : 'PENDING';
+  // One public status, one fan vocabulary — never "PENDING" on a share artifact (J6-015/J6-019).
+  const shareStatusLabel = publicGameStatusLabel(
+    publicGameStatus(game, liveWindowMinutes, requireFinalization),
+  ).toUpperCase();
 
   return (
     <div className="page-content">
@@ -283,9 +293,7 @@ export default async function PublicGameDetailsPage({
                 </div>
                 <div className={styles.detailRail}>
                   <span className="badge badge-primary">{gameType}</span>
-                  {isLiveGame
-                    ? <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
-                    : getStatusBadge(game, requireFinalization)}
+                  {getStatusBadge(game, requireFinalization, isLiveGame)}
                   {hasScore && (
                     <ShareScoreButton
                       tournamentName={data.tournament.name}
@@ -311,6 +319,7 @@ export default async function PublicGameDetailsPage({
                   <div className={`${styles.detailTeam} ${styles.detailAway} ${winner === 'home' ? styles.detailTeamLost : ''}`}>
                     <span className={styles.detailTeamSide}>Away</span>
                     <strong className={styles.detailTeamName}>{awayName}</strong>
+                    {awayTeam && <TeamFollowStar orgSlug={orgSlug} tournamentSlug={tournamentSlug} team={awayTeam} />}
                   </div>
 
                   <span className={styles.detailVs}>VS</span>
@@ -318,6 +327,7 @@ export default async function PublicGameDetailsPage({
                   <div className={`${styles.detailTeam} ${styles.detailHome} ${winner === 'away' ? styles.detailTeamLost : ''}`}>
                     <span className={styles.detailTeamSide}>Home</span>
                     <strong className={styles.detailTeamName}>{homeName}</strong>
+                    {homeTeam && <TeamFollowStar orgSlug={orgSlug} tournamentSlug={tournamentSlug} team={homeTeam} />}
                   </div>
                 </div>
 
@@ -388,7 +398,7 @@ export default async function PublicGameDetailsPage({
                     </div>
                     <div>
                       <dt>Status</dt>
-                      <dd>{getStatusText(game, requireFinalization)}</dd>
+                      <dd>{getStatusText(game, requireFinalization, isLiveGame)}</dd>
                     </div>
                   </dl>
                 </section>

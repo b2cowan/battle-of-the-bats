@@ -233,3 +233,28 @@
 .expandShare {
   margin-top: 0.5rem;
 }
+
+.expandAlerts {
+  margin-top: 0.5rem;
+}
+
+.expandUnfollow {
+  display: block;
+  width: 100%;
+  margin-top: 0.4rem;
+  padding: 0.45rem;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: 1px solid var(--border-2);
+  color: var(--text-secondary);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+}
+
+.expandUnfollow:hover {
+  color: var(--fl-text);
+  border-color: var(--white-25);
+}

@@ -204,88 +204,43 @@
   line-height: 1.55;
 }
 
-/* ── HelpPageLayout ──────────────────────────────────────────────────────── */
+/* ── HelpPageLayout — single-scroll guide ─────────────────────────────────
+   Layout: 272px sticky TOC + 1fr scrolling main. The TOC is collapsible per
+   group and auto-focuses the group the reader is in (scroll-spy). Search
+   reveals all groups. FAQs render inline under each topic (details/summary).
+   ──────────────────────────────────────────────────────────────────────────── */
+
 .helpPage {
   display: grid;
-  grid-template-columns: minmax(240px, 300px) minmax(0, 760px);
+  grid-template-columns: 272px minmax(0, 1fr);
   align-items: start;
-  gap: 2rem;
-  max-width: 1120px;
+  gap: 2.4rem;
+  max-width: 1100px;
 }
 
+/* ── Side panel & sticky TOC ─────────────────────────────────────────────── */
 .helpSidePanel {
   min-width: 0;
 }
 
-.helpSideInner {
+.helpTocSticky {
   position: sticky;
-  top: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.4rem;
-  max-height: calc(100vh - 2.5rem);
-  overflow: auto;
-  padding: 0.95rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.028);
+  top: 82px;
+  max-height: calc(100vh - 104px);
+  overflow-y: auto;
+  padding-right: 2px;
+  /* quiet scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border, rgba(255,255,255,0.08)) transparent;
 }
 
 .helpMain {
   min-width: 0;
 }
 
-.helpPageHeader {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.75rem;
-}
-
-.helpPageTitle {
-  font-size: 1.6rem;
-  font-weight: 900;
-  font-family: var(--font-display, sans-serif);
-  color: var(--white-90, rgba(255, 255, 255, 0.9));
-  margin: 0;
-  line-height: 1.15;
-}
-
-.helpRoleBadge {
-  display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0.2rem 0.55rem;
-  border-radius: 4px;
-  background: rgba(79, 163, 224, 0.12);
-  border: 1px solid rgba(79, 163, 224, 0.25);
-  color: #4fa3e0;
-  white-space: nowrap;
-}
-
-.helpIntro {
-  font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.55);
-  line-height: 1.65;
-  margin: 0 0 2rem;
-  max-width: 600px;
-}
-
+/* Search box inside the sticky TOC */
 .helpSearchPanel {
-  margin: 0;
-}
-
-.helpSearchLabel {
-  display: block;
-  margin-bottom: 0.45rem;
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 1.1rem;
 }
 
 .helpSearchBox {
@@ -296,21 +251,21 @@
 
 .helpSearchIcon {
   position: absolute;
-  left: 0.9rem;
-  color: rgba(255, 255, 255, 0.35);
+  left: 0.75rem;
+  color: var(--white-40, rgba(255, 255, 255, 0.35));
   pointer-events: none;
 }
 
 .helpSearchInput {
   width: 100%;
-  min-height: 44px;
-  padding: 0.7rem 2.6rem 0.7rem 2.35rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.045);
-  color: rgba(255, 255, 255, 0.84);
+  min-height: 38px;
+  padding: 0.55rem 2.2rem 0.55rem 2.1rem;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--fl-text, rgba(255, 255, 255, 0.84));
   font: inherit;
-  font-size: 0.92rem;
+  font-size: 0.86rem;
   outline: none;
 }
 
@@ -320,164 +275,356 @@
 }
 
 .helpSearchInput::placeholder {
-  color: rgba(255, 255, 255, 0.28);
+  color: var(--white-40, rgba(255, 255, 255, 0.28));
 }
 
 .helpSearchClear {
   position: absolute;
-  right: 0.55rem;
+  right: 0.4rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   border: 0;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--white-55, rgba(255, 255, 255, 0.55));
   cursor: pointer;
 }
 
 .helpSearchClear:hover {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--fl-text, rgba(255, 255, 255, 0.85));
   background: rgba(255, 255, 255, 0.12);
 }
 
 .helpSearchMeta {
-  margin: 0.5rem 0 0;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.42);
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  color: var(--white-40, rgba(255, 255, 255, 0.42));
 }
 
-.helpUtilityTitle {
-  margin: 0 0 0.85rem;
-  font-size: 0.78rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.72);
-}
-
-.quickAnswers {
-  margin: 0;
-}
-
-.quickAnswerGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.45rem;
-}
-
-.quickAnswerLink {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-height: 36px;
-  padding: 0.45rem 0;
-  border-radius: 0;
-  border: 0;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.68);
-  font: inherit;
-  font-size: 0.8rem;
-  line-height: 1.35;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.quickAnswerLink:hover {
-  border-color: transparent;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.helpToc {
-  margin: 0;
-}
-
+/* ── TOC groups (collapsible) ────────────────────────────────────────────── */
 .helpTocGroups {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .helpTocGroup {
-  border-radius: 0;
-  border: 0;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  background: transparent;
-  padding: 0 0 0 0.8rem;
+  margin-bottom: 2px;
 }
 
-.helpTocGroupTitle {
-  margin: 0 0 0.65rem;
-  font-size: 0.72rem;
-  font-weight: 850;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #4fa3e0;
-}
-
-.helpTocLinks {
+.helpTocGroupHead {
   display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.helpTocLink {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  align-items: center;
+  gap: 6px;
   width: 100%;
-  padding: 0.25rem 0;
-  border: 0;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.74);
-  font: inherit;
   text-align: left;
-  text-decoration: none;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--primary-light, #D9F99D);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  padding: 7px 6px 7px 4px;
   cursor: pointer;
+  opacity: 0.9;
+}
+
+.helpTocGroupHead:hover {
+  opacity: 1;
+}
+
+.helpTocGroupCaret {
+  display: inline-block;
+  font-size: 0.62rem;
+  opacity: 0.75;
+  transition: transform 0.18s ease;
+}
+
+/* When group is collapsed, rotate the caret and hide children */
+.helpTocGroupCollapsed .helpTocGroupCaret {
+  transform: rotate(-90deg);
+}
+
+.helpTocGroupCollapsed .helpTocChildren {
+  display: none;
+}
+
+.helpTocChildren {
+  padding-bottom: 4px;
+}
+
+/* Sub-group label inside TOC */
+.helpTocSubLabel {
+  margin: 5px 0 2px 14px;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  font-weight: 700;
+}
+
+/* TOC section link */
+.helpTocLink {
+  display: block;
+  color: var(--white-55, rgba(255, 255, 255, 0.7));
+  font-size: 0.84rem;
+  padding: 4px 10px 4px 14px;
+  border-radius: 7px;
+  border-left: 2px solid transparent;
+  text-decoration: none;
+  transition: color 0.12s, background 0.12s, border-left-color 0.12s;
+  line-height: 1.4;
+}
+
+/* Extra indent for links under a sub-group label */
+.helpTocLinkSub {
+  padding-left: 22px;
 }
 
 .helpTocLink:hover {
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--fl-text, rgba(255, 255, 255, 0.95));
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .helpTocLinkActive {
-  color: rgba(255, 255, 255, 0.96);
+  color: var(--primary-light, #D9F99D) !important;
+  background: rgba(217, 249, 157, 0.07);
+  border-left-color: var(--primary-light, #D9F99D);
+  font-weight: 600;
 }
 
-.helpTocLinkActive span {
-  color: #4fa3e0;
+/* ── Page header (decluttered) ───────────────────────────────────────────── */
+.helpPageHeader {
+  margin-bottom: 1.5rem;
 }
 
-.helpTocLink span {
-  font-size: 0.81rem;
+.helpPageTitle {
+  font-size: 1.75rem;
+  font-weight: 900;
+  font-family: var(--font-display, sans-serif);
+  color: var(--primary-light, #D9F99D);
+  margin: 0 0 0.3rem;
+  line-height: 1.15;
+}
+
+/* "For: Admin" quiet role line — not a badge, just a muted line */
+.helpRoleLine {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(79, 163, 224, 0.78);
+  margin: 0 0 0.7rem;
+}
+
+.helpIntro {
+  font-size: 0.95rem;
+  color: var(--white-55, rgba(255, 255, 255, 0.55));
+  line-height: 1.65;
+  margin: 0;
+  max-width: 600px;
+}
+
+/* ── Single-scroll body ──────────────────────────────────────────────────── */
+.helpScrollBody {
+  margin-top: 1.5rem;
+}
+
+/* Group block: h2 + topic sections */
+.helpGroupBlock {
+  margin-bottom: 0;
+}
+
+/* Group heading (h2) — uppercase lime separator */
+.helpGroupHeading {
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--primary-light, #D9F99D);
+  font-weight: 700;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  margin: 40px 0 4px;
+}
+
+.helpGroupBlock:first-child .helpGroupHeading {
+  margin-top: 0;
+}
+
+/* Sub-group heading (h3) under a group */
+.helpSubGroupHeading {
+  font-size: 0.92rem;
   font-weight: 650;
-  line-height: 1.35;
+  color: #cbe79a;
+  margin: 22px 0 8px;
+  letter-spacing: 0.01em;
 }
 
-.helpTocLink em {
-  display: none;
-  font-size: 0.73rem;
-  font-style: normal;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.38);
+/* Topic block: anchored section (h3 or h4 heading) */
+.helpTopicBlock {
+  scroll-margin-top: 90px;
+  margin: 16px 0 22px;
 }
 
-.helpSections {
+/* h3 (flat under group) and h4 (under sub-group) share the same visual style */
+.helpTopicHeading {
+  font-size: 1.1rem;
+  margin: 0 0 3px;
+  color: var(--fl-text, rgba(255, 255, 255, 0.9));
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.helpTopicSummary {
+  color: var(--data-gray, rgba(255, 255, 255, 0.42));
+  margin: 0 0 10px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+/* Quick-links row (section.links) */
+.helpSectionLinks {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.helpSectionLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0.28rem 0.55rem;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid rgba(79, 163, 224, 0.18);
+  color: var(--info, #4fa3e0);
+  background: rgba(79, 163, 224, 0.06);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.helpSectionLink:hover {
+  border-color: rgba(79, 163, 224, 0.35);
+  background: rgba(79, 163, 224, 0.1);
+}
+
+/* Body prose */
+.helpSectionContent {
+  font-size: 0.9rem;
+  color: var(--white-55, rgba(255, 255, 255, 0.55));
+  line-height: 1.7;
+}
+
+.helpSectionContent p {
+  margin: 0 0 0.6rem;
+}
+
+.helpSectionContent p:last-child {
+  margin-bottom: 0;
+}
+
+.helpSectionContent ul,
+.helpSectionContent ol {
+  padding-left: 1.25rem;
+  margin: 0.4rem 0 0.6rem;
+}
+
+.helpSectionContent li {
+  margin-bottom: 0.3rem;
+  line-height: 1.6;
+}
+
+.helpSectionContent strong {
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+}
+
+/* ── Inline FAQ accordion (details/summary under each topic) ─────────────── */
+.helpFaqList {
   display: flex;
   flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.helpFaqItem {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  padding: 0 14px;
+}
+
+.helpFaqItem[open] {
+  border-color: rgba(79, 163, 224, 0.2);
+  background: rgba(79, 163, 224, 0.04);
+}
+
+.helpFaqItem summary {
+  cursor: pointer;
+  padding: 9px 0;
+  font-weight: 600;
+  font-size: 0.87rem;
+  color: var(--fl-text, rgba(255, 255, 255, 0.82));
+  list-style: none;
+  display: flex;
+  align-items: center;
   gap: 0;
 }
 
-.helpSearchResults,
-.helpArticle {
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.075);
+.helpFaqItem summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Lime caret that rotates open */
+.helpFaqItem summary::before {
+  content: '›';
+  color: var(--primary-light, #D9F99D);
+  display: inline-block;
+  width: 16px;
+  flex-shrink: 0;
+  font-size: 1.05rem;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.helpFaqItem[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.helpFaqItem summary span {
+  flex: 1;
+  min-width: 0;
+}
+
+.helpFaqAnswer {
+  padding: 0 0 11px 16px;
+  color: var(--white-55, rgba(255, 255, 255, 0.56));
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+
+.helpFaqAnswer p {
+  margin: 0;
+}
+
+.helpFaqAnswer strong {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+/* ── Search results panel (replaces scroll body when query active) ─────────── */
+.helpSearchResults {
+  border-radius: var(--radius, 8px);
+  border: 1px solid var(--border-2, rgba(255, 255, 255, 0.075));
   background: rgba(255, 255, 255, 0.026);
   padding: 1.35rem;
+  margin-top: 1rem;
 }
 
 .helpResultHeader {
@@ -487,18 +634,18 @@
   gap: 1rem;
   margin-bottom: 1rem;
   padding-bottom: 0.85rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.07));
 }
 
 .helpResultHeader h2 {
   margin: 0;
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--fl-text, rgba(255, 255, 255, 0.86));
   font-size: 1rem;
   font-weight: 800;
 }
 
 .helpResultHeader span {
-  color: rgba(255, 255, 255, 0.38);
+  color: var(--white-40, rgba(255, 255, 255, 0.38));
   font-size: 0.78rem;
 }
 
@@ -529,11 +676,13 @@
   min-height: 76px;
   padding: 0.8rem 0.95rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.075);
+  border: 1px solid var(--border-2, rgba(255, 255, 255, 0.075));
   background: rgba(255, 255, 255, 0.028);
   font: inherit;
   text-align: left;
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
 .helpResultButton:hover {
@@ -550,7 +699,7 @@
 }
 
 .helpResultButton strong {
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--fl-text, rgba(255, 255, 255, 0.82));
   font-size: 0.88rem;
   line-height: 1.35;
 }
@@ -560,56 +709,44 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  color: rgba(255, 255, 255, 0.42);
+  color: var(--white-40, rgba(255, 255, 255, 0.42));
   font-size: 0.78rem;
   font-style: normal;
   line-height: 1.45;
 }
 
-.helpArticle {
-  scroll-margin-top: 1.25rem;
+/* ── Empty / no-results states ───────────────────────────────────────────── */
+.helpEmptyResults {
+  margin: 1.25rem 0;
+  padding: 1.2rem;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.025);
+  text-align: center;
 }
 
-.helpArticleMeta {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.75rem;
-}
-
-.helpArticleMeta span,
-.helpArticleMeta em {
-  color: rgba(255, 255, 255, 0.38);
-  font-size: 0.68rem;
-  font-weight: 850;
-  font-style: normal;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.helpArticleMeta em {
-  color: rgba(79, 163, 224, 0.82);
-}
-
-.helpArticleTitle {
+.helpNoResults {
   margin: 0;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1.18rem;
-  font-weight: 850;
-  line-height: 1.25;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  color: var(--white-40, rgba(255, 255, 255, 0.42));
+  font-size: 0.84rem;
 }
 
-.helpSection {
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  padding: 1.5rem 0;
-  scroll-margin-top: 1.5rem;
+/* ── Shared utility classes (kept for backward compat / hub agent) ─────────
+   helpUtilityTitle is used by the hub; keep it here.                        */
+.helpUtilityTitle {
+  margin: 0 0 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-55, rgba(255, 255, 255, 0.72));
 }
 
-.helpSection:last-child {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-}
-
+/* helpSectionHeader / helpSectionGroup / helpSectionHeading — kept for any
+   content that still references them directly; harmless if unused.          */
 .helpSectionHeader {
   display: flex;
   align-items: flex-start;
@@ -630,7 +767,7 @@
 .helpSectionHeading {
   font-size: 1rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--fl-text, rgba(255, 255, 255, 0.85));
   margin: 0;
   line-height: 1.3;
 }
@@ -639,553 +776,308 @@
   margin: 0 0 0.8rem;
   font-size: 0.83rem;
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.42);
+  color: var(--white-40, rgba(255, 255, 255, 0.42));
 }
 
-.helpSectionLinks {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-  max-width: 280px;
-}
-
-.helpSectionLink {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 0.32rem 0.55rem;
-  border-radius: 6px;
-  border: 1px solid rgba(79, 163, 224, 0.18);
-  color: #4fa3e0;
-  background: rgba(79, 163, 224, 0.06);
-  font-size: 0.74rem;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.helpSectionLink:hover {
-  border-color: rgba(79, 163, 224, 0.35);
-  background: rgba(79, 163, 224, 0.1);
-}
-
-.helpSectionContent {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.55);
-  line-height: 1.7;
-}
-
-.helpSectionContent p {
-  margin: 0 0 0.6rem;
-}
-
-.helpSectionContent p:last-child {
-  margin-bottom: 0;
-}
-
-.helpSectionContent ul,
-.helpSectionContent ol {
-  padding-left: 1.25rem;
-  margin: 0.4rem 0 0.6rem;
-}
-
-.helpSectionContent li {
-  margin-bottom: 0.3rem;
-  line-height: 1.6;
-}
-
-.helpSectionContent strong {
-  color: rgba(255, 255, 255, 0.75);
-  font-weight: 600;
-}
-
-.helpArticleNav {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-top: 1.4rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.helpArticleNavButton {
+.helpSections {
   display: flex;
   flex-direction: column;
-  gap: 0.18rem;
-  min-height: 62px;
-  padding: 0.75rem 0.9rem;
-  border-radius: 8px;
-  border: 1px solid rgba(79, 163, 224, 0.16);
-  background: rgba(79, 163, 224, 0.045);
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
+  gap: 0;
 }
 
-.helpArticleNavButton:last-child {
-  text-align: right;
-}
-
-.helpArticleNavButton:hover {
-  border-color: rgba(79, 163, 224, 0.32);
-  background: rgba(79, 163, 224, 0.075);
-}
-
-.helpArticleNavButton span {
-  color: rgba(79, 163, 224, 0.82);
-  font-size: 0.68rem;
-  font-weight: 850;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.helpArticleNavButton strong {
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 0.82rem;
-  line-height: 1.35;
-}
-
-.helpFaqSection {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.helpFaqHeader {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.helpFaqHeader span {
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.38);
-}
-
-.helpFaqList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.helpFaqItem {
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  background: rgba(255, 255, 255, 0.028);
-}
-
-.helpFaqItem[open] {
-  border-color: rgba(79, 163, 224, 0.2);
-  background: rgba(79, 163, 224, 0.045);
-}
-
-.helpFaqItem summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  min-height: 48px;
-  padding: 0.7rem 0.9rem;
-  cursor: pointer;
-  list-style: none;
-}
-
-.helpFaqItem summary::-webkit-details-marker {
-  display: none;
-}
-
-.helpFaqItem summary span {
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 0.88rem;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.helpFaqItem summary em {
-  flex-shrink: 0;
-  font-size: 0.68rem;
-  font-style: normal;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: rgba(79, 163, 224, 0.7);
-}
-
-.helpFaqAnswer {
-  padding: 0 0.9rem 0.85rem;
-  color: rgba(255, 255, 255, 0.56);
-  font-size: 0.86rem;
-  line-height: 1.65;
-}
-
-.helpFaqAnswer p {
-  margin: 0;
-}
-
-.helpFaqAnswer strong {
-  color: rgba(255, 255, 255, 0.76);
-}
-
-.helpNoResults {
-  margin: 0;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.42);
-  font-size: 0.84rem;
-}
-
-.helpEmptyResults {
-  margin: 1.25rem 0;
-  padding: 1.2rem;
-  border-radius: 8px;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.025);
-  text-align: center;
-}
-
-@media (max-width: 980px) {
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
   .helpPage {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 1.25rem;
   }
 
-  .helpSideInner {
+  .helpTocSticky {
     position: static;
     max-height: none;
+    border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+    padding-bottom: 1rem;
+    margin-bottom: 0.5rem;
   }
 
-  .helpTocGroups {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .helpTocGroupCollapsed .helpTocChildren {
+    /* On mobile all groups stay revealed (no auto-collapse from scroll-spy) */
+    display: block;
   }
 }
 
-@media (max-width: 760px) {
-  .helpTocGroups {
-    grid-template-columns: 1fr;
-  }
-
-  .helpSectionHeader {
-    flex-direction: column;
-  }
-
-  .helpSectionLinks {
-    justify-content: flex-start;
-    max-width: none;
+@media (max-width: 640px) {
+  .helpSearchResults {
+    padding: 1rem;
   }
 
   .helpFaqItem summary {
     align-items: flex-start;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .helpSearchResults,
-  .helpArticle {
-    padding: 1rem;
-  }
-
-  .helpArticleNav {
-    grid-template-columns: 1fr;
-  }
-
-  .helpArticleNavButton:last-child {
-    text-align: left;
   }
 }
 
 /* ── Help Hub ────────────────────────────────────────────────────────────── */
 .helpHub {
-  max-width: 1080px;
+  max-width: 980px;
 }
 
 .helpHubHeader {
-  margin-bottom: 1.4rem;
+  margin-bottom: 1.6rem;
 }
 
 .helpHubTitle {
-  font-size: 1.6rem;
+  font-size: 1.75rem;
   font-weight: 900;
   font-family: var(--font-display, sans-serif);
-  color: var(--white-90, rgba(255, 255, 255, 0.9));
-  margin: 0 0 0.4rem;
+  color: var(--fl-text, rgba(255, 255, 255, 0.9));
+  margin: 0 0 0.35rem;
   line-height: 1.15;
 }
 
 .helpHubSubtitle {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.45);
+  font-size: 1rem;
+  color: var(--white-55, rgba(255, 255, 255, 0.55));
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.55;
+  max-width: 60ch;
 }
 
-.helpHubGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-
+/* Search panel */
 .helpHubSearchPanel {
-  max-width: 720px;
-  margin: 0 0 1.4rem;
+  margin: 0 0 2rem;
 }
 
-.helpHubFeatured,
-.helpHubRolePaths,
-.helpHubTasks,
-.helpHubGroup {
-  margin-top: 1.35rem;
+.helpHubSearchPanel .helpSearchBox {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius, 14px);
+  padding: 4px 4px 4px 0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
 }
 
-.helpHubFeaturedGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.8rem;
+.helpHubSearchPanel .helpSearchInput {
+  font-size: 1rem;
+  min-height: 44px;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius, 14px);
+  padding: 0.6rem 2.4rem 0.6rem 2.4rem;
 }
 
-.helpHubFeaturedCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  min-height: 150px;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid rgba(79, 163, 224, 0.18);
-  background: rgba(79, 163, 224, 0.055);
-  color: inherit;
-  text-decoration: none;
+.helpHubSearchPanel .helpSearchInput:focus {
+  box-shadow: none;
 }
 
-.helpHubFeaturedCard:hover {
-  border-color: rgba(79, 163, 224, 0.35);
-  background: rgba(79, 163, 224, 0.085);
+.helpHubSearchPanel .helpSearchIcon {
+  left: 1rem;
 }
 
-.helpHubFeaturedCard span,
-.helpHubCardMeta span,
-.helpHubCardMeta em,
-.helpHubTaskLink em {
-  font-size: 0.68rem;
-  font-weight: 800;
-  line-height: 1.3;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+.helpHubSearchPanel .helpSearchClear {
+  right: 0.65rem;
 }
 
-.helpHubFeaturedCard span {
-  color: #4fa3e0;
-}
-
-.helpHubFeaturedCard strong {
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 0.94rem;
-  line-height: 1.35;
-}
-
-.helpHubFeaturedCard em {
-  color: rgba(255, 255, 255, 0.48);
-  font-size: 0.8rem;
-  font-style: normal;
-  line-height: 1.55;
-}
-
-.helpHubTaskGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
-}
-
-.helpHubRolePathGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
-}
-
-.helpHubRolePathCard {
-  min-width: 0;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  background: rgba(255, 255, 255, 0.028);
-}
-
-.helpHubRolePathCard:hover {
-  border-color: rgba(79, 163, 224, 0.2);
-  background: rgba(79, 163, 224, 0.04);
-}
-
-.helpHubRolePathCard h3 {
-  margin: 0.55rem 0 0.35rem;
-  color: rgba(255, 255, 255, 0.88);
-  font-size: 0.96rem;
-  font-weight: 800;
-  line-height: 1.3;
-}
-
-.helpHubRolePathCard p {
-  margin: 0 0 0.75rem;
-  color: rgba(255, 255, 255, 0.46);
-  font-size: 0.82rem;
-  line-height: 1.55;
-}
-
-.helpHubRolePathCard ol {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.4rem;
-  margin: 0;
-  padding-left: 1.15rem;
-  color: rgba(79, 163, 224, 0.75);
-}
-
-.helpHubRolePathCard li {
-  padding-left: 0.1rem;
-  font-size: 0.82rem;
-  line-height: 1.4;
-}
-
-.helpHubRolePathCard a {
-  color: rgba(255, 255, 255, 0.76);
-  text-decoration: none;
-}
-
-.helpHubRolePathCard a:hover {
-  color: #4fa3e0;
-}
-
-.helpHubTaskLink {
+/* Section label with rule line */
+.helpHubSectionLabel {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  min-height: 46px;
-  padding: 0.7rem 0.85rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.075);
-  background: rgba(255, 255, 255, 0.028);
-  color: rgba(255, 255, 255, 0.78);
-  text-decoration: none;
+  gap: 10px;
+  margin: 0 0 1rem;
 }
 
-.helpHubTaskLink:hover {
-  border-color: rgba(79, 163, 224, 0.24);
-  background: rgba(79, 163, 224, 0.05);
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.helpHubTaskLink span {
-  font-size: 0.84rem;
+.helpHubSectionLabel span {
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--primary-light, #D9F99D);
   font-weight: 700;
-  line-height: 1.35;
+  white-space: nowrap;
 }
 
-.helpHubTaskLink em {
-  flex-shrink: 0;
-  color: rgba(79, 163, 224, 0.78);
-  font-style: normal;
+.helpHubSectionRule {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
 }
 
-.helpHubGroupHeader {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+/* Guide card grid — 3 columns on wide, 2 on medium, 1 on narrow */
+.helpHubGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
-  margin-bottom: 0.85rem;
-  padding-top: 1.1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.helpHubGroupHeader h2 {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 0.92rem;
-  font-weight: 850;
-  line-height: 1.3;
+@media (max-width: 860px) {
+  .helpHubGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.helpHubGroupHeader span {
-  color: rgba(255, 255, 255, 0.38);
-  font-size: 0.78rem;
-}
-
-@media (max-width: 640px) {
-  .helpHubGrid,
-  .helpHubFeaturedGrid,
-  .helpHubRolePathGrid,
-  .helpHubTaskGrid {
+@media (max-width: 560px) {
+  .helpHubGrid {
     grid-template-columns: 1fr;
   }
 }
 
+/* Individual guide card */
 .helpHubCard {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1.25rem 1.375rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 1.1rem 1.1rem 1rem;
+  border-radius: var(--radius, 14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
   color: inherit;
   text-decoration: none;
 }
 
 .helpHubCard:hover {
-  border-color: rgba(79, 163, 224, 0.25);
-  background: rgba(79, 163, 224, 0.04);
+  border-color: var(--border, rgba(30, 58, 138, 0.35));
+  background: rgba(217, 249, 157, 0.04);
+  transform: translateY(-2px);
 }
 
 .helpHubCardTitle {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
-  margin: 0;
+  color: var(--fl-text, rgba(255, 255, 255, 0.88));
+  margin: 0 0 0.35rem;
   line-height: 1.3;
 }
 
-.helpHubCardMeta {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-}
-
-.helpHubCardMeta span {
-  color: rgba(255, 255, 255, 0.42);
-}
-
-.helpHubCardMeta em {
-  display: inline-flex;
-  align-items: center;
-  min-height: 20px;
-  padding: 0.15rem 0.38rem;
-  border-radius: 4px;
-  background: rgba(79, 163, 224, 0.1);
-  color: rgba(79, 163, 224, 0.82);
-  font-style: normal;
-}
-
 .helpHubCardDesc {
-  font-size: 0.83rem;
-  color: rgba(255, 255, 255, 0.45);
-  margin: 0;
+  font-size: 0.85rem;
+  color: var(--data-gray, rgba(255, 255, 255, 0.42));
+  margin: 0 0 0.9rem;
   line-height: 1.55;
   flex: 1;
+  min-height: 38px;
 }
 
-.helpHubCardLink {
-  display: inline-block;
-  margin-top: 0.25rem;
-  font-size: 0.82rem;
+.helpHubCardFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.helpHubCardCount {
+  font-size: 0.72rem;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  font-family: ui-monospace, monospace;
+}
+
+.helpHubCardRead {
+  font-size: 0.8rem;
+  color: var(--primary-light, #D9F99D);
   font-weight: 600;
-  color: #4fa3e0;
-  text-decoration: none;
-  transition: opacity 0.12s;
 }
 
-.helpHubCardLink:hover {
-  opacity: 0.75;
+/* Gate note below the grid */
+.helpHubGateNote {
+  margin: 0.9rem 2px 0;
+  font-size: 0.78rem;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  font-style: italic;
+  line-height: 1.5;
+}
+
+/* Empty state */
+.helpHubEmpty {
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  padding: 1.8rem 4px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* "New to FieldLogicHQ?" disclosure */
+.helpHubNewHere {
+  margin-top: 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius, 14px);
+  overflow: hidden;
+}
+
+.helpHubNewHereSummary {
+  cursor: pointer;
+  list-style: none;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 700;
+  font-size: 0.96rem;
+  color: var(--fl-text, rgba(255, 255, 255, 0.88));
+  user-select: none;
+}
+
+.helpHubNewHereSummary::-webkit-details-marker {
+  display: none;
+}
+
+.helpHubNewHereCaret {
+  color: var(--primary-light, #D9F99D);
+  font-size: 0.75rem;
+  transition: transform 0.18s ease;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.helpHubNewHere[open] .helpHubNewHereCaret {
+  transform: rotate(90deg);
+}
+
+.helpHubNewHereHint {
+  font-weight: 400;
+  color: var(--data-gray, rgba(255, 255, 255, 0.42));
+  font-size: 0.86rem;
+  margin-left: 2px;
+}
+
+/* Role path grid inside the disclosure */
+.helpHubRolePaths {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.1rem;
+  padding: 0.25rem 1.25rem 1.4rem;
+}
+
+@media (max-width: 680px) {
+  .helpHubRolePaths {
+    grid-template-columns: 1fr;
+  }
+}
+
+.helpHubRolePath {
+  /* no border — paths sit inside the disclosure card */
+}
+
+.helpHubRolePathTitle {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: #cbe79a;
+  margin: 0.4rem 0 0.5rem;
+}
+
+.helpHubRolePathList {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--white-55, rgba(255, 255, 255, 0.65));
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.helpHubRolePathList li {
+  margin-bottom: 0.3rem;
+}
+
+.helpHubRolePathList a {
+  color: var(--info, #4fa3e0);
+  text-decoration: none;
+}
+
+.helpHubRolePathList a:hover {
+  text-decoration: underline;
 }
 
 /* ── Loading / empty state (absorbed from coaches.module.css pattern) ────── */

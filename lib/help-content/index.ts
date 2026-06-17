@@ -18,6 +18,10 @@ export interface HelpFaq {
 export interface HelpSection {
   id?: string;
   group?: string;
+  /** Optional second grouping level rendered as a sub-heading under the group.
+   *  Sections without a subgroup render flat under their parent group.
+   *  Guides that use no groups at all are unaffected. */
+  subgroup?: string;
   heading: string;
   summary?: string;
   keywords?: string[];

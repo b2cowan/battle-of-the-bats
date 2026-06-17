@@ -1,0 +1,125 @@
+/* components/public/FollowTeamPicker.module.css
+   Reusable "follow your team" picker — the front door to the follow loop (J6-011).
+   Token-only (no literal hex) so it respects branding + the public-token ratchet. */
+
+.inline,
+.card {
+  position: relative;
+  width: 100%;
+}
+
+.card {
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  padding: 0.85rem 1rem;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: left;
+  padding: 0;
+}
+
+.triggerStar {
+  flex-shrink: 0;
+  color: var(--logic-lime);
+}
+
+.panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  z-index: 60;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--border-2);
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--fl-text);
+  font-size: 0.85rem;
+}
+
+.closeBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 2px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0.3rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.teamBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--fl-text);
+  font-size: 0.85rem;
+  text-align: left;
+  padding: 0.5rem 0.55rem;
+  border-radius: var(--radius-sm);
+}
+
+.teamBtn:hover {
+  background: var(--primary-faint);
+}
+
+.teamStar {
+  flex-shrink: 0;
+  color: var(--white-25);
+}
+
+.teamBtn:hover .teamStar {
+  color: var(--logic-lime);
+}
+
+.empty {
+  padding: 0.6rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}

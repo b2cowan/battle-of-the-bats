@@ -10,6 +10,7 @@
  * existing followers carry over.
  */
 import { useCallback, useEffect, useState } from 'react';
+import { tournamentToday } from './timezone';
 import type { Team, Tournament } from './types';
 
 export interface FollowedTeam {
@@ -108,6 +109,8 @@ export function isTournamentInProgress(
   if (tournament.status !== 'active') return false;
   const { startDate, endDate } = tournament;
   if (!startDate || !endDate) return false;
-  const today = new Date().toISOString().split('T')[0];
+  // Tournament-local date, not UTC — otherwise this flips false after ~8 PM Eastern on
+  // the final evening, killing the dock + live polling during championship play (J6-056).
+  const today = tournamentToday();
   return today >= startDate && today <= endDate;
 }

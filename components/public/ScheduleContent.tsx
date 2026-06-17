@@ -16,9 +16,12 @@ import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { readFollowedTeamId, clearFollowedTeam, isTournamentInProgress } from '@/lib/follow';
+import { isGameLive, gameStartMs, isGameUpcoming, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { tournamentToday } from '@/lib/timezone';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { downloadTeamScheduleICS } from '@/lib/team-calendar';
 import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
+import FollowTeamPicker from '@/components/public/FollowTeamPicker';
 import RollingNumber from '@/components/public/RollingNumber';
 import { teamAvatarHue, teamInitials } from '@/lib/team-color';
 
@@ -299,7 +302,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   });
   const sortedDates = Object.keys(byDate).sort();
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
 
   const activeG = divisions.find(g => g.id === activeGroup);
   const pools   = activeG?.pools || [];
@@ -325,28 +328,28 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     ? (followedTeamDiv.pools.find((p: { id: string; name: string }) => p.id === followedTeam.poolId) ?? null)
     : null;
 
-  // Most recent submitted+scored game today — "live" game for the scorebug
+  // Live game for the scorebug — in its time-window (J6-013), matching the dock (any
+  // in-window game, score or not; the scorebug renders a missing score as 0–0).
   const followedCurrentGame = useMemo(() => {
     if (!followedTeamId) return null;
     return games
       .filter(g =>
-        g.date === today &&
-        g.status === 'submitted' &&
-        g.homeScore != null && g.awayScore != null &&
+        isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES) &&
         (g.homeTeamId === followedTeamId || g.awayTeamId === followedTeamId)
       )
       .sort((a, b) => (b.time ?? '').localeCompare(a.time ?? ''))[0] ?? null;
-  }, [followedTeamId, games, today]);
+  }, [followedTeamId, games]);
 
-  // Next upcoming scheduled game for the followed team
+  // Next upcoming scheduled game for the followed team — time-aware so a past-due
+  // unscored game stops pinning as NEXT all day (J6-039).
   const followedNextGame = useMemo(() => {
     if (!followedTeamId) return null;
     return games
-      .filter(g =>
-        g.status === 'scheduled' &&
-        (g.homeTeamId === followedTeamId || g.awayTeamId === followedTeamId) &&
-        (g.date > today || g.date === today)
-      )
+      .filter(g => {
+        if (g.status !== 'scheduled') return false;
+        if (g.homeTeamId !== followedTeamId && g.awayTeamId !== followedTeamId) return false;
+        return gameStartMs(g) == null ? g.date >= today : isGameUpcoming(g);
+      })
       .sort((a, b) => {
         if (a.date !== b.date) return a.date.localeCompare(b.date);
         return (a.time ?? '').localeCompare(b.time ?? '');
@@ -530,17 +533,15 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       : winner === 'away' ? { label: 'W', color: outcomeColor.win }
       : { label: 'L', color: outcomeColor.loss };
 
-    const isLive = game.status === 'submitted' && game.date === today;
+    const isLive = isGameLive(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES);
     const statusBadge =
-      game.status === 'cancelled' ? <span className="badge badge-danger">Cancelled</span>
+      isLive ? <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
+      : game.status === 'cancelled' ? <span className="badge badge-danger">Cancelled</span>
       : game.status === 'completed' ? <span className="badge badge-success">Final</span>
-      : game.status === 'submitted' ? (
-          isLive
-            ? <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
-            : requireFinalization
-              ? <span className="badge badge-warning">Pending</span>
-              : <span className="badge badge-success">Final</span>
-        )
+      : game.status === 'submitted'
+        ? (requireFinalization
+            ? <span className="badge badge-warning">Unofficial</span>
+            : <span className="badge badge-success">Final</span>)
       : null;
 
     const isFollowedGame = Boolean(
@@ -806,10 +807,11 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                     </button>
                   </>
                 ) : (
-                  <div className={styles.noFollowPrompt}>
-                    <Star size={13} className={styles.noFollowStar} />
-                    <span>Follow a team to pin its score &amp; next game here.</span>
-                  </div>
+                  <FollowTeamPicker
+                    orgSlug={orgSlug}
+                    tournamentSlug={tournamentSlug}
+                    teams={divisionTeams}
+                  />
                 )}
               </div>
               {followedTeam && (
@@ -1196,7 +1198,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                               games={poolGames}
                               teams={teams}
                               tournamentId={selectedTournament!.id}
-                              highlightTeamId={undefined}
+                              highlightTeamId={followedTeamId ?? undefined}
                               requireFinalization={requireFinalization}
                             />
                           </div>
@@ -1211,7 +1213,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                     games={bracketGames}
                     teams={teams}
                     tournamentId={selectedTournament!.id}
-                    highlightTeamId={undefined}
+                    highlightTeamId={followedTeamId ?? undefined}
                     requireFinalization={requireFinalization}
                   />
                 );
@@ -1376,6 +1378,12 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                     tournamentId={selectedTournament.id}
                     team={{ id: followedTeam.id, name: followedTeam.name }}
                   />
+                )}
+
+                {!isMyTeamFilter && (
+                  <button type="button" className={styles.railCalendarBtn} onClick={showFollowedTeamGames}>
+                    <Star size={13} /> My Team Games
+                  </button>
                 )}
 
                 <button type="button" className={styles.railCalendarBtn} onClick={handleAddToCalendar}>

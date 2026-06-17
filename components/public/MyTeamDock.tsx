@@ -17,18 +17,24 @@ import { Star, ChevronUp, MapPin } from 'lucide-react';
 import type { Game, PublicTeam } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { useFollowedTeam } from '@/lib/follow';
+import { isGameLive, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { tournamentToday } from '@/lib/timezone';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import RollingNumber from '@/components/public/RollingNumber';
 import ShareScoreButton from '@/components/public/ShareScoreButton';
+import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
 import { teamAvatarHue, teamInitials } from '@/lib/team-color';
 import styles from './MyTeamDock.module.css';
 
 interface Props {
   orgSlug: string;
   tournamentSlug: string;
+  tournamentId: string;
   /** Computed server-side from the tournament window; gates all work. */
   inProgress: boolean;
+  /** Whether the plan includes fan push score alerts (Tournament Plus+). */
+  fanAlertsEnabled?: boolean;
 }
 
 function formatCountdown(ms: number): string {
@@ -42,8 +48,8 @@ function formatCountdown(ms: number): string {
   return `${Math.max(mins, 1)}m`;
 }
 
-export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress }: Props) {
-  const { followedTeamId } = useFollowedTeam(orgSlug, tournamentSlug);
+export default function MyTeamDock({ orgSlug, tournamentSlug, tournamentId, inProgress, fanAlertsEnabled = false }: Props) {
+  const { followedTeamId, unfollow } = useFollowedTeam(orgSlug, tournamentSlug);
   const [teams, setTeams] = useState<PublicTeam[]>([]);
   const [games, setGames] = useState<Game[]>([]);
   const [tournamentName, setTournamentName] = useState('');
@@ -86,7 +92,8 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress }: Prop
   }, [active]);
 
   const team = followedTeamId ? teams.find(t => t.id === followedTeamId) ?? null : null;
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
+  const now = new Date(nowMs);
 
   const teamGames = useMemo(
     () => team
@@ -97,11 +104,18 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress }: Prop
     [team, games],
   );
 
+  // One shared definition of "live" (J6-013): the game is inside its time-window — not the
+  // old "submitted score = live" heuristic that never turned off. nextGame is time-aware so
+  // a past-due unscored game stops pinning as NEXT all day (J6-039).
   const liveGame = teamGames.find(
-    g => g.date === today && g.status === 'submitted' && g.homeScore != null && g.awayScore != null,
+    g => isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES, now),
   ) ?? null;
   const nextGame = !liveGame
-    ? teamGames.find(g => g.status === 'scheduled' && g.date >= today) ?? null
+    ? teamGames.find(g => {
+        if (g.status !== 'scheduled') return false;
+        const startMs = gameStartMs(g);
+        return startMs == null ? g.date >= today : startMs > nowMs;
+      }) ?? null
     : null;
   const game = liveGame ?? nextGame;
 
@@ -112,8 +126,9 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress }: Prop
     ?? (game.homeTeamId === team.id ? game.awayPlaceholder : game.homePlaceholder)
     ?? 'TBD';
 
-  const myScore = liveGame ? (liveGame.homeTeamId === team.id ? liveGame.homeScore : liveGame.awayScore) : null;
-  const oppScore = liveGame ? (liveGame.homeTeamId === team.id ? liveGame.awayScore : liveGame.homeScore) : null;
+  // A game can be live before its first run is entered → show 0–0 rather than blank.
+  const myScore = liveGame ? ((liveGame.homeTeamId === team.id ? liveGame.homeScore : liveGame.awayScore) ?? 0) : null;
+  const oppScore = liveGame ? ((liveGame.homeTeamId === team.id ? liveGame.awayScore : liveGame.homeScore) ?? 0) : null;
 
   // Most recent scored game (live or final) → a shareable result card.
   const latestResult = teamGames
@@ -125,10 +140,10 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress }: Prop
   const shareAwayName = shareGame ? (teams.find(t => t.id === shareGame.awayTeamId)?.name ?? shareGame.awayPlaceholder ?? 'TBD') : '';
   const shareHomeName = shareGame ? (teams.find(t => t.id === shareGame.homeTeamId)?.name ?? shareGame.homePlaceholder ?? 'TBD') : '';
 
-  // `time` can be "HH:MM" or "HH:MM:SS" — normalise so the date is valid (else NaN).
-  const countdownMs = nextGame?.time
-    ? new Date(`${nextGame.date}T${nextGame.time.slice(0, 5)}:00`).getTime() - nowMs
-    : null;
+  // Tournament-timezone start instant so the countdown is correct regardless of the
+  // viewer's device zone (and so it never goes stale at the UTC day boundary).
+  const nextStartMs = nextGame ? gameStartMs(nextGame) : null;
+  const countdownMs = nextStartMs != null ? nextStartMs - nowMs : null;
   const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
 
   return (
@@ -163,8 +178,8 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress }: Prop
               tournamentName={tournamentName}
               awayName={shareAwayName}
               homeName={shareHomeName}
-              awayScore={shareGame.awayScore as number}
-              homeScore={shareGame.homeScore as number}
+              awayScore={shareGame.awayScore ?? 0}
+              homeScore={shareGame.homeScore ?? 0}
               statusLabel={shareIsLive ? 'LIVE' : 'FINAL'}
               live={shareIsLive}
               dateLabel={new Date(shareGame.date + 'T12:00:00').toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
@@ -172,9 +187,26 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress }: Prop
               gameType={shareGame.isPlayoff ? (shareGame.bracketCode || 'Playoff') : null}
             />
           )}
+          {fanAlertsEnabled && (
+            <div className={styles.expandAlerts}>
+              <FollowAlertsToggle
+                orgSlug={orgSlug}
+                tournamentSlug={tournamentSlug}
+                tournamentId={tournamentId}
+                team={{ id: team.id, name: team.name }}
+              />
+            </div>
+          )}
           <Link href={scheduleHref} className={styles.expandLink} onClick={() => setExpanded(false)}>
             View full schedule
           </Link>
+          <button
+            type="button"
+            className={styles.expandUnfollow}
+            onClick={() => { unfollow(); setExpanded(false); }}
+          >
+            Unfollow {team.name}
+          </button>
         </div>
       )}
 

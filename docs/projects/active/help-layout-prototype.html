@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en" data-mode="scroll">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Help layout preview — Tournaments Guide (with sub-groups)</title>
+<style>
+  :root{
+    --bg:#0A0A0A; --bg-2:#0F172A; --surface:#111827;
+    --lime:#D9F99D; --lime-rgb:217,249,157;
+    --blue:#3B82F6; --blue-rgb:59,130,246;
+    --text:#F1F5F9; --muted:#94A3B8;
+    --w70:rgba(255,255,255,.7); --w55:rgba(255,255,255,.55); --w40:rgba(255,255,255,.4);
+    --w08:rgba(255,255,255,.08); --w05:rgba(255,255,255,.05); --w03:rgba(255,255,255,.03);
+    --border:rgba(30,58,138,.35);
+    --radius:12px; --radius-sm:6px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    line-height:1.6; -webkit-font-smoothing:antialiased}
+  a{color:var(--blue); text-decoration:none}
+  .wrap{max-width:1100px; margin:0 auto; padding:0 20px 90px}
+
+  .bar{position:sticky; top:0; z-index:40; background:rgba(10,10,10,.92); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--w08); margin-bottom:24px}
+  .bar-inner{max-width:1100px; margin:0 auto; padding:13px 20px; display:flex; gap:18px; align-items:center; flex-wrap:wrap}
+  .bar-title{font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--w55); font-weight:700}
+  .seg{display:inline-flex; background:var(--w05); border:1px solid var(--w08); border-radius:999px; padding:4px}
+  .seg button{appearance:none; border:0; background:transparent; color:var(--w70); font:inherit; font-size:.85rem;
+    font-weight:600; padding:7px 15px; border-radius:999px; cursor:pointer; transition:all .15s ease}
+  .seg button:hover{color:var(--text)}
+  .seg button.on{background:var(--lime); color:#0f1123}
+  .caption{flex:1 1 320px; min-width:260px; font-size:.81rem; color:var(--muted)}
+  .caption b{color:var(--lime); font-weight:700}
+  .mini{margin-left:auto; font-size:.7rem; color:var(--w40)}
+
+  .pagehead{display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+  .pagehead h1{font-size:1.9rem; margin:0; color:var(--lime)}
+  .role{font-size:.62rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#bcd2ff;
+    background:rgba(var(--blue-rgb),.16); border:1px solid rgba(var(--blue-rgb),.4); padding:5px 10px; border-radius:var(--radius-sm)}
+  .intro{color:var(--w70); max-width:64ch; margin:10px 0 22px; font-size:1.0rem}
+
+  .search{display:flex; align-items:center; gap:8px; background:var(--w05); border:1px solid var(--w08);
+    border-radius:var(--radius); padding:9px 12px; max-width:380px; margin-bottom:20px}
+  .search input{flex:1; background:transparent; border:0; color:var(--text); font:inherit; outline:none}
+  .search input::placeholder{color:var(--w40)}
+  .search .ico{color:var(--muted)}
+
+  /* ===== SINGLE-SCROLL ===== */
+  .scroll-grid{display:grid; grid-template-columns:272px 1fr; gap:38px; align-items:start}
+  .toc{position:sticky; top:82px; max-height:calc(100vh - 104px); overflow:auto; padding-right:4px}
+  .toc-group{margin-bottom:4px}
+  .toc-group-head{display:flex; align-items:center; gap:7px; width:100%; text-align:left; appearance:none;
+    background:transparent; border:0; color:var(--lime); font:inherit; font-size:.7rem; font-weight:700;
+    letter-spacing:.13em; text-transform:uppercase; padding:8px 6px; cursor:pointer; opacity:.9}
+  .toc-group-head .car{transition:transform .18s ease; font-size:.7rem; opacity:.8}
+  .toc-group.collapsed .toc-group-head .car{transform:rotate(-90deg)}
+  .toc-group.collapsed .toc-children{display:none}
+  .toc-children{padding-bottom:6px}
+  .toc-sub{font-size:.64rem; letter-spacing:.1em; text-transform:uppercase; color:var(--w40); font-weight:700;
+    padding:7px 10px 3px 16px}
+  .toc a{display:block; color:var(--w70); font-size:.86rem; padding:5px 10px 5px 16px; border-radius:8px;
+    border-left:2px solid transparent; transition:all .12s ease}
+  .toc .toc-sub + a, .toc-sub ~ a{padding-left:24px}
+  .toc a.sub-link{padding-left:24px}
+  .toc a:hover{color:var(--text); background:var(--w03)}
+  .toc a.active{color:var(--lime); background:rgba(var(--lime-rgb),.08); border-left-color:var(--lime); font-weight:600}
+
+  .scroll-main{min-width:0}
+  .grp-h{font-size:.74rem; letter-spacing:.15em; text-transform:uppercase; color:var(--lime); font-weight:700;
+    padding-bottom:8px; border-bottom:1px solid var(--w08); margin:42px 0 6px}
+  .grp-h:first-child{margin-top:0}
+  .sub-h{font-size:.96rem; font-weight:650; color:#cbe79a; margin:24px 0 10px; letter-spacing:.01em}
+  .topic{scroll-margin-top:92px; margin:18px 0 26px}
+  .topic h3{font-size:1.18rem; margin:0 0 3px; color:var(--text)}
+  .topic .sum{color:var(--muted); margin:0 0 11px; font-size:.9rem}
+
+  .body p{margin:0 0 11px; color:var(--w70)}
+  .body .lead{color:var(--text)}
+  details.faq{background:var(--w03); border:1px solid var(--w08); border-radius:8px; padding:0 14px; margin:8px 0}
+  details.faq summary{cursor:pointer; padding:10px 0; font-weight:600; font-size:.88rem; color:var(--text); list-style:none}
+  details.faq summary::-webkit-details-marker{display:none}
+  details.faq summary::before{content:"›"; color:var(--lime); display:inline-block; width:15px; transition:transform .15s ease}
+  details.faq[open] summary::before{transform:rotate(90deg)}
+  details.faq .ans{padding:0 0 12px 15px; color:var(--w70); font-size:.88rem}
+
+  /* ===== ACCORDION ===== */
+  .group-label{font-size:.7rem; letter-spacing:.15em; text-transform:uppercase; color:var(--lime); font-weight:700; margin:26px 2px 10px; opacity:.9}
+  .sub-label{font-size:.78rem; font-weight:650; color:#cbe79a; margin:16px 2px 8px}
+  .acc-item{background:var(--w03); border:1px solid var(--w08); border-radius:var(--radius); margin-bottom:9px; overflow:hidden}
+  .acc-item:hover{border-color:var(--border)}
+  .acc-head{display:flex; align-items:flex-start; gap:13px; padding:14px 17px; cursor:pointer; user-select:none}
+  .acc-head .tt{flex:1}
+  .acc-head .title{font-size:1.0rem; font-weight:650}
+  .acc-head .sum{font-size:.85rem; color:var(--muted); margin-top:2px}
+  .chev{color:var(--muted); transition:transform .2s ease; margin-top:3px}
+  .acc-item.open .chev{transform:rotate(90deg); color:var(--lime)}
+  .acc-body{display:none; padding:2px 17px 18px; border-top:1px solid var(--w05)}
+  .acc-item.open .acc-body{display:block}
+  .acc-tools{display:flex; justify-content:flex-end; margin:-4px 0 4px}
+  .acc-tools button{appearance:none; background:transparent; border:1px solid var(--w08); color:var(--w70);
+    font:inherit; font-size:.76rem; font-weight:600; padding:6px 12px; border-radius:8px; cursor:pointer}
+  .acc-tools button:hover{border-color:var(--border); color:var(--text)}
+
+  .hide{display:none !important}
+  @media(max-width:840px){
+    .scroll-grid{grid-template-columns:1fr}
+    .toc{position:static; max-height:none; margin-bottom:16px; border-bottom:1px solid var(--w08); padding-bottom:12px}
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-inner">
+    <span class="bar-title">Help layout preview</span>
+    <div class="seg">
+      <button id="btnScroll" class="on" onclick="setMode('scroll')">Single-scroll</button>
+      <button id="btnAcc" onclick="setMode('accordion')">Accordion</button>
+    </div>
+    <span class="caption" id="caption"></span>
+    <span class="mini">mock data · long guide demo</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="pagehead">
+    <h1>Tournaments</h1>
+    <span class="role">For: Admin, Owner</span>
+  </div>
+  <p class="intro">A longer example (~25 topics) to show how sub-groups and the sticky map keep even a big guide easy to navigate. Other areas like Accounting are still <em>separate</em> guides.</p>
+
+  <div class="search">
+    <span class="ico">🔍</span>
+    <input id="filter" type="search" placeholder="Search this guide…" oninput="applyFilter(this.value)" />
+  </div>
+
+  <div id="scrollView">
+    <div class="scroll-grid">
+      <nav class="toc" id="toc"></nav>
+      <main class="scroll-main" id="scrollMain"></main>
+    </div>
+  </div>
+
+  <div id="accordionView" class="hide">
+    <div class="acc-tools"><button id="expandAll" onclick="toggleAll()">Expand all</button></div>
+    <div id="accBody"></div>
+  </div>
+</div>
+
+<script>
+// ---- content model: a group has EITHER sections[] (sub-groups) OR topics[] ----
+const F = {
+  pools:{q:"How do pools work?",a:"A pool splits a division into smaller groups for round-robin play before playoffs. Create them manually or let the generator balance them."},
+  email:{q:"Which email do teams see for questions?",a:"Teams see the public contact you choose here — not your personal login email."},
+  missing:{q:"Why is a team missing from the schedule builder?",a:"Only teams you've accepted appear in the schedule builder. Pending and waitlisted teams won't show until accepted."},
+  rr:{q:"How do I generate a round-robin schedule?",a:"From the Schedule page choose auto-generate; the system builds a balanced round-robin per division or pool, which you can then edit."},
+  pending:{q:"What does Pending Review mean?",a:"A score a volunteer submitted that you haven't confirmed yet. Finalizing it locks the result and updates standings."},
+  closeout:{q:"What's the difference between completed, archived, and sealed?",a:"Completed = finished but still counts toward your plan limit. Archived = history kept, slot freed. Sealed = an immutable final snapshot."},
+};
+const t=(id,title,sum,body,faqs)=>({id,title,sum,body,faqs:faqs||[]});
+
+const GUIDE = [
+  { group:"Set Up Your Event", sections:[
+    { sub:"Create the tournament", topics:[
+      t("create-launch","Create & launch a tournament","Set up the basics, confirm your public web address, then go live when you're ready.",
+        `<p class="lead">A tournament starts private. Fill in the essentials, preview the public page, and only activate when you choose to.</p>`,[]),
+      t("reuse-setup","Reuse last year's setup","Clone a past event's divisions, venues, rules and settings in one step.",
+        `<p>Carry over the structure from a previous tournament, then just update the dates. Teams, scores and schedules never copy.</p>`,[]),
+    ]},
+    { sub:"Define the structure", topics:[
+      t("divisions","Divisions, pools & capacities","Group teams, set how many can register, and split divisions into pools.",
+        `<p>Divisions are how teams are grouped to compete. Set a capacity to cap registrations, and use pools for round-robin play.</p>`,[F.pools]),
+      t("fees","Entry fees & payment options","Charge a fee per division and track how teams pay.",
+        `<p>Set entry fees by division and choose how teams pay. Payment status then shows alongside each team.</p>`,[]),
+      t("venues","Venues & game locations","Add the fields and locations your games are played at.",
+        `<p>Add every venue and field so games can be scheduled to real locations and shown on the public site.</p>`,[]),
+      t("contacts","Contacts & public info","Choose the public contact teams reach out to with questions.",
+        `<p>Pick the name and email shown publicly for tournament questions.</p>`,[F.email]),
+      t("branding","Branding & public site settings","Customize how your public tournament page looks.",
+        `<p>Adjust the public look and the information shown to parents, coaches and fans.</p>`,[]),
+    ]},
+  ]},
+  { group:"Teams & Registration", topics:[
+    t("open-close","Open & close registration","Control exactly when teams can sign up.",
+      `<p>Open registration when you're ready and close it when you're full or past your deadline.</p>`,[]),
+    t("review","Review & accept teams","Work the queue: accept, waitlist, or decline each team.",
+      `<p class="lead">As teams register they land in a review queue where you decide who's in.</p>`,[F.missing]),
+    t("waitlist","Waitlists & declines","Manage overflow and promote teams when space opens up.",
+      `<p>Hold extra teams on a waitlist and promote them automatically or by hand when a spot frees up.</p>`,[]),
+    t("payments","Payment status & reminders","See who has paid and nudge the teams who haven't.",
+      `<p>Track each team's payment status and send reminders to anyone outstanding.</p>`,[]),
+  ]},
+  { group:"Schedule & Playoffs", sections:[
+    { sub:"Build the schedule", topics:[
+      t("generate","Auto-generate a round robin","Let the system build a balanced set of games for you.",
+        `<p>Generate a round-robin for each division or pool, then fine-tune as needed.</p>`,[F.rr]),
+      t("manual","Add or edit games manually","Adjust times, venues, and matchups by hand.",
+        `<p>Add one-off games or tweak any generated game's time, field, or teams.</p>`,[]),
+      t("pools-view","Pools vs flat schedule","Switch between pool view and the overall schedule.",
+        `<p>View games grouped by pool, or see the whole tournament schedule at once.</p>`,[]),
+    ]},
+    { sub:"Playoffs", topics:[
+      t("bracket","Build a playoff bracket","Create brackets once pool play is complete.",
+        `<p>Turn pool results into a playoff bracket, with seeding based on standings.</p>`,[]),
+      t("wizard","The Playoff Wizard","Generate seeded brackets automatically instead of building by hand.",
+        `<p>The Playoff Wizard builds a correctly seeded bracket for you — far less error-prone than doing it manually.</p>`,[]),
+    ]},
+  ]},
+  { group:"Game Day & Scores", topics:[
+    t("scorekeepers","Hand scoring to volunteers","Let helpers enter scores from their phones — no admin access.",
+      `<p class="lead">You don't have to enter every score yourself. Volunteers score from a phone-friendly view that can't see the rest of your admin.</p>`,[F.pending]),
+    t("finalize","Review & finalize scores","Confirm submitted scores; standings update automatically.",
+      `<p>Submitted scores wait in review until you finalize them, then standings update on the public site.</p>`,[]),
+    t("checkin","Check-in & gate volunteers","Run arrivals at the gate without giving full access.",
+      `<p>Give gate volunteers a simple check-in board separate from your admin tools.</p>`,[]),
+  ]},
+  { group:"Communicate & Publish", topics:[
+    t("announcements","Announcements & email","Message teams on the public site or by email.",
+      `<p>Post announcements to the public site and optionally email registered teams.</p>`,[]),
+    t("public-site","The public tournament site","What parents, coaches and fans see online.",
+      `<p>A public page with schedule, standings, results and news — and optional live score alerts for fans.</p>`,[]),
+    t("preview","Preview before you publish","Check the public page before anything goes live.",
+      `<p>See exactly what teams and fans will see before you activate.</p>`,[]),
+  ]},
+  { group:"Close Out", topics:[
+    t("complete","Complete the tournament","Wrap up once all games are done.",
+      `<p>Mark the tournament complete when play has finished.</p>`,[]),
+    t("archive-seal","Archive vs seal","Free up a slot, or lock final results permanently.",
+      `<p class="lead">Archive to keep history while freeing a tournament slot, or seal to lock final results for good.</p>`,[F.closeout]),
+    t("exports","Exports & reports","Download registrations, schedules, and results.",
+      `<p>Export your data to Excel, PDF, or calendar formats whenever you need it.</p>`,[]),
+  ]},
+];
+
+// iterate a group's topics whether it has sections or flat topics
+function eachTopic(g, cb){
+  if(g.sections){ g.sections.forEach(s=> s.topics.forEach(tp=>cb(tp,s))); }
+  else { g.topics.forEach(tp=>cb(tp,null)); }
+}
+function bodyHTML(tp){
+  let h=`<div class="body">${tp.body}`;
+  tp.faqs.forEach(f=> h+=`<details class="faq"><summary>${f.q}</summary><div class="ans">${f.a}</div></details>`);
+  return h+`</div>`;
+}
+
+// ---------- SINGLE-SCROLL ----------
+const groupEls=[];
+function renderScroll(){
+  const toc=document.getElementById('toc'); const main=document.getElementById('scrollMain');
+  toc.innerHTML=''; main.innerHTML=''; groupEls.length=0;
+
+  GUIDE.forEach((g,gi)=>{
+    // TOC collapsible group
+    const tg=document.createElement('div'); tg.className='toc-group'; tg.dataset.gi=gi;
+    const head=document.createElement('button'); head.className='toc-group-head';
+    head.innerHTML=`<span class="car">▼</span><span>${g.group}</span>`;
+    head.onclick=()=>tg.classList.toggle('collapsed');
+    const kids=document.createElement('div'); kids.className='toc-children';
+    tg.appendChild(head); tg.appendChild(kids); toc.appendChild(tg); groupEls.push(tg);
+
+    // main group heading
+    const gh=document.createElement('div'); gh.className='grp-h'; gh.textContent=g.group; main.appendChild(gh);
+
+    const addTopicLink=(tp,isSub)=>{
+      const a=document.createElement('a'); a.href='#sc-'+tp.id; a.textContent=tp.title; a.dataset.for='sc-'+tp.id; a.dataset.gi=gi;
+      if(isSub) a.className='sub-link'; kids.appendChild(a);
+    };
+    const addTopicSection=(tp)=>{
+      const sec=document.createElement('section'); sec.className='topic'; sec.id='sc-'+tp.id; sec.dataset.gi=gi;
+      sec.dataset.search=(tp.title+' '+tp.sum).toLowerCase();
+      sec.innerHTML=`<h3>${tp.title}</h3><p class="sum">${tp.sum}</p>${bodyHTML(tp)}`;
+      main.appendChild(sec);
+    };
+
+    if(g.sections){
+      g.sections.forEach(s=>{
+        const sl=document.createElement('div'); sl.className='toc-sub'; sl.textContent=s.sub; kids.appendChild(sl);
+        const sh=document.createElement('div'); sh.className='sub-h'; sh.textContent=s.sub; main.appendChild(sh);
+        s.topics.forEach(tp=>{ addTopicLink(tp,true); addTopicSection(tp); });
+      });
+    } else {
+      g.topics.forEach(tp=>{ addTopicLink(tp,false); addTopicSection(tp); });
+    }
+  });
+  // start with only the first group expanded; rest collapsed (map stays short)
+  groupEls.forEach((el,i)=> el.classList.toggle('collapsed', i!==0));
+  setupSpy();
+}
+
+let spy;
+function setActiveGroup(gi){
+  groupEls.forEach((el,i)=> el.classList.toggle('collapsed', i!==gi));
+}
+function setupSpy(){
+  if(spy) spy.disconnect();
+  const links=[...document.querySelectorAll('.toc a')];
+  spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        links.forEach(l=>l.classList.toggle('active', l.dataset.for===e.target.id));
+        setActiveGroup(parseInt(e.target.dataset.gi,10)); // auto-focus the group you're in
+      }
+    });
+  },{rootMargin:'-82px 0px -68% 0px', threshold:0});
+  document.querySelectorAll('.topic').forEach(s=>spy.observe(s));
+}
+
+// ---------- ACCORDION ----------
+function renderAccordion(){
+  const root=document.getElementById('accBody'); root.innerHTML='';
+  GUIDE.forEach(g=>{
+    const gl=document.createElement('div'); gl.className='group-label'; gl.textContent=g.group; root.appendChild(gl);
+    const addItem=(tp)=>{
+      const item=document.createElement('div'); item.className='acc-item'; item.dataset.search=(tp.title+' '+tp.sum).toLowerCase();
+      item.innerHTML=`<div class="acc-head" onclick="this.parentElement.classList.toggle('open')">
+          <div class="tt"><div class="title">${tp.title}</div><div class="sum">${tp.sum}</div></div><div class="chev">▶</div></div>
+        <div class="acc-body">${bodyHTML(tp)}</div>`;
+      root.appendChild(item);
+    };
+    if(g.sections){ g.sections.forEach(s=>{ const sl=document.createElement('div'); sl.className='sub-label'; sl.textContent=s.sub; root.appendChild(sl); s.topics.forEach(addItem); }); }
+    else { g.topics.forEach(addItem); }
+  });
+}
+
+// ---------- mode + tools ----------
+const CAPTIONS={
+  scroll:`<b>Single-scroll</b> — sub-groups split big groups; the sticky map auto-focuses on the group you're in, so it never becomes a wall. Scroll and watch the left map follow you.`,
+  accordion:`<b>Accordion</b> — calm collapsed list. <b>Expand all</b> gives the hybrid behaviour.`
+};
+function setMode(m){
+  document.documentElement.dataset.mode=m;
+  document.getElementById('scrollView').classList.toggle('hide', m!=='scroll');
+  document.getElementById('accordionView').classList.toggle('hide', m!=='accordion');
+  document.getElementById('btnScroll').classList.toggle('on', m==='scroll');
+  document.getElementById('btnAcc').classList.toggle('on', m==='accordion');
+  document.getElementById('caption').innerHTML=CAPTIONS[m];
+  document.getElementById('filter').value=''; applyFilter('');
+  if(m==='scroll') setupSpy();
+}
+let allOpen=false;
+function toggleAll(){
+  allOpen=!allOpen;
+  document.querySelectorAll('.acc-item').forEach(i=>i.classList.toggle('open',allOpen));
+  document.getElementById('expandAll').textContent=allOpen?'Collapse all':'Expand all';
+}
+function applyFilter(q){
+  q=(q||'').trim().toLowerCase();
+  // when searching, reveal all groups in the map so matches across groups are visible
+  if(q) groupEls.forEach(el=>el.classList.remove('collapsed'));
+  document.querySelectorAll('#scrollMain .topic').forEach(s=> s.classList.toggle('hide', q && !s.dataset.search.includes(q)));
+  document.querySelectorAll('#accBody .acc-item').forEach(i=> i.classList.toggle('hide', q && !i.dataset.search.includes(q)));
+}
+
+renderScroll(); renderAccordion(); setMode('scroll');
+</script>
+</body>
+</html>

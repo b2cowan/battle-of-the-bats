@@ -4,6 +4,8 @@ import { getAuthContext } from '@/lib/api-auth';
 import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams } from '@/lib/db';
 import { getRegistrationState } from '@/lib/registration-state';
 import { isPlayoffOnly } from '@/lib/tournament-phase';
+import { tournamentToday } from '@/lib/timezone';
+import { hasPlanFeature } from '@/lib/plan-features';
 import { resolveTheme } from '@/lib/themes';
 import { buildPublicLightModeCssVars } from '@/lib/public-tournament-theme';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
@@ -13,6 +15,7 @@ import PoweredByBadge from '@/components/marketing/PoweredByBadge';
 import TournamentAcquisitionBanner from '@/components/marketing/TournamentAcquisitionBanner';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import MyTeamDock from '@/components/public/MyTeamDock';
+import FollowDeepLinkPrompt from '@/components/public/FollowDeepLinkPrompt';
 import TournamentSideRail from '@/components/public/TournamentSideRail';
 import railStyles from '@/components/public/TournamentSideRail.module.css';
 import ScoreTicker from '@/components/public/ScoreTicker';
@@ -113,8 +116,9 @@ export default async function TournamentLayout({
     : 'default';
 
   // Game-day window — gates the My-Team dock (mirrors lib/follow isTournamentInProgress
-  // without importing the client module into this server component).
-  const todayISO = new Date().toISOString().split('T')[0];
+  // without importing the client module into this server component). Tournament-local
+  // date so the dock survives the UTC day boundary on the final evening (J6-056).
+  const todayISO = tournamentToday();
   const tournamentInProgress =
     tournament.status === 'active' &&
     !!tournament.startDate && !!tournament.endDate &&
@@ -195,8 +199,12 @@ export default async function TournamentLayout({
       <MyTeamDock
         orgSlug={orgSlug}
         tournamentSlug={tournament.slug}
+        tournamentId={tournament.id}
         inProgress={tournamentInProgress}
+        fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
       />
+      {/* Self-onboarding shared links: ?follow=teamId → one-tap "Follow [team]?" (J6-012). */}
+      <FollowDeepLinkPrompt orgSlug={orgSlug} tournamentSlug={tournament.slug} />
       {/* Fan app install — this tournament's branded PWA (per-tournament manifest). */}
       <InstallAppPrompt
         appName={tournament.name}

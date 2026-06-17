@@ -14,6 +14,7 @@ import { CalendarClock, CircleCheck } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
+import { tournamentToday } from '@/lib/timezone';
 import type { Game, PublicTeam } from '@/lib/types';
 import styles from './TournamentNavStatus.module.css';
 
@@ -55,7 +56,7 @@ export default function TournamentNavStatus() {
   const tournamentSlug = (params?.tournamentSlug as string) || '';
   const { tournamentStartDate, tournamentEndDate, tournamentStatus } = useOrgNav();
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
   const phase = phaseOf(tournamentStartDate, tournamentEndDate, tournamentStatus, today);
   const isGameDay = phase === 'live' && !!orgSlug && !!tournamentSlug;
 

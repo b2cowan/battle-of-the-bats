@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { UserPlus, AlertCircle, ChevronDown, RefreshCw, CreditCard, CheckCircle, Calendar, Mail, Eye } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { isPublicPageEnabled } from '@/lib/public-pages';
+import { getRegistrationState } from '@/lib/registration-state';
 import { Division, Tournament, TournamentRegistrationField } from '@/lib/types';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import Countdown from '@/components/public/Countdown';
@@ -193,6 +194,7 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
   const [registrationFields, setRegistrationFields] = useState<TournamentRegistrationField[]>([]);
   const [contactEmail, setContactEmail] = useState<string | null>(null);
   const [stats, setStats]           = useState<Record<string, number>>({});
+  const [loaded, setLoaded]         = useState(false);
   const [step, setStep]             = useState<Step>('form');
   const [errorMsg, setErrorMsg]     = useState('');
   // Inline notice on the form (e.g. a returning coach who just got signed in mid-register).
@@ -215,14 +217,18 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
 
   useEffect(() => {
     async function init() {
-      const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, 'register');
-      const current = data?.tournament ?? null;
-      setTournament(current);
-      setContactEmail(current?.contactEmail ?? data?.organization.contactEmail ?? null);
-      if (current && data?.pageEnabled) {
-        setDivisions(data.divisions);
-        setRegistrationFields(data.registrationFields ?? []);
-        fetchStats(current.id);
+      try {
+        const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, 'register');
+        const current = data?.tournament ?? null;
+        setTournament(current);
+        setContactEmail(current?.contactEmail ?? data?.organization.contactEmail ?? null);
+        if (current && data?.pageEnabled) {
+          setDivisions(data.divisions);
+          setRegistrationFields(data.registrationFields ?? []);
+          fetchStats(current.id);
+        }
+      } finally {
+        setLoaded(true);
       }
     }
     init();
@@ -466,7 +472,13 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
     }
   }
 
-  const isRegistrationOpen = tournament?.status === 'active' && divisions.length > 0;
+  // Lifecycle-aware gate (single source: getRegistrationState) — a tournament that is
+  // underway or completed reads as closed even while its row is still "active", so the
+  // form (and the matching /api/register POST) stop minting junk mid-event registrations
+  // + coach accounts (J6-035). Open vs waitlist both keep the form available, so we pass
+  // no registrations here; per-division capacity is still handled inside the form below.
+  const registrationInfo = tournament ? getRegistrationState(tournament, divisions, []) : null;
+  const isRegistrationOpen = registrationInfo?.state === 'open' || registrationInfo?.state === 'waitlist';
   const notOpen = !isRegistrationOpen;
   // A logged-in coach registers as themselves — lock the registrant name to their account,
   // but only when the account actually has both name parts (else stay editable).
@@ -498,7 +510,9 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
   const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
   const rulesHref = `/${orgSlug}/${tournamentSlug}/rules`;
   const showSchedulePage = Boolean(tournament && isPublicPageEnabled(tournament, 'schedule'));
+  const showStandingsPage = Boolean(tournament && isPublicPageEnabled(tournament, 'standings'));
   const showRulesPage = Boolean(tournament && isPublicPageEnabled(tournament, 'rules'));
+  const standingsHref = `/${orgSlug}/${tournamentSlug}/standings`;
 
   function stepClass(target: 'form' | 'review' | 'success') {
     const done =
@@ -565,19 +579,23 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
         <div className="container">
           <div className={styles.formWrap}>
 
-            {notOpen && step === 'form' && (
-              <div className={`card ${styles.closedCard}`}>
-                <AlertCircle size={40} style={{ color: 'var(--warning)', margin: '0 auto 1rem' }} />
-                <h3>Registration Not Open</h3>
-                <p>
-                  Tournament registration is not accepting submissions right now.
-                  {contactEmail ? (
-                    <> Questions? Contact the organizer at <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.</>
-                  ) : (
-                    <> Check back soon or contact the organizer directly.</>
-                  )}
-                </p>
-              </div>
+            {!loaded && step === 'form' && (
+              <PublicTournamentState eyebrow="Registration" title="Loading registration…" compact />
+            )}
+
+            {loaded && notOpen && step === 'form' && (
+              <PublicTournamentState
+                icon={<AlertCircle size={40} />}
+                eyebrow="Registration"
+                title={registrationInfo?.label ?? 'Registration not open'}
+                description={registrationInfo?.detail ?? 'Tournament registration is not accepting submissions right now.'}
+                contactEmail={contactEmail}
+                actions={[
+                  { href: homeHref, label: 'Tournament Home', variant: 'ghost' as const },
+                  ...(showSchedulePage ? [{ href: scheduleHref, label: 'View Schedule', variant: 'ghost' as const }] : []),
+                  ...(showStandingsPage ? [{ href: standingsHref, label: 'Standings', variant: 'ghost' as const }] : []),
+                ]}
+              />
             )}
 
             {(step === 'form' || step === 'review' || step === 'submitting' || step === 'success') && !notOpen && (

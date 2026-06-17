@@ -106,3 +106,22 @@ export function utcToZonedInputs(
   if (hour === '24') hour = '00';
   return { date: `${get('year')}-${get('month')}-${get('day')}`, time: `${hour}:${get('minute')}` };
 }
+
+/**
+ * "Today" as a `YYYY-MM-DD` string in the tournament timezone (default
+ * `America/Toronto`), NOT the server/browser UTC date. Fan surfaces must use this
+ * instead of `new Date().toISOString().split('T')[0]`: that UTC form rolls over to
+ * tomorrow at ~8 PM Eastern, which made the live ticker vanish mid-game, "Today's
+ * Games" go empty, and the dock die on championship evening (J6-056).
+ */
+export function tournamentToday(
+  now: Date = new Date(),
+  timeZone: string = ORG_TIME_ZONE,
+): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(now);
+  const get = (t: string) => parts.find(p => p.type === t)?.value ?? '';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}

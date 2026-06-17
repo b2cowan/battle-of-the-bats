@@ -15,6 +15,8 @@ import { useOrgNav } from '@/components/OrgNavContext';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { formatTime } from '@/lib/utils';
+import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { tournamentToday } from '@/lib/timezone';
 import type { Game, PublicTeam } from '@/lib/types';
 import styles from './ScoreTicker.module.css';
 
@@ -29,7 +31,7 @@ export default function ScoreTicker() {
   const tournamentSlug = (params?.tournamentSlug as string) || '';
   const { tournamentStartDate, tournamentEndDate, tournamentStatus } = useOrgNav();
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
   const inWindow = !!tournamentStartDate && !!tournamentEndDate &&
     tournamentStatus !== 'completed' && tournamentStatus !== 'cancelled' &&
     today >= tournamentStartDate && today <= tournamentEndDate;
@@ -120,7 +122,7 @@ export default function ScoreTicker() {
       awayScore: g.awayScore,
       homeScore: g.homeScore,
       scored,
-      isLive: g.status === 'submitted' && scored,
+      isLive: isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES),
       isFinal: g.status === 'completed' && scored,
       time: g.time,
     };
@@ -141,7 +143,7 @@ export default function ScoreTicker() {
           >
             {it.isLive && <span className={styles.live}><span className={styles.dot} />LIVE</span>}
             {it.isFinal && <span className={styles.final}>FINAL</span>}
-            {!it.scored && <span className={styles.time}>{it.time ? formatTime(it.time) : 'TBD'}</span>}
+            {!it.scored && !it.isLive && <span className={styles.time}>{it.time ? formatTime(it.time) : 'TBD'}</span>}
             <span className={styles.team}>{it.away}</span>
             {it.scored ? (
               <>

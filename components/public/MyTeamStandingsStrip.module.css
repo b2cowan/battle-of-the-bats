@@ -1,0 +1,77 @@
+/* components/public/MyTeamStandingsStrip.module.css — your-team strip (J6-028). Token-only. */
+
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--logic-lime);
+  border-radius: var(--radius);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+}
+
+.head {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--fl-text);
+  font-weight: 800;
+}
+
+.star {
+  flex-shrink: 0;
+  color: var(--logic-lime);
+}
+
+.rank {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
+.facts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.9rem;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.facts strong {
+  color: var(--fl-text);
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--danger);
+  font-weight: 800;
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger);
+  display: inline-block;
+}
+
+.jump {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  color: var(--fl-text);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.6rem;
+}
+
+.jump:hover {
+  border-color: var(--logic-lime);
+}

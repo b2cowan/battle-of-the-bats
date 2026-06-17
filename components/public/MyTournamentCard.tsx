@@ -12,9 +12,12 @@ import { Star, Clock, Calendar, Trophy, CalendarPlus } from 'lucide-react';
 import type { Game, PublicTeam, Division, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { useFollowedTeam } from '@/lib/follow';
+import { isGameLive, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { tournamentToday } from '@/lib/timezone';
 import { downloadTeamScheduleICS } from '@/lib/team-calendar';
 import LocationLink from '@/components/LocationLink';
 import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
+import FollowTeamPicker from '@/components/public/FollowTeamPicker';
 import homeStyles from '@/app/[orgSlug]/Home.module.css';
 
 export interface MyCardStandingRow {
@@ -87,7 +90,7 @@ export default function MyTournamentCard({
 
   const team = followedTeamId ? teams.find(t => t.id === followedTeamId) ?? null : null;
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
 
   const teamGames = useMemo(() => {
     if (!team) return [];
@@ -96,13 +99,36 @@ export default function MyTournamentCard({
       .sort((a, b) => (a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? '')));
   }, [team, games]);
 
-  if (!team) return null;
+  if (!team) {
+    // Empty-state front door (J6-011): no account, no hunting — pick a team here.
+    return (
+      <div className={`card ${homeStyles.myTeamCard}`}>
+        <div className={homeStyles.dayCardHeader}>
+          <div className={homeStyles.dayCardIcon}><Star size={16} fill="currentColor" /></div>
+          <div>
+            <span className={homeStyles.dayCardKicker}>My Team</span>
+            <h3>Follow your team</h3>
+          </div>
+        </div>
+        <p className={homeStyles.dayCardSub}>
+          Pin your team&apos;s live score, next game, and standing here — no account needed.
+        </p>
+        <FollowTeamPicker orgSlug={orgSlug} tournamentSlug={tournamentSlug} teams={teams} variant="inline" />
+      </div>
+    );
+  }
 
+  const now = new Date(nowMs);
+  // One shared definition of "live" (J6-013) + time-aware next game (J6-039).
   const liveGame = teamGames.find(
-    g => g.date === today && g.status === 'submitted' && g.homeScore != null && g.awayScore != null,
+    g => isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES, now),
   ) ?? null;
   const nextGame = !liveGame
-    ? teamGames.find(g => g.status === 'scheduled' && g.date >= today) ?? null
+    ? teamGames.find(g => {
+        if (g.status !== 'scheduled') return false;
+        const startMs = gameStartMs(g);
+        return startMs == null ? g.date >= today : startMs > nowMs;
+      }) ?? null
     : null;
   const latestResult = [...teamGames]
     .filter(g => (g.status === 'completed' || g.status === 'submitted') && g.homeScore != null && g.awayScore != null)
@@ -122,6 +148,7 @@ export default function MyTournamentCard({
     if (g.isPlayoff) continue;
     if (g.status !== 'completed' && g.status !== 'submitted') continue;
     if (g.homeScore == null || g.awayScore == null) continue;
+    if (isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES, now)) continue; // don't bank a still-live game
     const isHome = g.homeTeamId === team.id;
     const tf = isHome ? g.homeScore : g.awayScore;
     const ta = isHome ? g.awayScore : g.homeScore;
@@ -137,15 +164,15 @@ export default function MyTournamentCard({
   const rankIdx = poolRows.findIndex(r => r.teamId === team.id);
   const rank = rankIdx >= 0 ? rankIdx + 1 : null;
 
-  // Live countdown to the next scheduled game (only when a start time exists)
-  const countdownMs = nextGame?.time
-    ? new Date(`${nextGame.date}T${nextGame.time.slice(0, 5)}:00`).getTime() - nowMs
-    : null;
+  // Live countdown to the next scheduled game (tournament-timezone start instant)
+  const nextStartMs = nextGame ? gameStartMs(nextGame) : null;
+  const countdownMs = nextStartMs != null ? nextStartMs - nowMs : null;
 
+  // A game can be live before its first run is entered → show 0–0 rather than blank.
+  const liveAway = liveGame?.awayScore ?? 0;
+  const liveHome = liveGame?.homeScore ?? 0;
   const liveScore = liveGame
-    ? (liveGame.awayTeamId === team.id
-        ? `${liveGame.awayScore}-${liveGame.homeScore}`
-        : `${liveGame.homeScore}-${liveGame.awayScore}`)
+    ? (liveGame.awayTeamId === team.id ? `${liveAway}-${liveHome}` : `${liveHome}-${liveAway}`)
     : null;
 
   function handleAddToCalendar() {

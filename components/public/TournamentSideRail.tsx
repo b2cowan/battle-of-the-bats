@@ -20,6 +20,7 @@ import { usePathname, useParams } from 'next/navigation';
 import { Home, Megaphone, Calendar, Trophy, Users, ScrollText, type LucideIcon } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import type { PublicPageKey } from '@/lib/public-pages';
+import DesktopMyTeamRailCard from '@/components/public/DesktopMyTeamRailCard';
 import styles from './TournamentSideRail.module.css';
 
 const RAIL_ITEMS: { key: PublicPageKey; label: string; Icon: LucideIcon }[] = [
@@ -99,6 +100,8 @@ export default function TournamentSideRail({
           );
         })}
       </nav>
+      {/* Persistent followed-team card — live public rail only, not admin preview (J6-042). */}
+      {!basePath && <DesktopMyTeamRailCard />}
       <div className={styles.railFooter}>Live on FieldLogicHQ</div>
     </aside>
   );

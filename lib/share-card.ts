@@ -196,17 +196,20 @@ export async function generateScoreCardBlob(data: ScoreCardData): Promise<Blob> 
 
   // ── Status chip ──
   const chipText = data.statusLabel || 'FINAL';
+  // A submitted-but-unconfirmed score is "Unofficial" — amber, never the success-green
+  // that reads as a final result on a shared keepsake (J6-015).
+  const isUnofficial = chipText.toUpperCase() === 'UNOFFICIAL';
   ctx.font = '800 30px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
   const chipW = ctx.measureText(chipText).width + 64;
   const chipH = 64;
   const chipX = (SIZE - chipW) / 2;
   const chipY = 168;
   roundRect(ctx, chipX, chipY, chipW, chipH, 14);
-  ctx.fillStyle = data.live ? 'rgba(239,68,68,0.18)' : 'rgba(34,197,94,0.16)';
+  ctx.fillStyle = data.live ? 'rgba(239,68,68,0.18)' : isUnofficial ? 'rgba(245,158,11,0.16)' : 'rgba(34,197,94,0.16)';
   ctx.fill();
   roundRect(ctx, chipX, chipY, chipW, chipH, 14);
   ctx.lineWidth = 2;
-  ctx.strokeStyle = data.live ? 'rgba(239,68,68,0.55)' : 'rgba(34,197,94,0.5)';
+  ctx.strokeStyle = data.live ? 'rgba(239,68,68,0.55)' : isUnofficial ? 'rgba(245,158,11,0.5)' : 'rgba(34,197,94,0.5)';
   ctx.stroke();
   if (data.live) {
     ctx.fillStyle = '#EF4444';
@@ -214,7 +217,7 @@ export async function generateScoreCardBlob(data: ScoreCardData): Promise<Blob> 
     ctx.arc(chipX + 30, chipY + chipH / 2, 9, 0, Math.PI * 2);
     ctx.fill();
   }
-  ctx.fillStyle = data.live ? '#FCA5A5' : '#86EFAC';
+  ctx.fillStyle = data.live ? '#FCA5A5' : isUnofficial ? '#FCD34D' : '#86EFAC';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(chipText, SIZE / 2 + (data.live ? 12 : 0), chipY + chipH / 2 + 2);

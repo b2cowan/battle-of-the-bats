@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Help hub preview — simplified</title>
+<style>
+  :root{
+    --bg:#0A0A0A; --surface:#111827;
+    --lime:#D9F99D; --lime-rgb:217,249,157;
+    --blue:#3B82F6; --blue-rgb:59,130,246;
+    --text:#F1F5F9; --muted:#94A3B8;
+    --w70:rgba(255,255,255,.7); --w55:rgba(255,255,255,.55); --w40:rgba(255,255,255,.4);
+    --w08:rgba(255,255,255,.08); --w05:rgba(255,255,255,.05); --w03:rgba(255,255,255,.03);
+    --border:rgba(30,58,138,.35);
+    --radius:14px; --radius-sm:6px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; line-height:1.6; -webkit-font-smoothing:antialiased}
+  a{color:var(--blue); text-decoration:none}
+  .wrap{max-width:980px; margin:0 auto; padding:40px 22px 90px}
+
+  .note{font-size:.7rem; letter-spacing:.13em; text-transform:uppercase; color:var(--w40); font-weight:700; margin-bottom:18px}
+  h1{font-size:2rem; margin:0 0 6px; color:var(--text)}
+  .sub{color:var(--w70); font-size:1.05rem; margin:0 0 26px; max-width:60ch}
+
+  .search{display:flex; align-items:center; gap:11px; background:var(--w05); border:1px solid var(--border);
+    border-radius:var(--radius); padding:15px 18px; margin-bottom:34px; box-shadow:0 4px 24px rgba(0,0,0,.35)}
+  .search input{flex:1; background:transparent; border:0; color:var(--text); font:inherit; font-size:1.05rem; outline:none}
+  .search input::placeholder{color:var(--w40)}
+  .search .ico{color:var(--lime); font-size:1.1rem}
+
+  .seclabel{display:flex; align-items:center; gap:10px; margin:6px 0 16px}
+  .seclabel span{font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--lime); font-weight:700}
+  .seclabel .rule{flex:1; height:1px; background:var(--w08)}
+
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
+  @media(max-width:760px){ .grid{grid-template-columns:1fr} }
+  .card{display:block; background:var(--w03); border:1px solid var(--w08); border-radius:var(--radius);
+    padding:18px 18px 16px; transition:all .15s ease}
+  .card:hover{border-color:var(--border); background:rgba(var(--lime-rgb),.04); transform:translateY(-2px)}
+  .card .cname{font-size:1.08rem; font-weight:650; color:var(--text)}
+  .card .cdesc{font-size:.86rem; color:var(--muted); margin:5px 0 14px; min-height:38px}
+  .card .cfoot{display:flex; align-items:center; justify-content:space-between}
+  .card .count{font-size:.72rem; color:var(--w40); font-family:ui-monospace,monospace}
+  .card .read{font-size:.8rem; color:var(--lime); font-weight:600}
+
+  .gate{font-size:.78rem; color:var(--w40); margin:14px 2px 0; font-style:italic}
+
+  .newhere{margin-top:34px; background:var(--w03); border:1px solid var(--w08); border-radius:var(--radius); overflow:hidden}
+  .newhere > summary{cursor:pointer; list-style:none; padding:16px 20px; display:flex; align-items:center; gap:10px;
+    font-weight:650; color:var(--text)}
+  .newhere > summary::-webkit-details-marker{display:none}
+  .newhere > summary .car{color:var(--lime); transition:transform .18s ease}
+  .newhere[open] > summary .car{transform:rotate(90deg)}
+  .newhere > summary .hint{font-weight:400; color:var(--muted); font-size:.86rem; margin-left:2px}
+  .paths{display:grid; grid-template-columns:1fr 1fr; gap:18px; padding:6px 20px 22px}
+  @media(max-width:680px){ .paths{grid-template-columns:1fr} }
+  .path h3{font-size:.96rem; margin:6px 0 8px; color:#cbe79a}
+  .path ol{margin:0; padding-left:18px; color:var(--w70); font-size:.88rem}
+  .path ol li{margin-bottom:5px}
+  .empty{color:var(--w40); padding:30px 4px; text-align:center}
+  .hide{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="note">Help hub preview · simplified (search + one grid + “New here?”)</div>
+  <h1>Help &amp; Guides</h1>
+  <p class="sub">Search for what you need, or browse the guides for your organization.</p>
+
+  <div class="search">
+    <span class="ico">🔍</span>
+    <input id="q" type="search" placeholder="Search all help — e.g. schedule, registration, payments, exports…" oninput="filt(this.value)" />
+  </div>
+
+  <div class="seclabel"><span>Guides</span><div class="rule"></div></div>
+  <div class="grid" id="grid"></div>
+  <div class="empty hide" id="empty">No guides match that — try a broader term.</div>
+  <p class="gate">You see the guides your plan and role include — e.g. Accounting and Rep Teams appear only for orgs with those modules.</p>
+
+  <details class="newhere">
+    <summary><span class="car">▶</span> New to FieldLogicHQ? <span class="hint">Getting-started paths by role</span></summary>
+    <div class="paths">
+      <div class="path">
+        <h3>Owner / Org Admin</h3>
+        <ol><li>Invite members and choose roles</li><li>Turn on the modules you use</li><li>Handle billing and upgrades</li></ol>
+      </div>
+      <div class="path">
+        <h3>Tournament Admin</h3>
+        <ol><li>Open team registration</li><li>Build and adjust the schedule</li><li>Run scorekeepers and finalize scores</li><li>Close out the tournament</li></ol>
+      </div>
+    </div>
+  </details>
+</div>
+
+<script>
+const CARDS=[
+  {n:"Tournaments", d:"Set up, run, and close out tournaments — registration, schedule, scores, and seal.", c:25, k:"tournament schedule scores registration playoff scorekeeper seal venues divisions"},
+  {n:"House League", d:"Seasons, teams, the draft, schedules and standings.", c:9, k:"house league season draft teams standings schedule"},
+  {n:"Rep Teams", d:"Programs, tryouts, rosters, dues, and coach access.", c:8, k:"rep teams tryout roster dues coach program"},
+  {n:"Accounting", d:"Ledgers, fees, expenses, and board-ready reports.", c:7, k:"accounting ledger fees expenses budget payments board report"},
+  {n:"Org Admin & Setup", d:"Members, roles, billing, modules, and settings.", c:6, k:"org admin members roles billing subscription settings invite modules"},
+  {n:"Exports & Downloads", d:"Download data to Excel, PDF, CSV, and calendars.", c:6, k:"export download excel pdf csv calendar ics"},
+];
+const grid=document.getElementById('grid');
+function render(list){
+  grid.innerHTML='';
+  list.forEach(c=>{
+    const a=document.createElement('a'); a.href='#'; a.className='card';
+    a.innerHTML=`<div class="cname">${c.n}</div><div class="cdesc">${c.d}</div>
+      <div class="cfoot"><span class="count">${c.c} topics</span><span class="read">Read guide →</span></div>`;
+    grid.appendChild(a);
+  });
+  document.getElementById('empty').classList.toggle('hide', list.length>0);
+}
+function filt(q){
+  q=(q||'').trim().toLowerCase();
+  render(!q ? CARDS : CARDS.filter(c=> (c.n+' '+c.d+' '+c.k).toLowerCase().includes(q)));
+}
+render(CARDS);
+</script>
+</body>
+</html>

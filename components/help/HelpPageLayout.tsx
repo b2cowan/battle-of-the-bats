@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import Link from 'next/link';
 import { Search, X } from 'lucide-react';
 import type { HelpFaq, HelpSection } from '@/lib/help-content';
@@ -51,6 +52,16 @@ function matchesQuery(haystack: string, query: string) {
   return haystack.includes(query);
 }
 
+// Scroll to a section/FAQ by id. For an FAQ, open its <details> imperatively —
+// the <details> is otherwise uncontrolled so the reader can freely toggle it
+// without a re-render snapping it shut.
+function revealAndScroll(id: string, opts?: { faq?: boolean }) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (opts?.faq && el instanceof HTMLDetailsElement) el.open = true;
+  el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+
 export default function HelpPageLayout({
   title,
   role,
@@ -60,14 +71,16 @@ export default function HelpPageLayout({
   faqs = [],
 }: HelpPageLayoutProps) {
   const [query, setQuery] = useState('');
-  // SSR-safe initial state: always start on the first topic so the server and the first
-  // client render agree. The deep-link hash is applied after mount in the effect below.
-  const [activeSectionId, setActiveSectionId] = useState(() => (
-    sections[0] ? sectionId(sections[0], 0) : ''
-  ));
-  const [focusedFaqId, setFocusedFaqId] = useState<string | null>(null);
+  // SSR-safe: no hash read during render; applied after mount via effect below.
+  // Track which TOC group is currently expanded (auto-driven by scroll-spy).
+  // null means "all groups revealed" (search mode).
+  const [activeGroupIndex, setActiveGroupIndex] = useState<number | null>(0);
+  const mainRef = useRef<HTMLElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const [activeSectionId, setActiveSectionId] = useState<string>('');
 
   const normalizedQuery = query.trim().toLowerCase();
+  const hasSearch = normalizedQuery.length > 0;
 
   const indexedSections = useMemo<IndexedSection[]>(() => (
     sections.map((section, index) => ({
@@ -96,42 +109,6 @@ export default function HelpPageLayout({
     return [...sectionFaqs, ...pageFaqs];
   }, [faqs, indexedSections]);
 
-  // Resolve a deep-link hash (e.g. #data-tools-imports) to the matching topic or question
-  // after mount. Reading window.location.hash during render/SSR is unreliable and causes a
-  // hydration mismatch, so we apply it here and also respond to in-browser hash navigation.
-  // In-page topic switches use history.replaceState (no hashchange event), so this does not
-  // fight the on-page navigation.
-  useEffect(() => {
-    function applyHash() {
-      const hash = decodeURIComponent(window.location.hash.replace(/^#/, ''));
-      if (!hash) return;
-
-      const targetSection = indexedSections.find(item => item.id === hash);
-      if (targetSection) {
-        setActiveSectionId(targetSection.id);
-        setFocusedFaqId(null);
-        requestAnimationFrame(() => {
-          document.getElementById('help-article')?.scrollIntoView({ block: 'start' });
-        });
-        return;
-      }
-
-      const targetFaq = indexedFaqs.find(faq => faq.resolvedId === hash);
-      if (targetFaq) {
-        if (targetFaq.sectionId) setActiveSectionId(targetFaq.sectionId);
-        setFocusedFaqId(targetFaq.resolvedId);
-        const scrollTargetId = targetFaq.sectionId ? 'help-article' : 'help-article-faqs';
-        requestAnimationFrame(() => {
-          document.getElementById(scrollTargetId)?.scrollIntoView({ block: 'start' });
-        });
-      }
-    }
-
-    applyHash();
-    window.addEventListener('hashchange', applyHash);
-    return () => window.removeEventListener('hashchange', applyHash);
-  }, [indexedSections, indexedFaqs]);
-
   const faqMatches = useMemo(() => {
     return indexedFaqs.filter(faq => matchesQuery(searchable([
       faq.question,
@@ -150,6 +127,7 @@ export default function HelpPageLayout({
         section.heading,
         section.summary,
         section.group,
+        section.subgroup,
         section.searchText,
         section.keywords,
       ]), normalizedQuery);
@@ -158,78 +136,107 @@ export default function HelpPageLayout({
     });
   }, [faqMatches, indexedSections, normalizedQuery]);
 
+  // Group -> optional subgroup -> sections
   const groupedSections = useMemo(() => {
-    const groups = new Map<string, IndexedSection[]>();
-    sectionMatches.filter(item => !item.section.hideFromContents).forEach(item => {
+    const groups = new Map<string, Map<string | null, IndexedSection[]>>();
+    // Body renders every matching section; hideFromContents only hides it from the TOC (below).
+    sectionMatches.forEach(item => {
       const group = item.section.group ?? 'Guide';
-      const items = groups.get(group) ?? [];
-      items.push(item);
-      groups.set(group, items);
+      const subgroup = item.section.subgroup ?? null;
+      if (!groups.has(group)) groups.set(group, new Map());
+      const subMap = groups.get(group)!;
+      if (!subMap.has(subgroup)) subMap.set(subgroup, []);
+      subMap.get(subgroup)!.push(item);
     });
-    return [...groups.entries()];
+    return [...groups.entries()].map(([group, subMap]) => ({
+      group,
+      subgroups: [...subMap.entries()].map(([sub, items]) => ({ sub, items })),
+      allItems: [...subMap.values()].flat(),
+    }));
   }, [sectionMatches]);
 
-  const activeSectionRecord = indexedSections.find(item => item.id === activeSectionId) ?? indexedSections[0];
-  const activeSection = activeSectionRecord?.section;
-  const activeIndex = activeSectionRecord?.index ?? 0;
-  const previousSection = activeIndex > 0 ? indexedSections[activeIndex - 1] : null;
-  const nextSection = activeIndex < indexedSections.length - 1 ? indexedSections[activeIndex + 1] : null;
-  const activeSectionFaqs = indexedFaqs.filter(faq => faq.sectionId === activeSectionRecord?.id);
-  const pagePopularFaqs = indexedFaqs.filter(faq => !faq.sectionId && faq.popular).slice(0, 4);
-  const focusedFaq = focusedFaqId ? indexedFaqs.find(faq => faq.resolvedId === focusedFaqId) : null;
-  const articleFaqs = [
-    ...activeSectionFaqs,
-    ...pagePopularFaqs.filter(faq => !activeSectionFaqs.some(item => item.resolvedId === faq.resolvedId)),
-    ...(focusedFaq && !activeSectionFaqs.some(faq => faq.resolvedId === focusedFaq.resolvedId)
-      ? [focusedFaq]
-      : []),
-  ].slice(0, 6);
+  // Deep-link: apply hash after mount; also handle hashchange for back/forward.
+  useEffect(() => {
+    function applyHash() {
+      const hash = decodeURIComponent(window.location.hash.replace(/^#/, ''));
+      if (!hash) return;
 
-  const popularFaqs = indexedFaqs.filter(faq => faq.popular).slice(0, 8);
-  const hasSearch = normalizedQuery.length > 0;
+      const targetSection = indexedSections.find(item => item.id === hash);
+      if (targetSection) {
+        setActiveSectionId(targetSection.id);
+        requestAnimationFrame(() => revealAndScroll(targetSection.id));
+        return;
+      }
+
+      const targetFaq = indexedFaqs.find(faq => faq.resolvedId === hash);
+      if (targetFaq) {
+        if (targetFaq.sectionId) setActiveSectionId(targetFaq.sectionId);
+        requestAnimationFrame(() => revealAndScroll(targetFaq.resolvedId, { faq: true }));
+      }
+    }
+
+    applyHash();
+    window.addEventListener('hashchange', applyHash);
+    return () => window.removeEventListener('hashchange', applyHash);
+  }, [indexedSections, indexedFaqs]);
+
+  // IntersectionObserver scroll-spy: auto-focus the TOC group the reader is in
+  // and highlight the active section link. Re-connect when sections or search changes.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Among everything in the active band, pick the topmost section so the
+        // highlighted TOC entry matches what the reader is actually looking at.
+        const sectionEl = entries
+          .filter(e => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
+          ?.target as HTMLElement | undefined;
+        if (!sectionEl) return;
+        setActiveSectionId(sectionEl.id);
+        const gi = sectionEl.dataset.groupIndex;
+        if (gi !== undefined) {
+          const parsed = parseInt(gi, 10);
+          if (!Number.isNaN(parsed)) setActiveGroupIndex(parsed);
+        }
+      },
+      { rootMargin: '-82px 0px -68% 0px', threshold: 0 },
+    );
+
+    observerRef.current = observer;
+
+    // Observe all topic sections in the main content
+    const topicEls = document.querySelectorAll('[data-help-section]');
+    topicEls.forEach(el => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [groupedSections]);
+
   const hasResults = sectionMatches.length > 0 || faqMatches.length > 0;
-
-  function openSection(id: string, options?: { clearSearch?: boolean; faqId?: string }) {
-    setActiveSectionId(id);
-    setFocusedFaqId(options?.faqId ?? null);
-    if (options?.clearSearch) setQuery('');
-    if (typeof window !== 'undefined') {
-      const hash = options?.faqId ?? id;
-      window.history.replaceState(null, '', `#${hash}`);
-      document.getElementById('help-article')?.scrollIntoView({ block: 'start' });
-    }
-  }
-
-  function openFaq(faq: IndexedFaq, options?: { clearSearch?: boolean }) {
-    if (faq.sectionId) {
-      openSection(faq.sectionId, { clearSearch: options?.clearSearch, faqId: faq.resolvedId });
-      return;
-    }
-    setFocusedFaqId(faq.resolvedId);
-    if (options?.clearSearch) setQuery('');
-    if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', `#${faq.resolvedId}`);
-      document.getElementById('help-article-faqs')?.scrollIntoView({ block: 'start' });
-    }
-  }
 
   return (
     <div className={styles.helpPage}>
+      {/* ── Sticky TOC sidebar ─────────────────────────────────────────────── */}
       <aside className={styles.helpSidePanel} aria-label="Help navigation">
-        <div className={styles.helpSideInner}>
+        <nav className={styles.helpTocSticky} aria-label="Guide contents">
+
+          {/* In-guide search */}
           <div className={styles.helpSearchPanel}>
-            <label className={styles.helpSearchLabel} htmlFor="help-search">
-              Search this guide
-            </label>
             <div className={styles.helpSearchBox}>
-              <Search size={16} className={styles.helpSearchIcon} />
+              <Search size={15} className={styles.helpSearchIcon} />
               <input
                 id="help-search"
                 type="search"
                 value={query}
                 onChange={event => setQuery(event.target.value)}
-                placeholder={searchPlaceholder ?? 'Search help...'}
+                placeholder={searchPlaceholder ?? 'Search this guide...'}
                 className={styles.helpSearchInput}
+                aria-label="Search this guide"
               />
               {query && (
                 <button
@@ -238,72 +245,86 @@ export default function HelpPageLayout({
                   className={styles.helpSearchClear}
                   aria-label="Clear search"
                 >
-                  <X size={14} />
+                  <X size={13} />
                 </button>
               )}
             </div>
             {hasSearch && (
               <p className={styles.helpSearchMeta}>
                 {hasResults
-                  ? `${sectionMatches.length} topic${sectionMatches.length === 1 ? '' : 's'} and ${faqMatches.length} question${faqMatches.length === 1 ? '' : 's'} found`
-                  : 'No matching help found. Try a broader search term.'}
+                  ? `${sectionMatches.length} topic${sectionMatches.length === 1 ? '' : 's'}${faqMatches.length > 0 ? `, ${faqMatches.length} Q&A` : ''}`
+                  : 'No results — try a broader term.'}
               </p>
             )}
           </div>
 
-          {!hasSearch && popularFaqs.length > 0 && (
-            <div className={styles.quickAnswers}>
-              <h2 className={styles.helpUtilityTitle}>Popular Questions</h2>
-              <div className={styles.quickAnswerGrid}>
-                {popularFaqs.map(faq => (
-                  <button
-                    key={faq.resolvedId}
-                    type="button"
-                    className={styles.quickAnswerLink}
-                    onClick={() => openFaq(faq)}
-                  >
-                    {faq.question}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
+          {/* TOC groups */}
           {groupedSections.length > 0 && (
-            <nav className={styles.helpToc} aria-label="Guide contents">
-              <h2 className={styles.helpUtilityTitle}>Topics</h2>
-              <div className={styles.helpTocGroups}>
-                {groupedSections.map(([group, items]) => (
-                  <div key={group} className={styles.helpTocGroup}>
-                    <p className={styles.helpTocGroupTitle}>{group}</p>
-                    <div className={styles.helpTocLinks}>
-                      {items.map(({ section, id }) => (
-                        <button
-                          key={id}
-                          type="button"
-                          onClick={() => openSection(id, { clearSearch: true })}
-                          className={`${styles.helpTocLink} ${id === activeSectionRecord?.id ? styles.helpTocLinkActive : ''}`}
-                        >
-                          <span>{section.heading}</span>
-                          {section.summary && <em>{section.summary}</em>}
-                        </button>
+            <div className={styles.helpTocGroups}>
+              {groupedSections.map(({ group, subgroups }, gi) => {
+                // TOC excludes hideFromContents sections (they still render in the body).
+                const visibleSubgroups = subgroups
+                  .map(({ sub, items }) => ({ sub, items: items.filter(it => !it.section.hideFromContents) }))
+                  .filter(sg => sg.items.length > 0);
+                if (visibleSubgroups.length === 0) return null;
+                const isExpanded = hasSearch || activeGroupIndex === null || activeGroupIndex === gi;
+                return (
+                  <div
+                    key={group}
+                    className={`${styles.helpTocGroup} ${isExpanded ? '' : styles.helpTocGroupCollapsed}`}
+                  >
+                    <button
+                      type="button"
+                      className={styles.helpTocGroupHead}
+                      onClick={() => setActiveGroupIndex(activeGroupIndex === gi ? null : gi)}
+                      aria-expanded={isExpanded}
+                    >
+                      <span className={styles.helpTocGroupCaret} aria-hidden="true">▼</span>
+                      <span>{group}</span>
+                    </button>
+
+                    <div className={styles.helpTocChildren}>
+                      {visibleSubgroups.map(({ sub, items }) => (
+                        <div key={sub ?? '__flat'}>
+                          {sub && (
+                            <p className={styles.helpTocSubLabel}>{sub}</p>
+                          )}
+                          {items.map(({ section, id }) => (
+                            <a
+                              key={id}
+                              href={`#${id}`}
+                              aria-current={activeSectionId === id ? 'location' : undefined}
+                              className={`${styles.helpTocLink} ${sub ? styles.helpTocLinkSub : ''} ${activeSectionId === id ? styles.helpTocLinkActive : ''}`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                window.history.replaceState(null, '', `#${id}`);
+                                revealAndScroll(id);
+                              }}
+                            >
+                              {section.heading}
+                            </a>
+                          ))}
+                        </div>
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </nav>
+                );
+              })}
+            </div>
           )}
-        </div>
+        </nav>
       </aside>
 
-      <main className={styles.helpMain}>
-        <div className={styles.helpPageHeader}>
+      {/* ── Main content area ──────────────────────────────────────────────── */}
+      <main ref={mainRef} className={styles.helpMain}>
+        {/* Decluttered header */}
+        <header className={styles.helpPageHeader}>
           <h1 className={styles.helpPageTitle}>{title}</h1>
-          <span className={styles.helpRoleBadge}>For: {role}</span>
-        </div>
-        <p className={styles.helpIntro}>{intro}</p>
+          <p className={styles.helpRoleLine}>For: {role}</p>
+          <p className={styles.helpIntro}>{intro}</p>
+        </header>
 
+        {/* Search results overlay */}
         {hasSearch ? (
           <section className={styles.helpSearchResults} aria-label="Search results">
             <div className={styles.helpResultHeader}>
@@ -314,7 +335,7 @@ export default function HelpPageLayout({
             {!hasResults && (
               <div className={styles.helpEmptyResults}>
                 <p className={styles.emptyStateTitle}>No matching help found</p>
-                <p className={styles.emptyStateSub}>Try a broader term like schedule, scores, registration, billing, module, or export.</p>
+                <p className={styles.emptyStateSub}>Try a broader term like schedule, scores, registration, billing, or exports.</p>
               </div>
             )}
 
@@ -323,16 +344,23 @@ export default function HelpPageLayout({
                 <h3>Topics</h3>
                 <div className={styles.helpResultList}>
                   {sectionMatches.map(({ section, id }) => (
-                    <button
+                    <a
                       key={id}
-                      type="button"
+                      href={`#${id}`}
                       className={styles.helpResultButton}
-                      onClick={() => openSection(id, { clearSearch: true })}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        // Clear search synchronously so the article (with the target) is in the
+                        // DOM before we scroll to it.
+                        flushSync(() => setQuery(''));
+                        window.history.replaceState(null, '', `#${id}`);
+                        revealAndScroll(id);
+                      }}
                     >
-                      <span>{section.group ?? 'Guide'}</span>
+                      <span>{section.subgroup ?? section.group ?? 'Guide'}</span>
                       <strong>{section.heading}</strong>
                       {section.summary && <em>{section.summary}</em>}
-                    </button>
+                    </a>
                   ))}
                 </div>
               </div>
@@ -343,90 +371,132 @@ export default function HelpPageLayout({
                 <h3>Questions</h3>
                 <div className={styles.helpResultList}>
                   {faqMatches.map(faq => (
-                    <button
+                    <a
                       key={faq.resolvedId}
-                      type="button"
+                      href={`#${faq.resolvedId}`}
                       className={styles.helpResultButton}
-                      onClick={() => openFaq(faq, { clearSearch: true })}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        flushSync(() => setQuery(''));
+                        if (faq.sectionId) setActiveSectionId(faq.sectionId);
+                        window.history.replaceState(null, '', `#${faq.resolvedId}`);
+                        revealAndScroll(faq.resolvedId, { faq: true });
+                      }}
                     >
                       <span>{faq.group ?? faq.sectionHeading ?? 'FAQ'}</span>
                       <strong>{faq.question}</strong>
                       {faq.answerText && <em>{faq.answerText}</em>}
-                    </button>
+                    </a>
                   ))}
                 </div>
               </div>
             )}
           </section>
-        ) : activeSection ? (
-          <article id="help-article" className={styles.helpArticle}>
-            <div className={styles.helpArticleMeta}>
-              <span>Topic {activeIndex + 1} of {indexedSections.length}</span>
-              {activeSection.group && <em>{activeSection.group}</em>}
-            </div>
-
-            <div className={styles.helpSectionHeader}>
-              <div>
-                <h2 className={styles.helpArticleTitle}>{activeSection.heading}</h2>
-                {activeSection.summary && <p className={styles.helpSectionSummary}>{activeSection.summary}</p>}
+        ) : (
+          /* Single-scroll article */
+          <div className={styles.helpScrollBody}>
+            {groupedSections.length === 0 ? (
+              <div className={styles.helpEmptyResults}>
+                <p className={styles.emptyStateTitle}>No help topics available</p>
+                <p className={styles.emptyStateSub}>This guide does not have any published topics yet.</p>
               </div>
-              {activeSection.links && activeSection.links.length > 0 && (
-                <div className={styles.helpSectionLinks}>
-                  {activeSection.links.map(link => (
-                    <Link key={link.href} href={link.href} className={styles.helpSectionLink}>
-                      {link.label}
-                    </Link>
+            ) : (
+              groupedSections.map(({ group, subgroups }, gi) => (
+                <div key={group} className={styles.helpGroupBlock}>
+                  {/* Group heading (h2) */}
+                  <h2 className={styles.helpGroupHeading}>{group}</h2>
+
+                  {subgroups.map(({ sub, items }) => (
+                    <div key={sub ?? '__flat'}>
+                      {/* Sub-group heading */}
+                      {sub && (
+                        <h3 className={styles.helpSubGroupHeading}>{sub}</h3>
+                      )}
+
+                      {items.map(({ section, id }) => {
+                        const sectionFaqs = indexedFaqs.filter(f => f.sectionId === id);
+                        return (
+                          <section
+                            key={id}
+                            id={id}
+                            className={styles.helpTopicBlock}
+                            data-help-section="1"
+                            data-group-index={gi}
+                          >
+                            {/* Topic heading (h4 when sub-group present; h3 otherwise) */}
+                            {sub ? (
+                              <h4 className={styles.helpTopicHeading}>{section.heading}</h4>
+                            ) : (
+                              <h3 className={styles.helpTopicHeading}>{section.heading}</h3>
+                            )}
+
+                            {section.summary && (
+                              <p className={styles.helpTopicSummary}>{section.summary}</p>
+                            )}
+
+                            {section.links && section.links.length > 0 && (
+                              <div className={styles.helpSectionLinks}>
+                                {section.links.map(link => (
+                                  <Link key={link.href} href={link.href} className={styles.helpSectionLink}>
+                                    {link.label}
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
+
+                            <div className={styles.helpSectionContent}>
+                              {section.content}
+                            </div>
+
+                            {/* Inline FAQ accordion */}
+                            {sectionFaqs.length > 0 && (
+                              <div className={styles.helpFaqList}>
+                                {sectionFaqs.map(faq => (
+                                  <details
+                                    key={faq.resolvedId}
+                                    id={faq.resolvedId}
+                                    className={styles.helpFaqItem}
+                                  >
+                                    <summary>
+                                      <span>{faq.question}</span>
+                                    </summary>
+                                    <div className={styles.helpFaqAnswer}>{faq.answer}</div>
+                                  </details>
+                                ))}
+                              </div>
+                            )}
+                          </section>
+                        );
+                      })}
+                    </div>
                   ))}
                 </div>
-              )}
-            </div>
+              ))
+            )}
 
-            <div className={styles.helpSectionContent}>{activeSection.content}</div>
-
-            {articleFaqs.length > 0 && (
-              <section id="help-article-faqs" className={styles.helpFaqSection} aria-labelledby="help-article-faq-heading">
-                <div className={styles.helpFaqHeader}>
-                  <h3 id="help-article-faq-heading" className={styles.helpUtilityTitle}>Related Questions</h3>
-                  <span>{articleFaqs.length} question{articleFaqs.length === 1 ? '' : 's'}</span>
-                </div>
+            {/* Page-level FAQs (not tied to a section) */}
+            {faqs.length > 0 && (
+              <section className={styles.helpGroupBlock} aria-label="General questions">
+                <h2 className={styles.helpGroupHeading}>Common Questions</h2>
                 <div className={styles.helpFaqList}>
-                  {articleFaqs.map(faq => (
-                    <details
-                      key={faq.resolvedId}
-                      id={faq.resolvedId}
-                      className={styles.helpFaqItem}
-                      open={focusedFaqId === faq.resolvedId}
-                    >
-                      <summary>
-                        <span>{faq.question}</span>
-                        {faq.group && <em>{faq.group}</em>}
-                      </summary>
-                      <div className={styles.helpFaqAnswer}>{faq.answer}</div>
-                    </details>
-                  ))}
+                  {faqs.map((faq, i) => {
+                    const resolvedId = faq.id ?? `faq-${i + 1}`;
+                    return (
+                      <details
+                        key={resolvedId}
+                        id={resolvedId}
+                        className={styles.helpFaqItem}
+                      >
+                        <summary>
+                          <span>{faq.question}</span>
+                        </summary>
+                        <div className={styles.helpFaqAnswer}>{faq.answer}</div>
+                      </details>
+                    );
+                  })}
                 </div>
               </section>
             )}
-
-            <nav className={styles.helpArticleNav} aria-label="Topic navigation">
-              {previousSection ? (
-                <button type="button" className={styles.helpArticleNavButton} onClick={() => openSection(previousSection.id)}>
-                  <span>Previous</span>
-                  <strong>{previousSection.section.heading}</strong>
-                </button>
-              ) : <span />}
-              {nextSection ? (
-                <button type="button" className={styles.helpArticleNavButton} onClick={() => openSection(nextSection.id)}>
-                  <span>Next</span>
-                  <strong>{nextSection.section.heading}</strong>
-                </button>
-              ) : <span />}
-            </nav>
-          </article>
-        ) : (
-          <div className={styles.helpEmptyResults}>
-            <p className={styles.emptyStateTitle}>No help topics available</p>
-            <p className={styles.emptyStateSub}>This guide does not have any published topics yet.</p>
           </div>
         )}
       </main>
