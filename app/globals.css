@@ -1038,6 +1038,19 @@ tbody tr:hover { background: var(--white-10); }
   animation: fadeInUp 0.5s ease forwards;
 }
 
+/* J1-002: fallbacks so AnimateIn sections are never stuck invisible.
+   The base rule holds opacity:0 until JS (IntersectionObserver) adds `.visible`.
+   Without these, no-JS users see the section permanently blank, and
+   reduced-motion users see a blank void until they happen to scroll it into view.
+   Both cases: show the content by default (no entrance animation needed). */
+@media (prefers-reduced-motion: reduce) {
+  .animateIn { opacity: 1; }
+}
+
+@media (scripting: none) {
+  .animateIn { opacity: 1; }
+}
+
 /* ─── Utility ───────────────────────────────────────────────────────────────── */
 .text-primary  { color: var(--primary-light); }
 .text-purple   { color: var(--primary-light); } /* legacy alias — use .text-primary */
