@@ -33,6 +33,29 @@
   gap: 0.5rem;
 }
 
+.summary[data-cols='2'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Quiet recipient explainer — names WHO gets the announcement + restates the
+   count in words. Text-note tier (the coach can't act from it): no surface,
+   --white-40, never lime (the Users icon matches the text). Shown only when
+   recipientCount > 0; the amber warning owns the zero state. (2026-06-17) */
+.recipientNote {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: var(--white-40);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.recipientNoteIcon {
+  flex-shrink: 0;
+  color: var(--white-40);
+}
+
 .summaryItem {
   min-width: 0;
   padding: 0.7rem;
@@ -57,22 +80,60 @@
   font-variant-numeric: tabular-nums;
 }
 
-.summaryItem[data-muted='true'] strong {
-  color: var(--white-40);
-}
-
-.empty {
-  padding: 1rem;
-  text-align: center;
-  color: var(--white-60);
-  background: var(--surface);
-  border: 1px dashed var(--border-2);
-  border-radius: var(--radius);
-}
-
-.empty p {
+/* No-contacts precondition: a slim text-note warning row (NOT a full
+   CoachEmptyState card) — the section's content is the compose form, the
+   missing contacts are a prerequisite, so this is --warning text-note tier
+   per COACH_SURFACE_DESIGN_ADDENDUM §iii + the 2026-06-17 decision. */
+.recipientsWarn {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   margin: 0;
-  line-height: 1.55;
+  padding: 0.55rem 0.75rem;
+  color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.08);
+  border: 1px solid rgba(var(--warning-rgb), 0.25);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.recipientsWarn span {
+  min-width: 0;
+}
+
+.recipientsWarnIcon {
+  flex-shrink: 0;
+  color: var(--warning);
+}
+
+.recipientsWarnAction {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 32px;
+  margin-left: auto;
+  padding: 0 0.65rem;
+  color: var(--white-60);
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.recipientsWarnAction:hover:not(:disabled) {
+  color: var(--white);
+  border-color: var(--border);
+}
+
+.recipientsWarnAction:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 /* Send-log "no history yet" — a text-only note (the coach can't act from
@@ -85,32 +146,18 @@
   line-height: 1.55;
 }
 
-.refreshBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  min-height: 38px;
-  margin-top: 0.75rem;
-  padding: 0 0.8rem;
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.06);
-  border: 1px dashed rgba(var(--logic-lime-rgb), 0.4);
-  border-radius: var(--radius-sm);
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
+/* The compose form is the section's PRIMARY surface, so it earns prominence
+   by position (top of the working area), NOT by glow — a neutral --surface
+   card. The lime accent is spent only on the Send button (CP-1 / 2026-06-17). */
 .form {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
   padding: 0.9rem;
   background: var(--surface);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--glow-sm), var(--highlight-top);
+  box-shadow: var(--highlight-top);
 }
 
 .input,
@@ -149,8 +196,17 @@
 
 .formActions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+
+/* Disabled-send explanation; pushes the Send button to the right edge. */
+.formHint {
+  margin-right: auto;
+  color: var(--white-40);
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 
 .sendBtn,
@@ -187,16 +243,22 @@
 }
 
 .sendBtn:disabled,
-.refreshBtn:disabled,
 .refreshGhostBtn:disabled {
   opacity: 0.45;
   cursor: default;
 }
 
-.block {
+/* Recent-announcements log: a real --surface card so it reads as a peer of
+   the compose card, not orphaned floating text (2026-06-17). */
+.logCard {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  padding: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--highlight-top);
 }
 
 .blockHeader {
@@ -228,15 +290,16 @@
   gap: 0.5rem;
 }
 
+/* Nested inside .logCard — flatten to --surface-2 list rows (no border/shadow)
+   to avoid a card-on-card double box. */
 .row {
   display: flex;
   align-items: flex-start;
   gap: 0.6rem;
   padding: 0.65rem 0.7rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--highlight-top);
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
 }
 
 .statusIcon {
@@ -308,5 +371,19 @@
 
   .formActions {
     flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .formHint {
+    margin-right: 0;
+    text-align: center;
+  }
+
+  .recipientsWarn {
+    flex-wrap: wrap;
+  }
+
+  .recipientsWarnAction {
+    margin-left: 0;
   }
 }

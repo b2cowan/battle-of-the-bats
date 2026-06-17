@@ -1,12 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle2, Mail, RefreshCw, Send, XCircle } from 'lucide-react';
+import { CheckCircle2, RefreshCw, Send, TriangleAlert, Users, XCircle } from 'lucide-react';
 import type {
   BasicCoachTeamAnnouncement,
   BasicCoachTeamAnnouncementRecipientSummary,
 } from '@/lib/basic-coach-announcements';
-import CoachEmptyState from './CoachEmptyState';
 import styles from './AnnouncementEditor.module.css';
 
 type Props = {
@@ -121,40 +120,59 @@ export default function AnnouncementEditor({
       {error && <p className={styles.error} role="alert">{error}</p>}
       {notice && <p className={styles.notice}>{notice}</p>}
 
-      <div className={styles.summary} aria-label="Announcement recipients">
+      <div
+        className={styles.summary}
+        data-cols={recipientSummary.skippedInvalidCount > 0 ? 3 : 2}
+        aria-label="Announcement recipients"
+      >
         <div className={styles.summaryItem}>
-          <span>Recipients</span>
+          <span>Will receive</span>
           <strong>{recipientSummary.recipientCount}</strong>
         </div>
         <div className={styles.summaryItem}>
-          <span>Roster contacts</span>
+          <span>On roster</span>
           <strong>{recipientSummary.rosterContactCount}</strong>
         </div>
-        <div className={styles.summaryItem} data-muted={recipientSummary.skippedInvalidCount === 0}>
-          <span>Skipped</span>
-          <strong>{recipientSummary.skippedInvalidCount}</strong>
-        </div>
+        {recipientSummary.skippedInvalidCount > 0 && (
+          <div className={styles.summaryItem}>
+            <span>Skipped</span>
+            <strong>{recipientSummary.skippedInvalidCount}</strong>
+          </div>
+        )}
       </div>
 
+      {hasRecipients && (
+        <p className={styles.recipientNote}>
+          <Users size={13} className={styles.recipientNoteIcon} aria-hidden />
+          <span>
+            Sent to the contact email on file for each player on your Roster —{' '}
+            {recipientSummary.recipientCount === 1
+              ? '1 person'
+              : `${recipientSummary.recipientCount} people`}{' '}
+            will receive this.
+          </span>
+        </p>
+      )}
+
       {!hasRecipients && (
-        <CoachEmptyState
-          icon={<Mail size={22} aria-hidden />}
-          eyebrow="Announcements"
-          headline="No contacts to email yet"
-          description="Add at least one roster contact email before sending an announcement, then refresh to pick it up."
-          primaryAction={{
-            label: refreshBusy ? 'Checking…' : 'Refresh contacts',
-            icon: <RefreshCw size={15} aria-hidden />,
-            onClick: refreshRecipients,
-            disabled: refreshBusy || busy,
-          }}
-        />
+        <div className={styles.recipientsWarn} role="status">
+          <TriangleAlert size={16} className={styles.recipientsWarnIcon} aria-hidden />
+          <span>No one to email yet. Add a contact email to a player on your Roster, then refresh.</span>
+          <button
+            type="button"
+            className={styles.recipientsWarnAction}
+            onClick={refreshRecipients}
+            disabled={refreshBusy || busy}
+          >
+            <RefreshCw size={13} aria-hidden /> {refreshBusy ? 'Checking…' : 'Refresh contacts'}
+          </button>
+        </div>
       )}
 
       <div className={styles.form}>
         <input
           className={styles.input}
-          placeholder="Subject"
+          placeholder="Subject — e.g. Game time changed"
           maxLength={160}
           value={subject}
           onChange={e => setSubject(e.target.value)}
@@ -162,7 +180,7 @@ export default function AnnouncementEditor({
         />
         <textarea
           className={styles.textarea}
-          placeholder="Message"
+          placeholder="Write your update to the team…"
           maxLength={4000}
           rows={5}
           value={body}
@@ -170,6 +188,9 @@ export default function AnnouncementEditor({
           aria-label="Announcement message"
         />
         <div className={styles.formActions}>
+          {!hasRecipients && (
+            <span className={styles.formHint}>Add a contact email on your Roster to send.</span>
+          )}
           {hasRecipients && (
             <button
               type="button"
@@ -191,7 +212,7 @@ export default function AnnouncementEditor({
         </div>
       </div>
 
-      <div className={styles.block}>
+      <div className={styles.logCard}>
         <div className={styles.blockHeader}>
           <h3 className={styles.blockTitle}>Recent announcements</h3>
           <span className={styles.blockMeta}>{announcements.length}</span>
