@@ -4,6 +4,7 @@ import { getBasicCoachTeamEvents } from '@/lib/basic-coach-schedule';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import ScheduleEditor from '@/components/coaches/ScheduleEditor';
+import ScopeShelf from '@/components/coaches/ScopeShelf';
 import TeamSectionShell from '@/components/coaches/TeamSectionShell';
 import styles from '../team.module.css';
 
@@ -30,6 +31,7 @@ export default async function CoachTeamSchedulePage({ params }: RouteParams) {
       meta={<span className={styles.rosterCount}>{events.length} {events.length === 1 ? 'event' : 'events'}</span>}
     >
       <ScheduleEditor basicTeamId={basicTeamId} initialEvents={events} />
+      {events.length > 0 && <ScopeShelf basicTeamId={basicTeamId} section="schedule" />}
     </TeamSectionShell>
   );
 }

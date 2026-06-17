@@ -7,6 +7,7 @@ import {
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import AnnouncementEditor from '@/components/coaches/AnnouncementEditor';
+import ScopeShelf from '@/components/coaches/ScopeShelf';
 import TeamSectionShell from '@/components/coaches/TeamSectionShell';
 
 type RouteParams = { params: Promise<{ basicTeamId: string }> };
@@ -38,6 +39,9 @@ export default async function CoachTeamAnnouncementsPage({ params }: RouteParams
         initialAnnouncements={announcements}
         initialRecipientSummary={recipientSummary}
       />
+      {(announcements.length > 0 || recipientSummary.recipientCount > 0) && (
+        <ScopeShelf basicTeamId={basicTeamId} section="announcements" />
+      )}
     </TeamSectionShell>
   );
 }

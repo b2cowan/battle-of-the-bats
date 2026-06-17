@@ -1,0 +1,101 @@
+/* Per-page feature-education strip (COACH_PORTAL_GROWTH Phase 1). A QUIET recessed footnote
+   (--white-03 panel, same register as CoachOverviewInvite) anchored at the BOTTOM of a section
+   page — never competes with the working content. Dismiss degrades to a faint line. */
+
+.shelf {
+  position: relative;
+  margin-top: 0.5rem;
+  padding: 0.85rem 0.95rem;
+  background: var(--white-03, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+}
+
+.dismiss {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: none;
+  background: transparent;
+  color: var(--white-40);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.dismiss:hover { color: var(--white); background: var(--white-08, rgba(255, 255, 255, 0.08)); }
+
+.eyebrow {
+  margin: 0;
+  color: var(--white-40);
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.heading {
+  margin: 0.2rem 0 0;
+  padding-right: 1.5rem; /* clear the dismiss button */
+  color: var(--white);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.bullets {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.bullets li {
+  position: relative;
+  padding-left: 1rem;
+  color: var(--white-60);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.bullets li::before {
+  content: '';
+  position: absolute;
+  left: 0.15rem;
+  top: 0.55rem;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--logic-lime);
+}
+
+.free {
+  margin: 0.55rem 0 0;
+  color: var(--white-40);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.cta {
+  margin-top: 0.7rem;
+}
+
+/* Degraded faint line — what dismissal leaves behind (discovery thread not cut). */
+.faintLine {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--white-40);
+  text-decoration: none;
+}
+.faintLine svg { flex-shrink: 0; color: var(--white-40); }
+.faintLine:hover { color: var(--logic-lime); }
+.faintLine:hover svg { color: var(--logic-lime); }

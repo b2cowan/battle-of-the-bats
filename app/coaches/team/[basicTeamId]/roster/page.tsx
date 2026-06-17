@@ -4,6 +4,7 @@ import { getBasicCoachTeamPlayers } from '@/lib/basic-coach-roster';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import RosterEditor from '@/components/coaches/RosterEditor';
+import ScopeShelf from '@/components/coaches/ScopeShelf';
 import TeamSectionShell from '@/components/coaches/TeamSectionShell';
 import styles from '../team.module.css';
 
@@ -30,6 +31,7 @@ export default async function CoachTeamRosterPage({ params }: RouteParams) {
       meta={<span className={styles.rosterCount}>{players.length} {players.length === 1 ? 'player' : 'players'}</span>}
     >
       <RosterEditor basicTeamId={basicTeamId} initialPlayers={players} />
+      {players.length > 0 && <ScopeShelf basicTeamId={basicTeamId} section="roster" />}
     </TeamSectionShell>
   );
 }

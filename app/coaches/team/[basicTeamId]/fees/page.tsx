@@ -5,6 +5,7 @@ import { getBasicCoachTeamPlayers } from '@/lib/basic-coach-roster';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import FeeEditor from '@/components/coaches/FeeEditor';
+import ScopeShelf from '@/components/coaches/ScopeShelf';
 import TeamSectionShell from '@/components/coaches/TeamSectionShell';
 import styles from '../team.module.css';
 
@@ -35,6 +36,7 @@ export default async function CoachTeamFeesPage({ params }: RouteParams) {
       meta={fees.length > 0 ? <span className={styles.rosterCount}>{unpaid} unpaid</span> : undefined}
     >
       <FeeEditor basicTeamId={basicTeamId} initialFees={fees} players={players} />
+      {fees.length > 0 && <ScopeShelf basicTeamId={basicTeamId} section="fees" />}
     </TeamSectionShell>
   );
 }
