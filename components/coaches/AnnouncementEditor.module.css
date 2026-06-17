@@ -52,6 +52,29 @@
   color: var(--white-40);
 }
 
+/* Roster-gap warning — its own --warning callout (matches the zero-state
+   .recipientsWarn recipe) so "amber = recipients need attention" stays a
+   consistent signal. Shown only when some players still lack an email; gone
+   entirely once every player has one. (2026-06-17) */
+.missingEmailWarn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.08);
+  border: 1px solid rgba(var(--warning-rgb), 0.25);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.missingEmailWarnIcon {
+  flex-shrink: 0;
+  color: var(--warning);
+}
+
 .summaryItem {
   min-width: 0;
   padding: 0.7rem;

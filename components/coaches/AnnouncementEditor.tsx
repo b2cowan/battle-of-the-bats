@@ -148,15 +148,18 @@ export default function AnnouncementEditor({
               ? '1 person'
               : `${recipientSummary.recipientCount} people`}{' '}
             will receive it.
-            {missingEmailCount > 0 && (
-              <>
-                {' '}
-                {missingEmailCount === 1
-                  ? '1 player has no email on file'
-                  : `${missingEmailCount} players have no email on file`}{' '}
-                — add one on your Roster to include them.
-              </>
-            )}
+          </span>
+        </p>
+      )}
+
+      {hasRecipients && missingEmailCount > 0 && (
+        <p className={styles.missingEmailWarn} role="status">
+          <TriangleAlert size={15} className={styles.missingEmailWarnIcon} aria-hidden />
+          <span>
+            {missingEmailCount === 1
+              ? '1 player has no email on file'
+              : `${missingEmailCount} players have no email on file`}{' '}
+            — add one on your Roster to include them.
           </span>
         </p>
       )}
