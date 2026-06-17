@@ -1053,6 +1053,15 @@
     "ordinal_position": 11
   },
   {
+    "table_name": "basic_coach_teams",
+    "column_name": "activated_features",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "ordinal_position": 12
+  },
+  {
     "table_name": "billing_retained_records",
     "column_name": "id",
     "data_type": "uuid",
