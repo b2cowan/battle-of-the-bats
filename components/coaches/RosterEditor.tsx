@@ -21,6 +21,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Pencil, Trash2, Plus, X, Check, ShieldCheck, Users } from 'lucide-react';
 import type { BasicCoachTeamPlayer } from '@/lib/basic-coach-roster';
 import CoachEmptyState from './CoachEmptyState';
+import FeedbackModal from '@/components/FeedbackModal';
 import styles from './RosterEditor.module.css';
 
 type Props = {
@@ -54,6 +55,7 @@ export default function RosterEditor({ basicTeamId, initialPlayers }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmPlayer, setConfirmPlayer] = useState<BasicCoachTeamPlayer | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -103,7 +105,6 @@ export default function RosterEditor({ basicTeamId, initialPlayers }: Props) {
   }
 
   async function removePlayer(playerId: string) {
-    if (!confirm('Remove this player from your roster?')) return;
     setBusy(true);
     setError(null);
     const prev = players;
@@ -187,7 +188,7 @@ export default function RosterEditor({ basicTeamId, initialPlayers }: Props) {
                     player={player}
                     locked={locked}
                     onEdit={() => { setAdding(false); setEditingId(player.id); }}
-                    onRemove={() => removePlayer(player.id)}
+                    onRemove={() => setConfirmPlayer(player)}
                   />
                 ),
               )}
@@ -210,6 +211,19 @@ export default function RosterEditor({ basicTeamId, initialPlayers }: Props) {
           <Plus size={15} aria-hidden /> Add player
         </button>
       ) : null}
+
+      <FeedbackModal
+        isOpen={confirmPlayer !== null}
+        onClose={() => setConfirmPlayer(null)}
+        onConfirm={() => { if (confirmPlayer) removePlayer(confirmPlayer.id); }}
+        title="Remove this player?"
+        message={confirmPlayer
+          ? `${confirmPlayer.name} will be removed from your roster. This can't be undone.`
+          : ''}
+        confirmText="Remove player"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 }

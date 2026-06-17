@@ -61,6 +61,11 @@
   line-height: 1.4;
 }
 
+.purposeAside em {
+  color: var(--white-60);
+  font-style: italic;
+}
+
 .summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -108,9 +113,13 @@
 
 .blockHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.8rem;
+}
+
+.blockTitleWrap {
+  min-width: 0;
 }
 
 .blockTitle {
@@ -118,6 +127,16 @@
   color: var(--white);
   font-size: 0.95rem;
   font-weight: 700;
+}
+
+/* Persistent one-line model explainer under each section title (metric-strip
+   register). Names the team-wide-vs-per-player distinction so it never reads
+   as a phantom split. (2026-06-17) */
+.blockSub {
+  margin: 0.1rem 0 0;
+  color: var(--white-40);
+  font-size: 0.76rem;
+  line-height: 1.4;
 }
 
 .blockMeta {
@@ -208,6 +227,47 @@
   font-size: 0.78rem;
 }
 
+/* Remainder line when SOME players have fees: quiet count + a real (app-standard
+   btn-ghost) "Add a player fee" action. When NO player has fees, the section
+   shows a compact CoachEmptyState instead — never two stray gray lines. (2026-06-17) */
+.remainderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.35rem 0.1rem 0.1rem;
+  color: var(--white-40);
+  font-size: 0.8rem;
+}
+
+/* No player fees yet (but a whole-team fee exists): a left-aligned inline prompt
+   with a real app-standard button — not a floaty centered card, not two gray
+   lines. Matches the fee-row surface. (2026-06-17) */
+.playerFeesEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 0.8rem 0.9rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+}
+
+.playerFeesEmpty p {
+  margin: 0;
+  color: var(--white-60);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 560px) {
+  .playerFeesEmpty {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 .row {
   display: flex;
   align-items: center;
@@ -218,38 +278,80 @@
   border-radius: var(--radius-sm);
 }
 
-.statusPaid,
-.statusUnpaid {
+/* Mark-paid is the ledger's core recurring verb — a LABELLED control, not a
+   bare icon. Neutral by default (lime would over-spend the accent across N
+   rows — CP-1); lime only on hover to hint the positive outcome. (2026-06-17) */
+.markPaidBtn {
   flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s, opacity 0.15s;
-}
-
-.statusPaid {
-  color: #0f1123;
-  background: var(--logic-lime);
-  border: 1px solid var(--logic-lime);
-}
-
-.statusUnpaid {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 32px;
+  padding: 0 0.7rem;
   color: var(--white-60);
   background: transparent;
-  border: 1px dashed var(--border-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
 
-.statusUnpaid:hover:not(:disabled) {
+.markPaidBtn:hover:not(:disabled) {
   color: var(--logic-lime);
   border-color: rgba(var(--logic-lime-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.06);
 }
 
-.statusPaid:disabled,
-.statusUnpaid:disabled {
+.markPaidBtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Paid row = a status pill (lime-as-paid is this page's established status
+   tint) + a quiet reversible Undo. */
+.paidState {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.paidPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 26px;
+  padding: 0 0.55rem;
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+  border-radius: var(--radius-sm);
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-family: var(--font-data, monospace);
+  white-space: nowrap;
+}
+
+.undoBtn {
+  padding: 0;
+  color: var(--white-40);
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+
+.undoBtn:hover:not(:disabled) {
+  color: var(--white-60);
+}
+
+.undoBtn:disabled {
   opacity: 0.45;
   cursor: default;
 }
@@ -354,6 +456,15 @@
   border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
   border-radius: var(--radius);
   box-shadow: var(--glow-sm), var(--highlight-top);
+}
+
+/* Helper under the assignment select — explains team-wide vs per-player at the
+   decision point. */
+.assignNote {
+  margin: -0.15rem 0 0.1rem;
+  color: var(--white-40);
+  font-size: 0.76rem;
+  line-height: 1.4;
 }
 
 .formTopRow {

@@ -5,6 +5,7 @@ import { Check, CheckCircle2, CircleDollarSign, Pencil, Plus, Trash2, Wallet, X 
 import type { BasicCoachTeamFee } from '@/lib/basic-coach-fees';
 import type { BasicCoachTeamPlayer } from '@/lib/basic-coach-roster';
 import CoachEmptyState from './CoachEmptyState';
+import FeedbackModal from '@/components/FeedbackModal';
 import styles from './FeeEditor.module.css';
 
 type Props = {
@@ -79,6 +80,7 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmFee, setConfirmFee] = useState<BasicCoachTeamFee | null>(null);
 
   const playerMap = useMemo(() => new Map(players.map(player => [player.id, player])), [players]);
   const base = `/api/coaches/teams/${basicTeamId}/fees`;
@@ -102,6 +104,13 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
   const allTotals = totalsFor(fees);
   const hasPlayers = players.length > 0;
   const hasFees = fees.length > 0;
+  // Only players who actually have a fee become ledger rows; the rest collapse
+  // into one quiet line so empty $0 rows can't imply a team-wide fee is "split".
+  const playersWithFees = useMemo(
+    () => players.filter(player => (grouped.byPlayer.get(player.id)?.length ?? 0) > 0),
+    [players, grouped],
+  );
+  const playersWithoutFeesCount = players.length - playersWithFees.length;
 
   async function addFee(input: FeeInput) {
     setBusy(true);
@@ -202,7 +211,6 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
   }
 
   async function removeFee(feeId: string) {
-    if (!confirm('Remove this fee from your ledger?')) return;
     const prev = fees;
     setBusy(true);
     setError(null);
@@ -230,12 +238,13 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
         <Wallet size={18} className={styles.purposeIcon} aria-hidden />
         <div className={styles.purposeText}>
           <p className={styles.purposeLead}>
-            <strong>Track what your players owe you</strong> — dues, jerseys, a tournament
-            cost-split. Record each fee and check it off as you collect it.
+            <strong>Track what your team owes you</strong> — each player&apos;s dues and jerseys, or a
+            cost split across the whole group. Record each fee and check it off as you collect it.
           </p>
           <p className={styles.purposeAside}>
-            Your private tracker — no payments run through FieldLogicHQ, and it&apos;s not where
-            you pay a tournament&apos;s entry fee.
+            Everything here is money owed <em>to you</em> — your private record of what to collect.
+            No payments run through FieldLogicHQ, and it&apos;s not where you pay a tournament&apos;s
+            entry fee.
           </p>
         </div>
       </div>
@@ -293,54 +302,91 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
               {hasPlayers && (
               <div className={styles.block}>
                 <div className={styles.blockHeader}>
-                  <h3 className={styles.blockTitle}>Roster fees</h3>
+                  <div className={styles.blockTitleWrap}>
+                    <h3 className={styles.blockTitle}>Roster fees</h3>
+                    {playersWithFees.length > 0 && (
+                      <p className={styles.blockSub}>What each player owes you individually.</p>
+                    )}
+                  </div>
                 </div>
-                <div className={styles.playerList}>
-                  {players.map(player => {
-                    const playerFees = grouped.byPlayer.get(player.id) ?? [];
-                    const playerTotals = totalsFor(playerFees);
-                    return (
-                      <div key={player.id} className={styles.playerGroup}>
-                        <div className={styles.playerHeader}>
-                          <div className={styles.playerName}>
-                            <span>{player.name}</span>
-                            {player.jerseyNumber ? <span className={styles.playerMeta}>#{player.jerseyNumber}</span> : null}
+                {playersWithFees.length > 0 ? (
+                  <>
+                    <div className={styles.playerList}>
+                      {playersWithFees.map(player => {
+                        const playerFees = grouped.byPlayer.get(player.id) ?? [];
+                        const playerTotals = totalsFor(playerFees);
+                        return (
+                          <div key={player.id} className={styles.playerGroup}>
+                            <div className={styles.playerHeader}>
+                              <div className={styles.playerName}>
+                                <span>{player.name}</span>
+                                {player.jerseyNumber ? <span className={styles.playerMeta}>#{player.jerseyNumber}</span> : null}
+                              </div>
+                              <div className={styles.playerTotals}>
+                                <span>{formatMoney(playerTotals.unpaid)} unpaid</span>
+                                <span>{formatMoney(playerTotals.paid)} paid</span>
+                              </div>
+                            </div>
+                            <FeeList
+                              fees={playerFees}
+                              editingId={editingId}
+                              locked={locked}
+                              busy={busy}
+                              players={players}
+                              onEdit={feeId => { setAdding(false); setEditingId(feeId); }}
+                              onCancelEdit={() => setEditingId(null)}
+                              onSave={saveFee}
+                              onTogglePaid={togglePaid}
+                              onRequestRemove={setConfirmFee}
+                            />
                           </div>
-                          <div className={styles.playerTotals}>
-                            <span>{formatMoney(playerTotals.unpaid)} unpaid</span>
-                            <span>{formatMoney(playerTotals.paid)} paid</span>
-                          </div>
-                        </div>
-                        {playerFees.length === 0 ? (
-                          <p className={styles.noFees}>No fees recorded.</p>
-                        ) : (
-                          <FeeList
-                            fees={playerFees}
-                            editingId={editingId}
-                            locked={locked}
-                            busy={busy}
-                            players={players}
-                            onEdit={feeId => { setAdding(false); setEditingId(feeId); }}
-                            onCancelEdit={() => setEditingId(null)}
-                            onSave={saveFee}
-                            onTogglePaid={togglePaid}
-                            onRemove={removeFee}
-                          />
-                        )}
+                        );
+                      })}
+                    </div>
+                    {playersWithoutFeesCount > 0 && (
+                      <div className={styles.remainderRow}>
+                        <span>
+                          {playersWithoutFeesCount === 1
+                            ? '1 more player has no individual fee'
+                            : `${playersWithoutFeesCount} more players have no individual fee`}
+                        </span>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-data"
+                          onClick={() => { setEditingId(null); setAdding(true); }}
+                          disabled={locked}
+                        >
+                          <Plus size={14} aria-hidden /> Add a player fee
+                        </button>
                       </div>
-                    );
-                  })}
-                </div>
+                    )}
+                  </>
+                ) : (
+                  <div className={styles.playerFeesEmpty}>
+                    <p>No player fees yet — add one when a player owes you on their own, separate from a whole-team fee.</p>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-data"
+                      onClick={() => { setEditingId(null); setAdding(true); }}
+                      disabled={locked}
+                    >
+                      <Plus size={14} aria-hidden /> Add a player fee
+                    </button>
+                  </div>
+                )}
               </div>
               )}
 
               <div className={styles.block}>
                 <div className={styles.blockHeader}>
-                  <h3 className={styles.blockTitle}>Team-wide charges</h3>
+                  <div className={styles.blockTitleWrap}>
+                    <h3 className={styles.blockTitle}>Whole-team fees</h3>
+                    <p className={styles.blockSub}>A shared amount the whole team owes you — tracked once, not split between players.</p>
+                  </div>
                   <span className={styles.blockMeta}>{grouped.teamWide.length}</span>
                 </div>
                 {grouped.teamWide.length === 0 ? (
-                  <p className={styles.noFees}>No team-wide charges yet.</p>
+                  <p className={styles.noFees}>No whole-team fees yet.</p>
                 ) : (
                   <FeeList
                     fees={grouped.teamWide}
@@ -352,7 +398,7 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
                     onCancelEdit={() => setEditingId(null)}
                     onSave={saveFee}
                     onTogglePaid={togglePaid}
-                    onRemove={removeFee}
+                    onRequestRemove={setConfirmFee}
                   />
                 )}
               </div>
@@ -360,6 +406,19 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
           )}
         </>
       )}
+
+      <FeedbackModal
+        isOpen={confirmFee !== null}
+        onClose={() => setConfirmFee(null)}
+        onConfirm={() => { if (confirmFee) removeFee(confirmFee.id); }}
+        title="Remove this fee?"
+        message={confirmFee
+          ? `"${confirmFee.label}" (${formatMoney(confirmFee.amount)}) will be removed from your ledger. This can't be undone.`
+          : ''}
+        confirmText="Remove fee"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 }
@@ -383,7 +442,7 @@ function FeeList({
   onCancelEdit,
   onSave,
   onTogglePaid,
-  onRemove,
+  onRequestRemove,
 }: {
   fees: BasicCoachTeamFee[];
   editingId: string | null;
@@ -394,7 +453,7 @@ function FeeList({
   onCancelEdit: () => void;
   onSave: (feeId: string, input: FeeInput) => void;
   onTogglePaid: (fee: BasicCoachTeamFee) => void;
-  onRemove: (feeId: string) => void;
+  onRequestRemove: (fee: BasicCoachTeamFee) => void;
 }) {
   return (
     <ul className={styles.list}>
@@ -410,25 +469,40 @@ function FeeList({
             />
           ) : (
             <>
-              <button
-                type="button"
-                className={fee.status === 'paid' ? styles.statusPaid : styles.statusUnpaid}
-                onClick={() => onTogglePaid(fee)}
-                disabled={locked}
-                aria-label={fee.status === 'paid' ? `Mark ${fee.label} unpaid` : `Mark ${fee.label} paid`}
-              >
-                {fee.status === 'paid' ? <CheckCircle2 size={16} aria-hidden /> : <Check size={16} aria-hidden />}
-              </button>
               <div className={styles.rowMain}>
                 <span className={styles.name}>{fee.label}</span>
                 <span className={styles.meta}>
                   {formatMoney(fee.amount)}
-                  {fee.status === 'paid'
-                    ? ` - paid${formatPaidDate(fee.markedPaidAt) ? ` ${formatPaidDate(fee.markedPaidAt)}` : ''}`
-                    : ' - unpaid'}
-                  {fee.notes ? ` - ${fee.notes}` : ''}
+                  {fee.notes ? ` · ${fee.notes}` : ''}
                 </span>
               </div>
+              {fee.status === 'paid' ? (
+                <div className={styles.paidState}>
+                  <span className={styles.paidPill}>
+                    <CheckCircle2 size={13} aria-hidden /> Paid
+                    {formatPaidDate(fee.markedPaidAt) ? ` · ${formatPaidDate(fee.markedPaidAt)}` : ''}
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.undoBtn}
+                    onClick={() => onTogglePaid(fee)}
+                    disabled={locked}
+                    aria-label={`Mark ${fee.label} unpaid`}
+                  >
+                    Undo
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className={styles.markPaidBtn}
+                  onClick={() => onTogglePaid(fee)}
+                  disabled={locked}
+                  aria-label={`Mark ${fee.label} paid`}
+                >
+                  <Check size={14} aria-hidden /> Mark paid
+                </button>
+              )}
               <div className={styles.rowActions}>
                 <button
                   type="button"
@@ -442,7 +516,7 @@ function FeeList({
                 <button
                   type="button"
                   className={styles.iconBtnDanger}
-                  onClick={() => onRemove(fee.id)}
+                  onClick={() => onRequestRemove(fee)}
                   disabled={locked}
                   aria-label={`Remove ${fee.label}`}
                 >
@@ -494,15 +568,23 @@ function FeeForm({
         className={styles.input}
         value={playerId || TEAM_WIDE}
         onChange={e => setPlayerId(e.target.value === TEAM_WIDE ? '' : e.target.value)}
-        aria-label="Assign fee"
+        aria-label="Who owes this fee"
       >
-        <option value={TEAM_WIDE}>Team-wide / unassigned</option>
-        {players.map(player => (
-          <option key={player.id} value={player.id}>
-            {player.jerseyNumber ? `#${player.jerseyNumber} ` : ''}{player.name}
-          </option>
-        ))}
+        <option value={TEAM_WIDE}>The whole team (one shared fee)</option>
+        {players.length > 0 && (
+          <optgroup label="One player owes this">
+            {players.map(player => (
+              <option key={player.id} value={player.id}>
+                {player.jerseyNumber ? `#${player.jerseyNumber} ` : ''}{player.name}
+              </option>
+            ))}
+          </optgroup>
+        )}
       </select>
+      <p className={styles.assignNote}>
+        Bill one player, or the whole team as a single shared fee — a whole-team fee isn&apos;t
+        split between players. Either way, it&apos;s money owed to you.
+      </p>
 
       <div className={styles.formTopRow}>
         <input

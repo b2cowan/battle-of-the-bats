@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Pencil, Trash2, Plus, X, Check, CalendarDays, Trophy, Dumbbell } from 'lucide-react';
 import type { BasicCoachTeamEvent } from '@/lib/basic-coach-schedule';
 import CoachEmptyState from './CoachEmptyState';
+import FeedbackModal from '@/components/FeedbackModal';
 import styles from './ScheduleEditor.module.css';
 
 type Props = {
@@ -86,6 +87,7 @@ export default function ScheduleEditor({ basicTeamId, initialEvents }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmEvent, setConfirmEvent] = useState<BasicCoachTeamEvent | null>(null);
 
   const base = `/api/coaches/teams/${basicTeamId}/events`;
 
@@ -130,7 +132,6 @@ export default function ScheduleEditor({ basicTeamId, initialEvents }: Props) {
   }
 
   async function removeEvent(eventId: string) {
-    if (!confirm('Remove this event from your schedule?')) return;
     setBusy(true);
     setError(null);
     const prev = events;
@@ -208,7 +209,7 @@ export default function ScheduleEditor({ basicTeamId, initialEvents }: Props) {
                   <button
                     type="button"
                     className={styles.iconBtnDanger}
-                    onClick={() => removeEvent(ev.id)}
+                    onClick={() => setConfirmEvent(ev)}
                     disabled={locked}
                     aria-label={`Remove ${ev.title}`}
                   >
@@ -235,6 +236,19 @@ export default function ScheduleEditor({ basicTeamId, initialEvents }: Props) {
           <Plus size={15} aria-hidden /> Add event
         </button>
       ) : null}
+
+      <FeedbackModal
+        isOpen={confirmEvent !== null}
+        onClose={() => setConfirmEvent(null)}
+        onConfirm={() => { if (confirmEvent) removeEvent(confirmEvent.id); }}
+        title="Remove this event?"
+        message={confirmEvent
+          ? `"${confirmEvent.title}" will be removed from your schedule. This can't be undone.`
+          : ''}
+        confirmText="Remove event"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 }
