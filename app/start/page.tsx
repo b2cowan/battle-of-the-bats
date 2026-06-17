@@ -136,7 +136,7 @@ export default async function StartPage() {
 
         <footer className={styles.footer}>
           Already started?{' '}
-          <Link href="/home" className={styles.footerLink}>Go to your workspaces</Link>
+          <Link href="/home?pick=1" className={styles.footerLink}>Go to your workspaces</Link>
         </footer>
       </div>
     </div>

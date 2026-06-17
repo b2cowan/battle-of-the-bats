@@ -25,9 +25,12 @@ type Props = {
   teamId: string;
   initialCoach: string;
   initialCoachEmail: string | null;
+  /** The registration / access email (teams.email) — the fallback recipient when no
+   *  contact override is set. Used only to spell out where organizer emails will go. */
+  registrationEmail?: string | null;
 };
 
-export default function HeadCoachEditor({ teamId, initialCoach, initialCoachEmail }: Props) {
+export default function HeadCoachEditor({ teamId, initialCoach, initialCoachEmail, registrationEmail }: Props) {
   const router = useRouter();
 
   const [coach, setCoach] = useState(initialCoach ?? '');
@@ -43,6 +46,9 @@ export default function HeadCoachEditor({ teamId, initialCoach, initialCoachEmai
   const trimmedName = coach.trim();
   const trimmedEmail = coachEmail.trim();
   const emailValid = trimmedEmail === '' || EMAIL_RE.test(trimmedEmail.toLowerCase());
+  // Where organizer emails actually route, based on the LAST SAVED state (not the
+  // in-progress edit): the saved override if set, else the registration email.
+  const routedEmail = (savedEmail ?? '').trim() || (registrationEmail ?? '').trim();
   const dirty =
     trimmedName !== savedCoach.trim() ||
     trimmedEmail.toLowerCase() !== (savedEmail ?? '').trim().toLowerCase();
@@ -112,6 +118,15 @@ export default function HeadCoachEditor({ teamId, initialCoach, initialCoachEmai
 
       {!emailValid && <p className={styles.hint}>Enter a valid email address, or leave it blank.</p>}
       {!trimmedName && <p className={styles.hint}>A head coach name is required.</p>}
+      {/* Routing confirmation — closes the loop so the coach knows where organizer
+          emails go (the registration email never changes here, which is otherwise
+          confusing). Reflects saved state; updates after a successful save. */}
+      {routedEmail && (
+        <p className={styles.routing}>
+          Organizer emails for this team will go to <strong>{routedEmail}</strong>
+          {!(savedEmail ?? '').trim() && ' (your registration email)'}.
+        </p>
+      )}
       {error && <p className={styles.error} role="alert">{error}</p>}
       {saved && !error && <p className={styles.success}>Head coach updated.</p>}
 

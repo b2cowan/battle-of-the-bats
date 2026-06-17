@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, Trash2, Plus, X, Check, CalendarDays } from 'lucide-react';
+import { Pencil, Trash2, Plus, X, Check, CalendarDays, Trophy, Dumbbell } from 'lucide-react';
 import type { BasicCoachTeamEvent } from '@/lib/basic-coach-schedule';
 import CoachEmptyState from './CoachEmptyState';
 import styles from './ScheduleEditor.module.css';
@@ -24,7 +24,10 @@ type EventInput = {
 };
 
 const TYPE_LABEL: Record<EventType, string> = { practice: 'Practice', game: 'Game', event: 'Event' };
-const TYPE_CHIP: Record<EventType, string> = { practice: 'PR', game: 'GM', event: 'EV' };
+// Per-type icon so games / practices / events read differently at a glance (paired with the
+// per-type chip colour in CSS): game = Trophy (lime, the marquee event), practice = Dumbbell
+// (blue/--info, routine training), event = CalendarDays (neutral catch-all).
+const TYPE_ICON: Record<EventType, typeof Trophy> = { practice: Dumbbell, game: Trophy, event: CalendarDays };
 const TYPES: EventType[] = ['practice', 'game', 'event'];
 
 function bySoonest(a: BasicCoachTeamEvent, b: BasicCoachTeamEvent) {
@@ -44,6 +47,16 @@ function addHoursToLocalInput(local: string, hours: number): string {
   const d = new Date(local);
   if (Number.isNaN(d.getTime())) return '';
   d.setHours(d.getHours() + hours);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// Default start for a NEW event: the next top-of-the-hour. Practices/games almost always start
+// on the hour, so pre-filling :00 saves the coach clearing the browser picker's current-minute
+// default (it opens at "now", e.g. 10:22). They can still adjust freely.
+function defaultStartLocal(): string {
+  const d = new Date();
+  d.setHours(d.getHours() + 1, 0, 0, 0); // next hour, :00:00.000
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
@@ -168,8 +181,10 @@ export default function ScheduleEditor({ basicTeamId, initialEvents }: Props) {
                 />
               </li>
             ) : (
-              <li key={ev.id} className={styles.row}>
-                <span className={styles.typeChip} data-type={ev.eventType}>{TYPE_CHIP[ev.eventType]}</span>
+              <li key={ev.id} className={styles.row} data-type={ev.eventType}>
+                <span className={styles.typeChip} data-type={ev.eventType} aria-label={TYPE_LABEL[ev.eventType]}>
+                  {(() => { const Icon = TYPE_ICON[ev.eventType]; return <Icon size={17} aria-hidden />; })()}
+                </span>
                 <div className={styles.rowMain}>
                   <span className={styles.name}>
                     {ev.title}
@@ -245,11 +260,14 @@ function EventForm({
   onSubmit: (input: EventInput) => void;
   onCancel: () => void;
 }) {
+  // New events pre-fill to the next top-of-the-hour (end auto-tracks start + 2h until edited);
+  // editing keeps the saved values verbatim.
+  const initialStart = event ? isoToLocalInput(event.startsAt) : defaultStartLocal();
   const [form, setForm] = useState<FormState>({
     eventType: event?.eventType ?? 'practice',
     title: event?.title ?? '',
-    startsLocal: event ? isoToLocalInput(event.startsAt) : '',
-    endsLocal: event?.endsAt ? isoToLocalInput(event.endsAt) : '',
+    startsLocal: initialStart,
+    endsLocal: event?.endsAt ? isoToLocalInput(event.endsAt) : (event ? '' : addHoursToLocalInput(initialStart, 2)),
     location: event?.location ?? '',
     opponent: event?.opponent ?? '',
     notes: event?.notes ?? '',

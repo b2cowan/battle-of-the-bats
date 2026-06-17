@@ -632,7 +632,7 @@
 
 .teamDetailMeta {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   flex-wrap: wrap;
   color: var(--white-45);
@@ -648,6 +648,36 @@
 }
 .teamDetailMeta a:hover {
   color: var(--fl-text);
+}
+
+/* Two labelled identities in the expanded row — head coach (name + contact email)
+   and registered-by (account email) — STACKED so they never blur into one person.
+   Each label is a quiet uppercase tag; the value inherits the meta colour with the
+   email as a normal meta link; the registered-on date trails below, dimmer. */
+.teamIdentityStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.teamIdentity {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  color: var(--white-60);
+}
+.teamIdentityLabel {
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--white-40);
+}
+.teamRegisteredOn {
+  font-size: 0.74rem;
+  color: var(--white-40);
 }
 
 /* Actions inline with meta, right-aligned */

@@ -39,6 +39,9 @@ interface TeamRecord {
   name: string;
   coach: string;
   email: string;
+  /** Optional coach contact override (teams.coach_email). When set, coach-facing
+   *  organizer emails route here instead of the registration `email`. */
+  coach_email?: string | null;
   division_id: string;
   division_name: string;
   status: 'pending' | 'accepted' | 'rejected' | 'waitlist';
@@ -1181,8 +1184,29 @@ export default function UnifiedTeamsPage() {
           {/* ── Single row: meta left, actions right ── */}
           <div className={styles.teamDetailMetaRow}>
             <div className={styles.teamDetailMeta}>
-              {team.email ? <a href={`mailto:${team.email}`}>{team.email}</a> : <span>Email not provided</span>}
-              <span>Registered {new Date(team.registered_at).toLocaleDateString()}</span>
+              {/* Two distinct identities, STACKED so the head-coach NAME never reads as
+                  the registrant's. Head coach = teams.coach (+ coach_email, the
+                  organizer-mail target when set); Registered by = teams.email (the
+                  account/access identity). The registrant NAME isn't on teams (it lives
+                  in auth metadata), so "Registered by" is email-only by design. */}
+              <div className={styles.teamIdentityStack}>
+                {team.coach?.trim() && (
+                  <span className={styles.teamIdentity}>
+                    <span className={styles.teamIdentityLabel}>Head coach:</span>{' '}
+                    {team.coach.trim()}
+                    {team.coach_email?.trim() && (
+                      <> (<a href={`mailto:${team.coach_email.trim()}`}>{team.coach_email.trim()}</a>)</>
+                    )}
+                  </span>
+                )}
+                <span className={styles.teamIdentity}>
+                  <span className={styles.teamIdentityLabel}>Registered by:</span>{' '}
+                  {team.email
+                    ? <a href={`mailto:${team.email}`}>{team.email}</a>
+                    : <span>Email not provided</span>}
+                </span>
+                <span className={styles.teamRegisteredOn}>Registered {new Date(team.registered_at).toLocaleDateString()}</span>
+              </div>
             </div>
             <div className={styles.teamQuickActions}>
               {team.status !== 'accepted' && (

@@ -1,5 +1,6 @@
 import { supabaseAdmin } from './supabase-admin';
 import { isPlatformAdminEmail } from './platform-auth';
+import { deriveCoachLifecycleChip } from './coach-tournament-lifecycle';
 
 export type BasicCoachTeam = {
   id: string;
@@ -10,6 +11,23 @@ export type BasicCoachTeam = {
   ageGroup: string | null;
   teamWorkspaceId: string | null;
   createdAt: string;
+  /** Tier-2 team-ops capabilities the coach has turned on (mig 131) — drives Coaches
+   *  Portal progressive-disclosure nav visibility. Empty = tournament-only coach. */
+  activatedFeatures: string[];
+};
+
+/** Rich per-team context for the team-scoped Coaches Portal shell (nav rebuild). */
+export type CoachTeamContext = {
+  id: string;
+  name: string;
+  /** Tier-2 capability keys turned on for this team (drives which sections show in the rail). */
+  activatedFeatures: string[];
+  /** The team's most-relevant lifecycle chip across its registrations (live > game-day >
+   *  upcoming > future > complete). null when the team has no dated registrations. */
+  lifecycle: { state: string; label: string; rank: number } | null;
+  /** tournament-registration (`teams`) ids under this team — lets the shell resolve the
+   *  current team from a `/coaches/tournaments/{registrationId}` path. */
+  registrationIds: string[];
 };
 
 export type BasicCoachTeamRegistration = {
@@ -80,7 +98,15 @@ type BasicCoachTeamRow = {
   age_group: string | null;
   team_workspace_id: string | null;
   created_at: string;
+  activated_features: unknown;
 };
+
+/** Coerce the JSONB `activated_features` column into a clean string[] (defensive: the
+ *  column defaults to [] but legacy/hand-edited rows could hold anything). */
+function parseActivatedFeatures(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((v): v is string => typeof v === 'string');
+}
 
 type TournamentTeamRow = {
   id: string;
@@ -138,6 +164,7 @@ function mapBasicCoachTeam(row: BasicCoachTeamRow): BasicCoachTeam {
     ageGroup: row.age_group,
     teamWorkspaceId: row.team_workspace_id,
     createdAt: row.created_at,
+    activatedFeatures: parseActivatedFeatures(row.activated_features),
   };
 }
 
@@ -224,7 +251,7 @@ export async function getBasicCoachTeamsForUser(userId: string): Promise<BasicCo
 
   const { data: teams, error: teamsError } = await supabaseAdmin
     .from('basic_coach_teams')
-    .select('id, name, primary_coach_name, primary_coach_email, sport, age_group, team_workspace_id, created_at')
+    .select('id, name, primary_coach_name, primary_coach_email, sport, age_group, team_workspace_id, created_at, activated_features')
     .in('id', teamIds)
     .order('created_at', { ascending: true });
 
@@ -276,7 +303,7 @@ export async function getBasicCoachTeamForUser(params: {
 
   const { data, error } = await supabaseAdmin
     .from('basic_coach_teams')
-    .select('id, name, primary_coach_name, primary_coach_email, sport, age_group, team_workspace_id, created_at')
+    .select('id, name, primary_coach_name, primary_coach_email, sport, age_group, team_workspace_id, created_at, activated_features')
     .eq('id', params.basicCoachTeamId)
     .maybeSingle();
 
@@ -557,6 +584,101 @@ export async function getBasicCoachTournamentTeamsForUser(params: {
     ...team,
     registrations: team.registrations.sort((a, b) => b.registeredAt.localeCompare(a.registeredAt)),
   }));
+}
+
+/**
+ * Rich per-team context for the team-scoped Coaches Portal shell (nav rebuild). Per team:
+ * its activated Tier-2 features (nav visibility), its most-relevant lifecycle chip (the rail
+ * status indicator — best across the team's registrations), and its registration ids (so the
+ * shell can resolve the "current team" from a `/coaches/tournaments/{registrationId}` path).
+ * Reuses getBasicCoachTournamentTeamsForUser (teams + registrations + activatedFeatures) and
+ * adds one tournament-dates lookup to compute the chips.
+ */
+export async function getCoachTeamContextsForUser(params: {
+  userId: string;
+  email?: string | null;
+  today?: string;
+}): Promise<CoachTeamContext[]> {
+  const teams = await getBasicCoachTournamentTeamsForUser({ userId: params.userId, email: params.email });
+  const today = params.today ?? new Date().toISOString().split('T')[0];
+
+  // One dates lookup for every tournament referenced by any registration.
+  const tournamentIds = [
+    ...new Set(
+      teams.flatMap(t => t.registrations.map(r => r.tournamentId).filter((id): id is string => Boolean(id))),
+    ),
+  ];
+  const datesById = new Map<string, { start: string | null; end: string | null }>();
+  if (tournamentIds.length > 0) {
+    const { data, error } = await supabaseAdmin
+      .from('tournaments')
+      .select('id, start_date, end_date')
+      .in('id', tournamentIds);
+    if (error) throw error;
+    for (const row of (data ?? []) as Array<{ id: string; start_date: string | null; end_date: string | null }>) {
+      datesById.set(row.id, { start: row.start_date, end: row.end_date });
+    }
+  }
+
+  return teams.map(team => {
+    // Best (lowest-rank) lifecycle chip across the team's registrations → the rail status.
+    let best: { state: string; label: string; rank: number } | null = null;
+    for (const reg of team.registrations) {
+      const dates = reg.tournamentId ? datesById.get(reg.tournamentId) : null;
+      if (!dates) continue;
+      const chip = deriveCoachLifecycleChip(dates.start, dates.end, today);
+      if (chip.state === 'unknown') continue;
+      if (!best || chip.rank < best.rank) best = chip;
+    }
+    return {
+      id: team.id,
+      name: team.name,
+      activatedFeatures: team.activatedFeatures,
+      lifecycle: best,
+      registrationIds: team.registrations.map(r => r.id),
+    };
+  });
+}
+
+/** The Tier-2 capability keys a coach can activate (mig 131 `activated_features`). */
+export const ACTIVATABLE_FEATURES = ['roster', 'schedule', 'fees', 'announcements'] as const;
+export type ActivatableFeature = (typeof ACTIVATABLE_FEATURES)[number];
+
+export function isActivatableFeature(value: string): value is ActivatableFeature {
+  return (ACTIVATABLE_FEATURES as readonly string[]).includes(value);
+}
+
+/**
+ * Turn a Tier-2 feature on (or off) for a basic team — drives Coaches Portal nav visibility
+ * (progressive disclosure). Idempotent: activating an already-active feature is a no-op.
+ * Caller MUST have already verified ownership (the API guards with requireBasicCoachTeamOwner).
+ * Returns the resulting activated_features set.
+ */
+export async function setBasicCoachTeamFeature(
+  basicCoachTeamId: string,
+  feature: ActivatableFeature,
+  active: boolean,
+): Promise<string[]> {
+  const { data, error } = await supabaseAdmin
+    .from('basic_coach_teams')
+    .select('activated_features')
+    .eq('id', basicCoachTeamId)
+    .maybeSingle();
+  if (error) throw error;
+
+  const current = parseActivatedFeatures(data?.activated_features);
+  const set = new Set(current);
+  if (active) set.add(feature);
+  else set.delete(feature);
+  const next = [...set];
+
+  const { error: updErr } = await supabaseAdmin
+    .from('basic_coach_teams')
+    .update({ activated_features: next })
+    .eq('id', basicCoachTeamId);
+  if (updErr) throw updErr;
+
+  return next;
 }
 
 export async function getBasicCoachTournamentHistoryForTeam(

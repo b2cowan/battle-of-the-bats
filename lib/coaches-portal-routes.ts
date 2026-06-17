@@ -26,8 +26,10 @@ export type SearchParamsRecord = Record<string, string | string[] | undefined>;
 export function isCoachPortalShellPath(pathname: string): boolean {
   return (
     pathname === COACHES_HOME_PATH ||
-    pathname.startsWith(`${COACHES_TOURNAMENTS_PATH}`) ||
-    pathname.startsWith(COACHES_TEAMS_PATH) ||
+    pathname === COACHES_TOURNAMENTS_PATH ||
+    pathname.startsWith(`${COACHES_TOURNAMENTS_PATH}/`) ||
+    pathname === COACHES_TEAMS_PATH ||
+    pathname.startsWith(`${COACHES_TEAMS_PATH}/`) ||
     pathname === COACHES_TEAM_PATH ||
     pathname.startsWith(`${COACHES_TEAM_PATH}/`)
   );

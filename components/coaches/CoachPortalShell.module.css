@@ -33,10 +33,27 @@
   letter-spacing: 0.02em;
 }
 
+.brandLockup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
 .brandText {
   font-weight: 800;
   font-size: 0.95rem;
   letter-spacing: -0.01em;
+}
+
+.brandSub {
+  font-family: var(--font-data, monospace);
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--white-40);
+  white-space: nowrap;
 }
 
 /* ── Desktop rail ─────────────────────────────────────────────────────────── */
@@ -119,51 +136,77 @@
   background: var(--logic-lime);
 }
 
-.railTeams {
-  margin-top: 1.1rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--border-2);
+/* ── Team context (rail-top: name + chip, or a switcher when >1) ── */
+.teamContext {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem 0.65rem;
+  margin-bottom: 0.85rem;
+  background: var(--white-03, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
 }
 
-.railTeamsLabel {
-  margin: 0 0 0.5rem;
-  padding: 0 0.75rem;
-  font-family: var(--font-data, monospace);
-  font-size: 0.6rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--white-40);
-}
-
-.railTeam {
+.teamContextHead {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.45rem 0.75rem;
-  border-radius: var(--radius);
-  color: var(--white-70);
-  text-decoration: none;
-  font-size: 0.82rem;
-  transition: background 0.15s, color 0.15s;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
-.railTeam:hover {
-  background: var(--white-05);
-  color: var(--white);
-}
-
-.railTeamDot {
+.teamDot {
   width: 10px;
   height: 10px;
   border-radius: 3px;
   flex-shrink: 0;
 }
 
-.railTeamName {
+.teamName {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--white);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.teamSelect {
+  width: 100%;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--white);
+  background: var(--surface-2, var(--surface));
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+}
+.teamSelect:focus {
+  outline: none;
+  border-color: var(--logic-lime);
+}
+
+.teamChip,
+.teamChipLive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.teamChip { color: var(--white-45); }
+.teamChipLive { color: var(--logic-lime); }
+.teamChipDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--logic-lime);
 }
 
 .railFooter {
@@ -172,29 +215,33 @@
   border-top: 1px solid var(--border-2);
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.1rem;
 }
 
-.railSignOut {
+.railFooterLink {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
+  width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border-2);
+  border: none;
   border-radius: var(--radius);
   background: transparent;
-  color: var(--white-60);
-  font-size: 0.8rem;
+  color: var(--white-55);
+  font-size: 0.82rem;
   font-weight: 600;
+  text-decoration: none;
+  text-align: left;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background 0.15s, color 0.15s;
 }
 
-.railSignOut:hover {
+.railFooterLink:hover {
   background: var(--white-05);
   color: var(--white);
-  border-color: var(--border);
 }
+.railFooterLink svg { color: var(--white-40); flex-shrink: 0; }
+.railFooterLink:hover svg { color: var(--white-70); }
 
 .railLive {
   padding: 0 0.75rem;
@@ -234,28 +281,41 @@
   }
 }
 
-/* ── Mobile account chip + bottom-sheet (≤1023px) ─────────────────────────── */
-.acctChip {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
-  background: rgba(var(--logic-lime-rgb), 0.15);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
-  color: var(--logic-lime);
-  font-family: var(--font-data, monospace);
-  font-weight: 800;
-  font-size: 0.82rem;
-  letter-spacing: 0.02em;
-  cursor: pointer;
+/* ── Mobile top bar: team-first context strip (≤1023px) ───────────────────── */
+/* A small "FL" mark for brand presence, then the TEAM takes the rest of the bar (the team is
+   the high-value info; the wordmark is dropped on mobile). Account + switcher live in "More". */
+.topbarMark {
   flex-shrink: 0;
-  text-transform: uppercase;
-  transition: background 0.15s;
+  display: inline-flex;
+  text-decoration: none;
 }
 
-.acctChip:hover {
-  background: rgba(var(--logic-lime-rgb), 0.22);
+.topbarTeam {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  margin-left: 0.7rem;
+  flex: 1;
+}
+.topbarTeamDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.topbarTeamName {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The lifecycle chip never shrinks the name to nothing — it sits after, can wrap off if tight. */
+.topbarTeam .teamChip,
+.topbarTeam .teamChipLive {
+  flex-shrink: 0;
 }
 
 .sheetOverlay {
@@ -296,6 +356,24 @@
   white-space: nowrap;
 }
 
+.sheetSelect {
+  width: 100%;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--white);
+  background: var(--surface-2, var(--surface));
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 2.2rem 0.6rem 0.6rem;
+  appearance: none;
+  cursor: pointer;
+}
+.sheetSelect:focus {
+  outline: none;
+  border-color: var(--logic-lime);
+}
+
 .sheetItem {
   display: flex;
   align-items: center;
@@ -317,6 +395,53 @@
 .sheetItem:hover {
   background: var(--white-05);
   color: var(--white);
+}
+
+.sheetItemActive {
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  color: var(--logic-lime);
+}
+.sheetItemActive svg { color: var(--logic-lime); }
+
+.sheetItemChevron {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--white-30);
+}
+
+/* "Current team" / "Sections" labels inside the More sheet. */
+.sheetBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.25rem 0.25rem 0.5rem;
+}
+.sheetBlockLabel {
+  padding: 0.4rem 0.5rem 0.2rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--white-40);
+}
+
+.sheetSelectShell {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.sheetSelectChevron {
+  position: absolute;
+  right: 0.6rem;
+  pointer-events: none;
+  color: var(--logic-lime);
+}
+
+.sheetDivider {
+  height: 1px;
+  background: var(--border-2);
+  margin: 0.4rem 0;
 }
 
 /* ── Content region ───────────────────────────────────────────────────────── */
@@ -374,6 +499,11 @@
   text-decoration: none;
   font-size: 0.68rem;
   font-weight: 600;
+  /* Reset for the "More" <button> so it matches the <Link> tabs. */
+  border: none;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
   transition: color 0.15s, transform 0.12s;
 }
 

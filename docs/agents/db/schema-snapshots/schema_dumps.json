@@ -1055,6 +1055,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "basic_coach_teams",
+        "pos": 12,
+        "column_name": "activated_features",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
         "table_name": "billing_retained_records",
         "pos": 1,
         "column_name": "id",

@@ -2,6 +2,28 @@
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 2px;
   background: var(--surface);
+  /* Leave breathing room when a deep-link scrolls this card to the top. */
+  scroll-margin-top: 1rem;
+}
+
+/* Deep-link arrival: a one-shot lime glow so the targeted card is unmistakable. */
+.highlight {
+  animation: cardHighlight 1.8s ease-out;
+}
+
+@keyframes cardHighlight {
+  0% {
+    border-color: rgba(var(--logic-lime-rgb), 0.9);
+    box-shadow: 0 0 0 1px rgba(var(--logic-lime-rgb), 0.6), 0 0 18px rgba(var(--logic-lime-rgb), 0.35);
+  }
+  100% {
+    border-color: rgba(var(--blueprint-blue-rgb), 0.2);
+    box-shadow: 0 0 0 1px rgba(var(--logic-lime-rgb), 0), 0 0 18px rgba(var(--logic-lime-rgb), 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .highlight { animation: none; }
 }
 
 .summary {

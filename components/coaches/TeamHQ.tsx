@@ -271,7 +271,7 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
 
   const checklist: ChecklistItem[] = [];
   if (phase === 'pending') {
-    checklist.push({ key: 'registered', label: 'Registered', state: registeredDateLabel ?? 'Submitted', done: true });
+    checklist.push({ key: 'registered', label: 'Registered', state: registeredDateLabel ? `Submitted ${registeredDateLabel}` : 'Submitted', done: true });
     checklist.push({ key: 'decision', label: 'Decision', state: 'Awaiting organizer', done: false, awaiting: true });
   } else if (accepted && phase !== 'result') {
     // Result phase collapses the prep checklist (the event is over) — the afterglow block below

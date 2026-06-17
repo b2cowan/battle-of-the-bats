@@ -4,6 +4,39 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-16 — Coaches Portal mobile shell: adopt the admin "4 primary + More" bottom-nav pattern
+
+**Decision:** The org-less Coaches Portal mobile shell (`CoachPortalShell.tsx`, ≤1023px) is realigned to the established `AdminBottomNav` pattern. (1) **TOP BAR** becomes a team-first context strip — team color-dot + team name (full width, `--white` `0.95rem` `700`) + lifecycle chip; the "Coaches Portal" wordmark is dropped on mobile (optional small "FL" mark only), and the standalone email-initial account chip is removed. (2) **BOTTOM NAV** is fixed at 4 primary tabs (Overview, Tournaments, + first two activated Tier-2 / Explore) + a 5th **"More"** tab (`MoreHorizontal`/`X`). (3) **"More"** opens a single sheet holding: the team switcher (>1 team, "Current team" label, mirroring the admin `tournamentBlock`), ALL overflow sections ("Sections" label), and account utilities (All workspaces, Send feedback, Sign out). `isMoreActive` highlights More when the route is inside it. The previous account bottom-sheet behind the "B" chip is retired (its contents move into More).
+
+**Rationale:** The coach shell invented its own mobile model and hit three failures: the bottom nav capped at 4 and silently dropped activated sections (functional dead-end), the brand outranked the truncated team name (inverted priority), and a bare-letter "B" chip created an opaque second nav home competing with the bottom bar. The admin shell already solved unbounded-section overflow with "4 primary + More" and keeps switcher+account inside More (one overflow home). Adopting it fixes all three, scales to any number of activated Tier-2 sections, puts the team identity first, and gives users the same mobile convention across admin and coach surfaces.
+
+**Applies to:** `components/coaches/CoachPortalShell.tsx` + `CoachPortalShell.module.css` (mobile top bar, bottom nav, account sheet → More sheet). Reuses `AdminBottomNav` conventions (`moreWrap`/`dropdown`/`dropSectionLabel`/`tournamentBlock` equivalents). No new tokens.
+
+---
+
+### 2026-06-16 — Coach schedule: differentiate event types (game vs practice vs event) by colour + icon + row accent
+
+**Decision:** The coach team Schedule list (`components/coaches/ScheduleEditor.tsx`) previously distinguished event types only by a 2-letter lime monogram (`GM`/`PR`/`EV`) — identical colour for all three, so games and practices blurred together. Now differentiated on three reinforcing axes, all reusing existing tokens:
+1. **Per-type chip colour** (`.typeChip[data-type]`): **game = `--logic-lime`** (the marquee event keeps the brand accent), **practice = `--info-rgb`** (blue — the platform's "scheduled/routine" status colour), **event = neutral** (`--white-50` text / `--white-05` fill / `--border-2`).
+2. **Icon instead of letters** (`TYPE_ICON` map): game = `Trophy`, practice = `Dumbbell`, event = `CalendarDays` (16–17px lucide, `aria-label` carries the type name for SR).
+3. **Left status-strip row accent** (`.row[data-type]`): game = `border-left: 3px solid var(--logic-lime)` (strong), practice = `rgba(var(--info-rgb),0.5)` (faint), event = default border (quietest) — same convention as the admin/public schedule rows.
+
+**Rationale:** Owner: games and practices should "stand out as different a little more." The one element meant to distinguish them (the chip) was visually identical across types. Colour is the fastest scan axis; icon reinforces it language-free; the row-edge strip makes games "pop" as the list scans (the established status-strip trick). Game = lime because it's the marquee event; practice = `--info` blue because that's the platform's routine/scheduled colour (pairs cleanly against lime, and avoids amber which already means "submitted/needs-attention" on schedule status-strips). No new tokens.
+
+**Applies to:** `components/coaches/ScheduleEditor.tsx` (`TYPE_ICON`, row `data-type`, icon chip), `components/coaches/ScheduleEditor.module.css` (`.typeChip[data-type='game'|'practice'|'event']`, `.row[data-type='game'|'practice']`). Pattern for any future event/type list: colour + icon + optional left status-strip, keyed off the existing status-colour RGB tokens; reserve lime for the primary/marquee type.
+
+---
+
+### 2026-06-15 — Coach pending portal: status-hero + persistent "what happens next" strip + demoted manage zone
+
+**Decision:** The coach pending tournament page (`/coaches/tournaments/{teamId}`, pending/waitlist phase) is restructured from a flat build-order card stack into three tiers: **(1)** the `TeamHQ` status hero (the answer — unchanged except the pending checklist "Registered" state now reads **"Submitted {date}"** to kill the ambiguous bare date); **(2)** a NEW persistent, non-dismissible **"What happens next"** 3-step strip (`components/coaches/CoachNextSteps.tsx` — borderless numbered rows on `--surface`/`--border`/`--radius`, lime step markers reusing the `CoachWelcomeBanner` `.iconWrap` recipe at `1.5rem`; NOT a `card`, NOT the lime banner — it carries the forward-orientation the dismissible welcome banner used to own, so it survives dismissal); **(3)** a visually-demoted **"Manage your entry"** zone (Head Coach in a `CollapsibleCard`, `defaultOpen={false}` while pending → `true` once accepted; a `.zoneNote` "Optional for now…" line). The dismissible `CoachWelcomeBanner` slims to a one-line lime greeting + resource links (body paragraph + "What happens next" block removed). The **Registration Details card is deleted on the pending phase** (fully duplicated by the hero; kept for accepted+). The "Back to Coaches Portal" breadcrumb is removed. New pending order: **hero → what-happens-next strip → manage-your-entry (collapsed) → announcements.**
+
+**Rationale:** This is the first place a brand-new coach lands and they know nothing about the platform. The only orientation lived in a dismissible banner; the rest was equal-weight cards in build order (head coach → reg details → announcements) including a verbatim-duplicate details card. A persistent quiet strip — same register as the 2026-06-05 dashboard metric-strip decision ("small info doesn't warrant box weight") — gives durable "what now" orientation; `CollapsibleCard` demotes optional-while-pending prep without removing it; deleting the duplicate card removes redundancy. Reserve the lime wash for the celebratory dismissible greeting only, so the persistent strip (neutral) and the greeting (lime) don't compete.
+
+**Applies to:** `app/coaches/tournaments/[teamId]/page.tsx`, `app/coaches/tournaments/[teamId]/detail.module.css` (`.zoneNote`; removed `.breadcrumb`), `components/coaches/TeamHQ.tsx`, `components/coaches/CoachWelcomeBanner.tsx` (+ module CSS), new `components/coaches/CoachNextSteps.tsx` (+ module CSS). Reuses `CollapsibleCard`. No new tokens; no literal hex (lime `rgba(217,249,157,…)` values match existing banner usage). Pattern: phase-adaptive coach pages lead with a status hero, carry forward-orientation in a persistent borderless strip (not a card), and demote optional-while-pending actions via `CollapsibleCard`. **Companion decision STAGED (separate session):** team-scoped coach shell nav mirroring tournament-admin (team name + status chip at rail top, dropdown only when >1 team; drop the "My Teams" nav link + team-list section; add a portal subtitle).
+
+---
+
 ### 2026-06-15 — Schedule toolbar (rev 7): dropdown-overlap bug fixed; narrower division select; actions stay pinned right
 
 **Decision:** Two real fixes + one reverted experiment, all MEASURED in Playwright.

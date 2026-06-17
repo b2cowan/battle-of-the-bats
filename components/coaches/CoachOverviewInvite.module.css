@@ -1,0 +1,59 @@
+/* Variant-A discovery nudge + its dismissed faint-line state (team Overview). */
+
+.invite {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 0.85rem;
+  background: var(--white-03, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--white-60);
+}
+
+.inviteIcon {
+  flex-shrink: 0;
+  margin-top: 0.12rem;
+  color: var(--logic-lime);
+}
+
+.inviteText { flex: 1; min-width: 0; }
+
+.inviteLink {
+  color: var(--logic-lime);
+  font-weight: 600;
+  text-decoration: none;
+}
+.inviteLink:hover { text-decoration: underline; }
+
+.inviteDismiss {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: -0.2rem -0.2rem 0 0;
+  border: none;
+  background: transparent;
+  color: var(--white-40);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.inviteDismiss:hover { color: var(--white); background: var(--white-08, rgba(255, 255, 255, 0.08)); }
+
+/* Degraded faint line — what dismissal leaves behind (thread not cut). */
+.faintLine {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--white-40);
+  text-decoration: none;
+}
+.faintLine svg { flex-shrink: 0; color: var(--white-40); }
+.faintLine:hover { color: var(--logic-lime); }
+.faintLine:hover svg { color: var(--logic-lime); }

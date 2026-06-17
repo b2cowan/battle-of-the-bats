@@ -72,6 +72,23 @@
   color: var(--white-60);
 }
 
+/* Quiet routing confirmation — tells the coach where organizer emails actually go.
+   Informational (not validation/success): muted text on a faint surface. */
+.routing {
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--white-60);
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+}
+.routing strong {
+  color: var(--white);
+  font-weight: 600;
+}
+
 .error {
   margin: 0;
   padding: 0.6rem 0.8rem;

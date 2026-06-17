@@ -217,7 +217,7 @@ export default function StartTeamForm({ isLoggedIn, email }: { isLoggedIn: boole
         <div className={authStyles.footer}>
           <p className={authStyles.footerText}>
             {isLoggedIn ? (
-              <Link href="/home" className={authStyles.footerLink}>← Back to your workspaces</Link>
+              <Link href="/home?pick=1" className={authStyles.footerLink}>← Back to your workspaces</Link>
             ) : (
               <>Already have an account?{' '}
                 <Link href={`/auth/login?next=${encodeURIComponent('/start/team')}`} className={authStyles.footerLink}>Sign in</Link>

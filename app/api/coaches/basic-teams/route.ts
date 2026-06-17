@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import {
   getBasicCoachTeamsForUser,
+  getCoachTeamContextsForUser,
   getPendingTournamentRegistrationForUser,
   linkTournamentRegistrationToBasicCoachTeam,
   canUserAccessTournamentRegistration,
@@ -46,9 +47,16 @@ export const GET = withObservability(async (req: NextRequest) => {
 
     const url = new URL(req.url);
     const registrationId = url.searchParams.get('registrationId');
+    // The team-scoped shell passes ?context=1 for the richer per-team context (lifecycle
+    // chip, activated features, registration ids). The register-prefill / join callers omit
+    // it and don't pay for the extra tournament-dates lookup.
+    const wantContext = url.searchParams.get('context') === '1';
 
-    const [teams, pendingRegistration, access] = await Promise.all([
+    const [teams, teamContexts, pendingRegistration, access] = await Promise.all([
       getBasicCoachTeamsForUser(user.id),
+      wantContext
+        ? getCoachTeamContextsForUser({ userId: user.id, email: user.email })
+        : Promise.resolve(null),
       registrationId
         ? getPendingTournamentRegistrationForUser(user.id, user.email, registrationId)
         : Promise.resolve(null),
@@ -60,6 +68,7 @@ export const GET = withObservability(async (req: NextRequest) => {
     return json({
       user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, name: user.name },
       teams,
+      ...(wantContext ? { teamContexts } : {}),
       pendingRegistration,
       // Already linked to this account → the join page skips the "choose team" interstitial.
       alreadyLinked: access === 'explicit',

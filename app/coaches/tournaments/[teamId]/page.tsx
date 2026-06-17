@@ -12,7 +12,7 @@ import {
 } from '@/lib/coaches-status';
 import { buildCoachTournamentStatus } from '@/lib/coach-status-model';
 import { deriveCoachTournamentPhase } from '@/lib/coach-tournament-phase';
-import { CalendarClock } from 'lucide-react';
+import { CalendarClock, UserCog } from 'lucide-react';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import TournamentStatusBlock from '@/components/coaches/TournamentStatusBlock';
@@ -22,6 +22,8 @@ import TournamentRosterSubmit from '@/components/coaches/TournamentRosterSubmit'
 import HeadCoachEditor from '@/components/coaches/HeadCoachEditor';
 import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
 import CoachWelcomeBanner from '@/components/coaches/CoachWelcomeBanner';
+import CoachNextSteps from '@/components/coaches/CoachNextSteps';
+import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import SharePageButton from '@/components/public/SharePageButton';
 import { parseRosterRequirements } from '@/lib/roster-requirements';
 import type { GameStatus, TournamentSettings } from '@/lib/types';
@@ -391,12 +393,10 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
     if (!hiddenPages.includes('rules')) welcomeResources.push({ href: `${base}/rules`, label: 'Tournament Rules' });
   }
 
+  const isPending = coachPhase === 'pending';
+
   return (
     <div className={styles.page}>
-      <nav className={styles.breadcrumb}>
-        <Link href={COACHES_TOURNAMENTS_PATH}>Back to Coaches Portal</Link>
-      </nav>
-
       {showWelcome && (
         <CoachWelcomeBanner
           teamName={team.name}
@@ -440,6 +440,14 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
         pendingFeeAmount={pendingFeeAmount}
         todayGames={todayGames}
       />
+
+      {/* Persistent "what happens next" strip — the durable forward-orientation for a
+          pending/waitlist coach (the dismissible welcome banner no longer carries it, so
+          it survives dismissal). Pending/waitlist only; accepted teams get the prep
+          checklist + status block instead. */}
+      {(team.status === 'pending' || team.status === 'waitlist') && (
+        <CoachNextSteps status={team.status === 'waitlist' ? 'waitlist' : 'pending'} />
+      )}
 
       {/* 5i game-day bridge — placed directly under the hero so the live scorebug
           + opponents sit in the "hero zone" for accepted teams with a published
@@ -512,31 +520,49 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
 
       {/* 5l — head-coach + contact assignment. The registrant sets who coaches this team for
           the event + an optional contact email; writes teams.coach / teams.coach_email. The
-          email never overwrites the team's access/claim email. */}
+          email never overwrites the team's access/claim email. While PENDING this is optional
+          prep, so it's demoted into a "Manage your entry" zone and collapsed by default
+          (CollapsibleCard keeps the form mounted, so state survives the collapse). Once accepted
+          it expands by default — head coach / roster become real prep tasks. */}
       {showHeadCoach && (
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Head coach</h2>
-          <HeadCoachEditor
-            teamId={teamId}
-            initialCoach={team.coach ?? ''}
-            initialCoachEmail={team.coach_email ?? null}
-          />
+          <h2 className={styles.sectionTitle}>Manage your entry</h2>
+          {isPending && (
+            <p className={styles.zoneNote}>Optional for now — you can set this anytime before the event.</p>
+          )}
+          <CollapsibleCard
+            title="Head coach"
+            icon={<UserCog size={15} aria-hidden />}
+            defaultOpen={!isPending}
+          >
+            <HeadCoachEditor
+              teamId={teamId}
+              initialCoach={team.coach ?? ''}
+              initialCoachEmail={team.coach_email ?? null}
+              registrationEmail={team.email ?? null}
+            />
+          </CollapsibleCard>
         </section>
       )}
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Registration Details</h2>
-        <div className="card">
-          <dl className={styles.detailGrid}>
-            <dt>Team</dt><dd>{team.name}</dd>
-            {team.coach && <><dt>Coach</dt><dd>{team.coach}</dd></>}
-            {division && <><dt>Division</dt><dd>{division.name}</dd></>}
-            {dateRange && <><dt>Dates</dt><dd>{dateRange}</dd></>}
-            <dt>Registered</dt>
-            <dd>{new Date(team.registered_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
-          </dl>
-        </div>
-      </section>
+      {/* Registration Details — a read-only recap. Suppressed on PENDING (the hero already
+          shows team / division / dates / registered date, so the card was pure duplication);
+          kept for accepted/later phases where the hero narrative differs. */}
+      {!isPending && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Registration Details</h2>
+          <div className="card">
+            <dl className={styles.detailGrid}>
+              <dt>Team</dt><dd>{team.name}</dd>
+              {team.coach && <><dt>Coach</dt><dd>{team.coach}</dd></>}
+              {division && <><dt>Division</dt><dd>{division.name}</dd></>}
+              {dateRange && <><dt>Dates</dt><dd>{dateRange}</dd></>}
+              <dt>Registered</dt>
+              <dd>{new Date(team.registered_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
+            </dl>
+          </div>
+        </section>
+      )}
 
       {/* When there's no live bridge to show, keep the schedule empty/unpublished
           notes in their normal position (the bridge above owns the populated case). */}

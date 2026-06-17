@@ -7,20 +7,6 @@
   padding: 2rem 1.5rem 4rem;
 }
 
-.breadcrumb {
-  margin-bottom: 1.5rem;
-  font-size: 0.82rem;
-}
-
-.breadcrumb a {
-  color: var(--white-60);
-  text-decoration: none;
-}
-
-.breadcrumb a:hover {
-  color: var(--logic-lime);
-}
-
 /* ── Header ─────────────────────────────────────────────────────────────── */
 .header {
   display: flex;
@@ -64,6 +50,15 @@
   letter-spacing: 0.12em;
   color: var(--white-40);
   margin: 0 0 0.6rem;
+}
+
+/* One-line note under a demoted section heading (e.g. the pending "Manage your
+   entry" zone) — signals the actions below are optional, not required. */
+.zoneNote {
+  margin: -0.2rem 0 0.7rem;
+  font-size: 0.8rem;
+  color: var(--white-50);
+  line-height: 1.45;
 }
 
 /* Organizer-owned "nothing here yet" note — text-only (the coach can't act

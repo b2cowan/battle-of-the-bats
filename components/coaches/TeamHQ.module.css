@@ -218,6 +218,33 @@
   .heroWatermark {
     font-size: 6rem;
   }
+
+  /* The status badge drops to its own row under the headline. On a phone the
+     52px monogram + the badge crushed .heroHeadText to ~140px, wrapping the
+     title to 3 lines and floating the badge beside ragged sub text. flex-start
+     stops the short badge centering against the tall text block. */
+  .heroHead {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    column-gap: 0.85rem;
+    row-gap: 0.55rem;
+  }
+
+  /* The text column needs an explicit basis so it doesn't share the row with
+     the inline badge; once the badge wraps (below) it grows to fill the row. */
+  .heroHeadText {
+    flex: 1 1 calc(100% - 52px - 0.85rem);
+  }
+
+  /* Badge wraps to its own line, indented to align under the headline column
+     (not the monogram) so it reads as belonging to that title. NOTE: `.badge`
+     is a GLOBAL class, so it must be reached via :global() inside this module —
+     a bare `.badge` here would (wrongly) look for a module-scoped class. */
+  .heroHead > :global(.badge) {
+    order: 3;
+    flex-basis: 100%;
+    margin-left: calc(52px + 0.85rem);
+  }
 }
 
 @media (min-width: 768px) {

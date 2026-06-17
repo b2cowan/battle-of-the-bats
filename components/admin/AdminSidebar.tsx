@@ -592,7 +592,7 @@ export default function AdminSidebar() {
               <Home size={15} /> Back to Site
             </Link>
           )}
-          <Link href="/home" className={styles.footerLink} id="admin-all-workspaces">
+          <Link href="/home?pick=1" className={styles.footerLink} id="admin-all-workspaces">
             <LayoutGrid size={15} /> All Workspaces
           </Link>
           <Link

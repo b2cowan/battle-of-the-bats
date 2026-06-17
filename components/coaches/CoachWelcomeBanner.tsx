@@ -3,18 +3,18 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { PartyPopper, X, CalendarDays, BookOpen, Home, ListChecks } from 'lucide-react';
+import { PartyPopper, X, CalendarDays, BookOpen, Home } from 'lucide-react';
 import styles from './CoachWelcomeBanner.module.css';
 
 type ResourceLink = { href: string; label: string };
 
 /**
- * First-run onboarding banner shown ONCE on the coach's tournament record, immediately after they
- * register (the register flow redirects here with `?welcome=1`). Most coaches don't know the
- * Coaches Portal exists until this moment, so the banner congratulates them, explains what the
- * portal is and how it relates to the tournament, surfaces the pending status, and points to the
- * tournament's public resources. Dismissing it strips the `welcome` param so a refresh won't show
- * it again — no DB state, no "seen" flag.
+ * First-run greeting shown ONCE on the coach's tournament record, immediately after they
+ * register (the register flow redirects here with `?welcome=1`). It's a thin, celebratory
+ * one-liner + the tournament's public resource links — orientation ("what is this portal,
+ * what happens next") lives in the persistent CoachNextSteps strip below, so it survives
+ * dismissal. Dismissing this banner strips the `welcome` param so a refresh won't re-show
+ * it — no DB state, no "seen" flag.
  */
 export default function CoachWelcomeBanner({
   teamName,
@@ -66,26 +66,11 @@ export default function CoachWelcomeBanner({
           </h2>
           <p className={styles.sub}>
             {isWaitlist
-              ? <><strong>{teamName}</strong> is on the waitlist for {tournamentName ?? 'the tournament'} — the organizer will reach out if a spot opens.</>
-              : <><strong>{teamName}</strong> is registered for {tournamentName ?? 'the tournament'} and is now <strong className={styles.pending}>pending the organizer&apos;s review</strong>.</>}
+              ? <><strong>{teamName}</strong> is on the waitlist for {tournamentName ?? 'the tournament'}.</>
+              : <><strong>{teamName}</strong> is in for review at {tournamentName ?? 'the tournament'}.</>}
+            {' '}This is your free <strong>Coaches Portal</strong> for this team.
           </p>
         </div>
-      </div>
-
-      <p className={styles.body}>
-        Welcome to your <strong>Coaches Portal</strong> — your free home base for this team. This is
-        where you&apos;ll track your registration status, see your game schedule once the organizer
-        publishes it, get their announcements, and manage your team. You don&apos;t have to do
-        anything else right now; we&apos;ll keep this page up to date as the organizer reviews your
-        entry and shares how to pay.
-      </p>
-
-      <div className={styles.whatNext}>
-        <ListChecks size={15} aria-hidden className={styles.whatNextIcon} />
-        <span>
-          <strong>What happens next:</strong> the organizer accepts your team and follows up with
-          payment details. Watch this page (and your email) for updates.
-        </span>
       </div>
 
       {resources.length > 0 && (

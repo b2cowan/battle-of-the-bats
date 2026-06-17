@@ -43,7 +43,17 @@ const KIND_LABELS: Record<UserAccessContext['kind'], string> = {
   coaches_premium: 'Coaches Portal',
 };
 
-export default async function UserHomePage() {
+export default async function UserHomePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ pick?: string }>;
+}) {
+  // `?pick=1` forces the launchpad even for single-access users — set by the explicit
+  // "All workspaces" / "Start something new" entry points so they aren't auto-redirected
+  // straight back into their one context (which would make adding a 2nd workspace impossible).
+  const { pick } = (await searchParams) ?? {};
+  const forcePicker = pick === '1';
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -71,14 +81,18 @@ export default async function UserHomePage() {
     redirect('/start');
   }
 
-  // If they have ONLY pending invites (no active context), we now render /home with the
+  // If they have ONLY pending invites (no active context), we render /home with the
   // PendingInvitationsCard so they can Accept/Decline in place — replacing the old
   // context-free bounce into the accept-invite form.
 
-  // Note: single-context users are intentionally NOT auto-redirected here. Landing on
-  // /home (on a base-URL login) lets them see the switcher + "Start something new" so
-  // they can add a second workspace. Deep links skip /home entirely (login honours an
-  // explicit `next` before ever calling getAuthDestination).
+  // Auto-drop single-access users straight into their one area: a chooser with a single
+  // choice is friction. When the user has exactly ONE access context and NO pending invite
+  // to act on, redirect to that context's canonical destination (the same href the card
+  // would link to). Users with >1 context, or any pending invite, still land on the /home
+  // launchpad (switcher + "Start something new"). "All workspaces" remains the way back here.
+  if (!forcePicker && contexts.length === 1 && pendingInvites.length === 0) {
+    redirect(contexts[0].destination);
+  }
 
   return (
     <div className={styles.page}>

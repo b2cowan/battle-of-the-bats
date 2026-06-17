@@ -1218,6 +1218,9 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 <!-- dict:col:basic_coach_teams.team_workspace_id -->
 **`team_workspace_id`** (FK → `team_workspaces.id`, nullable) — the Basic→Premium bridge (gotcha 3).
 
+<!-- dict:col:basic_coach_teams.activated_features -->
+**`activated_features`** (jsonb, NOT NULL, default `'[]'`; mig 131) — coach-opt-in set of **Tier-2 team-ops capabilities** turned on for this team, driving Coaches Portal **progressive-disclosure** nav visibility. JSONB array of feature keys (`roster|schedule|fees|announcements` — app-defined, **not** DB-enforced). Empty `[]` (default) = a brand-new tournament-only coach → ops sections hidden, clean tournament-first nav. A key present → that section appears in the rail. Also backs the persisted-roster opt-in. See [COACH_NAV_REBUILD_PLAN.md](../../projects/active/COACH_NAV_REBUILD_PLAN.md).
+
 ---
 
 ## `basic_coach_team_users`

@@ -14,17 +14,12 @@ import {
   getBasicCoachTeamAnnouncements,
 } from '@/lib/basic-coach-announcements';
 import {
-  COACHES_HOME_PATH,
   COACHES_TOURNAMENTS_PATH,
   coachTeamPath,
 } from '@/lib/coaches-portal-routes';
-import RosterEditor from '@/components/coaches/RosterEditor';
-import ScheduleEditor from '@/components/coaches/ScheduleEditor';
-import FeeEditor from '@/components/coaches/FeeEditor';
-import AnnouncementEditor from '@/components/coaches/AnnouncementEditor';
-import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
 import TeamHQ from '@/components/coaches/TeamHQ';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachOverviewInvite from '@/components/coaches/CoachOverviewInvite';
 import { Rocket, Users, CalendarDays, Megaphone } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { teamColor, teamInitials } from '@/lib/team-color';
@@ -123,10 +118,6 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
 
   return (
     <div className={`${shared.page} ${styles.pageWide}`}>
-      <nav className={styles.breadcrumb}>
-        <Link href={COACHES_HOME_PATH}>Back to Coaches Portal</Link>
-      </nav>
-
       <div
         className={styles.identityBand}
         style={{ '--team-color': teamColor(team.name) } as CSSProperties}
@@ -152,6 +143,18 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         latestHistoryLabel={latestHistoryLabel}
       />
 
+      {/* Discovery nudge (Variant A): a quiet, dismissible invite to turn on the persisted-roster
+          wedge → degrades to a faint line on dismiss (never erased; Explore link stays in the rail).
+          Suppressed during first-run (the onboarding banner leads) and once roster is already on. */}
+      {!isFirstRun && (
+        <section className={shared.section}>
+          <CoachOverviewInvite
+            basicTeamId={basicTeamId}
+            rosterActivated={team.activatedFeatures.includes('roster')}
+          />
+        </section>
+      )}
+
       {isFirstRun && (
         <section className={shared.section}>
           <CoachEmptyState
@@ -159,7 +162,7 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
             eyebrow="Get started"
             headline="Let's set up your team"
             description="Three quick steps and your team home is ready to share."
-            primaryAction={{ label: 'Add your first player', href: '#roster' }}
+            primaryAction={{ label: 'Add your first player', href: `${coachTeamPath(basicTeamId)}/roster` }}
           >
             <ol className={styles.firstRunSteps}>
               <li className={styles.firstRunStep}>
@@ -179,66 +182,9 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         </section>
       )}
 
-      {/* Theme 3 (density 4a): the four primary editors reflow 2-up on desktop
-          (Roster+Schedule, then Fees+Announcements); single-column ≤960px. */}
-      <div className={styles.contentGrid}>
-      {/* Master roster — the coach's primary owned data; leads the page. Identity only
-          (name / jersey / optional contact / consent-gated DOB) — attendance, lineups, and
-          positions stay Premium. The per-tournament roster submission is a later phase. */}
-      <section id="roster" className={shared.section}>
-        <div className={shared.sectionHeader}>
-          <h2 className={shared.sectionTitle}>Roster</h2>
-          <span className={styles.rosterCount}>
-            {players.length} {players.length === 1 ? 'player' : 'players'}
-          </span>
-        </div>
-        <RosterEditor basicTeamId={basicTeamId} initialPlayers={players} />
-      </section>
-
-      {/* Schedule — the coach's practices/games; parents are reached via comms (later slice).
-          Basic schedule only (no recurrence/scores/attendance — those stay Premium). */}
-      <section className={shared.section}>
-        <div className={shared.sectionHeader}>
-          <h2 className={shared.sectionTitle}>Schedule</h2>
-          <span className={styles.rosterCount}>
-            {events.length} {events.length === 1 ? 'event' : 'events'}
-          </span>
-        </div>
-        <ScheduleEditor basicTeamId={basicTeamId} initialEvents={events} />
-      </section>
-
-      {/* Fees - manual tracking only. No payment processing, Stripe, dues automation, or partials. */}
-      <section className={shared.section}>
-        <div className={shared.sectionHeader}>
-          <h2 className={shared.sectionTitle}>Fees</h2>
-          <span className={styles.rosterCount}>
-            {fees.filter(fee => fee.status === 'unpaid').length} unpaid
-          </span>
-        </div>
-        <FeeEditor basicTeamId={basicTeamId} initialFees={fees} players={players} />
-      </section>
-
-      {/* Announcements - one-way email to roster contact_email values only.
-          No parent accounts, chat, replies inbox, SMS/push, reminders, or Premium pitch. */}
-      <section className={shared.section}>
-        <div className={shared.sectionHeader}>
-          <h2 className={shared.sectionTitle}>Announcements</h2>
-          <span className={styles.rosterCount}>
-            {announcementRecipientSummary.recipientCount} {announcementRecipientSummary.recipientCount === 1 ? 'recipient' : 'recipients'}
-          </span>
-        </div>
-        <AnnouncementEditor
-          basicTeamId={basicTeamId}
-          initialAnnouncements={announcements}
-          initialRecipientSummary={announcementRecipientSummary}
-        />
-      </section>
-      </div>
-
-      {/* Scope ceiling - no checkout or unlock. Coaches can flag interest in tools that stay outside Basic. */}
-      <section className={shared.section}>
-        <ScopeCeilingInterest basicTeamId={basicTeamId} />
-      </section>
+      {/* The four team-ops editors (Roster / Schedule / Fees / Announcements) now live on their
+          own sub-routes (/coaches/team/{id}/roster etc.) — reached via the rail once activated.
+          The Overview keeps the at-a-glance stat strip (above) + tournament history (below). */}
 
       {/* Tournament history — empty for a no-tournament team; never leads the page. */}
       <section className={shared.section}>

@@ -53,6 +53,16 @@
   box-shadow: var(--highlight-top);
 }
 
+/* Left status-strip accent so the event type reads from the row edge as the list scans (same
+   convention as the admin/public schedule rows). Game = strong lime (marquee); practice = faint
+   blue; event keeps the default border (quietest). */
+.row[data-type='game'] {
+  border-left: 3px solid var(--logic-lime);
+}
+.row[data-type='practice'] {
+  border-left: 3px solid rgba(var(--info-rgb), 0.5);
+}
+
 .typeChip {
   flex-shrink: 0;
   min-width: 40px;
@@ -60,14 +70,26 @@
   display: grid;
   place-items: center;
   padding: 0 0.4rem;
-  font-family: var(--font-data, monospace);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
   border-radius: var(--radius-sm);
+}
+
+/* Per-type colour so games / practices / events read differently at a glance. Game keeps the
+   brand lime (marquee event); practice uses --info (blue, routine); event is neutral. Mirrors
+   the platform's status-colour-strip convention (info/success/warning RGB tokens). */
+.typeChip[data-type='game'] {
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+}
+.typeChip[data-type='practice'] {
+  color: rgb(var(--info-rgb));
+  background: rgba(var(--info-rgb), 0.1);
+  border: 1px solid rgba(var(--info-rgb), 0.3);
+}
+.typeChip[data-type='event'] {
+  color: var(--white-50);
+  background: var(--white-05, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-2);
 }
 
 .rowMain {
