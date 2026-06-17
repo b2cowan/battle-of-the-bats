@@ -404,6 +404,32 @@
   margin-bottom: 1.5rem;
 }
 
+.helpBreadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  margin-bottom: 0.6rem;
+}
+
+.helpBreadcrumb a {
+  color: var(--info);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.helpBreadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.helpBreadcrumbSep {
+  color: var(--white-40);
+}
+
+.helpBreadcrumbCurrent {
+  color: var(--white-55);
+}
+
 .helpPageTitle {
   font-size: 1.75rem;
   font-weight: 900;

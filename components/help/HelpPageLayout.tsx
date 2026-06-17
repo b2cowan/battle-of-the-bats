@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Search, X } from 'lucide-react';
 import type { HelpFaq, HelpSection } from '@/lib/help-content';
 import styles from './help.module.css';
@@ -81,6 +82,11 @@ export default function HelpPageLayout({
 
   const normalizedQuery = query.trim().toLowerCase();
   const hasSearch = normalizedQuery.length > 0;
+
+  // The Help hub is this guide's parent path (works for both the customer and
+  // platform-admin help shells). Lets the reader get back to all guides.
+  const pathname = usePathname();
+  const hubHref = pathname ? pathname.replace(/\/[^/]+\/?$/, '') : '.';
 
   const indexedSections = useMemo<IndexedSection[]>(() => (
     sections.map((section, index) => ({
@@ -319,6 +325,11 @@ export default function HelpPageLayout({
       <main ref={mainRef} className={styles.helpMain}>
         {/* Decluttered header */}
         <header className={styles.helpPageHeader}>
+          <nav className={styles.helpBreadcrumb} aria-label="Breadcrumb">
+            <Link href={hubHref}>← All guides</Link>
+            <span className={styles.helpBreadcrumbSep} aria-hidden="true">/</span>
+            <span className={styles.helpBreadcrumbCurrent}>{title}</span>
+          </nav>
           <h1 className={styles.helpPageTitle}>{title}</h1>
           <p className={styles.helpRoleLine}>For: {role}</p>
           <p className={styles.helpIntro}>{intro}</p>

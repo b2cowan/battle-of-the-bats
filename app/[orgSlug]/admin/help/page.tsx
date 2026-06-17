@@ -1,11 +1,11 @@
 'use client';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import HelpHubClient, { type HelpHubCard, type HelpHubRolePath } from '@/components/help/HelpHubClient';
 import styles from '@/components/help/help.module.css';
 
 export default function AdminHelpHubPage() {
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const { currentOrg, userRole, loading } = useOrg();
 
   if (loading) {
     return <div className={styles.loadingState}>Loading help...</div>;
@@ -14,9 +14,13 @@ export default function AdminHelpHubPage() {
   if (!userRole) return null;
 
   const helpBase = currentOrg?.slug ? `/${currentOrg.slug}/admin/help` : './help';
-  const canHouseLeague  = hasCapability(userRole, userCapabilities, 'module_house_league');
-  const canRepTeams     = hasCapability(userRole, userCapabilities, 'module_rep_teams');
-  const canAccounting   = hasCapability(userRole, userCapabilities, 'module_accounting');
+  // Show a module's guide only when the org actually has that module — by plan,
+  // free-tier floor, or add-on (hasModuleEntitlement), NOT by role. (Owners are
+  // granted every capability, so the old hasCapability gate showed all guides to
+  // every owner regardless of their plan.) Help itself stays free; this is relevance.
+  const canHouseLeague  = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_house_league');
+  const canRepTeams     = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_rep_teams');
+  const canAccounting   = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_accounting');
   const canOrgAdmin     = userRole === 'owner' || userRole === 'admin';
 
   const cards: HelpHubCard[] = [
