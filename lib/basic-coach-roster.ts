@@ -101,6 +101,15 @@ function isValidDateString(value: string): boolean {
 }
 
 /**
+ * Contact-email format guard — kept in sync with the announcements recipient
+ * filter (`EMAIL_RE` in lib/basic-coach-announcements.ts). Validating here, at
+ * the roster save chokepoint, means a malformed address can't be stored in the
+ * first place, so the announcements page can trust that every saved email is a
+ * real recipient (the send path keeps its own defensive skip for legacy rows).
+ */
+const CONTACT_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
  * Normalize a raw request body into a player input. Only keys PRESENT in the body are included
  * (so PATCH leaves omitted fields untouched); strings are trimmed and empties become null.
  * Identity fields only — any other key in the body is ignored ("roster fields scoped to Basic").
@@ -131,7 +140,13 @@ export function normalizeBasicCoachTeamPlayerBody(
   if (body.name !== undefined) input.name = trimmed(body.name);
   if (body.jerseyNumber !== undefined) input.jerseyNumber = trimmedOrNull(body.jerseyNumber);
   if (body.guardianName !== undefined) input.guardianName = trimmedOrNull(body.guardianName);
-  if (body.contactEmail !== undefined) input.contactEmail = trimmedOrNull(body.contactEmail);
+  if (body.contactEmail !== undefined) {
+    const email = trimmedOrNull(body.contactEmail);
+    if (email !== null && !CONTACT_EMAIL_RE.test(email)) {
+      return { input, error: 'Enter a valid contact email (e.g. name@example.com).' };
+    }
+    input.contactEmail = email;
+  }
   if (body.contactPhone !== undefined) input.contactPhone = trimmedOrNull(body.contactPhone);
   if (body.notes !== undefined) input.notes = trimmedOrNull(body.notes);
   if (body.dateOfBirth !== undefined) {

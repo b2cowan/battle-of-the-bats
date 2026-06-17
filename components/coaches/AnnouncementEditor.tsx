@@ -64,6 +64,14 @@ export default function AnnouncementEditor({
   const subjectReady = subject.trim().length > 0;
   const bodyReady = body.trim().length > 0;
   const hasRecipients = recipientSummary.recipientCount > 0;
+  // Players with NO contact email at all — total roster minus those that have one
+  // filled in. (Deliberately uses rosterContactCount, not recipientCount: a player
+  // whose email merely duplicates another's, or is a legacy-malformed address, DOES
+  // have an email on file, so "no email on file" must not count them.) Clamped >= 0.
+  const missingEmailCount = Math.max(
+    0,
+    recipientSummary.rosterPlayerCount - recipientSummary.rosterContactCount,
+  );
   const canSend = subjectReady && bodyReady && hasRecipients && !busy;
 
   async function refreshRecipients() {
@@ -120,36 +128,35 @@ export default function AnnouncementEditor({
       {error && <p className={styles.error} role="alert">{error}</p>}
       {notice && <p className={styles.notice}>{notice}</p>}
 
-      <div
-        className={styles.summary}
-        data-cols={recipientSummary.skippedInvalidCount > 0 ? 3 : 2}
-        aria-label="Announcement recipients"
-      >
-        <div className={styles.summaryItem}>
-          <span>Will receive</span>
-          <strong>{recipientSummary.recipientCount}</strong>
-        </div>
+      <div className={styles.summary} aria-label="Announcement recipients">
         <div className={styles.summaryItem}>
           <span>On roster</span>
-          <strong>{recipientSummary.rosterContactCount}</strong>
+          <strong>{recipientSummary.rosterPlayerCount}</strong>
         </div>
-        {recipientSummary.skippedInvalidCount > 0 && (
-          <div className={styles.summaryItem}>
-            <span>Skipped</span>
-            <strong>{recipientSummary.skippedInvalidCount}</strong>
-          </div>
-        )}
+        <div className={styles.summaryItem}>
+          <span>Recipients</span>
+          <strong>{recipientSummary.recipientCount}</strong>
+        </div>
       </div>
 
       {hasRecipients && (
         <p className={styles.recipientNote}>
           <Users size={13} className={styles.recipientNoteIcon} aria-hidden />
           <span>
-            Sent to the contact email on file for each player on your Roster —{' '}
+            Each player on your Roster with a contact email gets this —{' '}
             {recipientSummary.recipientCount === 1
               ? '1 person'
               : `${recipientSummary.recipientCount} people`}{' '}
-            will receive this.
+            will receive it.
+            {missingEmailCount > 0 && (
+              <>
+                {' '}
+                {missingEmailCount === 1
+                  ? '1 player has no email on file'
+                  : `${missingEmailCount} players have no email on file`}{' '}
+                — add one on your Roster to include them.
+              </>
+            )}
           </span>
         </p>
       )}

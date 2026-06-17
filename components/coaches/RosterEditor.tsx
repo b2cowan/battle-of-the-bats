@@ -315,7 +315,12 @@ function PlayerForm({
   const dobConsentRequired = dobValue.length > 0 && dobValue !== originalDob;
   const nameValid = form.name.trim().length > 0;
   const dobNeedsConsent = dobConsentRequired && !form.dobConsent;
-  const canSave = nameValid && !dobNeedsConsent && !busy;
+  // A contact email is optional, but if one is typed it must be a valid format —
+  // mirrors the server guard so a malformed address can't be saved and silently
+  // fail to receive announcements.
+  const emailValue = form.contactEmail.trim();
+  const emailInvalid = emailValue.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
+  const canSave = nameValid && !dobNeedsConsent && !emailInvalid && !busy;
 
   function submit() {
     if (!canSave) return;
@@ -416,7 +421,13 @@ function PlayerForm({
             value={form.contactEmail}
             onChange={e => set({ contactEmail: e.target.value })}
             aria-label="Contact email"
+            aria-invalid={emailInvalid || undefined}
           />
+          {emailInvalid && (
+            <p className={styles.error} role="alert">
+              Enter a valid email (e.g. name@example.com), or leave it blank.
+            </p>
+          )}
           <input
             className={styles.input}
             type="tel"

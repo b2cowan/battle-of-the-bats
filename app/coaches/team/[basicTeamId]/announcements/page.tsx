@@ -8,7 +8,6 @@ import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import AnnouncementEditor from '@/components/coaches/AnnouncementEditor';
 import TeamSectionShell from '@/components/coaches/TeamSectionShell';
-import styles from '../team.module.css';
 
 type RouteParams = { params: Promise<{ basicTeamId: string }> };
 
@@ -33,7 +32,6 @@ export default async function CoachTeamAnnouncementsPage({ params }: RouteParams
     <TeamSectionShell
       teamName={team.name}
       title="Announcements"
-      meta={<span className={styles.rosterCount}>{recipientSummary.recipientCount} {recipientSummary.recipientCount === 1 ? 'recipient' : 'recipients'}</span>}
     >
       <AnnouncementEditor
         basicTeamId={basicTeamId}

@@ -39,8 +39,18 @@ export type BasicCoachTeamAnnouncementInput = {
 };
 
 export type BasicCoachTeamAnnouncementRecipientSummary = {
+  /** Roster players whose contact email is valid + unique — the actual send list. */
   recipientCount: number;
+  /** Total players on the master roster (the denominator: "X of N players"). */
+  rosterPlayerCount: number;
+  /** Roster players with ANY contact email filled in (valid or not). */
   rosterContactCount: number;
+  /**
+   * Players whose stored email is malformed. Email format is now validated at
+   * roster-save time, so this is only ever > 0 for legacy rows saved before that
+   * guard existed; the send path still skips them defensively. Not surfaced in
+   * the UI (the roster gap caption uses recipientCount vs rosterPlayerCount).
+   */
   skippedInvalidCount: number;
 };
 
@@ -140,6 +150,7 @@ function statusFor(sentCount: number, failedCount: number): BasicCoachTeamAnnoun
 function summaryFromLookup(lookup: RecipientLookup): BasicCoachTeamAnnouncementRecipientSummary {
   return {
     recipientCount: lookup.recipientCount,
+    rosterPlayerCount: lookup.rosterPlayerCount,
     rosterContactCount: lookup.rosterContactCount,
     skippedInvalidCount: lookup.skippedInvalidCount,
   };
@@ -176,10 +187,11 @@ async function getRecipientLookup(basicCoachTeamId: string): Promise<RecipientLo
 
   if (error) throw error;
 
+  const rows = data ?? [];
   const emails = new Set<string>();
   let rosterContactCount = 0;
   let skippedInvalidCount = 0;
-  for (const row of data ?? []) {
+  for (const row of rows) {
     const email = normalizeEmail((row as BasicCoachTeamContactRow).contact_email);
     if (!email) continue;
     rosterContactCount++;
@@ -193,6 +205,7 @@ async function getRecipientLookup(basicCoachTeamId: string): Promise<RecipientLo
   return {
     emails: Array.from(emails).sort(),
     recipientCount: emails.size,
+    rosterPlayerCount: rows.length,
     rosterContactCount,
     skippedInvalidCount,
   };
