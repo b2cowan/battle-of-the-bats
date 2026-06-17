@@ -1,4 +1,17 @@
 {
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e 'process.stdout.write(JSON.stringify({hookSpecificOutput:{hookEventName:\"UserPromptSubmit\",additionalContext:\"REMINDER — product-owner voice: Unless the user explicitly asks for technical detail, write all responses to them — especially PM briefs, completed-work summaries, and test/QA plans — as if to a product owner, not an engineer. Lead with what the user sees and does differently (UX), how it affects other areas, why it matters, what tradeoffs were made, and how to navigate/test it. Omit file paths, function/variable names, schema/migration internals, and implementation mechanics from the message (they still belong in plan files, commits, and code). If asked for the technical breakdown, switch fully into technical detail for that request.\"}}))'",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
   "env": {
     "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
   },
