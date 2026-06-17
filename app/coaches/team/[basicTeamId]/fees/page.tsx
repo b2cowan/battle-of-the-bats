@@ -32,7 +32,7 @@ export default async function CoachTeamFeesPage({ params }: RouteParams) {
     <TeamSectionShell
       teamName={team.name}
       title="Fees"
-      meta={<span className={styles.rosterCount}>{unpaid} unpaid</span>}
+      meta={fees.length > 0 ? <span className={styles.rosterCount}>{unpaid} unpaid</span> : undefined}
     >
       <FeeEditor basicTeamId={basicTeamId} initialFees={fees} players={players} />
     </TeamSectionShell>

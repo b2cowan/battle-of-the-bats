@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Check, CheckCircle2, CircleDollarSign, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Check, CheckCircle2, CircleDollarSign, Pencil, Plus, Trash2, Wallet, X } from 'lucide-react';
 import type { BasicCoachTeamFee } from '@/lib/basic-coach-fees';
 import type { BasicCoachTeamPlayer } from '@/lib/basic-coach-roster';
 import CoachEmptyState from './CoachEmptyState';
@@ -100,6 +100,8 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
   }, [fees, playerMap]);
 
   const allTotals = totalsFor(fees);
+  const hasPlayers = players.length > 0;
+  const hasFees = fees.length > 0;
 
   async function addFee(input: FeeInput) {
     setBusy(true);
@@ -224,105 +226,140 @@ export default function FeeEditor({ basicTeamId, initialFees, players }: Props) 
     <div className={styles.editor}>
       {error && <p className={styles.error} role="alert">{error}</p>}
 
-      <div className={styles.summary} aria-label="Fee summary">
-        <SummaryStat label="Owed" value={formatMoney(allTotals.owed)} />
-        <SummaryStat label="Paid" value={formatMoney(allTotals.paid)} />
-        <SummaryStat label="Unpaid" value={formatMoney(allTotals.unpaid)} tone={allTotals.unpaid > 0 ? 'warn' : 'ok'} />
+      <div className={styles.purposeNote}>
+        <Wallet size={18} className={styles.purposeIcon} aria-hidden />
+        <div className={styles.purposeText}>
+          <p className={styles.purposeLead}>
+            <strong>Track what your players owe you</strong> — dues, jerseys, a tournament
+            cost-split. Record each fee and check it off as you collect it.
+          </p>
+          <p className={styles.purposeAside}>
+            Your private tracker — no payments run through FieldLogicHQ, and it&apos;s not where
+            you pay a tournament&apos;s entry fee.
+          </p>
+        </div>
       </div>
 
-      {adding ? (
-        <div className={styles.formRow}>
-          <FeeForm
-            players={players}
-            busy={busy}
-            onCancel={() => setAdding(false)}
-            onSubmit={addFee}
-          />
-        </div>
+      {!hasPlayers && !hasFees ? (
+        <CoachEmptyState
+          compact
+          icon={<CircleDollarSign size={20} aria-hidden />}
+          headline="No roster to bill yet"
+          description="Add players on the Roster tab to start tracking fees against your roster."
+        />
+      ) : !hasFees && !adding ? (
+        <CoachEmptyState
+          icon={<CircleDollarSign size={22} aria-hidden />}
+          headline="No fees yet"
+          description="Add a fee to start tracking what a player — or the whole team — owes. You'll mark each one paid as you collect it."
+          primaryAction={{
+            label: 'Add your first fee',
+            icon: <Plus size={15} aria-hidden />,
+            onClick: () => { setEditingId(null); setAdding(true); },
+          }}
+        />
       ) : (
-        <button
-          type="button"
-          className={styles.addBtn}
-          onClick={() => { setEditingId(null); setAdding(true); }}
-          disabled={editingId !== null || busy}
-        >
-          <Plus size={15} aria-hidden /> Add fee
-        </button>
-      )}
+        <>
+          {hasFees && (
+            <div className={styles.summary} aria-label="Fee summary">
+              <SummaryStat label="Owed" value={formatMoney(allTotals.owed)} />
+              <SummaryStat label="Paid" value={formatMoney(allTotals.paid)} />
+              <SummaryStat label="Unpaid" value={formatMoney(allTotals.unpaid)} tone={allTotals.unpaid > 0 ? 'warn' : 'ok'} />
+            </div>
+          )}
 
-      <div className={styles.block}>
-        <div className={styles.blockHeader}>
-          <h3 className={styles.blockTitle}>Roster fees</h3>
-        </div>
-        {players.length === 0 ? (
-          <CoachEmptyState
-            compact
-            icon={<CircleDollarSign size={20} aria-hidden />}
-            headline="No roster to bill yet"
-            description="Add players on the Roster tab to start tracking fees against your roster."
-          />
-        ) : (
-          <div className={styles.playerList}>
-            {players.map(player => {
-              const playerFees = grouped.byPlayer.get(player.id) ?? [];
-              const playerTotals = totalsFor(playerFees);
-              return (
-                <div key={player.id} className={styles.playerGroup}>
-                  <div className={styles.playerHeader}>
-                    <div className={styles.playerName}>
-                      <span>{player.name}</span>
-                      {player.jerseyNumber ? <span className={styles.playerMeta}>#{player.jerseyNumber}</span> : null}
-                    </div>
-                    <div className={styles.playerTotals}>
-                      <span>{formatMoney(playerTotals.unpaid)} unpaid</span>
-                      <span>{formatMoney(playerTotals.paid)} paid</span>
-                    </div>
-                  </div>
-                  {playerFees.length === 0 ? (
-                    <p className={styles.noFees}>No fees recorded.</p>
-                  ) : (
-                    <FeeList
-                      fees={playerFees}
-                      editingId={editingId}
-                      locked={locked}
-                      busy={busy}
-                      players={players}
-                      onEdit={feeId => { setAdding(false); setEditingId(feeId); }}
-                      onCancelEdit={() => setEditingId(null)}
-                      onSave={saveFee}
-                      onTogglePaid={togglePaid}
-                      onRemove={removeFee}
-                    />
-                  )}
+          {adding ? (
+            <div className={styles.formRow}>
+              <FeeForm
+                players={players}
+                busy={busy}
+                onCancel={() => setAdding(false)}
+                onSubmit={addFee}
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={styles.addBtn}
+              onClick={() => { setEditingId(null); setAdding(true); }}
+              disabled={editingId !== null || busy}
+            >
+              <Plus size={15} aria-hidden /> Add fee
+            </button>
+          )}
+
+          {hasFees && (
+            <>
+              {hasPlayers && (
+              <div className={styles.block}>
+                <div className={styles.blockHeader}>
+                  <h3 className={styles.blockTitle}>Roster fees</h3>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                <div className={styles.playerList}>
+                  {players.map(player => {
+                    const playerFees = grouped.byPlayer.get(player.id) ?? [];
+                    const playerTotals = totalsFor(playerFees);
+                    return (
+                      <div key={player.id} className={styles.playerGroup}>
+                        <div className={styles.playerHeader}>
+                          <div className={styles.playerName}>
+                            <span>{player.name}</span>
+                            {player.jerseyNumber ? <span className={styles.playerMeta}>#{player.jerseyNumber}</span> : null}
+                          </div>
+                          <div className={styles.playerTotals}>
+                            <span>{formatMoney(playerTotals.unpaid)} unpaid</span>
+                            <span>{formatMoney(playerTotals.paid)} paid</span>
+                          </div>
+                        </div>
+                        {playerFees.length === 0 ? (
+                          <p className={styles.noFees}>No fees recorded.</p>
+                        ) : (
+                          <FeeList
+                            fees={playerFees}
+                            editingId={editingId}
+                            locked={locked}
+                            busy={busy}
+                            players={players}
+                            onEdit={feeId => { setAdding(false); setEditingId(feeId); }}
+                            onCancelEdit={() => setEditingId(null)}
+                            onSave={saveFee}
+                            onTogglePaid={togglePaid}
+                            onRemove={removeFee}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              )}
 
-      <div className={styles.block}>
-        <div className={styles.blockHeader}>
-          <h3 className={styles.blockTitle}>Team-wide charges</h3>
-          <span className={styles.blockMeta}>{grouped.teamWide.length}</span>
-        </div>
-        {grouped.teamWide.length === 0 ? (
-          <p className={styles.noFees}>No team-wide charges yet.</p>
-        ) : (
-          <FeeList
-            fees={grouped.teamWide}
-            editingId={editingId}
-            locked={locked}
-            busy={busy}
-            players={players}
-            onEdit={feeId => { setAdding(false); setEditingId(feeId); }}
-            onCancelEdit={() => setEditingId(null)}
-            onSave={saveFee}
-            onTogglePaid={togglePaid}
-            onRemove={removeFee}
-          />
-        )}
-      </div>
+              <div className={styles.block}>
+                <div className={styles.blockHeader}>
+                  <h3 className={styles.blockTitle}>Team-wide charges</h3>
+                  <span className={styles.blockMeta}>{grouped.teamWide.length}</span>
+                </div>
+                {grouped.teamWide.length === 0 ? (
+                  <p className={styles.noFees}>No team-wide charges yet.</p>
+                ) : (
+                  <FeeList
+                    fees={grouped.teamWide}
+                    editingId={editingId}
+                    locked={locked}
+                    busy={busy}
+                    players={players}
+                    onEdit={feeId => { setAdding(false); setEditingId(feeId); }}
+                    onCancelEdit={() => setEditingId(null)}
+                    onSave={saveFee}
+                    onTogglePaid={togglePaid}
+                    onRemove={removeFee}
+                  />
+                )}
+              </div>
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }
