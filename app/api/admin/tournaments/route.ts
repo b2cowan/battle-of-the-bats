@@ -356,7 +356,6 @@ export const POST = withObservability(async (req: Request) => {
         if (!tournamentRow?.default_contact_member_id && !tournamentRow?.contact_email && !ctx.org.contactEmail) {
           blockers.push('add a public contact email');
         }
-        if (divisions?.length && divisions.every(g => g.is_closed)) blockers.push('open at least one division');
         if (blockers.length > 0) {
           return Response.json(
             { error: `Before activating this tournament, please ${blockers.join(', ')}.` },

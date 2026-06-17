@@ -634,7 +634,11 @@ export const GET = withObservability(async (req: Request) => {
       // the server activation blocker never enforced fee_scope, and the wizard
       // never asks for it — so the "ready" gate no longer requires it either.
       // hasFees is still surfaced as an optional checklist item below.
-      ready: hasDates && hasDivisions && hasOpenDivision,
+      // Opening public registration is OPTIONAL to activate (owner decision
+      // 2026-06-16): organizers who load/invite teams privately never open a
+      // division, so hasOpenDivision is surfaced as an optional item below
+      // rather than gating activation.
+      ready: hasDates && hasDivisions,
     },
     registration: {
       totalCapacity,

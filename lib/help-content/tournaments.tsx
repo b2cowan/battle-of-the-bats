@@ -48,11 +48,11 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-activation-blocked',
           question: 'Why can I not activate my tournament?',
-          answerText: 'Activation is blocked when dates, divisions, public contact, or an open division are missing.',
+          answerText: 'Activation is blocked when dates, divisions, or a public contact are missing.',
           keywords: ['blocked', 'not ready', 'launch checklist', 'draft only'],
           popular: true,
           answer: (
-            <p>The launch checklist is missing a required item. Check the tournament dashboard for the exact blocker, then add tournament dates, create a division, choose a public contact, or open at least one division for registration.</p>
+            <p>The launch checklist is missing a required item. Check the tournament dashboard for the exact blocker, then add tournament dates, create a division, or choose a public contact. Opening a division for public registration is optional — skip it if you are loading or inviting teams yourself.</p>
           ),
         },
       ],

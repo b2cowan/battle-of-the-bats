@@ -888,11 +888,11 @@ export default function AdminDashboard() {
   const checklistItems = [
     { key: 'dates',         done: checklist.hasDates,        label: 'Tournament dates',                            desc: 'Set a start and end date so teams know when the event runs.',     href: `${base}/settings/event?section=overview`, action: 'Edit dates'     },
     { key: 'divisions',     done: checklist.hasDivisions,    label: 'At least one division',                       desc: 'Create the divisions teams can register for.',                     href: `${base}/divisions`,      action: 'Add divisions'  },
-    { key: 'open-division', done: checklist.hasOpenDivision, label: 'Registration open for at least one division', desc: 'Open a division when you are ready for teams to register.',        href: `${base}/divisions`,      action: 'Open divisions' },
   ];
   const completedCount = checklistItems.filter(i => i.done).length;
 
   const optionalItems = [
+    { key: 'open-division', done: checklist.hasOpenDivision, label: 'Open public registration', desc: checklist.hasOpenDivision ? 'At least one division is open for teams to register online.' : 'Optional. Open a division when you want teams to register online — skip this if you are loading or inviting teams yourself.', href: `${base}/divisions`, action: 'Open divisions →' },
     { key: 'fees',         done: checklist.hasFees,          label: 'Fee approach',      desc: checklist.hasFees          ? 'A fee approach is set for this tournament.' : 'Optional. Confirm how registration fees work — or mark the event as free. You can activate without this.',           href: `${base}/settings/event?section=fees`, action: 'Configure fees →'   },
     { key: 'contact',      done: checklist.hasPublicContact, label: 'Contact email',     desc: checklist.hasPublicContact ? 'A contact email is set for this tournament.' : 'Defaults to your org contact email. Override with a tournament-specific address.',                    href: `${base}/settings/event?section=contact`, action: 'Review contact →'   },
     { key: 'game-timing',  done: checklist.hasGameTiming,    label: 'Game timing',       desc: checklist.hasGameTiming    ? 'Game timing is configured for this tournament.' : 'Defaults to 90 min games / 15 min buffer, tournament-wide. Customize before building the schedule.', href: `${base}/settings/event?section=schedule`, action: 'Configure timing →' },
