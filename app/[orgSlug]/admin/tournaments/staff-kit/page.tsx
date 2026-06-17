@@ -143,8 +143,8 @@ export default function StaffKitPage() {
           </div>
 
           <p className={styles.note}>
-            Inviting a volunteer? Add them under <strong>Settings &amp; Access → Members</strong> as a
-            Volunteer and pick whether they&apos;re scorekeeping, on the gate, or both — the invite email links them
+            Inviting a volunteer? Add them under <strong>Settings &amp; Access → Members</strong>{' '}
+            as a Volunteer and pick whether they&apos;re scorekeeping, on the gate, or both — the invite email links them
             straight to the right screen.
           </p>
         </>
