@@ -44,7 +44,7 @@ Fix the two least-trained personas' day-of surfaces (`app/[orgSlug]/scorekeeper/
 - [x] **J8-004 — PWA install lands on `/home`, not the field surface.** — **DONE.** New per-org scorekeeper manifest route (`start_url` scoped to `/{org}/scorekeeper`); layout references it.
 - [x] **J8-005 — "list self-updates" no-ops — `games` not in `supabase_realtime`.** — **DONE.** Migration 130 adds `games` to the publication (idempotent, dev-applied, watermark #130; RLS-disabled table so anon realtime can read). **⚠ DEPLOY GATE: mig 130 dev-only — apply `--prod` before promoting.**
 
-> **FP-3 COMPLETE 2026-06-15** (Blocker + 14 findings; J8-018 was done in FP-1; **J8-020/J8-021 deferred to FP-7** per the wrong-door seam). **Pending:** real-device browser verification + migration-130 prod-apply. Branch `fix/fp3-volunteer-dayof` (off origin/master) — collision-free.
+> **FP-3 COMPLETE 2026-06-15** (Blocker + 14 findings; J8-018 was done in FP-1; **J8-020/J8-021 deferred to FP-7** per the wrong-door seam). **Browser-verified + migration 130 confirmed applied to prod (live-DB catalog check 2026-06-17 — `check:migrations` is BLIND to a publication-only migration, so verified directly via `pg_publication_tables`). Fully deploy-ready, local/unpushed.**
 
 ## Verification
 `npm run typecheck` (shared-module touches), `npm run lint:focused -- <files>` per phase. Migration (J8-005) dev-first + dictionary + snapshots. Restart dev server after shared/new/proxy changes. Browser/field testing = user (real-device ergonomics).
