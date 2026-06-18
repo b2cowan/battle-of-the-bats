@@ -150,6 +150,10 @@
   border-color: rgba(79, 163, 224, 0.35);
   color: #4fa3e0;
 }
+.tooltipTrigger:focus-visible {
+  outline: 2px solid var(--primary-light, #D9F99D);
+  outline-offset: 2px;
+}
 
 .tooltipPopover {
   position: absolute;
@@ -163,7 +167,6 @@
   padding: 0.75rem 0.875rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   z-index: 60;
-  pointer-events: none;
 }
 
 /* Caret pointing down */
