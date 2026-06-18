@@ -1,7 +1,7 @@
 'use client';
 
 import { HelpCircle } from 'lucide-react';
-import { useHelpDrawer, type HelpRequest } from './HelpDrawerProvider';
+import { useHelpDrawer, type HelpRequest } from './help-drawer-context';
 import styles from './help.module.css';
 
 /**

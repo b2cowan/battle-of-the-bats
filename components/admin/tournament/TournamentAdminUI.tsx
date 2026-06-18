@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Check, ChevronDown, HelpCircle, Lock, MoreHorizontal, Search, X } from 'lucide-react';
 import clsx from 'clsx';
 import HelpButton from '@/components/help/HelpButton';
-import type { HelpRequest } from '@/components/help/HelpDrawerProvider';
+import type { HelpRequest } from '@/components/help/help-drawer-context';
 import styles from './TournamentAdminUI.module.css';
 
 type Option<T extends string> = {

@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { ExternalLink, X } from 'lucide-react';
 import { getHelpSections } from '@/lib/help-content/registry';
-import type { HelpRequest } from './HelpDrawerProvider';
+import type { HelpRequest } from './help-drawer-context';
 import HelpSectionBlock from './HelpSectionBlock';
 import styles from './help.module.css';
 
@@ -50,7 +50,12 @@ export default function HelpDrawer({
       const panel = panelRef.current;
       if (!panel) return;
       const focusables = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
-      if (focusables.length === 0) return;
+      if (focusables.length === 0) {
+        // Nothing to cycle to — keep focus on the panel so it can't escape the modal.
+        event.preventDefault();
+        panel.focus();
+        return;
+      }
       const first = focusables[0];
       const last = focusables[focusables.length - 1];
       if (event.shiftKey && document.activeElement === first) {
