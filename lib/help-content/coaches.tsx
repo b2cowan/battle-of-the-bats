@@ -3,347 +3,289 @@ import type { HelpPageContent } from './index';
 const coachesHelp: HelpPageContent = {
   title: 'Coaches Portal',
   role: 'Coach',
-  intro: 'The coaches portal is your day-to-day workspace. Your org sets up the team and handles tryouts — you run everything from here once the season starts.',
+  intro:
+    'The Coaches Portal is your free home base for the teams you coach — your roster, schedule, team fees, and parent announcements in one place, year-round and between tournaments. Turn on only the tools you need. Coaches Portal Premium adds the serious-operator extras on top.',
+  searchPlaceholder: 'Search coach help — roster, schedule, fees, announcements…',
   sections: [
     {
-      heading: 'Getting started — the franchise model',
+      id: 'overview',
+      group: 'Getting started',
+      heading: 'What the Coaches Portal is',
+      summary: 'A free, year-round team home that grows from a single tournament into your full-season workspace.',
+      keywords: ['coaches portal', 'free', 'team home', 'what is', 'overview', 'coach'],
+      searchText: 'coaches portal free team home tournament participant year round roster schedule fees announcements premium upgrade what is overview',
       content: (
         <>
-          <p>FieldLogicHQ uses a <strong>franchise model</strong> for rep teams. Think of your org as head office and yourself as the operator of your team&apos;s location.</p>
+          <p>The Coaches Portal is free. It often starts when you register a team for a tournament, but it&apos;s built to stay useful between events — a year-round home for your roster, schedule, team fees, and parent announcements.</p>
+          <p>The portal opens with two sections always available:</p>
           <ul>
-            <li><strong>Org admin does:</strong> create the team, run tryouts, approve players, set cost allocations, and publish document templates.</li>
-            <li><strong>You do:</strong> manage the roster day-to-day, build the schedule, track player dues, log expenses, and handle documents.</li>
+            <li><strong>Overview</strong> — your team at a glance: roster size, your next event, unpaid fees, how many parents you can reach, and your tournament history.</li>
+            <li><strong>Tournaments</strong> — every tournament you&apos;ve registered the team for, with status and schedule.</li>
           </ul>
-          <p>If something looks missing — a player who should be on your roster, a document you expected — contact your org admin. They control the setup side.</p>
+          <p>Four more tools — <strong>Roster</strong>, <strong>Schedule</strong>, <strong>Fees</strong>, and <strong>Announcements</strong> — are free too, but stay hidden until you turn them on from <strong>Explore</strong>. That keeps the portal simple if all you need is your tournament record.</p>
+          <p><strong>Coaches Portal Premium</strong> is the paid upgrade. It adds game-day tools (positions, attendance, lineups), recurring scheduling and calendar sync, dues automation and a season budget, and document storage. Each tool below notes what Premium adds.</p>
         </>
       ),
     },
     {
       id: 'recipe-first-login',
-      group: 'How-to recipes',
-      heading: 'How to get started as a coach',
-      summary: 'Sign in, confirm the right team and program year, and check the core setup before the season starts.',
-      keywords: ['coach login', 'first login', 'program year', 'team setup', 'coach portal'],
-      searchText: 'coach first login sign in coaches portal team program year roster schedule dues documents allocations missing access',
+      group: 'Getting started',
+      heading: 'How to get into your portal',
+      summary: 'Claim a team an organizer registered, or start a free team home from scratch.',
+      keywords: ['coach login', 'first login', 'claim team', 'start free team home', 'coach portal', 'get started'],
+      searchText: 'coach first login sign in coaches portal claim your team registered email start free team home organizer invited tournament registration get started access',
       content: (
         <>
-          <p>Use this checklist the first time you open the Coaches Portal for a new season.</p>
-          <p>The team overview shows <strong>Season setup</strong> progress for roster, schedule, lineup, budget, and parent organization linking tasks.</p>
-          <ol>
-            <li>Sign in using the email address your org invited.</li>
-            <li>Confirm you are viewing the correct team and program year.</li>
-            <li>Open <strong>Roster</strong> and confirm the expected players are present.</li>
-            <li>Open <strong>Schedule</strong> and check whether any events have already been added.</li>
-            <li>Open <strong>Accounting</strong> and review dues, expenses, and org allocations.</li>
-            <li>Open <strong>Documents</strong> and confirm which forms your org expects you to track.</li>
-          </ol>
-          <p>If your team, program year, roster, or document list looks wrong, contact your org admin. They control the setup side.</p>
+          <p>There are two ways your team shows up in the portal. Sign in with the email address you use for coaching, then look for one of these.</p>
+          <p><strong>Claim a team an organizer registered.</strong> If a tournament organizer registered your team using your email, a <strong>Claim your team</strong> prompt appears on your portal home. Click <strong>Claim team</strong> to link it to your account — then its status, schedule, and updates show up in your portal.</p>
+          <p><strong>Start a free team home.</strong> If you don&apos;t have a team yet, click <strong>Start free team home</strong>. You don&apos;t need an organization or an invite — it&apos;s free and yours to run.</p>
+          <p>A brand-new team home opens with a short three-step starter: add your first player, add practices and games, and send your first announcement. You can do them in any order, or skip straight to the tool you need.</p>
         </>
       ),
       faqs: [
         {
-          id: 'faq-coach-wrong-team',
-          question: 'Why do I not see my team?',
-          answerText: 'Your invite may not be accepted, or your org admin may not have assigned you to the active team program year yet.',
-          keywords: ['missing team', 'coach access', 'program year'],
+          id: 'faq-coach-no-team',
+          question: 'Why don’t I see my team?',
+          answerText: 'Make sure you signed in with the same email the organizer used to register the team. If a team was registered with your email, a "Claim your team" prompt appears on your portal home — claim it to link it. If no one registered a team for you, use "Start free team home" to create one.',
+          keywords: ['missing team', 'claim team', 'no team', 'wrong email'],
           popular: true,
           answer: (
-            <p>Your invite may not be accepted, or your org admin may not have assigned you to the active program year yet. Ask the admin to confirm your coach assignment.</p>
+            <p>Make sure you signed in with the same email the organizer used to register the team. If a team was registered with your email, a <strong>Claim your team</strong> prompt appears on your portal home — claim it to link it. If no one registered a team for you, use <strong>Start free team home</strong> to create your own.</p>
           ),
         },
       ],
     },
     {
-      id: 'recipe-team-workspace-season-tournaments',
-      group: 'How-to recipes',
-      heading: 'How Coaches Portal Premium, seasons, and local tournaments work',
-      summary: 'Understand what Premium includes, how season history is preserved, and what the included local tournament slot can be used for.',
-      keywords: ['coaches portal premium', 'coach subscription', 'season rollover', 'program year', 'free tournament', 'local tournament', 'tournament plus'],
-      searchText: 'coaches portal premium season rollover program year history team name division roster schedule dues budget free-tier tournament one slot round robin scrimmage exhibition Tournament Plus upgrade',
+      id: 'explore',
+      group: 'Getting started',
+      heading: 'How to turn on the tools you need',
+      summary: 'Roster, Schedule, Fees, and Announcements are free but off by default — turn them on from Explore.',
+      keywords: ['explore', 'turn on', 'activate', 'enable tools', 'roster schedule fees announcements', 'sections missing'],
+      searchText: 'explore turn on activate enable team tools roster schedule fees announcements free progressive disclosure where is my roster tab missing section',
       content: (
         <>
-          <p><strong>Coaches Portal Premium</strong> is built for one competitive team. It adds roster, schedule, dues, documents, budget, attendance, lineup cards, reminders, and setup progress to the same portal that stores tournament records.</p>
-          <p>Your premium team space is the long-term home for the team. Each <strong>program year</strong> is a season, so a team can update its name, division, roster, schedule, dues plan, documents, and budget for the new season while keeping previous seasons available as history.</p>
-          <p>Premium also includes one free-tier local tournament slot. Use it for simple round robins, scrimmage days, exhibition weekends, or informal events with nearby teams. It follows the free Tournament plan limits: one non-archived tournament at a time and no Tournament Plus features such as advanced registration fields, enhanced branding, unlimited tournament slots, cloning, or post-event reporting.</p>
-          <p>If you need a larger or more official tournament operation, use Tournament Plus or ask your organization whether the event should run from an organization account.</p>
+          <p>To keep things uncluttered, the four team tools start switched off. Open <strong>Explore</strong> (always in the menu) to see them:</p>
+          <ul>
+            <li><strong>Roster</strong> — enter your team once and reuse it for your next tournament registration.</li>
+            <li><strong>Schedule</strong> — your tournament games plus your own practices, in one calendar.</li>
+            <li><strong>Fees</strong> — track who has paid their team fees, no spreadsheet.</li>
+            <li><strong>Announcements</strong> — send a note to your whole team at once.</li>
+          </ul>
+          <p>Each shows a <strong>Free</strong> tag. Click <strong>Turn on</strong> and the tool appears in your menu and opens for you. Ignore the ones you don&apos;t need — nothing is forced on you, and you can turn a tool on any time from Explore.</p>
+          <p>If you can&apos;t find your Roster or Schedule tab, it&apos;s almost always because it hasn&apos;t been turned on yet. Open Explore and turn it on.</p>
         </>
       ),
-      faqs: [
-        {
-          id: 'faq-team-season-rollover',
-          question: 'Can my team change names or divisions next season?',
-          answerText: 'Yes. The workspace stays the same, but each program year can carry its own season identity, roster, schedule, dues, documents, budget, attendance, and lineup history.',
-          keywords: ['season rollover', 'team name', 'division', 'program year', 'history'],
-          popular: true,
-          answer: (
-            <p>Yes. The workspace stays the same, but each program year can carry its own season identity, roster, schedule, dues, documents, budget, attendance, and lineup history.</p>
-          ),
-        },
-        {
-          id: 'faq-team-free-tournament-slot',
-          question: 'What can I use the included tournament slot for?',
-          answerText: 'Use it for one simple non-archived local tournament at a time, such as a round robin, scrimmage day, or exhibition weekend. It does not include Tournament Plus features.',
-          keywords: ['free tournament', 'local tournament', 'round robin', 'scrimmage', 'Tournament Plus'],
-          answer: (
-            <p>Use it for one simple non-archived local tournament at a time, such as a round robin, scrimmage day, or exhibition weekend. It does not include Tournament Plus features. Archive or finish the old event before creating another, or move to Tournament Plus when you need serious tournament operations.</p>
-          ),
-        },
-        {
-          id: 'faq-team-billing-models',
-          question: 'How is paid Coaches Portal different from org-billed or Club coach access?',
-          answerText: 'Direct Premium is paid by the coach or manager. Org-billed Premium is paid by a linked organization but still coach-operated. Club included or extra teams are org-owned rep teams under the organization.',
-          keywords: ['direct coaches portal', 'org billed coaches portal', 'Club included', 'Club extra team', 'billing'],
-          answer: (
-            <p><strong>Direct Premium</strong> is paid by the coach or manager. <strong>Org-billed Premium</strong> is paid by a linked organization but still coach-operated. <strong>Club included</strong> and <strong>Club extra</strong> teams are org-owned rep teams under the organization&apos;s normal Club access and oversight.</p>
-          ),
-        },
-        {
-          id: 'faq-coaches-portal-cancellation-retention',
-          question: 'What happens if I cancel Coaches Portal Premium?',
-          answerText: 'Your Basic tournament records stay available. Premium tools shut off, and premium team data is archived for 90 days so reactivation can restore it where possible.',
-          keywords: ['cancel', 'cancellation', 'retention', 'reactivate', 'archive', 'premium'],
-          answer: (
-            <p>Your Basic tournament records stay available in Coaches Portal. Premium tools stop being active, and premium team data is archived for <strong>90 days</strong>. If you reactivate during that retention window, FieldLogicHQ can restore the archived premium workspace where possible instead of starting from scratch.</p>
-          ),
-        },
-      ],
-    },
-    {
-      id: 'recipe-link-parent-org',
-      group: 'How-to recipes',
-      heading: 'How to manage parent organization links',
-      summary: 'Request a Basic visibility link, respond to org invitations, ask a linked organization to take over Premium billing, or start ownership transfer approval.',
-      keywords: ['coaches portal', 'link organization', 'parent org', 'club', 'visibility link', 'basic sharing', 'organization invitation', 'org billing', 'ownership transfer'],
-      searchText: 'paid coaches portal request parent organization link org club association invitation accept decline basic visibility sharing billing transfer org billing organization pays ownership roster documents accounting',
-      links: [
-        { label: 'Link Organization', href: '../link-org' },
-      ],
-      content: (
-        <>
-          <p>Use this when your paid Coaches Portal team belongs to a parent club, league, or association and you want that organization to recognize the connection.</p>
-          <ol>
-            <li>Open <strong>Link Organization</strong> from the Coaches Portal.</li>
-            <li>Enter the parent organization&apos;s URL slug or contact email.</li>
-            <li>Review the request details and submit it for the organization to approve.</li>
-            <li>Watch the request status from the same page.</li>
-          </ol>
-          <p>If an organization invites your Coaches Portal first, open <strong>Link Organization</strong>, review the invitation, then click <strong>Accept Invitation</strong> or <strong>Decline</strong>.</p>
-          <p>The first link type is <strong>Basic visibility</strong>. It records the association only. It does not transfer billing, ownership, roster access, player documents, accounting data, or full rep-team admin rights.</p>
-          <p>After the Basic link is active, use <strong>Request Org Billing</strong> if the parent organization should pay for the Premium subscription. If the organization invites you to move billing first, review the billing invitation here and choose <strong>Accept Billing Invite</strong> or <strong>Decline Billing</strong>.</p>
-          <p>The Subscription page may also point you back to <strong>Link Organization</strong> when your Coaches Portal could be paid by a parent club. That prompt is only a shortcut to this approval flow.</p>
-          <p>Org billing keeps your Coaches Portal and team data coach-operated. It does not give the organization roster, document, accounting, or org-wide rep-team admin access.</p>
-          <p>Use <strong>Request Ownership Transfer</strong> only when the team should become fully org-owned. Both sides can approve from Coaches Portal Links, then a platform-assisted transfer moves roster, schedule, documents, budget, and accounting ownership in a later step.</p>
-        </>
-      ),
-      faqs: [
-        {
-          id: 'faq-standalone-team-plan-includes',
-          question: 'What does Coaches Portal Premium include?',
-          answerText: 'Coaches Portal Premium is for one competitive team. It includes roster, schedule, dues, documents, budget, attendance, lineups, setup checklist, reminders, and one free-tier local tournament slot. It is priced at $290 CAD per season or $29 CAD month-to-month.',
-          keywords: ['coaches portal premium', 'coach pricing', 'one competitive team'],
-          popular: true,
-          answer: (
-            <p>Coaches Portal Premium is for one competitive team. It includes roster, schedule, dues, documents, budget, attendance, lineups, setup checklist, reminders, and one free-tier local tournament slot. It is priced at <strong>$290 CAD per season</strong> or <strong>$29 CAD month-to-month</strong>.</p>
-          ),
-        },
-        {
-          id: 'faq-team-link-billing-transfer',
-          question: 'Does linking my Coaches Portal move billing to the organization?',
-          answerText: 'No. The Basic visibility link only records that the team is associated with the organization. Use Request Org Billing after the Basic link is active if the organization should pay.',
-          keywords: ['billing transfer', 'team link', 'organization pays'],
-          popular: true,
-          answer: (
-            <p>No. The Basic visibility link only records that your Coaches Portal is associated with the organization. Use <strong>Request Org Billing</strong> after the Basic link is active if the organization should pay.</p>
-          ),
-        },
-        {
-          id: 'faq-team-link-org-billing-access',
-          question: 'What changes if the organization pays for my Coaches Portal?',
-          answerText: 'The organization becomes the billing owner for this Premium subscription. You keep operational ownership, and Basic sharing still does not expose roster, documents, accounting, or full rep-team administration.',
-          keywords: ['org billing', 'billing transfer', 'coaches portal billing', 'organization access'],
-          answer: (
-            <p>The organization becomes the billing owner for this Premium subscription. You keep operational ownership, and Basic sharing still does not expose roster, documents, accounting, or full rep-team administration.</p>
-          ),
-        },
-        {
-          id: 'faq-team-link-ownership-transfer',
-          question: 'What changes when I request ownership transfer?',
-          answerText: 'Ownership transfer is stronger than Basic visibility or org billing. It means the team is preparing to become org-owned, with roster, documents, schedule, budget, and accounting moving under the organization after platform-assisted transfer is completed.',
-          keywords: ['ownership transfer', 'org owned', 'team transfer', 'club owns team'],
-          answer: (
-            <p>Ownership transfer is stronger than Basic visibility or org billing. It means the team is preparing to become org-owned, with roster, documents, schedule, budget, and accounting moving under the organization after platform-assisted transfer is completed.</p>
-          ),
-        },
-        {
-          id: 'faq-team-link-invitation-decline',
-          question: 'What happens if I decline an organization invitation?',
-          answerText: 'Declining closes the Basic visibility invitation. It does not affect your Coaches Portal, billing, roster, documents, accounting, or coach access.',
-          keywords: ['decline invitation', 'team link invite', 'organization invitation'],
-          answer: (
-            <p>Declining closes the Basic visibility invitation. It does not affect your Coaches Portal, billing, roster, documents, accounting, or coach access.</p>
-          ),
-        },
-      ],
     },
     {
       id: 'recipe-add-player',
-      group: 'How-to recipes',
-      heading: 'How to add or update a player',
-      summary: 'Maintain roster records while preserving inactive players for history.',
-      keywords: ['add player', 'roster', 'inactive player', 'update player'],
-      searchText: 'add player update player roster inactive active manual add walk-on missing player tryout acceptance',
+      group: 'Your team tools',
+      heading: 'How to build your roster',
+      summary: 'Add players, reorder them, and store optional ages and parent contacts.',
+      keywords: ['add player', 'roster', 'jersey number', 'parent contact', 'date of birth', 'reorder'],
+      searchText: 'add player roster jersey number date of birth age guardian parent contact email phone reorder drag remove player edit player walk-on',
       content: (
         <>
-          <p>Players usually arrive from org-managed tryouts, but coaches can add late players when allowed by the organization.</p>
+          <p>Turn on <strong>Roster</strong> from Explore, then click <strong>Add player</strong>.</p>
           <ol>
-            <li>Open <strong>Roster</strong>.</li>
-            <li>Click <strong>Add Player</strong> for a manual addition.</li>
-            <li>Enter the player and guardian details your org needs for communications and records.</li>
-            <li>Add jersey number and primary/secondary positions when you want roster exports and lineup cards to prefill cleanly.</li>
-            <li>Set the player to <strong>Active</strong> if they should count for dues and document tracking.</li>
-            <li>Use <strong>Inactive</strong> for players who should remain in history but not count in current workflows.</li>
+            <li>Enter the player&apos;s name (required). Add a jersey number if you want.</li>
+            <li>Optionally add a <strong>date of birth</strong> — useful when a tournament checks ages for division eligibility. Adding one asks you to confirm you have the parent&apos;s consent to store it.</li>
+            <li>Optionally add a <strong>parent/guardian contact</strong> (name, email, phone) and a private note. The contact email is what your Announcements go to, so add it for any parent you&apos;ll want to message.</li>
+            <li>Drag the handle to reorder players. Use the pencil to edit and the trash icon to remove.</li>
           </ol>
-          <p>If a tryout player is missing, ask your org admin to confirm they accepted the applicant into the same program year.</p>
+          <p>Your roster is yours — build it once and reuse it for every tournament you join.</p>
+          <p><strong>Coaches Portal Premium adds:</strong> player positions, attendance at every practice and game, and game-day lineups and batting orders.</p>
         </>
       ),
     },
     {
       id: 'recipe-build-coach-schedule',
-      group: 'How-to recipes',
+      group: 'Your team tools',
       heading: 'How to build your team schedule',
-      summary: 'Add practices, games, tournaments, and team events to the coach calendar.',
-      keywords: ['coach schedule', 'practice', 'game', 'tournament', 'team event', 'recurring'],
-      searchText: 'coach schedule add practice game scrimmage tournament tournament game team event recurrence list week month calendar score',
+      summary: 'Add practices, games, and team events to one calendar.',
+      keywords: ['coach schedule', 'practice', 'game', 'team event', 'opponent', 'calendar'],
+      searchText: 'coach schedule add practice game team event opponent location start end time calendar list edit remove event recurring premium',
       content: (
         <>
-          <p>Use the schedule to keep your team calendar in one place.</p>
+          <p>Turn on <strong>Schedule</strong> from Explore, then click <strong>Add event</strong>.</p>
           <ol>
-            <li>Open <strong>Schedule</strong>.</li>
-            <li>Choose the event type: practice, league game, scrimmage, tournament, tournament game, or team event.</li>
-            <li>Enter date, time, location, opponent, and notes where relevant.</li>
-            <li>Use recurrence for weekly practices so you do not need to enter each one manually.</li>
-            <li>Switch between list, week, and month views to review the full calendar.</li>
-            <li>Open a game or scrimmage to mark attendance and build a baseball/softball lineup card.</li>
-            <li>After games, enter scores where the event type supports it.</li>
+            <li>Choose the type: <strong>Practice</strong>, <strong>Game</strong>, or <strong>Event</strong>.</li>
+            <li>Give it a title and a start time. An end time is suggested automatically and you can adjust it.</li>
+            <li>Open <strong>Add location / details</strong> to set a location, a note for the team, and — for games — the opponent.</li>
+            <li>Edit or remove any event with the pencil and trash icons.</li>
           </ol>
-          <p>Events are visible to you and your org admin. Use clear names and locations so everyone sees the same plan.</p>
+          <p>Events list in date order so your whole season reads top to bottom.</p>
+          <p><strong>Coaches Portal Premium adds:</strong> recurring events (set repeating practices once), attendance taken straight from each event, and syncing your schedule to your phone&apos;s calendar.</p>
         </>
       ),
     },
     {
       id: 'recipe-track-dues',
-      group: 'How-to recipes',
-      heading: 'How to track player dues and expenses',
-      summary: 'Set dues schedules, mark payments, log expenses, and watch team budget status.',
-      keywords: ['dues', 'installments', 'payments', 'expenses', 'budget', 'accounting'],
-      searchText: 'track dues player dues installments mark paid expenses budget accounting reminders org allocations tournament payables',
+      group: 'Your team tools',
+      heading: 'How to track team fees',
+      summary: 'Charge everyone or one player, then mark each fee paid as money comes in.',
+      keywords: ['fees', 'team fees', 'dues', 'charge everyone', 'one player', 'mark paid', 'payment tracking'],
+      searchText: 'fees team fees dues charge everyone all players one player bulk mark paid unpaid owed payment tracking ledger no online payment collection installments reminders budget premium',
       content: (
         <>
-          <p>Use Accounting to keep player collections and team spending current.</p>
+          <p>Turn on <strong>Fees</strong> from Explore. Fees is a simple way to track who has paid — it records what each player owes and what they&apos;ve paid; it does not collect money online.</p>
           <ol>
-            <li>Open <strong>Accounting</strong>.</li>
-            <li>Use <strong>Set dues for all players</strong> when everyone owes the same amount.</li>
-            <li>Adjust individual player dues if a player has a different arrangement.</li>
-            <li>Mark installments paid as money comes in.</li>
-            <li>Log team expenses and tournament payables as they happen.</li>
-            <li>Review org allocations so you know what your team owes the organization.</li>
+            <li>To add a fee, choose a scope: <strong>Everyone</strong> charges every player on your roster the same amount in one step, or <strong>One player</strong> charges a single player.</li>
+            <li>Give the fee a label (for example, &quot;Spring registration&quot;) and an amount.</li>
+            <li>As money comes in, click <strong>Mark paid</strong> on each fee. You can mark it back to unpaid if needed.</li>
           </ol>
-          <p>The budget card is your quick health check. If numbers look wrong, look for unpaid installments, missing expenses, or allocations that your org admin has not finalized.</p>
+          <p>The summary at the top shows totals for <strong>Owed</strong>, <strong>Paid</strong>, and <strong>Unpaid</strong> so you can see at a glance where collection stands.</p>
+          <p><strong>Coaches Portal Premium adds:</strong> installment schedules with due dates per player, automatic overdue reminder emails, and a season budget that tracks fees, expenses, and fundraiser credits.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-fees-collect-online',
+          question: 'Can players pay their fees online through the portal?',
+          answerText: 'Not in the free Fees tool. It tracks who owes and who has paid — you collect payment your usual way (e-transfer, cash, cheque) and mark each fee paid. Charge everyone at once or one player at a time.',
+          keywords: ['online payment', 'collect fees', 'pay online', 'e-transfer'],
+          answer: (
+            <p>Not in the free Fees tool. It tracks who owes and who has paid — you collect payment your usual way (e-transfer, cash, cheque) and click <strong>Mark paid</strong>. You can charge everyone at once or one player at a time.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-announcements',
+      group: 'Your team tools',
+      heading: 'How to message your team',
+      summary: 'Email every parent with a contact email on your roster in one send.',
+      keywords: ['announcements', 'email parents', 'message team', 'send announcement', 'contact parents'],
+      searchText: 'announcements email parents message whole team send announcement subject body recipients contact email roster missing email recent announcements log delivery premium',
+      content: (
+        <>
+          <p>Turn on <strong>Announcements</strong> from Explore to email your whole team at once.</p>
+          <ol>
+            <li>Write a <strong>subject</strong> and your <strong>message</strong>.</li>
+            <li>The recipient count shows how many parents will get it — everyone on your Roster who has a contact email.</li>
+            <li>Click <strong>Send announcement</strong>.</li>
+          </ol>
+          <p>If a player has no contact email, the page warns you and won&apos;t reach them — add an email on your Roster and use <strong>Refresh</strong> to include them. Every send is saved to a <strong>Recent announcements</strong> log showing whether it sent fully, partly, or failed.</p>
+          <p><strong>Coaches Portal Premium adds:</strong> scheduling announcements ahead of time, automatic dues and event reminders, and seeing who has received each message.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-announcement-no-recipients',
+          question: 'Why does it say there’s no one to email?',
+          answerText: 'Announcements only reach players who have a contact email on your Roster. Add a parent/guardian email to each player on the Roster page, then use Refresh on the Announcements page to pick them up.',
+          keywords: ['no recipients', 'no one to email', 'contact email', 'announcement'],
+          answer: (
+            <p>Announcements only reach players who have a contact email on your Roster. Add a parent/guardian email to each player on the <strong>Roster</strong> page, then use <strong>Refresh</strong> on the Announcements page to pick them up.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'tournaments',
+      group: 'Tournaments',
+      heading: 'Your tournament records',
+      summary: 'See every tournament you’ve entered, with status and schedule, across organizations.',
+      keywords: ['tournaments', 'registration', 'tournament records', 'status', 'schedule', 'history', 'accepted', 'payment', 'how to pay', 'entry fee'],
+      searchText: 'tournaments tournament records registrations status schedule history across organizations bracket standings my registrations accepted what happens next payment how to pay entry fee deposit instructions pay the organizer e-transfer schedule published',
+      content: (
+        <>
+          <p>The <strong>Tournaments</strong> section lists every tournament you&apos;ve registered the team for — across any organization — with its registration status and schedule. Your team&apos;s tournament history also appears on the Overview.</p>
+          <p>Open a tournament record to see where your team stands and when it plays. The organizer running that tournament controls its schedule, brackets, and standings; your portal shows you the live view.</p>
+          <p>Once the organizer <strong>accepts</strong> your team, the record adds a <strong>What&apos;s next</strong> checklist and a <strong>Payment</strong> section. If there&apos;s an entry fee to pay, the organizer&apos;s instructions — how and where to send it — appear right there under <strong>How to pay</strong>, so you don&apos;t have to dig back through your acceptance email. Your games appear automatically once the organizer publishes the schedule.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-pay-entry-fee',
+          question: 'How do I pay the tournament entry fee?',
+          answerText: 'You pay the organizer directly — there is no online payment through the portal. When the organizer accepts your team, open the tournament record: if a fee is owed, their payment instructions appear under "How to pay" in the Payment section (and in your acceptance email). Follow those instructions; the organizer marks your fee paid once they receive it.',
+          keywords: ['pay entry fee', 'how to pay', 'payment instructions', 'tournament fee', 'deposit', 'e-transfer'],
+          answer: (
+            <p>You pay the organizer directly — there&apos;s no online payment through the portal. When the organizer accepts your team, open the tournament record: if a fee is owed, their payment instructions appear under <strong>How to pay</strong> in the <strong>Payment</strong> section (and in your acceptance email). Follow those instructions; the organizer marks your fee paid once they receive it.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'premium',
+      group: 'Coaches Portal Premium',
+      heading: 'What Coaches Portal Premium adds',
+      summary: 'The serious-operator upgrade — game-day tools, automation, budget, and documents.',
+      keywords: ['coaches portal premium', 'upgrade', 'premium', 'paid coaches portal'],
+      searchText: 'coaches portal premium upgrade paid lineup builder attendance dues automation team budget document storage carries over organization joins',
+      content: (
+        <>
+          <p><strong>Coaches Portal Premium</strong> keeps everything in your free portal and adds the tools for running a full competitive season:</p>
+          <ul>
+            <li>Player positions, attendance, and game-day lineups and batting orders.</li>
+            <li>Recurring schedule events and calendar sync.</li>
+            <li>Dues automation — installment schedules, due dates, and overdue reminders — plus a season budget with expenses and fundraiser credits.</li>
+            <li>Document storage for waivers and team forms (see below).</li>
+          </ul>
+          <p>If your organization later joins FieldLogicHQ, your team and its history carry over automatically.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-premium-cancel',
+          question: 'What happens to my data if my team is no longer on Premium?',
+          answerText: 'Your free portal and tournament records stay available. Premium tools switch off, and Premium-only data is retained for a window so it can be restored where possible rather than starting over.',
+          keywords: ['premium ends', 'retention', 'reactivate', 'data'],
+          answer: (
+            <p>Your free portal and tournament records stay available. Premium tools switch off, and Premium-only data is retained for a window so it can be restored where possible instead of starting over.</p>
+          ),
+        },
+      ],
     },
     {
       id: 'recipe-track-documents',
-      group: 'How-to recipes',
-      heading: 'How to track player documents',
-      summary: 'Use org templates and team templates to monitor which players have completed required forms.',
-      keywords: ['documents', 'waiver', 'medical form', 'templates', 'completion'],
-      searchText: 'track documents player documents org templates team templates waiver medical consent code of conduct upload complete missing forms',
+      group: 'Coaches Portal Premium',
+      heading: 'Player documents (Premium)',
+      summary: 'Track waivers and forms with org-wide and team templates — available in the Premium team workspace.',
+      keywords: ['documents', 'waiver', 'medical form', 'templates', 'completion', 'premium'],
+      searchText: 'documents player documents waiver medical consent code of conduct org templates team templates track completion upload premium team workspace organization',
       content: (
         <>
-          <p>Documents help you see which players have completed required forms.</p>
-          <ol>
-            <li>Open <strong>Documents</strong>.</li>
-            <li>Review org-wide templates published by your organization.</li>
-            <li>Add team templates for team-specific forms if needed.</li>
-            <li>Mark each player complete as forms are received.</li>
-            <li>Upload signed copies when your workflow requires attachments.</li>
-            <li>Review incomplete players before deadlines, tournaments, or travel events.</li>
-          </ol>
-          <p>If an expected org form is missing, contact your org admin. Coaches can track published templates, but org admins decide which org-wide templates exist.</p>
-        </>
-      ),
-    },
-    {
-      heading: 'Your roster — how players get added and managed',
-      content: (
-        <>
-          <p>Players are added to your roster in two ways:</p>
+          <p>Document tracking is part of the <strong>Premium team workspace</strong> (the richer workspace coaches get when their team runs under a FieldLogicHQ organization). The free standalone portal doesn&apos;t include a Documents area.</p>
+          <p>In the Premium workspace, the Documents page has two parts:</p>
           <ul>
-            <li><strong>Via tryout acceptance</strong> — when your org admin accepts a tryout applicant, they appear on your roster automatically.</li>
-            <li><strong>Manual add</strong> — you can add players directly from the Roster page using the &quot;Add Player&quot; button. This is useful for late additions or walk-ons.</li>
+            <li><strong>Org-wide templates</strong> — waivers, medical consent, and codes of conduct published by your organization. You can download these to share with families.</li>
+            <li><strong>Team templates</strong> — forms you add yourself for your own team.</li>
           </ul>
-          <p>Each player has a status of <strong>Active</strong> or <strong>Inactive</strong>. Inactive players remain on the roster for record-keeping but are excluded from dues calculations and document tracking.</p>
-          <p>If a player you expected isn&apos;t showing up, confirm with your org admin that the tryout application was accepted in the system.</p>
+          <p>If you expect an organization form and don&apos;t see it, ask your org admin — they decide which org-wide templates exist.</p>
         </>
       ),
     },
     {
-      heading: 'Building your team schedule',
+      id: 'recipe-link-parent-org',
+      group: 'Coaches Portal Premium',
+      heading: 'Linking your team to a parent organization (Premium)',
+      summary: 'Connect a Premium team to a club or league for recognition, or hand it over entirely.',
+      keywords: ['link organization', 'parent org', 'club', 'basic visibility', 'ownership transfer', 'premium'],
+      searchText: 'link organization parent org club league association basic visibility link ownership transfer team becomes org owned premium workspace',
       content: (
         <>
-          <p>Use the Schedule page to manage your full team calendar. You can add six event types:</p>
+          <p>If your team runs in the <strong>Premium team workspace</strong> and belongs to a parent club, league, or association, use <strong>Link Organization</strong> in that workspace to connect them. (The free standalone portal doesn&apos;t have this; it applies once your team is on Premium.)</p>
+          <p>There are two levels, from lighter to stronger:</p>
           <ul>
-            <li><strong>Practice</strong> — supports weekly recurrence so you only need to enter it once per season.</li>
-            <li><strong>League Game</strong> — tracks opponent, home/away, and lets you enter a score after the game.</li>
-            <li><strong>Scrimmage</strong> — same as a league game but doesn&apos;t count toward standings.</li>
-            <li><strong>Tournament</strong> — an external tournament the team attends. Add individual game slots inside it.</li>
-            <li><strong>Tournament Game</strong> — a single game inside a tournament event.</li>
-            <li><strong>Team Event</strong> — team meetings, fundraisers, or anything else.</li>
+            <li><strong>Basic visibility</strong> — records the association only. It does not change who runs the team or give the organization access to your roster, documents, or accounting.</li>
+            <li><strong>Ownership transfer</strong> — the team becomes fully org-owned. After both sides approve, roster, schedule, documents, budget, and accounting move under the organization.</li>
           </ul>
-          <p>Open an event to mark attendance for active roster players. Use <strong>In</strong>, <strong>Out</strong>, <strong>Late</strong>, or <strong>Unknown</strong>, and add a short note when needed.</p>
-          <p>For league games, tournament games, and scrimmages, open the lineup section to choose <strong>Everyone bats</strong> or <strong>9 player ball</strong>. Everyone bats keeps every active player in the batting order and lets you use Bench as an inning-by-inning position. 9 player ball keeps nine starters separate from the bench while still letting you plan substitutions by inning.</p>
-          <p>Events are visible to you and your org admin. Attendance is coach-managed and stays inside the team workflow. Switch between List, Week, and Month views using the toggle at the top right.</p>
+          <p>If an organization invites your team first, review the invitation on the same page and accept or decline it.</p>
         </>
       ),
-    },
-    {
-      heading: 'Team finances — dues, expenses, and your budget',
-      content: (
-        <>
-          <p>The Accounting page has three sections:</p>
-          <ul>
-            <li><strong>Player Dues</strong> — set a dues schedule per player (total amount + installment dates), then mark installments paid as money comes in. Use &quot;Set dues for all players&quot; to apply one schedule to the whole roster at once.</li>
-            <li><strong>Expenses &amp; Tournament Payables</strong> — log team expenses and track deposits/balances owed to tournaments.</li>
-            <li><strong>Org Allocations</strong> — costs your org has assigned to your team (e.g. diamond fees, insurance). These are set by the org admin and are read-only here.</li>
-          </ul>
-          <p>The <strong>Budget</strong> card at the top of the Accounting page is your overall target. Set it to match your org allocation or your team&apos;s fundraising goal for the season.</p>
-          <p>If dues and expenses show nothing yet, your org admin may still be configuring the accounting setup — check back after they confirm it&apos;s ready.</p>
-        </>
-      ),
-    },
-    {
-      heading: 'Player documents — what coaches manage vs. what the org provides',
-      content: (
-        <>
-          <p>The Documents page has two sections:</p>
-          <ul>
-            <li><strong>Org-Wide Templates</strong> — waivers, medical consent forms, and codes of conduct published by your org admin. These apply to all teams. You cannot edit them, but you can download them to share with players and families.</li>
-            <li><strong>Team Templates</strong> — documents you upload yourself that are specific to your team (e.g. team-specific photo permission forms).</li>
-          </ul>
-          <p>If no org-wide templates appear yet, your org admin hasn&apos;t published any. Contact them to confirm which forms are required for your team this season.</p>
-        </>
-      ),
-    },
-    {
-      heading: 'Past seasons — accessing team history',
-      content: (
-        <>
-          <p>Each <strong>program year</strong> is a separate season for your team. Your roster, schedule, and finances are all scoped to the current program year.</p>
-          <p>Past program years are accessible from the team History page. You can view rosters and events from previous seasons, but cannot edit them once the year is closed.</p>
-          <p>At the start of a new season, your org admin will create a new program year. Once you&apos;re assigned to it, it becomes your active context in the portal.</p>
-        </>
-      ),
+      faqs: [
+        {
+          id: 'faq-link-billing-vs-ownership',
+          question: 'Does linking to an organization hand over my team?',
+          answerText: 'Not by itself. A Basic visibility link only records the association and does not change who runs the team. Only an ownership transfer makes the team org-owned, and it requires approval from both sides.',
+          keywords: ['link org', 'visibility', 'ownership', 'org owned'],
+          popular: true,
+          answer: (
+            <p>Not by itself. A <strong>Basic visibility</strong> link only records the association and does not change who runs the team. Only an <strong>ownership transfer</strong> makes the team org-owned, and it requires approval from both sides.</p>
+          ),
+        },
+      ],
     },
   ],
 };

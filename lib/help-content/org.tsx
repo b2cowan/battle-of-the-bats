@@ -4,7 +4,7 @@ import type { HelpPageContent } from './index';
 const orgHelp: HelpPageContent = {
   title: 'Org Admin & Setup',
   role: 'Owner, Admin',
-  intro: 'This guide covers your organization\'s setup — who can do what, how to invite members, and how to manage your plan and settings.',
+  intro: 'This guide covers your organization\'s setup — who can do what, how to invite members, and how to manage your org settings.',
   sections: [
     {
       heading: 'Your first 30 days',
@@ -15,20 +15,24 @@ const orgHelp: HelpPageContent = {
             <li><strong>Invite your co-organizers.</strong> Go to <strong>Members</strong> and send invites to anyone who will help manage tournaments or run the league. Assign the Admin role for full co-organizer access.</li>
             <li><strong>Create your first tournament.</strong> Head to <strong>Tournaments</strong>, click <strong>New Tournament</strong>, and fill in the name, year, and URL slug.</li>
             <li><strong>Set up your org branding.</strong> In <strong>Settings</strong>, upload your logo, pick a colour theme, and confirm your URL slug before you share any links publicly.</li>
-            <li><strong>Enable your first module.</strong> If your plan includes House League, Rep Teams, or other modules, go to <strong>Subscription</strong> and request activation. Each module unlocks a new section in the admin panel.</li>
+            <li><strong>Check your modules.</strong> If your plan includes House League, Rep Teams, or Accounting, each appears automatically in the admin panel — there is no separate activation step. If you expect a module and don't see it, check your plan on <strong>Billing</strong>.</li>
             <li><strong>Invite scorekeepers.</strong> Scorekeepers don't use the main admin area. Add them via <strong>Members → Invite Member</strong> using the Scorekeeper role, then assign the tournaments they should score.</li>
           </ol>
         </>
       ),
     },
     {
+      id: 'roles',
       heading: 'Roles explained — who can do what',
+      summary: 'Owner, Admin, Staff, Treasurer, League Admin, League Registrar, Coach, and Scorekeeper — and what each can do.',
+      keywords: ['roles', 'permissions', 'owner', 'admin', 'staff', 'treasurer', 'league admin', 'registrar', 'coach', 'scorekeeper'],
+      searchText: 'roles permissions who can do what owner admin staff treasurer league admin league registrar coach scorekeeper capabilities grant revoke org settings billing owner only',
       content: (
         <>
           <p>Every member of your org is assigned one of these roles. Roles control what pages and actions they can access.</p>
           <ul>
             <li><strong>Owner</strong> — Full access. Owns the org, manages the subscription, and can do everything admins can. Assigned at org creation; ownership cannot be transferred through the admin panel.</li>
-            <li><strong>Admin</strong> — Manages tournaments, house league, rep teams, and org settings. Cannot manage the subscription.</li>
+            <li><strong>Admin</strong> — Runs operations: tournaments, house league, rep teams, members, and branding. Cannot open org <strong>Settings</strong> or the <strong>Subscription</strong> — those are owner-only.</li>
             <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot create tournaments, manage registrations, or send communications.</li>
             <li><strong>Treasurer</strong> — Access to accounting and ledgers only. Cannot access tournament management or other admin areas.</li>
             <li><strong>League Admin</strong> — Manages house league seasons, registrations, teams, and schedules. Scoped to the House League module.</li>
@@ -44,95 +48,54 @@ const orgHelp: HelpPageContent = {
       id: 'recipe-review-team-link-request',
       group: 'How-to recipes',
       heading: 'How to invite or review Coaches Portal links',
-      summary: 'Invite a paid Coaches Portal, approve Basic visibility requests, take over billing, and start ownership transfer approval when both sides agree.',
-      keywords: ['coaches portal links', 'coaches portal', 'invite coach portal', 'approve request', 'parent organization', 'basic visibility', 'org billing', 'coach portal billing', 'ownership transfer'],
-      searchText: 'invite review approve decline coaches portal link request parent organization club association basic visibility sharing billing transfer org billing ownership roster documents accounting',
+      summary: 'Invite or approve Basic visibility links with coach-run teams, and start ownership transfer when both sides agree.',
+      keywords: ['coaches portal links', 'coaches portal', 'invite coach portal', 'approve request', 'parent organization', 'basic visibility', 'ownership transfer'],
+      searchText: 'invite review approve decline coaches portal link request parent organization club association basic visibility sharing ownership transfer roster documents accounting',
       links: [
         { label: 'Coaches Portal Links', href: '../org/coaches-portal-links' },
       ],
       content: (
         <>
-          <p>Owners and admins can manage Basic visibility links with paid Coaches Portals from <strong>Org Admin &gt; Coaches Portal Links</strong>.</p>
+          <p>Owners and admins can connect coach-run Coaches Portals to the organization from <strong>Org Admin &gt; Coaches Portal Links</strong>.</p>
           <ol>
             <li>Open <strong>Org Admin &gt; Coaches Portal Links</strong>.</li>
-            <li>To invite a paid Coaches Portal, enter the portal URL slug or primary coach email, then click <strong>Send Invite</strong>.</li>
+            <li>To invite a Coaches Portal, enter the portal URL slug or primary coach email, then click <strong>Send Invite</strong>.</li>
             <li>The coach reviews the invitation from their Coaches Portal and chooses <strong>Accept Invitation</strong> or <strong>Decline</strong>.</li>
-            <li>For coach-requested links, review the portal name, team name, requested sharing level, and current billing mode.</li>
-            <li>Click <strong>Approve Link</strong> if the team should be associated with your organization.</li>
-            <li>Click <strong>Decline</strong> if the team is not part of your organization.</li>
+            <li>For coach-requested links, review the portal name, team name, and requested sharing level.</li>
+            <li>Click <strong>Approve Link</strong> if the team should be associated with your organization, or <strong>Decline</strong> if it is not.</li>
             <li>Use Link history later to confirm what was approved or declined.</li>
           </ol>
-          <p>Approving a coach request or receiving a coach&apos;s acceptance creates a <strong>Basic visibility</strong> link only. It does not transfer billing, ownership, player roster access, documents, accounting data, or org-wide rep-team admin access.</p>
-          <p>After the Basic link is active, use the <strong>Org billing</strong> section to invite the coach to move billing, or approve a coach&apos;s billing request. Choose annual or monthly checkout when both sides have approved. The portal becomes org-billed Coaches Portal Premium, but Basic sharing stays in place and the coach keeps operational ownership.</p>
-          <p>Use org-billed Coaches Portal when your organization wants to pay for one or two coach-operated teams without taking over roster, document, accounting, or rep-team administration. Use Club when the organization needs the full multi-team operating layer: rep-team administration, accounting oversight, house league, public site, staff access, and lower extra-team pricing.</p>
-          <p>If your organization is paying for three or more linked Premium portals, Coaches Portal Links and Billing may show a Club value nudge. This is guidance only: org-billed portals can stay active, and Club or ownership transfer still requires the normal approval path.</p>
-          <p>Use <strong>Ownership transfer</strong> only when the team should become org-owned. Phase 5A records mutual approval from the coach and organization; final roster, schedule, document, budget, and accounting reassignment is platform-assisted.</p>
+          <p>Approving a coach request or receiving a coach&apos;s acceptance creates a <strong>Basic visibility</strong> link only. It records the association — it does not give the organization access to the team&apos;s roster, documents, or accounting, or change who runs the team.</p>
+          <p>Use <strong>Ownership transfer</strong> only when a coach-run team should become a normal org-owned rep team. Both the coach and the organization approve it, after which the team&apos;s roster, schedule, documents, and accounting move under the organization.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-basic-team-link-access',
           question: 'What can we see after approving a Basic visibility link?',
-          answerText: 'You can see the approved association and basic Coaches Portal summary. You do not receive roster, documents, accounting, billing, or full rep-team admin access from this approval.',
-          keywords: ['basic visibility', 'coaches portal link access', 'roster', 'documents', 'billing'],
+          answerText: 'You can see the approved association and a basic Coaches Portal summary. You do not receive the team’s roster, documents, accounting, or full rep-team admin access from this approval.',
+          keywords: ['basic visibility', 'coaches portal link access', 'roster', 'documents'],
           popular: true,
           answer: (
-            <p>You can see the approved association and basic Coaches Portal summary. You do not receive roster, documents, accounting, billing, or full rep-team admin access from this approval.</p>
+            <p>You can see the approved association and a basic Coaches Portal summary. You do not receive the team&apos;s roster, documents, accounting, or full rep-team admin access from this approval.</p>
           ),
         },
         {
           id: 'faq-team-link-invite-access',
           question: 'Can we invite a Coaches Portal without taking over the team?',
-          answerText: 'Yes. Sending a Basic visibility invitation only asks the coach to confirm the association. Billing takeover is a separate action after the Basic link is active.',
-          keywords: ['invite coaches portal', 'basic visibility', 'ownership', 'billing'],
+          answerText: 'Yes. Sending a Basic visibility invitation only asks the coach to confirm the association — it does not change who runs the team or move any of its data.',
+          keywords: ['invite coaches portal', 'basic visibility', 'ownership'],
           answer: (
-            <p>Yes. Sending a Basic visibility invitation only asks the coach to confirm the association. Billing takeover is a separate action after the Basic link is active.</p>
+            <p>Yes. Sending a Basic visibility invitation only asks the coach to confirm the association — it does not change who runs the team or move any of its data.</p>
           ),
         },
         {
           id: 'faq-team-link-ownership-transfer',
           question: 'When should we use ownership transfer?',
-          answerText: 'Use ownership transfer only when the Team should become a normal org-owned rep team. It is separate from Basic visibility and org billing because it changes data ownership and access for roster, documents, schedule, budget, and accounting records.',
+          answerText: 'Use ownership transfer only when a coach-run team should become a normal org-owned rep team. It is stronger than a Basic visibility link because it moves data ownership and access for roster, documents, schedule, and accounting records.',
           keywords: ['ownership transfer', 'org owned team', 'club transfer', 'roster access'],
           answer: (
-            <p>Use ownership transfer only when the Team should become a normal org-owned rep team. It is separate from Basic visibility and org billing because it changes data ownership and access for roster, documents, schedule, budget, and accounting records.</p>
-          ),
-        },
-        {
-          id: 'faq-team-link-org-billing',
-          question: 'What happens when we take over billing for a linked Coaches Portal?',
-          answerText: 'Your organization becomes the payer for that Premium portal. The portal remains coach-operated, and this does not unlock roster, documents, accounting, ownership, or org-wide rep-team admin access.',
-          keywords: ['org billing', 'coaches portal billing', 'billing transfer', 'organization pays'],
-          answer: (
-            <p>Your organization becomes the payer for that Premium portal. The portal remains coach-operated, and this does not unlock roster, documents, accounting, ownership, or org-wide rep-team admin access.</p>
-          ),
-        },
-        {
-          id: 'faq-team-addon-vs-club',
-          question: 'When should we use org-billed Coaches Portal instead of Club?',
-          answerText: 'Use org-billed Coaches Portal for a small number of coach-operated linked teams. Club is the better fit when the organization needs multi-team oversight, full rep-team administration, accounting, staff access, public site, house league, or lower extra-team pricing.',
-          keywords: ['coaches portal billing', 'club', 'multi-team', 'pricing', 'rep teams'],
-          popular: true,
-          answer: (
-            <p>Use org-billed Coaches Portal for a small number of coach-operated linked teams. Club is the better fit when the organization needs multi-team oversight, full rep-team administration, accounting, staff access, public site, house league, or lower extra-team pricing.</p>
-          ),
-        },
-        {
-          id: 'faq-team-tournament-plus',
-          question: 'Do linked Coaches Portals include Tournament Plus features?',
-          answerText: 'No. Coaches Portal Premium includes one free-tier local tournament slot for simple events. Tournament Plus features such as unlimited tournament slots, advanced registration controls, enhanced branding, cloning, and post-event reporting require Tournament Plus or a higher organization plan.',
-          keywords: ['Coaches Portal tournaments', 'Tournament Plus', 'free tournament slot', 'upgrade'],
-          answer: (
-            <p>No. Coaches Portal Premium includes one free-tier local tournament slot for simple events. Tournament Plus features such as unlimited tournament slots, advanced registration controls, enhanced branding, cloning, and post-event reporting require Tournament Plus or a higher organization plan.</p>
-          ),
-        },
-        {
-          id: 'faq-team-link-club-nudge',
-          question: 'Why do we see a Club value nudge?',
-          answerText: 'The nudge appears when the organization is paying for three or more linked Premium portals. Club is usually the better multi-team operating layer, but the prompt does not change billing, sharing, ownership, or access by itself.',
-          keywords: ['club nudge', 'multi-team', 'coaches portal billing', 'club value'],
-          answer: (
-            <p>The nudge appears when the organization is paying for three or more linked Premium portals. Club is usually the better multi-team operating layer, but the prompt does not change billing, sharing, ownership, or access by itself.</p>
+            <p>Use ownership transfer only when a coach-run team should become a normal org-owned rep team. It is stronger than a Basic visibility link because it moves data ownership and access for roster, documents, schedule, and accounting records.</p>
           ),
         },
       ],
@@ -157,9 +120,10 @@ const orgHelp: HelpPageContent = {
             <li>Choose the lowest role that matches their job. Use <strong>Admin</strong> only for trusted co-organizers who need broad access.</li>
             <li>If the person only needs a narrow workflow, use a scoped role such as <strong>Treasurer</strong>, <strong>League Registrar</strong>, <strong>Coach</strong>, or <strong>Scorekeeper</strong>.</li>
             <li>For scorekeepers, assign the tournaments they should score so their Scorekeeper View stays focused on the right event.</li>
+            <li>When inviting a scorekeeper or gate volunteer, pick what they're <strong>helping with</strong> (Scorekeeping or Gate / check-in) so their invite link opens straight to the right screen.</li>
             <li>Send the invite, then confirm the person appears as <strong>Pending</strong> until they accept.</li>
           </ol>
-          <p>If they do not receive the email, ask them to check spam first. Then use the resend option from their pending invite row.</p>
+          <p><strong>Invited members don't get a password</strong> — the invite email contains a setup link they must click to finish creating their account. If they try to "log in" before clicking it, they'll see an incorrect-email-or-password error. If they didn't receive the email, ask them to check spam, then use the resend option on their pending invite row.</p>
           <p><strong>Access rule of thumb:</strong> owners manage billing and organization settings, admins run operations, staff handle day-of tasks, and scorekeepers use <code>/{'{orgSlug}'}/scorekeeper</code> rather than the main admin panel.</p>
         </>
       ),
@@ -227,48 +191,23 @@ const orgHelp: HelpPageContent = {
     {
       id: 'recipe-enable-modules',
       group: 'How-to recipes',
-      heading: 'How to turn on modules included in your plan',
-      summary: 'Enable House League, Rep Teams, Accounting, or public organization pages when your plan includes them.',
-      keywords: ['enable module', 'activate module', 'house league', 'rep teams', 'accounting', 'public organization page'],
-      searchText: 'enable module activate module included in plan house league rep teams accounting public organization page subscription billing upgrade module missing',
+      heading: 'How to find the modules included in your plan',
+      summary: 'Modules appear automatically when your plan includes them — here is where to confirm what you have.',
+      keywords: ['module', 'house league', 'rep teams', 'accounting', 'public organization page', 'included in plan'],
+      searchText: 'module included in plan house league rep teams accounting public organization page subscription billing upgrade module missing automatic no activation',
       links: [
         { label: 'Billing', href: '../org/billing' },
       ],
       content: (
         <>
-          <p>Modules appear in the admin navigation only after they are active for your organization.</p>
+          <p>Modules appear in the admin navigation automatically once your plan includes them — there is no separate activation step.</p>
           <ol>
             <li>Go to <strong>Org Admin &gt; Billing</strong>.</li>
-            <li>Review your current plan and included modules.</li>
-            <li>Open the module area and activate any included module you want to use.</li>
-            <li>Refresh the admin panel. The new module should appear in the navigation for members with matching access.</li>
-            <li>If the module is locked, review upgrade options or contact support if you believe it should already be included.</li>
+            <li>Review your current plan and its included modules.</li>
+            <li>Look in the left navigation — included modules show up there for members with matching access.</li>
+            <li>If a module is missing, it is not part of your current plan. Review upgrade options, or contact support if you believe it should already be included.</li>
           </ol>
-          <p>Activating a module gives the organization the feature. Members still need the correct role or capability before they can use it.</p>
-        </>
-      ),
-    },
-    {
-      id: 'recipe-handle-subscription-issue',
-      group: 'How-to recipes',
-      heading: 'How to handle billing, past-due, or upgrade issues',
-      summary: 'Know what owners should check before contacting support about subscription access.',
-      keywords: ['billing', 'subscription', 'past due', 'upgrade', 'payment method', 'plan limit', 'stripe'],
-      searchText: 'billing subscription past due payment failed update payment method manage subscription stripe checkout upgrade plan limit seat limit tournament slot module locked',
-      links: [
-        { label: 'Billing', href: '../org/billing' },
-      ],
-      content: (
-        <>
-          <p>Only owners can manage billing. If an admin sees a locked module or plan limit, ask an owner to review the subscription.</p>
-          <ol>
-            <li>Go to <strong>Org Admin &gt; Billing</strong>.</li>
-            <li>Check the current plan, active modules, tournament slot usage, and seat usage.</li>
-            <li>If payment is past due, open <strong>Manage Subscription</strong> and update the payment method in Stripe.</li>
-            <li>If a workflow is locked by plan, choose the appropriate upgrade or contact support for help choosing a plan.</li>
-            <li>If the plan looks correct but access is still locked, note the organization name, expected feature, and screenshot of the billing page before contacting support.</li>
-          </ol>
-          <p>During active events, do not wait until the day of play to resolve billing blockers. Check access during setup so support has time to help.</p>
+          <p>Having a module gives the organization the feature. Members still need the correct role or capability before they can use it.</p>
         </>
       ),
     },
@@ -287,51 +226,64 @@ const orgHelp: HelpPageContent = {
           <p>To resend an invitation to someone who hasn't accepted yet, click the mail icon on their row. Pending invites appear with a "Pending" status badge.</p>
           <p><strong>Scorekeeper links:</strong> Scorekeepers use <code>/{'{orgSlug}'}/scorekeeper</code>. Admins can also open Scorekeeper View from Results &amp; Scoring when they need to test the field workflow.</p>
           <p><strong>Seat limits:</strong> Your plan determines how many non-scorekeeper seats you can have. Scorekeepers are free on most plans. If you're near your limit, a banner will appear on the Members page with an upgrade link.</p>
+          <p>You can <strong>export</strong> your member list (Excel or CSV) from the Members page for your own records.</p>
         </>
       ),
     },
     {
-      heading: 'Modules — what each one does and how to enable',
+      id: 'notifications-audit',
+      heading: 'Notifications and the member audit log',
+      summary: 'Set your own notification preferences, and (as owner) review the history of member changes.',
+      keywords: ['notifications', 'email alerts', 'push', 'bell', 'audit log', 'member history'],
+      searchText: 'notifications notification preferences in-app bell email push per event type member audit log history who changed role owner only export members',
       content: (
         <>
-          <p>Modules extend FieldLogicHQ beyond the core tournament tools. Each module unlocks a new section in your admin panel and appears in the left navigation once enabled.</p>
+          <p>Two record-keeping areas sit under Org Admin:</p>
+          <ul>
+            <li><strong>Notifications</strong> — your personal notification preferences. Choose how you want to hear about each kind of event (in-app bell, email, and push where available). These settings are per person, not org-wide.</li>
+            <li><strong>Member audit log</strong> — an owner-only history of member changes (roles granted, suspensions, and similar), reachable from the Members area, so you can see who changed what and when.</li>
+          </ul>
+        </>
+      ),
+    },
+    {
+      id: 'modules',
+      heading: 'Modules — what each one does',
+      summary: 'What House League, Rep Teams, Accounting, and the public org page add, and which plan includes each.',
+      keywords: ['modules', 'house league', 'rep teams', 'accounting', 'public organization page', 'plan'],
+      searchText: 'modules house league rep teams accounting public organization page league plus club included plan navigation automatic',
+      content: (
+        <>
+          <p>Modules extend FieldLogicHQ beyond the core tournament tools. Each module adds a new section to your admin panel, shown in the left navigation once it is included in your plan.</p>
           <ul>
             <li><strong>Public Organization Page</strong> — A branded public landing page listing your tournaments, results, and registration links. Included on League Plus and above.</li>
             <li><strong>House League</strong> — Registration, divisions, seasons, game scheduling, standings, and league communications. Included on League Plus and above.</li>
             <li><strong>Accounting</strong> — Org ledger, team invoicing, payment reconciliation, and expense tracking. Included on Club.</li>
             <li><strong>Rep Teams</strong> — Tryouts, rosters, player documents, and the Coaches Portal. Included on Club.</li>
           </ul>
-          <p>To enable a module your plan includes, go to <strong>Subscription → Modules</strong> and use the activation option there. Modules are enabled per-org — contact support if you expect a module to be available but don't see the activation option.</p>
+          <p>Modules appear automatically once your plan includes them — there is no separate activation step. If you expect a module and don't see it, confirm your plan on <strong>Billing</strong>, or contact support.</p>
         </>
       ),
     },
     {
-      heading: 'Subscription and plan management',
-      content: (
-        <>
-          <p>The <strong>Subscription</strong> page (visible to Owners only) shows your current plan, tournament slot usage, seat usage, and available upgrades.</p>
-          <p>The free Tournament plan is meant for one starter event with standard registration, basic selected-row registration updates, waitlist collection, and FieldLogicHQ default public styling. Tournament Plus is the serious tournament operations plan: unlimited tournament slots, 10 staff seats, custom registration questions, Excel and PDF exports for registrations, schedules, and results — useful for check-in sheets, insurance submissions, and post-event board reports — payment reminders, waitlist promotion, full branding, automation, cloning, and post-event reporting.</p>
-          <p>Org-billed Coaches Portal is separate from Club extra teams. It pays for a coach-operated Premium portal. Club included or extra teams are org-owned rep teams under Club. Club includes the first three active rep teams, then uses the lower Club extra-team rate for additional active teams.</p>
-          <p>To upgrade to Tournament Plus, click <strong>Upgrade to Tournament Plus</strong>. You'll be taken to secure Stripe Checkout to enter payment details. Your first payment is collected automatically after the 14-day trial. League Plus and Club are shown as coming soon until those tiers open for self-serve checkout.</p>
-          <p>If you're on a paid plan, use <strong>Manage Subscription</strong> to update your payment method, view past invoices, or cancel. This opens the Stripe customer portal.</p>
-          <p><strong>Past-due payments:</strong> If a payment fails, your access stays active during a grace period. Update your payment method via <strong>Manage Subscription</strong> before the grace period ends to avoid service interruption.</p>
-        </>
-      ),
-    },
-    {
+      id: 'settings',
       heading: 'Settings and your org slug',
+      summary: 'The owner-only Settings page: org name, URL slug, branding, hero banner, fonts, and account deletion.',
+      keywords: ['settings', 'org slug', 'branding', 'logo', 'hero banner', 'font', 'card style', 'delete organization', 'stock logo'],
+      searchText: 'org settings owner only name url slug change redirect branding logo stock logos hero banner theme font card style colour theme delete organization account deletion danger zone discover listed public directory',
       content: (
         <>
-          <p>The <strong>Settings</strong> page (Owner only) controls your org name, URL slug, branding, and scoring preferences.</p>
-          <p><strong>URL slug</strong> — This is the identifier used in all your public URLs: <code>fieldlogichq.ca/your-slug/</code>. It appears in your registration forms, schedule pages, tournament links, and any URLs you've shared publicly or included in past emails.</p>
+          <p>The <strong>Settings</strong> page is <strong>owner-only</strong>. It controls your org name, URL slug, and the look of your public pages.</p>
+          <p><strong>URL slug</strong> — the identifier used in all your public URLs: <code>fieldlogichq.ca/your-slug/</code>. It appears in your registration forms, schedule pages, tournament links, and any URLs you've shared publicly or included in past emails.</p>
           <p>Changing your slug takes effect immediately. Every existing link will stop working — there is no redirect. Before saving a new slug:</p>
           <ul>
             <li>Update any links you've posted on social media or your website</li>
             <li>Note that registration form links sent to coaches in past emails will break</li>
             <li>Consider the timing — avoid changing mid-tournament</li>
           </ul>
-          <p><strong>Branding</strong> — Free Tournament orgs use FieldLogicHQ default public styling. Tournament Plus and higher can upload logos, choose tournament colours, and control more of the public tournament appearance. Public organization page branding is part of the broader public-site tiers.</p>
-          <p><strong>Score finalization</strong> — When enabled, scorekeeper submissions are visible to the public but not marked final until an admin reviews them in the Results page. Individual tournaments can inherit this organization setting or override it in Event Settings. Useful if your org requires a second review before results are final.</p>
+          <p><strong>Branding and appearance</strong> — upload your own logo or pick one from the <strong>stock logo</strong> library, choose a colour theme, set a <strong>theme font</strong> and <strong>card style</strong>, and add a <strong>hero banner</strong> image for your public pages. Free Tournament orgs use FieldLogicHQ default styling; logos, colours, and the hero banner become available on Tournament Plus and higher. There is also a toggle to list your organization on the public <strong>/discover</strong> directory.</p>
+          <p><strong>Danger zone</strong> — the bottom of Settings has a <strong>Request Account Deletion</strong> flow for closing the organization.</p>
+          <p>Requiring an admin to review scores before results go public is a per-tournament setting in each event's settings, not an org-wide Settings option.</p>
         </>
       ),
     },

@@ -113,7 +113,6 @@ export default function PlatformAdminHelpPage() {
         { label: 'Invite members and choose roles', href: '/platform-admin/help/org#recipe-invite-member' },
         { label: 'Fix member access problems', href: '/platform-admin/help/org#recipe-fix-member-access' },
         { label: 'Turn on modules included in a plan', href: '/platform-admin/help/org#recipe-enable-modules' },
-        { label: 'Handle billing or upgrade issues', href: '/platform-admin/help/org#recipe-handle-subscription-issue' },
         { label: 'Explain exports and downloads', href: '/platform-admin/help/exports' },
       ],
     },
@@ -144,7 +143,7 @@ export default function PlatformAdminHelpPage() {
         { label: 'Open tryouts and review applicants', href: '/platform-admin/help/rep-teams#recipe-open-tryouts-review-applicants' },
         { label: 'Give a coach access to their team', href: '/platform-admin/help/rep-teams#recipe-assign-coach-access' },
         { label: 'Help a coach get started', href: '/platform-admin/help/coaches#recipe-first-login' },
-        { label: 'Track player dues and expenses', href: '/platform-admin/help/coaches#recipe-track-dues' },
+        { label: 'Track team fees', href: '/platform-admin/help/coaches#recipe-track-dues' },
       ],
     },
     {

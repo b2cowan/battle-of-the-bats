@@ -93,7 +93,6 @@ export default function AdminHelpHubPage() {
         { label: 'Invite members and choose roles', href: `${helpBase}/org#recipe-invite-member` },
         { label: 'Fix a member access issue', href: `${helpBase}/org#recipe-fix-member-access` },
         { label: 'Turn on included modules', href: `${helpBase}/org#recipe-enable-modules` },
-        { label: 'Handle billing or upgrade questions', href: `${helpBase}/org#recipe-handle-subscription-issue` },
       ],
     }] : []),
     {
@@ -144,7 +143,7 @@ export default function AdminHelpHubPage() {
           { label: 'Get started as a coach', href: `${helpBase}/coaches#recipe-first-login` },
           { label: 'Add or update a player', href: `${helpBase}/coaches#recipe-add-player` },
           { label: 'Build your team schedule', href: `${helpBase}/coaches#recipe-build-coach-schedule` },
-          { label: 'Track player dues and expenses', href: `${helpBase}/coaches#recipe-track-dues` },
+          { label: 'Track team fees', href: `${helpBase}/coaches#recipe-track-dues` },
           { label: 'Track player documents', href: `${helpBase}/coaches#recipe-track-documents` },
         ],
       },

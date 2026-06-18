@@ -1,21 +1,44 @@
-/* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
 
 const repTeamsHelp: HelpPageContent = {
   title: 'Rep Teams',
   role: 'Admin, Owner',
-  intro: 'The Rep Teams module manages competitive travel teams through a franchise model — your org creates and oversees teams at the top level, while coaches operate their teams day-to-day from the Coaches Portal.',
+  intro: 'Rep Teams manages competitive travel teams through a franchise model — your org creates and oversees teams at the top level, while coaches operate their teams day-to-day from their team workspace. It is part of the Club plan (or available as a per-team add-on).',
   sections: [
     {
+      id: 'franchise-model',
+      group: 'Getting started',
       heading: 'The franchise model explained',
+      summary: 'Org HQ sets up and oversees teams; coaches operate their own team day-to-day.',
+      keywords: ['franchise model', 'org hq', 'coach operator', 'rep team', 'oversight'],
+      searchText: 'franchise model org hq coach operator rep team oversight tryouts allocations documents program year coaches portal scoped team',
       content: (
         <>
           <p>FieldLogicHQ separates rep team management into two layers:</p>
           <ul>
-            <li><strong>Org HQ (you)</strong> — creates teams, runs tryouts, sets cost allocations, publishes document templates, and controls program year lifecycle. Admins and owners work here.</li>
-            <li><strong>Coach operators</strong> — manage their assigned team day-to-day from the Coaches Portal: roster, schedule, team finances, player documents. Coaches see only their own team.</li>
+            <li><strong>Org HQ (you)</strong> — creates teams, runs tryouts, sets cost allocations, publishes document templates, and controls the program-year lifecycle.</li>
+            <li><strong>Coach operators</strong> — manage their assigned team day-to-day from their team workspace: roster, schedule, and team finances. Coaches see only their own team.</li>
           </ul>
           <p>This separation keeps org-level decisions centralized while giving coaches the autonomy they need to operate efficiently.</p>
+        </>
+      ),
+    },
+    {
+      id: 'plans-access',
+      group: 'Getting started',
+      heading: 'Plans and access',
+      summary: 'Rep Teams is a Club-plan module; some actions are owner/treasurer-only.',
+      keywords: ['club plan', 'add-on', 'access', 'owner', 'treasurer', 'admin', 'coach access'],
+      searchText: 'rep teams club plan add-on access owner treasurer admin permission cost allocation owner treasurer only coach scoped per-team billing entitlement module',
+      content: (
+        <>
+          <p>Rep Teams comes with the <strong>Club</strong> plan, or it can be added for specific teams as an add-on. If your org doesn&apos;t have it, the module is hidden.</p>
+          <p>Within the module, access varies by role:</p>
+          <ul>
+            <li><strong>Owners and admins</strong> — create teams and program years, run tryouts, publish document templates, and move program years through their lifecycle.</li>
+            <li><strong>Owners and treasurers only</strong> — create and change <strong>cost allocations</strong>. Admins can view allocations but not create them.</li>
+            <li><strong>Coaches</strong> — operate their assigned team from their team workspace, scoped to that team and program year. You don&apos;t need to make a coach a full admin to give them their team.</li>
+          </ul>
         </>
       ),
     },
@@ -24,20 +47,20 @@ const repTeamsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to create a rep team and program year',
       summary: 'Set up the team once, then create a program year for each competitive season.',
-      keywords: ['create rep team', 'program year', 'season', 'team setup', 'active year'],
-      searchText: 'create rep team add team program year competitive season slug active draft completed archived roster tryouts documents coaches',
+      keywords: ['create rep team', 'program year', 'season', 'team setup', 'active year', 'team billing'],
+      searchText: 'create rep team add team program year competitive season slug active draft completed archived roster tryouts documents coaches description group per-team billing club',
       content: (
         <>
           <p>Use a team record for the long-running franchise, and a program year for each season of activity.</p>
           <ol>
             <li>Go to <strong>Rep Teams</strong> and click <strong>Add Team</strong>.</li>
-            <li>Enter the team name, slug, sport, division, and colour.</li>
+            <li>Enter the team name, URL slug, sport, division, colour, and an optional description. If you use team groups, pick the group here too.</li>
             <li>Open the team and create a <strong>Program Year</strong> for the upcoming season.</li>
             <li>Keep the program year in <strong>Draft</strong> while you prepare tryouts, coaches, documents, and cost allocations.</li>
-            <li>Move the program year to <strong>Active</strong> when coaches and families should begin using it.</li>
-            <li>At the end of the season, complete and archive the program year instead of overwriting it.</li>
+            <li>Move it to <strong>Active</strong> when coaches and families should begin using it; only one program year per team should be Active at a time.</li>
+            <li>At season&apos;s end, complete and archive the program year instead of overwriting it.</li>
           </ol>
-          <p>Create a new program year each season so rosters, finances, schedules, and documents remain historically accurate.</p>
+          <p>On the Club plan, creating teams beyond your included count shows a prorated billing confirmation before the team is created — so you always see the cost first.</p>
         </>
       ),
       faqs: [
@@ -59,18 +82,17 @@ const repTeamsHelp: HelpPageContent = {
       heading: 'How to open tryouts and review applicants',
       summary: 'Turn on the public tryout form, process applications, and close registration when evaluations are done.',
       keywords: ['tryouts', 'open registration', 'applicants', 'offer', 'accept', 'decline'],
-      searchText: 'open tryouts review applicants public tryout form registration pending review extend offer accept decline close registration add applicant',
+      searchText: 'open tryouts review applicants public tryout form registration pending review extend offer accept decline close registration add applicant offer extended',
       content: (
         <>
           <p>Tryout registration belongs to a specific team program year.</p>
           <ol>
-            <li>Open the team and select the correct program year.</li>
-            <li>Go to <strong>Tryouts</strong>.</li>
-            <li>Turn on <strong>Open Registration</strong> when families should be able to apply.</li>
-            <li>Review incoming applicants from <strong>Pending Review</strong>.</li>
-            <li>Use <strong>Extend Offer</strong> for players you want to invite onto the team.</li>
-            <li>Use <strong>Accept</strong> only when the player is confirmed for the roster.</li>
-            <li>Close registration when tryouts are finished so the public form is no longer available.</li>
+            <li>Open the team and select the correct program year, then go to <strong>Tryouts</strong>.</li>
+            <li>Turn on <strong>Open Registration</strong> so families can apply from your org&apos;s public page.</li>
+            <li>Review incoming applicants in <strong>Pending Review</strong>.</li>
+            <li>Use <strong>Extend Offer</strong> to invite a player (the application moves to Offer Extended and the guardian is notified).</li>
+            <li>Use <strong>Accept</strong> only when the player is confirmed — this adds them to the roster and makes them visible to the coach. <strong>Decline</strong> notifies the guardian.</li>
+            <li>Close registration when tryouts finish so the public form goes offline.</li>
           </ol>
           <p>If an applicant registered outside the form, use <strong>Add Applicant</strong> so the decision history stays with the program year.</p>
         </>
@@ -87,11 +109,11 @@ const repTeamsHelp: HelpPageContent = {
         <>
           <p>A player becomes visible to the coach only after the application reaches the accepted state.</p>
           <ol>
-            <li>Open the program year's <strong>Tryouts</strong> tab.</li>
+            <li>Open the program year&apos;s <strong>Tryouts</strong> tab.</li>
             <li>Find the applicant by player name or guardian email.</li>
-            <li>If the player is still pending, extend an offer first if your workflow requires an offer step.</li>
+            <li>If the player is still pending, extend an offer first if your workflow requires it.</li>
             <li>Click <strong>Accept</strong> when the player is confirmed.</li>
-            <li>Open the roster or ask the coach to refresh the Coaches Portal.</li>
+            <li>Open the roster or ask the coach to refresh their workspace.</li>
             <li>If the player is still missing, confirm you accepted them in the same program year the coach is viewing.</li>
           </ol>
           <p>Declined and offer-only players do not appear on the active roster.</p>
@@ -101,7 +123,7 @@ const repTeamsHelp: HelpPageContent = {
         {
           id: 'faq-coach-missing-rep-player',
           question: 'Why can a coach not see a player on the roster?',
-          answerText: 'The player may still be pending or offered, or the coach may be looking at a different program year.',
+          answerText: 'The player may still be pending or only offered, or the coach may be looking at a different program year. The player must be Accepted, and the coach must be viewing the same program year.',
           keywords: ['missing roster', 'coach portal', 'accepted player'],
           popular: true,
           answer: (
@@ -116,7 +138,7 @@ const repTeamsHelp: HelpPageContent = {
       heading: 'How to give a coach access to their team',
       summary: 'Invite the coach, assign them to the correct team, and verify they only see their own program year.',
       keywords: ['coach access', 'assign coach', 'coaches portal', 'member invite', 'team access'],
-      searchText: 'coach access assign coach invite coach coaches portal team program year member role missing team cannot access coach portal',
+      searchText: 'coach access assign coach invite coach coaches portal team program year member role missing team cannot access coach portal scoped',
       content: (
         <>
           <p>Coach access has two parts: the person needs a member account, and that account needs to be assigned to the team/program year.</p>
@@ -124,7 +146,7 @@ const repTeamsHelp: HelpPageContent = {
             <li>Invite the person from <strong>Members</strong> using the <strong>Coach</strong> role if they do not already have an account.</li>
             <li>Open the rep team program year and go to the coaches area.</li>
             <li>Add the coach to the correct team/program year.</li>
-            <li>Ask the coach to sign in and open the Coaches Portal.</li>
+            <li>Ask the coach to sign in and open their team workspace.</li>
             <li>If they cannot see the team, confirm their invite was accepted and that they were assigned to the active program year.</li>
           </ol>
           <p>Coaches should not be made full admins just to operate a team. The coach assignment keeps their access scoped to the team they manage.</p>
@@ -135,95 +157,103 @@ const repTeamsHelp: HelpPageContent = {
       id: 'recipe-publish-document-templates',
       group: 'How-to recipes',
       heading: 'How to publish document templates for coaches',
-      summary: 'Create reusable document requirements that coaches can track for each player.',
+      summary: 'Create reusable document requirements and publish them to a program year.',
       keywords: ['document templates', 'waiver', 'medical form', 'coach documents', 'publish template'],
-      searchText: 'publish document templates coach documents player waiver medical consent code of conduct upload signed copies program year',
+      searchText: 'publish document templates coach documents player waiver medical consent code of conduct upload program year org-wide team-specific',
       content: (
         <>
-          <p>Use document templates for requirements that every team or player needs to complete.</p>
+          <p>Use document templates for forms every team or player needs.</p>
           <ol>
-            <li>Go to <strong>Rep Teams &gt; Document Templates</strong>.</li>
-            <li>Create a template for the document type, such as waiver, medical form, or code of conduct.</li>
-            <li>Publish it for the appropriate program year.</li>
-            <li>Tell coaches to open their Documents tab and begin tracking completion.</li>
-            <li>Review completion status before roster deadlines or travel events.</li>
+            <li>Open <strong>Document Templates</strong> from the Rep Teams page.</li>
+            <li>Create or upload a template for the document type — waiver, medical form, code of conduct, and so on.</li>
+            <li>Publish it for the appropriate program year. You can publish org-wide templates or ones scoped to a specific team.</li>
+            <li>Coaches then see the published templates in their team&apos;s Documents area and can download them to share with families.</li>
           </ol>
           <p>Templates are program-year specific. Re-publish or recreate them for the next season when requirements carry forward.</p>
         </>
       ),
     },
     {
-      heading: 'Creating teams and program years',
+      id: 'team-groups',
+      group: 'Org-level tools',
+      heading: 'Organizing teams into groups',
+      summary: 'Group teams by competitive tier (e.g. AA, A, Select) to filter and organize the list.',
+      keywords: ['team groups', 'groups', 'competitive tier', 'filter teams'],
+      searchText: 'team groups competitive tier AA A select filter organize teams create rename delete group assign team to group',
       content: (
         <>
-          <p>From the Rep Teams page, click <strong>Add Team</strong> to create a team. Set a name, URL slug, sport, and optional division and colour. The slug appears in public URLs — choose it carefully.</p>
-          <p>Once a team exists, open it and create a <strong>Program Year</strong>. A program year represents one competitive season for that team. All rosters, schedules, finances, tryouts, and documents are scoped to a program year. Create a new program year at the start of each season — this preserves full history for past years.</p>
-          <p>Program years move through statuses: <strong>Draft → Active → Completed → Archived</strong>. Only one program year per team should be Active at a time.</p>
+          <p>If you run many teams, use <strong>Team Groups</strong> to organize them by tier or category (for example, AA, A, and Select). From the Rep Teams page you can create, rename, and delete groups, assign a team to a group when you create it, and filter the team list by group.</p>
         </>
       ),
     },
     {
-      heading: 'Running tryouts',
+      id: 'cost-allocations',
+      group: 'Org-level tools',
+      heading: 'Cost allocations',
+      summary: 'Split a shared expense across teams with installments — created by owners and treasurers.',
+      keywords: ['cost allocation', 'shared expense', 'team splits', 'installments', 'collected', 'outstanding'],
+      searchText: 'cost allocation shared expense diamond rental insurance tournament fees team splits fixed dollar percentage sessions installments due dates collected outstanding owner treasurer',
       content: (
         <>
-          <p>Open the Tryouts tab for a program year. Toggle <strong>Open Registration</strong> to make the public tryout form live — families can submit applications directly from your org&apos;s public page.</p>
-          <p>When applications arrive they land in <strong>Pending Review</strong>. For each applicant:</p>
-          <ul>
-            <li><strong>Extend Offer</strong> — sends an offer notification to the guardian. The application moves to Offer Extended.</li>
-            <li><strong>Accept</strong> — finalizes the offer. The player is added to the program year roster and becomes available to the coach.</li>
-            <li><strong>Decline</strong> — sends a decline notification.</li>
-          </ul>
-          <p>You can also <strong>Add Applicant</strong> manually to enter a player outside the public form.</p>
-          <p>Once tryouts are complete, close registration using the toggle. The public form goes offline immediately.</p>
-        </>
-      ),
-    },
-    {
-      heading: 'Managing cost allocations',
-      content: (
-        <>
-          <p>Cost allocations split a shared expense (e.g., diamond rental, insurance, tournament fees) across one or more teams for a program year.</p>
+          <p>Cost allocations split a shared expense (diamond rental, insurance, tournament fees) across one or more teams for a program year. Creating allocations is limited to <strong>owners and treasurers</strong>.</p>
           <p>Go to <strong>Cost Allocations</strong> and click <strong>New Allocation</strong>. The wizard has three steps:</p>
           <ol>
-            <li><strong>Details</strong> — enter a description and the total shared expense amount. Optionally link it to an org ledger entry.</li>
-            <li><strong>Team Splits</strong> — assign a portion to each team. Use a fixed dollar amount, a percentage of the total, or a per-session rate. Set payment due dates or split into multiple installments.</li>
-            <li><strong>Review</strong> — confirm the allocation before saving.</li>
+            <li><strong>Details</strong> — enter a description and the total shared amount. Optionally link it to an org ledger entry.</li>
+            <li><strong>Team splits</strong> — assign each team&apos;s share as a fixed dollar amount, a percentage of the total, or by number of sessions. Set a due date, or break it into multiple installments with their own dates.</li>
+            <li><strong>Review</strong> — confirm before saving.</li>
           </ol>
-          <p>Once created, coaches see their team&apos;s allocation on their accounting page as a budget target. The Allocations list shows total, collected, and outstanding amounts so you can track payment status across all teams.</p>
+          <p>Once created, each coach sees their team&apos;s allocation as a budget target. The Allocations list shows total, collected, and outstanding amounts so you can track payment status across all teams.</p>
         </>
       ),
     },
     {
-      heading: 'Working with coaches — who does what',
+      id: 'payment-requests',
+      group: 'Org-level tools',
+      heading: 'Payment requests',
+      summary: 'Review money-to-org and reimbursement requests coaches submit, and approve or deny each.',
+      keywords: ['payment requests', 'reimbursement', 'approve', 'deny', 'coach request'],
+      searchText: 'payment requests reimbursement coach submit money to org money from org approve deny reason queue review',
       content: (
         <>
-          <p>After a player is accepted through tryouts, the coach can see and manage them from the Coaches Portal roster. Admins can view the roster but coaches are the ones who add events, manage dues, and track player documents.</p>
-          <p>Admins control:</p>
-          <ul>
-            <li>Team and program year setup</li>
-            <li>Tryout registration and applicant review</li>
-            <li>Cost allocation amounts and due dates</li>
-            <li>Document templates published to coaches</li>
-            <li>Program year status transitions</li>
-          </ul>
-          <p>Coaches control:</p>
-          <ul>
-            <li>Team schedule (games, practices, events)</li>
-            <li>Dues schedules and expense tracking</li>
-            <li>Player document completion tracking</li>
-            <li>Day-to-day roster management</li>
-          </ul>
-          <p>If a coach reports missing players on their roster, check the Tryouts tab — the player may be Offered but not yet Accepted.</p>
+          <p>Coaches can submit <strong>payment requests</strong> to the org — for example, money owed to the organization or a reimbursement they&apos;re owed. The Payment Requests page is your queue to review each request and <strong>approve</strong> or <strong>deny</strong> it (with a reason). It keeps the money conversation with coaches in one auditable place instead of email.</p>
         </>
       ),
     },
     {
-      heading: 'Team documents and templates',
+      id: 'coach-finances',
+      group: 'Org-level tools',
+      heading: 'What coaches manage (and what you see)',
+      summary: 'Coaches run roster, schedule, and team finances; admins oversee allocations and can view rosters.',
+      keywords: ['coach', 'team finances', 'dues', 'budget', 'who does what', 'roster'],
+      searchText: 'coach manages roster schedule team finances player dues installments expenses fundraisers budget season refund payment requests admin view roster allocations who does what',
+      links: [
+        { label: 'Coaches Portal guide', href: '../help/coaches' },
+      ],
       content: (
         <>
-          <p>Go to <strong>Document Templates</strong> from the Rep Teams page to publish document types to your coaches (e.g., player waiver, medical consent form, code of conduct).</p>
-          <p>Once a template is published, it appears in the coach&apos;s Documents tab for their team. Coaches can mark which players have completed each document and upload the signed copies.</p>
-          <p>Documents are scoped to the program year — templates published during the 2025 program year carry forward only if re-published for the new year.</p>
+          <p>After a player is accepted through tryouts, the coach sees and manages them from their team workspace. Coaches run the day-to-day:</p>
+          <ul>
+            <li>Team schedule (games, practices, events) and the roster.</li>
+            <li>Team finances — player dues and installments, expenses, fundraisers, a season budget, and payment requests to the org.</li>
+          </ul>
+          <p>As an admin you oversee the structure: team and program-year setup, tryouts, document templates, and program-year status. <strong>Cost allocations are owner/treasurer-only.</strong> Admins can view rosters but coaches own the day-to-day team operations. For the coach&apos;s view, see the <a href="../help/coaches">Coaches Portal guide</a>.</p>
+        </>
+      ),
+    },
+    {
+      id: 'team-urls-past',
+      group: 'Org-level tools',
+      heading: 'Team URLs and past seasons',
+      summary: 'Rename team URLs in bulk, and review archived program years from past seasons.',
+      keywords: ['rename team url', 'slug', 'past teams', 'archived', 'history'],
+      searchText: 'rename team url slug bulk rename past teams archived program years history previous seasons',
+      content: (
+        <>
+          <p>Two housekeeping tools live alongside the team list:</p>
+          <ul>
+            <li><strong>Rename Team URLs</strong> — update team URL slugs (in bulk) when names or branding change, so public links stay tidy.</li>
+            <li><strong>Past program years</strong> — review archived seasons. Completed and archived program years keep their rosters, schedules, and finances as history.</li>
+          </ul>
         </>
       ),
     },

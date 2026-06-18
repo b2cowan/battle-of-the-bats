@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import type { HelpPageContent } from './index';
 
 const exportsHelp: HelpPageContent = {
@@ -5,7 +6,7 @@ const exportsHelp: HelpPageContent = {
   role: 'Admin, Owner, Staff, Treasurer, Coach',
   searchPlaceholder: 'Search export help...',
   intro:
-    'Exports let you take data from FieldLogicHQ and use it in other tools — a spreadsheet, a calendar app, a printed document, or an email attachment. Every export works the same way: find the table you want, click the Export button in the top right of that section, and choose a format. The default is always Excel.',
+    'Exports let you take data from FieldLogicHQ and use it in other tools — a spreadsheet, a calendar app, a printed document, or an email attachment. Every export works the same way: find the table you want, click its Export button, and choose a format. The default is always Excel.',
   sections: [
     // ── Section 1: Format guide ─────────────────────────────────────────────
     {
@@ -56,7 +57,9 @@ const exportsHelp: HelpPageContent = {
             Calendar, Microsoft Outlook, and any other app that supports the standard iCal format.
           </p>
           <p>
-            Calendar export is available on schedule pages and is free on all plans.
+            Calendar export is available on the schedule pages that support it — the house league
+            season schedule and the team schedule in the Coaches Portal. (The tournament schedule
+            exports to Excel, CSV, and PDF, not calendar.)
           </p>
           <p>
             <strong>Common uses:</strong> coaches adding a full season schedule to their phone's
@@ -71,8 +74,10 @@ const exportsHelp: HelpPageContent = {
             optional footer text.
           </p>
           <p>
-            PDF exports are available on Tournament Plus, League Plus, and Club plans. Free Tournament
-            plan organizations get PDFs with default FieldLogicHQ branding.
+            PDF exports require <strong>Tournament Plus or above</strong> (Tournament Plus, League
+            Plus, and Club). The free Tournament plan does not include PDF exports — on the free
+            plan the PDF option is disabled. Where a PDF is available, it uses your organization's
+            branding (logo and colours in the header, your name, and optional footer text).
           </p>
           <p>
             <strong>Common uses:</strong> tournament check-in sheets, team rosters for provincial
@@ -89,7 +94,7 @@ const exportsHelp: HelpPageContent = {
       summary: 'Every module and page that has an Export button, and which formats are supported.',
       keywords: ['available', 'which pages', 'modules', 'where', 'registrations', 'schedule', 'roster', 'ledger', 'standings'],
       searchText:
-        'export available pages modules tournaments registrations schedule results house league standings teams rep teams roster tryout coaches portal dues accounting ledger budget org members',
+        'export available pages modules tournaments registrations schedule results house league standings teams rep teams roster tryout coaches portal dues accounting ledger budget org members data tools download where bracket pdf',
       content: (
         <>
           <p>
@@ -120,8 +125,8 @@ const exportsHelp: HelpPageContent = {
               <tr>
                 <td><strong>Tournaments</strong></td>
                 <td>Schedule</td>
-                <td>✓</td><td>✓</td><td>✓</td><td>✓</td>
-                <td>Excel/CSV/iCal: any plan · PDF: Plus</td>
+                <td>✓</td><td>✓</td><td>—</td><td>✓</td>
+                <td>Excel/CSV: any plan · PDF: Plus</td>
               </tr>
               <tr>
                 <td><strong>Tournaments</strong></td>
@@ -251,8 +256,7 @@ const exportsHelp: HelpPageContent = {
           </p>
           <p>
             For large datasets that span multiple pages, the export downloads all matching records
-            — not just what's visible on screen. The export button will indicate "All matching
-            records" in those cases.
+            — not just the rows visible on the current page.
           </p>
         </>
       ),
@@ -434,9 +438,9 @@ const exportsHelp: HelpPageContent = {
             <p>
               Anyone who can see the table can export it — there are no extra role restrictions
               beyond what the page already requires to view. Owners and Admins can export across
-              all modules they have access to. Treasurers can export accounting data. Coaches can
-              export their own team's roster, dues, and schedule from the Coaches Portal. Staff can
-              export schedules and results.
+              all modules they have access to. Treasurers can export accounting data. Coaches in a
+              Club organization can export their team's roster, dues, and schedule from their team
+              workspace. Staff can export schedules and results.
             </p>
           ),
           answerText:
