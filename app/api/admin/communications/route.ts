@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sendEmail } from '@/lib/email';
+import { sendEmail, announcementHtml, resolveCoachRecipient } from '@/lib/email';
 import { getAuthContextWithScope, scopeGuard, unauthorized, forbidden, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
@@ -9,10 +9,6 @@ import { Communication } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function normalizeEmail(email: unknown) {
-  return typeof email === 'string' ? email.trim().toLowerCase() : '';
-}
 
 function stringSet(value: unknown) {
   return new Set(Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []);
@@ -63,7 +59,7 @@ async function resolveRecipients(tournamentId: string, targeting: RecipientTarge
 
     const { data: teams, error: teamsError } = await supabaseAdmin
       .from('teams')
-      .select('id, email, status, payment_status, division_id')
+      .select('id, email, coach_email, status, payment_status, division_id')
       .eq('tournament_id', tournamentId);
 
     if (teamsError) throw teamsError;
@@ -77,7 +73,9 @@ async function resolveRecipients(tournamentId: string, targeting: RecipientTarge
         (divisionIds.size === 0 || divisionIds.has(team.division_id));
 
       if (!selectedById && !selectedByFilters) continue;
-      const email = normalizeEmail(team.email);
+      // Honor an assigned head-coach contact (teams.coach_email) over the original registration
+      // email — mirrors every automatic coach email, so a reassigned coach gets the announcement.
+      const email = resolveCoachRecipient({ coach_email: team.coach_email, email: team.email });
       if (email) recipientMap.set(email, email);
     }
   }
@@ -219,11 +217,26 @@ export const POST = withObservability(async (req: Request) => {
           console.error('Failed to resolve recipients:', resolveErr);
         }
 
+        // Tournament context for the branded email body (name + organizer contact).
+        const { data: tournamentRow } = await supabaseAdmin
+          .from('tournaments')
+          .select('name, contact_email')
+          .eq('id', data.tournamentId)
+          .maybeSingle();
+        const announcementTournamentName = tournamentRow?.name ?? 'your tournament';
+        const announcementContact = tournamentRow?.contact_email ?? undefined;
+
         const results = { success: 0, failed: 0, failedAddresses: [] as string[] };
 
         for (const email of recipients) {
           try {
-            await sendEmail(email, data.title.trim(), data.body.trim());
+            await sendEmail(email, data.title.trim(), announcementHtml({
+              title: data.title.trim(),
+              body: data.body.trim(),
+              tournamentName: announcementTournamentName,
+              contactEmail: announcementContact,
+              coachEmail: email,
+            }));
             results.success++;
           } catch (sendErr) {
             console.error(`Failed to send to ${email}:`, sendErr);

@@ -4,13 +4,14 @@ import {
   paymentConfirmationHtml,
   rejectionHtml,
   sendEmail,
-  coachEmailEnabled, resolveCoachRecipient,
+  coachEmailEnabled, resolveCoachRecipient, acceptanceFeeLine,
 } from '@/lib/email';
 import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { writePlatformEvent } from '@/lib/platform-events';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
+import { resolveTournamentContactEmail } from '@/lib/db';
 import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
 import { markPaidInFullPatch } from '@/lib/mark-paid';
@@ -47,7 +48,9 @@ type TournamentRow = {
   org_id: string | null;
   fee_schedule_mode: string | null;
   deposit_amount: number | null;
+  deposit_due_date: string | null;
   total_fee_amount: number | null;
+  total_fee_due_date: string | null;
   settings: Record<string, unknown> | null;
 };
 
@@ -55,7 +58,9 @@ type DivisionFeeRow = {
   id: string;
   name: string;
   deposit_amount: number | null;
+  deposit_due_date: string | null;
   total_fee_amount: number | null;
+  total_fee_due_date: string | null;
 };
 
 const BULK_ACTIONS = new Set<BulkAction>([
@@ -133,15 +138,17 @@ async function releaseTeamSlot(team: TeamRow) {
   await supabaseAdmin.from('pool_slots').update({ team_id: null }).eq('id', team.slot_id);
 }
 
-async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournamentName: string, divisions: Map<string, DivisionFeeRow>, orgId: string | null, paymentInstructions?: string, coachSettings?: unknown) {
+async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament: TournamentRow, divisions: Map<string, DivisionFeeRow>, orgId: string | null, paymentInstructions?: string, coachSettings?: unknown, contactEmail?: string) {
   if (action !== 'accept' && action !== 'reject' && action !== 'mark_paid') return;
+  const tournamentName = tournament.name;
 
   for (const team of teams) {
     // Recipient prefers the assigned coach (teams.coach_email), falls back to teams.email; skip
     // only when neither exists. The footer keeps using teams.email (the claim key, never touched).
     const recipient = resolveCoachRecipient(team);
     if (!recipient) continue;
-    const divisionName = divisions.get(team.division_id)?.name ?? 'Division';
+    const div = divisions.get(team.division_id);
+    const divisionName = div?.name ?? 'Division';
     const payload = {
       teamName: team.name,
       coachName: team.coach ?? '',
@@ -149,10 +156,19 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
       tournamentName,
       teamId: team.id,
       coachEmail: team.email ?? undefined,
+      // Without this, acceptance/rejection emails fall back to the platform inbox as the "contact"
+      // (J5-057) — a coach's reply would never reach the organizer.
+      contactEmail,
     };
 
     if (action === 'accept' && team.status !== 'accepted' && coachEmailEnabled(coachSettings, 'acceptance')) {
-      await sendEmail(recipient, `Your Team Has Been Accepted - ${team.name}`, acceptanceHtml({ ...payload, paymentInstructions }));
+      // J5-063: state the amount owed (deposit-first) — skipped for an already-paid team.
+      const feeLine = team.payment_status === 'paid' ? undefined : acceptanceFeeLine({
+        feeMode: tournament.fee_schedule_mode,
+        tournament: { depositAmount: tournament.deposit_amount, depositDueDate: tournament.deposit_due_date, totalFeeAmount: tournament.total_fee_amount, totalFeeDueDate: tournament.total_fee_due_date },
+        division: div ? { depositAmount: div.deposit_amount, depositDueDate: div.deposit_due_date, totalFeeAmount: div.total_fee_amount, totalFeeDueDate: div.total_fee_due_date } : null,
+      });
+      await sendEmail(recipient, `Your Team Has Been Accepted - ${team.name}`, acceptanceHtml({ ...payload, paymentInstructions, feeLine }));
     }
     if (action === 'reject' && team.status !== 'rejected') {
       if (coachEmailEnabled(coachSettings, 'rejection')) {
@@ -204,7 +220,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const [{ data: tournament, error: tournamentError }, { data: teams, error: teamsError }, { data: divisionRows, error: divisionError }] = await Promise.all([
     supabaseAdmin
       .from('tournaments')
-      .select('id, name, org_id, fee_schedule_mode, deposit_amount, total_fee_amount, settings')
+      .select('id, name, org_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, settings')
       .eq('id', tournamentId)
       .maybeSingle<TournamentRow>(),
     supabaseAdmin
@@ -213,7 +229,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
       .in('id', ids),
     supabaseAdmin
       .from('divisions')
-      .select('id, name, deposit_amount, total_fee_amount')
+      .select('id, name, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
       .eq('tournament_id', tournamentId),
   ]);
 
@@ -285,7 +301,11 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   const paymentInstructions = typeof tournament.settings?.payment_instructions === 'string'
     ? tournament.settings.payment_instructions
     : undefined;
-  await sendStatusEmails(selectedTeams, bulkAction, tournament.name, divisions, tournament.org_id, paymentInstructions, tournament.settings);
+  // Resolve the organizer's coach-facing contact (respects the show-to-coaches toggle + org-owner
+  // fallback) so status emails point coaches at the organizer, not the platform inbox (J5-057).
+  const statusFallback = tournament.org_id ? (await getOrgOwnerEmail(tournament.org_id)) ?? null : null;
+  const statusContact = (await resolveTournamentContactEmail(tournamentId, statusFallback, 'coach')) ?? undefined;
+  await sendStatusEmails(selectedTeams, bulkAction, tournament, divisions, tournament.org_id, paymentInstructions, tournament.settings, statusContact);
 
   // Notify org admins of bulk status / payment changes (fire-and-forget, one notification per operation)
   const count = selectedTeams.length;

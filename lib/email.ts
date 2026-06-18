@@ -236,6 +236,58 @@ export function adminNotificationHtml(p: {
   `);
 }
 
+/** PostgREST numerics arrive as strings — coerce to a finite number (0 fallback). */
+function feeNum(v: number | string | null | undefined): number {
+  const n = Number(v ?? 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function feeMoney(amount: number): string {
+  return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 2 }).format(amount);
+}
+
+function feeDueLabel(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+  const d = dateOnly ? new Date(value + 'T00:00:00') : new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+type AcceptanceFeeSchedule = {
+  depositAmount: number | string | null;
+  depositDueDate: string | null;
+  totalFeeAmount: number | string | null;
+  totalFeeDueDate: string | null;
+};
+
+/**
+ * Build the "Amount due" line for the acceptance email — what a freshly-accepted (unpaid) team owes:
+ * the deposit first (if there is one), else the full fee, with its due date. Division fee overrides
+ * apply in division fee-mode. Returns undefined when there's no fee schedule (free event). Pure (no
+ * payment state) — callers skip it for an already-paid team.
+ */
+export function acceptanceFeeLine(input: {
+  feeMode: string | null;
+  tournament: AcceptanceFeeSchedule | null;
+  division: AcceptanceFeeSchedule | null;
+}): string | undefined {
+  const useDivision = input.feeMode === 'division' && feeNum(input.division?.totalFeeAmount) > 0;
+  const src = useDivision ? input.division : input.tournament;
+  if (!src) return undefined;
+  const deposit = feeNum(src.depositAmount);
+  const total = feeNum(src.totalFeeAmount);
+  if (total <= 0 && deposit <= 0) return undefined;
+  // Deposit phase: a partial deposit is owed first, with the full fee shown for context.
+  if (deposit > 0 && deposit < total) {
+    const due = feeDueLabel(src.depositDueDate);
+    return `${feeMoney(deposit)} deposit${due ? ` due by ${due}` : ''} (${feeMoney(total)} total)`;
+  }
+  const owe = total > 0 ? total : deposit;
+  const due = feeDueLabel(src.totalFeeDueDate ?? src.depositDueDate);
+  return `${feeMoney(owe)}${due ? ` due by ${due}` : ''}`;
+}
+
 export function acceptanceHtml(p: {
   teamName: string; coachName: string; divisionName: string; tournamentName: string; teamId: string;
   contactEmail?: string;
@@ -243,6 +295,8 @@ export function acceptanceHtml(p: {
   coachEmail?: string;
   /** Organizer-authored "how to pay" text (from tournament settings). Shown verbatim when set. */
   paymentInstructions?: string;
+  /** Pre-formatted "amount due" line (build with acceptanceFeeLine). Shown above the instructions. */
+  feeLine?: string;
 }) {
   // Claim-aware portal link: carries the registration (teamId) so the coach lands on this team
   // (or creates an account and it links). dashboardUrl override kept for back-compat.
@@ -257,7 +311,8 @@ export function acceptanceHtml(p: {
     <p>Hi <strong>${p.coachName}</strong>,</p>
     <p>Great news! <strong>${p.teamName}</strong> has been accepted into the <strong>${p.divisionName}</strong> division for <strong>${p.tournamentName}</strong>.</p>
     <div style="background:#0F172A;border:1px solid rgba(34,197,94,0.35);border-left:3px solid rgba(34,197,94,0.6);padding:1.5rem;margin:1.5rem 0;">
-      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Payment Instructions</p>
+      <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#22C55E;">Payment</p>
+      ${p.feeLine ? `<p style="margin:0 0 0.75rem;color:#fff;font-size:0.98rem;"><strong>Amount due:</strong> ${p.feeLine}</p>` : ''}
       <p style="margin:0 0 0.75rem;color:rgba(241,245,249,0.8);">${paymentBody}</p>
       <p style="margin:1rem 0 0;color:rgba(241,245,249,0.45);font-size:0.85rem;">Questions? Contact <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>
     </div>
@@ -325,6 +380,33 @@ function escapeEmailHtml(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+/**
+ * Organizer announcement broadcast (Communications → email channel). Wraps the organizer's
+ * plain-text title + body in the FieldLogicHQ shell with a contact line and a portal link, so a
+ * coach gets a branded, actionable email instead of a raw, unstyled, link-less blob. The body is
+ * ESCAPED (organizer-authored free text) then split into paragraphs — never injected as raw HTML.
+ */
+export function announcementHtml(p: {
+  title: string;
+  body: string;
+  tournamentName: string;
+  contactEmail?: string;
+  /** Recipient address — pre-fills the portal claim link (generic tournaments list, no per-team id). */
+  coachEmail?: string;
+}) {
+  const bodyHtml = escapeEmailHtml(p.body)
+    .split('\n')
+    .map(line => (line.trim() ? `<p style="margin:0 0 0.75rem;line-height:1.7;color:rgba(241,245,249,0.85);">${line}</p>` : ''))
+    .join('');
+  return wrap(`
+    <p style="margin:0 0 0.35rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Announcement &middot; ${escapeEmailHtml(p.tournamentName)}</p>
+    <h2 style="color:#fff;font-size:1.35rem;margin:0 0 1.25rem;">${escapeEmailHtml(p.title)}</h2>
+    ${bodyHtml}
+    ${p.contactEmail ? `<p style="color:rgba(241,245,249,0.55);font-size:0.85rem;margin-top:1.5rem;">Questions? Contact <a href="mailto:${escapeEmailHtml(p.contactEmail)}" style="color:#D9F99D;">${escapeEmailHtml(p.contactEmail)}</a></p>` : ''}
+    ${coachPortalFooter({ email: p.coachEmail })}
+  `);
 }
 
 export function paymentReminderHtml(p: {

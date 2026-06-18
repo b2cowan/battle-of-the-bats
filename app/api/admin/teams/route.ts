@@ -1,12 +1,13 @@
 import {
   sendEmail,
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml, manualTeamRegistrationHtml,
-  coachEmailEnabled, resolveCoachRecipient,
+  coachEmailEnabled, resolveCoachRecipient, acceptanceFeeLine,
 } from '@/lib/email';
 import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
+import { resolveTournamentContactEmail } from '@/lib/db';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { captureError, withObservability } from '@/lib/observability';
 
@@ -398,19 +399,46 @@ export const POST = withObservability(async (req: Request) => {
     const bulkTournamentId = (currents[0] as any)?.tournament_id;
     if (bulkTournamentId && await isTournamentLocked(bulkTournamentId)) return tournamentLockedResponse();
 
-    // Organizer-authored payment instructions (tournament-wide) for the acceptance email,
-    // plus the per-tournament automatic coach-email switches.
+    // Organizer-authored payment instructions (tournament-wide) for the acceptance email, plus the
+    // per-tournament coach-email switches, the REAL tournament + division names, and the organizer
+    // contact — so status emails don't ship "Tournament"/"Division" placeholders (J5-056) or fall
+    // back to the platform inbox as the contact (J5-057).
     let bulkPaymentInstructions: string | undefined;
     let bulkCoachSettings: unknown = null;
+    let bulkTournamentName = 'Tournament';
+    let bulkContactEmail: string | undefined;
+    let bulkFeeMode: string | null = null;
+    let bulkTournamentFee: { depositAmount: number | null; depositDueDate: string | null; totalFeeAmount: number | null; totalFeeDueDate: string | null } | null = null;
+    type BulkDivisionFee = { name: string; deposit_amount: number | null; deposit_due_date: string | null; total_fee_amount: number | null; total_fee_due_date: string | null };
+    const bulkDivisions = new Map<string, BulkDivisionFee>();
     if (bulkTournamentId) {
       const { data: bulkTournament } = await supabaseAdmin
         .from('tournaments')
-        .select('settings')
+        .select('name, contact_email, org_id, settings, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
         .eq('id', bulkTournamentId)
         .single();
       bulkCoachSettings = bulkTournament?.settings ?? null;
+      bulkTournamentName = bulkTournament?.name ?? 'Tournament';
+      bulkFeeMode = bulkTournament?.fee_schedule_mode ?? null;
+      bulkTournamentFee = {
+        depositAmount: bulkTournament?.deposit_amount ?? null,
+        depositDueDate: bulkTournament?.deposit_due_date ?? null,
+        totalFeeAmount: bulkTournament?.total_fee_amount ?? null,
+        totalFeeDueDate: bulkTournament?.total_fee_due_date ?? null,
+      };
       const raw = (bulkTournament?.settings as { payment_instructions?: unknown } | null)?.payment_instructions;
       if (typeof raw === 'string') bulkPaymentInstructions = raw;
+
+      const bulkOrgId = bulkTournament?.org_id ?? null;
+      const bulkFallback = bulkOrgId ? (await getOrgOwnerEmail(bulkOrgId)) ?? null : null;
+      bulkContactEmail = (await resolveTournamentContactEmail(bulkTournamentId, bulkFallback, 'coach')) ?? undefined;
+
+      const divIds = [...new Set((currents as Array<{ division_id: string | null }>).map(t => t.division_id).filter(Boolean) as string[])];
+      if (divIds.length) {
+        const { data: divs } = await supabaseAdmin
+          .from('divisions').select('id, name, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date').in('id', divIds);
+        for (const d of divs ?? []) bulkDivisions.set(d.id, { name: d.name, deposit_amount: d.deposit_amount, deposit_due_date: d.deposit_due_date, total_fee_amount: d.total_fee_amount, total_fee_due_date: d.total_fee_due_date });
+      }
     }
 
     // J5-026: when an update marks a team paid, stamp the paid-in-full AMOUNTS the same way the
@@ -525,10 +553,11 @@ export const POST = withObservability(async (req: Request) => {
       const p = {
         teamName:       current.name,
         coachName:      current.coach,
-        divisionName:   'Division',
-        tournamentName: 'Tournament',
+        divisionName:   bulkDivisions.get(current.division_id)?.name ?? 'Division',
+        tournamentName: bulkTournamentName,
         teamId:         current.id,
         coachEmail:     current.email,
+        contactEmail:   bulkContactEmail,
       };
       // Route to the assigned coach (teams.coach_email) when set, else teams.email (the claim key,
       // which the footer keeps using — teams.email is never overwritten).
@@ -536,8 +565,17 @@ export const POST = withObservability(async (req: Request) => {
 
       const updates = item.updates;
       if (updates.status === 'accepted' && current.status !== 'accepted') {
-        if (coachEmailEnabled(bulkCoachSettings, 'acceptance')) {
-          await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions }));
+        if (recipient && coachEmailEnabled(bulkCoachSettings, 'acceptance')) {
+          // J5-063: state the amount owed (deposit-first) — skipped for an already-paid team, including
+          // when this same update marks it paid (effective post-update status).
+          const div = bulkDivisions.get(current.division_id);
+          const willBePaid = current.payment_status === 'paid' || updates.payment_status === 'paid' || updates.paymentStatus === 'paid';
+          const feeLine = willBePaid ? undefined : acceptanceFeeLine({
+            feeMode: bulkFeeMode,
+            tournament: bulkTournamentFee,
+            division: div ? { depositAmount: div.deposit_amount, depositDueDate: div.deposit_due_date, totalFeeAmount: div.total_fee_amount, totalFeeDueDate: div.total_fee_due_date } : null,
+          });
+          await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions: bulkPaymentInstructions, feeLine }));
         }
         // Notify other org admins of the status change (fire-and-forget)
         notify({
@@ -551,7 +589,7 @@ export const POST = withObservability(async (req: Request) => {
         }).catch(console.error);
       }
       if (updates.status === 'rejected' && current.status !== 'rejected') {
-        if (coachEmailEnabled(bulkCoachSettings, 'rejection')) {
+        if (recipient && coachEmailEnabled(bulkCoachSettings, 'rejection')) {
           await sendEmail(recipient, `Registration Update — ${current.name}`, rejectionHtml(p));
         }
         // 5m: a rejected team is no longer playing — cancel any scheduled game-day reminder.
@@ -579,7 +617,7 @@ export const POST = withObservability(async (req: Request) => {
         }).catch(console.error);
       }
       if ((updates.payment_status === 'paid' || updates.paymentStatus === 'paid') && current.payment_status !== 'paid') {
-        if (coachEmailEnabled(bulkCoachSettings, 'payment')) {
+        if (recipient && coachEmailEnabled(bulkCoachSettings, 'payment')) {
           await sendEmail(recipient, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
         }
         // Notify org admins of received payment (fire-and-forget)

@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   sendEmail,
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml,
-  coachEmailEnabled, resolveCoachRecipient,
+  coachEmailEnabled, resolveCoachRecipient, acceptanceFeeLine,
 } from '@/lib/email';
 import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
@@ -26,8 +26,8 @@ export const PATCH = withObservability(async (req: NextRequest, props: { params:
       .from('teams')
       .select(`
         *,
-        divisions (name),
-        tournaments!teams_tournament_id_fkey (name, contact_email, org_id, settings)
+        divisions (name, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date),
+        tournaments!teams_tournament_id_fkey (name, contact_email, org_id, settings, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date)
       `)
       .eq('id', id)
       .single();
@@ -79,8 +79,23 @@ export const PATCH = withObservability(async (req: NextRequest, props: { params:
     // falling back to teams.email. teams.email stays the claim key (the footer keeps using it).
     const recipient = resolveCoachRecipient(current);
     const coachSettings = tournamentData?.settings;
+    // J5-063: state the amount owed (deposit-first) in the acceptance email — skipped if already paid,
+    // including when THIS same request marks the team paid (use the effective post-update status).
+    const divisionData = current.divisions as any;
+    const effectivePaymentStatus = payment_status ?? current.payment_status;
+    const feeLine = effectivePaymentStatus === 'paid' ? undefined : acceptanceFeeLine({
+      feeMode: tournamentData?.fee_schedule_mode ?? null,
+      tournament: tournamentData ? {
+        depositAmount: tournamentData.deposit_amount, depositDueDate: tournamentData.deposit_due_date,
+        totalFeeAmount: tournamentData.total_fee_amount, totalFeeDueDate: tournamentData.total_fee_due_date,
+      } : null,
+      division: divisionData ? {
+        depositAmount: divisionData.deposit_amount, depositDueDate: divisionData.deposit_due_date,
+        totalFeeAmount: divisionData.total_fee_amount, totalFeeDueDate: divisionData.total_fee_due_date,
+      } : null,
+    });
     if (status === 'accepted' && current.status !== 'accepted' && coachEmailEnabled(coachSettings, 'acceptance')) {
-      await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions }));
+      await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions, feeLine }));
     }
     if (status === 'rejected' && current.status !== 'rejected' && coachEmailEnabled(coachSettings, 'rejection')) {
       await sendEmail(recipient, `Registration Update — ${current.name}`, rejectionHtml(p));
