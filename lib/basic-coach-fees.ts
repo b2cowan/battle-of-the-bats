@@ -5,11 +5,15 @@ import { supabaseAdmin } from './supabase-admin';
  * Manual fee ledger for org-less Basic coach teams (free-tier Phase 4b, table mig 116).
  *
  * Scope rules (do not widen):
- * - Coach-self-recorded tracking only: label / amount / paid-unpaid / optional player link / note.
+ * - Coach-self-recorded tracking only: label / amount / paid-unpaid / player link / note.
  *   NO Stripe, online collection, partial payments, installments, reminders, dues automation, budget,
  *   or accounting entries. Those stay Premium / future payment-processing work.
- * - A fee may link to one `basic_coach_team_players` row, or have `playerId=null` for a team-wide
- *   / unassigned charge. Player deletes retain the fee and null the link.
+ * - Every fee is PER-PLAYER. The UI charges either "everyone" (fans out to one independent
+ *   per-player row via `createBasicCoachTeamFeesForAllPlayers`) or one specific player. A single
+ *   create therefore REQUIRES a `playerId`; the player-less "team-wide" charge was removed.
+ *   `player_id=null` only persists on LEGACY rows (created before that change) or when a linked
+ *   player is deleted (ON DELETE SET NULL keeps the fee as an orphaned historical charge). Those
+ *   legacy/orphaned rows stay editable + removable, but no new player-less fee can be created.
  * - Ownership is enforced by the CALLER (route) via `userOwnsBasicCoachTeam`; every mutation here
  *   ALSO scopes by `basic_coach_team_id`, and any supplied `playerId` must belong to the same team.
  *
@@ -67,6 +71,7 @@ const MAX_LENGTHS: Record<string, { max: number; label: string }> = {
 };
 
 export const BASIC_COACH_FEE_PLAYER_SCOPE_ERROR = 'That player does not belong to this team.';
+export const BASIC_COACH_FEE_PLAYER_REQUIRED_ERROR = 'Choose a player for this fee, or charge everyone.';
 
 function mapFee(row: BasicCoachTeamFeeRow): BasicCoachTeamFee {
   return {
@@ -172,7 +177,8 @@ async function assertPlayerBelongsToTeam(basicCoachTeamId: string, playerId: str
   if (!data) throw new Error(BASIC_COACH_FEE_PLAYER_SCOPE_ERROR);
 }
 
-/** List a team's manual fees, grouped in app code by player/team-wide. */
+/** List a team's manual fees. App code groups per-player; legacy/orphaned (player-less) rows
+ *  surface in a separate "Other fees" block. */
 export async function getBasicCoachTeamFees(basicCoachTeamId: string): Promise<BasicCoachTeamFee[]> {
   const { data, error } = await supabaseAdmin
     .from('basic_coach_team_fees')
@@ -185,7 +191,8 @@ export async function getBasicCoachTeamFees(basicCoachTeamId: string): Promise<B
   return (data ?? []).map(row => mapFee(row as BasicCoachTeamFeeRow));
 }
 
-/** Add a manual fee to the end of the team's ledger. `label` + `amount` are required. */
+/** Add a manual fee to the end of the team's ledger for ONE specific player. `label`, `amount`,
+ *  and a `playerId` are required (charge-everyone uses `createBasicCoachTeamFeesForAllPlayers`). */
 export async function createBasicCoachTeamFee(params: {
   basicCoachTeamId: string;
   createdByUserId: string;
@@ -194,6 +201,10 @@ export async function createBasicCoachTeamFee(params: {
   const label = (params.input.label ?? '').trim();
   if (!label) throw new Error('A fee label is required.');
   if (params.input.amount === undefined) throw new Error('A fee amount is required.');
+  // Per-player model: a single create must name a player. Team-wide creation was removed
+  // (the "everyone" path fans out to per-player rows); legacy null rows stay editable but new
+  // player-less fees cannot be created. The scope check below also confirms same-team ownership.
+  if (!params.input.playerId) throw new Error(BASIC_COACH_FEE_PLAYER_REQUIRED_ERROR);
   await assertPlayerBelongsToTeam(params.basicCoachTeamId, params.input.playerId);
 
   const { data: top, error: topError } = await supabaseAdmin

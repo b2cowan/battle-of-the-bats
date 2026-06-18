@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBasicCoachTeamOwner } from '@/lib/coach-team-guard';
 import {
+  BASIC_COACH_FEE_PLAYER_REQUIRED_ERROR,
   BASIC_COACH_FEE_PLAYER_SCOPE_ERROR,
   createBasicCoachTeamFee,
   getBasicCoachTeamFees,
@@ -25,6 +26,7 @@ function validationError(error: unknown): string | null {
   return [
     'A fee label is required.',
     'A fee amount is required.',
+    BASIC_COACH_FEE_PLAYER_REQUIRED_ERROR,
     BASIC_COACH_FEE_PLAYER_SCOPE_ERROR,
   ].includes(message)
     ? message
@@ -62,6 +64,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     if (error) return json({ error }, 400);
     if (!input.label) return json({ error: 'A fee label is required.' }, 400);
     if (input.amount === undefined) return json({ error: 'A fee amount is required.' }, 400);
+    if (!input.playerId) return json({ error: BASIC_COACH_FEE_PLAYER_REQUIRED_ERROR }, 400);
 
     const fee = await createBasicCoachTeamFee({
       basicCoachTeamId: basicTeamId,

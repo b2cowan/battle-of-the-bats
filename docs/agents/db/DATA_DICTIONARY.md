@@ -1376,7 +1376,7 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 **Gotchas (read first):**
 1. **Dev-only until deploy** (mig 116, applied to dev). Expect it in `DRIFT_dev_vs_prod.md` until `feat/free-tier-coaches` merges to master.
 2. **Manual ledger by policy.** `status` is binary (`unpaid|paid`) and `marked_paid_at` is just the coach's manual stamp. Do not add processor ids, payment links, installment state, reminder state, or "partial" here - those belong to Premium/future payment-processing work.
-3. **`player_id` is optional and lossy by design.** NULL means team-wide/unassigned. The FK is `ON DELETE SET NULL`, so deleting a player keeps the ledger row as an unassigned historical/team charge instead of deleting money history.
+3. **Every fee is per-player now; `player_id` NULL = legacy/orphaned only.** A new fee is created either for "everyone" (fans out to one independent per-player row each, via the `/fees/bulk` route) or for one specific player — a single create REQUIRES a `player_id` (`lib/basic-coach-fees.ts`). The player-less "team-wide" charge was **removed**. The column stays nullable only because the FK is `ON DELETE SET NULL`: deleting a player keeps the fee as an orphaned historical charge. So NULL now means a LEGACY row (created before the removal) or an ORPHANED row (its player was deleted) — **not** a creatable team-wide fee. The UI surfaces these under "Other fees" (editable/removable, not reassignable).
 4. **Same-team player validation is app-layer.** The DB FK proves `player_id` exists, but not that it belongs to the same `basic_coach_team_id`. `lib/basic-coach-fees.ts` validates the selected player against the team before create/update, and every mutation also scopes by `basic_coach_team_id`.
 5. **Money convention follows the rest of the app.** Amount is `numeric(10,2)` dollars (not integer cents), matching tournament fee fields, league registration fees, accounting entries, and rep dues. Stripe cents exist only in Stripe-facing code, not manual ledgers.
 6. **Ownership = `basic_coach_team_users` membership** (same as roster/schedule); no `org_id`. RLS-enabled, no policies = `supabaseAdmin` only; the API gates on `userOwnsBasicCoachTeam` via `requireBasicCoachTeamOwner`.
@@ -1387,7 +1387,7 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 **`basic_coach_team_id`** (FK to `basic_coach_teams.id` ON DELETE CASCADE, NOT NULL) - the team; the only structural anchor (no `org_id`).
 
 <!-- dict:col:basic_coach_team_fees.player_id -->
-**`player_id`** (FK to `basic_coach_team_players.id` ON DELETE SET NULL, nullable) - optional roster-player link; NULL means team-wide/unassigned (gotchas 3-4).
+**`player_id`** (FK to `basic_coach_team_players.id` ON DELETE SET NULL, nullable) - the roster player who owes this fee; **REQUIRED on new fees** ("everyone" fans out to per-player rows; or one specific player). NULL only on legacy/orphaned rows (gotchas 3-4).
 
 <!-- dict:col:basic_coach_team_fees.label -->
 **`label`** (text, NOT NULL) - coach-entered fee label (e.g. tournament fee, jersey deposit, pizza night).
