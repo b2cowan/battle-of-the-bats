@@ -1,6 +1,7 @@
 import { normalizeBillingCycle, type BillingCycle } from './plan-config';
 import { writePlatformEvent, type PlatformEventInput } from './platform-events';
 import { supabaseAdmin } from './supabase-admin';
+import { sendEmail, teamWorkspaceWelcomeHtml, SITE_URL } from './email';
 import {
   provisionStandaloneTeamWorkspace,
   TeamWorkspaceProvisioningError,
@@ -579,6 +580,24 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
       teamWorkspaceId: result.teamWorkspaceId,
       claimedByUserId: parsed.ownerUserId,
     });
+  }
+
+  // Premium Coaches Portal welcome — best-effort, fires once here (the FIRST webhook event to
+  // provision wins; the second finds the workspace already exists and returns early above). Never
+  // block provisioning or the webhook 200 on an email failure.
+  if (parsed.ownerEmail) {
+    try {
+      await sendEmail(
+        parsed.ownerEmail,
+        `Welcome to your Premium Coaches Portal — ${parsed.teamName}`,
+        teamWorkspaceWelcomeHtml({
+          teamName: parsed.teamName,
+          portalUrl: `${SITE_URL}/${result.org.slug}/coaches`,
+        }),
+      );
+    } catch (err) {
+      console.error('[team-checkout] Premium welcome email failed:', err);
+    }
   }
 
   return { provisioned: true, result };

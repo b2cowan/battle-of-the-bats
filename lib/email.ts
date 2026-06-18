@@ -469,6 +469,35 @@ export function basicCoachTeamWelcomeHtml(p: {
   `);
 }
 
+/**
+ * Welcome email sent once when a coach's PAID Premium Coaches Portal workspace is first provisioned
+ * (Stripe checkout → webhook). Confirms the upgrade, names what's now unlocked, and links into the
+ * portal. Naming canon: the product is the "Coaches Portal"; the paid tier is "Premium Coaches Portal".
+ */
+export function teamWorkspaceWelcomeHtml(p: {
+  teamName: string;
+  coachName?: string | null;
+  portalUrl: string;
+}) {
+  const coachName = p.coachName?.trim() || 'Coach';
+  return wrap(`
+    <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">Welcome to the Premium Coaches Portal 🎉</h2>
+    <p>Hi <strong>${escapeEmailHtml(coachName)}</strong>,</p>
+    <p>Your <strong>Premium Coaches Portal</strong> is ready for <strong>${escapeEmailHtml(p.teamName)}</strong>. Everything from your free portal carries over — plus the full season toolkit.</p>
+    <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
+      <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What's now unlocked</p>
+      <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.82);">
+        Player positions, attendance &amp; game-day lineups<br>
+        Recurring events &amp; calendar sync<br>
+        Dues schedules, reminders &amp; a season budget<br>
+        Documents for waivers and team forms
+      </p>
+    </div>
+    <a href="${escapeEmailHtml(p.portalUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Open your Coaches Portal &rarr;</a>
+    <p style="color:rgba(241,245,249,0.45);font-size:0.86rem;margin-top:1.5rem;">You can manage or cancel your subscription anytime from your portal billing settings.</p>
+  `);
+}
+
 export function coachAccessReminderHtml(p: {
   teamName: string;
   coachName: string;

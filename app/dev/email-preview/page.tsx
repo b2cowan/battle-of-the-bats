@@ -13,6 +13,7 @@ import {
   manualTeamRegistrationHtml,
   announcementHtml,
   acceptanceFeeLine,
+  teamWorkspaceWelcomeHtml,
 } from '@/lib/email';
 
 // Sample "amount due" line (deposit-first), as the acceptance email now shows (J5-063).
@@ -145,6 +146,16 @@ const AUTOMATIC: Preview[] = [
     html: rejectionHtml({
       teamName: S.teamName, coachName: S.coachName, divisionName: S.divisionName,
       tournamentName: S.tournamentName, contactEmail: S.contactEmail,
+    }),
+  },
+  {
+    id: 'premium-welcome',
+    label: 'Premium Coaches Portal welcome',
+    subject: 'Welcome to your Premium Coaches Portal — ' + S.teamName,
+    trigger: 'Fires once when a coach completes the Premium checkout (provisioning).',
+    html: teamWorkspaceWelcomeHtml({
+      teamName: S.teamName,
+      portalUrl: 'https://dev.fieldlogichq.ca/toronto-blue-jays-u13/coaches',
     }),
   },
   {
