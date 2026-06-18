@@ -111,3 +111,34 @@
     justify-content: flex-start;
   }
 }
+
+/* Quiet / "waiting" variant (COACH_SURFACE_DESIGN_ADDENDUM §iii — the tier between Compact and
+   a text-only <p>). For a NO-ACTION empty where the coach can only check back (unpublished /
+   no-games schedule): a calm flat panel, not a glowing illustration. Drops the radial lime wash,
+   the highlight shadow, and the medallion glow; the icon goes neutral (--white-40, never lime);
+   left-aligned, full-width, section-weight headline — so it sits at the same visual weight as the
+   data panels around it instead of out-shouting them. Opt-in only; action empties keep the glow. */
+.quiet {
+  max-width: none;
+  margin: 0;
+  gap: 0.55rem;
+  padding: 1.15rem 1.25rem;
+  text-align: left;
+  align-items: flex-start;
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.quiet .medallion {
+  width: 36px;
+  height: 36px;
+  color: var(--white-40);
+  background: var(--white-05);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+.quiet .headline {
+  font-size: 0.95rem;
+  font-weight: 700;
+}

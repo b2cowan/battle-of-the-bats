@@ -24,7 +24,9 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* auto-fit so the strip reads cleanly whether it carries 2 or 3 steps (the accepted
+     phase drops the fee step for a no-fee tournament) — never a stranded empty column. */
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 1rem;
 }
 
@@ -49,6 +51,22 @@
   font-size: 0.78rem;
   font-weight: 700;
   line-height: 1;
+}
+
+/* A completed step (fee paid / roster submitted) demotes to a quiet checked state so the
+   coach's attention falls on what's still outstanding, not what's done. */
+.stepDone .marker {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--white-40);
+}
+
+.stepDone .stepTitle {
+  color: var(--white-50);
+}
+
+.stepDone .stepDetail {
+  color: var(--white-30);
 }
 
 .stepText {

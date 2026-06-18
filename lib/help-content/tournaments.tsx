@@ -173,8 +173,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Define the structure',
       heading: 'Divisions, capacities, pools, and fees',
       summary: 'Control who can register and how teams are organized.',
-      keywords: ['division', 'capacity', 'pool', 'fees', 'payment'],
-      searchText: 'divisions capacity waitlist pools user selects pool fee schedule deposit total fee registration open closed per division tournament level',
+      keywords: ['division', 'capacity', 'pool', 'fees', 'payment', 'payment instructions', 'how to pay'],
+      searchText: 'divisions capacity waitlist pools user selects pool fee schedule deposit total fee registration open closed per division tournament level payment instructions how to pay e-transfer acceptance email coaches portal registration form manual payment',
       links: [
         { label: 'Divisions', href: '../tournaments/divisions' },
         { label: 'Event Settings', href: '../tournaments/settings/event' },
@@ -205,6 +205,15 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['fees', 'deposit', 'payments', 'division fee'],
           answer: (
             <p>Yes. Open <strong>Event Settings</strong> and set the fee schedule mode to <strong>By Division</strong>, then edit each division to configure its own deposit, total fee, and due dates.</p>
+          ),
+        },
+        {
+          id: 'faq-payment-instructions',
+          question: 'Where do my payment instructions show up?',
+          answerText: 'Payment instructions you enter with the fee schedule in Event Settings are always included in the team\'s acceptance email and shown to accepted coaches in their Coaches Portal. The "Where these appear" toggle controls the public registration form only — choose "Form & email" to also show them before teams register. Payment is recorded manually; there is no online payment.',
+          keywords: ['payment instructions', 'how to pay', 'e-transfer', 'acceptance email', 'coaches portal', 'registration form'],
+          answer: (
+            <p>Payment instructions you enter with the fee schedule in <strong>Event Settings</strong> are always included in the team&apos;s acceptance email and shown to accepted coaches in their <strong>Coaches Portal</strong>. The <strong>Where these appear</strong> toggle controls the public registration form only — choose <strong>Form &amp; email</strong> to also show them to teams before they register. Payment is recorded manually; there is no online payment through FieldLogicHQ.</p>
           ),
         },
       ],

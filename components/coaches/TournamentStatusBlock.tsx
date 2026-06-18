@@ -49,10 +49,18 @@ export default function TournamentStatusBlock({
   status,
   contactEmail,
   showCheckIn,
+  paymentInstructions,
 }: {
   status: CoachTournamentStatus;
   contactEmail: string | null;
   showCheckIn: boolean;
+  /**
+   * The organizer's "how to pay" text (tournament settings → payment_instructions), shown
+   * verbatim to an ACCEPTED coach who owes a fee. This is the DETAIL layer the hero fee strip
+   * deliberately withholds (per the coach-surface addendum: strip = the glance alert, block =
+   * how much / by when / the process). Null when unset or the fee is already paid.
+   */
+  paymentInstructions?: string | null;
 }) {
   const { fee, checkIn, roster } = status;
   const paidDate = formatDate(fee.collectedAt);
@@ -83,14 +91,29 @@ export default function TournamentStatusBlock({
       </div>
 
       {fee.hasSchedule && !fee.isPaid && (
-        <p className={styles.note}>
-          Your organizer records payment manually
-          {contactEmail ? (
-            <> — contact <a href={`mailto:${contactEmail}`}>{contactEmail}</a> to arrange.</>
-          ) : (
-            '.'
-          )}
-        </p>
+        paymentInstructions ? (
+          // How-to-pay detail. The hero strip only signals THAT a fee is owed; this panel is
+          // where the coach learns HOW to pay it — the organizer's instructions, verbatim.
+          <div className={styles.payPanel}>
+            <p className={styles.payPanelLabel}>How to pay</p>
+            <p className={styles.payInstructions}>{paymentInstructions}</p>
+            <p className={styles.payNote}>
+              Your organizer records payment manually.
+              {contactEmail && (
+                <> Questions? <a href={`mailto:${contactEmail}`}>{contactEmail}</a></>
+              )}
+            </p>
+          </div>
+        ) : (
+          <p className={styles.note}>
+            Your organizer records payment manually
+            {contactEmail ? (
+              <> — contact <a href={`mailto:${contactEmail}`}>{contactEmail}</a> to arrange.</>
+            ) : (
+              '.'
+            )}
+          </p>
+        )
       )}
 
       {showCheckIn && (

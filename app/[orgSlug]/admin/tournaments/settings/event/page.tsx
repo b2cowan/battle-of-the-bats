@@ -1340,7 +1340,7 @@ export default function TournamentEventSettingsPage() {
                 </div>
               </div>
               <p className={styles.descriptionText} style={{ marginTop: '0.4rem' }}>
-                Payment instructions are always included in the acceptance email. Choose &ldquo;Form &amp; email&rdquo; to also show them on the public registration form.
+                Payment instructions are always included in the acceptance email and shown to accepted coaches in their Coaches Portal. Choose &ldquo;Form &amp; email&rdquo; to also show them on the public registration form before teams register.
               </p>
             </>
           )}

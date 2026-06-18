@@ -377,7 +377,13 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
 
       {accepted && beforeStart && startDate && (
         <p className={styles.heroCountdown}>
-          <Countdown target={`${startDate}T00:00:00`} prefix="First game in " whenPast={null} />
+          {/* Before a schedule exists (accepted_prep) there's no "first game" to count to — count
+              to the tournament start. Once the schedule is live, "First game in" is honest again. */}
+          <Countdown
+            target={`${startDate}T00:00:00`}
+            prefix={phase === 'accepted_prep' ? 'Tournament starts in ' : 'First game in '}
+            whenPast={null}
+          />
         </p>
       )}
 

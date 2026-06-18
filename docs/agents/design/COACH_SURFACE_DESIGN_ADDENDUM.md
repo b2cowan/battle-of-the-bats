@@ -111,12 +111,13 @@ display: grid; place-items: center;
 - **Primary CTA is always `btn btn-lime`** — never `.inlineLink`, blueprint-blue `.btnPrimary`, `btn-primary`, `btn-sm`-as-primary, or a bare hex anchor. Secondary → `btn-ghost`.
 - **Tournament-mode glow option:** swap the container/medallion lime tints to `color-mix(in srgb, var(--team-color, var(--logic-lime)) 8%/12%/30%/20%, transparent)` for the radial/medallion — **the medallion icon stays `--logic-lime` always.** (Never `rgba(var(--team-color-rgb),…)` — that token doesn't exist.)
 
-**Full-card vs text-note decision rule:**
-- **Full `CoachEmptyState`** — when the section IS the content and the coach CAN act: new-team first-run banner, roster/schedule/fee empties, premium BvA, premium schedule.
-- **Compact `CoachEmptyState`** — when it's one of several recoverable empties: editor section empties, tournament pending/no-schedule.
-- **Text-only `<p>` note** — when the coach CANNOT act from this surface: organizer announcements, team-wide-charges sub-block, announcement-log "No history", `CoachLiveSchedule` static-mode banner (`rgba(var(--info-rgb),0.07)` bg + `rgba(var(--info-rgb),0.18)` border — `--info-rgb` is real at `globals.css:68`, never hardcoded `rgba(59,130,246,…)`).
+**Empty-state tier decision rule (4 tiers, brightest → quietest):**
+- **Full `CoachEmptyState`** — when the section IS the content and the coach CAN act: new-team first-run banner, roster/fee first-run empties, premium BvA, premium schedule. Keeps the lime glow + radial wash — the glow earns its place when there's a CTA to press.
+- **Compact `CoachEmptyState`** (`compact`) — one of several recoverable empties the coach can still act on: editor section sub-empties.
+- **Quiet `CoachEmptyState`** (`quiet`) — when the section needs a card body but the coach can do **nothing but check back** (waiting on the organizer): the tournament Schedule "not published yet" / "no games scheduled yet" states. Flat panel — **no radial wash, no highlight shadow, no medallion glow**; the medallion icon goes **neutral `--white-40` (never lime)**; left-aligned, full-width, `36px` medallion, section-weight headline (`0.95rem/700`). Sits at the same visual weight as the data panels around it instead of out-shouting them. **Never pair `quiet` with a CTA** — if the coach can act, it's Compact/Full.
+- **Text-only `<p>` note** — when the coach CANNOT act AND the section doesn't need a card body: organizer announcements, team-wide-charges sub-block, announcement-log "No history", `CoachLiveSchedule` static-mode banner (`rgba(var(--info-rgb),0.07)` bg + `rgba(var(--info-rgb),0.18)` border — `--info-rgb` is real at `globals.css:68`, never hardcoded `rgba(59,130,246,…)`).
 
-Empty-state cards always carry the **lime** glow (not the team-hue wash). The team-hue wash is the hero header only; content cards inside sections are lime-glow. No conflict with Section iv.
+**Glow rule:** the **Full** and **Compact** empties carry the **lime** glow (not the team-hue wash); the **Quiet** tier carries **no glow at all** (that's what makes it a calm placeholder). The team-hue wash is the hero header only. No conflict with Section iv.
 
 ---
 

@@ -47,6 +47,12 @@ type CoachEmptyStateProps = {
   /** Compact variant: 40px medallion + tighter padding. */
   compact?: boolean;
   /**
+   * Quiet "waiting" variant (addendum §iii) — a NO-ACTION empty the coach can only check back on
+   * (unpublished / no-games schedule). Flat panel, neutral --white-40 medallion (no lime, no glow),
+   * left-aligned, section-weight — matches the data panels around it. Do NOT use with a CTA.
+   */
+  quiet?: boolean;
+  /**
    * Tournament-mode glow: the radial wash + medallion tints lean on the team
    * hue (`color-mix` off `--team-color`) instead of lime. The medallion ICON
    * stays `--logic-lime` always. Set `--team-color` inline on an ancestor.
@@ -91,12 +97,14 @@ export default function CoachEmptyState({
   primaryAction,
   secondaryAction,
   compact = false,
+  quiet = false,
   tournamentGlow = false,
   children,
 }: CoachEmptyStateProps) {
   const stateClass = [
     styles.state,
     compact ? styles.compact : '',
+    quiet ? styles.quiet : '',
     tournamentGlow ? styles.tournamentGlow : '',
   ]
     .filter(Boolean)

@@ -4,6 +4,16 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-17 — CoachEmptyState gains a "Quiet" tier for no-action "waiting" empties
+
+**Decision (owner-driven, on the accepted coach tournament page):** the shared `CoachEmptyState` gets a fourth tier — **Quiet** (`quiet` prop) — between Compact and a text-only `<p>`. It's for a section that needs a card body but where the coach can do **nothing but check back** (waiting on the organizer): the tournament Schedule **"not published yet"** and **"no games scheduled yet"** states. Treatment: a calm **flat panel** — drops the radial lime wash (flat `--surface`), the `--highlight-top` shadow, AND the medallion glow halo; the medallion shrinks to `36px` and its icon goes **neutral `--white-40` (never lime)** on a `--white-05`/`--border` shell; **left-aligned, full-width** (no `560px` centering), tighter padding (`1.15rem 1.25rem`) + gap (`0.55rem`), section-weight headline (`0.95rem/700`). Applied to both schedule empties on `/coaches/tournaments/{teamId}` (icon dropped to 18px to suit the smaller medallion). **Opt-in only** — the Full/Compact action empties (first-run "Add your first fee", etc.) keep the lime glow untouched.
+
+**Rationale:** Owner: the unpublished-schedule card "could be the same size as the rest and lighter on the brightness of the icon." Root cause: a no-action waiting state was wearing the **action** treatment (glowing lime medallion + radial wash + centered hero), so it out-weighed the Payment panel right above it and pulled the eye to a place with nothing to do. The glow should signal "there's something to press" — when there isn't, the empty should read as a quiet placeholder. This is the same **flat-note register** already established for `purposeNote`/`recipientNote`/the dashboard metric strip (no box-shadow + neutral non-lime icon + left-aligned = a *note*, not a *card*), now applied as a formal empty-state tier.
+
+**Applies to:** `components/coaches/CoachEmptyState.tsx` (+ `quiet` prop) + `CoachEmptyState.module.css` (`.quiet` + `.quiet .medallion` + `.quiet .headline`), `app/coaches/tournaments/[teamId]/page.tsx` (schedule empty `compact`→`quiet`), `docs/agents/design/COACH_SURFACE_DESIGN_ADDENDUM.md` §iii (4-tier rule). No new tokens, no literal hex. **Generalizes:** an empty whose only "action" is to wait gets the Quiet tier (flat, no glow, neutral `--white-40` icon, left-aligned, section-weight) — match the surrounding data panels, don't out-shout them; the lime glow is reserved for empties that carry a real CTA.
+
+---
+
 ### 2026-06-17 — Real logo mark in both shells + coach upsell as a quiet page-footer
 
 **Decision (owner-driven revisions to the COACH_PORTAL_GROWTH Phase-1 quick wins):**

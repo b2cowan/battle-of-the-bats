@@ -22,7 +22,7 @@ import TournamentRosterSubmit from '@/components/coaches/TournamentRosterSubmit'
 import HeadCoachEditor from '@/components/coaches/HeadCoachEditor';
 import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
 import CoachWelcomeBanner from '@/components/coaches/CoachWelcomeBanner';
-import CoachNextSteps from '@/components/coaches/CoachNextSteps';
+import CoachNextSteps, { type CoachNextStep } from '@/components/coaches/CoachNextSteps';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import SharePageButton from '@/components/public/SharePageButton';
 import { parseRosterRequirements } from '@/lib/roster-requirements';
@@ -395,6 +395,52 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
 
   const isPending = coachPhase === 'pending';
 
+  // Payment instructions (the organizer's "how to pay" text) shown to an ACCEPTED coach who owes a
+  // fee, inside the payment/status block. The acceptance email already sends these verbatim, so the
+  // authenticated portal is the same disclosure level — no on-form toggle gate here (that toggle
+  // only governs the PUBLIC registration form). Render-only: `settings` is already fetched above.
+  const rawPaymentInstructions = (tournament?.settings as Record<string, unknown> | null)?.payment_instructions;
+  const paymentInstructions =
+    team.status === 'accepted' && typeof rawPaymentInstructions === 'string'
+      ? rawPaymentInstructions.trim() || null
+      : null;
+
+  // The status block is fee-only at accepted_prep (check-in hides until game day; the roster row
+  // only appears once submitted), so it reads better as "Payment" there; once other rows join
+  // (game day / submitted roster) it becomes the broader "Your status".
+  const statusSectionTitle =
+    coachStatus && !isGameDayOrLater && coachStatus.roster.state === 'none' ? 'Payment' : 'Your status';
+
+  // Accepted "what's next" — data-driven forward orientation mirroring the pending strip. Finished
+  // steps (fee paid / roster submitted) render muted + checked so the coach sees what's outstanding.
+  const acceptedNextSteps: CoachNextStep[] = [];
+  if (coachPhase === 'accepted_prep' && coachStatus) {
+    const fee = coachStatus.fee;
+    if (fee.hasSchedule) {
+      // Action-only — the amount/due date live in the hero alert (glance) and the Payment block
+      // (detail) directly above and below this strip, so repeating them here is pure noise.
+      acceptedNextSteps.push(
+        fee.isPaid
+          ? { title: 'Entry fee paid', detail: 'Your organizer has recorded your payment — thank you.', done: true }
+          : { title: 'Pay your entry fee', detail: 'See how to pay below.' },
+      );
+    }
+    // Only surface the roster step when a "Your roster" section actually renders below
+    // (showRosterSubmit = roster required OR already submitted) — otherwise the step would
+    // point the coach at a section that doesn't exist for this tournament.
+    if (showRosterSubmit) {
+      acceptedNextSteps.push(
+        team.roster_submitted_at
+          ? { title: 'Roster submitted', detail: 'You can still update it until the organizer locks rosters.', done: true }
+          : { title: 'Submit your roster', detail: 'Add your players in the roster section below.' },
+      );
+    }
+    acceptedNextSteps.push({
+      title: 'Watch for the schedule',
+      detail: 'Your games will appear here once the organizer publishes the schedule.',
+    });
+  }
+
   return (
     <div className={styles.page}>
       {showWelcome && (
@@ -443,10 +489,16 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
 
       {/* Persistent "what happens next" strip — the durable forward-orientation for a
           pending/waitlist coach (the dismissible welcome banner no longer carries it, so
-          it survives dismissal). Pending/waitlist only; accepted teams get the prep
-          checklist + status block instead. */}
+          it survives dismissal). The accepted phase gets its own data-driven strip just below. */}
       {(team.status === 'pending' || team.status === 'waitlist') && (
         <CoachNextSteps status={team.status === 'waitlist' ? 'waitlist' : 'pending'} />
+      )}
+
+      {/* Accepted forward-orientation — the durable "now that you're in, here's what to do"
+          strip (pay your fee → submit your roster → watch for the schedule). Mirrors the pending
+          strip's pattern; non-dismissible so a returning coach still sees outstanding steps. */}
+      {acceptedNextSteps.length > 0 && (
+        <CoachNextSteps steps={acceptedNextSteps} label="What's next" />
       )}
 
       {/* 5i game-day bridge — placed directly under the hero so the live scorebug
@@ -499,11 +551,32 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
 
       {coachStatus && (
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Your status</h2>
+          <h2 className={styles.sectionTitle}>{statusSectionTitle}</h2>
           <TournamentStatusBlock
             status={coachStatus}
             contactEmail={coachContactEmail}
             showCheckIn={isGameDayOrLater}
+            paymentInstructions={paymentInstructions}
+          />
+        </section>
+      )}
+
+      {/* Schedule — placed directly under the payment/status block so the "not published yet"
+          expectation lands right where the What's-next strip pointed ("watch for the schedule").
+          The populated (published) case renders in the hero zone via showLiveBridge above; this
+          block owns the empty/unpublished case only. */}
+      {team.status === 'accepted' && !showLiveBridge && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Schedule</h2>
+          <CoachEmptyState
+            quiet
+            icon={<CalendarClock size={18} aria-hidden />}
+            headline={!scheduleVisible ? 'Schedule not published yet' : 'No games scheduled yet'}
+            description={
+              !scheduleVisible
+                ? 'The schedule for this division has not been published. Check back after the organizer publishes it.'
+                : 'No games have been scheduled for your team yet.'
+            }
           />
         </section>
       )}
@@ -526,7 +599,7 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
           it expands by default — head coach / roster become real prep tasks. */}
       {showHeadCoach && (
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Manage your entry</h2>
+          <h2 className={styles.sectionTitle}>Your entry</h2>
           {isPending && (
             <p className={styles.zoneNote}>Optional for now — you can set this anytime before the event.</p>
           )}
@@ -561,24 +634,6 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
               <dd>{new Date(team.registered_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
             </dl>
           </div>
-        </section>
-      )}
-
-      {/* When there's no live bridge to show, keep the schedule empty/unpublished
-          notes in their normal position (the bridge above owns the populated case). */}
-      {team.status === 'accepted' && !showLiveBridge && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Schedule</h2>
-          <CoachEmptyState
-            compact
-            icon={<CalendarClock size={20} aria-hidden />}
-            headline={!scheduleVisible ? 'Schedule not published yet' : 'No games scheduled yet'}
-            description={
-              !scheduleVisible
-                ? 'The schedule for this division has not been published. Check back after the organizer publishes it.'
-                : 'No games have been scheduled for your team yet.'
-            }
-          />
         </section>
       )}
 

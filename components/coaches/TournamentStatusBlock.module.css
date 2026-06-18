@@ -51,3 +51,48 @@
 .note a {
   color: var(--logic-lime);
 }
+
+/* How-to-pay panel — the detail layer the hero fee strip withholds. Quiet amber accent
+   (the fee is owed, not complete), barely-there warning tint so it reads as "action info",
+   not an alarm. Caps the organizer's text height so a long block can't dominate the page. */
+.payPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.8rem 0.9rem;
+  background: color-mix(in srgb, var(--warning) 8%, var(--surface-2) 92%);
+  border-left: 2px solid var(--warning);
+  border-radius: var(--radius-sm);
+}
+
+.payPanelLabel {
+  margin: 0;
+  font-family: var(--font-data, monospace);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.payInstructions {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.payNote {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+
+.payNote a {
+  color: var(--logic-lime);
+}
