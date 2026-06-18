@@ -19922,6 +19922,15 @@
         "column_default": null
       },
       {
+        "table_name": "games",
+        "pos": 29,
+        "column_name": "round_label",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "import_batch_rows",
         "pos": 1,
         "column_name": "id",
@@ -32699,12 +32708,6 @@
         "table_name": "feedback_submissions",
         "detail": "ENABLED",
         "check_clause": null
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "games",
-        "detail": "games_score_submission_source_check",
-        "check_clause": "((score_submission_source IS NULL) OR (score_submission_source = ANY (ARRAY['scorekeeper'::text, 'admin_results'::text, 'system'::text])))"
       },
       {
         "kind": "RLS",
