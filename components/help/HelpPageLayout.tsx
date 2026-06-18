@@ -63,13 +63,18 @@ function revealAndScroll(id: string, opts?: { faq?: boolean }) {
   el.scrollIntoView({ block: 'start', behavior: 'smooth' });
 }
 
+// Stable empty-array default. Guides without page-level FAQs would otherwise get a
+// fresh `[]` on every render, churning the indexed-data memos and re-firing the
+// deep-link scroll effect each render — which yanks the reader back to the hash.
+const EMPTY_FAQS: HelpFaq[] = [];
+
 export default function HelpPageLayout({
   title,
   role,
   intro,
   searchPlaceholder,
   sections,
-  faqs = [],
+  faqs = EMPTY_FAQS,
 }: HelpPageLayoutProps) {
   const [query, setQuery] = useState('');
   // SSR-safe: no hash read during render; applied after mount via effect below.
@@ -161,14 +166,21 @@ export default function HelpPageLayout({
     }));
   }, [sectionMatches]);
 
-  // Deep-link: apply hash after mount; also handle hashchange for back/forward.
+  // Deep-link: scroll to the hash target on mount and on real hashchange (back/forward).
+  // Guard against re-scrolling to the SAME hash: if this effect re-runs for any other
+  // reason (e.g. the scroll-spy updating state as the reader scrolls), honouring the
+  // hash again would snap the page back to the deep-linked section on every scroll.
+  const lastAppliedHashRef = useRef<string | null>(null);
   useEffect(() => {
     function applyHash() {
       const hash = decodeURIComponent(window.location.hash.replace(/^#/, ''));
-      if (!hash) return;
+      if (!hash) { lastAppliedHashRef.current = null; return; }
+      // Already honoured this hash — don't fight the reader's own scrolling.
+      if (hash === lastAppliedHashRef.current) return;
 
       const targetSection = indexedSections.find(item => item.id === hash);
       if (targetSection) {
+        lastAppliedHashRef.current = hash;
         setActiveSectionId(targetSection.id);
         requestAnimationFrame(() => revealAndScroll(targetSection.id));
         return;
@@ -176,6 +188,7 @@ export default function HelpPageLayout({
 
       const targetFaq = indexedFaqs.find(faq => faq.resolvedId === hash);
       if (targetFaq) {
+        lastAppliedHashRef.current = hash;
         if (targetFaq.sectionId) setActiveSectionId(targetFaq.sectionId);
         requestAnimationFrame(() => revealAndScroll(targetFaq.resolvedId, { faq: true }));
       }
