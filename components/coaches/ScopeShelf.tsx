@@ -45,14 +45,15 @@ const SECTION_LABEL: Record<Section, string> = {
   announcements: 'announcements',
 };
 
-export default async function ScopeShelf({ section }: { basicTeamId: string; section: Section }) {
+export default async function ScopeShelf({ basicTeamId, section }: { basicTeamId: string; section: Section }) {
   const copy = COPY[section];
   // The upgrade link follows the SAME server-side checkout gate as /coaches/start: open in dev
   // (team plan ungated) → the real checkout; gated in prod → the info/express-interest explainer.
   // The gate lives in each environment's own DB and fails closed, so a prod deploy can never flip it.
+  // Forward the originating free team so the signup can pre-fill it and (Phase 2+) carry its data over.
   const checkoutOpen = !(await getPlanGatingMap()).team;
   const href = checkoutOpen
-    ? `/coaches/start?source=coach_footer_${section}`
+    ? `/coaches/start?source=coach_footer_${section}&basicTeamId=${encodeURIComponent(basicTeamId)}`
     : `/for-coaches?source=coach_footer_${section}`;
   const linkLabel = checkoutOpen ? 'Upgrade to Premium →' : 'See everything it includes →';
   return (

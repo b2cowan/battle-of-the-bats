@@ -37,6 +37,14 @@ export type TeamClaimPrefill = {
 type TeamSignupClientProps = {
   teamIsGated: boolean;
   claim?: TeamClaimPrefill | null;
+  /**
+   * Pre-fill from an existing FREE Coaches Portal team when the coach arrived via that team's
+   * "Upgrade to Premium" CTA (resolved + ownership-checked server-side in /coaches/start). Makes the
+   * upgrade read as confirm-and-pay instead of create-from-scratch. Null for new/first-time coaches.
+   */
+  prefillTeamName?: string | null;
+  prefillSport?: string | null;
+  prefillBasicTeamId?: string | null;
 };
 
 const DRAFT_KEY = 'fieldlogichq.coaches.signup.draft';
@@ -51,6 +59,14 @@ const SPORT_OPTIONS = [
   'Volleyball',
   'Other',
 ] as const;
+
+/** Snap a free-text sport (Basic teams store it as free text) onto a Premium option; unknown →
+ *  'Other', blank/missing → the default ('Softball'). Case-insensitive. */
+function normalizeSport(value: string | null | undefined): string {
+  const trimmed = (value ?? '').trim();
+  if (!trimmed) return 'Softball';
+  return SPORT_OPTIONS.find(option => option.toLowerCase() === trimmed.toLowerCase()) ?? 'Other';
+}
 
 const VALUE_POINTS = [
   ['Roster and documents', 'Keep player details, jersey numbers, positions, and season documents in one coach-owned workspace.'],
@@ -101,16 +117,22 @@ function getPayloadError(payload: Record<string, unknown>, fallback: string) {
   return typeof payload.error === 'string' ? payload.error : fallback;
 }
 
-export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSignupClientProps) {
+export default function TeamSignupClient({
+  teamIsGated,
+  claim = null,
+  prefillTeamName = null,
+  prefillSport = null,
+  prefillBasicTeamId = null,
+}: TeamSignupClientProps) {
   const searchParams = useSearchParams();
   const currentYear = new Date().getFullYear();
   const reactivationOrgSlug = searchParams.get('reactivateOrgSlug')?.trim() || null;
   const reactivationTeamName = searchParams.get('teamName')?.trim() || '';
   const isReactivation = Boolean(reactivationOrgSlug);
-  const [teamName, setTeamName] = useState(claim?.teamName ?? reactivationTeamName);
-  const [sport, setSport] = useState('Softball');
-  const [division, setDivision] = useState(claim?.division ?? '');
-  const [seasonYear, setSeasonYear] = useState(String(claim?.seasonYear ?? currentYear));
+  const [teamName, setTeamName] = useState(claim?.teamName ?? prefillTeamName ?? reactivationTeamName);
+  const [sport, setSport] = useState(normalizeSport(prefillSport));
+  // Season is no longer asked at signup — it defaults silently (claim season, else current year).
+  const seasonYear = claim?.seasonYear ?? currentYear;
   const [billingCycle, setBillingCycle] = useState<BillingCycle>(normalizeBilling(searchParams.get('billing')));
   const [authMode, setAuthMode] = useState<AuthMode>('signup');
   const [email, setEmail] = useState(claim?.contactEmail ?? '');
@@ -123,17 +145,20 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
 
   const busy = !!busyLabel;
   const cleanTeamName = teamName.trim();
-  const cleanDivision = division.trim();
-  const parsedSeasonYear = Number.parseInt(seasonYear, 10);
-  const validSeasonYear = Number.isInteger(parsedSeasonYear) && parsedSeasonYear >= 2000 && parsedSeasonYear <= 2100;
   const previewSlug = slugPreview(cleanTeamName) || 'your-team';
   const planPrice = billingCycle === 'annual'
     ? `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD / season`
     : `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month`;
   const accountReady = isAuthenticated || (email.trim() && password.length >= (authMode === 'signup' ? 8 : 1));
   const claimEmailMismatch = !!claim && isAuthenticated && !!email && email.trim().toLowerCase() !== claim.contactEmail.toLowerCase();
-  const canSubmit = !teamIsGated && !claimEmailMismatch && cleanTeamName.length >= 2 && validSeasonYear && !!accountReady && !busy;
-  const draftKey = claim ? `${DRAFT_KEY}.${claim.token.slice(0, 12)}` : DRAFT_KEY;
+  const canSubmit = !teamIsGated && !claimEmailMismatch && cleanTeamName.length >= 2 && !!accountReady && !busy;
+  // Isolate the draft per claim / per originating free team so a stale generic draft can't clobber a
+  // team-specific pre-fill (and vice versa).
+  const draftKey = claim
+    ? `${DRAFT_KEY}.${claim.token.slice(0, 12)}`
+    : prefillBasicTeamId
+      ? `${DRAFT_KEY}.team.${prefillBasicTeamId.slice(0, 12)}`
+      : DRAFT_KEY;
   const claimPath = claim ? `${COACHES_CLAIM_PATH}/${encodeURIComponent(claim.token)}` : COACHES_START_PATH;
   const claimReturnPath = `${claimPath}?billing=${billingCycle}`;
   const returnPath = isReactivation
@@ -141,8 +166,8 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
     : claimReturnPath;
 
   const seasonName = useMemo(() => {
-    return cleanTeamName ? `${cleanTeamName} ${parsedSeasonYear || currentYear}` : `Team ${parsedSeasonYear || currentYear}`;
-  }, [cleanTeamName, currentYear, parsedSeasonYear]);
+    return cleanTeamName ? `${cleanTeamName} ${seasonYear}` : `Team ${seasonYear}`;
+  }, [cleanTeamName, seasonYear]);
 
   useEffect(() => {
     window.queueMicrotask(() => {
@@ -152,15 +177,11 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
           const draft = JSON.parse(stored) as Partial<{
             teamName: string;
             sport: string;
-            division: string;
-            seasonYear: string;
             billingCycle: BillingCycle;
             email: string;
           }>;
           if (draft.teamName) setTeamName(draft.teamName);
           if (draft.sport) setSport(draft.sport);
-          if (draft.division) setDivision(draft.division);
-          if (draft.seasonYear) setSeasonYear(draft.seasonYear);
           if (draft.billingCycle) setBillingCycle(draft.billingCycle);
           if (draft.email) setEmail(draft.email);
         } catch {
@@ -187,8 +208,6 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
     window.sessionStorage.setItem(draftKey, JSON.stringify({
       teamName,
       sport,
-      division,
-      seasonYear,
       billingCycle,
       email,
     }));
@@ -197,7 +216,6 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
   function validateForm() {
     if (teamIsGated) return 'Coaches Portal self-serve signup is not open yet.';
     if (cleanTeamName.length < 2) return 'Enter your team name.';
-    if (!validSeasonYear) return 'Season year must be a valid four-digit year.';
     if (!isAuthenticated && !email.trim()) return 'Enter your email address.';
     if (claim && email.trim().toLowerCase() !== claim.contactEmail.toLowerCase()) {
       return `This team claim is reserved for ${claim.contactEmail}.`;
@@ -262,9 +280,9 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
         teamName: cleanTeamName,
         workspaceName: `${cleanTeamName} Coaches Portal`,
         sport,
-        division: cleanDivision || null,
+        division: claim?.division ?? null,
         seasonName,
-        seasonYear: parsedSeasonYear,
+        seasonYear,
         billingCycle,
         returnTo: returnPath,
         claimToken: claim?.token ?? null,
@@ -427,35 +445,13 @@ export default function TeamSignupClient({ teamIsGated, claim = null }: TeamSign
                 disabled={busy}
               />
             </label>
-            <div className={styles.twoCol}>
-              <label className={styles.field}>
-                <span>Sport</span>
-                <select value={sport} onChange={event => setSport(event.target.value)} disabled={busy}>
-                  {SPORT_OPTIONS.map(option => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              </label>
-              <label className={styles.field}>
-                <span>Division</span>
-                <input
-                  value={division}
-                  onChange={event => setDivision(event.target.value)}
-                  placeholder="U15, 16U, Varsity"
-                  autoComplete="off"
-                  disabled={busy}
-                />
-              </label>
-            </div>
             <label className={styles.field}>
-              <span>Season year</span>
-              <input
-                value={seasonYear}
-                onChange={event => setSeasonYear(event.target.value)}
-                inputMode="numeric"
-                pattern="[0-9]{4}"
-                disabled={busy}
-              />
+              <span>Sport</span>
+              <select value={sport} onChange={event => setSport(event.target.value)} disabled={busy}>
+                {SPORT_OPTIONS.map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
             </label>
             <p className={styles.previewLine}>
               Portal URL preview: <span>fieldlogichq.ca/{previewSlug}</span>
