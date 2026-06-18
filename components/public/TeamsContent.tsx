@@ -16,6 +16,7 @@ import { isGameLive, gameStartMs, isGameUpcoming } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { teamColor, teamInitials } from '@/lib/team-color';
+import type { DivisionStandingRow } from '@/lib/tie-breakers';
 
 interface Props {
   orgSlug: string;
@@ -40,39 +41,10 @@ function ordinal(n: number): string {
 // Team avatar colour + monogram come from lib/team-color so a team's identity is
 // identical here, on the schedule, scorebug, dock, broadcast card and team profile.
 
-// ── Standings computation ─────────────────────────────────────────────────────
-
-interface StandingsRow {
-  teamId: string;
-  poolId: string | undefined;
-  w: number; l: number; t: number;
-  pts: number; rf: number; ra: number; rd: number;
-}
-
-function computeStandings(divisionId: string, teams: PublicTeam[], games: Game[]): StandingsRow[] {
-  const divTeams = teams.filter(t => t.divisionId === divisionId);
-  const divGames = games.filter(
-    g =>
-      g.divisionId === divisionId &&
-      (g.status === 'completed' || g.status === 'submitted') &&
-      !g.isPlayoff,
-  );
-
-  return divTeams
-    .map(t => {
-      const tGames = divGames.filter(g => g.homeTeamId === t.id || g.awayTeamId === t.id);
-      let w = 0, l = 0, ti = 0, rf = 0, ra = 0;
-      tGames.forEach(g => {
-        const isHome = g.homeTeamId === t.id;
-        const tf = isHome ? (g.homeScore ?? 0) : (g.awayScore ?? 0);
-        const ta = isHome ? (g.awayScore ?? 0) : (g.homeScore ?? 0);
-        rf += tf; ra += ta;
-        if (tf > ta) w++; else if (tf < ta) l++; else ti++;
-      });
-      return { teamId: t.id, poolId: t.poolId, w, l, t: ti, pts: w * 2 + ti, rf, ra, rd: rf - ra };
-    })
-    .sort((a, b) => b.pts - a.pts || b.rd - a.rd || b.rf - a.rf);
-}
+// Team standings rows come from the canonical engine (computeTournamentStandings,
+// via the public payload's standingsByDivision) — the SAME ranking the Standings
+// table uses (H2H, run-diff cap, coin toss). No local re-compute here, so a team
+// card can't show a rank that contradicts the standings table (J6-032).
 
 // ── Live-game detection ───────────────────────────────────────────────────────
 
@@ -119,7 +91,7 @@ function TeamCard({
   tournament: Tournament | null;
   games: Game[];
   teams: PublicTeam[];
-  standings: StandingsRow[];
+  standings: DivisionStandingRow[];
   isFollowed: boolean;
   isPreview: boolean;
   orgSlug: string;
@@ -283,6 +255,9 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
   });
   const [search, setSearch]         = useState('');
   const [followedTeamId, setFollowedTeamId] = useState<string | null>(null);
+  const [standingsByDivision, setStandingsByDivision] = useState<Record<string, DivisionStandingRow[]>>(
+    () => initialData?.standingsByDivision ?? {},
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -299,6 +274,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
       setContactEmail(current?.contactEmail ?? data?.organization?.contactEmail ?? null);
       setTeams(data?.teams ?? []);
       setGames(data?.games ?? []);
+      setStandingsByDivision(data?.standingsByDivision ?? {});
       const groups = data?.divisions ?? [];
       setDivisions(groups);
       if (groups.length > 0) {
@@ -321,6 +297,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
       setTeams(data.teams ?? []);
       setGames(data.games ?? []);
       setDivisions(data.divisions ?? []);
+      setStandingsByDivision(data.standingsByDivision ?? {});
     },
   });
 
@@ -335,16 +312,22 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
     });
 
   const divisionStandings = activeDivision
-    ? computeStandings(activeDivision.id, teams, games)
+    ? (standingsByDivision[activeDivision.id] ?? [])
     : [];
 
   // Order cards by standing once the division has results; before that, fall back
   // to alphabetical (a standings sort would just be arbitrary registration order).
   // The followed team is always pinned to the top of its pool.
   const standingRank = new Map(divisionStandings.map((s, i) => [s.teamId, i]));
-  const divisionStarted = divisionStandings.some(s => s.w + s.l + s.t > 0);
   const sortForDisplay = (arr: PublicTeam[]): PublicTeam[] => {
-    const base = divisionStarted
+    // "Started?" is judged per group (the rows actually being sorted), not
+    // division-wide — otherwise a not-yet-played pool in a multi-pool division
+    // would sort by arbitrary registration order instead of alphabetically.
+    const groupStarted = arr.some(t => {
+      const s = divisionStandings.find(r => r.teamId === t.id);
+      return s ? s.w + s.l + s.t > 0 : false;
+    });
+    const base = groupStarted
       ? [...arr].sort((a, b) => (standingRank.get(a.id) ?? 999) - (standingRank.get(b.id) ?? 999))
       : [...arr].sort((a, b) => cleanTeamName(a.name).localeCompare(cleanTeamName(b.name)));
     const idx = followedTeamId ? base.findIndex(t => t.id === followedTeamId) : -1;
@@ -352,6 +335,10 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
     return base;
   };
 
+  // Only reserve dock clearance when the dock can actually render (game day + a
+  // followed team) — matches MyTeamDock's own gate so we don't leave dead space
+  // at the bottom for everyone else (J6-041 review).
+  const dockActive = isTournamentInProgress(selectedTournament) && !!followedTeamId;
   const homeHref = `/${orgSlug}/${tournamentSlug}`;
   const registerHref = `/${orgSlug}/${tournamentSlug}/register`;
   const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
@@ -420,7 +407,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
   };
 
   return (
-    <div className="page-content">
+    <div className={`page-content ${dockActive ? styles.dockClear : ''}`}>
       <div className="section">
         <div className="container">
 

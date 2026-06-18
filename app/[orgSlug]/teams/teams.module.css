@@ -1,3 +1,12 @@
+/* Extra bottom clearance so the last team card (incl. its Follow button) isn't
+   covered by the game-day My-Team dock. `main` already pads the nav height; this
+   adds only the dock's footprint on mobile (J6-041). */
+@media (max-width: 900px) {
+  .dockClear {
+    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+  }
+}
+
 /* ── Page heading ──────────────────────────────────────────────────────────── */
 
 .pageHeading {

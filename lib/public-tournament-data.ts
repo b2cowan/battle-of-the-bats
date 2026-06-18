@@ -9,11 +9,12 @@ import {
   getStandings,
   getTeams,
   getTournamentsByOrg,
+  getAnnouncements,
   resolveTournamentContactEmail,
 } from './db';
 import { hasPlanFeature } from './plan-features';
 import { isPublicPageEnabled, type PublicPageKey } from './public-pages';
-import type { Division, Venue, Game, Organization, Resource, RuleSection, Team, PublicTeam, Tournament, TournamentRegistrationField } from './types';
+import type { Announcement, Division, Venue, Game, Organization, Resource, RuleSection, Team, PublicTeam, Tournament, TournamentRegistrationField } from './types';
 
 export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context';
 
@@ -50,6 +51,11 @@ export type PublicTournamentPageData = {
   /** Public-safe teams only — see {@link toPublicTeam} / J6-001. */
   teams: PublicTeam[];
   registrationFields: TournamentRegistrationField[];
+  /** Tournament announcements — populated for the schedule section so a pinned
+   *  rain-delay/operational notice can surface on game day (J6-033). Optional so
+   *  manual payload constructors (e.g. admin preview) don't have to set it;
+   *  consumers treat undefined as an empty list. */
+  announcements?: Announcement[];
   standingsByDivision: Record<string, Awaited<ReturnType<typeof getStandings>>>;
   /** Whether the org's plan includes fan push score alerts (Tournament Plus+).
    *  Optional so manual payload constructors (e.g. admin preview) don't have to
@@ -72,6 +78,22 @@ function publicOrganization(org: Organization, tournament?: Tournament | null): 
     contactEmail: org.contactEmail,
     requireScoreFinalization: tournament?.requireScoreFinalization ?? org.requireScoreFinalization,
   };
+}
+
+/** Canonical per-division standings (full tie-break chain). Shared by the standings
+ *  AND teams sections so the Teams page ranks/orders cards from the same engine as
+ *  the standings table — no divergent local re-compute (J6-032). */
+async function computeStandingsByDivision(
+  divisions: Division[],
+  tournament: Tournament,
+): Promise<Record<string, Awaited<ReturnType<typeof getStandings>>>> {
+  const entries = await Promise.all(
+    divisions.map(async group => [
+      group.id,
+      await getStandings(group.id, group.playoffConfig, { admin: true }, tournament.settings),
+    ] as const),
+  );
+  return Object.fromEntries(entries);
 }
 
 async function getPublicContext(orgSlug: string, tournamentSlug: string | null) {
@@ -125,6 +147,7 @@ export async function getPublicTournamentPageData(
     rules: [],
     teams: [],
     registrationFields: [],
+    announcements: [],
     standingsByDivision: {},
     fanAlertsEnabled: hasPlanFeature(org.planId, 'fan_score_alerts'),
   };
@@ -134,13 +157,14 @@ export async function getPublicTournamentPageData(
   }
 
   if (section === 'schedule') {
-    const [games, teams, venues, divisions] = await Promise.all([
+    const [games, teams, venues, divisions, announcements] = await Promise.all([
       getGames(tournament.id, { admin: true }),
       getTeams(tournament.id, { admin: true }),
       getVenues(tournament.id, { admin: true }),
       getDivisions(tournament.id, { admin: true }),
+      getAnnouncements(tournament.id, { admin: true }),
     ]);
-    return { ...base, games, teams: teams.filter(t => t.status === 'accepted').map(toPublicTeam), venues, divisions };
+    return { ...base, games, teams: teams.filter(t => t.status === 'accepted').map(toPublicTeam), venues, divisions, announcements };
   }
 
   if (section === 'teams') {
@@ -149,7 +173,13 @@ export async function getPublicTournamentPageData(
       getDivisions(tournament.id, { admin: true }),
       getGames(tournament.id, { admin: true }),
     ]);
-    return { ...base, teams: teams.filter(t => t.status === 'accepted').map(toPublicTeam), divisions, games };
+    return {
+      ...base,
+      teams: teams.filter(t => t.status === 'accepted').map(toPublicTeam),
+      divisions,
+      games,
+      standingsByDivision: await computeStandingsByDivision(divisions, tournament),
+    };
   }
 
   if (section === 'standings') {
@@ -159,19 +189,13 @@ export async function getPublicTournamentPageData(
       getTeams(tournament.id, { admin: true }),
       getVenues(tournament.id, { admin: true }),
     ]);
-    const standingsEntries = await Promise.all(
-      divisions.map(async group => [
-        group.id,
-        await getStandings(group.id, group.playoffConfig, { admin: true }, tournament.settings),
-      ] as const),
-    );
     return {
       ...base,
       divisions,
       games,
       teams: teams.filter(t => t.status === 'accepted').map(toPublicTeam),
       venues,
-      standingsByDivision: Object.fromEntries(standingsEntries),
+      standingsByDivision: await computeStandingsByDivision(divisions, tournament),
     };
   }
 

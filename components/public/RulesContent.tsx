@@ -1,4 +1,4 @@
-import { BookOpen, FileText, Shield, AlertCircle, CheckCircle, Download, ExternalLink } from 'lucide-react';
+import { BookOpen, FileText, Shield, AlertCircle, CheckCircle, ExternalLink } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Division, Resource, RuleSection } from '@/lib/types';
 import DivisionFilterBar from '@/components/DivisionFilterBar';
@@ -11,6 +11,11 @@ const ICON_MAP: Record<string, LucideIcon> = {
   AlertCircle: AlertCircle,
   CheckCircle: CheckCircle,
 };
+
+/** Stable deep-link anchor for a rules section (e.g. "Mercy Rule" → "rule-mercy-rule"). */
+function ruleAnchor(title: string): string {
+  return `rule-${title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`;
+}
 
 type RulesContentProps = {
   orgSlug: string;
@@ -114,11 +119,22 @@ export default function RulesContent({
                 />
               )}
 
+              {/* Jump links — only when there are enough sections to make scrolling a chore (J6-034). */}
+              {displayRules.length > 4 && (
+                <nav className={styles.ruleJump} aria-label="Jump to a rules section">
+                  {displayRules.map(section => (
+                    <a key={section.id} href={`#${ruleAnchor(section.title)}`} className={styles.ruleJumpChip}>
+                      {section.title}
+                    </a>
+                  ))}
+                </nav>
+              )}
+
               <div className={`${styles.rulesGrid}${rulesLayout === 'single' ? ` ${styles.rulesGridSingle}` : ''}`}>
                 {displayRules.map(section => {
                   const Icon = ICON_MAP[section.icon || 'Shield'] || Shield;
                   return (
-                    <div key={section.title} className={`card ${styles.ruleCard}`}>
+                    <div key={section.id} id={ruleAnchor(section.title)} className={`card ${styles.ruleCard}`} style={{ scrollMarginTop: 'calc(var(--nav-height) + var(--ticker-h, 0px) + 1rem)' }}>
                       <div className={styles.ruleCardHeader}>
                         <div className={styles.ruleIcon}>
                           <Icon size={20} />
@@ -149,25 +165,21 @@ export default function RulesContent({
                 <h2 className={styles.ruleTitle}>Downloads &amp; Resources</h2>
               </div>
               <div className={`${styles.resourcesList}${resourcesLayout === 'grid' ? ` ${styles.resourcesGrid}` : ''}`} style={{ marginTop: '1.5rem' }}>
-                {resources.map(r => {
-                  const isSupabase = r.url.includes('supabase.co');
-                  const downloadUrl = isSupabase ? `${r.url}?download=` : r.url;
-                  const isExternal = !isSupabase && r.url.startsWith('http');
-
-                  return (
-                    <a
-                      key={r.label}
-                      href={downloadUrl}
-                      download={isSupabase ? r.label : undefined}
-                      target={isExternal ? '_blank' : undefined}
-                      rel="noopener noreferrer"
-                      className={styles.resourceItem}
-                    >
-                      {isExternal ? <ExternalLink size={14} /> : <Download size={14} />}
-                      {r.label}
-                    </a>
-                  );
-                })}
+                {resources.map(r => (
+                  // Open every resource inline in a new tab (J6-034): PDFs view in the
+                  // browser instead of being force-downloaded into the Files app, which is
+                  // what a parent on a phone actually wants.
+                  <a
+                    key={r.label}
+                    href={r.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.resourceItem}
+                  >
+                    <ExternalLink size={14} />
+                    {r.label}
+                  </a>
+                ))}
               </div>
             </div>
           )}

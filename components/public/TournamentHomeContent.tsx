@@ -64,6 +64,8 @@ export default async function TournamentHomeContent({
   const showNewsPage = isPublicPageEnabled(tournament, 'news');
   const showSchedulePage = isPublicPageEnabled(tournament, 'schedule');
   const showStandingsPage = isPublicPageEnabled(tournament, 'standings');
+  const showTeamsPage = isPublicPageEnabled(tournament, 'teams');
+  const showRulesPage = isPublicPageEnabled(tournament, 'rules');
   // Honor the tournament's "show contact email publicly" privacy toggle and resolve
   // the designated contact (member email) — the raw `tournament.contactEmail ?? org`
   // fallback skipped both (J1-045). Returns null when the organizer hid it.
@@ -724,6 +726,19 @@ export default async function TournamentHomeContent({
       )}
 
       {!isInProgress && !isCompletedTournament && scheduleBlock}
+
+      {/* Explore sections — guarantees every public page (especially Rules, which is
+          not a mobile bottom-nav tab) is reachable from the Overview in every state
+          (J6-006 / J6-034). Gated per-link on page visibility. */}
+      {(showSchedulePage || showStandingsPage || showTeamsPage || showRulesPage || showNewsPage) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', margin: '2.5rem 0 0.5rem' }}>
+          {showSchedulePage && <Link href={`${primaryBase}/schedule`} className="btn btn-ghost btn-sm">Schedule</Link>}
+          {showStandingsPage && <Link href={`${primaryBase}/standings`} className="btn btn-ghost btn-sm">Standings</Link>}
+          {showTeamsPage && <Link href={`${primaryBase}/teams`} className="btn btn-ghost btn-sm">Teams</Link>}
+          {showRulesPage && <Link href={`${primaryBase}/rules`} className="btn btn-ghost btn-sm">Rules</Link>}
+          {showNewsPage && <Link href={`${primaryBase}/news`} className="btn btn-ghost btn-sm">News</Link>}
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Search, X } from 'lucide-react';
 import type { HelpFaq, HelpSection } from '@/lib/help-content';
+import { resolveSectionId, resolveFaqId } from '@/lib/help-content';
+import HelpSectionBlock from './HelpSectionBlock';
 import styles from './help.module.css';
 
 interface HelpPageLayoutProps {
@@ -28,17 +30,6 @@ type IndexedFaq = HelpFaq & {
   sectionHeading?: string;
   sectionId?: string;
 };
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-}
-
-function sectionId(section: HelpSection, index: number) {
-  return section.id ?? `${slugify(section.heading) || 'section'}-${index + 1}`;
-}
 
 function searchable(value: Array<string | string[] | undefined>) {
   return value
@@ -96,7 +87,7 @@ export default function HelpPageLayout({
   const indexedSections = useMemo<IndexedSection[]>(() => (
     sections.map((section, index) => ({
       section,
-      id: sectionId(section, index),
+      id: resolveSectionId(section, index),
       index,
     }))
   ), [sections]);
@@ -108,7 +99,7 @@ export default function HelpPageLayout({
         group: faq.group ?? section.group,
         sectionHeading: section.heading,
         sectionId: id,
-        resolvedId: faq.id ?? `${id}-faq-${faqIndex + 1}`,
+        resolvedId: resolveFaqId(id, faq, faqIndex),
       }))
     ));
 
@@ -437,61 +428,19 @@ export default function HelpPageLayout({
                         <h3 className={styles.helpSubGroupHeading}>{sub}</h3>
                       )}
 
-                      {items.map(({ section, id }) => {
-                        const sectionFaqs = indexedFaqs.filter(f => f.sectionId === id);
-                        return (
-                          <section
-                            key={id}
-                            id={id}
-                            className={styles.helpTopicBlock}
-                            data-help-section="1"
-                            data-group-index={gi}
-                          >
-                            {/* Topic heading (h4 when sub-group present; h3 otherwise) */}
-                            {sub ? (
-                              <h4 className={styles.helpTopicHeading}>{section.heading}</h4>
-                            ) : (
-                              <h3 className={styles.helpTopicHeading}>{section.heading}</h3>
-                            )}
-
-                            {section.summary && (
-                              <p className={styles.helpTopicSummary}>{section.summary}</p>
-                            )}
-
-                            {section.links && section.links.length > 0 && (
-                              <div className={styles.helpSectionLinks}>
-                                {section.links.map(link => (
-                                  <Link key={link.href} href={link.href} className={styles.helpSectionLink}>
-                                    {link.label}
-                                  </Link>
-                                ))}
-                              </div>
-                            )}
-
-                            <div className={styles.helpSectionContent}>
-                              {section.content}
-                            </div>
-
-                            {/* Inline FAQ accordion */}
-                            {sectionFaqs.length > 0 && (
-                              <div className={styles.helpFaqList}>
-                                {sectionFaqs.map(faq => (
-                                  <details
-                                    key={faq.resolvedId}
-                                    id={faq.resolvedId}
-                                    className={styles.helpFaqItem}
-                                  >
-                                    <summary>
-                                      <span>{faq.question}</span>
-                                    </summary>
-                                    <div className={styles.helpFaqAnswer}>{faq.answer}</div>
-                                  </details>
-                                ))}
-                              </div>
-                            )}
-                          </section>
-                        );
-                      })}
+                      {items.map(({ section, id }) => (
+                        <section
+                          key={id}
+                          id={id}
+                          className={styles.helpTopicBlock}
+                          data-help-section="1"
+                          data-group-index={gi}
+                        >
+                          {/* Same renderer the in-context drawer uses (h4 under a
+                              sub-group, h3 otherwise) so the two never drift. */}
+                          <HelpSectionBlock section={section} sectionId={id} headingLevel={sub ? 4 : 3} />
+                        </section>
+                      ))}
                     </div>
                   ))}
                 </div>

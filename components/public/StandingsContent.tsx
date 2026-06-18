@@ -59,14 +59,16 @@ function formatShortDate(date: string) {
   });
 }
 
-/** Column abbreviations explained beneath each standings table. */
-const STAT_LEGEND: { abbr: string; label: string }[] = [
-  { abbr: 'REC', label: 'Record (W-L-T)' },
-  { abbr: 'W',   label: 'Wins' },
-  { abbr: 'L',   label: 'Losses' },
-  { abbr: 'T',   label: 'Ties' },
-  { abbr: 'RF',  label: 'Runs For' },
-  { abbr: 'RA',  label: 'Runs Against' },
+/** Column abbreviations explained beneath each standings table. `vis` mirrors the
+ *  table column's own responsive visibility so the legend only defines columns the
+ *  current breakpoint actually shows (mobile = REC/RD/PTS; desktop = W/L/T/RF/RA/RD/PTS) — J6-031. */
+const STAT_LEGEND: { abbr: string; label: string; vis?: 'mobile' | 'desktop' }[] = [
+  { abbr: 'REC', label: 'Record (W-L-T)', vis: 'mobile' },
+  { abbr: 'W',   label: 'Wins', vis: 'desktop' },
+  { abbr: 'L',   label: 'Losses', vis: 'desktop' },
+  { abbr: 'T',   label: 'Ties', vis: 'desktop' },
+  { abbr: 'RF',  label: 'Runs For', vis: 'desktop' },
+  { abbr: 'RA',  label: 'Runs Against', vis: 'desktop' },
   { abbr: 'RD',  label: 'Run Differential' },
   { abbr: 'PTS', label: 'Points' },
 ];
@@ -262,6 +264,8 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
   })();
 
   const followedTeam = followedTeamId ? teams.find(team => team.id === followedTeamId) ?? null : null;
+  // Reserve dock clearance only when the dock can actually render (J6-041 review).
+  const dockActive = isTournamentInProgress(selectedTournament) && !!followedTeamId;
   const followedDivision = followedTeam
     ? divisions.find(group => group.id === followedTeam.divisionId) ?? null
     : null;
@@ -415,10 +419,12 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
   ) : null;
 
   return (
-    <div className="page-content">
+    <div className={`page-content ${dockActive ? styles.dockClear : ''}`}>
       <div className="public-page-header">
         <div className="container">
-          <span className="eyebrow"><Trophy size={12} /> Results & Standings</span>
+          {/* Eyebrow carries the event name (context the H1 doesn't) instead of repeating
+              the H1 verbatim (J6-031). */}
+          <span className="eyebrow"><Trophy size={12} /> {selectedTournament?.name ?? 'Standings'}</span>
           <h1>{isCompletedTournament ? 'Final Results & Standings' : 'Results & Standings'}</h1>
           <p className="text-muted">
             {isCompletedTournament
@@ -625,7 +631,10 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                         <div className={styles.standingsFooter}>
                           <dl className={styles.statLegend}>
                             {STAT_LEGEND.map(item => (
-                              <div key={item.abbr} className={styles.statLegendItem}>
+                              <div
+                                key={item.abbr}
+                                className={`${styles.statLegendItem} ${item.vis === 'mobile' ? styles.mobileOnly : item.vis === 'desktop' ? styles.desktopOnly : ''}`}
+                              >
                                 <dt>{item.abbr}</dt>
                                 <dd>{item.label}</dd>
                               </div>

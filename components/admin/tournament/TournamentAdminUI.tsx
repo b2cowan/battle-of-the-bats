@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Check, ChevronDown, HelpCircle, Lock, MoreHorizontal, Search, X } from 'lucide-react';
 import clsx from 'clsx';
+import HelpButton from '@/components/help/HelpButton';
+import type { HelpRequest } from '@/components/help/HelpDrawerProvider';
 import styles from './TournamentAdminUI.module.css';
 
 type Option<T extends string> = {
@@ -20,6 +22,7 @@ export function TournamentAdminHeader({
   subtitle,
   meta,
   actions,
+  help,
   locked = false,
   mobileActionsInline = false,
   className,
@@ -30,6 +33,9 @@ export function TournamentAdminHeader({
   subtitle?: React.ReactNode;
   meta?: React.ReactNode;
   actions?: React.ReactNode;
+  /** When set, renders a "?" Help button in the header actions that opens the
+   *  in-context HelpDrawer to this page's mapped guide section(s). */
+  help?: HelpRequest;
   /** When true, renders a read-only banner below the header. */
   locked?: boolean;
   mobileActionsInline?: boolean;
@@ -46,7 +52,12 @@ export function TournamentAdminHeader({
           {meta && <div className={styles.headerMeta}>{meta}</div>}
         </div>
       </div>
-      {actions && <div className={styles.headerActions}>{actions}</div>}
+      {(actions || help) && (
+        <div className={styles.headerActions}>
+          {actions}
+          {help && <HelpButton help={help} label={typeof title === 'string' ? title : undefined} />}
+        </div>
+      )}
       {locked && (
         <div className={styles.lockedBanner} role="status">
           <Lock size={13} aria-hidden />

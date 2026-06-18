@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { Calendar, CalendarPlus, Trophy, List, LayoutTemplate, Search, ChevronDown, Star, X } from 'lucide-react';
-import { Game, PublicTeam, Division, Tournament, Venue } from '@/lib/types';
+import { Calendar, CalendarPlus, Trophy, List, LayoutTemplate, Search, ChevronDown, Star, X, Megaphone } from 'lucide-react';
+import { Game, PublicTeam, Division, Tournament, Venue, Announcement } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
@@ -105,6 +105,10 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   const [teams, setTeams]           = useState<PublicTeam[]>(() => initialData?.teams ?? []);
   const [divisions, setDivisions]   = useState<Division[]>(() => initialData?.divisions ?? []);
   const [venues, setVenues]         = useState<Venue[]>(() => initialData?.venues ?? []);
+  const [announcements, setAnnouncements] = useState<Announcement[]>(() => initialData?.announcements ?? []);
+  // Session-only dismissal — a pinned rain-delay notice returns on the next visit
+  // until the organizer unpins it (we don't let fans permanently bury urgent news).
+  const [dismissedAnnIds, setDismissedAnnIds] = useState<Set<string>>(() => new Set());
   const [allTournaments, setAllTournaments] = useState<Tournament[]>(() => initialData?.tournaments ?? []);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(() => initialData?.tournament ?? null);
   const [activeGroup, setActiveGroup]     = useState<string>(() => {
@@ -159,6 +163,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       setTeams(data?.teams ?? []);
       setDivisions(groups);
       setVenues(data?.venues ?? []);
+      setAnnouncements(data?.announcements ?? []);
       if (groups.length > 0) {
         const pref = getDivisionPref(orgSlug);
         const preferred = pref ? groups.find(g => g.name === pref) : null;
@@ -179,6 +184,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       setGames(data.games ?? []);
       setTeams(data.teams ?? []);
       setDivisions(data.divisions ?? []);
+      setAnnouncements(data.announcements ?? []);
     },
   });
 
@@ -739,6 +745,48 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
           <p className="text-muted">View games by division. All times are local.</p>
         </div>
       </div>
+
+      {/* Pinned announcements surface here on game day so a rain-delay/urgent notice
+          is seen without hunting for the News tab (J6-033). Session-dismissible. */}
+      {isTournamentInProgress(selectedTournament) &&
+        announcements.some(a => a.pinned && !dismissedAnnIds.has(a.id)) && (
+        <div className="section" style={{ paddingBottom: 0 }}>
+          <div className="container">
+            {announcements
+              .filter(a => a.pinned && !dismissedAnnIds.has(a.id))
+              .map(a => (
+                <div
+                  key={a.id}
+                  role="alert"
+                  style={{
+                    display: 'flex', alignItems: 'flex-start', gap: '0.7rem',
+                    padding: '0.8rem 0.9rem', marginBottom: '0.75rem', borderRadius: 10,
+                    border: '1px solid rgba(var(--warning-rgb), 0.35)',
+                    background: 'rgba(var(--warning-rgb), 0.1)',
+                  }}
+                >
+                  <Megaphone size={18} style={{ flexShrink: 0, color: 'var(--warning)', marginTop: 2 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: '0 0 0.15rem', fontWeight: 700, fontSize: '0.9rem', color: 'var(--white)' }}>{a.title}</p>
+                    {a.body && (
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--white-55)', lineHeight: 1.45 }}>
+                        {a.body.slice(0, 240)}{a.body.length > 240 ? '…' : ''}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDismissedAnnIds(prev => new Set(prev).add(a.id))}
+                    aria-label="Dismiss announcement"
+                    style={{ flexShrink: 0, background: 'transparent', border: 'none', color: 'var(--white-55)', cursor: 'pointer', padding: 2 }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
 
       <div className="section">
         <div className="container">

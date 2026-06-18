@@ -1,3 +1,12 @@
+/* Extra bottom clearance so the standings legend / last row isn't covered by the
+   game-day My-Team dock (which parks ~50px above the bottom nav). `main` already
+   pads the nav height; this adds only the dock's footprint on mobile (J6-041). */
+@media (max-width: 900px) {
+  .dockClear {
+    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+  }
+}
+
 /* Tabular numerals — keep stat columns, records and scores aligned and steady
    through live refresh. Applies to the whole table cell (harmless on the team
    name; only affects digits). */
@@ -757,6 +766,12 @@
 
   .mobileOnly {
     display: table-cell;
+  }
+
+  /* The legend reuses .mobileOnly on flex children (not table cells) — keep them
+     inline-flex so `display: table-cell` doesn't apply to a non-table element (J6-031). */
+  .statLegendItem.mobileOnly {
+    display: inline-flex;
   }
 
   .desktopOnly {

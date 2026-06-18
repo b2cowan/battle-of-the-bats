@@ -52,7 +52,9 @@ export function getRegistrationState(
     return {
       state: 'closed',
       label: 'Registration closed',
-      detail: 'The tournament is underway — follow along with the schedule and live results.',
+      // Page-agnostic: some events hide the schedule/standings pages, so don't
+      // promise pages that may not exist (J6-057).
+      detail: 'The tournament is underway — registration for this event is now closed.',
       cta: null,
     };
   }

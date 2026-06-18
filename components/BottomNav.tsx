@@ -1,17 +1,19 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
-import { Calendar, Trophy, Users, Megaphone, FileText } from 'lucide-react';
+import { Home, Calendar, Trophy, Users, Megaphone } from 'lucide-react';
 import { useOrgNav } from './OrgNavContext';
 import type { PublicPageKey } from '@/lib/public-pages';
 import styles from './BottomNav.module.css';
 
-const TAB_KEYS = [
+// Mobile primary tabs. Home/Overview leads (matching the desktop side rail — J6-006);
+// Rules is intentionally NOT a bottom tab (it's reference material checked once) — it
+// stays reachable from the Overview page + the desktop rail, keeping the bar at five.
+const PAGE_TABS = [
   { key: 'news',     icon: Megaphone, label: 'News'     },
   { key: 'schedule', icon: Calendar,  label: 'Schedule' },
   { key: 'standings', icon: Trophy,   label: 'Standings' },
   { key: 'teams',    icon: Users,     label: 'Teams'    },
-  { key: 'rules',    icon: FileText,  label: 'Rules'    },
 ];
 
 export default function BottomNav() {
@@ -26,12 +28,28 @@ export default function BottomNav() {
   const isMarketing = pathname === '/' || pathname.startsWith('/discover') || pathname.startsWith('/auth');
   if (isAdmin || isMarketing || pathname.startsWith('/platform-admin') || !tournamentSlug) return null;
 
-  // No Home tab — the header wordmark links back to the tournament home, so the
-  // tab was redundant; dropping it gives the five page tabs room for full labels.
+  const homeHref = `/${orgSlug}/${tournamentSlug}`;
+  const pageTabs = PAGE_TABS.filter(tab => !tournamentHiddenPages.includes(tab.key as PublicPageKey));
+
   return (
     <nav className={styles.bottomNav} aria-label="Mobile navigation">
-      {TAB_KEYS.filter(tab => !tournamentHiddenPages.includes(tab.key as PublicPageKey)).map(({ key, icon: Icon, label }) => {
-        const href   = `/${orgSlug}/${tournamentSlug}/${key}`;
+      {/* Overview — always present (the tournament home always exists), so the bar is
+          never an empty frosted shell even when every page is hidden (J6-057). */}
+      <Link
+        href={homeHref}
+        className={`${styles.tab} ${pathname === homeHref ? styles.active : ''}`}
+        id="bottom-nav-home"
+        aria-current={pathname === homeHref ? 'page' : undefined}
+      >
+        <span className={styles.iconWrap}>
+          <Home size={22} strokeWidth={pathname === homeHref ? 2.5 : 1.8} />
+          {pathname === homeHref && <span className={styles.activeDot} />}
+        </span>
+        <span className={styles.label}>Home</span>
+      </Link>
+
+      {pageTabs.map(({ key, icon: Icon, label }) => {
+        const href   = `${homeHref}/${key}`;
         const active = pathname.startsWith(href);
         return (
           <Link

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getOrganizationBySlug, getTournamentsByOrg, getTeams, getDivisions, getGames } from '@/lib/db';
-import { clampRunDiffCap, cappedGameDiff } from '@/lib/tie-breakers';
+import { computeTournamentStandings } from '@/lib/tie-breakers';
 import type { Game } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { toPublicTeam } from '@/lib/public-tournament-data';
@@ -56,55 +56,30 @@ export const GET = withObservability(async (req: Request) => {
 
   const teamsQualifying = division.playoffConfig?.teamsQualifying ?? null;
 
-  // Compute pool-play standings for the division
-  const divTeams = teams.filter(t => t.divisionId === division.id && t.status === 'accepted');
-  const poolPlayGames = games.filter(
-    g =>
-      g.divisionId === division.id &&
-      (g.status === 'completed' || g.status === 'submitted') &&
-      !g.isPlayoff,
+  // Pool-play standings from the canonical engine — the SAME ranking the standings
+  // table uses (H2H, run-diff cap, coin toss). Computing it locally here is what let
+  // a team's profile rank contradict the standings table (J6-032).
+  const standingsRows = computeTournamentStandings(
+    division.id,
+    teams,
+    games,
+    division.playoffConfig,
+    tournament.settings,
   );
 
-  // Run-diff cap (division override → tournament default → none). Caps the RD value
-  // only — rf/ra stay raw — matching getStandings (lib/db.ts).
-  const runDiffCap = clampRunDiffCap(
-    division.playoffConfig?.maxRunDiffPerGame ?? tournament.settings?.max_run_diff_per_game ?? null,
-  );
-
-  const standingsRows = divTeams
-    .map(t => {
-      const tGames = poolPlayGames.filter(g => g.homeTeamId === t.id || g.awayTeamId === t.id);
-      let w = 0, l = 0, ti = 0, rf = 0, ra = 0, rd = 0;
-      tGames.forEach(g => {
-        const isHome = g.homeTeamId === t.id;
-        const tf = isHome ? (g.homeScore ?? 0) : (g.awayScore ?? 0);
-        const ta = isHome ? (g.awayScore ?? 0) : (g.homeScore ?? 0);
-        rf += tf;
-        ra += ta;
-        rd += cappedGameDiff(tf - ta, runDiffCap);
-        if (tf > ta) w++;
-        else if (tf < ta) l++;
-        else ti++;
-      });
-      return {
-        teamId: t.id,
-        poolId: t.poolId ?? null,
-        w,
-        l,
-        t: ti,
-        pts: w * 2 + ti,
-        rf,
-        ra,
-        rd,
+  const foundStats = standingsRows.find(s => s.teamId === teamId);
+  const teamStats = foundStats
+    ? {
+        teamId,
+        poolId: foundStats.poolId ?? null,
+        w: foundStats.w, l: foundStats.l, t: foundStats.t,
+        pts: foundStats.pts, rf: foundStats.rf, ra: foundStats.ra, rd: foundStats.rd,
+      }
+    : {
+        teamId,
+        poolId: team.poolId ?? null,
+        w: 0, l: 0, t: 0, pts: 0, rf: 0, ra: 0, rd: 0,
       };
-    })
-    .sort((a, b) => b.pts - a.pts || b.rd - a.rd || b.rf - a.rf);
-
-  const teamStats = standingsRows.find(s => s.teamId === teamId) ?? {
-    teamId,
-    poolId: team.poolId ?? null,
-    w: 0, l: 0, t: 0, pts: 0, rf: 0, ra: 0, rd: 0,
-  };
 
   // Rank within pool (or division if no pool)
   const rankPool = team.poolId

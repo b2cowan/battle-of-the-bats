@@ -11,6 +11,32 @@
   grid-template-columns: 1fr;
 }
 
+/* Jump-to-section chips (shown only for long rule sets — J6-034). */
+.ruleJump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ruleJumpChip {
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--white-8);
+  border: 1px solid var(--border);
+  color: var(--white-85);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ruleJumpChip:hover {
+  background: var(--primary-faint);
+  border-color: var(--primary);
+  color: var(--white);
+}
+
 .ruleCard { display: flex; flex-direction: column; gap: 1.25rem; }
 
 .ruleCardHeader { display: flex; align-items: center; gap: 0.875rem; }

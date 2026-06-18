@@ -205,6 +205,9 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
   const [customAnswers, setCustomAnswers] = useState<CustomAnswerState>({});
   const [customFiles, setCustomFiles] = useState<CustomFileState>({});
   const [signedInCoachEmail, setSignedInCoachEmail] = useState<string | null>(null);
+  // True once the coach-session check has settled — gates the fan off-ramp so it
+  // doesn't flash for a signed-in coach before their session resolves (J6-037 review).
+  const [coachSessionLoaded, setCoachSessionLoaded] = useState(false);
   // True only when the account has BOTH a first and last name — gates the registrant
   // name lock. Stable (set at load), so typing never flips the inputs to disabled.
   const [accountHasName, setAccountHasName] = useState(false);
@@ -284,7 +287,10 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
   useEffect(() => {
     // Async wrapper: state updates happen after the fetch resolves, not synchronously
     // in the effect (loadCoachTeams is reused by the returning-coach sign-in path).
-    async function run() { await loadCoachTeams(); }
+    async function run() {
+      try { await loadCoachTeams(); }
+      finally { setCoachSessionLoaded(true); }
+    }
     run();
   }, [loadCoachTeams]);
 
@@ -562,8 +568,8 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
             <div style={{
               display: 'flex', alignItems: 'center', gap: '0.5rem',
               padding: '0.6rem 0.9rem', borderRadius: 8,
-              border: '1px solid rgba(217,249,157,0.35)',
-              background: 'rgba(217,249,157,0.08)',
+              border: '1px solid rgba(var(--logic-lime-rgb), 0.35)',
+              background: 'rgba(var(--logic-lime-rgb), 0.08)',
               color: 'var(--fl-text)', fontSize: '0.8rem', lineHeight: 1.5,
             }}>
               <Eye size={14} style={{ flexShrink: 0 }} />
@@ -820,14 +826,36 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
                   </div>
                 </div>
 
+                {/* Fan off-ramp (J6-037): this form is for team/coach registration and
+                    asks for a password. A parent who just wants to follow along needs no
+                    account — point them at the public pages. Hidden for a signed-in coach
+                    (and until the coach-session check settles, to avoid a flash). */}
+                {coachSessionLoaded && !signedInCoachEmail && (
+                  <p
+                    style={{
+                      margin: '0 0 1rem',
+                      fontSize: '0.78rem',
+                      color: 'var(--white-55)',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Just here to follow a team? No account needed — everything is on the{' '}
+                    {showSchedulePage
+                      ? <Link href={scheduleHref} style={{ color: 'var(--logic-lime)', textDecoration: 'underline' }}>schedule</Link>
+                      : 'schedule'}
+                    {showStandingsPage && <> and <Link href={standingsHref} style={{ color: 'var(--logic-lime)', textDecoration: 'underline' }}>standings</Link></>}
+                    {' '}pages.
+                  </p>
+                )}
+
                 {noticeMsg && (
                   <div
                     role="status"
                     style={{
                       margin: '0 0 1rem',
                       padding: '0.7rem 0.9rem',
-                      border: '1px solid rgba(217,249,157,0.35)',
-                      background: 'rgba(217,249,157,0.08)',
+                      border: '1px solid rgba(var(--logic-lime-rgb), 0.35)',
+                      background: 'rgba(var(--logic-lime-rgb), 0.08)',
                       color: 'var(--fl-text)',
                       fontSize: '0.8rem',
                       lineHeight: 1.5,
@@ -1042,14 +1070,14 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
                   )}
 
                   {isClosed && (
-                    <div className="alert alert-danger" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: '#fca5a5', padding: '1rem', borderRadius: 8, border: '1px solid rgba(239,68,68,0.2)' }}>
+                    <div className="alert alert-danger" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(var(--danger-rgb), 0.1)', color: 'var(--danger)', padding: '1rem', borderRadius: 8, border: '1px solid rgba(var(--danger-rgb), 0.2)' }}>
                       <AlertCircle size={20} />
                       <p style={{ margin: 0, fontSize: '0.9rem' }}>Registration for this division is officially closed. You cannot submit a registration.</p>
                     </div>
                   )}
 
                   {isWaitlist && !isClosed && (
-                    <div className="alert alert-warning" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', padding: '1rem', borderRadius: 8, border: '1px solid rgba(245,158,11,0.2)' }}>
+                    <div className="alert alert-warning" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(var(--warning-rgb), 0.1)', color: 'var(--warning)', padding: '1rem', borderRadius: 8, border: '1px solid rgba(var(--warning-rgb), 0.2)' }}>
                       <AlertCircle size={20} />
                       <p style={{ margin: 0, fontSize: '0.9rem' }}>This division is currently full. Submitting this form will place your team on the <strong>Waitlist</strong>.</p>
                     </div>
