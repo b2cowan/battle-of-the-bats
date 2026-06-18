@@ -152,6 +152,14 @@ function TeamCard({
   // window matches every other surface (which all key off game.durationMinutes first).
   const liveGame = teamGames.find(g => isGameLive(g, g.durationMinutes ?? durationMin));
   const today = tournamentToday();
+  const todayDate = new Date(today + 'T12:00:00');
+  todayDate.setDate(todayDate.getDate() + 1);
+  const tomorrow = todayDate.toISOString().slice(0, 10);
+  function gameDay(date: string): string {
+    if (date === today) return 'Today';
+    if (date === tomorrow) return 'Tomorrow';
+    return new Date(date + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+  }
   const nextGame = !liveGame
     ? teamGames
         .filter(g => {
@@ -226,7 +234,7 @@ function TeamCard({
           )}
           {!liveGame && nextGame && (
             <span className={styles.nextGame}>
-              {formatTime(nextGame.time)} vs {nextOpponent ? cleanTeamName(nextOpponent) : 'TBD'}
+              {gameDay(nextGame.date)}{nextGame.time ? ` · ${formatTime(nextGame.time)}` : ''} vs {nextOpponent ? cleanTeamName(nextOpponent) : 'TBD'}
             </span>
           )}
           {poolPlayDone && (
@@ -257,6 +265,9 @@ function TeamCard({
 export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = false, initialData }: Props) {
   const [teams, setTeams]           = useState<PublicTeam[]>(() => initialData?.teams ?? []);
   const [divisions, setDivisions]   = useState<Division[]>(() => initialData?.divisions ?? []);
+  // True once fetched (or immediately with initialData) — gates the empty state so it
+  // doesn't flash during the initial client fetch (J6-026).
+  const [loaded, setLoaded] = useState(() => !!initialData);
   const [games, setGames]           = useState<Game[]>(() => initialData?.games ?? []);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>(() => initialData?.tournaments ?? []);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(() => initialData?.tournament ?? null);
@@ -295,6 +306,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
         const preferred = pref ? groups.find(g => g.name === pref) : null;
         setActiveDivisionId(preferred?.id ?? groups[0]?.id ?? '');
       }
+      setLoaded(true);
     }
     init();
   }, [orgSlug, tournamentSlug, initialData]);
@@ -465,7 +477,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
           </div>
 
           {/* Content */}
-          {filtered.length === 0 ? (
+          {loaded && filtered.length === 0 ? (
             <PublicTournamentState
               icon={<Users size={40} />}
               eyebrow="Teams"

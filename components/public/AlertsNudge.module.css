@@ -1,0 +1,71 @@
+/* AlertsNudge — one-time post-install prompt steering a follower to score alerts.
+   Top-anchored (below the score ticker) so it never collides with the bottom band
+   contested by the My-Team dock + install banner (J6-045). */
+.nudge {
+  position: fixed;
+  top: calc(var(--ticker-h, 0px) + 0.6rem);
+  left: 0.6rem;
+  right: 0.6rem;
+  margin: 0 auto;
+  max-width: 27rem;
+  z-index: 350;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--white-10);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius-md, 12px);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  animation: nudgeIn 0.28s ease-out;
+}
+
+@keyframes nudgeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.icon {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  margin: 0 0 0.1rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.sub {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--white-55);
+  line-height: 1.35;
+}
+
+.dismiss {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: var(--white-8);
+  color: var(--white-50);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.dismiss:hover {
+  background: var(--white-10);
+  color: var(--white-85);
+}

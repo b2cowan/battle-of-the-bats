@@ -5,15 +5,25 @@
  * rendered when the tournament's plan includes `fan_score_alerts` (Tournament
  * Plus+). Subscribes the browser to push and registers a row keyed to
  * (endpoint, tournamentId) via the anonymous fan-push API.
+ *
+ * Three honesty fixes live here:
+ *  - J6-048: on a normal iPhone tab (push needs Add-to-Home-Screen on iOS 16.4+),
+ *    show an explainer instead of a blank/dead button.
+ *  - J6-050: "Alerts on" reflects the LIVE subscription + permission, not just a
+ *    stale localStorage flag.
  */
-import { useEffect, useState } from 'react';
-import { Bell, BellRing, BellOff, Loader2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Bell, BellRing, BellOff, BellPlus, Loader2 } from 'lucide-react';
+import { getCurrentPushEndpoint, isPushSupported, PushPermissionError } from '@/lib/push-client';
+import { isIOSLike, isStandalonePWA } from '@/lib/device';
 import {
-  isPushSupported,
-  subscribeToPush,
-  getCurrentPushEndpoint,
-  PushPermissionError,
-} from '@/lib/push-client';
+  clearFanAlertsOptIn,
+  enableFanAlerts,
+  fanAlertsKey,
+  notifyFanAlertsChange,
+  readFanAlertsOptIn,
+  verifyFanAlertsLive,
+} from '@/lib/fan-alerts';
 
 interface Props {
   orgSlug: string;
@@ -24,48 +34,73 @@ interface Props {
 
 type State = 'off' | 'pending' | 'on' | 'error';
 
-function alertsKey(orgSlug: string, tournamentSlug: string) {
-  return `fl_fan_alerts_${orgSlug}_${tournamentSlug}`;
-}
-
-/** Notify other toggle instances on the same tab (the native `storage` event
- *  only fires cross-tab) so the rail/scorebug/home toggles stay in sync. */
-function notifyAlertsChange() {
-  window.dispatchEvent(new CustomEvent('fl-fan-alerts-change'));
-}
-
 export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournamentId, team }: Props) {
   const [supported, setSupported] = useState(true);
+  // iOS push only works once the app is on the home screen — surface that instead
+  // of rendering nothing (J6-048).
+  const [iosInstall, setIosInstall] = useState(false);
+  const [iosHint, setIosHint] = useState(false);
   const [state, setState] = useState<State>('off');
   const [msg, setMsg] = useState('');
+  // Mirror state into a ref so the effect's sync() can read the LIVE value without
+  // re-subscribing — used to skip work while an enable()/disable() is in flight.
+  const stateRef = useRef<State>(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
-    // Browser-only capabilities + stored opt-in hydrate after first paint, and
-    // stay in sync with other toggle instances (storage + same-tab event).
-    if (!isPushSupported()) {
+    // iPhone/iPad in a normal browser tab: push is unavailable until the page is
+    // added to the home screen (iOS 16.4+, standalone only). Covers iOS <16.4 (no
+    // push APIs), 16.4+ non-standalone (APIs present but permission never grants),
+    // AND iPadOS desktop-mode (UA reads as macOS) — show the explainer rather than a
+    // dead button (J6-048).
+    if (isIOSLike() && !isStandalonePWA()) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIosInstall(true);
+      return;
+    }
+    if (!isPushSupported()) {
       setSupported(false);
       return;
     }
     const sync = () => {
-      try {
-        const raw = localStorage.getItem(alertsKey(orgSlug, tournamentSlug));
-        if (raw) {
-          const parsed = JSON.parse(raw) as { teamId?: string };
-          setState('on');
-          // The followed team changed while alerts were on — silently move the
-          // server row to the new team.
-          if (parsed.teamId && parsed.teamId !== team.id) void register('silent');
-        } else {
-          setState(prev => (prev === 'on' ? 'off' : prev));
-        }
-      } catch {
-        /* ignore */
+      // An enable()/disable() is mid-flight (it owns the final state). Skip — its
+      // own success path dispatches fl-fan-alerts-change, and acting here would
+      // prematurely clear the pending spinner / launch a spurious verify.
+      if (stateRef.current === 'pending') return;
+      const stored = readFanAlertsOptIn(orgSlug, tournamentSlug);
+      if (!stored) {
+        setState(prev => (prev === 'on' ? 'off' : prev));
+        return;
       }
+      // Optimistically show ON from the stored opt-in (no flicker for the common,
+      // valid case)…
+      setState('on');
+      // …then verify against the LIVE subscription + permission and drop back to
+      // OFF if it no longer holds, so we never show a confident "Alerts on" while
+      // pushes have silently stopped (J6-050).
+      void (async () => {
+        const live = await verifyFanAlertsLive(stored);
+        if (!live) {
+          clearFanAlertsOptIn(orgSlug, tournamentSlug);
+          notifyFanAlertsChange();
+          setState('off');
+          return;
+        }
+        // The followed team changed while alerts were on — move the server row.
+        if (stored.teamId && stored.teamId !== team.id) {
+          try {
+            await enableFanAlerts({ orgSlug, tournamentSlug, tournamentId, team });
+          } catch {
+            /* best-effort re-point; the toggle stays usable */
+          }
+        }
+      })();
     };
     sync();
     const onStorage = (e: StorageEvent) => {
-      if (e.key === alertsKey(orgSlug, tournamentSlug)) sync();
+      if (e.key === fanAlertsKey(orgSlug, tournamentSlug)) sync();
     };
     window.addEventListener('storage', onStorage);
     window.addEventListener('fl-fan-alerts-change', sync);
@@ -74,38 +109,14 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournament
       window.removeEventListener('fl-fan-alerts-change', sync);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgSlug, tournamentSlug, team.id]);
-
-  async function register(mode: 'interactive' | 'silent') {
-    const sub = await subscribeToPush();
-    const res = await fetch('/api/public/fan-push/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        endpoint: sub.endpoint,
-        keys: sub.keys,
-        tournamentId,
-        teamId: team.id,
-        deviceLabel: sub.deviceLabel,
-      }),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.error ?? 'Could not enable alerts.');
-    }
-    localStorage.setItem(
-      alertsKey(orgSlug, tournamentSlug),
-      JSON.stringify({ endpoint: sub.endpoint, teamId: team.id }),
-    );
-    notifyAlertsChange();
-    if (mode === 'interactive') setState('on');
-  }
+  }, [orgSlug, tournamentSlug, tournamentId, team.id]);
 
   async function enable() {
     setState('pending');
     setMsg('');
     try {
-      await register('interactive');
+      await enableFanAlerts({ orgSlug, tournamentSlug, tournamentId, team });
+      setState('on');
     } catch (err) {
       const reason = err instanceof PushPermissionError ? err.reason : 'failed';
       setMsg(
@@ -122,13 +133,7 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournament
   async function disable() {
     setState('pending');
     try {
-      let endpoint: string | null = null;
-      try {
-        const raw = localStorage.getItem(alertsKey(orgSlug, tournamentSlug));
-        endpoint = raw ? (JSON.parse(raw) as { endpoint?: string }).endpoint ?? null : null;
-      } catch {
-        /* ignore */
-      }
+      let endpoint = readFanAlertsOptIn(orgSlug, tournamentSlug)?.endpoint ?? null;
       endpoint = endpoint ?? (await getCurrentPushEndpoint());
       if (endpoint) {
         await fetch('/api/public/fan-push/unsubscribe', {
@@ -137,15 +142,32 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournament
           body: JSON.stringify({ endpoint, tournamentId }),
         });
       }
-      localStorage.removeItem(alertsKey(orgSlug, tournamentSlug));
-      notifyAlertsChange();
+      clearFanAlertsOptIn(orgSlug, tournamentSlug);
+      notifyFanAlertsChange();
       setState('off');
     } catch {
       // Even if the network call fails, treat it as off locally.
-      localStorage.removeItem(alertsKey(orgSlug, tournamentSlug));
-      notifyAlertsChange();
+      clearFanAlertsOptIn(orgSlug, tournamentSlug);
+      notifyFanAlertsChange();
       setState('off');
     }
+  }
+
+  // iPhone in a normal tab: an honest "add to home screen first" explainer so the
+  // marquee Plus feature is at least discoverable on the dominant parent platform.
+  if (iosInstall) {
+    return (
+      <>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setIosHint(v => !v)}>
+          <BellPlus size={14} /> Get score alerts
+        </button>
+        {iosHint && (
+          <span style={{ display: 'block', width: '100%', fontSize: '0.7rem', color: 'var(--white-55)' }}>
+            On iPhone or iPad, tap Share then “Add to Home Screen”, then open this app to turn on alerts.
+          </span>
+        )}
+      </>
+    );
   }
 
   if (!supported) return null;

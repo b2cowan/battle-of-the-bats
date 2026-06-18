@@ -41,9 +41,18 @@ export function LiveLogicProvider({ children }: { children: React.ReactNode }) {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'games', filter: `tournament_id=eq.${tournamentId}` },
         ({ old: prev, new: next }) => {
+          // The realtime `old` payload only carries previous column values when `games`
+          // has REPLICA IDENTITY FULL (migration 132). Without it Postgres logs only the
+          // primary key, so prev.home_score / prev.status arrive `undefined` and every
+          // comparison below reads as a change — popping a false SCORE_UPDATE on every
+          // game write (e.g. a bracket save re-writes the schedule fields of each game).
+          // Treat "previous value unknown" as "no change" so only real moves notify; this
+          // also keeps the rail honest if the migration hasn't been applied yet.
+          const prevScoreKnown = prev.home_score !== undefined && prev.away_score !== undefined;
           const scoreChanged =
-            prev.home_score !== next.home_score || prev.away_score !== next.away_score;
-          const justCompleted = prev.status !== 'completed' && next.status === 'completed';
+            prevScoreKnown && (prev.home_score !== next.home_score || prev.away_score !== next.away_score);
+          const justCompleted =
+            prev.status !== undefined && prev.status !== 'completed' && next.status === 'completed';
 
           if (justCompleted) {
             // completed games get one GAME_COMPLETE notification that already shows the score

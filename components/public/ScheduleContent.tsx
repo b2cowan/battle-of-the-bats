@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Calendar, CalendarPlus, Trophy, List, LayoutTemplate, Search, ChevronDown, Star, X } from 'lucide-react';
-import { Game, PublicTeam, Division, Tournament } from '@/lib/types';
+import { Game, PublicTeam, Division, Tournament, Venue } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
@@ -10,7 +10,7 @@ import YearSelector from '@/components/YearSelector';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
 import { LogicSyncBracket } from '@/components/bracket/LogicSyncBracket';
-import { bracketRoundInfo } from '@/lib/playoff-bracket';
+import { bracketRoundInfo, bracketRoundLabel } from '@/lib/playoff-bracket';
 import { computePlacementStandings } from '@/lib/playoff-standings';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
@@ -104,6 +104,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   const [games, setGames]           = useState<Game[]>(() => initialData?.games ?? []);
   const [teams, setTeams]           = useState<PublicTeam[]>(() => initialData?.teams ?? []);
   const [divisions, setDivisions]   = useState<Division[]>(() => initialData?.divisions ?? []);
+  const [venues, setVenues]         = useState<Venue[]>(() => initialData?.venues ?? []);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>(() => initialData?.tournaments ?? []);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(() => initialData?.tournament ?? null);
   const [activeGroup, setActiveGroup]     = useState<string>(() => {
@@ -157,6 +158,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       setGames(data?.games ?? []);
       setTeams(data?.teams ?? []);
       setDivisions(groups);
+      setVenues(data?.venues ?? []);
       if (groups.length > 0) {
         const pref = getDivisionPref(orgSlug);
         const preferred = pref ? groups.find(g => g.name === pref) : null;
@@ -280,6 +282,14 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
         );
       })
     : filtered;
+
+  function nextUpDateLabel(date: string): string {
+    if (date === today) return 'Today';
+    const tmrw = new Date(today + 'T12:00:00');
+    tmrw.setDate(tmrw.getDate() + 1);
+    if (date === tmrw.toISOString().slice(0, 10)) return 'Tomorrow';
+    return new Date(date + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+  }
 
   function formatDividerDate(d: string) {
     if (!d) return 'TBD';
@@ -449,6 +459,27 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     });
   }
 
+  /** Compact venue label for schedule rows — venue name + optional facility (J6-014).
+   *  Uses game.location (plain string) when no managed Venue record is linked,
+   *  consistent with the game-detail page pattern. */
+  function getVenueLabel(game: Game): string | null {
+    const venue = game.venueId ? venues.find(v => v.id === game.venueId) ?? null : null;
+    const facility = venue?.facilities?.find(f => f.id === game.venueFacilityId) ?? null;
+    const rawLocation = game.location?.trim() ?? '';
+    const venueName = venue?.name || rawLocation;
+    if (!venueName) {
+      return game.scheduleFacilityLaneLabel?.trim() || null;
+    }
+    let facilityLabel = facility?.name ?? '';
+    if (!facilityLabel && rawLocation && venue?.name && rawLocation.toLowerCase().startsWith(venue.name.toLowerCase())) {
+      facilityLabel = rawLocation
+        .slice(venue.name.length)
+        .replace(/^\s*(?:-|–|—|,)\s*/, '')
+        .trim();
+    }
+    return facilityLabel ? `${venueName} — ${facilityLabel}` : venueName;
+  }
+
   function inferPool(game: Game, allGames: Game[]): string | null {
     for (const pool of pools) {
       const bare = pool.name.replace(/^Pool\s+/i, '').trim();
@@ -519,19 +550,14 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     const awayName = getTeamDisplay(game, false);
     const homeName = getTeamDisplay(game, true);
 
-    const outcomeColor = {
-      win: 'var(--success)',
-      tie: 'var(--warning)',
-      loss: 'rgba(var(--danger-rgb), 0.72)',
-    };
-    const homeOutcome = !hasScore ? null
-      : winner === 'tie' ? { label: 'T', color: outcomeColor.tie }
-      : winner === 'home' ? { label: 'W', color: outcomeColor.win }
-      : { label: 'L', color: outcomeColor.loss };
-    const awayOutcome = !hasScore ? null
-      : winner === 'tie' ? { label: 'T', color: outcomeColor.tie }
-      : winner === 'away' ? { label: 'W', color: outcomeColor.win }
-      : { label: 'L', color: outcomeColor.loss };
+    // Mobile rows mirror the Recent-Scores cards: winner score green, loser dimmed
+    // (not red), tie gold; the winning side also gets a trophy.
+    const mobileScoreStyle = (side: 'home' | 'away') =>
+      !hasScore ? { color: 'var(--white-75)' }
+      : winner === 'tie' ? { color: 'var(--warning)' }
+      : { color: winner === side ? 'var(--success)' : 'var(--white-40)' };
+    const mobileNameStyle = (side: 'home' | 'away') =>
+      hasScore && winner !== 'tie' && winner !== side ? { color: 'var(--white-40)' } : undefined;
 
     const isLive = isGameLive(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES);
     const statusBadge =
@@ -563,16 +589,15 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
         </div>
 
         <div className={styles.matchupCell}>
-          <div className={`${styles.matchSide} ${styles.matchAway}`}>
-            {awayOutcome && <span className={styles.resultTag} style={{ color: awayOutcome.color }}>{awayOutcome.label}</span>}
-            {hasScore && <span className={styles.matchScore} style={{ color: awayOutcome?.color }}>{game.awayScore}</span>}
+          <div className={`${styles.matchRow} ${winner === 'away' ? styles.matchWin : winner === 'home' ? styles.matchLose : ''}`}>
+            <span className={styles.matchWinSlot}>{hasScore && winner === 'away' && <Trophy size={14} aria-label="Winner" />}</span>
             <span className={styles.matchTeam} title={awayName}>{awayName}</span>
+            <span className={styles.matchScore}>{hasScore ? game.awayScore : ''}</span>
           </div>
-          <span className={styles.matchVs}>VS</span>
-          <div className={`${styles.matchSide} ${styles.matchHome}`}>
+          <div className={`${styles.matchRow} ${winner === 'home' ? styles.matchWin : winner === 'away' ? styles.matchLose : ''}`}>
+            <span className={styles.matchWinSlot}>{hasScore && winner === 'home' && <Trophy size={14} aria-label="Winner" />}</span>
             <span className={styles.matchTeam} title={homeName}>{homeName}</span>
-            {hasScore && <span className={styles.matchScore} style={{ color: homeOutcome?.color }}>{game.homeScore}</span>}
-            {homeOutcome && <span className={styles.resultTag} style={{ color: homeOutcome.color }}>{homeOutcome.label}</span>}
+            <span className={styles.matchScore}>{hasScore ? game.homeScore : ''}</span>
           </div>
         </div>
 
@@ -590,35 +615,23 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
           <div className={styles.mobileTimeCol}>
             <span className={styles.mobileTimePrimary}>{game.time ? formatTime(game.time) : 'TBD'}</span>
           </div>
-          {/* col 2: away avatar */}
-          <span
-            className={styles.mobileAvAway}
-            style={{ background: awayName !== 'TBD' ? `hsl(${teamAvatarHue(awayName)}, 58%, 38%)` : 'var(--white-10)' }}
-          >
-            {awayName !== 'TBD' ? teamInitials(awayName) : '?'}
-          </span>
-          {/* col 3: away name */}
-          <span className={styles.mobileNameAway}>
+          {/* away row: name · score */}
+          <span className={styles.mobileNameAway} style={mobileNameStyle('away')}>
             {awayName}{isFollowedGame && game.awayTeamId === followedTeamId ? ' ★' : ''}
           </span>
-          {/* col 4: away score */}
-          <span className={styles.mobileScoreAway} style={{ color: awayOutcome?.color ?? 'var(--white-75)' }}>
+          {/* col 4: away score (winner: trophy + green) */}
+          <span className={styles.mobileScoreAway} style={mobileScoreStyle('away')}>
+            {hasScore && winner === 'away' && <Trophy size={12} className={styles.mobileWinIcon} aria-label="Winner" />}
             {hasScore ? game.awayScore : ''}
           </span>
-          {/* col 2: home avatar */}
-          <span
-            className={styles.mobileAvHome}
-            style={{ background: homeName !== 'TBD' ? `hsl(${teamAvatarHue(homeName)}, 58%, 38%)` : 'var(--white-10)' }}
-          >
-            {homeName !== 'TBD' ? teamInitials(homeName) : '?'}
-          </span>
-          {/* col 3: home name */}
-          <span className={styles.mobileNameHome}>
+          {/* home row: name · score + status badge */}
+          <span className={styles.mobileNameHome} style={mobileNameStyle('home')}>
             {homeName}{isFollowedGame && game.homeTeamId === followedTeamId ? ' ★' : ''}
           </span>
           {/* col 4: home score + status badge */}
           <div className={styles.mobileScoreHome}>
-            <span className={styles.mobileScoreNum} style={{ color: homeOutcome?.color ?? 'var(--white-75)' }}>
+            <span className={styles.mobileScoreNum} style={mobileScoreStyle('home')}>
+              {hasScore && winner === 'home' && <Trophy size={12} className={styles.mobileWinIcon} aria-label="Winner" />}
               {hasScore ? game.homeScore : ''}
             </span>
             <span className={styles.mobileRowStatus}>{statusBadge ?? typeLabel}</span>
@@ -790,9 +803,13 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                       ) : followedNextGame ? (
                         <>
                           <div className={styles.scorebugNextUp}>NEXT UP</div>
+                          {followedNextGame.date && (
+                            <div className={styles.scorebugNextDate}>{nextUpDateLabel(followedNextGame.date)}</div>
+                          )}
                           <div className={styles.scorebugNextTime}>
                             {followedNextGame.time ? formatTime(followedNextGame.time) : 'TBD'}
                           </div>
+                          {(() => { const vl = getVenueLabel(followedNextGame); return vl ? <div className={styles.scorebugNextVenue}>{vl}</div> : null; })()}
                         </>
                       ) : null}
                     </div>
@@ -832,7 +849,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                   >
                     <CalendarPlus size={11} /> Add to Calendar
                   </button>
-                  {fanAlertsEnabled && selectedTournament && (
+                  {fanAlertsEnabled && selectedTournament && selectedTournament.status !== 'completed' && (
                     <FollowAlertsToggle
                       orgSlug={orgSlug}
                       tournamentSlug={tournamentSlug}
@@ -908,6 +925,8 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
             {/* Search + List/Bracket on the same row */}
             {activeVisibility !== 'unpublished' && (
               <div className={styles.mobileSearchBracketRow}>
+                {/* Search is useless in the bracket diagram → hide it there (keep the toggle). */}
+                {!(viewMode === 'playoff' && bracketLayout === 'bracket') && (
                 <div className={`${styles.teamFilter} ${styles.mobileTeamFilter}`}>
                   <Search size={14} className={styles.teamFilterIcon} />
                   <input
@@ -919,14 +938,15 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                     onChange={e => setTeamSearch(e.target.value)}
                   />
                   <datalist id="schedule-mobile-team-options">
-                    {divisionTeams.map(team => (
+                    {activeVisibility === 'published' && divisionTeams.map(team => (
                       <option key={team.id} value={team.name}>{team.coach}</option>
                     ))}
                   </datalist>
                   {teamSearch && (
-                    <button type="button" className={styles.clearFilter} onClick={() => setTeamSearch('')} aria-label="Clear team filter">x</button>
+                    <button type="button" className={styles.clearFilter} onClick={() => setTeamSearch('')} aria-label="Clear team filter"><X size={12} /></button>
                   )}
                 </div>
+                )}
                 {viewMode === 'playoff' && (
                   <div className={`${styles.segmentedControl} ${styles.mobileBracketInline}`} role="group" aria-label="Playoff view">
                     <button
@@ -990,25 +1010,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                 </button>
               </div>
               )}
-            </div>
-
-            <div className={styles.secondaryControls}>
-              {activeVisibility !== 'unpublished' && (
-                <div className={styles.teamFilter}>
-                  <Search size={14} className={styles.teamFilterIcon} />
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Search team or coach..."
-                    value={teamSearch}
-                    onChange={e => setTeamSearch(e.target.value)}
-                  />
-                  {teamSearch && (
-                    <button type="button" className={styles.clearFilter} onClick={() => setTeamSearch('')} aria-label="Clear team filter">x</button>
-                  )}
-                </div>
-              )}
-
+              {/* List/Bracket display toggle — sits beside the stage toggle (Playoffs only). */}
               {viewMode === 'playoff' && (
                 <div className={styles.segmentedControl} role="group" aria-label="Playoff view">
                   <button
@@ -1029,7 +1031,25 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                   </button>
                 </div>
               )}
+            </div>
 
+            <div className={styles.secondaryControls}>
+              {/* Search is useless in the bracket diagram → hide it there. */}
+              {activeVisibility !== 'unpublished' && !(viewMode === 'playoff' && bracketLayout === 'bracket') && (
+                <div className={styles.teamFilter}>
+                  <Search size={14} className={styles.teamFilterIcon} />
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Search team or coach..."
+                    value={teamSearch}
+                    onChange={e => setTeamSearch(e.target.value)}
+                  />
+                  {teamSearch && (
+                    <button type="button" className={styles.clearFilter} onClick={() => setTeamSearch('')} aria-label="Clear team filter"><X size={12} /></button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1221,14 +1241,31 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
 
               // ── LIST VIEW — pool play split ───────────────────────────────
               if (viewMode === 'pool' && pools.length >= 2) {
+                // Attribution for dedup so a cross-pool game renders in exactly one section:
+                // the HOME slot's pool wins (by team or placeholder); the away slot only
+                // claims a game when the home slot belongs to no pool (J6-016).
+                const teamPoolId = new Map(teams.filter(t => t.poolId).map(t => [t.id, t.poolId!] as [string, string]));
+                const allPoolTags = pools.map(p => `Pool ${p.name.replace(/^Pool\s+/i, '').trim()}`);
                 return pools.map(pool => {
                   const bare = pool.name.replace(/^Pool\s+/i, '').trim();
                   const tag  = `Pool ${bare}`;
-                  const poolTeamIds = teams.filter(t => t.poolId === pool.id).map(t => t.id);
-                  const poolGames = teamFiltered.filter(g =>
-                    g.homePlaceholder?.includes(tag) || g.awayPlaceholder?.includes(tag) ||
-                    poolTeamIds.includes(g.homeTeamId) || poolTeamIds.includes(g.awayTeamId)
-                  );
+                  const poolGames = teamFiltered.filter(g => {
+                    const homeInPool = !!g.homePlaceholder?.includes(tag);
+                    const awayInPool = !!g.awayPlaceholder?.includes(tag);
+                    if (homeInPool || awayInPool) {
+                      // Home placeholder's pool wins; away claims it only when the home
+                      // placeholder isn't tied to any pool — so a cross-pool seeded game
+                      // (home "Pool A #1", away "Pool B #2") renders once, under A.
+                      if (homeInPool) return true;
+                      const homeInAnyPool = allPoolTags.some(t2 => g.homePlaceholder?.includes(t2));
+                      return awayInPool && !homeInAnyPool;
+                    }
+                    const homePool = g.homeTeamId ? teamPoolId.get(g.homeTeamId) : undefined;
+                    const awayPool = g.awayTeamId ? teamPoolId.get(g.awayTeamId) : undefined;
+                    if (homePool) return homePool === pool.id;
+                    if (awayPool) return awayPool === pool.id;
+                    return false;
+                  });
                   if (poolGames.length === 0) return null;
                   const poolDateGroups: Record<string, Game[]> = {};
                   poolGames.forEach(g => {
@@ -1275,7 +1312,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                                 {poolDateGroups[date].map(game => renderGameCard(
                                   game,
                                   styles.playoffRow,
-                                  <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
+                                  <span className="badge badge-primary">{bracketRoundLabel(game.bracketCode)}</span>
                                 ))}
                               </div>
                             </div>
@@ -1296,7 +1333,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                       game,
                       game.isPlayoff ? styles.playoffRow : '',
                       game.isPlayoff
-                        ? <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
+                        ? <span className="badge badge-primary">{bracketRoundLabel(game.bracketCode)}</span>
                         : null
                     ))}
                   </div>
@@ -1357,9 +1394,13 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                       ) : followedNextGame ? (
                         <>
                           <div className={styles.railNextUp}>NEXT UP</div>
+                          {followedNextGame.date && (
+                            <div className={styles.railNextDate}>{nextUpDateLabel(followedNextGame.date)}</div>
+                          )}
                           <div className={styles.railNextTime}>
                             {followedNextGame.time ? formatTime(followedNextGame.time) : 'TBD'}
                           </div>
+                          {(() => { const vl = getVenueLabel(followedNextGame); return vl ? <div className={styles.railNextVenue}>{vl}</div> : null; })()}
                         </>
                       ) : null}
                     </div>
@@ -1371,7 +1412,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                   )}
                 </div>
 
-                {fanAlertsEnabled && selectedTournament && (
+                {fanAlertsEnabled && selectedTournament && selectedTournament.status !== 'completed' && (
                   <FollowAlertsToggle
                     orgSlug={orgSlug}
                     tournamentSlug={tournamentSlug}

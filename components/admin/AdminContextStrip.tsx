@@ -39,6 +39,9 @@ export default function AdminContextStrip() {
   const tournamentId = currentTournament?.id;
   const base = currentOrg?.slug ? `/${currentOrg.slug}/admin/tournaments` : null;
   const onTournamentRoute = pathname.includes('/admin/tournaments');
+  // Don't nudge toward the Results page when you're already on it — the bottom-nav
+  // tab badge already carries the count, so the strip would just duplicate it.
+  const onResultsPage = pathname.includes('/admin/tournaments/results');
 
   // Load this tournament's dismiss state after mount (avoids SSR mismatch).
   useEffect(() => {
@@ -56,7 +59,7 @@ export default function AdminContextStrip() {
     if (!onTournamentRoute || !base || !currentTournament) return null;
     const regs = worklist.registrations ?? 0;
     const results = worklist.results ?? 0;
-    if (results > 0) {
+    if (results > 0 && !onResultsPage) {
       return { key: 'finalize', label: `${results} game${results === 1 ? '' : 's'} to finalize`, href: `${base}/results`, icon: <Trophy size={15} />, count: results };
     }
     if (regs > 0) {
@@ -73,7 +76,7 @@ export default function AdminContextStrip() {
       return { key: 'summary', label: 'Review event summary', href: `${base}/summary`, icon: <FileText size={15} />, count: 0 };
     }
     return null; // open / game day with nothing pending → nothing to surface
-  }, [onTournamentRoute, base, currentTournament, worklist]);
+  }, [onTournamentRoute, onResultsPage, base, currentTournament, worklist]);
 
   // Visible unless dismissed for the same action whose count hasn't increased.
   const visible = !!action && hydrated && !(

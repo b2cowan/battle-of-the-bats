@@ -29,6 +29,7 @@ export default function DesktopMyTeamRailCard() {
   const [games, setGames] = useState<Game[]>([]);
   const [tournamentId, setTournamentId] = useState('');
   const [alertsEnabled, setAlertsEnabled] = useState(false);
+  const [tournamentCompleted, setTournamentCompleted] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function DesktopMyTeamRailCard() {
       setGames(data.games ?? []);
       setTournamentId(data.tournament?.id ?? '');
       setAlertsEnabled(!!data.fanAlertsEnabled);
+      setTournamentCompleted(data.tournament?.status === 'completed');
       setLoaded(true);
     });
     return () => { cancelled = true; };
@@ -91,7 +93,7 @@ export default function DesktopMyTeamRailCard() {
       ) : (
         <div className={styles.row}><span className={styles.nextVal}>No upcoming games</span></div>
       )}
-      {alertsEnabled && tournamentId && (
+      {alertsEnabled && tournamentId && !tournamentCompleted && (
         <FollowAlertsToggle orgSlug={orgSlug} tournamentSlug={tournamentSlug} tournamentId={tournamentId} team={{ id: team.id, name: team.name }} />
       )}
       <Link href={scheduleHref} className={styles.link}>View schedule</Link>

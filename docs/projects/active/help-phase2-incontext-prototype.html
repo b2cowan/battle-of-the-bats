@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Help Phase 2 — In-context help prototype (clickable)</title>
+<style>
+  :root{
+    --bg:#0A0A0A; --hud-surface:#111827; --surface-2:#0F172A; --bg-raised:#141D2B;
+    --lime:#D9F99D; --lime-rgb:217,249,157;
+    --blue:#3B82F6; --blue-rgb:59,130,246;
+    --warning:#F59E0B; --warning-rgb:245,158,11;
+    --danger:#EF4444; --danger-rgb:239,68,68;
+    --text:#F1F5F9; --muted:#94A3B8;
+    --w70:rgba(255,255,255,.7); --w55:rgba(255,255,255,.55); --w40:rgba(255,255,255,.4);
+    --w08:rgba(255,255,255,.08); --w05:rgba(255,255,255,.05); --w03:rgba(255,255,255,.03);
+    --border:rgba(30,58,138,.35);
+    --radius:12px; --radius-md:8px; --radius-sm:6px;
+    --shadow-lg:0 8px 48px rgba(0,0,0,.6);
+    --glow-blue:0 0 12px rgba(var(--blue-rgb),.3);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased}
+  a{color:var(--blue); text-decoration:none}
+  button{font:inherit}
+  .wrap{max-width:1040px; margin:0 auto; padding:0 20px 120px}
+
+  /* ===== explainer bar ===== */
+  .bar{position:sticky; top:0; z-index:40; background:rgba(10,10,10,.92); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--w08); margin-bottom:24px}
+  .bar-inner{max-width:1040px; margin:0 auto; padding:12px 20px; display:flex; gap:16px; align-items:center; flex-wrap:wrap}
+  .bar-title{font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--w55); font-weight:700}
+  .caption{flex:1 1 320px; min-width:240px; font-size:.8rem; color:var(--muted)}
+  .caption b{color:var(--lime); font-weight:700}
+  .seg{display:inline-flex; background:var(--w05); border:1px solid var(--w08); border-radius:999px; padding:4px}
+  .seg button{appearance:none; border:0; background:transparent; color:var(--w70); font-size:.82rem;
+    font-weight:600; padding:6px 13px; border-radius:999px; cursor:pointer; transition:all .15s ease}
+  .seg button:hover{color:var(--text)}
+  .seg button.on{background:var(--lime); color:#0f1123}
+
+  /* ===== faux admin chrome ===== */
+  .chrome-top{display:flex; align-items:center; gap:12px; padding:10px 16px; background:var(--surface-2);
+    border:1px solid var(--w08); border-radius:var(--radius); margin-bottom:18px; font-size:.82rem; color:var(--muted)}
+  .chrome-top .pill{background:var(--w05); border:1px solid var(--w08); border-radius:999px; padding:4px 11px; color:var(--w70); font-weight:600}
+  .chrome-top .tname{color:var(--lime); font-weight:700}
+
+  /* ===== work-page header (mirrors TournamentAdminHeader) ===== */
+  .phead{display:flex; align-items:flex-start; gap:14px; padding:18px 0 14px; border-bottom:1px solid var(--w08); margin-bottom:22px; flex-wrap:wrap}
+  .phead .hicon{width:42px; height:42px; border-radius:10px; background:rgba(var(--blue-rgb),.14);
+    border:1px solid rgba(var(--blue-rgb),.35); display:grid; place-items:center; font-size:1.1rem; flex:0 0 auto}
+  .phead .hmain{min-width:0; flex:1 1 280px}
+  .eyebrow{font-size:.6rem; letter-spacing:.18em; text-transform:uppercase; color:var(--w40); font-weight:700}
+  .phead h1{font-size:1.5rem; margin:2px 0 3px; color:var(--text)}
+  .phead .sub{font-size:.86rem; color:var(--muted); margin:0}
+  .hactions{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-left:auto}
+
+  .btn{display:inline-flex; align-items:center; gap:6px; border-radius:var(--radius-sm); padding:7px 12px;
+    font-size:.8rem; font-weight:600; cursor:pointer; border:1px solid transparent; transition:all .14s ease}
+  .btn-ghost{background:var(--w05); border-color:var(--w08); color:var(--w70)}
+  .btn-ghost:hover{color:var(--text); border-color:var(--border)}
+  .btn-lime{background:var(--lime); color:#0f1123; border-color:var(--lime)}
+  .btn-lime:hover{filter:brightness(1.05)}
+  .btn-danger{background:rgba(var(--danger-rgb),.12); color:#fca5a5; border-color:rgba(var(--danger-rgb),.4)}
+  .btn .ic{font-size:.9em}
+
+  /* the "?" help trigger — quiet, follows the Scorekeeper convention */
+  .help-btn{display:inline-flex; align-items:center; gap:6px; background:var(--w05); border:1px solid var(--w08);
+    color:var(--w70); border-radius:var(--radius-sm); padding:7px 11px; font-size:.8rem; font-weight:600; cursor:pointer; transition:all .14s ease}
+  .help-btn:hover{color:var(--lime); border-color:rgba(var(--lime-rgb),.4)}
+  .help-btn:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
+  .help-btn .q{display:grid; place-items:center; width:16px; height:16px; border-radius:50%;
+    border:1.5px solid currentColor; font-size:.66rem; font-weight:800}
+
+  /* ===== page body samples ===== */
+  .card{background:var(--w03); border:1px solid var(--w08); border-radius:var(--radius); padding:18px; margin-bottom:16px}
+  .card h2{font-size:1rem; margin:0 0 4px}
+  .field{margin:14px 0}
+  .field label{display:block; font-size:.85rem; font-weight:600; color:var(--text); margin-bottom:4px}
+  .field .ctl{background:var(--w05); border:1px solid var(--w08); border-radius:var(--radius-sm); padding:9px 11px;
+    color:var(--text); font-size:.85rem; width:240px; max-width:100%}
+  /* FieldHint — always-visible, muted, sub-label */
+  .field-hint{font-size:.76rem; color:var(--w40); margin-top:5px; max-width:52ch; line-height:1.5}
+
+  .row{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--w05)}
+  .row:last-child{border-bottom:0}
+  .status{font-size:.72rem; font-weight:700; padding:3px 9px; border-radius:999px; letter-spacing:.02em}
+  .status.pending{background:rgba(var(--warning-rgb),.14); color:#fcd497; border:1px solid rgba(var(--warning-rgb),.35)}
+
+  /* fixed HelpTooltip (touch + keyboard) */
+  .tip-wrap{position:relative; display:inline-flex}
+  .tip-btn{display:grid; place-items:center; width:17px; height:17px; border-radius:50%; border:1.5px solid var(--w40);
+    background:transparent; color:var(--w55); font-size:.66rem; font-weight:800; cursor:pointer; transition:all .14s ease}
+  .tip-btn:hover{color:var(--lime); border-color:var(--lime)}
+  .tip-btn:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
+  .tip-pop{position:absolute; top:140%; left:50%; transform:translateX(-50%); width:230px; z-index:60;
+    background:var(--hud-surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:10px 12px;
+    font-size:.78rem; color:var(--w70); box-shadow:var(--shadow-lg); display:none}
+  .tip-pop.open{display:block}
+  .tip-pop b{color:var(--text)}
+
+  /* heads-up warning callout (HelpCallout variant=warning) adjacent to a risky action */
+  .warn{display:flex; gap:11px; background:rgba(var(--warning-rgb),.08); border:1px solid rgba(var(--warning-rgb),.32);
+    border-left:3px solid var(--warning); border-radius:var(--radius-md); padding:12px 14px; margin:14px 0; max-width:640px}
+  .warn .wic{color:var(--warning); flex:0 0 auto; font-size:1rem; line-height:1.4}
+  .warn .wbody{font-size:.83rem; color:var(--w70)}
+  .warn .wbody b{color:var(--text)}
+  .actbar{display:flex; align-items:center; gap:10px; margin-top:6px}
+
+  .note{font-size:.74rem; color:var(--w40); margin:6px 0 0}
+  .legend{font-size:.72rem; color:var(--muted); background:var(--w03); border:1px dashed var(--w08); border-radius:8px; padding:8px 12px; margin:10px 0 0}
+  .legend b{color:var(--lime)}
+  .sectiontitle{font-size:.7rem; letter-spacing:.15em; text-transform:uppercase; color:var(--lime); font-weight:700; margin:34px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--w08)}
+
+  /* ===== HelpDrawer (right-edge slide-over) ===== */
+  .drawer-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(2px); z-index:699;
+    opacity:0; pointer-events:none; transition:opacity .2s ease}
+  .drawer-backdrop.open{opacity:1; pointer-events:auto}
+  .drawer{position:fixed; top:0; right:0; bottom:0; width:min(420px,100vw); background:var(--hud-surface);
+    border-left:1px solid var(--border); box-shadow:var(--shadow-lg); z-index:700; display:flex; flex-direction:column;
+    transform:translateX(100%); transition:transform .22s ease}
+  .drawer.open{transform:translateX(0)}
+  .drawer-head{display:flex; align-items:flex-start; gap:12px; padding:16px 18px; border-bottom:1px solid var(--w08)}
+  .drawer-head .dk{font-size:.6rem; letter-spacing:.16em; text-transform:uppercase; color:var(--w40); font-weight:700}
+  .drawer-head h3{font-size:1.05rem; margin:3px 0 0; color:var(--lime)}
+  .drawer-close{margin-left:auto; flex:0 0 auto; width:30px; height:30px; border-radius:8px; background:var(--w05);
+    border:1px solid var(--w08); color:var(--w70); cursor:pointer; font-size:1rem}
+  .drawer-close:hover{color:var(--text)}
+  .drawer-close:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
+  .drawer-body{overflow:auto; padding:16px 18px 22px; flex:1 1 auto}
+  .drawer-body .sum{color:var(--muted); font-size:.84rem; margin:0 0 12px}
+  .drawer-body p{font-size:.86rem; color:var(--w70); margin:0 0 11px}
+  .drawer-body .lead{color:var(--text)}
+  .drawer-body ol{font-size:.85rem; color:var(--w70); padding-left:18px; margin:0 0 12px}
+  .drawer-body ol li{margin:4px 0}
+  details.faq{background:var(--w03); border:1px solid var(--w08); border-radius:8px; padding:0 13px; margin:7px 0}
+  details.faq summary{cursor:pointer; padding:9px 0; font-weight:600; font-size:.84rem; color:var(--text); list-style:none}
+  details.faq summary::-webkit-details-marker{display:none}
+  details.faq summary::before{content:"›"; color:var(--lime); display:inline-block; width:14px; transition:transform .15s ease}
+  details.faq[open] summary::before{transform:rotate(90deg)}
+  details.faq .ans{padding:0 0 11px 14px; color:var(--w70); font-size:.82rem}
+  .drawer-foot{border-top:1px solid var(--w08); padding:13px 18px}
+  .drawer-foot a{display:inline-flex; align-items:center; gap:6px; font-size:.84rem; font-weight:600}
+  .pill-plus{font-size:.6rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#bcd2ff;
+    background:rgba(var(--blue-rgb),.16); border:1px solid rgba(var(--blue-rgb),.4); padding:2px 7px; border-radius:5px; margin-left:6px}
+
+  @media (max-width:640px){ .drawer{width:100vw} .hactions{margin-left:0; width:100%} }
+</style>
+</head>
+<body>
+
+<div class="bar"><div class="bar-inner">
+  <span class="bar-title">Help · Phase 2 — In-context help</span>
+  <span class="caption">Click <b>“? Help”</b> in the page header to open the slide-over. Switch the page to see the <b>“?” map to a different guide section</b>. Tap the small <b>“?” badges</b> (fixed tooltip) — they now work on touch & keyboard.</span>
+  <span class="seg" id="pageSeg">
+    <button data-page="divisions" class="on">Divisions</button>
+    <button data-page="schedule">Schedule</button>
+    <button data-page="registrations">Registrations</button>
+  </span>
+</div></div>
+
+<div class="wrap">
+
+  <div class="chrome-top">
+    <span class="pill">☰ Admin</span>
+    <span>Tournament:</span><span class="tname" id="chromeTname">Spring Slam 2026</span>
+    <span style="margin-left:auto" class="pill">Owner</span>
+  </div>
+
+  <!-- WORK-PAGE HEADER (mirrors TournamentAdminHeader actions slot) -->
+  <header class="phead">
+    <div class="hicon" id="hicon">▦</div>
+    <div class="hmain">
+      <div class="eyebrow">Tournament</div>
+      <h1 id="pTitle">Divisions</h1>
+      <p class="sub" id="pSub">Set up divisions, pool play, and per-division fees.</p>
+    </div>
+    <div class="hactions">
+      <button class="btn btn-ghost"><span class="ic">⤓</span> Export</button>
+      <button class="btn btn-lime"><span class="ic">＋</span> <span id="addLabel">Add Division</span></button>
+      <button class="help-btn" id="helpBtn" aria-haspopup="dialog">
+        <span class="q">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== DIVISIONS PAGE BODY ===== -->
+  <div data-body="divisions">
+    <div class="card">
+      <h2>U12 Boys</h2>
+      <div class="field">
+        <label>Pool play</label>
+        <select class="ctl"><option>Single pool</option><option>2 pools</option><option>3 pools</option></select>
+        <!-- FieldHint: always-visible, 1 short sentence, muted -->
+        <p class="field-hint">Pools split a division into groups that play within themselves first; the schedule builder then seeds playoffs from each pool’s standings.</p>
+      </div>
+      <div class="field">
+        <label>Entry fee</label>
+        <input class="ctl" value="$450" />
+        <p class="field-hint">Leave blank to inherit the tournament-level fee. A fee set here overrides the default for this division only.</p>
+      </div>
+      <div class="row">
+        <span>Maple FC</span>
+        <span class="status pending">Pending Review</span>
+        <!-- fixed tooltip (touch + keyboard) -->
+        <span class="tip-wrap">
+          <button class="tip-btn" data-tip="t1" aria-label="What does Pending Review mean?" aria-describedby="t1">?</button>
+          <span class="tip-pop" id="t1" role="tooltip"><b>Pending Review</b> — the team registered but you haven’t accepted them yet. Only accepted teams appear in the schedule builder.</span>
+        </span>
+      </div>
+    </div>
+    <p class="legend"><b>FieldHint</b> = the muted sentence under a label (always visible, never a click). <b>“?” badge</b> = the fixed tooltip — tap it on this page; it stays open on touch, closes on tap-away / Escape, and is reachable by keyboard.</p>
+  </div>
+
+  <!-- ===== SCHEDULE PAGE BODY ===== -->
+  <div data-body="schedule" style="display:none">
+    <div class="card">
+      <h2>Playoff bracket — U12 Boys</h2>
+      <p class="sub" style="margin-bottom:6px">8-team single elimination · 7 games built</p>
+      <!-- heads-up warning adjacent to a destructive action -->
+      <div class="warn">
+        <span class="wic">⚠</span>
+        <div class="wbody"><b>Clearing the bracket is permanent.</b> It removes all 7 playoff games for this division — including any scores already entered. You’ll need to rebuild from scratch.</div>
+      </div>
+      <div class="actbar">
+        <button class="btn btn-danger"><span class="ic">🗑</span> Clear Bracket</button>
+        <span class="note">Build a new bracket afterward from the Playoff Wizard or by hand.</span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Publish schedule</h2>
+      <div class="warn">
+        <span class="wic">⚠</span>
+        <div class="wbody"><b>Publishing closes registration</b> for the selected divisions and schedules a game-day reminder email to each coach the evening before their first game. Publishing puts real names on the public schedule.</div>
+      </div>
+      <div class="actbar"><button class="btn btn-lime"><span class="ic">◉</span> Publish</button></div>
+    </div>
+    <p class="legend"><b>Heads-up warning</b> = a <b>HelpCallout (warning)</b> that appears next to a risky action <b>only when the risky state is present</b> (a bracket exists / a division is still open). It states the consequence <i>before</i> the click; the existing confirm dialog is still the second gate.</p>
+  </div>
+
+  <!-- ===== REGISTRATIONS PAGE BODY ===== -->
+  <div data-body="registrations" style="display:none">
+    <div class="card">
+      <h2>Registrations</h2>
+      <div class="row"><span>Riverside United</span><span class="status pending">Pending Review</span>
+        <span class="tip-wrap"><button class="tip-btn" data-tip="t2" aria-label="What does Pending Review mean?" aria-describedby="t2">?</button>
+        <span class="tip-pop" id="t2" role="tooltip"><b>Pending Review</b> — a new registration awaiting your decision. Accept, waitlist, or decline — each sends the coach an email.</span></span>
+      </div>
+      <div class="row"><span>Hill City Heat</span><span class="status pending">Waitlisted</span></div>
+      <div class="field">
+        <label>Bulk action</label>
+        <select class="ctl"><option>Accept selected</option><option>Waitlist selected</option><option>Decline selected</option></select>
+        <p class="field-hint">Every accept / waitlist / decline emails the team contact. Only accepted teams can be scheduled.</p>
+      </div>
+    </div>
+    <p class="legend">Same “? Help” button → opens the <b>Registrations</b> guide section. One quiet entry point, every work page.</p>
+  </div>
+
+  <div class="sectiontitle">How a page says which section it opens</div>
+  <div class="card" style="font-size:.85rem; color:var(--w70)">
+    <p style="margin-top:0">Each page declares its mapping in one line — the header’s help button is wired to a <b>module + section id(s)</b> that already exist in the guide content. No new copy is written for Phase 2; the drawer renders the <i>same</i> section the full guide shows.</p>
+    <ul style="margin:0; padding-left:18px">
+      <li><b>Divisions</b> → <code>tournaments / divisions-and-pools</code></li>
+      <li><b>Schedule</b> → <code>tournaments / build-the-schedule + playoffs</code> (two sections, shown in order)</li>
+      <li><b>Registrations</b> → <code>tournaments / registrations-and-teams</code></li>
+    </ul>
+    <p style="margin-bottom:0">A single drawer lives at the layout level; every page’s “?” just tells it which section to show.</p>
+  </div>
+
+</div>
+
+<!-- ===== DRAWER ===== -->
+<div class="drawer-backdrop" id="backdrop"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" aria-hidden="true">
+  <div class="drawer-head">
+    <div>
+      <div class="dk">Help · on this page</div>
+      <h3 id="drawerTitle">Divisions, pools &amp; fees</h3>
+    </div>
+    <button class="drawer-close" id="drawerClose" aria-label="Close help">✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot"><a id="drawerFull" href="#">Open the full Tournaments guide ↗</a></div>
+</aside>
+
+<script>
+  const PAGES = {
+    divisions: {
+      title:'Divisions', sub:'Set up divisions, pool play, and per-division fees.', icon:'▦', add:'Add Division',
+      drawerTitle:'Divisions, pools &amp; fees',
+      full:'#divisions-and-pools',
+      body:`<p class="sum">How divisions, pools, and fees fit together.</p>
+        <p class="lead">A <b>division</b> is an age/skill bracket teams register into. Split a busy division into <b>pools</b> so teams play within a group first, then cross over for playoffs.</p>
+        <ol><li>Add a division and set its team cap.</li><li>Choose single pool, or 2–3 pools to group teams.</li><li>Set an entry fee here to override the tournament default, or leave blank to inherit it.</li></ol>
+        <details class="faq"><summary>How do pools work?</summary><div class="ans">Each pool plays a round-robin within itself; the schedule builder then seeds the playoff bracket from each pool’s standings.</div></details>
+        <details class="faq"><summary>Can I charge different fees per division?</summary><div class="ans">Yes — a fee set on a division overrides the tournament-level fee for that division only.</div></details>`
+    },
+    schedule:{
+      title:'Schedule', sub:'Build the round-robin, then the playoff bracket — and publish.', icon:'▥', add:'Add Game',
+      drawerTitle:'Build the schedule &amp; playoffs',
+      full:'#recipe-build-tournament-schedule',
+      body:`<p class="sum">Building games, brackets, and going public.</p>
+        <p class="lead">Build pool/round-robin games first, then the playoff bracket. <b>Publishing</b> puts real names on the public site and closes registration for those divisions.</p>
+        <ol><li>Generate or hand-build the round-robin.</li><li>Build the playoff bracket by hand, or with the Playoff Wizard <span class="pill-plus">Plus</span>.</li><li>Publish when names are final — this closes registration and schedules coach reminders.</li></ol>
+        <details class="faq"><summary>What does publishing actually do?</summary><div class="ans">It makes the schedule public, closes registration for the selected divisions, and queues a reminder email to each coach the night before their first game.</div></details>
+        <details class="faq"><summary>Can I undo a publish?</summary><div class="ans">You can unpublish to pull it off the public page, but registration stays closed — reopen it separately if you need to.</div></details>`
+    },
+    registrations:{
+      title:'Registrations', sub:'Review, accept, waitlist, or decline registered teams.', icon:'▤', add:'Add Team',
+      drawerTitle:'Review &amp; manage teams',
+      full:'#registrations-and-teams',
+      body:`<p class="sum">The accept / waitlist / decline lifecycle.</p>
+        <p class="lead">New registrations arrive as <b>Pending Review</b>. Your decision controls who gets scheduled and what email the coach receives.</p>
+        <ol><li><b>Accept</b> — team is eligible for the schedule builder; coach gets a confirmation email.</li><li><b>Waitlist</b> — held without a spot; coach is notified.</li><li><b>Decline</b> — removed from consideration; coach is notified.</li></ol>
+        <details class="faq"><summary>Why isn’t a team showing in the schedule builder?</summary><div class="ans">Only accepted teams appear. Pending and waitlisted teams are excluded until you accept them.</div></details>`
+    }
+  };
+
+  const drawer=document.getElementById('drawer'), backdrop=document.getElementById('backdrop');
+  const helpBtn=document.getElementById('helpBtn'), drawerClose=document.getElementById('drawerClose');
+  let current='divisions', lastFocus=null;
+
+  function renderPage(p){
+    current=p; const d=PAGES[p];
+    document.getElementById('pTitle').textContent=d.title;
+    document.getElementById('pSub').textContent=d.sub;
+    document.getElementById('hicon').textContent=d.icon;
+    document.getElementById('addLabel').textContent=d.add;
+    document.querySelectorAll('[data-body]').forEach(el=>el.style.display=(el.dataset.body===p)?'':'none');
+    document.querySelectorAll('#pageSeg button').forEach(b=>b.classList.toggle('on', b.dataset.page===p));
+  }
+  function openDrawer(){
+    const d=PAGES[current];
+    document.getElementById('drawerTitle').innerHTML=d.drawerTitle;
+    document.getElementById('drawerBody').innerHTML=d.body;
+    document.getElementById('drawerFull').setAttribute('href', d.full);
+    lastFocus=document.activeElement;
+    backdrop.classList.add('open'); drawer.classList.add('open');
+    drawer.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
+    drawerClose.focus();
+  }
+  function closeDrawer(){
+    backdrop.classList.remove('open'); drawer.classList.remove('open');
+    drawer.setAttribute('aria-hidden','true'); document.body.style.overflow='';
+    if(lastFocus) lastFocus.focus();
+  }
+
+  helpBtn.addEventListener('click', openDrawer);
+  drawerClose.addEventListener('click', closeDrawer);
+  backdrop.addEventListener('click', closeDrawer);
+  document.getElementById('pageSeg').addEventListener('click', e=>{ if(e.target.dataset.page) renderPage(e.target.dataset.page); });
+
+  // fixed tooltip: toggle on tap/click, close on tap-away or Escape (pointerdown = touch-safe)
+  function closeTips(except){ document.querySelectorAll('.tip-pop.open').forEach(p=>{ if(p!==except) p.classList.remove('open'); }); }
+  document.addEventListener('pointerdown', e=>{
+    const btn=e.target.closest('.tip-btn');
+    if(btn){ const pop=document.getElementById(btn.dataset.tip); const willOpen=!pop.classList.contains('open'); closeTips(pop); pop.classList.toggle('open', willOpen); e.preventDefault(); return; }
+    if(!e.target.closest('.tip-pop')) closeTips(null);
+  });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape'){ if(drawer.classList.contains('open')) closeDrawer(); closeTips(null); }
+  });
+</script>
+</body>
+</html>

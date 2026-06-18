@@ -242,6 +242,34 @@
   font-weight: 500;
 }
 
+/* ── Champion treatment (J6-025) — gold ─────────────────────────────────────── */
+.championBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.75rem;
+  border-radius: var(--radius-md);
+  background: rgba(var(--warning-rgb), 0.16);
+  border: 1px solid rgba(var(--warning-rgb), 0.4);
+  color: var(--warning);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.statTileChampion {
+  background: rgba(var(--warning-rgb), 0.12);
+  border-color: rgba(var(--warning-rgb), 0.35);
+}
+
+.statTileChampionSub {
+  font-size: 0.7rem;
+  color: var(--warning);
+  font-weight: 700;
+}
+
 /* ── Form card ───────────────────────────────────────────────────────────────── */
 
 .formCard {

@@ -650,6 +650,8 @@ export interface Game {
   generatorLocked?: boolean;
   bracketId?: string;
   bracketCode?: string;
+  /** Optional custom display name for this game's bracket COLUMN (null/undefined = auto-derived round name). */
+  roundLabel?: string | null;
   homePlaceholder?: string;
   awayPlaceholder?: string;
   homeSlotId?: string;   // FK to pool_slots — set for slot-based games

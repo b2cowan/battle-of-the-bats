@@ -95,6 +95,7 @@ export const GET = withObservability(async (req: Request) => {
     generatorLocked: g.generator_locked ?? false,
     bracketId: g.bracket_id,
     bracketCode: g.bracket_code,
+    roundLabel: g.round_label ?? null,
     homePlaceholder: g.home_placeholder,
     awayPlaceholder: g.away_placeholder,
     homeSlotId: g.home_slot_id,
@@ -316,6 +317,7 @@ export const POST = withObservability(async (req: Request) => {
           venue_facility_id: g.venueFacilityId || null,
           bracket_id:       g.bracketId || null,
           bracket_code:     g.bracketCode || null,
+          round_label:      g.roundLabel ? String(g.roundLabel).slice(0, 60) : null,
           home_placeholder: g.homePlaceholder || null,
           away_placeholder: g.awayPlaceholder || null,
         };

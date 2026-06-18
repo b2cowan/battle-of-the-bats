@@ -82,7 +82,12 @@ export default function ScoreTicker() {
   const todayGames = useMemo(
     () => games
       .filter(g => g.date === today && g.status !== 'cancelled')
-      .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? '')),
+      .sort((a, b) => {
+        const aLive = isGameLive(a, a.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES) ? 0 : 1;
+        const bLive = isGameLive(b, b.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES) ? 0 : 1;
+        if (aLive !== bLive) return aLive - bLive;
+        return (a.time ?? '').localeCompare(b.time ?? '');
+      }),
     [games, today],
   );
 

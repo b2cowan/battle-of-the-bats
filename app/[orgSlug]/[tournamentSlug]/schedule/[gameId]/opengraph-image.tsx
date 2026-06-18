@@ -3,6 +3,7 @@ import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { resolveTheme } from '@/lib/themes';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import { publicGameStatus, publicGameStatusLabel, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { bracketRoundLabel } from '@/lib/playoff-bracket';
 
 export const alt = 'Tournament score';
 export const size = { width: 1200, height: 630 };
@@ -72,7 +73,7 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     const dateLabel = game.date
       ? new Date(`${game.date}T12:00:00`).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
       : '';
-    const gameType = game.isPlayoff ? (game.bracketCode || 'Playoff') : 'Pool Play';
+    const gameType = game.isPlayoff ? bracketRoundLabel(game.bracketCode) : 'Pool Play';
 
     return {
       tournamentName: t.name,

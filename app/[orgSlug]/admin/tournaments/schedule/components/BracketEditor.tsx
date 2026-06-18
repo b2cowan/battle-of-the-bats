@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Trophy, Check, RefreshCw, Sparkles, AlertTriangle } from 'lucide-react';
 import { Division, Team, Venue, Tournament, Game } from '@/lib/types';
-import { nextPow2, seedOrder, findBracketSchedulingViolations, gamesToBracketPreview } from '@/lib/playoff-bracket';
+import { nextPow2, seedOrder, findBracketSchedulingViolations, gamesToBracketPreview, computeBracketColumns } from '@/lib/playoff-bracket';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
 import NumberStepper from '@/components/admin/NumberStepper';
@@ -42,9 +42,9 @@ interface PreviewRow {
   sourceGameId?: string;
 }
 
-/** Stable signature of the editable fields, for dirty-comparison (ignores round-group labels). */
+/** Stable signature of the editable fields, for dirty-comparison (includes the round name, now persisted). */
 function serializeRows(rows: PreviewRow[]): string {
-  return JSON.stringify(rows.map(r => [r.code, r.home, r.away, r.date, r.time, r.venueId, r.venueFacilityId ?? '']));
+  return JSON.stringify(rows.map(r => [r.code, r.home, r.away, r.date, r.time, r.venueId, r.venueFacilityId ?? '', r.round ?? '']));
 }
 
 /**
@@ -170,8 +170,19 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
     }
     setLoading(true);
     try {
-      const gameRows = preview.map(p => ({
+      // A round name is persisted only when the organizer CUSTOMIZED it — i.e. it
+      // differs from the auto-derived column title — so untouched rounds stay auto.
+      // Key the derived lookup by row INDEX (codes can be empty or duplicated).
+      const derivedCols = computeBracketColumns(
+        preview.map((p, i) => ({ id: String(i), bracketCode: p.code, homePlaceholder: p.home, awayPlaceholder: p.away })),
+      );
+      const gameRows = preview.map((p, i) => ({
         sourceGameId: p.sourceGameId,
+        roundLabel: (() => {
+          const custom = (p.round || '').trim();
+          const derived = derivedCols.get(String(i))?.title ?? '';
+          return custom && custom !== derived ? custom : null;
+        })(),
         // Resolve seeds to teams only for NEW games on playoff-only events (no
         // standings to resolve later). Round-robin leaves them null (advancePlayoffs
         // fills from standings); existing games keep their teams server-side.

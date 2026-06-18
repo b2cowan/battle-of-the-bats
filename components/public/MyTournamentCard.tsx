@@ -43,6 +43,8 @@ interface Props {
   scheduleHref: string;
   /** Whether the plan includes fan push score alerts (Tournament Plus+). */
   fanAlertsEnabled?: boolean;
+  /** True when the tournament is completed — suppresses live-only actions (alerts). */
+  isCompleted?: boolean;
 }
 
 function cleanTeamName(name: string) {
@@ -79,6 +81,7 @@ export default function MyTournamentCard({
   standingsByDivision,
   scheduleHref,
   fanAlertsEnabled = false,
+  isCompleted = false,
 }: Props) {
   const { followedTeamId } = useFollowedTeam(orgSlug, tournamentSlug);
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -245,7 +248,7 @@ export default function MyTournamentCard({
       )}
 
       <div className={homeStyles.dayCardActions}>
-        {fanAlertsEnabled && (
+        {fanAlertsEnabled && !isCompleted && (
           <FollowAlertsToggle
             orgSlug={orgSlug}
             tournamentSlug={tournamentSlug}

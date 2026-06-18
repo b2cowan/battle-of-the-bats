@@ -3,7 +3,7 @@ import { Trophy } from 'lucide-react';
 import { Game, PublicTeam } from '@/lib/types';
 import { teamInitials, teamColorFromName } from '@/lib/teamBadge';
 import { formatTime } from '@/lib/utils';
-import { bracketRoundInfo } from '@/lib/playoff-bracket';
+import { bracketRoundInfo, computeBracketColumns } from '@/lib/playoff-bracket';
 import styles from '@/app/[orgSlug]/standings/standings.module.css';
 
 interface Props {
@@ -20,13 +20,14 @@ type BracketRound = {
 };
 
 function buildRounds(playoffGames: Game[]): BracketRound[] {
+  const colMap = computeBracketColumns(playoffGames);
   const map = new Map<string, BracketRound>();
   for (const g of playoffGames) {
     const raw = (g.bracketCode || 'PLAYOFF').toUpperCase();
     // Keep 3rd place as its own key — the tree renders it as a separate sub-section.
     const info = (raw === '3RD' || raw === 'P3')
       ? { key: '3RD', title: '3rd Place', rank: 2.5 }
-      : bracketRoundInfo(g.bracketCode || 'PLAYOFF');
+      : (colMap.get(g.id) || bracketRoundInfo(g.bracketCode || 'PLAYOFF'));
     if (!map.has(info.key)) {
       map.set(info.key, { key: info.key, label: info.title, order: info.rank, games: [] });
     }

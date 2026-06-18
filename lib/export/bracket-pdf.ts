@@ -15,7 +15,7 @@
  */
 
 import { DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from './pdf';
-import { bracketRoundInfo, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
+import { bracketRoundInfo, computeBracketColumns, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
 import type { Game, Team } from '@/lib/types';
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
@@ -42,9 +42,10 @@ function sideName(teamId: string | null | undefined, placeholder: string | undef
 interface BracketColumn { title: string; games: Game[]; }
 
 function buildColumns(games: Game[]): BracketColumn[] {
+  const colMap = computeBracketColumns(games);
   const groups = new Map<string, { title: string; rank: number; games: Game[] }>();
   for (const g of games) {
-    const info = bracketRoundInfo(g.bracketCode || '');
+    const info = colMap.get(g.id) || bracketRoundInfo(g.bracketCode || '');
     let grp = groups.get(info.key);
     if (!grp) { grp = { title: info.title, rank: info.rank, games: [] }; groups.set(info.key, grp); }
     grp.games.push(g);
@@ -172,16 +173,15 @@ export async function downloadBracketPDF(
   };
 
   type Placement = { game: Game; x: number; y: number };
-  type ConnectorMode = 'data' | 'halving' | 'none';
+  type ConnectorMode = 'data' | 'none';
 
   // Lay out + draw one set of columns within the current page's body.
   //   • 'fork' → seed (left) → winners (top) / losers (bottom) → grand final (right)
   //   • 'flat' → one row of round columns
   // Connectors:
-  //   • 'data'    → follow Winner/Loser refs, coloured by path, only when both
-  //                 endpoints are on this page (so split pages stay clean).
-  //   • 'halving' → round-to-round pairing (plain single elimination).
-  //   • 'none'    → no lines (consolation / placement cross-links would be noise).
+  //   • 'data' → follow Winner/Loser refs (format-agnostic; single + double elim),
+  //              coloured by path, only when both endpoints are on this page.
+  //   • 'none' → no lines (consolation / placement cross-links would be noise).
   const drawSection = (cols: BracketColumn[], mode: 'fork' | 'flat', headerBottom: number, connectors: ConnectorMode) => {
     const bodyTop = headerBottom + 9;
     const bodyH = (pageH - 11) - bodyTop;
@@ -272,24 +272,6 @@ export async function downloadBracketPDF(
         });
       });
       doc.setLineDashPattern([], 0);
-    } else if (connectors === 'halving') {
-      const posOf = new Map(placements.map(p => [p.game.id, p]));
-      doc.setDrawColor(185, 185, 200); doc.setLineWidth(0.3);
-      cols.forEach((cur, ci) => {
-        const next = cols[ci + 1];
-        if (!next) return;
-        cur.games.forEach((g, pi) => {
-          const tg = next.games[Math.floor(pi / 2)];
-          const sp = posOf.get(g.id), tp = tg ? posOf.get(tg.id) : undefined;
-          if (!sp || !tp) return;
-          const fromX = sp.x + colW, fromY = sp.y + boxH / 2;
-          const toY = tp.y + boxH / 2;
-          const midX = fromX + colGap / 2;
-          doc.line(fromX, fromY, midX, fromY);
-          doc.line(midX, fromY, midX, toY);
-          doc.line(midX, toY, tp.x, toY);
-        });
-      });
     }
 
     // ── Boxes ──
@@ -371,7 +353,10 @@ export async function downloadBracketPDF(
       drawFooter();
     }
   } else {
-    const flatConnectors: ConnectorMode = isMultiSection ? 'none' : 'halving';
+    // Single-elim follows the real Winner/Loser wiring ('data'), same as the
+    // double-elim fork — so renamed/legacy/irregular brackets trace correctly
+    // instead of assuming round-to-round halving.
+    const flatConnectors: ConnectorMode = isMultiSection ? 'none' : 'data';
     if (fitColW(columns.length) >= MIN_COL_W || columns.length <= 1) {
       drawSection(columns, 'flat', drawPageHeader(), flatConnectors);
       drawFooter();

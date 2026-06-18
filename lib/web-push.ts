@@ -43,6 +43,9 @@ export interface PushPayload {
   title:  string;
   body?:  string;
   link?:  string;
+  /** Notification icon URL (e.g. tournament/org logo). The SW falls back to the
+   *  platform icon when this is absent. May be absolute or origin-relative. */
+  icon?:  string;
 }
 
 // ── sendWebPush ───────────────────────────────────────────────────────────────

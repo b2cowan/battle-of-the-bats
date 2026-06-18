@@ -59,6 +59,8 @@ export default function GameList({
   onEdit, onPlayoffEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onForfeit, onCreateVenue, mode, conflictsOnly = false, tournament
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // Which game's "who forfeited?" picker is open (scoring mode); null = closed.
+  const [forfeitPickerId, setForfeitPickerId] = useState<string | null>(null);
   const [editState, setEditState] = useState<Record<string, EditFields>>({});
   const [saving, setSaving] = useState<Set<string>>(new Set());
   const [saveErrors, setSaveErrors] = useState<Record<string, string>>({});
@@ -147,6 +149,7 @@ export default function GameList({
 
   function toggleExpand(id: string, game?: Game) {
     const isExpanding = !expanded.has(id);
+    setForfeitPickerId(null);
     setExpanded(prev => {
       const set = new Set(prev);
       if (set.has(id)) set.delete(id);
@@ -336,7 +339,6 @@ export default function GameList({
       // Derived win/loss/tie for colour coding
       const awayWon  = hasScoredResult && (g.awayScore ?? 0) > (g.homeScore ?? 0);
       const homeWon  = hasScoredResult && (g.homeScore ?? 0) > (g.awayScore ?? 0);
-      const isTie    = hasScoredResult && g.awayScore === g.homeScore;
 
       const handleScoreDiscard = () => {
         setScoreState(prev => { const n = { ...prev }; delete n[g.id]; return n; });
@@ -389,12 +391,15 @@ export default function GameList({
         && g.status === 'scheduled';
       const homeLabel = resolveTeam(g.homeTeamId ?? '', g.homePlaceholder);
       const awayLabel = resolveTeam(g.awayTeamId ?? '', g.awayPlaceholder);
+      // Forfeit mode: the user tapped "Forfeit" — the per-team score steppers become
+      // "Forfeited" pickers right beside each name, and the action bar shows a hint.
+      const forfeitMode = canForfeit && forfeitPickerId === g.id;
 
       return (
         <div key={g.id} className={`${s.row} ${styles.scoringRow}`} data-status={g.status} data-live={liveStates.get(g.id) ?? undefined}>
           {/* ── Compact row — scores always visible inline with team names ── */}
           <div className={`${s.rowMain} ${styles.gameRowMain} ${styles.scoringGameRow}`} style={{ gap: '1rem' }}>
-            {/* Date · Time · status + venue sub-line */}
+            {/* Date · Time · status */}
             <div className={`${s.gameColDate} ${styles.scoringDateCell}`} style={{ fontFamily: 'var(--font-data)' }}>
               <div className={styles.dateLine}>
                 <span style={{ whiteSpace: 'nowrap' }}>
@@ -404,42 +409,32 @@ export default function GameList({
                   <span style={{ fontSize: '0.72rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }}>
                     {g.time ? `· ${formatTime(g.time)}` : '· —'}
                   </span>
-                  {!isExpanded && (g.status === 'completed' || g.status === 'submitted') && (
-                    <span className={styles.scoringMobileStatus} data-status={g.status}>
-                      {g.status === 'completed' ? '· ✓ FINAL' : '· ⚠ REVIEWING'}
-                    </span>
-                  )}
                 </span>
                 {renderLiveChip(g.id)}
               </div>
-              {(g.venueId || g.location) && (() => {
-                const vp = g.venueId
-                  ? getVenueParts(g.venueId, g.venueFacilityId)
-                  : { name: g.location || '', facility: '' };
-                return vp.name ? (
-                  <div className={styles.venueInDate}>
-                    <MapPin size={10} style={{ flexShrink: 0, opacity: 0.55 }} />
-                    <span className={styles.venueLine}>
-                      {vp.name}{vp.facility ? ` · ${vp.facility}` : ''}
-                    </span>
-                  </div>
-                ) : null;
-              })()}
             </div>
 
-            {/* Matchup — symmetric: [W/L · score · Away]  VS  [Home · score · W/L] */}
-            <div className={`${s.gameColMatchup} ${styles.scoringMatchupCell}`} data-editing={isExpanded ? 'true' : undefined} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+            {/* Matchup — stacked away-over-home (mirrors the public score cards);
+                score input/stepper stays inline on the right of each team row. */}
+            <div className={`${s.gameColMatchup} ${styles.scoringMatchupCell}`} data-editing={isExpanded ? 'true' : undefined}>
 
-              {/* Away side — right-aligned: W/L · score/input · team name */}
-              <div style={{ flex: '0 1 auto', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem', minWidth: 0 }}>
-                {/* W/L indicator — outer left, only in view mode */}
-                {hasScoredResult && !isExpanded && (
-                  <span style={{ fontFamily: 'var(--font-data)', fontSize: '1rem', fontWeight: 900, flexShrink: 0, color: awayWon ? 'var(--success)' : isTie ? 'var(--warning)' : 'rgba(var(--danger-rgb), 0.6)' }}>
-                    {awayWon ? 'W' : isTie ? 'T' : 'L'}
-                  </span>
-                )}
-                {/* Score or input */}
-                {isExpanded ? (
+              {/* Away row — name left, score/stepper right */}
+              <div className={styles.scoringTeamRow}>
+                {isNoShow(g.awayTeamId) && <span className={styles.noShowTag}>No-show</span>}
+                <span className={styles.scoringTeamName} title={resolveTeam(g.awayTeamId, g.awayPlaceholder)}>
+                  {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
+                </span>
+                {forfeitMode ? (
+                  <button
+                    type="button"
+                    className={`btn btn-ghost btn-data ${styles.forfeitChoiceBtn}`}
+                    disabled={isScoringBusy}
+                    title={`${awayLabel} forfeited — ${homeLabel} advances`}
+                    onClick={e => { e.stopPropagation(); setForfeitPickerId(null); void handleForfeit('home'); }}
+                  >
+                    Forfeited
+                  </button>
+                ) : isExpanded ? (
                   <span className={styles.scoreStepper}>
                     <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'away', -1); }} aria-label="Decrease away score"><Minus size={16} /></button>
                     <input
@@ -454,28 +449,29 @@ export default function GameList({
                     <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'away', 1); }} aria-label="Increase away score"><Plus size={16} /></button>
                   </span>
                 ) : hasScoredResult ? (
-                  <span className={styles.scoreInlineValue} style={{ color: awayWon ? 'var(--success)' : isTie ? 'var(--warning)' : 'rgba(var(--danger-rgb), 0.65)' }}>
+                  <span className={styles.scoreInlineValue} style={{ color: awayWon ? 'var(--success)' : 'var(--data-gray)' }}>
                     {g.awayScore}
                   </span>
                 ) : null}
-                {/* Team name */}
-                {isNoShow(g.awayTeamId) && <span className={styles.noShowTag}>No-show</span>}
-                <span className={styles.scoringTeamName} style={{ textAlign: 'right' }} title={resolveTeam(g.awayTeamId, g.awayPlaceholder)}>
-                  {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
-                </span>
               </div>
 
-              <div style={{ color: 'var(--white-30)', fontFamily: 'var(--font-data)', fontWeight: 900, fontSize: '0.6rem', letterSpacing: '0.12em', flexShrink: 0 }}>VS</div>
-
-              {/* Home side — left-aligned: team name · score/input · W/L */}
-              <div style={{ flex: '0 1 auto', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '0.5rem', minWidth: 0 }}>
-                {/* Team name */}
+              {/* Home row — name left, score/stepper right */}
+              <div className={styles.scoringTeamRow}>
+                {isNoShow(g.homeTeamId) && <span className={styles.noShowTag}>No-show</span>}
                 <span className={styles.scoringTeamName} title={resolveTeam(g.homeTeamId, g.homePlaceholder)}>
                   {resolveTeam(g.homeTeamId, g.homePlaceholder)}
                 </span>
-                {isNoShow(g.homeTeamId) && <span className={styles.noShowTag}>No-show</span>}
-                {/* Score or input */}
-                {isExpanded ? (
+                {forfeitMode ? (
+                  <button
+                    type="button"
+                    className={`btn btn-ghost btn-data ${styles.forfeitChoiceBtn}`}
+                    disabled={isScoringBusy}
+                    title={`${homeLabel} forfeited — ${awayLabel} advances`}
+                    onClick={e => { e.stopPropagation(); setForfeitPickerId(null); void handleForfeit('away'); }}
+                  >
+                    Forfeited
+                  </button>
+                ) : isExpanded ? (
                   <span className={styles.scoreStepper}>
                     <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'home', -1); }} aria-label="Decrease home score"><Minus size={16} /></button>
                     <input
@@ -489,16 +485,10 @@ export default function GameList({
                     <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'home', 1); }} aria-label="Increase home score"><Plus size={16} /></button>
                   </span>
                 ) : hasScoredResult ? (
-                  <span className={styles.scoreInlineValue} style={{ color: homeWon ? 'var(--success)' : isTie ? 'var(--warning)' : 'rgba(var(--danger-rgb), 0.65)' }}>
+                  <span className={styles.scoreInlineValue} style={{ color: homeWon ? 'var(--success)' : 'var(--data-gray)' }}>
                     {g.homeScore}
                   </span>
                 ) : null}
-                {/* W/L indicator — outer right, only in view mode */}
-                {hasScoredResult && !isExpanded && (
-                  <span style={{ fontFamily: 'var(--font-data)', fontSize: '1rem', fontWeight: 900, flexShrink: 0, color: homeWon ? 'var(--success)' : isTie ? 'var(--warning)' : 'rgba(var(--danger-rgb), 0.6)' }}>
-                    {homeWon ? 'W' : isTie ? 'T' : 'L'}
-                  </span>
-                )}
               </div>
             </div>
 
@@ -511,8 +501,9 @@ export default function GameList({
               <div className={`${s.gameStatusSlot} ${styles.desktopStatusSlot}`}>{statusBadge(g.status, g.scoreSubmissionSource)}</div>
               {/* Finalize — quick-access, rendered only when relevant (no fixed-width wrapper) */}
               {!isExpanded && onFinalize && g.status === 'submitted' && (
-                <button className="btn btn-success btn-data" onClick={e => { e.stopPropagation(); onFinalize(g.id); }}>
-                  Finalize
+                <button className="btn btn-success btn-data" aria-label="Finalize result" onClick={e => { e.stopPropagation(); onFinalize(g.id); }}>
+                  <Check size={15} className={styles.finalizeIcon} aria-hidden />
+                  <span className={styles.finalizeLabel}>Finalize</span>
                 </button>
               )}
               {/* Pencil — only visible when not editing */}
@@ -531,7 +522,19 @@ export default function GameList({
           </div>
 
           {/* ── Slim action bar — only while editing ── */}
-          {isExpanded && (
+          {isExpanded && (forfeitMode ? (
+            <div className={styles.scoreActionBar}>
+              <div className={styles.scoreActionBarLeft}>
+                <span className={styles.forfeitPrompt}>Tap the team that forfeited</span>
+                {scoreErrors[g.id] && (
+                  <span className={styles.saveError}>{scoreErrors[g.id]}</span>
+                )}
+              </div>
+              <div className={styles.scoreActionBarRight} style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexShrink: 0 }}>
+                <button type="button" className="btn btn-ghost btn-data" onClick={e => { e.stopPropagation(); setForfeitPickerId(null); }}>Cancel</button>
+              </div>
+            </div>
+          ) : (
             <div className={styles.scoreActionBar}>
               <div className={styles.scoreActionBarLeft}>
                 {hasExistingScore && onSchedule && (
@@ -540,29 +543,15 @@ export default function GameList({
                   </button>
                 )}
                 {canForfeit && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--data-gray)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>No-show:</span>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-data"
-                      style={{ color: 'rgba(var(--warning-rgb), 0.85)' }}
-                      disabled={isScoringBusy}
-                      title={`${awayLabel} forfeits — ${homeLabel} advances`}
-                      onClick={e => { e.stopPropagation(); void handleForfeit('home'); }}
-                    >
-                      {awayLabel}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-data"
-                      style={{ color: 'rgba(var(--warning-rgb), 0.85)' }}
-                      disabled={isScoringBusy}
-                      title={`${homeLabel} forfeits — ${awayLabel} advances`}
-                      onClick={e => { e.stopPropagation(); void handleForfeit('away'); }}
-                    >
-                      {homeLabel}
-                    </button>
-                  </span>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-data"
+                    style={{ color: 'rgba(var(--warning-rgb), 0.85)', flexShrink: 0 }}
+                    disabled={isScoringBusy}
+                    onClick={e => { e.stopPropagation(); setForfeitPickerId(g.id); }}
+                  >
+                    Forfeit
+                  </button>
                 )}
                 {hasExistingScore && scoreAuditSummary && (
                   <span className={styles.scoreActionBarAudit}>{scoreAuditSummary}</span>
@@ -571,7 +560,7 @@ export default function GameList({
                   <span className={styles.saveError}>{scoreErrors[g.id]}</span>
                 )}
               </div>
-              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexShrink: 0 }}>
+              <div className={styles.scoreActionBarRight} style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexShrink: 0 }}>
                 <button className="btn btn-ghost btn-data" onClick={handleScoreDiscard}>Discard</button>
                 <button
                   className="btn btn-lime btn-data"
@@ -582,7 +571,7 @@ export default function GameList({
                 </button>
               </div>
             </div>
-          )}
+          ))}
         </div>
       );
     }
@@ -688,12 +677,11 @@ export default function GameList({
           </div>
 
           {/* Matchup */}
-          <div className={`${s.gameColMatchup} ${styles.planningMatchup}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem' }}>
+          <div className={`${s.gameColMatchup} ${styles.planningMatchup}`}>
             <div className={styles.planningTeamAway} title={resolveTeam(g.awayTeamId, g.awayPlaceholder)}>
               {isNoShow(g.awayTeamId) && <span className={styles.noShowTag}>No-show</span>}
               {resolveTeam(g.awayTeamId, g.awayPlaceholder)}
             </div>
-            <div className={styles.planningVs} style={{ fontFamily: 'var(--font-data)', fontSize: '0.58rem', fontWeight: 900, color: 'var(--white-25)', letterSpacing: '0.1em', flexShrink: 0 }}>VS</div>
             <div className={styles.planningTeamHome} title={resolveTeam(g.homeTeamId, g.homePlaceholder)}>
               {resolveTeam(g.homeTeamId, g.homePlaceholder)}
               {isNoShow(g.homeTeamId) && <span className={styles.noShowTag}>No-show</span>}
@@ -1080,7 +1068,7 @@ export default function GameList({
   return (
     <div className={s.flatList}>
       <div className={s.tableHeader} style={{ gap: '1rem' }}>
-        <div className={s.gameColDate}>Date / Location</div>
+        <div className={s.gameColDate}>{mode === 'scoring' ? 'Date' : 'Date / Location'}</div>
         <div className={s.gameColMatchup} style={{ textAlign: 'center' }}>Matchup</div>
         <div style={{ flex: '0 0 96px' }} />
         <div style={{ flex: '0 0 28px' }} />

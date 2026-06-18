@@ -26,6 +26,8 @@ export default function BottomNav() {
   const isMarketing = pathname === '/' || pathname.startsWith('/discover') || pathname.startsWith('/auth');
   if (isAdmin || isMarketing || pathname.startsWith('/platform-admin') || !tournamentSlug) return null;
 
+  // No Home tab — the header wordmark links back to the tournament home, so the
+  // tab was redundant; dropping it gives the five page tabs room for full labels.
   return (
     <nav className={styles.bottomNav} aria-label="Mobile navigation">
       {TAB_KEYS.filter(tab => !tournamentHiddenPages.includes(tab.key as PublicPageKey)).map(({ key, icon: Icon, label }) => {
@@ -37,6 +39,7 @@ export default function BottomNav() {
             href={href}
             className={`${styles.tab} ${active ? styles.active : ''}`}
             id={`bottom-nav-${label.toLowerCase()}`}
+            aria-current={active ? 'page' : undefined}
           >
             <span className={styles.iconWrap}>
               <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />

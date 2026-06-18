@@ -9,7 +9,7 @@
 .raceRecord,
 .followFinalRank,
 .followRankBadge,
-.scoreTeam strong,
+.scoreNum,
 .bracketScore {
   font-variant-numeric: tabular-nums;
 }
@@ -446,6 +446,30 @@
   text-transform: uppercase;
 }
 
+/* ── Playoff advancement (J6-027) ──────────────────────────────────────────── */
+
+.playoffAdvanceNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid rgba(var(--success-rgb), 0.3);
+  border-radius: var(--radius-sm);
+  background: rgba(var(--success-rgb), 0.08);
+  color: var(--success);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* Green check on teams currently holding a playoff spot — additive, so it never
+   clashes with the gold 1st-place or the followed-team row accents. */
+.advancingIcon {
+  flex-shrink: 0;
+  color: var(--success);
+}
+
 .standingsFooter {
   display: flex;
   flex-direction: column;
@@ -523,6 +547,9 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--bg-card);
+  /* Fill the grid cell so paired cards in a row match heights and their venue
+     footers line up (the footer is pinned to the bottom below). */
+  height: 100%;
 }
 
 .scoreCardPending {
@@ -531,30 +558,43 @@
 }
 
 .scoreMeta {
+  /* Status + date on the left, the round badge (Final / Semifinal) pinned right. */
+  justify-content: space-between;
   gap: 0.5rem;
-  flex-wrap: wrap;
   color: var(--white-50);
   font-size: 0.78rem;
 }
 
-.scoreMatchup {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 0.65rem;
-}
-
-.scoreTeam {
+.scoreMetaLeft {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  min-width: 0;
+}
+
+.scoreMatchup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* One row per team (away over home). Fixed columns — trophy slot · name · score
+   — so the names start and the score column line up across both rows and every
+   card, regardless of how long a name wraps. */
+.scoreRow {
+  display: grid;
+  grid-template-columns: 1.1rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
   color: var(--white-60);
 }
 
-.scoreTeamHome {
-  justify-content: flex-start;
+.scoreWinIconSlot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  flex-shrink: 0;
 }
 
 .scoreTeamName {
@@ -567,29 +607,31 @@
   overflow: hidden;
   line-height: 1.25;
   font-weight: 800;
-  text-align: right;
 }
-.scoreTeamHome .scoreTeamName { text-align: left; }
 
-.scoreTeam strong {
+.scoreNum {
+  justify-self: end;
   flex-shrink: 0;
   font-family: var(--font-data);
   font-size: 2rem;
   line-height: 1;
-  /* Name + score follow the team's win/lose/neutral colour set on .scoreTeam. */
   color: inherit;
 }
 
-/* Winner emphasis — winner stays bright, loser dims back. Consistent with the
-   schedule rows and game-detail scoreboard (one "dim-the-loser" language). */
+/* Winner emphasis — winner stays bright with a green score + trophy; loser dims
+   back. One "dim-the-loser" language shared with the schedule rows and the
+   game-detail scoreboard. */
 .scoreWinner { color: var(--white); }
+.scoreWinner .scoreNum { color: var(--success); }
+.scoreWinner .scoreWinIconSlot { color: var(--success); }
 .scoreLoser  { color: var(--white-40); }
 
-.scoreVs {
-  color: var(--white-35);
+.tieTag {
   font-size: 0.7rem;
-  font-weight: 900;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  color: var(--white-50);
 }
 
 .scoreFooter {
@@ -598,6 +640,8 @@
   color: var(--white-50);
   font-size: 0.8rem;
   flex-wrap: wrap;
+  /* Pin to the bottom so venue lines align across equal-height paired cards. */
+  margin-top: auto;
 }
 
 .statValue {
@@ -764,29 +808,10 @@
     padding: 0.85rem;
   }
 
-  .scoreMatchup {
-    grid-template-columns: 1fr;
-    justify-items: stretch;
-    gap: 0.35rem;
-  }
-
-  .scoreTeam,
-  .scoreTeamHome {
-    justify-content: space-between;
-    padding: 0.2rem 0;
-  }
-
-  .scoreTeamName {
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-
-  .scoreTeam strong {
+  /* The Recent Scores section is hidden on mobile (.scoreSection display:none
+     below); this keeps the score size sane if that hide is ever lifted. */
+  .scoreNum {
     font-size: 1.7rem;
-  }
-
-  .scoreVs {
-    justify-self: center;
   }
 
   .scoreSection {

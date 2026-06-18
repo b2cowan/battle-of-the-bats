@@ -102,6 +102,7 @@ export default function AdminHelpHubPage() {
         { label: 'Review team registrations', href: `${helpBase}/tournaments#recipe-review-tournament-teams` },
         { label: 'Build and adjust the schedule', href: `${helpBase}/tournaments#recipe-build-tournament-schedule` },
         { label: 'Set up scorekeepers and finalize scores', href: `${helpBase}/tournaments#recipe-finalize-tournament-scores` },
+        { label: 'Help fans follow a team and get score alerts', href: `${helpBase}/tournaments#public-site-preview` },
         { label: 'Close out the tournament', href: `${helpBase}/tournaments#recipe-closeout-tournament` },
       ],
     },

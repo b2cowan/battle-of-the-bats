@@ -1,16 +1,16 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-06-17 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-06-18 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 50 divergence(s)** across dev/prod.
+**⚠️ 52 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
-| Columns | 0 | 3 | 23 |
+| Columns | 1 | 3 | 23 |
 | Indexes | 4 | 3 | 0 |
 | Constraints | 7 | 9 | — |
-| RLS / CHECK | 0 | 1 | 0 (RLS state) |
+| RLS / CHECK | 0 | 2 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (0)
@@ -20,8 +20,8 @@ _none_
 _none_
 
 ## Columns
-### Only in DEV (0)
-_none_
+### Only in DEV (1)
+- `games.round_label`
 
 ### Only in PROD (3)
 - `resources.created_at`
@@ -96,6 +96,7 @@ _none_
 ### CHECK only in DEV (0)
 _none_
 
-### CHECK only in PROD (1)
+### CHECK only in PROD (2)
+- `games.games_score_submission_source_check`
 - `tournaments.tournaments_status_check`
 

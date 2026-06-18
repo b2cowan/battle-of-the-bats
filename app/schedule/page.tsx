@@ -5,7 +5,7 @@ import { getGames, getTeams, getDivisions, getVenues, getTournaments } from '@/l
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
-import { bracketRoundInfo } from '@/lib/playoff-bracket';
+import { bracketRoundInfo, computeBracketColumns } from '@/lib/playoff-bracket';
 import styles from './schedule.module.css';
 
 // ── bracket helpers ───────────────────────────────────────────────────────────
@@ -22,9 +22,10 @@ function buildBracketColumns(games: Game[]) {
     if (/^3RD/i.test(a.bracketCode || '') && /^FIN/i.test(b.bracketCode || '')) return 1;
     return (a.bracketCode || '').localeCompare(b.bracketCode || '');
   };
+  const colMap = computeBracketColumns(games);
   const groups = new Map<string, { title: string; rank: number; games: Game[] }>();
   for (const g of games) {
-    const info = bracketRoundInfo(g.bracketCode || '');
+    const info = colMap.get(g.id) || bracketRoundInfo(g.bracketCode || '');
     let grp = groups.get(info.key);
     if (!grp) { grp = { title: info.title, rank: info.rank, games: [] }; groups.set(info.key, grp); }
     grp.games.push(g);

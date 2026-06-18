@@ -58,9 +58,16 @@ export function LiveEventLog({ tournamentId, orgSlug }: { tournamentId: string; 
           const away = next.away_score ?? 0;
           const now = new Date().toISOString();
 
-          if (prev.status !== 'completed' && next.status === 'completed') {
+          // `prev` (realtime `old`) only carries previous column values when `games` has
+          // REPLICA IDENTITY FULL (migration 132). Without it Postgres logs only the PK, so
+          // prev.status / prev.*_score arrive `undefined` and every comparison reads as a
+          // change — logging a false "Score updated: 0 – 0" on every game write (e.g. a
+          // bracket save). Treat "previous value unknown" as "no change". Mirrors the guard
+          // in components/live-logic/LiveLogicProvider.tsx.
+          const prevScoreKnown = prev.home_score !== undefined && prev.away_score !== undefined;
+          if (prev.status !== undefined && prev.status !== 'completed' && next.status === 'completed') {
             prepend({ id: `gc-${id}`, type: 'game_complete', message: `Game final: ${home} – ${away}`, timestamp: now, timeAgo: 'just now' });
-          } else if (prev.home_score !== next.home_score || prev.away_score !== next.away_score) {
+          } else if (prevScoreKnown && (prev.home_score !== next.home_score || prev.away_score !== next.away_score)) {
             prepend({ id: `sc-${id}`, type: 'score', message: `Score updated: ${home} – ${away}`, timestamp: now, timeAgo: 'just now' });
           }
         },

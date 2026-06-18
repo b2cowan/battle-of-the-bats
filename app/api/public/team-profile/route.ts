@@ -4,6 +4,7 @@ import { clampRunDiffCap, cappedGameDiff } from '@/lib/tie-breakers';
 import type { Game } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { toPublicTeam } from '@/lib/public-tournament-data';
+import { decidedFinalFor } from '@/lib/champions';
 
 export const dynamic = 'force-dynamic';
 
@@ -115,6 +116,13 @@ export const GET = withObservability(async (req: Request) => {
   const inPlayoffSpot =
     teamsQualifying !== null && poolRank !== null && poolRank <= teamsQualifying;
 
+  // Champion / runner-up from the decided division final (J6-025).
+  const decidedFinal = decidedFinalFor(games, division.id);
+  const isChampion = !!decidedFinal &&
+    ((decidedFinal.homeScore! > decidedFinal.awayScore! ? decidedFinal.homeTeamId : decidedFinal.awayTeamId) === teamId);
+  const isRunnerUp = !!decidedFinal && !isChampion &&
+    (decidedFinal.homeTeamId === teamId || decidedFinal.awayTeamId === teamId);
+
   // Team's games (pool play + playoffs, excluding cancelled)
   const teamMap = Object.fromEntries(teams.map(t => [t.id, t.name]));
 
@@ -141,11 +149,14 @@ export const GET = withObservability(async (req: Request) => {
     divisionName: division.name,
     poolName,
     gameDurationMinutes,
+    tournamentName: tournament.name,
     standings: {
       ...teamStats,
       poolRank,
       poolRankLabel,
       inPlayoffSpot,
+      isChampion,
+      isRunnerUp,
     },
     games: teamGames,
     teamNames: teamMap,

@@ -7,7 +7,7 @@ import type { Game, PublicTeam, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { isGameLive, publicGameStatus, publicGameStatusLabel, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
-import { bracketRoundInfo } from '@/lib/playoff-bracket';
+import { bracketRoundInfo, bracketRoundLabel } from '@/lib/playoff-bracket';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import GameDetailLiveRefresher from '@/components/public/GameDetailLiveRefresher';
 import ShareScoreButton from '@/components/public/ShareScoreButton';
@@ -241,7 +241,7 @@ export default async function PublicGameDetailsPage({
   const homeOutcome = !hasScore ? null : winner === 'tie' ? 'T' : winner === 'home' ? 'W' : 'L';
   let gameType = 'Pool Play';
   if (game.isPlayoff) {
-    gameType = game.bracketCode ? `Playoff - ${game.bracketCode}` : 'Playoff';
+    gameType = game.bracketCode ? bracketRoundLabel(game.bracketCode) : 'Playoff';
   }
   const venue = getVenueDisplay(game, data.venues);
   const stakes = getPlayoffStakes(game, data.games);

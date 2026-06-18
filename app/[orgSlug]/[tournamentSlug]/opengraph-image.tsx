@@ -2,6 +2,8 @@ import { ImageResponse } from 'next/og';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { resolveTheme } from '@/lib/themes';
 import type { Game } from '@/lib/types';
+import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { tournamentToday } from '@/lib/timezone';
 
 export const alt = 'Tournament';
 export const size = { width: 1200, height: 630 };
@@ -10,6 +12,14 @@ export const contentType = 'image/png';
 const GOLD = '#EFC44D';
 
 interface ChampionInfo { division: string; champion: string; runnerUp: string | null; }
+interface LiveInfo {
+  /** Number of games scheduled today. */
+  gamesToday: number;
+  /** Number of games currently in-window (live). */
+  liveCount: number;
+  /** Score line of the first live game that has scores, or null. */
+  topScore: string | null;
+}
 interface CardData {
   name: string;
   orgName: string;
@@ -20,6 +30,8 @@ interface CardData {
   rgb: string;
   /** Decided division champions (one per division whose final is settled). */
   champions: ChampionInfo[];
+  /** Present only on game day — drives the LIVE OG variant (J6-008). */
+  liveInfo: LiveInfo | null;
 }
 
 function fmtRange(start?: string, end?: string): string {
@@ -71,6 +83,25 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
       if (champion) champions.push({ division: div.name, champion, runnerUp: teamName(loserId) });
     }
 
+    // ── Game-day / live detection (J6-008) ───────────────────────────────────
+    const now = new Date();
+    const today = tournamentToday(now);
+    const todayGames = games.filter(g => g.date === today && g.status !== 'cancelled');
+    let liveInfo: LiveInfo | null = null;
+    if (todayGames.length > 0) {
+      const liveGames = todayGames.filter(g =>
+        isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES, now),
+      );
+      let topScore: string | null = null;
+      const scoredLive = liveGames.find(g => g.homeScore != null && g.awayScore != null);
+      if (scoredLive) {
+        const home = teamName(scoredLive.homeTeamId) ?? 'Home';
+        const away = teamName(scoredLive.awayTeamId) ?? 'Away';
+        topScore = `${home} ${scoredLive.homeScore} – ${scoredLive.awayScore} ${away}`;
+      }
+      liveInfo = { gamesToday: todayGames.length, liveCount: liveGames.length, topScore };
+    }
+
     return {
       name: t.name,
       orgName: data.organization?.name ?? '',
@@ -80,6 +111,7 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
       primary: theme.primary,
       rgb: theme.primaryRgb,
       champions,
+      liveInfo,
     };
   } catch {
     return null;
@@ -148,6 +180,61 @@ export default async function Image({ params }: { params: Promise<{ orgSlug: str
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', fontSize: 30, fontWeight: 800, color: 'rgba(255,255,255,0.92)' }}>{c.name}</div>
               {c.dateLabel && <div style={{ display: 'flex', fontSize: 24, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>{c.dateLabel}</div>}
+            </div>
+            <div style={{ display: 'flex', color: 'rgba(255,255,255,0.62)', fontSize: 26, fontWeight: 700 }}>Live on FieldLogicHQ</div>
+          </div>
+        </div>
+      ),
+      { ...size },
+    );
+  }
+
+  // ── Game-day LIVE card (today has games) ─────────────────────────────────────
+  if (c.liveInfo) {
+    const { gamesToday, liveCount, topScore } = c.liveInfo;
+    const isLiveNow = liveCount > 0;
+    return new ImageResponse(
+      (
+        <div style={{
+          width: '100%', height: '100%', display: 'flex', flexDirection: 'column', padding: 72,
+          backgroundColor: '#0A0A12',
+          backgroundImage: `linear-gradient(135deg, rgba(${c.rgb},0.4) 0%, rgba(${c.rgb},0.1) 48%, rgba(10,10,18,0) 80%)`,
+          fontFamily: 'sans-serif',
+        }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 12, background: c.primary }} />
+
+          {c.orgName
+            ? <div style={{ display: 'flex', color: 'rgba(255,255,255,0.7)', fontSize: 30, fontWeight: 700, letterSpacing: 1 }}>{c.orgName.toUpperCase()}</div>
+            : <div style={{ display: 'flex' }} />}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18, flex: 1, justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              {isLiveNow && (
+                <div style={{ display: 'flex', width: 22, height: 22, borderRadius: 11, background: '#FF3B30' }} />
+              )}
+              <div style={{
+                display: 'flex', fontSize: 30, fontWeight: 800, letterSpacing: 6,
+                color: isLiveNow ? '#FF3B30' : 'rgba(255,255,255,0.7)',
+              }}>
+                {isLiveNow ? 'LIVE NOW' : 'GAME DAY'}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', fontSize: 86, fontWeight: 800, color: '#fff', lineHeight: 1.05 }}>{c.name}</div>
+
+            {topScore
+              ? <div style={{ display: 'flex', fontSize: 34, fontWeight: 700, color: 'rgba(255,255,255,0.88)' }}>{topScore}</div>
+              : <div style={{ display: 'flex', fontSize: 34, fontWeight: 700, color: 'rgba(255,255,255,0.72)' }}>
+                  {gamesToday === 1 ? '1 game today' : `${gamesToday} games today`}
+                </div>
+            }
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', fontSize: 26, fontWeight: 700, color: 'rgba(255,255,255,0.55)' }}>
+              {topScore
+                ? (gamesToday === 1 ? '1 game today' : `${gamesToday} games today`)
+                : (c.dateLabel || '')}
             </div>
             <div style={{ display: 'flex', color: 'rgba(255,255,255,0.62)', fontSize: 26, fontWeight: 700 }}>Live on FieldLogicHQ</div>
           </div>

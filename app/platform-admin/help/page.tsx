@@ -123,6 +123,7 @@ export default function PlatformAdminHelpPage() {
         { label: 'Review team registrations', href: '/platform-admin/help/tournaments#recipe-review-tournament-teams' },
         { label: 'Build and adjust the schedule', href: '/platform-admin/help/tournaments#recipe-build-tournament-schedule' },
         { label: 'Enter and finalize scores', href: '/platform-admin/help/tournaments#recipe-finalize-tournament-scores' },
+        { label: 'Fan following and score alerts', href: '/platform-admin/help/tournaments#public-site-preview' },
         { label: 'Close out the tournament', href: '/platform-admin/help/tournaments#recipe-closeout-tournament' },
       ],
     },

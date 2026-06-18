@@ -5,8 +5,11 @@
  *  - Fan app  — mounted on public tournament pages (per-tournament manifest).
  *  - Member app — mounted in authenticated shells (root /home-scoped manifest).
  *
- * iOS has no install API, so it shows manual instructions; Android/desktop
- * Chromium capture `beforeinstallprompt` and offer a one-tap Install button.
+ * iOS has no install API, so it shows manual instructions; Android Chromium
+ * captures `beforeinstallprompt` and offers a one-tap Install button. Desktop
+ * Chromium fires the same event but is deliberately suppressed — an
+ * add-to-home-screen prompt is a phone/tablet affordance (see the pointer gate
+ * in the effect below).
  * The installed app's name/icon/start_url come from whichever <link rel="manifest">
  * the host page declares — this component only renders the prompt.
  */
@@ -49,13 +52,25 @@ interface Props {
   dismissKey?: string;
   /** Branded icon for the prompt (e.g. the tournament logo); falls back to the FLHQ PWA icon. */
   iconUrl?: string | null;
+  /**
+   * When provided, the banner is suppressed entirely while the user follows a
+   * team for this tournament (the dock takes priority on game day — J6-045).
+   * Also used to apply the engagement gate (J6-005).
+   */
+  orgSlug?: string;
+  tournamentSlug?: string;
 }
+
+// Delay before the install banner appears on iOS (engagement gate — J6-005).
+const ENGAGE_DELAY_MS = 30_000;
 
 export default function InstallAppPrompt({
   appName = 'FieldLogicHQ',
   subtitle = 'Add it to your home screen for one-tap access.',
   dismissKey = 'flhq-install-dismissed',
   iconUrl = null,
+  orgSlug,
+  tournamentSlug,
 }: Props) {
   const [mode, setMode] = useState<Mode>('hidden');
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
@@ -70,13 +85,42 @@ export default function InstallAppPrompt({
     if ((window.navigator as { standalone?: boolean }).standalone === true) return;
     if (window.matchMedia?.('(display-mode: standalone)')?.matches) return;
 
+    // If the user follows a team for this tournament, suppress the banner entirely.
+    // The My-Team dock takes priority on game day (J6-045), and an engaged follower
+    // doesn't need an install nudge on this visit.
+    const followKey =
+      orgSlug && tournamentSlug ? `fl_follow_team_${orgSlug}_${tournamentSlug}` : null;
+    if (followKey && localStorage.getItem(followKey)) return;
+
     // iOS has no install API — show manual Add-to-Home-Screen instructions.
     if (/iPhone|iPad|iPod/i.test(ua)) {
-      setMode(/CriOS/i.test(ua) ? 'ios-chrome' : 'ios');
+      const iosMode = /CriOS/i.test(ua) ? 'ios-chrome' : 'ios';
+      // Fan tournament context (slugs provided): engagement-gate the banner so the
+      // dock/content show first (J6-005), and re-check the follow key at fire time so a
+      // follow made mid-session still suppresses it (J6-045). Other shells
+      // (member/admin/signup) keep the immediate prompt — no behaviour change there.
+      if (followKey) {
+        const timer = window.setTimeout(() => {
+          if (localStorage.getItem(followKey)) return;
+          setMode(iosMode);
+        }, ENGAGE_DELAY_MS);
+        return () => window.clearTimeout(timer);
+      }
+      setMode(iosMode);
       return;
     }
 
-    // Android / desktop Chromium: wait for the native install prompt.
+    // Desktop Chromium (Edge/Chrome) also fires `beforeinstallprompt`, but the
+    // add-to-home-screen banner is meant for phones/tablets. Gate on the primary
+    // pointer being coarse (touch) so it never shows on a desktop/laptop — a
+    // touchscreen laptop driven by a trackpad reports a fine primary pointer and
+    // is correctly treated as desktop. The /Android/ UA check is a safety net for
+    // the rare device that misreports the pointer media query.
+    const isTouchPrimary =
+      window.matchMedia?.('(pointer: coarse)')?.matches === true || /Android/i.test(ua);
+    if (!isTouchPrimary) return;
+
+    // Android Chromium: wait for the native install prompt.
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
       // Chromium re-fires `beforeinstallprompt` on client-side (History API)
@@ -85,12 +129,14 @@ export default function InstallAppPrompt({
       // every screen change even after the user dismissed it.
       const stored = localStorage.getItem(dismissKey);
       if (stored && Date.now() - parseInt(stored, 10) < DISMISS_MS) return;
+      // Also re-check follow state on each navigation (J6-045).
+      if (followKey && localStorage.getItem(followKey)) return;
       setDeferred(e as BeforeInstallPromptEvent);
       setMode('android');
     };
     window.addEventListener('beforeinstallprompt', onBeforeInstall);
     return () => window.removeEventListener('beforeinstallprompt', onBeforeInstall);
-  }, [dismissKey]);
+  }, [dismissKey, orgSlug, tournamentSlug]);
 
   function dismiss() {
     localStorage.setItem(dismissKey, String(Date.now()));

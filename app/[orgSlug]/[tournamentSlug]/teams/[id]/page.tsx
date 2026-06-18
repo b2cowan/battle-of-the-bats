@@ -1,7 +1,9 @@
 'use client';
 import { useState, useEffect, use, type CSSProperties } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, Star, AlertTriangle, Users, Clock } from 'lucide-react';
+import { CalendarPlus, ChevronLeft, Star, AlertTriangle, Users, Clock, Trophy } from 'lucide-react';
+import { downloadTeamScheduleICS } from '@/lib/team-calendar';
+import type { Game, PublicTeam, Division } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import SharePageButton from '@/components/public/SharePageButton';
@@ -23,12 +25,16 @@ interface TeamProfileData {
   divisionName: string;
   poolName: string | null;
   gameDurationMinutes: number;
+  tournamentName: string;
+  teamNames: Record<string, string>;
   standings: {
     w: number; l: number; t: number;
     pts: number; rf: number; ra: number; rd: number;
     poolRank: number | null;
     poolRankLabel: string | null;
     inPlayoffSpot: boolean;
+    isChampion: boolean;
+    isRunnerUp: boolean;
   };
   games: {
     id: string;
@@ -125,7 +131,7 @@ export default function TeamProfilePage({
     );
   }
 
-  const { team, divisionName, poolName, gameDurationMinutes, standings, games } = data;
+  const { team, divisionName, poolName, gameDurationMinutes, tournamentName, teamNames, standings, games } = data;
   const cleanedName = cleanName(team.name);
   const initials = teamInitials(cleanedName);
   const color = teamColor(cleanedName);
@@ -139,6 +145,24 @@ export default function TeamProfilePage({
     } else {
       follow({ id: team.id, name: team.name, divisionId: team.divisionId });
     }
+  }
+
+  function handleAddToCalendar() {
+    if (games.length === 0) return;
+    // Synthesise the shapes the ICS helper needs from data already on the page —
+    // it only reads id+name on teams and id+name on divisions (J6-024).
+    const calTeams: PublicTeam[] = Object.entries(teamNames).map(([id, name]) => ({
+      id, name, tournamentId: '', divisionId: '', coach: '', status: 'accepted', poolId: undefined, seed: null,
+    }));
+    void downloadTeamScheduleICS({
+      team,
+      games: games as unknown as Game[],
+      teams: calTeams,
+      divisions: [{ id: team.divisionId, name: divisionName }] as unknown as Division[],
+      tournamentName,
+      orgSlug,
+      tournamentSlug,
+    });
   }
 
   // Form: pool play + playoffs, sorted chronologically
@@ -156,6 +180,14 @@ export default function TeamProfilePage({
 
   // Next game
   const today = tournamentToday();
+  const todayDate = new Date(today + 'T12:00:00');
+  todayDate.setDate(todayDate.getDate() + 1);
+  const tomorrow = todayDate.toISOString().slice(0, 10);
+  function gameDay(date: string): string {
+    if (date === today) return 'Today';
+    if (date === tomorrow) return 'Tomorrow';
+    return new Date(date + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+  }
   const liveGame = games.find(g => isGameLive(g, gameDurationMinutes));
   const nextGame = !liveGame
     ? games.find(g => g.status === 'scheduled' && (gameStartMs(g) == null ? g.date >= today : isGameUpcoming(g)))
@@ -181,6 +213,14 @@ export default function TeamProfilePage({
             <ChevronLeft size={16} />
             All Teams
           </Link>
+
+          {/* Champion banner — shown above the hero when this team won the division final (J6-025) */}
+          {standings.isChampion && (
+            <div className={styles.championBanner}>
+              <Trophy size={18} />
+              <span>Division Champion</span>
+            </div>
+          )}
 
           {/* Hero card */}
           <div className={styles.heroCard}>
@@ -208,6 +248,17 @@ export default function TeamProfilePage({
                   <Star size={14} fill={isFollowed ? 'currentColor' : 'none'} />
                   {isFollowed ? 'Following' : 'Follow'}
                 </button>
+                {games.length > 0 && (
+                  <button
+                    type="button"
+                    className={styles.followHeroBtn}
+                    onClick={handleAddToCalendar}
+                    aria-label="Add schedule to calendar"
+                  >
+                    <CalendarPlus size={14} />
+                    Calendar
+                  </button>
+                )}
                 <SharePageButton
                   url={`/${orgSlug}/${tournamentSlug}/teams/${id}?follow=${id}`}
                   title={cleanedName}
@@ -247,12 +298,18 @@ export default function TeamProfilePage({
               <span className={styles.statTileLabel}>POINTS</span>
               <span className={`${styles.statTileValue} ${styles.statTileAccent}`}>{standings.pts}</span>
             </div>
-            <div className={styles.statTile}>
-              <span className={styles.statTileLabel}>POOL RANK</span>
-              <span className={styles.statTileValue}>{standings.poolRankLabel ?? '—'}</span>
-              {standings.inPlayoffSpot && (
+            <div className={standings.isChampion ? `${styles.statTile} ${styles.statTileChampion}` : styles.statTile}>
+              <span className={styles.statTileLabel}>{standings.isChampion ? 'RESULT' : 'POOL RANK'}</span>
+              <span className={styles.statTileValue}>
+                {standings.isChampion ? <Trophy size={26} style={{ color: 'var(--warning)' }} /> : (standings.poolRankLabel ?? '—')}
+              </span>
+              {standings.isChampion ? (
+                <span className={styles.statTileChampionSub}>Champions</span>
+              ) : standings.isRunnerUp ? (
+                <span className={styles.statTileSub}>Runner-up</span>
+              ) : standings.inPlayoffSpot ? (
                 <span className={styles.statTileSub}>In playoff spot</span>
-              )}
+              ) : null}
             </div>
             <div className={styles.statTile}>
               <span className={styles.statTileLabel}>RUNS FOR</span>
@@ -299,8 +356,10 @@ export default function TeamProfilePage({
                   </div>
                   <div className={styles.nextGameDetails}>
                     <span className={styles.nextGameOpponent}>vs {focusOpponent}</span>
-                    {!liveGame && focusGame.time && (
-                      <span className={styles.nextGameTime}>{formatTime(focusGame.time)}</span>
+                    {!liveGame && (
+                      <span className={styles.nextGameTime}>
+                        {gameDay(focusGame.date)}{focusGame.time ? ` · ${formatTime(focusGame.time)}` : ''}
+                      </span>
                     )}
                   </div>
                 </div>

@@ -534,6 +534,7 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
             value={round.name}
             onChange={e => setRounds(rounds.map(r => r.id === round.id ? { ...r, name: e.target.value } : r))}
             className={styles.roundTitleInput}
+            maxLength={40}
             rows={1}
             ref={el => { if (el) { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; } }}
           />

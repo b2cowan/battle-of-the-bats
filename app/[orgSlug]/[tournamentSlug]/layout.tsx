@@ -16,6 +16,7 @@ import TournamentAcquisitionBanner from '@/components/marketing/TournamentAcquis
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import MyTeamDock from '@/components/public/MyTeamDock';
 import FollowDeepLinkPrompt from '@/components/public/FollowDeepLinkPrompt';
+import AlertsNudge from '@/components/public/AlertsNudge';
 import TournamentSideRail from '@/components/public/TournamentSideRail';
 import railStyles from '@/components/public/TournamentSideRail.module.css';
 import ScoreTicker from '@/components/public/ScoreTicker';
@@ -205,13 +206,32 @@ export default async function TournamentLayout({
       />
       {/* Self-onboarding shared links: ?follow=teamId → one-tap "Follow [team]?" (J6-012). */}
       <FollowDeepLinkPrompt orgSlug={orgSlug} tournamentSlug={tournament.slug} />
-      {/* Fan app install — this tournament's branded PWA (per-tournament manifest). */}
-      <InstallAppPrompt
-        appName={tournament.name}
-        subtitle="Live scores, schedule &amp; alerts — add to your home screen."
-        dismissKey={`flhq-install-fan-${tournament.slug}`}
-        iconUrl={canUseAdvancedBranding ? tournament.logoUrl ?? org.logoUrl ?? null : null}
-      />
+      {/* Post-install one-time nudge → turn on score alerts (J6-048). Self-gates to
+          the installed app + a followed team; suppressed on completed events. */}
+      {tournament.status !== 'completed' && (
+        <AlertsNudge
+          orgSlug={orgSlug}
+          tournamentSlug={tournament.slug}
+          tournamentId={tournament.id}
+          enabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
+        />
+      )}
+      {/* Fan app install — active/upcoming events only; suppressed on completed events
+          (no live scores/alerts left to follow — J6-054). */}
+      {tournament.status !== 'completed' && (
+        <InstallAppPrompt
+          appName={tournament.name}
+          subtitle={
+            hasPlanFeature(org.planId, 'fan_score_alerts')
+              ? 'Live scores, schedule & alerts — add to your home screen.'
+              : 'Live scores & schedule — add to your home screen.'
+          }
+          dismissKey={`flhq-install-fan-${tournament.slug}`}
+          iconUrl={canUseAdvancedBranding ? tournament.logoUrl ?? org.logoUrl ?? null : null}
+          orgSlug={orgSlug}
+          tournamentSlug={tournament.slug}
+        />
+      )}
     </>
   );
 }

@@ -659,6 +659,9 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 <!-- dict:col:games.bracket_code -->
 **`bracket_id`** (uuid, **not a FK**) / **`bracket_code`** (text) — bracket-tree grouping key + round/slot code (gotchas 2–3).
 
+<!-- dict:col:games.round_label -->
+**`round_label`** (text, nullable) — optional custom display name for the game's bracket COLUMN (e.g. `'Championship'`, `'Gold Final'`). Every game in a column carries the same label (written together by the `save-bracket` diff). Null = use the auto-derived round name (`computeBracketColumns`). Display-only; never affects advancement (gotcha 3) or grouping — only the column TITLE.
+
 <!-- dict:col:games.home_placeholder -->
 <!-- dict:col:games.away_placeholder -->
 **`home_placeholder` / `away_placeholder`** (text) — human seed/source labels for unresolved bracket slots (`'Winner FIN'`, `'Pool A #1'`); string-matched by `advancePlayoffs` to fill team ids (gotcha 3).
@@ -677,7 +680,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 <!-- dict:col:games.score_submitted_by_email -->
 <!-- dict:col:games.score_submitted_at -->
 <!-- dict:col:games.score_submission_source -->
-**Score-submission audit block** — who/when/how a score was entered, written only via the scoring service ([lib/tournament-scoring-service.ts](../../../lib/tournament-scoring-service.ts)) and cleared on revert. `score_submission_source` ∈ `scorekeeper | admin_results | system | forfeit` (`ScoreSubmissionSource`, [lib/types.ts](../../../lib/types.ts); app enum, no DB CHECK). The `forfeit` value marks a result entered as a forfeit and persists through BOTH lifecycle states — a PENDING forfeit is `status='submitted'` with `source='forfeit'`, and finalize promotes it to `status='forfeit'` (not `completed`) so it advances the bracket but stays excluded from RF/RA/RD in tie-breakers (FP-5 / J1-091). Not a generic row-mtime (gotcha 7).
+**Score-submission audit block** — who/when/how a score was entered, written only via the scoring service ([lib/tournament-scoring-service.ts](../../../lib/tournament-scoring-service.ts)) and cleared on revert. `score_submission_source` ∈ `scorekeeper | admin_results | system | forfeit` (`ScoreSubmissionSource`, [lib/types.ts](../../../lib/types.ts); app enum, no DB CHECK — the drifted 3-value CHECK from mig 068 was dropped in mig 133, so `forfeit` is accepted and the column is app-enum-validated only). The `forfeit` value marks a result entered as a forfeit and persists through BOTH lifecycle states — a PENDING forfeit is `status='submitted'` with `source='forfeit'`, and finalize promotes it to `status='forfeit'` (not `completed`) so it advances the bracket but stays excluded from RF/RA/RD in tie-breakers (FP-5 / J1-091). Not a generic row-mtime (gotcha 7).
 
 ---
 

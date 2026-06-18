@@ -6,11 +6,11 @@ import CoinTossRecorder from '@/components/admin/CoinTossRecorder';
 import { normalizeTieBreakers, BREAKER_LABELS } from '@/lib/tie-breakers';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
-import { Division, Game, PublicTeam, Tournament, Venue } from '@/lib/types';
+import { Division, Game, PublicTeam, Tournament } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
-import LocationLink from '@/components/LocationLink';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import { LogicSyncBracket } from '@/components/bracket/LogicSyncBracket';
+import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import { formatPoolName, formatTime } from '@/lib/utils';
 import styles from '@/app/[orgSlug]/standings/standings.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
@@ -75,7 +75,6 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
   const [divisions, setDivisions]           = useState<Division[]>(() => initialData?.divisions ?? []);
   const [games, setGames]                   = useState<Game[]>(() => initialData?.games ?? []);
   const [teams, setTeams]                   = useState<PublicTeam[]>(() => initialData?.teams ?? []);
-  const [venues, setVenues]                 = useState<Venue[]>(() => initialData?.venues ?? []);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>(() => initialData?.tournaments ?? []);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(() => initialData?.tournament ?? null);
   const [contactEmail, setContactEmail] = useState<string | null>(
@@ -95,6 +94,9 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
   const [standingsByDivision, setStandingsByDivision] = useState<Record<string, StandingResult[]>>(
     () => (initialData?.standingsByDivision as Record<string, StandingResult[]>) ?? {}
   );
+  // True once data has been fetched (or immediately when initialData is present) —
+  // gates the empty states so they don't flash during the initial client fetch (J6-026).
+  const [loaded, setLoaded] = useState(() => !!initialData);
   // Transient ▲/▼ markers when a live result changes a team's pool rank.
   const [rankChanges, setRankChanges] = useState<Map<string, 'up' | 'down'>>(() => new Map());
   const prevRanksRef = useRef<Map<string, number>>(new Map());
@@ -164,13 +166,13 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
       setDivisions(groups);
       setGames(data?.games ?? []);
       setTeams(data?.teams ?? []);
-      setVenues(data?.venues ?? []);
       setStandingsByDivision((data?.standingsByDivision as Record<string, StandingResult[]>) ?? {});
       if (groups.length > 0) {
         const pref = getDivisionPref(orgSlug);
         const preferred = pref ? groups.find(g => g.name === pref) : null;
         setActiveGroup((preferred ?? groups[0]).id);
       }
+      setLoaded(true);
     }
     init();
   }, [orgSlug, tournamentSlug, initialData]);
@@ -185,7 +187,6 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
       setGames(data.games ?? []);
       setTeams(data.teams ?? []);
       setDivisions(data.divisions ?? []);
-      setVenues(data.venues ?? []);
       setStandingsByDivision((data.standingsByDivision as Record<string, StandingResult[]>) ?? {});
     },
   });
@@ -205,7 +206,6 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
   const isCompletedTournament = selectedTournament?.status === 'completed';
   const teamMap = useMemo(() => new Map(teams.map(team => [team.id, team])), [teams]);
   const getTeamName = (id?: string) => id ? teamMap.get(id)?.name ?? 'TBD' : 'TBD';
-  const getVenue = (id?: string) => id ? venues.find(venue => venue.id === id) ?? null : null;
   const activeGames = games.filter(game => game.divisionId === activeGroup && game.status !== 'cancelled');
   const finalGames = activeGames.filter(game =>
     game.status === 'completed' && game.homeScore != null && game.awayScore != null
@@ -225,6 +225,41 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
 
   const hasPlayoffGames = activeGames.some(g => g.isPlayoff);
   const gamesStarted = standings.some(s => s.gp > 0);
+
+  // Once the knockout stage is underway (or the event is over), the bracket is the
+  // headline — surface it above the pool tables. A bracket that only exists as
+  // not-yet-played placeholders during pool play stays below the standings, where
+  // seeding is still the relevant thing to watch.
+  const playoffsUnderway = activeGames.some(
+    g => g.isPlayoff && (g.status !== 'scheduled' || isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES)),
+  );
+  const bracketOnTop = hasPlayoffGames && (isCompletedTournament || playoffsUnderway);
+
+  // "On track to advance" (J6-027): the set of teams currently holding a playoff spot,
+  // plus the rule caption. Combined cutoff for crossover/single-pool formats, per-pool
+  // otherwise — matching how the bracket actually seeds.
+  const playoffCfg = currentGroup?.playoffConfig;
+  const teamsQualifying = playoffCfg?.teamsQualifying ?? 0;
+  const combinePools = (playoffCfg?.crossover ?? 'none') !== 'none' || pools.length <= 1;
+  const advanceCaption = teamsQualifying > 0
+    ? (combinePools ? `Top ${teamsQualifying} of ${standings.length} advance` : `Top ${teamsQualifying} per pool advance`)
+    : '';
+  const advancingTeamIds = (() => {
+    const ids = new Set<string>();
+    if (teamsQualifying <= 0 || !gamesStarted) return ids;
+    // `standings` already arrives in the engine's full tie-breaker order (head-to-head,
+    // run-diff cap, coin toss …). Slice that order directly — do NOT re-sort by pts/rd
+    // alone, which would mismark the cut when teams are tied on pts+rd but separated by
+    // a lower tie-breaker.
+    if (combinePools) {
+      standings.slice(0, teamsQualifying).forEach(r => ids.add(r.teamId));
+    } else {
+      pools.forEach(pool =>
+        standings.filter(s => s.poolId === pool.id).slice(0, teamsQualifying).forEach(r => ids.add(r.teamId)),
+      );
+    }
+    return ids;
+  })();
 
   const followedTeam = followedTeamId ? teams.find(team => team.id === followedTeamId) ?? null : null;
   const followedDivision = followedTeam
@@ -301,32 +336,45 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
     return (
       <div key={game.id} className={`${styles.scoreCard} ${isPending ? styles.scoreCardPending : ''}`}>
         <div className={styles.scoreMeta}>
-          <span className={isPending ? 'badge badge-warning' : 'badge badge-success'}>
-            {getResultStatusLabel(game)}
+          <span className={styles.scoreMetaLeft}>
+            {/* The whole section already reads "Final Score Record" — only flag the
+                exceptions (Unofficial / pending), not every final game. */}
+            {isPending && (
+              <span className="badge badge-warning">{getResultStatusLabel(game)}</span>
+            )}
+            <span>{formatShortDate(game.date)}</span>
+            {game.time && <span>{formatTime(game.time)}</span>}
           </span>
-          <span>{formatShortDate(game.date)}</span>
-          {game.time && <span>{formatTime(game.time)}</span>}
           {game.isPlayoff && (
-            <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
+            <span className="badge badge-primary">{bracketRoundLabel(game.bracketCode)}</span>
           )}
         </div>
 
+        {/* Stacked rows (away over home) keep the scores in a fixed right-hand
+            column, so they line up across every card no matter how long a name
+            wraps. Winner row stays bright with a trophy + green score; loser dims. */}
         <div className={styles.scoreMatchup}>
-          <div className={`${styles.scoreTeam} ${winner === 'away' ? styles.scoreWinner : winner === 'home' ? styles.scoreLoser : ''}`}>
-            <span className={styles.scoreTeamName}>{getTeamName(game.awayTeamId)}</span>
-            <strong>{game.awayScore}</strong>
+          <div className={`${styles.scoreRow} ${winner === 'away' ? styles.scoreWinner : winner === 'home' ? styles.scoreLoser : ''}`}>
+            <span className={styles.scoreWinIconSlot}>
+              {winner === 'away' && <Trophy size={14} aria-label="Winner" />}
+            </span>
+            <span className={styles.scoreTeamName}>{game.awayTeamId ? getTeamName(game.awayTeamId) : (game.awayPlaceholder ?? 'TBD')}</span>
+            <strong className={styles.scoreNum}>{game.awayScore}</strong>
           </div>
-          <span className={styles.scoreVs}>at</span>
-          <div className={`${styles.scoreTeam} ${styles.scoreTeamHome} ${winner === 'home' ? styles.scoreWinner : winner === 'away' ? styles.scoreLoser : ''}`}>
-            <span className={styles.scoreTeamName}>{getTeamName(game.homeTeamId)}</span>
-            <strong>{game.homeScore}</strong>
+          <div className={`${styles.scoreRow} ${winner === 'home' ? styles.scoreWinner : winner === 'away' ? styles.scoreLoser : ''}`}>
+            <span className={styles.scoreWinIconSlot}>
+              {winner === 'home' && <Trophy size={14} aria-label="Winner" />}
+            </span>
+            <span className={styles.scoreTeamName}>{game.homeTeamId ? getTeamName(game.homeTeamId) : (game.homePlaceholder ?? 'TBD')}</span>
+            <strong className={styles.scoreNum}>{game.homeScore}</strong>
           </div>
         </div>
 
-        <div className={styles.scoreFooter}>
-          {winner === 'tie' ? <span>Tie game</span> : <span>{winner === 'home' ? getTeamName(game.homeTeamId) : getTeamName(game.awayTeamId)} won</span>}
-          <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
-        </div>
+        {winner === 'tie' && (
+          <div className={styles.scoreFooter}>
+            <span className={styles.tieTag}>Tie game</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -431,7 +479,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
             </div>
           )}
 
-          {divisions.length === 0 && (
+          {loaded && divisions.length === 0 && (
             <PublicTournamentState
               icon={<Trophy size={40} />}
               eyebrow="Standings"
@@ -450,6 +498,17 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
 
               {/* ── Standings table ───────────────────────────────────────── */}
               <>
+                {/* Knockout stage / completed event — lead with the bracket (the headline);
+                    the pool tables become reference material below. */}
+                {bracketOnTop && bracketSection}
+                {/* Advancement rule — one line above the full tables; the on-track teams
+                    are marked with a green check in the rows below (J6-027). Suppressed once
+                    the playoffs are underway/decided — it's no longer a prediction. */}
+                {!bracketOnTop && advanceCaption && (
+                  <div className={styles.playoffAdvanceNote}>
+                    <Trophy size={13} /> {advanceCaption} to playoffs
+                  </div>
+                )}
                 {/* Standings table */}
                   {(pools.length >= 2 ? pools : [{ id: 'default', name: 'All Teams' }]).map(pool => {
                     const poolStandings = pools.length >= 2
@@ -506,8 +565,9 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                             <tbody>
                               {poolStandings.map((team, idx) => {
                                 const gStarted  = poolStandings.some(s => s.gp > 0);
-                                const isFirst   = idx === 0 && gStarted;
+                                const isFirst   = idx === 0 && gStarted && poolStandings.length > 1 && team.w >= team.l;
                                 const isFollowed = !isPreview && team.id === followedTeamId;
+                                const isInPlayoffSpot = advancingTeamIds.has(team.teamId);
                                 const rowClass = [
                                   isFirst ? styles.topRow : '',
                                   isFollowed ? styles.followedTeamRow : '',
@@ -524,6 +584,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                                           </span>
                                         )}
                                         <span>{team.name}</span>
+                                        {isInPlayoffSpot && <CheckCircle size={12} className={styles.advancingIcon} aria-label="In a playoff spot" />}
                                         {team.hasPendingGame ? <span className={styles.pendingTeamBadge}>Pending</span> : null}
                                       </div>
                                     </td>
@@ -600,11 +661,12 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                     );
                   })}
 
-                  {/* Playoff bracket — always below standings */}
-                  {bracketSection}
+                  {/* Playoff bracket — below the pool tables during pool play; moves
+                      above them once the knockout stage starts (see bracketOnTop). */}
+                  {!bracketOnTop && bracketSection}
               </>
 
-              {standings.length === 0 && (
+              {loaded && standings.length === 0 && (
                 <PublicTournamentState
                   icon={<Trophy size={40} />}
                   eyebrow="Standings"

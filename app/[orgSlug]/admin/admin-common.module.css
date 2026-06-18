@@ -311,6 +311,14 @@
   width: 100%;
 }
 
+@media (max-width: 768px) {
+  /* Tighter rhythm on phones — the pool header already provides the division
+     break, so the full 2.5rem gap wastes a chunk of the small viewport, and the
+     header's wide right padding leaves the rows beneath it misaligned. */
+  .compactList { gap: 1.25rem; }
+  .poolSubHeader { padding: 0.45rem 0.75rem; }
+}
+
 .poolDot {
   width: 8px;
   height: 8px;

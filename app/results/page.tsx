@@ -6,6 +6,7 @@ import { normalizeTieBreakers } from '@/lib/tie-breakers';
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { formatTime, formatPoolName } from '@/lib/utils';
+import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import styles from './results.module.css';
 
 export default function ResultsPage() {
@@ -253,7 +254,7 @@ export default function ResultsPage() {
                                   <span className="badge badge-success">Final</span>
                                   <span className={styles.resultDate}>{formatDate(game.date)}</span>
                                   {game.time && <span className={styles.resultTime}>{formatTime(game.time)}</span>}
-                                  <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
+                                  <span className="badge badge-primary">{bracketRoundLabel(game.bracketCode)}</span>
                                 </div>
                                 <div className={styles.scoreRow}>
                                   <div className={`${styles.teamScore} ${winner === 'home' ? styles.winner : ''}`}>
@@ -295,7 +296,7 @@ export default function ResultsPage() {
                           <span className="badge badge-success">Final</span>
                           <span className={styles.resultDate}>{formatDate(game.date)}</span>
                           {game.time && <span className={styles.resultTime}>{formatTime(game.time)}</span>}
-                          <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
+                          <span className="badge badge-primary">{bracketRoundLabel(game.bracketCode)}</span>
                         </div>
                         <div className={styles.scoreRow}>
                           <div className={`${styles.teamScore} ${winner === 'home' ? styles.winner : ''}`}>

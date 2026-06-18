@@ -331,6 +331,8 @@ This plan supersedes docs/projects/active/TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md, w
 ---
 
 ### Phase 2 — In-App Contextual Help Rollout
+> **Build-ready detail: [HELP_PHASE2_INCONTEXT_PLAN.md](HELP_PHASE2_INCONTEXT_PLAN.md) + [HELP_PHASE2_INCONTEXT_PM_BRIEF.md](HELP_PHASE2_INCONTEXT_PM_BRIEF.md)** (2026-06-18). Mockup: [help-phase2-incontext-prototype.html](help-phase2-incontext-prototype.html). The summary below is superseded by that dedicated plan, which grounds every item in the current code and adds the page→section map, the shared foundation (content registry + extracted `HelpSectionBlock` + `HelpDrawerProvider`), the standalone-coaches help entry point, and six new owner decisions.
+
 **Goal:** Every tournament admin page has at least one help affordance available mid-workflow.
 
 **What operators get:** A "?" button in the top-right of every tournament page header that opens a slide-over HelpDrawer showing the relevant guide section inline — no navigate-away required. HelpTooltip fixed so it works on touch devices. FieldHint primitive added and applied to the highest-confusion form fields (divisions, schedule generator). HelpCallout variant=warning deployed before publish, clear-bracket, and archive-seal actions. StatusLegendPopover made unconditional on results page.
@@ -895,7 +897,7 @@ Every phase's UX plan **opens with a visual** before any code is written, so the
 | Phase | Mockup for sign-off | What it should show |
 |---|---|---|
 | **1 — Help center usable** | ✅ **Done** (clickable) | Single-scroll guide + sub-groups + adaptive sticky map (`help-layout-prototype.html`); a simplified-hub sketch |
-| **2 — In-context help** | ✅ Yes (clickable) | The "?" slide-over drawer on a real work page; an always-visible field-hint; the fixed (touch/keyboard) tooltip |
+| **2 — In-context help** | ✅ **Done** (clickable) | [help-phase2-incontext-prototype.html](help-phase2-incontext-prototype.html) — the "?" slide-over drawer on a real work page; an always-visible field-hint; the fixed (touch/keyboard) tooltip; heads-up warnings |
 | **3 — Discovery (rail + nudges + shortcuts)** | ✅ Yes (clickable) | The dashboard "what's next" rail across stages, a dismissible "Did you know?" nudge, the "I want to…" shortcut list |
 | **4 — Persona panel + a11y/polish** | ◑ Partial | Clickable mock of the "what everyone else sees" persona panel; the a11y/token cleanup needs no mockup |
 | **5 — Guided tours (optional)** | ✅ Yes (clickable) | A coachmark step over a real screen (the §14 experience) |

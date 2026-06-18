@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase-browser';
 import { formatPoolName, formatTime } from '@/lib/utils';
 import type { Game, PublicTeam } from '@/lib/types';
 import type { BracketNode } from '@/lib/types/bracket';
-import { bracketRoundInfo, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
+import { bracketRoundInfo, computeBracketColumns, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
 import styles from './LogicSyncBracket.module.css';
 
 // draw-day reveal timing
@@ -41,9 +41,10 @@ function sortByCode(a: Game, b: Game): number {
 }
 
 function buildColumns(games: Game[]): { title: string; games: Game[] }[] {
+  const colMap = computeBracketColumns(games);
   const groups = new Map<string, { title: string; rank: number; games: Game[] }>();
   for (const g of games) {
-    let info = bracketRoundInfo(g.bracketCode ?? '');
+    let info = colMap.get(g.id) || bracketRoundInfo(g.bracketCode ?? '');
     // The "if necessary" reset is its own column just right of the Grand Final.
     if ((g.bracketCode ?? '').toUpperCase() === 'GF2') {
       info = { key: 'GF2', title: 'Grand Final Game 2 (If Necessary)', rank: 501 };
@@ -840,13 +841,12 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
         })}
 
         {/* ── connectors (behind nodes) ──
-              Double elimination / placement / consolation follow the actual
-              Winner/Loser references (a game's loser-drop line is correct by data);
-              single elimination uses simple round-to-round halving.
-              All connectors use cubic bezier curves.  Cross-band WB-loser→LB
-              connectors exit from the node's bottom-center (dropDown=true) so the
-              path reads as "loser falls to the losers bracket"; within-band
-              connections use the standard horizontal S-curve. ── */}
+              ALL formats follow the actual Winner/Loser references (format-agnostic),
+              so a renamed/legacy or otherwise irregular bracket traces correctly —
+              not just round-to-round halving. All connectors use cubic bezier curves.
+              Cross-band WB-loser→LB connectors exit from the node's bottom-center
+              (dropDown=true) so the path reads as "loser falls to the losers bracket";
+              within-band connections use the standard horizontal S-curve. ── */}
         {isDoubleElim
           ? columns.flatMap(col => col.games.flatMap(g => {
               const tgt = positions.get(g.id);
@@ -880,30 +880,31 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
                 )];
               });
             }))
-          : !hasMultiBracket && columns.map((col, ci) => {
-              const nextCol = columns[ci + 1];
-              if (!nextCol) return null;
-              return col.games.map((g, pi) => {
-                const targetPos = Math.floor(pi / 2);
-                const tg = nextCol.games[targetPos];
-                if (!tg) return null;
-                const sp = positions.get(g.id);
-                const tp = positions.get(tg.id);
-                if (!sp || !tp) return null;
-                const srcNode = nodeByCode.get((g.bracketCode || '').toUpperCase());
-                return (
+          : !hasMultiBracket && columns.flatMap(col => col.games.flatMap(g => {
+              const tgt = positions.get(g.id);
+              if (!tgt) return [];
+              // Follow the real Winner/Loser wiring (not round-to-round halving) so a
+              // renamed/legacy or otherwise irregular single-elim bracket still traces
+              // correctly. Neutral colour preserved (no `kind`) — only accuracy changes.
+              return [g.homePlaceholder, g.awayPlaceholder].flatMap((ph, side) => {
+                const m = (ph || '').match(/^(Winner|Loser)\s+(.+)$/);
+                if (!m) return [];
+                const srcNode = nodeByCode.get(m[2].toUpperCase());
+                const sp = srcNode ? positions.get(srcNode.id) : undefined;
+                if (!srcNode || !sp) return [];
+                return [(
                   <ConnectorPath
-                    key={`c-${ci}-${pi}`}
+                    key={`c-${g.id}-${side}`}
                     fromX={sp.x + NODE_WIDTH}
                     fromY={sp.y + NODE_HEIGHT / 2}
-                    toX={tp.x}
-                    toY={tp.y + NODE_HEIGHT / 2}
-                    active={srcNode?.winnerId != null}
-                    revealDelay={connectorDelay(g.id, tg.id)}
+                    toX={tgt.x}
+                    toY={tgt.y + NODE_HEIGHT / 2}
+                    active={srcNode.winnerId !== null}
+                    revealDelay={connectorDelay(srcNode.id, g.id)}
                   />
-                );
+                )];
               });
-            })}
+            }))}
 
         {/* ── match nodes ── */}
         {columns.flatMap(col =>

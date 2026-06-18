@@ -13,6 +13,8 @@ import {
   validateTierRanges,
   buildPlaceholderOptions,
   findBracketSchedulingViolations,
+  nextManualBracketCode,
+  computeBracketColumns,
   resolvePlayoffWinner,
   type GeneratedMatchup,
 } from '../../lib/playoff-bracket.ts';
@@ -647,5 +649,170 @@ describe('resolvePlayoffWinner', () => {
       resolvePlayoffWinner({ homeTeamId: 'home', awayTeamId: 'away', homeScore: null, awayScore: null, status: 'completed' }),
       { tie: true },
     );
+  });
+});
+
+describe('nextManualBracketCode (auto-assigned wiring code)', () => {
+  it('a seeds-only game is Round 1, first index', () => {
+    assert.equal(nextManualBracketCode([], 'Seed #1', 'Seed #4'), 'R1-1');
+  });
+
+  it('increments the index within the same round', () => {
+    const existing = [{ bracketCode: 'R1-1', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #4' }];
+    assert.equal(nextManualBracketCode(existing, 'Seed #2', 'Seed #3'), 'R1-2');
+  });
+
+  it('a game fed by Round 1 winners becomes Round 2', () => {
+    const existing = [
+      { bracketCode: 'R1-1', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #4' },
+      { bracketCode: 'R1-2', homePlaceholder: 'Seed #2', awayPlaceholder: 'Seed #3' },
+    ];
+    assert.equal(nextManualBracketCode(existing, 'Winner R1-1', 'Winner R1-2'), 'R2-1');
+  });
+
+  it('depth chains: a game fed by a Round 2 winner is Round 3', () => {
+    const existing = [
+      { bracketCode: 'R1-1', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #4' },
+      { bracketCode: 'R1-2', homePlaceholder: 'Seed #2', awayPlaceholder: 'Seed #3' },
+      { bracketCode: 'R2-1', homePlaceholder: 'Winner R1-1', awayPlaceholder: 'Winner R1-2' },
+    ];
+    assert.equal(nextManualBracketCode(existing, 'Winner R2-1', 'Seed #5'), 'R3-1');
+  });
+
+  it('resolves round depth even for a legacy (G#) code scheme', () => {
+    const existing = [
+      { bracketCode: 'G1', homePlaceholder: 'Seed #5', awayPlaceholder: 'Seed #4' },
+      { bracketCode: 'G2', homePlaceholder: 'Seed #9', awayPlaceholder: 'Seed #6' },
+    ];
+    // Fed by a G-coded round-1 winner → Round 2, and the new R2- index is free.
+    assert.equal(nextManualBracketCode(existing, 'Winner G1', 'Seed #1'), 'R2-1');
+  });
+
+  it('never collides with an existing R{round}-{n} code', () => {
+    const existing = [
+      { bracketCode: 'R2-1', homePlaceholder: 'Winner R1-1', awayPlaceholder: 'Winner R1-2' },
+      { bracketCode: 'R1-1', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #4' },
+      { bracketCode: 'R1-2', homePlaceholder: 'Seed #2', awayPlaceholder: 'Seed #3' },
+    ];
+    assert.equal(nextManualBracketCode(existing, 'Winner R1-1', 'Winner R1-2'), 'R2-2');
+  });
+});
+
+describe('computeBracketColumns (feed-graph layout)', () => {
+  it('all-canonical single-elim stays on the code path (keys unchanged)', () => {
+    const games = [
+      { id: 'a', bracketCode: 'QF1', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #8' },
+      { id: 'b', bracketCode: 'SF1', homePlaceholder: 'Winner QF1', awayPlaceholder: 'Winner QF2' },
+      { id: 'c', bracketCode: 'FIN', homePlaceholder: 'Winner SF1', awayPlaceholder: 'Winner SF2' },
+    ];
+    const m = computeBracketColumns(games);
+    assert.equal(m.get('a')!.key, 'QF');
+    assert.equal(m.get('b')!.key, 'SF');
+    assert.equal(m.get('c')!.key, 'FIN');
+  });
+
+  it('double-elim section codes stay on the code path (WB/LB keys preserved)', () => {
+    const games = [
+      { id: 'a', bracketCode: 'WB1-1', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #4' },
+      { id: 'b', bracketCode: 'LB1-1', homePlaceholder: 'Loser WB1-1', awayPlaceholder: 'Loser WB1-2' },
+      { id: 'c', bracketCode: 'GF', homePlaceholder: 'Winner WB2-1', awayPlaceholder: 'Winner LB3-1' },
+    ];
+    const m = computeBracketColumns(games);
+    assert.equal(m.get('a')!.key, 'WB1');
+    assert.equal(m.get('b')!.key, 'LB1');
+    assert.equal(m.get('c')!.key, 'GF');
+  });
+
+  it('a renamed code groups with its same-depth peer instead of scattering', () => {
+    // The reported bug: SF1 renamed to "test"; without graph layout it lands in its
+    // own rank-1000 column to the right of the final.
+    const games = [
+      { id: 't', bracketCode: 'test', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #4' },
+      { id: 's', bracketCode: 'SF2', homePlaceholder: 'Seed #2', awayPlaceholder: 'Seed #3' },
+      { id: 'f', bracketCode: 'FIN', homePlaceholder: 'Winner test', awayPlaceholder: 'Winner SF2' },
+    ];
+    const m = computeBracketColumns(games);
+    assert.equal(m.get('t')!.key, m.get('s')!.key); // same column
+    assert.equal(m.get('t')!.rank, 1);
+    assert.equal(m.get('f')!.rank, 2);
+    assert.ok(m.get('f')!.rank > m.get('t')!.rank); // final to the RIGHT of its feeders
+    assert.equal(m.get('t')!.title, 'Semifinals');
+    assert.equal(m.get('f')!.title, 'Finals');
+  });
+
+  it('legacy G# codes order by feed-graph depth with named columns', () => {
+    const games = [
+      { id: 'g1', bracketCode: 'G1', homePlaceholder: 'Seed #5', awayPlaceholder: 'Seed #4' },
+      { id: 'g2', bracketCode: 'G2', homePlaceholder: 'Seed #9', awayPlaceholder: 'Seed #6' },
+      { id: 'g4', bracketCode: 'G4', homePlaceholder: 'Winner G1', awayPlaceholder: 'Seed #1' },
+      { id: 'g7', bracketCode: 'G7', homePlaceholder: 'Winner G4', awayPlaceholder: 'Seed #2' },
+    ];
+    const m = computeBracketColumns(games);
+    assert.equal(m.get('g1')!.rank, 1);
+    assert.equal(m.get('g4')!.rank, 2);
+    assert.equal(m.get('g7')!.rank, 3);
+    assert.equal(m.get('g1')!.title, 'Quarterfinals'); // two rounds from the final
+    assert.equal(m.get('g4')!.title, 'Semifinals');
+    assert.equal(m.get('g7')!.title, 'Finals');
+  });
+
+  it('a codeless game does not flip a standard bracket into graph mode', () => {
+    // Regression guard: one codeless game must NOT re-order/re-title an otherwise
+    // canonical QF/SF/FIN bracket — it keeps the code path (own rank-1000 column).
+    const games = [
+      { id: 'a', bracketCode: 'QF1', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #8' },
+      { id: 'b', bracketCode: 'SF1', homePlaceholder: 'Winner QF1', awayPlaceholder: 'Winner QF2' },
+      { id: 'c', bracketCode: 'FIN', homePlaceholder: 'Winner SF1', awayPlaceholder: 'Winner SF2' },
+      { id: 'x', bracketCode: '', homePlaceholder: '', awayPlaceholder: '' },
+    ];
+    const m = computeBracketColumns(games);
+    assert.equal(m.get('a')!.key, 'QF'); // still code path, not 'RND1'
+    assert.equal(m.get('b')!.key, 'SF');
+    assert.equal(m.get('c')!.key, 'FIN');
+  });
+
+  it('a custom round_label overrides the column title, leaving key/rank structural', () => {
+    const games = [
+      { id: 'a', bracketCode: 'SF1', roundLabel: 'Gold Semis', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #4' },
+      { id: 'b', bracketCode: 'FIN', roundLabel: 'Championship', homePlaceholder: 'Winner SF1', awayPlaceholder: 'Winner SF2' },
+    ];
+    const m = computeBracketColumns(games);
+    assert.equal(m.get('a')!.title, 'Gold Semis');
+    assert.equal(m.get('a')!.key, 'SF'); // structural key unchanged
+    assert.equal(m.get('b')!.title, 'Championship');
+    assert.equal(m.get('b')!.key, 'FIN');
+  });
+
+  it('a label on one game applies to the whole structural column (consistent, no spreading nondeterminism)', () => {
+    const games = [
+      { id: 'a', bracketCode: 'SF1', roundLabel: 'Gold Semis', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #4' },
+      { id: 'b', bracketCode: 'SF2', roundLabel: null, homePlaceholder: 'Seed #2', awayPlaceholder: 'Seed #3' },
+      { id: 'c', bracketCode: 'FIN', homePlaceholder: 'Winner SF1', awayPlaceholder: 'Winner SF2' },
+    ];
+    const m = computeBracketColumns(games);
+    assert.equal(m.get('a')!.title, 'Gold Semis');
+    assert.equal(m.get('b')!.title, 'Gold Semis'); // unlabeled peer inherits the column's label
+    assert.equal(m.get('c')!.title, 'Finals');      // a different column is unaffected
+  });
+
+  it('an empty/whitespace round_label falls back to the derived title', () => {
+    const m = computeBracketColumns([
+      { id: 'a', bracketCode: 'FIN', roundLabel: '   ', homePlaceholder: 'Winner SF1', awayPlaceholder: 'Winner SF2' },
+    ]);
+    assert.equal(m.get('a')!.title, 'Finals');
+  });
+
+  it('a custom label also overrides graph-mode (renamed-code) titles', () => {
+    const games = [
+      { id: 't', bracketCode: 'test', roundLabel: 'Play-in', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #4' },
+      { id: 'f', bracketCode: 'FIN', roundLabel: '', homePlaceholder: 'Winner test', awayPlaceholder: 'Seed #2' },
+    ];
+    const m = computeBracketColumns(games);
+    assert.equal(m.get('t')!.title, 'Play-in');
+    assert.equal(m.get('f')!.title, 'Finals'); // empty label → derived
+  });
+
+  it('empty input returns an empty map', () => {
+    assert.equal(computeBracketColumns([]).size, 0);
   });
 });

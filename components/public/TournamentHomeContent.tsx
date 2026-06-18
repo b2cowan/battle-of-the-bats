@@ -1,13 +1,17 @@
 import Link from 'next/link';
 import { Calendar, Trophy, ChevronRight, Megaphone, Star, Eye, Clock, MapPin, CheckCircle } from 'lucide-react';
 import { getAnnouncements, getGames, getTeams, getDivisions, getVenues, getStandings, resolveTournamentContactEmail } from '@/lib/db';
-import type { Organization, Tournament } from '@/lib/types';
+import type { Game, Organization, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { getRegistrationState } from '@/lib/registration-state';
 import { tournamentToday } from '@/lib/timezone';
+import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { deriveChampions } from '@/lib/champions';
+import { bracketRoundLabel } from '@/lib/playoff-bracket';
+import SharePageButton from '@/components/public/SharePageButton';
 import LocationLink from '@/components/LocationLink';
 import MyTournamentCard from '@/components/public/MyTournamentCard';
 import { toPublicTeam } from '@/lib/public-tournament-data';
@@ -132,6 +136,10 @@ export default async function TournamentHomeContent({
     : null;
 
   const sortedDivisions = [...divisions].sort((a, b) => a.order - b.order);
+
+  // Champions for the completed-home banner (J6-052). allGames (raw, all statuses)
+  // so playoff finals aren't filtered out; teams here is the public-safe array (id+name).
+  const champions = isCompletedTournament ? deriveChampions(allGames, teams, sortedDivisions) : [];
   const ageRange = sortedDivisions.length > 0
     ? `${sortedDivisions[0].name} - ${sortedDivisions[sortedDivisions.length - 1].name}`
     : 'Divisions TBA';
@@ -145,6 +153,34 @@ export default async function TournamentHomeContent({
     return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-CA', {
       weekday: 'short', month: 'short', day: 'numeric',
     });
+  }
+
+  // Latest-Finals row — same stacked format as the Recent-Scores cards (away over
+  // home, winner trophy + green score, loser dimmed). Used by both finals lists.
+  function renderFinalRow(game: Game, href: string, meta: string) {
+    const aScore = game.awayScore;
+    const hScore = game.homeScore;
+    const winner = aScore == null || hScore == null ? null
+      : hScore > aScore ? 'home' : aScore > hScore ? 'away' : 'tie';
+    const awayName = game.awayTeamId ? getTeamName(game.awayTeamId) : (game.awayPlaceholder ?? 'TBD');
+    const homeName = game.homeTeamId ? getTeamName(game.homeTeamId) : (game.homePlaceholder ?? 'TBD');
+    return (
+      <Link key={game.id} href={href} className={styles.finalRow}>
+        <div className={styles.finalMatch}>
+          <div className={`${styles.finalTeam} ${winner === 'away' ? styles.finalWin : winner === 'home' ? styles.finalLose : ''}`}>
+            <span className={styles.finalWinIconSlot}>{winner === 'away' && <Trophy size={13} aria-label="Winner" />}</span>
+            <span className={styles.finalName}>{awayName}</span>
+            <span className={styles.finalScore}>{aScore}</span>
+          </div>
+          <div className={`${styles.finalTeam} ${winner === 'home' ? styles.finalWin : winner === 'away' ? styles.finalLose : ''}`}>
+            <span className={styles.finalWinIconSlot}>{winner === 'home' && <Trophy size={13} aria-label="Winner" />}</span>
+            <span className={styles.finalName}>{homeName}</span>
+            <span className={styles.finalScore}>{hScore}</span>
+          </div>
+        </div>
+        <span className={styles.finalMeta}>{meta}</span>
+      </Link>
+    );
   }
 
   const heroBanner = canUseAdvancedTournamentBranding(org)
@@ -188,7 +224,7 @@ export default async function TournamentHomeContent({
     acc.push({ key, label, location: game.location, venue });
     return acc;
   }, []).slice(0, 4);
-  const hasTournamentDayPanel = showSchedulePage && (isInProgress || todayGames.length > 0 || latestResults.length > 0);
+  const hasTournamentDayPanel = !isCompletedTournament && showSchedulePage && (isInProgress || todayGames.length > 0 || latestResults.length > 0);
 
   function gameStatusLabel(status: string) {
     if (status === 'completed') return 'Final';
@@ -228,6 +264,7 @@ export default async function TournamentHomeContent({
               standingsByDivision={Object.fromEntries(standingsByDivision)}
               scheduleHref={scheduleHref}
               fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
+              isCompleted={isCompletedTournament}
             />
           )}
 
@@ -243,15 +280,26 @@ export default async function TournamentHomeContent({
               <p className={styles.dayCardSub}>No games are scheduled for today.</p>
             ) : (
               <div className={styles.quickGameList}>
-                {todayGames.map(game => (
-                  <Link key={game.id} href={scheduleHref} className={styles.quickGameRow}>
-                    <span className={styles.quickGameTime}>{formatTime(game.time)}</span>
-                    <span className={styles.quickGameTeams}>
-                      {getTeamName(game.homeTeamId)} vs {getTeamName(game.awayTeamId)}
-                    </span>
-                    <span className={styles.quickGameMeta}>{game.location || getDivisionName(game.divisionId)}</span>
-                  </Link>
-                ))}
+                {todayGames.map(game => {
+                  const live = isGameLive(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES);
+                  const hasScore = game.homeScore != null && game.awayScore != null;
+                  return (
+                    <Link key={game.id} href={getGameHref(game.id)} className={styles.quickGameRow}>
+                      {live ? (
+                        <span className={styles.myTeamLiveBadge}>
+                          <span className={styles.myTeamLiveDot} />
+                          {hasScore ? `${game.homeScore}–${game.awayScore}` : 'LIVE'}
+                        </span>
+                      ) : (
+                        <span className={styles.quickGameTime}>{formatTime(game.time)}</span>
+                      )}
+                      <span className={styles.quickGameTeams}>
+                        {game.homeTeamId ? getTeamName(game.homeTeamId) : (game.homePlaceholder ?? 'TBD')} vs {game.awayTeamId ? getTeamName(game.awayTeamId) : (game.awayPlaceholder ?? 'TBD')}
+                      </span>
+                      <span className={styles.quickGameMeta}>{game.location || getDivisionName(game.divisionId)}</span>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -268,15 +316,7 @@ export default async function TournamentHomeContent({
               <p className={styles.dayCardSub}>Final scores will appear here once games are completed.</p>
             ) : (
               <div className={styles.quickGameList}>
-                {latestResults.map(game => (
-                  <Link key={game.id} href={scheduleHref} className={styles.quickGameRow}>
-                    <span className={styles.scorePill}>{game.homeScore} - {game.awayScore}</span>
-                    <span className={styles.quickGameTeams}>
-                      {getTeamName(game.homeTeamId)} vs {getTeamName(game.awayTeamId)}
-                    </span>
-                    <span className={styles.quickGameMeta}>{gameStatusLabel(game.status)}</span>
-                  </Link>
-                ))}
+                {latestResults.map(game => renderFinalRow(game, scheduleHref, gameStatusLabel(game.status)))}
               </div>
             )}
           </div>
@@ -323,6 +363,48 @@ export default async function TournamentHomeContent({
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+  ) : null;
+
+  const singleChampion = champions.length === 1;
+  const multiDivision = divisions.length > 1;
+
+  const championBanner = isCompletedTournament && champions.length > 0 ? (
+    <section className={`section ${styles.championSection}`} id="champions">
+      <div className="container">
+        <div className="section-header">
+          <span className="eyebrow"><Trophy size={12} /> Tournament Champions</span>
+          <h2 className="display-md">{singleChampion ? `${champions[0].champion} — Champion` : 'Champions'}</h2>
+        </div>
+
+        {singleChampion ? (
+          <div className={`${styles.championCard} ${styles.championSingle}`}>
+            {multiDivision && <span className={styles.championDivision}>{champions[0].division}</span>}
+            <div className={styles.championName}>{champions[0].champion}</div>
+            {champions[0].runnerUp && <div className={styles.championRunnerUp}>Runner-up: {champions[0].runnerUp}</div>}
+          </div>
+        ) : (
+          <div className={styles.championGrid}>
+            {champions.map(ch => (
+              <div key={ch.division} className={styles.championCard}>
+                <span className={styles.championDivision}>{ch.division}</span>
+                <div className={styles.championName}>{ch.champion}</div>
+                {ch.runnerUp && <div className={styles.championRunnerUp}>Runner-up: {ch.runnerUp}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className={styles.championShareRow}>
+          <SharePageButton
+            url={publicBase}
+            title={tournament.name}
+            text={`${champions.map(c => `${c.champion}${multiDivision ? ` (${c.division})` : ''}`).join(', ')} — Champions`}
+            label="Share results"
+            className="btn btn-outline btn-sm"
+          />
         </div>
       </div>
     </section>
@@ -421,15 +503,7 @@ export default async function TournamentHomeContent({
                 <p className={styles.dayCardSub}>No final scores have been posted yet.</p>
               ) : (
                 <div className={styles.quickGameList}>
-                  {latestResults.map(game => (
-                    <Link key={game.id} href={getGameHref(game.id)} className={styles.quickGameRow}>
-                      <span className={styles.scorePill}>{game.homeScore} - {game.awayScore}</span>
-                      <span className={styles.quickGameTeams}>
-                        {getTeamName(game.homeTeamId)} vs {getTeamName(game.awayTeamId)}
-                      </span>
-                      <span className={styles.quickGameMeta}>{formatDate(game.date)}</span>
-                    </Link>
-                  ))}
+                  {latestResults.map(game => renderFinalRow(game, getGameHref(game.id), formatDate(game.date)))}
                 </div>
               )}
             </div>
@@ -466,7 +540,7 @@ export default async function TournamentHomeContent({
               <div key={game.id} className={`card ${styles.gameCard}`}>
                 <div className={styles.gameHeader}>
                   <span className="badge badge-primary">
-                    {game.isPlayoff && game.bracketCode ? game.bracketCode : getDivisionName(game.divisionId)}
+                    {game.isPlayoff && game.bracketCode ? bracketRoundLabel(game.bracketCode) : getDivisionName(game.divisionId)}
                   </span>
                   <span className={styles.gameDate}>{formatDate(game.date)} - {formatTime(game.time)}</span>
                 </div>
@@ -539,13 +613,18 @@ export default async function TournamentHomeContent({
             {tournament.name}
           </h1>
           <p className={styles.heroSub}>
-            Hosted by <strong>{org.name}</strong>. View tournament details and updates in one place.
+            Hosted by <strong>{org.name}</strong>.
+            {isCompletedTournament
+              ? ' Thanks for following along — final scores and standings are preserved below.'
+              : ' View tournament details and updates in one place.'}
           </p>
 
-          <div className={styles.registrationStatus}>
-            <strong>{registration.label}</strong>
-            <span>{registration.detail}</span>
-          </div>
+          {!isInProgress && !isCompletedTournament && (
+            <div className={styles.registrationStatus}>
+              <strong>{registration.label}</strong>
+              <span>{registration.detail}</span>
+            </div>
+          )}
 
           {/* The one conversion CTA lives on the hero (not in the persistent
               header, which stays logo + name + share). Lifecycle-gated. */}
@@ -557,26 +636,28 @@ export default async function TournamentHomeContent({
             </div>
           )}
 
-          <div className={styles.stats}>
-            <div className={styles.stat}>
-              <span className={styles.statNum}>
-                {divisions.length ? <CountUp value={divisions.length} /> : 'TBA'}
-              </span>
-              <span className={styles.statLabel}>Divisions</span>
+          {!isInProgress && !isCompletedTournament && (
+            <div className={styles.stats}>
+              <div className={styles.stat}>
+                <span className={styles.statNum}>
+                  {divisions.length ? <CountUp value={divisions.length} /> : 'TBA'}
+                </span>
+                <span className={styles.statLabel}>Divisions</span>
+              </div>
+              <div className={styles.statDivider} />
+              <div className={styles.stat}>
+                <span className={styles.statNum}>
+                  {teams.length ? <CountUp value={teams.length} /> : 'TBA'}
+                </span>
+                <span className={styles.statLabel}>Teams</span>
+              </div>
+              <div className={styles.statDivider} />
+              <div className={styles.stat}>
+                <span className={`${styles.statNum} ${styles.ageRangeText}`}>{ageRange}</span>
+                <span className={styles.statLabel}>Age Range</span>
+              </div>
             </div>
-            <div className={styles.statDivider} />
-            <div className={styles.stat}>
-              <span className={styles.statNum}>
-                {teams.length ? <CountUp value={teams.length} /> : 'TBA'}
-              </span>
-              <span className={styles.statLabel}>Teams</span>
-            </div>
-            <div className={styles.statDivider} />
-            <div className={styles.stat}>
-              <span className={`${styles.statNum} ${styles.ageRangeText}`}>{ageRange}</span>
-              <span className={styles.statLabel}>Age Range</span>
-            </div>
-          </div>
+          )}
         </div>
 
         <div className={styles.heroScroll}>
@@ -584,6 +665,7 @@ export default async function TournamentHomeContent({
         </div>
       </section>
 
+      {championBanner}
       {completedRecordPanel}
       {tournamentDayPanel}
       {isInProgress && scheduleBlock}

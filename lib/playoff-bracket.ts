@@ -498,6 +498,50 @@ export function bracketRoundInfo(code: string): BracketRoundInfo {
 }
 
 /**
+ * Fan-friendly SINGULAR round name for ONE bracket game — "Final", "Semifinal",
+ * "Quarterfinal", "Round of 16", "3rd Place", "Grand Final", etc. Unlike
+ * bracketRoundInfo (which groups games into display COLUMNS and so deliberately
+ * files the 3rd-place game under the "Finals" column), this names the individual
+ * game the way a spectator would say it. Use it for standalone badges/labels on
+ * public surfaces; keep bracketRoundInfo for grouping a bracket into columns.
+ * Falls back to the raw code (or "Playoff") for anything it doesn't recognise.
+ */
+export function bracketRoundLabel(code: string | null | undefined): string {
+  const c = (code || '').toUpperCase();
+  if (!c) return 'Playoff';
+
+  // 3rd-place / bronze game — explicitly NOT the Final (bracketRoundInfo lumps it there).
+  if (c === 'P3' || c === '3RD') return '3rd Place';
+
+  // Full placement / classification (PL{place} deciding game; PL{place}R{round}-{game} sub-bracket)
+  if (c.startsWith('PL')) {
+    const m = c.match(/^PL(\d+)(?:R(\d+))?/);
+    const place = m ? parseInt(m[1], 10) || 0 : 0;
+    if (!place) return 'Placement';
+    return m && m[2] ? `${ordinal(place)} Place Bracket` : `${ordinal(place)} Place`;
+  }
+
+  // Double elimination
+  if (c === 'GF') return 'Grand Final';
+  if (c === 'GF2') return 'Grand Final (Game 2)';
+  if (c.startsWith('WB')) return 'Winners Bracket';
+  if (c.startsWith('LB')) return 'Losers Bracket';
+  if (c.startsWith('CON')) return 'Consolation';
+
+  // Single elimination championship path (auto: Round of N for 16+; manual: Round N)
+  if (/^R\d+-/.test(c)) {
+    const n = parseInt(c.match(/^R(\d+)-/)?.[1] ?? '0', 10) || 0;
+    return n >= 16 ? `Round of ${n}` : `Round ${n}`;
+  }
+  if (c.startsWith('QF')) return 'Quarterfinal';
+  if (c.startsWith('SF')) return 'Semifinal';
+  if (c === 'FIN' || c === 'IF') return 'Final';
+
+  // Unknown / manual code — show it as-is rather than guess a meaning.
+  return code || 'Playoff';
+}
+
+/**
  * Display-only relabel for the forked double-elim bracket UI. Winners-bracket
  * round 1 IS the shared "Seed Round" shown ahead of the fork, so the winners
  * bracket proper should read WB1, WB2, … (not WB2, WB3, …). Rewrite WB round
@@ -590,6 +634,7 @@ export function resolvePlayoffWinner(g: {
 export interface LoadableBracketGame {
   id: string;
   bracketCode?: string | null;
+  roundLabel?: string | null;
   homePlaceholder?: string | null;
   awayPlaceholder?: string | null;
   date?: string | null;
@@ -621,9 +666,10 @@ export interface BracketPreviewRow {
  * placeholder as the slot label (so wiring round-trips).
  */
 export function gamesToBracketPreview(games: LoadableBracketGame[]): BracketPreviewRow[] {
+  const colMap = computeBracketColumns(games);
   const groups = new Map<string, { title: string; rank: number; games: LoadableBracketGame[] }>();
   for (const g of games) {
-    const info = bracketRoundInfo(g.bracketCode || '');
+    const info = colMap.get(g.id) || bracketRoundInfo(g.bracketCode || '');
     let grp = groups.get(info.key);
     if (!grp) { grp = { title: info.title, rank: info.rank, games: [] }; groups.set(info.key, grp); }
     grp.games.push(g);
@@ -709,6 +755,177 @@ export function findBracketSchedulingViolations(games: BracketTimingGame[]): Bra
     }
   }
   return out;
+}
+
+export interface ManualCodeGame {
+  bracketCode?: string | null;
+  homePlaceholder?: string | null;
+  awayPlaceholder?: string | null;
+}
+
+/**
+ * Choose a fresh, collision-free bracket code for a hand-added playoff game.
+ *
+ * Bracket codes are internal wiring — `advancePlayoffs` matches `Winner <code>` /
+ * `Loser <code>` against them. Users never type codes (they wire games via the
+ * Winner/Loser pickers), so this assigns one automatically; a stray keystroke can
+ * no longer orphan downstream references.
+ *
+ * Emits the canonical manual scheme `R{round}-{n}` (rendered as ordered "Round N"
+ * columns by `bracketRoundInfo`). `round` is the new game's depth in the
+ * Winner/Loser feed graph over `existing`: a game that references only seeds/teams
+ * is Round 1; one that references the Winner/Loser of round-r games is round r+1.
+ * `n` is the next index not already used by an existing code in that round.
+ */
+export function nextManualBracketCode(
+  existing: ManualCodeGame[],
+  homePlaceholder?: string | null,
+  awayPlaceholder?: string | null,
+): string {
+  const byCode = new Map<string, ManualCodeGame>();
+  for (const g of existing) if (g.bracketCode) byCode.set(g.bracketCode, g);
+
+  const depCodes = (home?: string | null, away?: string | null): string[] =>
+    [home, away]
+      .map(p => ADVANCEMENT_REF_RE.exec(p || '')?.[1]?.trim())
+      .filter((c): c is string => !!c && byCode.has(c));
+
+  // Round of each existing game (fixpoint over the feed graph).
+  const round = new Map<string, number>();
+  for (let guard = 0; guard < 200; guard++) {
+    let changed = false;
+    for (const g of existing) {
+      if (!g.bracketCode) continue;
+      const deps = depCodes(g.homePlaceholder, g.awayPlaceholder);
+      let r: number;
+      if (deps.length === 0) r = 1;
+      else { if (!deps.every(d => round.has(d))) continue; r = 1 + Math.max(...deps.map(d => round.get(d)!)); }
+      if (round.get(g.bracketCode) !== r) { round.set(g.bracketCode, r); changed = true; }
+    }
+    if (!changed) break;
+  }
+  // A game the fixpoint couldn't resolve (a dependency cycle or a dangling ref —
+  // only external/legacy data can create these, never the UI) still gets a Round 1
+  // floor, so a real feeder is never silently dropped from the new game's depth.
+  for (const g of existing) if (g.bracketCode && !round.has(g.bracketCode)) round.set(g.bracketCode, 1);
+
+  // Round of the NEW game from its picked placeholders.
+  const newDeps = depCodes(homePlaceholder, awayPlaceholder).filter(d => round.has(d));
+  const newRound = newDeps.length === 0 ? 1 : 1 + Math.max(...newDeps.map(d => round.get(d)!));
+
+  const used = new Set([...byCode.keys()].map(c => c.toUpperCase()));
+  let n = 1;
+  while (used.has(`R${newRound}-${n}`.toUpperCase())) n++;
+  return `R${newRound}-${n}`;
+}
+
+/** Codes that bracketRoundInfo recognizes as a real round/section (not the rank-1000 fallback). */
+const RECOGNIZED_CODE_RE = /^(R\d+-|QF|SF|FIN|WB|LB|GF|CON|PL|P3|3RD|IF)/i;
+/** Multi-section formats whose code-based grouping + fork rendering must stay untouched. */
+const SECTION_CODE_RE = /^(WB|LB|GF|CON|PL|P3|3RD)/i;
+
+export interface BracketColumnGame {
+  id: string;
+  bracketCode?: string | null;
+  /** Optional custom column name; overrides the derived round TITLE (not the key/rank). */
+  roundLabel?: string | null;
+  homePlaceholder?: string | null;
+  awayPlaceholder?: string | null;
+}
+
+/**
+ * Assign each game to a bracket display COLUMN by the Winner/Loser FEED GRAPH
+ * (who-feeds-whom) rather than by parsing the `bracket_code` string — so a
+ * renamed code ("test") or a legacy scheme ("G1".."G7") still groups into ordered
+ * round columns instead of scattering into its own rank-1000 column.
+ *
+ * Returns a per-game `{key,title,rank}` map in the SAME shape `bracketRoundInfo`
+ * returns, so every renderer swaps a single lookup and keeps its own grouping/
+ * fork code. The mode is decided for the whole bracket (never mixed):
+ *
+ *  - **Code path** (unchanged behavior) when EVERY code is already recognized, OR
+ *    any multi-section code (WB/LB/GF/CON/PL/P3/3RD) is present: per-game
+ *    `bracketRoundInfo`. Standard single-elim, double-elim, consolation, placement,
+ *    and 3rd-place all render exactly as before — zero regression.
+ *  - **Graph path** only when a NON-standard/legacy code appears with no
+ *    multi-section structure (i.e. the brackets that scatter today): place games by
+ *    their depth in the feed graph (seeds/teams-only = depth 1; Winner/Loser of a
+ *    depth-r game = r+1). Columns are titled from the end (deepest = Finals, then
+ *    Semifinals, Quarterfinals, else "Round N").
+ */
+export function computeBracketColumns(games: BracketColumnGame[]): Map<string, BracketRoundInfo> {
+  const out = new Map<string, BracketRoundInfo>();
+  if (!games.length) return out;
+
+  // Apply an organizer's custom column name (round_label) as a TITLE override —
+  // grouping key + rank stay structural, so only the displayed name changes. A
+  // label is a COLUMN property: pick one label per structural key (first non-empty
+  // wins) and apply it to EVERY game in that column, so a partially-labeled column
+  // reads consistently (no first-game-wins nondeterminism / re-save spreading).
+  const applyLabels = () => {
+    const labelByKey = new Map<string, string>();
+    for (const g of games) {
+      const lbl = g.roundLabel?.trim();
+      const info = lbl ? out.get(g.id) : undefined;
+      if (info && !labelByKey.has(info.key)) labelByKey.set(info.key, lbl as string);
+    }
+    if (labelByKey.size === 0) return out;
+    for (const g of games) {
+      const info = out.get(g.id);
+      const lbl = info && labelByKey.get(info.key);
+      if (info && lbl && info.title !== lbl) out.set(g.id, { ...info, title: lbl });
+    }
+    return out;
+  };
+
+  const hasSection = games.some(g => SECTION_CODE_RE.test(g.bracketCode || ''));
+  // A codeless game counts as "recognized" so it can't, by itself, flip a standard
+  // QF/SF/FIN bracket into graph mode — it keeps its existing rank-1000 own column.
+  const allRecognized = games.every(g => !g.bracketCode || RECOGNIZED_CODE_RE.test(g.bracketCode));
+  if (hasSection || allRecognized) {
+    for (const g of games) out.set(g.id, bracketRoundInfo(g.bracketCode || ''));
+    return applyLabels();
+  }
+
+  // Graph path: depth per game from the feed graph (fixpoint, same as nextManualBracketCode).
+  const byCode = new Map<string, BracketColumnGame>();
+  for (const g of games) if (g.bracketCode) byCode.set(g.bracketCode, g);
+  const deps = (g: BracketColumnGame): string[] =>
+    [g.homePlaceholder, g.awayPlaceholder]
+      .map(p => ADVANCEMENT_REF_RE.exec(p || '')?.[1]?.trim())
+      .filter((c): c is string => !!c && byCode.has(c));
+
+  const depthByCode = new Map<string, number>();
+  for (let guard = 0; guard < 500; guard++) {
+    let changed = false;
+    for (const g of games) {
+      if (!g.bracketCode) continue;
+      const d = deps(g);
+      let r: number;
+      if (d.length === 0) r = 1;
+      else { if (!d.every(c => depthByCode.has(c))) continue; r = 1 + Math.max(...d.map(c => depthByCode.get(c)!)); }
+      if (depthByCode.get(g.bracketCode) !== r) { depthByCode.set(g.bracketCode, r); changed = true; }
+    }
+    if (!changed) break;
+  }
+  const depthOf = (g: BracketColumnGame): number => {
+    if (g.bracketCode && depthByCode.has(g.bracketCode)) return depthByCode.get(g.bracketCode)!;
+    const d = deps(g).filter(c => depthByCode.has(c)); // codeless / cycle / dangling → placeholder depth, floor 1
+    return d.length ? 1 + Math.max(...d.map(c => depthByCode.get(c)!)) : 1;
+  };
+
+  const dG = new Map<string, number>();
+  let maxDepth = 1;
+  for (const g of games) { const d = depthOf(g); dG.set(g.id, d); if (d > maxDepth) maxDepth = d; }
+  const titleFor = (depth: number): string => {
+    if (depth === maxDepth) return 'Finals';
+    const fromEnd = maxDepth - depth;
+    if (fromEnd === 1) return 'Semifinals';
+    if (fromEnd === 2) return 'Quarterfinals';
+    return `Round ${depth}`;
+  };
+  for (const g of games) { const d = dG.get(g.id)!; out.set(g.id, { key: `RND${d}`, title: titleFor(d), rank: d }); }
+  return applyLabels();
 }
 
 /**

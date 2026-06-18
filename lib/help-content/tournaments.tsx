@@ -287,10 +287,13 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-score-finalization-setting',
           question: 'Where do I control whether scores need admin review?',
-          answerText: 'Use Event Settings to control score finalization behavior.',
-          keywords: ['score finalization', 'pending review', 'scorekeepers', 'scoring settings'],
+          answerText: 'Use Event Settings to control score finalization behavior. If fan score alerts are on (Tournament Plus), the Final alert is sent when a score becomes final — for tournaments that send submissions to Pending Review, that is when an admin finalizes it.',
+          keywords: ['score finalization', 'pending review', 'scorekeepers', 'scoring settings', 'final alert'],
           answer: (
-            <p>Open <strong>Event Settings</strong> and find the Scoring section. Choose whether this tournament inherits the organization setting, sends scorekeeper submissions to Pending Review, or finalizes scorekeeper submissions immediately. Admin score entry from Results &amp; Scoring remains an admin action and can always finalize or correct scores.</p>
+            <>
+              <p>Open <strong>Event Settings</strong> and find the Scoring section. Choose whether this tournament inherits the organization setting, sends scorekeeper submissions to Pending Review, or finalizes scorekeeper submissions immediately. Admin score entry from Results &amp; Scoring remains an admin action and can always finalize or correct scores.</p>
+              <p>If you&rsquo;ve turned on fan score alerts (Tournament Plus), the &ldquo;Final&rdquo; alert is sent when a score becomes final. For tournaments that send submissions to Pending Review, that&rsquo;s the moment an admin finalizes the score.</p>
+            </>
           ),
         },
         {
@@ -507,7 +510,7 @@ const tournamentsHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p>Switch to the <strong>Playoffs</strong> stage on the Schedule page to manage bracket games. Free Tournament orgs can add playoff games manually using the inline <strong>BracketEditor</strong>; Tournament Plus, League Plus, and Club can also use the <strong>Playoff Wizard</strong> for format-based auto-generation.</p>
+          <p>Switch to the <strong>Playoffs</strong> stage on the Schedule page to manage bracket games. Free Tournament orgs can add playoff games manually using the inline <strong>bracket editor</strong>; Tournament Plus, League Plus, and Club can also use the <strong>Playoff Wizard</strong> for format-based auto-generation.</p>
           <p>The inline bracket editor is a canvas where you add rounds, set up matchups, and wire Seed/Winner/Loser placeholders. Once pool play is complete and standings are known, the placeholders resolve to the real teams.</p>
           <p><strong>Bracket view</strong> on the Schedule page lets admins inspect playoff paths and advancement after games are created. It is a read-oriented visualization alongside the editable list and timeline.</p>
           <p>To build a bracket:</p>
@@ -688,10 +691,10 @@ const tournamentsHelp: HelpPageContent = {
     {
       id: 'public-site-preview',
       group: 'Communicate & Publish',
-      heading: 'The public tournament site and preview',
-      summary: 'What teams and fans see online — and how to check it before going live.',
-      keywords: ['public site', 'preview', 'public tournament page', 'teams see', 'public schedule', 'standings'],
-      searchText: 'public tournament site preview schedule standings results teams rules news registration public page what teams see preview site before activation',
+      heading: 'The public tournament site, fan following, and preview',
+      summary: 'What teams and fans see online — following a team, score alerts, the home-screen app — and how to preview it.',
+      keywords: ['public site', 'preview', 'public tournament page', 'teams see', 'public schedule', 'standings', 'follow a team', 'score alerts', 'add to home screen', 'install app', 'offline'],
+      searchText: 'public tournament site preview schedule standings results teams rules news registration public page what teams see preview site before activation fans follow a team my team score alerts push notification final alert add to home screen install the app home screen icon fan app works offline last scores branded icon iphone android',
       links: [
         { label: 'Preview Site', href: '../tournaments/dashboard' },
       ],
@@ -700,8 +703,39 @@ const tournamentsHelp: HelpPageContent = {
           <p>Use <strong>Preview Site</strong> from the tournament sidebar footer to inspect the public tournament experience before or after activation.</p>
           <p>The public tournament site can include registration, schedule, standings, results, teams, rules, resources, and news depending on tournament setup and status.</p>
           <p>Preview is always available to admins regardless of tournament status. Share the preview link internally to review the public experience before you activate.</p>
+          <p><strong>Following a team.</strong> Fans can follow a team on the public site — no account needed — to get a personalized &ldquo;my team&rdquo; view: next game, live score, and current standing, front and centre. Following, live public scores, and the home-screen app are included on every plan.</p>
+          <p><strong>Score alerts.</strong> On Tournament Plus and above, fans who follow a team can turn on <strong>score alerts</strong> — a push notification when their team&rsquo;s game goes live and a &ldquo;Final&rdquo; when it ends. Tapping an alert opens that game, and on a branded event the notification carries your tournament logo.</p>
+          <p><strong>Add to home screen (the fan app).</strong> Fans can add the tournament to their phone&rsquo;s home screen and open it like an app — straight to your event. On iPhone, alerts only work once the page has been added to the home screen (Apple&rsquo;s rule), so the alerts button there shows an &ldquo;add to home screen for alerts&rdquo; prompt first, with a one-time reminder after they install. On Tournament Plus events the home-screen icon and app name carry your tournament branding; free events use the default FieldLogicHQ icon.</p>
+          <p><strong>Works at the field.</strong> Once a fan has opened the tournament, the installed app keeps the last-loaded scores and schedule available on a weak or dropped signal and shows a tidy &ldquo;you&rsquo;re offline&rdquo; screen instead of a browser error.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-fan-score-alerts',
+          question: 'Can fans get a notification when their team scores?',
+          answerText: 'Yes, on Tournament Plus and above. Fans follow a team on the public site, then turn on score alerts to get a push when the game goes live and a Final when it ends. Following, live public scores, and the home-screen app are free on every plan; score alerts are Tournament Plus and above. No fan account is needed — it is per device.',
+          keywords: ['score alerts', 'fan alerts', 'push notification', 'follow a team', 'live score', 'Tournament Plus'],
+          popular: true,
+          answer: (
+            <>
+              <p>Yes — on <strong>Tournament Plus and above</strong>. A fan follows a team on the public tournament site, then taps <strong>Get score alerts</strong> and allows notifications. They get a push when that team&rsquo;s game goes live and a &ldquo;Final&rdquo; when it ends.</p>
+              <p>Following a team, live public scores, and adding the tournament to the home screen are included on <strong>every plan</strong>. Score alerts are available on Tournament Plus and above. No fan account is required — alerts are tied to that person&rsquo;s device.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-iphone-alerts',
+          question: "Why don't score alerts appear on some iPhones?",
+          answerText: 'Apple only allows web push alerts on iPhone and iPad after the page is added to the home screen. Until then the alerts button shows an add-to-home-screen prompt. Once the fan adds it and opens it from the home screen, the Get score alerts button works normally. Android shows the alerts button directly.',
+          keywords: ['iphone alerts', 'ipad', 'add to home screen', 'safari', 'no alerts button', 'apple'],
+          answer: (
+            <>
+              <p>On iPhone and iPad, Apple only allows these alerts <strong>after the page is added to the home screen</strong>. Until then, the alerts control shows an &ldquo;add to home screen for alerts&rdquo; prompt instead of a button that wouldn&rsquo;t work.</p>
+              <p>Once a fan adds the tournament to their home screen and opens it from there, the <strong>Get score alerts</strong> button works normally, with a one-time reminder to switch alerts on. Android shows the alerts button directly — no install step needed.</p>
+            </>
+          ),
+        },
+      ],
     },
 
     // ── CLOSE OUT ─────────────────────────────────────────────────────────

@@ -2532,10 +2532,11 @@
   .planningMatchup {
     grid-column: 1 / -1;
     grid-row: 2;
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    gap: 0.55rem !important;
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.2rem !important;
     width: 100%;
+    max-width: none;
     min-width: 0;
   }
 
@@ -2543,13 +2544,6 @@
   .planningTeamHome {
     min-width: 0;
     font-size: 0.82rem !important;
-  }
-
-  .planningTeamAway {
-    text-align: right !important;
-  }
-
-  .planningTeamHome {
     text-align: left !important;
   }
 
@@ -2608,11 +2602,7 @@
 
   .scoringMatchupCell {
     grid-area: matchup;
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    min-width: 0;
+    max-width: none;
     width: 100%;
   }
 
@@ -2664,10 +2654,23 @@
   overflow: hidden;
   line-height: 1.25;
 }
-.planningTeamAway { text-align: right; }
+/* Planning matchup — stacked away-over-home names (no scores in this mode).
+   Centered in the (growing) matchup column so a full-width row stays balanced and
+   the expand chevron doesn't strand far to the right; the block is a fixed width
+   so names still line up across rows. */
+.planningMatchup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  max-width: 24rem;
+  margin: 0 auto;
+  min-width: 0;
+}
+.planningTeamAway,
 .planningTeamHome { text-align: left; }
 
-/* Scoring-mode name span (sits beside the inline score/W-L marker). */
+/* Scoring-mode name span (sits beside the inline score). */
 .scoringTeamName {
   font-family: var(--font-data);
   font-size: 0.85rem;
@@ -2680,6 +2683,54 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.25;
+}
+
+/* Scoring matchup — stacked away-over-home (mirrors the public score cards);
+   the score value / input-stepper stays inline on the right of each team row. */
+.scoringMatchupCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  max-width: 28rem;
+  /* Left-aligned (not centered): the matchup column width varies per row with the
+     rail (Finalize vs Scheduled), so centering would drift the names. The date
+     column is a fixed width, so left-aligning lines the names up across every
+     row — scored or not — and keeps the score column at a consistent right edge. */
+  margin: 0;
+  min-width: 0;
+}
+
+.scoringTeamRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.scoringTeamRow .scoringTeamName {
+  flex: 1;
+  text-align: left;
+}
+
+/* While editing a score, let the matchup use the full column width so the score
+   inputs/steppers reach across instead of bunching in a narrow left block. */
+.scoringMatchupCell[data-editing="true"] {
+  max-width: none;
+}
+
+/* Keep the status/edit rail flush to the row's right edge — the matchup is
+   width-capped for alignment, so without this the rail would sit mid-row. */
+.scoringRailCell {
+  margin-left: auto;
+}
+
+/* Finalize — full "Finalize" label on desktop, compact ✓ icon on mobile so the
+   row rail stays slim (the floating worklist bar carries the batched action). */
+.finalizeIcon { display: none; }
+@media (max-width: 768px) {
+  .finalizeLabel { display: none; }
+  .finalizeIcon { display: inline-flex; align-items: center; }
 }
 
 /* ─── Planning Mode Status Cell ──────────────────────────────────────────── */
@@ -3219,6 +3270,46 @@
   text-overflow: ellipsis;
 }
 
+/* "Forfeit" → "who forfeited?" picker — the team buttons only appear after the
+   single Forfeit button is tapped, so the bar isn't cluttered with two full team
+   names by default. Wraps cleanly on narrow widths. */
+.forfeitPicker {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.forfeitPrompt {
+  font-size: 0.7rem;
+  color: var(--data-gray);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Per-team "Forfeited" choice that replaces the score stepper in forfeit mode. */
+.forfeitChoiceBtn {
+  flex-shrink: 0;
+  white-space: nowrap;
+  color: rgba(var(--warning-rgb), 0.85);
+}
+
+@media (max-width: 768px) {
+  /* Phones: let the action bar wrap so BOTH No-show buttons and Save are always
+     visible — the desktop single-row layout clipped the second forfeit button.
+     Forfeit options take the first line(s); Discard/Save sit right-aligned below. */
+  .scoreActionBar { flex-wrap: wrap; }
+  .scoreActionBarLeft { overflow: visible; flex-wrap: wrap; flex: 1 1 100%; }
+  .scoreActionBarRight { margin-left: auto; }
+  .forfeitBtn {
+    max-width: 7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
 /* ─── Game Row Cell ───────────────────────────────────────────────────────── */
 .cell {
   font-size: 0.95rem;
@@ -3690,26 +3781,6 @@
     background: rgba(var(--logic-lime-rgb), 0.14);
     border-color: rgba(var(--logic-lime-rgb), 0.5);
     color: var(--logic-lime);
-  }
-
-  /* Stack the two teams when editing → full-width rows, big steppers, name left */
-  .scoringMatchupCell[data-editing="true"] {
-    flex-direction: column;
-    align-items: stretch !important;
-    gap: 0.5rem;
-  }
-
-  .scoringMatchupCell[data-editing="true"] > div {
-    width: 100%;
-    justify-content: space-between !important;
-  }
-
-  .scoringMatchupCell[data-editing="true"] > div:nth-child(1) {
-    flex-direction: row-reverse; /* away: team name left, steppers right (matches home) */
-  }
-
-  .scoringMatchupCell[data-editing="true"] > div:nth-child(2) {
-    display: none; /* hide the VS divider when stacked */
   }
 }
 

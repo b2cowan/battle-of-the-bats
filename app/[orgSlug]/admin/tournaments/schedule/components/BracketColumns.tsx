@@ -1,7 +1,7 @@
 'use client';
 import React, { useRef } from 'react';
 import { Calendar, Clock, MapPin, Trophy, Pencil, Trash2 } from 'lucide-react';
-import { bracketRoundInfo, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
+import { bracketRoundInfo, computeBracketColumns, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
 import { formatTime } from '@/lib/utils';
 import BracketConnectors from './BracketConnectors';
 import BracketZoomFrame from './BracketZoomFrame';
@@ -20,9 +20,10 @@ export function buildBracketColumns(games: any[]) {
     if (/^3RD/i.test(a.bracketCode || '') && /^FIN/i.test(b.bracketCode || '')) return 1;
     return (a.bracketCode || '').localeCompare(b.bracketCode || '');
   };
+  const colMap = computeBracketColumns(games);
   const groups = new Map<string, { key: string; title: string; rank: number; games: any[] }>();
   for (const g of games) {
-    let info = bracketRoundInfo(g.bracketCode || '');
+    let info = colMap.get(g.id) || bracketRoundInfo(g.bracketCode || '');
     // The "if necessary" reset is its own column just right of the Grand Final.
     if ((g.bracketCode || '').toUpperCase() === 'GF2') {
       info = { key: 'GF2', title: 'Grand Final Game 2 (If Necessary)', rank: 501 };

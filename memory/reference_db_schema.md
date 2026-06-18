@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-06-17 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-06-18 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-06-17
+# DB Schema Reference — 2026-06-18
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -26,7 +26,7 @@ id (uuid), tournament_id (uuid) → tournaments.id, name NOT NULL, address, note
 id (uuid), tournament_id (uuid) → tournaments.id, name NOT NULL, min_age (integer), max_age (integer), display_order (integer), is_closed (boolean), capacity (integer), pool_count (integer), pool_names, requires_pool_selection (boolean), playoff_config (jsonb), deposit_amount (numeric), deposit_due_date, total_fee_amount (numeric), total_fee_due_date, schedule_visibility, contact_member_id (uuid) → organization_members.id, settings (jsonb)
 
 ### games
-id (uuid), tournament_id (uuid) → tournaments.id, division_id (uuid) → divisions.id, home_team_id (uuid) → teams.id, away_team_id (uuid) → teams.id, game_date, game_time (time without time zone), location, diamond_id (uuid) → diamonds.id, home_score (integer), away_score (integer), status, is_playoff (boolean), bracket_id (uuid), bracket_code, home_placeholder, away_placeholder, notes, home_slot_id (uuid) → pool_slots.id, away_slot_id (uuid) → pool_slots.id, score_submitted_by_user_id (uuid), score_submitted_by_email, score_submitted_at, score_submission_source, venue_facility_id (uuid) → venue_facilities.id, schedule_facility_lane_id (uuid) → schedule_facility_lanes.id, generator_locked (boolean), duration_minutes (integer)
+id (uuid), tournament_id (uuid) → tournaments.id, division_id (uuid) → divisions.id, home_team_id (uuid) → teams.id, away_team_id (uuid) → teams.id, game_date, game_time (time without time zone), location, diamond_id (uuid) → diamonds.id, home_score (integer), away_score (integer), status, is_playoff (boolean), bracket_id (uuid), bracket_code, home_placeholder, away_placeholder, notes, home_slot_id (uuid) → pool_slots.id, away_slot_id (uuid) → pool_slots.id, score_submitted_by_user_id (uuid), score_submitted_by_email, score_submitted_at, score_submission_source, venue_facility_id (uuid) → venue_facilities.id, schedule_facility_lane_id (uuid) → schedule_facility_lanes.id, generator_locked (boolean), duration_minutes (integer), round_label
 - Indexes: games_schedule_facility_lane_id_idx, games_score_submitted_at_idx, games_venue_facility_id_idx, idx_games_away_slot_id, idx_games_generator_locked, idx_games_home_slot_id
 
 ### org_venue_facilities

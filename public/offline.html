@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <title>You're offline · FieldLogicHQ</title>
+  <!-- Self-contained: the service worker serves this when a navigation fails and no
+       last-good page is cached. NO external CSS/JS/font/image so it always renders
+       with zero network. The document URL stays the page the user requested, so
+       "Try again" reloads that real page (J6-044). -->
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.25rem;
+      padding: 2rem calc(1.5rem + env(safe-area-inset-right)) calc(2rem + env(safe-area-inset-bottom)) calc(1.5rem + env(safe-area-inset-left));
+      text-align: center;
+      background: #0a0a0f;
+      color: #f5f5f7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .mark {
+      font-weight: 800;
+      font-size: 1.05rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(245, 245, 247, 0.55);
+    }
+    .mark b { color: #d9f99d; }
+    .glyph {
+      width: 64px; height: 64px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 16px;
+      background: rgba(217, 249, 157, 0.12);
+      border: 1px solid rgba(217, 249, 157, 0.35);
+    }
+    .glyph svg { width: 30px; height: 30px; stroke: #d9f99d; }
+    h1 { margin: 0; font-size: 1.5rem; font-weight: 800; }
+    p { margin: 0; max-width: 22rem; font-size: 0.95rem; line-height: 1.5; color: rgba(245, 245, 247, 0.62); }
+    button {
+      margin-top: 0.25rem;
+      padding: 0.7rem 1.4rem;
+      border: none;
+      border-radius: 10px;
+      background: #d9f99d;
+      color: #0f1123;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:active { transform: translateY(1px); }
+  </style>
+</head>
+<body>
+  <div class="glyph" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1 1l22 22" />
+      <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" />
+      <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" />
+      <path d="M10.71 5.05A16 16 0 0 1 22.58 9" />
+      <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" />
+      <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+      <line x1="12" y1="20" x2="12.01" y2="20" />
+    </svg>
+  </div>
+  <h1>You're offline</h1>
+  <p>Reconnect to see live scores, schedules and standings. Pages you've already opened stay available.</p>
+  <button type="button" onclick="location.reload()">Try again</button>
+  <div class="mark">Field<b>Logic</b>HQ</div>
+</body>
+</html>

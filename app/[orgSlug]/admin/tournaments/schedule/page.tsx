@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link';
 import { Calendar, ChevronRight, ChevronDown, Plus, Pencil, Trash2, X, Check, Sparkles, SlidersHorizontal, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw, AlertTriangle, AlertCircle, Lock, Wrench } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
-import { buildPlaceholderOptions, findBracketSchedulingViolations } from '@/lib/playoff-bracket';
+import { buildPlaceholderOptions, findBracketSchedulingViolations, nextManualBracketCode } from '@/lib/playoff-bracket';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
@@ -78,7 +78,6 @@ const emptyForm = {
   // Seed/Winner/Loser placeholder (mutually exclusive).
   homePlaceholder: '', awayPlaceholder: '',
   date: '', time: '09:00', durationMinutes: '' as number | '', location: '', venueId: '', venueFacilityId: '', notes: null as string | null,
-  bracketCode: '',
 };
 
 export default function AdminSchedulePage() {
@@ -459,7 +458,6 @@ export default function AdminSchedulePage() {
       venueId: g.venueId ?? '',
       venueFacilityId: g.venueFacilityId ?? '',
       notes: g.notes ?? '',
-      bracketCode: g.bracketCode ?? '',
     });
     const existingVenue    = g.venueId ? venues.find(d => d.id === g.venueId) : null;
     const existingFacility = g.venueFacilityId ? existingVenue?.facilities?.find(f => f.id === g.venueFacilityId) : null;
@@ -496,6 +494,18 @@ export default function AdminSchedulePage() {
     const slotMode = !isPlayoffGame && modalSlots.length > 0;
     const homeSlot = slotMode ? modalSlots.find(s => s.id === form.homeSlotId) : null;
     const awaySlot = slotMode ? modalSlots.find(s => s.id === form.awaySlotId) : null;
+    // Bracket codes are internal wiring, never user-typed. Editing a playoff game
+    // KEEPS its existing code (so downstream Winner/Loser refs stay valid); a new
+    // hand-added game gets a fresh, collision-free code assigned by the system.
+    const effectiveBracketCode = isPlayoffGame
+      ? (editing?.isPlayoff
+          ? (editing.bracketCode || undefined)
+          : nextManualBracketCode(
+              games.filter(g => g.isPlayoff && g.divisionId === form.divisionId && g.id !== editing?.id),
+              form.homePlaceholder,
+              form.awayPlaceholder,
+            ))
+      : undefined;
     const data: Omit<Game, 'id'> = {
       tournamentId:    currentTournament?.id ?? '',
       divisionId:      form.divisionId,
@@ -513,7 +523,7 @@ export default function AdminSchedulePage() {
       venueFacilityId:   form.venueFacilityId   || undefined,
       notes:             form.notes             || undefined,
       status:          editing?.status || 'scheduled',
-      bracketCode:     form.bracketCode || undefined,
+      bracketCode:     effectiveBracketCode,
     };
     const w = data as Record<string, unknown>;
 
@@ -555,13 +565,13 @@ export default function AdminSchedulePage() {
 
     // A playoff game can't be scheduled on/before a game that feeds it (or moved so
     // a game it feeds would precede it). Validate this game against the division's bracket.
-    if (isPlayoffGame && form.bracketCode) {
+    if (isPlayoffGame && effectiveBracketCode) {
       const others = games
         .filter(g => g.isPlayoff && g.divisionId === form.divisionId && g.id !== editing?.id)
         .map(g => ({ code: g.bracketCode, home: g.homePlaceholder, away: g.awayPlaceholder, date: g.date, time: g.time }));
-      const candidate = { code: form.bracketCode, home: w.homePlaceholder as string | null, away: w.awayPlaceholder as string | null, date: form.date, time: form.time };
+      const candidate = { code: effectiveBracketCode, home: w.homePlaceholder as string | null, away: w.awayPlaceholder as string | null, date: form.date, time: form.time };
       const involved = findBracketSchedulingViolations([...others, candidate])
-        .filter(v => v.game === form.bracketCode || v.feeder === form.bracketCode);
+        .filter(v => v.game === effectiveBracketCode || v.feeder === effectiveBracketCode);
       if (involved.length > 0) {
         setFeedback({
           isOpen: true,
@@ -1990,7 +2000,7 @@ export default function AdminSchedulePage() {
                   return (
                     <>
                       <div style={{ marginBottom: '0.75rem', padding: '0.6rem 0.8rem', background: 'var(--white-5)', borderRadius: '2px', fontSize: '0.78rem', color: 'var(--white-40)', lineHeight: 1.5 }}>
-                        Pick a <strong>Seed #</strong> or the <strong>Winner / Loser</strong> of an earlier game. Set this game&rsquo;s code below (e.g. SF1) so later rounds can point at its winner.
+                        Pick a <strong>Seed #</strong> or the <strong>Winner / Loser</strong> of an earlier game. Later rounds can then point at this game&rsquo;s winner automatically.
                       </div>
                       <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
                         {renderSide(true, 'Home')}
@@ -2148,38 +2158,11 @@ export default function AdminSchedulePage() {
                   </div>
                 )}
               </div>
-              {(editing ? editing.isPlayoff : viewMode === 'playoff') && (
-                <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
-                  <div className="form-group">
-                    <label className="form-label">Abbreviation</label>
-                    <input
-                      className="form-input"
-                      placeholder="e.g. SF1, FIN"
-                      value={form.bracketCode}
-                      maxLength={3}
-                      onChange={e => setForm(f => ({ ...f, bracketCode: e.target.value.toUpperCase() }))}
-                      style={{ fontFamily: 'var(--font-data)', letterSpacing: '0.05em', textTransform: 'uppercase' }}
-                    />
-                    {form.bracketCode && games.some(g => g.isPlayoff && g.divisionId === form.divisionId && g.id !== editing?.id && (g.bracketCode || '').toUpperCase() === form.bracketCode.toUpperCase()) && (
-                      <small style={{ display: 'block', marginTop: '0.35rem', color: '#fbbf24', fontSize: '0.72rem', lineHeight: 1.4 }}>
-                        Another game already uses <strong>{form.bracketCode}</strong>. Duplicate codes break Winner/Loser wiring — pick a unique code.
-                      </small>
-                    )}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Notes (optional)</label>
-                    <input className="form-input" placeholder="Any additional info" value={form.notes || ''}
-                      onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
-                  </div>
-                </div>
-              )}
-              {!(editing ? editing.isPlayoff : viewMode === 'playoff') && (
-                <div className="form-group" style={{ marginBottom: '0.5rem' }}>
-                  <label className="form-label">Notes (optional)</label>
-                  <input className="form-input" placeholder="Any additional info" value={form.notes || ''}
-                    onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
-                </div>
-              )}
+              <div className="form-group" style={{ marginBottom: '0.5rem' }}>
+                <label className="form-label">Notes (optional)</label>
+                <input className="form-input" placeholder="Any additional info" value={form.notes || ''}
+                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
+              </div>
 
               {/* Venue conflict banner */}
               {modalConflict && (

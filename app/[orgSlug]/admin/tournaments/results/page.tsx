@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Check, ChevronRight, ExternalLink, MapPin, SlidersHorizontal, Trophy, RefreshCw, X } from 'lucide-react';
+import { ExternalLink, SlidersHorizontal, Trophy, RefreshCw } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -65,9 +65,7 @@ export default function AdminResultsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'pool' | 'playoff'>('pool');
   const [groupMode, setGroupMode] = useState<'flat' | 'pools'>('pools');
-  const [selectedVenueKeys, setSelectedVenueKeys] = useState<string[]>([]);
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
-  const [venueModalOpen, setVenueModalOpen] = useState(false);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
     title: string;
@@ -149,14 +147,12 @@ export default function AdminResultsPage() {
         selectedStatuses: ResultsFilter[];
         viewMode: 'pool' | 'playoff';
         groupMode: 'flat' | 'pools';
-        selectedVenueKeys: string[];
       }>;
       if (Array.isArray(cached.selectedStatuses) && cached.selectedStatuses.length > 0) {
         setSelectedStatuses(cached.selectedStatuses);
       }
       if (cached.viewMode === 'pool' || cached.viewMode === 'playoff') setViewMode(cached.viewMode);
       if (cached.groupMode === 'flat' || cached.groupMode === 'pools') setGroupMode(cached.groupMode);
-      if (Array.isArray(cached.selectedVenueKeys)) setSelectedVenueKeys(cached.selectedVenueKeys);
     } catch {}
   }, [tournamentId]);
 
@@ -170,10 +166,9 @@ export default function AdminResultsPage() {
         selectedStatuses,
         viewMode,
         groupMode,
-        selectedVenueKeys,
       }));
     } catch {}
-  }, [tournamentId, filterGroup, selectedStatuses, viewMode, groupMode, selectedVenueKeys, divisions.length]);
+  }, [tournamentId, filterGroup, selectedStatuses, viewMode, groupMode, divisions.length]);
 
   function getTeamName(id: string) {
     return teams.find(t => t.id === id)?.name ?? 'TBD';
@@ -182,32 +177,6 @@ export default function AdminResultsPage() {
   function getGroupName(id: string) {
     return divisions.find(g => g.id === id)?.name ?? '—';
   }
-
-  const getVenueName = (venueId?: string, facilityId?: string) => {
-    const venue = venueId ? venues.find(d => d.id === venueId) : null;
-    if (!venue) return '';
-    if (!facilityId) return venue.name;
-    const facility = (venue as any).facilities?.find((f: any) => f.id === facilityId);
-    return facility ? `${venue.name} — ${facility.name}` : venue.name;
-  };
-  // Key by facility when present so each diamond/field is its own filter row with
-  // an accurate count — matches the Schedule venue filter exactly.
-  const getGameVenueKey = (g: Game) =>
-    g.venueId
-      ? (g.venueFacilityId ? `venue:${g.venueId}:${g.venueFacilityId}` : `venue:${g.venueId}`)
-      : `custom:${(g.location || '').trim() || '__none__'}`;
-  const getGameVenueDisplay = (g: Game): { name: string; sublabel?: string } => {
-    if (g.venueId) {
-      const venue = venues.find(v => v.id === g.venueId);
-      if (!venue) return { name: g.location || 'Unknown venue' };
-      if (g.venueFacilityId) {
-        const facility = (venue as any).facilities?.find((f: any) => f.id === g.venueFacilityId);
-        if (facility) return { name: venue.name, sublabel: facility.name };
-      }
-      return { name: venue.name };
-    }
-    return { name: g.location?.trim() || 'No venue' };
-  };
 
   async function patchGame(body: Record<string, unknown>) {
     const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
@@ -261,22 +230,6 @@ export default function AdminResultsPage() {
   // Forfeits are a final result — group them with completed for counts/filters.
   const completedCount = divisionGames.filter(g => g.status === 'completed' || g.status === 'forfeit').length;
 
-  // Venue filter options — built from games in the current division + view mode
-  const venueFilterOptions = Array.from(
-    divisionGames.reduce((map, g) => {
-      const key = getGameVenueKey(g);
-      const existing = map.get(key);
-      if (existing) {
-        existing.count += 1;
-      } else {
-        const display = getGameVenueDisplay(g);
-        map.set(key, { key, label: display.name, sublabel: display.sublabel, count: 1 });
-      }
-      return map;
-    }, new Map<string, { key: string; label: string; sublabel?: string; count: number }>()),
-  ).map(([, option]) => option).sort((a, b) => a.label.localeCompare(b.label));
-  const totalVenueCount = venueFilterOptions.reduce((t, o) => t + o.count, 0);
-
   const filtered = games.filter(g => {
     const matchesGroup = g.divisionId === filterGroup;
     const matchesStatus = selectedStatuses.length === 0 ||
@@ -294,9 +247,8 @@ export default function AdminResultsPage() {
     const matchesSearch = q === '' || hName.includes(q) || aName.includes(q) || hPlace.includes(q) || aPlace.includes(q);
 
     const matchesView = viewMode === 'pool' ? !g.isPlayoff : g.isPlayoff;
-    const matchesVenue = selectedVenueKeys.length === 0 || selectedVenueKeys.includes(getGameVenueKey(g));
 
-    return matchesGroup && matchesStatus && matchesSearch && matchesView && matchesVenue;
+    return matchesGroup && matchesStatus && matchesSearch && matchesView;
   });
 
   // ── Export handlers ────────────────────────────────────────────────────
@@ -436,19 +388,9 @@ export default function AdminResultsPage() {
     completed: s.chip_success, // Completed → success-green
   };
 
-  // Label shown in the venue button inside the sheet and in the summary strip
-  const venueLabel = selectedVenueKeys.length === 0
-    ? 'All venues'
-    : selectedVenueKeys.length === 1
-      ? (venueFilterOptions.find(o => o.key === selectedVenueKeys[0])?.label ?? '1 venue')
-      : `${selectedVenueKeys.length} venues`;
-
-  // Always-visible summary of current view settings for the strip outside the sheet
-  const settingsSummary = [
-    viewMode === 'pool' ? 'Round Robin' : 'Playoffs',
-    viewMode === 'pool' ? (groupMode === 'pools' ? 'Pools' : 'Flat') : null,
-    venueFilterOptions.length > 1 ? venueLabel : null,
-  ].filter(Boolean).join(' · ');
+  // Stage label for the mobile summary strip — the grouping sub-mode (Pools/Flat)
+  // is one tap away in the sheet, so the strip stays to the coarse context only.
+  const settingsSummary = viewMode === 'pool' ? 'Round Robin' : 'Playoffs';
 
   return (
     <div className={s.page}>
@@ -520,17 +462,9 @@ export default function AdminResultsPage() {
           )}
         </ToolbarGroup>
 
-        {/* ── Row 2: search + venue (desktop) + status filters ── */}
+        {/* ── Row 2: search + status filters ── */}
         <ToolbarGroup fullWidth>
           <ToolbarSearch className={styles.resultsSearch} value={searchQuery} onChange={setSearchQuery} placeholder="Search teams..." label="Search games" />
-          <div className={styles.resultsVenueDesktop}>
-            <VenueFilterMenu
-              options={venueFilterOptions}
-              selectedKeys={selectedVenueKeys}
-              onToggle={key => setSelectedVenueKeys(prev => prev.includes(key) ? prev.filter(v => v !== key) : [...prev, key])}
-              onClear={() => setSelectedVenueKeys([])}
-            />
-          </div>
           <div className={`${s.statusFilters} ${styles.resultsStatusFilters}`}>
             {statusFilterOptions.map(({ key, label, count }) => (
               <button
@@ -616,20 +550,6 @@ export default function AdminResultsPage() {
                 </div>
               )}
 
-              {venueFilterOptions.length > 1 && (
-                <div className={styles.sheetSection}>
-                  <div className={styles.sheetSectionLabel}>Venue</div>
-                  <button
-                    type="button"
-                    className={`${styles.venueSheetBtn} ${selectedVenueKeys.length > 0 ? styles.venueSheetBtnActive : ''}`}
-                    onClick={() => setVenueModalOpen(true)}
-                  >
-                    <span>{venueLabel}</span>
-                    <ChevronRight size={13} aria-hidden />
-                  </button>
-                </div>
-              )}
-
               <div className={styles.sheetSection}>
                 <div className={styles.sheetSectionLabel}>Game Status</div>
                 <div className={styles.sheetSegments}>
@@ -646,6 +566,19 @@ export default function AdminResultsPage() {
                     </button>
                   ))}
                 </div>
+                {requiresFinalization && (
+                  <div style={{ marginTop: '0.6rem' }}>
+                    <StatusLegendPopover
+                      label="What do these mean?"
+                      title="Score Status Guide"
+                      items={[
+                        { label: 'To Be Scored', description: 'Game is scheduled but no score has been submitted yet.', tone: 'info' },
+                        { label: 'Pending Review', description: 'Score submitted by a scorekeeper - visible to the public but not yet final. Use Finalize to confirm it.', tone: 'warning' },
+                        { label: 'Completed', description: 'Score is finalized. Admins can still correct or revert the result if needed.', tone: 'success' },
+                      ]}
+                    />
+                  </div>
+                )}
               </div>
 
               <button
@@ -657,77 +590,6 @@ export default function AdminResultsPage() {
               </button>
             </div>
           </div>
-
-          {/* ── Venue nested modal (slides over the settings sheet) ── */}
-          {venueModalOpen && (
-            <>
-              <div
-                className={styles.venueModalBackdrop}
-                onClick={() => setVenueModalOpen(false)}
-                aria-hidden
-              />
-              <div className={styles.venueModal} role="dialog" aria-modal="true" aria-label="Filter by venue">
-                <div className={styles.venueModalHandle} />
-                <div className={styles.venueModalHeader}>
-                  <button
-                    type="button"
-                    className={styles.venueModalBack}
-                    onClick={() => setVenueModalOpen(false)}
-                  >
-                    ← Back
-                  </button>
-                  <span className={styles.venueModalTitle}>Venue</span>
-                  {selectedVenueKeys.length > 0 && (
-                    <button
-                      type="button"
-                      className={styles.venueModalClear}
-                      onClick={() => setSelectedVenueKeys([])}
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-                <div className={styles.venueModalList}>
-                  <button
-                    type="button"
-                    className={`${styles.venueModalOption} ${selectedVenueKeys.length === 0 ? styles.venueModalOptionActive : ''}`}
-                    onClick={() => setSelectedVenueKeys([])}
-                  >
-                    <span>All venues</span>
-                    <span className={styles.venueModalCount}>{totalVenueCount}</span>
-                  </button>
-                  {venueFilterOptions.map(opt => {
-                    const isActive = selectedVenueKeys.includes(opt.key);
-                    return (
-                      <button
-                        key={opt.key}
-                        type="button"
-                        className={`${styles.venueModalOption} ${isActive ? styles.venueModalOptionActive : ''}`}
-                        onClick={() => setSelectedVenueKeys(prev =>
-                          prev.includes(opt.key) ? prev.filter(k => k !== opt.key) : [...prev, opt.key]
-                        )}
-                      >
-                        <span>
-                          {opt.label}
-                          {opt.sublabel && <span className={styles.venueModalSublabel}> — {opt.sublabel}</span>}
-                        </span>
-                        <span className={styles.venueModalCount}>{opt.count}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className={styles.venueModalFooter}>
-                  <button
-                    type="button"
-                    className={styles.sheetDone}
-                    onClick={() => setVenueModalOpen(false)}
-                  >
-                    Done
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
         </>
       )}
 
@@ -741,23 +603,14 @@ export default function AdminResultsPage() {
         >
           <span className={styles.activeSettingsSummaryText}>{settingsSummary}</span>
           <span className={styles.summaryRight}>
-            <span className={styles.statusCountTally} aria-hidden>
-              {statusFilterOptions.map(({ key, count }) => (
-                <span
-                  key={key}
-                  className={[
-                    styles.tallyPill,
-                    key === 'pending'   ? styles.tallyPending   : '',
-                    key === 'submitted' ? styles.tallySubmitted : '',
-                    key === 'completed' ? styles.tallyCompleted : '',
-                    !selectedStatuses.includes(key) ? styles.tallyInactive : '',
-                  ].filter(Boolean).join(' ')}
-                >
-                  <span className={styles.tallyDot} />
-                  {count}
-                </span>
-              ))}
-            </span>
+            {/* Single "needs action" count — only games awaiting finalize (the one
+                number that demands attention); per-row stripes carry the rest. */}
+            {submittedCount > 0 && (
+              <span className={`${styles.tallyPill} ${styles.tallySubmitted}`} aria-hidden>
+                <span className={styles.tallyDot} />
+                {submittedCount}
+              </span>
+            )}
             <SlidersHorizontal size={12} className={styles.activeSettingsSummaryIcon} aria-hidden />
           </span>
         </button>
@@ -825,106 +678,3 @@ export default function AdminResultsPage() {
   );
 }
 
-// ── VenueFilterMenu ──────────────────────────────────────────────────────────
-// Local component — mirrors the implementation in schedule/page.tsx.
-// References `styles` (results-admin.module.css) so all venueFilter* class
-// names resolve to the results-specific CSS module.
-function VenueFilterMenu({
-  options,
-  selectedKeys,
-  onToggle,
-  onClear,
-}: {
-  options: Array<{ key: string; label: string; sublabel?: string; count: number }>;
-  selectedKeys: string[];
-  onToggle: (key: string) => void;
-  onClear: () => void;
-}) {
-  const [open, setOpen] = React.useState(false);
-  const rootRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (!open) return;
-    function handlePointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    }
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [open]);
-
-  const selectedCount = selectedKeys.length;
-  const buttonText = selectedCount === 0
-    ? 'All venues'
-    : selectedCount === 1
-      ? options.find(o => o.key === selectedKeys[0])?.label ?? '1 venue'
-      : `${selectedCount} venues`;
-
-  return (
-    <div className={styles.venueFilterRoot} ref={rootRef}>
-      <button
-        type="button"
-        className={`${styles.venueFilterButton} ${selectedCount > 0 ? styles.venueFilterButtonActive : ''}`}
-        onClick={() => setOpen(v => !v)}
-        disabled={options.length === 0}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        title={options.length === 0 ? 'No venues in this view' : 'Filter by venue'}
-      >
-        <MapPin size={13} />
-        <span>{buttonText}</span>
-      </button>
-      {open && (
-        <div className={styles.venueFilterPanel} role="menu">
-          <div className={styles.venueFilterHeader}>
-            <span>Venues</span>
-            {selectedCount > 0 && (
-              <button type="button" onClick={onClear}>
-                <X size={12} /> Clear
-              </button>
-            )}
-          </div>
-          <div className={styles.venueFilterList}>
-            <button
-              type="button"
-              className={`${styles.venueFilterOption} ${selectedCount === 0 ? styles.venueFilterOptionActive : ''}`}
-              onClick={onClear}
-              role="menuitemcheckbox"
-              aria-checked={selectedCount === 0}
-            >
-              <span className={styles.venueFilterCheck}>{selectedCount === 0 ? <Check size={12} /> : null}</span>
-              <span className={styles.venueFilterName}><span className={styles.venueFilterNamePrimary}>All venues</span></span>
-              <span className={styles.venueFilterCount}>{options.reduce((t, o) => t + o.count, 0)}</span>
-            </button>
-            {options.map(option => {
-              const isSelected = selectedKeys.includes(option.key);
-              return (
-                <button
-                  key={option.key}
-                  type="button"
-                  className={`${styles.venueFilterOption} ${isSelected ? styles.venueFilterOptionActive : ''}`}
-                  onClick={() => onToggle(option.key)}
-                  role="menuitemcheckbox"
-                  aria-checked={isSelected}
-                >
-                  <span className={styles.venueFilterCheck}>{isSelected ? <Check size={12} /> : null}</span>
-                  <span className={styles.venueFilterName}>
-                    <span className={styles.venueFilterNamePrimary}>{option.label}</span>
-                    {option.sublabel && <span className={styles.venueFilterSublabel}>{option.sublabel}</span>}
-                  </span>
-                  <span className={styles.venueFilterCount}>{option.count}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}

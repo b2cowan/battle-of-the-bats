@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getArchiveById, getOrganizationBySlug } from '@/lib/db';
 import { getAuthContextWithScope } from '@/lib/api-auth';
+import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import type { Game, Team } from '@/lib/types';
 
 // Compute standings from a frozen snapshot — no live DB queries
@@ -331,7 +332,7 @@ export default async function ArchiveDetailPage({
                         fontWeight: 700,
                       }}
                     >
-                      {g.bracketCode ?? 'PLAYOFF'}
+                      {bracketRoundLabel(g.bracketCode)}
                     </span>
                     <span
                       style={{

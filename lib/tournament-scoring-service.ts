@@ -199,6 +199,12 @@ export function createTournamentScoringService(deps: TournamentScoringServiceDep
       const nextStatus: GameStatus =
         scoreGame.scoreSubmissionSource === 'forfeit' ? 'forfeit' : 'completed';
       await deps.updateGame(gameId, { status: nextStatus }, { admin: true });
+      // Fire the fan "Final:" push on the submitted→terminal transition (J6-049).
+      // Without this, orgs that require score finalization only ever sent the
+      // mid-game "Score update:" push (from the submit step) and the "Final:" title
+      // was dead code. notifyFansForGame ignores 'forfeit' (no meaningful scoreline),
+      // so a promoted forfeit advances the bracket without a misleading score push.
+      deps.onScored?.(gameId, nextStatus);
       return { status: nextStatus };
     }
     return { status: scoreGame.status };
