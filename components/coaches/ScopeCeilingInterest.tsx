@@ -1,12 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Check, Send } from 'lucide-react';
 import type { BasicCoachInterestOption } from '@/lib/basic-coach-interest';
 import styles from './ScopeCeilingInterest.module.css';
 
 type Props = {
   basicTeamId: string;
+  /**
+   * When the Premium checkout gate is open (dev today; prod at launch) this widget becomes a real
+   * upgrade CTA into /coaches/start. When closed (prod), it stays the express-interest capture.
+   * Resolved server-side by the parent from getPlanGatingMap — see ScopeShelf for the same gate.
+   */
+  checkoutOpen?: boolean;
 };
 
 type SubmitResponse = {
@@ -21,7 +28,7 @@ const OPTIONS: Array<{ value: BasicCoachInterestOption; label: string }> = [
   { value: 'dues_automation', label: 'Dues automation' },
 ];
 
-export default function ScopeCeilingInterest({ basicTeamId }: Props) {
+export default function ScopeCeilingInterest({ basicTeamId, checkoutOpen = false }: Props) {
   const [selected, setSelected] = useState<BasicCoachInterestOption[]>([
     'lineups',
     'documents',
@@ -60,6 +67,21 @@ export default function ScopeCeilingInterest({ basicTeamId }: Props) {
     } finally {
       setBusy(false);
     }
+  }
+
+  // Gate open (dev / post-launch): a real upgrade CTA into the checkout instead of interest capture.
+  if (checkoutOpen) {
+    return (
+      <div className={styles.panel}>
+        <div className={styles.copy}>
+          <h3>Ready for the full toolkit?</h3>
+          <p>Upgrade this team to the Premium Coaches Portal — lineups, attendance, documents, dues automation, and a season budget.</p>
+        </div>
+        <Link href="/coaches/start?source=coach_scope_ceiling" className={styles.button}>
+          Upgrade to Premium →
+        </Link>
+      </div>
+    );
   }
 
   return (

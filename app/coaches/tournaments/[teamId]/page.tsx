@@ -26,6 +26,7 @@ import CoachNextSteps, { type CoachNextStep } from '@/components/coaches/CoachNe
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import SharePageButton from '@/components/public/SharePageButton';
 import { parseRosterRequirements } from '@/lib/roster-requirements';
+import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import type { GameStatus, TournamentSettings } from '@/lib/types';
 import styles from './detail.module.css';
 
@@ -375,6 +376,9 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
   const afterglowBasicTeamId = isResultPhase
     ? await findLinkedBasicTeamForRegistration(user.id, teamId)
     : null;
+  // The afterglow upgrade widget becomes a real checkout CTA only when the Premium gate is open
+  // (dev today; prod at launch) — express-interest otherwise. Resolve only when the widget renders.
+  const upgradeCheckoutOpen = afterglowBasicTeamId ? !(await getPlanGatingMap()).team : false;
 
   // First-run onboarding banner: the register flow redirects here with `?welcome=1` immediately
   // after registering. Only show it while the registration is still pending/waitlist (the moment
@@ -540,7 +544,7 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
                 label="Share your team"
               />
             )}
-            {afterglowBasicTeamId && <ScopeCeilingInterest basicTeamId={afterglowBasicTeamId} />}
+            {afterglowBasicTeamId && <ScopeCeilingInterest basicTeamId={afterglowBasicTeamId} checkoutOpen={upgradeCheckoutOpen} />}
             <p style={{ margin: 0, color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>
               Thinking about running your own event?{' '}
               <Link href="/pricing?source=coach_afterglow" style={{ color: 'var(--logic-lime)' }}>See how organizers use FieldLogicHQ &rarr;</Link>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import styles from './ScopeShelf.module.css';
 
 /**
@@ -44,16 +45,23 @@ const SECTION_LABEL: Record<Section, string> = {
   announcements: 'announcements',
 };
 
-export default function ScopeShelf({ section }: { basicTeamId: string; section: Section }) {
+export default async function ScopeShelf({ section }: { basicTeamId: string; section: Section }) {
   const copy = COPY[section];
-  const href = `/for-coaches?source=coach_footer_${section}`;
+  // The upgrade link follows the SAME server-side checkout gate as /coaches/start: open in dev
+  // (team plan ungated) → the real checkout; gated in prod → the info/express-interest explainer.
+  // The gate lives in each environment's own DB and fails closed, so a prod deploy can never flip it.
+  const checkoutOpen = !(await getPlanGatingMap()).team;
+  const href = checkoutOpen
+    ? `/coaches/start?source=coach_footer_${section}`
+    : `/for-coaches?source=coach_footer_${section}`;
+  const linkLabel = checkoutOpen ? 'Upgrade to Premium →' : 'See everything it includes →';
   return (
     <footer className={styles.footer}>
       <p className={styles.footerEyebrow}>Premium Coaches Portal</p>
       <p className={styles.footerBody}>
         On {SECTION_LABEL[section]}: {copy.value} — {copy.teaser}. Your free tools stay free.
       </p>
-      <Link href={href} className={styles.footerLink}>See everything it includes →</Link>
+      <Link href={href} className={styles.footerLink}>{linkLabel}</Link>
     </footer>
   );
 }
