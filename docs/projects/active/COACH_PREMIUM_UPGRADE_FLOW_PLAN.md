@@ -1,6 +1,6 @@
 # Coach Premium Upgrade Flow — Frictionless Per-Team Upgrade + Data Carry-Over
 
-**Status:** ACTIVE — building, 2026-06-18. Phase 1 (slim+smart signup) and Phase 1.5 (Basic fees per-player alignment) BUILT on dev. Data-model reconciliation complete; remaining phases (2–5) sequenced below. Spun out of the Coach Experience walkthrough (Step 7) after the owner walked the live `/coaches/start` checkout on dev and found the upgrade re-asks for everything a free coach already has.
+**Status:** ACTIVE — building. BUILT on dev: Phase 1 (slim+smart signup), Phase 1.5 (Basic fees per-player), Phase 2 (carry free-team id through checkout — server+client, reviewed), Phase 3a (cancelled-events parity — mig 135 dev-only/prod-pending, reviewed). Data-model reconciliation complete. Remaining: Phase 3b–d, 4, 5. ⚠ A parallel Multi-Sport initiative is editing the same shared core (lib/db.ts, lib/types.ts, team-checkout/provisioning, signup) uncommitted — stage per-hunk and verify `git diff --cached` before every commit. Spun out of the Coach Experience walkthrough (Step 7) after the owner walked the live `/coaches/start` checkout on dev and found the upgrade re-asks for everything a free coach already has.
 
 **Owner decision (locked 2026-06-18):** Premium stays **per-team** ($29/mo, "one competitive team"). Upgrading scopes to ONE team and carries THAT team's data forward; the coach's other free teams stay free (each can upgrade separately, each its own subscription). NOT a whole-account upgrade.
 
@@ -114,7 +114,7 @@ Thread the free-team id through the checkout request → Stripe metadata → met
 
 ### Phase 3 — Premium capability parity (close every Premium < Free gap) — L (→ `/review`; dev-only migrations)
 So the migration lands cleanly AND Premium is never weaker than Free:
-- **3a Cancelled events** — add a cancelled state to `rep_team_events` and surface it in the Premium schedule UI.
+- **3a Cancelled events** — ✅ BUILT (dev, 2026-06-19; mig 135 dev-applied ⚠ prod-pending; `/review` clean). Real `scheduled|cancelled` state on `rep_team_events`; coach schedule slide-over Cancel/Restore + dimmed "Cancelled" rendering (chips, header, month dots); admin read-only schedule shows the same; cancelled games excluded from the season W-L-T tally.
 - **3b Announcements** — build the team-announcements feature in the Premium portal (write subject/body, email the roster, log the send) at parity with Free.
 - **3c Migrated-row tolerance** — make `rep_roster_players` guardian first/last/email accept blanks on migrated rows (no fabricated data); audit Premium readers that assume non-null (esp. dues reminders) to degrade gracefully.
 - **3d Roster ordering (minor)** — add manual ordering to the Premium roster to match Free, or accept name-sort (lean: add).
