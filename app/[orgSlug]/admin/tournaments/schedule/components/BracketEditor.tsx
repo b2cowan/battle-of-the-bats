@@ -398,7 +398,7 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
             type="button"
             className="btn btn-lime btn-data"
             onClick={save}
-            disabled={loading || preview.length === 0 || violations.length > 0}
+            disabled={loading || preview.length === 0}
             title={violations.length > 0 ? 'Fix the bracket order — a game is scheduled before the game that feeds it' : undefined}
           >
             {loading ? <><RefreshCw className="spin" size={14} /> Saving…</> : <><Check size={14} /> Save Bracket</>}

@@ -196,7 +196,16 @@ function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, label
 
       <div className={styles.matchupFooter}>
         <input type="date" value={matchup.date} onChange={e => onUpdate({...matchup, date: e.target.value})} className={styles.dateInput} />
-        <input type="time" value={matchup.time} onChange={e => onUpdate({...matchup, time: e.target.value})} className={styles.timeInput} />
+        {/* Empty time field: seed top-of-the-hour on focus so the native picker doesn't open
+            on the current minute (e.g. :48). Games start on the hour; the organizer still
+            adjusts freely. Matches the coaches ScheduleEditor :00 default. */}
+        <input
+          type="time"
+          value={matchup.time}
+          onFocus={() => { if (!matchup.time) onUpdate({ ...matchup, time: `${String(new Date().getHours()).padStart(2, '0')}:00` }); }}
+          onChange={e => onUpdate({...matchup, time: e.target.value})}
+          className={styles.timeInput}
+        />
         <select
           value={matchup.scheduleFacilityLaneId ? `lane:${matchup.scheduleFacilityLaneId}` : (matchup.venueFacilityId || matchup.venueId)}
           onChange={e => {
