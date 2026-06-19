@@ -756,6 +756,42 @@ describe('computeBracketColumns (feed-graph layout)', () => {
     assert.equal(m.get('g7')!.title, 'Finals');
   });
 
+  it('aligns a seeds-only semifinal with its play-in-fed peer (5-team tier)', () => {
+    // The reported bug: a 5-team tier with a play-in (G1) feeding only ONE semifinal
+    // (G4). The other semifinal (G5) is seeds-only. Laid out from the START, G5 lands
+    // a column LEFT of G4; it must instead sit in the SAME column as G4.
+    const games = [
+      { id: 'g1', bracketCode: 'G1', homePlaceholder: 'Seed #5', awayPlaceholder: 'Seed #4' }, // play-in
+      { id: 'g4', bracketCode: 'G4', homePlaceholder: 'Winner G1', awayPlaceholder: 'Seed #1' }, // SF (fed by play-in)
+      { id: 'g5', bracketCode: 'G5', homePlaceholder: 'Seed #3', awayPlaceholder: 'Seed #2' }, // SF (seeds only)
+      { id: 'g7', bracketCode: 'G7', homePlaceholder: 'Winner G5', awayPlaceholder: 'Winner G4' }, // final
+    ];
+    const m = computeBracketColumns(games);
+    assert.equal(m.get('g1')!.rank, 1);                       // play-in alone, leftmost
+    assert.equal(m.get('g4')!.rank, m.get('g5')!.rank);       // both semifinals TOGETHER
+    assert.equal(m.get('g4')!.rank, 2);
+    assert.equal(m.get('g4')!.key, m.get('g5')!.key);         // same column key
+    assert.equal(m.get('g7')!.rank, 3);                       // final to the right
+    assert.equal(m.get('g1')!.title, 'Quarterfinals');
+    assert.equal(m.get('g5')!.title, 'Semifinals');
+    assert.equal(m.get('g4')!.title, 'Semifinals');
+    assert.equal(m.get('g7')!.title, 'Finals');
+  });
+
+  it('a not-yet-wired early game stays on the left, not in the final column', () => {
+    // While building by hand, an early game is added before its winner is wired
+    // forward. It must not jump to the final column just because it feeds nothing yet.
+    const games = [
+      { id: 'g1', bracketCode: 'G1', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #4' }, // wired → SF
+      { id: 'g2', bracketCode: 'G2', homePlaceholder: 'Seed #2', awayPlaceholder: 'Seed #3' }, // NOT wired yet
+      { id: 'g3', bracketCode: 'G3', homePlaceholder: 'Winner G1', awayPlaceholder: 'Seed #5' }, // final-ish
+    ];
+    const m = computeBracketColumns(games);
+    assert.equal(m.get('g3')!.title, 'Finals');               // deepest game = final column
+    assert.ok(m.get('g2')!.rank < m.get('g3')!.rank);         // unwired early game stays LEFT of the final
+    assert.equal(m.get('g1')!.rank, m.get('g2')!.rank);       // both first-round games share the left column
+  });
+
   it('a codeless game does not flip a standard bracket into graph mode', () => {
     // Regression guard: one codeless game must NOT re-order/re-title an otherwise
     // canonical QF/SF/FIN bracket — it keeps the code path (own rank-1000 column).

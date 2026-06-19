@@ -948,7 +948,13 @@ export function computeBracketColumns(games: BracketColumnGame[]): Map<string, B
     return applyLabels();
   }
 
-  // Graph path: depth per game from the feed graph (fixpoint, same as nextManualBracketCode).
+  // Graph path. A WIRED game (its winner feeds a later game) is placed by its
+  // DISTANCE TO THE FINAL, so every same-round game lines up even when a bye/play-in
+  // makes one branch deeper from the START than the other (the seeds-only semifinal
+  // would otherwise drop a column left of its play-in-fed peer). A game that feeds
+  // nothing yet — the real final, or an early game not wired forward during a manual
+  // build — is placed by its DEPTH FROM THE START, so the deepest game is the final
+  // and half-built early games stay on the left instead of jumping to the final column.
   const byCode = new Map<string, BracketColumnGame>();
   for (const g of games) if (g.bracketCode) byCode.set(g.bracketCode, g);
   const deps = (g: BracketColumnGame): string[] =>
@@ -956,6 +962,7 @@ export function computeBracketColumns(games: BracketColumnGame[]): Map<string, B
       .map(p => ADVANCEMENT_REF_RE.exec(p || '')?.[1]?.trim())
       .filter((c): c is string => !!c && byCode.has(c));
 
+  // Forward depth from the seeds (1 = no feeders), fixpoint.
   const depthByCode = new Map<string, number>();
   for (let guard = 0; guard < 500; guard++) {
     let changed = false;
@@ -975,17 +982,46 @@ export function computeBracketColumns(games: BracketColumnGame[]): Map<string, B
     return d.length ? 1 + Math.max(...d.map(c => depthByCode.get(c)!)) : 1;
   };
 
-  const dG = new Map<string, number>();
+  // Reverse height to the sink (0 = feeds nothing), fixpoint over who-feeds-whom.
+  const feedsInto = new Map<string, Set<string>>();
+  for (const g of games) {
+    if (!g.bracketCode) continue;
+    for (const c of deps(g)) (feedsInto.get(c) ?? feedsInto.set(c, new Set()).get(c)!).add(g.bracketCode);
+  }
+  const heightByCode = new Map<string, number>();
+  for (let guard = 0; guard < 500; guard++) {
+    let changed = false;
+    for (const g of games) {
+      if (!g.bracketCode) continue;
+      const outs = [...(feedsInto.get(g.bracketCode) ?? [])];
+      let r: number;
+      if (outs.length === 0) r = 0;
+      else { if (!outs.every(c => heightByCode.has(c))) continue; r = 1 + Math.max(...outs.map(c => heightByCode.get(c)!)); }
+      if (heightByCode.get(g.bracketCode) !== r) { heightByCode.set(g.bracketCode, r); changed = true; }
+    }
+    if (!changed) break;
+  }
+  const heightOf = (g: BracketColumnGame): number =>
+    (g.bracketCode && heightByCode.has(g.bracketCode)) ? heightByCode.get(g.bracketCode)! : 0;
+  const feedsSomething = (g: BracketColumnGame): boolean =>
+    !!g.bracketCode && (feedsInto.get(g.bracketCode)?.size ?? 0) > 0;
+
   let maxDepth = 1;
-  for (const g of games) { const d = depthOf(g); dG.set(g.id, d); if (d > maxDepth) maxDepth = d; }
-  const titleFor = (depth: number): string => {
-    if (depth === maxDepth) return 'Finals';
-    const fromEnd = maxDepth - depth;
+  for (const g of games) { const d = depthOf(g); if (d > maxDepth) maxDepth = d; }
+  // Wired game: distance-to-final (maxDepth − height). Unwired/final: depth from start.
+  const rankOf = (g: BracketColumnGame): number => (feedsSomething(g) ? maxDepth - heightOf(g) : depthOf(g));
+
+  const rG = new Map<string, number>();
+  let maxRank = 1;
+  for (const g of games) { const r = rankOf(g); rG.set(g.id, r); if (r > maxRank) maxRank = r; }
+  const titleFor = (rank: number): string => {
+    if (rank === maxRank) return 'Finals';
+    const fromEnd = maxRank - rank;
     if (fromEnd === 1) return 'Semifinals';
     if (fromEnd === 2) return 'Quarterfinals';
-    return `Round ${depth}`;
+    return `Round ${rank}`;
   };
-  for (const g of games) { const d = dG.get(g.id)!; out.set(g.id, { key: `RND${d}`, title: titleFor(d), rank: d }); }
+  for (const g of games) { const r = rG.get(g.id)!; out.set(g.id, { key: `RND${r}`, title: titleFor(r), rank: r }); }
   return applyLabels();
 }
 
