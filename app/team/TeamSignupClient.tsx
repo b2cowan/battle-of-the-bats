@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { SPORT_OPTIONS as SHARED_SPORT_OPTIONS } from '@/lib/sports';
 import {
   ArrowRight,
   CalendarDays,
@@ -49,16 +50,9 @@ type TeamSignupClientProps = {
 
 const DRAFT_KEY = 'fieldlogichq.coaches.signup.draft';
 
-const SPORT_OPTIONS = [
-  'Softball',
-  'Baseball',
-  'Hockey',
-  'Soccer',
-  'Lacrosse',
-  'Basketball',
-  'Volleyball',
-  'Other',
-] as const;
+// Sourced from the shared canonical list (lib/sports) so the sport set never drifts again.
+// Coach signup stores the display label (legacy free-text convention), so we map to labels.
+const SPORT_OPTIONS: string[] = SHARED_SPORT_OPTIONS.map(o => o.label);
 
 /** Snap a free-text sport (Basic teams store it as free text) onto a Premium option; unknown →
  *  'Other', blank/missing → the default ('Softball'). Case-insensitive. */
@@ -287,6 +281,10 @@ export default function TeamSignupClient({
         returnTo: returnPath,
         claimToken: claim?.token ?? null,
         reactivateOrgSlug: reactivationOrgSlug,
+        // Per-team upgrade: forward the originating free team so the server (after re-verifying
+        // ownership) back-links the new Premium workspace to it and migrates its data. Null for
+        // brand-new / claim signups.
+        basicCoachTeamId: prefillBasicTeamId,
       }),
     });
 
