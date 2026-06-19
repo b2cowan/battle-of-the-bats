@@ -5,6 +5,7 @@ import { Team, Division, Venue, Game, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { buildScheduleMetrics, resolveManualTravelBuffers } from '@/lib/schedule-metrics';
 import NumberStepper from '@/components/admin/NumberStepper';
+import FieldHint from '@/components/help/FieldHint';
 import {
   defaultSchedulePriorities,
   generateScoredScheduleDrafts,
@@ -1268,7 +1269,11 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
                   max={10}
                   onChange={setGamesPerTeam}
                   ariaLabel="Games per team"
+                  ariaDescribedBy="gen-games-per-team-hint"
                 />
+                <FieldHint id="gen-games-per-team-hint">
+                  Round-robin rounds to generate, not a guaranteed game count. With an odd number of teams, one gets a bye each round and plays one fewer game.
+                </FieldHint>
               </div>
             </div>
 
@@ -1346,7 +1351,10 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
             <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
               <div className="form-group">
                 <label className="form-label">Game Duration (min)</label>
-                <NumberStepper value={gameLength} min={5} step={5} onChange={setGameLength} ariaLabel="Game duration in minutes" />
+                <NumberStepper value={gameLength} min={5} step={5} onChange={setGameLength} ariaLabel="Game duration in minutes" ariaDescribedBy="gen-game-duration-hint" />
+                <FieldHint id="gen-game-duration-hint">
+                  Length of each game slot. Shorter games fit more into each day; if the generator says it&apos;s out of slots, trimming this (or the turnover time) is the fix.
+                </FieldHint>
               </div>
               <div className="form-group">
                 <label className="form-label">Turnover Time (min)</label>

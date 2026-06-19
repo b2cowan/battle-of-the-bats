@@ -24,6 +24,7 @@ import styles from './teams-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import ExportMenu from '@/components/admin/ExportMenu';
 import TeamAvatar from '@/components/TeamAvatar';
+import FieldHint from '@/components/help/FieldHint';
 import {
   SelectionActionBar,
   ToolbarGroup,
@@ -1968,16 +1969,17 @@ export default function UnifiedTeamsPage() {
       )}
 
       {!isLocked && (
+        <>
         <SelectionActionBar
           selectedCount={selectedRegistrationIds.size}
           label={`${selectedRegistrationIds.size} selected`}
           onClear={clearRegistrationSelection}
           className={styles.registrationSelectionBar}
         >
-          <button type="button" className="btn btn-lime btn-data" onClick={() => runBulkAction('accept')} disabled={working === 'bulk'}>
+          <button type="button" className="btn btn-lime btn-data" aria-describedby="bulk-action-hint" onClick={() => runBulkAction('accept')} disabled={working === 'bulk'}>
             Accept
           </button>
-          <button type="button" className="btn btn-outline btn-data" onClick={() => runBulkAction('waitlist')} disabled={working === 'bulk'}>
+          <button type="button" className="btn btn-outline btn-data" aria-describedby="bulk-action-hint" onClick={() => runBulkAction('waitlist')} disabled={working === 'bulk'}>
             Waitlist
           </button>
           <button type="button" className={`btn btn-outline btn-data ${styles.bulkPaymentAction}`} onClick={() => runBulkAction('mark_deposit_paid')} disabled={working === 'bulk'}>
@@ -1996,10 +1998,16 @@ export default function UnifiedTeamsPage() {
               <Mail size={12} /> Reminder
             </button>
           )}
-          <button type="button" className="btn btn-outline btn-data" style={{ color: 'var(--danger)' }} onClick={() => runBulkAction('reject')} disabled={working === 'bulk'}>
+          <button type="button" className="btn btn-outline btn-data" aria-describedby="bulk-action-hint" style={{ color: 'var(--danger)' }} onClick={() => runBulkAction('reject')} disabled={working === 'bulk'}>
             Reject
           </button>
         </SelectionActionBar>
+        {selectedRegistrationIds.size > 0 && (
+          <FieldHint id="bulk-action-hint">
+            Accepting or rejecting a team emails its contact (if those emails are on in your settings); waitlisting only notifies in-app. Only accepted teams appear in the schedule builder.
+          </FieldHint>
+        )}
+        </>
       )}
 
       {/* ── SLOT BOARD (divisions with pool slots configured) ─────────────────── */}

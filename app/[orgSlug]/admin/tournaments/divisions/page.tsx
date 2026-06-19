@@ -7,6 +7,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import type { Division, DivisionSettings } from '@/lib/types';
 import { TournamentAdminHeader } from '@/components/admin/tournament';
 import TieBreakerEditor from '@/components/admin/TieBreakerEditor';
+import FieldHint from '@/components/help/FieldHint';
 import { normalizeTieBreakers, clampRunDiffCap, DEFAULT_TIE_BREAKERS, BREAKER_LABELS, type TieBreaker } from '@/lib/tie-breakers';
 
 interface OrgMemberOption {
@@ -407,17 +408,24 @@ export default function DivisionsPage() {
                     <span style={{ fontWeight: 600 }}>Enable pools</span>
                   </label>
                   {form.usePools && (
-                    <div className="subCheck" title="When enabled, registrants choose their own pool during sign-up. When disabled, you assign pools manually from the Registrations page.">
-                      <label style={{ fontSize: '0.7rem', color: 'var(--white-30)', textTransform: 'uppercase', fontWeight: 800 }}>Self-select pool:</label>
-                      <input type="checkbox" checked={form.requiresPoolSelection} onChange={e => setForm(f => ({ ...f, requiresPoolSelection: e.target.checked }))} />
+                    <div className="subCheck">
+                      <label htmlFor="div-pool-selfselect" style={{ fontSize: '0.7rem', color: 'var(--white-30)', textTransform: 'uppercase', fontWeight: 800 }}>Self-select pool:</label>
+                      <input id="div-pool-selfselect" type="checkbox" aria-describedby="div-pool-selfselect-hint" checked={form.requiresPoolSelection} onChange={e => setForm(f => ({ ...f, requiresPoolSelection: e.target.checked }))} />
                     </div>
                   )}
                 </div>
                 {form.usePools && (
+                  <FieldHint id="div-pool-selfselect-hint">
+                    When on, teams pick their own pool during registration. When off, you assign pools yourself from the Registrations page.
+                  </FieldHint>
+                )}
+                {form.usePools && (
+                  <>
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                     <div className="form-group">
-                      <label className="form-label" style={{ fontSize: '0.65rem' }}>Count</label>
-                      <input className="form-input" type="number" min="2" max="10" value={form.poolCount}
+                      <label className="form-label" htmlFor="div-pool-count" style={{ fontSize: '0.65rem' }}>Count</label>
+                      <input id="div-pool-count" className="form-input" type="number" min="2" max="10" value={form.poolCount}
+                        aria-describedby="div-pool-count-hint"
                         onChange={e => setForm(f => ({ ...f, poolCount: e.target.value }))} style={{ width: '70px' }} />
                     </div>
                     <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.75rem' }}>
@@ -445,6 +453,10 @@ export default function DivisionsPage() {
                       })}
                     </div>
                   </div>
+                  <FieldHint id="div-pool-count-hint">
+                    Splits the division into this many round-robin pools (2–10). Each pool gets its own name, and teams are spread across them.
+                  </FieldHint>
+                  </>
                 )}
               </div>
 

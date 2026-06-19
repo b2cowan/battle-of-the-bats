@@ -17,6 +17,7 @@ export default function NumberStepper({
   step = 1,
   className,
   ariaLabel,
+  ariaDescribedBy,
 }: {
   value: number;
   onChange: (value: number) => void;
@@ -25,6 +26,7 @@ export default function NumberStepper({
   step?: number;
   className?: string;
   ariaLabel?: string;
+  ariaDescribedBy?: string;
 }) {
   const clamp = (v: number) => {
     let n = Number.isFinite(v) ? v : min;
@@ -53,6 +55,7 @@ export default function NumberStepper({
         max={max}
         step={step}
         aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
         onChange={e => onChange(clamp(Number(e.target.value)))}
       />
       <button
