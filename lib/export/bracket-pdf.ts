@@ -15,7 +15,7 @@
  */
 
 import { DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from './pdf';
-import { bracketRoundInfo, computeBracketColumns, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
+import { bracketRoundInfo, computeBracketColumns, displayBracketRefs, displayRoundTitle, groupGamesByBracketId } from '@/lib/playoff-bracket';
 import type { Game, Team } from '@/lib/types';
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
@@ -89,7 +89,10 @@ export async function downloadBracketPDF(
   const { default: jsPDF } = await import('jspdf');
 
   const playoffGames = games.filter(g => g.isPlayoff);
-  const columns = buildColumns(playoffGames);
+  // Split into independent brackets (tiers / per-pool): each bracket_id renders as
+  // its own section so tiers print as separate, titled brackets instead of merging
+  // into one cross-wired tree. A single bracket → one group (unchanged output).
+  const groups = groupGamesByBracketId(playoffGames);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const doc: any = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
@@ -98,16 +101,10 @@ export async function downloadBracketPDF(
   const margin = 12;
   const accent = hexToRgb(settings.accentColor || '#1e293b');
 
-  // Champion (decisive final → grand-final reset, grand final, or single-elim final)
-  const byCode = (c: string) => playoffGames.find(g => (g.bracketCode || '').toUpperCase() === c);
-  const finalG = [byCode('GF2'), byCode('GF'), byCode('FIN')].find(isDecided);
-  const championName = !blank && finalG
-    ? sideName(
-        (finalG.homeScore ?? 0) > (finalG.awayScore ?? 0) ? finalG.homeTeamId : finalG.awayTeamId,
-        (finalG.homeScore ?? 0) > (finalG.awayScore ?? 0) ? finalG.homePlaceholder : finalG.awayPlaceholder,
-        teams,
-      )
-    : null;
+  // The current section's champion (recomputed per bracket group) + its tier label,
+  // both read by drawPageHeader's closure.
+  let championName: string | null = null;
+  let groupLabel: string | undefined;
 
   // ── Header (drawn per page) ───────────────────────────────────────────────
   const drawPageHeader = (suffix?: string): number => {
@@ -125,7 +122,7 @@ export async function downloadBracketPDF(
     doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(20, 20, 35);
     doc.text(settings.headerLine1 || title, textX, margin + 5);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(90, 90, 110);
-    doc.text([title, subtitle, suffix].filter(Boolean).join('  ·  '), textX, margin + 11);
+    doc.text([title, subtitle, groupLabel, suffix].filter(Boolean).join('  ·  '), textX, margin + 11);
 
     if (championName) {
       doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(accent.r, accent.g, accent.b);
@@ -149,7 +146,7 @@ export async function downloadBracketPDF(
     if (parts.length) doc.text(parts.join('  ·  '), margin, footerY);
   };
 
-  if (columns.length === 0) {
+  if (playoffGames.length === 0) {
     const hb = drawPageHeader();
     doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(120, 120, 135);
     doc.text('No playoff bracket games to display.', margin, hb + 12);
@@ -326,51 +323,84 @@ export async function downloadBracketPDF(
     placements.forEach(p => drawBox(p.game, p.x, p.y));
   };
 
-  // ── Pagination decision ─────────────────────────────────────────────────────
+  // ── Render one bracket group (a tier / pool, or the whole single bracket) ────
   const fitColW = (n: number) => (pageW - margin * 2 - colGap * (n - 1)) / n;
-  const isDoubleElim = playoffGames.some(g => /^LB/i.test(g.bracketCode || ''));
-  const isMultiSection = playoffGames.some(g => /^(WB|LB|GF|CON|PL)/i.test(g.bracketCode || ''));
+  const renderGroup = (groupGames: Game[]) => {
+    const columns = buildColumns(groupGames);
+    if (columns.length === 0) return;
 
-  if (isDoubleElim) {
-    const wbAll = columns.filter(c => sectionOfColumn(c) === 'W');
-    const lbCols = columns.filter(c => sectionOfColumn(c) === 'L');
-    const gfCols = columns.filter(c => sectionOfColumn(c) === 'GF');
-    const seedCols = wbAll.filter(c => wbRoundOfColumn(c) === 1);
-    const wbCols = wbAll.filter(c => wbRoundOfColumn(c) !== 1);
-    const forkNumH = seedCols.length + Math.max(wbCols.length, lbCols.length) + gfCols.length;
+    // Champion for THIS group (decisive grand-final reset, grand final, or final).
+    const byCode = (c: string) => groupGames.find(g => (g.bracketCode || '').toUpperCase() === c);
+    const finalG = [byCode('GF2'), byCode('GF'), byCode('FIN')].find(isDecided);
+    championName = !blank && finalG
+      ? sideName(
+          (finalG.homeScore ?? 0) > (finalG.awayScore ?? 0) ? finalG.homeTeamId : finalG.awayTeamId,
+          (finalG.homeScore ?? 0) > (finalG.awayScore ?? 0) ? finalG.homePlaceholder : finalG.awayPlaceholder,
+          teams,
+        )
+      : null;
 
-    if (fitColW(forkNumH) >= MIN_COL_W) {
-      // Fits legibly → the whole fork on one page.
-      drawSection(columns, 'fork', drawPageHeader(), 'data');
-      drawFooter();
-    } else {
-      // Too dense → Winners (seed + winners + grand final) on page 1, Losers on
-      // page 2. Each gets full page width, so names stay readable.
-      drawSection([...seedCols, ...wbCols, ...gfCols], 'flat', drawPageHeader('Winners Bracket'), 'data');
-      drawFooter();
-      doc.addPage();
-      drawSection(lbCols, 'flat', drawPageHeader('Losers Bracket'), 'data');
-      drawFooter();
-    }
-  } else {
-    // Single-elim follows the real Winner/Loser wiring ('data'), same as the
-    // double-elim fork — so renamed/legacy/irregular brackets trace correctly
-    // instead of assuming round-to-round halving.
-    const flatConnectors: ConnectorMode = isMultiSection ? 'none' : 'data';
-    if (fitColW(columns.length) >= MIN_COL_W || columns.length <= 1) {
-      drawSection(columns, 'flat', drawPageHeader(), flatConnectors);
-      drawFooter();
-    } else {
-      // Too many rounds for one page → paginate by round.
-      const perPage = Math.max(2, Math.floor((pageW - margin * 2 + colGap) / (MIN_COL_W + colGap)));
-      for (let i = 0; i < columns.length; i += perPage) {
-        if (i > 0) doc.addPage();
-        const last = Math.min(i + perPage, columns.length);
-        const suffix = columns.length > perPage ? `Rounds ${i + 1}–${last}` : undefined;
-        drawSection(columns.slice(i, last), 'flat', drawPageHeader(suffix), flatConnectors);
+    const isDoubleElim = groupGames.some(g => /^LB/i.test(g.bracketCode || ''));
+    const isMultiSection = groupGames.some(g => /^(WB|LB|GF|CON|PL)/i.test(g.bracketCode || ''));
+
+    if (isDoubleElim) {
+      const wbAll = columns.filter(c => sectionOfColumn(c) === 'W');
+      const lbCols = columns.filter(c => sectionOfColumn(c) === 'L');
+      const gfCols = columns.filter(c => sectionOfColumn(c) === 'GF');
+      const seedCols = wbAll.filter(c => wbRoundOfColumn(c) === 1);
+      const wbCols = wbAll.filter(c => wbRoundOfColumn(c) !== 1);
+      const forkNumH = seedCols.length + Math.max(wbCols.length, lbCols.length) + gfCols.length;
+
+      if (fitColW(forkNumH) >= MIN_COL_W) {
+        // Fits legibly → the whole fork on one page.
+        drawSection(columns, 'fork', drawPageHeader(), 'data');
+        drawFooter();
+      } else {
+        // Too dense → Winners (seed + winners + grand final) on page 1, Losers on
+        // page 2. Each gets full page width, so names stay readable.
+        drawSection([...seedCols, ...wbCols, ...gfCols], 'flat', drawPageHeader('Winners Bracket'), 'data');
+        drawFooter();
+        doc.addPage();
+        drawSection(lbCols, 'flat', drawPageHeader('Losers Bracket'), 'data');
         drawFooter();
       }
+    } else {
+      // Single-elim follows the real Winner/Loser wiring ('data'), same as the
+      // double-elim fork — so renamed/legacy/irregular brackets trace correctly
+      // instead of assuming round-to-round halving.
+      const flatConnectors: ConnectorMode = isMultiSection ? 'none' : 'data';
+      if (fitColW(columns.length) >= MIN_COL_W || columns.length <= 1) {
+        drawSection(columns, 'flat', drawPageHeader(), flatConnectors);
+        drawFooter();
+      } else {
+        // Too many rounds for one page → paginate by round.
+        const perPage = Math.max(2, Math.floor((pageW - margin * 2 + colGap) / (MIN_COL_W + colGap)));
+        for (let i = 0; i < columns.length; i += perPage) {
+          if (i > 0) doc.addPage();
+          const last = Math.min(i + perPage, columns.length);
+          const suffix = columns.length > perPage ? `Rounds ${i + 1}–${last}` : undefined;
+          drawSection(columns.slice(i, last), 'flat', drawPageHeader(suffix), flatConnectors);
+          drawFooter();
+        }
+      }
     }
+  };
+
+  // Each bracket group prints on its own page(s); the tier name shows in the header.
+  let rendered = false;
+  groups.forEach((grp, gi) => {
+    if (grp.games.length === 0) return;
+    if (rendered) doc.addPage();
+    groupLabel = groups.length > 1 ? (grp.label || `Bracket ${gi + 1}`) : undefined;
+    renderGroup(grp.games);
+    rendered = true;
+  });
+  // No group produced any columns (e.g. games without resolvable structure) → blank sheet.
+  if (!rendered) {
+    const hb = drawPageHeader();
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(120, 120, 135);
+    doc.text('No playoff bracket games to display.', margin, hb + 12);
+    drawFooter();
   }
 
   doc.save(filename);
