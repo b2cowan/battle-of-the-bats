@@ -263,6 +263,11 @@ export default function DivisionsPage() {
         subtitle="Manage tournament divisions and registration groups"
         locked={isLocked}
         mobileActionsInline
+        help={{
+          module: 'tournaments',
+          sectionIds: ['divisions-and-pools'],
+          fullGuideHref: currentOrg ? `/${currentOrg.slug}/admin/help/tournaments#divisions-and-pools` : undefined,
+        }}
         actions={!isLocked ? (
           <button className={`btn btn-lime btn-data ${styles.addDivisionBtn}`} onClick={openAdd} id="division-add-btn" disabled={!currentTournament}>
             <Plus size={16} />

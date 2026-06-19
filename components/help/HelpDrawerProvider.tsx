@@ -1,8 +1,14 @@
 'use client';
 
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import { HelpDrawerContext, type HelpRequest } from './help-drawer-context';
-import HelpDrawer from './HelpDrawer';
+
+// Load the drawer (and, through it, the content registry + all guide content)
+// only when help is first opened. The provider is mounted on every admin page,
+// so eager-importing would put all guide content in every page's bundle; this
+// defers that weight to the moment a user actually clicks "?".
+const HelpDrawer = dynamic(() => import('./HelpDrawer'), { ssr: false });
 
 /**
  * Mounts a SINGLE in-context help drawer for an admin/portal area. Work pages
@@ -24,7 +30,8 @@ export default function HelpDrawerProvider({ children }: { children: ReactNode }
   return (
     <HelpDrawerContext.Provider value={value}>
       {children}
-      <HelpDrawer request={request} onClose={closeHelp} />
+      {/* Only mounted once help is opened, so the drawer chunk loads on demand. */}
+      {request && <HelpDrawer request={request} onClose={closeHelp} />}
     </HelpDrawerContext.Provider>
   );
 }

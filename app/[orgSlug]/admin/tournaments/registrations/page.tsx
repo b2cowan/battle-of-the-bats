@@ -1570,6 +1570,11 @@ export default function UnifiedTeamsPage() {
         subtitle="Manage all teams and signups in one place"
         mobileActionsInline
         locked={isLocked}
+        help={{
+          module: 'tournaments',
+          sectionIds: ['registrations-and-teams'],
+          fullGuideHref: currentOrg ? `/${currentOrg.slug}/admin/help/tournaments#registrations-and-teams` : undefined,
+        }}
         actions={(
           <>
             <ExportMenu

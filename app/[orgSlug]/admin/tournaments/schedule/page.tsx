@@ -1179,6 +1179,12 @@ export default function AdminSchedulePage() {
     <div className={s.page}>
       <TournamentAdminHeader
         icon={<Calendar size={20} />}
+        help={{
+          module: 'tournaments',
+          sectionIds: ['recipe-build-tournament-schedule', 'schedule-playoffs'],
+          label: 'Schedule',
+          fullGuideHref: currentOrg ? `/${currentOrg.slug}/admin/help/tournaments#recipe-build-tournament-schedule` : undefined,
+        }}
         title={(
           <>
             <span className={styles.desktopTitle}>Schedule Management</span>

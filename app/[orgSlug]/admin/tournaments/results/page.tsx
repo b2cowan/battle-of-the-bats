@@ -399,6 +399,12 @@ export default function AdminResultsPage() {
         title="Results & Scoring"
         subtitle={currentTournament ? `${currentTournament.name} (${currentTournament.year})` : 'Enter scores and finalize tournament outcomes'}
         mobileActionsInline
+        help={{
+          module: 'tournaments',
+          sectionIds: ['scores-and-results', 'recipe-finalize-tournament-scores'],
+          label: 'Results',
+          fullGuideHref: currentOrg ? `/${currentOrg.slug}/admin/help/tournaments#scores-and-results` : undefined,
+        }}
         actions={(
           <>
             <ExportMenu

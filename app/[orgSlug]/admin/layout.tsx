@@ -6,6 +6,7 @@ import { TournamentProvider } from '@/lib/tournament-context';
 import { OrgProvider } from '@/lib/org-context';
 import { LiveLogicProvider } from '@/components/live-logic/LiveLogicProvider';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
+import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import AdminChrome from './AdminChrome';
 
 const MEMBER_INSTALL = {
@@ -69,7 +70,9 @@ export default async function AdminLayout({
       <TournamentProvider orgSlug={orgSlug}>
         <LiveLogicProvider>
           <AdminChrome>
-            {children}
+            <HelpDrawerProvider>
+              {children}
+            </HelpDrawerProvider>
           </AdminChrome>
           <InstallAppPrompt {...MEMBER_INSTALL} />
         </LiveLogicProvider>
