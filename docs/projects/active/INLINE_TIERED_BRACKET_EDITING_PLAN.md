@@ -1,6 +1,14 @@
 # Inline Tiered Bracket Editing — Implementation Plan
 
-**Status:** Planned (not started). A first hotfix has already shipped on `dev` — see "Already done" below.
+**Status:** Phases 0 + 1 + 3 BUILT on `dev` 2026-06-19 (typecheck/dictionary/snapshot green; awaiting browser verification). Phase 2 (manual "split into tiers") is the next checkpoint. A first hotfix shipped earlier — see "Already done".
+
+## Build progress (2026-06-19)
+- **Phase 0 — DONE.** Migration 137 `games.bracket_label` applied to dev; threaded through the type, the admin games API (read + bulk-save + create + save-bracket), the shared `lib/db.ts` mappers, and the generator (writes the tier name for tiered/per-pool brackets). Data Dictionary + snapshots refreshed (watermark #137).
+- **Phase 1 — DONE (save side).** The inline editor preserves each existing game's own bracket id **and** tier name on save, so edits no longer collapse or un-name tiers. The editor's in-canvas *visual* tier split is deferred to Phase 2 (it needs round-alignment handling shared with the manual-create flow).
+- **Phase 3 — DONE.** Public schedule + admin bracket view now split a division's playoff games into separate, titled bracket sections by bracket group (shared `groupGamesByBracketId`), so tiers render as distinct brackets instead of one merged tree. PDF export split is a follow-up (not yet done).
+- **Phase 2 — PENDING.** Manual "split into tiers" UI in the build-mode starter + writing `crossover:'tiers'` + `tierConfigs` to `divisions.playoff_config`; plus the editor's in-canvas visual split.
+
+**Status note:** Planned (Phase 2 remains). A first hotfix has already shipped on `dev` — see "Already done" below.
 **Owner agent:** /plan → implementation on `dev`
 **Created:** 2026-06-19
 **Related:** [PLAYOFF_BRACKET_BUILDER_UX_PLAN.md](./PLAYOFF_BRACKET_BUILDER_UX_PLAN.md), [BRACKET_GRAPH_LAYOUT_PLAN.md](./BRACKET_GRAPH_LAYOUT_PLAN.md), unified bracket engine (`lib/playoff-bracket.ts`)

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link';
 import { Calendar, ChevronRight, ChevronDown, Plus, Pencil, Trash2, X, Check, Sparkles, SlidersHorizontal, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw, AlertTriangle, AlertCircle, Lock, Wrench } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
-import { buildPlaceholderOptions, findBracketSchedulingViolations, nextManualBracketCode } from '@/lib/playoff-bracket';
+import { buildPlaceholderOptions, findBracketSchedulingViolations, nextManualBracketCode, groupGamesByBracketId } from '@/lib/playoff-bracket';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
@@ -3173,6 +3173,29 @@ function PlayoffBracketView({ games, teams, division, canBuildManualBracket, onB
             </div>
           );
         })()}
+      </div>
+    );
+  }
+
+  // Tiered (or per-bracket) layout: when pools don't drive the split but the games
+  // span ≥2 independent brackets (each tier is its own bracket_id, reusing codes),
+  // render one diagram per bracket so tiers don't cross-wire into a single tree.
+  const bracketGroups = groupGamesByBracketId(games);
+  if (bracketGroups.length > 1) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem', padding: '2rem 0.75rem 0' }}>
+        {bracketGroups.map((grp, i) => (
+          <div key={grp.key}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <Trophy size={16} style={{ color: 'var(--logic-lime)' }} />
+              <h3 style={{ color: 'var(--logic-lime)', fontFamily: 'var(--font-data)', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                {grp.label || `Bracket ${i + 1}`}
+              </h3>
+              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, var(--blueprint-blue), transparent)' }} />
+            </div>
+            <BracketColumns columns={buildBracketColumns(grp.games)} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} />
+          </div>
+        ))}
       </div>
     );
   }

@@ -651,6 +651,13 @@ export interface Game {
   generatorLocked?: boolean;
   bracketId?: string;
   bracketCode?: string;
+  /**
+   * Display name of the bracket/tier this game belongs to (e.g. "Gold", "Tier 1").
+   * null/undefined = an ungrouped single bracket. `bracketId` stays the structural
+   * key (one id per tier); `bracketLabel` is the grouping/title name so a tier's
+   * name survives saves and the diagrams can split + title tiers.
+   */
+  bracketLabel?: string | null;
   /** Optional custom display name for this game's bracket COLUMN (null/undefined = auto-derived round name). */
   roundLabel?: string | null;
   homePlaceholder?: string;

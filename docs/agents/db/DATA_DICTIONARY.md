@@ -662,6 +662,9 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 <!-- dict:col:games.bracket_code -->
 **`bracket_id`** (uuid, **not a FK**) / **`bracket_code`** (text) — bracket-tree grouping key + round/slot code (gotchas 2–3).
 
+<!-- dict:col:games.bracket_label -->
+**`bracket_label`** (text, nullable) — display NAME of the bracket/tier this game belongs to (e.g. `'Gold'`, `'Tier 1'`). Null = an ungrouped single bracket. `bracket_id` stays the structural/advancement key (one id per tier, tiers reuse `bracket_code`s); `bracket_label` is purely the grouping/title name so a tier's name survives the `save-bracket` diff and the public + admin bracket diagrams can split + title tiers (`groupGamesByBracketId`). Set per-tier by the playoff generator and the manual editor's tier-split. Display-only; never affects advancement.
+
 <!-- dict:col:games.round_label -->
 **`round_label`** (text, nullable) — optional custom display name for the game's bracket COLUMN (e.g. `'Championship'`, `'Gold Final'`). Every game in a column carries the same label (written together by the `save-bracket` diff). Null = use the auto-derived round name (`computeBracketColumns`). Display-only; never affects advancement (gotcha 3) or grouping — only the column TITLE.
 

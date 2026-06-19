@@ -1574,6 +1574,7 @@ export async function getGames(tournamentId?: string, options: ReadOptions = {})
     generatorLocked: g.generator_locked ?? false,
     bracketId: g.bracket_id,
     bracketCode: g.bracket_code,
+    bracketLabel: g.bracket_label ?? null,
     roundLabel: g.round_label ?? null,
     homePlaceholder: g.home_placeholder,
     awayPlaceholder: g.away_placeholder,
@@ -1601,6 +1602,7 @@ export async function saveGame(g: Omit<Game, 'id'>): Promise<void> {
     is_playoff: g.isPlayoff || false,
     bracket_id: g.bracketId,
     bracket_code: g.bracketCode,
+    bracket_label: g.bracketLabel ?? null,
     round_label: g.roundLabel ?? null,
     home_placeholder: g.homePlaceholder,
     away_placeholder: g.awayPlaceholder,
@@ -1636,6 +1638,7 @@ export async function updateGame(id: string, g: Partial<Game>, options: ReadOpti
   if (g.generatorLocked !== undefined) updates.generator_locked = Boolean(g.generatorLocked);
   if (g.bracketId !== undefined) updates.bracket_id = g.bracketId;
   if (g.bracketCode !== undefined) updates.bracket_code = g.bracketCode;
+  if (g.bracketLabel !== undefined) updates.bracket_label = g.bracketLabel ?? null;
   if (g.homePlaceholder !== undefined) updates.home_placeholder = g.homePlaceholder;
   if (g.awayPlaceholder !== undefined) updates.away_placeholder = g.awayPlaceholder;
   if (g.homeSlotId !== undefined) updates.home_slot_id = g.homeSlotId;

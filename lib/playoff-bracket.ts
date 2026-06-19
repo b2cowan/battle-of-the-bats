@@ -693,6 +693,48 @@ export function gamesToBracketPreview(games: LoadableBracketGame[]): BracketPrev
       })));
 }
 
+export interface BracketGroup<T> {
+  /** bracket_id of the group (or a sentinel for the ungrouped single bracket). */
+  key: string;
+  /** Display name from bracket_label (tier name); null = unnamed / single bracket. */
+  label: string | null;
+  games: T[];
+}
+
+/**
+ * Split a division's playoff games into independent bracket groups by `bracketId`
+ * — each tier / per-pool bracket is its own id and reuses codes, so they must be
+ * rendered as SEPARATE diagrams (one column computation each) to avoid cross-wiring.
+ * An ordinary single bracket returns one group. Named groups (a tier name lives on
+ * `bracketLabel`) are ordered by label (Tier 1 < Tier 2, Gold < Silver); unnamed
+ * groups keep first-seen order. `groups.length > 1` ⇒ render tiers separately.
+ */
+export function groupGamesByBracketId<T extends { bracketId?: string | null; bracketLabel?: string | null }>(
+  games: T[],
+): BracketGroup<T>[] {
+  const map = new Map<string, T[]>();
+  const order: string[] = [];
+  for (const g of games) {
+    const key = g.bracketId || '__single__';
+    let arr = map.get(key);
+    if (!arr) { arr = []; map.set(key, arr); order.push(key); }
+    arr.push(g);
+  }
+  const enriched = order.map((key, i) => ({
+    key,
+    label: map.get(key)!.find(x => x.bracketLabel)?.bracketLabel ?? null,
+    games: map.get(key)!,
+    seen: i,
+  }));
+  enriched.sort((a, b) => {
+    if (a.label && b.label) return a.label.localeCompare(b.label);
+    if (a.label) return -1;
+    if (b.label) return 1;
+    return a.seen - b.seen;
+  });
+  return enriched.map(({ key, label, games }) => ({ key, label, games }));
+}
+
 export interface BracketTimingGame {
   code?: string | null;
   home?: string | null;

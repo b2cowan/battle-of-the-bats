@@ -1190,6 +1190,9 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
           status: 'scheduled',
           isPlayoff: true,
           bracketId,
+          // Persist the tier/pool name so it survives saves and the diagrams can
+          // split + title tiers. Only per-group brackets carry a label.
+          bracketLabel: usesPerGroupBrackets ? (p.pool || null) : null,
           bracketCode: p.code,
           homePlaceholder: p.home,
           awayPlaceholder: p.away,

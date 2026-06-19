@@ -10,7 +10,7 @@ import YearSelector from '@/components/YearSelector';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
 import { LogicSyncBracket } from '@/components/bracket/LogicSyncBracket';
-import { bracketRoundInfo, bracketRoundLabel } from '@/lib/playoff-bracket';
+import { bracketRoundInfo, bracketRoundLabel, groupGamesByBracketId } from '@/lib/playoff-bracket';
 import { computePlacementStandings } from '@/lib/playoff-standings';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
@@ -1272,6 +1272,29 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                           </div>
                         );
                       })}
+                    </div>
+                  );
+                }
+
+                // Tiered (or per-bracket) split: pools don't drive it, but the games
+                // span ≥2 independent brackets (each tier its own bracket_id, reusing
+                // codes) — render one bracket per group so tiers stay separate.
+                const bracketGroups = groupGamesByBracketId(bracketGames);
+                if (bracketGroups.length > 1) {
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+                      {bracketGroups.map((grp, i) => (
+                        <div key={grp.key}>
+                          <PoolHeader name={grp.label || `Bracket ${i + 1}`} />
+                          <LogicSyncBracket
+                            games={grp.games}
+                            teams={teams}
+                            tournamentId={selectedTournament!.id}
+                            highlightTeamId={followedTeamId ?? undefined}
+                            requireFinalization={requireFinalization}
+                          />
+                        </div>
+                      ))}
                     </div>
                   );
                 }

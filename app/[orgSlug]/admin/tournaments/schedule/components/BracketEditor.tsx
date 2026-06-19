@@ -170,11 +170,12 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
     }
     setLoading(true);
     try {
-      // Preserve each existing game's own bracketId so multi-bracket divisions
-      // (tiered / per-pool) don't collapse into one bracket on save. Only NEW
-      // rows fall back to the single computed bracketId.
-      const origBracketByGameId = new Map(
-        existingGames.filter(g => g.bracketId).map(g => [g.id, g.bracketId as string]),
+      // Preserve each existing game's own bracketId + bracketLabel so multi-bracket
+      // divisions (tiered / per-pool) don't collapse into one bracket — or lose
+      // their tier name — on save. Only NEW rows fall back to the single computed
+      // bracketId (and carry no tier label until manual tier-splitting lands).
+      const origByGameId = new Map(
+        existingGames.map(g => [g.id, { bracketId: g.bracketId, bracketLabel: g.bracketLabel ?? null }]),
       );
       // A round name is persisted only when the organizer CUSTOMIZED it — i.e. it
       // differs from the auto-derived column title — so untouched rounds stay auto.
@@ -200,7 +201,8 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
         location: resolveLocation(p),
         venueId: p.venueId || undefined,
         venueFacilityId: p.venueFacilityId || undefined,
-        bracketId: (p.sourceGameId && origBracketByGameId.get(p.sourceGameId)) || bracketId,
+        bracketId: (p.sourceGameId && origByGameId.get(p.sourceGameId)?.bracketId) || bracketId,
+        bracketLabel: (p.sourceGameId && origByGameId.get(p.sourceGameId)?.bracketLabel) ?? null,
         bracketCode: p.code,
         homePlaceholder: p.home,
         awayPlaceholder: p.away,
