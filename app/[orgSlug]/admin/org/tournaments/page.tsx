@@ -544,6 +544,30 @@ export default function AdminTournamentsPage({
       return;
     }
 
+    if (status === 'completed') {
+      setFeedback({
+        isOpen: true,
+        title: 'Mark as Completed?',
+        message: 'Registration closes and all event data — scores, standings, schedule, divisions, and registrations — becomes read-only and final. If you have "Notify teams on complete" turned on, a results summary email is sent to every team coach now. You can reopen it by setting the status back to Live.',
+        type: 'warning',
+        confirmText: 'Mark Completed',
+        onConfirm: () => applyTournamentStatus(tournament.id, status),
+      });
+      return;
+    }
+
+    if (status === 'archived') {
+      setFeedback({
+        isOpen: true,
+        title: 'Archive this tournament?',
+        message: 'It is removed from public view immediately — all public links and coach-portal access for this event go offline — and its tournament slot is freed. You can set the status back later to bring it back.',
+        type: 'warning',
+        confirmText: 'Archive',
+        onConfirm: () => applyTournamentStatus(tournament.id, status),
+      });
+      return;
+    }
+
     applyTournamentStatus(tournament.id, status);
   }
 
@@ -1205,8 +1229,9 @@ export default function AdminTournamentsPage({
               <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>
-              Deleting this tournament will remove its record. Teams and games tagged to it will remain in storage
-              but will no longer appear on any page.
+              This permanently deletes the tournament and all of its data — every team registration, game result,
+              schedule, division, and rule is erased and cannot be recovered. To keep a copy of the results, seal
+              the tournament first.
             </p>
             <div className="modal-footer">
               <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}>Cancel</button>

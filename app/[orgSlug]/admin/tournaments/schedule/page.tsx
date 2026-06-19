@@ -394,7 +394,7 @@ export default function AdminSchedulePage() {
     setFeedback({
       isOpen: true,
       title: 'Unpublish Division?',
-      message: 'The schedule for this division will be removed from the public page.',
+      message: 'The schedule for this division will be removed from the public page. Registration stays closed — unpublishing does not reopen it; reopen registration separately if you want new sign-ups.',
       type: 'warning',
       confirmText: 'Unpublish',
       onConfirm: async () => {
@@ -415,7 +415,7 @@ export default function AdminSchedulePage() {
     setFeedback({
       isOpen: true,
       title: `Unpublish all ${published.length} divisions?`,
-      message: 'These divisions will be removed from the public schedule page. You can republish them at any time.',
+      message: 'These divisions will be removed from the public schedule page (you can republish them at any time). Registration stays closed — unpublishing does not reopen it; reopen registration separately if you want new sign-ups.',
       items: published.map(g => ({ label: g.name })),
       type: 'warning',
       confirmText: `Unpublish All (${published.length})`,
@@ -805,7 +805,7 @@ export default function AdminSchedulePage() {
     setFeedback({
       isOpen: true,
       title: 'Clear the whole bracket?',
-      message: `This permanently removes all ${count} playoff game${count === 1 ? '' : 's'} for this division. You can build a new bracket afterward.`,
+      message: `This permanently removes all ${count} playoff game${count === 1 ? '' : 's'} for this division, including any scores already recorded — this cannot be undone. You can build a new bracket afterward.`,
       type: 'danger',
       confirmText: 'Clear bracket',
       onConfirm: async () => {
@@ -2675,6 +2675,20 @@ function PublishScheduleModal({
                   </div>
                 </label>
               </div>
+
+              {targets.length > 0 && (
+                <div style={{
+                  display: 'flex', alignItems: 'flex-start', gap: '0.55rem',
+                  marginBottom: '1rem', padding: '0.6rem 0.75rem',
+                  background: 'var(--white-3)',
+                  border: '1px solid var(--white-10)', borderRadius: '2px',
+                }}>
+                  <AlertCircle size={14} style={{ color: 'var(--white-40)', marginTop: '2px', flexShrink: 0 }} />
+                  <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', lineHeight: 1.45 }}>
+                    Publishing also schedules a game-day reminder email to each accepted team for the evening before their first game — this is sent even if the box above is left unchecked.
+                  </div>
+                </div>
+              )}
 
               {error && (
                 <div style={{ marginBottom: '1rem', padding: '0.6rem 0.75rem', background: 'rgba(var(--danger-rgb),0.1)', border: '1px solid rgba(var(--danger-rgb),0.3)', borderRadius: '2px', fontSize: '0.82rem', color: '#f87171' }}>
