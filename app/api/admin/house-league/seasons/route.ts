@@ -7,6 +7,7 @@ import { getLeagueSeasons, getLeagueSeasonSummary } from '@/lib/db';
 import { houseLeagueSeasonCap, isFreeFloorLeague, leagueCapHit } from '@/lib/free-floor';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { withObservability } from '@/lib/observability';
+import { DEFAULT_SPORT } from '@/lib/sports';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -81,7 +82,7 @@ export const POST = withObservability(async (req: Request) => {
       org_id:                       ctx!.org.id,
       name,
       slug,
-      sport:                        typeof body.sport === 'string' && body.sport ? body.sport : 'softball',
+      sport:                        typeof body.sport === 'string' && body.sport ? body.sport : DEFAULT_SPORT,
       division:                    typeof body.division === 'string' && body.division ? body.division : null,
       description:                  typeof body.description === 'string' && body.description ? body.description : null,
       registration_fee:             typeof body.registrationFee === 'number' ? body.registrationFee : null,

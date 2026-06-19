@@ -83,13 +83,13 @@ export default async function ScorekeeperLayout({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '1rem',
+        gap: '1.25rem',
         position: 'sticky',
         top: 0,
         zIndex: 40,
       }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '1rem' }}>
+        <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+          <div style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '1rem', whiteSpace: 'nowrap' }}>
             <span style={{ color: '#F1F5F9' }}>FIELD</span>
             <span style={{ color: '#D9F99D' }}>LOGIC</span>
             <span style={{ color: 'rgba(148,163,184,0.5)' }}>HQ</span>
@@ -104,10 +104,10 @@ export default async function ScorekeeperLayout({
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
           }}>
-            {authCtx.org.name} scorekeeper
+            {authCtx.org.name}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexShrink: 0 }}>
           {/* J1-077: one-tap hop to the gate board for volunteers who also check teams in. */}
           {(hasCapability(authCtx.role, authCtx.capabilities, 'check_in_teams')
             || hasCapability(authCtx.role, authCtx.capabilities, 'manage_registrations')) && (

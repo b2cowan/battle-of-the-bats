@@ -252,10 +252,13 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-rules-resources',
           question: 'How do I show rules or resources to teams?',
-          answerText: 'Add rules and documents from Rules & Resources so they appear on the public tournament site.',
-          keywords: ['rules', 'resources', 'documents', 'public site'],
+          answerText: 'Add rules and documents from Rules & Resources so they appear on the public tournament site. On the public Rules page, uploaded documents open in a new tab (so a PDF views in the browser instead of downloading), and long rule sets get jump-links so fans can skip to a section.',
+          keywords: ['rules', 'resources', 'documents', 'public site', 'pdf', 'jump links'],
           answer: (
-            <p>Open <strong>Rules & Resources</strong> and add the text, links, or documents teams need. These become part of the tournament public experience.</p>
+            <>
+              <p>Open <strong>Rules & Resources</strong> and add the text, links, or documents teams need. These become part of the tournament public experience.</p>
+              <p>On the public <strong>Rules</strong> page, uploaded documents open in a new tab — a PDF views right in the browser instead of forcing a download — and when you have several rule sections, fans get quick jump-links to skip straight to the one they need.</p>
+            </>
           ),
         },
       ],
@@ -663,15 +666,16 @@ const tournamentsHelp: HelpPageContent = {
       id: 'public-communication',
       group: 'Communicate & Publish',
       heading: 'Announcements and email',
-      summary: 'Publish news to the public site and send email updates to registered teams.',
-      keywords: ['communication', 'announcements', 'email', 'news posts', 'targeted email'],
-      searchText: 'communication audiences send email announcements news posts public tournament page teams division payment status selected teams contact role targeted communication all teams',
+      summary: 'Publish news to the public site, pin urgent day-of updates, and send email updates to registered teams.',
+      keywords: ['communication', 'announcements', 'email', 'news posts', 'targeted email', 'pin', 'pinned', 'rain delay', 'schedule banner'],
+      searchText: 'communication audiences send email announcements news posts public tournament page teams division payment status selected teams contact role targeted communication all teams pin pinned post top of news rain delay urgent day-of update game day schedule banner live event',
       links: [
         { label: 'Communication', href: '../tournaments/communication' },
       ],
       content: (
         <>
           <p>Use <strong>Communication</strong> for tournament messages. Free Tournament supports basic all-team email. Tournament Plus can target by division, registration status, payment status, selected teams, and contact role.</p>
+          <p><strong>Pinning a site post.</strong> When you post a message to the site and <strong>pin</strong> it, it stays at the top of the public <strong>News</strong> page — and, while the tournament is live (today falls within the event dates), it also appears as a <strong>banner at the top of the public Schedule</strong>. That puts urgent day-of updates — a rain delay, a diamond change, a start-time push — right where fans are already looking. Pin sparingly so the banner stays meaningful; unpin it once the situation clears.</p>
           <p>Review recipients and message content carefully before sending. Targeted sends should be operational and useful for teams, not broad marketing blasts.</p>
         </>
       ),
@@ -685,6 +689,19 @@ const tournamentsHelp: HelpPageContent = {
             <p>Targeted communication is included with Tournament Plus and higher. Free Tournament can still send basic all-team email, but targeted filters are locked so an unauthorized filter never falls back to sending everyone.</p>
           ),
         },
+        {
+          id: 'faq-rain-delay-banner',
+          question: 'How do I get a rain delay or urgent update in front of fans on game day?',
+          answerText: 'Post a message to the site and pin it. A pinned site post stays at the top of the News page and, while the tournament is live, also shows as a banner at the top of the public Schedule page. Unpin it once the situation clears. This is the same pin control used for News.',
+          keywords: ['rain delay', 'urgent update', 'game day', 'schedule banner', 'pin announcement', 'day-of'],
+          popular: true,
+          answer: (
+            <>
+              <p>Open <strong>Communication</strong>, write the update, keep <strong>Post to site</strong> on, and turn on <strong>Pin</strong>. While the tournament is live, a pinned site post appears as a banner at the top of the public <strong>Schedule</strong> (and stays pinned at the top of <strong>News</strong>). It&rsquo;s the fastest way to reach fans already watching the schedule for a rain delay, a diamond change, or a start-time push.</p>
+              <p><strong>Unpin</strong> it once the situation clears so the banner stays reserved for things that matter in the moment.</p>
+            </>
+          ),
+        },
       ],
     },
 
@@ -694,7 +711,7 @@ const tournamentsHelp: HelpPageContent = {
       heading: 'The public tournament site, fan following, and preview',
       summary: 'What teams and fans see online — following a team, score alerts, the home-screen app — and how to preview it.',
       keywords: ['public site', 'preview', 'public tournament page', 'teams see', 'public schedule', 'standings', 'follow a team', 'score alerts', 'add to home screen', 'install app', 'offline'],
-      searchText: 'public tournament site preview schedule standings results teams rules news registration public page what teams see preview site before activation fans follow a team my team score alerts push notification final alert add to home screen install the app home screen icon fan app works offline last scores branded icon iphone android',
+      searchText: 'public tournament site preview schedule standings results teams rules news registration public page what teams see preview site before activation fans follow a team my team score alerts push notification final alert add to home screen install the app home screen icon fan app works offline last scores branded icon iphone android consistent standings rank same rank everywhere team card team profile tie-breaker head-to-head',
       links: [
         { label: 'Preview Site', href: '../tournaments/dashboard' },
       ],
@@ -703,6 +720,7 @@ const tournamentsHelp: HelpPageContent = {
           <p>Use <strong>Preview Site</strong> from the tournament sidebar footer to inspect the public tournament experience before or after activation.</p>
           <p>The public tournament site can include registration, schedule, standings, results, teams, rules, resources, and news depending on tournament setup and status.</p>
           <p>Preview is always available to admins regardless of tournament status. Share the preview link internally to review the public experience before you activate.</p>
+          <p><strong>Consistent standings.</strong> A team&rsquo;s rank is the same everywhere it appears — the standings table, the Teams page cards, and the team&rsquo;s own page all rank by your tie-breaker rules (head-to-head, then run differential, and so on). So a team that wins a tie on head-to-head shows the same position to every fan, on every screen.</p>
           <p><strong>Following a team.</strong> Fans can follow a team on the public site — no account needed — to get a personalized &ldquo;my team&rdquo; view: next game, live score, and current standing, front and centre. Following, live public scores, and the home-screen app are included on every plan.</p>
           <p><strong>Score alerts.</strong> On Tournament Plus and above, fans who follow a team can turn on <strong>score alerts</strong> — a push notification when their team&rsquo;s game goes live and a &ldquo;Final&rdquo; when it ends. Tapping an alert opens that game, and on a branded event the notification carries your tournament logo.</p>
           <p><strong>Add to home screen (the fan app).</strong> Fans can add the tournament to their phone&rsquo;s home screen and open it like an app — straight to your event. On iPhone, alerts only work once the page has been added to the home screen (Apple&rsquo;s rule), so the alerts button there shows an &ldquo;add to home screen for alerts&rdquo; prompt first, with a one-time reminder after they install. On Tournament Plus events the home-screen icon and app name carry your tournament branding; free events use the default FieldLogicHQ icon.</p>

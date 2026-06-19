@@ -1,6 +1,6 @@
 # Public Fan Experience — Implementation Plan
 
-> **Status:** **BUILD COMPLETE 2026-06-18 — all phases A–E built on `dev` (local, unpushed), pending a browser/on-device pass.** Spun out of the User Journey Audit (Phase 5, FP-2); **successor to the archived PUBLIC_VISUAL_REDESIGN** (its 32 J6-routed findings reopened + closed here). No DB migrations. Archive after the browser pass + sign-off.
+> **Status:** ✅ **COMPLETE 2026-06-19 — all phases A–E built and browser/on-device verified; ARCHIVED.** Local on `dev`, unpushed (master deploy is the owner's call); no DB migrations. Spun out of the User Journey Audit (Phase 5, FP-2); **successor to the archived PUBLIC_VISUAL_REDESIGN** (its 32 J6-routed findings reopened + closed here).
 > **Branch:** dev. **Companion:** [PUBLIC_FAN_EXPERIENCE_PM_BRIEF.md](PUBLIC_FAN_EXPERIENCE_PM_BRIEF.md)
 > **Source of truth:** [journeys/JOURNEY_J6_TOURNAMENT_PARENT_FAN.md](journeys/JOURNEY_J6_TOURNAMENT_PARENT_FAN.md) + [USER_JOURNEY_AUDIT_SYNTHESIS.md](USER_JOURNEY_AUDIT_SYNTHESIS.md) §4 FP-2.
 

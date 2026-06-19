@@ -9,6 +9,7 @@ import HelpCallout from '@/components/help/HelpCallout';
 import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel';
 import styles from './rep-teams.module.css';
 import type { RepTeam, RepProgramYear, RepTeamGroup } from '@/lib/types';
+import { SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 
 function slugify(s: string): string {
   return s.toLowerCase().trim()
@@ -39,7 +40,7 @@ interface TeamForm {
 }
 
 const BLANK_FORM: TeamForm = {
-  name: '', slug: '', sport: 'softball', division: '', description: '', color: '', groupId: '',
+  name: '', slug: '', sport: DEFAULT_SPORT, division: '', description: '', color: '', groupId: '',
 };
 
 export default function RepTeamsPage() {
@@ -145,7 +146,7 @@ export default function RepTeamsPage() {
         body: JSON.stringify({
           name: form.name.trim(),
           slug: form.slug.trim(),
-          sport: form.sport || 'softball',
+          sport: form.sport || DEFAULT_SPORT,
           division: form.division.trim() || null,
           description: form.description.trim() || null,
           color: form.color.trim() || null,
@@ -565,12 +566,9 @@ export default function RepTeamsPage() {
                 <label className={styles.label} htmlFor="rt-sport">Sport</label>
                 <select id="rt-sport" className={styles.select} value={form.sport}
                   onChange={e => setForm(f => ({ ...f, sport: e.target.value }))}>
-                  <option value="softball">Softball</option>
-                  <option value="baseball">Baseball</option>
-                  <option value="hockey">Hockey</option>
-                  <option value="soccer">Soccer</option>
-                  <option value="basketball">Basketball</option>
-                  <option value="other">Other</option>
+                  {SPORT_OPTIONS.map(s => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
                 </select>
               </div>
 

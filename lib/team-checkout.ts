@@ -1,4 +1,5 @@
 import { normalizeBillingCycle, type BillingCycle } from './plan-config';
+import { DEFAULT_SPORT } from './sports';
 import { writePlatformEvent, type PlatformEventInput } from './platform-events';
 import { supabaseAdmin } from './supabase-admin';
 import { sendEmail, teamWorkspaceWelcomeHtml, SITE_URL } from './email';
@@ -125,7 +126,7 @@ export function normalizeTeamCheckoutRequest(body: Record<string, unknown>): Tea
 
   const seasonYear = cleanYear(body.seasonYear);
   const workspaceName = cleanText(body.workspaceName, `${teamName} Coaches Portal`, 140);
-  const sport = cleanText(body.sport, 'softball', 60);
+  const sport = cleanText(body.sport, DEFAULT_SPORT, 60);
   const seasonName = cleanText(body.seasonName, `${teamName} ${seasonYear}`, 140);
   const returnTo = typeof body.returnTo === 'string' && body.returnTo.startsWith('/')
     ? body.returnTo.slice(0, 240)
@@ -201,7 +202,7 @@ export function parseTeamCheckoutMetadata(metadata: Record<string, string> | nul
     workspaceName,
     teamSlug: metadata.teamSlug?.trim() || null,
     workspaceSlug: metadata.workspaceSlug?.trim() || null,
-    sport: metadata.sport?.trim() || 'softball',
+    sport: metadata.sport?.trim() || DEFAULT_SPORT,
     division: metadata.division?.trim() || null,
     seasonName,
     seasonYear: cleanYear(metadata.seasonYear),

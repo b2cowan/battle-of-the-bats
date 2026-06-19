@@ -10,6 +10,7 @@ import { writePlatformAuditLog } from './platform-audit';
 import { writePlatformEvent, type PlatformEventInput } from './platform-events';
 import { supabaseAdmin } from './supabase-admin';
 import { findBasicCoachTeamIdForTournamentRegistration } from './basic-coach-teams';
+import { DEFAULT_SPORT } from './sports';
 import type {
   AccountingLedger,
   Organization,
@@ -210,7 +211,7 @@ export async function provisionStandaloneTeamWorkspace(
   const workspaceName = cleanRequiredText(input.workspaceName ?? `${teamName} Coaches Portal`, 'Workspace name');
   const seasonYear = normalizeSeasonYear(input.seasonYear);
   const seasonName = cleanRequiredText(input.seasonName ?? `${teamName} ${seasonYear}`, 'Season name');
-  const sport = cleanRequiredText(input.sport ?? 'softball', 'Sport');
+  const sport = cleanRequiredText(input.sport ?? DEFAULT_SPORT, 'Sport');
   const subscriptionStatus = input.subscriptionStatus ?? 'active';
   const source = input.source ?? 'direct_signup';
   const billingMode = input.billingMode ?? 'team_direct';

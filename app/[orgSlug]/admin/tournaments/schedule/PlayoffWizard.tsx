@@ -1431,7 +1431,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                       const effFormat = tier.format ?? config.format ?? 'single';
                       const showThird = effFormat !== 'double' && effFormat !== 'placement';
                       return (
-                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'minmax(110px, 1.1fr) auto minmax(140px, 1.3fr) auto auto', gap: '1rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: '2px', border: '1px solid var(--border)' }}>
+                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'minmax(90px, 1fr) auto minmax(120px, 1.2fr) auto auto', gap: '0.625rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: '2px', border: '1px solid var(--border)', minWidth: 0 }}>
                           <input
                             className="form-input"
                             value={tier.name}

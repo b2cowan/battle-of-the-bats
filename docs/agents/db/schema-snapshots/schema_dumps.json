@@ -11909,6 +11909,15 @@
         "column_default": "true"
       },
       {
+        "table_name": "tournaments",
+        "pos": 37,
+        "column_name": "sport",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'softball'::text"
+      },
+      {
         "table_name": "venue_facilities",
         "pos": 1,
         "column_name": "id",

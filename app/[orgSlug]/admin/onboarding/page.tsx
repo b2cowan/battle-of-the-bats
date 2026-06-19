@@ -18,6 +18,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/lib/free-floor';
 import type { FreeFloor, OrgPlan, TournamentFormat, FacilityType } from '@/lib/types';
 import { FACILITY_TYPE_LABELS } from '@/lib/types';
+import { SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 import PricingSection from '@/components/PricingSection';
 import styles from './onboarding.module.css';
 
@@ -171,7 +172,7 @@ function getDefaultLeagueSeasonForm(): LeagueSeasonForm {
   return {
     name: defaultName,
     slug: generateSlug(defaultName),
-    sport: 'softball',
+    sport: DEFAULT_SPORT,
     division: '',
     description: '',
     seasonStartDate: '',
@@ -1105,7 +1106,7 @@ export default function OnboardingPage() {
     return {
       name,
       slug,
-      sport: leagueSeasonForm.sport || 'softball',
+      sport: leagueSeasonForm.sport || DEFAULT_SPORT,
       division: leagueSeasonForm.division.trim() || null,
       description: leagueSeasonForm.description.trim() || null,
       seasonStartDate: leagueSeasonForm.seasonStartDate || null,
@@ -1756,12 +1757,9 @@ export default function OnboardingPage() {
                   value={leagueSeasonForm.sport}
                   onChange={e => setLeagueSeasonForm(form => ({ ...form, sport: e.target.value }))}
                 >
-                  <option value="softball">Softball</option>
-                  <option value="baseball">Baseball</option>
-                  <option value="hockey">Hockey</option>
-                  <option value="soccer">Soccer</option>
-                  <option value="basketball">Basketball</option>
-                  <option value="other">Other</option>
+                  {SPORT_OPTIONS.map(s => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
                 </select>
               </label>
               <label className={styles.fieldLabel}>

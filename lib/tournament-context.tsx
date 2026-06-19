@@ -1,6 +1,7 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { Tournament, TournamentStatus } from './types';
+import { DEFAULT_SPORT } from './sports';
 
 interface TournamentContextType {
   /** All available tournaments, newest first — scoped to user's assignments when applicable */
@@ -35,6 +36,7 @@ type TournamentRow = {
   year: number;
   name: string;
   slug?: string | null;
+  sport?: string | null;
   status?: TournamentStatus | null;
   is_active?: boolean | null;
   start_date?: string | null;
@@ -54,6 +56,7 @@ function mapRow(r: TournamentRow): Tournament {
     year:           r.year,
     name:           r.name,
     slug:           r.slug ?? '',
+    sport:          r.sport ?? DEFAULT_SPORT,
     status,
     isActive:       status === 'active',
     startDate:      r.start_date ?? undefined,

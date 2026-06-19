@@ -66,10 +66,10 @@ export default async function CheckInVolunteerLayout({
       <header style={{
         borderBottom: '1px solid rgba(var(--blueprint-blue-rgb), 0.4)', background: 'var(--hud-surface)', padding: '0 1.25rem',
         minHeight: '52px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        gap: '1rem', position: 'sticky', top: 0, zIndex: 40,
+        gap: '1.25rem', position: 'sticky', top: 0, zIndex: 40,
       }}>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '1rem' }}>
+        <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+          <div style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '1rem', whiteSpace: 'nowrap' }}>
             <span style={{ color: '#F1F5F9' }}>FIELD</span>
             <span style={{ color: '#D9F99D' }}>LOGIC</span>
             <span style={{ color: 'rgba(148,163,184,0.5)' }}>HQ</span>
@@ -81,7 +81,7 @@ export default async function CheckInVolunteerLayout({
             {authCtx.org.name}
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexShrink: 0 }}>
           {/* J1-077: one-tap hop to the scorekeeper screen for volunteers who also score. */}
           {hasCapability(authCtx.role, authCtx.capabilities, 'submit_scores') && (
             <Link

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { Tournament, TournamentStatus, TournamentArchive, CloneCopiedCounts } from '@/lib/types';
+import { DEFAULT_SPORT } from '@/lib/sports';
 import { copiedSummary } from '@/lib/utils';
 
 function generateSlug(name: string): string {
@@ -85,6 +86,7 @@ type AdminTournamentRow = {
   is_active?: boolean | null;
   start_date?: string | null;
   end_date?: string | null;
+  sport?: string | null;
   contact_email?: string | null;
   fee_schedule_mode?: string | null;
   deposit_amount?: number | null;
@@ -106,6 +108,7 @@ function mapAdminTournament(row: AdminTournamentRow): Tournament {
     year: row.year,
     name: row.name,
     slug: row.slug ?? '',
+    sport: row.sport ?? DEFAULT_SPORT,
     status,
     isActive: status === 'active',
     startDate: row.start_date ?? undefined,

@@ -11,6 +11,7 @@ import HelpTooltip from '@/components/help/HelpTooltip';
 import styles from './house-league.module.css';
 import type { LeagueSeason, LeagueSeasonSummary, LeagueSeasonStatus } from '@/lib/types';
 import type { LeagueCapKind } from '@/lib/free-floor';
+import { SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -78,7 +79,7 @@ interface SeasonForm {
 const BLANK_FORM: SeasonForm = {
   name: '',
   slug: '',
-  sport: 'softball',
+  sport: DEFAULT_SPORT,
   division: '',
   description: '',
   seasonStartDate: '',
@@ -165,7 +166,7 @@ export default function HouseLeaguePage() {
         body: JSON.stringify({
           name:                     form.name.trim(),
           slug:                     form.slug.trim(),
-          sport:                    form.sport || 'softball',
+          sport:                    form.sport || DEFAULT_SPORT,
           division:                 form.division.trim() || null,
           description:              form.description.trim() || null,
           seasonStartDate:          form.seasonStartDate || null,
@@ -307,12 +308,9 @@ export default function HouseLeaguePage() {
                   value={form.sport}
                   onChange={e => setForm(f => ({ ...f, sport: e.target.value }))}
                 >
-                  <option value="softball">Softball</option>
-                  <option value="baseball">Baseball</option>
-                  <option value="hockey">Hockey</option>
-                  <option value="soccer">Soccer</option>
-                  <option value="basketball">Basketball</option>
-                  <option value="other">Other</option>
+                  {SPORT_OPTIONS.map(s => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
                 </select>
               </div>
 

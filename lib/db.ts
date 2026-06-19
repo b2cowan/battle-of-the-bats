@@ -7,6 +7,7 @@ import { applyEntitlementGrants } from './entitlement-grants';
 import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
+import { DEFAULT_SPORT } from './sports';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
 export type { DivisionStandingRow } from './tie-breakers';
@@ -57,6 +58,7 @@ export async function saveTournament(t: Omit<Tournament, 'id'>): Promise<Tournam
       year: t.year,
       name: t.name,
       slug: t.slug,
+      sport: t.sport ?? DEFAULT_SPORT,
       status: t.status ?? (t.isActive ? 'active' : 'draft'),
       is_active: t.isActive,
       start_date: t.startDate,
@@ -212,6 +214,19 @@ export type CloneTournamentResult = {
   };
 };
 
+/**
+ * Coerce a tournament `settings` JSONB value into a plain object before copying it.
+ * The column defaults to '{}' and the write path enforces object shape, but a malformed
+ * value (array/scalar from a direct DB write or legacy row) must not propagate through a
+ * clone/populate — fall back to an empty object. Mirrors the defensive read pattern used
+ * elsewhere (e.g. tournament-dashboard route).
+ */
+function toSettingsObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? { ...(value as Record<string, unknown>) }
+    : {};
+}
+
 function remapUuidArray(value: unknown, idMap: Map<string, string>): string[] | null {
   if (!Array.isArray(value)) return null;
   const mapped = value
@@ -238,11 +253,31 @@ export async function cloneTournament(
     if (sourceError) throw sourceError;
     if (!source) throw new Error('Source tournament not found.');
 
+    // Carry the event's configuration DNA (tie-breakers, game timing, roster rules,
+    // coach-email toggles, format) so a clone reproduces last year's setup. Respect the
+    // granular include flags: when the organizer opts out of fees or rules/resources,
+    // don't silently carry those domains' settings keys either. settings holds only
+    // enums/booleans/strings (no entity ids), so the copy is reference-safe.
+    const clonedSettings = toSettingsObject(source.settings);
+    if (!options.includeFeeSchedule) {
+      delete clonedSettings.fee_scope;
+      delete clonedSettings.show_fees_on_register;
+      delete clonedSettings.payment_instructions;
+      delete clonedSettings.payment_instructions_on_form;
+    }
+    if (!options.includeRulesResources) {
+      delete clonedSettings.rulesLayout;
+      delete clonedSettings.resourcesLayout;
+    }
+
     const tournamentInsert: Record<string, unknown> = {
       org_id: orgId,
       year: options.year,
       name: options.name,
       slug: options.slug,
+      // Carry the source event's sport (multi-sport, Phase 1). Defaults to softball for
+      // pre-migration sources; the column default covers brand-new tournaments.
+      sport: source.sport ?? DEFAULT_SPORT,
       status: 'draft',
       is_active: false,
       start_date: options.startDate ?? null,
@@ -255,6 +290,7 @@ export async function cloneTournament(
       contact_show_to_coaches: source.contact_show_to_coaches ?? true,
       contact_show_on_public: source.contact_show_on_public ?? true,
       require_score_finalization: source.require_score_finalization ?? null,
+      settings: clonedSettings,
     };
 
     if (options.includeFeeSchedule) {
@@ -641,6 +677,8 @@ export async function populateTournamentFrom(
 
   // ── Copy tournament-level fields from source ───────────────────────────────
   const { error: updateError } = await supabaseAdmin.from('tournaments').update({
+    // Carry the source event's sport (multi-sport, Phase 1).
+    sport: source.sport ?? DEFAULT_SPORT,
     contact_email: source.contact_email ?? null,
     // Carry the selected contact member too (source & destination are same-org, so the
     // member id is valid here) — without it, populating drops the primary contact and the
@@ -651,6 +689,12 @@ export async function populateTournamentFrom(
     contact_show_to_coaches: source.contact_show_to_coaches ?? true,
     contact_show_on_public: source.contact_show_on_public ?? true,
     require_score_finalization: source.require_score_finalization ?? null,
+    // Carry the event's configuration DNA (tie-breakers, game timing, roster rules,
+    // coach-email toggles, format) — previously dropped, so populating a draft from a
+    // source silently lost all of it. populate is a wholesale replace (it already deletes
+    // + recreates divisions/pools/rules), so settings are copied in full. settings holds
+    // only enums/booleans/strings (no entity ids), so the copy is reference-safe.
+    settings: toSettingsObject(source.settings),
     fee_schedule_mode: source.fee_schedule_mode ?? 'tournament',
     deposit_amount: source.deposit_amount ?? null,
     deposit_due_date: source.deposit_due_date ?? null,
@@ -2483,6 +2527,7 @@ function mapTournament(r: any): Tournament {
     year:           r.year,
     name:           r.name,
     slug:           r.slug ?? '',
+    sport:          r.sport ?? DEFAULT_SPORT,
     status,
     isActive:       status === 'active',
     startDate:      r.start_date ?? undefined,
@@ -3049,7 +3094,7 @@ export async function createLeagueSeason(orgId: string, input: LeagueSeasonInput
       org_id:                      orgId,
       name:                        input.name,
       slug:                        input.slug,
-      sport:                       input.sport ?? 'softball',
+      sport:                       input.sport ?? DEFAULT_SPORT,
       division:                   input.division ?? null,
       description:                 input.description ?? null,
       registration_fee:            input.registrationFee ?? null,

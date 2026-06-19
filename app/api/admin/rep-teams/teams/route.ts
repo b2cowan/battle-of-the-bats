@@ -6,6 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeams, createRepTeam } from '@/lib/db';
 import { syncRepTeamBilling } from '@/lib/stripe-sync';
 import { withObservability } from '@/lib/observability';
+import { DEFAULT_SPORT } from '@/lib/sports';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -75,7 +76,7 @@ export const POST = withObservability(async (req: Request) => {
   const body = await req.json();
   const name = typeof body.name === 'string' ? body.name.trim() : '';
   const slug = typeof body.slug === 'string' ? body.slug.trim().toLowerCase() : slugify(name);
-  const sport = typeof body.sport === 'string' ? body.sport.trim() : 'softball';
+  const sport = typeof body.sport === 'string' ? body.sport.trim() : DEFAULT_SPORT;
 
   if (!name || name.length > 100) {
     return NextResponse.json({ error: 'name is required and must be 100 characters or fewer' }, { status: 400 });

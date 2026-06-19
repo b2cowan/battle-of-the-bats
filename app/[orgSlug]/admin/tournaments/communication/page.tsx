@@ -393,6 +393,9 @@ export default function AdminCommunicationPage() {
                           <Star size={13} fill={pinned ? 'currentColor' : 'none'} />
                           Pin at top of News page
                         </label>
+                        <p style={{ margin: '0.25rem 0 0 1.7rem', fontSize: '0.72rem', color: 'var(--white-50)', lineHeight: 1.4 }}>
+                          While the tournament is live, pinned site posts also appear as a banner at the top of the public Schedule — use it for rain delays and urgent day-of updates.
+                        </p>
 
                         {/* Division visibility — vertical checklist */}
                         {divisions.length > 0 && (
@@ -864,11 +867,16 @@ export default function AdminCommunicationPage() {
 
                   {/* Pin toggle */}
                   {!isDeleted && (
-                    <label className={styles.pinLabel}>
-                      <input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} />
-                      <Star size={13} fill={pinned ? 'currentColor' : 'none'} />
-                      Pin at top of News page
-                    </label>
+                    <>
+                      <label className={styles.pinLabel}>
+                        <input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} />
+                        <Star size={13} fill={pinned ? 'currentColor' : 'none'} />
+                        Pin at top of News page
+                      </label>
+                      <p style={{ margin: '0.25rem 0 0 1.7rem', fontSize: '0.72rem', color: 'var(--white-50)', lineHeight: 1.4 }}>
+                        While the tournament is live, pinned site posts also appear as a banner at the top of the public Schedule — use it for rain delays and urgent day-of updates.
+                      </p>
+                    </>
                   )}
 
                   {/* Division visibility */}

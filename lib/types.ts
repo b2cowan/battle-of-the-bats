@@ -269,6 +269,7 @@ export interface Tournament {
   year: number;        // e.g. 2026
   name: string;        // e.g. "Spring Classic 2026"
   slug: string;        // URL-safe identifier; unique per org among non-archived
+  sport: string;       // e.g. 'softball' | 'basketball'; default 'softball'. Drives the Sport Pack (lib/sports). Free-text to match league_seasons/rep_teams.
   status: TournamentStatus;
   isActive: boolean;   // derived: status === 'active'. Kept for compatibility.
   startDate?: string;    // YYYY-MM-DD
