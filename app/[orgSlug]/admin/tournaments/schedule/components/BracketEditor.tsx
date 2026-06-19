@@ -170,6 +170,12 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
     }
     setLoading(true);
     try {
+      // Preserve each existing game's own bracketId so multi-bracket divisions
+      // (tiered / per-pool) don't collapse into one bracket on save. Only NEW
+      // rows fall back to the single computed bracketId.
+      const origBracketByGameId = new Map(
+        existingGames.filter(g => g.bracketId).map(g => [g.id, g.bracketId as string]),
+      );
       // A round name is persisted only when the organizer CUSTOMIZED it — i.e. it
       // differs from the auto-derived column title — so untouched rounds stay auto.
       // Key the derived lookup by row INDEX (codes can be empty or duplicated).
@@ -194,7 +200,7 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
         location: resolveLocation(p),
         venueId: p.venueId || undefined,
         venueFacilityId: p.venueFacilityId || undefined,
-        bracketId,
+        bracketId: (p.sourceGameId && origBracketByGameId.get(p.sourceGameId)) || bracketId,
         bracketCode: p.code,
         homePlaceholder: p.home,
         awayPlaceholder: p.away,

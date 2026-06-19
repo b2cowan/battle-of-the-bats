@@ -3115,7 +3115,7 @@ function PlayoffBracketView({ games, teams, division, canBuildManualBracket, onB
       <div className="empty-state" style={{ padding: '4rem' }}>
         <Trophy size={48} />
         <p>No playoff bracket yet</p>
-        <p className="text-sm text-muted" style={{ maxWidth: '34rem' }}>
+        <p className="text-sm text-muted" style={{ maxWidth: '34rem', margin: '0 auto' }}>
           A bracket is rounds of games wired together — each game feeds its winner (or loser) into the next.
           Build one here; the rounds and matchups link up automatically.
         </p>
