@@ -2680,7 +2680,7 @@ function PublishScheduleModal({
                 <div style={{
                   display: 'flex', alignItems: 'flex-start', gap: '0.55rem',
                   marginBottom: '1rem', padding: '0.6rem 0.75rem',
-                  background: 'var(--white-3)',
+                  background: 'var(--white-03)',
                   border: '1px solid var(--white-10)', borderRadius: '2px',
                 }}>
                   <AlertCircle size={14} style={{ color: 'var(--white-40)', marginTop: '2px', flexShrink: 0 }} />
