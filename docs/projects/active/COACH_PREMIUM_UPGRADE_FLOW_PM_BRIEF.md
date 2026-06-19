@@ -22,7 +22,7 @@ Premium is **per team** ($29/mo each). Upgrading scopes to the one team the coac
 - **No impact in production** until Premium is switched on there; this all lives behind the same per-environment gate (dev now, prod at launch).
 
 ## Priority
-**High for the launch path.** The upgrade experience is the front door to Premium revenue; it should not ship to a real launch as a re-signup with an empty portal. Sequenced: slim the signup (quick) → carry the team's identity through checkout → migrate the team's data (the real build) → in-portal season/division management (companion, required for the multi-season promise).
+**High for the launch path.** The upgrade experience is the front door to Premium revenue; it should not ship to a real launch as a re-signup with an empty portal. Sequenced: slim the signup (done) → align Free fees to per-player (done) → carry the team's identity through checkout → close every spot where Premium is currently weaker than Free (cancelled events, **team announcements**, accepting incomplete records) → migrate the team's data (the real build) → in-portal season/division management (companion, required for the multi-season promise).
 
 ## Success criteria
 - A coach upgrading from a free team reaches payment in **two screens**, with name + sport pre-filled, and **never re-enters** team details.
@@ -31,4 +31,4 @@ Premium is **per team** ($29/mo each). Upgrading scopes to the one team the coac
 - Production remains express-interest only until its gate is deliberately opened.
 
 ## Tradeoffs / honesty
-Some data doesn't map perfectly (single-field names must be split; basic "game" events become "scrimmages"; team-wide fees become expenses; simple paid/unpaid fees become a one-line dues schedule). v1 accepts these and **tells the coach** rather than silently losing or misrepresenting data. A flawless copy isn't the goal; a populated, trustworthy portal with a short "check these" list is.
+We did a full field-by-field review of the free vs Premium data models so transfers are **deterministic**, not guesswork. Where Premium was missing something Free has, we're adding it to Premium (a real "cancelled" state for events, a team-announcements feature, and acceptance of incomplete records) rather than degrading the data. The few things that genuinely can't transfer cleanly — a single name field split into first/last, a guardian email or fee due date a coach never filled in, the historical announcement send-log — are handled honestly: nothing is faked, and the coach gets a short "check these" list on arrival. A flawless silent copy isn't the goal; a populated, trustworthy portal the coach can stand behind is.
