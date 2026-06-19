@@ -1170,6 +1170,20 @@
   outline: 2px solid var(--primary-light, #D9F99D);
   outline-offset: 2px;
 }
+/* Mobile: collapse to an icon-only square that matches the page's compact
+   primary action button (e.g. the "+" Add button, which hides its own label and
+   becomes 32x32 at this same breakpoint). The aria-label keeps it accessible. */
+@media (max-width: 760px) {
+  .helpButtonLabel { display: none; }
+  .helpButton {
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0;
+    gap: 0;
+    justify-content: center;
+  }
+}
 
 /* ── HelpDrawer — right-edge in-context slide-over ───────────────────────────── */
 .helpDrawerBackdrop {
