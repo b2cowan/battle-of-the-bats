@@ -3042,6 +3042,15 @@
     "ordinal_position": 29
   },
   {
+    "table_name": "games",
+    "column_name": "bracket_label",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 30
+  },
+  {
     "table_name": "import_batch_rows",
     "column_name": "id",
     "data_type": "uuid",

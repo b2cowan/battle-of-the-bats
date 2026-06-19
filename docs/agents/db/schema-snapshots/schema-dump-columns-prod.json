@@ -3042,6 +3042,15 @@
     "ordinal_position": 29
   },
   {
+    "table_name": "games",
+    "column_name": "bracket_label",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 30
+  },
+  {
     "table_name": "import_batch_rows",
     "column_name": "id",
     "data_type": "uuid",
@@ -9126,6 +9135,15 @@
     "ordinal_position": 21
   },
   {
+    "table_name": "rep_team_events",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'scheduled'::text",
+    "ordinal_position": 22
+  },
+  {
     "table_name": "rep_team_expenses",
     "column_name": "id",
     "data_type": "uuid",
@@ -11923,6 +11941,15 @@
     "is_nullable": "NO",
     "column_default": "true",
     "ordinal_position": 35
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "sport",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'softball'::text",
+    "ordinal_position": 36
   },
   {
     "table_name": "venue_facilities",

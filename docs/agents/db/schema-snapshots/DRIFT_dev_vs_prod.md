@@ -2,15 +2,15 @@
 
 **Generated:** 2026-06-19 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 53 divergence(s)** across dev/prod.
+**⚠️ 50 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
-| Columns | 2 | 3 | 23 |
+| Columns | 0 | 3 | 23 |
 | Indexes | 4 | 3 | 0 |
 | Constraints | 7 | 9 | — |
-| RLS / CHECK | 1 | 1 | 0 (RLS state) |
+| RLS / CHECK | 0 | 1 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (0)
@@ -20,9 +20,8 @@ _none_
 _none_
 
 ## Columns
-### Only in DEV (2)
-- `rep_team_events.status`
-- `tournaments.sport`
+### Only in DEV (0)
+_none_
 
 ### Only in PROD (3)
 - `resources.created_at`
@@ -94,8 +93,8 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (1)
-- `rep_team_events.rep_team_events_status_check`
+### CHECK only in DEV (0)
+_none_
 
 ### CHECK only in PROD (1)
 - `tournaments.tournaments_status_check`
