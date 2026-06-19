@@ -8,6 +8,7 @@ import {
   normalizeTeamCheckoutRequest,
   provisionTeamWorkspaceFromCheckoutMetadata,
 } from '@/lib/team-checkout';
+import { getBasicCoachTeamForUser } from '@/lib/basic-coach-teams';
 import {
   TeamWorkspaceClaimError,
   verifyTeamWorkspaceClaimForCheckout,
@@ -25,8 +26,10 @@ export const POST = withObservability(async (req: Request) => {
   if (!user) return unauthorized();
 
   let checkoutRequest;
+  let rawBody: Record<string, unknown>;
   try {
-    checkoutRequest = normalizeTeamCheckoutRequest(await req.json() as Record<string, unknown>);
+    rawBody = (await req.json()) as Record<string, unknown>;
+    checkoutRequest = normalizeTeamCheckoutRequest(rawBody);
   } catch (error) {
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Invalid Coaches Portal checkout request.' }), {
       status: 400,
@@ -65,6 +68,21 @@ export const POST = withObservability(async (req: Request) => {
         });
       }
       throw error;
+    }
+  }
+
+  // Per-team upgrade from an existing FREE Basic team: carry it forward so the new workspace
+  // back-links to it (and Phase 4 migrates its data). The client-supplied id is NEVER trusted —
+  // re-verify the authenticated user owns it first; an unowned/unknown id is silently ignored
+  // (falls back to a fresh team). Claim checkouts derive their free team from the tournament
+  // registration instead, so skip this there.
+  if (!checkoutRequest.claimToken) {
+    const basicTeamIdInput = typeof rawBody.basicCoachTeamId === 'string' ? rawBody.basicCoachTeamId.trim() : '';
+    if (basicTeamIdInput) {
+      const ownedTeam = await getBasicCoachTeamForUser({ userId: user.id, basicCoachTeamId: basicTeamIdInput });
+      if (ownedTeam) {
+        checkoutRequest = { ...checkoutRequest, basicCoachTeamId: ownedTeam.id };
+      }
     }
   }
 

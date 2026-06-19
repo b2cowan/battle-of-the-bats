@@ -31,6 +31,13 @@ export type TeamCheckoutRequest = {
   sourceTournamentTeamId: string | null;
   teamWorkspaceClaimId: string | null;
   reactivateOrgSlug: string | null;
+  /**
+   * The originating FREE Basic team being upgraded (per-team upgrade). MUST be set only after the
+   * route re-verifies the authenticated user owns it — it drives the workspace back-link and (Phase 4)
+   * the data migration, so an unverified value would let one coach pull another's team into their
+   * workspace. `normalizeTeamCheckoutRequest` defaults it null; the route fills it post-verification.
+   */
+  basicCoachTeamId: string | null;
 };
 
 export type TeamCheckoutMetadata = {
@@ -50,6 +57,7 @@ export type TeamCheckoutMetadata = {
   sourceTournamentTeamId: string | null;
   teamWorkspaceClaimId: string | null;
   reactivateOrgSlug: string | null;
+  basicCoachTeamId: string | null;
 };
 
 export type TeamCheckoutProvisionResult =
@@ -140,6 +148,8 @@ export function normalizeTeamCheckoutRequest(body: Record<string, unknown>): Tea
     sourceTournamentTeamId: null,
     teamWorkspaceClaimId: null,
     reactivateOrgSlug: cleanOptionalText(body.reactivateOrgSlug, 120),
+    // Default null — the route sets this only after re-verifying the caller owns the team.
+    basicCoachTeamId: null,
   };
 }
 
@@ -167,6 +177,7 @@ export function buildTeamCheckoutMetadata(params: {
     sourceTournamentTeamId: metadataValue(params.request.sourceTournamentTeamId),
     teamWorkspaceClaimId: metadataValue(params.request.teamWorkspaceClaimId),
     reactivateOrgSlug: metadataValue(params.request.reactivateOrgSlug),
+    basicCoachTeamId: metadataValue(params.request.basicCoachTeamId),
   };
 }
 
@@ -200,6 +211,7 @@ export function parseTeamCheckoutMetadata(metadata: Record<string, string> | nul
     sourceTournamentTeamId: metadata.sourceTournamentTeamId?.trim() || null,
     teamWorkspaceClaimId: metadata.teamWorkspaceClaimId?.trim() || null,
     reactivateOrgSlug: metadata.reactivateOrgSlug?.trim() || null,
+    basicCoachTeamId: metadata.basicCoachTeamId?.trim() || null,
   };
 }
 
@@ -559,6 +571,10 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
     source: parsed.source,
     sourceTournamentId: parsed.sourceTournamentId,
     sourceTournamentTeamId: parsed.sourceTournamentTeamId,
+    // A verified upgrade carries its free team explicitly → back-link to THAT team. When absent
+    // (brand-new team or tournament claim) pass undefined so the provisioner keeps its existing
+    // fallback: deriving the free team from the source tournament registration.
+    basicCoachTeamId: parsed.basicCoachTeamId ?? undefined,
     billingMode: 'team_direct',
     billingOwnerUserId: parsed.ownerUserId,
     subscriptionStatus: mapStripeStatusToOrgStatus(params.subscriptionStatus),
