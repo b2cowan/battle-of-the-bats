@@ -168,6 +168,10 @@ id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uu
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, total_surplus (numeric), notes, created_by (uuid), created_at, updated_at
 - Indexes: rep_season_surplus_program_year_id_key
 
+### rep_team_announcements
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, subject NOT NULL, body NOT NULL, recipient_count (integer), sent_count (integer), failed_count (integer), status, sent_at, created_by (uuid), created_at, updated_at
+- Indexes: rep_team_announcements_year_idx
+
 ### rep_team_coaches
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, user_id (uuid) NOT NULL, coach_role, created_at
 - Indexes: rep_team_coaches_program_year_id_user_id_key, rep_team_coaches_user_idx
@@ -473,11 +477,11 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) →
 
 ## Tables by count
 
-Total: **113 tables** across 10 modules.
+Total: **114 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 25 tables
+- Rep Teams: 26 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables

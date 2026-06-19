@@ -2288,6 +2288,38 @@
     "foreign_column": null
   },
   {
+    "table_name": "rep_team_announcements",
+    "constraint_name": "rep_team_announcements_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_announcements",
+    "constraint_name": "rep_team_announcements_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_announcements",
+    "constraint_name": "rep_team_announcements_program_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "program_year_id",
+    "foreign_table": "rep_program_years",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_announcements",
+    "constraint_name": "rep_team_announcements_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
     "table_name": "rep_team_coaches",
     "constraint_name": "rep_team_coaches_org_id_fkey",
     "constraint_type": "FOREIGN KEY",

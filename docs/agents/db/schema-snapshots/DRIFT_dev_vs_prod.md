@@ -2,26 +2,39 @@
 
 **Generated:** 2026-06-19 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 50 divergence(s)** across dev/prod.
+**⚠️ 78 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 0 | 0 | — |
-| Columns | 0 | 3 | 23 |
-| Indexes | 4 | 3 | 0 |
-| Constraints | 7 | 9 | — |
-| RLS / CHECK | 0 | 1 | 0 (RLS state) |
+| Tables | 1 | 0 | — |
+| Columns | 14 | 3 | 23 |
+| Indexes | 6 | 3 | 0 |
+| Constraints | 11 | 9 | — |
+| RLS / CHECK | 7 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (0)
-_none_
+### Only in DEV (1)
+- `rep_team_announcements`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (0)
-_none_
+### Only in DEV (14)
+- `rep_team_announcements.body`
+- `rep_team_announcements.created_at`
+- `rep_team_announcements.created_by`
+- `rep_team_announcements.failed_count`
+- `rep_team_announcements.id`
+- `rep_team_announcements.org_id`
+- `rep_team_announcements.program_year_id`
+- `rep_team_announcements.recipient_count`
+- `rep_team_announcements.sent_at`
+- `rep_team_announcements.sent_count`
+- `rep_team_announcements.status`
+- `rep_team_announcements.subject`
+- `rep_team_announcements.team_id`
+- `rep_team_announcements.updated_at`
 
 ### Only in PROD (3)
 - `resources.created_at`
@@ -54,11 +67,13 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (4)
+### Only in DEV (6)
 - `league_practices_recurrence_idx`
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
 - `league_practices_team_idx`
+- `rep_team_announcements_pkey`
+- `rep_team_announcements_year_idx`
 
 ### Only in PROD (3)
 - `league_practices_recurrence_group_id_idx`
@@ -69,13 +84,17 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (7)
+### Only in DEV (11)
 - `announcements.announcements_tournament_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
 - `games.games_age_group_id_fkey`
 - `games.games_away_team_id_fkey`
 - `games.games_tournament_id_fkey`
+- `rep_team_announcements.rep_team_announcements_org_id_fkey`
+- `rep_team_announcements.rep_team_announcements_pkey`
+- `rep_team_announcements.rep_team_announcements_program_year_id_fkey`
+- `rep_team_announcements.rep_team_announcements_team_id_fkey`
 - `teams.teams_tournament_id_fkey`
 
 ### Only in PROD (9)
@@ -93,8 +112,14 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (0)
-_none_
+### CHECK only in DEV (7)
+- `rep_team_announcements.rep_team_announcements_body_check`
+- `rep_team_announcements.rep_team_announcements_counts_check`
+- `rep_team_announcements.rep_team_announcements_failed_count_check`
+- `rep_team_announcements.rep_team_announcements_recipient_count_check`
+- `rep_team_announcements.rep_team_announcements_sent_count_check`
+- `rep_team_announcements.rep_team_announcements_status_check`
+- `rep_team_announcements.rep_team_announcements_subject_check`
 
 ### CHECK only in PROD (1)
 - `tournaments.tournaments_status_check`

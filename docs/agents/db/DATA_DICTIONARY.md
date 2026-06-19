@@ -2106,7 +2106,45 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 ---
 
-*End of Rep operations (Phase 4a — 12 tables). The 4 `team_workspace_*` tables that the coverage classifier files under this domain live in the Coaches / basic-teams domain.*
+### `rep_team_announcements`
+<!-- dict:table:rep_team_announcements -->
+
+**Purpose:** Premium Coaches Portal one-way email announcements (mig 138) — the Premium-side mirror of the free `basic_coach_team_announcements` (Premium ≥ Free parity). A coach emails the active roster's guardian contacts; the row logs COUNTS only (no recipient addresses — PII minimization). Org-scoped + season-scoped.
+
+**Gotchas (read first):**
+1. **Dev-only until deploy** (mig 138, applied to dev). Expect it in `DRIFT_dev_vs_prod.md` until promoted to master.
+2. **Service-role only.** RLS ENABLED with NO policies (like its Basic cousin); all access via `supabaseAdmin` behind the coaches API `resolveCoachContext` gate (org + coaching assignment + active program year). `lib/rep-team-announcements.ts` owns the logic.
+3. **Counts, not recipients.** Recipient emails are recomputed from the active roster (`rep_roster_players.guardian_email`, `status='active'`) on each send and never stored.
+4. **Abuse caps are app-enforced** (10 sends / 24h per team, 100 recipients per send) — no DB constraint, matching the Basic floor.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_announcements.org_id -->
+<!-- dict:col:rep_team_announcements.team_id -->
+<!-- dict:col:rep_team_announcements.program_year_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) / **`team_id`** (FK → `rep_teams.id` ON DELETE CASCADE, NOT NULL) / **`program_year_id`** (FK → `rep_program_years.id` ON DELETE CASCADE, NOT NULL) — tenant + team + season scope; the log + recipient lookup key on `program_year_id` (`rep_team_announcements_year_idx (program_year_id, sent_at desc)`).
+
+<!-- dict:col:rep_team_announcements.subject -->
+<!-- dict:col:rep_team_announcements.body -->
+**`subject`** (text, NOT NULL, CHECK non-empty + `<= 160`) / **`body`** (text, NOT NULL, CHECK non-empty + `<= 4000`) — email subject + message; same caps as the client editor and the Basic table.
+
+<!-- dict:col:rep_team_announcements.recipient_count -->
+<!-- dict:col:rep_team_announcements.sent_count -->
+<!-- dict:col:rep_team_announcements.failed_count -->
+**`recipient_count` / `sent_count` / `failed_count`** (int, NOT NULL, default `0`, CHECK `>= 0`; plus CHECK `sent_count + failed_count <= recipient_count` named `rep_team_announcements_counts_check`) — deduped target count at send time + per-recipient send-outcome tallies.
+
+<!-- dict:col:rep_team_announcements.status -->
+**`status`** (text, NOT NULL, default `'sent'`; CHECK `sent|partial|failed`) — derived: all sent → `sent`; some sent → `partial`; none → `failed`.
+
+<!-- dict:col:rep_team_announcements.sent_at -->
+**`sent_at`** (timestamptz, NOT NULL, default `now()`) — send-log display timestamp + the 24h rolling rate-limit key.
+
+<!-- dict:col:rep_team_announcements.created_by -->
+**`created_by`** (uuid, nullable, **no FK** — mirrors the rep family audit columns) — the coach who sent it.
+
+---
+
+*End of Rep operations (Phase 4a — 12 tables; + `rep_team_announcements` mig 138). The 4 `team_workspace_*` tables that the coverage classifier files under this domain live in the Coaches / basic-teams domain.*
 
 ---
 

@@ -3,7 +3,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
-import { Archive, Calendar, CheckCircle2, Circle, DollarSign, FileText, Link2, Trophy, Users } from 'lucide-react';
+import { Archive, Calendar, CheckCircle2, Circle, DollarSign, FileText, Link2, Megaphone, Trophy, Users } from 'lucide-react';
 import styles from '../../coaches.module.css';
 import type { RepRosterPlayer, RepTeamEvent } from '@/lib/types';
 
@@ -38,6 +38,7 @@ const REGISTRATION_STATUS_CSS: Record<string, string> = {
 const QUICK_LINKS = [
   { label: 'Roster',       href: '/roster',     icon: Users,      desc: 'Manage players' },
   { label: 'Schedule',     href: '/schedule',   icon: Calendar,   desc: 'Events & games' },
+  { label: 'Announcements', href: '/announcements', icon: Megaphone, desc: 'Email your team' },
   { label: 'Accounting',   href: '/accounting', icon: DollarSign, desc: 'Budget & dues' },
   { label: 'Documents',    href: '/documents',  icon: FileText,   desc: 'Waivers & forms' },
   { label: 'Past Seasons', href: '/history',    icon: Archive,    desc: 'Completed years' },

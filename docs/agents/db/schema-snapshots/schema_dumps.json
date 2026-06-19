@@ -8786,6 +8786,132 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_team_announcements",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "pos": 4,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "pos": 5,
+        "column_name": "subject",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "pos": 6,
+        "column_name": "body",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "pos": 7,
+        "column_name": "recipient_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "pos": 8,
+        "column_name": "sent_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "pos": 9,
+        "column_name": "failed_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "pos": 10,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'sent'::text"
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "pos": 11,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "pos": 12,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "pos": 13,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "pos": 14,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_team_coaches",
         "pos": 1,
         "column_name": "id",
@@ -13153,6 +13279,27 @@
         "constraint_name": "rep_season_surplus_program_year_id_fkey"
       },
       {
+        "table_name": "rep_team_announcements",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_announcements_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_announcements_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_team_announcements",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_announcements_team_id_fkey"
+      },
+      {
         "table_name": "rep_team_coaches",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -15012,6 +15159,16 @@
         "indexdef": "CREATE UNIQUE INDEX rep_season_surplus_program_year_id_key ON public.rep_season_surplus USING btree (program_year_id)"
       },
       {
+        "tablename": "rep_team_announcements",
+        "indexname": "rep_team_announcements_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_announcements_pkey ON public.rep_team_announcements USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_announcements",
+        "indexname": "rep_team_announcements_year_idx",
+        "indexdef": "CREATE INDEX rep_team_announcements_year_idx ON public.rep_team_announcements USING btree (program_year_id, sent_at DESC)"
+      },
+      {
         "tablename": "rep_team_coaches",
         "indexname": "rep_team_coaches_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_team_coaches_pkey ON public.rep_team_coaches USING btree (id)"
@@ -16530,6 +16687,54 @@
       {
         "kind": "RLS",
         "table_name": "rep_season_surplus",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_announcements",
+        "detail": "rep_team_announcements_body_check",
+        "check_clause": "((char_length(btrim(body)) >= 1) AND (char_length(body) <= 4000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_announcements",
+        "detail": "rep_team_announcements_counts_check",
+        "check_clause": "((sent_count + failed_count) <= recipient_count)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_announcements",
+        "detail": "rep_team_announcements_failed_count_check",
+        "check_clause": "(failed_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_announcements",
+        "detail": "rep_team_announcements_recipient_count_check",
+        "check_clause": "(recipient_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_announcements",
+        "detail": "rep_team_announcements_sent_count_check",
+        "check_clause": "(sent_count >= 0)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_announcements",
+        "detail": "rep_team_announcements_status_check",
+        "check_clause": "(status = ANY (ARRAY['sent'::text, 'partial'::text, 'failed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_announcements",
+        "detail": "rep_team_announcements_subject_check",
+        "check_clause": "((char_length(btrim(subject)) >= 1) AND (char_length(subject) <= 160))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_announcements",
         "detail": "ENABLED",
         "check_clause": null
       },

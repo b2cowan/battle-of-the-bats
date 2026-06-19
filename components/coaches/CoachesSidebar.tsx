@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowLeft, Users, Calendar, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Link2 } from 'lucide-react';
+import { ArrowLeft, Users, Calendar, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Link2 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import NotificationBell from '@/components/notifications/NotificationBell';
@@ -11,6 +11,7 @@ const TEAM_NAV = [
   { label: 'Overview',    href: '',           icon: LayoutDashboard },
   { label: 'Roster',      href: '/roster',    icon: Users },
   { label: 'Schedule',    href: '/schedule',  icon: Calendar },
+  { label: 'Announcements', href: '/announcements', icon: Megaphone },
   { label: 'Accounting',  href: '/accounting',icon: DollarSign },
   { label: 'Documents',   href: '/documents', icon: FileText },
   { label: 'History',     href: '/history',   icon: History },

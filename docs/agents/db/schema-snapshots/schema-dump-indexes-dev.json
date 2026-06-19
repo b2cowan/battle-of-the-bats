@@ -1220,6 +1220,16 @@
     "indexdef": "CREATE UNIQUE INDEX rep_season_surplus_program_year_id_key ON public.rep_season_surplus USING btree (program_year_id)"
   },
   {
+    "tablename": "rep_team_announcements",
+    "indexname": "rep_team_announcements_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_announcements_pkey ON public.rep_team_announcements USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_announcements",
+    "indexname": "rep_team_announcements_year_idx",
+    "indexdef": "CREATE INDEX rep_team_announcements_year_idx ON public.rep_team_announcements USING btree (program_year_id, sent_at DESC)"
+  },
+  {
     "tablename": "rep_team_coaches",
     "indexname": "rep_team_coaches_pkey",
     "indexdef": "CREATE UNIQUE INDEX rep_team_coaches_pkey ON public.rep_team_coaches USING btree (id)"
