@@ -122,11 +122,14 @@ So the migration lands cleanly AND Premium is never weaker than Free:
 ### Phase 4 — Migrate the data on provisioning — L (→ `/review`)
 On provisioning of an upgrade-with-team-id, seed the new Premium first season from the free team per the reconciliation contract above. Properties:
 - **Deterministic** (the contract, not "best-effort guessing").
-- **Idempotent** — runs exactly once; gate on first-provision (same as the welcome email). Both Stripe events (`checkout.session.completed` + `customer.subscription.created`) reach the provisioner.
-- **Webhook-safe** — never throws out of the provision/webhook path (mirror the welcome-email pattern): a migration failure must never fail the payment/provision.
-- **Per-season anchored** — the provisioner creates the first `rep_program_years` row before seeding.
+- **Idempotent — DB-atomic, race-safe.** Both Stripe events (`checkout.session.completed` + `customer.subscription.created`) reach the provisioner, possibly concurrently; the existing workspace dedup is keyed on `stripe_subscription_id` and fires *before* the workspace row exists, so an app-layer "not yet upgraded" check has a partial-failure / concurrent-fire window. Gate the migration with a **DB-atomic guard** (partial unique index / advisory lock on the basic-team id, or a `migration_completed_at` marker written atomically) **before any rep_* insert**.
+- **Webhook-safe + repairable.** Never throws out of the provision/webhook path (mirror the welcome-email try/catch). BUT webhook-safe = swallowed exceptions, so a *partial* migration (roster in, fees failed) must not strand the coach in a half-populated paid portal: add **detection + a re-run/repair path** (the worst outcome — paying then seeing an empty portal — is exactly what this project fixes).
+- **Per-season anchored** — the provisioner creates the first `rep_program_years` row before seeding. **Multi-year free data collapses into one synthetic "current" season** — surface this in the "check these" summary (semantic loss, not data loss).
+- **Prereq ordering:** Phase 3c (Premium tolerant of incomplete migrated records — optional guardian fields) must be applied to **prod before Phase 4 runs in prod**, with dues-reminder null-safety audited in the same change, or every player with missing guardian info hits a not-null violation.
 - Synchronous best-effort at provisioning (owner decision), so the portal is populated on first load.
 - Emits the post-upgrade "check these" summary.
+
+> **Architecture decision (2026-06-19, owner-confirmed):** keep the free/paid portals as separate models + migrate on upgrade; do NOT unify onto shared tier-gated tables now (the Tournament free/Plus analogy is invalid — no shared org row to flip). Unification kept as a future "account-per-free-coach" option. Enforce **Premium ≥ Free** on every new free feature. Full record + the 9-agent analysis: [COACH_PORTAL_ARCHITECTURE_DECISION.md](COACH_PORTAL_ARCHITECTURE_DECISION.md).
 
 ### Phase 5 — Companion: in-portal season & division management — L (separate track)
 Required for the multi-season Premium promise:
