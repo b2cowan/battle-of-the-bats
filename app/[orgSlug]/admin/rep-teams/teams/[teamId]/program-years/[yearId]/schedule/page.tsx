@@ -68,16 +68,19 @@ function weekKey(iso: string) {
 function EventChip({ event, onClick }: { event: RepTeamEvent; onClick: () => void }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
+  const cancelled = event.status === 'cancelled';
   return (
     <button
       className={styles.eventChip}
-      style={{ borderLeftColor: color }}
+      style={{ borderLeftColor: color, ...(cancelled ? { opacity: 0.55 } : {}) }}
       onClick={onClick}
     >
       <Icon size={12} style={{ color, flexShrink: 0 }} />
       <span className={styles.eventChipTime}>{fmtTime(event.startsAt)}</span>
-      <span className={styles.eventChipName}>{event.name}</span>
-      {event.result && (
+      <span className={styles.eventChipName} style={cancelled ? { textDecoration: 'line-through' } : undefined}>{event.name}</span>
+      {cancelled ? (
+        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#f59e0b' }}>CANCELLED</span>
+      ) : event.result && (
         <span style={{
           fontSize: '0.7rem', fontWeight: 700,
           color: event.result === 'win' ? '#22c55e' : event.result === 'loss' ? '#ef4444' : '#f59e0b',

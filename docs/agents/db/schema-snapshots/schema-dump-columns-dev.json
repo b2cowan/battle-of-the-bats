@@ -9126,6 +9126,15 @@
     "ordinal_position": 21
   },
   {
+    "table_name": "rep_team_events",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'scheduled'::text",
+    "ordinal_position": 22
+  },
+  {
     "table_name": "rep_team_expenses",
     "column_name": "id",
     "data_type": "uuid",

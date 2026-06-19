@@ -407,6 +407,9 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 <!-- dict:col:tournaments.is_active -->
 **`is_active`** (bool) — **legacy/redundant**; always written as `status==='active'`. `mapTournament` uses it only as a fallback when `status` is null ([lib/db.ts:2479](../../../lib/db.ts#L2479)). Treat `status` as authoritative.
 
+<!-- dict:col:tournaments.sport -->
+**`sport`** (text, NOT NULL, default `'softball'`; mig 136) — the tournament's sport. Drives the per-sport **Sport Pack** ([lib/sports.ts](../../../lib/sports.ts)) that supplies score vocabulary (Runs/Goals/Points), default tie-breakers, points-per-win, diff-cap applicability, default surface, and the countdown verb. **Free-text** (mirrors `league_seasons.sport` / `rep_teams.sport`) — read via `getSportPack`/`normalizeSportId`, which fall back to `'softball'`; the value is normalized for display, never trusted as an enum. Carried on clone + populate-from ([lib/db.ts](../../../lib/db.ts)). **Phase 1 (mig 136) records it only — default `'softball'`, no UI and no behaviour change;** the creation picker, Event Settings field, and sport-aware labels/rules land in later phases. _Dev/prod:_ dev-applied; **prod-pending until release** (apply with the rest of the multi-sport phases).
+
 <!-- dict:col:tournaments.start_date -->
 <!-- dict:col:tournaments.end_date -->
 **`start_date` / `end_date`** (date) — drive game-day/phase logic and public countdowns.
@@ -1873,6 +1876,9 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_team_events.recurrence_parent_id -->
 **`recurrence_parent_id`** (FK → self, ON DELETE SET NULL, nullable) — series-grouping pointer (gotchas 1–2).
+
+<!-- dict:col:rep_team_events.status -->
+**`status`** (text, NOT NULL, default `'scheduled'`; CHECK `scheduled|cancelled`) — event lifecycle state (mig 135). Mirrors the Basic cousin `basic_coach_team_events.status` so a cancelled free event carries over on upgrade and Premium is never less capable than Free. `'cancelled'` keeps the event on the schedule (dimmed + badged), not deleted; the coach can restore it. Written via the events PATCH.
 
 ### `rep_team_event_attendance`
 <!-- dict:table:rep_team_event_attendance -->

@@ -1100,6 +1100,7 @@ export interface RepTeamEvent {
   isRecurring: boolean;
   recurrenceRule: Record<string, unknown> | null;
   recurrenceParentId: string | null;
+  status: 'scheduled' | 'cancelled';
   createdAt: string;
   updatedAt: string;
 }

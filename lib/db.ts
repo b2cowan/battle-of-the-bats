@@ -4513,6 +4513,7 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
     isRecurring: r.is_recurring ?? false,
     recurrenceRule: r.recurrence_rule ?? null,
     recurrenceParentId: r.recurrence_parent_id ?? null,
+    status: r.status ?? 'scheduled',
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -4561,6 +4562,7 @@ export interface CreateRepTeamEventFields {
   isRecurring?: boolean;
   recurrenceRule?: Record<string, unknown> | null;
   recurrenceParentId?: string | null;
+  status?: 'scheduled' | 'cancelled';
 }
 
 export async function createRepTeamEvent(fields: CreateRepTeamEventFields): Promise<RepTeamEvent> {
@@ -4582,6 +4584,7 @@ export async function createRepTeamEvent(fields: CreateRepTeamEventFields): Prom
       is_recurring: fields.isRecurring ?? false,
       recurrence_rule: fields.recurrenceRule ?? null,
       recurrence_parent_id: fields.recurrenceParentId ?? null,
+      status: fields.status ?? 'scheduled',
     })
     .select()
     .single();
@@ -4608,6 +4611,7 @@ export async function createRepTeamEvents(rows: CreateRepTeamEventFields[]): Pro
       is_recurring: f.isRecurring ?? false,
       recurrence_rule: f.recurrenceRule ?? null,
       recurrence_parent_id: f.recurrenceParentId ?? null,
+      status: f.status ?? 'scheduled',
     })))
     .select();
   if (error) throw error;
@@ -4626,6 +4630,7 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   homeScore?: number | null;
   awayScore?: number | null;
   result?: 'win' | 'loss' | 'tie' | null;
+  status?: 'scheduled' | 'cancelled';
 }): Promise<RepTeamEvent> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.name !== undefined)        patch.name = fields.name;
@@ -4639,6 +4644,7 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   if (fields.homeScore !== undefined)   patch.home_score = fields.homeScore;
   if (fields.awayScore !== undefined)   patch.away_score = fields.awayScore;
   if (fields.result !== undefined)      patch.result = fields.result;
+  if (fields.status !== undefined)      patch.status = fields.status;
   const { data, error } = await supabaseAdmin
     .from('rep_team_events')
     .update(patch)

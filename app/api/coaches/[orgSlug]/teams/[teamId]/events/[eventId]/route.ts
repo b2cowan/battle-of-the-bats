@@ -66,6 +66,14 @@ export const PATCH = withObservability(async (req: Request,
     fields.result = r;
   }
 
+  if (body.status !== undefined) {
+    const s = body.status;
+    if (s !== 'scheduled' && s !== 'cancelled') {
+      return NextResponse.json({ error: 'status must be scheduled or cancelled' }, { status: 400 });
+    }
+    fields.status = s;
+  }
+
   const updated = await updateRepTeamEvent(eventId, fields);
   return NextResponse.json({ event: updated });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]' });

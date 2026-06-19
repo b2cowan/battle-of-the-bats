@@ -206,18 +206,21 @@ function errorMessage(error: unknown, fallback: string) {
 function EventChip({ event, onClick }: { event: RepTeamEvent; onClick: () => void }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
+  const cancelled = event.status === 'cancelled';
   return (
     <button
       className={styles.eventChip}
-      style={{ borderLeftColor: color }}
+      style={{ borderLeftColor: color, ...(cancelled ? { opacity: 0.55 } : {}) }}
       onClick={onClick}
     >
       <Icon size={12} style={{ color, flexShrink: 0 }} />
       <span className={styles.eventChipTime}>
         {event.startsAt ? fmtTime(event.startsAt) : ''}
       </span>
-      <span className={styles.eventChipName}>{event.name}</span>
-      {event.result && (
+      <span className={styles.eventChipName} style={cancelled ? { textDecoration: 'line-through' } : undefined}>{event.name}</span>
+      {cancelled ? (
+        <span className={styles.eventChipResult} style={{ color: '#f59e0b' }}>CANCELLED</span>
+      ) : event.result && (
         <span className={styles.eventChipResult} style={{
           color: event.result === 'win' ? '#22c55e' : event.result === 'loss' ? '#ef4444' : '#f59e0b',
         }}>
@@ -478,6 +481,32 @@ export default function CoachesSchedulePage({
       await fetchEvents();
     } catch (e: unknown) {
       setSaveError(errorMessage(e, 'Save failed'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // ── Cancel / restore ─────────────────────────────────────────────────────────
+  // A cancelled event stays on the schedule (dimmed + badged) rather than being deleted —
+  // parity with the free Basic portal, and the honest way to handle a called-off practice/game.
+
+  async function handleToggleCancel() {
+    if (!selectedEvent) return;
+    const nextStatus = selectedEvent.status === 'cancelled' ? 'scheduled' : 'cancelled';
+    setSaving(true);
+    setSaveError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${selectedEvent.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Update failed');
+      const { event: updated } = await res.json();
+      setSelectedEvent(updated);
+      await fetchEvents();
+    } catch (e: unknown) {
+      setSaveError(errorMessage(e, 'Update failed'));
     } finally {
       setSaving(false);
     }
@@ -834,8 +863,8 @@ export default function CoachesSchedulePage({
                   <button
                     key={e.id}
                     className={styles.calMonthEventDot}
-                    style={{ background: EVENT_COLORS[e.eventType] }}
-                    title={e.name}
+                    style={{ background: EVENT_COLORS[e.eventType], ...(e.status === 'cancelled' ? { opacity: 0.55, textDecoration: 'line-through' } : {}) }}
+                    title={e.status === 'cancelled' ? `${e.name} (cancelled)` : e.name}
                     onClick={() => setSelectedEvent(e)}
                   >
                     {e.name.slice(0, 14)}
@@ -959,6 +988,9 @@ export default function CoachesSchedulePage({
                 <span className={styles.eventTypePill} style={{ background: EVENT_COLORS[selectedEvent.eventType] + '22', color: EVENT_COLORS[selectedEvent.eventType] }}>
                   {EVENT_LABELS[selectedEvent.eventType]}
                 </span>
+                {selectedEvent.status === 'cancelled' && (
+                  <span className={styles.eventTypePill} style={{ background: '#f59e0b22', color: '#f59e0b' }}>Cancelled</span>
+                )}
               </div>
               <button className={styles.modalCloseBtn} onClick={closeSelectedEvent}>
                 <X size={18} />
@@ -1277,12 +1309,17 @@ export default function CoachesSchedulePage({
               </div>
             )}
 
-            {/* Delete */}
+            {/* Cancel / restore + Delete */}
             <div className={styles.slideOverActions}>
               {!deleteConfirm ? (
-                <button className={styles.btnDanger} onClick={() => setDeleteConfirm({ eventId: selectedEvent.id, isRecurring: selectedEvent.isRecurring })}>
-                  Delete
-                </button>
+                <>
+                  <button className={styles.btnGhost} disabled={saving} onClick={handleToggleCancel}>
+                    {selectedEvent.status === 'cancelled' ? 'Restore event' : 'Cancel event'}
+                  </button>
+                  <button className={styles.btnDanger} onClick={() => setDeleteConfirm({ eventId: selectedEvent.id, isRecurring: selectedEvent.isRecurring })}>
+                    Delete
+                  </button>
+                </>
               ) : (
                 <div className={styles.deleteConfirm}>
                   <p className={styles.deleteConfirmMsg}>
