@@ -1,8 +1,8 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Trophy, Check, RefreshCw, Sparkles, AlertTriangle } from 'lucide-react';
-import { Division, Team, Venue, Tournament, Game } from '@/lib/types';
-import { nextPow2, seedOrder, findBracketSchedulingViolations, gamesToBracketPreview, computeBracketColumns } from '@/lib/playoff-bracket';
+import { Trophy, Check, RefreshCw, Sparkles, AlertTriangle, Layers, Plus, Trash2 } from 'lucide-react';
+import { Division, Team, Venue, Tournament, Game, PlayoffTierConfig } from '@/lib/types';
+import { nextPow2, seedOrder, findBracketSchedulingViolations, gamesToBracketPreview, computeBracketColumns, suggestDefaultTiers, validateTierRanges, remapTierSeed } from '@/lib/playoff-bracket';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
 import NumberStepper from '@/components/admin/NumberStepper';
@@ -40,11 +40,13 @@ interface PreviewRow {
   venueFacilityId?: string;
   location?: string;
   sourceGameId?: string;
+  /** Tier/group name when the division has multiple brackets (tiers). Drives the canvas split. */
+  pool?: string;
 }
 
-/** Stable signature of the editable fields, for dirty-comparison (includes the round name, now persisted). */
+/** Stable signature of the editable fields, for dirty-comparison (includes the round name + tier, now persisted). */
 function serializeRows(rows: PreviewRow[]): string {
-  return JSON.stringify(rows.map(r => [r.code, r.home, r.away, r.date, r.time, r.venueId, r.venueFacilityId ?? '', r.round ?? '']));
+  return JSON.stringify(rows.map(r => [r.code, r.home, r.away, r.date, r.time, r.venueId, r.venueFacilityId ?? '', r.round ?? '', r.pool ?? '']));
 }
 
 /**
@@ -65,6 +67,10 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
   const [advancing, setAdvancing] = useState(4);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ isOpen: boolean; title: string; message: string; type: 'primary' | 'danger' | 'warning' | 'success' | 'info'; onConfirm?: () => void; confirmText?: string }>({ isOpen: false, title: '', message: '', type: 'primary' });
+  // Manual tier setup (build mode). Declared up here so `groupOptions` can read the
+  // defined ranges (which include bye seeds absent from any first-round placeholder).
+  const [showTierSetup, setShowTierSetup] = useState(false);
+  const [tiers, setTiers] = useState<PlayoffTierConfig[]>([]);
 
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
@@ -106,6 +112,44 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
 
   const baseOptions = useMemo(() => Array.from({ length: teams.length }, (_, i) => `Seed #${i + 1}`), [teams.length]);
 
+  // Tiered when any row carries a tier name (loaded multi-bracket, or a manual
+  // split). Drives the canvas split + per-tier scheduling/seed scoping.
+  const bracketCrossover = useMemo<'reseed' | 'tiers'>(
+    () => (templatePreview.some(r => r.pool) || preview.some(r => r.pool) ? 'tiers' : 'reseed'),
+    [templatePreview, preview],
+  );
+
+  // Per-tier seed dropdown options: each tier offers only its own global seed range,
+  // so editing a tier can't pull a seed from another tier. Absent → all seeds (single).
+  const groupOptions = useMemo<Record<string, string[]> | undefined>(() => {
+    // Manual tiers: use the DEFINED ranges (covers bye seeds absent from any
+    // first-round placeholder, e.g. a 3-team tier where the top seed has a bye).
+    if (tiers.length > 0) {
+      const map: Record<string, string[]> = {};
+      for (const t of tiers) {
+        map[t.name] = Array.from({ length: t.toSeed - t.fromSeed + 1 }, (_, k) => `Seed #${t.fromSeed + k}`);
+      }
+      return map;
+    }
+    // Loaded tiers: derive each tier's range from the Seed #N placeholders present.
+    const rows = preview.length ? preview : templatePreview;
+    if (!rows.some(r => r.pool)) return undefined;
+    const out: Record<string, Set<number>> = {};
+    for (const r of rows) {
+      if (!r.pool) continue;
+      (out[r.pool] ??= new Set<number>());
+      for (const ref of [r.home, r.away]) {
+        const m = (ref || '').match(/^Seed #(\d+)$/);
+        if (m) out[r.pool].add(Number(m[1]));
+      }
+    }
+    const map: Record<string, string[]> = {};
+    for (const [pool, seeds] of Object.entries(out)) {
+      map[pool] = [...seeds].sort((a, b) => a - b).map(n => `Seed #${n}`);
+    }
+    return map;
+  }, [tiers, preview, templatePreview]);
+
   const onPreviewChange = useCallback((p: PreviewRow[]) => setPreview(p), []);
 
   // Dirty = the live canvas differs from what was loaded. Derived (not a flag) so
@@ -113,10 +157,19 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
   const baseline = useMemo(() => serializeRows(templatePreview), [templatePreview]);
   const dirty = useMemo(() => serializeRows(preview) !== baseline, [preview, baseline]);
 
-  const violations = useMemo(
-    () => findBracketSchedulingViolations(preview.map(p => ({ code: p.code, home: p.home, away: p.away, date: p.date, time: p.time }))),
-    [preview],
-  );
+  // Scope the feed-order check PER TIER — codes repeat across tiers, so a global
+  // check would cross-match "Winner SF1" to the wrong tier's game.
+  const violations = useMemo(() => {
+    const groups = new Map<string, PreviewRow[]>();
+    for (const p of preview) {
+      const k = p.pool || '';
+      const arr = groups.get(k) ?? groups.set(k, []).get(k)!;
+      arr.push(p);
+    }
+    return [...groups.values()].flatMap(rows =>
+      findBracketSchedulingViolations(rows.map(p => ({ code: p.code, home: p.home, away: p.away, date: p.date, time: p.time }))),
+    );
+  }, [preview]);
 
   // Live bracket health — same structural read-out as the Plus auto-generator
   // (tightest turnaround, worst-case games/day, longest run), recomputed as the
@@ -152,6 +205,79 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
   }
   function startEmpty() { setTemplatePreview([]); }
 
+  // ── Manual tiers (build mode) ──────────────────────────────────────────────
+  // Split the division's overall seeds into N contiguous tiers, each its own
+  // bracket. Free on every plan (this is the manual surface). Reuses the same
+  // tier helpers as the Plus auto-generator so behaviour matches. (showTierSetup +
+  // tiers state declared near the top so groupOptions can read the ranges.)
+  const tierEligibleCount = teams.length;
+  const tierValidation = useMemo(() => validateTierRanges(tiers, tierEligibleCount), [tiers, tierEligibleCount]);
+
+  function openTierSetup() {
+    setTiers(suggestDefaultTiers(Math.max(4, tierEligibleCount)));
+    setShowTierSetup(true);
+  }
+  /** Re-derive contiguity: each tier starts right after the previous one ends. */
+  function commitTiers(next: PlayoffTierConfig[]) {
+    let cursor = 1;
+    const normalized = next.map(t => {
+      const size = Math.max(2, t.toSeed - t.fromSeed + 1);
+      const fromSeed = cursor;
+      const toSeed = cursor + size - 1;
+      cursor = toSeed + 1;
+      return { ...t, fromSeed, toSeed };
+    });
+    setTiers(normalized);
+  }
+  function updateTierSize(idx: number, size: number) {
+    commitTiers(tiers.map((t, i) => (i === idx ? { ...t, toSeed: t.fromSeed + Math.max(2, size) - 1 } : t)));
+  }
+  function renameTier(idx: number, name: string) {
+    setTiers(tiers.map((t, i) => (i === idx ? { ...t, name } : t)));
+  }
+  function addTier() {
+    const last = tiers[tiers.length - 1];
+    const start = last ? last.toSeed + 1 : 1;
+    commitTiers([...tiers, { name: `Tier ${tiers.length + 1}`, fromSeed: start, toSeed: start + 1, format: 'single' }]);
+  }
+  function removeTier(idx: number) {
+    if (tiers.length <= 1) return;
+    commitTiers(tiers.filter((_, i) => i !== idx));
+  }
+  /** Seed each tier's first round from its global seed range, tag rows with the
+   *  tier name (→ separate bracket + label on save), and load into the canvas. */
+  function buildTiers() {
+    const v = validateTierRanges(tiers, tierEligibleCount);
+    if (!v.ok) {
+      setFeedback({ isOpen: true, title: 'Check tier setup', message: v.error ?? 'Tier ranges are invalid.', type: 'warning' });
+      return;
+    }
+    const rows: PreviewRow[] = tiers.flatMap(tier => {
+      const n = tier.toSeed - tier.fromSeed + 1;
+      const order = seedOrder(nextPow2(n));
+      const out: PreviewRow[] = [];
+      let g = 1;
+      for (let i = 0; i < order.length; i += 2) {
+        const a = order[i];
+        const b = order[i + 1];
+        if (a <= n && b <= n) {
+          out.push({
+            round: 'Round 1',
+            code: `R1-${g}`,
+            home: remapTierSeed(`Seed #${a}`, tier.fromSeed),
+            away: remapTierSeed(`Seed #${b}`, tier.fromSeed),
+            date: '', time: '', venueId: '',
+            pool: tier.name,
+          });
+          g++;
+        }
+      }
+      return out;
+    });
+    setTemplatePreview(rows);
+    setShowTierSetup(false);
+  }
+
   function resolveLocation(p: PreviewRow): string {
     const v = venues.find(d => d.id === p.venueId);
     if (!v) return p.location || '';
@@ -172,11 +298,24 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
     try {
       // Preserve each existing game's own bracketId + bracketLabel so multi-bracket
       // divisions (tiered / per-pool) don't collapse into one bracket — or lose
-      // their tier name — on save. Only NEW rows fall back to the single computed
-      // bracketId (and carry no tier label until manual tier-splitting lands).
+      // their tier name — on save.
       const origByGameId = new Map(
         existingGames.map(g => [g.id, { bracketId: g.bracketId, bracketLabel: g.bracketLabel ?? null }]),
       );
+      // Map each tier (canvas `pool` name) → its bracketId. Existing tiers keep the
+      // real id of their games (so a NEW game added to a tier joins it, and legacy
+      // unlabeled tiers shown as "Bracket N" route correctly); brand-new manual tiers
+      // get a fresh id each. Ungrouped (single-bracket) rows carry no pool.
+      const poolBracketIds: Record<string, string> = {};
+      for (const p of preview) {
+        if (p.pool && p.sourceGameId && !(p.pool in poolBracketIds)) {
+          const id = origByGameId.get(p.sourceGameId)?.bracketId;
+          if (id) poolBracketIds[p.pool] = id;
+        }
+      }
+      for (const p of preview) {
+        if (p.pool && !(p.pool in poolBracketIds)) poolBracketIds[p.pool] = crypto.randomUUID();
+      }
       // A round name is persisted only when the organizer CUSTOMIZED it — i.e. it
       // differs from the auto-derived column title — so untouched rounds stay auto.
       // Key the derived lookup by row INDEX (codes can be empty or duplicated).
@@ -201,8 +340,12 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
         location: resolveLocation(p),
         venueId: p.venueId || undefined,
         venueFacilityId: p.venueFacilityId || undefined,
-        bracketId: (p.sourceGameId && origByGameId.get(p.sourceGameId)?.bracketId) || bracketId,
-        bracketLabel: (p.sourceGameId && origByGameId.get(p.sourceGameId)?.bracketLabel) ?? null,
+        // Existing rows keep their own real id; new rows join their tier's id (or the
+        // single computed id when ungrouped). Label = the tier name when grouped.
+        bracketId: p.sourceGameId
+          ? ((origByGameId.get(p.sourceGameId)?.bracketId) || (p.pool && poolBracketIds[p.pool]) || bracketId)
+          : ((p.pool && poolBracketIds[p.pool]) || bracketId),
+        bracketLabel: p.pool ?? (p.sourceGameId ? (origByGameId.get(p.sourceGameId)?.bracketLabel ?? null) : null),
         bracketCode: p.code,
         homePlaceholder: p.home,
         awayPlaceholder: p.away,
@@ -275,6 +418,9 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
               <button type="button" className="btn btn-lime btn-data" onClick={seedFirstRound} disabled={teams.length < 2}>
                 <Sparkles size={13} /> Seed first round
               </button>
+              <button type="button" className="btn btn-outline btn-data" onClick={openTierSetup} disabled={teams.length < 4} title={teams.length < 4 ? 'Add at least four accepted teams to split into tiers' : 'Split overall seeds into separate tiered brackets (e.g. Gold / Silver)'}>
+                <Layers size={13} /> Split into tiers
+              </button>
               <button type="button" className="btn btn-ghost btn-data" onClick={startEmpty}>Start empty</button>
               <span style={{ flex: 1 }} />
               {canAutoGenerate && onUseAutoGenerator && (
@@ -283,10 +429,69 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
                 </button>
               )}
             </div>
+
+            {/* Manual tier setup — split overall seeds into N contiguous tiered brackets */}
+            {showTierSetup && (
+              <div style={{ marginBottom: '1rem', padding: '1rem 1.1rem', borderRadius: '2px', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <Layers size={14} style={{ color: 'var(--logic-lime)' }} />
+                  <span className="text-label" style={{ color: 'var(--logic-lime)' }}>Tiers — split the {tierEligibleCount} seeds into separate brackets</span>
+                </div>
+                <p className="text-sm text-muted" style={{ margin: '0 0 0.85rem', maxWidth: '46rem', lineHeight: 1.5 }}>
+                  Each tier is its own bracket, seeded from the division&apos;s overall standings (top seeds in the first tier).
+                  Set how many teams go in each tier; ranges fill in order.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.85rem' }}>
+                  {tiers.map((t, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                      <input
+                        type="text"
+                        value={t.name}
+                        onChange={e => renameTier(i, e.target.value)}
+                        className="form-input"
+                        style={{ width: '9rem' }}
+                        aria-label={`Tier ${i + 1} name`}
+                        maxLength={24}
+                      />
+                      <span className="text-sm text-muted">Seeds {t.fromSeed}–{t.toSeed}</span>
+                      <span style={{ flex: 1 }} />
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <NumberStepper
+                          value={t.toSeed - t.fromSeed + 1}
+                          min={2}
+                          max={Math.max(2, tierEligibleCount)}
+                          step={1}
+                          onChange={(val) => updateTierSize(i, val)}
+                          ariaLabel={`${t.name} team count`}
+                        />
+                      </div>
+                      <button type="button" className="btn btn-ghost btn-data" onClick={() => removeTier(i)} disabled={tiers.length <= 1} title="Remove tier" style={{ padding: '0.35rem' }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {!tierValidation.ok && (
+                  <p style={{ margin: '0 0 0.7rem', color: '#f87171', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <AlertTriangle size={12} /> {tierValidation.error}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button type="button" className="btn btn-outline btn-data" onClick={addTier}><Plus size={13} /> Add tier</button>
+                  <span style={{ flex: 1 }} />
+                  <button type="button" className="btn btn-ghost btn-data" onClick={() => setShowTierSetup(false)}>Cancel</button>
+                  <button type="button" className="btn btn-lime btn-data" onClick={buildTiers} disabled={!tierValidation.ok}>
+                    <Check size={13} /> Build tiers
+                  </button>
+                </div>
+              </div>
+            )}
+
             <p className="text-sm text-muted" style={{ margin: '0 0 1rem', maxWidth: '52rem', lineHeight: 1.5 }}>
               Seed a first round (Seed #1 v lowest …), then build each later round by hand: add a round, add matchups, and
               set each side to a <strong>Seed</strong> or the <strong>Winner / Loser</strong> of an earlier game. Lines draw
               as you wire them. Leave dates blank to schedule later — a game cannot be saved on/before a game that feeds it.
+              Or <strong>Split into tiers</strong> to seed separate brackets (e.g. Gold / Silver) from the overall standings.
             </p>
           </>
         )}
@@ -326,8 +531,9 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
             defaultDate=""
             templatePreview={templatePreview}
             baseOptions={baseOptions}
+            groupOptions={groupOptions}
             onPreviewChange={onPreviewChange}
-            crossover="reseed"
+            crossover={bracketCrossover}
             labelFor={labelFor}
             focusSourceGameId={focusGameId}
           />

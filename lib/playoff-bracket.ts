@@ -633,6 +633,8 @@ export function resolvePlayoffWinner(g: {
 
 export interface LoadableBracketGame {
   id: string;
+  bracketId?: string | null;
+  bracketLabel?: string | null;
   bracketCode?: string | null;
   roundLabel?: string | null;
   homePlaceholder?: string | null;
@@ -656,6 +658,8 @@ export interface BracketPreviewRow {
   location?: string;
   /** Links this canvas row back to its existing game so a save can DIFF (update vs insert). */
   sourceGameId?: string;
+  /** Tier/group name when the division has multiple brackets (tiers / per-pool). Drives the canvas split. */
+  pool?: string;
 }
 
 /**
@@ -666,31 +670,46 @@ export interface BracketPreviewRow {
  * placeholder as the slot label (so wiring round-trips).
  */
 export function gamesToBracketPreview(games: LoadableBracketGame[]): BracketPreviewRow[] {
-  const colMap = computeBracketColumns(games);
-  const groups = new Map<string, { title: string; rank: number; games: LoadableBracketGame[] }>();
-  for (const g of games) {
-    const info = colMap.get(g.id) || bracketRoundInfo(g.bracketCode || '');
-    let grp = groups.get(info.key);
-    if (!grp) { grp = { title: info.title, rank: info.rank, games: [] }; groups.set(info.key, grp); }
-    grp.games.push(g);
-  }
-  return [...groups.values()]
-    .sort((a, b) => a.rank - b.rank)
-    .flatMap(grp => grp.games
-      .slice()
-      .sort((a, b) => (a.bracketCode || '').localeCompare(b.bracketCode || ''))
-      .map(g => ({
-        round: grp.title,
-        code: g.bracketCode || '',
-        home: g.homePlaceholder || '',
-        away: g.awayPlaceholder || '',
-        date: g.date || '',
-        time: g.time || '',
-        venueId: g.venueId || '',
-        venueFacilityId: g.venueFacilityId || undefined,
-        location: g.location || '',
-        sourceGameId: g.id,
-      })));
+  // Group by bracketId — tiers / per-pool brackets reuse codes, so each must compute
+  // its own columns and render as its own canvas group (BracketBuilder splits by the
+  // `pool` field). A single bracket → one group, emitted ungrouped (no `pool`).
+  const groups = groupGamesByBracketId(games);
+  const multi = groups.length > 1;
+
+  const ranked: { rank: number; row: BracketPreviewRow }[] = [];
+  groups.forEach((grp, gi) => {
+    const poolName = multi ? (grp.label || `Bracket ${gi + 1}`) : undefined;
+    const colMap = computeBracketColumns(grp.games);
+    for (const g of grp.games) {
+      const info = colMap.get(g.id) || bracketRoundInfo(g.bracketCode || '');
+      ranked.push({
+        rank: info.rank,
+        row: {
+          round: info.title,
+          code: g.bracketCode || '',
+          home: g.homePlaceholder || '',
+          away: g.awayPlaceholder || '',
+          date: g.date || '',
+          time: g.time || '',
+          venueId: g.venueId || '',
+          venueFacilityId: g.venueFacilityId || undefined,
+          location: g.location || '',
+          sourceGameId: g.id,
+          pool: poolName,
+        },
+      });
+    }
+  });
+  // Order globally by structural rank so BracketBuilder's shared (by round-NAME)
+  // column array lands left-to-right even when tiers of DIFFERENT sizes share round
+  // names (e.g. a 4-team tier's "Final" vs an 8-team tier's "Quarterfinal"); then by
+  // group + code for a stable read.
+  ranked.sort((a, b) =>
+    a.rank - b.rank ||
+    (a.row.pool || '').localeCompare(b.row.pool || '') ||
+    (a.row.code || '').localeCompare(b.row.code || ''),
+  );
+  return ranked.map(r => r.row);
 }
 
 export interface BracketGroup<T> {
