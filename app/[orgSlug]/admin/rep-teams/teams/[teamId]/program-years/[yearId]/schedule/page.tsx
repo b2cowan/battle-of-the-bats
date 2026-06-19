@@ -93,7 +93,7 @@ function EventChip({ event, onClick }: { event: RepTeamEvent; onClick: () => voi
 }
 
 function WLTWidget({ events }: { events: RepTeamEvent[] }) {
-  const games = events.filter(e => e.eventType === 'league_game' && e.result);
+  const games = events.filter(e => e.eventType === 'league_game' && e.result && e.status !== 'cancelled');
   const w = games.filter(e => e.result === 'win').length;
   const l = games.filter(e => e.result === 'loss').length;
   const t = games.filter(e => e.result === 'tie').length;
