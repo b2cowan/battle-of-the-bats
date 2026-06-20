@@ -118,7 +118,9 @@ export async function migrateBasicTeamIntoWorkspace(params: {
         summary.roster.migrated++;
         const label = p.name?.trim() || created.id;
         if (name.uncertain) summary.roster.nameSplitUncertain.push(label);
-        if (!p.contactEmail) summary.roster.needGuardian.push(label);
+        // Flag any missing guardian contact (name OR email) — both came over nullable; the coach
+        // should complete them (an email is what re-enables dues reminders).
+        if (!p.contactEmail || !p.guardianName) summary.roster.needGuardian.push(label);
       } catch (e) {
         summary.roster.failed++;
         console.error('[coach-upgrade-migration] roster player failed:', e);
@@ -133,28 +135,33 @@ export async function migrateBasicTeamIntoWorkspace(params: {
   // ── Schedule ──────────────────────────────────────────────────────────────
   try {
     const events = await getBasicCoachTeamEvents(params.basicCoachTeamId);
-    const rows: CreateRepTeamEventFields[] = events.map(ev => {
-      if (ev.status === 'cancelled') summary.schedule.cancelled++;
-      return {
-        programYearId: params.programYearId,
-        teamId: params.teamId,
-        orgId: params.orgId,
-        eventType: EVENT_TYPE_MAP[ev.eventType] ?? 'team_event',
-        name: ev.title,
-        description: ev.notes,
-        startsAt: ev.startsAt,
-        endsAt: ev.endsAt,
-        location: ev.location,
-        opponent: ev.opponent,
-        status: ev.status,
-      };
-    });
+    const rows: CreateRepTeamEventFields[] = events.map(ev => ({
+      programYearId: params.programYearId,
+      teamId: params.teamId,
+      orgId: params.orgId,
+      eventType: EVENT_TYPE_MAP[ev.eventType] ?? 'team_event',
+      name: ev.title,
+      description: ev.notes,
+      startsAt: ev.startsAt,
+      endsAt: ev.endsAt,
+      location: ev.location,
+      opponent: ev.opponent,
+      status: ev.status,
+    }));
     if (rows.length > 0) {
-      const created = await createRepTeamEvents(rows);
-      summary.schedule.migrated += created.length;
+      try {
+        const created = await createRepTeamEvents(rows);
+        summary.schedule.migrated += created.length;
+        // Count cancelled only among events that actually landed (accurate on partial/total failure).
+        summary.schedule.cancelled += created.filter(e => e.status === 'cancelled').length;
+      } catch (e) {
+        summary.schedule.failed += rows.length; // bulk insert is all-or-nothing
+        summary.ok = false;
+        summary.notes.push('Schedule import hit a problem; some events may be missing.');
+        console.error('[coach-upgrade-migration] schedule insert failed:', e);
+      }
     }
   } catch (e) {
-    summary.schedule.failed++;
     summary.ok = false;
     summary.notes.push('Schedule import hit a problem; some events may be missing.');
     console.error('[coach-upgrade-migration] schedule pass failed:', e);
