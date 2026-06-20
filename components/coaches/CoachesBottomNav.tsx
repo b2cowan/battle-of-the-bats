@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutGrid, Calendar, Users, DollarSign, FileText,
   History, MoreHorizontal, X, ChevronRight, LogOut,
-  Link2,
+  Link2, HelpCircle,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -150,6 +150,17 @@ export default function CoachesBottomNav() {
                 <div className={styles.dropDivider} />
               </>
             )}
+            <Link
+              href={`${base}/help`}
+              className={styles.dropItem}
+              role="menuitem"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <HelpCircle size={17} />
+              <span>Help</span>
+              <ChevronRight size={14} className={styles.dropChevron} />
+            </Link>
             <button
               className={`${styles.dropItem} ${styles.dropLogout}`}
               onClick={handleLogout}

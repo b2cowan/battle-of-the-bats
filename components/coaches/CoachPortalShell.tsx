@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Home, Trophy, Users, CalendarClock, CircleDollarSign, Megaphone,
   Compass, LogOut, LayoutGrid, X, MoreHorizontal, ChevronRight, ChevronDown,
+  HelpCircle,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { teamColor } from '@/lib/team-color';
@@ -272,6 +273,9 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
             </Link>
           )}
           <FeedbackLauncher className={styles.railFooterLink} label="Send feedback" iconSize={14} />
+          <Link href="/coaches/help" className={styles.railFooterLink} target="_blank" rel="noopener noreferrer">
+            <HelpCircle size={14} aria-hidden /><span>Help</span>
+          </Link>
           <Link href="/home?pick=1" className={styles.railFooterLink}>
             <LayoutGrid size={14} aria-hidden /><span>All workspaces</span>
           </Link>
@@ -408,6 +412,9 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
               <LayoutGrid size={16} aria-hidden /><span>All workspaces</span>
             </Link>
             <FeedbackLauncher className={styles.sheetItem} label="Send feedback" iconSize={16} />
+            <Link href="/coaches/help" className={styles.sheetItem} target="_blank" rel="noopener noreferrer" onClick={closeMore}>
+              <HelpCircle size={16} aria-hidden /><span>Help</span>
+            </Link>
             <button
               type="button"
               className={styles.sheetItem}
