@@ -22,9 +22,10 @@ export type SearchParamsRecord = Record<string, string | string[] | undefined>;
  * (and therefore suppress the global marketing top nav + footer). The signup /
  * marketing surfaces — `/coaches/join`, `/coaches/start`, `/coaches/claim`,
  * `/coaches/checkout` — are intentionally excluded: they keep the marketing chrome
- * and the shell passes their children through untouched. `/coaches/help` IS included:
- * the help guide renders inside the portal shell (no marketing nav) so its full-page
- * layout doesn't collide with the global top bar.
+ * and the shell passes their children through untouched. `/coaches/help` IS included so the
+ * marketing nav + footer are suppressed — but `CoachPortalShell` renders it as a FOCUSED
+ * full-page guide (no rail / bottom-nav), matching how admin help renders without the admin
+ * sidebar. Help must never collide with the global top bar nor keep an app side nav.
  */
 export function isCoachPortalShellPath(pathname: string): boolean {
   return (

@@ -11,6 +11,7 @@ import { signOut } from '@/lib/auth';
 import { teamColor } from '@/lib/team-color';
 import {
   COACHES_HOME_PATH,
+  COACHES_HELP_PATH,
   COACHES_TEAM_PATH,
   coachTeamPath,
   isCoachPortalShellPath,
@@ -61,6 +62,10 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
   const pathname = usePathname();
   const router = useRouter();
   const showShell = isCoachPortalShellPath(pathname);
+  // The help guide is a shell path (so the global marketing nav + footer are suppressed),
+  // but it renders as a FOCUSED full-page guide — no rail / bottom-nav — matching how admin
+  // help renders without the admin sidebar. (Owner feedback: help must not keep an app side nav.)
+  const isHelp = pathname === COACHES_HELP_PATH;
 
   const [teamContexts, setTeamContexts] = useState<TeamContext[]>([]);
   const [email, setEmail] = useState<string | null>(null);
@@ -87,7 +92,7 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
   // writes immediately (the catalog's "Turn on" navigates the coach, which triggers this).
   // The fetch is lightweight + `no-store`; gated on `showShell` so non-portal routes skip it.
   useEffect(() => {
-    if (!showShell) return;
+    if (!showShell || isHelp) return;
     let cancelled = false;
     (async () => {
       try {
@@ -104,7 +109,7 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
     return () => {
       cancelled = true;
     };
-  }, [showShell, pathname]);
+  }, [showShell, pathname, isHelp]);
 
   // More sheet a11y: focus in on open, restore on close, Escape to close.
   useEffect(() => {
@@ -122,6 +127,10 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
   }, [moreOpen, closeMore]);
 
   if (!showShell) return <>{children}</>;
+
+  // Focused full-page help guide: no rail, no bottom nav — just the guide, padded so the
+  // shared HelpPageLayout gets the breathing room it relies on (mirrors admin focused help).
+  if (isHelp) return <main className={styles.helpFocused}>{children}</main>;
 
   async function handleSignOut() {
     await signOut();

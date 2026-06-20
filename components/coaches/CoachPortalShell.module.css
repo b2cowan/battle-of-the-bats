@@ -10,6 +10,21 @@
   --coach-bottomnav-h: 64px;
 }
 
+/* Focused full-page help guide (/coaches/help): marketing nav/footer are suppressed like
+   other portal routes, but we render NO rail/bottom-nav — just the padded guide — so the
+   shared HelpPageLayout gets the breathing room it relies on (mirrors admin focused help). */
+.helpFocused {
+  min-height: 100vh;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1023px) {
+  .helpFocused {
+    padding: 1rem;
+  }
+}
+
 /* ── Brand lockup (shared by rail header + mobile top bar) ── */
 .brand {
   display: inline-flex;
