@@ -1,13 +1,13 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-06-19 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-06-20 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 78 divergence(s)** across dev/prod.
+**⚠️ 81 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 1 | 0 | — |
-| Columns | 14 | 3 | 23 |
+| Columns | 14 | 3 | 26 |
 | Indexes | 6 | 3 | 0 |
 | Constraints | 11 | 9 | — |
 | RLS / CHECK | 7 | 1 | 0 (RLS state) |
@@ -41,7 +41,7 @@ _none_
 - `rule_items.created_at`
 - `rules.created_at`
 
-### Type/nullability/default changed (23)
+### Type/nullability/default changed (26)
 - `announcements.body` — dev: `text|text|YES|` | prod: `text|text|NO|`
 - `announcements.published_at` — dev: `timestamp with time zone|timestamptz|NO|now()` | prod: `timestamp with time zone|timestamptz|NO|`
 - `diamonds.address` — dev: `text|text|YES|` | prod: `text|text|NO|`
@@ -51,6 +51,9 @@ _none_
 - `divisions.requires_pool_selection` — dev: `boolean|bool|NO|false` | prod: `boolean|bool|YES|false`
 - `games.is_playoff` — dev: `boolean|bool|NO|false` | prod: `boolean|bool|YES|false`
 - `games.location` — dev: `text|text|YES|` | prod: `text|text|NO|`
+- `rep_roster_players.guardian_email` — dev: `text|text|YES|` | prod: `text|text|NO|`
+- `rep_roster_players.guardian_first_name` — dev: `text|text|YES|` | prod: `text|text|NO|`
+- `rep_roster_players.guardian_last_name` — dev: `text|text|YES|` | prod: `text|text|NO|`
 - `resources.display_order` — dev: `integer|int4|NO|0` | prod: `integer|int4|YES|0`
 - `resources.id` — dev: `uuid|uuid|NO|gen_random_uuid()` | prod: `uuid|uuid|NO|uuid_generate_v4()`
 - `rule_items.display_order` — dev: `integer|int4|NO|0` | prod: `integer|int4|YES|0`

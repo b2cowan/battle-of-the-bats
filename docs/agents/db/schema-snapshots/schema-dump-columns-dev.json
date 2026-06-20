@@ -8608,7 +8608,7 @@
     "column_name": "guardian_first_name",
     "data_type": "text",
     "udt_name": "text",
-    "is_nullable": "NO",
+    "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 9
   },
@@ -8617,7 +8617,7 @@
     "column_name": "guardian_last_name",
     "data_type": "text",
     "udt_name": "text",
-    "is_nullable": "NO",
+    "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 10
   },
@@ -8626,7 +8626,7 @@
     "column_name": "guardian_email",
     "data_type": "text",
     "udt_name": "text",
-    "is_nullable": "NO",
+    "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 11
   },

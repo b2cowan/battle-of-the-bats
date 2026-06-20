@@ -1776,7 +1776,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_roster_players.guardian_last_name -->
 <!-- dict:col:rep_roster_players.guardian_email -->
 <!-- dict:col:rep_roster_players.guardian_phone -->
-**`guardian_first_name` / `guardian_last_name` / `guardian_email` / `guardian_phone`** — guardian contact; first/last/email are **NOT NULL** in the DB (the route guarantees non-null even though `createRepRosterPlayer`'s TS types them optional); `guardian_email` indexed (`email_idx`). `guardian_phone` nullable.
+**`guardian_first_name` / `guardian_last_name` / `guardian_email` / `guardian_phone`** — guardian contact; **all nullable as of mig 139** (Coach Premium Upgrade Phase 3c — so a free team's roster carries over on upgrade without fabricating guardian data). The manual roster-add route still requires first/last/email app-side, so in practice only **migrated rows** (or edits that clear the field) are null. `guardian_email` indexed (`email_idx`, non-unique). TS types are already `string | null` and every reader is null-safe (dues reminders skip null emails; displays/exports coalesce). `guardian_phone` nullable.
 
 <!-- dict:col:rep_roster_players.status -->
 **`status`** (text, NOT NULL, default `'active'`; CHECK `active|inactive`) — `inactive` is the de-facto delete (gotcha 1).
