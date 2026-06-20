@@ -8,6 +8,7 @@ export const COACHES_TEAMS_PATH = '/coaches/teams';
 export const COACHES_TEAM_PATH = '/coaches/team';
 export const COACHES_CLAIM_PATH = '/coaches/claim';
 export const COACHES_CHECKOUT_COMPLETE_PATH = '/coaches/checkout/complete';
+export const COACHES_HELP_PATH = '/coaches/help';
 
 /** Build the path to a single org-less Basic coach team home. */
 export function coachTeamPath(basicCoachTeamId: string): string {
@@ -21,11 +22,14 @@ export type SearchParamsRecord = Record<string, string | string[] | undefined>;
  * (and therefore suppress the global marketing top nav + footer). The signup /
  * marketing surfaces — `/coaches/join`, `/coaches/start`, `/coaches/claim`,
  * `/coaches/checkout` — are intentionally excluded: they keep the marketing chrome
- * and the shell passes their children through untouched.
+ * and the shell passes their children through untouched. `/coaches/help` IS included:
+ * the help guide renders inside the portal shell (no marketing nav) so its full-page
+ * layout doesn't collide with the global top bar.
  */
 export function isCoachPortalShellPath(pathname: string): boolean {
   return (
     pathname === COACHES_HOME_PATH ||
+    pathname === COACHES_HELP_PATH ||
     pathname === COACHES_TOURNAMENTS_PATH ||
     pathname.startsWith(`${COACHES_TOURNAMENTS_PATH}/`) ||
     pathname === COACHES_TEAMS_PATH ||
