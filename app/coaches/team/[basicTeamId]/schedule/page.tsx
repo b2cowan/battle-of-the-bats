@@ -29,6 +29,7 @@ export default async function CoachTeamSchedulePage({ params }: RouteParams) {
       teamName={team.name}
       title="Schedule"
       meta={<span className={styles.rosterCount}>{events.length} {events.length === 1 ? 'event' : 'events'}</span>}
+      help={{ module: 'coaches', sectionIds: ['recipe-build-coach-schedule'], fullGuideHref: '/coaches/help#recipe-build-coach-schedule' }}
     >
       <ScheduleEditor basicTeamId={basicTeamId} initialEvents={events} />
       {events.length > 0 && <ScopeShelf basicTeamId={basicTeamId} section="schedule" />}

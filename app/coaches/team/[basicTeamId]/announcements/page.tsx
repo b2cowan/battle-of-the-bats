@@ -33,6 +33,7 @@ export default async function CoachTeamAnnouncementsPage({ params }: RouteParams
     <TeamSectionShell
       teamName={team.name}
       title="Announcements"
+      help={{ module: 'coaches', sectionIds: ['recipe-announcements'], fullGuideHref: '/coaches/help#recipe-announcements' }}
     >
       <AnnouncementEditor
         basicTeamId={basicTeamId}

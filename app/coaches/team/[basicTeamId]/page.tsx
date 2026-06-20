@@ -17,6 +17,7 @@ import {
   COACHES_TOURNAMENTS_PATH,
   coachTeamPath,
 } from '@/lib/coaches-portal-routes';
+import HelpButton from '@/components/help/HelpButton';
 import TeamHQ from '@/components/coaches/TeamHQ';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachOverviewInvite from '@/components/coaches/CoachOverviewInvite';
@@ -129,6 +130,12 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
           <p className={styles.identityMeta}>
             {metaParts.length > 0 ? metaParts.join(' · ') : 'Your team home'}
           </p>
+        </div>
+        <div style={{ marginLeft: 'auto', position: 'relative' }}>
+          <HelpButton
+            help={{ module: 'coaches', sectionIds: ['overview'], fullGuideHref: '/coaches/help#overview' }}
+            label="Overview"
+          />
         </div>
       </div>
 

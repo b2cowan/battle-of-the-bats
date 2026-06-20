@@ -29,6 +29,7 @@ export default async function CoachTeamRosterPage({ params }: RouteParams) {
       teamName={team.name}
       title="Roster"
       meta={<span className={styles.rosterCount}>{players.length} {players.length === 1 ? 'player' : 'players'}</span>}
+      help={{ module: 'coaches', sectionIds: ['recipe-add-player'], fullGuideHref: '/coaches/help#recipe-add-player' }}
     >
       <RosterEditor basicTeamId={basicTeamId} initialPlayers={players} />
       {players.length > 0 && <ScopeShelf basicTeamId={basicTeamId} section="roster" />}

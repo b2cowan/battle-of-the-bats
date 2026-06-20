@@ -34,6 +34,7 @@ export default async function CoachTeamFeesPage({ params }: RouteParams) {
       teamName={team.name}
       title="Fees"
       meta={fees.length > 0 ? <span className={styles.rosterCount}>{unpaid} unpaid</span> : undefined}
+      help={{ module: 'coaches', sectionIds: ['recipe-track-dues'], fullGuideHref: '/coaches/help#recipe-track-dues' }}
     >
       <FeeEditor basicTeamId={basicTeamId} initialFees={fees} players={players} />
       {fees.length > 0 && <ScopeShelf basicTeamId={basicTeamId} section="fees" />}

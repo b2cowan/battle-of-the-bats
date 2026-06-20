@@ -2,6 +2,8 @@ import type { CSSProperties, ReactNode } from 'react';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import shared from '@/app/coaches/coaches-portal.module.css';
 import styles from '@/app/coaches/team/[basicTeamId]/team.module.css';
+import HelpButton from '@/components/help/HelpButton';
+import type { HelpRequest } from '@/components/help/help-drawer-context';
 
 /**
  * Shared header + page frame for a team section sub-route (roster / schedule / fees /
@@ -13,12 +15,15 @@ export default function TeamSectionShell({
   teamName,
   title,
   meta,
+  help,
   children,
 }: {
   teamName: string;
   title: string;
   /** Optional right-aligned header meta (e.g. "12 players"). */
   meta?: ReactNode;
+  /** Optional in-context "?" help — opens the matching coaches guide section in the drawer. */
+  help?: HelpRequest;
   children: ReactNode;
 }) {
   return (
@@ -38,7 +43,12 @@ export default function TeamSectionShell({
       <section className={shared.section}>
         <div className={shared.sectionHeader}>
           <h2 className={shared.sectionTitle}>{title}</h2>
-          {meta}
+          {(meta || help) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              {meta}
+              {help && <HelpButton help={help} label={title} />}
+            </div>
+          )}
         </div>
         {children}
       </section>
