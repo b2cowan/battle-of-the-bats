@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Phase 5a — Discovery &amp; Orientation — Clickable Mockup</title>
+<style>
+  :root{
+    --bg:#070a11; --panel-bg:rgba(86,140,210,.045); --panel-border:rgba(86,140,210,.32);
+    --lime:#b9f04a; --lime-dim:rgba(185,240,74,.4); --lime-bg:rgba(185,240,74,.08);
+    --warning:#f0a93a; --warning-bg:rgba(240,169,58,.07); --warning-border:rgba(240,169,58,.4);
+    --plus:#7cc6ff; --plus-bg:rgba(124,198,255,.09); --plus-border:rgba(124,198,255,.45);
+    --w90:rgba(255,255,255,.9); --w70:rgba(255,255,255,.7); --w55:rgba(255,255,255,.55);
+    --w40:rgba(255,255,255,.4); --w12:rgba(255,255,255,.12); --w06:rgba(255,255,255,.06); --w03:rgba(255,255,255,.03);
+    --mono:"SFMono-Regular",ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--w90);font-family:var(--sans);line-height:1.5;
+    background-image:linear-gradient(rgba(86,140,210,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(86,140,210,.04) 1px,transparent 1px);
+    background-size:32px 32px;}
+  .wrap{max-width:1080px;margin:0 auto;padding:1.5rem 1.25rem 5rem;}
+  h1{font-size:1.25rem;margin:0 0 .25rem;font-weight:800;letter-spacing:-.01em;}
+  .sub{color:var(--w55);font-size:.82rem;margin:0 0 1.25rem;}
+  .legend{font-size:.7rem;color:var(--w40);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin:.25rem 0 1.25rem;}
+  .badge{display:inline-block;font-size:.62rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;
+    padding:.12rem .4rem;border-radius:3px;vertical-align:middle;}
+  .badge.free{background:var(--lime-bg);color:var(--lime);border:1px solid var(--lime-dim);}
+  .badge.plus{background:var(--plus-bg);color:var(--plus);border:1px solid var(--plus-border);}
+
+  /* controls */
+  .controls{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-bottom:1.25rem;
+    padding:.85rem 1rem;border:1px solid var(--panel-border);background:var(--w03);border-radius:8px;}
+  .ctl-group{display:flex;flex-direction:column;gap:.35rem;}
+  .ctl-label{font-size:.6rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--w40);}
+  .seg{display:inline-flex;border:1px solid var(--w12);border-radius:6px;overflow:hidden;}
+  .seg button{background:transparent;border:0;color:var(--w55);font-family:var(--mono);font-size:.68rem;
+    padding:.4rem .6rem;cursor:pointer;letter-spacing:.04em;text-transform:uppercase;border-right:1px solid var(--w12);}
+  .seg button:last-child{border-right:0;}
+  .seg button.on{background:var(--lime);color:#0a0d05;font-weight:700;}
+  .seg.plan button.on{background:var(--plus);color:#04121f;}
+  .reset{margin-left:auto;background:transparent;border:1px solid var(--w12);color:var(--w55);
+    font-family:var(--mono);font-size:.65rem;padding:.4rem .65rem;border-radius:6px;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;}
+
+  /* faux dashboard frame */
+  .frame{border:1px solid var(--panel-border);border-radius:10px;background:rgba(7,10,17,.6);overflow:hidden;}
+  .frame-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;
+    padding:1rem 1.15rem;border-bottom:1px solid var(--w06);}
+  .frame-title{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;}
+  .frame-title .tname{font-size:1.05rem;font-weight:700;}
+  .pill{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
+    padding:.18rem .5rem;border-radius:4px;border:1px solid var(--w12);color:var(--w70);}
+  .pill .sublabel{color:var(--lime);}
+  .frame-head .hbtns{display:flex;gap:.5rem;}
+  .ghostbtn{background:transparent;border:1px solid var(--w12);color:var(--w70);font-family:var(--mono);
+    font-size:.66rem;padding:.4rem .6rem;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;text-transform:uppercase;letter-spacing:.04em;}
+  .ghostbtn:hover{border-color:var(--lime-dim);color:var(--lime);}
+
+  .frame-body{padding:1.15rem;}
+
+  /* the rail card (D1) */
+  .rail{border:1px solid var(--panel-border);background:var(--panel-bg);border-radius:8px;
+    padding:1rem 1.15rem;margin-bottom:1.25rem;box-shadow:inset 0 1px 0 rgba(255,255,255,.03);}
+  .rail.live{border-color:var(--warning-border);background:var(--warning-bg);}
+  .rail-head{display:flex;gap:.7rem;align-items:flex-start;}
+  .rail-ico{flex-shrink:0;width:18px;height:18px;color:var(--lime);margin-top:.15rem;}
+  .rail.live .rail-ico{color:var(--warning);}
+  .rail-h{font-family:var(--mono);font-size:.9rem;font-weight:700;margin:0 0 .25rem;letter-spacing:.01em;}
+  .rail-ctx{font-size:.8rem;color:var(--w70);margin:0 0 .8rem;max-width:60ch;}
+  .rail-cta{background:var(--lime);color:#0a0d05;border:0;font-weight:700;font-family:var(--mono);
+    font-size:.72rem;padding:.5rem .85rem;border-radius:6px;cursor:pointer;letter-spacing:.03em;text-transform:uppercase;}
+  .rail.live .rail-cta{background:var(--warning);color:#1a1205;}
+  .progress{font-family:var(--mono);font-size:.64rem;color:var(--w40);letter-spacing:.08em;text-transform:uppercase;margin-top:.6rem;}
+
+  /* did-you-know nudge (D2) */
+  .nudge{margin-top:.95rem;padding-top:.85rem;border-top:1px dashed var(--w12);
+    display:flex;gap:.55rem;align-items:flex-start;font-size:.76rem;color:var(--w70);}
+  .nudge .dyk{color:var(--lime);font-weight:700;font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
+  .nudge-body{flex:1;}
+  .nudge-actions{display:flex;gap:.5rem;margin-top:.45rem;align-items:center;}
+  .nudge-show{background:transparent;border:1px solid var(--lime-dim);color:var(--lime);font-family:var(--mono);
+    font-size:.65rem;padding:.28rem .55rem;border-radius:5px;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;}
+  .nudge-dismiss{background:transparent;border:0;color:var(--w40);font-family:var(--mono);font-size:.65rem;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;}
+  .nudge-dismiss:hover{color:var(--w70);}
+  .nudge.plus .dyk{color:var(--plus);}
+  .nudge.plus .nudge-show{border-color:var(--plus-border);color:var(--plus);}
+
+  /* common tasks reveal (D4) */
+  .tasks-toggle{margin-top:.85rem;background:transparent;border:0;color:var(--w55);font-family:var(--mono);
+    font-size:.66rem;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;padding:0;}
+  .tasks-toggle:hover{color:var(--lime);}
+  .tasks{margin-top:.7rem;display:none;}
+  .tasks.open{display:block;}
+  .tasks ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.2rem;}
+  .tasks li a{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--w70);
+    font-size:.78rem;padding:.4rem .5rem;border-radius:5px;border:1px solid transparent;}
+  .tasks li a:hover{background:var(--w03);border-color:var(--w06);color:var(--w90);}
+  .tasks li a .arrow{color:var(--w40);font-family:var(--mono);}
+
+  /* faux checklist / metric strip placeholders below the rail */
+  .placeholder{border:1px dashed var(--w12);border-radius:8px;padding:1rem;color:var(--w40);
+    font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;text-align:center;}
+
+  /* help drawer (D4 in drawer) */
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .18s;z-index:40;}
+  .backdrop.on{opacity:1;pointer-events:auto;}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,100%);background:#0a0e16;
+    border-left:1px solid var(--panel-border);transform:translateX(100%);transition:transform .2s ease;z-index:50;
+    display:flex;flex-direction:column;}
+  .drawer.on{transform:translateX(0);}
+  .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.15rem;border-bottom:1px solid var(--w06);}
+  .drawer-head h2{font-size:.95rem;margin:0;font-weight:700;}
+  .drawer-x{background:transparent;border:0;color:var(--w55);font-size:1.1rem;cursor:pointer;}
+  .drawer-body{padding:1.15rem;overflow:auto;}
+  .drawer-shortcuts{border:1px solid var(--lime-dim);background:var(--lime-bg);border-radius:8px;padding:.85rem;margin-bottom:1.1rem;}
+  .drawer-shortcuts .h{font-family:var(--mono);font-size:.66rem;color:var(--lime);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.5rem;}
+  .drawer-section h3{font-size:.85rem;margin:0 0 .4rem;}
+  .drawer-section p{font-size:.78rem;color:var(--w70);margin:0 0 .6rem;}
+  .drawer-foot{margin-top:.5rem;}
+  .drawer-foot a{color:var(--plus);font-size:.74rem;text-decoration:none;font-family:var(--mono);}
+
+  /* section blocks */
+  section.block{margin-top:2.5rem;}
+  section.block > h2{font-size:.95rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--lime);
+    border-bottom:1px solid var(--w06);padding-bottom:.5rem;margin-bottom:1rem;}
+  .note{font-size:.76rem;color:var(--w55);margin:.25rem 0 1rem;max-width:75ch;}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+  @media(max-width:760px){.twocol{grid-template-columns:1fr;}}
+
+  /* wizard mock */
+  .wiz{border:1px solid var(--panel-border);border-radius:10px;background:#080b12;overflow:hidden;}
+  .wiz-chrome{padding:.7rem 1rem;border-bottom:1px solid var(--w06);font-family:var(--mono);font-size:.62rem;
+    color:var(--lime);text-transform:uppercase;letter-spacing:.08em;display:flex;justify-content:space-between;}
+  .wiz-bar{height:3px;background:var(--w06);border-radius:2px;margin-top:.5rem;overflow:hidden;}
+  .wiz-bar i{display:block;height:100%;background:var(--lime);}
+  .wiz-body{padding:1.15rem;}
+  .wiz-h{font-size:1rem;font-weight:700;margin:0 0 .2rem;}
+  .wiz-sub{font-size:.76rem;color:var(--w55);margin:0 0 1rem;}
+  .firsttime{border:1px solid var(--panel-border);background:var(--panel-bg);border-radius:7px;padding:.85rem .95rem;margin-bottom:1.1rem;}
+  .firsttime .h{font-family:var(--mono);font-size:.64rem;color:var(--lime);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.5rem;}
+  .firsttime ul{margin:0;padding-left:1.05rem;display:flex;flex-direction:column;gap:.35rem;}
+  .firsttime li{font-size:.78rem;color:var(--w70);}
+  .field-label{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--w55);margin-bottom:.3rem;}
+  .fake-input{border:1px solid var(--w12);border-radius:6px;background:var(--w03);padding:.55rem .65rem;color:var(--w40);font-size:.8rem;margin-bottom:.9rem;}
+  .review-rows{border:1px solid var(--w06);border-radius:7px;overflow:hidden;margin-bottom:1rem;}
+  .review-rows .r{display:flex;justify-content:space-between;padding:.5rem .8rem;border-bottom:1px solid var(--w06);font-size:.76rem;}
+  .review-rows .r:last-child{border-bottom:0;}
+  .review-rows .r .k{color:var(--w55);font-family:var(--mono);font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;}
+  .nextsteps{border:1px solid var(--plus-border);background:var(--plus-bg);border-radius:7px;padding:.85rem .95rem;}
+  .nextsteps .h{font-family:var(--mono);font-size:.64rem;color:var(--plus);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.45rem;}
+  .nextsteps p{margin:0;font-size:.79rem;color:var(--w70);}
+
+  /* persona panel (5b preview) */
+  .preview-tag{display:inline-block;font-family:var(--mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--warning);border:1px solid var(--warning-border);background:var(--warning-bg);padding:.12rem .45rem;border-radius:4px;margin-left:.5rem;}
+  .persona{border:1px solid var(--panel-border);border-radius:9px;overflow:hidden;}
+  .persona-head{display:flex;justify-content:space-between;align-items:center;padding:.8rem 1rem;border-bottom:1px solid var(--w06);font-weight:700;font-size:.85rem;}
+  .persona-cols{display:grid;grid-template-columns:1fr 1fr 1fr;}
+  @media(max-width:760px){.persona-cols{grid-template-columns:1fr;}}
+  .persona-col{padding:.9rem 1rem;border-right:1px solid var(--w06);}
+  .persona-col:last-child{border-right:0;}
+  .persona-col h4{margin:0 0 .4rem;font-size:.74rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--lime);}
+  .persona-col p{margin:0 0 .5rem;font-size:.75rem;color:var(--w70);}
+  .persona-col .when{font-size:.66rem;color:var(--w40);font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;}
+  .persona-col a{display:inline-block;margin-top:.45rem;color:var(--plus);font-size:.72rem;text-decoration:none;font-family:var(--mono);}
+  .persona-foot{padding:.7rem 1rem;border-top:1px solid var(--w06);font-size:.72rem;color:var(--w55);}
+
+  .anno{font-size:.72rem;color:var(--w40);font-style:italic;margin:.5rem 0 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Phase 5a — Discovery &amp; Orientation <span class="badge free">clickable mockup</span></h1>
+  <p class="sub">Layer 3 of the help model. The "what's next" guidance rail, dismissible "Did you know?" nudges, and outcome-worded "I want to…" shortcuts — shown on the single tournament dashboard, across every lifecycle stage. Switch stage &amp; plan to see how it adapts. The wizard additions (D5) and the Phase 5b persona panel (D3) follow below.</p>
+  <p class="legend">Anti-overwhelm rules in force: one action + one nudge per stage · dismissible &amp; never reappears · invisible orientation for returning users · pull always available via the "?" drawer.</p>
+
+  <div class="controls">
+    <div class="ctl-group">
+      <span class="ctl-label">Lifecycle stage</span>
+      <div class="seg" id="stageSeg">
+        <button data-stage="draft" class="on">Draft</button>
+        <button data-stage="pre">Pre-Event</button>
+        <button data-stage="live">Game Day</button>
+        <button data-stage="post">Post-Event</button>
+        <button data-stage="done">Completed</button>
+      </div>
+    </div>
+    <div class="ctl-group">
+      <span class="ctl-label">Org plan</span>
+      <div class="seg plan" id="planSeg">
+        <button data-plan="free" class="on">Tournament (free)</button>
+        <button data-plan="plus">Tournament Plus</button>
+      </div>
+    </div>
+    <button class="reset" id="resetBtn">Reset dismissals</button>
+  </div>
+
+  <!-- faux dashboard -->
+  <div class="frame">
+    <div class="frame-head">
+      <div class="frame-title">
+        <span class="tname">Spring Classic 2026</span>
+        <span class="pill" id="statusPill">DRAFT</span>
+      </div>
+      <div class="hbtns">
+        <button class="ghostbtn" id="helpBtn">? Help</button>
+      </div>
+    </div>
+    <div class="frame-body">
+      <div id="railHost"></div>
+      <div class="placeholder" id="belowRail">↓ launch checklist / metric strip / live board renders here (existing dashboard) ↓</div>
+    </div>
+  </div>
+  <p class="anno">The rail is pinned at the top of the dashboard body, above the existing checklist (draft) / metric strip (active) / live board (game day) / wrap-up card (completed). It reuses the existing banner visual language; it is never a modal.</p>
+
+  <!-- D5 wizard -->
+  <section class="block">
+    <h2>D5 · Setup Wizard additions <span class="badge free">static — first run only</span></h2>
+    <p class="note">Two lightweight, non-blocking copy additions to the existing 5-step wizard. Neither adds a step. The first-time blurb appears <strong>only</strong> for an organizer creating their very first tournament; the "what happens next" callout appears on the Review step every time.</p>
+    <div class="twocol">
+      <div>
+        <div class="wiz">
+          <div class="wiz-chrome"><span>Step 1/5 · Create</span><span>Setup Wizard</span></div>
+          <div style="padding:0 1rem;"><div class="wiz-bar"><i style="width:20%"></i></div></div>
+          <div class="wiz-body">
+            <div class="wiz-h">Create your tournament</div>
+            <div class="wiz-sub">Start with core tournament details. The tournament stays private as a draft.</div>
+            <div class="firsttime">
+              <div class="h">💡 New here? Here's what you're building</div>
+              <ul>
+                <li>A public tournament page teams can find and register on.</li>
+                <li>Your schedule, standings, and results go live for coaches and parents on game day.</li>
+                <li>Nothing is visible to anyone until you choose to activate — you're always in control.</li>
+              </ul>
+            </div>
+            <div class="field-label">Tournament name</div>
+            <div class="fake-input">Spring Classic 2026</div>
+            <div class="field-label">Dates</div>
+            <div class="fake-input">May 16 – May 17, 2026</div>
+          </div>
+        </div>
+        <p class="anno">First-time blurb sits above the name field. Returning organizers never see it.</p>
+      </div>
+      <div>
+        <div class="wiz">
+          <div class="wiz-chrome"><span>Step 5/5 · Review</span><span>Setup Wizard</span></div>
+          <div style="padding:0 1rem;"><div class="wiz-bar"><i style="width:100%"></i></div></div>
+          <div class="wiz-body">
+            <div class="wiz-h">Review and save</div>
+            <div class="wiz-sub">Saving keeps the tournament hidden from the public. You can activate it later.</div>
+            <div class="review-rows">
+              <div class="r"><span class="k">Tournament</span><span>Spring Classic 2026</span></div>
+              <div class="r"><span class="k">Divisions</span><span>U11, U13</span></div>
+              <div class="r"><span class="k">Venues</span><span>1 added</span></div>
+              <div class="r"><span class="k">Visibility</span><span>Private draft</span></div>
+            </div>
+            <div class="nextsteps">
+              <div class="h">What happens after you save</div>
+              <p>You'll finish a short launch checklist on your dashboard, preview exactly what teams will see, and activate when you're ready. Only admins can work on it until then — registration stays closed and the public page is not live until you activate.</p>
+            </div>
+          </div>
+        </div>
+        <p class="anno">Replaces today's plain reassurance box: keeps the "nothing public until you activate" promise and adds the forward path.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5b persona preview -->
+  <section class="block">
+    <h2>D3 · "What everyone else sees" persona panel <span class="preview-tag">Phase 5b — preview only, not in 5a</span></h2>
+    <p class="note">Shown here so you can see the full vision. Recommended as a fast-follow (5b) once the 5a rail is verified — it needs viewport validation and ideally cross-device dismiss. Collapsed by default after first view; auto-opens once on a first-time draft dashboard.</p>
+    <div class="persona">
+      <div class="persona-head"><span>What everyone else sees</span><span style="color:var(--w40);">▲</span></div>
+      <div class="persona-cols">
+        <div class="persona-col">
+          <h4>Parents &amp; Fans</h4>
+          <p>Public site with schedule, results, standings, and news. Plus: a fan app with live score alerts.</p>
+          <span class="when">From activation</span><br/>
+          <a href="#">Preview site →</a>
+        </div>
+        <div class="persona-col">
+          <h4>Coaches &amp; Teams</h4>
+          <p>Registration form and public schedule. No admin access.</p>
+          <span class="when">From activation</span><br/>
+          <a href="#">Preview registration →</a>
+        </div>
+        <div class="persona-col">
+          <h4>Scorekeepers &amp; Volunteers</h4>
+          <p>Phone-friendly scoring view — today's games only, no admin access. Gate volunteers run check-in from a separate board.</p>
+          <span class="when">When you hand off access</span><br/>
+          <a href="#">See Staff Kit →</a>
+        </div>
+      </div>
+      <div class="persona-foot">This is the journey your tournament creates for everyone involved. <a href="#" style="color:var(--plus);text-decoration:none;">Learn more in the guide →</a></div>
+    </div>
+  </section>
+</div>
+
+<!-- drawer -->
+<div class="backdrop" id="backdrop"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" role="dialog" aria-label="Help">
+  <div class="drawer-head"><h2 id="drawerTitle">Help</h2><button class="drawer-x" id="drawerX">✕</button></div>
+  <div class="drawer-body">
+    <div class="drawer-shortcuts">
+      <div class="h">I want to…</div>
+      <div class="tasks open" style="margin:0;"><ul id="drawerTasks"></ul></div>
+    </div>
+    <div class="drawer-section">
+      <h3 id="drawerSecH">Section</h3>
+      <p id="drawerSecBody">The relevant guide section renders here, exactly as it does today on the work pages.</p>
+      <div class="drawer-foot"><a id="drawerGuide" href="#" target="_blank">Open the full guide ↗</a></div>
+    </div>
+  </div>
+</aside>
+
+<script>
+/* ---- grounded content model, keyed by stage; plan-conditional fields where gating differs ---- */
+var CONTENT = {
+  draft: {
+    pill:"DRAFT", sublabel:"",
+    head:"Let's get your tournament ready to launch",
+    ctx:"Two things are required before you can go live: your dates and at least one division. Finish those and you can preview and activate.",
+    cta:"Finish your launch checklist →",
+    progress:"1 of 2 required items done",
+    below:"↓ launch checklist (dates · divisions) renders here ↓",
+    nudge:{ plan:"any", dyk:"Did you know?",
+      body:"You can preview your public page before you go live — see exactly what teams will see, with no risk of anything going public.",
+      show:"Preview site" },
+    tasks:[
+      ["Preview what teams will see","public-site-preview","any"],
+      ["Set up divisions and pool play","divisions-and-pools","any"],
+      ["Import a team list from a spreadsheet","data-tools-imports","plus"],
+      ["Understand what activating does","settings-and-access","any"],
+      ["Customize my public page branding","settings-and-access","any"]
+    ]
+  },
+  pre: {
+    pill:"ACTIVE", sublabel:"PRE-EVENT",
+    head:"Your event is 4 days away",
+    ctx:"Teams are registered and your schedule is set. Next, make sure game-day operations are covered.",
+    cta:"Set up volunteer access →",
+    progress:"",
+    below:"↓ metric strip (Teams · Scheduled · Days Away) + panels render here ↓",
+    nudge:{ plan:"any", dyk:"Did you know?",
+      body:"You can hand scorekeeping to a volunteer — they get a phone-friendly scoring view and can't see registration, payments, or any other part of your admin. Generate their access link in Staff Kit in under a minute.",
+      show:"Open Staff Kit" },
+    tasks:[
+      ["Get my schedule onto the public site","recipe-build-tournament-schedule","any"],
+      ["Set up a playoff bracket","schedule-playoffs","any"],
+      ["Hand scorekeeping to a volunteer","scores-and-results","any"],
+      ["Send an announcement to all teams","public-communication","any"],
+      ["Run game-day check-in at the gate","scores-and-results","any"]
+    ]
+  },
+  live: {
+    pill:"ACTIVE", sublabel:"LIVE",
+    head:"It's game day — here's your live view",
+    ctx:"Scores update on the public site the moment they're entered. Keep an eye on any games waiting in review.",
+    cta:"Open the live game board →",
+    progress:"",
+    below:"↓ Now Playing · Games Progress · Check-in · Standings board renders here ↓",
+    nudge:{ plan:"free", dyk:"Did you know?",
+      body:"Pool play almost done? Build your playoff bracket by hand from the Schedule page — drag teams straight in, no need to redraw it on paper.",
+      show:"Go to Schedule",
+      plusBody:"Pool play almost done? Auto-generate your playoff bracket from pool results in one step from the Schedule page.",
+      plusShow:"Open Playoff Wizard" },
+    tasks:[
+      ["Enter or fix a score","scores-and-results","any"],
+      ["Build my playoff bracket","schedule-playoffs","any"],
+      ["See live standings","scores-and-results","any"],
+      ["Check who's checked in","scores-and-results","any"]
+    ]
+  },
+  post: {
+    pill:"ACTIVE", sublabel:"EVENT ENDED",
+    head:"Your event has wrapped up",
+    ctx:"All games are done. When you're ready, mark the tournament complete to lock in your final results.",
+    cta:"Mark tournament complete →",
+    progress:"",
+    below:"↓ post-event panels + 'mark complete' prompt render here ↓",
+    nudge:{ plan:"free", dyk:"Did you know?",
+      body:"Your public results and standings stay live at the same link forever — share it with teams and families.",
+      show:"View public results",
+      plusBody:"Completing your tournament unlocks an event summary and lets you reuse this whole setup next year.",
+      plusShow:"What's next" },
+    tasks:[
+      ["Confirm all scores are final","scores-and-results","any"],
+      ["Mark the tournament complete","recipe-closeout-tournament","any"],
+      ["Export final results","exports","plus"],
+      ["Share the public results link","public-site-preview","any"]
+    ]
+  },
+  done: {
+    pill:"COMPLETED", sublabel:"",
+    head:"Tournament complete — nice work 🏆",
+    ctx:"Your results are public and permanent. Here's how to wrap up and get a head start on next time.",
+    cta:"View final results →",
+    ctaPlus:"View your event summary →",
+    progress:"",
+    below:"↓ wrap-up card (champions · summary) renders here ↓",
+    nudge:{ plan:"free", dyk:"Tip",
+      body:"Upgrade to Tournament Plus to reuse this entire setup next year in one step and unlock a post-event summary.",
+      show:"See Tournament Plus",
+      plusBody:"Reuse this entire setup — divisions, venues, rules — to start next year in one step.",
+      plusShow:"Reuse this setup", plusDyk:"Did you know?" },
+    tasks:[
+      ["View final results","scores-and-results","any"],
+      ["Reuse this setup for next year","repeat-event-setup","plus"],
+      ["Export results & schedule","exports","plus"],
+      ["Archive this tournament","recipe-closeout-tournament","any"]
+    ]
+  }
+};
+
+var state = { stage:"draft", plan:"free" };
+var ORG="milton-bats", TID="t-demo";
+function dismissKey(stage){ return "fl-discovery-nudge-"+stage+"-"+TID; }
+
+function render(){
+  var c = CONTENT[state.stage];
+  document.getElementById("statusPill").innerHTML = c.pill + (c.sublabel? ' · <span class="sublabel">'+c.sublabel+'</span>' : '');
+  document.getElementById("belowRail").textContent = c.below;
+
+  var isLive = state.stage==="live";
+  var cta = (state.plan==="plus" && c.ctaPlus) ? c.ctaPlus : c.cta;
+  var html = '<div class="rail'+(isLive?' live':'')+'">';
+  html += '<div class="rail-head"><svg class="rail-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2.5 2.5"/></svg>';
+  html += '<div style="flex:1"><div class="rail-h">'+c.head+'</div><p class="rail-ctx">'+c.ctx+'</p>';
+  html += '<button class="rail-cta">'+cta+'</button>';
+  if(c.progress) html += '<div class="progress">'+c.progress+'</div>';
+
+  // nudge (D2) — respects plan + dismissal
+  var n = c.nudge;
+  var planMatch = (n.plan==="any") || (n.plan==="free"); // base always available; plus variant swaps text
+  var dismissed = localStorage.getItem(dismissKey(state.stage))==="1";
+  if(planMatch && !dismissed){
+    var usePlus = (state.plan==="plus");
+    var dyk = usePlus && n.plusDyk ? n.plusDyk : n.dyk;
+    var body = usePlus && n.plusBody ? n.plusBody : n.body;
+    var show = usePlus && n.plusShow ? n.plusShow : n.show;
+    html += '<div class="nudge'+(usePlus && n.plusBody?' plus':'')+'"><span class="dyk">💡 '+dyk+'</span><div class="nudge-body">'+body+
+      '<div class="nudge-actions"><button class="nudge-show">'+show+' →</button><button class="nudge-dismiss" data-dismiss="'+state.stage+'">Dismiss ✕</button></div></div></div>';
+  }
+
+  // common tasks reveal (D4)
+  html += '<button class="tasks-toggle" id="tasksToggle">See common tasks ▾</button>';
+  html += '<div class="tasks" id="tasksList"><ul>';
+  c.tasks.forEach(function(t){
+    var gated = (t[2]==="plus" && state.plan==="free");
+    html += '<li><a href="#">'+t[0]+(gated?' <span class="badge plus" style="margin-left:auto">Plus</span>':'')+(gated?'':' <span class="arrow" style="margin-left:auto">→</span>')+'</a></li>';
+  });
+  html += '</ul></div>';
+  html += '</div></div>';
+  document.getElementById("railHost").innerHTML = html;
+
+  // wire nudge dismiss
+  var dz = document.querySelector(".nudge-dismiss");
+  if(dz) dz.onclick = function(){ localStorage.setItem(dismissKey(state.stage),"1"); render(); };
+  // wire tasks toggle
+  var tt = document.getElementById("tasksToggle");
+  tt.onclick = function(){ document.getElementById("tasksList").classList.toggle("open"); tt.textContent = document.getElementById("tasksList").classList.contains("open")?"Hide common tasks ▴":"See common tasks ▾"; };
+}
+
+/* stage / plan toggles */
+document.getElementById("stageSeg").addEventListener("click",function(e){
+  if(e.target.tagName!=="BUTTON") return;
+  [].forEach.call(this.querySelectorAll("button"),function(b){b.classList.remove("on");});
+  e.target.classList.add("on"); state.stage=e.target.dataset.stage; render();
+});
+document.getElementById("planSeg").addEventListener("click",function(e){
+  if(e.target.tagName!=="BUTTON") return;
+  [].forEach.call(this.querySelectorAll("button"),function(b){b.classList.remove("on");});
+  e.target.classList.add("on"); state.plan=e.target.dataset.plan; render();
+});
+document.getElementById("resetBtn").onclick=function(){
+  Object.keys(CONTENT).forEach(function(s){localStorage.removeItem(dismissKey(s));}); render();
+};
+
+/* drawer (D4 in drawer) */
+var drawer=document.getElementById("drawer"), backdrop=document.getElementById("backdrop");
+function openDrawer(){
+  var c=CONTENT[state.stage];
+  document.getElementById("drawerTitle").textContent="Help — "+(c.sublabel||c.pill);
+  var ul=document.getElementById("drawerTasks"); ul.innerHTML="";
+  c.tasks.forEach(function(t){
+    var gated=(t[2]==="plus"&&state.plan==="free");
+    var li=document.createElement("li");
+    li.innerHTML='<a href="#">'+t[0]+(gated?' <span class="badge plus" style="margin-left:auto">Plus</span>':' <span class="arrow" style="margin-left:auto">→</span>')+'</a>';
+    ul.appendChild(li);
+  });
+  document.getElementById("drawerSecH").textContent="On this page";
+  document.getElementById("drawerSecBody").textContent="The relevant guide section for the page you're on renders here (this already ships in Phase 2). The shortcut list above is the new Phase 5a addition — the same lifecycle-filtered tasks as the rail.";
+  document.getElementById("drawerGuide").href="/"+ORG+"/admin/help/tournaments#getting-started";
+  drawer.classList.add("on"); backdrop.classList.add("on"); drawer.setAttribute("aria-hidden","false");
+}
+function closeDrawer(){ drawer.classList.remove("on"); backdrop.classList.remove("on"); drawer.setAttribute("aria-hidden","true"); }
+document.getElementById("helpBtn").onclick=openDrawer;
+document.getElementById("drawerX").onclick=closeDrawer;
+backdrop.onclick=closeDrawer;
+document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeDrawer(); });
+
+render();
+</script>
+</body>
+</html>

@@ -674,6 +674,8 @@ No content is duplicated across layers. Layer 3 surfaces give just enough to mot
 
 ### H. Updated Phase Plan Slot
 
+> **Build-ready detail: [HELP_PHASE5_DISCOVERY_PLAN.md](HELP_PHASE5_DISCOVERY_PLAN.md) + [HELP_PHASE5_DISCOVERY_PM_BRIEF.md](HELP_PHASE5_DISCOVERY_PM_BRIEF.md)** (2026-06-19). Clickable mockup: [help-phase5a-discovery-prototype.html](help-phase5a-discovery-prototype.html). A 5-agent grounding pass corrected several assumptions below — most importantly there is **one** dashboard (no standalone surface), **Staff Kit + check-in + manual bracket building are FREE** (only the auto Playoff Wizard, data import, fan score alerts, post-event summary, and clone/reuse are Tournament Plus), the launch checklist gates on **two** required items, and tip-dismissal must reuse the real `HelpCallout` localStorage convention (`flhq-help-dismissed-{slug}-{tournamentId}`), not the `guidance_nudge_*` keys named below. See §0 of the dedicated plan for the full corrections table.
+
 The existing plan has a thin "Phase 5 — Setup Checklist" slot. This should be expanded and renamed as follows:
 
 **Recommended: rename Phase 5 to "Phase 5 — Discovery & Orientation" and split delivery across two drops.**
@@ -898,7 +900,7 @@ Every phase's UX plan **opens with a visual** before any code is written, so the
 |---|---|---|
 | **1 — Help center usable** | ✅ **Done** (clickable) | Single-scroll guide + sub-groups + adaptive sticky map (`help-layout-prototype.html`); a simplified-hub sketch |
 | **2 — In-context help** | ✅ **Done** (clickable) | [help-phase2-incontext-prototype.html](help-phase2-incontext-prototype.html) — the "?" slide-over drawer on a real work page; an always-visible field-hint; the fixed (touch/keyboard) tooltip; heads-up warnings |
-| **3 — Discovery (rail + nudges + shortcuts)** | ✅ Yes (clickable) | The dashboard "what's next" rail across stages, a dismissible "Did you know?" nudge, the "I want to…" shortcut list |
+| **3 — Discovery (rail + nudges + shortcuts)** | ✅ **Done** (clickable) | [help-phase5a-discovery-prototype.html](help-phase5a-discovery-prototype.html) — the dashboard "what's next" rail across all stages (stage + plan switcher), a dismissible "Did you know?" nudge, the "I want to…" shortcut list (rail + drawer), the D5 wizard additions, and a labeled D3 (5b) preview. Build-ready detail: [HELP_PHASE5_DISCOVERY_PLAN.md](HELP_PHASE5_DISCOVERY_PLAN.md) + [PM brief](HELP_PHASE5_DISCOVERY_PM_BRIEF.md) |
 | **4 — Persona panel + a11y/polish** | ◑ Partial | Clickable mock of the "what everyone else sees" persona panel; the a11y/token cleanup needs no mockup |
 | **5 — Guided tours (optional)** | ✅ Yes (clickable) | A coachmark step over a real screen (the §14 experience) |
 
