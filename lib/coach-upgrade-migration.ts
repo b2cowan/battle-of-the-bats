@@ -166,41 +166,54 @@ export async function migrateBasicTeamIntoWorkspace(params: {
   const defaultDueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   try {
     const fees = await getBasicCoachTeamFees(params.basicCoachTeamId);
+    // Premium allows exactly ONE dues schedule per player per season (UNIQUE program_year_id+player_id),
+    // so GROUP each player's fees into one schedule with one installment per fee. $0 fees and fees with
+    // no/unmapped player are surfaced (counted), not migrated.
+    const feesByPlayer = new Map<string, typeof fees>();
     for (const fee of fees) {
+      if (fee.amount <= 0) { summary.fees.skippedZero++; continue; }
+      const newPlayerId = fee.playerId ? playerIdMap.get(fee.playerId) : undefined;
+      if (!newPlayerId) { summary.fees.skippedNoPlayer++; continue; }
+      const list = feesByPlayer.get(newPlayerId) ?? [];
+      list.push(fee);
+      feesByPlayer.set(newPlayerId, list);
+    }
+    for (const [newPlayerId, playerFees] of feesByPlayer) {
       try {
-        if (fee.amount <= 0) { summary.fees.skippedZero++; continue; }
-        const newPlayerId = fee.playerId ? playerIdMap.get(fee.playerId) : undefined;
-        if (!newPlayerId) { summary.fees.skippedNoPlayer++; continue; }
-
+        const total = playerFees.reduce((sum, f) => sum + f.amount, 0);
         const schedule = await createRepPlayerDuesSchedule({
           programYearId: params.programYearId,
           playerId: newPlayerId,
           teamId: params.teamId,
           orgId: params.orgId,
-          totalAmount: fee.amount,
-          notes: fee.label + (fee.notes ? ` — ${fee.notes}` : ''),
+          totalAmount: total,
+          notes: playerFees.map(f => f.label).join(', '),
         });
         const installments = await replaceRepDuesInstallments(
           schedule.id,
           newPlayerId,
-          [{ installmentNumber: 1, amount: fee.amount, dueDate: defaultDueDate }],
+          playerFees.map((f, i) => ({ installmentNumber: i + 1, amount: f.amount, dueDate: defaultDueDate })),
           params.orgId,
           params.teamId,
         );
-        summary.fees.migrated++;
-        summary.fees.dueDateDefaulted++;
-        // Preserve paid state: stamp the installment paid_at from the free ledger.
-        if (fee.status === 'paid' && installments[0]) {
+        summary.fees.migrated += playerFees.length;
+        summary.fees.dueDateDefaulted += playerFees.length;
+        // Preserve paid state per fee: stamp the matching installment's paid_at from the free ledger.
+        for (let i = 0; i < playerFees.length; i++) {
+          const fee = playerFees[i];
+          if (fee.status !== 'paid') continue;
+          const inst = installments.find(x => x.installmentNumber === i + 1);
+          if (!inst) continue;
           const paidAt = fee.markedPaidAt ?? new Date().toISOString();
           const { error } = await supabaseAdmin
             .from('rep_player_dues_installments')
             .update({ paid_at: paidAt })
-            .eq('id', installments[0].id);
+            .eq('id', inst.id);
           if (!error) summary.fees.markedPaid++;
         }
       } catch (e) {
-        summary.fees.failed++;
-        console.error('[coach-upgrade-migration] fee failed:', e);
+        summary.fees.failed += playerFees.length;
+        console.error('[coach-upgrade-migration] fee group failed:', e);
       }
     }
   } catch (e) {
