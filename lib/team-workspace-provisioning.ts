@@ -10,6 +10,7 @@ import { writePlatformAuditLog } from './platform-audit';
 import { writePlatformEvent, type PlatformEventInput } from './platform-events';
 import { supabaseAdmin } from './supabase-admin';
 import { findBasicCoachTeamIdForTournamentRegistration } from './basic-coach-teams';
+import { migrateBasicTeamIntoWorkspace } from './coach-upgrade-migration';
 import { DEFAULT_SPORT } from './sports';
 import type {
   AccountingLedger,
@@ -299,11 +300,19 @@ export async function provisionStandaloneTeamWorkspace(
       .single();
     if (workspaceError) throw workspaceError;
 
+    // Back-link the free team to its new paid workspace — as an ATOMIC, race-safe claim. The
+    // `WHERE team_workspace_id IS NULL` makes exactly one provisioner win even if both Stripe events
+    // (or a re-upgrade) race; the winner gets a returned row and owns the one-time data migration.
+    let migrationClaimed = false;
     if (basicCoachTeamId) {
-      await supabaseAdmin
+      const { data: claimed, error: claimError } = await supabaseAdmin
         .from('basic_coach_teams')
         .update({ team_workspace_id: workspace.id, updated_at: new Date().toISOString() })
-        .eq('id', basicCoachTeamId);
+        .eq('id', basicCoachTeamId)
+        .is('team_workspace_id', null)
+        .select('id');
+      if (claimError) throw claimError;
+      migrationClaimed = (claimed?.length ?? 0) > 0;
     }
 
     const { data: entitlement, error: entitlementError } = await supabaseAdmin
@@ -358,6 +367,28 @@ export async function provisionStandaloneTeamWorkspace(
     }
 
     createdOrgId = null;
+
+    // Free→Premium data migration (Phase 4) — runs ONLY for the provisioner that won the atomic
+    // claim above (so exactly once per upgraded team), and only AFTER provisioning is committed +
+    // rollback is disarmed. Best-effort + per-entity resilient + never throws out of this path: a
+    // migration hiccup must never fail the payment/provision. The honest "check these" summary is
+    // stored on the workspace for the Premium portal to surface on first load.
+    if (migrationClaimed && basicCoachTeamId) {
+      try {
+        const migrationSummary = await migrateBasicTeamIntoWorkspace({
+          basicCoachTeamId,
+          orgId: provisionedOrg.id,
+          teamId: team.id,
+          programYearId: programYear.id,
+        });
+        await supabaseAdmin
+          .from('team_workspaces')
+          .update({ migration_summary: migrationSummary })
+          .eq('id', workspace.id);
+      } catch (err) {
+        console.error('[provisionStandaloneTeamWorkspace] free→premium data migration failed (non-fatal, workspace still provisioned):', err);
+      }
+    }
 
     return {
       org: provisionedOrg,

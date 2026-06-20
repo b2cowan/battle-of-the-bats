@@ -1512,6 +1512,9 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 <!-- dict:col:team_workspaces.basic_coach_team_id -->
 **`basic_coach_team_id`** (FK → `basic_coach_teams.id`, nullable) — the **reverse free→paid bridge** (kept in sync with `basic_coach_teams.team_workspace_id`).
 
+<!-- dict:col:team_workspaces.migration_summary -->
+**`migration_summary`** (jsonb, nullable; mig 140) — the free→Premium upgrade data-migration result (Coach Premium Upgrade Phase 4): counts brought over + "check these" flags (players needing a guardian email, uncertain name splits, defaulted fee due dates, skipped $0/orphan fees, per-pass failures) + `ok`. Written once by `provisionStandaloneTeamWorkspace` (the provisioner that won the atomic `basic_coach_teams.team_workspace_id` claim) via `lib/coach-upgrade-migration.ts`. The Premium team overview reads it on first load to show a dismissible banner; dismissing stamps `acknowledgedAt` into the JSON. NULL = not an upgrade-with-migration.
+
 ### `team_org_links`
 <!-- dict:table:team_org_links -->
 

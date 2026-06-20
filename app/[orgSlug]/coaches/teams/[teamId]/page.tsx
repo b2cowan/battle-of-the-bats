@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { Archive, Calendar, CheckCircle2, Circle, DollarSign, FileText, Link2, Megaphone, Trophy, Users } from 'lucide-react';
+import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
 import styles from '../../coaches.module.css';
 import type { RepRosterPlayer, RepTeamEvent } from '@/lib/types';
 
@@ -246,6 +247,7 @@ export default function TeamOverviewPage({
 
   return (
     <div className={styles.page}>
+      <UpgradeSummaryBanner orgSlug={orgSlug} teamId={teamId} />
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div>

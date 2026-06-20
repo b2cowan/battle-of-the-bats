@@ -11043,6 +11043,15 @@
     "ordinal_position": 19
   },
   {
+    "table_name": "team_workspaces",
+    "column_name": "migration_summary",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 20
+  },
+  {
     "table_name": "teams",
     "column_name": "id",
     "data_type": "uuid",

@@ -11045,6 +11045,15 @@
         "column_default": null
       },
       {
+        "table_name": "team_workspaces",
+        "pos": 20,
+        "column_name": "migration_summary",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "teams",
         "pos": 1,
         "column_name": "id",

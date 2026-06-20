@@ -2,12 +2,12 @@
 
 **Generated:** 2026-06-20 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 81 divergence(s)** across dev/prod.
+**⚠️ 82 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 1 | 0 | — |
-| Columns | 14 | 3 | 26 |
+| Columns | 15 | 3 | 26 |
 | Indexes | 6 | 3 | 0 |
 | Constraints | 11 | 9 | — |
 | RLS / CHECK | 7 | 1 | 0 (RLS state) |
@@ -20,7 +20,7 @@
 _none_
 
 ## Columns
-### Only in DEV (14)
+### Only in DEV (15)
 - `rep_team_announcements.body`
 - `rep_team_announcements.created_at`
 - `rep_team_announcements.created_by`
@@ -35,6 +35,7 @@ _none_
 - `rep_team_announcements.subject`
 - `rep_team_announcements.team_id`
 - `rep_team_announcements.updated_at`
+- `team_workspaces.migration_summary`
 
 ### Only in PROD (3)
 - `resources.created_at`
