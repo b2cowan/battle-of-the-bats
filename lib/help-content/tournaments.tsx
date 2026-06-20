@@ -505,9 +505,9 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Schedule & Playoffs',
       subgroup: 'Playoffs',
       heading: 'Build a playoff bracket',
-      summary: 'Manual bracket building for all plans — inline bracket editor and the Playoff Wizard.',
-      keywords: ['schedule', 'playoffs', 'bracket', 'seeds', 'manual bracket', 'bracket builder'],
-      searchText: 'playoff bracket manual build add game bracket view playoff wizard auto generate seeds single elimination consolation double elimination placement crossover reseed',
+      summary: 'Manual bracket building for all plans — inline bracket editor, tiers (Gold/Silver), and the Playoff Wizard.',
+      keywords: ['schedule', 'playoffs', 'bracket', 'seeds', 'manual bracket', 'bracket builder', 'tiers', 'split into tiers', 'gold silver bracket'],
+      searchText: 'playoff bracket manual build add game bracket view playoff wizard auto generate seeds single elimination consolation double elimination placement crossover reseed tiers split into tiers gold silver tier bracket separate brackets overall standings tiered bracket',
       links: [
         { label: 'Schedule', href: '../tournaments/schedule' },
       ],
@@ -516,6 +516,7 @@ const tournamentsHelp: HelpPageContent = {
           <p>Switch to the <strong>Playoffs</strong> stage on the Schedule page to manage bracket games. Free Tournament orgs can add playoff games manually using the inline <strong>bracket editor</strong>; Tournament Plus, League Plus, and Club can also use the <strong>Playoff Wizard</strong> for format-based auto-generation.</p>
           <p>The inline bracket editor is a canvas where you add rounds, set up matchups, and wire Seed/Winner/Loser placeholders. Once pool play is complete and standings are known, the placeholders resolve to the real teams.</p>
           <p><strong>Bracket view</strong> on the Schedule page lets admins inspect playoff paths and advancement after games are created. It is a read-oriented visualization alongside the editable list and timeline.</p>
+          <p><strong>Split a division into tiers.</strong> A large division can be split into two or more tiers — for example a <strong>Gold</strong> bracket for the top seeds and a <strong>Silver</strong> bracket for the rest — so every team keeps playing meaningful games. In the inline bracket editor, click <strong>Split into tiers</strong>, set how many teams go in each tier, and FieldLogicHQ seeds each tier from the division&apos;s overall standings. Building tiers by hand is free on every plan; Tournament Plus, League Plus, and Club can also produce tiers in one click from the Playoff Wizard. Each tier is its own bracket and shows as a separate, titled section in the editor, on the public schedule, in the admin bracket view, and on the printable bracket PDF. Editing a tiered bracket — adding a venue or time, for instance — keeps every tier intact.</p>
           <p>To build a bracket:</p>
           <ol>
             <li>Confirm pool-play or round-robin games are complete and standings reflect final team records.</li>
@@ -543,6 +544,24 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['bracket view', 'playoff paths', 'advancement'],
           answer: (
             <p>Bracket view is a visual display of the playoff tree — rounds, matchups, and team advancement paths. Switch to it from the layout options on the Schedule page when you are in Playoffs stage.</p>
+          ),
+        },
+        {
+          id: 'faq-split-into-tiers',
+          question: 'Can I split a division into tiers (like Gold and Silver)?',
+          answerText: 'Yes. In the inline bracket editor click Split into tiers, then set how many teams go in each tier. FieldLogicHQ seeds each tier from the division’s overall standings and makes each tier its own bracket — shown as a separate, titled section in the editor, on the public schedule, in the admin bracket view, and on the PDF. Building tiers by hand is free on every plan; Tournament Plus can also generate tiers in one click from the Playoff Wizard. Editing a tiered bracket keeps the tiers intact.',
+          keywords: ['tiers', 'split into tiers', 'gold', 'silver', 'tiered bracket', 'separate brackets', 'consolation'],
+          popular: true,
+          answer: (
+            <>
+              <p>Yes. A division can run as two or more tiers so every team keeps playing — for example a Gold bracket for the top seeds and a Silver bracket for the rest.</p>
+              <ul>
+                <li>In the inline bracket editor, click <strong>Split into tiers</strong> and set how many teams go in each tier. Tiers fill from the division&apos;s overall standings, top seeds first.</li>
+                <li>Each tier becomes its own bracket and appears as a separate, titled section in the editor, on the public schedule, in the admin bracket view, and on the printable PDF.</li>
+                <li>Editing a tiered bracket — such as adding a venue or time — keeps every tier intact.</li>
+              </ul>
+              <p>Building tiers by hand is free on every plan. Tournament Plus, League Plus, and Club can also generate tiers in one click from the Playoff Wizard.</p>
+            </>
           ),
         },
       ],
