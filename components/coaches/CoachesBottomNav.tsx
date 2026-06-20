@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutGrid, Calendar, Users, DollarSign, FileText,
   History, MoreHorizontal, X, ChevronRight, LogOut,
-  Link2, HelpCircle,
+  Link2, HelpCircle, Settings,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -16,6 +16,7 @@ const TEAM_MORE = [
   { key: '/accounting', icon: DollarSign, label: 'Accounting' },
   { key: '/documents',  icon: FileText,   label: 'Documents'  },
   { key: '/history',    icon: History,    label: 'History'    },
+  { key: '/settings',   icon: Settings,   label: 'Settings'   },
 ];
 
 export default function CoachesBottomNav() {

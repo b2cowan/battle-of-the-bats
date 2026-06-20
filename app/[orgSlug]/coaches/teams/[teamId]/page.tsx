@@ -3,7 +3,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
-import { Archive, Calendar, CheckCircle2, Circle, DollarSign, FileText, Link2, Megaphone, Trophy, Users } from 'lucide-react';
+import { Archive, Calendar, CheckCircle2, Circle, DollarSign, FileText, Link2, Megaphone, Settings, Trophy, Users } from 'lucide-react';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
 import styles from '../../coaches.module.css';
 import type { RepRosterPlayer, RepTeamEvent } from '@/lib/types';
@@ -43,6 +43,7 @@ const QUICK_LINKS = [
   { label: 'Accounting',   href: '/accounting', icon: DollarSign, desc: 'Budget & dues' },
   { label: 'Documents',    href: '/documents',  icon: FileText,   desc: 'Waivers & forms' },
   { label: 'Past Seasons', href: '/history',    icon: Archive,    desc: 'Completed years' },
+  { label: 'Settings',     href: '/settings',   icon: Settings,   desc: 'Division & seasons' },
 ];
 
 interface SetupStats {
@@ -122,6 +123,7 @@ export default function TeamOverviewPage({
   const [tournamentHistory, setTournamentHistory] = useState<TournamentHistoryEntry[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyError, setHistoryError] = useState('');
+  const [teamDivision, setTeamDivision] = useState<string | null>(null);
 
   const loadSetup = useCallback(async () => {
     setSetupLoading(true);
@@ -183,6 +185,16 @@ export default function TeamOverviewPage({
   useEffect(() => {
     if (!loading) void Promise.resolve().then(loadTournamentHistory);
   }, [loading, loadTournamentHistory]);
+
+  useEffect(() => {
+    if (loading) return;
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(json => { if (!cancelled && json?.team) setTeamDivision(json.team.division ?? null); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [loading, orgSlug, teamId]);
 
   if (loading) return <p className={styles.muted}>Loading...</p>;
 
@@ -256,6 +268,9 @@ export default function TeamOverviewPage({
               <span className={`${styles.badge} ${STATUS_CSS[assignment.programYearStatus] ?? styles.badgeDraft}`}>
                 {STATUS_LABEL[assignment.programYearStatus] ?? assignment.programYearStatus}
               </span>
+              {teamDivision && (
+                <span className={`${styles.badge} ${styles.badgeManual}`}>{teamDivision}</span>
+              )}
             </div>
             <p className={styles.pageSub}>
               {assignment.programYearName} -{' '}
