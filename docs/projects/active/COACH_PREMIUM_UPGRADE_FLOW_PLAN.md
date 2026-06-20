@@ -131,11 +131,19 @@ On provisioning of an upgrade-with-team-id, seeds the new Premium first season f
 
 > **Architecture decision (2026-06-19, owner-confirmed):** keep the free/paid portals as separate models + migrate on upgrade; do NOT unify onto shared tier-gated tables now (the Tournament free/Plus analogy is invalid — no shared org row to flip). Unification kept as a future "account-per-free-coach" option. Enforce **Premium ≥ Free** on every new free feature. Full record + the 9-agent analysis: [COACH_PORTAL_ARCHITECTURE_DECISION.md](COACH_PORTAL_ARCHITECTURE_DECISION.md).
 
-### Phase 5 — Companion: in-portal season & division management — L (separate track)
-Required for the multi-season Premium promise:
-- **"Start next season"** in the coaches portal — roll into a new `rep_program_years` row without org-admin access (today admin-only — a year-end dead-end).
-- **Editable division** in team settings (today set at signup and frozen).
-May split to its own plan when scheduled.
+### Phase 5 — Companion: in-portal season & division management — L (separate track; NOT built)
+Required for the multi-season Premium promise.
+- **"Start next season"** in the coaches portal — a coach rolls their team into a new season themselves, **without org-admin access** (today admin-only — a year-end dead-end for a standalone Premium coach).
+- **Editable division** in team settings (today set at signup and frozen; Phase 1 removed it from signup on the promise it returns here).
+
+**Owner decisions LOCKED (2026-06-19):**
+1. **Roster carries forward** by default on "start next season" (copy the active roster into the new season; coach prunes/adds).
+2. **Optional carry-over toggles** the coach chooses at season-start: (a) a **fee template** and (b) the **previous season's BUDGET — planned/projected buckets only, NOT actual spending** (projections are usually similar year-to-year; the coach adjusts). **Schedule starts fresh** each season; **actual spending / dues payments / paid history do NOT carry.**
+3. **Previous season becomes read-only history** (viewable under Past Seasons), not still-editable.
+
+**Access:** the **coach** (standalone Premium portal owner) performs both — no admin dependency. For org-OWNED/adopted teams, season control sensibly stays with the club admin (scope check at build time).
+
+Should be spun into its own plan + PM brief when scheduled (separable from the now-complete upgrade flow).
 
 ---
 
