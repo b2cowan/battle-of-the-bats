@@ -97,8 +97,9 @@ export default function StaffKitPage() {
       {currentTournament && currentOrg && (
         <>
           <p className={styles.intro}>
-            Hand these to your day-of volunteers — scan the code or copy the link. Each volunteer signs in
-            on the screen they land on, then sees only their job (scoring or the gate).
+            Set your volunteers up before game day. Each volunteer needs a sign-in first — invite them once
+            (see below); then they scan the code or open the link, sign in, and see only their job
+            (scoring or the gate), nothing else in your admin.
           </p>
 
           <div className={styles.grid}>

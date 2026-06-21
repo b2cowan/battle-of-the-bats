@@ -765,6 +765,56 @@
   line-height: 1.45;
 }
 
+/* Discovery & Orientation (help Layer 3) — first-run wizard additions */
+.orientationBlurb {
+  margin: 0 0 0.25rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.025);
+}
+.orientationBlurb p {
+  margin: 0 0 0.55rem;
+  color: var(--logic-lime);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.orientationBlurb ul {
+  margin: 0;
+  padding-left: 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+}
+.orientationBlurb li {
+  color: var(--white-70, rgba(255, 255, 255, 0.7));
+  font-size: 0.79rem;
+  line-height: 1.45;
+}
+
+.nextStepsCallout {
+  margin-top: 0.25rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.025);
+}
+.nextStepsCallout strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--white-90, #f0f0f0);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+.nextStepsCallout p {
+  margin: 0;
+  color: var(--white-60, rgba(255, 255, 255, 0.6));
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
 @media (max-width: 640px) {
   .modalOverlay {
     align-items: flex-start;

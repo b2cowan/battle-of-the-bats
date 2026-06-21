@@ -1,0 +1,186 @@
+/* Discovery & Orientation lifecycle rail — matches the dashboard's
+   reuseSetupPrompt banner language (border-2 / white-03 / logic-lime icon). */
+
+.rail {
+  border: 1px solid var(--border-2);
+  background: var(--white-03);
+  border-radius: 8px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 1.5rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+.railLive {
+  border-color: var(--warning);
+}
+
+.head {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+}
+.icon {
+  color: var(--logic-lime);
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+.railLive .icon {
+  color: var(--warning);
+}
+.body {
+  flex: 1;
+  min-width: 0;
+}
+.headline {
+  font-family: var(--font-data);
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+  letter-spacing: 0.01em;
+}
+.context {
+  font-size: 0.78rem;
+  color: var(--white-50);
+  margin: 0 0 0.75rem;
+  max-width: 62ch;
+  line-height: 1.5;
+}
+.cta {
+  /* uses shared .btn classes; just guarantee it sits on its own line */
+  display: inline-flex;
+}
+.progress {
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  color: var(--white-40);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0.55rem 0 0;
+}
+
+/* ── "Did you know?" nudge ───────────────────────────────────────────── */
+.nudge {
+  margin-top: 0.95rem;
+  padding-top: 0.85rem;
+  border-top: 1px dashed var(--border-2);
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+}
+.nudgeDyk {
+  color: var(--logic-lime);
+  font-weight: 700;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+  margin-top: 0.12rem;
+}
+.railLive .nudgeDyk {
+  color: var(--warning);
+}
+.nudgeBody {
+  flex: 1;
+  min-width: 0;
+}
+.nudgeText {
+  font-size: 0.76rem;
+  color: var(--white-50);
+  margin: 0;
+  line-height: 1.5;
+}
+.nudgeActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.nudgeShow {
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+.nudgeShow:hover {
+  text-decoration: underline;
+}
+.nudgeDismiss {
+  background: none;
+  border: 0;
+  color: var(--white-40);
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0;
+}
+.nudgeDismiss:hover {
+  color: var(--white-60);
+}
+
+/* ── "See common tasks" shortcuts ────────────────────────────────────── */
+.tasks {
+  margin-top: 0.85rem;
+}
+.tasksToggle {
+  background: none;
+  border: 0;
+  color: var(--white-50);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  padding: 0;
+}
+.tasksToggle:hover {
+  color: var(--logic-lime);
+}
+.taskList {
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.taskLink {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--white-60);
+  font-size: 0.8rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.taskLink:hover {
+  background: var(--white-03);
+  border-color: var(--border-2);
+  color: var(--white-80);
+}
+.taskLabel {
+  flex: 1;
+}
+.taskArrow {
+  color: var(--white-40);
+  font-family: var(--font-data);
+}
+.plusTag {
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--logic-lime);
+  border: 1px solid var(--border-2);
+  border-radius: 3px;
+  padding: 0.05rem 0.34rem;
+}

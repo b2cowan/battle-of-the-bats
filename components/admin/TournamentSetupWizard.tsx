@@ -1297,6 +1297,16 @@ export default function TournamentSetupWizard({
       'Start with core tournament details. The tournament stays private as a draft.',
       (
         <>
+          {!hasPastTournaments && (
+            <div className={styles.orientationBlurb}>
+              <p>New here? Here’s what you’re building</p>
+              <ul>
+                <li>A public tournament page teams can find and register on.</li>
+                <li>Your schedule, standings, and results go live for coaches and parents on game day.</li>
+                <li>Nothing is visible to anyone until you choose to activate — you’re always in control.</li>
+              </ul>
+            </div>
+          )}
           <label className={styles.fieldLabel}>
             Tournament name
             <input
@@ -1636,8 +1646,13 @@ export default function TournamentSetupWizard({
         <div className={styles.reviewItem}><span>Venues</span><strong>{venueCount > 0 ? `${venueCount} included` : 'Skipped'}</strong></div>
         <div className={styles.reviewItem}><span>Public contact</span><strong>You (editable in Event Settings)</strong></div>
         <div className={styles.reviewItem}><span>Public visibility</span><strong>Not live yet</strong></div>
-        <div className={styles.emptyModalState}>
-          After saving, only admins can work on this tournament. Registration stays closed and the public page is not live until you activate it.
+        <div className={styles.nextStepsCallout}>
+          <strong>What happens after you save</strong>
+          <p>
+            You’ll finish a short launch checklist on your dashboard, preview exactly what teams will see, and
+            activate when you’re ready. Only admins can work on it until then — registration stays closed and the
+            public page is not live until you activate.
+          </p>
         </div>
       </div>
     ),

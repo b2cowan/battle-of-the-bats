@@ -26,6 +26,8 @@ import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features'
 import type { RegistrationAttentionSummary } from '@/lib/registration-attention';
 import { LiveEventLog } from '@/components/admin/LiveEventLog';
 import HelpTooltip from '@/components/help/HelpTooltip';
+import GuidanceRail from '@/components/admin/tournament/GuidanceRail';
+import { getGuidance, getStageShortcuts, type GuidanceStage } from '@/lib/tournament-guidance';
 import styles from './dashboard.module.css';
 import { copiedSummary } from '@/lib/utils';
 import type { CloneCopiedCounts } from '@/lib/types';
@@ -865,6 +867,31 @@ export default function AdminDashboard() {
   const isPostEventActive = isActive && !isTournamentDay && (daysUntil === null || daysUntil <= 0);
 
   const statusLabel = (isActive && isGameDay) ? 'Live' : isPreEvent ? 'Pre-Event' : isPostEventActive ? 'Event Ended' : isCompleted ? 'Completed' : status.charAt(0).toUpperCase() + status.slice(1);
+
+  // ── Discovery & Orientation rail (help Layer 3) ─────────────────────────────
+  // One stage-aware "what's next" card pinned at the top of each dashboard stage.
+  const guidanceStage: GuidanceStage | null =
+    isDraft ? 'draft'
+    : isCompleted ? 'done'
+    : isActive ? (isGameDay ? 'live' : isPreEvent ? 'pre' : 'post')
+    : null; // archived → no rail
+  const guidanceRail = (guidanceStage && currentOrg?.slug && currentTournament?.id) ? (() => {
+    const ctx = {
+      orgSlug: currentOrg.slug,
+      tournamentSlug: currentTournament.slug,
+      planId: currentOrg.planId,
+      daysUntil,
+      checklist: { hasDates: checklist.hasDates, hasDivisions: checklist.hasDivisions, ready: checklist.ready },
+    };
+    return (
+      <GuidanceRail
+        guidance={getGuidance(guidanceStage, ctx)}
+        shortcuts={getStageShortcuts(guidanceStage, ctx)}
+        tournamentId={currentTournament.id}
+        live={guidanceStage === 'live'}
+      />
+    );
+  })() : null;
 
   // Cards that don't apply to the current tournament phase — suppressed regardless of saved layout
   const contextHidden = new Set<StatCardId>();
@@ -1771,6 +1798,8 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {guidanceRail}
+
           <section className={`${styles.publishChecklist} ${completedCount === checklistItems.length ? styles.checklistReady : ''}`}>
             <div className={styles.checklistHeader}>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -1869,6 +1898,8 @@ export default function AdminDashboard() {
       {/* ── LIVE DASHBOARD (active) ──────────────────────── */}
       {isActive && currentTournament?.id && (
         <>
+          {guidanceRail}
+
           {/* Compact metric strip — absent on game day where the board gives richer context */}
           {!isGameDay && renderMetricStrip()}
 
@@ -1892,6 +1923,8 @@ export default function AdminDashboard() {
       {/* ── COMPLETED DASHBOARD ──────────────────────────── */}
       {isCompleted && currentTournament?.id && (
         <>
+          {guidanceRail}
+
           {/* Wrap-up banner — headline + champion(s) + hand-off (Plus = summary, Free = results) */}
           <div className={styles.wrapUpCard}>
             <div className={styles.wrapUpIcon}><Trophy size={22} /></div>
