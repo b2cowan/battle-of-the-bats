@@ -114,7 +114,9 @@ export function getGuidance(stage: GuidanceStage, ctx: GuidanceContext): Guidanc
         headline: 'You’re ready to launch',
         context:
           'Preview exactly what teams will see, then activate when you’re set. Nothing is public until you activate.',
-        cta: previewHref ? { label: 'Preview what teams will see', href: previewHref } : undefined,
+        cta: previewHref
+          ? { label: 'Preview what teams will see', href: previewHref }
+          : { label: 'Review your settings', href: `${b}/settings/event?section=overview` },
         nudge: {
           id: 'activate-emails',
           body:
@@ -147,13 +149,13 @@ export function getGuidance(stage: GuidanceStage, ctx: GuidanceContext): Guidanc
       return {
         headline: 'It’s game day — here’s your live view',
         context:
-          'Scores update everywhere the moment you enter them. Your one game-day job is clearing any games waiting in your review queue.',
+          'The scores you enter flow straight to your public site and standings as you go, so coaches and families can follow along.',
         cta: { label: 'Enter & review scores', href: `${b}/results` },
         nudge: {
           id: 'live-fan',
           body: hasFanAlerts
-            ? 'Parents and coaches see scores update live on your public site as you enter them — and fans with your app get a push alert the moment their team’s game is final.'
-            : 'Parents and coaches see every score update live on your public site the moment you enter it.',
+            ? 'Parents and coaches can follow every score on your public site as you enter it — and fans with your app get a push alert when their team’s game is final.'
+            : 'Parents and coaches can follow every score on your public site as you enter it.',
           action: publicHref ? { label: 'View your public site', href: publicHref, external: true } : undefined,
         },
       };
@@ -175,7 +177,7 @@ export function getGuidance(stage: GuidanceStage, ctx: GuidanceContext): Guidanc
           : {
               id: 'results-live',
               body:
-                'Your public results and standings stay live at the same link forever — share it with teams and families.',
+                'Your public results and standings stay at the same public link for teams and families to revisit — share it around.',
               action: publicHref ? { label: 'View public results', href: publicHref, external: true } : undefined,
             },
       };

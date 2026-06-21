@@ -1302,7 +1302,7 @@ export default function TournamentSetupWizard({
               <p>New here? Here’s what you’re building</p>
               <ul>
                 <li>A public tournament page teams can find and register on.</li>
-                <li>Your schedule, standings, and results go live for coaches and parents on game day.</li>
+                <li>Your schedule, scores, and standings update live for coaches and parents on game day.</li>
                 <li>Nothing is visible to anyone until you choose to activate — you’re always in control.</li>
               </ul>
             </div>
