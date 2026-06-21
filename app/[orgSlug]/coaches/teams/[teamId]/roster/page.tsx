@@ -1,7 +1,14 @@
 'use client';
 import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Users, ChevronRight, Plus, X } from 'lucide-react';
+import { Users, ChevronRight, Plus, X, GripVertical } from 'lucide-react';
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -76,6 +83,11 @@ export default function RosterPage({
   const [adding, setAdding] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
   const [feedbackMsg, setFeedbackMsg] = useState('');
@@ -132,6 +144,34 @@ export default function RosterPage({
       showFeedback('danger', errorMessage(e, 'Failed to update status.'));
     } finally {
       setTogglingId(null);
+    }
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = players.findIndex(p => p.id === active.id);
+    const newIndex = players.findIndex(p => p.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const prev = players;
+    const next = arrayMove(players, oldIndex, newIndex);
+    setPlayers(next); // optimistic
+    try {
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/roster/reorder`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderedIds: next.map(p => p.id) }),
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? 'Could not save the new order.');
+      }
+    } catch (e: unknown) {
+      setPlayers(prev); // revert
+      showFeedback('danger', errorMessage(e, 'Could not save the new order.'));
     }
   }
 
@@ -344,75 +384,39 @@ export default function RosterPage({
           body="Players are added after tryout acceptance — contact your org admin if expected players are missing. You can also add players directly using the Add Player button above."
         />
       ) : (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.th}>#</th>
-                <th className={styles.th}>Player</th>
-                <th className={styles.th}>Positions</th>
-                <th className={styles.th}>Guardian Email</th>
-                <th className={styles.th}>Phone</th>
-                <th className={styles.th}>Source</th>
-                <th className={styles.th}>Status</th>
-                <th className={styles.th}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {players.map(p => (
-                <tr key={p.id} className={styles.tr}>
-                  <td className={styles.td} style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', width: '40px' }}>
-                    {p.playerNumber ?? <span style={{ opacity: 0.3 }}>—</span>}
-                  </td>
-                  <td className={styles.td}>
-                    <span className={styles.playerName}>{p.playerFirstName} {p.playerLastName}</span>
-                  </td>
-                  <td className={styles.td} style={{ fontSize: '0.85rem' }}>
-                    {[p.primaryPosition, p.secondaryPosition].filter(Boolean).join(' / ') || <span style={{ opacity: 0.3 }}>-</span>}
-                  </td>
-                  <td className={styles.td} style={{ fontSize: '0.85rem' }}>
-                    {p.guardianEmail
-                      ? <a href={`mailto:${p.guardianEmail}`} style={{ color: 'var(--blueprint-blue,#4fa3e0)' }}>{p.guardianEmail}</a>
-                      : <span style={{ opacity: 0.3 }}>—</span>}
-                  </td>
-                  <td className={styles.td} style={{ fontSize: '0.85rem' }}>
-                    {p.guardianPhone ?? <span style={{ opacity: 0.3 }}>—</span>}
-                  </td>
-                  <td className={styles.td}>
-                    <span className={`${styles.badge} ${p.source === 'tryout' ? styles.badgeTryout : styles.badgeManual}`}>
-                      {p.source === 'tryout' ? 'Tryout' : 'Manual'}
-                    </span>
-                  </td>
-                  <td className={styles.td}>
-                    <span className={`${styles.badge} ${STATUS_CSS[p.status] ?? styles.badgeDraft}`}>
-                      {p.status === 'active' ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className={styles.td}>
-                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        style={{ fontSize: '0.78rem', padding: '0.25rem 0.5rem', opacity: togglingId === p.id ? 0.5 : 1 }}
-                        disabled={togglingId === p.id}
-                        onClick={() => handleToggleStatus(p)}
-                      >
-                        {togglingId === p.id ? '…' : p.status === 'active' ? 'Deactivate' : 'Activate'}
-                      </button>
-                      <Link
-                        href={`${base}/roster/${p.id}`}
-                        className="btn btn-ghost"
-                        style={{ fontSize: '0.78rem', padding: '0.25rem 0.5rem' }}
-                      >
-                        View
-                      </Link>
-                    </div>
-                  </td>
+        <DndContext id={`rep-roster-dnd-${teamId}`} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.th} style={{ width: 28 }} aria-hidden />
+                  <th className={styles.th}>#</th>
+                  <th className={styles.th}>Player</th>
+                  <th className={styles.th}>Positions</th>
+                  <th className={styles.th}>Guardian Email</th>
+                  <th className={styles.th}>Phone</th>
+                  <th className={styles.th}>Source</th>
+                  <th className={styles.th}>Status</th>
+                  <th className={styles.th}></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                <SortableContext items={players.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                  {players.map(p => (
+                    <SortableRow
+                      key={p.id}
+                      player={p}
+                      base={base}
+                      togglingId={togglingId}
+                      onToggle={handleToggleStatus}
+                      dragDisabled={players.length < 2}
+                    />
+                  ))}
+                </SortableContext>
+              </tbody>
+            </table>
+          </div>
+        </DndContext>
       )}
 
       {/* Add player modal */}
@@ -554,5 +558,89 @@ export default function RosterPage({
         type="info"
       />
     </div>
+  );
+}
+
+function SortableRow({
+  player: p,
+  base,
+  togglingId,
+  onToggle,
+  dragDisabled,
+}: {
+  player: RepRosterPlayer;
+  base: string;
+  togglingId: string | null;
+  onToggle: (player: RepRosterPlayer) => void;
+  dragDisabled: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id, disabled: dragDisabled });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  return (
+    <tr ref={setNodeRef} style={style} className={styles.tr}>
+      <td className={styles.td} style={{ width: 28, paddingLeft: '0.25rem', paddingRight: 0 }}>
+        <button
+          type="button"
+          aria-label="Drag to reorder"
+          disabled={dragDisabled}
+          style={{ background: 'none', border: 'none', padding: 4, lineHeight: 0, cursor: dragDisabled ? 'default' : 'grab', color: 'rgba(255,255,255,0.35)', touchAction: 'none' }}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={15} />
+        </button>
+      </td>
+      <td className={styles.td} style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', width: '40px' }}>
+        {p.playerNumber ?? <span style={{ opacity: 0.3 }}>—</span>}
+      </td>
+      <td className={styles.td}>
+        <span className={styles.playerName}>{p.playerFirstName} {p.playerLastName}</span>
+      </td>
+      <td className={styles.td} style={{ fontSize: '0.85rem' }}>
+        {[p.primaryPosition, p.secondaryPosition].filter(Boolean).join(' / ') || <span style={{ opacity: 0.3 }}>-</span>}
+      </td>
+      <td className={styles.td} style={{ fontSize: '0.85rem' }}>
+        {p.guardianEmail
+          ? <a href={`mailto:${p.guardianEmail}`} style={{ color: 'var(--blueprint-blue,#4fa3e0)' }}>{p.guardianEmail}</a>
+          : <span style={{ opacity: 0.3 }}>—</span>}
+      </td>
+      <td className={styles.td} style={{ fontSize: '0.85rem' }}>
+        {p.guardianPhone ?? <span style={{ opacity: 0.3 }}>—</span>}
+      </td>
+      <td className={styles.td}>
+        <span className={`${styles.badge} ${p.source === 'tryout' ? styles.badgeTryout : styles.badgeManual}`}>
+          {p.source === 'tryout' ? 'Tryout' : 'Manual'}
+        </span>
+      </td>
+      <td className={styles.td}>
+        <span className={`${styles.badge} ${STATUS_CSS[p.status] ?? styles.badgeDraft}`}>
+          {p.status === 'active' ? 'Active' : 'Inactive'}
+        </span>
+      </td>
+      <td className={styles.td}>
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            style={{ fontSize: '0.78rem', padding: '0.25rem 0.5rem', opacity: togglingId === p.id ? 0.5 : 1 }}
+            disabled={togglingId === p.id}
+            onClick={() => onToggle(p)}
+          >
+            {togglingId === p.id ? '…' : p.status === 'active' ? 'Deactivate' : 'Activate'}
+          </button>
+          <Link
+            href={`${base}/roster/${p.id}`}
+            className="btn btn-ghost"
+            style={{ fontSize: '0.78rem', padding: '0.25rem 0.5rem' }}
+          >
+            View
+          </Link>
+        </div>
+      </td>
+    </tr>
   );
 }

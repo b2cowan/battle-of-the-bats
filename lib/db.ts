@@ -4433,7 +4433,8 @@ export async function getRepRosterPlayers(programYearId: string): Promise<RepRos
     .from('rep_roster_players')
     .select('*')
     .eq('program_year_id', programYearId)
-    .order('player_last_name');
+    .order('display_order', { ascending: true })
+    .order('player_last_name', { ascending: true });
   if (error) throw error;
   return (data ?? []).map(mapRepRosterPlayer);
 }
@@ -4467,6 +4468,18 @@ export async function createRepRosterPlayer(fields: {
   notes?: string | null;
   adminNotes?: string | null;
 }): Promise<RepRosterPlayer> {
+  // Append new players at the end of the manual roster order (parity with the Basic roster — a coach
+  // can drag-reorder afterward). mig 142 added rep_roster_players.display_order; sequential creates
+  // (manual add, upgrade migration, season rollover) each append, preserving source order.
+  const { data: top } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('display_order')
+    .eq('program_year_id', fields.programYearId)
+    .order('display_order', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const nextDisplayOrder = ((top?.display_order as number | null | undefined) ?? -1) + 1;
+
   const { data, error } = await supabaseAdmin
     .from('rep_roster_players')
     .insert({
@@ -4487,6 +4500,7 @@ export async function createRepRosterPlayer(fields: {
       guardian_phone: fields.guardianPhone ?? null,
       notes: fields.notes ?? null,
       admin_notes: fields.adminNotes ?? null,
+      display_order: nextDisplayOrder,
     })
     .select()
     .single();
