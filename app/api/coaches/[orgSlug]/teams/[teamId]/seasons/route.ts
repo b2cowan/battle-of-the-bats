@@ -68,6 +68,7 @@ export const POST = withObservability(async (req: Request,
     .from('team_workspaces')
     .select('id')
     .eq('rep_team_id', teamId)
+    .eq('workspace_org_id', ctx.org.id)
     .maybeSingle();
 
   try {

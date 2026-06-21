@@ -225,6 +225,7 @@ export async function startNextRepSeason(params: {
         .from('rep_budget_lines')
         .select('*')
         .eq('program_year_id', currentSeason.id)
+        .eq('org_id', orgId)
         .order('sort_order');
       type BudgetLineRow = {
         id: string;
@@ -278,7 +279,8 @@ export async function startNextRepSeason(params: {
               .from('rep_budget_periods')
               .insert(periodRows)
               .select('id');
-            if (!pErr) summary.budget.periodsCopied += createdPeriods?.length ?? 0;
+            if (pErr) summary.budget.failed++; // a line copied without its period breakdown — flag it, don't lose it silently
+            else summary.budget.periodsCopied += createdPeriods?.length ?? 0;
           }
         } catch (e) {
           summary.budget.failed++;
@@ -303,7 +305,8 @@ export async function startNextRepSeason(params: {
       const { data: oldSchedules } = await supabaseAdmin
         .from('rep_player_dues_schedules')
         .select('id, player_id, total_amount, notes')
-        .eq('program_year_id', currentSeason.id);
+        .eq('program_year_id', currentSeason.id)
+        .eq('org_id', orgId);
       for (const sched of (oldSchedules ?? []) as Array<{ id: string; player_id: string; total_amount: number; notes: string | null }>) {
         const newPlayerId = playerIdMap.get(sched.player_id);
         if (!newPlayerId) continue; // player not carried (inactive/pruned) — their dues don't carry
