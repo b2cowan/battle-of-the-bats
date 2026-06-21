@@ -117,7 +117,7 @@ So the migration lands cleanly AND Premium is never weaker than Free:
 - **3a Cancelled events** — ✅ BUILT (dev, 2026-06-19; mig 135 dev-applied ⚠ prod-pending; `/review` clean). Real `scheduled|cancelled` state on `rep_team_events`; coach schedule slide-over Cancel/Restore + dimmed "Cancelled" rendering (chips, header, month dots); admin read-only schedule shows the same; cancelled games excluded from the season W-L-T tally.
 - **3b Announcements** — ✅ BUILT (dev, 2026-06-19; mig 138 dev-applied ⚠ prod-pending; `/review` clean). Team-announcements in the Premium portal (write subject/body → email the active roster's guardian emails → send log), at parity with Free, in a self-contained module (no shared-data-layer change). Nav + overview quick-link added. Review found only 3 Low items, all inherited-from-Free parity (no fix needed).
 - **3c Migrated-row tolerance** — make `rep_roster_players` guardian first/last/email accept blanks on migrated rows (no fabricated data); audit Premium readers that assume non-null (esp. dues reminders) to degrade gracefully.
-- **3d Roster ordering (minor)** — add manual ordering to the Premium roster to match Free, or accept name-sort (lean: add).
+- **3d Roster ordering** — ✅ BUILT (dev, 2026-06-20; mig 142 `rep_roster_players.display_order` dev-applied ⚠ prod-pending). Premium roster now has drag-to-reorder (dnd-kit, parity with the free `RosterEditor`) + a season-scoped reorder endpoint; new players append at the end; order carries on free→Premium upgrade and into the next season (sequential creates append in source order). typecheck/lint/dictionary/snapshots green.
 
 ### Phase 4 — Migrate the data on provisioning — ✅ BUILT (dev, 2026-06-19; migs 138-needed/139/140; `/review` 3-lens clean, no Critical/High in own code)
 On provisioning of an upgrade-with-team-id, seeds the new Premium first season from the free team per the reconciliation contract. `lib/coach-upgrade-migration.ts` (roster/schedule/fees, per-entity resilient, never throws); atomic race-safe claim in the provisioner (runs exactly once); summary stored on `team_workspaces.migration_summary` (mig 140) + surfaced via a dismissible overview banner. Fees grouped per player into one dues schedule (UNIQUE program_year+player). **v1 follow-ups (accepted, not blockers):** no auto-retry for a partial migration (surfaced honestly; needs per-entity idempotency to retry safely); the **pre-existing** duplicate-workspace race (two Stripe events both passing the stripe_subscription_id dedup) is unaffected — separate provisioning-hardening follow-up; rare re-upgrade back-link asymmetry (audit any code reading `basic_coach_teams.team_workspace_id` as "current workspace"). Original target properties:
@@ -159,7 +159,7 @@ Should be spun into its own plan + PM brief when scheduled (separable from the n
 6. **Blank required fields:** transfer as-is, make those fields optional on migrated Premium rows, list them on the post-upgrade summary — **no fabricated emails/dates**.
 7. **Re-upgrade / already-linked (build guard, not a choice):** gate on `basic_coach_teams.team_workspace_id` + an idempotency marker so a re-provision never double-migrates.
 
-**Still open (minor):** roster manual-ordering parity (Phase 3d) — lean: add.
+**Still open (minor):** ~~roster manual-ordering parity (Phase 3d)~~ — ✅ DONE (2026-06-20, mig 142). All phases now built.
 
 ---
 
