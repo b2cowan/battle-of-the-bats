@@ -212,7 +212,7 @@ const coachesHelp: HelpPageContent = {
       heading: 'What Coaches Portal Premium adds',
       summary: 'The serious-operator upgrade — game-day tools, automation, budget, and documents.',
       keywords: ['coaches portal premium', 'upgrade', 'premium', 'paid coaches portal'],
-      searchText: 'coaches portal premium upgrade paid lineup builder attendance dues automation team budget document storage carries over organization joins',
+      searchText: 'coaches portal premium upgrade paid lineup builder attendance dues automation team budget document storage carries over organization joins start next season new season division team settings multi season year over year',
       content: (
         <>
           <p><strong>Coaches Portal Premium</strong> keeps everything in your free portal and adds the tools for running a full competitive season:</p>
@@ -221,6 +221,7 @@ const coachesHelp: HelpPageContent = {
             <li>Recurring schedule events and calendar sync.</li>
             <li>Dues automation — installment schedules, due dates, and overdue reminders — plus a season budget with expenses and fundraiser credits.</li>
             <li>Document storage for waivers and team forms (see below).</li>
+            <li>A <strong>Settings</strong> area to start your next season yourself and set your team&apos;s division (see below).</li>
           </ul>
           <p>If your organization later joins FieldLogicHQ, your team and its history carry over automatically.</p>
         </>
@@ -233,6 +234,49 @@ const coachesHelp: HelpPageContent = {
           keywords: ['premium ends', 'retention', 'reactivate', 'data'],
           answer: (
             <p>Your free portal and tournament records stay available. Premium tools switch off, and Premium-only data is retained for a window so it can be restored where possible instead of starting over.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-start-next-season',
+      group: 'Coaches Portal Premium',
+      heading: 'How to start your next season & set your division (Premium)',
+      summary: 'Roll your team into a new season yourself — your roster comes with you, the schedule starts fresh, and last year becomes read-only history.',
+      keywords: ['start next season', 'new season', 'next season', 'roll over season', 'season rollover', 'team settings', 'division', 'edit division', 'past seasons', 'premium'],
+      searchText: 'start next season new season next year roll over rollover carry roster forward fee plan fee template planned budget schedule starts fresh previous season read only past seasons history team settings edit change division head coach year end premium club owned admin manages seasons',
+      content: (
+        <>
+          <p>In the <strong>Premium</strong> portal, a new <strong>Settings</strong> area lets you run your team from one year to the next yourself — without waiting on an organization admin.</p>
+          <p><strong>Start next season.</strong> When a season wraps, open <strong>Settings</strong> and choose <strong>Start next season</strong>. Confirm the new season&apos;s name and year, then pick what to bring over:</p>
+          <ul>
+            <li>Your <strong>active roster carries forward automatically</strong> — trim or add players from there.</li>
+            <li>Optionally bring over your <strong>fee plan</strong> (amounts and installments; due dates shift forward a year) and your <strong>planned budget</strong> (your projected buckets).</li>
+            <li>The <strong>schedule starts fresh</strong>, and last season&apos;s money — payments, spending, and paid history — stays behind with that season.</li>
+          </ul>
+          <p>The previous season then becomes <strong>read-only history</strong> under <strong>Past Seasons</strong>, and you land in the new season with a short summary of what carried over and anything worth a second look — for example, confirming the carried-over fee due dates or re-collecting waivers for the new season.</p>
+          <p><strong>Set your division.</strong> Settings is also where you set your team&apos;s <strong>division</strong> (for example, &quot;U13 Tier 1&quot;); it shows on your team overview.</p>
+          <p>If your team is <strong>owned by a club or league</strong> (an organization adopted it), your club admin manages seasons and division for you — you&apos;ll see those as read-only.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-start-next-season',
+          question: 'How do I start a new season without an admin?',
+          answerText: 'On a standalone Premium team, the head coach can do it directly: open Settings and choose Start next season. Your active roster carries forward, you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season moves to read-only Past Seasons. If your team is owned by a club or league, the club admin starts seasons for you.',
+          keywords: ['start new season', 'next season', 'no admin', 'rollover', 'head coach'],
+          popular: true,
+          answer: (
+            <p>On a standalone Premium team, the <strong>head coach</strong> can do it directly: open <strong>Settings</strong> and choose <strong>Start next season</strong>. Your active roster carries forward, you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season moves to read-only <strong>Past Seasons</strong>. If your team is owned by a club or league, the club admin starts seasons for you.</p>
+          ),
+        },
+        {
+          id: 'faq-change-division',
+          question: 'Can I change my team’s division?',
+          answerText: 'Yes, on a standalone Premium team. Open Settings and edit the Division field (for example, "U13 Tier 1"); it shows on your team overview. For club-owned teams, the club admin manages the division.',
+          keywords: ['change division', 'edit division', 'division', 'team settings'],
+          answer: (
+            <p>Yes, on a standalone Premium team. Open <strong>Settings</strong> and edit the <strong>Division</strong> field (for example, &quot;U13 Tier 1&quot;); it shows on your team overview. For club-owned teams, the club admin manages the division.</p>
           ),
         },
       ],
