@@ -4471,13 +4471,15 @@ export async function createRepRosterPlayer(fields: {
   // Append new players at the end of the manual roster order (parity with the Basic roster — a coach
   // can drag-reorder afterward). mig 142 added rep_roster_players.display_order; sequential creates
   // (manual add, upgrade migration, season rollover) each append, preserving source order.
-  const { data: top } = await supabaseAdmin
+  const { data: top, error: topError } = await supabaseAdmin
     .from('rep_roster_players')
     .select('display_order')
     .eq('program_year_id', fields.programYearId)
+    .eq('team_id', fields.teamId)
     .order('display_order', { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (topError) throw topError; // fail loud rather than silently appending at position 0
   const nextDisplayOrder = ((top?.display_order as number | null | undefined) ?? -1) + 1;
 
   const { data, error } = await supabaseAdmin

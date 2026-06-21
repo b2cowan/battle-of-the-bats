@@ -34,7 +34,7 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { programYear } = resolved;
+  const { team, programYear } = resolved;
 
   const body = (await req.json().catch(() => ({}))) as { orderedIds?: unknown };
   if (!Array.isArray(body.orderedIds)) {
@@ -56,7 +56,8 @@ export const POST = withObservability(async (req: Request,
       .from('rep_roster_players')
       .update({ display_order: i, updated_at: now })
       .eq('id', orderedIds[i])
-      .eq('program_year_id', programYear.id); // scope: a coach can only reorder their active season's roster
+      .eq('program_year_id', programYear.id)
+      .eq('team_id', team.id); // scope: a coach can only reorder their own team's active-season roster
     if (error) {
       console.error('[coaches rep roster reorder] update failed:', error);
       return NextResponse.json({ error: 'Could not save the new order.' }, { status: 500 });

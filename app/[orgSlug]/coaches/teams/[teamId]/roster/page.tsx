@@ -206,7 +206,9 @@ export default function RosterPage({
       if (!res.ok) throw new Error(data.error ?? 'Failed to add player');
       setAddOpen(false);
       setAddForm(BLANK);
-      await load();
+      // Append the created player to local state (it appends server-side too) rather than refetching —
+      // a refetch here could stomp an in-flight reorder's optimistic state.
+      if (data.player) setPlayers(prev => [...prev, data.player]);
       showFeedback('success', `${addForm.playerFirstName} ${addForm.playerLastName} added to roster.`);
     } catch (e: unknown) {
       showFeedback('danger', errorMessage(e, 'Failed to add player.'));
