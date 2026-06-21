@@ -88,7 +88,7 @@ export default function PersonaPanel({
                   ? ', plus a fan app with live scores and push alerts.'
                   : ' — plus a fan app with live scores (push alerts on Tournament Plus).'}
               </p>
-              <span className={styles.when}>From the moment you activate</span>
+              <span className={styles.when}>Once you activate</span>
               {previewHref && (
                 <Link href={previewHref} className={styles.link} {...NEW_TAB}>
                   {isDraft ? 'Preview site' : 'View public site'} →
@@ -98,8 +98,8 @@ export default function PersonaPanel({
 
             <div className={styles.col}>
               <h3 className={styles.colTitle}>Coaches &amp; Teams</h3>
-              <p className={styles.colDesc}>The registration form and your public schedule. No admin access.</p>
-              <span className={styles.when}>From the moment you activate</span>
+              <p className={styles.colDesc}>Your public site — schedule, standings, and results — plus the registration form. No admin access.</p>
+              <span className={styles.when}>Once you activate</span>
               {registerHref && (
                 <Link href={registerHref} className={styles.link} {...NEW_TAB}>
                   Preview registration →
@@ -110,8 +110,8 @@ export default function PersonaPanel({
             <div className={styles.col}>
               <h3 className={styles.colTitle}>Scorekeepers &amp; Volunteers</h3>
               <p className={styles.colDesc}>
-                A phone-friendly scoring screen — today’s games only, nothing else in your admin. Gate volunteers run
-                check-in from a separate board.
+                A phone-friendly scoring screen that opens to the day’s games — and nothing else in your admin. Gate
+                volunteers run check-in from a separate board.
               </p>
               <span className={styles.when}>When you hand off access</span>
               <Link href={staffKitHref} className={styles.link}>
