@@ -1,10 +1,14 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { ExternalLink, X } from 'lucide-react';
 import { getHelpSections } from '@/lib/help-content/registry';
+import { useOrg } from '@/lib/org-context';
+import { useTournament } from '@/lib/tournament-context';
+import { isWithinEventDates } from '@/lib/tournament-phase';
+import { daysUntilStart, getStageShortcuts, resolveGuidanceStage, type TaskShortcut } from '@/lib/tournament-guidance';
 import type { HelpRequest } from './help-drawer-context';
 import HelpSectionBlock from './HelpSectionBlock';
 import styles from './help.module.css';
@@ -79,6 +83,25 @@ export default function HelpDrawer({
     };
   }, [open]);
 
+  // ── In-context "I want to…" shortcuts (help Layer 3 / Phase 5a fast-follow) ──
+  // The drawer sits inside Org + Tournament context on admin pages, so it can
+  // surface the same lifecycle-filtered shortcuts the dashboard rail shows — on
+  // every tournament work page, with no per-page wiring. Outside those providers
+  // (e.g. the coaches portal) the hooks return safe defaults, so this stays empty.
+  const { currentOrg } = useOrg();
+  const { currentTournament } = useTournament();
+  const shortcuts = useMemo<TaskShortcut[]>(() => {
+    if (!request || request.module !== 'tournaments' || !currentOrg?.slug || !currentTournament) return [];
+    const { startDate, endDate, status } = currentTournament;
+    const stage = resolveGuidanceStage({
+      status,
+      isGameDay: isWithinEventDates(startDate, endDate),
+      daysUntil: daysUntilStart(startDate),
+    });
+    if (!stage) return [];
+    return getStageShortcuts(stage, { orgSlug: currentOrg.slug, planId: currentOrg.planId });
+  }, [request, currentOrg, currentTournament]);
+
   if (!open || typeof document === 'undefined' || !request) return null;
 
   const sections = getHelpSections(request.module, request.sectionIds);
@@ -111,6 +134,29 @@ export default function HelpDrawer({
         </div>
 
         <div className={styles.helpDrawerBody}>
+          {shortcuts.length > 0 && (
+            <div className={styles.helpDrawerShortcuts}>
+              <p className={styles.helpDrawerShortcutsTitle}>I want to…</p>
+              <ul className={styles.helpDrawerShortcutList}>
+                {shortcuts.map((s, i) => (
+                  <li key={i}>
+                    <Link
+                      href={s.href}
+                      className={styles.helpDrawerShortcut}
+                      {...(s.locked ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
+                    >
+                      <span>{s.label}</span>
+                      {s.locked ? (
+                        <span className={styles.helpDrawerShortcutPlus}>Plus</span>
+                      ) : (
+                        <span className={styles.helpDrawerShortcutArrow} aria-hidden>→</span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {sections.length === 0 ? (
             <p className={styles.helpDrawerEmpty}>Help for this page is coming soon.</p>
           ) : (

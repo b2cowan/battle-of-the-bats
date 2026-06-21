@@ -1273,6 +1273,62 @@
   font-weight: 600;
   color: var(--info, #4fa3e0);
 }
+
+/* "I want to…" lifecycle shortcuts at the top of the drawer (Phase 5a fast-follow) */
+.helpDrawerShortcuts {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.125rem;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+.helpDrawerShortcutsTitle {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-data, inherit);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--logic-lime, #b9f04a);
+}
+.helpDrawerShortcutList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.helpDrawerShortcut {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--white-70, rgba(255, 255, 255, 0.7));
+  font-size: 0.83rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.helpDrawerShortcut:hover {
+  background: var(--white-03, rgba(255, 255, 255, 0.03));
+  border-color: var(--border, rgba(255, 255, 255, 0.08));
+  color: var(--white-90, rgba(255, 255, 255, 0.9));
+}
+.helpDrawerShortcut span:first-child {
+  flex: 1;
+}
+.helpDrawerShortcutArrow {
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+}
+.helpDrawerShortcutPlus {
+  font-family: var(--font-data, inherit);
+  font-size: 0.56rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--logic-lime, #b9f04a);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 3px;
+  padding: 0.05rem 0.34rem;
+}
 @keyframes helpDrawerIn {
   from { transform: translateX(100%); }
   to   { transform: translateX(0); }

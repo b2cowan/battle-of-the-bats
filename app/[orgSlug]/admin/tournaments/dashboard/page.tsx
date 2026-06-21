@@ -27,6 +27,7 @@ import type { RegistrationAttentionSummary } from '@/lib/registration-attention'
 import { LiveEventLog } from '@/components/admin/LiveEventLog';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import GuidanceRail from '@/components/admin/tournament/GuidanceRail';
+import PersonaPanel from '@/components/admin/tournament/PersonaPanel';
 import { getGuidance, getStageShortcuts, type GuidanceStage } from '@/lib/tournament-guidance';
 import styles from './dashboard.module.css';
 import { copiedSummary } from '@/lib/utils';
@@ -892,6 +893,17 @@ export default function AdminDashboard() {
       />
     );
   })() : null;
+
+  // Persona panel ("what everyone else sees") — draft + active stages only.
+  const personaPanel = (currentOrg?.slug && currentTournament?.id && (isDraft || isActive)) ? (
+    <PersonaPanel
+      orgSlug={currentOrg.slug}
+      tournamentSlug={currentTournament.slug}
+      tournamentId={currentTournament.id}
+      planId={currentOrg.planId}
+      isDraft={isDraft}
+    />
+  ) : null;
 
   // Cards that don't apply to the current tournament phase — suppressed regardless of saved layout
   const contextHidden = new Set<StatCardId>();
@@ -1799,6 +1811,7 @@ export default function AdminDashboard() {
           )}
 
           {guidanceRail}
+          {personaPanel}
 
           <section className={`${styles.publishChecklist} ${completedCount === checklistItems.length ? styles.checklistReady : ''}`}>
             <div className={styles.checklistHeader}>
@@ -1899,6 +1912,7 @@ export default function AdminDashboard() {
       {isActive && currentTournament?.id && (
         <>
           {guidanceRail}
+          {personaPanel}
 
           {/* Compact metric strip — absent on game day where the board gives richer context */}
           {!isGameDay && renderMetricStrip()}

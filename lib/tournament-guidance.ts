@@ -72,6 +72,16 @@ export function resolveGuidanceStage(opts: {
   return 'pre';
 }
 
+/**
+ * Whole days from today until a start date (negative once the date is past).
+ * Encapsulates the clock read so callers can use it during render without
+ * tripping the purity rule (same pattern as isWithinEventDates).
+ */
+export function daysUntilStart(startDate?: string | null): number | null {
+  if (!startDate) return null;
+  return Math.ceil((Date.parse(startDate) - Date.now()) / 86_400_000);
+}
+
 function base(orgSlug: string) {
   return `/${orgSlug}/admin/tournaments`;
 }
@@ -210,11 +220,19 @@ export function getGuidance(stage: GuidanceStage, ctx: GuidanceContext): Guidanc
   }
 }
 
-/** The lifecycle-filtered "I want to…" outcome shortcuts (4–5 per stage). */
-export function getStageShortcuts(stage: GuidanceStage, ctx: GuidanceContext): TaskShortcut[] {
-  const billingHref = getBillingHref(ctx.orgSlug, ctx.planId);
-  const canImport = hasPlanFeature(ctx.planId, 'bulk_data_imports');
-  const canClone = hasPlanFeature(ctx.planId, 'tournament_cloning');
+/**
+ * The lifecycle-filtered "I want to…" outcome shortcuts (4–5 per stage).
+ * Takes only org slug + plan (not the full GuidanceContext) so the in-context
+ * HelpDrawer can surface the same list on every tournament page.
+ */
+export function getStageShortcuts(
+  stage: GuidanceStage,
+  opts: { orgSlug: string; planId: OrgPlan },
+): TaskShortcut[] {
+  const { orgSlug, planId } = opts;
+  const billingHref = getBillingHref(orgSlug, planId);
+  const canImport = hasPlanFeature(planId, 'bulk_data_imports');
+  const canClone = hasPlanFeature(planId, 'tournament_cloning');
 
   // Raw outcome → guide section; `plus` flags the genuinely gated ones.
   const RAW: Record<GuidanceStage, Array<{ label: string; sectionId: string; plus?: 'import' | 'clone' }>> = {
@@ -255,7 +273,7 @@ export function getStageShortcuts(stage: GuidanceStage, ctx: GuidanceContext): T
       (item.plus === 'import' && !canImport) || (item.plus === 'clone' && !canClone);
     return {
       label: item.label,
-      href: locked ? billingHref : guideHref(ctx.orgSlug, item.sectionId),
+      href: locked ? billingHref : guideHref(orgSlug, item.sectionId),
       locked,
     };
   });
