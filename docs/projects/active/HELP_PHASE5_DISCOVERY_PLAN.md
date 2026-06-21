@@ -1,7 +1,9 @@
 # Help System Redesign — Phase 5 (Discovery &amp; Orientation) Build Plan
 
-**Status:** Proposed — mockup + plan + PM brief authored, NO code yet (awaiting owner sign-off on the in-chat PM brief).
-**Created:** 2026-06-19
+**Status:** **Phase 5a BUILT on `dev` 2026-06-20** (owner-approved; committed `bea5558`, awaiting browser sign-off). Phase 5b not started. D4b (drawer "I want to…" shortcuts on work pages) deferred as a fast-follow — the rail's "See common tasks" delivers the shortcuts on the dashboard; extending them to every page's "?" needs per-page wiring since the shared header is presentational.
+**Created:** 2026-06-19 · **Built:** 2026-06-20
+
+> **Build status (5a):** Shipped — D1 lifecycle rail + D2 nudges + D4a "See common tasks" (new `components/admin/tournament/GuidanceRail.tsx` + `.module.css`, content in new `lib/tournament-guidance.ts`, mounted in the draft/active/completed branches of `dashboard/page.tsx`); D5 wizard first-run blurb + Review callout (`TournamentSetupWizard.tsx` + CSS); Staff Kit intro reworded (invite-before-game-day). Dismissal = `flhq-help-dismissed-{nudgeId}-{tournamentId}` via the HelpCallout convention, SSR-safe read after mount. `lint:focused` 0 errors, `typecheck` clean. **Deferred:** D4b drawer shortcuts (fast-follow), all of 5b.
 **Layer:** L3 (Discovery &amp; Orientation) of the three-layer help model. Extends the master design in `HELP_SYSTEM_REDESIGN_PLAN.md` §13.
 **Mockup (satisfies §15 gate):** [help-phase5a-discovery-prototype.html](help-phase5a-discovery-prototype.html) — clickable; stage + plan switcher, dismissible nudge, "I want to…" shortcuts (rail + drawer), plus the static D5 wizard additions and a labeled D3 (5b) preview.
 **Depends on:** Phase 1 (single-scroll guides ✅), Phase 1.5 (content accuracy ✅), Phase 2 (HelpDrawer + registry + provider ✅ — all on `dev`). No new dependency on the Coaches Portal.
@@ -75,8 +77,12 @@ Recommend: **build 5a, get owner browser sign-off, then start 5b.**
 
 | Spotlight | Stage shown | Plan behavior | Target |
 |---|---|---|---|
-| Scorekeeper handoff (Staff Kit) | Pre-event (also a quieter game-day fallback) | **All plans, no badge** | `/{slug}/admin/tournaments/staff-kit` |
-| Playoff bracket | Game-day (pool play winding down) | **Text swaps:** free = "build by hand", Plus = "auto-generate" | `/{slug}/admin/tournaments/schedule` |
+| Scorekeeper handoff (Staff Kit) | **Pre-event only** | All plans. Seat nuance: free **Tournament** counts a volunteer against the 3-seat cap; **Tournament Plus** = free + unlimited scorekeeper seats. | `/{slug}/admin/tournaments/staff-kit` |
+| Live scores &amp; review queue | **Game-day** | All plans, no badge | dashboard review queue / scores |
+
+**Game-day nudge changed (owner, 2026-06-19→20):** the original "build your playoff bracket on game day" nudge is **dropped** — brackets/schedules are set before the event; what changes live is which teams land on which seed and when they play. The game-day nudge is now the **live-scores + review-queue** reassurance (Option A): *"Every score you enter updates the public site, standings, and playoff seeds instantly — your one game-day job is clearing any games waiting in your review queue."* Calm, universal, free, not a feature-sell.
+
+**Volunteer handoff is a PRE-EVENT task, not a game-day rescue (verified 2026-06-20).** A first-time volunteer needs a one-time invite + account setup (invite email → set name + password → lands on the scorekeeper screen). The Staff Kit QR/printout does **not** bypass login, so a cold walk-up volunteer can't be live "in under a minute." Therefore the handoff nudge lives in **pre-event** with honest copy: *"Set your scorekeepers up before game day — invite them once and they get a phone-friendly scoring screen that shows only the games, nothing else in your admin."* The "can't see anything else in your admin" claim is verified true (the scorekeeper/`official` role has no admin capabilities and the surface has no admin nav).
 
 Plus a per-stage default nudge for draft (preview), post-event (results link / Plus reuse), completed (Plus reuse or upgrade CTA) — see §6.
 
@@ -129,8 +135,8 @@ Plus a per-stage default nudge for draft (preview), post-event (results link / P
 | Stage | Pill | Rail headline | One action (CTA) | "Did you know?" nudge | Free vs Plus |
 |---|---|---|---|---|---|
 | **Draft** | DRAFT | "Let's get your tournament ready to launch" | Finish your launch checklist → | Preview your public page before you go live | same both |
-| **Pre-event** | ACTIVE · PRE-EVENT | "Your event is N days away" | Set up volunteer access → (Staff Kit) | Hand scorekeeping to a volunteer — phone scoring view, no admin access | same both (Staff Kit free) |
-| **Game day** | ACTIVE · LIVE | "It's game day — here's your live view" | Open the live game board → | Free: "build your playoff bracket by hand from the Schedule page" · Plus: "auto-generate your bracket from pool results" | text swaps |
+| **Pre-event** | ACTIVE · PRE-EVENT | "Your event is N days away" | Set up volunteer access → (Staff Kit) | "Set your scorekeepers up before game day — invite them once and they get a phone-friendly scoring screen that shows only the games, nothing else in your admin." | Same copy both; seat-capped on free Tournament, free+unlimited on Plus |
+| **Game day** | ACTIVE · LIVE | "It's game day — here's your live view" | Open the live game board → | "Every score you enter updates the public site, standings, and playoff seeds instantly — your one game-day job is clearing any games waiting in your review queue." | same both |
 | **Post-event** | ACTIVE · EVENT ENDED | "Your event has wrapped up" | Mark tournament complete → | Free: "results stay live at the same link forever" · Plus: "completing unlocks your event summary + reuse" | text swaps |
 | **Completed** | COMPLETED | "Tournament complete — nice work" | Free: View final results → · Plus: View your event summary → | Free: upgrade-to-reuse CTA (→ billing) · Plus: "reuse this entire setup next year in one step" | CTA + nudge swap |
 
