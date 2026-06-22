@@ -6,7 +6,7 @@ import { sendEmail, schedulePublishedHtml, gameDayReminderHtml, resolveCoachReci
 import { sendMarketingEmail, cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
 import { hasPlanFeature } from '@/lib/plan-features';
 import type { OrgPlan } from '@/lib/types';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureError } from '@/lib/observability';
 
 // Empty-slot sentinel some games use instead of NULL for an unassigned team.
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
@@ -220,6 +220,16 @@ export const POST = withObservability(async (req: Request) => {
 
   } catch (err: unknown) {
     console.error('[schedule-publish] Error:', err);
+    // Report with rich attribution (real error + org/user) so this failure is visible in
+    // observability and can alert — a Supabase PostgrestError is not an Error instance, so the
+    // generic message below is all the client ever sees (this is what surfaced as the bogus
+    // "Unknown error" prod 500 when mig 129 lagged the code).
+    await captureError(err, {
+      route: '/api/admin/schedule-publish',
+      method: 'POST',
+      statusCode: 500,
+      ctx,
+    });
     const message = err instanceof Error ? err.message : 'Unknown error';
     return Response.json({ error: message }, { status: 500 });
   }

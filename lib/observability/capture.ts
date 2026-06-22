@@ -12,7 +12,7 @@ import { maybeSendCriticalAlert, type RecordErrorFlags } from './alerts';
 import { observabilityEnv } from './env';
 import { fingerprint } from './fingerprint';
 import { redactContext, scrubEmails } from './redact';
-import { getRequestContext } from './request-context';
+import { getRequestContext, markRequestCaptured } from './request-context';
 
 export type Severity = 'critical' | 'error' | 'warning' | 'info';
 
@@ -78,6 +78,9 @@ function toError(err: unknown): { name: string; message: string; stack?: string 
 
 export async function captureError(err: unknown, opts: CaptureOptions = {}): Promise<void> {
   try {
+    // Tell withObservability's returned-5xx safety net this request was already reported, so it
+    // won't also capture a generic fallback for the same failure. No-op outside a request context.
+    markRequestCaptured();
     const reqCtx = getRequestContext();
     const route = opts.route ?? reqCtx?.route;
     const method = opts.method ?? reqCtx?.method;

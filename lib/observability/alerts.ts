@@ -1,8 +1,14 @@
 /**
- * Critical-error alerting (Phase 4) — emails ADMIN_EMAIL on the FIRST occurrence of a
- * critical-severity issue (and on escalation-to-critical / regression of a resolved critical),
- * de-noised by the record_error_event RPC's atomic transition flags: one email per distinct
- * transition, never one per occurrence. See OBSERVABILITY_ERROR_TRACKING_PLAN.md §14.2.
+ * Server-error alerting (Phase 4) — emails ADMIN_EMAIL on the FIRST occurrence of a server issue
+ * (and on escalation-to-critical / regression of a resolved issue), de-noised by the
+ * record_error_event RPC's atomic transition flags: one email per distinct transition, never one
+ * per occurrence. See OBSERVABILITY_ERROR_TRACKING_PLAN.md §14.2.
+ *
+ * COVERAGE (broadened 2026-06-22): alerts on BOTH 'critical' and 'error' severity. Originally
+ * critical-only (a tight allowlist of billing/auth/registration routes); broadened because the
+ * product is new + low-volume, so surfacing every genuine server failure fast outweighs inbox
+ * noise. 'warning'/'info' still stay silent, client-source still never pages, and the per-issue
+ * de-noise + per-worker hourly cap still bound volume. Revisit the threshold if volume grows.
  *
  * Hard gates (owner-approved 2026-06-10): server-source only (the public client error endpoint
  * can never page us) and production env only (local/dev noise never alerts). Fire-and-forget
@@ -61,7 +67,8 @@ export function shouldAlert(
 ): boolean {
   if (source !== 'server') return false;
   if (env !== 'production') return false;
-  if (flags.severity !== 'critical') return false;
+  // Broadened threshold: 'error' AND 'critical' page; 'warning'/'info' stay silent.
+  if (flags.severity !== 'critical' && flags.severity !== 'error') return false;
   return !!(flags.is_new || flags.became_critical || flags.regressed || flags.reopened);
 }
 
@@ -91,10 +98,16 @@ function escapeHtml(value: string): string {
 }
 
 function alertTrigger(flags: RecordErrorFlags): string {
-  if (flags.is_new) return 'New critical issue';
   if (flags.became_critical) return 'Issue escalated to critical';
-  if (flags.reopened) return 'Critical issue reopened (regression)';
-  return 'Critical issue recurred after resolve (regression)';
+  const noun = flags.severity === 'critical' ? 'critical issue' : 'error';
+  if (flags.is_new) return `New ${noun}`;
+  if (flags.reopened) return `Resolved ${noun} reopened (regression)`;
+  return `Resolved ${noun} recurred (regression)`;
+}
+
+/** 🚨 for critical, ⚠️ for error — so the inbox can triage at a glance. */
+function alertIcon(flags: RecordErrorFlags): string {
+  return flags.severity === 'critical' || flags.became_critical ? '🚨' : '⚠️';
 }
 
 function alertHtml(trigger: string, flags: RecordErrorFlags, d: CriticalAlertDetails, link: string): string {
@@ -102,7 +115,7 @@ function alertHtml(trigger: string, flags: RecordErrorFlags, d: CriticalAlertDet
     value ? `<tr><td style="padding:4px 12px 4px 0;color:#666;white-space:nowrap;">${label}</td><td style="padding:4px 0;">${escapeHtml(value)}</td></tr>` : '';
   return `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-      <h2 style="color:#b91c1c;">🚨 ${escapeHtml(trigger)}</h2>
+      <h2 style="color:#b91c1c;">${alertIcon(flags)} ${escapeHtml(trigger)}</h2>
       <p style="font-size:15px;"><strong>${escapeHtml(d.title)}</strong></p>
       <table style="font-size:14px;border-collapse:collapse;">
         ${row('Error', d.errorName)}
@@ -145,7 +158,7 @@ export async function maybeSendCriticalAlert(
     const link = flags.group_id
       ? `${SITE_URL}/platform-admin/observability/${flags.group_id}`
       : `${SITE_URL}/platform-admin/observability`;
-    const subject = `🚨 ${trigger}: ${details.errorName}${details.route ? ` @ ${details.route}` : ''}`;
+    const subject = `${alertIcon(flags)} ${trigger}: ${details.errorName}${details.route ? ` @ ${details.route}` : ''}`;
     const result = await sendEmail(ADMIN_EMAIL, subject, alertHtml(trigger, flags, details, link));
     if (result.status === 'sent') {
       console.log(`[observability] critical alert emailed to ${ADMIN_EMAIL}: ${trigger} (group ${flags.group_id ?? '?'})`);

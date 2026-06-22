@@ -18,6 +18,11 @@ export interface RequestObservabilityContext {
   userId?: string | null;
   userEmail?: string | null;
   userRole?: string | null;
+  /**
+   * Set once captureError() records anything for this request. withObservability() reads it so its
+   * returned-5xx safety net never double-captures an error the route already reported itself.
+   */
+  captured?: boolean;
 }
 
 const storage = new AsyncLocalStorage<RequestObservabilityContext>();
@@ -48,4 +53,14 @@ export function setRequestAuth(auth: {
   if (auth.userId !== undefined) store.userId = auth.userId;
   if (auth.userEmail !== undefined) store.userEmail = auth.userEmail;
   if (auth.userRole !== undefined) store.userRole = auth.userRole;
+}
+
+/**
+ * Mark the active request as already error-captured, so withObservability()'s returned-5xx safety
+ * net skips it (no double-capture). No-op outside a request context — e.g. the global
+ * onRequestError path, whose throw already unwound the AsyncLocalStorage store.
+ */
+export function markRequestCaptured(): void {
+  const store = storage.getStore();
+  if (store) store.captured = true;
 }

@@ -122,9 +122,9 @@ describe('scrubEmails', () => {
   });
 });
 
-// ── Phase 4 critical-error alert gate ────────────────────────────────────────
+// ── Phase 4 server-error alert gate ──────────────────────────────────────────
 // The gate is the safety boundary between the public capture surface and ADMIN_EMAIL's inbox:
-// pin every reason an alert must NOT fire (client source, dev env, sub-critical severity, no
+// pin every reason an alert must NOT fire (client source, dev env, sub-error severity, no
 // transition flag) and every transition that must.
 
 describe('shouldAlert', () => {
@@ -148,9 +148,14 @@ describe('shouldAlert', () => {
     assert.equal(shouldAlert({ ...critical, is_new: true }, 'server', 'dev'), false);
   });
 
-  it('never fires below critical severity', () => {
-    assert.equal(shouldAlert({ severity: 'error', is_new: true }, 'server', 'production'), false);
+  it('fires for error severity too (broadened 2026-06-22 — surface every server failure)', () => {
+    assert.equal(shouldAlert({ severity: 'error', is_new: true }, 'server', 'production'), true);
+    assert.equal(shouldAlert({ severity: 'error', reopened: true }, 'server', 'production'), true);
+  });
+
+  it('never fires below error severity (warning/info stay silent)', () => {
     assert.equal(shouldAlert({ severity: 'warning', is_new: true }, 'server', 'production'), false);
+    assert.equal(shouldAlert({ severity: 'info', is_new: true }, 'server', 'production'), false);
   });
 
   it('never fires without a transition flag (repeat occurrences stay silent)', () => {
