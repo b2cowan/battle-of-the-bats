@@ -26,10 +26,10 @@ export default function AdminHelpHubPage() {
   const cards: HelpHubCard[] = [
     {
       title: 'Tournaments',
-      desc:  'Create tournaments, manage the lifecycle, build schedules, run scorekeepers, enter scores, and seal final results.',
+      desc:  'Create tournaments, manage the lifecycle, build schedules, run scorekeepers, enter scores, chat with coaches, and seal final results.',
       href:  `${helpBase}/tournaments`,
-      topicCount: 25,
-      keywords: ['create tournament', 'schedule', 'scorekeeper', 'scores', 'results', 'archive', 'teams'],
+      topicCount: 26,
+      keywords: ['create tournament', 'schedule', 'scorekeeper', 'scores', 'results', 'archive', 'teams', 'chat', 'coach chat'],
     },
     ...(canHouseLeague ? [
       {
@@ -57,10 +57,10 @@ export default function AdminHelpHubPage() {
       },
       {
         title: 'Coaches Portal',
-        desc:  'Help coaches manage rosters, schedules, dues, expenses, and player documents.',
+        desc:  'Help coaches manage rosters, schedules, dues, expenses, player documents, and tournament chat.',
         href:  `${helpBase}/coaches`,
-        topicCount: 7,
-        keywords: ['coach', 'coaches portal', 'roster', 'dues', 'documents', 'schedule'],
+        topicCount: 8,
+        keywords: ['coach', 'coaches portal', 'roster', 'dues', 'documents', 'schedule', 'chat', 'tournament chat'],
       },
     ] : []),
     ...(canAccounting ? [{
@@ -103,6 +103,7 @@ export default function AdminHelpHubPage() {
         { label: 'Build and adjust the schedule', href: `${helpBase}/tournaments#recipe-build-tournament-schedule` },
         { label: 'Set up scorekeepers and finalize scores', href: `${helpBase}/tournaments#recipe-finalize-tournament-scores` },
         { label: 'Help fans follow a team and get score alerts', href: `${helpBase}/tournaments#public-site-preview` },
+        { label: 'Chat with your coaches', href: `${helpBase}/tournaments#tournament-chat` },
         { label: 'Close out the tournament', href: `${helpBase}/tournaments#recipe-closeout-tournament` },
       ],
     },
@@ -146,6 +147,7 @@ export default function AdminHelpHubPage() {
           { label: 'Build your team schedule', href: `${helpBase}/coaches#recipe-build-coach-schedule` },
           { label: 'Track team fees', href: `${helpBase}/coaches#recipe-track-dues` },
           { label: 'Track player documents', href: `${helpBase}/coaches#recipe-track-documents` },
+          { label: 'Chat with the tournament organizer', href: `${helpBase}/coaches#recipe-tournament-chat` },
         ],
       },
     ] : []),

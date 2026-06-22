@@ -725,6 +725,65 @@ const tournamentsHelp: HelpPageContent = {
     },
 
     {
+      id: 'tournament-chat',
+      group: 'Communicate & Publish',
+      heading: 'Chat with your coaches',
+      summary: 'A live group chat with every coach in your tournament — a real conversation instead of one-way email blasts.',
+      keywords: ['chat', 'tournament chat', 'coach chat', 'group chat', 'message coaches', 'live chat', 'mute', 'close room', 'not yet joined', 'moderation'],
+      searchText: 'tournament chat group chat live chat with coaches message all coaches conversation real time chat tab not yet joined invite coach mute coach close room reopen read only remove message moderate moderation push notification Tournament Plus every participating coach free and paid stays readable after tournament',
+      links: [
+        { label: 'Chat', href: '../tournaments/chat' },
+      ],
+      content: (
+        <>
+          <p><strong>Chat</strong> gives you a live group conversation with every coach in your tournament — a real back-and-forth instead of one-way email blasts. Open the <strong>Chat</strong> tab on your tournament; every coach who has registered a team is already in the room, free and paid alike. They don&rsquo;t need a plan of their own — being in your tournament is enough.</p>
+          <p><strong>&ldquo;Not yet joined.&rdquo;</strong> Coaches who haven&rsquo;t finished signing in yet appear in a <strong>Not yet joined</strong> list, so nobody is silently left out. Use <strong>Copy link</strong> or <strong>Email</strong> beside a name to send that coach the sign-in link; they join the chat automatically the moment they sign in with their team&rsquo;s email.</p>
+          <p><strong>Keeping it on track.</strong> As the organizer you moderate the room: <strong>mute</strong> a coach for up to 72 hours (they can still read, just not post), <strong>remove</strong> a message, or <strong>close</strong> the room to make it read-only. You can reopen a closed room at any time. The conversation stays readable after the tournament wraps up, so the record is always there.</p>
+          <p>Chat is included with <strong>Tournament Plus and above</strong>. On the free Tournament plan the tab shows an upgrade option instead.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-tournament-chat-who',
+          question: 'Who is in the tournament chat, and who can use it?',
+          answerText: 'Tournament Chat is included with Tournament Plus, League Plus, and Club. Every coach with a team in your tournament is in the room — free and paid coaches alike — and none of them need a plan of their own. Coaches reach it from the Chat entry in their coaches portal. On the free Tournament plan the Chat tab shows an upgrade option.',
+          keywords: ['who can use chat', 'tournament chat plan', 'coaches in chat', 'free coaches', 'Tournament Plus chat'],
+          popular: true,
+          answer: (
+            <>
+              <p>Tournament Chat is included with <strong>Tournament Plus and above</strong>. Every coach with a team in your tournament is automatically in the room — both free and paid coaches — and none of them need a plan of their own.</p>
+              <p>Coaches open it from the <strong>Chat</strong> entry in their coaches portal. On the free Tournament plan, the Chat tab shows an upgrade option instead.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-tournament-chat-not-joined',
+          question: 'A coach is missing from the chat — how do I add them?',
+          answerText: 'Coaches who have not finished signing in appear under Not yet joined in the Chat tab. Use Copy link or Email beside their name to send them the coach sign-in link. They join the chat automatically once they sign in with the email on their team registration — there is no manual step to add them.',
+          keywords: ['not yet joined', 'coach missing from chat', 'invite coach to chat', 'add coach', 'coach sign in'],
+          answer: (
+            <>
+              <p>A coach who hasn&rsquo;t finished signing in yet appears under <strong>Not yet joined</strong> in the Chat tab. Use <strong>Copy link</strong> or <strong>Email</strong> beside their name to send them the coach sign-in link.</p>
+              <p>They join the chat automatically the moment they sign in with their team&rsquo;s email — there&rsquo;s no manual step to add them.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-tournament-chat-moderate',
+          question: 'How do I mute a coach or close the chat?',
+          answerText: 'In the Chat tab, use Mute beside a coach to stop them posting for up to 72 hours — they can still read the conversation. Use Close room to make the whole chat read-only for everyone, and reopen it any time. You can also remove an individual message. The room stays readable after the tournament finishes.',
+          keywords: ['mute coach', 'close chat', 'read only', 'remove message', 'moderate chat', 'reopen room'],
+          answer: (
+            <>
+              <p>Open the <strong>Chat</strong> tab. Beside any coach, <strong>Mute</strong> stops them posting for up to 72 hours while still letting them read. <strong>Close room</strong> makes the whole conversation read-only for everyone — you can <strong>reopen</strong> it at any time. You can also <strong>remove</strong> an individual message.</p>
+              <p>The conversation stays readable after the tournament finishes, so the record is always there.</p>
+            </>
+          ),
+        },
+      ],
+    },
+
+    {
       id: 'public-site-preview',
       group: 'Communicate & Publish',
       heading: 'The public tournament site, fan following, and preview',

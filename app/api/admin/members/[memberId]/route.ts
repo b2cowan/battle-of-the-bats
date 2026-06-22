@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { ALL_CAPABILITY_KEYS, hasCapability } from '@/lib/roles';
 import type { OrgRole } from '@/lib/types';
 import { sendEmail, memberSuspendedHtml } from '@/lib/email';
+import { cleanupBasicCoachTeamsForUserDeletion } from '@/lib/basic-coach-teams';
 import { withObservability } from '@/lib/observability';
 
 const VALID_CAPABILITIES = new Set<string>(ALL_CAPABILITY_KEYS);
@@ -137,6 +138,9 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
     // via the auth user.)
     await supabaseAdmin.from('org_member_tournament_assignments').delete().eq('org_member_id', memberId);
     await supabaseAdmin.from('org_member_rep_group_scopes').delete().eq('member_id', memberId);
+    // Note: tournaments.default_contact_member_id and divisions(age_groups).contact_member_id both
+    // FK organization_members(id) ON DELETE SET NULL (mig 088), so deleting the member row below
+    // auto-nulls any contact references — no explicit clearing needed on this path.
     const { error: memberError } = await supabaseAdmin
       .from('organization_members')
       .delete()
@@ -155,6 +159,16 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
     });
 
     return NextResponse.json({ ok: true, membershipOnly: true });
+  }
+
+  // J5-012: before deleting the auth user (cascade strips their basic_coach_team_users rows),
+  // delete any Basic coach team they were the SOLE active member of — otherwise it orphans (zero
+  // members → unreachable + unclaimable). Mirrors the platform-admin delete path. Best-effort: log
+  // but don't block the removal.
+  try {
+    await cleanupBasicCoachTeamsForUserDeletion(target.user_id);
+  } catch (e) {
+    console.error('[members] basic-coach-team cleanup failed (continuing with user delete):', e);
   }
 
   // Sole membership → hard-delete the account (ON DELETE CASCADE removes the member row and

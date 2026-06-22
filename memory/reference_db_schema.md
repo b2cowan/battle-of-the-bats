@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-06-20 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-06-22 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-06-20
+# DB Schema Reference — 2026-06-22
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -161,8 +161,8 @@ id (uuid), team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizat
 - Indexes: rep_program_years_team_id_year_key
 
 ### rep_roster_players
-id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_number, guardian_first_name, guardian_last_name, guardian_email, guardian_phone, status, source, tryout_registration_id (uuid) → rep_tryout_registrations.id, notes, admin_notes, created_at, updated_at, primary_position, secondary_position
-- Indexes: rep_roster_players_email_idx, rep_roster_players_year_idx
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_number, guardian_first_name, guardian_last_name, guardian_email, guardian_phone, status, source, tryout_registration_id (uuid) → rep_tryout_registrations.id, notes, admin_notes, created_at, updated_at, primary_position, secondary_position, display_order (integer), source_basic_player_id (uuid)
+- Indexes: rep_roster_players_email_idx, rep_roster_players_src_basic_player_uq, rep_roster_players_year_idx
 
 ### rep_season_surplus
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, total_surplus (numeric), notes, created_by (uuid), created_at, updated_at
@@ -181,8 +181,8 @@ id (uuid), event_id (uuid) → rep_team_events.id NOT NULL, player_id (uuid) →
 - Indexes: rep_team_event_attendance_event_id_player_id_key, rep_team_event_attendance_event_idx, rep_team_event_attendance_player_idx, rep_team_event_attendance_team_idx
 
 ### rep_team_events
-id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, home_score (integer), away_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status
-- Indexes: rep_team_events_parent_idx, rep_team_events_year_idx
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, home_score (integer), away_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid)
+- Indexes: rep_team_events_parent_idx, rep_team_events_src_basic_event_uq, rep_team_events_year_idx
 
 ### rep_team_expenses
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, expense_type NOT NULL, description NOT NULL, category, amount (numeric) NOT NULL, expense_paid_at, deposit_amount (numeric), deposit_due_date, deposit_paid_at, balance_amount (numeric), balance_due_date, balance_paid_at, event_id (uuid) → rep_team_events.id, accounting_entry_id (uuid) → accounting_entries.id, created_by (uuid), created_at, updated_at, payment_method, payee_id (uuid) → org_payees.id, payee_payer, notes
@@ -430,6 +430,18 @@ id (uuid), basic_coach_team_id (uuid) → basic_coach_teams.id NOT NULL, name NO
 id (uuid), name NOT NULL, normalized_name NOT NULL, primary_coach_name, primary_coach_email NOT NULL, sport, age_group, source, team_workspace_id (uuid) → team_workspaces.id, created_at, updated_at, activated_features (jsonb)
 - Indexes: basic_coach_teams_primary_email_idx, basic_coach_teams_workspace_idx
 
+### chat_messages
+id (uuid), room_id (uuid) → chat_rooms.id NOT NULL, sender_user_id (uuid), body NOT NULL, deleted_at, deleted_by_user_id (uuid), metadata (jsonb), sent_at
+- Indexes: chat_messages_room_sent_idx, chat_messages_sender_idx
+
+### chat_room_members
+id (uuid), room_id (uuid) → chat_rooms.id NOT NULL, user_id (uuid) NOT NULL, member_role, status, muted_until, joined_at, last_read_at
+- Indexes: chat_room_members_room_idx, chat_room_members_room_user_key, chat_room_members_user_idx
+
+### chat_rooms
+id (uuid), org_id (uuid) → organizations.id NOT NULL, surface NOT NULL, ref_id (uuid) NOT NULL, ref_sub_id (uuid), name NOT NULL, created_by_user_id (uuid), is_archived (boolean), settings (jsonb), created_at
+- Indexes: chat_rooms_org_idx, chat_rooms_surface_ref_idx
+
 ### error_events
 id (uuid), group_id (uuid) → error_groups.id NOT NULL, occurred_at, env, source, route, http_method, status_code (integer), error_name, error_message, stack_trace, org_id (uuid) → organizations.id, org_slug, user_id (uuid), user_email, user_role, request_id, ip_address, user_agent, request_context (jsonb), created_at
 - Indexes: idx_error_events_group_org, idx_error_events_group_time, idx_error_events_occurred, idx_error_events_org_time
@@ -477,7 +489,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) →
 
 ## Tables by count
 
-Total: **114 tables** across 10 modules.
+Total: **117 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -488,4 +500,4 @@ Total: **114 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 16 tables
+- Other: 19 tables

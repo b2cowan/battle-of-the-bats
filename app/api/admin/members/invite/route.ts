@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { sendEmail, orgInviteHtml, orgMemberAddedHtml } from '@/lib/email';
 import type { OrgRole } from '@/lib/types';
@@ -108,18 +109,11 @@ export const POST = withObservability(async (req: Request) => {
       return NextResponse.json({ error: 'This user is already a member of this organization' }, { status: 409 });
     }
 
-    // One-org constraint: reject if they genuinely belong to another org. A PENDING
-    // invite elsewhere (status='invited') does NOT count — the person never accepted it,
-    // so it shouldn't false-block a real invite here (J10-001). Only active/suspended
-    // memberships mean they're actually attached to another org.
-    const { data: otherMembers } = await supabaseAdmin
-      .from('organization_members')
-      .select('id')
-      .eq('user_id', existingUser.id)
-      .neq('status', 'invited')
-      .limit(1);
-
-    if (otherMembers && otherMembers.length > 0) {
+    // Single-org by default (decision 2026-06-19): reject if they already belong to another
+    // REAL org. A PENDING invite elsewhere (status='invited') does NOT count — the person never
+    // accepted it (J10-001). A standalone coach's OWN Coaches Portal (team_workspace) is EXEMPT,
+    // so a coach can still be invited into a club with one login. (Their current org is excluded.)
+    if (await userBelongsToOtherRealOrg(existingUser.id, org.id)) {
       return NextResponse.json(
         { error: 'This user already belongs to another organization. They must be removed from their current organization before being invited here.' },
         { status: 409 }

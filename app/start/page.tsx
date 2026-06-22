@@ -105,7 +105,7 @@ export default async function StartPage() {
             <Compass size={21} strokeWidth={1.8} aria-hidden />
           </div>
           <h1 className={styles.title}>What do you want to do?</h1>
-          <p className={styles.sub}>Pick where you&apos;re starting — you can add more later</p>
+          <p className={styles.sub}>Pick where you&apos;re starting</p>
         </header>
 
         <div className={styles.grid}>

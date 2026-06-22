@@ -18,6 +18,7 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { hasCapability, type Capability } from '@/lib/roles';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
+import { useHasMultipleWorkspaces } from '@/lib/use-has-multiple-workspaces';
 import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
 import { isWithinEventDates } from '@/lib/tournament-phase';
 import { useAdminWorklist } from '@/lib/admin-worklist';
@@ -117,6 +118,9 @@ export default function AdminSidebar() {
     currentOrgSlug,
     Boolean(canSeeRepTeams && !isCanceled),
   );
+  // "Single-org by default" (2026-06-19): only surface the workspace switcher when the user
+  // actually has more than one workspace; single-org admins never see it.
+  const hasMultipleWorkspaces = useHasMultipleWorkspaces();
 
   const hasOnlyTournamentWorkspace = !!currentOrg && canUseModule('module_tournaments') && !canSeePublicSite && !canSeeAccounting && !canSeeHouseLeague && !canSeeRepTeams;
   // Org venue library is a League/Club feature — not available to Tournament or Tournament Plus subscribers
@@ -601,9 +605,11 @@ export default function AdminSidebar() {
               <Users2 size={15} /> Coaches Portal
             </Link>
           )}
-          <Link href="/home?pick=1" className={styles.footerLink} id="admin-all-workspaces">
-            <LayoutGrid size={15} /> All Workspaces
-          </Link>
+          {hasMultipleWorkspaces && (
+            <Link href="/home?pick=1" className={styles.footerLink} id="admin-all-workspaces">
+              <LayoutGrid size={15} /> All Workspaces
+            </Link>
+          )}
           <Link
             href={helpHref}
             className={styles.footerLink}

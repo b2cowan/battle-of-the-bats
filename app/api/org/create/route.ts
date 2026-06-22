@@ -47,6 +47,22 @@ export const POST = withObservability(async (req: Request) => {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
     }
 
+    // Single-org by default (decision 2026-06-19): a signed-in user who already has an active
+    // membership cannot self-serve a second org — a second org comes only from a deliberate
+    // invite or a Coaches Portal purchase. Mirrors the /start/tournament page redirect; this is
+    // the server-side enforcement so the rule holds even if the page guard is bypassed.
+    const { count: activeMemberships } = await supabaseAdmin
+      .from('organization_members')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('status', 'active');
+    if ((activeMemberships ?? 0) > 0) {
+      return NextResponse.json(
+        { error: 'Your account already has a workspace. To join another organization, ask them to invite you.' },
+        { status: 403 }
+      );
+    }
+
     const { orgName, orgSlug } = await req.json().catch(() => ({}));
     const normalizedOrgName = typeof orgName === 'string' ? orgName.trim() : '';
     if (!normalizedOrgName) {

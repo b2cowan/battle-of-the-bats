@@ -5,7 +5,6 @@ import {
   Building2,
   ClipboardCheck,
   LayoutGrid,
-  Plus,
   Trophy,
   Users,
   type LucideIcon,
@@ -49,8 +48,8 @@ export default async function UserHomePage({
   searchParams?: Promise<{ pick?: string }>;
 }) {
   // `?pick=1` forces the launchpad even for single-access users — set by the explicit
-  // "All workspaces" / "Start something new" entry points so they aren't auto-redirected
-  // straight back into their one context (which would make adding a 2nd workspace impossible).
+  // "All workspaces" entry points so a genuinely multi-workspace user isn't auto-redirected
+  // straight back into their one context. Single-org users normally never reach the launchpad.
   const { pick } = (await searchParams) ?? {};
   const forcePicker = pick === '1';
 
@@ -89,7 +88,7 @@ export default async function UserHomePage({
   // choice is friction. When the user has exactly ONE access context and NO pending invite
   // to act on, redirect to that context's canonical destination (the same href the card
   // would link to). Users with >1 context, or any pending invite, still land on the /home
-  // launchpad (switcher + "Start something new"). "All workspaces" remains the way back here.
+  // launchpad (the workspace switcher). "All workspaces" remains the way back here.
   // Guard on a non-empty destination — some contexts (e.g. `organization`) currently carry an
   // empty `destination`; never `redirect('')` (it would loop/error). Those fall through to /home.
   if (!forcePicker && contexts.length === 1 && pendingInvites.length === 0 && contexts[0].destination) {
@@ -117,7 +116,6 @@ export default async function UserHomePage({
           {contexts.map(context => (
             <ContextCard key={context.id} context={context} />
           ))}
-          <StartNewCard />
         </div>
 
         <footer className={styles.footer}>
@@ -158,24 +156,3 @@ function ContextCard({ context }: { context: UserAccessContext }) {
   );
 }
 
-function StartNewCard() {
-  return (
-    <Link href="/start" className={`${styles.contextItem} ${styles.startNewItem}`}>
-      <div className={`${styles.contextIcon} ${styles.startNewIcon}`}>
-        <Plus size={20} strokeWidth={2} aria-hidden />
-      </div>
-      <div className={styles.contextInfo}>
-        <div className={styles.contextTop}>
-          <span className={styles.contextType}>New workspace</span>
-        </div>
-        <div className={styles.contextTitle}>Start something new</div>
-        <div className={styles.contextMeta}>
-          <span>Run a tournament, coach a team, or explore league &amp; club</span>
-        </div>
-      </div>
-      <span className={styles.enterBtn} aria-label="Start something new">
-        <ArrowRight size={16} strokeWidth={2.4} aria-hidden />
-      </span>
-    </Link>
-  );
-}

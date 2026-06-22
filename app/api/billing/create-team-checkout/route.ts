@@ -9,6 +9,7 @@ import {
   provisionTeamWorkspaceFromCheckoutMetadata,
 } from '@/lib/team-checkout';
 import { getBasicCoachTeamForUser } from '@/lib/basic-coach-teams';
+import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-entitlements';
 import {
   TeamWorkspaceClaimError,
   verifyTeamWorkspaceClaimForCheckout,
@@ -87,6 +88,22 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+
+  // One paid Coaches Portal per email (decision 2026-06-19): if this account already has a LIVE
+  // portal, don't let them start a second one — route them to the one they have. This applies to
+  // reactivation too: reactivating a canceled portal when you have NO live one still works (the
+  // check returns null for a canceled portal), but you can't reactivate a second portal while
+  // another is already live.
+  const existingPortal = await getActiveOwnedTeamWorkspace(user.id);
+  if (existingPortal) {
+    return new Response(JSON.stringify({
+      error: 'Your account already has a Coaches Portal. Each account can have one — use a different email to start another.',
+      code: 'portal_exists',
+      orgSlug: existingPortal.orgSlug,
+      url: `${appUrl}/${existingPortal.orgSlug}/coaches`,
+    }), { status: 409, headers: { 'Content-Type': 'application/json' } });
+  }
+
   const shouldApplyDirectly = isBillingMockEnabled() || (!isStripeConfigured() && process.env.NODE_ENV !== 'production');
 
   if (shouldApplyDirectly) {

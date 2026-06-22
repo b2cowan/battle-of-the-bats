@@ -4,10 +4,10 @@ export default function PlatformAdminHelpPage() {
   const customerCards: HelpHubCard[] = [
     {
       title: 'Tournaments',
-      desc: 'Customer-facing guide for tournament setup, schedules, results, registrations, and day-of operations.',
+      desc: 'Customer-facing guide for tournament setup, schedules, results, registrations, coach chat, and day-of operations.',
       href: '/platform-admin/help/tournaments',
-      topicCount: 25,
-      keywords: ['customer', 'tournament', 'schedule', 'scores', 'results', 'registrations'],
+      topicCount: 26,
+      keywords: ['customer', 'tournament', 'schedule', 'scores', 'results', 'registrations', 'chat', 'coach chat'],
     },
     {
       title: 'House League',
@@ -32,10 +32,10 @@ export default function PlatformAdminHelpPage() {
     },
     {
       title: 'Coaches Portal',
-      desc: 'Customer-facing guide coaches can use for rosters, schedules, dues, expenses, and player documents.',
+      desc: 'Customer-facing guide coaches can use for rosters, schedules, dues, expenses, player documents, and tournament chat.',
       href: '/platform-admin/help/coaches',
-      topicCount: 7,
-      keywords: ['customer', 'coach', 'coaches portal', 'roster', 'schedule', 'dues', 'documents'],
+      topicCount: 8,
+      keywords: ['customer', 'coach', 'coaches portal', 'roster', 'schedule', 'dues', 'documents', 'chat', 'tournament chat'],
     },
     {
       title: 'Accounting',
@@ -124,6 +124,7 @@ export default function PlatformAdminHelpPage() {
         { label: 'Build and adjust the schedule', href: '/platform-admin/help/tournaments#recipe-build-tournament-schedule' },
         { label: 'Enter and finalize scores', href: '/platform-admin/help/tournaments#recipe-finalize-tournament-scores' },
         { label: 'Fan following and score alerts', href: '/platform-admin/help/tournaments#public-site-preview' },
+        { label: 'Chat with participating coaches', href: '/platform-admin/help/tournaments#tournament-chat' },
         { label: 'Close out the tournament', href: '/platform-admin/help/tournaments#recipe-closeout-tournament' },
       ],
     },
@@ -145,6 +146,7 @@ export default function PlatformAdminHelpPage() {
         { label: 'Give a coach access to their team', href: '/platform-admin/help/rep-teams#recipe-assign-coach-access' },
         { label: 'Help a coach get started', href: '/platform-admin/help/coaches#recipe-first-login' },
         { label: 'Track team fees', href: '/platform-admin/help/coaches#recipe-track-dues' },
+        { label: 'Coach tournament chat', href: '/platform-admin/help/coaches#recipe-tournament-chat' },
       ],
     },
     {

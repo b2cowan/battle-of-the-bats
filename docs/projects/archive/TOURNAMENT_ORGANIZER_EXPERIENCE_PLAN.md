@@ -1,5 +1,7 @@
 # Tournament Organizer Experience — Implementation Plan
 
+> 🗄️ **SUPERSEDED — ARCHIVED 2026-06-20.** This is the original FP-5 *scoping* doc. The work was executed and **completed (browser-verified 2026-06-17)** under [`FP5_TOURNAMENT_ORGANIZER_PLAN.md`](FP5_TOURNAMENT_ORGANIZER_PLAN.md) (in this archive folder, alongside its PM brief, staffing plan, and test plan). Kept for historical reference only — **do not action from this file.**
+
 > **Status:** SCOPED 2026-06-13 — spun out of the User Journey Audit (Phase 5, FP-5). **NEW project.** Coordinates with DASHBOARD_SUMMARY_IA (owns completed/summary IA). Awaiting owner go-ahead.
 > **Branch:** dev. **Companion:** [TOURNAMENT_ORGANIZER_EXPERIENCE_PM_BRIEF.md](TOURNAMENT_ORGANIZER_EXPERIENCE_PM_BRIEF.md)
 > **Source of truth:** [journeys/JOURNEY_J1_TOURNAMENT_ORGANIZER.md](journeys/JOURNEY_J1_TOURNAMENT_ORGANIZER.md) + [USER_JOURNEY_AUDIT_SYNTHESIS.md](USER_JOURNEY_AUDIT_SYNTHESIS.md) §4 FP-5.

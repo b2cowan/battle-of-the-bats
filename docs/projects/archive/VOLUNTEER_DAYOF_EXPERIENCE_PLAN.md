@@ -1,5 +1,7 @@
 # Volunteer Day-of Experience — Implementation Plan
 
+> 🗄️ **SUPERSEDED — ARCHIVED 2026-06-20.** This is the original FP-3 *scoping* doc. The work was executed and **completed (browser-verified; complete 2026-06-15)** under `FP3_VOLUNTEER_DAYOF_PLAN.md` (the canonical FP-3 record). Kept for historical reference only — **do not action from this file.**
+
 > **Status:** SCOPED 2026-06-13 — spun out of the User Journey Audit (Phase 5, FP-3). **NEW project — no plan previously owned the volunteer shells.** Awaiting owner go-ahead.
 > **Branch:** dev. **Companion:** [VOLUNTEER_DAYOF_EXPERIENCE_PM_BRIEF.md](VOLUNTEER_DAYOF_EXPERIENCE_PM_BRIEF.md)
 > **Source of truth:** [journeys/JOURNEY_J8_SCOREKEEPER_GATE.md](journeys/JOURNEY_J8_SCOREKEEPER_GATE.md) + [USER_JOURNEY_AUDIT_SYNTHESIS.md](USER_JOURNEY_AUDIT_SYNTHESIS.md) §4 FP-3.

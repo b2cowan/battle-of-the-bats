@@ -45,7 +45,11 @@ export type PlanFeature =
   /** PWA install prompts on public pages — free on all plans */
   | 'pwa_install'
   /** Anonymous fan push score alerts — tournament_plus and above (the signature halo feature) */
-  | 'fan_score_alerts';
+  | 'fan_score_alerts'
+  // ── Coach Chat (Project 1 — Tournament Chat) ─────────────────────────────
+  /** Live group chat between the host org and all participating coaches — tournament_plus and above.
+   *  Gates the HOST org only; participating coaches need no plan of their own. */
+  | 'tournament_chat';
 
 export const PLAN_RANK: Record<OrgPlan, number> = {
   tournament:      0,
@@ -88,6 +92,8 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
   fan_following:                     'tournament',
   pwa_install:                       'tournament',
   fan_score_alerts:                  'tournament_plus',
+  // ── Coach Chat ───────────────────────────────────────────────────────────
+  tournament_chat:                   'tournament_plus',
 };
 
 export function hasPlanFeature(planId: OrgPlan, feature: PlanFeature): boolean {
@@ -124,6 +130,8 @@ export function requiresPlanCopy(feature: PlanFeature): string {
     // ── Public fan experience ─────────────────────────────────────────────
     case 'fan_score_alerts':
       return 'Live score alerts to fans who follow a team are included with Tournament Plus, League Plus, and Club.';
+    case 'tournament_chat':
+      return 'Tournament Chat — a live group chat with all your participating coaches — is included with Tournament Plus, League Plus, and Club.';
     case 'live_score_refresh':
     case 'fan_following':
     case 'pwa_install':

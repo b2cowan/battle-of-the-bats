@@ -1,6 +1,6 @@
 # Multi-Sport Tournaments — Implementation Plan
 
-**Status:** Planned (no code yet)
+**Status:** Phase 0 + Phase 1 **BUILT + DEPLOYED to production** (2026-06-19) — a *silent anchor* (sport stored + threaded end-to-end; migrations 135/136/137 applied to dev + prod; **no organizer-facing change yet**). **Phase 2 is next** (reveal the sport picker + sport-aware labels). Phase log: `memory/project_multisport_tournaments.md`.
 **Priority:** High (unblocks non-softball orgs + aligns tournaments with the coach "select your sport" model)
 **Tier:** All tiers (core capability; plan-gating TBD — see Open Decisions)
 **First non-softball pack:** Basketball

@@ -207,6 +207,48 @@ const coachesHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'recipe-tournament-chat',
+      group: 'Tournaments',
+      heading: 'How to chat with your tournament organizer',
+      summary: 'A live group chat with the organizer and the other coaches in each tournament you’re in.',
+      keywords: ['chat', 'tournament chat', 'message organizer', 'group chat', 'unread', 'push notification', 'coach chat'],
+      searchText: 'tournament chat group chat with organizer and other coaches live chat unread badge reply message push notification phone alert no email last seen read receipts join automatically muted closed read only free or paid',
+      content: (
+        <>
+          <p>When an organizer runs a chat for a tournament your team is in, a <strong>Chat</strong> item appears in your portal with an <strong>unread badge</strong>. Open it to read and reply in real time alongside the organizer and the other coaches in that tournament.</p>
+          <ol>
+            <li>Open <strong>Chat</strong> and pick the tournament conversation (if you only have one, it opens straight away).</li>
+            <li>Type your message and send — everyone in the room sees it right away.</li>
+          </ol>
+          <p>You get a <strong>phone notification</strong> for new messages (and the in-app bell) — no email. The chat shows a &ldquo;last seen&rdquo; marker per person rather than a tick on every message. If the organizer <strong>mutes</strong> you, you can still read but can&rsquo;t post for a while; if they <strong>close</strong> the room, it becomes read-only. There&rsquo;s nothing to set up — you join automatically once you&rsquo;ve signed in with your team&rsquo;s email.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-tournament-chat-join',
+          question: 'How do I join a tournament’s chat?',
+          answerText: 'You join automatically. When an organizer opens chat for a tournament your team is in, a Chat item appears in your coaches portal with an unread badge. There is nothing to accept — just sign in with the email on your team registration and the conversation shows up. It works the same whether your team is free or paid.',
+          keywords: ['join chat', 'tournament chat', 'no chat showing', 'where is chat', 'unread'],
+          popular: true,
+          answer: (
+            <>
+              <p>You join automatically. When an organizer opens chat for a tournament your team is in, a <strong>Chat</strong> item appears in your portal with an unread badge — there&rsquo;s nothing to accept.</p>
+              <p>If you don&rsquo;t see it yet, make sure you&rsquo;ve signed in with the email on your team registration. It works the same whether your team is free or paid.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-tournament-chat-notify',
+          question: 'Will I be notified of new chat messages?',
+          answerText: 'Yes — new chat messages send a phone push notification and light up the in-app bell. Chat does not email you. The chat shows a last seen marker per person, not a read tick on each message.',
+          keywords: ['chat notification', 'push notification', 'new message alert', 'no email', 'unread'],
+          answer: (
+            <p>Yes — a new chat message sends a <strong>phone push notification</strong> and lights up the in-app bell. Chat doesn&rsquo;t email you. The conversation shows a &ldquo;last seen&rdquo; marker per person rather than a read tick on every message.</p>
+          ),
+        },
+      ],
+    },
+    {
       id: 'premium',
       group: 'Coaches Portal Premium',
       heading: 'What Coaches Portal Premium adds',

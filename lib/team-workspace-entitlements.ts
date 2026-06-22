@@ -148,6 +148,43 @@ export function shouldShowClubValueNudge(activePaidTeamCount: number): boolean {
   return activePaidTeamCount >= 3;
 }
 
+const LIVE_TEAM_WORKSPACE_SUB_STATUSES: TeamWorkspaceSubscriptionStatus[] = ['active', 'trialing', 'past_due'];
+
+/**
+ * The LIVE Coaches Portal this user already OWNS, if any — enforcing "one paid Coaches Portal per
+ * email" (decision 2026-06-19). Returns its org id + slug (to route them to it), or null. A
+ * canceled/incomplete workspace does NOT count — they can reactivate it or start fresh — so only an
+ * active / trialing / past_due subscription blocks a second purchase.
+ */
+export async function getActiveOwnedTeamWorkspace(
+  userId: string,
+): Promise<{ orgSlug: string; workspaceOrgId: string } | null> {
+  const { data, error } = await supabaseAdmin
+    .from('team_workspaces')
+    .select('workspace_org_id, subscription_status')
+    .eq('primary_owner_user_id', userId);
+  if (error) throw error;
+
+  const live = (data ?? []).find(w =>
+    LIVE_TEAM_WORKSPACE_SUB_STATUSES.includes(w.subscription_status as TeamWorkspaceSubscriptionStatus),
+  );
+  if (!live) return null;
+
+  const { data: org } = await supabaseAdmin
+    .from('organizations')
+    .select('slug')
+    .eq('id', live.workspace_org_id)
+    .maybeSingle<{ slug: string }>();
+
+  if (!org?.slug) {
+    // A live workspace whose org can't be resolved is a data-integrity anomaly — surface it rather
+    // than silently treating the user as portal-less (which would let them buy a second).
+    console.error('[team-workspace-entitlements] live team_workspace has unresolvable org:', live.workspace_org_id);
+    return null;
+  }
+  return { orgSlug: org.slug, workspaceOrgId: live.workspace_org_id as string };
+}
+
 export async function getTeamWorkspaceForOrg(orgId: string): Promise<TeamWorkspace | null> {
   const { data, error } = await supabaseAdmin
     .from('team_workspaces')

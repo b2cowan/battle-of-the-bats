@@ -1,4 +1,60 @@
 {
+  "env": {
+    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
+  },
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash(mkdir -p \"c:\\\\Users\\\\Robert Cowan\\\\Documents\\\\tournament-website\\\\app\\\\[orgSlug]\\\\admin\\\\org\\\\notifications\" 2>/dev/null; echo done)",
+      "Bash(node *)",
+      "Bash(xargs grep -l \"action.*update.*divisions\")",
+      "Bash(cd *)",
+      "Bash(powershell -Command *)",
+      "PowerShell(npm run *)",
+      "PowerShell(npm install*)",
+      "PowerShell(npm ci*)",
+      "PowerShell(npm test*)",
+      "PowerShell(npm exec*)",
+      "PowerShell(npm ls*)",
+      "PowerShell(npm list*)",
+      "PowerShell(npm outdated*)",
+      "PowerShell(npm view*)",
+      "PowerShell(npx *)",
+      "PowerShell(node *)",
+      "PowerShell(pnpm *)",
+      "PowerShell(git status*)",
+      "PowerShell(git diff*)",
+      "PowerShell(git log*)",
+      "PowerShell(git show*)",
+      "PowerShell(git branch*)",
+      "PowerShell(git add *)",
+      "PowerShell(git fetch*)",
+      "PowerShell(git rev-parse*)",
+      "PowerShell(git stash list*)",
+      "PowerShell(git remote*)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Get-Item *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(Select-Object *)",
+      "PowerShell(Where-Object *)",
+      "PowerShell(Sort-Object *)",
+      "PowerShell(Measure-Object *)",
+      "PowerShell(Select-String *)",
+      "PowerShell(ForEach-Object *)",
+      "PowerShell(Format-Table *)",
+      "PowerShell(Format-List *)",
+      "PowerShell(Out-String*)",
+      "WebSearch",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "WebFetch"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Robert Cowan\\Documents\\tournament-website\\app\\[orgSlug]\\admin\\org"
+    ]
+  },
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -10,19 +66,6 @@
           }
         ]
       }
-    ]
-  },
-  "env": {
-    "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"
-  },
-  "permissions": {
-    "allow": [
-      "Bash(mkdir -p \"c:\\\\Users\\\\Robert Cowan\\\\Documents\\\\tournament-website\\\\app\\\\[orgSlug]\\\\admin\\\\org\\\\notifications\" 2>/dev/null; echo done)",
-      "Bash(node -e ' *)",
-      "Bash(xargs grep -l \"action.*update.*divisions\")"
-    ],
-    "additionalDirectories": [
-      "c:\\Users\\Robert Cowan\\Documents\\tournament-website\\app\\[orgSlug]\\admin\\org"
     ]
   }
 }

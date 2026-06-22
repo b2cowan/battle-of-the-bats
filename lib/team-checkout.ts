@@ -14,6 +14,7 @@ import {
 } from './team-workspace-claims';
 import type { SubscriptionStatus } from './types';
 import type { TeamEntitlementStatus, TeamWorkspaceSource } from './team-workspace-entitlements';
+import { getActiveOwnedTeamWorkspace } from './team-workspace-entitlements';
 
 export type TeamCheckoutRequest = {
   teamName: string;
@@ -554,6 +555,16 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
       });
     }
     return { provisioned: false, reason: 'already_exists', workspaceOrgId: existing.workspace_org_id as string };
+  }
+
+  // One Coaches Portal per owner (defense-in-depth for the rare double-pay race that slips past the
+  // stripe_subscription_id idempotency check above — two checkout sessions carry different sub ids).
+  // The pre-checkout route guard is the primary block; this stops a SECOND portal from being created
+  // if a webhook for a duplicate session still arrives. (Canceling/refunding the duplicate Stripe
+  // subscription is a follow-up, only relevant once self-serve Coaches Portal checkout is ungated.)
+  const ownerLivePortal = await getActiveOwnedTeamWorkspace(parsed.ownerUserId);
+  if (ownerLivePortal) {
+    return { provisioned: false, reason: 'already_exists', workspaceOrgId: ownerLivePortal.workspaceOrgId };
   }
 
   await assertTeamWorkspaceClaimAvailableForProvisioning(parsed.teamWorkspaceClaimId);

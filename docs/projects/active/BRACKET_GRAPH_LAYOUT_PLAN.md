@@ -1,6 +1,6 @@
 # Bracket Graph-Layout — Implementation Plan
 
-**Status:** Proposed (awaiting sign-off) · **Branch:** `dev` · Created 2026-06-18
+**Status:** ✅ **COMPLETE — DEPLOYED to production** (`origin/master`, 2026-06-19; owner-verified). Column placement follows the Winner/Loser feed graph across admin view, public SVG/HTML, and PDF; legacy/renamed (`G#`) codes render correctly with no data repair. Migration 134 (custom round names) applied to dev + prod. · Created 2026-06-18
 **PM brief:** `BRACKET_GRAPH_LAYOUT_PM_BRIEF.md`
 
 ## Problem

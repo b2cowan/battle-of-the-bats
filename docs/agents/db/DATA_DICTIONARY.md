@@ -1763,7 +1763,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_roster_players.player_first_name -->
 <!-- dict:col:rep_roster_players.player_last_name -->
-**`player_first_name` / `player_last_name`** (text, NOT NULL) — required on every write; list ordered by last name. (Split, unlike `basic_coach_team_players.name`.)
+**`player_first_name` / `player_last_name`** (text, NOT NULL) — required on every write; list ordered by `display_order` then last name (mig 142). (Split, unlike `basic_coach_team_players.name`.)
 
 <!-- dict:col:rep_roster_players.player_date_of_birth -->
 **`player_date_of_birth`** (date, nullable) — optional; **not** consent-gated (gotcha 4).
@@ -1793,6 +1793,12 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_roster_players.notes -->
 <!-- dict:col:rep_roster_players.admin_notes -->
 **`notes`** (general/coach-visible) / **`admin_notes`** (staff-internal, intended family-hidden) — both coach-writable (gotcha 3).
+
+<!-- dict:col:rep_roster_players.display_order -->
+**`display_order`** (int, NOT NULL, default 0; mig 142) — manual roster order for drag-to-reorder (Coach Premium Phase 3d; parity with `basic_coach_team_players.display_order`). List sorts `display_order ASC, player_last_name ASC`; existing rows are all `0` (so they keep name-sorting) until a coach reorders, which writes an explicit `0..n` to every shown row (scoped per program year). `createRepRosterPlayer` appends new players at `max(display_order)+1`; the free→Premium upgrade migration and the season rollover create players in source order, which the append preserves.
+
+<!-- dict:col:rep_roster_players.source_basic_player_id -->
+**`source_basic_player_id`** (uuid, nullable; mig 143) — provenance tag: the `basic_coach_team_players.id` this row was copied from during a free→Premium upgrade (Phase 4). Written ONLY by the upgrade migration/retry path; coach-created rows leave it NULL. Backs **idempotent retry** of a partial upgrade — a partial-unique index `(program_year_id, source_basic_player_id) WHERE source_basic_player_id IS NOT NULL` guarantees a given Basic player can only be copied once (a re-run / concurrent retry skips it). Not a FK (loose tag; the Basic row may be edited/removed independently).
 
 ### `rep_team_coaches`
 <!-- dict:table:rep_team_coaches -->
@@ -1885,6 +1891,9 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_team_events.status -->
 **`status`** (text, NOT NULL, default `'scheduled'`; CHECK `scheduled|cancelled`) — event lifecycle state (mig 135). Mirrors the Basic cousin `basic_coach_team_events.status` so a cancelled free event carries over on upgrade and Premium is never less capable than Free. `'cancelled'` keeps the event on the schedule (dimmed + badged), not deleted; the coach can restore it. Written via the events PATCH.
+
+<!-- dict:col:rep_team_events.source_basic_event_id -->
+**`source_basic_event_id`** (uuid, nullable; mig 143) — provenance tag: the `basic_coach_team_events.id` this event was copied from during a free→Premium upgrade (Phase 4). Written ONLY by the upgrade migration/retry path; coach-created events leave it NULL. Backs **idempotent retry** of a partial upgrade — a partial-unique index `(program_year_id, source_basic_event_id) WHERE source_basic_event_id IS NOT NULL` guarantees a given Basic event is copied at most once. Not a FK (loose tag).
 
 ### `rep_team_event_attendance`
 <!-- dict:table:rep_team_event_attendance -->
@@ -5027,3 +5036,121 @@ The platform-admin **error-tracking + in-app feedback** store (the "notification
 ---
 
 *End of Observability & Feedback (migrations 118 + 122 [Phase-4 functions/jobs] applied dev+prod; 6 tables, now **column-sealed**). RLS-enabled-zero-policies-zero-triggers throughout; the error-tracking core (RPC-upserted groups + sampled events), the in-process metrics fold, the Phase-3 feedback center [uncommitted working-tree], and the cron heartbeat. Many forensic / future-proof columns are capture-but-never-read by design (flagged per-column). Cross-references — not redocuments — `organizations`, `auth.users`, `platform_events` [the distinct business-event log], and [[project_email_stack]] [the feedback emails].*
+
+---
+
+# Domain: Chat
+
+> **Added by migration 141 (2026-06-19) — applied to DEV only (⚠ PROD-PENDING).** The shared chat engine — first slice of the Coach Chat program (Project 1, Tournament Chat). Built + validated as the **proving slice**: live message delivery + tenant-privacy (RLS) were confirmed on the live dev DB via `scripts/validate-chat-slice.mjs` (6/6) BEFORE any UI. NOT column-sealed yet (one slice in; revisit at the surface build). See [COACH_CHAT_PLATFORM_PLAN.md](../../projects/active/COACH_CHAT_PLATFORM_PLAN.md) §2 + [TOURNAMENT_CHAT_PLAN.md](../../projects/active/TOURNAMENT_CHAT_PLAN.md).
+
+One generic engine, three tables: **chat_rooms** (a conversation, typed by `surface`), **chat_room_members** (who's in it + each person's read watermark), **chat_messages** (append-only, soft-delete). Access is **membership-based**, org-agnostic — a person reads a room's messages only if they hold an `active` membership row. Realtime delivery is via the `supabase_realtime` publication on `chat_messages` (REPLICA IDENTITY FULL).
+
+### Gotchas first (the cross-cutting traps)
+
+- **Membership is the ONLY access key — RLS, not `org_id`.** `chat_messages`/`chat_rooms` SELECT policies subquery `chat_room_members` for an `active` row for `auth.uid()`. Deliberately org-agnostic so a future cross-org room (Project 3) works unchanged.
+- **`chat_room_members` SELECT policy is OWN-ROWS-ONLY (`user_id = auth.uid()`) to avoid RLS recursion.** A policy on `chat_room_members` that subqueries `chat_room_members` triggers Postgres "infinite recursion detected in policy". The full member roster is therefore read **server-side via the service role**, never by a member's own client.
+- **Realtime SUBSCRIBED ≠ streaming.** The channel reports SUBSCRIBED a beat before `postgres_changes` actually streams; a message sent into that gap is silently missed. The UI MUST load history via a fetch and treat realtime as post-connection updates (proven 2026-06-19).
+- **REPLICA IDENTITY FULL set BEFORE the publication add** (single migration, correct statement order) — the games realtime lesson (migs 130/132). `chat_messages` is the platform's **first RLS-enabled realtime table** (`games` runs RLS-off).
+- **Grants are COLUMN-scoped least-privilege — RLS is deliberately NOT the only write guard.** An RLS `WITH CHECK` sees only the NEW row, so a row-level "update your own membership" policy can't stop a member from ALSO flipping `status`/`member_role`; column grants reject that at the privilege layer first. `authenticated` gets: SELECT on `chat_rooms`; SELECT + **UPDATE(`last_read_at`)** on `chat_room_members` (NOT status/member_role → no self-promote-to-moderator, no ban/mute evasion); SELECT + **INSERT(`room_id`,`sender_user_id`,`body`,`metadata`)** + **UPDATE(`deleted_at`,`deleted_by_user_id`)** on `chat_messages` (NOT body/sender/room_id → no rewriting/reattributing history; NOT sent_at → no backdating). Rooms + membership rows are created/mutated by the service role. **No grants to `anon`.** (Hardened after the /review found the blanket-UPDATE escalation hole; re-validated 12/12.)
+- **Dev/prod:** migration 141 is **DEV-ONLY** as of 2026-06-19 — apply to prod + `npm run refresh:snapshots` at release, before promoting any reading code (`check:migrations` shows dev-ahead drift until then).
+
+---
+
+## `chat_rooms`
+<!-- dict:table:chat_rooms -->
+
+**Purpose:** one row per conversation. `surface` types it; `ref_id`/`ref_sub_id` point at what it belongs to (a tournament + optional division, etc.). Created/managed by the service role.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:chat_rooms.org_id -->
+**`org_id`** (FK → organizations.id, NN, CASCADE) — owning org. NOT the access key (membership is); used for scoping/listing. Project 3 (cross-org) will relax this.
+
+<!-- dict:col:chat_rooms.surface -->
+**`surface`** (text, NN; CHECK `tournament|coach_peer|coach_parent`) — which product surface owns the room; selects the participant-resolver. (`direct_message` for cross-org is a future Project-3 value.)
+
+<!-- dict:col:chat_rooms.ref_id -->
+**`ref_id`** (uuid, NN) — the subject the room is about (tournamentId for `tournament`, orgId for `coach_peer`, …). App-layer reference, no DB FK (varies by surface).
+
+<!-- dict:col:chat_rooms.ref_sub_id -->
+**`ref_sub_id`** (uuid, nullable) — optional sub-scope (e.g. a division for a tournament sub-room).
+
+<!-- dict:col:chat_rooms.name -->
+**`name`** (text, NN) — display name.
+
+<!-- dict:col:chat_rooms.created_by_user_id -->
+**`created_by_user_id`** (FK → auth.users.id, nullable, SET NULL) — room creator.
+
+<!-- dict:col:chat_rooms.is_archived -->
+**`is_archived`** (bool, NN, default false) — archived rooms are read-only (the INSERT policy requires `is_archived = false`). A tournament room **stays readable** after archive (owner decision 2026-06-19).
+
+<!-- dict:col:chat_rooms.settings -->
+**`settings`** (jsonb, NN, default `{}`) — per-room flags (`coach_post_enabled`, `is_read_only`, `max_retention_days`); reserved for the surface phase.
+
+## `chat_room_members`
+<!-- dict:table:chat_room_members -->
+
+**Purpose:** who is in a room, their role, and **each person's read watermark** (`last_read_at`). The membership row IS the access key for the whole engine.
+
+**Gotchas (read first):**
+1. **SELECT policy = own-rows-only** (`user_id = auth.uid()`) to avoid RLS recursion; the roster is read server-side via the service role.
+2. **`last_read_at` is the seen-receipt** — "last seen" per person, not a per-message read tick.
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:chat_room_members.room_id -->
+**`room_id`** (FK → chat_rooms.id, NN, CASCADE) — the room. UNIQUE with `user_id` (one membership per person per room).
+
+<!-- dict:col:chat_room_members.user_id -->
+**`user_id`** (FK → auth.users.id, NN, CASCADE) — the member.
+
+<!-- dict:col:chat_room_members.member_role -->
+**`member_role`** (text, NN, default `member`; CHECK `member|moderator`) — moderators may soft-delete messages.
+
+<!-- dict:col:chat_room_members.status -->
+**`status`** (text, NN, default `active`; CHECK `active|pending|muted|removed`) — only `active` grants access. `pending` = a coach who hasn't finished signup ("not yet joined"), auto-activated later.
+
+<!-- dict:col:chat_room_members.muted_until -->
+**`muted_until`** (timestamptz, nullable) — admin mute expiry (≤72h at the surface).
+
+<!-- dict:col:chat_room_members.joined_at -->
+**`joined_at`** (timestamptz, NN, default now()) — when added.
+
+<!-- dict:col:chat_room_members.last_read_at -->
+**`last_read_at`** (timestamptz, nullable) — the read watermark; unread count = messages with `sent_at > last_read_at`. Updated by the member's **own** client (the only authenticated UPDATE they may do).
+
+## `chat_messages`
+<!-- dict:table:chat_messages -->
+
+**Purpose:** append-only message log (soft-delete). The realtime-published table — active members receive INSERTs live.
+
+**Gotchas (read first):**
+1. **In the `supabase_realtime` publication with REPLICA IDENTITY FULL** — the platform's first RLS-enabled realtime table.
+2. **INSERT policy pins `sender_user_id = auth.uid()`** and requires an active membership in a non-archived room — you can only post as yourself, into a room you're in.
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:chat_messages.room_id -->
+**`room_id`** (FK → chat_rooms.id, NN, CASCADE) — the room; the realtime filter key.
+
+<!-- dict:col:chat_messages.sender_user_id -->
+**`sender_user_id`** (FK → auth.users.id, nullable, SET NULL) — author; the INSERT policy forces it to `auth.uid()`.
+
+<!-- dict:col:chat_messages.body -->
+**`body`** (text, NN) — message text.
+
+<!-- dict:col:chat_messages.deleted_at -->
+**`deleted_at`** (timestamptz, nullable) — soft-delete marker; set by a moderator UPDATE.
+
+<!-- dict:col:chat_messages.deleted_by_user_id -->
+**`deleted_by_user_id`** (FK → auth.users.id, nullable, SET NULL) — the moderator who removed it.
+
+<!-- dict:col:chat_messages.metadata -->
+**`metadata`** (jsonb, NN, default `{}`) — reserved for the surface phase (attachments, system messages).
+
+<!-- dict:col:chat_messages.sent_at -->
+**`sent_at`** (timestamptz, NN, default now()) — order key; index `(room_id, sent_at DESC)` for pagination.
+
+---
+
+*End of Chat (migration 141, DEV-only / ⚠ prod-pending; 3 tables, NOT yet column-sealed). Membership-based RLS (org-agnostic by design for future cross-org), own-rows-only member visibility to dodge RLS recursion, `chat_messages` realtime-published (REPLICA IDENTITY FULL). Proving slice validated 6/6 via `scripts/validate-chat-slice.mjs`. Cross-references — not redocuments — `organizations`, `auth.users`, and the Notifications & Push domain (the bell/push path, wired at the surface phase).*

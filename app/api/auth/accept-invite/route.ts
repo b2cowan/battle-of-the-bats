@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { withObservability } from '@/lib/observability';
 
 async function getAuthenticatedUser() {
@@ -77,11 +78,17 @@ export const POST = withObservability(async (req: Request) => {
   // Find the pending member row for this user.
   // Use supabaseAdmin to bypass RLS — the user's session may not yet have
   // org-level read access before accepted_at is set.
+  // A user can momentarily hold more than one pending 'invited' row (e.g. invited to a club and
+  // to their own Coaches Portal stub). Accept the oldest deterministically — `.limit(1)` keeps
+  // `.maybeSingle()` from erroring on >1 row. The single-org accept guard below then prevents a
+  // second REAL-org join. (The /home pending-invites card accepts multiple invites individually.)
   const { data: member } = await supabaseAdmin
     .from('organization_members')
     .select('id, role, organization_id, organizations(slug)')
     .eq('user_id', user.id)
     .eq('status', 'invited')
+    .order('invited_at', { ascending: true })
+    .limit(1)
     .maybeSingle();
 
   if (!member) {
@@ -91,11 +98,23 @@ export const POST = withObservability(async (req: Request) => {
       .from('organization_members')
       .select('role, organizations(slug)')
       .eq('user_id', user.id)
+      .order('accepted_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     const orgSlug = orgSlugFromRelation(existing?.organizations ?? null);
     const role = existing?.role ?? null;
     return NextResponse.json({ ok: true, orgSlug, role, alreadyAccepted: true });
+  }
+
+  // Single-org by default (decision 2026-06-19): don't let an accept create membership in a
+  // SECOND real org. The user's own Coaches Portal is exempt (so a standalone coach can accept a
+  // club invite with one login). Closes the long-open "cross-org accept guard".
+  if (await userBelongsToOtherRealOrg(user.id, member.organization_id)) {
+    return NextResponse.json(
+      { error: 'Your account already belongs to another organization. Ask an admin to remove you there before joining this one.' },
+      { status: 409 }
+    );
   }
 
   const memberUpdate: Record<string, unknown> = {

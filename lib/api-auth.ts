@@ -82,6 +82,24 @@ export async function getAuthenticatedUser(): Promise<User | null> {
 }
 
 /**
+ * Deterministic "home" org for the orgless fallback (decision 2026-06-19). Prefers a real
+ * organization over the user's own Coaches Portal stub (team_workspace), then the earliest-created
+ * org — so a multi-membership user always resolves to the same workspace instead of whichever row
+ * the DB happens to return first. Returns undefined when the user has no non-null org membership.
+ */
+function pickHomeMembership(rows: AuthMemberOrgRow[]): AuthMemberOrgRow | undefined {
+  const withOrg = rows.filter((row): row is { organizations: AuthOrgRow } => row.organizations !== null);
+  if (withOrg.length <= 1) return withOrg[0];
+  const isTeamWorkspace = (o: AuthOrgRow) => o.account_kind === 'team_workspace' || o.plan_id === 'team';
+  return [...withOrg].sort((a, b) => {
+    const at = isTeamWorkspace(a.organizations) ? 1 : 0;
+    const bt = isTeamWorkspace(b.organizations) ? 1 : 0;
+    if (at !== bt) return at - bt;                                                  // real org before Coaches Portal stub
+    return a.organizations.created_at.localeCompare(b.organizations.created_at);    // earliest-created first
+  })[0];
+}
+
+/**
  * Extracts the authenticated user and their organization from the request session cookie.
  * Returns null if the request is unauthenticated or the user has no org.
  * Use in all /api/admin/* route handlers before touching the database.
@@ -101,12 +119,14 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
 
   // Fail closed (J3-012): when the caller requires an explicit org and didn't pass one,
   // resolve to NO org rather than the arbitrary first membership. Otherwise (orgless
-  // callers like billing / auth/me) keep the first-non-null-membership fallback.
+  // callers like billing / auth/me) fall back to the user's deterministic HOME org — a real
+  // organization is preferred over their own Coaches Portal stub, then earliest-created — so a
+  // multi-membership user always resolves to the same workspace ("home org", decision 2026-06-19).
   const membership = options.orgSlug
     ? memberData?.find(row => row.organizations?.slug === options.orgSlug)
     : options.requireOrgSlug
       ? undefined
-      : memberData?.find(row => row.organizations !== null);
+      : pickHomeMembership(memberData ?? []);
 
   const orgRow = membership?.organizations;
   if (!orgRow) return null;
