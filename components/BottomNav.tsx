@@ -16,20 +16,30 @@ const PAGE_TABS = [
   { key: 'teams',    icon: Users,     label: 'Teams'    },
 ];
 
-export default function BottomNav() {
+type BottomNavProps = {
+  /** Link prefix override. Omit on the live public site (derived from route params);
+   *  the admin tournament PREVIEW passes its `/…/preview/{tournament}` base so the
+   *  tabs stay inside the preview instead of escaping to the live site. */
+  basePath?: string;
+  hiddenPages?: PublicPageKey[];
+};
+
+export default function BottomNav({ basePath, hiddenPages }: BottomNavProps = {}) {
   const pathname = usePathname();
   const params   = useParams();
   const orgSlug  = (params?.orgSlug as string) || 'milton-bats';
   const tournamentSlug = params?.tournamentSlug as string | undefined;
   const { tournamentHiddenPages } = useOrgNav();
 
-  // Hide on admin routes and marketing/auth pages
+  // Live usage: hide on admin/marketing/auth routes and when there's no tournament
+  // in the URL. Preview usage: an explicit basePath is passed, so bypass the admin
+  // guard (the preview lives under /…/admin/…) and link inside the preview.
   const isAdmin = /^\/[^/]+\/admin(\/|$)/.test(pathname) || pathname.startsWith('/admin');
   const isMarketing = pathname === '/' || pathname.startsWith('/discover') || pathname.startsWith('/auth');
-  if (isAdmin || isMarketing || pathname.startsWith('/platform-admin') || !tournamentSlug) return null;
+  if (!basePath && (isAdmin || isMarketing || pathname.startsWith('/platform-admin') || !tournamentSlug)) return null;
 
-  const homeHref = `/${orgSlug}/${tournamentSlug}`;
-  const pageTabs = PAGE_TABS.filter(tab => !tournamentHiddenPages.includes(tab.key as PublicPageKey));
+  const homeHref = basePath ?? `/${orgSlug}/${tournamentSlug}`;
+  const pageTabs = PAGE_TABS.filter(tab => !(hiddenPages ?? tournamentHiddenPages).includes(tab.key as PublicPageKey));
 
   return (
     <nav className={styles.bottomNav} aria-label="Mobile navigation">

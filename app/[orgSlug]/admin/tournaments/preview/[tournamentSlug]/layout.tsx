@@ -1,4 +1,5 @@
 import TournamentPreviewNav from '@/components/public/TournamentPreviewNav';
+import BottomNav from '@/components/BottomNav';
 import TournamentSideRail from '@/components/public/TournamentSideRail';
 import railStyles from '@/components/public/TournamentSideRail.module.css';
 import {
@@ -63,6 +64,10 @@ export default async function TournamentPreviewLayout({
         />
         {children}
       </div>
+      {/* Mobile (≤900px) section nav — the preview gets no global bottom nav (that one
+          hides on /admin/* routes), so mount a preview-scoped instance whose tabs link
+          inside the preview. Matches the live public shell the admin is previewing. */}
+      <BottomNav basePath={previewBase} hiddenPages={hiddenPages} />
     </>
   );
 }
