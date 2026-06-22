@@ -23,16 +23,26 @@ import type { RepEventType } from './types';
  * - WEBHOOK-SAFE: the caller (provisioner) wraps this so it never throws out of the provision/webhook
  *   path — a migration hiccup must never fail the payment. This function also never throws; it
  *   returns a summary (with `ok: false` + `error` if it hit a top-level problem).
- * - IDEMPOTENCY is the CALLER's responsibility (atomic claim of basic_coach_teams.team_workspace_id);
- *   this function just does the copy for a team that has been claimed for the first time.
+ * - IDEMPOTENT (mig 143): every migrated roster/event row carries a `source_basic_*_id` provenance
+ *   tag (fees use the natural UNIQUE(program_year_id, player_id) key). This function RECONCILES the
+ *   Basic source against the current Premium target each run — it copies only what's missing and
+ *   counts the FULL resulting state — so it is safe to re-run to repair a partial migration
+ *   (see retryCoachUpgradeMigration). The first provisioning run (nothing present yet) copies
+ *   everything exactly as before.
  *
  * Announcements are NOT migrated (the historical send-log stays on the free team by design; the
  * Premium announcements FEATURE exists separately — Phase 3b).
  */
 
+export const MAX_AUTO_MIGRATION_RETRIES = 3;
+
 export type CoachUpgradeMigrationSummary = {
   ok: boolean;
+  programYearId: string;
   migratedAt: string;
+  retryCount?: number;
+  lastRetryAt?: string;
+  acknowledgedAt?: string;
   roster: { migrated: number; failed: number; needGuardian: string[]; nameSplitUncertain: string[] };
   schedule: { migrated: number; cancelled: number; failed: number };
   fees: { migrated: number; markedPaid: number; dueDateDefaulted: number; skippedZero: number; skippedNoPlayer: number; failed: number };
@@ -41,9 +51,10 @@ export type CoachUpgradeMigrationSummary = {
   error?: string;
 };
 
-function emptySummary(): CoachUpgradeMigrationSummary {
+function emptySummary(programYearId: string): CoachUpgradeMigrationSummary {
   return {
     ok: true,
+    programYearId,
     migratedAt: new Date().toISOString(),
     roster: { migrated: 0, failed: 0, needGuardian: [], nameSplitUncertain: [] },
     schedule: { migrated: 0, cancelled: 0, failed: 0 },
@@ -88,21 +99,38 @@ export async function migrateBasicTeamIntoWorkspace(params: {
   teamId: string;
   programYearId: string;
 }): Promise<CoachUpgradeMigrationSummary> {
-  const summary = emptySummary();
+  const { basicCoachTeamId, orgId, teamId, programYearId } = params;
+  const summary = emptySummary(programYearId);
 
-  // ── Roster ────────────────────────────────────────────────────────────────
-  // Build a freePlayerId → newRepPlayerId map for the fees pass.
+  // ── Roster ──────────────────────────────────────────────────────────────
+  // Idempotent: skip Basic players already copied (matched by source_basic_player_id), copy + stamp
+  // the rest. Build a basicPlayerId → newRepPlayerId map (existing + new) for the fees pass.
   const playerIdMap = new Map<string, string>();
   try {
-    const players = await getBasicCoachTeamPlayers(params.basicCoachTeamId);
+    const { data: existingRows } = await supabaseAdmin
+      .from('rep_roster_players')
+      .select('id, source_basic_player_id')
+      .eq('program_year_id', programYearId);
+    for (const row of (existingRows ?? []) as Array<{ id: string; source_basic_player_id: string | null }>) {
+      if (row.source_basic_player_id) playerIdMap.set(row.source_basic_player_id, row.id);
+    }
+
+    const players = await getBasicCoachTeamPlayers(basicCoachTeamId);
     for (const p of players) {
+      const label = p.name?.trim() || p.id;
+      const name = splitName(p.name);
+      // Review flags are recomputed from the Basic source on every run (including for already-copied
+      // players), so the summary stays complete + accurate across retries.
+      if (name.uncertain) summary.roster.nameSplitUncertain.push(label);
+      if (!p.contactEmail || !p.guardianName) summary.roster.needGuardian.push(label);
+
+      if (playerIdMap.has(p.id)) { summary.roster.migrated++; continue; } // already copied — skip
       try {
-        const name = splitName(p.name);
         const guardian = splitGuardian(p.guardianName);
         const created = await createRepRosterPlayer({
-          programYearId: params.programYearId,
-          teamId: params.teamId,
-          orgId: params.orgId,
+          programYearId,
+          teamId,
+          orgId,
           source: 'admin_manual',
           playerFirstName: name.first,
           playerLastName: name.last,
@@ -113,14 +141,10 @@ export async function migrateBasicTeamIntoWorkspace(params: {
           guardianEmail: p.contactEmail,
           guardianPhone: p.contactPhone,
           notes: p.notes,
+          sourceBasicPlayerId: p.id,
         });
         playerIdMap.set(p.id, created.id);
         summary.roster.migrated++;
-        const label = p.name?.trim() || created.id;
-        if (name.uncertain) summary.roster.nameSplitUncertain.push(label);
-        // Flag any missing guardian contact (name OR email) — both came over nullable; the coach
-        // should complete them (an email is what re-enables dues reminders).
-        if (!p.contactEmail || !p.guardianName) summary.roster.needGuardian.push(label);
       } catch (e) {
         summary.roster.failed++;
         console.error('[coach-upgrade-migration] roster player failed:', e);
@@ -132,33 +156,52 @@ export async function migrateBasicTeamIntoWorkspace(params: {
     console.error('[coach-upgrade-migration] roster pass failed:', e);
   }
 
-  // ── Schedule ──────────────────────────────────────────────────────────────
+  // ── Schedule ────────────────────────────────────────────────────────────
+  // Idempotent: count events already copied (by source_basic_event_id), bulk-insert only the missing
+  // ones. Events are all-or-nothing per insert, so a failed batch lands 0 and a retry re-inserts.
   try {
-    const events = await getBasicCoachTeamEvents(params.basicCoachTeamId);
-    const rows: CreateRepTeamEventFields[] = events.map(ev => ({
-      programYearId: params.programYearId,
-      teamId: params.teamId,
-      orgId: params.orgId,
-      eventType: EVENT_TYPE_MAP[ev.eventType] ?? 'team_event',
-      name: ev.title,
-      description: ev.notes,
-      startsAt: ev.startsAt,
-      endsAt: ev.endsAt,
-      location: ev.location,
-      opponent: ev.opponent,
-      status: ev.status,
-    }));
+    const { data: existingEvents } = await supabaseAdmin
+      .from('rep_team_events')
+      .select('source_basic_event_id, status')
+      .eq('program_year_id', programYearId)
+      .not('source_basic_event_id', 'is', null);
+    const existingEventSources = new Set<string>();
+    for (const ev of (existingEvents ?? []) as Array<{ source_basic_event_id: string; status: string }>) {
+      existingEventSources.add(ev.source_basic_event_id);
+      if (ev.status === 'cancelled') summary.schedule.cancelled++;
+    }
+    summary.schedule.migrated += existingEventSources.size;
+
+    const events = await getBasicCoachTeamEvents(basicCoachTeamId);
+    const rows: CreateRepTeamEventFields[] = events
+      .filter(ev => !existingEventSources.has(ev.id))
+      .map(ev => ({
+        programYearId,
+        teamId,
+        orgId,
+        eventType: EVENT_TYPE_MAP[ev.eventType] ?? 'team_event',
+        name: ev.title,
+        description: ev.notes,
+        startsAt: ev.startsAt,
+        endsAt: ev.endsAt,
+        location: ev.location,
+        opponent: ev.opponent,
+        status: ev.status,
+        sourceBasicEventId: ev.id,
+      }));
     if (rows.length > 0) {
       try {
         const created = await createRepTeamEvents(rows);
         summary.schedule.migrated += created.length;
-        // Count cancelled only among events that actually landed (accurate on partial/total failure).
         summary.schedule.cancelled += created.filter(e => e.status === 'cancelled').length;
       } catch (e) {
-        summary.schedule.failed += rows.length; // bulk insert is all-or-nothing
-        summary.ok = false;
-        summary.notes.push('Schedule import hit a problem; some events may be missing.');
-        console.error('[coach-upgrade-migration] schedule insert failed:', e);
+        // A 23505 means a concurrent retry already inserted these (the partial-unique index on
+        // source_basic_event_id won the race) — not a real failure; the next reconcile read counts them.
+        if ((e as { code?: string })?.code !== '23505') {
+          summary.schedule.failed += rows.length; // bulk insert is all-or-nothing
+          summary.notes.push('Schedule import hit a problem; some events may be missing.');
+          console.error('[coach-upgrade-migration] schedule insert failed:', e);
+        }
       }
     }
   } catch (e) {
@@ -169,13 +212,21 @@ export async function migrateBasicTeamIntoWorkspace(params: {
 
   // ── Fees → per-player dues schedules ──────────────────────────────────────
   // Default due date 30 days out (avoids a back-dated "overdue" on a migrated fee); flagged for
-  // coach review. $0 fees and fees with no/unmapped player are surfaced, not migrated.
+  // coach review. $0 fees and fees with no/unmapped player are surfaced, not migrated. Idempotent:
+  // a player who already has a dues schedule is skipped (schedules are deleted on failure below, so
+  // an existing one is complete); UNIQUE(program_year_id, player_id) is the dedup key.
   const defaultDueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   try {
-    const fees = await getBasicCoachTeamFees(params.basicCoachTeamId);
-    // Premium allows exactly ONE dues schedule per player per season (UNIQUE program_year_id+player_id),
-    // so GROUP each player's fees into one schedule with one installment per fee. $0 fees and fees with
-    // no/unmapped player are surfaced (counted), not migrated.
+    const { data: existingSchedules } = await supabaseAdmin
+      .from('rep_player_dues_schedules')
+      .select('id, player_id')
+      .eq('program_year_id', programYearId);
+    const existingScheduleByPlayer = new Map<string, string>();
+    for (const s of (existingSchedules ?? []) as Array<{ id: string; player_id: string }>) {
+      existingScheduleByPlayer.set(s.player_id, s.id);
+    }
+
+    const fees = await getBasicCoachTeamFees(basicCoachTeamId);
     const feesByPlayer = new Map<string, typeof fees>();
     for (const fee of fees) {
       if (fee.amount <= 0) { summary.fees.skippedZero++; continue; }
@@ -186,26 +237,75 @@ export async function migrateBasicTeamIntoWorkspace(params: {
       feesByPlayer.set(newPlayerId, list);
     }
     for (const [newPlayerId, playerFees] of feesByPlayer) {
+      let existingScheduleId = existingScheduleByPlayer.get(newPlayerId);
+
+      // Reconcile an existing schedule (from a prior run): a COMPLETE one (has installments) is
+      // counted + its paid state reconciled, without re-creating; an installment-less ORPHAN (a prior
+      // partial whose cleanup also failed) is deleted and re-created below.
+      if (existingScheduleId) {
+        try {
+          const { data: insts } = await supabaseAdmin
+            .from('rep_player_dues_installments')
+            .select('id, installment_number, paid_at')
+            .eq('schedule_id', existingScheduleId)
+            .order('installment_number');
+          if (insts && insts.length > 0) {
+            summary.fees.migrated += playerFees.length;
+            // Reconcile paid state from the Basic ledger: stamp any Basic-paid fee whose installment
+            // is not yet paid (never un-stamps a coach-set paid_at). markedPaid reflects ACTUAL state.
+            let stampError = false;
+            for (let i = 0; i < playerFees.length; i++) {
+              const inst = (insts as Array<{ id: string; installment_number: number; paid_at: string | null }>)
+                .find(x => x.installment_number === i + 1);
+              if (!inst) continue;
+              if (inst.paid_at) { summary.fees.markedPaid++; continue; }
+              if (playerFees[i].status === 'paid') {
+                const paidAt = playerFees[i].markedPaidAt ?? new Date().toISOString();
+                const { error } = await supabaseAdmin
+                  .from('rep_player_dues_installments')
+                  .update({ paid_at: paidAt })
+                  .eq('id', inst.id);
+                if (error) stampError = true; else summary.fees.markedPaid++;
+              }
+            }
+            if (stampError) summary.fees.failed++; // surface so a retry re-reconciles
+            continue;
+          }
+          // Orphan (schedule exists, zero installments) — remove it and fall through to re-create.
+          await supabaseAdmin.from('rep_player_dues_schedules').delete().eq('id', existingScheduleId);
+          existingScheduleId = undefined;
+        } catch (e) {
+          summary.fees.failed += playerFees.length;
+          console.error('[coach-upgrade-migration] dues reconcile failed:', e);
+          continue;
+        }
+      }
+
+      // Create path — a player with no schedule yet (or an orphan just deleted).
+      let createdScheduleId: string | null = null;
       try {
         const total = playerFees.reduce((sum, f) => sum + f.amount, 0);
         const schedule = await createRepPlayerDuesSchedule({
-          programYearId: params.programYearId,
+          programYearId,
           playerId: newPlayerId,
-          teamId: params.teamId,
-          orgId: params.orgId,
+          teamId,
+          orgId,
           totalAmount: total,
           notes: playerFees.map(f => f.label).join(', '),
         });
+        createdScheduleId = schedule.id;
         const installments = await replaceRepDuesInstallments(
           schedule.id,
           newPlayerId,
           playerFees.map((f, i) => ({ installmentNumber: i + 1, amount: f.amount, dueDate: defaultDueDate })),
-          params.orgId,
-          params.teamId,
+          orgId,
+          teamId,
         );
         summary.fees.migrated += playerFees.length;
         summary.fees.dueDateDefaulted += playerFees.length;
         // Preserve paid state per fee: stamp the matching installment's paid_at from the free ledger.
+        // A stamp FAILURE is surfaced (fees.failed++) so the run is ok:false and a retry re-stamps it
+        // via the reconcile path above — otherwise a paid fee would silently show unpaid in Premium.
         for (let i = 0; i < playerFees.length; i++) {
           const fee = playerFees[i];
           if (fee.status !== 'paid') continue;
@@ -216,10 +316,16 @@ export async function migrateBasicTeamIntoWorkspace(params: {
             .from('rep_player_dues_installments')
             .update({ paid_at: paidAt })
             .eq('id', inst.id);
-          if (!error) summary.fees.markedPaid++;
+          if (error) summary.fees.failed++; else summary.fees.markedPaid++;
         }
       } catch (e) {
         summary.fees.failed += playerFees.length;
+        // Delete the just-created schedule if its installments failed to land, so a retry re-creates
+        // it cleanly and an installment-less orphan can't overcount outstanding dues.
+        if (createdScheduleId) {
+          try { await supabaseAdmin.from('rep_player_dues_schedules').delete().eq('id', createdScheduleId); }
+          catch (delErr) { console.error('[coach-upgrade-migration] orphan dues-schedule cleanup failed:', delErr); }
+        }
         console.error('[coach-upgrade-migration] fee group failed:', e);
       }
     }
@@ -229,5 +335,50 @@ export async function migrateBasicTeamIntoWorkspace(params: {
     console.error('[coach-upgrade-migration] fees pass failed:', e);
   }
 
+  // A per-row failure in any entity also marks the run not-ok (a retry will re-attempt those).
+  if (summary.roster.failed > 0 || summary.schedule.failed > 0 || summary.fees.failed > 0) {
+    summary.ok = false;
+  }
+
   return summary;
+}
+
+/**
+ * Re-run the (idempotent) copy to repair a partial migration, then persist the fresh full-state
+ * summary on the workspace with retry bookkeeping. Safe to call repeatedly: each call fills only
+ * what's still missing. The caller (route) enforces the auto-retry cap; a manual "Try again" bypasses
+ * it. Never throws — returns the prior summary on a top-level problem.
+ */
+export async function retryCoachUpgradeMigration(params: {
+  workspaceId: string;
+  orgId: string;
+  teamId: string;
+  basicCoachTeamId: string;
+  programYearId: string;
+  priorSummary: CoachUpgradeMigrationSummary;
+}): Promise<CoachUpgradeMigrationSummary> {
+  try {
+    const fresh = await migrateBasicTeamIntoWorkspace({
+      basicCoachTeamId: params.basicCoachTeamId,
+      orgId: params.orgId,
+      teamId: params.teamId,
+      programYearId: params.programYearId,
+    });
+    const merged: CoachUpgradeMigrationSummary = {
+      ...fresh,
+      // Preserve the original first-migration timestamp + any prior acknowledgement.
+      migratedAt: params.priorSummary.migratedAt ?? fresh.migratedAt,
+      acknowledgedAt: params.priorSummary.acknowledgedAt,
+      retryCount: (params.priorSummary.retryCount ?? 0) + 1,
+      lastRetryAt: new Date().toISOString(),
+    };
+    await supabaseAdmin
+      .from('team_workspaces')
+      .update({ migration_summary: merged })
+      .eq('id', params.workspaceId);
+    return merged;
+  } catch (e) {
+    console.error('[coach-upgrade-migration] retry failed (non-fatal):', e);
+    return params.priorSummary;
+  }
 }

@@ -4467,6 +4467,7 @@ export async function createRepRosterPlayer(fields: {
   guardianPhone?: string | null;
   notes?: string | null;
   adminNotes?: string | null;
+  sourceBasicPlayerId?: string | null;
 }): Promise<RepRosterPlayer> {
   // Append new players at the end of the manual roster order (parity with the Basic roster — a coach
   // can drag-reorder afterward). mig 142 added rep_roster_players.display_order; sequential creates
@@ -4503,6 +4504,7 @@ export async function createRepRosterPlayer(fields: {
       notes: fields.notes ?? null,
       admin_notes: fields.adminNotes ?? null,
       display_order: nextDisplayOrder,
+      source_basic_player_id: fields.sourceBasicPlayerId ?? null,
     })
     .select()
     .single();
@@ -4627,6 +4629,7 @@ export interface CreateRepTeamEventFields {
   recurrenceRule?: Record<string, unknown> | null;
   recurrenceParentId?: string | null;
   status?: 'scheduled' | 'cancelled';
+  sourceBasicEventId?: string | null;
 }
 
 export async function createRepTeamEvent(fields: CreateRepTeamEventFields): Promise<RepTeamEvent> {
@@ -4649,6 +4652,7 @@ export async function createRepTeamEvent(fields: CreateRepTeamEventFields): Prom
       recurrence_rule: fields.recurrenceRule ?? null,
       recurrence_parent_id: fields.recurrenceParentId ?? null,
       status: fields.status ?? 'scheduled',
+      source_basic_event_id: fields.sourceBasicEventId ?? null,
     })
     .select()
     .single();
@@ -4676,6 +4680,7 @@ export async function createRepTeamEvents(rows: CreateRepTeamEventFields[]): Pro
       recurrence_rule: f.recurrenceRule ?? null,
       recurrence_parent_id: f.recurrenceParentId ?? null,
       status: f.status ?? 'scheduled',
+      source_basic_event_id: f.sourceBasicEventId ?? null,
     })))
     .select();
   if (error) throw error;

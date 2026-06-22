@@ -1,15 +1,19 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { CheckCircle2, X, TriangleAlert } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { CheckCircle2, X, TriangleAlert, RefreshCw } from 'lucide-react';
 
 type MigrationSummary = {
   ok?: boolean;
+  programYearId?: string;
+  retryCount?: number;
   roster?: { migrated: number; needGuardian?: string[]; nameSplitUncertain?: string[] };
   schedule?: { migrated: number; cancelled: number };
   fees?: { migrated: number; dueDateDefaulted: number; skippedZero: number; skippedNoPlayer: number };
   announcementsMigrated?: boolean;
 };
+
+const MAX_AUTO_RETRIES = 3;
 
 /**
  * One-time "here's what we brought over + check these" banner shown on the Premium team overview
@@ -17,21 +21,48 @@ type MigrationSummary = {
  * renders nothing if there isn't one (or it's been dismissed). Honest by design — surfaces the
  * lossy edges (missing guardian emails, uncertain name splits, defaulted fee due dates, skipped
  * fees, announcements not carried) rather than pretending it was a perfect copy.
+ *
+ * If the migration was only PARTIAL (`ok:false`), the banner automatically re-runs the (idempotent)
+ * repair in the background — up to a small cap — and offers a manual "Try again" press; gaps from a
+ * transient failure self-heal without the coach lifting a finger.
  */
 export default function UpgradeSummaryBanner({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const [summary, setSummary] = useState<MigrationSummary | null>(null);
   const [dismissing, setDismissing] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const retryingRef = useRef(false);
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/upgrade-summary`;
+
+  const runRetry = useCallback(async (manual: boolean) => {
+    if (retryingRef.current) return; // single-flight on the client (idempotency guards the server)
+    retryingRef.current = true;
+    setRetrying(true);
+    try {
+      const res = await fetch(`${base}/retry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ manual }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && 'summary' in data) setSummary(data.summary as MigrationSummary | null);
+    } catch { /* keep current state */ }
+    finally { setRetrying(false); retryingRef.current = false; }
+  }, [base]);
 
   const load = useCallback(async () => {
     try {
       const res = await fetch(base, { cache: 'no-store' });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.summary) setSummary(data.summary as MigrationSummary);
+      if (res.ok && data.summary) {
+        const s = data.summary as MigrationSummary;
+        setSummary(s);
+        // Auto-repair a partial migration on load (server enforces the cap too).
+        if (s.ok === false && (s.retryCount ?? 0) < MAX_AUTO_RETRIES) void runRetry(false);
+      }
     } catch { /* non-fatal — banner just won't show */ }
-  }, [base]);
+  }, [base, runRetry]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
   async function dismiss() {
     setDismissing(true);
@@ -44,6 +75,8 @@ export default function UpgradeSummaryBanner({ orgSlug, teamId }: { orgSlug: str
   const r = summary.roster ?? { migrated: 0 };
   const s = summary.schedule ?? { migrated: 0, cancelled: 0 };
   const f = summary.fees ?? { migrated: 0, dueDateDefaulted: 0, skippedZero: 0, skippedNoPlayer: 0 };
+  const partial = summary.ok === false;
+  const autoExhausted = (summary.retryCount ?? 0) >= MAX_AUTO_RETRIES;
 
   const broughtOver: string[] = [];
   if (r.migrated) broughtOver.push(`${r.migrated} player${r.migrated === 1 ? '' : 's'}`);
@@ -59,7 +92,6 @@ export default function UpgradeSummaryBanner({ orgSlug, teamId }: { orgSlug: str
   if (f.skippedNoPlayer) checkThese.push(`${f.skippedNoPlayer} fee${f.skippedNoPlayer === 1 ? ' was' : 's were'} not linked to a player and weren't carried over.`);
   if (f.skippedZero) checkThese.push(`${f.skippedZero} $0 fee${f.skippedZero === 1 ? ' was' : 's were'} skipped.`);
   checkThese.push('Past team announcements aren’t carried over — the announcements feature is ready to use here.');
-  if (summary.ok === false) checkThese.push('Some items hit a problem during import — double-check your roster, schedule, and fees.');
 
   return (
     <div style={{
@@ -93,6 +125,32 @@ export default function UpgradeSummaryBanner({ orgSlug, teamId }: { orgSlug: str
             {checkThese.map((item, i) => <li key={i}>{item}</li>)}
           </ul>
         </>
+      )}
+      {partial && (
+        <div style={{ marginTop: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: 'rgba(241,245,249,0.8)' }}>
+            {retrying && <RefreshCw size={13} className="spin" aria-hidden style={{ animation: 'spin 1s linear infinite' }} />}
+            {retrying
+              ? 'Finishing bringing your data over…'
+              : autoExhausted
+                ? 'A few items couldn’t be brought over automatically — add them on the Roster, Schedule, or Dues tabs, or try again.'
+                : 'Finishing bringing the rest of your data over…'}
+          </span>
+          <button
+            type="button"
+            onClick={() => runRetry(true)}
+            disabled={retrying}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
+              background: 'rgba(96,165,250,0.18)', border: '1px solid rgba(96,165,250,0.4)',
+              color: '#bfdbfe', borderRadius: 8, padding: '0.3rem 0.7rem', fontSize: '0.8rem',
+              fontWeight: 600, cursor: retrying ? 'default' : 'pointer', opacity: retrying ? 0.6 : 1,
+            }}
+          >
+            <RefreshCw size={13} aria-hidden /> {retrying ? 'Working…' : 'Try again now'}
+          </button>
+          <style>{'@keyframes spin{to{transform:rotate(360deg)}}'}</style>
+        </div>
       )}
     </div>
   );
