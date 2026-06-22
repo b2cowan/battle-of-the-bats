@@ -483,7 +483,15 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
   // form (and the matching /api/register POST) stop minting junk mid-event registrations
   // + coach accounts (J6-035). Open vs waitlist both keep the form available, so we pass
   // no registrations here; per-division capacity is still handled inside the form below.
-  const registrationInfo = tournament ? getRegistrationState(tournament, divisions, []) : null;
+  // In the admin preview a draft hasn't been activated, so the live gate would read
+  // "not open" — but the whole point of the preview is to show the real form before
+  // going live. Treat a draft as active in preview ONLY (live registrants are never
+  // affected — isPreview is false on the public route), and let the normal
+  // division/capacity rules decide open vs waitlist.
+  const gateTournament = isPreview && tournament?.status === 'draft'
+    ? { ...tournament, status: 'active' as const }
+    : tournament;
+  const registrationInfo = gateTournament ? getRegistrationState(gateTournament, divisions, []) : null;
   const isRegistrationOpen = registrationInfo?.state === 'open' || registrationInfo?.state === 'waitlist';
   const notOpen = !isRegistrationOpen;
   // A logged-in coach registers as themselves — lock the registrant name to their account,
