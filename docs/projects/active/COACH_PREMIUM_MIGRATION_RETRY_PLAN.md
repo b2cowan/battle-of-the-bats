@@ -1,6 +1,8 @@
 # Coach Premium — Automatic Retry for a Partial Data Migration (scoping)
 
-**Status:** SCOPING (not built). Spun out of the Coach Premium Upgrade Flow as the one v1 follow-up worth pursuing (owner, 2026-06-22). Parent: [COACH_PREMIUM_UPGRADE_FLOW_PLAN.md](COACH_PREMIUM_UPGRADE_FLOW_PLAN.md) · PM brief: [COACH_PREMIUM_MIGRATION_RETRY_PM_BRIEF.md](COACH_PREMIUM_MIGRATION_RETRY_PM_BRIEF.md).
+**Status:** ✅ BUILT on `dev` (2026-06-22), adversarially reviewed, gates green; NOT pushed. Parent: [COACH_PREMIUM_UPGRADE_FLOW_PLAN.md](COACH_PREMIUM_UPGRADE_FLOW_PLAN.md) · PM brief: [COACH_PREMIUM_MIGRATION_RETRY_PM_BRIEF.md](COACH_PREMIUM_MIGRATION_RETRY_PM_BRIEF.md).
+
+**Build:** all four owner-approved defaults shipped — auto-retry on overview load (cap 3) + manual "Try again" button; provenance tags on roster + schedule (mig **143**, dev-applied ⚠ prod-pending) with partial-unique indexes; fees idempotent via the existing per-player key. The copy was rewritten to **reconcile to full state** each run (idempotent: fills only what's missing, converges to `ok:true`). A 4-lens adversarial review (money/dues · idempotency · concurrency · auth) was folded in — two Criticals fixed (silent paid-state failure → now surfaced + retried; orphan-schedule detection + re-create + paid_at re-stamp on the reconcile path). Accepted non-blockers (rare, self-healing, no data corruption): non-atomic retry-count under a two-tab race; a coach-pre-created dues schedule shadows that player's fee count; any assigned coach (not just head) can press "Try again". Owner browser-test on dev pending.
 
 ---
 

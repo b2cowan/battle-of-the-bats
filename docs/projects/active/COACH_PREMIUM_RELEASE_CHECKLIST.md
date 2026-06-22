@@ -53,6 +53,7 @@ Already on prod: **135 / 136 / 137** (applied during the Multi-Sport promotion).
 | 139 | `139_rep_roster_players_guardian_nullable.sql` | 3c | **Must precede 140.** Drops NOT NULL on guardian fields so the Phase-4 migration can carry rosters with missing guardian info without a constraint violation |
 | 140 | `140_team_workspaces_migration_summary.sql` | 4 | Stores the post-upgrade "check these" summary the portal surfaces |
 | 142 | `142_rep_roster_players_display_order.sql` | 3d | Roster manual-order column |
+| 143 | `143_coach_upgrade_migration_provenance.sql` | retry | Provenance tags + partial-unique indexes that make the partial-migration auto-retry safe |
 | *(141)* | `141_chat_foundation.sql` | *(chat)* | **Only under scope (A)** — not a Coach Premium migration |
 
 Per file:
@@ -109,6 +110,6 @@ Today `getPlanGatingMap().team` is **truthy** in prod → `/coaches/start` rende
 
 ## Known follow-ups (documented, NOT release blockers)
 
-- **No auto-retry for a partial data migration** — a partial carry is surfaced honestly in the summary (`ok:false` + banner); safe retry needs per-entity idempotency. Worst case is visible, not silent. **Now scoped** (owner wants it): [COACH_PREMIUM_MIGRATION_RETRY_PLAN.md](COACH_PREMIUM_MIGRATION_RETRY_PLAN.md) — best done pre-launch so the safety tagging covers every real upgrade.
+- ~~**No auto-retry for a partial data migration**~~ — ✅ **BUILT** (mig 143, dev): a partial carry now self-heals (bounded auto-retry + manual "Try again"), made safe by row-level provenance. See [COACH_PREMIUM_MIGRATION_RETRY_PLAN.md](COACH_PREMIUM_MIGRATION_RETRY_PLAN.md). Adds mig 143 to the prod-pending set (Step 3).
 - **Pre-existing duplicate-workspace race** — two Stripe events both passing the subscription-id dedup could create two workspaces; unaffected by this work, tracked as separate provisioning hardening.
 - **Phase 5 edge cases** — lapsed-subscription coach can still roll a season (no per-action billing gate, consistent with the rest of the portal); true all-or-nothing season rollover would need a DB transaction/RPC; both documented in the Phase 5 plan.
