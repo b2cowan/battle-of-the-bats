@@ -610,6 +610,7 @@ export default function AdminDashboard() {
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [expandedIconPicker, setExpandedIconPicker] = useState<StatCardId | null>(null);
   const [addMenuZone, setAddMenuZone] = useState<'stat' | 'panel' | 'gameday' | null>(null);
+  const [reuseDismissed, setReuseDismissed] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -621,6 +622,22 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (currentOrg?.slug) setLayout(loadLayout(currentOrg.slug));
   }, [currentOrg?.slug]);
+
+  // Reuse-setup banner: remember the "no thanks" decision per tournament (client-only).
+  useEffect(() => {
+    const id = currentTournament?.id;
+    if (!id) { setReuseDismissed(false); return; }
+    try {
+      setReuseDismissed(localStorage.getItem(`flhq-help-dismissed-reuse-setup-${id}`) === '1');
+    } catch { setReuseDismissed(false); }
+  }, [currentTournament?.id]);
+
+  function dismissReuseSetup() {
+    const id = currentTournament?.id;
+    if (!id) return;
+    try { localStorage.setItem(`flhq-help-dismissed-reuse-setup-${id}`, '1'); } catch { /* ignore */ }
+    setReuseDismissed(true);
+  }
 
   const updateLayout = useCallback((next: DashboardLayout) => {
     setLayout(next);
@@ -1791,13 +1808,13 @@ export default function AdminDashboard() {
 
       {isDraft && currentTournament?.id && (
         <>
-          {otherTournaments.length > 0 && (
+          {otherTournaments.length > 0 && !checklist.hasDivisions && !reuseDismissed && (
             <div className={styles.reuseSetupPrompt}>
               <div className={styles.reusePromptBody}>
                 <Copy size={16} className={styles.reusePromptIcon} />
                 <div>
                   <strong className={styles.reusePromptTitle}>Reuse setup from a previous tournament</strong>
-                  <p>Bring forward divisions, venues, registration questions, fees, rules, and public settings into this draft.</p>
+                  <p>Bring forward divisions, venues, registration questions, fees, rules, and public settings into this draft. You can always reuse a setup later from Manage Tournaments.</p>
                 </div>
               </div>
               <div className={styles.reusePromptActions}>
@@ -1806,6 +1823,15 @@ export default function AdminDashboard() {
                 ) : (
                   <Link className="btn btn-lime btn-data" href={subscriptionHref}>Review Tournament Plus</Link>
                 )}
+                <button
+                  type="button"
+                  onClick={dismissReuseSetup}
+                  aria-label="Dismiss"
+                  title="Dismiss"
+                  style={{ background: 'none', border: 0, color: 'var(--white-40)', cursor: 'pointer', padding: '0.25rem', display: 'inline-flex', alignItems: 'center' }}
+                >
+                  <X size={14} />
+                </button>
               </div>
             </div>
           )}
