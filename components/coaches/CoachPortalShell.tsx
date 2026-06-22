@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Home, Trophy, Users, CalendarClock, CircleDollarSign, Megaphone,
   Compass, LogOut, LayoutGrid, X, MoreHorizontal, ChevronRight, ChevronDown,
-  HelpCircle,
+  HelpCircle, MessageSquare,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { teamColor } from '@/lib/team-color';
@@ -18,6 +18,9 @@ import {
 } from '@/lib/coaches-portal-routes';
 import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
 import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdProvider';
+import { useHasMultipleWorkspaces } from '@/lib/use-has-multiple-workspaces';
+import { useChatUnread } from '@/lib/use-chat-unread';
+import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import styles from './CoachPortalShell.module.css';
 
 /** Rich per-team context from /api/coaches/basic-teams?context=1 (lib/basic-coach-teams CoachTeamContext). */
@@ -33,6 +36,7 @@ type TeamContext = {
 const TIER1 = [
   { key: 'overview', label: 'Overview', icon: Home, sub: '' },
   { key: 'tournaments', label: 'Tournaments', icon: Trophy, sub: '/tournaments' },
+  { key: 'chat', label: 'Chat', icon: MessageSquare, sub: '/chat' },
 ] as const;
 
 /** Tier-2 sections — shown only when the coach has turned them on (activatedFeatures). */
@@ -76,6 +80,11 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
 
   const [lastPath, setLastPath] = useState(pathname);
   const closeMore = useCallback(() => setMoreOpen(false), []);
+  // "Single-org by default" (2026-06-19): only show the workspace switcher when the coach
+  // actually has more than one workspace (e.g. their portal + a club).
+  const hasMultipleWorkspaces = useHasMultipleWorkspaces();
+  // Unread chat badge — only fetch on real (authenticated) shell routes, not signup/marketing.
+  const chatUnread = useChatUnread(showShell && !isHelp);
 
   // Close the More sheet on any route change (the shell persists across soft-nav). React's
   // endorsed "adjust state during render" pattern (guarded by the path-changed check, so it
@@ -207,6 +216,7 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
             aria-current={sectionActive(currentTeam!, sub) ? 'page' : undefined}
           >
             <Icon size={16} aria-hidden /><span>{label}</span>
+            {key === 'chat' && <ChatUnreadBadge count={chatUnread} />}
           </Link>
         ))}
     </nav>
@@ -285,9 +295,11 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
           <Link href="/coaches/help" className={styles.railFooterLink} target="_blank" rel="noopener noreferrer">
             <HelpCircle size={14} aria-hidden /><span>Help</span>
           </Link>
-          <Link href="/home?pick=1" className={styles.railFooterLink}>
-            <LayoutGrid size={14} aria-hidden /><span>All workspaces</span>
-          </Link>
+          {hasMultipleWorkspaces && (
+            <Link href="/home?pick=1" className={styles.railFooterLink}>
+              <LayoutGrid size={14} aria-hidden /><span>All workspaces</span>
+            </Link>
+          )}
           <button type="button" className={styles.railFooterLink} onClick={handleSignOut}>
             <LogOut size={14} aria-hidden /><span>Sign out</span>
           </button>
@@ -335,8 +347,18 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
                   href={sectionHref(currentTeam!, sub)}
                   className={`${styles.bottomTab}${active ? ` ${styles.bottomTabActive}` : ''}`}
                   aria-current={active ? 'page' : undefined}
+                  aria-label={key === 'chat' && chatUnread > 0 ? `${label}, ${chatUnread > 9 ? '9+' : chatUnread} unread` : undefined}
+                  style={{ position: 'relative' }}
                 >
                   <Icon size={20} strokeWidth={active ? 2.4 : 1.8} aria-hidden /><span>{label}</span>
+                  {key === 'chat' && chatUnread > 0 && (
+                    <span
+                      aria-hidden
+                      style={{ position: 'absolute', top: 4, left: 'calc(50% + 6px)', background: 'var(--logic-lime)', color: 'var(--pitch-black)', fontSize: '0.55rem', fontWeight: 800, borderRadius: 999, padding: '0 4px', minWidth: 14, height: 14, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      {chatUnread > 9 ? '9+' : chatUnread}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -417,9 +439,11 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
 
             {/* Account utilities */}
             {email && <p className={styles.sheetEmail} title={email}>{email}</p>}
-            <Link href="/home?pick=1" className={styles.sheetItem} onClick={closeMore}>
-              <LayoutGrid size={16} aria-hidden /><span>All workspaces</span>
-            </Link>
+            {hasMultipleWorkspaces && (
+              <Link href="/home?pick=1" className={styles.sheetItem} onClick={closeMore}>
+                <LayoutGrid size={16} aria-hidden /><span>All workspaces</span>
+              </Link>
+            )}
             <FeedbackLauncher className={styles.sheetItem} label="Send feedback" iconSize={16} />
             <Link href="/coaches/help" className={styles.sheetItem} target="_blank" rel="noopener noreferrer" onClick={closeMore}>
               <HelpCircle size={16} aria-hidden /><span>Help</span>

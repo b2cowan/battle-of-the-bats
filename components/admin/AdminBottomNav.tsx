@@ -14,6 +14,7 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import { useAdminWorklist } from '@/lib/admin-worklist';
+import { useChatUnread } from '@/lib/use-chat-unread';
 import { TOUR_GROUPS, type TourNavItem } from './admin-nav-config';
 import AdminContextStrip from './AdminContextStrip';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
@@ -62,13 +63,26 @@ export default function AdminBottomNav() {
   const setupItems = TOUR_GROUPS.find(g => g.key === 'setup')!.items;
   const adminItems = TOUR_GROUPS.find(g => g.key === 'admin')!.items;
 
-  const PRIMARY_KEYS = opsItems.slice(0, 4).map(prefixKey);
-  const operationsMoreBase = opsItems.slice(4).map(prefixKey);
+  // Lifecycle-aware primary tabs. Dashboard now lives on the top-bar title ("home"), freeing a slot;
+  // Chat is ALWAYS promoted (the main coach↔organizer channel). Before the event is live the bar
+  // leans setup (Teams + Divisions); once live (and after) it leans game-day (Results + Check-in).
+  // Everything else — including Dashboard, as a safety net — stays reachable under "More".
+  const resultsPhase = tournamentIsLive || currentTournament?.status === 'archived';
+  const opsByKey = new Map(opsItems.map(i => [i.key, i]));
+  const setupByKey = new Map(setupItems.map(i => [i.key, i]));
+  const primaryDefs: TourNavItem[] = (resultsPhase
+    ? [opsByKey.get('results'), opsByKey.get('check-in'), opsByKey.get('schedule'), opsByKey.get('chat')]
+    : [opsByKey.get('registrations'), setupByKey.get('divisions'), opsByKey.get('schedule'), opsByKey.get('chat')]
+  ).filter((i): i is TourNavItem => Boolean(i));
+  const PRIMARY_KEYS = primaryDefs.map(prefixKey);
+  const primaryKeys = new Set(primaryDefs.map(i => i.key));
+  const operationsMoreBase = opsItems.filter(i => !primaryKeys.has(i.key)).map(prefixKey);
   const operationsMore: NavItem[] = showTournamentSummary
     ? [...operationsMoreBase, { key: 'tournaments/summary', icon: FileText, label: 'Summary' }]
     : operationsMoreBase;
   const setupMore = setupItems
     .filter(item => !item.roles || item.roles.includes(userRole ?? ''))
+    .filter(item => !primaryKeys.has(item.key)) // Divisions is a primary tab pre-live — don't double-list it
     .map(prefixKey);
   const adminMore = adminItems.map(prefixKey);
 
@@ -146,6 +160,9 @@ export default function AdminBottomNav() {
       ]
     : null; // tournament ops — use PRIMARY_KEYS
 
+  // Chat unread — only in tournament-ops mode (where the Chat tab lives).
+  const chatUnread = useChatUnread(!modulePrimaryTabs);
+
   return (
     <nav className={styles.bottomNav} aria-label="Admin mobile navigation">
       {!modulePrimaryTabs && <AdminContextStrip />}
@@ -178,11 +195,17 @@ export default function AdminBottomNav() {
               href={href}
               className={`${styles.tab} ${active ? styles.active : ''}`}
               id={`admin-mob-${label.toLowerCase()}`}
+              aria-label={key === 'tournaments/chat' && chatUnread > 0 ? `${label}, ${chatUnread > 9 ? '9+' : chatUnread} unread` : undefined}
             >
               <span className={styles.iconWrap}>
                 <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
                 {active && <span className={styles.activeDot} />}
                 {count > 0 && <span className={styles.tabCount}>{count > 9 ? '9+' : count}</span>}
+                {key === 'tournaments/chat' && chatUnread > 0 && (
+                  <span className={styles.tabCount} style={{ background: 'var(--logic-lime)', color: 'var(--pitch-black)' }}>
+                    {chatUnread > 9 ? '9+' : chatUnread}
+                  </span>
+                )}
               </span>
               <span className={styles.label}>{label}</span>
             </Link>

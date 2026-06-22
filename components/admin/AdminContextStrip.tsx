@@ -42,6 +42,9 @@ export default function AdminContextStrip() {
   // Don't nudge toward the Results page when you're already on it — the bottom-nav
   // tab badge already carries the count, so the strip would just duplicate it.
   const onResultsPage = pathname.includes('/admin/tournaments/results');
+  // The chat is a full-screen messaging surface; a dashboard nudge above the composer
+  // just steals vertical space from the conversation, so suppress the strip there.
+  const onChatPage = pathname.includes('/admin/tournaments/chat');
 
   // Load this tournament's dismiss state after mount (avoids SSR mismatch).
   useEffect(() => {
@@ -56,7 +59,7 @@ export default function AdminContextStrip() {
   }, [tournamentId]);
 
   const action: StripAction | null = useMemo(() => {
-    if (!onTournamentRoute || !base || !currentTournament) return null;
+    if (!onTournamentRoute || onChatPage || !base || !currentTournament) return null;
     const regs = worklist.registrations ?? 0;
     const results = worklist.results ?? 0;
     if (results > 0 && !onResultsPage) {
@@ -76,7 +79,7 @@ export default function AdminContextStrip() {
       return { key: 'summary', label: 'Review event summary', href: `${base}/summary`, icon: <FileText size={15} />, count: 0 };
     }
     return null; // open / game day with nothing pending → nothing to surface
-  }, [onTournamentRoute, onResultsPage, base, currentTournament, worklist]);
+  }, [onTournamentRoute, onChatPage, onResultsPage, base, currentTournament, worklist]);
 
   // Visible unless dismissed for the same action whose count hasn't increased.
   const visible = !!action && hydrated && !(

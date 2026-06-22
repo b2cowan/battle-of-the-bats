@@ -6,9 +6,24 @@
 
 ---
 
+## 0. Program structure (restructured 2026-06-19) — this doc is now the UMBRELLA
+
+The surfaces were split into **separate, independently-shippable projects**, each with its own plan + PM brief. **This document remains the canonical reference for the shared engine (§2) and the program rationale; the per-surface build details now live in the project docs below.** Sequenced so a **live chat experience ships before the Coaches Portal opens for business** (Projects 1 and 2 need no Coaches Portal).
+
+| # | Project | Gated to | Coaches Portal needed? | Docs |
+|---|---|---|---|---|
+| 1 | **Tournament Chat** (builds the shared engine) | Tournament Plus | No | `TOURNAMENT_CHAT_PLAN.md` + `_PM_BRIEF.md` |
+| 2 | **In-Org Coach-to-Coach Chat** (+ assistant coaches) | League / Club | No | `IN_ORG_COACH_CHAT_PLAN.md` + `_PM_BRIEF.md` |
+| 3 | **Cross-Org Coach Messaging** (scrimmages) | paid coaches both sides | **Yes** (launch first) | `CROSS_ORG_COACH_MESSAGING_PLAN.md` + `_PM_BRIEF.md` |
+| — | **Coach↔Parent Chat** (separate later track) | League / Club + new parent login | n/a | §3.C + §4 below (own project + legal review) |
+
+Cross-cutting building block: **assistant coaches** — `ASSISTANT_COACHES_BUILDING_BLOCK.md` (introduced in Project 2, also feeds Project 1). The §3/§5/§6 phasing below is retained as the original design record; the table above is the current sequencing of record.
+
+---
+
 ## 1. Vision — one engine, thin surfaces
 
-Build **one generic chat engine** (rooms + room-membership + messages + per-user read watermark) and put three product surfaces on top of it. Every surface differs only in **who is resolved into a room** (a participant-resolver function) and **where the entry point lives**. The transport, RLS, plan-gating, notifications, and UI panel are shared with zero duplication.
+Build **one generic chat engine** (rooms + room-membership + messages + per-user read watermark) and put product surfaces on top of it (three at original scoping; a fourth — cross-org messaging — added 2026-06-19, see §0). Every surface differs only in **who is resolved into a room** (a participant-resolver function) and **where the entry point lives**. The transport, RLS, plan-gating, notifications, and UI panel are shared with zero duplication.
 
 This is deliberately NOT three bespoke chat builds. The engine is built once (Phase 1) and each surface is mostly a resolver + a route + a sidebar entry.
 

@@ -1,9 +1,11 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowLeft, Users, Calendar, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Link2, Settings } from 'lucide-react';
+import { ArrowLeft, Users, Calendar, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Link2, Settings, MessageSquare } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
+import { useChatUnread } from '@/lib/use-chat-unread';
+import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -11,6 +13,7 @@ const TEAM_NAV = [
   { label: 'Overview',    href: '',           icon: LayoutDashboard },
   { label: 'Roster',      href: '/roster',    icon: Users },
   { label: 'Schedule',    href: '/schedule',  icon: Calendar },
+  { label: 'Chat',        href: '/chat',      icon: MessageSquare },
   { label: 'Announcements', href: '/announcements', icon: Megaphone },
   { label: 'Accounting',  href: '/accounting',icon: DollarSign },
   { label: 'Documents',   href: '/documents', icon: FileText },
@@ -22,6 +25,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const pathname = usePathname();
   const { assignments } = useCoaches();
   const { currentOrg } = useOrg();
+  const chatUnread = useChatUnread();
 
   const teamMatch = pathname.match(/\/coaches\/teams\/([^/]+)/);
   const currentTeamId = teamMatch?.[1] ?? null;
@@ -88,6 +92,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
                 >
                   <Icon size={14} />
                   {label}
+                  {label === 'Chat' && <ChatUnreadBadge count={chatUnread} />}
                 </Link>
               );
             })}

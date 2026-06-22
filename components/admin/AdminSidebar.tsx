@@ -22,6 +22,8 @@ import { useHasMultipleWorkspaces } from '@/lib/use-has-multiple-workspaces';
 import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
 import { isWithinEventDates } from '@/lib/tournament-phase';
 import { useAdminWorklist } from '@/lib/admin-worklist';
+import { useChatUnread } from '@/lib/use-chat-unread';
+import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import { TOUR_GROUPS, type TourNavItem, type TourGroup } from './admin-nav-config';
 import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
 import styles from './AdminSidebar.module.css';
@@ -57,6 +59,8 @@ export default function AdminSidebar() {
   const isHouseLeague  = pathname.startsWith(`${base}/house-league`);
   const isRepTeams     = pathname.startsWith(`${base}/rep-teams`);
   const isTournaments  = pathname.startsWith(`${base}/tournaments`);
+  // Chat unread — only poll while the tournament nav is on screen (Chat lives there).
+  const chatUnread = useChatUnread(isTournaments);
 
   const seasonMatch     = pathname.match(/\/house-league\/seasons\/([^/]+)/);
   const repTeamMatch    = pathname.match(/\/rep-teams\/teams\/([^/]+)\/program-years\/([^/]+)/);
@@ -204,6 +208,7 @@ export default function AdminSidebar() {
             {count > 9 ? '9+' : count}
           </span>
         )}
+        {key === 'chat' && <ChatUnreadBadge count={chatUnread} />}
         {active && <ChevronRight size={14} className={styles.navChevron} />}
       </Link>
     );

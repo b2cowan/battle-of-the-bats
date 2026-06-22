@@ -5,10 +5,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutGrid, Calendar, Users, DollarSign, FileText,
   History, MoreHorizontal, X, ChevronRight, LogOut,
-  Link2, HelpCircle, Settings,
+  Link2, HelpCircle, Settings, MessageSquare,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
+import { useChatUnread } from '@/lib/use-chat-unread';
 import styles from './CoachesBottomNav.module.css';
 
 const TEAM_MORE = [
@@ -41,7 +42,11 @@ export default function CoachesBottomNav() {
   const isOnSchedule = currentTeamId
     ? pathname.startsWith(`${base}/teams/${currentTeamId}/schedule`)
     : false;
-  const isHubActive  = !isOnTeamMore && !isOnSchedule;
+  const isOnChat = currentTeamId
+    ? pathname.startsWith(`${base}/teams/${currentTeamId}/chat`)
+    : false;
+  const chatUnread = useChatUnread();
+  const isHubActive  = !isOnTeamMore && !isOnSchedule && !isOnChat;
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -90,6 +95,30 @@ export default function CoachesBottomNav() {
             {isOnSchedule && <span className={styles.activeDot} />}
           </span>
           <span className={styles.label}>Schedule</span>
+        </Link>
+      )}
+
+      {/* Chat — only when inside a specific team */}
+      {teamBase && (
+        <Link
+          href={`${teamBase}/chat`}
+          className={`${styles.tab} ${isOnChat ? styles.active : ''}`}
+          id="coaches-mob-chat"
+          aria-label={chatUnread > 0 ? `Chat, ${chatUnread > 9 ? '9+' : chatUnread} unread` : undefined}
+        >
+          <span className={styles.iconWrap}>
+            <MessageSquare size={22} strokeWidth={isOnChat ? 2.5 : 1.8} />
+            {isOnChat && <span className={styles.activeDot} />}
+            {chatUnread > 0 && (
+              <span
+                aria-hidden
+                style={{ position: 'absolute', top: -2, right: 2, background: 'var(--logic-lime)', color: 'var(--pitch-black)', fontSize: '0.55rem', fontWeight: 800, borderRadius: 999, padding: '0 4px', minWidth: 14, height: 14, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                {chatUnread > 9 ? '9+' : chatUnread}
+              </span>
+            )}
+          </span>
+          <span className={styles.label}>Chat</span>
         </Link>
       )}
 

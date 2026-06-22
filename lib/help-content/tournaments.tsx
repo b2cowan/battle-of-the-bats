@@ -738,16 +738,16 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Communicate & Publish',
       heading: 'Chat with your coaches',
       summary: 'A live group chat with every coach in your tournament — a real conversation instead of one-way email blasts.',
-      keywords: ['chat', 'tournament chat', 'coach chat', 'group chat', 'message coaches', 'live chat', 'mute', 'close room', 'not yet joined', 'moderation'],
-      searchText: 'tournament chat group chat live chat with coaches message all coaches conversation real time chat tab not yet joined invite coach mute coach close room reopen read only remove message moderate moderation push notification Tournament Plus every participating coach free and paid stays readable after tournament',
+      keywords: ['chat', 'tournament chat', 'coach chat', 'group chat', 'message coaches', 'live chat', 'members', 'manage chat', 'manage panel', 'mute', 'close room', 'remove message', 'not yet joined', 'moderation', 'unread'],
+      searchText: 'tournament chat group chat live chat with coaches message all coaches conversation real time chat tab open members manage panel manage chat roster not yet joined invite coach mute coach close room reopen read only remove message moderate moderation unread count in-app bell phone push notification Tournament Plus every participating coach free and paid stays readable after tournament',
       links: [
         { label: 'Chat', href: '../tournaments/chat' },
       ],
       content: (
         <>
-          <p><strong>Chat</strong> gives you a live group conversation with every coach in your tournament — a real back-and-forth instead of one-way email blasts. Open the <strong>Chat</strong> tab on your tournament; every coach who has registered a team is already in the room, free and paid alike. They don&rsquo;t need a plan of their own — being in your tournament is enough.</p>
-          <p><strong>&ldquo;Not yet joined.&rdquo;</strong> Coaches who haven&rsquo;t finished signing in yet appear in a <strong>Not yet joined</strong> list, so nobody is silently left out. Use <strong>Copy link</strong> or <strong>Email</strong> beside a name to send that coach the sign-in link; they join the chat automatically the moment they sign in with their team&rsquo;s email.</p>
-          <p><strong>Keeping it on track.</strong> As the organizer you moderate the room: <strong>mute</strong> a coach for up to 72 hours (they can still read, just not post), <strong>remove</strong> a message, or <strong>close</strong> the room to make it read-only. You can reopen a closed room at any time. The conversation stays readable after the tournament wraps up, so the record is always there.</p>
+          <p><strong>Chat</strong> gives you a live group conversation with every coach in your tournament — a real back-and-forth instead of one-way email blasts. Open the <strong>Chat</strong> tab on your tournament; every coach who has registered a team is already in the room, free and paid alike. They don&rsquo;t need a plan of their own — being in your tournament is enough. You&rsquo;ll see an <strong>unread count</strong> on the Chat menu, and new messages also reach you by in-app bell and phone notification — no email.</p>
+          <p><strong>Manage the room from &ldquo;Members.&rdquo;</strong> Tap <strong>Members</strong> at the top of the chat to open the management panel. It lists everyone in the room, and under <strong>Not yet joined</strong> it shows the coaches who haven&rsquo;t signed in yet — so nobody is silently left out. Beside a not-yet-joined name, use <strong>Copy link</strong> or <strong>Email</strong> to send that coach the sign-in link; they join automatically the moment they sign in with their team&rsquo;s email.</p>
+          <p><strong>Keeping it on track.</strong> From the <strong>Members</strong> panel you can <strong>mute</strong> a coach for up to 72 hours (they can still read, just not post) or <strong>close</strong> the room to make it read-only — and reopen it at any time. To take down a single message, use the <strong>remove</strong> control on the message itself. The conversation stays readable after the tournament wraps up, so the record is always there.</p>
           <p>Chat is included with <strong>Tournament Plus and above</strong>. On the free Tournament plan the tab shows an upgrade option instead.</p>
         </>
       ),
@@ -768,11 +768,11 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-tournament-chat-not-joined',
           question: 'A coach is missing from the chat — how do I add them?',
-          answerText: 'Coaches who have not finished signing in appear under Not yet joined in the Chat tab. Use Copy link or Email beside their name to send them the coach sign-in link. They join the chat automatically once they sign in with the email on their team registration — there is no manual step to add them.',
-          keywords: ['not yet joined', 'coach missing from chat', 'invite coach to chat', 'add coach', 'coach sign in'],
+          answerText: 'Open Members at the top of the Chat tab to find the Not yet joined list — coaches who have not finished signing in. Use Copy link or Email beside their name to send the coach sign-in link. They join automatically once they sign in with the email on their team registration — there is no manual step to add them.',
+          keywords: ['not yet joined', 'coach missing from chat', 'invite coach to chat', 'add coach', 'coach sign in', 'members'],
           answer: (
             <>
-              <p>A coach who hasn&rsquo;t finished signing in yet appears under <strong>Not yet joined</strong> in the Chat tab. Use <strong>Copy link</strong> or <strong>Email</strong> beside their name to send them the coach sign-in link.</p>
+              <p>Tap <strong>Members</strong> at the top of the Chat tab and look under <strong>Not yet joined</strong> — that&rsquo;s any coach who hasn&rsquo;t finished signing in yet. Use <strong>Copy link</strong> or <strong>Email</strong> beside their name to send the coach sign-in link.</p>
               <p>They join the chat automatically the moment they sign in with their team&rsquo;s email — there&rsquo;s no manual step to add them.</p>
             </>
           ),
@@ -780,11 +780,11 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-tournament-chat-moderate',
           question: 'How do I mute a coach or close the chat?',
-          answerText: 'In the Chat tab, use Mute beside a coach to stop them posting for up to 72 hours — they can still read the conversation. Use Close room to make the whole chat read-only for everyone, and reopen it any time. You can also remove an individual message. The room stays readable after the tournament finishes.',
-          keywords: ['mute coach', 'close chat', 'read only', 'remove message', 'moderate chat', 'reopen room'],
+          answerText: 'Tap Members at the top of the Chat tab to open the management panel. Beside a coach, Mute stops them posting for up to 72 hours — they can still read. Close room makes the whole chat read-only for everyone, and you can reopen it any time. To remove a single message, use the remove control on the message itself. The room stays readable after the tournament finishes.',
+          keywords: ['mute coach', 'close chat', 'read only', 'remove message', 'moderate chat', 'reopen room', 'members', 'manage chat'],
           answer: (
             <>
-              <p>Open the <strong>Chat</strong> tab. Beside any coach, <strong>Mute</strong> stops them posting for up to 72 hours while still letting them read. <strong>Close room</strong> makes the whole conversation read-only for everyone — you can <strong>reopen</strong> it at any time. You can also <strong>remove</strong> an individual message.</p>
+              <p>Tap <strong>Members</strong> at the top of the <strong>Chat</strong> tab to open the management panel. Beside a coach, <strong>Mute</strong> stops them posting for up to 72 hours while still letting them read. <strong>Close room</strong> makes the whole conversation read-only for everyone — you can <strong>reopen</strong> it at any time. To take down a single message, use the <strong>remove</strong> control on the message itself.</p>
               <p>The conversation stays readable after the tournament finishes, so the record is always there.</p>
             </>
           ),

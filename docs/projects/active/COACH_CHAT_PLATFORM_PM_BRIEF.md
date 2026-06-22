@@ -1,11 +1,22 @@
 # Coach Chat Platform — PM Brief
 
-**Status:** Planned, not started. Design + LOE scoped 2026-06-18.
+**Status:** Planned, not started. Design + LOE scoped 2026-06-18. **Restructured into separate projects 2026-06-19 (this is the umbrella overview).**
 **Full plan:** `docs/projects/active/COACH_CHAT_PLATFORM_PLAN.md`
+
+## Program structure (restructured 2026-06-19)
+
+The chat work is now **four independently-shippable projects** on one shared engine, sequenced so a **live chat experience ships before the Coaches Portal opens** (Projects 1 and 2 don't depend on it):
+
+1. **Tournament Chat** (builds the foundation) — `TOURNAMENT_CHAT_PM_BRIEF.md` — *ships first.*
+2. **In-Org Coach-to-Coach Chat** (+ assistant coaches) — `IN_ORG_COACH_CHAT_PM_BRIEF.md`.
+3. **Cross-Org Coach Messaging** (scrimmages) — `CROSS_ORG_COACH_MESSAGING_PM_BRIEF.md` — *needs the Coaches Portal launched first.*
+4. **Coach↔Parent Chat** — a separate, larger, later bet (new parent login + legal review).
+
+The rest of this brief is the original program-level framing.
 
 ## What this is
 
-Real-time chat inside FieldLogicHQ, built as ONE engine with three product surfaces stacked on it:
+Real-time chat inside FieldLogicHQ, built as ONE engine with product surfaces stacked on it:
 
 1. **Tournament Chat** *(the original ask)* — a tournament organizer gets a single group room with **all the coaches in their tournament**, like a team-wide group chat. Optional separate rooms per division. The organizer runs it (can remove/mute, close it). This is what a Tournament Plus subscriber offers *their* coaches — a real reason to be on Plus.
 2. **Coach Peer Chat** — premium coaches in a club talk to each other (scrimmages, standings, the usual chatter). One club-wide room, optional per-team rooms.
@@ -32,7 +43,7 @@ Real-time chat inside FieldLogicHQ, built as ONE engine with three product surfa
 ## Effort & sequencing
 
 - **Tournament Chat (the core ask): ~3–4 weeks.** Recommended first release — clear requirement, gated to an existing plan, reuses proven infrastructure.
-- **Coach Peer Chat: ~1.5–2 weeks** after that (reuses the engine, no new account type).
+- **In-Org Coach-to-Coach Chat (incl. assistant coaches): ~2–3 weeks** after that (reuses the engine, no new account type).
 - **Coach↔Parent Chat: ~3–4 weeks** and treated as its own project — it creates a brand-new parent-login population and carries a **legal step** (consent to email guardians an invite to create an account; PIPEDA/CASL). This needs a decision before that phase starts.
 - **Full platform end-to-end: ~7–10 weeks.**
 

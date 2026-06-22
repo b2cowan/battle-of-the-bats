@@ -1,0 +1,16 @@
+.badge {
+  margin-left: auto;
+  flex: 0 0 auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--logic-lime);
+  color: var(--pitch-black);
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+  border-radius: 999px;
+}

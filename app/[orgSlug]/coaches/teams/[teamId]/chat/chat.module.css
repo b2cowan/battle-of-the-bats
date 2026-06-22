@@ -1,0 +1,18 @@
+/* Full-bleed escape for the org-based (league/club) coach portal chat route.
+   The shared coaches <main> pads its content (2rem desktop / 1rem 1rem 6rem mobile) and never
+   defines the --coach-*-h vars CoachChatView's height calc expects — so without this the chat box
+   floats with dead space + a nested scroll. We cancel that padding with negative margins and set the
+   vars to this portal's real chrome (no mobile top bar; bottom nav only ≤900px). */
+.chatWrap {
+  --coach-topbar-h: 0px;
+  --coach-bottomnav-h: 64px;
+  margin: -1rem -1rem -6rem;
+  min-width: 0;
+}
+
+@media (min-width: 901px) {
+  .chatWrap {
+    --coach-bottomnav-h: 0px;
+    margin: -2rem;
+  }
+}

@@ -20,6 +20,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   team_no_show:                      'Team marked no-show',
   coach_access_requested:            'Coach access requested',
   house_league_registration_new:     'House league registration',
+  chat_message:                      'Chat message',
 };
 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
@@ -35,6 +36,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   team_no_show:                      'A team is marked as a no-show during gate check-in.',
   coach_access_requested:            'A coach requests access to the coaches portal.',
   house_league_registration_new:     'A player submits a house league season registration.',
+  chat_message:                      'A new message is posted in a tournament chat you are part of.',
 };
 
 // ── Section groups (org-level preferences page) ────────────────────────────────
@@ -74,6 +76,11 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
     label: 'House League',
     module: 'module_house_league',
     eventTypes: ['house_league_registration_new'],
+  },
+  {
+    label: 'Messaging',
+    module: null,
+    eventTypes: ['chat_message'],
   },
 ];
 

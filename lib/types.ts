@@ -1464,7 +1464,9 @@ export type NotificationEventType =
   | 'waitlist_opened'
   | 'team_no_show'
   | 'coach_access_requested'
-  | 'house_league_registration_new';
+  | 'house_league_registration_new'
+  // Coach Chat (Project 1 — Tournament Chat). The one event type that defaults push ON.
+  | 'chat_message';
 
 export interface AppNotification {
   id: string;
