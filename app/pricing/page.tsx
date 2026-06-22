@@ -147,7 +147,7 @@ const FAQS = [
   },
   {
     q: 'Is there a limit on how many staff accounts I can have?',
-    a: 'Not on any paid plan. Tournament Plus, League Plus, and Club all include unlimited staff seats — add as many admins, schedulers, and scorekeepers as you need. The free Tournament tier includes 3 staff seats as a soft limit. On the free tier, officials count toward that limit; on all paid plans there is no staff seat limit at all.',
+    a: 'Not on any paid plan. Tournament Plus, League Plus, and Club all include unlimited staff seats — add as many admins, schedulers, and scorekeepers as you need. The free Tournament tier includes 3 staff seats as a soft limit, but officials and scorekeepers don\'t count against it — bring as many as your event needs. Paid plans have no staff seat limit at all.',
   },
   {
     q: 'Is there a setup fee or onboarding cost?',

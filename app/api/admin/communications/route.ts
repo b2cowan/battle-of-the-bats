@@ -8,6 +8,12 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { Communication } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
+// Free-tier email volume guard (ratified 2026-06-22). Basic all-team announcements are
+// free, but lightly capped so the free floor can't be used as a bulk mailer. Tournament
+// Plus and above are uncapped (they carry the targeted_tournament_announcements feature).
+const FREE_EMAIL_RECIPIENT_CAP = 100;
+const FREE_EMAIL_SENDS_PER_DAY = 10;
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function stringSet(value: unknown) {
@@ -170,6 +176,35 @@ export const POST = withObservability(async (req: Request) => {
       const advanced  = usesAdvancedTargeting(targeting);
       if (advanced && !hasPlanFeature(ctx.org.planId, 'targeted_tournament_announcements')) {
         return NextResponse.json({ error: requiresTournamentPlusCopy('targeted_tournament_announcements') }, { status: 403 });
+      }
+
+      // Free-tier email volume guard: cap basic announcements so the free floor isn't a
+      // bulk mailer. Free orgs only ever send basic all-team emails (advanced targeting is
+      // already gated above). Tournament Plus and above carry the feature and are uncapped.
+      if (channelEmail && !hasPlanFeature(ctx.org.planId, 'targeted_tournament_announcements')) {
+        const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { count: recentEmailSends } = await supabaseAdmin
+          .from('announcements')
+          .select('id', { count: 'exact', head: true })
+          .eq('tournament_id', data.tournamentId)
+          .eq('channel_email', true)
+          // Count by creation time (published_at), not send-completion (email_sent_at), so
+          // concurrent in-flight sends and failed attempts still count toward the daily cap —
+          // closes the race where rows pending their email_sent_at stamp read as uncounted.
+          .gte('published_at', since);
+        if ((recentEmailSends ?? 0) >= FREE_EMAIL_SENDS_PER_DAY) {
+          return NextResponse.json(
+            { error: `Free plan: up to ${FREE_EMAIL_SENDS_PER_DAY} email announcements per day. Tournament Plus removes the limit.` },
+            { status: 429 },
+          );
+        }
+        const freeRecipients = await resolveRecipients(data.tournamentId, targeting);
+        if (freeRecipients.length > FREE_EMAIL_RECIPIENT_CAP) {
+          return NextResponse.json(
+            { error: `Free plan announcements reach up to ${FREE_EMAIL_RECIPIENT_CAP} recipients per send (${freeRecipients.length} selected). Tournament Plus removes the limit.` },
+            { status: 400 },
+          );
+        }
       }
 
       // Insert the base record

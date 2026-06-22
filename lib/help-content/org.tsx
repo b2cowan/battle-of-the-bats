@@ -213,6 +213,8 @@ const orgHelp: HelpPageContent = {
     },
     {
       heading: 'Inviting and managing members',
+      keywords: ['seat limit', 'staff seats', 'scorekeepers free', 'officials free', 'do scorekeepers count', 'invite member', 'manage member', 'resend invite'],
+      searchText: 'seat limit staff seats how many seats do scorekeepers count toward limit officials free seats free tournament 3 seats upgrade invite member manage role restrict tournaments resend pending invite export member list',
       content: (
         <>
           <p>Go to <strong>Members</strong> and click <strong>Invite Member</strong>. Enter the person's email and pick their role. They'll receive an invitation email with a link to accept and set up their account.</p>
@@ -225,7 +227,7 @@ const orgHelp: HelpPageContent = {
           </ul>
           <p>To resend an invitation to someone who hasn't accepted yet, click the mail icon on their row. Pending invites appear with a "Pending" status badge.</p>
           <p><strong>Scorekeeper links:</strong> Scorekeepers use <code>/{'{orgSlug}'}/scorekeeper</code>. Admins can also open Scorekeeper View from Results &amp; Scoring when they need to test the field workflow.</p>
-          <p><strong>Seat limits:</strong> Your plan determines how many non-scorekeeper seats you can have. Scorekeepers are free on most plans. If you're near your limit, a banner will appear on the Members page with an upgrade link.</p>
+          <p><strong>Seat limits:</strong> Your plan's seat limit counts admins and staff only — <strong>scorekeepers and officials are free on every plan and never count toward it</strong>, so bring as many day-of volunteers as your event needs. The free Tournament plan includes 3 staff seats; if you're near the limit, a banner appears on the Members page with an upgrade link. Paid plans have unlimited staff seats.</p>
           <p>You can <strong>export</strong> your member list (Excel or CSV) from the Members page for your own records.</p>
         </>
       ),

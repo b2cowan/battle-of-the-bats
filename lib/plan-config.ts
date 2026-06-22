@@ -36,7 +36,10 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     annualPrice: 0,
     tournamentLimit: 1,
     seatLimit: 3,
-    officialsFreeSeats: false,
+    // Officials/scorekeepers (the score-entry-only 'official' role) are exempt from the
+    // free-tier seat count — ratified 2026-06-22 (BUSINESS_DECISIONS.md). The 3-seat cap
+    // applies to admin/staff only; multi-field events shouldn't be taxed for scorekeepers.
+    officialsFreeSeats: true,
     trialDays: 0,
     moduleEntitlements: CORE_MODULES,
     gatingStatus: 'live',

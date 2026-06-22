@@ -686,14 +686,14 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Communicate & Publish',
       heading: 'Announcements and email',
       summary: 'Publish news to the public site, pin urgent day-of updates, and send email updates to registered teams.',
-      keywords: ['communication', 'announcements', 'email', 'news posts', 'targeted email', 'pin', 'pinned', 'rain delay', 'schedule banner'],
-      searchText: 'communication audiences send email announcements news posts public tournament page teams division payment status selected teams contact role targeted communication all teams pin pinned post top of news rain delay urgent day-of update game day schedule banner live event',
+      keywords: ['communication', 'announcements', 'email', 'news posts', 'targeted email', 'pin', 'pinned', 'rain delay', 'schedule banner', 'email limit', 'recipient limit', 'free email cap'],
+      searchText: 'communication audiences send email announcements news posts public tournament page teams division payment status selected teams contact role targeted communication all teams pin pinned post top of news rain delay urgent day-of update game day schedule banner live event free plan email limit 100 recipients per send 10 announcements per day daily email cap volume limit basic email cap too many emails send limit',
       links: [
         { label: 'Communication', href: '../tournaments/communication' },
       ],
       content: (
         <>
-          <p>Use <strong>Communication</strong> for tournament messages. Free Tournament supports basic all-team email. Tournament Plus can target by division, registration status, payment status, selected teams, and contact role.</p>
+          <p>Use <strong>Communication</strong> for tournament messages. Free Tournament supports basic all-team email — up to 100 recipients per message and 10 email announcements per day. Tournament Plus removes those limits and can target by division, registration status, payment status, selected teams, and contact role.</p>
           <p><strong>Pinning a site post.</strong> When you post a message to the site and <strong>pin</strong> it, it stays at the top of the public <strong>News</strong> page — and, while the tournament is live (today falls within the event dates), it also appears as a <strong>banner at the top of the public Schedule</strong>. That puts urgent day-of updates — a rain delay, a diamond change, a start-time push — right where fans are already looking. Pin sparingly so the banner stays meaningful; unpin it once the situation clears.</p>
           <p>Review recipients and message content carefully before sending. Targeted sends should be operational and useful for teams, not broad marketing blasts.</p>
         </>
@@ -702,10 +702,19 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-targeted-communication',
           question: 'Who can use targeted tournament communication?',
-          answerText: 'Tournament Plus, League Plus, and Club can target messages by team status, payment status, division, selected teams, and contact role.',
+          answerText: 'Tournament Plus, League Plus, and Club can target messages by team status, payment status, division, selected teams, and contact role, and remove the free plan\'s basic-email limits (100 recipients per send, 10 sends per day).',
           keywords: ['targeted communication', 'email selected', 'division email', 'payment status'],
           answer: (
-            <p>Targeted communication is included with Tournament Plus and higher. Free Tournament can still send basic all-team email, but targeted filters are locked so an unauthorized filter never falls back to sending everyone.</p>
+            <p>Targeted communication is included with Tournament Plus and higher. Free Tournament can still send basic all-team email, but targeted filters are locked so an unauthorized filter never falls back to sending everyone. Tournament Plus also removes the free plan&apos;s volume limits (see below).</p>
+          ),
+        },
+        {
+          id: 'faq-free-email-limits',
+          question: 'Is there a limit on emails from the free Tournament plan?',
+          answerText: 'Yes. The free Tournament plan can send a basic all-team announcement to up to 100 recipients per message and up to 10 email announcements per day. Tournament Plus and above remove both limits. Posting to the public site (no email) is never limited.',
+          keywords: ['email limit', 'free plan email', '100 recipients', '10 per day', 'send limit', 'too many emails', 'daily email limit'],
+          answer: (
+            <p>The free Tournament plan can send a basic all-team announcement to <strong>up to 100 recipients per message</strong> and <strong>up to 10 email announcements per day</strong>. If you reach a limit, you&apos;ll see a message saying so. <strong>Tournament Plus</strong> and above remove both limits. Posting to the public <strong>site</strong> (without email) is never limited.</p>
           ),
         },
         {

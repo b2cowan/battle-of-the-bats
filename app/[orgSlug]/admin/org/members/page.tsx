@@ -789,9 +789,9 @@ export default function MembersPage() {
           </p>
           {currentOrg?.planId === 'tournament' && (
             <p className={styles.roleRefNote} style={{ marginTop: '0.5rem' }}>
-              <strong>Seats:</strong> Your Tournament plan includes 3 staff seats (owner + 2 others). Scorekeepers count toward this limit.{' '}
+              <strong>Seats:</strong> Your Tournament plan includes 3 staff seats (owner + 2 others). Scorekeepers don&apos;t count toward this limit — only admins and staff do.{' '}
               <Link href={billingHref} style={{ color: 'var(--logic-lime)' }}>Upgrade to Tournament Plus</Link>{' '}
-              for unlimited seats and free scorekeepers.
+              for unlimited staff seats.
             </p>
           )}
           {currentOrg?.planId === 'tournament_plus' && (
@@ -813,7 +813,7 @@ export default function MembersPage() {
           )}
           {currentOrg?.planId === 'tournament' && (
             <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--white-30)', fontWeight: 400, marginTop: '0.15rem' }}>
-              Tournament plan · upgrade to Tournament Plus for unlimited seats and free scorekeepers
+              Tournament plan · upgrade to Tournament Plus for unlimited staff seats
             </span>
           )}
           {currentOrg?.planId === 'tournament_plus' && (

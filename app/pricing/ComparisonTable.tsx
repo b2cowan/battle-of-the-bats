@@ -46,7 +46,7 @@ const COMPARISON_CATEGORIES = [
     defaultOpen: false,
     rows: [
       { feature: 'Staff / admin seats',                   tournament: '3',       plus: 'Unlimited',        league: 'Unlimited',        club: 'Unlimited' },
-      { feature: 'Officials seats',                       tournament: 'Counted', plus: 'Unlimited (free)', league: 'Unlimited (free)', club: 'Unlimited (free)' },
+      { feature: 'Officials seats',                       tournament: 'Not counted', plus: 'Unlimited (free)', league: 'Unlimited (free)', club: 'Unlimited (free)' },
       { feature: 'Advanced member roles and permissions', tournament: '—',       plus: '—',                league: '✓',                club: '✓' },
     ],
   },
