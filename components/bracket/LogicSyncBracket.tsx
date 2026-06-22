@@ -709,8 +709,12 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
     svgWidth = maxX + NODE_WIDTH + 40;
     svgHeight = maxY + NODE_HEIGHT + V_PAD;
   } else {
-    const maxFirstCol = columns.length > 0 ? columns[0].games.length : 1;
-    const totalH = maxFirstCol * (NODE_HEIGHT + NODE_GAP);
+    // Size the column height by the LARGEST round, not the first one. A standard
+    // bracket's first round IS the largest, but an irregular/tiered bracket can have
+    // a play-in round (1 game) feeding a bigger Semifinal round (2 games) — sizing
+    // off the first column then squeezes the larger column so its cards overlap.
+    const maxCol = columns.reduce((m, c) => Math.max(m, c.games.length), 1);
+    const totalH = maxCol * (NODE_HEIGHT + NODE_GAP);
     columns.forEach((col, ci) => {
       const x = ci * ROUND_WIDTH + 20;
       columnLabels.push({ key: `c-${ci}`, title: displayRoundTitle(col.title), x: x + NODE_WIDTH / 2, y: V_PAD - 12 });
