@@ -28,6 +28,38 @@ The sections below document all copy changes applied to the live pages after the
 >
 > In all customer-facing copy use **"Premium Coaches Portal"** (Premium as a prefix, mirroring "Basic Coaches Portal") and **"Coaches Portal"** for the product. **Do NOT write** "Coaches Portal Premium", "Coach Portal" (singular), "Team plan", "Team subscription", or "standalone Team". In-product upsell that *links to info* should send to `/for-coaches` (the explainer) with an info-first CTA ("See everything it includes →"), not "express interest" — the express-interest ask lives on `/for-coaches` itself.
 
+### 🆕 Pricing & packaging amendments — 2026-06-22 strategy ratification (APPROVED — apply to live pages with the Club Repackaging build)
+
+Owner-ratified from the 2026-06-22 pricing & product review. **Canonical numbers/names live in `docs/agents/strategy/PLAN_PRICING_FACTS.md` — this doc references, it does not restate.**
+
+**Status (2026-06-22, dev/unpushed):** the **officials-don't-count** copy (pricing FAQ, comparison table, members page) and the **free-email-limit** copy (in-app help) already shipped with billing **Group A**. The **Club band** copy below (cards, comparison rows, coach bridge) still waits for the **Club Repackaging** build (`docs/projects/active/CLUB_REPACKAGING_PLAN.md`); apply it there.
+
+**Club → two capacity bands (per-team "$19/additional team" meter retired):**
+- **Club** — whole coaching staff included, up to 15 teams. **Club · Association** — 15–30 teams (custom above 30). Never write "Club Large" in customer copy.
+- Public framing while Club is still early-access: **"Club — from $219/mo."** Do **not** publish firm band prices until the early-access cohort opens (they recalibrate Q1 2027).
+- Card 4 feature line — was "Coaches Portal — 3 team accounts included; additional accounts at $19/mo" → **"Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee."**
+- Comparison table — remove the per-team add-on row; add **"Premium Coaches Portal — whole coaching staff … Club ✓ (every team included)"** and **"Teams included … Up to 15 (Club) · up to 30 (Club · Association)."** No "$19/additional" anywhere.
+
+**/for-clubs "what you pay":** "one predictable price for your whole club, by size — up to 15 teams, or up to 30 on Club · Association. Every team you run gets the full Premium Coaches Portal: rosters, lineups, budgets, schedules, and documents. No per-team fees, no 'select team' discount tier — every team counts the same, because every team gets the same tools."
+
+**Coach pricing bridge (Segment 4) — the "$19/mo, $10 less than standalone" line is retired:**
+- Coach-facing: "Start independently with the standalone Premium Coaches Portal at $29/month — everything you need to run your team, whether or not your organization is on FieldLogicHQ. When your org joins Club, your portal is **included** in their plan: your account carries over and you stop paying the standalone rate."
+- Club-facing: "Club includes the Premium Coaches Portal for your **whole coaching staff** — every coach, every team, no per-team fee. Coaches already on the standalone portal? Their account carries over and rolls into your Club plan automatically."
+
+**Free tier — "announcements free, communications workflow paid":**
+- Free Tournament card — "Basic team/contact email" → **"Basic team announcements — one message to all your teams."**
+- Tournament Plus card — "Email announcements and communications" → **"Communications workflow — templates, send scheduling, delivery tracking, and audience segmentation."**
+- Comparison "Communications": **"Basic all-team announcement"** ✓ all tiers; **"Templates, scheduling, delivery tracking & segmentation"** — / ✓ / ✓ / ✓.
+
+**Officials/scorekeepers off the free 3-seat count:**
+- Comparison "Staff & Access" Officials row — Tournament "Counted toward limit" → **"Not counted"**; paid plans = Unlimited.
+- FAQ "Is there a limit on staff accounts?" — replace the "officials count toward that limit on the free tier" sentence with: **"The free Tournament tier includes 3 staff seats. Officials and scorekeepers don't count against it — bring as many as your event needs. Paid plans have no staff seat limit at all."**
+- Appendix officials row → "Not counted."
+
+**League naming (ratified 2026-06-22):** the $89 tier is **League Plus**; the free "League" floor stays held for its own launch. No new public change beyond keeping the page on "League Plus."
+
+**Acquisition emphasis (persona pages / positioning):** lead Club and `/for-clubs` acquisition messaging toward the **mid-size dual-stream club (~8–14 teams)** — numerous, self-serve-able, sits in the lower band. Focus, not exclusion.
+
 ### Phase 1 amendments (applied 2026-05-27)
 - `/for-tournament-organizers` planNote → "Free through Dec 31, 2026 — Founding Season · $390/year from Jan 2027"; CTA → "Start Free — No Credit Card →"
 - `/pricing` Bridge 1 CTA → "Start Free — No Credit Card" (not "Start Free Trial")
@@ -703,6 +735,8 @@ These are intended as guidance for sourcing real testimonials or writing represe
 ---
 
 ## APPENDIX: PRICING QUICK REFERENCE
+
+> ⛔ **Superseded as a source of truth.** Canonical plan names / prices / capacity now live in `docs/agents/strategy/PLAN_PRICING_FACTS.md` — do not cite the numbers below. The table is historical (pre-2026-06-22 Club repackaging): the "$89 League" is now **League Plus**, and Club is now banded (**Club** ≤15 / **Club · Association** 15–30). Reference the Facts doc instead.
 
 | | Tournament | Tournament Plus | League | Club |
 |---|---|---|---|---|

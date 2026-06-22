@@ -112,14 +112,19 @@ Do not change this line without a documented brand strategy decision. It is the 
 | "Canadian pricing" | "CAD pricing" or "built for Canadian organizations" |
 
 ### Plan names — non-negotiable
-Always use the full plan name. Never abbreviate or invent a shorthand.
+Always use the full plan name. Never abbreviate or invent a shorthand. **Canonical names/prices/capacity: `docs/agents/strategy/PLAN_PRICING_FACTS.md` — do not restate numbers here.**
 
 | Full name | Never say |
 |---|---|
-| Tournament | "the free plan", "free tier", "starter" |
+| Tournament *(free)* | "the free plan", "free tier", "starter" |
 | Tournament Plus | "Plus", "Pro", "the paid plan" |
-| League | "the league plan" (always capitalized as a proper noun) |
+| League *(free floor)* | "League Starter", "Starter" |
+| League Plus *($89 paid tier)* | "League" (that's the free floor now), "the league plan" |
 | Club | "the club plan", "enterprise", "top tier" |
+| Club · Association *(larger Club band)* | "Club Large", "enterprise" |
+| Premium Coaches Portal | "Coach Portal", "Team plan", "Coaches Portal Premium" |
+
+**League naming (ratified 2026-06-22):** mirrors Tournament — **League (free floor) → League Plus (paid $89)**. The 2026-06-13 rebrand stands; this supersedes any older "League = $89" framing in this doc.
 
 ---
 
@@ -221,14 +226,19 @@ On Coach Portal-facing copy:
 
 ### The tiers at a glance
 
-| Plan | Monthly | Annual | Who it's for |
-|---|---|---|---|
-| Tournament | Free | Free | Running a single tournament |
-| Tournament Plus | $39 | $390 | Running multiple tournaments or wanting auto-scheduling |
-| League | $89 | $890 | Running a house league program |
-| Club ⭐ | $179 | $1,790 | Running a full club — rep teams, house league, tournaments, accounting |
-| Coach Portal | $29 | — | Individual team management (standalone) |
-| Additional Team | $19/mo | — | Add-on to Club for teams beyond the 3 included |
+> **Canonical prices, capacity, and gating live in `docs/agents/strategy/PLAN_PRICING_FACTS.md`** — that table is the source of truth (kept matched to the app config). The summary below is for orientation only; if it ever disagrees with the Facts doc, the Facts doc wins. ⚠ Some values are **decided / not yet built** (Club repackaging) — see the Facts doc for status.
+
+| Plan | Monthly | Who it's for |
+|---|---|---|
+| Tournament *(free)* | Free | Running a single tournament |
+| Tournament Plus | $39 | Running multiple tournaments or wanting auto-scheduling |
+| League *(free floor)* | Free | A first house-league season (held for launch) |
+| League Plus | $89 | Running a full house league program |
+| Club ⭐ | $219 *(up to 15 teams)* | Running a full club — rep teams, house league, tournaments, accounting; whole coaching staff included |
+| Club · Association | $379 *(15–30 teams; custom > 30)* | A larger club / association |
+| Premium Coaches Portal *(standalone)* | $29 | Individual team management (carries over, and is **included**, when the org joins Club) |
+
+*The per-team "$19 additional team" add-on is retired — Club includes the whole coaching staff within its band.*
 
 ### Rules
 
