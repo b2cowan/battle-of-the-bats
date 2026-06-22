@@ -61,10 +61,15 @@ export default function PersonaPanel({
   }
 
   const base = `/${orgSlug}/admin/tournaments`;
+  // A draft tournament's public pages 404 until it's activated, so link drafts to
+  // the admin preview (which renders the real public view) and only switch to the
+  // live public URL once active — same pattern for both the site and the form.
   const previewHref = tournamentSlug
     ? (isDraft ? `${base}/preview/${tournamentSlug}` : `/${orgSlug}/${tournamentSlug}`)
     : undefined;
-  const registerHref = tournamentSlug ? `/${orgSlug}/${tournamentSlug}/register` : undefined;
+  const registerHref = tournamentSlug
+    ? (isDraft ? `${base}/preview/${tournamentSlug}/register` : `/${orgSlug}/${tournamentSlug}/register`)
+    : undefined;
   const staffKitHref = `${base}/staff-kit`;
   const hasFanAlerts = hasPlanFeature(planId, 'fan_score_alerts');
 
