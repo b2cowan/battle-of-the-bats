@@ -207,15 +207,18 @@ export default async function TournamentPreviewSectionPage({
       ? getTournamentRegistrationFields(tournament.id)
       : Promise.resolve([]),
   ]);
+  // Mirror getPublicTournamentPageData exactly: the public-resolved contact (null
+  // when the organizer hid it) goes on BOTH the org and the tournament object, so
+  // the preview shows precisely what a registrant sees — never a hidden address.
   const registerData: PublicTournamentPageData = {
     organization: {
       id: org.id, name: org.name, slug: org.slug,
       logoUrl: org.logoUrl ?? undefined,
-      contactEmail: contactEmail ?? org.contactEmail ?? null,
+      contactEmail: contactEmail ?? null,
       requireScoreFinalization: tournament.requireScoreFinalization ?? org.requireScoreFinalization,
     },
     tournaments: [tournament],
-    tournament,
+    tournament: { ...tournament, contactEmail: contactEmail ?? undefined },
     pageEnabled: true,
     divisions: registerDivisions,
     venues: [],
