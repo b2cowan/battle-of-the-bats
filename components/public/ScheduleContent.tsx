@@ -15,7 +15,7 @@ import { computePlacementStandings } from '@/lib/playoff-standings';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
-import { readFollowedTeamId, clearFollowedTeam, isTournamentInProgress } from '@/lib/follow';
+import { readFollowedTeamId, clearFollowedTeam, isTournamentInProgress, followKey } from '@/lib/follow';
 import { isGameLive, gameStartMs, isGameUpcoming, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
@@ -140,10 +140,25 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   }, [isPlayoffOnly, viewMode]);
 
   useEffect(() => {
-    // Browser-local preference hydrates after the public page renders.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setFollowedTeamId(readFollowedTeamId(orgSlug, tournamentSlug));
-    setFollowedFilterApplied(false);
+    // Browser-local preference hydrates after the public page renders — and must
+    // stay in sync when the inline picker (same tab) or another tab changes the
+    // followed team. Without the `fl-follow-change` subscription, picking a team
+    // writes localStorage but ScheduleContent never re-reads it, so the pin
+    // silently fails (dropdown closes, nothing follows).
+    const sync = () => {
+      setFollowedTeamId(readFollowedTeamId(orgSlug, tournamentSlug));
+      setFollowedFilterApplied(false);
+    };
+    sync();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === followKey(orgSlug, tournamentSlug)) sync();
+    };
+    window.addEventListener('fl-follow-change', sync);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('fl-follow-change', sync);
+      window.removeEventListener('storage', onStorage);
+    };
   }, [orgSlug, tournamentSlug]);
 
   useEffect(() => {
