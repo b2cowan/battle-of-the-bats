@@ -10,6 +10,7 @@ import PublicTournamentState from '@/components/public/PublicTournamentState';
 import Countdown from '@/components/public/Countdown';
 import styles from '@/app/[orgSlug]/register/register.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
+import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 
 type Step = 'form' | 'review' | 'submitting' | 'success' | 'error';
 
@@ -183,7 +184,7 @@ function downloadTournamentCalendar(tournament: Tournament, url: string) {
  * creation, so an organizer sees the real form (fees, custom fields, steps) exactly
  * as a registrant will, without creating a registration or an account.
  */
-export default function RegisterContent({ isPreview = false }: { isPreview?: boolean }) {
+export default function RegisterContent({ isPreview = false, initialData = null }: { isPreview?: boolean; initialData?: PublicTournamentPageData | null }) {
   const params         = useParams();
   const router         = useRouter();
   const orgSlug        = params.orgSlug as string;
@@ -221,14 +222,18 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
   useEffect(() => {
     async function init() {
       try {
-        const data = await fetchPublicTournamentData(orgSlug, tournamentSlug, 'register');
+        // The admin preview seeds data server-side (drafts included); the public
+        // endpoint excludes non-public tournaments, so only fetch when not seeded.
+        const data = initialData ?? await fetchPublicTournamentData(orgSlug, tournamentSlug, 'register');
         const current = data?.tournament ?? null;
         setTournament(current);
         setContactEmail(current?.contactEmail ?? data?.organization.contactEmail ?? null);
         if (current && data?.pageEnabled) {
           setDivisions(data.divisions);
           setRegistrationFields(data.registrationFields ?? []);
-          fetchStats(current.id);
+          // Per-division counts come from the public stats endpoint, which has no
+          // draft data — skip it in preview; the form still renders from the seed.
+          if (!isPreview) fetchStats(current.id);
         }
       } finally {
         setLoaded(true);
@@ -244,7 +249,7 @@ export default function RegisterContent({ isPreview = false }: { isPreview?: boo
         console.error(e);
       }
     }
-  }, [orgSlug, tournamentSlug]);
+  }, [orgSlug, tournamentSlug, initialData, isPreview]);
 
   // Loads the signed-in coach's account + teams. Reused on mount AND after a returning
   // coach is signed in mid-registration, so they can attach to an existing team instead

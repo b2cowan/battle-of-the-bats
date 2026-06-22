@@ -8,9 +8,11 @@ import {
   getRules,
   getStandings,
   getTeams,
+  getTournamentRegistrationFields,
   resolveTournamentContactEmail,
 } from '@/lib/db';
 import { getTournamentPreviewContext } from '@/lib/tournament-preview';
+import { hasPlanFeature } from '@/lib/plan-features';
 import { isPublicPageEnabled, type PublicPageKey } from '@/lib/public-pages';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import ScheduleContent from '@/components/public/ScheduleContent';
@@ -197,5 +199,32 @@ export default async function TournamentPreviewSectionPage({
   }
 
   // ── Register (preview — the real form, with submission disabled) ───────────
-  return <RegisterContent isPreview />;
+  // Seed the form with admin reads so it renders for DRAFTS too (the public data
+  // endpoint excludes non-public tournaments). Mirrors the other preview sections.
+  const [registerDivisions, registrationFields] = await Promise.all([
+    getDivisions(tournament.id, readOptions),
+    hasPlanFeature(org.planId, 'custom_registration_fields')
+      ? getTournamentRegistrationFields(tournament.id)
+      : Promise.resolve([]),
+  ]);
+  const registerData: PublicTournamentPageData = {
+    organization: {
+      id: org.id, name: org.name, slug: org.slug,
+      logoUrl: org.logoUrl ?? undefined,
+      contactEmail: contactEmail ?? org.contactEmail ?? null,
+      requireScoreFinalization: tournament.requireScoreFinalization ?? org.requireScoreFinalization,
+    },
+    tournaments: [tournament],
+    tournament,
+    pageEnabled: true,
+    divisions: registerDivisions,
+    venues: [],
+    games: [],
+    resources: [],
+    rules: [],
+    teams: [],
+    registrationFields,
+    standingsByDivision: {},
+  };
+  return <RegisterContent isPreview initialData={registerData} />;
 }
