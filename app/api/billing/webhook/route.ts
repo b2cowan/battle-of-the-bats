@@ -9,6 +9,7 @@ import {
   syncTeamWorkspaceSubscription,
 } from '@/lib/team-checkout';
 import { completeOrgTeamAddonBillingFromMetadata } from '@/lib/team-org-billing';
+import { PLAN_RANK } from '@/lib/plan-features';
 import { sendEmail, trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
 import { cancelScheduledEmail } from '@/lib/email-sender';
 import { notify } from '@/lib/notify';
@@ -23,14 +24,6 @@ function toIso(unixSeconds: number | null | undefined): string | null {
   if (!unixSeconds) return null;
   return new Date(unixSeconds * 1000).toISOString();
 }
-
-const PLAN_RANK: Record<OrgPlan, number> = {
-  tournament: 0,
-  team: 0,
-  tournament_plus: 1,
-  league: 2,
-  club: 3,
-};
 
 function subscriptionIdFromSession(session: Stripe.Checkout.Session): string | null {
   return typeof session.subscription === 'string'
@@ -77,6 +70,9 @@ export const POST = withObservability(async (req: Request) => {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
+      // RETIRING (Club Repackaging 2026-06-22): org_team_addon checkouts are no longer
+      // initiated (the takeover is retired). Kept only to settle any in-flight pre-cutover
+      // session — 0 exist in dev/prod. Remove this arm post-cutover.
       if (session.metadata?.checkoutKind === 'org_team_addon') {
         const subscriptionId = subscriptionIdFromSession(session);
         const sub = subscriptionId
@@ -137,6 +133,8 @@ export const POST = withObservability(async (req: Request) => {
       const priceId: string = sub.items?.data?.[0]?.price?.id ?? '';
       const matchedPlan = await getPlanFromPriceId(priceId);
       if (matchedPlan) {
+        // RETIRING (Club Repackaging 2026-06-22): org_team_addon is retired; kept only to
+        // settle any in-flight pre-cutover subscription (0 exist). Remove post-cutover.
         if (matchedPlan.planId === 'org_team_addon') {
           const result = await completeOrgTeamAddonBillingFromMetadata({
             metadata: sub.metadata,

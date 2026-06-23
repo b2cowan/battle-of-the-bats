@@ -1,21 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { forbidden, getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import {
-  getActiveTeamEntitlementsForOrg,
-  isTeamWorkspaceOrg,
-  shouldShowClubValueNudge,
-} from '@/lib/team-workspace-entitlements';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import {
   createTeamOrgLinkInvite,
   listTeamOrgLinksForLinkedOrg,
   reviewTeamOrgLink,
 } from '@/lib/team-org-links';
-import {
-  declineOrgTeamAddonBillingRequest,
-  inviteOrgTeamAddonBilling,
-  startOrgTeamAddonCheckout,
-} from '@/lib/team-org-billing';
 import {
   declineTeamOwnershipTransferRequest,
   inviteTeamOwnershipTransfer,
@@ -29,24 +19,11 @@ export const GET = withObservability(async (req: NextRequest) => {
   if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
   if (isTeamWorkspaceOrg(ctx.org)) return forbidden();
 
-  const [links, entitlements] = await Promise.all([
-    listTeamOrgLinksForLinkedOrg(ctx.org.id),
-    getActiveTeamEntitlementsForOrg(ctx.org.id),
-  ]);
-  const activeOrgPaidTeamCount = new Set(
-    entitlements
-      .filter(entitlement => entitlement.source === 'org_team_addon')
-      .map(entitlement => entitlement.repTeamId),
-  ).size;
-
-  return NextResponse.json({
-    links,
-    billingSummary: {
-      activeOrgPaidTeamCount,
-      clubValueThreshold: 3,
-      showClubValueNudge: shouldShowClubValueNudge(activeOrgPaidTeamCount),
-    },
-  });
+  // Club Repackaging (2026-06-22): the per-team "$19/team" org-paid summary + the
+  // "upgrade to save" nudge are retired — Club includes the whole coaching staff up to
+  // the plan cap. Linked Coaches Portals are visibility-only or transfer ownership in.
+  const links = await listTeamOrgLinksForLinkedOrg(ctx.org.id);
+  return NextResponse.json({ links });
 }, { route: '/api/admin/org/team-links' });
 
 export const POST = withObservability(async (req: NextRequest) => {
@@ -86,59 +63,18 @@ export const POST = withObservability(async (req: NextRequest) => {
     return NextResponse.json({ error: 'linkId and action are required.' }, { status: 400 });
   }
 
-  // Money + ownership actions are owner-reserved: admins coordinate links and may decline
-  // requests, but they cannot start org billing (a recurring charge) or initiate/approve an
-  // ownership transfer. The coarse owner+admin gate above still covers the operational actions.
-  if ((action === 'invite_billing' || action === 'approve_billing') && !hasCapability(ctx.role, ctx.capabilities, 'billing')) {
-    return forbidden();
+  // Ownership actions are owner-reserved. (Club Repackaging 2026-06-22: the org-paid
+  // "$19/team" billing-takeover actions — invite_billing / decline_billing / approve_billing —
+  // are retired. Teams in a Club are included up to the plan cap; an external coach either
+  // keeps a standalone portal or transfers ownership in.)
+  if (action === 'invite_billing' || action === 'decline_billing' || action === 'approve_billing') {
+    return NextResponse.json(
+      { error: 'Org billing transfer has been retired. Teams in a Club are included up to the plan cap.' },
+      { status: 410 },
+    );
   }
   if (action === 'invite_ownership' && ctx.role !== 'owner') {
     return forbidden();
-  }
-
-  if (action === 'invite_billing') {
-    const result = await inviteOrgTeamAddonBilling({
-      orgId: ctx.org.id,
-      linkId,
-      actorUserId: ctx.user.id,
-      actorEmail: ctx.user.email ?? null,
-    });
-    if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
-    }
-    return NextResponse.json({ link: result.link });
-  }
-
-  if (action === 'decline_billing') {
-    const result = await declineOrgTeamAddonBillingRequest({
-      orgId: ctx.org.id,
-      linkId,
-      actorUserId: ctx.user.id,
-      actorEmail: ctx.user.email ?? null,
-    });
-    if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
-    }
-    return NextResponse.json({ link: result.link });
-  }
-
-  if (action === 'approve_billing') {
-    const result = await startOrgTeamAddonCheckout({
-      org: ctx.org,
-      linkId,
-      billingCycle: body.billingCycle,
-      actorUserId: ctx.user.id,
-      actorEmail: ctx.user.email ?? null,
-    });
-    if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
-    }
-    return NextResponse.json({
-      link: result.link,
-      applied: result.applied ?? false,
-      url: result.url ?? null,
-      billingCycle: result.billingCycle ?? null,
-    });
   }
 
   if (action === 'invite_ownership') {

@@ -3,7 +3,7 @@ import type { HelpPageContent } from './index';
 const repTeamsHelp: HelpPageContent = {
   title: 'Rep Teams',
   role: 'Admin, Owner',
-  intro: 'Rep Teams manages competitive travel teams through a franchise model — your org creates and oversees teams at the top level, while coaches operate their teams day-to-day from their team workspace. It is part of the Club plan (or available as a per-team add-on).',
+  intro: 'Rep Teams manages competitive travel teams through a franchise model — your org creates and oversees teams at the top level, while coaches operate their teams day-to-day from their team workspace. It is part of the Club plan, which includes the Premium Coaches Portal for your whole coaching staff — every team, no per-team fee. (A coach can also run a single team independently on the standalone Premium Coaches Portal.)',
   sections: [
     {
       id: 'franchise-model',

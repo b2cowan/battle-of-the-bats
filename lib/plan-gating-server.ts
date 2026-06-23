@@ -6,7 +6,7 @@ import type { OrgPlan } from './types';
 
 export type PlanGatingMap = Record<OrgPlan, boolean>; // true = gated (early_access)
 
-const ALL_PLANS: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
+const ALL_PLANS: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 
 function fromPlanConfig(): PlanGatingMap {
   return Object.fromEntries(

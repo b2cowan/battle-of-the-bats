@@ -7,6 +7,7 @@ import { Check, ChevronDown, Copy, KeyRound, Search, Trash2 } from 'lucide-react
 import ExportMenu from '@/components/admin/ExportMenu';
 import HelpCallout from '@/components/help/HelpCallout';
 import { fmtAbsoluteDate, fmtAbsoluteDateTime, fmtSince } from '@/lib/format-date';
+import { PLAN_CONFIG } from '@/lib/plan-config';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -537,7 +538,7 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
                           <span className={styles.slug}>/{m.orgSlug}</span>
                           <span className={`${styles.badge} ${styles.badgeMuted}`}>{m.role}</span>
                           <span className={`${styles.badge} ${statusClass(m.status, styles)}`}>{m.status}</span>
-                          <span className={styles.dimText}>{m.planId} / {m.subscriptionStatus}</span>
+                          <span className={styles.dimText}>{PLAN_CONFIG[m.planId as keyof typeof PLAN_CONFIG]?.label ?? m.planId} / {m.subscriptionStatus}</span>
                         </div>
                       ))}
                     </div>

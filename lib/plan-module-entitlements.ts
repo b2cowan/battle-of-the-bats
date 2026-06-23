@@ -3,7 +3,7 @@ import { PLAN_CONFIG } from './plan-config';
 import type { Capability } from './roles';
 import type { OrgPlan } from './types';
 
-export const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
+export const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 
 export const MODULE_CATALOG: { key: Capability; label: string; description: string }[] = [
   {

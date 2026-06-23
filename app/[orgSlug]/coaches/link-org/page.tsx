@@ -2,7 +2,7 @@
 
 import { FormEvent, use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Building2, CreditCard, Link2, RefreshCw } from 'lucide-react';
+import { Building2, Link2, RefreshCw } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { useOrg } from '@/lib/org-context';
 import styles from '../coaches.module.css';
@@ -139,42 +139,15 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
     }
   }
 
-  async function billingAction(linkId: string, action: 'request_billing' | 'accept_billing' | 'decline_billing') {
-    setWorkingId(linkId);
-    setError(null);
-    setMessage(null);
-
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/team-links`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ linkId, action }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'Could not update the org billing request.');
-      if (action === 'request_billing') setMessage('Org billing request sent. The organization owner can review it from Coaches Portal Links.');
-      if (action === 'accept_billing') setMessage('Org billing invitation accepted. The organization owner can now complete checkout.');
-      if (action === 'decline_billing') setMessage('Org billing invitation declined. The Basic link remains active.');
-      await loadLinks();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not update the org billing request.');
-    } finally {
-      setWorkingId(null);
-    }
-  }
-
+  // Club Repackaging (2026-06-22): the org-pays "$19/team" billing-takeover is retired.
+  // A coach keeps their own standalone Premium portal (visibility-only link) or transfers
+  // ownership into the club, where the team is included under the plan cap.
   function billingText(link: LinkSummary) {
     if (link.linkType === 'ownership' && link.status === 'ownership_pending') {
       if (link.approvedByOrgUserId && !link.approvedByTeamUserId) return 'Ownership transfer invited';
       if (link.approvedByTeamUserId && !link.approvedByOrgUserId) return 'Ownership transfer requested';
       if (link.approvedByTeamUserId && link.approvedByOrgUserId) return 'Ready for platform transfer';
     }
-    const pendingBilling = link.linkType === 'billing' && link.billingModeAfterApproval === 'org_team_addon';
-    const activeOrgBilling = pendingBilling && link.workspace?.billingMode === 'org_team_addon';
-    if (activeOrgBilling) return 'Org billing active';
-    if (pendingBilling && link.approvedByOrgUserId && !link.approvedByTeamUserId) return 'Organization invited you to move billing';
-    if (pendingBilling && link.approvedByTeamUserId && !link.approvedByOrgUserId) return 'Waiting for organization billing approval';
-    if (pendingBilling && link.approvedByTeamUserId && link.approvedByOrgUserId) return 'Organization checkout pending';
     return billingModeLabel(link.workspace?.billingMode);
   }
 
@@ -234,7 +207,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
           <div className={styles.headerIcon}><Building2 size={22} /></div>
           <div>
             <h1 className={styles.pageTitle}>Link Organization</h1>
-            <p className={styles.pageSub}>Request a Basic visibility link or move approved Premium billing to a parent organization.</p>
+            <p className={styles.pageSub}>Request a Basic visibility link with a parent organization, or transfer your team into it.</p>
           </div>
         </div>
         <button type="button" className="btn btn-ghost btn-sm" onClick={loadLinks}>
@@ -245,13 +218,13 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
       <HelpCallout
         variant="info"
         title="Basic visibility first"
-        body="A Basic link records the parent organization association. You can separately request org billing, but that still does not transfer ownership, roster access, documents, accounting details, or org-wide rep-team admin access."
+        body="A Basic link records the parent organization association only. It does not transfer ownership, roster access, documents, accounting details, or org-wide rep-team admin access — use Ownership transfer for that."
       />
 
       <HelpCallout
         variant="tip"
-        title="When the club should pay"
-        body="After a Basic link is active, use Request Org Billing on the linked organization card. The organization can approve annual or monthly Coaches Portal billing while your portal stays coach-operated."
+        title="Joining a club"
+        body="If your club runs on FieldLogicHQ, your Coaches Portal is included in their Club plan once your team's ownership transfers in — no separate per-team charge. Keep your standalone portal if you'd rather stay independent."
       />
 
       <section className={styles.detailSection}>
@@ -282,12 +255,8 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
         ) : (
           <div className={styles.linkList}>
             {links.map(link => {
-              const pendingBilling = link.linkType === 'billing' && link.billingModeAfterApproval === 'org_team_addon';
-              const activeOrgBilling = pendingBilling && link.workspace?.billingMode === 'org_team_addon';
               const pendingOwnership = link.linkType === 'ownership' && link.status === 'ownership_pending';
-              const canRequestBilling = link.status === 'linked' && !pendingBilling && !activeOrgBilling && (link.workspace?.billingMode === 'team_direct' || link.workspace?.billingMode === 'platform_override');
-              const canRespondToBillingInvite = link.status === 'linked' && pendingBilling && link.approvedByOrgUserId && !link.approvedByTeamUserId;
-              const canRequestOwnership = link.status === 'linked' && !pendingOwnership && (!pendingBilling || activeOrgBilling);
+              const canRequestOwnership = link.status === 'linked' && !pendingOwnership;
               const canRespondToOwnershipInvite = pendingOwnership && link.approvedByOrgUserId && !link.approvedByTeamUserId;
 
               return (
@@ -328,38 +297,6 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
                         disabled={workingId === link.id}
                       >
                         Decline
-                      </button>
-                    </div>
-                  )}
-                  {canRequestBilling && (
-                    <div className="flex gap-2 mt-4 flex-wrap">
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        onClick={() => billingAction(link.id, 'request_billing')}
-                        disabled={workingId === link.id}
-                      >
-                        <CreditCard size={14} /> Request Org Billing
-                      </button>
-                    </div>
-                  )}
-                  {canRespondToBillingInvite && (
-                    <div className="flex gap-2 mt-4 flex-wrap">
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        onClick={() => billingAction(link.id, 'accept_billing')}
-                        disabled={workingId === link.id}
-                      >
-                        Accept Billing Invite
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-danger btn-sm"
-                        onClick={() => billingAction(link.id, 'decline_billing')}
-                        disabled={workingId === link.id}
-                      >
-                        Decline Billing
                       </button>
                     </div>
                   )}

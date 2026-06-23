@@ -733,7 +733,7 @@ export default function TournamentVenuesPage() {
   // Org venue library is only available on League and Club plans.
   // Tournament / Tournament Plus subscribers have no org library — their entire
   // experience is the tournament admin module only.
-  const hasOrgLibrary = !!currentOrg && ['league', 'club'].includes(currentOrg.planId);
+  const hasOrgLibrary = !!currentOrg && ['league', 'club', 'club_large'].includes(currentOrg.planId);
 
   const refresh = useCallback(async () => {
     if (!currentTournament) { setVenues([]); return; }

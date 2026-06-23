@@ -6,7 +6,7 @@ import type { User } from '@supabase/supabase-js';
 import { hasCapability } from './roles';
 import type { Capability } from './roles';
 import { assertSafeSupabaseServerEnvironment } from './supabase-safety';
-import { getEffectiveTournamentLimit } from './plan-config';
+import { getEffectiveTournamentLimit, getEffectiveTeamLimit } from './plan-config';
 import { applyEntitlementGrants } from './entitlement-grants';
 
 export interface AuthContext {
@@ -43,6 +43,7 @@ type AuthOrgRow = {
   logo_url: string | null;
   plan_id: OrgPlan;
   tournament_limit: number | null;
+  team_limit: number | null;
   subscription_status: Organization['subscriptionStatus'] | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
@@ -138,6 +139,7 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
     logoUrl: orgRow.logo_url ?? undefined,
     planId: orgRow.plan_id as OrgPlan,
     tournamentLimit: getEffectiveTournamentLimit(orgRow.plan_id as OrgPlan, orgRow.tournament_limit),
+    teamLimit: getEffectiveTeamLimit(orgRow.plan_id as OrgPlan, orgRow.team_limit),
     subscriptionStatus: orgRow.subscription_status ?? 'active',
     stripeCustomerId: orgRow.stripe_customer_id ?? undefined,
     stripeSubscriptionId: orgRow.stripe_subscription_id ?? undefined,

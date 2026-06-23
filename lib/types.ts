@@ -1,4 +1,4 @@
-export type OrgPlan = 'tournament' | 'team' | 'tournament_plus' | 'league' | 'club';
+export type OrgPlan = 'tournament' | 'team' | 'tournament_plus' | 'league' | 'club' | 'club_large';
 
 // ── Tournament scope types ────────────────────────────────────────────────────
 /** How game timing (duration + buffer) is managed across divisions. */
@@ -235,6 +235,9 @@ export interface Organization {
   currentPeriodEnd?: string | null;
   repTeamSubscriptionItemId?: string | null;
   tournamentLimit: number;
+  // Effective rep-team capacity (Club Repackaging): per-org override ?? plan band default.
+  // 9999 ≈ uncapped. Computed via getEffectiveTeamLimit in the org mapper.
+  teamLimit: number;
   isPublic: boolean;
   createdAt: string;
   themePreset?: string;

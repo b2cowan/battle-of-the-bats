@@ -4,15 +4,8 @@ import { PLAN_CONFIG } from '@/lib/plan-config';
 import { isPastDueTransition, isRecoveryTransition, writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
+import { PLAN_RANK } from '@/lib/plan-features';
 import { withObservability } from '@/lib/observability';
-
-const PLAN_RANK: Record<OrgPlan, number> = {
-  tournament: 0,
-  team: 0,
-  tournament_plus: 1,
-  league: 2,
-  club: 3,
-};
 
 export const POST = withObservability(async (req: Request) => {
   if (!isBillingMockEnabled()) {

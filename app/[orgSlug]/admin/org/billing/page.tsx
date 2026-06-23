@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { CreditCard, CheckCircle, Archive, ShieldOff, Link2, UsersRound, Star, ArrowRight, Users, CalendarRange, Building2 } from 'lucide-react';
+import { CreditCard, CheckCircle, Archive, ShieldOff, Link2, Star, ArrowRight, Users, CalendarRange, Building2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useTournament } from '@/lib/tournament-context';
@@ -64,6 +64,8 @@ const PLAN_TAGLINE: Record<OrgPlan, string> = {
   tournament_plus: 'Serious tournament operations: registration control, branding, automation, and reporting.',
   league:          'Manage your league, registrations, and public presence — all in one place.',
   club:            'The complete operating system for your sports organization.',
+  // club_large copy is interim — final customer wording owned by Phase 4 (/marketing).
+  club_large:      'The complete operating system, sized for a larger club or association — every team and coach included.',
 };
 
 const PLAN_FEATURES: Record<OrgPlan, string[]> = {
@@ -104,7 +106,14 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
     'Everything in League Plus',
     'Accounting — ledger, invoicing, payment reconciliation',
     'Rep Teams — tryouts, rosters, player documents',
-    'Coaches portal',
+    'Whole coaching staff included — Premium portals for up to 15 teams',
+    'Unlimited staff / admin seats',
+  ],
+  club_large: [
+    'Everything in Club',
+    'Sized for a larger association — up to 30 teams',
+    'Whole coaching staff included — no per-team fees',
+    'Accounting, Rep Teams, and Premium Coaches Portals',
     'Unlimited staff / admin seats',
   ],
 };
@@ -114,7 +123,8 @@ const PLAN_META_COPY: Record<OrgPlan, string> = {
   team:            "You're on Coaches Portal Premium. Your team tools and one free-tier tournament slot are active.",
   tournament_plus: "You're on Tournament Plus. Your tournament operations tools are active; League Plus and Club are coming soon while those broader workflows are refined.",
   league:          "You're on League Plus. Need accounting or rep team tools? Club is the complete platform.",
-  club:            "You're on the complete Club platform.",
+  club:            "You're on the complete Club platform. Your whole coaching staff is included, up to 15 teams.",
+  club_large:      "You're on Club · Association — the complete platform, sized for a larger association of up to 30 teams.",
 };
 
 type ProductShelfPlan = 'team' | 'league' | 'club';
@@ -130,27 +140,6 @@ const PRODUCT_SHELF_ICON: Partial<Record<OrgPlan, React.ReactElement>> = {
   team:   <Users size={18} />,
   league: <CalendarRange size={18} />,
   club:   <Building2 size={18} />,
-};
-
-const CLUB_VALUE_TEAM_COUNT = 3;
-
-type TeamLinkForBillingSummary = {
-  id: string;
-  teamWorkspaceId: string;
-  status: string;
-  linkType: string;
-  billingModeAfterApproval: string | null;
-  workspace: {
-    billingMode: string | null;
-    subscriptionStatus: string | null;
-  } | null;
-};
-
-type TeamLinkBillingSummary = {
-  activeOrgPaidTeamCount: number;
-  connectedTeamCount?: number;
-  clubValueThreshold?: number;
-  showClubValueNudge?: boolean;
 };
 
 export default function BillingPage() {
@@ -179,13 +168,9 @@ export default function BillingPage() {
   const [seatUsage, setSeatUsage]         = useState<{
     billed: number; officials: number; limit: number; officialsFree: boolean;
   } | null>(null);
-  const [repTeamAddon, setRepTeamAddon]   = useState<{
-    activeCount: number; billableCount: number;
-  } | null>(null);
   const [foundingSeasonStatus, setFoundingSeasonStatus] = useState<{
     isFoundingSeason: boolean; compUntil: string | null;
   } | null>(null);
-  const [teamLinkBillingSummary, setTeamLinkBillingSummary] = useState<TeamLinkBillingSummary | null>(null);
 
   async function refreshBillingState() {
     await Promise.all([refreshOrg(), refreshTournaments()]);
@@ -207,68 +192,9 @@ export default function BillingPage() {
       .catch(() => {});
   }, [currentOrg]);
 
-  // E6 — fetch rep-team add-on usage for Club orgs
-  useEffect(() => {
-    if (!currentOrg || currentOrg.planId !== 'club') return;
-    fetch(`/api/admin/rep-teams/billing-preview?proposedCount=0${currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : ''}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data && typeof data.currentCount === 'number') {
-          setRepTeamAddon({
-            activeCount: data.currentCount,
-            billableCount: Math.max(0, data.currentCount - 3),
-          });
-        }
-      })
-      .catch(() => {});
-  }, [currentOrg]);
-
-  useEffect(() => {
-    if (!currentOrg) return;
-    if (currentOrg.accountKind === 'team_workspace' || currentOrg.planId === 'team') {
-      return;
-    }
-    if (userRole !== 'owner' && userRole !== 'admin') {
-      return;
-    }
-
-    fetch(`/api/admin/org/team-links?orgSlug=${encodeURIComponent(currentOrg.slug)}`, { cache: 'no-store' })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        const links = Array.isArray(data?.links) ? data.links as TeamLinkForBillingSummary[] : [];
-        if (data?.billingSummary && typeof data.billingSummary.activeOrgPaidTeamCount === 'number') {
-          setTeamLinkBillingSummary({
-            activeOrgPaidTeamCount: data.billingSummary.activeOrgPaidTeamCount,
-            clubValueThreshold: data.billingSummary.clubValueThreshold,
-            showClubValueNudge: data.billingSummary.showClubValueNudge,
-          });
-          return;
-        }
-        const activeOrgPaidTeamIds = new Set(
-          links
-            .filter(link => (
-              link.status === 'linked' &&
-              link.linkType === 'billing' &&
-              link.billingModeAfterApproval === 'org_team_addon' &&
-              link.workspace?.billingMode === 'org_team_addon' &&
-              link.workspace.subscriptionStatus !== 'canceled'
-            ))
-            .map(link => link.teamWorkspaceId),
-        );
-        const connectedTeamIds = new Set(
-          links
-            .filter(link => ['linked', 'ownership_pending', 'org_owned'].includes(link.status))
-            .map(link => link.teamWorkspaceId),
-        );
-        setTeamLinkBillingSummary({
-          activeOrgPaidTeamCount: activeOrgPaidTeamIds.size,
-          connectedTeamCount: connectedTeamIds.size,
-        });
-      })
-      .catch(() => {
-        setTeamLinkBillingSummary(null);
-      });
-  }, [currentOrg, userRole]);
+  // Club Repackaging (2026-06-22): the per-team "$19/team beyond 3" add-on usage fetch and
+  // the "upgrade to Club to save" nudge are retired — Club includes the whole coaching staff
+  // up to the plan's team cap. The customer-facing team-capacity readout is added in Phase 3.
 
   async function handleUpgrade(planKey: 'tournament_plus' | 'league' | 'club') {
     if (!currentOrg) return;
@@ -481,13 +407,6 @@ export default function BillingPage() {
   const cancelWarningCopy = isTeamWorkspaceBilling
     ? `Premium tools will become inactive and premium team data is retained for ${cancelPreflight?.retentionDays ?? 90} days. Basic tournament records stay available in Coaches Portal.`
     : `Cancellation suspends the full account. Public pages and modules shut down, and data is retained for ${cancelPreflight?.retentionDays ?? 90} days.`;
-  const showClubValueNudge =
-    !isTeamWorkspaceBilling &&
-    currentPlanKey !== 'club' &&
-    (userRole === 'owner' || userRole === 'admin') &&
-    (teamLinkBillingSummary?.showClubValueNudge ??
-      (teamLinkBillingSummary?.activeOrgPaidTeamCount ?? 0) >= CLUB_VALUE_TEAM_COUNT);
-
   function getPrice(planKey: OrgPlan): string {
     if (isEffectivelyGated(planKey)) return 'Coming soon';
     if (planKey === 'tournament_plus' && isFoundingSeasonActive()) return 'Free through Dec 31, 2026';
@@ -751,27 +670,6 @@ export default function BillingPage() {
         </div>
       )}
 
-      {showClubValueNudge && (
-        <div className={styles.billingNudgeCard}>
-          <div className={styles.billingNudgeIcon}><UsersRound size={18} /></div>
-          <div className={styles.billingNudgeBody}>
-            <h2 className={styles.billingNudgeTitle}>Club may be the better multi-team home</h2>
-            <p className={styles.billingNudgeCopy}>
-              This organization is paying for {teamLinkBillingSummary?.activeOrgPaidTeamCount ?? CLUB_VALUE_TEAM_COUNT} linked Premium portals. Club is designed for multi-team oversight, accounting, and lower extra-team pricing while existing links can stay narrow until both sides approve a transfer.
-            </p>
-          </div>
-          <div className={styles.billingNudgeActions}>
-            <Link className="btn btn-lime btn-data" href={`/${currentOrg.slug}/admin/org/coaches-portal-links`}>
-              Review Coaches Portal Links
-              <ArrowRight size={14} />
-            </Link>
-            <Link className="btn btn-ghost btn-data" href="/pricing#club">
-              View Club Preview
-            </Link>
-          </div>
-        </div>
-      )}
-
       {status === 'past_due' && (
         <p className={`${styles.statusNote} ${styles.statusNoteWarning}`}>
           Your last payment failed. Your access remains active during the grace period — please update your payment method via <strong>Manage Subscription</strong> below to avoid service interruption.
@@ -830,25 +728,6 @@ export default function BillingPage() {
               })()}
             </div>
           )}
-        </div>
-      )}
-
-      {/* E6 — Rep team add-on usage (Club plan only) */}
-      {currentPlanKey === 'club' && repTeamAddon !== null && (
-        <div className={styles.usageCard}>
-          <div className={styles.usageHeader}>
-            <span className={styles.usageLabel}>
-              Rep team add-on
-              <span style={{ marginLeft: '0.5rem', fontWeight: 400, color: 'var(--white-30)' }}>
-                · first 3 active teams included
-              </span>
-            </span>
-            <span className={styles.usageCount}>
-              {repTeamAddon.billableCount > 0
-                ? `${repTeamAddon.billableCount} billed — ${currentOrg.subscriptionPeriod === 'annual' ? '$190 CAD / year' : '$19 CAD / month'} each`
-                : `${repTeamAddon.activeCount} active · within free threshold`}
-            </span>
-          </div>
         </div>
       )}
 

@@ -1,5 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
-import { getEffectiveTournamentLimit } from './plan-config';
+import { getEffectiveTournamentLimit, getEffectiveTeamLimit } from './plan-config';
 import { applyEntitlementGrants } from './entitlement-grants';
 import type { Organization } from './types';
 
@@ -13,6 +13,7 @@ type OrganizationRow = {
   stripe_subscription_id: string | null;
   subscription_status: Organization['subscriptionStatus'] | null;
   tournament_limit: number | null;
+  team_limit: number | null;
   is_public: boolean | null;
   created_at: string;
   theme_preset: string | null;
@@ -42,6 +43,7 @@ function mapOrganization(row: OrganizationRow): Organization {
     stripeSubscriptionId: row.stripe_subscription_id ?? undefined,
     subscriptionStatus: row.subscription_status ?? 'active',
     tournamentLimit: getEffectiveTournamentLimit(row.plan_id, row.tournament_limit),
+    teamLimit: getEffectiveTeamLimit(row.plan_id, row.team_limit),
     isPublic: row.is_public ?? true,
     createdAt: row.created_at,
     themePreset: row.theme_preset ?? undefined,

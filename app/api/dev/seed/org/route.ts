@@ -7,7 +7,7 @@ import type { OrgPlan } from '@/lib/types';
 const OWNER_EMAIL  = 'owner@dev.local';
 const DEV_PASSWORD = 'devpass123';
 
-const VALID_ORG_PLANS = ['tournament', 'tournament_plus', 'league', 'club'] as const satisfies readonly OrgPlan[];
+const VALID_ORG_PLANS = ['tournament', 'tournament_plus', 'league', 'club', 'club_large'] as const satisfies readonly OrgPlan[];
 type DevOrgPlan = (typeof VALID_ORG_PLANS)[number];
 
 const PLAN_SLUG: Record<DevOrgPlan, string> = {
@@ -15,6 +15,7 @@ const PLAN_SLUG: Record<DevOrgPlan, string> = {
   tournament_plus: 'dev-tplus-org',
   league:          'dev-league-org',
   club:            'dev-club-org',
+  club_large:      'dev-club-assoc-org',
 };
 
 const PLAN_NAME: Record<DevOrgPlan, string> = {
@@ -22,6 +23,7 @@ const PLAN_NAME: Record<DevOrgPlan, string> = {
   tournament_plus: 'Dev Tournament+ Org',
   league:          'Dev League Org',
   club:            'Dev Club Org',
+  club_large:      'Dev Club · Association Org',
 };
 
 function isValidOrgPlan(plan: unknown): plan is DevOrgPlan {

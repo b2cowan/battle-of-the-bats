@@ -328,7 +328,7 @@ export default function OrgVenueLibraryPage() {
   const orgSlug = currentOrg?.slug;
 
   // Venue Library is a League/Club feature only
-  const planAllowed = !!currentOrg && ['league', 'club'].includes(currentOrg.planId);
+  const planAllowed = !!currentOrg && ['league', 'club', 'club_large'].includes(currentOrg.planId);
 
   const [venues, setVenues]     = useState<OrgVenue[]>([]);
   const [loading, setLoading]   = useState(true);

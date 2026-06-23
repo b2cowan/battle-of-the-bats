@@ -284,8 +284,8 @@ export const PLAN_ARTICLE_CONTENT: Record<'tournament_plus' | 'league' | 'club' 
       'Rep Teams module — tryout registration and roster management',
       'Player documents and season history',
       'Team financial management',
-      'Coaches Portal — 3 team accounts included',
-      'Additional Coaches Portal accounts at $19/month each',
+      'Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee',
+      'Up to 15 teams — or up to 30 on Club · Association',
     ],
   },
 };

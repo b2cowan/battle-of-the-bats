@@ -144,10 +144,6 @@ export function hasTeamFreeTournamentSlot(org: Pick<Organization, 'planId' | 'su
   return org?.planId === 'team' && org.subscriptionStatus !== 'canceled';
 }
 
-export function shouldShowClubValueNudge(activePaidTeamCount: number): boolean {
-  return activePaidTeamCount >= 3;
-}
-
 const LIVE_TEAM_WORKSPACE_SUB_STATUSES: TeamWorkspaceSubscriptionStatus[] = ['active', 'trialing', 'past_due'];
 
 /**

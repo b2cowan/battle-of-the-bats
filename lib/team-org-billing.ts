@@ -1,5 +1,14 @@
 import 'server-only';
 
+// ⚠️ RETIRING (Club Repackaging, 2026-06-22): the org-pays "$19/team" billing-takeover
+// (org_team_addon) is retired. Teams in a Club are included up to the plan cap; an external
+// coach either keeps a standalone portal or transfers ownership in. The request/invite/respond/
+// checkout entry points are no longer wired to any route (the team-links routes return 410).
+// Only `completeOrgTeamAddonBillingFromMetadata` remains referenced (by the Stripe webhook) so
+// any in-flight pre-cutover session could still settle — there are 0 such subscriptions in dev
+// or prod (verified 2026-06-22), so this whole module is effectively dead and safe to delete
+// once the webhook arms are removed post-cutover.
+
 import { normalizeBillingCycle, type BillingCycle } from './plan-config';
 import { isBillingMockEnabled, isStripeConfigured } from './billing-mock';
 import { writePlatformEvent } from './platform-events';

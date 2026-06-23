@@ -22,7 +22,7 @@ export default function TournamentSettingsAccessPage() {
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
   const subscriptionHref = `${base}/settings/subscription`;
   const isOwner = userRole === 'owner';
-  const isLeagueOrClub = !!currentOrg && ['league', 'club'].includes(currentOrg.planId);
+  const isLeagueOrClub = !!currentOrg && ['league', 'club', 'club_large'].includes(currentOrg.planId);
   const canManageMembers = userRole
     ? userRole === 'owner' || hasCapability(userRole, userCapabilities, 'module_members')
     : false;

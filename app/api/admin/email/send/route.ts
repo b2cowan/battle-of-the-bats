@@ -108,7 +108,8 @@ async function getFoundingSeasonRecipients(): Promise<
   }>;
 }
 
-// Same as getFoundingSeasonRecipients but excludes orgs already on league/club plan.
+// Same as getFoundingSeasonRecipients but excludes orgs already on a League/Club tier
+// (league, club, AND club_large — Club · Association is a Club tier, don't pitch it Club).
 async function getFoundingSeasonRecipientsNotOnClub(): Promise<
   Array<{ orgId: string; orgName: string; ownerEmail: string; ownerName: string | null }>
 > {
@@ -126,7 +127,7 @@ async function getFoundingSeasonRecipientsNotOnClub(): Promise<
     .select('id, name, email_marketing_opt_out')
     .in('id', orgIds)
     .eq('email_marketing_opt_out', false)
-    .not('plan_id', 'in', '(league,club)');
+    .not('plan_id', 'in', '(league,club,club_large)');
 
   if (!orgs?.length) return [];
 

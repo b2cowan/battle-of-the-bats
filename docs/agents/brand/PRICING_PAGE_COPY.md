@@ -305,6 +305,8 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 
 ### CARD 4 — CLUB ($179 / $1,790) ⭐ Most Popular
 
+> ⛔ **Repriced 2026-06-22 (Club Repackaging) — this card body is historical.** Club is now banded: **Club from $219/mo** (up to 15 teams) and **Club · Association** (15–30 teams). The Premium Coaches Portal is included for the **whole coaching staff — every team, no per-team fee**; the "$19/mo additional accounts" line below is **retired**. See the 2026-06-22 amendment at the top of this doc + `docs/agents/strategy/PLAN_PRICING_FACTS.md` (canonical). Public framing while early-access: "Club — from $219/mo"; do not publish the firm Club · Association band price until the cohort opens.
+
 **Plan Name:** Club
 
 **Badge:** Most Popular
@@ -328,7 +330,7 @@ Layout: four equal-width cards in a horizontal row. Club card is visually elevat
 - Everything in League
 - Accounting — org ledger, invoicing, expense tracking, and payment reconciliation
 - Rep Teams — tryouts, rosters, player documents, and season history
-- Coaches Portal — 3 team accounts included; additional accounts at $19/mo
+- Premium Coaches Portal for your whole coaching staff — every team included, no per-team fee *(was: "3 team accounts; additional at $19/mo" — retired 2026-06-22)*
 
 **"Why most popular" blurb (shown within or beneath the card):**
 > Most organizations choose Club because of what they stop doing: hunting down payments, managing tryouts over email, reconciling team finances in spreadsheets. Club eliminates the manual work that takes up treasurer and executive time all season. If your organization runs rep teams or manages money, it pays for itself quickly.

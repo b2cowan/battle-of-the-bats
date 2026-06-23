@@ -688,7 +688,7 @@ const SPOTLIGHT_CLUB_PREVIEW = W(`
       <li>Accounting: org ledger, team invoicing, budget vs. actual</li>
     </ul>
   </div>
-  <p style="margin:0 0 1.5rem;line-height:1.7;">Club is normally <strong>$179/month</strong>. As a founding organization, <strong>Club is free through December 31, 2026</strong>.</p>
+  <p style="margin:0 0 1.5rem;line-height:1.7;">Club is normally <strong>from $219/month</strong>. As a founding organization, <strong>Club is free through December 31, 2026</strong>.</p>
   <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Start on Club — free through December 31 →</a>
   <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
 `);
@@ -706,7 +706,7 @@ const SPOTLIGHT_LEAGUE_PREVIEW = W(`
       <li>Standings update the moment scores are entered.</li>
     </ul>
   </div>
-  <p style="margin:0 0 1.5rem;line-height:1.7;">Available on League Plus (<strong>$89/month</strong>) and Club (<strong>$179/month</strong>). Both are <strong>free through December 31, 2026</strong>.</p>
+  <p style="margin:0 0 1.5rem;line-height:1.7;">Available on League Plus (<strong>$89/month</strong>) and Club (<strong>from $219/month</strong>). Both are <strong>free through December 31, 2026</strong>.</p>
   <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Get set up on League Plus — free through December 31 →</a>
   <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
 `);
@@ -755,7 +755,7 @@ const SPOTLIGHT_CLUB_LAST_PREVIEW = W(`
   <p style="margin:0 0 1rem;">Hi Demo User,</p>
   <p style="margin:0 0 1.25rem;line-height:1.7;">A quick follow-up to our August note about Club.</p>
   <p style="margin:0 0 1.25rem;line-height:1.7;color:rgba(241,245,249,0.8);">If <strong>Demo Org</strong> is running a house league, rep teams, or both alongside your tournaments — Club is free through December 31, 2026 as part of your founding season.</p>
-  <p style="margin:0 0 1.5rem;line-height:1.7;">After the new year, it's <strong>$179/month</strong>. Starting now, it costs nothing.</p>
+  <p style="margin:0 0 1.5rem;line-height:1.7;">After the new year, it's <strong>from $219/month</strong>. Starting now, it costs nothing.</p>
   <p style="margin:0 0 1.5rem;line-height:1.7;color:rgba(241,245,249,0.8);">The longer you wait to set it up, the deeper into the season you go on separate systems.</p>
   <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Start on Club — free through December 31 →</a>
   <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>

@@ -63,15 +63,16 @@ function matchesAttentionFilter(org: OrgRow, filter: string): boolean {
   return true;
 }
 
-const PLANS = ['tournament', 'team', 'tournament_plus', 'league', 'club'] as const;
+const PLANS = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'] as const;
 const STATUSES = ['active', 'trialing', 'past_due', 'canceled'] as const;
 
 const PLAN_LABELS: Record<string, string> = {
   tournament:      'Tournament',
-  team:            'Team',
+  team:            'Coaches Portal',
   tournament_plus: 'Tournament Plus',
   league:          'League Plus',
   club:            'Club',
+  club_large:      'Club · Association',
 };
 
 const fmtDate = (iso: string) => fmtAbsoluteDate(iso);

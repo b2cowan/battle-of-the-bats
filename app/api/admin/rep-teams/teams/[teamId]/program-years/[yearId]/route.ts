@@ -4,7 +4,6 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeam, getRepProgramYear, getRepProgramYears, updateRepProgramYear } from '@/lib/db';
-import { syncRepTeamBilling } from '@/lib/stripe-sync';
 import type { RepProgramYearStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
@@ -129,17 +128,9 @@ export const PATCH = withObservability(async (req: Request,
 
   const updated = await updateRepProgramYear(yearId, fields);
 
-  // E5 — sync rep-team billing when a program year is completed or archived.
-  // A completed/archived year means one fewer active year for that team, which
-  // may reduce the billable add-on quantity for Club orgs. Fire-and-forget:
-  // a billing sync failure should not block the status update response.
-  if (fields.status === 'completed' || fields.status === 'archived') {
-    if (ctx!.org.planId === 'club') {
-      syncRepTeamBilling(ctx!.org.id).catch(err =>
-        console.error('[program-year PATCH] syncRepTeamBilling failed:', err),
-      );
-    }
-  }
+  // Club Repackaging (2026-06-22): the per-team "$19/team beyond 3" meter is retired,
+  // so program-year status changes no longer trigger a per-team billing sync. A Club
+  // subscription includes the whole coaching staff up to the plan's team cap.
 
   return NextResponse.json({ programYear: updated });
 }, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]' });

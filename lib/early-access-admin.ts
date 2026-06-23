@@ -23,9 +23,10 @@ export const EARLY_ACCESS_STATUS_LABELS: Record<EarlyAccessStatus, string> = {
 };
 
 export const EARLY_ACCESS_PLAN_LABELS: Record<string, string> = {
-  team: 'Team',
+  team: 'Coaches Portal',
   league: 'League Plus',
   club: 'Club',
+  club_large: 'Club · Association',
 };
 
 export const EARLY_ACCESS_FEATURE_LABELS: Record<string, string> = {

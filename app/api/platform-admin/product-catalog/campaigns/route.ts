@@ -6,7 +6,7 @@ import { withObservability } from '@/lib/observability';
 
 const VALID_TYPES = new Set(['coupon', 'promo', 'trial', 'launch', 'retention']);
 const VALID_STATUSES = new Set(['draft', 'scheduled', 'active', 'paused', 'ended']);
-const VALID_PLANS = new Set(['tournament', 'team', 'tournament_plus', 'league', 'club']);
+const VALID_PLANS = new Set(['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large']);
 
 function cleanText(value: unknown, maxLength: number): string | null {
   if (typeof value !== 'string') return null;

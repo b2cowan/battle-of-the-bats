@@ -41,7 +41,7 @@ type PlatformEventRow = {
 
 type CountResult = { count: number | null; error?: unknown };
 
-export const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
+export const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 export const STATUS_ORDER = ['active', 'trialing', 'past_due', 'canceled'];
 export const MODULES = [
   { key: 'module_public_site', label: 'Public Site' },

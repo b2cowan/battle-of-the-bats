@@ -156,8 +156,9 @@ export default function ForCoachesPage() {
                   finances, and season records stay in place.
                 </p>
                 <p className={styles.bridgeRateNote}>
-                  Club team accounts run at $19/month — $10 less than the standalone rate.
-                  Nothing changes in your portal; the billing just drops.
+                  When your organization joins Club, your portal is included in their plan —
+                  you stop paying the standalone rate entirely. Nothing changes in your
+                  portal; the bill just goes away.
                 </p>
                 <p className={styles.bridgeBody}>
                   Until then, everything you need is here. The standalone portal is a complete
@@ -195,8 +196,8 @@ export default function ForCoachesPage() {
               <span className={styles.crossSellLabel}>Club</span>
               <span className={styles.crossSellQ}>Is your organization on FieldLogicHQ yet?</span>
               <span className={styles.crossSellBody}>
-                Club includes three Coaches Portal accounts for your coaching staff, plus tournaments,
-                house league, rep teams, and accounting — for the whole club, not just one team.
+                Club includes the Premium Coaches Portal for your whole coaching staff — every coach,
+                every team, no per-team fee — plus tournaments, house league, rep teams, and accounting.
               </span>
               <span className={styles.crossSellCta}>Express interest in Club →</span>
             </EarlyAccessModalTrigger>

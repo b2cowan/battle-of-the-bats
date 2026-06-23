@@ -22,7 +22,7 @@ import { SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 import PricingSection from '@/components/PricingSection';
 import styles from './onboarding.module.css';
 
-const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
+const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 const STARTUP_ORDER = ['tournament', 'divisions', 'welcome', 'venues'] as const;
 // Plan selection is a standalone gate (reached via ?choosePlan=1), NOT a numbered
 // wizard step. The wizard is the 6-step tournament setup flow.
@@ -402,6 +402,7 @@ export default function OnboardingPage() {
     tournament_plus: PLAN_CONFIG.tournament_plus.gatingStatus === 'early_access',
     league: PLAN_CONFIG.league.gatingStatus === 'early_access',
     club: PLAN_CONFIG.club.gatingStatus === 'early_access',
+    club_large: PLAN_CONFIG.club_large.gatingStatus === 'early_access',
   }));
   const [planLoading, setPlanLoading] = useState<OrgPlan | null>(null);
   const [planError, setPlanError] = useState('');
@@ -593,7 +594,7 @@ export default function OnboardingPage() {
 
   async function advancePlanStep(selectedPlan: OrgPlan) {
     const newPlan = normalizePlanId(selectedPlan);
-    if (newPlan === 'league' || newPlan === 'club') {
+    if (newPlan === 'league' || newPlan === 'club' || newPlan === 'club_large') {
       await showWizardStep('league-season');
     } else {
       await advanceWizard('plan');
@@ -1520,7 +1521,7 @@ export default function OnboardingPage() {
   const planLabel = PLAN_CONFIG[activePlanId].label;
   const isTournamentPlan = activePlanId === 'tournament' || activePlanId === 'tournament_plus';
   const isLeaguePlan = activePlanId === 'league';
-  const isClubPlan = activePlanId === 'club';
+  const isClubPlan = activePlanId === 'club' || activePlanId === 'club_large';
   const shouldRedirectFromTournamentOnboarding = isTournamentPlan && startupProgress?.wizardAvailable === false;
   const todayDate = getTodayDateValue();
   const allDone = isLeaguePlan

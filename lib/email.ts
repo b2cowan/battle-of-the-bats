@@ -1586,7 +1586,7 @@ export function spotlightClubHtml(p: {
       Nobody is sending weekly update emails.
     </p>
     <p style="margin:0 0 1.5rem;line-height:1.7;">
-      Club is normally <strong>$179/month</strong>, unlimited staff seats.<br>
+      Club is normally <strong>from $219/month</strong>, unlimited staff seats.<br>
       As a founding organization, <strong>Club is free through December 31, 2026</strong>.
     </p>
     <p style="margin:0 0 1.5rem;line-height:1.7;color:rgba(241,245,249,0.8);">
@@ -1645,7 +1645,7 @@ export function spotlightLeagueHtml(p: {
       No parallel spreadsheets. No manual notifications. One dashboard.
     </p>
     <p style="margin:0 0 1.5rem;line-height:1.7;">
-      Available on the League Plus plan (<strong>$89/month</strong>) and Club plan (<strong>$179/month</strong>).<br>
+      Available on the League Plus plan (<strong>$89/month</strong>) and Club plan (<strong>from $219/month</strong>).<br>
       Both are <strong>free through December 31, 2026</strong> for founding organizations.
     </p>
     <p style="margin:0 0 1rem;line-height:1.7;">If you're planning a league season:</p>
@@ -1791,7 +1791,7 @@ export function spotlightClubLastHtml(p: {
       Club is free through December 31, 2026 as part of your founding season.
     </p>
     <p style="margin:0 0 1.5rem;line-height:1.7;">
-      After the new year, it's <strong>$179/month</strong>. Starting now, it costs nothing.
+      After the new year, it's <strong>from $219/month</strong>. Starting now, it costs nothing.
     </p>
     <p style="margin:0 0 1.5rem;line-height:1.7;color:rgba(241,245,249,0.8);">
       The longer you wait to set it up, the deeper into the season you go on separate systems.

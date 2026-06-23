@@ -8,7 +8,7 @@ import FeedbackModal from '@/components/FeedbackModal';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
 import styles from './mock-portal.module.css';
 
-const PLANS: OrgPlan[]    = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
+const PLANS: OrgPlan[]    = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 const STATUSES: SubscriptionStatus[] = ['active', 'trialing', 'past_due', 'canceled'];
 
 function normalizeStatusForPlan(plan: OrgPlan, status: SubscriptionStatus): SubscriptionStatus {

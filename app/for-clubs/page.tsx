@@ -142,7 +142,7 @@ export default function ForClubsPage() {
                   <span className={styles.planAmount}>{formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)}</span>
                   <span className={styles.planPeriod}>/month</span>
                 </div>
-                <p className={styles.planNote}>{formatPriceAmount(PLAN_CONFIG.club.annualPrice)}/year — save two months</p>
+                <p className={styles.planNote}>{formatPriceAmount(PLAN_CONFIG.club.annualPrice)}/year — save two months · priced by club size (up to 15 teams · up to 30 on Club · Association)</p>
               </div>
               <span className={styles.comingSoonBadge}>Coming soon</span>
               <p className={styles.planTagline}>

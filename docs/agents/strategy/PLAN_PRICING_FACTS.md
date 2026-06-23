@@ -18,8 +18,8 @@
 | **Tournament Plus** | $39 | $390 | Unlimited | Yes (self-serve) | Live |
 | **League** (free floor) | Free | Free | 1 season / 1 division / 8 teams | No — **Held** for launch | Built, internal key `free_floor='league_starter'` |
 | **League Plus** | $89 | $890 | Unlimited | No — early-access / express-interest | Live (app label is "League Plus") |
-| **Club** | **$219** *(was $179)* | **$2,190** | **Up to 15 teams** | No — early-access | **Decided / not yet built** (app still shows $179) · price = Target/anchor |
-| **Club · Association** | **$379** | **$3,790** | **15–30 teams** (custom > 30) | No — early-access | **Decided / not yet built** (plan does not exist in app yet) · price = Target/anchor · *public name pending final /marketing sign-off* |
+| **Club** | **$219** *(was $179)* | **$2,190** | **Up to 15 teams** | No — early-access | **Built dev 2026-06-22** (app config repriced; Stripe live prices = owner step) · price = Target/anchor |
+| **Club · Association** | **$379** | **$3,790** | **15–30 teams** (custom > 30) | No — early-access | **Built dev 2026-06-22** (plan key `club_large`) · price = Target/anchor · *public name pending final /marketing sign-off* |
 | **Premium Coaches Portal** (standalone) | $29 | $290 | One team | No — early-access | Live |
 
 **Annual convention:** ≈ 2 months free (pay for 10). $219→$2,190 and $379→$3,790 follow it.
@@ -56,7 +56,7 @@ Framing: **"announcements free, communications workflow paid."** *(Decided — r
 
 ## Decided-but-not-yet-built change log (close these to keep app == this table)
 
-- [ ] **Club Repackaging** — reprice Club $179→$219; add **Club · Association** ($379, 15–30 teams, custom >30); retire the $19/team meter; whole-staff portals included; enforce 15/30 caps. (`docs/projects/active/CLUB_REPACKAGING_PLAN.md`) — *not started; app still shows $179.*
+- [x] **Club Repackaging** — **BUILT dev 2026-06-22** (local/unpushed). Repriced Club $179→$219/$2,190; added **Club · Association** (`club_large`, $379/$3,790, 15–30 teams, custom >30 via per-org `organizations.team_limit`); retired the $19/team meter (charge path, takeover flow, nudge all removed); whole-staff portals included; 15/30 caps enforced at rep-team create. Both bands stay early-access. Migs 144 (CHECK widenings) + 145 (`team_limit`) + 146 (Club · Association Stripe price slots) applied **dev only** — prod migs + Stripe live-price creation are owner steps. (`docs/projects/active/CLUB_REPACKAGING_PLAN.md`)
 - [x] **Officials seat exemption** — BUILT dev 2026-06-22 (free-tier `officialsFreeSeats` on; both seat-count + invite paths already honor it; the score-entry "official" role *is* the scorekeeper role). Local/unpushed.
 - [x] **Free email split + guard** — BUILT dev 2026-06-22. The basic-free / advanced-gated split was already enforced in the product (copy was the only gap — fixed by `/marketing`); added a free-tier volume guard (100 recipients/send, 10 sends/24h). *Note: "templates / send-scheduling" Plus features don't exist yet — nothing to gate until built.* Local/unpushed.
 - [ ] **Founding $179 lock** — dormant (no founding $179 clubs exist); no grandfather to build.

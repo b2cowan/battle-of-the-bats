@@ -163,26 +163,28 @@ type PriceProductGroup = {
   annual: StripePriceRow | null;
 };
 
-const PLAN_ORDER = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
+const PLAN_ORDER = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 
 const PLAN_META: Record<string, { label: string; price: string; summary: string }> = {
   tournament: { label: 'Tournament', price: 'Free', summary: 'Starter event tier: 1 tournament, standard registration, FieldLogicHQ styling.' },
-  team: { label: 'Team', price: `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/mo`, summary: 'Standalone coach workspace with one rep team, coaches portal, and one free-tier tournament slot.' },
+  team: { label: 'Coaches Portal', price: `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/mo`, summary: 'Standalone coach workspace with one rep team, coaches portal, and one free-tier tournament slot.' },
   tournament_plus: { label: 'Tournament Plus', price: `${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo`, summary: 'Serious tournament operations: unlimited slots, unlimited seats, registration control, branding, automation.' },
-  league: { label: 'League', price: `${formatPriceAmount(PLAN_CONFIG.league.monthlyPrice)}/mo`, summary: 'House league, registration, public organization page, and league workflows.' },
-  club: { label: 'Club', price: `${formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)}/mo`, summary: 'Full club operations with accounting, rep teams, and coaches portal.' },
+  league: { label: 'League Plus', price: `${formatPriceAmount(PLAN_CONFIG.league.monthlyPrice)}/mo`, summary: 'House league, registration, public organization page, and league workflows.' },
+  club: { label: 'Club', price: `${formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)}/mo`, summary: 'Full club operations (accounting, rep teams, whole-staff coaches portals) — up to 15 teams.' },
+  club_large: { label: 'Club · Association', price: `${formatPriceAmount(PLAN_CONFIG.club_large.monthlyPrice)}/mo`, summary: 'Full club operations sized for a larger association — up to 30 teams, whole coaching staff included.' },
 };
 
 const PRICE_PLAN_LABELS: Record<string, string> = {
-  team: 'Team',
+  team: 'Coaches Portal',
   tournament_plus: 'Tournament Plus',
   league: 'League Plus',
   club: 'Club',
-  org_team_addon: 'Org Team Add-on',
-  rep_team: 'Club Extra Rep Team',
+  club_large: 'Club · Association',
+  org_team_addon: 'Org Team Add-on (Retired)',
+  rep_team: 'Club Extra Rep Team (Retired)',
 };
 
-const PRICE_PLAN_ORDER = ['team', 'tournament_plus', 'league', 'club', 'org_team_addon', 'rep_team'];
+const PRICE_PLAN_ORDER = ['team', 'tournament_plus', 'league', 'club', 'club_large', 'org_team_addon', 'rep_team'];
 const ADDON_CATALOG_KEY_BY_PRICE_PLAN: Record<string, string> = {
   org_team_addon: 'org_team_addon',
   rep_team: 'extra_rep_team',

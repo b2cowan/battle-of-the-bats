@@ -6,6 +6,8 @@ import { isStripeConfigured } from './billing-mock';
 import { stripe } from './stripe';
 import { supabaseAdmin } from './supabase-admin';
 import { getTeamOrgLinkSummary, type TeamOrgLinkSummary } from './team-org-links';
+import { PLAN_CONFIG } from './plan-config';
+import type { OrgPlan } from './types';
 import type { TeamWorkspace, TeamWorkspaceBillingMode } from './team-workspace-entitlements';
 
 type OwnershipLinkRow = {
@@ -176,7 +178,11 @@ function enabledAddonsIncludes(value: unknown, addon: string): boolean {
 }
 
 function orgHasRepTeamsModule(org: OwnershipOrgRow): boolean {
-  return org.plan_id === 'club' || enabledAddonsIncludes(org.enabled_addons, 'module_rep_teams');
+  // Plan-config-driven (Club Repackaging): any plan whose tier includes module_rep_teams
+  // qualifies — covers club AND club_large (and any future club-tier band) without hardcoding
+  // each plan key. Falls back to the per-org add-on for non-tier grants.
+  const planModules = PLAN_CONFIG[org.plan_id as OrgPlan]?.moduleEntitlements ?? [];
+  return planModules.includes('module_rep_teams') || enabledAddonsIncludes(org.enabled_addons, 'module_rep_teams');
 }
 
 async function fetchOrg(orgId: string): Promise<OwnershipOrgRow | null> {

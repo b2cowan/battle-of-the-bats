@@ -48,7 +48,7 @@ export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   // Org Venue Library is a League/Club org-admin feature (matches the page-level gate).
-  if (!['league', 'club'].includes(ctx.org.planId)) return forbidden();
+  if (!['league', 'club', 'club_large'].includes(ctx.org.planId)) return forbidden();
 
   const { data: venues, error: vErr } = await supabaseAdmin
     .from('org_venues')
@@ -87,7 +87,7 @@ export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   // Org Venue Library is a League/Club org-admin feature (matches the page-level gate).
-  if (!['league', 'club'].includes(ctx.org.planId)) return forbidden();
+  if (!['league', 'club', 'club_large'].includes(ctx.org.planId)) return forbidden();
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 
   try {

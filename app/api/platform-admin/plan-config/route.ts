@@ -23,7 +23,7 @@ function badRequest(message: string) {
   });
 }
 
-const VALID_PLANS = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
+const VALID_PLANS = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 
 export const GET = withObservability(async () => {
   const user = await getPlatformAuthContext();

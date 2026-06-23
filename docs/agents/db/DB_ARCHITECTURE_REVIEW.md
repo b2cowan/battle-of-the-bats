@@ -1,7 +1,7 @@
 # FieldLogicHQ — Database Architecture Review
 
 > **Maintained by:** `/dba` agent  
-> **Last reviewed:** 2026-06-08 (Finding #25: full dev+prod re-snapshot via new `scripts/refresh-db-snapshots.mjs`; 50 dev/prod divergences catalogued in `schema-snapshots/DRIFT_dev_vs_prod.md`. Schema now **103 tables** both envs.) — prev 2026-06-04 (H8 Findings #22–24: extend `org_overrides` not a new table, embed-not-flag hot path, reuse billing-suspension columns).  
+> **Last reviewed:** 2026-06-22 (Finding #26: Club Repackaging entitlement decoupling reviewed pre-build — reuse `club_included`, cap via a new `organizations.team_limit` column NOT `org_overrides`, no per-team rows for org-owned teams; verify-zero confirmed against live dev+prod.) — prev 2026-06-08 (Finding #25: full dev+prod re-snapshot via new `scripts/refresh-db-snapshots.mjs`; 50 dev/prod divergences catalogued in `schema-snapshots/DRIFT_dev_vs_prod.md`. Schema now **103 tables** both envs.) — prev 2026-06-04 (H8 Findings #22–24: extend `org_overrides` not a new table, embed-not-flag hot path, reuse billing-suspension columns).  
 > **Schema source (authoritative):** `docs/agents/db/schema-snapshots/*.json` — regenerated for **dev AND prod** by `node scripts/refresh-db-snapshots.mjs` (run after every migration). It also emits `DRIFT_dev_vs_prod.md` and refreshes `memory/reference_db_schema.md`. **Decide column existence from these snapshots / live `information_schema`, never from migrations** (see `docs/agents/db/DATA_DICTIONARY.md` rules).  
 > **Tables reviewed:** 85 across 9 modules (tournament, league, rep teams, standalone team workspace, accounting, stripe, org/platform core, platform admin, CRM)  
 > **Validation:** `docs/validate_db_state.sql` — checks 17–18 added (pools); check 19 added (games FK duplicates). Will FAIL on prod until migrations 081 Part B and 082 applied.
@@ -21,6 +21,29 @@
 ---
 
 ## Open Findings
+
+---
+
+### [2026-06-22] — Finding #26: Club Repackaging entitlement decoupling — reuse `club_included`, cap via `organizations.team_limit` (NOT `org_overrides`), no per-team rows for org-owned teams
+
+**Severity:** High (pre-implementation architecture decision)
+**Finding:** Club Repackaging (`docs/projects/active/CLUB_REPACKAGING_PLAN.md`) retires the `org_team_addon` per-team meter and entitles a Club / `club_large` org's rep teams up to a per-plan cap (15 / 30). **Verify-zero (read-only, live, 2026-06-22):** prod (`qcttcboqysynwcdyghil`) has **0 Club orgs, 0 rep_teams, 0 `org_team_addon`** across `team_workspaces.billing_mode` / `team_entitlements.source` / `team_org_links.billing_mode_after_approval`; dev (`npgnrxaitgbtbtvvykto`) has **0 `org_team_addon`**, 2 (test) Club orgs, 6 rep_teams, 0 `club_included`. **Greenfield — nothing to migrate, no access-loss / grandfather risk.**
+Two access concepts already coexist and are mostly disjoint: (1) **module access** `module_rep_teams`, derived at read time from `PLAN_CONFIG[planId].moduleEntitlements` (Club already includes it) — covers a Club org's OWN rep teams with **no** `team_entitlements` rows; (2) **team-scoped** `team_entitlements` (`getTeamScopedRepTeamAccess`), which gates the standalone Coaches Portal product (`planId='team'`, deliberately lacking `module_rep_teams`). `club_included` is **already** a valid value in the live CHECK constraints (mig 065) for `team_workspaces.billing_mode`, `team_entitlements.source`, and `team_org_links.billing_mode_after_approval`, and is already written by the ownership-transfer RPC (mig 067).
+**Tables affected:** `organizations`, `team_entitlements`, `team_workspaces`, `team_org_links`, `rep_teams` (+ plan config in code).
+**Recommendation:**
+- **Do NOT materialize per-team `club_included` entitlement rows for a Club org's own rep teams** — they are entitled by `module_rep_teams` at read time. Per-team rows would be redundant + drift-prone (every create/archive needs sync). Enforce the cap as a **write-time gate** at rep-team create/link; keep access plan-tier-derived.
+- Reserve `source='club_included'` rows for the existing **external-workspace link/takeover** path only (extend it to write `club_included` instead of `org_team_addon`, capped). Reuse the existing cancel-then-insert discipline + honor the `team_entitlements_active_source_unique` partial index.
+- **Per-plan `teamLimit` = plan-config only, NO DB** (mirror `tournamentLimit`).
+- **Per-org custom cap (">30"): add nullable `organizations.team_limit integer`; `getEffectiveTeamLimit(planId, storedLimit)` mirrors `getEffectiveTournamentLimit`. Do NOT reuse `org_overrides`** — its `type` CHECK (`subscription_status|comp_period|module_addon|plan_tier`) would need DROP+ADD anyway, AND its grant reader is **inert by default** (`ENTITLEMENT_GRANTS_ENABLED` off) and only handles `module_addon`+`subscription_status`, so a `team_cap` type would never be read without a bespoke reader. The `organizations.tournament_limit` column is the proven per-org capacity-override pattern; `team_limit` should follow it exactly. **(This supersedes the plan's Phase 3.5-D "reuse org_overrides" proposal.)**
+- **Cap count = `rep_teams WHERE org_id=? AND is_archived=false`.** `rep_teams` has no team-subtype/billing-class column (`division` is free text, `group_id` is display grouping) — all teams count equally (matches the "no separate select pricing" decision). `league_teams` and tournament `teams` are different modules and must not count.
+- **Retiring `org_team_addon` is code-only** (remove checkout/takeover fns + the `$19` UI + `getStripePriceId('org_team_addon')`); zero rows to migrate. RLS unchanged — `team_entitlements`/`team_org_links`/`team_workspaces` are service-role-only by design (do not add client policies). No realtime dependency on entitlements.
+**Migrations required:** **Three small additive migrations** (corrected 2026-06-22 by the Club Repackaging debt scan — my initial "zero migrations for Phases 1–2" was an undercount). `organizations.plan_id` and `stripe_prices.plan_id` carry **no DB CHECK**, but **two other plan-keyed tables do** and were missed:
+1. **`plan_gating.plan_key`** — `plan_gating_plan_key_check` is live-locked to the 5 plans (verified in `schema_dumps.json`, **dev block + prod block**). Widen to add `'club_large'` + seed a `('club_large','early_access')` row (the route does UPDATE-only, so a missing row silently no-ops the gating toggle).
+2. **`platform_plan_module_entitlements.plan_id`** — `platform_plan_module_entitlements_plan_check` is live-locked to the 5 plans (dev+prod). Widen to add `'club_large'`; the feature-matrix publish path will attempt `club_large` rows once it's in `PLAN_ORDER` and would otherwise hit the CHECK. Seed the 7 module rows mirroring `club`.
+3. **`organizations.team_limit`** (nullable integer) — Phase 3.5-D per-org custom cap, mirrors `tournament_limit`.
+
+All three are additive/idempotent (DROP+ADD the explicitly-named CHECK constraints; existing rows unaffected) and ride the same unit of work: update `DATA_DICTIONARY.md` + `npm run refresh:snapshots` (dev+prod); `check:dictionary` + the snapshot refresh gate them. **Note for future:** these two CHECK constraints are exactly the kind the column-only drift gate (`check-prod-migration-drift.mjs`) is BLIND to — widen them deliberately, don't assume the gate will catch a miss.
+**Status:** Open — **GO for Phase 1** (with the corrected 3-migration set above). Recommendation issued 2026-06-22; migration count corrected same day post-debt-scan.
 
 ---
 

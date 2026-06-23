@@ -1,10 +1,9 @@
 'use client';
 
 import { FormEvent, use, useCallback, useEffect, useState } from 'react';
-import { Clock, CreditCard, Link2, RefreshCw, Send, ShieldCheck, UsersRound } from 'lucide-react';
+import { Clock, Link2, RefreshCw, Send, ShieldCheck } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
 
 type LinkSummary = {
   id: string;
@@ -29,12 +28,6 @@ type LinkSummary = {
   } | null;
 };
 
-type BillingSummary = {
-  activeOrgPaidTeamCount: number;
-  clubValueThreshold: number;
-  showClubValueNudge: boolean;
-};
-
 const STATUS_LABEL: Record<string, string> = {
   requested: 'Needs review',
   invited: 'Invited',
@@ -46,7 +39,6 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const REVIEWABLE_STATUSES = new Set(['requested']);
-const CLUB_VALUE_TEAM_COUNT = 3;
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value));
@@ -67,20 +59,17 @@ function billingModeLabel(mode: string | null | undefined) {
 
 export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = use(params);
-  const { userRole, userCapabilities, loading: orgLoading } = useOrg();
+  const { userRole, loading: orgLoading } = useOrg();
   const [links, setLinks] = useState<LinkSummary[]>([]);
   const [inviteTarget, setInviteTarget] = useState('');
   const [loading, setLoading] = useState(true);
   const [inviting, setInviting] = useState(false);
   const [workingId, setWorkingId] = useState<string | null>(null);
-  const [billingSummary, setBillingSummary] = useState<BillingSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   const canReview = userRole === 'owner' || userRole === 'admin';
-  // Admins coordinate links + can decline requests, but starting org billing (a recurring
-  // charge) and transferring ownership are owner-reserved — mirror the team-links API gate.
-  const canManageBilling = hasCapability(userRole ?? 'official', userCapabilities, 'billing');
+  // Ownership transfer is owner-reserved — mirror the team-links API gate.
   const canTransferOwnership = userRole === 'owner';
 
   const loadLinks = useCallback(async () => {
@@ -91,11 +80,6 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? 'Could not load Coaches Portal link requests.');
       setLinks(Array.isArray(data.links) ? data.links : []);
-      setBillingSummary(
-        data.billingSummary && typeof data.billingSummary.activeOrgPaidTeamCount === 'number'
-          ? data.billingSummary
-          : null,
-      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not load Coaches Portal link requests.');
     } finally {
@@ -157,33 +141,6 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
     }
   }
 
-  async function billingAction(linkId: string, action: 'invite_billing' | 'decline_billing' | 'approve_billing', billingCycle?: 'annual' | 'monthly') {
-    setWorkingId(linkId);
-    setError(null);
-    setMessage(null);
-    try {
-      const res = await fetch(`/api/admin/org/team-links?orgSlug=${encodeURIComponent(orgSlug)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ linkId, action, billingCycle }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? 'Could not update Coaches Portal billing.');
-      if (typeof data.url === 'string' && data.url) {
-        window.location.assign(data.url);
-        return;
-      }
-      if (action === 'invite_billing') setMessage('Org billing invitation sent to the coach.');
-      if (action === 'decline_billing') setMessage('Org billing request declined. The Basic link remains active.');
-      if (action === 'approve_billing') setMessage(data.applied ? 'Org billing is now active for this Coaches Portal.' : 'Org billing checkout started.');
-      await loadLinks();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not update Coaches Portal billing.');
-    } finally {
-      setWorkingId(null);
-    }
-  }
-
   async function ownershipAction(linkId: string, action: 'invite_ownership' | 'decline_ownership') {
     setWorkingId(linkId);
     setError(null);
@@ -206,34 +163,11 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
     }
   }
 
-  function billingStatusText(link: LinkSummary) {
-    const pendingBilling = link.linkType === 'billing' && link.billingModeAfterApproval === 'org_team_addon';
-    const orgBillingActive = pendingBilling && link.workspace?.billingMode === 'org_team_addon';
-    if (orgBillingActive) return 'Org-billed Premium active';
-    if (pendingBilling && link.approvedByTeamUserId && !link.approvedByOrgUserId) return 'Coach requested org billing';
-    if (pendingBilling && link.approvedByOrgUserId && !link.approvedByTeamUserId) return 'Waiting for coach approval';
-    if (pendingBilling && link.approvedByOrgUserId && link.approvedByTeamUserId) return 'Ready for checkout';
-    return billingModeLabel(link.workspace?.billingMode);
-  }
-
   const pendingLinks = links.filter(link => REVIEWABLE_STATUSES.has(link.status));
   const invitedLinks = links.filter(link => link.status === 'invited');
   const linkedLinks = links.filter(link => link.status === 'linked');
   const ownershipLinks = links.filter(link => link.linkType === 'ownership' && (link.status === 'ownership_pending' || link.status === 'org_owned'));
   const historyLinks = links.filter(link => !REVIEWABLE_STATUSES.has(link.status) && link.status !== 'invited' && link.status !== 'ownership_pending');
-  const fallbackActiveOrgPaidTeamCount = new Set(
-    links
-      .filter(link => (
-        link.status === 'linked' &&
-        link.linkType === 'billing' &&
-        link.billingModeAfterApproval === 'org_team_addon' &&
-        link.workspace?.billingMode === 'org_team_addon' &&
-        link.workspace.subscriptionStatus !== 'canceled'
-      ))
-      .map(link => link.teamWorkspaceId),
-  ).size;
-  const activeOrgPaidTeamCount = billingSummary?.activeOrgPaidTeamCount ?? fallbackActiveOrgPaidTeamCount;
-  const showClubValueNudge = billingSummary?.showClubValueNudge ?? activeOrgPaidTeamCount >= CLUB_VALUE_TEAM_COUNT;
 
   if (orgLoading || loading) {
     return <div className="p-8 text-data-gray">Loading Coaches Portal links...</div>;
@@ -260,7 +194,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
             Coaches Portal Links
           </h1>
           <p className="text-data-gray text-sm mt-2 max-w-2xl">
-            Invite paid Coaches Portals to connect, review coach requests, and manage org-billed Premium access.
+            Invite paid Coaches Portals to connect, review coach requests, and transfer a coach&apos;s team into your organization.
           </p>
         </div>
         <button type="button" className="btn btn-ghost btn-sm" onClick={loadLinks}>
@@ -271,25 +205,9 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
       <HelpCallout
         variant="info"
         title="Approval creates a basic link"
-        body="Inviting or approving a Coaches Portal records the Basic association only after both sides agree. Org billing transfer is separate and still does not transfer ownership or unlock player, document, accounting, or org-wide rep-team access."
+        body="Inviting or approving a Coaches Portal records the Basic visibility association only after both sides agree. It does not transfer ownership or unlock player, document, accounting, or org-wide rep-team access — use Ownership transfer for that."
         cta={{ label: 'Read the guide', href: `/${orgSlug}/admin/help/org#recipe-review-team-link-request` }}
       />
-
-      {showClubValueNudge && (
-        <div className="card p-5 mb-6 border-blueprint-blue/40 bg-blueprint-blue/10">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 border border-logic-lime/30 bg-logic-lime/10 text-logic-lime flex items-center justify-center shrink-0">
-              <UsersRound size={17} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="font-bold uppercase tracking-wide text-fl-text text-sm">Club may be a better value now</h2>
-              <p className="text-data-gray text-sm mt-2 leading-relaxed">
-                This organization is paying for {activeOrgPaidTeamCount} linked Premium portals. Org-billed portals can stay active, but Club is the cleaner multi-team operating layer for oversight, accounting, rep-team administration, and lower extra-team pricing.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {error && <div className="card p-4 mb-4 text-red-300 border-red-500/40">{error}</div>}
       {message && <div className="card p-4 mb-4 text-green-300 border-green-500/40">{message}</div>}
@@ -439,108 +357,6 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
 
       <section className="mb-8">
         <div className="flex items-center gap-2 mb-3">
-          <CreditCard size={18} className="text-logic-lime" />
-          <h2 className="font-bold uppercase tracking-wide">Org billing</h2>
-          <span className="hud-label">{linkedLinks.length}</span>
-        </div>
-        {linkedLinks.length === 0 ? (
-          <div className="card p-6 text-data-gray">No linked Coaches Portals are ready for billing transfer.</div>
-        ) : (
-          <div className="grid gap-3">
-            {linkedLinks.map(link => {
-              const pendingBilling = link.linkType === 'billing' && link.billingModeAfterApproval === 'org_team_addon';
-              const orgBillingActive = pendingBilling && link.workspace?.billingMode === 'org_team_addon';
-              const canInviteBilling = !pendingBilling && !orgBillingActive && (link.workspace?.billingMode === 'team_direct' || link.workspace?.billingMode === 'platform_override');
-              const coachRequestedBilling = pendingBilling && link.approvedByTeamUserId && !link.approvedByOrgUserId;
-              const readyForCheckout = pendingBilling && link.approvedByTeamUserId && link.approvedByOrgUserId && !orgBillingActive;
-
-              return (
-                <article key={link.id} className="card p-5">
-                  <div className="flex items-start justify-between gap-4 flex-wrap">
-                    <div>
-                      <div className="font-bold text-fl-text">
-                        {link.repTeam?.name ?? link.workspaceOrg?.name ?? 'Coaches Portal'}
-                      </div>
-                      <div className="text-data-gray text-sm mt-1">
-                        {billingStatusText(link)}
-                      </div>
-                    </div>
-                    <span className={`inline-flex px-2 py-1 text-xs uppercase font-bold border ${orgBillingActive ? 'border-green-500/35 text-green-300 bg-green-500/10' : 'border-yellow-400/35 text-yellow-300 bg-yellow-400/10'}`}>
-                      {orgBillingActive ? 'Active' : pendingBilling ? 'Pending' : 'Basic link'}
-                    </span>
-                  </div>
-                  <div className="grid sm:grid-cols-4 gap-3 mt-4 text-sm">
-                    <div>
-                      <div className="hud-label">Portal</div>
-                      <div className="text-fl-text">/{link.workspaceOrg?.slug ?? 'portal'}</div>
-                    </div>
-                    <div>
-                      <div className="hud-label">Current billing</div>
-                      <div className="text-fl-text">{billingModeLabel(link.workspace?.billingMode)}</div>
-                    </div>
-                    <div>
-                      <div className="hud-label">Coach approval</div>
-                      <div className="text-fl-text">{link.approvedByTeamUserId ? 'Approved' : 'Waiting'}</div>
-                    </div>
-                    <div>
-                      <div className="hud-label">Org approval</div>
-                      <div className="text-fl-text">{link.approvedByOrgUserId ? 'Approved' : 'Waiting'}</div>
-                    </div>
-                  </div>
-                  <p className="text-data-gray text-sm mt-4">
-                    Org billing keeps Basic sharing only. It does not transfer ownership, roster, documents, accounting, or org-wide rep-team admin access.
-                  </p>
-                  <div className="flex gap-2 mt-5 flex-wrap">
-                    {canManageBilling && canInviteBilling && (
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        onClick={() => billingAction(link.id, 'invite_billing')}
-                        disabled={workingId === link.id}
-                      >
-                        Invite Billing Transfer
-                      </button>
-                    )}
-                    {canManageBilling && (coachRequestedBilling || readyForCheckout) && (
-                      <>
-                        <button
-                          type="button"
-                          className="btn btn-primary btn-sm"
-                          onClick={() => billingAction(link.id, 'approve_billing', 'annual')}
-                          disabled={workingId === link.id}
-                        >
-                          {readyForCheckout ? 'Complete Annual Checkout' : 'Approve Annual'}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => billingAction(link.id, 'approve_billing', 'monthly')}
-                          disabled={workingId === link.id}
-                        >
-                          {readyForCheckout ? 'Complete Monthly Checkout' : 'Approve Monthly'}
-                        </button>
-                      </>
-                    )}
-                    {coachRequestedBilling && (
-                      <button
-                        type="button"
-                        className="btn btn-danger btn-sm"
-                        onClick={() => billingAction(link.id, 'decline_billing')}
-                        disabled={workingId === link.id}
-                      >
-                        Decline Billing
-                      </button>
-                    )}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      <section className="mb-8">
-        <div className="flex items-center gap-2 mb-3">
           <ShieldCheck size={18} className="text-logic-lime" />
           <h2 className="font-bold uppercase tracking-wide">Ownership transfer</h2>
           <span className="hud-label">{linkedLinks.length + ownershipLinks.length}</span>
@@ -554,9 +370,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
               const coachRequestedOwnership = pendingOwnership && link.approvedByTeamUserId && !link.approvedByOrgUserId;
               const waitingForCoach = pendingOwnership && link.approvedByOrgUserId && !link.approvedByTeamUserId;
               const readyForPlatformTransfer = pendingOwnership && link.approvedByTeamUserId && link.approvedByOrgUserId;
-              const pendingBilling = link.linkType === 'billing' && link.billingModeAfterApproval === 'org_team_addon';
-              const orgBillingActive = pendingBilling && link.workspace?.billingMode === 'org_team_addon';
-              const canInviteOwnership = link.status === 'linked' && !pendingOwnership && (!pendingBilling || orgBillingActive);
+              const canInviteOwnership = link.status === 'linked' && !pendingOwnership;
 
               return (
                 <article key={`ownership-${link.id}`} className="card p-5">

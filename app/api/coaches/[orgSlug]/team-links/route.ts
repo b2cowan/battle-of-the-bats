@@ -11,10 +11,6 @@ import {
   respondToTeamOrgLinkInvitation,
 } from '@/lib/team-org-links';
 import {
-  requestOrgTeamAddonBilling,
-  respondToOrgTeamAddonBillingInvite,
-} from '@/lib/team-org-billing';
-import {
   requestTeamOwnershipTransfer,
   respondToTeamOwnershipTransferInvite,
 } from '@/lib/team-ownership-transfer';
@@ -107,31 +103,14 @@ export const PATCH = withObservability(async (req: Request, { params }: RoutePar
     return NextResponse.json({ error: 'linkId and action are required.' }, { status: 400 });
   }
 
-  if (action === 'request_billing') {
-    const result = await requestOrgTeamAddonBilling({
-      workspace: resolved.workspace,
-      linkId,
-      actorUserId: resolved.ctx.user.id,
-      actorEmail: resolved.ctx.user.email ?? null,
-    });
-    if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
-    }
-    return NextResponse.json({ link: result.link });
-  }
-
-  if (action === 'accept_billing' || action === 'decline_billing') {
-    const result = await respondToOrgTeamAddonBillingInvite({
-      workspace: resolved.workspace,
-      linkId,
-      action: action === 'accept_billing' ? 'accept' : 'decline',
-      actorUserId: resolved.ctx.user.id,
-      actorEmail: resolved.ctx.user.email ?? null,
-    });
-    if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
-    }
-    return NextResponse.json({ link: result.link });
+  // Club Repackaging (2026-06-22): the org-pays-$19/team "billing takeover" is retired.
+  // A coach either keeps their own standalone Premium portal (visibility-only link) or
+  // transfers the team's ownership into the club, where it is included under the cap.
+  if (action === 'request_billing' || action === 'accept_billing' || action === 'decline_billing') {
+    return NextResponse.json(
+      { error: 'Org billing transfer has been retired. Teams in a Club are included up to the plan cap — keep your standalone portal or transfer ownership to the club.' },
+      { status: 410 },
+    );
   }
 
   if (action === 'request_ownership') {

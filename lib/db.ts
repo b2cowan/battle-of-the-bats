@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
-import { getEffectiveTournamentLimit, PLAN_CONFIG } from './plan-config';
+import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from './plan-config';
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
@@ -2492,6 +2492,7 @@ function mapOrg(r: any): Organization {
     currentPeriodEnd:            r.current_period_end ?? null,
     repTeamSubscriptionItemId:   r.rep_team_subscription_item_id ?? null,
     tournamentLimit:             getEffectiveTournamentLimit(r.plan_id, r.tournament_limit),
+    teamLimit:                   getEffectiveTeamLimit(r.plan_id, r.team_limit),
     isPublic:             r.is_public ?? true,
     createdAt:            r.created_at,
     themePreset:          r.theme_preset ?? undefined,
@@ -3929,6 +3930,21 @@ export async function getActiveRepTeamCount(orgId: string): Promise<number> {
   if (error) throw error;
   const uniqueTeamIds = new Set((data ?? []).map((r: any) => r.team_id as string));
   return uniqueTeamIds.size;
+}
+
+/**
+ * Authoritative team count for the Club capacity band (Club Repackaging): every
+ * non-archived rep team counts equally — all team types (rep/select/development),
+ * regardless of program-year status. This is the count enforced against teamLimit.
+ */
+export async function getNonArchivedRepTeamCount(orgId: string): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id', { count: 'exact', head: true })
+    .eq('org_id', orgId)
+    .eq('is_archived', false);
+  if (error) throw error;
+  return count ?? 0;
 }
 
 export async function bulkRenameTeamSlugs(

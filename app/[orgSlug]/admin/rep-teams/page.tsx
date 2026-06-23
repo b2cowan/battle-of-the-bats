@@ -1,14 +1,14 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Users, X, Archive, Link2, DollarSign, ArrowLeftRight, Pencil, Trash2, ChevronDown, ChevronUp, CreditCard } from 'lucide-react';
+import { Users, X, Archive, Link2, DollarSign, ArrowLeftRight, Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel';
 import styles from './rep-teams.module.css';
-import type { RepTeam, RepProgramYear, RepTeamGroup } from '@/lib/types';
+import type { RepTeam, RepTeamGroup } from '@/lib/types';
 import { SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 
 function slugify(s: string): string {
@@ -71,18 +71,6 @@ export default function RepTeamsPage() {
   const [savingGroup, setSavingGroup] = useState(false);
   const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
 
-  // E4 — per-team billing preview for Club plan orgs
-  const [billingPreview, setBillingPreview] = useState<{
-    currentCount: number;
-    newCount: number;
-    newBillable: number;
-    immediateChargeFormatted: string;
-    newRecurringFormatted: string;
-    billingPeriod: string;
-  } | null>(null);
-  const [billingConfirmOpen, setBillingConfirmOpen] = useState(false);
-  const [billingChecking, setBillingChecking] = useState(false);
-
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
   const [feedbackMsg, setFeedbackMsg] = useState('');
@@ -134,11 +122,11 @@ export default function RepTeamsPage() {
     setForm(BLANK_FORM); setSlugEdited(false); setCreateOpen(true);
   }
 
-  // Performs the actual team creation API call (called directly or after billing confirm).
+  // Performs the actual team creation API call. The server enforces the plan's team cap
+  // (Club Repackaging) and returns a clear error if the org is at capacity.
   async function executeCreate() {
     if (!form.name.trim() || !form.slug.trim()) return;
     setCreating(true);
-    setBillingConfirmOpen(false);
     try {
       const res = await fetch(`/api/admin/rep-teams/teams${orgQuery}`, {
         method: 'POST',
@@ -156,7 +144,6 @@ export default function RepTeamsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to create team');
       setCreateOpen(false);
-      setBillingPreview(null);
       await load();
       showFeedback('success', `Team "${form.name}" created.`);
     } catch (e: any) {
@@ -166,40 +153,12 @@ export default function RepTeamsPage() {
     }
   }
 
-  // Entry point for the Create Team button. For Club orgs at or above the
-  // 3-team threshold, fetches a billing preview and gates on user confirmation.
+  // Entry point for the Create Team button. Club Repackaging (2026-06-22): the per-team
+  // "$19/team beyond 3" billing preview/confirm is retired — a Club subscription includes
+  // the whole coaching staff up to the plan's team cap. The server enforces the cap and
+  // returns a clear error if the org is already at capacity.
   async function handleCreate() {
     if (!form.name.trim() || !form.slug.trim()) return;
-
-    if (currentOrg?.planId === 'club') {
-      // Approximate active count from loaded summaries (draft/active years).
-      const approxActiveCount = summaries.filter(
-        s => s.activeYear?.status === 'draft' || s.activeYear?.status === 'active',
-      ).length;
-
-      if (approxActiveCount >= 3) {
-        setBillingChecking(true);
-        try {
-          const res = await fetch(
-            `/api/admin/rep-teams/billing-preview?proposedCount=${approxActiveCount + 1}${orgParam}`,
-          );
-          const preview = await res.json();
-          if (!res.ok) throw new Error(preview.error ?? 'Billing check failed');
-
-          if (preview.newBillable > 0) {
-            setBillingPreview(preview);
-            setBillingConfirmOpen(true);
-            return; // Wait for billing confirmation before creating
-          }
-        } catch (e: any) {
-          showFeedback('danger', e.message ?? 'Billing check failed. Please try again.');
-          return;
-        } finally {
-          setBillingChecking(false);
-        }
-      }
-    }
-
     await executeCreate();
   }
 
@@ -305,7 +264,12 @@ export default function RepTeamsPage() {
           <div className={styles.headerIcon}><Users size={20} /></div>
           <div>
             <h1 className={styles.pageTitle}>Rep Teams</h1>
-            <p className={styles.pageSub}>{currentOrg?.name} — all teams</p>
+            <p className={styles.pageSub}>
+              {currentOrg?.name}
+              {currentOrg && currentOrg.teamLimit < 9999
+                ? ` — ${summaries.filter(s => !s.team.isArchived).length} of ${currentOrg.teamLimit} teams`
+                : ' — all teams'}
+            </p>
           </div>
         </div>
         {canWrite && (
@@ -610,8 +574,8 @@ export default function RepTeamsPage() {
             <div className={styles.modalFooter}>
               <button type="button" className="btn btn-ghost" onClick={() => setCreateOpen(false)}>Cancel</button>
               <button type="button" className="btn btn-primary" onClick={handleCreate}
-                disabled={creating || billingChecking || !form.name.trim() || !form.slug.trim()}>
-                {billingChecking ? 'Checking billing…' : creating ? 'Creating…' : 'Create Team'}
+                disabled={creating || !form.name.trim() || !form.slug.trim()}>
+                {creating ? 'Creating…' : 'Create Team'}
               </button>
             </div>
           </div>
@@ -639,38 +603,6 @@ export default function RepTeamsPage() {
               <button type="button" className="btn btn-ghost" onClick={() => setArchiveTarget(null)}>Cancel</button>
               <button type="button" className="btn btn-danger" onClick={handleArchive} disabled={archiving}>
                 {archiving ? 'Archiving…' : 'Archive Team'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* E4 — Billing confirmation modal (Club plan, 4th+ team) */}
-      {billingConfirmOpen && billingPreview && (
-        <div className={styles.confirmOverlay} onClick={() => setBillingConfirmOpen(false)}>
-          <div className={styles.confirmBox} onClick={e => e.stopPropagation()}>
-            <p className={styles.confirmTitle}>
-              <CreditCard size={16} style={{ display: 'inline', marginRight: '0.4rem', verticalAlign: 'text-bottom' }} />
-              Adding a billable team
-            </p>
-            <p className={styles.confirmMsg}>
-              Your Club plan includes 3 active rep teams at no extra cost.
-              {' '}Adding <strong>{form.name || 'this team'}</strong> will bring your active team count to{' '}
-              <strong>{billingPreview.newCount}</strong>, with{' '}
-              <strong>{billingPreview.newBillable}</strong> team{billingPreview.newBillable === 1 ? '' : 's'} billed as an add-on.
-            </p>
-            <p className={styles.confirmMsg}>
-              <strong>Billed today (prorated):</strong> {billingPreview.immediateChargeFormatted}
-              <br />
-              <strong>New recurring add-on total:</strong>{' '}
-              {billingPreview.newRecurringFormatted}/{billingPreview.billingPeriod === 'annual' ? 'year' : 'month'}
-            </p>
-            <div className={styles.confirmActions}>
-              <button type="button" className="btn btn-ghost" onClick={() => setBillingConfirmOpen(false)}>
-                Cancel
-              </button>
-              <button type="button" className="btn btn-primary" onClick={executeCreate} disabled={creating}>
-                {creating ? 'Creating…' : 'Confirm and add team'}
               </button>
             </div>
           </div>

@@ -98,10 +98,11 @@ interface MockBillingConfig {
 
 
 const ORG_PLAN_OPTIONS: { value: OrgPlan; label: string; price: string }[] = [
-  { value: 'tournament',      label: 'Tournament',  price: 'Free'    },
-  { value: 'tournament_plus', label: 'Tournament+', price: '$39/mo'  },
-  { value: 'league',          label: 'League Plus', price: '$89/mo'  },
-  { value: 'club',            label: 'Club',        price: '$179/mo' },
+  { value: 'tournament',      label: 'Tournament',        price: 'Free'    },
+  { value: 'tournament_plus', label: 'Tournament+',       price: '$39/mo'  },
+  { value: 'league',          label: 'League Plus',       price: '$89/mo'  },
+  { value: 'club',            label: 'Club',              price: '$219/mo' },
+  { value: 'club_large',      label: 'Club · Association', price: '$379/mo' },
 ];
 
 const PLAN_COLORS: Record<string, { text: string; border: string; bg: string }> = {
@@ -109,8 +110,15 @@ const PLAN_COLORS: Record<string, { text: string; border: string; bg: string }> 
   tournament_plus: { text: '#93c5fd', border: 'rgba(59,130,246,0.45)', bg: 'rgba(59,130,246,0.1)' },
   league:          { text: '#fde68a', border: 'rgba(251,191,36,0.45)', bg: 'rgba(251,191,36,0.1)' },
   club:            { text: '#a5b4fc', border: 'rgba(99,102,241,0.45)', bg: 'rgba(99,102,241,0.1)' },
+  club_large:      { text: '#a5b4fc', border: 'rgba(99,102,241,0.45)', bg: 'rgba(99,102,241,0.1)' },
   team:            { text: '#f9a8d4', border: 'rgba(236,72,153,0.45)', bg: 'rgba(236,72,153,0.1)' },
 };
+
+// Dev-tools plan badge label — keep the existing lowercase style for legacy keys but
+// render the new band with its proper name (raw '_'-replace would show "club large").
+function planBadgeLabel(id: string): string {
+  return id === 'club_large' ? 'Club · Association' : id.replace('_', ' ');
+}
 
 // Plan gates toggle is only available when NEXT_PUBLIC_DEV_PLAN_GATES_TOGGLE=true
 // (.env.local only — not set on Amplify dev or production)
@@ -183,7 +191,7 @@ function LiveCredentials({ data }: { data: MembershipData | null }) {
                         className={styles.planBadge}
                         style={{ color: pc.text, borderColor: pc.border, background: pc.bg, fontSize: '0.5rem' }}
                       >
-                        {org.planId.replace('_', ' ')}
+                        {planBadgeLabel(org.planId)}
                       </span>
                     </button>
                   );
@@ -253,7 +261,7 @@ function LiveCredentials({ data }: { data: MembershipData | null }) {
                             className={styles.planBadge}
                             style={{ color: pc.text, borderColor: pc.border, background: pc.bg, fontSize: '0.5rem' }}
                           >
-                            {o.planId.replace('_', ' ')}
+                            {planBadgeLabel(o.planId)}
                           </span>
                           <span className={styles.credDetailRole}>{ROLE_DISPLAY[o.role] ?? o.role}</span>
                         </div>
@@ -604,7 +612,7 @@ function UserListPanel({
                       className={styles.planBadge}
                       style={{ color: pc.text, borderColor: pc.border, background: pc.bg, fontSize: '0.5rem' }}
                     >
-                      {o.planId.replace('_', ' ')}
+                      {planBadgeLabel(o.planId)}
                     </span>
                   </div>
                 );

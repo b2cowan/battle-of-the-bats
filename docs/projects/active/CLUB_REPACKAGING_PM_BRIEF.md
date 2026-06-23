@@ -8,6 +8,8 @@
 
 **Expected impact:** A club sees one honest number for its size, with the whole staff included. Big associations stop being under-served by a too-low flat price; small clubs stop being priced out. Internally, the per-team billing machinery is retired in favour of size bands.
 
+**Internal operator tooling (your platform-admin console) is in scope.** The new "Club · Association" band is added everywhere you'd run it from: setting an org's plan, filtering and listing orgs by plan, the internal plans/pricing and Stripe-price screens, and the early-access toggle — so the new band shows a proper name (not a raw code) and is selectable. The retired per-team add-on is cleaned out of those internal pricing views. Two net-new operator capabilities: a **team-usage readout** on each org ("X of 15 teams") with an over-cap warning so you can see at a glance where a club sits against its band, and a **per-org custom cap override** so you can lift a large association above 30 teams after a quote. This is a small, mostly mechanical sweep plus those two new readouts — it doesn't change anything a customer sees.
+
 **Priority:** High — it's the structural foundation the Club early-access cohort will be sold on, and it removes a live contradiction between the plan card and the comparison table. Sequenced ahead of opening Club for sale.
 
 **Success criteria:**
@@ -15,3 +17,4 @@
 - Team-count capacity is enforced at the 15 / 30 band boundaries; over-cap adds prompt an upgrade (or a conversation above 30).
 - Pricing surfaces show two bands and no "$19 per extra team" line anywhere.
 - No existing customer loses team access in the cutover.
+- In the platform-admin console, the new band displays with a proper name and is selectable/filterable; each org shows team usage vs. its cap; and an above-30 club can be granted a custom cap.

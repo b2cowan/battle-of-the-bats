@@ -92,7 +92,7 @@ const UPGRADE_BRIDGES = [
   },
   {
     headline: 'Running a club with rep teams, house league, and tournaments?',
-    body: 'Club is the complete platform — tournaments, house league, rep teams, and accounting in one place. Includes three Coaches Portal accounts for your coaching staff, with additional teams at $19/month. Start directly on Club — you don\'t need to have been on League Plus first. Available soon — express interest to be notified when it opens.',
+    body: 'Club is the complete platform — tournaments, house league, rep teams, and accounting in one place. The Premium Coaches Portal is included for your whole coaching staff — every team, no per-team fee — priced by club size (up to 15 teams, or up to 30 on Club · Association). Start directly on Club — you don\'t need to have been on League Plus first. Available soon — express interest to be notified when it opens.',
     from: null,
     to: null,
     label: 'Club executives',

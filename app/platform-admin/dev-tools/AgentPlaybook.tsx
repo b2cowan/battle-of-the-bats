@@ -152,8 +152,9 @@ const AGENTS: AgentDef[] = [
             <tbody>
               <tr><td><code>tournament</code></td><td>Tournament</td><td>Free</td><td>1 active tournament, manual scheduling</td></tr>
               <tr><td><code>tournament_plus</code></td><td>Tournament Plus</td><td>$39</td><td>Auto-schedule, brackets, PDF exports</td></tr>
-              <tr><td><code>league</code></td><td>League</td><td>$89</td><td>Public org page, House League module</td></tr>
-              <tr><td><code>club</code></td><td>Club</td><td>$179</td><td>Accounting, Rep Teams, unlimited seats</td></tr>
+              <tr><td><code>league</code></td><td>League Plus</td><td>$89</td><td>Public org page, House League module</td></tr>
+              <tr><td><code>club</code></td><td>Club</td><td>$219</td><td>Accounting, Rep Teams, whole-staff Coaches Portal (up to 15 teams)</td></tr>
+              <tr><td><code>club_large</code></td><td>Club · Association</td><td>$379</td><td>Club, sized for 15–30 teams (custom &gt;30)</td></tr>
             </tbody>
           </table>
         ),

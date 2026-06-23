@@ -356,7 +356,7 @@ async function applyPlanGatingUpdateProposal(
   | { ok: true; planGating: PlanGatingRow; alreadyCurrent?: boolean }
   | { ok: false; response: NextResponse }
 > {
-  const validPlans = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
+  const validPlans = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
   const validStatuses = ['live', 'early_access'];
   if (!validPlans.includes(proposal.planId) || !validStatuses.includes(proposal.currentStatus) || !validStatuses.includes(proposal.proposedStatus)) {
     return { ok: false, response: NextResponse.json({ error: 'Invalid plan availability proposal.' }, { status: 400 }) };
@@ -465,7 +465,7 @@ async function applyPlanConfigUpdateProposal(
   | { ok: true; planConfig: PlanConfigRow; alreadyCurrent?: boolean }
   | { ok: false; response: NextResponse }
 > {
-  const validPlans = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
+  const validPlans = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
   if (!validPlans.includes(proposal.planId)) {
     return { ok: false, response: NextResponse.json({ error: 'Invalid plan config proposal.' }, { status: 400 }) };
   }

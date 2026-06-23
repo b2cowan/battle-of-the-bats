@@ -180,7 +180,7 @@ These are parallel offerings for different types of operators — not a seniorit
 
 **Tone**: Emphasize the org/coach relationship. The president gets control and visibility; the coach gets independence and tools. Both win. Frame around what disappears: the middle-man communication, the duplicate data entry, the lost files.
 
-**Plan**: Club ($179/mo, $1,790/yr) — includes house league, unlimited tournaments, accounting, and 3 team accounts. Additional teams at $19/mo each.
+**Plan**: Club — banded by club size (Club from $219/mo, up to 15 teams; **Club · Association** for 15–30 teams, custom above 30). Includes house league, unlimited tournaments, accounting, and the **Premium Coaches Portal for the whole coaching staff — every team included, no per-team fee**. *(Canonical prices/bands: `docs/agents/strategy/PLAN_PRICING_FACTS.md`; while early-access, public framing is "Club — from $219/mo" and the firm Club · Association band price is held.)*
 
 **CTA**: "Express interest — be notified when Club opens for your organization"
 
@@ -213,10 +213,10 @@ This message:
 **Pricing bridge — how to present the org vs. standalone rate**:
 
 On Club-facing copy:
-> "Club includes three team accounts — each coach gets the full portal experience. Additional teams are $19/month. Coaches can also start independently with the standalone Coach Portal at $29/month; their account carries over when your org joins."
+> "Club includes the Premium Coaches Portal for your **whole coaching staff** — every coach, every team, no per-team fee. Coaches already on the standalone Premium Coaches Portal ($29/month)? Their account carries over and rolls into your Club plan automatically when your org joins."
 
-On Coach Portal-facing copy:
-> "When your organization subscribes to Club, team accounts run $19/month — $10 less than the standalone rate. Your account moves over automatically. Until then, everything you need is here."
+On Coach-facing copy:
+> "Start independently with the standalone Premium Coaches Portal at $29/month — everything you need to run your team, whether or not your organization is on FieldLogicHQ. When your org joins Club, your portal is **included** in their plan: your account carries over and you stop paying the standalone rate."
 
 **Strategic note**: The Coach Portal is a genuine product, not a consolation prize. Copy must convey completeness and autonomy first, with the org-level bridge as a secondary note — not the headline.
 
@@ -268,7 +268,7 @@ The homepage's job is to help visitors recognize themselves and route to the rig
 /for-leagues                    → League segment page (marketed live, interest CTA)
 /for-clubs                      → Club segment page (marketed live, interest CTA)
 /for-coaches                    → Coach Portal segment page (marketed live, interest CTA)
-/pricing                        → Full 4-tier table + team add-on row + coach standalone row
+/pricing                        → Full 4-tier table + Club capacity-band row (Club / Club · Association) + coach standalone row
 /platform/[module]              → Module deep-dives (existing, keep as-is)
 /auth/signup                    → Tournament plan onboarding (default entry point)
 /coaches                        → Coaches Portal entry and signup

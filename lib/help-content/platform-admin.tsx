@@ -357,7 +357,7 @@ const platformAdminHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p>Use this only after the coach and organization have both approved ownership transfer from Coaches Portal Links. Basic visibility and org billing do not require this step.</p>
+          <p>Use this only after the coach and organization have both approved ownership transfer from Coaches Portal Links. Basic visibility links do not require this step.</p>
           <ol>
             <li>Open the target organization from <strong>Organizations</strong>.</li>
             <li>Confirm the account has Club or Rep Teams module access.</li>
@@ -386,8 +386,8 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Launch SOP',
       heading: 'How to verify Coaches Portal Premium launch readiness',
       summary: 'Confirm Stripe prices, readiness checks, manual smokes, and customer-facing help before Premium launch.',
-      keywords: ['coaches portal premium launch', 'stripe prices', 'readiness', 'coach checkout', 'org billed portal', 'club extra team'],
-      searchText: 'coaches portal premium launch readiness Stripe price IDs sandbox live direct checkout org billed premium Club extra team cancellation past due mobile coach portal help documentation',
+      keywords: ['coaches portal premium launch', 'stripe prices', 'readiness', 'coach checkout', 'club capacity bands', 'club association band'],
+      searchText: 'coaches portal premium launch readiness Stripe price IDs sandbox live direct checkout Club capacity bands Club Association band retired org billed extra team per-team add-on cancellation past due mobile coach portal help documentation',
       links: [
         { label: 'Dev Tools', href: '/platform-admin/dev-tools' },
         { label: 'Stripe Prices', href: '/platform-admin/stripe-prices' },
@@ -398,11 +398,11 @@ const platformAdminHelp: HelpPageContent = {
           <p>Use this before opening Coaches Portal Premium self-serve checkout or supporting the first external Premium customers.</p>
           <ol>
             <li>Confirm Stripe has sandbox and live recurring prices for direct Coaches Portal Premium at <strong>$29 CAD monthly</strong> and <strong>$290 CAD annual/seasonal</strong>.</li>
-            <li>Confirm Stripe has sandbox and live recurring prices for org-billed Coaches Portal Premium at <strong>$29 CAD monthly</strong> and <strong>$290 CAD annual/seasonal</strong>.</li>
-            <li>Confirm Stripe has new sandbox and live recurring prices for Club extra rep teams at <strong>$19 CAD monthly</strong> and <strong>$190 CAD annual</strong>. Do not reuse the old $20/$200 price IDs.</li>
+            <li>Confirm Stripe has sandbox and live recurring prices for the two <strong>Club capacity bands</strong> — Club and Club&nbsp;·&nbsp;Association — each monthly and annual (Club Repackaging, 2026-06-22).</li>
+            <li><strong>Retired:</strong> the org-billed &quot;$19/team&quot; Coaches Portal takeover and the &quot;Club extra rep team&quot; ($19/$190) add-on are gone — do not create or reuse those price IDs. A Club subscription includes the whole coaching staff up to its band cap, with no per-team fee.</li>
             <li>Paste each <code>price_...</code> ID into the matching sandbox or live row in <strong>Stripe Prices</strong> or <strong>Plans &amp; Pricing</strong>.</li>
             <li>Run <strong>Dev Tools &gt; Coaches Portal checkout readiness</strong> and resolve any missing app URL, webhook secret, Premium gate, or price-row failures.</li>
-            <li>Complete manual sandbox smokes for direct Coaches Portal checkout, tournament-claim checkout, org-billed Coaches Portal checkout, cancellation or past-due simulation, and Club extra-team quantity billing.</li>
+            <li>Complete manual sandbox smokes for direct Coaches Portal checkout, tournament-claim checkout, cancellation or past-due simulation, and Club / Club&nbsp;·&nbsp;Association band checkout.</li>
             <li>Ask the product owner to visually check the public pricing page, Coaches Portal signup page, and mobile Coaches Portal flows.</li>
           </ol>
           <p>Customer-facing help should explain Coaches Portal Premium, season rollover, the one free-tier local tournament slot, Basic org linking, billing transfer, ownership transfer, and the difference between direct Premium, org-billed Premium, Club included teams, and Club extra teams.</p>

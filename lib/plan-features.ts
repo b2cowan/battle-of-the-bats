@@ -57,6 +57,7 @@ export const PLAN_RANK: Record<OrgPlan, number> = {
   tournament_plus: 1,
   league:          2,
   club:            3,
+  club_large:      4,
 };
 
 export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {

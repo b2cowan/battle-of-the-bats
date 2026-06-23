@@ -8,7 +8,7 @@ import {
 } from '@/lib/billing-retention';
 import { stripe } from '@/lib/stripe';
 import { sendEmail, cancellationConfirmationHtml, SITE_URL } from '@/lib/email';
-import { PLAN_CONFIG } from '@/lib/plan-config';
+import { PLAN_CONFIG, getEffectiveTeamLimit } from '@/lib/plan-config';
 import type { OrgPlan, Organization } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
@@ -22,6 +22,7 @@ type OrgRow = {
   enabled_addons: string[] | null;
   account_kind: string | null;
   tournament_limit: number | null;
+  team_limit: number | null;
 };
 
 function mapOrgRow(row: OrgRow): Organization {
@@ -35,6 +36,7 @@ function mapOrgRow(row: OrgRow): Organization {
     enabledAddons: row.enabled_addons ?? [],
     accountKind: (row.account_kind ?? 'org') as Organization['accountKind'],
     tournamentLimit: row.tournament_limit ?? 1,
+    teamLimit: getEffectiveTeamLimit(row.plan_id as OrgPlan, row.team_limit),
     isPublic: false,
     createdAt: new Date().toISOString(),
     isDiscoverable: false,
@@ -50,7 +52,7 @@ export const GET = withObservability(async (_req: NextRequest,
 
   const { data: orgRow, error: orgError } = await supabaseAdmin
     .from('organizations')
-    .select('id, name, slug, plan_id, subscription_status, stripe_subscription_id, enabled_addons, account_kind, tournament_limit')
+    .select('id, name, slug, plan_id, subscription_status, stripe_subscription_id, enabled_addons, account_kind, tournament_limit, team_limit')
     .eq('id', id)
     .single<OrgRow>();
 
@@ -95,7 +97,7 @@ export const POST = withObservability(async (req: NextRequest,
 
   const { data: orgRow, error: orgError } = await supabaseAdmin
     .from('organizations')
-    .select('id, name, slug, plan_id, subscription_status, stripe_subscription_id, enabled_addons, account_kind, tournament_limit')
+    .select('id, name, slug, plan_id, subscription_status, stripe_subscription_id, enabled_addons, account_kind, tournament_limit, team_limit')
     .eq('id', id)
     .single<OrgRow>();
 

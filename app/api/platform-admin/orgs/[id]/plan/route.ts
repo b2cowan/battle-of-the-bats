@@ -13,6 +13,7 @@ function isOrgPlan(planId: unknown): planId is OrgPlan {
 type CurrentPlanRow = {
   plan_id: string;
   tournament_limit: number;
+  team_limit: number | null;
   subscription_status: string | null;
   stripe_subscription_id: string | null;
   subscription_period: string | null;
@@ -25,8 +26,8 @@ export const PATCH = withObservability(async (req: NextRequest,
   if (auth.response) return auth.response;
 
   const { id } = await params;
-  const body = await req.json() as { planId?: string; tournamentLimit?: number; reason?: string };
-  const { planId, tournamentLimit, reason } = body;
+  const body = await req.json() as { planId?: string; tournamentLimit?: number; teamLimit?: number | null; reason?: string };
+  const { planId, tournamentLimit, teamLimit, reason } = body;
 
   if (!isOrgPlan(planId) || typeof tournamentLimit !== 'number') {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
@@ -34,12 +35,23 @@ export const PATCH = withObservability(async (req: NextRequest,
   if (!reason?.trim()) {
     return NextResponse.json({ error: 'Reason is required' }, { status: 400 });
   }
+  // Sanity ceiling on the custom team-cap override — well above any real association
+  // (largest custom deals are tens of teams), guards against a runaway/typo value.
+  if (typeof teamLimit === 'number' && teamLimit > 1000) {
+    return NextResponse.json({ error: 'Team limit override is too large (max 1000).' }, { status: 400 });
+  }
 
   const effectiveTournamentLimit = getEffectiveTournamentLimit(planId, tournamentLimit);
+  // Per-org rep-team capacity override (Club Repackaging). Stores the RAW value (a value
+  // RAISES the band for "custom above 30" Club · Association deals). IMPORTANT: only written
+  // when the caller EXPLICITLY includes teamLimit — an unrelated plan/limit save (which omits
+  // teamLimit) must NOT wipe an existing custom cap. A provided 0/null clears the override.
+  const teamLimitProvided = teamLimit !== undefined;
+  const normalizedTeamLimit = (typeof teamLimit === 'number' && teamLimit > 0) ? Math.floor(teamLimit) : null;
 
   const { data: current } = await supabaseAdmin
     .from('organizations')
-    .select('plan_id, tournament_limit, subscription_status, stripe_subscription_id, subscription_period, current_period_end')
+    .select('plan_id, tournament_limit, team_limit, subscription_status, stripe_subscription_id, subscription_period, current_period_end')
     .eq('id', id)
     .single<CurrentPlanRow>();
 
@@ -55,6 +67,7 @@ export const PATCH = withObservability(async (req: NextRequest,
   const updatePayload: {
     plan_id: OrgPlan;
     tournament_limit: number;
+    team_limit?: number | null;
     subscription_status?: 'active';
     stripe_subscription_id?: null;
     subscription_period?: null;
@@ -63,6 +76,9 @@ export const PATCH = withObservability(async (req: NextRequest,
     plan_id: planId,
     tournament_limit: effectiveTournamentLimit,
   };
+  // Only touch the team cap when the caller explicitly sent it — never wipe a custom cap on
+  // an unrelated plan/limit save.
+  if (teamLimitProvided) updatePayload.team_limit = normalizedTeamLimit;
 
   if (planId === 'tournament') {
     updatePayload.subscription_status = 'active';
@@ -103,6 +119,10 @@ export const PATCH = withObservability(async (req: NextRequest,
     await writePlatformAuditLog(auth.user.email!, id, 'update_plan', 'tournament_limit',
       current?.tournament_limit, effectiveTournamentLimit);
   }
+  if (teamLimitProvided && (current?.team_limit ?? null) !== normalizedTeamLimit) {
+    await writePlatformAuditLog(auth.user.email!, id, 'update_plan', 'team_limit',
+      current?.team_limit ?? null, normalizedTeamLimit);
+  }
   if (planId === 'tournament') {
     if (current?.subscription_status !== 'active') {
       await writePlatformAuditLog(auth.user.email!, id, 'update_plan', 'subscription_status',
@@ -126,5 +146,6 @@ export const PATCH = withObservability(async (req: NextRequest,
     ok: true,
     planId,
     tournamentLimit: effectiveTournamentLimit,
+    teamLimit: teamLimitProvided ? normalizedTeamLimit : (current?.team_limit ?? null),
   });
 }, { route: '/api/platform-admin/orgs/[id]/plan' });

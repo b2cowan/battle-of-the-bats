@@ -15,13 +15,14 @@ import styles from './plans.module.css';
 
 const PLAN_META: Record<string, { label: string; price: string }> = {
   tournament:      { label: 'Tournament',      price: 'Free' },
-  team:            { label: 'Team',            price: `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/mo` },
+  team:            { label: 'Coaches Portal',  price: `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/mo` },
   tournament_plus: { label: 'Tournament Plus', price: `${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/mo` },
   league:          { label: 'League Plus',     price: `${formatPriceAmount(PLAN_CONFIG.league.monthlyPrice)}/mo` },
   club:            { label: 'Club',            price: `${formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)}/mo` },
+  club_large:      { label: 'Club · Association', price: `${formatPriceAmount(PLAN_CONFIG.club_large.monthlyPrice)}/mo` },
 };
 
-const ORDER = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
+const ORDER = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 
 // Dead code (page redirects to /platform-admin/plans-pricing) — routed through
 // the shared helper for consistency.

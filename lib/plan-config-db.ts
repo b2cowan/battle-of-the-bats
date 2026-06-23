@@ -21,7 +21,7 @@ export type MergedPlanLimits = {
   trialDays: number;
 };
 
-const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club'];
+const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

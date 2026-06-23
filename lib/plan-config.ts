@@ -9,6 +9,11 @@ export interface PlanConfig {
   annualPrice: number;
   // Max number of non-archived tournaments. Draft, active, and completed count.
   tournamentLimit: number;
+  // Max number of non-archived rep teams an org may run (the Club capacity band).
+  // 9999 = effectively unlimited / not capped by this mechanism. Only enforced for
+  // plans that include module_rep_teams (Club bands). Per-org overrides live on
+  // organizations.team_limit (mirrors tournament_limit) — see getEffectiveTeamLimit.
+  teamLimit: number;
   seatLimit: number;
   // When true, officials are excluded from the seat count and have no seat cap.
   officialsFreeSeats: boolean;
@@ -35,6 +40,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     monthlyPrice: 0,
     annualPrice: 0,
     tournamentLimit: 1,
+    teamLimit: 9999,
     seatLimit: 3,
     // Officials/scorekeepers (the score-entry-only 'official' role) are exempt from the
     // free-tier seat count — ratified 2026-06-22 (BUSINESS_DECISIONS.md). The 3-seat cap
@@ -49,6 +55,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     monthlyPrice: 29,
     annualPrice: 290,
     tournamentLimit: 1,
+    teamLimit: 9999,
     seatLimit: 3,
     officialsFreeSeats: false,
     trialDays: 0,
@@ -62,6 +69,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     monthlyPrice: 39,
     annualPrice: 390,
     tournamentLimit: 9999,
+    teamLimit: 9999,
     seatLimit: 9999,
     officialsFreeSeats: true,
     trialDays: 14,
@@ -73,6 +81,7 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     monthlyPrice: 89,
     annualPrice: 890,
     tournamentLimit: 9999,
+    teamLimit: 9999,
     seatLimit: 9999,
     officialsFreeSeats: true,
     trialDays: 30,
@@ -85,9 +94,35 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
   },
   club: {
     label: 'Club',
-    monthlyPrice: 179,
-    annualPrice: 1790,
+    // Repriced 2026-06-22 (Club Repackaging): $179→$219 / $1,790→$2,190. Lower capacity band.
+    monthlyPrice: 219,
+    annualPrice: 2190,
     tournamentLimit: 9999,
+    // Lower band: up to 15 teams (all team types count equally). Whole coaching staff
+    // included up to this cap — the old "$19/team beyond 3" meter is retired.
+    teamLimit: 15,
+    seatLimit: 9999,
+    officialsFreeSeats: true,
+    trialDays: 90,
+    moduleEntitlements: [
+      ...CORE_MODULES,
+      'module_public_site',
+      'module_house_league',
+      'module_accounting',
+      'module_rep_teams',
+    ],
+    gatingStatus: 'early_access',
+  },
+  club_large: {
+    // Upper Club capacity band — public name "Club · Association" (working name pending
+    // final /marketing sign-off). Internal key is club_large; never surface "Club Large"
+    // in customer copy. Identical modules to club; differs only by teamLimit + price.
+    // Above 30 teams = custom quote (platform-admin sets organizations.team_limit).
+    label: 'Club · Association',
+    monthlyPrice: 379,
+    annualPrice: 3790,
+    tournamentLimit: 9999,
+    teamLimit: 30,
     seatLimit: 9999,
     officialsFreeSeats: true,
     trialDays: 90,
@@ -124,6 +159,26 @@ export function getEffectiveTournamentLimit(
   }
 
   return storedLimit ?? configuredLimit;
+}
+
+/**
+ * Effective rep-team cap for an org. The per-org `organizations.team_limit` override
+ * (when set) WINS outright — it exists to RAISE the band for "custom above 30" Club ·
+ * Association deals (platform-admin sets e.g. 40). This differs intentionally from
+ * getEffectiveTournamentLimit, where the stored value only narrows a finite plan cap.
+ * A null/undefined stored limit falls back to the plan band default (club=15, club_large=30,
+ * others=9999 ≈ unlimited). 9999 is treated as "uncapped".
+ */
+export function getEffectiveTeamLimit(
+  planId: OrgPlan,
+  storedLimit?: number | null
+): number {
+  const planDefault = PLAN_CONFIG[planId]?.teamLimit ?? 9999;
+  // The per-org override only RAISES the band (for "custom above 30" deals) — it never
+  // lowers a club below the capacity it pays for. A stored value below the plan default
+  // (e.g. an operator typo) is ignored.
+  if (storedLimit != null && storedLimit > 0) return Math.max(storedLimit, planDefault);
+  return planDefault;
 }
 
 export function normalizeBillingCycle(value: unknown): BillingCycle {

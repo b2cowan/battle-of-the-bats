@@ -496,13 +496,13 @@ export async function getMarketingAudienceCounts(): Promise<Record<MarketingAudi
       .select('id', { count: 'exact', head: true })
       .in('id', orgIds)
       .eq('email_marketing_opt_out', false),
-    // not_on_club: founding, not opted out, plan not league/club
+    // not_on_club: founding, not opted out, plan not on a League/Club tier (league, club, club_large)
     supabaseAdmin
       .from('organizations')
       .select('id', { count: 'exact', head: true })
       .in('id', orgIds)
       .eq('email_marketing_opt_out', false)
-      .not('plan_id', 'in', '(league,club)'),
+      .not('plan_id', 'in', '(league,club,club_large)'),
     // coaches: distinct coach members across non-opted-out founding orgs
     supabaseAdmin
       .from('organizations')
