@@ -13,9 +13,16 @@ import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 
 export const dynamic = 'force-dynamic';
 
-const PLATFORM_ICONS = [
+// Any-purpose platform PNGs — kept as installability fallbacks under every event.
+const PLATFORM_ICONS_ANY = [
   { src: '/icons/pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
   { src: '/icons/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+];
+// Free-tier set: the any-purpose PNGs + the platform MASKABLE icon (Android's
+// adaptive launcher icon). Branded events deliberately omit the platform maskable
+// (see below) so it can't win the launcher slot over the tournament logo.
+const PLATFORM_ICONS = [
+  ...PLATFORM_ICONS_ANY,
   { src: '/icons/pwa-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
 ];
 
@@ -38,10 +45,20 @@ export async function GET(
   const advanced = canUseAdvancedTournamentBranding(org);
   const logo = advanced ? tournament.logoUrl ?? org.logoUrl ?? null : null;
 
-  // Branded logo (when present) is preferred; platform icons stay for installability
-  // (Android requires a 192 + 512 + maskable, which the logo alone may not satisfy).
+  // Branded events: serve the composited per-tournament icon (logo on a tile
+  // painted the logo's own background colour) as a single `any maskable` entry —
+  // Android uses it as the maskable adaptive launcher icon, other contexts use it
+  // un-masked, and the one entry avoids a duplicate fetch of the (DB + compositing)
+  // route. We must declare a BRANDED maskable here and NOT include the platform
+  // maskable — Android prefers a maskable icon for the installed home-screen
+  // launcher, so leaving the FLHQ maskable in the set made every branded install
+  // revert to the FieldLogicHQ logo. The any-purpose platform PNGs remain only as
+  // installability fallbacks. Free-tier keeps the full platform set (incl. maskable).
   const icons = logo
-    ? [{ src: logo, sizes: 'any', purpose: 'any' }, ...PLATFORM_ICONS]
+    ? [
+        { src: `${base}/icon-maskable`, sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+        ...PLATFORM_ICONS_ANY,
+      ]
     : PLATFORM_ICONS;
 
   const shortName = tournament.name.length > 12 ? tournament.name.slice(0, 12).trim() : tournament.name;

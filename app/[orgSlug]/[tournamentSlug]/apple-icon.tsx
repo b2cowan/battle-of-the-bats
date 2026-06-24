@@ -14,45 +14,17 @@
  * broken icon or an unhandled 500.
  */
 import { ImageResponse } from 'next/og';
-import { headers } from 'next/headers';
-import { getOrganizationBySlug, getPublicTournamentBySlug } from '@/lib/db';
-import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
+import { getOrganizationBySlug } from '@/lib/db';
+import {
+  ICON_DARK as DARK,
+  originFromHeaders,
+  fetchAsDataUrl,
+  resolveBrandedLogo,
+} from '@/lib/pwa-icon';
 
 export const dynamic = 'force-dynamic';
 export const size = { width: 180, height: 180 };
 export const contentType = 'image/png';
-
-const DARK = '#0A0A12';
-
-async function originFromHeaders(): Promise<string> {
-  try {
-    const h = await headers();
-    const host = h.get('host');
-    // x-forwarded-proto can be a comma-separated hop list — take the outermost.
-    const proto = (h.get('x-forwarded-proto') ?? 'https').split(',')[0].trim() || 'https';
-    return host ? `${proto}://${host}` : '';
-  } catch {
-    return '';
-  }
-}
-
-/** Fetch a RASTER image and inline it as a data URL so satori never does its own
- *  (flakier) remote fetch. Returns null on any failure, or for SVG/non-raster
- *  sources — satori's <img> SVG support is unreliable and would otherwise throw
- *  during streaming (which a try/catch around ImageResponse cannot catch). A null
- *  return makes the caller fall back to the platform default. */
-async function fetchAsDataUrl(url: string): Promise<string | null> {
-  try {
-    const resp = await fetch(url);
-    if (!resp.ok) return null;
-    const ctype = resp.headers.get('content-type') ?? 'image/png';
-    if (!/^image\/(png|jpe?g|webp|gif)/i.test(ctype)) return null;
-    const buf = await resp.arrayBuffer();
-    return `data:${ctype};base64,${Buffer.from(buf).toString('base64')}`;
-  } catch {
-    return null;
-  }
-}
 
 function letterMark() {
   return new ImageResponse(
@@ -94,28 +66,18 @@ export default async function AppleIcon({
 
   const origin = await originFromHeaders();
 
-  // Resolve the branded logo only when the plan allows advanced branding.
-  let logoSrc: string | null = null;
-  try {
-    if (canUseAdvancedTournamentBranding(org)) {
-      const t = await getPublicTournamentBySlug(org.id, tournamentSlug);
-      const raw = t?.logoUrl ?? org.logoUrl ?? null;
-      if (raw && raw.startsWith('http')) {
-        logoSrc = await fetchAsDataUrl(raw);
-      } else if (raw && origin) {
-        // Root-relative stock logo — needs an origin to fetch. Without one (rare:
-        // missing host header) we fall through to the platform default.
-        logoSrc = await fetchAsDataUrl(`${origin}${raw.startsWith('/') ? '' : '/'}${raw}`);
-      }
-    }
-  } catch {
-    /* fall back to the platform default */
-  }
+  // Resolve the branded logo only when the plan allows advanced branding (shared
+  // with the Android maskable icon route so both pick the same source + fallbacks).
+  const branded = await resolveBrandedLogo(org, tournamentSlug, origin);
 
-  if (logoSrc) {
-    // Branded: logo inset on a dark square (handles transparent wordmarks cleanly).
-    // logoSrc is guaranteed raster (fetchAsDataUrl rejects SVG/non-raster), so satori
-    // renders it reliably — no try/catch needed (one wouldn't catch streaming errors).
+  if (branded) {
+    // Branded: tile painted the logo's own sampled background colour so the logo
+    // reads as one seamless field (no white-card-on-dark look); falls back to the
+    // dark square for transparent wordmarks. iOS only rounds the corners (no
+    // circular crop), so the logo runs near edge-to-edge (156 of 180 ≈ 87%).
+    // branded.src is guaranteed raster (fetchAsDataUrl rejects SVG/non-raster), so
+    // satori renders it reliably — no try/catch needed (one wouldn't catch
+    // streaming errors).
     return new ImageResponse(
       (
         <div
@@ -125,11 +87,11 @@ export default async function AppleIcon({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: DARK,
+            backgroundColor: branded.bg ?? DARK,
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logoSrc} width={138} height={138} style={{ objectFit: 'contain' }} alt="" />
+          <img src={branded.src} width={156} height={156} style={{ objectFit: 'contain' }} alt="" />
         </div>
       ),
       { ...size },
