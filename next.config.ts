@@ -1,19 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // sharp is a Next.js *default* external server package, but under the Turbopack
-  // production build + pnpm's non-hoisted node_modules its plain-JS runtime dep
-  // detect-libc was NOT traced into the deployed Lambda — so `import sharp` threw
-  // "Cannot find module 'detect-libc'" at module load and 500'd every route importing
-  // it (tournament branding, logo upload, PWA icon routes). Force just detect-libc into
-  // the output file trace. We deliberately do NOT include the @img/* native packages:
-  // Amplify's compute bundler already ships those, and globbing them recreates a pnpm
-  // symlink Amplify already made → "EEXIST … @img/sharp-libvips-linux-x64" build failure.
-  outputFileTracingIncludes: {
-    '/**': [
-      './node_modules/detect-libc/**/*',
-    ],
-  },
   async redirects() {
     return [
       // Redirect .com to .ca (canonical domain)
