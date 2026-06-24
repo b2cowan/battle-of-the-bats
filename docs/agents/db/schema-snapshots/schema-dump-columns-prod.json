@@ -12510,6 +12510,24 @@
     "ordinal_position": 37
   },
   {
+    "table_name": "tournaments",
+    "column_name": "icon_bg_color",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 38
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "app_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 39
+  },
+  {
     "table_name": "venue_facilities",
     "column_name": "id",
     "data_type": "uuid",
