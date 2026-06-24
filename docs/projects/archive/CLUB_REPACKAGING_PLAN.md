@@ -1,6 +1,6 @@
 # Club Repackaging (Capacity Bands + Whole-Staff Portals) — Implementation Plan
 
-> **Status:** BUILT — dev, local/unpushed (2026-06-22). See **Build status** below.
+> **Status:** ✅ **COMPLETE — LIVE on prod 2026-06-24** (migs 144/145/146 applied; live Stripe prices wired for both bands). Post-launch 13-agent verification done (core solid); the two deferred items — operator custom-cap UI + the transfer/un-archive cap guards — shipped to `dev` (commit `1bbb891`), pending the next prod promotion. **ARCHIVED 2026-06-24.** See **Build status** below.
 > **Created:** 2026-06-22
 > **Branch:** dev
 > **Source of truth:** `docs/agents/strategy/BUSINESS_DECISIONS.md` (2026-06-22 ratified decisions)
