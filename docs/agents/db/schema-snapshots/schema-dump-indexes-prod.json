@@ -220,6 +220,31 @@
     "indexdef": "CREATE UNIQUE INDEX budget_items_unique_org_name ON public.budget_items USING btree (category_id, org_id, lower(name)) WHERE (org_id IS NOT NULL)"
   },
   {
+    "tablename": "chat_message_reactions",
+    "indexname": "chat_message_reactions_message_idx",
+    "indexdef": "CREATE INDEX chat_message_reactions_message_idx ON public.chat_message_reactions USING btree (message_id)"
+  },
+  {
+    "tablename": "chat_message_reactions",
+    "indexname": "chat_message_reactions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX chat_message_reactions_pkey ON public.chat_message_reactions USING btree (id)"
+  },
+  {
+    "tablename": "chat_message_reactions",
+    "indexname": "chat_message_reactions_room_idx",
+    "indexdef": "CREATE INDEX chat_message_reactions_room_idx ON public.chat_message_reactions USING btree (room_id)"
+  },
+  {
+    "tablename": "chat_message_reactions",
+    "indexname": "chat_message_reactions_unique",
+    "indexdef": "CREATE UNIQUE INDEX chat_message_reactions_unique ON public.chat_message_reactions USING btree (message_id, user_id, emoji)"
+  },
+  {
+    "tablename": "chat_messages",
+    "indexname": "chat_messages_pinned_idx",
+    "indexdef": "CREATE INDEX chat_messages_pinned_idx ON public.chat_messages USING btree (room_id, pinned_at DESC) WHERE (pinned_at IS NOT NULL)"
+  },
+  {
     "tablename": "chat_messages",
     "indexname": "chat_messages_pkey",
     "indexdef": "CREATE UNIQUE INDEX chat_messages_pkey ON public.chat_messages USING btree (id)"
@@ -233,6 +258,26 @@
     "tablename": "chat_messages",
     "indexname": "chat_messages_sender_idx",
     "indexdef": "CREATE INDEX chat_messages_sender_idx ON public.chat_messages USING btree (sender_user_id)"
+  },
+  {
+    "tablename": "chat_poll_votes",
+    "indexname": "chat_poll_votes_message_idx",
+    "indexdef": "CREATE INDEX chat_poll_votes_message_idx ON public.chat_poll_votes USING btree (message_id)"
+  },
+  {
+    "tablename": "chat_poll_votes",
+    "indexname": "chat_poll_votes_pkey",
+    "indexdef": "CREATE UNIQUE INDEX chat_poll_votes_pkey ON public.chat_poll_votes USING btree (id)"
+  },
+  {
+    "tablename": "chat_poll_votes",
+    "indexname": "chat_poll_votes_room_idx",
+    "indexdef": "CREATE INDEX chat_poll_votes_room_idx ON public.chat_poll_votes USING btree (room_id)"
+  },
+  {
+    "tablename": "chat_poll_votes",
+    "indexname": "chat_poll_votes_unique",
+    "indexdef": "CREATE UNIQUE INDEX chat_poll_votes_unique ON public.chat_poll_votes USING btree (message_id, option_id, user_id)"
   },
   {
     "tablename": "chat_room_members",
@@ -268,6 +313,16 @@
     "tablename": "chat_rooms",
     "indexname": "chat_rooms_surface_ref_idx",
     "indexdef": "CREATE INDEX chat_rooms_surface_ref_idx ON public.chat_rooms USING btree (surface, ref_id)"
+  },
+  {
+    "tablename": "chat_rooms",
+    "indexname": "chat_rooms_surface_ref_nosub_uniq",
+    "indexdef": "CREATE UNIQUE INDEX chat_rooms_surface_ref_nosub_uniq ON public.chat_rooms USING btree (surface, ref_id) WHERE (ref_sub_id IS NULL)"
+  },
+  {
+    "tablename": "chat_rooms",
+    "indexname": "chat_rooms_surface_ref_sub_uniq",
+    "indexdef": "CREATE UNIQUE INDEX chat_rooms_surface_ref_sub_uniq ON public.chat_rooms USING btree (surface, ref_id, ref_sub_id) WHERE (ref_sub_id IS NOT NULL)"
   },
   {
     "tablename": "diamonds",
