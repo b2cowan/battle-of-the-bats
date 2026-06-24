@@ -12528,6 +12528,15 @@
     "ordinal_position": 39
   },
   {
+    "table_name": "tournaments",
+    "column_name": "app_icon_scale",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 40
+  },
+  {
     "table_name": "venue_facilities",
     "column_name": "id",
     "data_type": "uuid",
