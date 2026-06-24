@@ -158,6 +158,22 @@
   white-space: normal;
 }
 .rowActions { flex: 0 0 auto; display: flex; align-items: center; gap: 0.3rem; }
+/* Icon-only invite actions (copy link / email). Square hit target so the coach's email keeps the row
+   width instead of two word-buttons eating it; double-class beats the global .btn padding. */
+.iconAction.iconAction {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+/* Brief copied confirmation (replaces the old "Copied" word) — lime tick. */
+.iconActionDone.iconActionDone {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.45);
+}
 
 .tagOrg, .tagMuted {
   font-size: 0.58rem;

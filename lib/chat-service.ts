@@ -1,7 +1,16 @@
 import 'server-only';
 
+import { randomUUID } from 'node:crypto';
 import { supabaseAdmin } from './supabase-admin';
 import { notify } from './notify';
+import { isReactionEmoji, type MessageReactionsMap, type ReactionSummary } from './chat-reactions';
+import {
+  extractPoll,
+  validatePollInput,
+  type PollDefinition,
+  type PollTalliesMap,
+  type PollTally,
+} from './chat-polls';
 import {
   resolveTournamentChatParticipants,
   resolveTournamentsForCoach,
@@ -26,7 +35,7 @@ export const CHAT_SURFACE_TOURNAMENT = 'tournament';
 export const MAX_MUTE_HOURS = 72;
 
 export class ChatError extends Error {
-  code: 'room_closed' | 'not_member' | 'muted' | 'empty' | 'too_long' | 'not_found';
+  code: 'room_closed' | 'not_member' | 'muted' | 'empty' | 'too_long' | 'not_found' | 'invalid' | 'forbidden';
   status: number;
   constructor(code: ChatError['code'], message: string, status: number) {
     super(message);
@@ -52,6 +61,13 @@ export type ChatRoom = {
   createdAt: string;
 };
 
+/** A server-derived quote of the message being replied to (rebuilt from the real row — never trusted
+ *  from the client — so a reply can't fake what someone said). Rides chat_messages.metadata jsonb. */
+export type ReplyRef = { id: string; name: string; snippet: string };
+
+/** A resolved @mention (server-derived name from the real member row). Rides metadata.mentions. */
+export type MentionRef = { userId: string; name: string };
+
 export type ChatMessageView = {
   id: string;
   roomId: string;
@@ -60,6 +76,11 @@ export type ChatMessageView = {
   body: string;
   deletedAt: string | null;
   sentAt: string;
+  replyTo: ReplyRef | null;
+  mentions: MentionRef[];
+  pinnedAt: string | null;
+  /** Present when this message is a poll (question = body; options + settings ride metadata). */
+  poll: PollDefinition | null;
 };
 
 export type ChatMemberView = {
@@ -470,7 +491,60 @@ type MessageRow = {
   body: string;
   deleted_at: string | null;
   sent_at: string;
+  metadata: Record<string, unknown> | null;
+  pinned_at: string | null;
 };
+
+const REPLY_SNIPPET_MAX = 140;
+
+/** Pull a typed replyTo out of a message's metadata jsonb (defensive — tolerates any shape). */
+function extractReplyTo(metadata: Record<string, unknown> | null): ReplyRef | null {
+  const r = (metadata?.replyTo ?? null) as { id?: unknown; name?: unknown; snippet?: unknown } | null;
+  if (!r || typeof r.id !== 'string') return null;
+  return {
+    id: r.id,
+    name: typeof r.name === 'string' ? r.name : 'Coach',
+    snippet: typeof r.snippet === 'string' ? r.snippet : '',
+  };
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Pull typed @mentions out of a message's metadata jsonb (defensive). */
+function extractMentions(metadata: Record<string, unknown> | null): MentionRef[] {
+  const arr = metadata?.mentions;
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((m) => (m && typeof m === 'object' ? (m as { userId?: unknown; name?: unknown }) : null))
+    .filter((m): m is { userId: string; name?: unknown } => !!m && typeof m.userId === 'string')
+    .map((m) => ({ userId: m.userId, name: typeof m.name === 'string' ? m.name : 'Coach' }));
+}
+
+/** Active members with display names, for the @mention picker. Names are the same shown on messages. */
+export async function getRoomMemberDirectory(roomId: string): Promise<MentionRef[]> {
+  const ids = await getActiveMemberUserIds(roomId);
+  const display = await hydrateUserDisplay(ids);
+  return ids
+    .map((id) => ({ userId: id, name: display.get(id)?.name ?? 'Coach' }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** Build an authoritative reply snippet from the REAL referenced message (same room, not deleted). */
+async function buildReplyRef(roomId: string, messageId: string): Promise<ReplyRef | null> {
+  if (!UUID_RE.test(messageId)) return null; // malformed id → drop the quote (don't fail the send)
+  const { data, error } = await supabaseAdmin
+    .from('chat_messages')
+    .select('id, sender_user_id, body, deleted_at')
+    .eq('id', messageId)
+    .eq('room_id', roomId)
+    .maybeSingle<{ id: string; sender_user_id: string | null; body: string; deleted_at: string | null }>();
+  if (error) throw error;
+  if (!data || data.deleted_at) return null; // don't quote a missing / removed / cross-room message
+  const name = data.sender_user_id
+    ? (await hydrateUserDisplay([data.sender_user_id])).get(data.sender_user_id)?.name ?? 'Coach'
+    : 'Coach';
+  return { id: data.id, name, snippet: data.body.slice(0, REPLY_SNIPPET_MAX) };
+}
 
 /**
  * Paginated message history (newest-first window, returned oldest-first for rendering). Pass
@@ -484,7 +558,7 @@ export async function getRoomMessages(
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 100);
   let q = supabaseAdmin
     .from('chat_messages')
-    .select('id, room_id, sender_user_id, body, deleted_at, sent_at')
+    .select('id, room_id, sender_user_id, body, deleted_at, sent_at, metadata, pinned_at')
     .eq('room_id', roomId)
     .order('sent_at', { ascending: false })
     .limit(limit + 1);
@@ -512,6 +586,10 @@ export async function getRoomMessages(
       body: r.deleted_at ? '' : r.body,
       deletedAt: r.deleted_at,
       sentAt: r.sent_at,
+      replyTo: r.deleted_at ? null : extractReplyTo(r.metadata),
+      mentions: r.deleted_at ? [] : extractMentions(r.metadata),
+      pinnedAt: r.pinned_at,
+      poll: r.deleted_at ? null : extractPoll(r.metadata),
     }));
 
   return { messages, participants, hasMore };
@@ -522,6 +600,10 @@ export async function postChatMessage(params: {
   roomId: string;
   senderUserId: string;
   body: string;
+  /** id of the message being replied to (validated + snippet rebuilt server-side; ignored if invalid). */
+  replyToId?: string | null;
+  /** user ids @mentioned (validated against active members + names resolved server-side). */
+  mentionUserIds?: string[] | null;
 }): Promise<ChatMessageView> {
   const body = params.body.trim();
   if (!body) throw new ChatError('empty', 'Message cannot be empty.', 400);
@@ -541,31 +623,67 @@ export async function postChatMessage(params: {
     throw new ChatError('muted', 'You are muted in this conversation.', 403);
   }
 
+  // Reply: rebuild the quote from the real referenced message (anti-spoof); drop it if invalid.
+  const replyTo = params.replyToId ? await buildReplyRef(params.roomId, params.replyToId) : null;
+
+  // Mentions: keep only ids that are REAL active members; resolve display names server-side (anti-spoof).
+  const activeIds = await getActiveMemberUserIds(params.roomId);
+  let mentions: MentionRef[] = [];
+  if (params.mentionUserIds?.length) {
+    const activeSet = new Set(activeIds);
+    const valid = [...new Set(params.mentionUserIds)].filter(id => activeSet.has(id) && id !== params.senderUserId);
+    if (valid.length > 0) {
+      const disp = await hydrateUserDisplay(valid);
+      mentions = valid.map(id => ({ userId: id, name: disp.get(id)?.name ?? 'Coach' }));
+    }
+  }
+
+  const metadata: Record<string, unknown> = {};
+  if (replyTo) metadata.replyTo = replyTo;
+  if (mentions.length > 0) metadata.mentions = mentions;
+  const hasMetadata = Object.keys(metadata).length > 0;
+
   const { data, error } = await supabaseAdmin
     .from('chat_messages')
-    .insert({ room_id: params.roomId, sender_user_id: params.senderUserId, body })
-    .select('id, room_id, sender_user_id, body, deleted_at, sent_at')
+    .insert({
+      room_id: params.roomId,
+      sender_user_id: params.senderUserId,
+      body,
+      ...(hasMetadata ? { metadata } : {}),
+    })
+    .select('id, room_id, sender_user_id, body, deleted_at, sent_at, metadata, pinned_at')
     .single<MessageRow>();
   if (error) throw error;
 
   const senderDisplay = (await hydrateUserDisplay([params.senderUserId])).get(params.senderUserId);
   const senderName = senderDisplay?.name ?? 'Coach';
 
-  // Notify every OTHER active member (in-app bell + web push; chat defaults push ON, no email).
-  // No deep-link in V1 (recipients span free coaches, org coaches, and admins across two portals —
-  // a single link would mis-route most of them; the unread badge guides them to Chat instead).
+  // Notify (in-app bell + web push; chat defaults push ON, no email; no deep-link in V1). Mentioned
+  // members get the DISTINCT `chat_mention` event (reaches them even if they muted general chat) and
+  // are removed from the general fan-out so nobody is double-notified for one message.
   try {
-    const recipients = (await getActiveMemberUserIds(params.roomId)).filter(
-      id => id !== params.senderUserId,
-    );
-    if (recipients.length > 0) {
+    const mentionedIds = new Set(mentions.map(m => m.userId));
+    const general = activeIds.filter(id => id !== params.senderUserId && !mentionedIds.has(id));
+    if (general.length > 0) {
       await notify({
         orgId: room.orgId,
         tournamentId: room.refId,
         eventType: 'chat_message',
         title: room.name,
         body: `${senderName}: ${body.slice(0, 140)}`,
-        userIds: recipients,
+        userIds: general,
+        excludeUserIds: [params.senderUserId],
+        requiredFeature: 'tournament_chat',
+      });
+    }
+    if (mentionedIds.size > 0) {
+      await notify({
+        orgId: room.orgId,
+        tournamentId: room.refId,
+        eventType: 'chat_mention',
+        title: room.name,
+        body: `${senderName} mentioned you: ${body.slice(0, 120)}`,
+        userIds: [...mentionedIds],
         excludeUserIds: [params.senderUserId],
         requiredFeature: 'tournament_chat',
       });
@@ -582,6 +700,10 @@ export async function postChatMessage(params: {
     body: data.body,
     deletedAt: data.deleted_at,
     sentAt: data.sent_at,
+    replyTo,
+    mentions,
+    pinnedAt: data.pinned_at,
+    poll: null,
   };
 }
 
@@ -592,6 +714,31 @@ export async function markRoomRead(roomId: string, userId: string): Promise<void
     .eq('room_id', roomId)
     .eq('user_id', userId);
   if (error) throw error;
+}
+
+/**
+ * Aggregate "read by N of M" for the caller's own message: how many OTHER active members have a read
+ * watermark at or past `sinceIso` (read the message), out of the total other active members (M). Counts
+ * ONLY — no identities leave the server; the per-member "last seen" is organizer-only (the roster).
+ * Reuses the per-member last_read_at watermark — no per-message receipts table.
+ */
+export async function getReadByCount(
+  roomId: string,
+  excludeUserId: string,
+  sinceIso: string,
+): Promise<{ readBy: number; memberCount: number }> {
+  const since = new Date(sinceIso).getTime();
+  const { data, error } = await supabaseAdmin
+    .from('chat_room_members')
+    .select('user_id, last_read_at')
+    .eq('room_id', roomId)
+    .eq('status', 'active');
+  if (error) throw error;
+  const others = (data ?? []).filter((r) => r.user_id !== excludeUserId);
+  const readBy = Number.isNaN(since)
+    ? 0
+    : others.filter((r) => r.last_read_at && new Date(r.last_read_at as string).getTime() >= since).length;
+  return { readBy, memberCount: others.length };
 }
 
 // ── Moderation (service role) ───────────────────────────────────────────────
@@ -631,6 +778,485 @@ export async function softDeleteMessage(params: {
   const { error } = await supabaseAdmin
     .from('chat_messages')
     .update({ deleted_at: new Date().toISOString(), deleted_by_user_id: params.byUserId })
+    .eq('id', params.messageId)
+    .eq('room_id', params.roomId);
+  if (error) throw error;
+}
+
+/**
+ * Delete YOUR OWN message. Verifies (server-side) that the caller is the message's sender and that the
+ * message belongs to the room before soft-deleting — the column grants let a member write only the
+ * delete columns, and RLS lets only moderators do so, so a member's own-delete must run service-role
+ * with the ownership check enforced here. Idempotent: re-deleting an already-deleted message is a no-op.
+ * Returns 'ok' | 'not_found' (no such message in the room) | 'forbidden' (not the sender).
+ */
+export async function deleteOwnMessage(params: {
+  roomId: string;
+  messageId: string;
+  userId: string;
+}): Promise<'ok' | 'not_found' | 'forbidden'> {
+  const { data, error } = await supabaseAdmin
+    .from('chat_messages')
+    .select('id, sender_user_id, deleted_at')
+    .eq('id', params.messageId)
+    .eq('room_id', params.roomId)
+    .maybeSingle<{ id: string; sender_user_id: string | null; deleted_at: string | null }>();
+  if (error) throw error;
+  if (!data) return 'not_found';
+  // An orphaned message (sender account deleted → sender_user_id NULL) is unownable by anyone; treat
+  // as not-found rather than implying the caller could own it.
+  if (!data.sender_user_id) return 'not_found';
+  if (data.sender_user_id !== params.userId) return 'forbidden';
+  if (data.deleted_at) return 'ok'; // already removed — idempotent
+  await softDeleteMessage({ roomId: params.roomId, messageId: params.messageId, byUserId: params.userId });
+  return 'ok';
+}
+
+/** Pin or unpin a message (moderator). Pin/unpin is an UPDATE → propagates live on the realtime
+ *  publication. Won't pin a deleted message. Service-role only (browsers can't write pinned_*). */
+export async function setPinned(params: {
+  roomId: string;
+  messageId: string;
+  byUserId: string;
+  pinned: boolean;
+}): Promise<void> {
+  const patch = params.pinned
+    ? { pinned_at: new Date().toISOString(), pinned_by_user_id: params.byUserId }
+    : { pinned_at: null, pinned_by_user_id: null };
+  const { error } = await supabaseAdmin
+    .from('chat_messages')
+    .update(patch)
+    .eq('id', params.messageId)
+    .eq('room_id', params.roomId)
+    .is('deleted_at', null);
+  if (error) throw error;
+}
+
+/** The room's currently-pinned messages (newest pin first), for the pinned banner. Excludes deleted. */
+export async function getPinnedMessages(roomId: string): Promise<ChatMessageView[]> {
+  const { data, error } = await supabaseAdmin
+    .from('chat_messages')
+    .select('id, room_id, sender_user_id, body, deleted_at, sent_at, metadata, pinned_at')
+    .eq('room_id', roomId)
+    .not('pinned_at', 'is', null)
+    .is('deleted_at', null)
+    .order('pinned_at', { ascending: false })
+    .limit(20);
+  if (error) throw error;
+  const rows = (data ?? []) as MessageRow[];
+  const senderIds = rows.map(r => r.sender_user_id).filter((v): v is string => Boolean(v));
+  const display = await hydrateUserDisplay(senderIds);
+  return rows.map(r => ({
+    id: r.id,
+    roomId: r.room_id,
+    senderUserId: r.sender_user_id,
+    senderName: r.sender_user_id ? display.get(r.sender_user_id)?.name ?? 'Coach' : 'Coach',
+    body: r.body,
+    deletedAt: r.deleted_at,
+    sentAt: r.sent_at,
+    replyTo: extractReplyTo(r.metadata),
+    mentions: extractMentions(r.metadata),
+    pinnedAt: r.pinned_at,
+    poll: extractPoll(r.metadata),
+  }));
+}
+
+// ── Reactions (service role) ────────────────────────────────────────────────
+// chat_message_reactions (mig 147) is the SECOND realtime-published table. Writes are service-role
+// ONLY (the table grants `authenticated` SELECT only), and un-react is a SOFT-DELETE (removed_at) —
+// never a hard DELETE — because Supabase realtime does not RLS-gate hard-DELETE events (it leaks to
+// non-members). All reads are scoped to the room via the denormalized room_id so a member cannot pull
+// counts/reactors for a message in a room they're not in.
+
+type ReactionRow = { message_id: string; emoji: string; user_id: string };
+
+/**
+ * Active-reaction roll-up for a set of messages IN ONE ROOM: per message, per emoji → { count, mine }.
+ * Only messages with ≥1 active (removed_at IS NULL) reaction appear. Used for the initial history
+ * paint AND the realtime refresh-on-event signal (a reaction INSERT/UPDATE tells the client "re-pull
+ * these messages' summaries"; the live payload is never trusted to mutate counts). Room-scoped so a
+ * crafted messageIds list can't read another room's reactions.
+ */
+export async function getReactionsForMessages(
+  roomId: string,
+  messageIds: string[],
+  selfUserId: string,
+): Promise<MessageReactionsMap> {
+  const ids = [...new Set(messageIds.filter(Boolean))];
+  if (ids.length === 0) return {};
+  const { data, error } = await supabaseAdmin
+    .from('chat_message_reactions')
+    .select('message_id, emoji, user_id')
+    .eq('room_id', roomId)
+    .in('message_id', ids)
+    .is('removed_at', null);
+  if (error) throw error;
+  const map: MessageReactionsMap = {};
+  for (const r of (data ?? []) as ReactionRow[]) {
+    const summary = (map[r.message_id] ??= {});
+    const cell = (summary[r.emoji] ??= { count: 0, mine: false });
+    cell.count += 1;
+    if (r.user_id === selfUserId) cell.mine = true;
+  }
+  return map;
+}
+
+/**
+ * Toggle the caller's reaction on a message. Enforces (service role) the same gate as posting — room
+ * exists + not archived, caller is an active (non-removed) member, not muted — then:
+ *   • no row yet         → INSERT (reacted = true)
+ *   • row exists, active → soft-remove via removed_at (reacted = false)
+ *   • row exists, removed→ revive (removed_at = NULL, reacted = true)
+ * Soft-delete toggle (never a hard DELETE) keeps every realtime event RLS-correct. Returns the new
+ * state + the message's recomputed summary (authoritative — the client replaces its optimistic value).
+ */
+export async function toggleReaction(params: {
+  roomId: string;
+  messageId: string;
+  userId: string;
+  emoji: string;
+}): Promise<{ reacted: boolean; summary: ReactionSummary }> {
+  if (!isReactionEmoji(params.emoji)) throw new ChatError('invalid', 'Unsupported reaction.', 400);
+
+  const room = await getRoomById(params.roomId);
+  if (!room) throw new ChatError('not_found', 'Conversation not found.', 404);
+  if (room.isArchived) throw new ChatError('room_closed', 'This conversation is closed.', 403);
+
+  const membership = await getMembership(params.roomId, params.userId);
+  if (!membership || membership.status === 'removed') {
+    throw new ChatError('not_member', 'You are not a member of this conversation.', 403);
+  }
+  if (membership.muted_until && new Date(membership.muted_until) > new Date()) {
+    throw new ChatError('muted', 'You are muted in this conversation.', 403);
+  }
+
+  // The reacted-to message must exist in THIS room and not be deleted.
+  const { data: msg, error: msgErr } = await supabaseAdmin
+    .from('chat_messages')
+    .select('id, deleted_at')
+    .eq('id', params.messageId)
+    .eq('room_id', params.roomId)
+    .maybeSingle<{ id: string; deleted_at: string | null }>();
+  if (msgErr) throw msgErr;
+  if (!msg || msg.deleted_at) throw new ChatError('not_found', 'Message not found.', 404);
+
+  const { data: existing, error: exErr } = await supabaseAdmin
+    .from('chat_message_reactions')
+    .select('id, removed_at')
+    .eq('message_id', params.messageId)
+    .eq('user_id', params.userId)
+    .eq('emoji', params.emoji)
+    .maybeSingle<{ id: string; removed_at: string | null }>();
+  if (exErr) throw exErr;
+
+  if (existing) {
+    const removeIt = existing.removed_at == null; // currently active → remove; removed → revive
+    const { error } = await supabaseAdmin
+      .from('chat_message_reactions')
+      .update({ removed_at: removeIt ? new Date().toISOString() : null })
+      .eq('id', existing.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabaseAdmin
+      .from('chat_message_reactions')
+      .insert({ room_id: params.roomId, message_id: params.messageId, user_id: params.userId, emoji: params.emoji });
+    if (error) {
+      // A concurrent insert won the UNIQUE race — revive whatever is there now (idempotent toggle-on).
+      if ((error as { code?: string }).code === '23505') {
+        await supabaseAdmin
+          .from('chat_message_reactions')
+          .update({ removed_at: null })
+          .eq('message_id', params.messageId)
+          .eq('user_id', params.userId)
+          .eq('emoji', params.emoji);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  // Re-read the authoritative summary and DERIVE `reacted` from it, so the returned flag can never
+  // contradict the DB even if a concurrent toggle raced the write above (the client uses the summary,
+  // but a truthful flag keeps any future consumer correct).
+  const map = await getReactionsForMessages(params.roomId, [params.messageId], params.userId);
+  const summary = map[params.messageId] ?? {};
+  return { reacted: Boolean(summary[params.emoji]?.mine), summary };
+}
+
+/** The coaches who currently react to a message with a given emoji (the "who reacted" popover).
+ *  Room-scoped via the denormalized room_id so it can't read a message from another room. */
+export async function getReactionReactors(params: {
+  roomId: string;
+  messageId: string;
+  emoji: string;
+}): Promise<MentionRef[]> {
+  if (!isReactionEmoji(params.emoji)) return [];
+  const { data, error } = await supabaseAdmin
+    .from('chat_message_reactions')
+    .select('user_id')
+    .eq('room_id', params.roomId)
+    .eq('message_id', params.messageId)
+    .eq('emoji', params.emoji)
+    .is('removed_at', null);
+  if (error) throw error;
+  const ids = (data ?? []).map(r => r.user_id as string);
+  const display = await hydrateUserDisplay(ids);
+  return ids
+    .map(id => ({ userId: id, name: display.get(id)?.name ?? 'Coach' }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// ── Polls (service role) ─────────────────────────────────────────────────────
+// A poll IS a chat message: question = body, options + settings ride metadata.poll, so creating +
+// closing a poll are chat_messages INSERT/UPDATE (they ride the EXISTING realtime). The only new live
+// store is the VOTES (chat_poll_votes, mig 148) — SELECT-only to browsers, soft-delete toggle, same
+// discipline as reactions. Owner decisions (2026-06-23): organizers create + close; the creator picks
+// single-vs-multiple per poll; voters are VISIBLE; voting is any active member.
+
+type PollVoteRow = { message_id: string; option_id: string; user_id: string };
+
+/** Active-vote tallies for a set of poll messages IN ONE ROOM: per message, per option → {count, mine}.
+ *  Room-scoped (via denormalized room_id) so a crafted messageIds list can't read another room's votes. */
+export async function getPollTallies(
+  roomId: string,
+  messageIds: string[],
+  selfUserId: string,
+): Promise<PollTalliesMap> {
+  const ids = [...new Set(messageIds.filter(Boolean))];
+  if (ids.length === 0) return {};
+  const { data, error } = await supabaseAdmin
+    .from('chat_poll_votes')
+    .select('message_id, option_id, user_id')
+    .eq('room_id', roomId)
+    .in('message_id', ids)
+    .is('removed_at', null);
+  if (error) throw error;
+  const map: PollTalliesMap = {};
+  for (const v of (data ?? []) as PollVoteRow[]) {
+    const tally = (map[v.message_id] ??= {});
+    const cell = (tally[v.option_id] ??= { count: 0, mine: false });
+    cell.count += 1;
+    if (v.user_id === selfUserId) cell.mine = true;
+  }
+  return map;
+}
+
+/** The coaches who currently voted a given option (visible-voter polls). Room-scoped via room_id. */
+export async function getPollVoters(params: {
+  roomId: string;
+  messageId: string;
+  optionId: string;
+}): Promise<MentionRef[]> {
+  const { data, error } = await supabaseAdmin
+    .from('chat_poll_votes')
+    .select('user_id')
+    .eq('room_id', params.roomId)
+    .eq('message_id', params.messageId)
+    .eq('option_id', params.optionId)
+    .is('removed_at', null);
+  if (error) throw error;
+  const uids = (data ?? []).map((r) => r.user_id as string);
+  const display = await hydrateUserDisplay(uids);
+  return uids
+    .map((id) => ({ userId: id, name: display.get(id)?.name ?? 'Coach' }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Create a poll (organizer only). Inserts a poll MESSAGE (question = body; options [with generated
+ * uuids] + settings ride metadata.poll), notifies the room, and returns the message view. The INSERT
+ * rides the existing chat_messages realtime so the poll appears live in everyone's stream.
+ */
+export async function createPoll(params: {
+  roomId: string;
+  byUserId: string;
+  question: string;
+  options: string[];
+  multiple: boolean;
+}): Promise<ChatMessageView> {
+  const room = await getRoomById(params.roomId);
+  if (!room) throw new ChatError('not_found', 'Conversation not found.', 404);
+  if (room.isArchived) throw new ChatError('room_closed', 'This conversation is closed.', 403);
+
+  const membership = await getMembership(params.roomId, params.byUserId);
+  if (!membership || membership.status === 'removed') {
+    throw new ChatError('not_member', 'You are not a member of this conversation.', 403);
+  }
+  if (membership.member_role !== 'moderator') {
+    throw new ChatError('forbidden', 'Only organizers can create a poll.', 403);
+  }
+
+  const valid = validatePollInput(params.question, params.options);
+  if (!valid.ok) throw new ChatError('invalid', valid.error, 400);
+
+  const poll: PollDefinition = {
+    options: valid.options.map((text) => ({ id: randomUUID(), text })),
+    multiple: params.multiple === true,
+    closedAt: null,
+  };
+
+  const { data, error } = await supabaseAdmin
+    .from('chat_messages')
+    .insert({ room_id: params.roomId, sender_user_id: params.byUserId, body: valid.question, metadata: { poll } })
+    .select('id, room_id, sender_user_id, body, deleted_at, sent_at, metadata, pinned_at')
+    .single<MessageRow>();
+  if (error) throw error;
+
+  const senderName = (await hydrateUserDisplay([params.byUserId])).get(params.byUserId)?.name ?? 'Coach';
+
+  // Notify the room (an organizer asking for input is worth a ping). Reuse the chat_message event so it
+  // lands in the same stream as a normal message.
+  try {
+    const recipients = (await getActiveMemberUserIds(params.roomId)).filter((id) => id !== params.byUserId);
+    if (recipients.length > 0) {
+      await notify({
+        orgId: room.orgId,
+        tournamentId: room.refId,
+        eventType: 'chat_message',
+        title: room.name,
+        body: `${senderName} posted a poll: ${valid.question.slice(0, 120)}`,
+        userIds: recipients,
+        excludeUserIds: [params.byUserId],
+        requiredFeature: 'tournament_chat',
+      });
+    }
+  } catch (err) {
+    console.error('[chat-service] poll notify failed (non-fatal):', err);
+  }
+
+  return {
+    id: data.id, roomId: data.room_id, senderUserId: data.sender_user_id, senderName,
+    body: data.body, deletedAt: data.deleted_at, sentAt: data.sent_at,
+    replyTo: null, mentions: [], pinnedAt: data.pinned_at, poll: extractPoll(data.metadata),
+  };
+}
+
+/**
+ * Cast / change / retract MY vote on a poll option (any active member). Enforces membership / mute /
+ * archived / poll-open, validates the option against the poll, applies single-vs-multiple, and uses a
+ * soft-delete toggle (revote/un-vote sets removed_at). Returns the poll's recomputed tally.
+ */
+export async function castVote(params: {
+  roomId: string;
+  messageId: string;
+  userId: string;
+  optionId: string;
+}): Promise<{ tally: PollTally }> {
+  const room = await getRoomById(params.roomId);
+  if (!room) throw new ChatError('not_found', 'Conversation not found.', 404);
+  if (room.isArchived) throw new ChatError('room_closed', 'This conversation is closed.', 403);
+
+  const membership = await getMembership(params.roomId, params.userId);
+  if (!membership || membership.status === 'removed') {
+    throw new ChatError('not_member', 'You are not a member of this conversation.', 403);
+  }
+  if (membership.muted_until && new Date(membership.muted_until) > new Date()) {
+    throw new ChatError('muted', 'You are muted in this conversation.', 403);
+  }
+
+  // Load the poll message; it must be a non-deleted, open poll in THIS room, and the option must exist.
+  const { data: msg, error: msgErr } = await supabaseAdmin
+    .from('chat_messages')
+    .select('id, metadata, deleted_at')
+    .eq('id', params.messageId)
+    .eq('room_id', params.roomId)
+    .maybeSingle<{ id: string; metadata: Record<string, unknown> | null; deleted_at: string | null }>();
+  if (msgErr) throw msgErr;
+  if (!msg || msg.deleted_at) throw new ChatError('not_found', 'Poll not found.', 404);
+  const poll = extractPoll(msg.metadata);
+  if (!poll) throw new ChatError('not_found', 'Poll not found.', 404);
+  if (poll.closedAt) throw new ChatError('room_closed', 'This poll is closed.', 403);
+  if (!poll.options.some((o) => o.id === params.optionId)) {
+    throw new ChatError('invalid', 'Unknown poll option.', 400);
+  }
+
+  const { data: mine, error: mineErr } = await supabaseAdmin
+    .from('chat_poll_votes')
+    .select('id, removed_at')
+    .eq('message_id', params.messageId)
+    .eq('option_id', params.optionId)
+    .eq('user_id', params.userId)
+    .maybeSingle<{ id: string; removed_at: string | null }>();
+  if (mineErr) throw mineErr;
+
+  if (mine && mine.removed_at == null) {
+    // Toggle this option OFF.
+    const { error } = await supabaseAdmin.from('chat_poll_votes')
+      .update({ removed_at: new Date().toISOString() }).eq('id', mine.id);
+    if (error) throw error;
+  } else {
+    // Cast THIS option first (revive a previously-removed row of mine, or insert a fresh one)...
+    if (mine) {
+      const { error } = await supabaseAdmin.from('chat_poll_votes')
+        .update({ removed_at: null }).eq('id', mine.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabaseAdmin.from('chat_poll_votes')
+        .insert({ room_id: params.roomId, message_id: params.messageId, option_id: params.optionId, user_id: params.userId });
+      if (error) {
+        // A concurrent insert won the UNIQUE race — revive whatever is there now (idempotent toggle-on).
+        if ((error as { code?: string }).code === '23505') {
+          await supabaseAdmin.from('chat_poll_votes').update({ removed_at: null })
+            .eq('room_id', params.roomId)
+            .eq('message_id', params.messageId)
+            .eq('option_id', params.optionId)
+            .eq('user_id', params.userId);
+        } else {
+          throw error;
+        }
+      }
+    }
+    // ...THEN, for single-choice, retract any OTHER active option-votes by me. Cast-then-clear means the
+    // chosen option always wins and the state converges even if two of my requests race (clear-then-cast
+    // could momentarily leave two options active for one voter).
+    if (!poll.multiple) {
+      const { error: clearErr } = await supabaseAdmin.from('chat_poll_votes')
+        .update({ removed_at: new Date().toISOString() })
+        .eq('message_id', params.messageId)
+        .eq('user_id', params.userId)
+        .neq('option_id', params.optionId)
+        .is('removed_at', null);
+      if (clearErr) throw clearErr;
+    }
+  }
+
+  const map = await getPollTallies(params.roomId, [params.messageId], params.userId);
+  return { tally: map[params.messageId] ?? {} };
+}
+
+/**
+ * Close (or reopen) a poll — organizer only. Sets/clears metadata.poll.closedAt on the poll message,
+ * preserving the rest of metadata. A chat_messages UPDATE → propagates live on the existing realtime
+ * publication (so every client flips to the closed/open state without a refetch).
+ */
+export async function setPollClosed(params: {
+  roomId: string;
+  messageId: string;
+  byUserId: string;
+  closed: boolean;
+}): Promise<void> {
+  const membership = await getMembership(params.roomId, params.byUserId);
+  if (!membership || membership.status === 'removed' || membership.member_role !== 'moderator') {
+    throw new ChatError('forbidden', 'Only organizers can change a poll.', 403);
+  }
+  const { data: msg, error: msgErr } = await supabaseAdmin
+    .from('chat_messages')
+    .select('id, metadata, deleted_at')
+    .eq('id', params.messageId)
+    .eq('room_id', params.roomId)
+    .maybeSingle<{ id: string; metadata: Record<string, unknown> | null; deleted_at: string | null }>();
+  if (msgErr) throw msgErr;
+  if (!msg || msg.deleted_at) throw new ChatError('not_found', 'Poll not found.', 404);
+  const poll = extractPoll(msg.metadata);
+  if (!poll) throw new ChatError('not_found', 'Poll not found.', 404);
+
+  const nextMeta = {
+    ...(msg.metadata ?? {}),
+    poll: { ...poll, closedAt: params.closed ? new Date().toISOString() : null },
+  };
+  const { error } = await supabaseAdmin
+    .from('chat_messages')
+    .update({ metadata: nextMeta })
     .eq('id', params.messageId)
     .eq('room_id', params.roomId);
   if (error) throw error;

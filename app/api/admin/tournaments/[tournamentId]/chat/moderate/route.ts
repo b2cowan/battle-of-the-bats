@@ -15,6 +15,7 @@ import {
   muteMember,
   unmuteMember,
   softDeleteMessage,
+  setPinned,
   setRoomArchived,
   MAX_MUTE_HOURS,
 } from '@/lib/chat-service';
@@ -24,7 +25,7 @@ export const runtime = 'nodejs';
 type Params = { params: Promise<{ tournamentId: string }> };
 
 type ModerateBody = {
-  action?: 'mute' | 'unmute' | 'delete' | 'close' | 'reopen';
+  action?: 'mute' | 'unmute' | 'delete' | 'close' | 'reopen' | 'pin' | 'unpin';
   targetUserId?: string;
   messageId?: string;
   hours?: number;
@@ -75,6 +76,12 @@ export const POST = withObservability(async (req: NextRequest, { params }: Param
     case 'delete': {
       if (!body.messageId) return NextResponse.json({ error: 'messageId required' }, { status: 400 });
       await softDeleteMessage({ roomId: room.id, messageId: body.messageId, byUserId: ctx.user.id });
+      return NextResponse.json({ ok: true });
+    }
+    case 'pin':
+    case 'unpin': {
+      if (!body.messageId) return NextResponse.json({ error: 'messageId required' }, { status: 400 });
+      await setPinned({ roomId: room.id, messageId: body.messageId, byUserId: ctx.user.id, pinned: body.action === 'pin' });
       return NextResponse.json({ ok: true });
     }
     case 'close': {

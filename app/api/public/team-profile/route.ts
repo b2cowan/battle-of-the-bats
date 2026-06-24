@@ -119,8 +119,8 @@ export const GET = withObservability(async (req: Request) => {
 
   return NextResponse.json({
     // Public-safe team only — never expose coach email / paymentStatus / adminNotes
-    // on this anonymous endpoint (J6-001).
-    team: toPublicTeam(team),
+    // on this anonymous endpoint (J6-001). Coach NAME honors the per-tournament toggle (mig 150).
+    team: toPublicTeam(team, tournament.coachNamesShowOnPublic === true),
     divisionName: division.name,
     poolName,
     gameDurationMinutes,

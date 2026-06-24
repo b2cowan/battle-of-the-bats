@@ -48,7 +48,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data: pageData } = await supabaseAdmin
     .from('tournaments')
-    .select('public_hidden_pages')
+    .select('public_hidden_pages, coach_names_show_on_public')
     .eq('id', tournamentId)
     .eq('org_id', ctx.org.id)
     .maybeSingle();
@@ -64,6 +64,7 @@ export const GET = withObservability(async (req: Request) => {
     colorMode:                data.color_mode ?? 'dark',
     requireScoreFinalization: data.require_score_finalization,
     publicHiddenPages:        normalizeHiddenPublicPages(pageData?.public_hidden_pages),
+    coachNamesShowOnPublic:   pageData?.coach_names_show_on_public === true,
   });
 }, { route: '/api/admin/tournament-branding' });
 
@@ -87,13 +88,14 @@ export const PATCH = withObservability(async (req: Request) => {
     themeCardStyle?: string | null;
     colorMode?: 'dark' | 'light' | null;
     publicHiddenPages?: PublicPageKey[] | null;
+    coachNamesShowOnPublic?: boolean | null;
     requireScoreFinalization?: boolean | null;
   };
 
   // Branding fields: the tournament's public visual identity + which public pages show.
   // Gated on the manage_branding capability (owner + admin by default; tunable per-member).
   // Operational settings like requireScoreFinalization are not branding and stay as-is.
-  const BRANDING_FIELDS = [...PLUS_VISUAL_FIELDS, 'publicHiddenPages'] as const;
+  const BRANDING_FIELDS = [...PLUS_VISUAL_FIELDS, 'publicHiddenPages', 'coachNamesShowOnPublic'] as const;
   if (!hasCapability(ctx.role, ctx.capabilities, 'manage_branding') && BRANDING_FIELDS.some(field => field in body)) {
     return forbidden();
   }
@@ -183,6 +185,7 @@ export const PATCH = withObservability(async (req: Request) => {
 
   if ('colorMode'                in body) updates.color_mode                 = body.colorMode === 'light' ? 'light' : null;
   if ('publicHiddenPages'        in body) updates.public_hidden_pages        = normalizeHiddenPublicPages(body.publicHiddenPages);
+  if ('coachNamesShowOnPublic'   in body) updates.coach_names_show_on_public = Boolean(body.coachNamesShowOnPublic);
   if ('requireScoreFinalization' in body) updates.require_score_finalization = body.requireScoreFinalization;
 
   if (Object.keys(updates).length === 0) {

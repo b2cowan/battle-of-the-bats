@@ -24,14 +24,20 @@ export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'stand
  * feeds BOTH the public pages (server components) and the anonymous
  * `/api/public/tournament-data` endpoint, so sanitizing here closes the J6-001 leak
  * everywhere at once. Never return raw `Team` rows from this module.
+ *
+ * `showCoachName` gates the coach NAME per the tournament's `coachNamesShowOnPublic`
+ * toggle (migration 150, default off). When false the name is stripped to `''` here —
+ * at the data layer — so it never reaches the browser/JSON payload, not merely hidden in
+ * the UI. The public components already guard `team.coach && …`, so an empty value hides
+ * the coach line, search match, and datalist option automatically.
  */
-export function toPublicTeam(t: Team): PublicTeam {
+export function toPublicTeam(t: Team, showCoachName: boolean): PublicTeam {
   return {
     id: t.id,
     tournamentId: t.tournamentId,
     divisionId: t.divisionId,
     name: t.name,
-    coach: t.coach,
+    coach: showCoachName ? t.coach : '',
     status: t.status,
     poolId: t.poolId,
     seed: t.seed ?? null,
@@ -164,7 +170,7 @@ export async function getPublicTournamentPageData(
       getDivisions(tournament.id, { admin: true }),
       getAnnouncements(tournament.id, { admin: true }),
     ]);
-    return { ...base, games, teams: teams.filter(t => t.status === 'accepted').map(toPublicTeam), venues, divisions, announcements };
+    return { ...base, games, teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)), venues, divisions, announcements };
   }
 
   if (section === 'teams') {
@@ -175,7 +181,7 @@ export async function getPublicTournamentPageData(
     ]);
     return {
       ...base,
-      teams: teams.filter(t => t.status === 'accepted').map(toPublicTeam),
+      teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
       divisions,
       games,
       standingsByDivision: await computeStandingsByDivision(divisions, tournament),
@@ -193,7 +199,7 @@ export async function getPublicTournamentPageData(
       ...base,
       divisions,
       games,
-      teams: teams.filter(t => t.status === 'accepted').map(toPublicTeam),
+      teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
       venues,
       standingsByDivision: await computeStandingsByDivision(divisions, tournament),
     };

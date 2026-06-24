@@ -62,6 +62,10 @@ function ChatModeration({ tournamentId, orgParam }: { tournamentId: string; orgP
   );
 
   const handleDelete = useCallback((messageId: string) => moderate({ action: 'delete', messageId }), [moderate]);
+  const handlePin = useCallback(
+    (messageId: string, pinned: boolean) => moderate({ action: pinned ? 'pin' : 'unpin', messageId }),
+    [moderate],
+  );
   // Stable identity so the manage panel's focus-trap effect doesn't re-fire on every moderation
   // re-render (mute/close flip `busy` + refetch `data`), which would bounce focus repeatedly.
   const handleManageClose = useCallback(() => setManageOpen(false), []);
@@ -113,6 +117,7 @@ function ChatModeration({ tournamentId, orgParam }: { tournamentId: string; orgP
           roomId={data.room.id}
           roomName={data.room.name}
           onModerateDelete={handleDelete}
+          onPin={handlePin}
           headerRight={
             <button
               type="button"
@@ -120,9 +125,15 @@ function ChatModeration({ tournamentId, orgParam }: { tournamentId: string; orgP
               onClick={() => setManageOpen((o) => !o)}
               aria-expanded={manageOpen}
               aria-controls="chat-manage-panel"
+              aria-label={`Members${data.members.length ? `, ${data.members.length}` : ''}`}
+              title="Members"
             >
-              <Users size={14} aria-hidden /> Members{data.members.length ? ` (${data.members.length})` : ''}
-              <ChevronRight size={13} aria-hidden />
+              <Users size={14} aria-hidden />
+              <span className={styles.manageBtnLabel}>
+                Members{data.members.length ? ` (${data.members.length})` : ''}
+              </span>
+              {data.members.length ? <span className={styles.manageBtnCount}>{data.members.length}</span> : null}
+              <ChevronRight size={13} aria-hidden className={styles.manageBtnChevron} />
             </button>
           }
         />

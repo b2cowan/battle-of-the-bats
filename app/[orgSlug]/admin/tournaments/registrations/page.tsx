@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, SlidersHorizontal, Trash2, ArrowLeftRight, Mail, Pencil, ClipboardList, ListChecks, Check, Lock, Unlock } from 'lucide-react';
+import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, SlidersHorizontal, Trash2, ArrowLeftRight, Mail, Pencil, ClipboardList, ListChecks, Check, Lock, Unlock, CalendarClock } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -272,6 +272,7 @@ export default function UnifiedTeamsPage() {
   const [stableSortedIds, setStableSortedIds] = useState<string[]>([]);
   const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
   const [viewMode, setViewMode] = useState<'flat' | 'pools'>('pools');
+  const [paymentsOpen, setPaymentsOpen] = useState(true);
   const [feeMode, setFeeMode] = useState<FeeMode>('tournament');
   const [feeSchedule, setFeeSchedule] = useState<FeeSchedule>({ depositAmount: null, depositDueDate: null, totalFeeAmount: null, totalFeeDueDate: null });
   const [poolSlots, setPoolSlots] = useState<PoolSlot[]>([]);
@@ -1063,10 +1064,11 @@ export default function UnifiedTeamsPage() {
     try {
       const raw = localStorage.getItem(`flhq-teams-${tid}`);
       if (!raw) return;
-      const cached = JSON.parse(raw) as Partial<{ viewMode: 'flat' | 'pools'; selectedStatuses: Status[]; selectedDivisionId: string }>;
+      const cached = JSON.parse(raw) as Partial<{ viewMode: 'flat' | 'pools'; selectedStatuses: Status[]; selectedDivisionId: string; paymentsOpen: boolean }>;
       if (cached.viewMode === 'flat' || cached.viewMode === 'pools') setViewMode(cached.viewMode);
       if (Array.isArray(cached.selectedStatuses) && cached.selectedStatuses.length > 0) setSelectedStatuses(cached.selectedStatuses);
       if (cached.selectedDivisionId) setSelectedDivisionId(cached.selectedDivisionId);
+      if (typeof cached.paymentsOpen === 'boolean') setPaymentsOpen(cached.paymentsOpen);
     } catch {}
   }, [currentTournament?.id]);
 
@@ -1075,9 +1077,9 @@ export default function UnifiedTeamsPage() {
     const tid = currentTournament?.id;
     if (!tid || !selectedDivisionId || divisions.length === 0) return;
     try {
-      localStorage.setItem(`flhq-teams-${tid}`, JSON.stringify({ viewMode, selectedStatuses, selectedDivisionId }));
+      localStorage.setItem(`flhq-teams-${tid}`, JSON.stringify({ viewMode, selectedStatuses, selectedDivisionId, paymentsOpen }));
     } catch {}
-  }, [currentTournament?.id, viewMode, selectedStatuses, selectedDivisionId, divisions.length]);
+  }, [currentTournament?.id, viewMode, selectedStatuses, selectedDivisionId, paymentsOpen, divisions.length]);
 
   const divRegs = regs.filter(r => r.division_id === selectedDivisionId);
   const waitlistTeams = divRegs.filter(r => r.waitlistPosition != null).sort((a, b) => (a.waitlistPosition ?? 0) - (b.waitlistPosition ?? 0));
@@ -1095,8 +1097,11 @@ export default function UnifiedTeamsPage() {
     let expected = 0;
     let collected = 0;
     let outstanding = 0;
+    let depositRequired = 0;
     let depositComplete = 0;
+    let paidInFull = 0;
     let pastDue = 0;
+    let pastDueAmount = 0;
     let scheduled = 0;
 
     for (const team of accepted) {
@@ -1107,9 +1112,25 @@ export default function UnifiedTeamsPage() {
         expected += fee.totalFeeAmount;
         collected += Math.min(team.totalPaid, fee.totalFeeAmount);
         outstanding += Math.max(fee.totalFeeAmount - team.totalPaid, 0);
+        if (team.totalPaid >= fee.totalFeeAmount) paidInFull++;
       }
-      if (fee.depositAmount && team.depositPaid >= fee.depositAmount) depositComplete++;
-      if (status === 'past-due') pastDue++;
+      if (hasDepositStep(fee)) {
+        depositRequired++;
+        const depositCovered = (fee.totalFeeAmount != null && team.totalPaid >= fee.totalFeeAmount)
+          || team.depositPaid >= (fee.depositAmount ?? 0);
+        if (depositCovered) depositComplete++;
+      }
+      if (status === 'past-due') {
+        pastDue++;
+        // Dollars actually overdue: once the total-fee due date has passed, the whole
+        // remaining balance is past due; if only the deposit deadline has slipped, just
+        // the deposit shortfall is. (getPaymentDue returns the *next step*, which would
+        // understate a team whose total date passed but deposit is still unpaid.)
+        const totalOverdue = Boolean(fee.totalFeeDueDate && today > fee.totalFeeDueDate);
+        pastDueAmount += totalOverdue
+          ? Math.max((fee.totalFeeAmount ?? 0) - team.totalPaid, 0)
+          : Math.max((fee.depositAmount ?? 0) - team.depositPaid, 0);
+      }
     }
 
     return {
@@ -1118,8 +1139,11 @@ export default function UnifiedTeamsPage() {
       expected,
       collected,
       outstanding,
+      depositRequired,
       depositComplete,
+      paidInFull,
       pastDue,
+      pastDueAmount,
     };
   }, [divisions, divRegs, feeMode, feeSchedule, today]);
 
@@ -1844,37 +1868,127 @@ export default function UnifiedTeamsPage() {
         );
       })()}
 
-      {/* ── Payment money strip (J1-068) ─────────────────────────────────────────
-          paymentSummary was computed but never rendered; the .paymentPanel/.paymentMetric
-          CSS sat orphaned. Render the per-division money roll-up so the organizer sees
-          totals here instead of bouncing to the dashboard. Payment-tool surface, so
-          gated like the existing payment filters; only shown when a fee schedule applies. */}
-      {paymentToolsAvailable && currentTournament && selectedGroup && !isLocked && paymentSummary.scheduled > 0 && (
-        <div className={styles.paymentPanel}>
-          <div className={styles.paymentMetrics}>
-            <div className={styles.paymentMetric}>
-              <span>With a fee</span>
-              <strong>{paymentSummary.scheduled}</strong>
+      {/* ── Payments roll-up (J1-068) ─────────────────────────────────────────────
+          Per-division money summary so the organizer sees totals here instead of
+          bouncing to the dashboard. Collapsible (mirrors the Schedule Health panel)
+          with a glance chip that survives collapse, and a meaning line under every
+          number so "with a fee" / "expected" are self-explaining. Payment-tool
+          surface, gated like the payment filters; only shown when a fee applies. */}
+      {paymentToolsAvailable && currentTournament && selectedGroup && !isLocked && paymentSummary.scheduled > 0 && (() => {
+        const { scheduled, expected, collected, outstanding, depositRequired, depositComplete, paidInFull, pastDue, pastDueAmount } = paymentSummary;
+        const pctCollected = expected > 0 ? Math.min(100, Math.round((collected / expected) * 100)) : 0;
+        const pctPaidTeams = scheduled > 0 ? Math.round((paidInFull / scheduled) * 100) : 0;
+        const pctDeposits = depositRequired > 0 ? Math.round((depositComplete / depositRequired) * 100) : 0;
+        const fullyCollected = outstanding <= 0;
+        const glanceTone = pastDue > 0 ? 'danger' : !fullyCollected ? 'warning' : 'good';
+        const showDeposit = depositRequired > 0;
+
+        // All teams in this panel share the selected division, so the effective fee
+        // schedule (and its due dates) resolves once — mirror getEffectiveFee.
+        const divFee: FeeSchedule = feeMode === 'division' && selectedGroup.totalFeeAmount != null
+          ? {
+              depositAmount: selectedGroup.depositAmount ?? null,
+              depositDueDate: selectedGroup.depositDueDate ?? null,
+              totalFeeAmount: selectedGroup.totalFeeAmount ?? null,
+              totalFeeDueDate: selectedGroup.totalFeeDueDate ?? null,
+            }
+          : feeSchedule;
+        const fmtDue = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+        const dueDates: Array<{ label: string; date: string; overdue: boolean }> = [];
+        if (showDeposit && divFee.depositDueDate) {
+          dueDates.push({ label: 'Deposit due', date: fmtDue(divFee.depositDueDate), overdue: divFee.depositDueDate < today });
+        }
+        if (divFee.totalFeeDueDate) {
+          dueDates.push({ label: showDeposit ? 'Balance due' : 'Payment due', date: fmtDue(divFee.totalFeeDueDate), overdue: divFee.totalFeeDueDate < today });
+        }
+
+        return (
+          <details
+            className={styles.payPanel}
+            open={paymentsOpen}
+            onToggle={e => setPaymentsOpen(e.currentTarget.open)}
+          >
+            <summary className={styles.paySummary} aria-label={`${paymentsOpen ? 'Collapse' : 'Expand'} payments summary`}>
+              <div className={styles.payHeader}>
+                <div>
+                  <h4>Payments</h4>
+                  <p>{selectedGroup.name}</p>
+                </div>
+              </div>
+              <div className={styles.payGlance} data-tone={glanceTone}>
+                {pastDue > 0 ? (
+                  <><span>{formatMoney(pastDueAmount)}</span><small>past due</small></>
+                ) : !fullyCollected ? (
+                  <><span>{formatMoney(outstanding)}</span><small>due</small></>
+                ) : (
+                  <span>All collected</span>
+                )}
+              </div>
+              <span className={styles.payToggle}>
+                <span>{paymentsOpen ? 'Hide' : 'Show'}</span>
+                <ChevronDown size={14} aria-hidden />
+              </span>
+            </summary>
+            <div className={styles.payBody}>
+              {/* Collected-progress headline */}
+              <div className={styles.payProgress}>
+                <div className={styles.payProgressTop}>
+                  <span className={styles.payProgressLabel}>Collected</span>
+                  <span className={styles.payProgressValue}>
+                    <strong>{formatMoney(collected)}</strong> of {formatMoney(expected)} · {pctCollected}%
+                  </span>
+                </div>
+                <div
+                  className={styles.payProgressTrack}
+                  role="progressbar"
+                  aria-valuenow={pctCollected}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label="Fees collected"
+                >
+                  <div className={styles.payProgressFill} style={{ width: `${pctCollected}%` }} />
+                </div>
+              </div>
+
+              <div className={styles.payGrid} data-cols={showDeposit ? 4 : 3}>
+                <div className={styles.payKpi} data-tone={scheduled > 0 && paidInFull === scheduled ? 'good' : undefined}>
+                  <span>Paid in full</span>
+                  <strong>{paidInFull} / {scheduled}</strong>
+                  <small>{pctPaidTeams}% of teams</small>
+                </div>
+                {showDeposit && (
+                  <div className={styles.payKpi} data-tone={depositComplete === depositRequired ? 'good' : undefined}>
+                    <span>Deposits in</span>
+                    <strong>{depositComplete} / {depositRequired}</strong>
+                    <small>{pctDeposits}% of teams</small>
+                  </div>
+                )}
+                <div className={styles.payKpi}>
+                  <span>Outstanding</span>
+                  <strong>{formatMoney(outstanding)}</strong>
+                  <small>{outstanding > 0 ? 'still to collect' : 'all fees in'}</small>
+                </div>
+                <div className={styles.payKpi} data-tone={pastDue > 0 ? 'danger' : 'good'}>
+                  <span>Past due</span>
+                  <strong>{formatMoney(pastDueAmount)}</strong>
+                  <small>{pastDue === 0 ? 'none overdue' : `${pastDue} team${pastDue === 1 ? '' : 's'} overdue`}</small>
+                </div>
+              </div>
+
+              {dueDates.length > 0 && (
+                <div className={styles.payDueDates}>
+                  {dueDates.map(d => (
+                    <span key={d.label} className={styles.payDueItem} data-overdue={d.overdue ? '' : undefined}>
+                      <CalendarClock size={12} aria-hidden />
+                      {d.label} {d.date}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className={styles.paymentMetric}>
-              <span>Expected</span>
-              <strong>{formatMoney(paymentSummary.expected)}</strong>
-            </div>
-            <div className={styles.paymentMetric}>
-              <span>Collected</span>
-              <strong>{formatMoney(paymentSummary.collected)}</strong>
-            </div>
-            <div className={styles.paymentMetric} data-variant={paymentSummary.outstanding > 0 ? 'danger' : undefined}>
-              <span>Outstanding</span>
-              <strong>{formatMoney(paymentSummary.outstanding)}</strong>
-            </div>
-            <div className={styles.paymentMetric} data-variant={paymentSummary.pastDue > 0 ? 'danger' : undefined}>
-              <span>Past due</span>
-              <strong>{paymentSummary.pastDue}</strong>
-            </div>
-          </div>
-        </div>
-      )}
+          </details>
+        );
+      })()}
 
       {/* ── Filters / settings bottom sheet ─────────────────── */}
       {mobileSettingsOpen && (

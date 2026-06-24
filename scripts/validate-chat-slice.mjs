@@ -87,11 +87,21 @@ async function signIn(email) {
 
 // Subscribe and resolve once the channel is actually live (or reject on error/timeout).
 function subscribeReady(client, channelName, roomId, onInsert) {
+  return subscribeTable(client, channelName, 'chat_messages', roomId, 'INSERT', onInsert);
+}
+
+// Generalized version of the above: subscribe to `event` ('INSERT' | 'UPDATE' | '*') on any
+// room-scoped chat table (filter room_id=eq.<roomId>) and resolve once the channel is live. Used to
+// prove the SECOND realtime-published table (chat_message_reactions, mig 147) with the same rigour as
+// chat_messages — live add (INSERT) and live un-react (a SOFT-DELETE UPDATE; reactions never hard-
+// DELETE, since Supabase does not RLS-gate hard-DELETE events). REPLICA IDENTITY FULL is what lets the
+// UPDATE's row carry room_id so the filter + RLS evaluate correctly.
+function subscribeTable(client, channelName, table, roomId, event, onEvent) {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`subscribe timeout: ${channelName}`)), 12000);
     const channel = client
       .channel(channelName)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${roomId}` }, onInsert)
+      .on('postgres_changes', { event, schema: 'public', table, filter: `room_id=eq.${roomId}` }, onEvent)
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') { clearTimeout(timer); resolve(channel); }
         else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
@@ -216,6 +226,170 @@ try {
   const { error: remInsErr } = await clientRemoved.from('chat_messages').insert({ room_id: roomId, sender_user_id: users.removed.id, body: 'removed attempt' });
   check('removed member CANNOT post', !!remInsErr, remInsErr ? 'blocked by RLS' : 'INSERT unexpectedly SUCCEEDED');
 
+  // ── 14–22. Emoji reactions (chat_message_reactions, mig 147) — the program's SECOND realtime-
+  // published table. Prove the same make-or-break properties we proved for messages: live delivery to
+  // an active member, silence + zero rows to a non-member/removed member, that a browser CANNOT write
+  // the table directly (every add/remove goes through the audited server route as service role), and
+  // that a live UN-REACT (hard DELETE) propagates WITH the old row — which only works under REPLICA
+  // IDENTITY FULL (the whole reason that line is in the migration).
+  console.log('\nEmoji reactions (chat_message_reactions, mig 147):');
+
+  // The message A posted earlier is the reaction target.
+  const { data: msgRow } = await admin
+    .from('chat_messages').select('id').eq('room_id', roomId)
+    .order('sent_at', { ascending: true }).limit(1).maybeSingle();
+  const messageId = msgRow?.id;
+  if (!messageId) throw new Error('no message available to react to');
+
+  let bReaction = null;        // INSERT payload member B receives (live add)
+  let outReaction = null;      // anything the outsider receives (must stay null)
+  let bReactionUpdate = null;  // UPDATE payload (new row) member B receives on un-react (soft-delete)
+
+  const rChanB = await subscribeTable(clientB, 'rx-b', 'chat_message_reactions', roomId, '*', (p) => {
+    if (p.eventType === 'INSERT') bReaction = p.new;
+    else if (p.eventType === 'UPDATE') bReactionUpdate = p.new;
+  });
+  const rChanOut = await subscribeTable(clientOut, 'rx-out', 'chat_message_reactions', roomId, '*', (p) => {
+    outReaction = p.new ?? p.old ?? true;
+  });
+  await sleep(3000); // same SUBSCRIBED-≠-streaming warm-up as the message slice
+
+  // A reaction is recorded by the SERVICE ROLE (simulating the server route) — there is no browser write.
+  const { data: rxRow, error: rxErr } = await admin
+    .from('chat_message_reactions')
+    .insert({ room_id: roomId, message_id: messageId, user_id: users.memberA.id, emoji: '👍' })
+    .select('id').single();
+  check('a reaction can be recorded (service role / server route)', !rxErr, rxErr ? rxErr.message : 'emoji=👍');
+
+  await sleep(3500);
+  check('member B receives the reaction LIVE', bReaction?.message_id === messageId,
+    bReaction ? `message_id=${String(bReaction.message_id).slice(0, 8)} emoji=${bReaction.emoji}` : 'no realtime payload within 3.5s');
+  check('non-member receives NO reaction live', outReaction === null,
+    outReaction ? 'LEAKED a reaction' : 'silent, as expected');
+
+  // Query-path privacy: member reads it; outsider + removed get zero rows.
+  const { data: bRx } = await clientB.from('chat_message_reactions').select('id, emoji').eq('room_id', roomId);
+  check('member B can query the reaction', (bRx?.length ?? 0) === 1, `${bRx?.length ?? 0} row(s)`);
+  const { data: outRx } = await clientOut.from('chat_message_reactions').select('id').eq('room_id', roomId);
+  check('non-member reaction query returns ZERO rows', (outRx?.length ?? 0) === 0, `${outRx?.length ?? 0} row(s)`);
+  const { data: remRx } = await clientRemoved.from('chat_message_reactions').select('id').eq('room_id', roomId);
+  check('removed member reaction query returns ZERO rows', (remRx?.length ?? 0) === 0, `${remRx?.length ?? 0} row(s)`);
+
+  // Write-lock: a browser cannot write this table at all — strictly stronger than the column-scoped
+  // INSERT on chat_messages (there is no write grant), so every add/remove must go through the server
+  // route. A direct INSERT (even of one's own, non-spoofed reaction) must be rejected.
+  const { error: bInsErr } = await clientB.from('chat_message_reactions')
+    .insert({ room_id: roomId, message_id: messageId, user_id: users.memberB.id, emoji: '❤️' });
+  check('member CANNOT write a reaction directly (server-route only)', !!bInsErr,
+    bInsErr ? 'blocked at privilege layer' : 'INSERT unexpectedly SUCCEEDED — direct-write hole');
+
+  // ...and cannot UPDATE one either (the soft-delete / un-react path the server uses). A missing
+  // UPDATE grant surfaces as an error OR a 0-row no-op; assert the row is untouched (removed_at NULL).
+  const { error: bUpdErr } = await clientB.from('chat_message_reactions')
+    .update({ removed_at: new Date().toISOString() }).eq('room_id', roomId);
+  // Re-check the EXACT row B tried to touch (not just "row 0 in the room") so the assertion can't pass
+  // for the wrong reason if the row set ever changes.
+  const { data: afterUpd } = await admin.from('chat_message_reactions')
+    .select('id, removed_at').eq('id', rxRow?.id).maybeSingle();
+  check('member CANNOT update a reaction directly (no un-react/hide)',
+    !!bUpdErr || (afterUpd?.removed_at == null),
+    bUpdErr ? 'blocked at privilege layer' : `removed_at=${afterUpd?.removed_at ?? 'null'}`);
+
+  // Live un-react = a SOFT-DELETE (UPDATE removed_at), NOT a hard DELETE — Supabase does not RLS-gate
+  // hard-DELETE events (they leak to non-members; see the migration header). An UPDATE carries the
+  // full new row, so the room_id filter + RLS evaluate correctly: the active member receives it (and
+  // it carries message_id, so the client knows which message's summary to re-pull) and the non-member
+  // receives NOTHING.
+  outReaction = null; // reset so this specifically tests un-react leakage to the non-member
+  const { error: unErr } = await admin.from('chat_message_reactions')
+    .update({ removed_at: new Date().toISOString() }).eq('id', rxRow?.id);
+  check('a reaction can be un-reacted (service-role soft-delete)', !unErr, unErr ? unErr.message : 'removed_at set');
+  await sleep(3500);
+  check('member B receives the un-react LIVE (UPDATE carries the row)',
+    bReactionUpdate?.message_id === messageId && bReactionUpdate?.removed_at != null,
+    bReactionUpdate ? `message_id=${String(bReactionUpdate.message_id).slice(0, 8)} removed_at set` : 'no UPDATE payload within 3.5s');
+  check('non-member receives NO un-react live', outReaction === null,
+    outReaction ? 'LEAKED an un-react' : 'silent, as expected');
+
+  await clientB.removeChannel(rChanB);
+  await clientOut.removeChannel(rChanOut);
+
+  // ── 23–31. Poll votes (chat_poll_votes, mig 148) — the program's THIRD realtime-published table.
+  // Same make-or-break properties as messages + reactions: live vote to an active member, silence +
+  // zero rows to non-member/removed, write-lock (server-route only), and a live REVOTE via soft-delete
+  // UPDATE. A poll is a chat message (its options live in metadata), so here we just need the
+  // message_id + two option uuids to cast votes against.
+  console.log('\nPoll votes (chat_poll_votes, mig 148):');
+
+  const optionA = randomUUID();
+  const optionB = randomUUID();
+
+  let bVote = null;        // INSERT payload member B receives (live vote)
+  let outVote = null;      // anything the outsider receives (must stay null)
+  let bVoteUpdate = null;  // UPDATE payload member B receives on revote/retract (soft-delete)
+
+  // FRESH realtime clients for this section. The clients reused above have had channels added+removed
+  // twice already; a 3rd re-subscribe on a torn-down/rebuilt socket doesn't reliably re-arm
+  // postgres_changes within the warm-up window (a realtime-js socket-churn artifact, NOT a table/RLS
+  // problem — a fresh socket, like every real browser client, delivers first try). Sign in fresh.
+  const clientBVotes = await signIn(EMAILS.memberB);
+  const clientOutVotes = await signIn(EMAILS.outsider);
+  clients.push(clientBVotes, clientOutVotes);
+
+  const vChanB = await subscribeTable(clientBVotes, 'pv-b', 'chat_poll_votes', roomId, '*', (p) => {
+    if (p.eventType === 'INSERT') bVote = p.new;
+    else if (p.eventType === 'UPDATE') bVoteUpdate = p.new;
+  });
+  const vChanOut = await subscribeTable(clientOutVotes, 'pv-out', 'chat_poll_votes', roomId, '*', (p) => {
+    outVote = p.new ?? p.old ?? true;
+  });
+  await sleep(3000); // SUBSCRIBED-≠-streaming warm-up
+
+  // A vote is recorded by the SERVICE ROLE (simulating the server route) — there is no browser write.
+  const { data: voteRow, error: voteErr } = await admin
+    .from('chat_poll_votes')
+    .insert({ room_id: roomId, message_id: messageId, option_id: optionA, user_id: users.memberA.id })
+    .select('id').single();
+  check('a vote can be recorded (service role / server route)', !voteErr, voteErr ? voteErr.message : `option=${optionA.slice(0, 8)}`);
+
+  await sleep(3500);
+  check('member B receives the vote LIVE', bVote?.message_id === messageId,
+    bVote ? `message_id=${String(bVote.message_id).slice(0, 8)} option=${String(bVote.option_id).slice(0, 8)}` : 'no realtime payload within 3.5s');
+  check('non-member receives NO vote live', outVote === null, outVote ? 'LEAKED a vote' : 'silent, as expected');
+
+  // Query-path privacy.
+  const { data: bV } = await clientBVotes.from('chat_poll_votes').select('id, option_id').eq('room_id', roomId);
+  check('member B can query the vote', (bV?.length ?? 0) === 1, `${bV?.length ?? 0} row(s)`);
+  const { data: outV } = await clientOutVotes.from('chat_poll_votes').select('id').eq('room_id', roomId);
+  check('non-member vote query returns ZERO rows', (outV?.length ?? 0) === 0, `${outV?.length ?? 0} row(s)`);
+  const { data: remV } = await clientRemoved.from('chat_poll_votes').select('id').eq('room_id', roomId);
+  check('removed member vote query returns ZERO rows', (remV?.length ?? 0) === 0, `${remV?.length ?? 0} row(s)`);
+
+  // Write-lock: a browser cannot write this table at all (SELECT-only grant) — every vote is server-side.
+  const { error: bVInsErr } = await clientBVotes.from('chat_poll_votes')
+    .insert({ room_id: roomId, message_id: messageId, option_id: optionB, user_id: users.memberB.id });
+  check('member CANNOT cast a vote directly (server-route only)', !!bVInsErr,
+    bVInsErr ? 'blocked at privilege layer' : 'INSERT unexpectedly SUCCEEDED — direct-write hole');
+  const { error: bVUpdErr } = await clientBVotes.from('chat_poll_votes')
+    .update({ removed_at: new Date().toISOString() }).eq('room_id', roomId);
+  const { data: afterVUpd } = await admin.from('chat_poll_votes').select('id, removed_at').eq('id', voteRow?.id).maybeSingle();
+  check('member CANNOT update a vote directly (no revote/retract)', !!bVUpdErr || (afterVUpd?.removed_at == null),
+    bVUpdErr ? 'blocked at privilege layer' : `removed_at=${afterVUpd?.removed_at ?? 'null'}`);
+
+  // Live revote/retract = a SOFT-DELETE (UPDATE removed_at): delivered to the member, NOT the outsider.
+  outVote = null;
+  const { error: unVoteErr } = await admin.from('chat_poll_votes')
+    .update({ removed_at: new Date().toISOString() }).eq('id', voteRow?.id);
+  check('a vote can be retracted (service-role soft-delete)', !unVoteErr, unVoteErr ? unVoteErr.message : 'removed_at set');
+  await sleep(3500);
+  check('member B receives the retract LIVE (UPDATE carries the row)',
+    bVoteUpdate?.message_id === messageId && bVoteUpdate?.removed_at != null,
+    bVoteUpdate ? `message_id=${String(bVoteUpdate.message_id).slice(0, 8)} removed_at set` : 'no UPDATE payload within 3.5s');
+  check('non-member receives NO retract live', outVote === null, outVote ? 'LEAKED a retract' : 'silent, as expected');
+
+  await clientBVotes.removeChannel(vChanB);
+  await clientOutVotes.removeChannel(vChanOut);
+
 } catch (err) {
   console.error('\nERROR:', err.message);
   process.exitCode = 1;
@@ -224,6 +398,10 @@ try {
   try {
     for (const c of clients) { try { await c.removeAllChannels(); } catch { /* noop */ } }
     if (roomId) {
+      // Reaction + poll-vote children first (also cascade off chat_messages/chat_rooms, but be
+      // explicit + order-independent).
+      await admin.from('chat_message_reactions').delete().eq('room_id', roomId);
+      await admin.from('chat_poll_votes').delete().eq('room_id', roomId);
       await admin.from('chat_messages').delete().eq('room_id', roomId);
       await admin.from('chat_room_members').delete().eq('room_id', roomId);
       await admin.from('chat_rooms').delete().eq('id', roomId);

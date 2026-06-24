@@ -81,7 +81,7 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 <!-- dict:col:organizations.subscription_period -->
 <!-- dict:col:organizations.current_period_end -->
 <!-- dict:col:organizations.rep_team_subscription_item_id -->
-**Stripe / subscription block** (`stripe_customer_id`, `stripe_subscription_id`, `subscription_status`, `subscription_period`, `current_period_end`, `rep_team_subscription_item_id`) — Stripe linkage + subscription state. `subscription_status` (no DB CHECK; code domain `active|trialing|past_due|canceled`, [lib/types.ts:13](../../../lib/types.ts#L13)) defaults `'active'`; `subscriptionStatus==='canceled'` hard-disables module entitlements ([lib/module-entitlements.ts:15](../../../lib/module-entitlements.ts#L15)) and blocks public tournament context ([lib/public-tournament-data.ts:60](../../../lib/public-tournament-data.ts#L60)). **Main writer = the Stripe webhook** ([app/api/billing/webhook/route.ts](../../../app/api/billing/webhook/route.ts): `subscription.updated/created` ~:233, `payment_succeeded`→active ~:528, `payment_failed`→`past_due` ~:557, `subscription.deleted`→`canceled`+null ~:466); also `updateOrgSubscription` ([lib/db.ts:2457-2464](../../../lib/db.ts#L2457)). *(Billing-flow narrative + the `stripe_prices` table → the Stripe/Billing phase; these columns are documented here.)*
+**Stripe / subscription block** (`stripe_customer_id`, `stripe_subscription_id`, `subscription_status`, `subscription_period`, `current_period_end`, `rep_team_subscription_item_id`) — Stripe linkage + subscription state. `subscription_status` (no DB CHECK; code domain `active|trialing|past_due|canceled`, [lib/types.ts:13](../../../lib/types.ts#L13)) defaults `'active'`; `subscriptionStatus==='canceled'` hard-disables module entitlements ([lib/module-entitlements.ts:15](../../../lib/module-entitlements.ts#L15)) and blocks public tournament context ([lib/public-tournament-data.ts:60](../../../lib/public-tournament-data.ts#L60)). **Main writer = the Stripe webhook** ([app/api/billing/webhook/route.ts](../../../app/api/billing/webhook/route.ts): `subscription.updated/created` ~:233, `payment_succeeded`→active ~:528, `payment_failed`→`past_due` ~:557, `subscription.deleted`→`canceled`+null ~:466); also `updateOrgSubscription` ([lib/db.ts:2457-2464](../../../lib/db.ts#L2457)). **`rep_team_subscription_item_id` is RETIRING (Club Repackaging 2026-06-22):** it tracked the now-retired per-team "$19/team beyond 3" rep-team Stripe add-on item; its writer (`syncRepTeamBilling`) was deleted. The column is now read-only/vestigial (0 rows carry a value) — no new writes; safe to drop post-cutover. *(Billing-flow narrative + the `stripe_prices` table → the Stripe/Billing phase; these columns are documented here.)*
 
 <!-- dict:col:organizations.billing_suspended_at -->
 <!-- dict:col:organizations.billing_suspension_reason -->
@@ -89,6 +89,9 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 
 <!-- dict:col:organizations.tournament_limit -->
 **`tournament_limit`** (int, NOT NULL, default 1) — stored cap. The hydrated `Organization.tournamentLimit` is **never the raw column** — it's always clamped through `getEffectiveTournamentLimit(plan_id, tournament_limit)` in all three mappers ([lib/db.ts:2485](../../../lib/db.ts#L2485), [lib/plan-config.ts](../../../lib/plan-config.ts)). (Platform-admin bulk-ops reads the raw column directly.) _Writes:_ `createOrganization`, `updateOrgSubscription`, onboarding-plan.
+
+<!-- dict:col:organizations.team_limit -->
+**`team_limit`** (int, **nullable**; mig 145, Club Repackaging) — per-org rep-team capacity override, mirroring `tournament_limit`. **Semantics differ intentionally:** the hydrated `Organization.teamLimit = getEffectiveTeamLimit(plan_id, team_limit)` returns the **raw stored value when set** (it RAISES the band for "custom above 30" Club · Association deals), else the plan band default (`PLAN_CONFIG.teamLimit`: club=15, club_large=30, others=9999≈uncapped). NULL = plan default. Enforced at rep-team create ([app/api/admin/rep-teams/teams/route.ts](../../../app/api/admin/rep-teams/teams/route.ts)) against `getNonArchivedRepTeamCount` (all non-archived rep teams count equally). _Writes:_ platform-admin org plan PATCH ([app/api/platform-admin/orgs/[id]/plan/route.ts](../../../app/api/platform-admin/orgs/[id]/plan/route.ts)).
 
 <!-- dict:col:organizations.is_public -->
 **`is_public`** (bool, NOT NULL, default true) — gates the **org-home/league** landing pages ([app/[orgSlug]/page.tsx:17](../../../app/[orgSlug]/page.tsx#L17)) and the public tournaments feed; **does NOT gate tournament pages or registration** ([lib/public-tournament-data.ts:57](../../../lib/public-tournament-data.ts#L57)). Force-cleared to `false` on cancel/suspend. _Writes:_ org-settings PATCH.
@@ -428,6 +431,9 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 
 <!-- dict:col:tournaments.contact_show_on_public -->
 **`contact_show_on_public`** (boolean, NOT NULL, default `true`; mig 120) — per-**audience** display toggle for the *public/anonymous* audience: when `false`, no contact email is shown on public tournament pages. Enforced in `resolveTournamentContactEmail(..., 'public')` ([lib/db.ts](../../../lib/db.ts)), which returns `null` (suppressing even the `org` fallback) so the toggle can't be a no-op. When `true`, public pages resolve the **selected member's** email (then legacy `contact_email`, then org) — previously the public surface only read legacy `contact_email`.
+
+<!-- dict:col:tournaments.coach_names_show_on_public -->
+**`coach_names_show_on_public`** (boolean, NOT NULL, default `false`; mig 150) — public-site visibility toggle for team **coach names** (`teams.coach`). Default `false` = coach names are **private** on the public site (this changed existing tournaments: any event that previously showed coach names publicly hides them until an organizer opts back in). When `false`, the name is stripped to `''` at the J6-001 choke point `toPublicTeam(t, showCoachName)` ([lib/public-tournament-data.ts](../../../lib/public-tournament-data.ts)) so it never reaches any anonymous payload — Teams cards, team profile, schedule search/datalist, `/api/public/tournament-data`, `/api/public/team-profile` — not merely hidden in the UI. Governs the **public site only**: coach names stay visible in admin views and the Coaches Portal. Does **not** affect coach *emails* (already excluded from public payloads). Surfaced in Public Site → Public Pages as "Show coach names" (all plans, `manage_branding` capability); carried on clone/populate with the public-pages block. _Dev/prod:_ identical (both default `false`).
 
 <!-- dict:col:tournaments.fee_schedule_mode -->
 **`fee_schedule_mode`** (text, NOT NULL, default `'tournament'`; `tournament|division`) — selects tournament-level vs per-division fee fields in `resolveFeeSchedule` ([register/page.tsx:65](../../../app/[orgSlug]/[tournamentSlug]/register/page.tsx#L65)). Shadowed by `settings.fee_scope` — gotcha 5. `mapTournament` normalizes non-`'division'` → `'tournament'`.
@@ -3769,7 +3775,7 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 ### `plan_gating`
 <!-- dict:table:plan_gating -->
 
-**Purpose:** the per-plan checkout gating switch managed by platform admins (5 rows, PK `plan_key`). `gating_status='early_access'` blocks self-serve Stripe Checkout for that plan and shows an early-access CTA; `'live'` opens it. **Runtime-consumed** — `getPlanGatingMap` overlays these rows on the static `PLAN_CONFIG.gatingStatus` fallback.
+**Purpose:** the per-plan checkout gating switch managed by platform admins (6 rows after Club Repackaging, PK `plan_key`). `gating_status='early_access'` blocks self-serve Stripe Checkout for that plan and shows an early-access CTA; `'live'` opens it. **Runtime-consumed** — `getPlanGatingMap` overlays these rows on the static `PLAN_CONFIG.gatingStatus` fallback.
 
 **Gotchas (read first):**
 1. **This table IS consumed at runtime** — `getPlanGatingMap` selects `plan_key/gating_status` and overlays it on the code fallback ([lib/plan-gating-server.ts:38-50](../../../lib/plan-gating-server.ts#L38)); a DB edit here actually changes checkout behavior. It drives the 403 in `create-checkout` ([:120-126](../../../app/api/billing/create-checkout/route.ts#L120)) and is also read by the home + pricing pages, coaches start/claim, and `create-team-checkout`.
@@ -3780,7 +3786,7 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 **Fields:**
 
 <!-- dict:col:plan_gating.plan_key -->
-**`plan_key`** (text, NOT NULL, PK; CHECK `tournament|team|tournament_plus|league|club`) — plan identity + PK; matched against `OrgPlan` keys when overlaying ([lib/plan-gating-server.ts:46](../../../lib/plan-gating-server.ts#L46)). The `team` row only matters to the coach/team checkout + display reads (general `create-checkout` 400s `team`).
+**`plan_key`** (text, NOT NULL, PK; CHECK `tournament|team|tournament_plus|league|club|club_large`) — plan identity + PK; matched against `OrgPlan` keys when overlaying. (`club_large` added in mig 144, Club Repackaging — seeded `early_access`; the route does UPDATE-only so the seed row is required for the gating toggle to work.) ([lib/plan-gating-server.ts:46](../../../lib/plan-gating-server.ts#L46)). The `team` row only matters to the coach/team checkout + display reads (general `create-checkout` 400s `team`).
 
 <!-- dict:col:plan_gating.gating_status -->
 **`gating_status`** (text, NOT NULL, default `'early_access'`; CHECK `live|early_access`) — `early_access` ⇒ gated=true (checkout 403s); `live` ⇒ open.
@@ -3873,7 +3879,7 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 **Fields** (boilerplate `updated_at` omitted — code-maintained):
 
 <!-- dict:col:platform_plan_module_entitlements.plan_id -->
-**`plan_id`** (text, NOT NULL; part of composite PK `(plan_id, module_key)`; CHECK `tournament|team|tournament_plus|league|club`) — plan side of the grid; iterated via `PLAN_ORDER`.
+**`plan_id`** (text, NOT NULL; part of composite PK `(plan_id, module_key)`; CHECK `tournament|team|tournament_plus|league|club|club_large`) — plan side of the grid; iterated via `PLAN_ORDER`. (`club_large` added in mig 144, Club Repackaging — seeds 7 module rows mirroring `club`.)
 
 <!-- dict:col:platform_plan_module_entitlements.module_key -->
 **`module_key`** (text, NOT NULL; part of composite PK; CHECK `module_tournaments|module_communications|module_members|module_public_site|module_house_league|module_accounting|module_rep_teams`) — module side of the grid (= the 7-entry `MODULE_CATALOG`).
@@ -4384,7 +4390,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 - **`notify()` is the hub, and it is fire-and-forget.** A single `notify()` call ([lib/notify.ts:87](../../../lib/notify.ts#L87)) resolves recipients, then writes a bell row, optionally fans a Web Push, optionally sends an email — each per-channel-gated. The whole body is wrapped in a try/catch that only `console.error`s ([:273](../../../lib/notify.ts#L273)); a failed notification **never surfaces to or blocks the caller**. Call sites fire it without awaiting — predominantly `notify(...).catch(console.error)` (e.g. [admin/teams/route.ts:352](../../../app/api/admin/teams/route.ts#L352), [billing/webhook/route.ts:581](../../../app/api/billing/webhook/route.ts#L581)), occasionally `void notify(...)` (the check-in route).
 - **TWO suppression layers, in this order:** **Layer 2** = per-tournament opt-out (`tournament_notification_preferences.opted_out`, checked **only when the caller passes `tournamentId`**, [:166](../../../lib/notify.ts#L166)) runs **before** **Layer 1** = global per-channel prefs (`notification_preferences`, [:178](../../../lib/notify.ts#L178)). Missing rows ⇒ **deliver** (the bell channel is default-ON).
 - **Only `notifications` has RLS policies, and they are VESTIGIAL for every shipped data path.** The two policies — `own notifications select` and `own notifications update`, both `qual = auth.uid() = user_id`, roles `public`, **identical dev↔prod** — are never evaluated by the bell list, unread count, or mark-read, which all run through `supabaseAdmin` (service-role, BYPASSRLS) with ownership enforced **in code** (`.eq('user_id', …)`). The only user-scoped client that could exercise the SELECT policy is the `NotificationBell` Realtime subscription ([NotificationBell.tsx:49](../../../components/notifications/NotificationBell.tsx#L49)); the UPDATE policy is fully vestigial. The other 7 tables are **RLS-enabled-ZERO-policies** (service-role-only) — the [[reference_supabase_rls_grants]] backstop against prod's anon full-DML grant.
-- **`notifications.event_type` name-collides with `platform_events.event_type` but is a DISJOINT union.** `NotificationEventType` ([lib/types.ts:1377](../../../lib/types.ts#L1377), 12 values) shares zero values with `PlatformEventType` ([lib/platform-events.ts:3](../../../lib/platform-events.ts#L3)) — e.g. `payment_failed` exists only in the notification union. Never conflate the two. **5 of the 12** notification values have NO emitter (dead enum values — see the table).
+- **`notifications.event_type` name-collides with `platform_events.event_type` but is a DISJOINT union.** `NotificationEventType` ([lib/types.ts](../../../lib/types.ts), 14 values incl. `chat_message` + `chat_mention`, both emitters, both default push-ON) shares zero values with `PlatformEventType` ([lib/platform-events.ts:3](../../../lib/platform-events.ts#L3)) — e.g. `payment_failed` exists only in the notification union. Never conflate the two. **5 values still have NO emitter** (dead enum values — see the table). `chat_mention` is intentionally NOT in the settings-UI sections (`NOTIFICATION_SECTIONS`), so it has no user toggle and always delivers — that's how an @mention reaches a coach who muted general `chat_message`.
 - **No DB triggers or CHECKs anywhere in this domain** — every `updated_at` is code-maintained, and every "enum" (`event_type`, `email_batches.status`, `email_sends.status`/`suppression_reason`, the template `category`) is a TS union/string convention.
 - **Two push tables, by design — different identity models.** `push_subscriptions` = authenticated member (`user_id`, **globally-unique endpoint** → one row per browser, follows the logged-in member across orgs); `fan_push_subscriptions` = anonymous public fan (**no `user_id`**, scoped to `(tournament_id, team_id)`, **`UNIQUE(endpoint, tournament_id)`** → the same browser can follow many tournaments, one row each). Both are **EMPTY in dev AND prod** (built, zero live subscriptions). `sendWebPush` is shared and **no-ops when VAPID keys are unset**.
 - **The DB email-template registry is a MIRROR, not the source of sends.** `platform_email_templates` is admin **edit/preview/test-send only**; the planned `resolveEmailTemplate()`/`resolveEmail()` DB loader **was never built** (grep = no matches), so the hardcoded `lib/email.ts` templates always send. The "looks authoritative but isn't" trap — editing a template here changes nothing that ships.
@@ -5041,7 +5047,7 @@ The platform-admin **error-tracking + in-app feedback** store (the "notification
 
 # Domain: Chat
 
-> **Added by migration 141 (2026-06-19) — applied to DEV only (⚠ PROD-PENDING).** The shared chat engine — first slice of the Coach Chat program (Project 1, Tournament Chat). Built + validated as the **proving slice**: live message delivery + tenant-privacy (RLS) were confirmed on the live dev DB via `scripts/validate-chat-slice.mjs` (6/6) BEFORE any UI. NOT column-sealed yet (one slice in; revisit at the surface build). See [COACH_CHAT_PLATFORM_PLAN.md](../../projects/active/COACH_CHAT_PLATFORM_PLAN.md) §2 + [TOURNAMENT_CHAT_PLAN.md](../../projects/active/TOURNAMENT_CHAT_PLAN.md).
+> **Added by migrations 141 + 146 + 147 + 148 + 149 — applied to DEV only (⚠ PROD-PENDING).** The shared chat engine — Project 1 (Tournament Chat) of the Coach Chat program. Built + validated as the **proving slice**: live delivery + tenant-privacy (RLS) confirmed on the live dev DB via `scripts/validate-chat-slice.mjs` BEFORE any UI. Mig 141 = the 3-table engine (6/6). Mig 146 = pinned messages (`chat_messages.pinned_*`, rides the existing publication). Mig 147 = emoji reactions (`chat_message_reactions`, the 2nd realtime-published table; caught + fixed an RLS-on-hard-DELETE leak by soft-deleting). Mig 148 = poll votes (`chat_poll_votes`, the 3rd realtime-published table; same soft-delete pattern; poll definition rides `chat_messages.metadata`). Mig 149 = dedupe duplicate rooms from a creation race + partial unique indexes on `chat_rooms (surface, ref_id[, ref_sub_id])` so one conversation = one room. Slice grown to **34/34**. NOT column-sealed yet (revisit at the surface build). See [COACH_CHAT_PLATFORM_PLAN.md](../../projects/active/COACH_CHAT_PLATFORM_PLAN.md) §2 + [TOURNAMENT_CHAT_PLAN.md](../../projects/active/TOURNAMENT_CHAT_PLAN.md).
 
 One generic engine, three tables: **chat_rooms** (a conversation, typed by `surface`), **chat_room_members** (who's in it + each person's read watermark), **chat_messages** (append-only, soft-delete). Access is **membership-based**, org-agnostic — a person reads a room's messages only if they hold an `active` membership row. Realtime delivery is via the `supabase_realtime` publication on `chat_messages` (REPLICA IDENTITY FULL).
 
@@ -5070,7 +5076,7 @@ One generic engine, three tables: **chat_rooms** (a conversation, typed by `surf
 **`surface`** (text, NN; CHECK `tournament|coach_peer|coach_parent`) — which product surface owns the room; selects the participant-resolver. (`direct_message` for cross-org is a future Project-3 value.)
 
 <!-- dict:col:chat_rooms.ref_id -->
-**`ref_id`** (uuid, NN) — the subject the room is about (tournamentId for `tournament`, orgId for `coach_peer`, …). App-layer reference, no DB FK (varies by surface).
+**`ref_id`** (uuid, NN) — the subject the room is about (tournamentId for `tournament`, orgId for `coach_peer`, …). App-layer reference, no DB FK (varies by surface). **UNIQUE per conversation identity (mig 149):** partial unique indexes enforce ONE room per `(surface, ref_id)` when `ref_sub_id IS NULL` and per `(surface, ref_id, ref_sub_id)` otherwise — added after a creation race produced duplicate rooms (a coach saw the same tournament chat twice); `ensureTournamentChatRoom` catches the unique-violation and re-fetches the winner.
 
 <!-- dict:col:chat_rooms.ref_sub_id -->
 **`ref_sub_id`** (uuid, nullable) — optional sub-scope (e.g. a division for a tournament sub-room).
@@ -5146,11 +5152,75 @@ One generic engine, three tables: **chat_rooms** (a conversation, typed by `surf
 **`deleted_by_user_id`** (FK → auth.users.id, nullable, SET NULL) — the moderator who removed it.
 
 <!-- dict:col:chat_messages.metadata -->
-**`metadata`** (jsonb, NN, default `{}`) — reserved for the surface phase (attachments, system messages).
+**`metadata`** (jsonb, NN, default `{}`) — surface-phase payload (Phase 3B): `replyTo` (a server-rebuilt quote `{id,name,snippet}`) and `mentions` (`[{userId,name}]`). The browser INSERT grant covers it, but reply/mention payloads are written server-side from real rows (anti-spoof).
 
 <!-- dict:col:chat_messages.sent_at -->
 **`sent_at`** (timestamptz, NN, default now()) — order key; index `(room_id, sent_at DESC)` for pagination.
 
+<!-- dict:col:chat_messages.pinned_at -->
+**`pinned_at`** (timestamptz, nullable; mig 146) — set when a moderator pins the message (NULL = not pinned); partial index `(room_id, pinned_at DESC) WHERE pinned_at IS NOT NULL` backs the pinned-banner query. Written service-role only (NOT in the `authenticated` column grant); a pin/unpin is a `chat_messages` UPDATE so it propagates live on the realtime publication.
+
+<!-- dict:col:chat_messages.pinned_by_user_id -->
+**`pinned_by_user_id`** (FK → auth.users.id, nullable, SET NULL; mig 146) — the moderator who pinned it; cleared on unpin.
+
+## `chat_message_reactions`
+<!-- dict:table:chat_message_reactions -->
+
+**Purpose** (mig 147, Phase 3C): emoji reactions on a message — one row per `(message, user, emoji)` from a FIXED seven-emoji set (👍 👎 ❤️ ✅ 😂 🎉 🙏). The chat program's **second** realtime-published table.
+
+**Gotchas (read first):**
+1. **Realtime-published (REPLICA IDENTITY FULL) — the SECOND such table.** Re-proven on dev by `scripts/validate-chat-slice.mjs` (now 23 checks): live add to active members, silence + zero rows to non-members/removed, write-lock, live un-react.
+2. **SOFT-DELETE, never hard DELETE.** Un-react sets `removed_at`; the row is never deleted. **Why:** Supabase `postgres_changes` does NOT enforce RLS on hard-DELETE events (PK-only old row → membership subquery can't evaluate → delivery fails OPEN → a non-member who knows the room id receives the DELETE). Keeping every reaction event an INSERT/UPDATE (full new row) makes the room_id filter + RLS evaluate correctly. This is the same reason the engine soft-deletes `chat_messages`. **Active reaction = `removed_at IS NULL`.**
+3. **Write-locked to `authenticated` — SELECT only (no INSERT/UPDATE/DELETE grant).** Every add/un-react/revive is the **service role** via the server route (membership + mute + rate-limit). Tighter than `chat_messages` (which grants a column-scoped INSERT): reactions have no direct-client write path, so there is no spoof/escalate surface to column-scope.
+4. **`room_id` is DENORMALIZED** onto each reaction (copied from the message) so the RLS SELECT policy / realtime authorization gates on membership directly — no join back through `chat_messages`, exactly like `chat_messages` itself.
+5. **Re-react REVIVES the row** (UPDATE `removed_at = NULL`) rather than inserting a duplicate, so `UNIQUE(message_id, user_id, emoji)` holds across toggles.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:chat_message_reactions.room_id -->
+**`room_id`** (FK → chat_rooms.id, NN, CASCADE) — the room; denormalized from the message so RLS + realtime gate on membership directly. The realtime filter key.
+
+<!-- dict:col:chat_message_reactions.message_id -->
+**`message_id`** (FK → chat_messages.id, NN, CASCADE) — the reacted-to message. Indexed for the per-message reaction-summary query.
+
+<!-- dict:col:chat_message_reactions.user_id -->
+**`user_id`** (FK → auth.users.id, NN, CASCADE) — the reactor. Set server-side to the caller (no client write path → cannot be spoofed).
+
+<!-- dict:col:chat_message_reactions.emoji -->
+**`emoji`** (text, NN; CHECK `👍|👎|❤️|✅|😂|🎉|🙏`) — the reaction glyph; the CHECK is the DB backstop to the fixed set (canonical list in `lib/chat-reactions.ts`).
+
+<!-- dict:col:chat_message_reactions.removed_at -->
+**`removed_at`** (timestamptz, nullable; mig 147) — soft-delete marker. NULL = active reaction; set on un-react (an UPDATE, never a hard DELETE — see gotcha 2). UNIQUE on `(message_id, user_id, emoji)` means re-reacting revives this row (sets it back to NULL).
+
+## `chat_poll_votes`
+<!-- dict:table:chat_poll_votes -->
+
+**Purpose** (mig 148, Phase 3C): votes on an in-chat poll — one row per `(poll-message, option, voter)`. The chat program's **third** realtime-published table. **A poll is a chat MESSAGE** whose `metadata` carries the question's options + settings (multiple-choice / anonymous / closed_at); creating + closing a poll ride the existing `chat_messages` realtime, so the **only** new live store is the votes here (the live tally).
+
+**Gotchas (read first):**
+1. **Realtime-published (REPLICA IDENTITY FULL).** Re-proven on dev by `scripts/validate-chat-slice.mjs`: live vote to active members, silence + zero rows to non-members/removed, write-lock, live revote.
+2. **SOFT-DELETE, never hard DELETE** (the same reason as `chat_message_reactions` — Supabase does not RLS-gate hard-DELETE realtime events). Revote / un-vote sets `removed_at`; re-casting revives the row. **Active vote = `removed_at IS NULL`.**
+3. **Write-locked to `authenticated` — SELECT only.** Every cast/change/retract is the **service role** via the server route (membership + mute + poll-open + single-vs-multi enforced in code).
+4. **`room_id` is DENORMALIZED** (from the poll message) so RLS / realtime gate on membership directly.
+5. **No FK from `option_id` to an options table** — options live in the poll message's `metadata`; the server validates `option_id` against them at vote time. **Single-choice is server-enforced** (retract the voter's other option-votes); multiple-choice allows several. `UNIQUE(message_id, option_id, user_id)` prevents duplicate votes and supports both models.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:chat_poll_votes.room_id -->
+**`room_id`** (FK → chat_rooms.id, NN, CASCADE) — the room; denormalized from the poll message so RLS + realtime gate on membership directly. The realtime filter key.
+
+<!-- dict:col:chat_poll_votes.message_id -->
+**`message_id`** (FK → chat_messages.id, NN, CASCADE) — the **poll** message (a poll IS a message; its `metadata.poll` holds the options). Indexed for the per-poll tally query.
+
+<!-- dict:col:chat_poll_votes.option_id -->
+**`option_id`** (uuid, NN) — the chosen option; references an option id in the poll message's `metadata` (server-validated, no FK).
+
+<!-- dict:col:chat_poll_votes.user_id -->
+**`user_id`** (FK → auth.users.id, NN, CASCADE) — the voter. Set server-side to the caller (no client write path → cannot be spoofed). Enforces one-vote-per-user, allows vote-changing, and backs the visible "who voted" view (owner decision 2026-06-23: voters are visible, not anonymous).
+
+<!-- dict:col:chat_poll_votes.removed_at -->
+**`removed_at`** (timestamptz, nullable; mig 148) — soft-delete marker. NULL = active vote; set on revote/retract (an UPDATE, never a hard DELETE). UNIQUE on `(message_id, option_id, user_id)` means re-casting revives this row.
+
 ---
 
-*End of Chat (migration 141, DEV-only / ⚠ prod-pending; 3 tables, NOT yet column-sealed). Membership-based RLS (org-agnostic by design for future cross-org), own-rows-only member visibility to dodge RLS recursion, `chat_messages` realtime-published (REPLICA IDENTITY FULL). Proving slice validated 6/6 via `scripts/validate-chat-slice.mjs`. Cross-references — not redocuments — `organizations`, `auth.users`, and the Notifications & Push domain (the bell/push path, wired at the surface phase).*
+*End of Chat (migrations 141 + 146 + 147 + 148, DEV-only / ⚠ prod-pending; 5 tables). Membership-based RLS (org-agnostic by design for future cross-org), own-rows-only member visibility to dodge RLS recursion, `chat_messages` + `chat_message_reactions` + `chat_poll_votes` realtime-published (REPLICA IDENTITY FULL) — soft-delete + pin/unpin + reactions + poll votes ride it; **hard DELETE is avoided platform-wide on these tables because Supabase `postgres_changes` does not RLS-gate DELETE events**. Proving slice validated via `scripts/validate-chat-slice.mjs` (34 checks). Cross-references — not redocuments — `organizations`, `auth.users`, and the Notifications & Push domain (the bell/push path).*

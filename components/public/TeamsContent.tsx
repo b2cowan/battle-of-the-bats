@@ -303,6 +303,10 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
 
   const activeDivision = divisions.find(d => d.id === activeDivisionId) ?? divisions[0] ?? null;
 
+  // Coach names are stripped from the payload when the organizer's public-site toggle is off
+  // (mig 150) — so their presence in the data tells us whether to mention coaches in the UI.
+  const showCoachNames = teams.some(t => !!t.coach);
+
   const filtered = teams
     .filter(t => !activeDivision || t.divisionId === activeDivision.id)
     .filter(t => {
@@ -455,7 +459,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
               <Search size={15} className={styles.searchIcon} />
               <input
                 type="text"
-                placeholder="Search teams or coaches..."
+                placeholder={showCoachNames ? 'Search teams or coaches...' : 'Search teams...'}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className={styles.searchInput}

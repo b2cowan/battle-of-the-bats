@@ -211,8 +211,8 @@ const coachesHelp: HelpPageContent = {
       group: 'Tournaments',
       heading: 'How to chat with your tournament organizer',
       summary: 'A live group chat with the organizer and the other coaches in each tournament you’re in.',
-      keywords: ['chat', 'tournament chat', 'message organizer', 'group chat', 'unread', 'push notification', 'coach chat'],
-      searchText: 'tournament chat group chat with organizer and other coaches live chat unread badge reply message push notification phone alert no email last seen read receipts join automatically muted closed read only free or paid',
+      keywords: ['chat', 'tournament chat', 'message organizer', 'group chat', 'unread', 'push notification', 'coach chat', 'reply', 'quote', 'mention', '@mention', 'emoji', 'react', 'search', 'search messages', 'delete message', 'delete own message', 'message removed', 'read by', 'read receipt', 'pinned', 'pinned messages', 'last seen'],
+      searchText: 'tournament chat group chat with organizer and other coaches live chat unread badge reply quote a message jump to original message push notification phone alert no email last seen read receipts read by sent read by everyone join automatically muted closed read only free or paid mention @mention tag a coach mention reaches you even if muted emoji smiley react with emoji search recent messages magnifier delete your own message message removed pinned messages pin schedule field map rules banner jump to message see pinned only organizer can pin',
       content: (
         <>
           <p>When an organizer runs a chat for a tournament your team is in, a <strong>Chat</strong> item appears in your portal with an <strong>unread badge</strong>. Open it to read and reply in real time alongside the organizer and the other coaches in that tournament.</p>
@@ -220,7 +220,8 @@ const coachesHelp: HelpPageContent = {
             <li>Open <strong>Chat</strong> and pick the tournament conversation (if you only have one, it opens straight away).</li>
             <li>Type your message and send — everyone in the room sees it right away.</li>
           </ol>
-          <p>You get a <strong>phone notification</strong> for new messages (and the in-app bell) — no email. The chat shows a &ldquo;last seen&rdquo; marker per person rather than a tick on every message. If the organizer <strong>mutes</strong> you, you can still read but can&rsquo;t post for a while; if they <strong>close</strong> the room, it becomes read-only. There&rsquo;s nothing to set up — you join automatically once you&rsquo;ve signed in with your team&rsquo;s email.</p>
+          <p><strong>It works like any chat app.</strong> Add an <strong>emoji</strong> from the smiley in the box, <strong>reply</strong> to a specific message (your reply shows the quote — tap it to jump to the original), and type <strong>@</strong> to <strong>mention</strong> a coach or the organizer by name. You can <strong>delete a message you sent</strong> — it then reads &ldquo;Message removed&rdquo; for everyone. The <strong>magnifier</strong> at the top <strong>searches</strong> the recent messages. Under your latest message, a small note shows when it&rsquo;s been read (<strong>Sent</strong> &rarr; <strong>Read by everyone</strong>). If the organizer has <strong>pinned</strong> anything — the schedule, a field map, the rules — it sits in a banner at the top; tap it to jump there. Only the organizer can pin.</p>
+          <p>You get a <strong>phone notification</strong> for new messages (and the in-app bell) — no email. An <strong>@mention</strong> always reaches you directly, even if you&rsquo;ve turned general chat notifications off. The chat shows a &ldquo;last seen&rdquo; marker per person rather than a tick on every message. If the organizer <strong>mutes</strong> you, you can still read but can&rsquo;t post for a while; if they <strong>close</strong> the room, it becomes read-only. There&rsquo;s nothing to set up — you join automatically once you&rsquo;ve signed in with your team&rsquo;s email.</p>
         </>
       ),
       faqs: [
@@ -240,10 +241,25 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-tournament-chat-notify',
           question: 'Will I be notified of new chat messages?',
-          answerText: 'Yes — new chat messages send a phone push notification and light up the in-app bell. Chat does not email you. The chat shows a last seen marker per person, not a read tick on each message.',
-          keywords: ['chat notification', 'push notification', 'new message alert', 'no email', 'unread'],
+          answerText: 'Yes — new chat messages send a phone push notification and light up the in-app bell. Chat does not email you. If someone @mentions you, that reaches you directly even if you have turned general chat notifications off. The chat shows a last seen marker per person, not a read tick on each message.',
+          keywords: ['chat notification', 'push notification', 'new message alert', 'no email', 'unread', 'mention', '@mention', 'mentioned'],
           answer: (
-            <p>Yes — a new chat message sends a <strong>phone push notification</strong> and lights up the in-app bell. Chat doesn&rsquo;t email you. The conversation shows a &ldquo;last seen&rdquo; marker per person rather than a read tick on every message.</p>
+            <>
+              <p>Yes — a new chat message sends a <strong>phone push notification</strong> and lights up the in-app bell. Chat doesn&rsquo;t email you.</p>
+              <p>If another coach or the organizer <strong>@mentions</strong> you, that reaches you directly — even if you&rsquo;ve turned general chat notifications off. The conversation shows a &ldquo;last seen&rdquo; marker per person rather than a read tick on every message.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-tournament-chat-tools',
+          question: 'Can I reply, mention a coach, add emoji, or delete my own messages?',
+          answerText: 'Yes. You can reply to a specific message so your answer quotes it (tap the quote to jump to the original), type @ to mention a coach or the organizer, and add an emoji from the smiley in the message box. You can delete a message you sent — it then reads Message removed for everyone. The magnifier at the top searches the recent messages. Under your latest message a small Sent or Read by everyone note shows when it has been read. If the organizer has pinned the schedule, a field map, or the rules, they show in a banner at the top you can tap to jump to — only the organizer can pin.',
+          keywords: ['reply', 'quote', 'mention', '@mention', 'emoji', 'react', 'search messages', 'delete message', 'delete own message', 'message removed', 'read by', 'read receipt', 'pinned messages', 'pin'],
+          answer: (
+            <>
+              <p>Yes. <strong>Reply</strong> to a specific message so your answer quotes it (tap the quote to jump to the original), type <strong>@</strong> to <strong>mention</strong> a coach or the organizer, and add an <strong>emoji</strong> from the smiley in the message box. You can <strong>delete a message you sent</strong> — it then reads &ldquo;Message removed&rdquo; for everyone.</p>
+              <p>The <strong>magnifier</strong> at the top <strong>searches</strong> the recent messages, and under your latest message a small <strong>Sent</strong> / <strong>Read by everyone</strong> note shows when it&rsquo;s been read. If the organizer has <strong>pinned</strong> the schedule, a field map, or the rules, they show in a banner at the top you can tap to jump to — only the organizer can pin.</p>
+            </>
           ),
         },
       ],

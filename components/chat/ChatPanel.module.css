@@ -47,10 +47,202 @@
   gap: 0.4rem;
 }
 
+/* ── Pinned messages banner ────────────────────────────────────────────── */
+.pinBar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  max-height: 11rem;
+  overflow-y: auto;
+  padding: 0.3rem max(0.6rem, calc((100% - var(--chat-max, 820px)) / 2));
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+}
+.pinBarHead {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 36px;
+  padding: 0.2rem 0;
+  background: none;
+  border: none;
+  color: var(--logic-lime);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.pinBarHead:disabled { cursor: default; }
+.pinBarHead:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+.pinRow {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.pinRowMain {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+.pinRowName { flex: 0 0 auto; font-size: 0.72rem; font-weight: 700; color: var(--white-80); }
+.pinRowSnippet {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.78rem;
+  color: var(--white-60);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pinRowMain:hover .pinRowSnippet { color: var(--white-80); }
+.pinRowMain:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+.pinUnpin {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  color: var(--white-50);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.pinUnpin:hover { color: var(--danger); }
+.pinUnpin:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: -2px; }
+
+/* ── In-conversation search ────────────────────────────────────────────── */
+.searchBtn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: -0.35rem 0;
+  background: none;
+  border: none;
+  color: var(--white-55);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.searchBtn:hover { color: var(--white-90); }
+.searchBtnActive { color: var(--logic-lime); }
+.searchBtn:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
+.searchBar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem max(0.6rem, calc((100% - var(--chat-max, 820px)) / 2));
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  background: var(--bg-inset);
+}
+.searchBarIcon { flex: 0 0 auto; color: var(--white-40); }
+.searchInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--white-5);
+  border: 1px solid var(--white-10);
+  color: var(--white-90);
+  border-radius: var(--radius-md);
+  padding: 0.45rem 0.6rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.searchInput::placeholder { color: var(--white-40); }
+.searchInput:focus-visible {
+  outline: 2px solid rgba(var(--logic-lime-rgb), 0.7);
+  outline-offset: 1px;
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+}
+.searchMeta {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  color: var(--white-55);
+  white-space: nowrap;
+}
+.searchClose {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  color: var(--white-55);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.searchClose:hover { color: var(--white-90); }
+.searchClose:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
+.searchResults { display: flex; flex-direction: column; gap: 0.4rem; }
+.searchHint {
+  align-self: center;
+  color: var(--white-45);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0.2rem 0 0.4rem;
+}
+.searchEmpty {
+  margin: auto;
+  text-align: center;
+  color: var(--white-50);
+  font-size: 0.85rem;
+  padding: 2rem 1rem;
+}
+.searchResult {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: var(--white-5);
+  border: 1px solid var(--white-10);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.65rem;
+}
+.searchResultHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.searchResultName { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; }
+.searchResultTime { flex: 0 0 auto; font-size: 0.66rem; color: var(--white-45); white-space: nowrap; }
+.searchResultBody {
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: var(--white-90);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.searchHit {
+  background: rgba(var(--logic-lime-rgb), 0.3);
+  color: var(--white-90);
+  border-radius: 3px;
+  padding: 0 0.1em;
+}
+
 .messages {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden; /* a chat never scrolls horizontally; also caps any stray hover-affordance overflow */
   overscroll-behavior: contain;
   padding: 0.75rem max(0.85rem, calc((100% - var(--chat-max, 820px)) / 2)) 0.5rem;
   display: flex;
@@ -234,28 +426,160 @@
 }
 .bubbleRevealed { cursor: default; }
 
-.deleteBtn {
+/* Per-message action cluster (Reply + conditional Delete) — floats just OUTSIDE the bubble (toward the
+   centre), vertically centred, FLUSH with the bubble edge so the hover region is contiguous (no dead
+   gap) and the revealed controls stay clickable; each 32px dot is centred in a 44px hit box. Others' →
+   right of bubble; my messages → left (row-reverse keeps Reply nearest the bubble). */
+.msgActions {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 30px;
-  height: 30px;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
   display: none;
+  flex-direction: row;
+  align-items: center;
+}
+.rowMine .msgActions { left: auto; right: 100%; flex-direction: row-reverse; }
+.bubble:hover .msgActions,
+.bubbleRevealed .msgActions { display: flex; }
+/* Mobile (tap-to-reveal): a wide bubble nearly fills the width, so a side-floated cluster spills past
+   the screen edge and gets clipped (the list is overflow-x:hidden). Float the cluster ABOVE the bubble,
+   anchored to its near edge, so it stays on-screen regardless of bubble width. */
+@media (max-width: 900px) {
+  .msgActions {
+    top: auto;
+    bottom: 100%;
+    left: 0;
+    right: auto;
+    transform: none;
+    margin-bottom: 0.2rem;
+  }
+  .rowMine .msgActions { left: auto; right: 0; flex-direction: row; }
+}
+.msgActionBtn {
+  flex: 0 0 auto;
+  display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(var(--danger-rgb), 0.92);
-  color: #fff;
+  width: 40px;
+  height: 44px;
+  padding: 0;
+  background: none;
   border: none;
-  border-radius: 8px;
   cursor: pointer;
 }
-.bubble:hover .deleteBtn,
-.bubbleRevealed .deleteBtn { display: inline-flex; }
+.msgActionDot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--white-50);
+  border: 1px solid var(--white-20);
+  box-shadow: var(--shadow-sm);
+}
+.msgActionBtn:hover .msgActionDot { background: var(--white-8); color: var(--white-90); }
+.msgActionDotActive {
+  background: rgba(var(--logic-lime-rgb), 0.2);
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.45);
+}
+.msgActionBtn:hover .msgActionDotActive {
+  background: rgba(var(--logic-lime-rgb), 0.32);
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+}
+.msgActionDanger:hover .msgActionDot {
+  background: rgba(var(--danger-rgb), 0.15);
+  color: var(--danger);
+  border-color: rgba(var(--danger-rgb), 0.45);
+}
+.msgActionBtn:focus-visible .msgActionDot { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
+/* Quoted message shown above a reply's body; tap to jump to the original. */
+.quote {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  width: 100%;
+  max-width: 100%;
+  text-align: left;
+  margin-bottom: 0.3rem;
+  padding: 0.2rem 0.4rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-left: 2px solid rgba(var(--logic-lime-rgb), 0.6);
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+  overflow: hidden;
+}
+.quote:hover { background: rgba(0, 0, 0, 0.28); }
+.quoteName { font-size: 0.66rem; font-weight: 700; color: var(--white-80); }
+.quoteSnippet {
+  max-width: 100%;
+  font-size: 0.76rem;
+  color: var(--white-60);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* @mention highlight in a message body — reads on both others' and "mine" (lime) bubbles. */
+.mentionTag {
+  background: rgba(var(--logic-lime-rgb), 0.28);
+  color: var(--white-90);
+  border-radius: 3px;
+  padding: 0 0.15em;
+  font-weight: 700;
+}
+
+/* Brief highlight when jumping to a quoted message. */
+.bubbleFlash { animation: chat-flash 1.6s ease-out; }
+@keyframes chat-flash {
+  0% { box-shadow: 0 0 0 2px rgba(var(--logic-lime-rgb), 0.75); }
+  100% { box-shadow: 0 0 0 2px rgba(var(--logic-lime-rgb), 0); }
+}
 
 .time {
   font-size: 0.68rem;
   color: var(--white-55);
   margin: 0.12rem 0.3rem 0.1rem;
+}
+
+/* ── Delete confirmation (in-app, replaces the native window.confirm) ───── */
+.confirmBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+}
+.confirmDialog {
+  width: min(20rem, 100%);
+  background: var(--card-bg);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 1rem 1.1rem;
+}
+.confirmTitle { margin: 0 0 0.35rem; font-size: 0.95rem; font-weight: 700; color: var(--white-90); }
+.confirmBody { margin: 0 0 0.9rem; font-size: 0.83rem; color: var(--white-60); }
+.confirmActions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+
+/* "Read by N of M" receipt under the sender's latest own message. */
+.readReceipt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.66rem;
+  color: var(--white-50);
+  margin: 0.02rem 0.3rem 0.1rem;
 }
 
 /* ── Jump to latest ────────────────────────────────────────────────────── */
@@ -319,6 +643,49 @@
 .bannerDismiss:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
 
 /* ── Composer ──────────────────────────────────────────────────────────── */
+/* Column wrapper so an optional reply bar can sit above the input row; owns the divider + inset bg.
+   Positioning context for the @mention picker (which floats above the input). */
+.composerArea {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  background: var(--bg-inset);
+}
+
+/* @mention picker — floats above the composer, spanning the reading column. */
+.mentionPicker {
+  position: absolute;
+  bottom: calc(100% + 0.4rem);
+  left: max(0.6rem, calc((100% - var(--chat-max, 820px)) / 2));
+  right: max(0.6rem, calc((100% - var(--chat-max, 820px)) / 2));
+  z-index: 20;
+  max-height: 14rem;
+  overflow-y: auto;
+  padding: 0.3rem;
+  background: var(--card-bg);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+.mentionOption {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 40px;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.mentionOption:hover,
+.mentionOptionActive { background: var(--white-8); }
+.mentionOption:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: -2px; }
+.mentionName { font-size: 0.85rem; color: var(--white-90); }
 .composer {
   position: relative;
   flex: 0 0 auto;
@@ -326,20 +693,59 @@
   align-items: flex-end;
   gap: 0.5rem;
   padding: 0.6rem max(0.6rem, calc((100% - var(--chat-max, 820px)) / 2));
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
-  background: var(--bg-inset);
 }
+.replyBar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem max(0.6rem, calc((100% - var(--chat-max, 820px)) / 2)) 0.35rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.12);
+}
+.replyBarBody {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 2px solid rgba(var(--logic-lime-rgb), 0.6);
+  padding-left: 0.5rem;
+}
+.replyBarLabel { font-size: 0.7rem; font-weight: 700; color: var(--logic-lime); }
+.replyBarSnippet {
+  font-size: 0.78rem;
+  color: var(--white-60);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.replyBarClose {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  color: var(--white-55);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.replyBarClose:hover { color: var(--white-90); }
+.replyBarClose:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
 
 .input {
   flex: 1 1 auto;
   resize: none;
-  overflow-y: auto;
+  /* Default hidden; the autosize effect flips to `auto` only when the box hits its 140px max, so a
+     single-line composer never shows a phantom border-box scrollbar on its right edge. */
+  overflow-y: hidden;
+  min-height: 44px; /* match the 44px emoji/poll/send controls so the row sits flush */
   max-height: 140px;
   background: var(--white-5);
   border: 1px solid var(--white-10);
   color: var(--white-90);
   border-radius: var(--radius-md);
-  padding: 0.6rem 0.7rem;
+  padding: 0.7rem 0.75rem; /* equal vertical padding optically centers the single line in 44px */
   font-size: 0.88rem;
   line-height: 1.4;
   font-family: inherit;
@@ -374,6 +780,68 @@
 }
 .sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* ── Emoji picker (composer quick-insert) ──────────────────────────────── */
+.emojiWrap {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+}
+/* Recessive ghost icons (emoji + poll reuse this): no resting fill/border, so the text box reads as
+   the one primary surface in the composer. Same recessive-at-rest, reveal-on-intent pattern as the
+   message reaction dots and the toolbar Clear-Bracket control. Keeps a 44px touch target. */
+.emojiBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--white-50);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.emojiBtn:hover { background: var(--white-8); color: var(--white-90); border-color: rgba(var(--logic-lime-rgb), 0.4); }
+.emojiBtn[aria-expanded='true'] { background: var(--white-8); color: var(--logic-lime); border-color: rgba(var(--logic-lime-rgb), 0.5); }
+.emojiBtn:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
+.emojiPop {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 20;
+  width: min(20rem, calc(100vw - 1.5rem));
+  max-height: 20rem;
+  overflow-y: auto;
+  padding: 0.4rem;
+  background: var(--card-bg);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+.emojiGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.1rem;
+}
+.emojiItem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.emojiItem:hover { background: var(--white-8); }
+.emojiItem:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: -2px; }
+
 /* ── Closed / muted footers (semantically distinct) ────────────────────── */
 .closed,
 .muted {
@@ -389,8 +857,7 @@
 /* ── Focus-visible (keyboard) ──────────────────────────────────────────── */
 .loadMore:focus-visible,
 .retryBtn:focus-visible,
-.jumpPill:focus-visible,
-.deleteBtn:focus-visible {
+.jumpPill:focus-visible {
   outline: 2px solid var(--logic-lime);
   outline-offset: 2px;
 }
@@ -399,7 +866,283 @@
 @keyframes chat-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
   .spin { animation: none; }
+  .bubbleFlash { animation: none; }
 }
+
+/* ── Reactions (Phase 3C) ──────────────────────────────────────────────── */
+/* Chips sit just under the bubble; mine-side rows align to the right (the bubbleWrap already aligns
+   my content to the end, but be explicit so wrapped chips stay on the correct side). */
+.reactionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.25rem 0.1rem 0;
+}
+.reactionRowMine { justify-content: flex-end; }
+
+.reactionChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  min-height: 26px;
+  padding: 0.1rem 0.45rem;
+  background: var(--white-8);
+  border: 1px solid var(--white-10);
+  border-radius: 999px;
+  cursor: pointer;
+  line-height: 1;
+}
+.reactionChip:hover { background: var(--white-10); border-color: var(--white-20); }
+.reactionChip:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+.reactionChipMine {
+  background: rgba(var(--logic-lime-rgb), 0.2);
+  border-color: rgba(var(--logic-lime-rgb), 0.45);
+}
+.reactionChipMine:hover { background: rgba(var(--logic-lime-rgb), 0.3); }
+.reactionChipEmoji { font-size: 0.92rem; }
+.reactionChipCount { font-size: 0.72rem; font-weight: 700; color: var(--white-70); }
+.reactionChipMine .reactionChipCount { color: var(--logic-lime); }
+
+/* The quick-pick row (inline — pushes content rather than overlaying, so it can't be clipped by the
+   scroll container). Aligns under the bubble; mine-side anchors to the right. */
+.reactionPicker {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 0.1rem;
+  margin: 0.3rem 0.1rem 0.1rem;
+  padding: 0.2rem;
+  background: var(--card-bg);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: 999px;
+  box-shadow: var(--shadow-md);
+}
+.reactionPickerMine { align-self: flex-end; }
+.reactionPick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.reactionPick:hover { background: var(--white-8); }
+.reactionPick:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: -2px; }
+.reactionPickActive { background: rgba(var(--logic-lime-rgb), 0.22); }
+
+/* "Who reacted" popover — also inline (no clipping). */
+.reactorsPop {
+  align-self: flex-start;
+  width: min(15rem, calc(100vw - 2rem));
+  margin: 0.3rem 0.1rem 0.1rem;
+  padding: 0.45rem;
+  background: var(--card-bg);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+.reactorsPopMine { align-self: flex-end; }
+.reactorsHead {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.15rem 0.35rem;
+  border-bottom: 1px solid var(--white-10);
+}
+.reactorsEmoji { font-size: 1rem; }
+.reactorsTitle { font-size: 0.72rem; font-weight: 700; color: var(--white-70); flex: 1 1 auto; text-transform: uppercase; letter-spacing: 0.04em; }
+.reactorsClose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: var(--white-55);
+  cursor: pointer;
+}
+.reactorsClose:hover { background: var(--white-8); color: var(--white-90); }
+.reactorsClose:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: -2px; }
+.reactorsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  max-height: 12rem;
+  overflow-y: auto;
+  padding: 0.35rem 0.15rem 0;
+}
+.reactorItem { display: flex; align-items: center; gap: 0.5rem; padding: 0.2rem 0.1rem; }
+.reactorName { font-size: 0.82rem; color: var(--white-90); }
+.reactorsLoading,
+.reactorsEmpty { font-size: 0.78rem; color: var(--white-55); padding: 0.35rem 0.15rem; }
+.reactorsLoading { display: flex; align-items: center; gap: 0.35rem; }
+.reactorsToggle {
+  width: 100%;
+  margin-top: 0.4rem;
+  padding: 0.4rem;
+  background: var(--white-8);
+  border: 1px solid var(--white-10);
+  border-radius: var(--radius-sm);
+  color: var(--white-90);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.reactorsToggle:hover { background: var(--white-10); }
+.reactorsToggle:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
+/* ── Polls (Phase 3C) ──────────────────────────────────────────────────── */
+.poll {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: min(17rem, 70vw);
+  cursor: default;
+}
+.pollQ { font-weight: 700; font-size: 0.9rem; line-height: 1.3; }
+.pollOpts { display: flex; flex-direction: column; gap: 0.3rem; }
+.pollOptRow { display: flex; align-items: stretch; gap: 0.3rem; }
+.pollOpt {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  padding: 0.35rem 0.6rem;
+  background: var(--white-5);
+  border: 1px solid var(--white-10);
+  border-radius: var(--radius-sm);
+  color: var(--white-90);
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+.pollOpt:not(:disabled):hover { background: var(--white-8); border-color: var(--white-20); }
+.pollOpt:disabled { cursor: default; }
+.pollOpt:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+.pollOptMine { border-color: rgba(var(--logic-lime-rgb), 0.5); }
+.pollOptFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(var(--logic-lime-rgb), 0.16);
+  transition: width 0.25s ease;
+  z-index: 0;
+}
+.pollOptMine .pollOptFill { background: rgba(var(--logic-lime-rgb), 0.28); }
+.pollOptLabel { position: relative; z-index: 1; flex: 1 1 auto; display: flex; align-items: center; gap: 0.3rem; overflow-wrap: anywhere; }
+.pollOptCheck { color: var(--logic-lime); flex: 0 0 auto; }
+.pollOptPct { position: relative; z-index: 1; flex: 0 0 auto; font-size: 0.72rem; font-weight: 700; color: var(--white-60); }
+.pollOptMine .pollOptPct { color: var(--logic-lime); }
+.pollOptCount {
+  flex: 0 0 auto;
+  min-width: 30px;
+  padding: 0 0.4rem;
+  background: var(--white-8);
+  border: 1px solid var(--white-10);
+  border-radius: var(--radius-sm);
+  color: var(--white-70);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pollOptCount:not(:disabled):hover { background: var(--white-10); color: var(--white-90); }
+.pollOptCount:disabled { cursor: default; opacity: 0.5; }
+.pollOptCount:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+.pollFoot { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.72rem; color: var(--white-55); }
+.pollMeta { display: inline-flex; align-items: center; gap: 0.25rem; }
+.pollCloseBtn {
+  flex: 0 0 auto;
+  padding: 0.2rem 0.55rem;
+  background: none;
+  border: 1px solid var(--white-20);
+  border-radius: 999px;
+  color: var(--white-70);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pollCloseBtn:hover { background: var(--white-8); color: var(--white-90); }
+.pollCloseBtn:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
+/* Poll builder (composer) — replaces the input row while open. Aligns to the composer's gutter so the
+   surface doesn't shift when toggling; capped height + scroll so a many-option poll can't grow past the
+   viewport and push the conversation off-screen on mobile. */
+.pollBuilder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.55rem max(0.6rem, calc((100% - var(--chat-max, 820px)) / 2));
+  max-height: min(72vh, 34rem);
+  overflow-y: auto;
+}
+.pollBuilderHead { display: flex; align-items: center; gap: 0.4rem; color: var(--white-70); }
+.pollBuilderTitle { flex: 1 1 auto; font-size: 0.8rem; font-weight: 700; }
+.pollBuilderQuestion,
+.pollBuilderOpt {
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  line-height: 1.3;
+  background: var(--white-5);
+  border: 1px solid var(--white-10);
+  border-radius: var(--radius-sm);
+  color: var(--white-90);
+  font-size: 0.85rem;
+}
+.pollBuilderQuestion { font-weight: 600; }
+.pollBuilderQuestion:focus,
+.pollBuilderOpt:focus { outline: none; border-color: rgba(var(--logic-lime-rgb), 0.55); }
+.pollBuilderOptRow { display: flex; align-items: center; gap: 0.35rem; }
+.pollBuilderOptDel {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: var(--white-50);
+  cursor: pointer;
+}
+.pollBuilderOptDel:hover { background: var(--white-8); color: var(--white-90); }
+.pollAddOpt {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.5rem;
+  background: none;
+  border: none;
+  color: var(--logic-lime);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pollAddOpt:hover { text-decoration: underline; }
+/* "Add option" + "Allow multiple answers" share one row to save vertical space (wrap if too narrow). */
+.pollBuilderControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem 0.75rem;
+}
+.pollMultiLabel { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--white-70); cursor: pointer; }
+.pollBuilderActions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.15rem; }
+/* Slightly trimmer than full-size CTAs so the builder stays compact; still a comfortable tap target. */
+.pollBuilderActions :global(.btn) { padding: 0.45rem 1rem; font-size: 0.85rem; }
 
 /* Mobile: full-bleed conversation (no floating rounded card against the screen edge). */
 @media (max-width: 900px) {

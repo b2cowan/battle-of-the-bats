@@ -328,10 +328,74 @@
     "foreign_column": null
   },
   {
+    "table_name": "chat_message_reactions",
+    "constraint_name": "chat_message_reactions_message_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "message_id",
+    "foreign_table": "chat_messages",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "chat_message_reactions",
+    "constraint_name": "chat_message_reactions_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "chat_message_reactions",
+    "constraint_name": "chat_message_reactions_room_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "room_id",
+    "foreign_table": "chat_rooms",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "chat_message_reactions",
+    "constraint_name": "chat_message_reactions_unique",
+    "constraint_type": "UNIQUE",
+    "column_name": "message_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "chat_message_reactions",
+    "constraint_name": "chat_message_reactions_unique",
+    "constraint_type": "UNIQUE",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "chat_message_reactions",
+    "constraint_name": "chat_message_reactions_unique",
+    "constraint_type": "UNIQUE",
+    "column_name": "emoji",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "chat_message_reactions",
+    "constraint_name": "chat_message_reactions_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
     "table_name": "chat_messages",
     "constraint_name": "chat_messages_deleted_by_user_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "deleted_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "chat_messages",
+    "constraint_name": "chat_messages_pinned_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "pinned_by_user_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -356,6 +420,62 @@
     "constraint_name": "chat_messages_sender_user_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "sender_user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "chat_poll_votes",
+    "constraint_name": "chat_poll_votes_message_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "message_id",
+    "foreign_table": "chat_messages",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "chat_poll_votes",
+    "constraint_name": "chat_poll_votes_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "chat_poll_votes",
+    "constraint_name": "chat_poll_votes_room_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "room_id",
+    "foreign_table": "chat_rooms",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "chat_poll_votes",
+    "constraint_name": "chat_poll_votes_unique",
+    "constraint_type": "UNIQUE",
+    "column_name": "message_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "chat_poll_votes",
+    "constraint_name": "chat_poll_votes_unique",
+    "constraint_type": "UNIQUE",
+    "column_name": "option_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "chat_poll_votes",
+    "constraint_name": "chat_poll_votes_unique",
+    "constraint_type": "UNIQUE",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "chat_poll_votes",
+    "constraint_name": "chat_poll_votes_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
     "foreign_table": null,
     "foreign_column": null
   },

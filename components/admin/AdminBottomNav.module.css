@@ -266,6 +266,32 @@
     flex-shrink: 0;
   }
 
+  /* Chat unread count on its row inside More (mirrors the lime tab badge). */
+  .dropCount {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.05rem;
+    height: 1.05rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: var(--logic-lime);
+    color: var(--pitch-black);
+    font-family: var(--font-data);
+    font-size: 0.6rem;
+    font-weight: 800;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  /* The count owns the right-side auto-margin (pushes itself hard-right); the row's
+     chevron then sits flush after it via the natural flex gap, instead of the free
+     space splitting between two auto-margins and stranding the badge mid-row. */
+  .dropItem:has(.dropCount) .dropChevron {
+    margin-left: 0;
+  }
+
   .dropDivider {
     height: 1px;
     background: rgba(255, 255, 255, 0.07);

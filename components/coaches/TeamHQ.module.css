@@ -214,36 +214,24 @@
   letter-spacing: 0.01em;
 }
 
+/* Headline + status chip share the top row of the head-text column. The chip is pinned
+   to the right edge (margin-left:auto) and never shrinks; the headline takes the left.
+   Both are fixed phrases (independent of tournament/org name length), so this row is
+   stable at every width — no wrap-below gymnastics needed. */
+.heroTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.heroTitleRow > :global(.badge) {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 @media (max-width: 640px) {
   .heroWatermark {
     font-size: 6rem;
-  }
-
-  /* The status badge drops to its own row under the headline. On a phone the
-     52px monogram + the badge crushed .heroHeadText to ~140px, wrapping the
-     title to 3 lines and floating the badge beside ragged sub text. flex-start
-     stops the short badge centering against the tall text block. */
-  .heroHead {
-    flex-wrap: wrap;
-    align-items: flex-start;
-    column-gap: 0.85rem;
-    row-gap: 0.55rem;
-  }
-
-  /* The text column needs an explicit basis so it doesn't share the row with
-     the inline badge; once the badge wraps (below) it grows to fill the row. */
-  .heroHeadText {
-    flex: 1 1 calc(100% - 52px - 0.85rem);
-  }
-
-  /* Badge wraps to its own line, indented to align under the headline column
-     (not the monogram) so it reads as belonging to that title. NOTE: `.badge`
-     is a GLOBAL class, so it must be reached via :global() inside this module —
-     a bare `.badge` here would (wrongly) look for a module-scoped class. */
-  .heroHead > :global(.badge) {
-    order: 3;
-    flex-basis: 100%;
-    margin-left: calc(52px + 0.85rem);
   }
 }
 
@@ -276,6 +264,16 @@
   color: var(--white-60);
   font-size: 0.85rem;
   line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Organization line — sits directly under the tournament name, gently demoted so the
+   pair reads as "{tournament} / hosted by {org}". */
+.heroSubOrg {
+  margin: 0;
+  color: var(--white-45);
+  font-size: 0.8rem;
+  line-height: 1.4;
   overflow-wrap: anywhere;
 }
 
@@ -388,13 +386,10 @@
 
 /* ── Theme 1 inner content zones ──────────────────────────────────────────── */
 
-/* Past-due micro-note next to the Fee checklist badge. */
-.checkNote {
-  display: block;
-  margin-top: 0.15rem;
+/* Past-due Fee state text — plain red, uniform with the other checklist rows. The red
+   fee glance strip above owns the alarm + "Was due" date (no pill, no second line). */
+.checkStateDanger {
   color: var(--danger);
-  font-family: var(--font-data, monospace);
-  font-size: 0.72rem;
 }
 
 /* Pending entry-fee preview (5h). */

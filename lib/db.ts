@@ -316,6 +316,8 @@ export async function cloneTournament(
       tournamentInsert.public_hidden_pages = Array.isArray(source.public_hidden_pages)
         ? source.public_hidden_pages
         : [];
+      // Carry the coach-name visibility choice with the rest of the public-site config (mig 150).
+      tournamentInsert.coach_names_show_on_public = source.coach_names_show_on_public === true;
     }
 
     const { data: target, error: targetError } = await supabaseAdmin
@@ -709,6 +711,9 @@ export async function populateTournamentFrom(
     theme_card_style: source.theme_card_style ?? null,
     color_mode: source.color_mode ?? null,
     public_hidden_pages: Array.isArray(source.public_hidden_pages) ? source.public_hidden_pages : [],
+    // Carry coach-name visibility (mig 150) so populating from a source can't silently re-expose
+    // (or hide) coach names against the organizer's saved choice.
+    coach_names_show_on_public: source.coach_names_show_on_public === true,
   }).eq('id', destinationTournamentId);
   if (updateError) throw updateError;
 
@@ -2551,6 +2556,7 @@ function mapTournament(r: any): Tournament {
     themeCardStyle:           r.theme_card_style ?? null,
     colorMode:                (r.color_mode === 'light' ? 'light' : null) as 'light' | null,
     publicHiddenPages:        Array.isArray(r.public_hidden_pages) ? r.public_hidden_pages : [],
+    coachNamesShowOnPublic:   r.coach_names_show_on_public === true,
     requireScoreFinalization: r.require_score_finalization ?? null,
     settings:                 (r.settings && typeof r.settings === 'object') ? r.settings : {},
   };

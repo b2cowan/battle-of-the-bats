@@ -1,0 +1,13 @@
+/* Full-bleed wrapper for the STANDALONE (org-less) coach portal chat route.
+   Unlike the org-based coach portal, THIS shell (CoachPortalShell) already offsets the fixed chrome
+   via .content padding (--coach-topbar-h / --coach-bottomnav-h on mobile; --coach-rail-w on desktop)
+   and CoachChatView's height calc reads those same vars — so we do NOT cancel padding here.
+   The one fix needed: the shell's `.content { min-height: 100vh }` exceeds the DYNAMIC viewport on
+   mobile (100vh includes the browser bar; the chat sizes to 100dvh), opening a phantom page-scroll
+   with dead space behind the fixed bars ("pressed up at the top"). The `data-chat-fullbleed` marker on
+   this wrapper lets `.content` drop that minimum on this route (see CoachPortalShell.module.css), so
+   the chat owns exactly the chrome-bounded viewport. `min-width: 0` keeps the conversation column from
+   overflowing its flex parent. */
+.chatWrap {
+  min-width: 0;
+}

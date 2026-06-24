@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { X, Lock, Unlock, VolumeX, Volume2, Copy, Mail, Users } from 'lucide-react';
+import { X, Lock, Unlock, VolumeX, Volume2, Copy, Check, Mail, Users } from 'lucide-react';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import styles from './ChatManagePanel.module.css';
 
@@ -190,12 +190,23 @@ export default function ChatManagePanel({
                       <div className={styles.rowSub}>{p.teamName}{p.email ? ` · ${p.email}` : ''}</div>
                     </div>
                     <div className={styles.rowActions}>
-                      <button type="button" className="btn btn-ghost btn-data" onClick={() => onCopyInvite(p)}>
-                        <Copy size={13} aria-hidden /> {copiedId === p.teamId ? 'Copied' : 'Link'}
+                      <button
+                        type="button"
+                        className={`btn btn-ghost btn-data ${styles.iconAction}${copiedId === p.teamId ? ` ${styles.iconActionDone}` : ''}`}
+                        onClick={() => onCopyInvite(p)}
+                        aria-label={copiedId === p.teamId ? 'Sign-up link copied' : 'Copy sign-up link'}
+                        title={copiedId === p.teamId ? 'Copied' : 'Copy sign-up link'}
+                      >
+                        {copiedId === p.teamId ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
                       </button>
                       {p.email && (
-                        <a className="btn btn-ghost btn-data" href={inviteMailto(p.email)} aria-label={`Email ${p.coachName || p.teamName}`}>
-                          <Mail size={13} aria-hidden /> Email
+                        <a
+                          className={`btn btn-ghost btn-data ${styles.iconAction}`}
+                          href={inviteMailto(p.email)}
+                          aria-label={`Email ${p.coachName || p.teamName}`}
+                          title="Email this coach"
+                        >
+                          <Mail size={15} aria-hidden />
                         </a>
                       )}
                     </div>

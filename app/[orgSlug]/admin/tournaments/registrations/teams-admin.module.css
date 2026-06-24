@@ -64,68 +64,255 @@
 .bulkButtons .btn { border-color: rgba(255, 255, 255, 0.2); }
 .bulkButtons .btn:hover { background: rgba(255, 255, 255, 0.1); }
 
-/* ─── Payment Readiness ───────────────────────────────────────────────────── */
-.paymentPanel {
-  margin: 0 2rem 1rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--border-2);
-  border-radius: 0;
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
+/* ─── Payments roll-up (collapsible — mirrors the Schedule Health panel) ─────
+   Full-bleed horizontally (margin: 0) so it spans the same width as the capacity
+   row + team table above/below it — matching the Schedule Health panel's edge. */
+.payPanel {
+  margin: 0 0 1rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+.paySummary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.62rem 0.85rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.paySummary::-webkit-details-marker {
+  display: none;
+}
+
+.payHeader {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+  min-width: 0;
 }
 
-.paymentPanel strong {
-  color: var(--white);
-}
-
-.paymentPanel p {
-  margin: 0.25rem 0 0;
-  max-width: 720px;
-  color: var(--white-50);
-  font-size: 0.85rem;
-}
-
-.paymentMetrics {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(120px, 1fr));
-  gap: 0.75rem;
-  flex: 1;
-  min-width: 280px;
-}
-
-.paymentMetric {
-  border: 1px solid var(--border-2);
-  border-radius: 0;
-  padding: 0.65rem 0.75rem;
-  background: var(--hud-surface);
-  min-height: 64px;
-}
-
-.paymentMetric span {
-  display: block;
-  margin-bottom: 0.25rem;
-  color: var(--white-40);
-  font-size: 0.7rem;
+.payHeader h4 {
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: 0.76rem;
   font-weight: 800;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  color: var(--white-85);
 }
 
-.paymentMetric strong {
-  color: var(--white);
-  font-size: 1.05rem;
+.payHeader p {
+  margin: 0.15rem 0 0;
+  color: var(--white-50);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.paymentMetric[data-variant="danger"] {
-  border-color: rgba(var(--danger-rgb), 0.35);
+.payGlance {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 30px;
+  padding: 0.22rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  background: var(--white-5);
+  font-family: var(--font-data);
+  white-space: nowrap;
+}
+
+.payGlance span {
+  font-size: 0.92rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.payGlance small {
+  font-size: 0.56rem;
+  color: var(--white-50);
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.payGlance[data-tone="good"] {
+  color: var(--success);
+  background: rgba(var(--success-rgb), 0.08);
+}
+
+.payGlance[data-tone="warning"] {
+  color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.08);
+}
+
+.payGlance[data-tone="danger"] {
+  color: var(--danger);
   background: rgba(var(--danger-rgb), 0.08);
 }
 
-.paymentMetric[data-variant="danger"] strong {
+.payToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.24rem;
+  color: rgba(var(--logic-lime-rgb), 0.72);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.payToggle svg {
+  transition: transform 0.15s ease;
+}
+
+.payPanel[open] .payToggle svg {
+  transform: rotate(180deg);
+}
+
+.payBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0 0.85rem 0.75rem;
+}
+
+/* ── Collected-progress headline ───────────────────────────────────────────── */
+.payProgress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.payProgressTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.payProgressLabel {
+  font-family: var(--font-data);
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--white-45);
+}
+
+.payProgressValue {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--white-50);
+  white-space: nowrap;
+}
+
+.payProgressValue strong {
+  color: var(--white-90);
+  font-size: 0.82rem;
+}
+
+.payProgressTrack {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--white-8);
+  overflow: hidden;
+}
+
+.payProgressFill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--success);
+  transition: width 0.3s ease;
+}
+
+/* ── Deposit / final-payment due dates ─────────────────────────────────────── */
+.payDueDates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  padding-top: 0.05rem;
+}
+
+.payDueItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
+  color: var(--white-50);
+}
+
+.payDueItem svg {
+  color: var(--white-35);
+}
+
+.payDueItem[data-overdue] {
+  color: var(--danger);
+}
+
+.payDueItem[data-overdue] svg {
+  color: var(--danger);
+}
+
+.payGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.payKpi {
+  min-width: 0;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.16);
+  background: var(--white-5);
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+}
+
+.payKpi span,
+.payKpi small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.payKpi span {
+  color: var(--white-45);
+  font-family: var(--font-data);
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.payKpi strong {
+  display: block;
+  color: var(--white-90);
+  font-family: var(--font-data);
+  font-size: 1.05rem;
+  line-height: 1.15;
+  margin-top: 0.14rem;
+}
+
+.payKpi small {
+  color: var(--white-50);
+  font-size: 0.62rem;
+  margin-top: 0.1rem;
+}
+
+.payKpi[data-tone="good"] strong {
+  color: var(--success);
+}
+
+.payKpi[data-tone="danger"] strong {
   color: var(--danger);
 }
 
@@ -1333,9 +1520,17 @@
   flex-shrink: 0;
 }
 
+/* Without a deposit step the grid has 3 tiles — fill the width on desktop so there's
+   no empty 4th column. Gated to desktop so the ≤980px 2-col rule still governs mobile. */
+@media (min-width: 981px) {
+  .payGrid[data-cols="3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 980px) {
-  .paymentMetrics {
-    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  .payGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .attentionGrid {
@@ -1344,12 +1539,8 @@
 }
 
 @media (max-width: 640px) {
-  .paymentPanel {
-    margin: 0 1rem 1rem;
-  }
-
-  .paymentMetrics {
-    grid-template-columns: 1fr;
+  .payToggle span {
+    display: none;
   }
 
   .compactExpandedRow {

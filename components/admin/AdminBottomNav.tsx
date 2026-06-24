@@ -6,7 +6,7 @@ import {
   Users, MoreHorizontal,
   LogOut, X, ChevronRight, ChevronDown,
   LayoutGrid, CalendarDays, UserCheck,
-  ExternalLink, FileText, MessageSquarePlus,
+  ExternalLink, FileText, MessageSquarePlus, Globe,
   type LucideIcon,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
@@ -28,6 +28,11 @@ type NavItem = {
 
 function prefixKey(item: TourNavItem): NavItem {
   return { key: `tournaments/${item.key}`, icon: item.icon, label: item.label };
+}
+
+/** Clone a nav item with a shorter bottom-bar label (and optionally a tab-specific icon). */
+function withBarLabel(item: TourNavItem | undefined, label: string, icon?: LucideIcon): TourNavItem | undefined {
+  return item ? { ...item, label, ...(icon ? { icon } : {}) } : undefined;
 }
 
 export default function AdminBottomNav() {
@@ -63,26 +68,41 @@ export default function AdminBottomNav() {
   const setupItems = TOUR_GROUPS.find(g => g.key === 'setup')!.items;
   const adminItems = TOUR_GROUPS.find(g => g.key === 'admin')!.items;
 
-  // Lifecycle-aware primary tabs. Dashboard now lives on the top-bar title ("home"), freeing a slot;
-  // Chat is ALWAYS promoted (the main coach↔organizer channel). Before the event is live the bar
-  // leans setup (Teams + Divisions); once live (and after) it leans game-day (Results + Check-in).
-  // Everything else — including Dashboard, as a safety net — stays reachable under "More".
+  // Lifecycle-aware primary tabs. Dashboard lives on the top-bar title ("home").
+  // Draft ("getting ready") leans setup + the customer-facing page: Setup · Teams · Schedule · Site,
+  // with Chat demoted to More (no audience pre-launch — its unread badge bubbles up to the More tab).
+  // Once live/after ("running it") it flips to game-day: Results · Check-in · Schedule · Chat.
+  // Schedule holds the same (third) slot across both bars as the constant anchor; everything else,
+  // including Divisions (a do-once step surfaced by the setup checklist) and Dashboard, stays under "More".
   const resultsPhase = tournamentIsLive || currentTournament?.status === 'archived';
   const opsByKey = new Map(opsItems.map(i => [i.key, i]));
   const setupByKey = new Map(setupItems.map(i => [i.key, i]));
+  // Event Settings is owner/admin-only. For roles that can't open it (staff/official/treasurer),
+  // lead the draft bar with Divisions instead — a build step they can actually use.
+  const eventSettings = setupByKey.get('settings/event');
+  const canSeeEventSettings = !eventSettings?.roles || eventSettings.roles.includes(userRole ?? '');
+  const draftLead = canSeeEventSettings
+    ? withBarLabel(eventSettings, 'Setup')
+    : setupByKey.get('divisions');
   const primaryDefs: TourNavItem[] = (resultsPhase
     ? [opsByKey.get('results'), opsByKey.get('check-in'), opsByKey.get('schedule'), opsByKey.get('chat')]
-    : [opsByKey.get('registrations'), setupByKey.get('divisions'), opsByKey.get('schedule'), opsByKey.get('chat')]
+    : [
+        draftLead,
+        opsByKey.get('registrations'),
+        opsByKey.get('schedule'),
+        withBarLabel(setupByKey.get('branding'), 'Site', Globe),
+      ]
   ).filter((i): i is TourNavItem => Boolean(i));
   const PRIMARY_KEYS = primaryDefs.map(prefixKey);
   const primaryKeys = new Set(primaryDefs.map(i => i.key));
+  const chatIsPrimary = primaryKeys.has('chat');
   const operationsMoreBase = opsItems.filter(i => !primaryKeys.has(i.key)).map(prefixKey);
   const operationsMore: NavItem[] = showTournamentSummary
     ? [...operationsMoreBase, { key: 'tournaments/summary', icon: FileText, label: 'Summary' }]
     : operationsMoreBase;
   const setupMore = setupItems
     .filter(item => !item.roles || item.roles.includes(userRole ?? ''))
-    .filter(item => !primaryKeys.has(item.key)) // Divisions is a primary tab pre-live — don't double-list it
+    .filter(item => !primaryKeys.has(item.key)) // Event Settings + Public Site are primary tabs pre-live; the rest (incl. Divisions) list here
     .map(prefixKey);
   const adminMore = adminItems.map(prefixKey);
 
@@ -124,6 +144,7 @@ export default function AdminBottomNav() {
       const active = key === ''
         ? pathname === base
         : pathname === href || pathname.startsWith(href + '/');
+      const unread = key === 'tournaments/chat' ? moreChatUnread : 0;
       return (
         <Link
           key={key || '_dashboard'}
@@ -134,6 +155,11 @@ export default function AdminBottomNav() {
         >
           <Icon size={17} />
           <span>{label}</span>
+          {unread > 0 && (
+            <span className={styles.dropCount} aria-label={`${unread > 9 ? '9+' : unread} unread`}>
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
           <ChevronRight size={14} className={styles.dropChevron} />
         </Link>
       );
@@ -162,6 +188,8 @@ export default function AdminBottomNav() {
 
   // Chat unread — only in tournament-ops mode (where the Chat tab lives).
   const chatUnread = useChatUnread(!modulePrimaryTabs);
+  // When Chat isn't a primary tab (draft phase), its unread badge bubbles up to the More tab + its row inside More.
+  const moreChatUnread = !chatIsPrimary ? chatUnread : 0;
 
   return (
     <nav className={styles.bottomNav} aria-label="Admin mobile navigation">
@@ -221,6 +249,9 @@ export default function AdminBottomNav() {
           id="admin-mob-more"
           aria-haspopup="true"
           aria-expanded={moreOpen}
+          aria-label={moreChatUnread > 0
+            ? `More, ${moreChatUnread > 9 ? '9+' : moreChatUnread} unread chat ${moreChatUnread === 1 ? 'message' : 'messages'}`
+            : undefined}
         >
           <span className={styles.iconWrap}>
             {moreOpen
@@ -228,6 +259,11 @@ export default function AdminBottomNav() {
               : <MoreHorizontal size={22} strokeWidth={isMoreActive ? 2.5 : 1.8} />
             }
             {isMoreActive && !moreOpen && <span className={styles.activeDot} />}
+            {moreChatUnread > 0 && !moreOpen && (
+              <span className={styles.tabCount} style={{ background: 'var(--logic-lime)', color: 'var(--pitch-black)' }}>
+                {moreChatUnread > 9 ? '9+' : moreChatUnread}
+              </span>
+            )}
           </span>
           <span className={styles.label}>More</span>
         </button>

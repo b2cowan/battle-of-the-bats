@@ -21,6 +21,8 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   coach_access_requested:            'Coach access requested',
   house_league_registration_new:     'House league registration',
   chat_message:                      'Chat message',
+  // Intentionally NOT in NOTIFICATION_SECTIONS — an @mention is always delivered (not user-mutable here).
+  chat_mention:                      'Chat @mention',
 };
 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
@@ -37,6 +39,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   coach_access_requested:            'A coach requests access to the coaches portal.',
   house_league_registration_new:     'A player submits a house league season registration.',
   chat_message:                      'A new message is posted in a tournament chat you are part of.',
+  chat_mention:                      'Someone @mentions you in a tournament chat (always delivered).',
 };
 
 // ── Section groups (org-level preferences page) ────────────────────────────────

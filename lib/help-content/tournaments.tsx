@@ -738,17 +738,19 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Communicate & Publish',
       heading: 'Chat with your coaches',
       summary: 'A live group chat with every coach in your tournament — a real conversation instead of one-way email blasts.',
-      keywords: ['chat', 'tournament chat', 'coach chat', 'group chat', 'message coaches', 'live chat', 'members', 'manage chat', 'manage panel', 'mute', 'close room', 'remove message', 'not yet joined', 'moderation', 'unread'],
-      searchText: 'tournament chat group chat live chat with coaches message all coaches conversation real time chat tab open members manage panel manage chat roster not yet joined invite coach mute coach close room reopen read only remove message moderate moderation unread count in-app bell phone push notification Tournament Plus every participating coach free and paid stays readable after tournament',
+      keywords: ['chat', 'tournament chat', 'coach chat', 'group chat', 'message coaches', 'live chat', 'members', 'manage chat', 'manage panel', 'mute', 'close room', 'remove message', 'delete message', 'delete own message', 'message removed', 'not yet joined', 'moderation', 'unread', 'reply', 'quote', 'mention', '@mention', 'emoji', 'react', 'search messages', 'pinned messages', 'pin message', 'unpin', 'read by', 'read receipt', 'last seen'],
+      searchText: 'tournament chat group chat live chat with coaches message all coaches conversation real time chat tab open members manage panel manage chat roster not yet joined invite coach mute coach close room reopen read only remove message delete message delete your own message message removed moderate moderation unread count in-app bell phone push notification Tournament Plus every participating coach free and paid stays readable after tournament reply quote a message jump to original mention @mention tag a coach mention reaches them even if muted emoji smiley react with emoji search recent messages magnifier read receipt sent read by 3 of 8 read by everyone last seen pinned message pin unpin schedule field map rules banner at top of room collapsible',
       links: [
         { label: 'Chat', href: '../tournaments/chat' },
       ],
       content: (
         <>
           <p><strong>Chat</strong> gives you a live group conversation with every coach in your tournament — a real back-and-forth instead of one-way email blasts. Open the <strong>Chat</strong> tab on your tournament; every coach who has registered a team is already in the room, free and paid alike. They don&rsquo;t need a plan of their own — being in your tournament is enough. You&rsquo;ll see an <strong>unread count</strong> on the Chat menu, and new messages also reach you by in-app bell and phone notification — no email.</p>
-          <p><strong>Manage the room from &ldquo;Members.&rdquo;</strong> Tap <strong>Members</strong> at the top of the chat to open the management panel. It lists everyone in the room, and under <strong>Not yet joined</strong> it shows the coaches who haven&rsquo;t signed in yet — so nobody is silently left out. Beside a not-yet-joined name, use <strong>Copy link</strong> or <strong>Email</strong> to send that coach the sign-in link; they join automatically the moment they sign in with their team&rsquo;s email.</p>
-          <p><strong>Keeping it on track.</strong> From the <strong>Members</strong> panel you can <strong>mute</strong> a coach for up to 72 hours (they can still read, just not post) or <strong>close</strong> the room to make it read-only — and reopen it at any time. To take down a single message, use the <strong>remove</strong> control on the message itself. The conversation stays readable after the tournament wraps up, so the record is always there.</p>
-          <p>Chat is included with <strong>Tournament Plus and above</strong>. On the free Tournament plan the tab shows an upgrade option instead.</p>
+          <p><strong>It works like a real chat app.</strong> Add an <strong>emoji</strong> from the smiley in the message box, <strong>reply</strong> to a specific message so your answer quotes it (tap the quote to jump back to the original), and type <strong>@</strong> to <strong>mention</strong> a coach by name — a mention reaches that coach directly, even if they&rsquo;ve turned general chat notifications off. The <strong>magnifier</strong> in the chat header <strong>searches</strong> the conversation; today it filters the recent messages on screen, with full-history search coming later. Under your own most recent message, a small receipt moves from <strong>Sent</strong> to <strong>Read by 3 of 8</strong> to <strong>Read by everyone</strong> as coaches catch up.</p>
+          <p><strong>Manage the room from &ldquo;Members.&rdquo;</strong> Tap <strong>Members</strong> at the top of the chat to open the management panel. It lists everyone in the room — with each coach&rsquo;s <strong>last seen</strong> time — and under <strong>Not yet joined</strong> it shows the coaches who haven&rsquo;t signed in yet, so nobody is silently left out. Beside a not-yet-joined name, use <strong>Copy link</strong> or <strong>Email</strong> to send that coach the sign-in link; they join automatically the moment they sign in with their team&rsquo;s email.</p>
+          <p><strong>Keeping it on track.</strong> From the <strong>Members</strong> panel you can <strong>mute</strong> a coach for up to 72 hours (they can still read, just not post) or <strong>close</strong> the room to make it read-only — and reopen it at any time. Any coach can <strong>delete a message they sent</strong> (it then reads &ldquo;Message removed&rdquo;); as the organizer you can also <strong>remove anyone&rsquo;s</strong> message using the remove control on the message itself. A muted coach can&rsquo;t delete. The conversation stays readable after the tournament wraps up, so the record is always there.</p>
+          <p><strong>Pin what coaches keep asking for.</strong> Pin the schedule, the field map, the rules — any message — to a <strong>banner at the top of the room</strong>. Pin several at once; the banner collapses and expands, and a coach can tap any pinned item to jump straight to it. Pinning and unpinning are yours alone (from the controls on a message, beside <strong>remove</strong>) — coaches see the banner but can&rsquo;t change it.</p>
+          <p>Chat — and everything in it — is included with <strong>Tournament Plus and above</strong>; these conversation tools add no extra cost. On the free Tournament plan the tab shows an upgrade option instead.</p>
         </>
       ),
       faqs: [
@@ -779,13 +781,25 @@ const tournamentsHelp: HelpPageContent = {
         },
         {
           id: 'faq-tournament-chat-moderate',
-          question: 'How do I mute a coach or close the chat?',
-          answerText: 'Tap Members at the top of the Chat tab to open the management panel. Beside a coach, Mute stops them posting for up to 72 hours — they can still read. Close room makes the whole chat read-only for everyone, and you can reopen it any time. To remove a single message, use the remove control on the message itself. The room stays readable after the tournament finishes.',
-          keywords: ['mute coach', 'close chat', 'read only', 'remove message', 'moderate chat', 'reopen room', 'members', 'manage chat'],
+          question: 'How do I mute a coach, close the chat, or remove a message?',
+          answerText: 'Tap Members at the top of the Chat tab to open the management panel. Beside a coach, Mute stops them posting for up to 72 hours — they can still read. Close room makes the whole chat read-only for everyone, and you can reopen it any time. To take down any message, use the remove control on the message itself. Coaches can delete their own messages too (the message then reads Message removed); a muted coach cannot. The room stays readable after the tournament finishes.',
+          keywords: ['mute coach', 'close chat', 'read only', 'remove message', 'delete message', 'delete own message', 'message removed', 'moderate chat', 'reopen room', 'members', 'manage chat'],
           answer: (
             <>
-              <p>Tap <strong>Members</strong> at the top of the <strong>Chat</strong> tab to open the management panel. Beside a coach, <strong>Mute</strong> stops them posting for up to 72 hours while still letting them read. <strong>Close room</strong> makes the whole conversation read-only for everyone — you can <strong>reopen</strong> it at any time. To take down a single message, use the <strong>remove</strong> control on the message itself.</p>
-              <p>The conversation stays readable after the tournament finishes, so the record is always there.</p>
+              <p>Tap <strong>Members</strong> at the top of the <strong>Chat</strong> tab to open the management panel. Beside a coach, <strong>Mute</strong> stops them posting for up to 72 hours while still letting them read. <strong>Close room</strong> makes the whole conversation read-only for everyone — you can <strong>reopen</strong> it at any time. To take down <strong>any</strong> message, use the <strong>remove</strong> control on the message itself.</p>
+              <p>Coaches can also <strong>delete their own</strong> messages — a removed message reads &ldquo;Message removed&rdquo; for everyone. A muted coach can&rsquo;t delete. The conversation stays readable after the tournament finishes, so the record is always there.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-tournament-chat-pin',
+          question: 'Can I pin the schedule or rules to the top of the chat?',
+          answerText: 'Yes. As the organizer you can pin any message — the schedule, a field map, the rules — to a banner at the top of the room. You can pin several at once, and the banner collapses and expands. Pin or unpin from the controls on a message, beside the remove control. Coaches see the pinned banner and can tap an item to jump to it, but they cannot pin or unpin.',
+          keywords: ['pin message', 'pinned messages', 'unpin', 'pin schedule', 'pin rules', 'field map', 'banner', 'pin to top'],
+          answer: (
+            <>
+              <p>Yes. As the organizer you can <strong>pin</strong> any message — the schedule, a field map, the rules — to a <strong>banner at the top of the room</strong>. Pin several at once; the banner collapses and expands so it never crowds the conversation. Pin or unpin from the controls on a message, beside the <strong>remove</strong> control.</p>
+              <p>Coaches see the pinned banner and can tap an item to jump to it, but only an organizer can pin or unpin.</p>
             </>
           ),
         },

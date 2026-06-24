@@ -1496,6 +1496,69 @@
         "column_default": "now()"
       },
       {
+        "table_name": "chat_message_reactions",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "chat_message_reactions",
+        "pos": 2,
+        "column_name": "room_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_message_reactions",
+        "pos": 3,
+        "column_name": "message_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_message_reactions",
+        "pos": 4,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_message_reactions",
+        "pos": 5,
+        "column_name": "emoji",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_message_reactions",
+        "pos": 6,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "chat_message_reactions",
+        "pos": 7,
+        "column_name": "removed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "chat_messages",
         "pos": 1,
         "column_name": "id",
@@ -1562,6 +1625,87 @@
         "table_name": "chat_messages",
         "pos": 8,
         "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "chat_messages",
+        "pos": 9,
+        "column_name": "pinned_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_messages",
+        "pos": 10,
+        "column_name": "pinned_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_poll_votes",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "chat_poll_votes",
+        "pos": 2,
+        "column_name": "room_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_poll_votes",
+        "pos": 3,
+        "column_name": "message_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_poll_votes",
+        "pos": 4,
+        "column_name": "option_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_poll_votes",
+        "pos": 5,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_poll_votes",
+        "pos": 6,
+        "column_name": "removed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_poll_votes",
+        "pos": 7,
+        "column_name": "created_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
@@ -5830,6 +5974,15 @@
         "column_name": "free_floor",
         "data_type": "text",
         "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organizations",
+        "pos": 34,
+        "column_name": "team_limit",
+        "data_type": "integer",
+        "udt_name": "int4",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -12323,6 +12476,15 @@
         "column_default": "'softball'::text"
       },
       {
+        "table_name": "tournaments",
+        "pos": 38,
+        "column_name": "coach_names_show_on_public",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
         "table_name": "venue_facilities",
         "pos": 1,
         "column_name": "id",
@@ -12583,11 +12745,39 @@
         "constraint_name": "budget_items_org_id_fkey"
       },
       {
+        "table_name": "chat_message_reactions",
+        "column_name": "message_id",
+        "foreign_table": "chat_messages",
+        "foreign_column": "id",
+        "constraint_name": "chat_message_reactions_message_id_fkey"
+      },
+      {
+        "table_name": "chat_message_reactions",
+        "column_name": "room_id",
+        "foreign_table": "chat_rooms",
+        "foreign_column": "id",
+        "constraint_name": "chat_message_reactions_room_id_fkey"
+      },
+      {
+        "table_name": "chat_message_reactions",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "chat_message_reactions_user_id_fkey"
+      },
+      {
         "table_name": "chat_messages",
         "column_name": "deleted_by_user_id",
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "chat_messages_deleted_by_user_id_fkey"
+      },
+      {
+        "table_name": "chat_messages",
+        "column_name": "pinned_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "chat_messages_pinned_by_user_id_fkey"
       },
       {
         "table_name": "chat_messages",
@@ -12602,6 +12792,27 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "chat_messages_sender_user_id_fkey"
+      },
+      {
+        "table_name": "chat_poll_votes",
+        "column_name": "message_id",
+        "foreign_table": "chat_messages",
+        "foreign_column": "id",
+        "constraint_name": "chat_poll_votes_message_id_fkey"
+      },
+      {
+        "table_name": "chat_poll_votes",
+        "column_name": "room_id",
+        "foreign_table": "chat_rooms",
+        "foreign_column": "id",
+        "constraint_name": "chat_poll_votes_room_id_fkey"
+      },
+      {
+        "table_name": "chat_poll_votes",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "chat_poll_votes_user_id_fkey"
       },
       {
         "table_name": "chat_room_members",
@@ -14478,6 +14689,31 @@
         "indexdef": "CREATE UNIQUE INDEX budget_items_unique_org_name ON public.budget_items USING btree (category_id, org_id, lower(name)) WHERE (org_id IS NOT NULL)"
       },
       {
+        "tablename": "chat_message_reactions",
+        "indexname": "chat_message_reactions_message_idx",
+        "indexdef": "CREATE INDEX chat_message_reactions_message_idx ON public.chat_message_reactions USING btree (message_id)"
+      },
+      {
+        "tablename": "chat_message_reactions",
+        "indexname": "chat_message_reactions_pkey",
+        "indexdef": "CREATE UNIQUE INDEX chat_message_reactions_pkey ON public.chat_message_reactions USING btree (id)"
+      },
+      {
+        "tablename": "chat_message_reactions",
+        "indexname": "chat_message_reactions_room_idx",
+        "indexdef": "CREATE INDEX chat_message_reactions_room_idx ON public.chat_message_reactions USING btree (room_id)"
+      },
+      {
+        "tablename": "chat_message_reactions",
+        "indexname": "chat_message_reactions_unique",
+        "indexdef": "CREATE UNIQUE INDEX chat_message_reactions_unique ON public.chat_message_reactions USING btree (message_id, user_id, emoji)"
+      },
+      {
+        "tablename": "chat_messages",
+        "indexname": "chat_messages_pinned_idx",
+        "indexdef": "CREATE INDEX chat_messages_pinned_idx ON public.chat_messages USING btree (room_id, pinned_at DESC) WHERE (pinned_at IS NOT NULL)"
+      },
+      {
         "tablename": "chat_messages",
         "indexname": "chat_messages_pkey",
         "indexdef": "CREATE UNIQUE INDEX chat_messages_pkey ON public.chat_messages USING btree (id)"
@@ -14491,6 +14727,26 @@
         "tablename": "chat_messages",
         "indexname": "chat_messages_sender_idx",
         "indexdef": "CREATE INDEX chat_messages_sender_idx ON public.chat_messages USING btree (sender_user_id)"
+      },
+      {
+        "tablename": "chat_poll_votes",
+        "indexname": "chat_poll_votes_message_idx",
+        "indexdef": "CREATE INDEX chat_poll_votes_message_idx ON public.chat_poll_votes USING btree (message_id)"
+      },
+      {
+        "tablename": "chat_poll_votes",
+        "indexname": "chat_poll_votes_pkey",
+        "indexdef": "CREATE UNIQUE INDEX chat_poll_votes_pkey ON public.chat_poll_votes USING btree (id)"
+      },
+      {
+        "tablename": "chat_poll_votes",
+        "indexname": "chat_poll_votes_room_idx",
+        "indexdef": "CREATE INDEX chat_poll_votes_room_idx ON public.chat_poll_votes USING btree (room_id)"
+      },
+      {
+        "tablename": "chat_poll_votes",
+        "indexname": "chat_poll_votes_unique",
+        "indexdef": "CREATE UNIQUE INDEX chat_poll_votes_unique ON public.chat_poll_votes USING btree (message_id, option_id, user_id)"
       },
       {
         "tablename": "chat_room_members",
@@ -14526,6 +14782,16 @@
         "tablename": "chat_rooms",
         "indexname": "chat_rooms_surface_ref_idx",
         "indexdef": "CREATE INDEX chat_rooms_surface_ref_idx ON public.chat_rooms USING btree (surface, ref_id)"
+      },
+      {
+        "tablename": "chat_rooms",
+        "indexname": "chat_rooms_surface_ref_nosub_uniq",
+        "indexdef": "CREATE UNIQUE INDEX chat_rooms_surface_ref_nosub_uniq ON public.chat_rooms USING btree (surface, ref_id) WHERE (ref_sub_id IS NULL)"
+      },
+      {
+        "tablename": "chat_rooms",
+        "indexname": "chat_rooms_surface_ref_sub_uniq",
+        "indexdef": "CREATE UNIQUE INDEX chat_rooms_surface_ref_sub_uniq ON public.chat_rooms USING btree (surface, ref_id, ref_sub_id) WHERE (ref_sub_id IS NOT NULL)"
       },
       {
         "tablename": "diamonds",
@@ -16248,8 +16514,26 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "chat_message_reactions",
+        "detail": "chat_message_reactions_emoji_check",
+        "check_clause": "(emoji = ANY (ARRAY['👍'::text, '👎'::text, '❤️'::text, '✅'::text, '😂'::text, '🎉'::text, '🙏'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "chat_message_reactions",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "chat_messages",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "chat_poll_votes",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -16689,7 +16973,7 @@
         "kind": "CHECK",
         "table_name": "plan_gating",
         "detail": "plan_gating_plan_key_check",
-        "check_clause": "(plan_key = ANY (ARRAY['tournament'::text, 'team'::text, 'tournament_plus'::text, 'league'::text, 'club'::text]))"
+        "check_clause": "(plan_key = ANY (ARRAY['tournament'::text, 'team'::text, 'tournament_plus'::text, 'league'::text, 'club'::text, 'club_large'::text]))"
       },
       {
         "kind": "RLS",
@@ -16833,7 +17117,7 @@
         "kind": "CHECK",
         "table_name": "platform_plan_module_entitlements",
         "detail": "platform_plan_module_entitlements_plan_check",
-        "check_clause": "(plan_id = ANY (ARRAY['tournament'::text, 'team'::text, 'tournament_plus'::text, 'league'::text, 'club'::text]))"
+        "check_clause": "(plan_id = ANY (ARRAY['tournament'::text, 'team'::text, 'tournament_plus'::text, 'league'::text, 'club'::text, 'club_large'::text]))"
       },
       {
         "kind": "RLS",

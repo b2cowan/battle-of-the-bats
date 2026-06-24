@@ -304,6 +304,10 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       })
     : filtered;
 
+  // Coach names are stripped from the payload when the organizer's public-site toggle is off
+  // (mig 150); their presence tells us whether to mention coaches in the search affordances.
+  const showCoachNames = teams.some(t => !!t.coach);
+
   function nextUpDateLabel(date: string): string {
     if (date === today) return 'Today';
     const tmrw = new Date(today + 'T12:00:00');
@@ -996,7 +1000,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                     type="text"
                     className="form-input"
                     list="schedule-mobile-team-options"
-                    placeholder="Search team or coach..."
+                    placeholder={showCoachNames ? 'Search team or coach...' : 'Search team...'}
                     value={teamSearch}
                     onChange={e => setTeamSearch(e.target.value)}
                   />
@@ -1104,7 +1108,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="Search team or coach..."
+                    placeholder={showCoachNames ? 'Search team or coach...' : 'Search team...'}
                     value={teamSearch}
                     onChange={e => setTeamSearch(e.target.value)}
                   />
@@ -1237,7 +1241,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
               icon={<Calendar size={40} />}
               eyebrow="Schedule"
               title={teamSearch ? 'No games match that search' : `No ${viewMode === 'playoff' ? 'playoff ' : ''}games yet`}
-              description={teamSearch ? 'Try another team name, coach name, or clear the search.' : 'Games will appear here once the organizer adds them.'}
+              description={teamSearch ? `Try another team name${showCoachNames ? ', coach name' : ''}, or clear the search.` : 'Games will appear here once the organizer adds them.'}
               actions={!teamSearch && !isPreview && showTeamsPage ? [{ href: teamsHref, label: 'View Teams', variant: 'ghost' as const }] : []}
               compact
             >

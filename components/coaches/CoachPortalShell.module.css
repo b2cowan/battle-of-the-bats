@@ -470,6 +470,20 @@
   }
 }
 
+/* A full-bleed route (the chat surface) owns the dynamic viewport itself: it is pinned to exactly the
+   dynamic viewport (100dvh, border-box so the chrome-clearing padding is included) with overflow
+   hidden, so the PAGE never scrolls behind the fixed bars. Without this the shell's min-height:100vh
+   exceeds the dynamic viewport on mobile (vh includes the browser bar), opening a phantom scroll that
+   carried the chat's own header up under the fixed top bar when you scrolled the messages. The chat
+   then scrolls only INTERNALLY (its message list), and its fixed header stays put. */
+.content:has([data-chat-fullbleed]) {
+  box-sizing: border-box;
+  min-height: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
 /* ── Mobile bottom nav ────────────────────────────────────────────────────── */
 .bottomNav {
   position: fixed;

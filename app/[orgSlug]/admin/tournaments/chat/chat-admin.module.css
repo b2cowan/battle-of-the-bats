@@ -54,6 +54,21 @@
   align-items: center;
   gap: 0.3rem;
 }
+/* The count shown beside the icon only when the "Members" label is hidden (mobile). */
+.manageBtnCount {
+  display: none;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mobile: collapse to icon + count so the room-name title keeps its space (the full pill otherwise
+   starves the flex-1 header title and truncates it early). Matches the panel's full-bleed breakpoint. */
+@media (max-width: 900px) {
+  .manageBtnLabel,
+  .manageBtnChevron { display: none; }
+  .manageBtnCount { display: inline; }
+  .manageBtn { gap: 0.25rem; }
+}
 
 .state {
   flex: 1 1 auto;

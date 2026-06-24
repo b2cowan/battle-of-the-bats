@@ -5,9 +5,13 @@ import {
   getRoomById,
   getMembership,
   getRoomMessages,
+  getReactionsForMessages,
+  getPollTallies,
   postChatMessage,
   ChatError,
 } from '@/lib/chat-service';
+import type { MessageReactionsMap } from '@/lib/chat-reactions';
+import type { PollTalliesMap } from '@/lib/chat-polls';
 import { FixedWindowRateLimiter } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -43,6 +47,28 @@ export const GET = withObservability(async (req: NextRequest, { params }: Params
   const limit = Number(url.searchParams.get('limit')) || 50;
   const { messages, participants, hasMore } = await getRoomMessages(roomId, { before, limit });
 
+  // Reaction summaries for the window, so reactions paint with the first render (no flash). Keyed by
+  // message id; only messages with ≥1 active reaction appear. NON-FATAL: a reactions-table problem
+  // (e.g. the table not yet applied to an environment — mig 147 is prod-pending) must NOT break the
+  // core chat-history load. Degrade to no counts; they still arrive live via realtime + the
+  // refresh-on-event signal.
+  let reactions: MessageReactionsMap = {};
+  try {
+    reactions = await getReactionsForMessages(roomId, messages.map((m) => m.id), user.id);
+  } catch (err) {
+    console.error('[chat] reaction summary load failed (non-fatal):', err);
+  }
+
+  // Poll tallies for the poll messages in the window (NON-FATAL, like reactions). Only poll messages
+  // have votes; non-poll ids would contribute nothing, so filter to keep the query small.
+  let pollTallies: PollTalliesMap = {};
+  try {
+    const pollIds = messages.filter((m) => m.poll).map((m) => m.id);
+    if (pollIds.length > 0) pollTallies = await getPollTallies(roomId, pollIds, user.id);
+  } catch (err) {
+    console.error('[chat] poll tally load failed (non-fatal):', err);
+  }
+
   return NextResponse.json({
     room: { id: room.id, name: room.name, isArchived: room.isArchived },
     self: {
@@ -52,6 +78,8 @@ export const GET = withObservability(async (req: NextRequest, { params }: Params
     },
     messages,
     participants,
+    reactions,
+    pollTallies,
     hasMore,
   });
 }, { route: '/api/chat/rooms/[roomId]/messages' });
@@ -72,11 +100,17 @@ export const POST = withObservability(async (req: NextRequest, { params }: Param
     );
   }
 
-  const json = (await req.json().catch(() => ({}))) as { body?: unknown };
+  const json = (await req.json().catch(() => ({}))) as {
+    body?: unknown; replyToId?: unknown; mentionUserIds?: unknown;
+  };
   const text = typeof json.body === 'string' ? json.body : '';
+  const replyToId = typeof json.replyToId === 'string' ? json.replyToId : null;
+  const mentionUserIds = Array.isArray(json.mentionUserIds)
+    ? json.mentionUserIds.filter((v): v is string => typeof v === 'string').slice(0, 50)
+    : null;
 
   try {
-    const message = await postChatMessage({ roomId, senderUserId: user.id, body: text });
+    const message = await postChatMessage({ roomId, senderUserId: user.id, body: text, replyToId, mentionUserIds });
     return NextResponse.json({ message });
   } catch (err) {
     if (err instanceof ChatError) {

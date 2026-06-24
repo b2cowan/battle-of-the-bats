@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-06-22 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-06-24 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-06-22
+# DB Schema Reference — 2026-06-24
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -70,7 +70,7 @@ id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, org_id (uuid) → o
 - Indexes: tournament_registration_fields_org_idx, tournament_registration_fields_tournament_idx
 
 ### tournaments
-id (uuid), year (integer) NOT NULL, name NOT NULL, slug, status, is_active (boolean), start_date, end_date, contact_email, fee_schedule_mode, deposit_amount (numeric), deposit_due_date, total_fee_amount (numeric), total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, require_score_finalization (boolean), color_mode, created_at, notify_teams_on_complete (boolean), results_notified_at, results_notification_sent_count (integer), org_id (uuid) → organizations.id NOT NULL, settings (jsonb), default_contact_member_id (uuid) → organization_members.id, notify_mode, public_hidden_pages (jsonb), contact_show_on_public (boolean), contact_show_to_coaches (boolean), sport
+id (uuid), year (integer) NOT NULL, name NOT NULL, slug, status, is_active (boolean), start_date, end_date, contact_email, fee_schedule_mode, deposit_amount (numeric), deposit_due_date, total_fee_amount (numeric), total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, require_score_finalization (boolean), color_mode, created_at, notify_teams_on_complete (boolean), results_notified_at, results_notification_sent_count (integer), org_id (uuid) → organizations.id NOT NULL, settings (jsonb), default_contact_member_id (uuid) → organization_members.id, notify_mode, public_hidden_pages (jsonb), contact_show_on_public (boolean), contact_show_to_coaches (boolean), sport, coach_names_show_on_public (boolean)
 - Indexes: idx_tournaments_created_at, idx_tournaments_results_notified_at, tournaments_org_id_idx, tournaments_org_slug_live_unique
 
 ### venue_facilities
@@ -313,7 +313,7 @@ id (uuid), organization_id (uuid) → organizations.id NOT NULL, user_id (uuid) 
 - Indexes: organization_members_invited_email_idx, organization_members_organization_id_user_id_key
 
 ### organizations
-id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor
+id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, free_floor, team_limit (integer)
 - Indexes: idx_organizations_email_opt_out, organizations_slug_key
 
 ## Module: Platform Admin
@@ -430,9 +430,17 @@ id (uuid), basic_coach_team_id (uuid) → basic_coach_teams.id NOT NULL, name NO
 id (uuid), name NOT NULL, normalized_name NOT NULL, primary_coach_name, primary_coach_email NOT NULL, sport, age_group, source, team_workspace_id (uuid) → team_workspaces.id, created_at, updated_at, activated_features (jsonb)
 - Indexes: basic_coach_teams_primary_email_idx, basic_coach_teams_workspace_idx
 
+### chat_message_reactions
+id (uuid), room_id (uuid) → chat_rooms.id NOT NULL, message_id (uuid) → chat_messages.id NOT NULL, user_id (uuid) NOT NULL, emoji NOT NULL, created_at, removed_at
+- Indexes: chat_message_reactions_message_idx, chat_message_reactions_room_idx, chat_message_reactions_unique
+
 ### chat_messages
-id (uuid), room_id (uuid) → chat_rooms.id NOT NULL, sender_user_id (uuid), body NOT NULL, deleted_at, deleted_by_user_id (uuid), metadata (jsonb), sent_at
-- Indexes: chat_messages_room_sent_idx, chat_messages_sender_idx
+id (uuid), room_id (uuid) → chat_rooms.id NOT NULL, sender_user_id (uuid), body NOT NULL, deleted_at, deleted_by_user_id (uuid), metadata (jsonb), sent_at, pinned_at, pinned_by_user_id (uuid)
+- Indexes: chat_messages_pinned_idx, chat_messages_room_sent_idx, chat_messages_sender_idx
+
+### chat_poll_votes
+id (uuid), room_id (uuid) → chat_rooms.id NOT NULL, message_id (uuid) → chat_messages.id NOT NULL, option_id (uuid) NOT NULL, user_id (uuid) NOT NULL, removed_at, created_at
+- Indexes: chat_poll_votes_message_idx, chat_poll_votes_room_idx, chat_poll_votes_unique
 
 ### chat_room_members
 id (uuid), room_id (uuid) → chat_rooms.id NOT NULL, user_id (uuid) NOT NULL, member_role, status, muted_until, joined_at, last_read_at
@@ -440,7 +448,7 @@ id (uuid), room_id (uuid) → chat_rooms.id NOT NULL, user_id (uuid) NOT NULL, m
 
 ### chat_rooms
 id (uuid), org_id (uuid) → organizations.id NOT NULL, surface NOT NULL, ref_id (uuid) NOT NULL, ref_sub_id (uuid), name NOT NULL, created_by_user_id (uuid), is_archived (boolean), settings (jsonb), created_at
-- Indexes: chat_rooms_org_idx, chat_rooms_surface_ref_idx
+- Indexes: chat_rooms_org_idx, chat_rooms_surface_ref_idx, chat_rooms_surface_ref_nosub_uniq, chat_rooms_surface_ref_sub_uniq
 
 ### error_events
 id (uuid), group_id (uuid) → error_groups.id NOT NULL, occurred_at, env, source, route, http_method, status_code (integer), error_name, error_message, stack_trace, org_id (uuid) → organizations.id, org_slug, user_id (uuid), user_email, user_role, request_id, ip_address, user_agent, request_context (jsonb), created_at
@@ -489,7 +497,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) →
 
 ## Tables by count
 
-Total: **117 tables** across 10 modules.
+Total: **119 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -500,4 +508,4 @@ Total: **117 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 19 tables
+- Other: 21 tables

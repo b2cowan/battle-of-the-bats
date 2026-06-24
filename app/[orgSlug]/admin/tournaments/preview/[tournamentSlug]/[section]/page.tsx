@@ -14,7 +14,7 @@ import {
 import { getTournamentPreviewContext } from '@/lib/tournament-preview';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { isPublicPageEnabled, type PublicPageKey } from '@/lib/public-pages';
-import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
+import { toPublicTeam, type PublicTournamentPageData } from '@/lib/public-tournament-data';
 import ScheduleContent from '@/components/public/ScheduleContent';
 import StandingsContent from '@/components/public/StandingsContent';
 import TeamsContent from '@/components/public/TeamsContent';
@@ -65,7 +65,7 @@ export default async function TournamentPreviewSectionPage({
       games,
       resources: [],
       rules: [],
-      teams: teams.filter(t => t.status === 'accepted'),
+      teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
       registrationFields: [],
       standingsByDivision: {},
     };
@@ -139,7 +139,7 @@ export default async function TournamentPreviewSectionPage({
       games: [],
       resources: [],
       rules: [],
-      teams: teams.filter(t => t.status === 'accepted'),
+      teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)),
       registrationFields: [],
       standingsByDivision: {},
     };

@@ -161,8 +161,10 @@ type ChecklistItem = {
   done: boolean;
   /** Renders the clock (awaiting) icon instead of the empty circle when not done. */
   awaiting?: boolean;
-  /** When set, the state renders as a coloured badge + optional micro-note (e.g. past-due Fee). */
-  badge?: { className: string; label: string; note?: string };
+  /** Colours the (plain, right-aligned) state text — e.g. past-due Fee → danger. The
+   *  row stays uniform with its siblings (no pill, no second line); the red fee glance
+   *  strip above owns the alarm + the "Was due" date, so it's never duplicated here. */
+  stateTone?: 'danger';
 };
 
 function Checklist({ items }: { items: ChecklistItem[] }) {
@@ -183,14 +185,9 @@ function Checklist({ items }: { items: ChecklistItem[] }) {
             )}
           </span>
           <span className={styles.checkLabel}>{item.label}</span>
-          {item.badge ? (
-            <span className={styles.checkState}>
-              <span className={`badge ${item.badge.className}`}>{item.badge.label}</span>
-              {item.badge.note ? <span className={styles.checkNote}>{item.badge.note}</span> : null}
-            </span>
-          ) : (
-            <span className={styles.checkState}>{item.state}</span>
-          )}
+          <span className={`${styles.checkState}${item.stateTone === 'danger' ? ` ${styles.checkStateDanger}` : ''}`}>
+            {item.state}
+          </span>
         </li>
       ))}
     </ul>
@@ -249,7 +246,9 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
   // Headline + sub per phase. Pending/waitlist/rejected reuse the existing
   // registration-status copy (statusDesc); accepted gets the prep narrative.
   let headline: string;
-  let sub: string | null;
+  // accepted / result split the identity onto two stacked lines (tournament over org);
+  // pending / rejected use the status-description sentence as a single sub line.
+  let sub: string | null = null;
   if (phase === 'pending') {
     headline = 'Registration submitted';
     sub = statusDesc || null;
@@ -258,11 +257,10 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
     sub = statusDesc || null;
   } else if (phase === 'result') {
     headline = "That's a wrap!";
-    sub = [tournamentName, orgName].filter(Boolean).join(' · ') || null;
   } else {
     headline = "You're in!";
-    sub = [tournamentName, orgName].filter(Boolean).join(' · ') || null;
   }
+  const splitIdentity = accepted; // accepted_prep / schedule_live / game_day / result
 
   // Accepted countdown: future start → live "First game in N days"; otherwise a
   // static, honest line (no live scores until 5i / no afterglow until 5m).
@@ -281,17 +279,17 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
     // Fee — only when the organizer set a fee schedule; read-only state, no amount
     // (the detailed amount/due/contact lives in the status block below).
     if (status?.fee.hasSchedule) {
-      // Past-due (J5-034): a danger badge + "Was due" micro-note. Merely owed → plain
+      // Past-due (J5-034): plain red "Past due" state text, uniform with the other rows.
+      // The red fee glance strip above owns the alarm + amount + "Was due" date, so the
+      // checklist no longer repeats it as a pill + a second red line. Merely owed → plain
       // "Owed". Binary by design (no third state) — mirrors the locked fee vocabulary.
+      const feePastDueRow = !status.fee.isPaid && status.fee.state === 'past-due';
       checklist.push({
         key: 'fee',
         label: 'Fee',
-        state: status.fee.isPaid ? 'Paid' : 'Owed',
+        state: status.fee.isPaid ? 'Paid' : feePastDueRow ? 'Past due' : 'Owed',
         done: status.fee.isPaid,
-        badge:
-          !status.fee.isPaid && status.fee.state === 'past-due'
-            ? { className: 'badge-danger', label: 'Past due', note: feeDueLabel ? `Was due ${feeDueLabel}` : undefined }
-            : undefined,
+        stateTone: feePastDueRow ? 'danger' : undefined,
       });
     }
     // Roster — shown when the organizer requires one (5f) OR once the coach has
@@ -334,10 +332,22 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
       <div className={styles.heroHead}>
         <div className={styles.heroMonogram} aria-hidden>{monogram}</div>
         <div className={styles.heroHeadText}>
-          <h2 className={styles.heroTitle}>{headline}</h2>
-          {sub && <p className={styles.heroSub}>{sub}</p>}
+          {/* Headline + status chip share the top row; the chip is pinned right
+              (margin-left:auto) and never shrinks. Both are fixed phrases that don't
+              depend on tournament/org name length, so this row stays stable. */}
+          <div className={styles.heroTitleRow}>
+            <h2 className={styles.heroTitle}>{headline}</h2>
+            <span className={`badge ${statusBadgeClass}`}>{statusLabel}</span>
+          </div>
+          {splitIdentity ? (
+            <>
+              {tournamentName && <p className={styles.heroSub}>{tournamentName}</p>}
+              {orgName && <p className={styles.heroSubOrg}>{orgName}</p>}
+            </>
+          ) : (
+            sub && <p className={styles.heroSub}>{sub}</p>
+          )}
         </div>
-        <span className={`badge ${statusBadgeClass}`}>{statusLabel}</span>
       </div>
 
       {/* Pending entry-fee preview (5h) — only when the organizer set a fee schedule.

@@ -293,6 +293,11 @@ export interface Tournament {
   themeCardStyle?: string | null;
   colorMode?: 'dark' | 'light' | null;
   publicHiddenPages?: PublicPageKey[];
+  /** When true, team coach names render on the public tournament pages (Teams cards,
+   *  team profile header, schedule search). Defaults to false — coach names are private
+   *  on the public site by default (migration 150). Governs the public site only; coach
+   *  names stay visible in admin + the Coaches Portal. */
+  coachNamesShowOnPublic?: boolean;
   requireScoreFinalization?: boolean | null;
   notifyTeamsOnComplete?: boolean;
   resultsNotifiedAt?: string | null;
@@ -1468,8 +1473,12 @@ export type NotificationEventType =
   | 'team_no_show'
   | 'coach_access_requested'
   | 'house_league_registration_new'
-  // Coach Chat (Project 1 — Tournament Chat). The one event type that defaults push ON.
-  | 'chat_message';
+  // Coach Chat (Project 1 — Tournament Chat). These default push ON (the chat-app model).
+  | 'chat_message'
+  // A targeted @mention — a DISTINCT, higher-priority event so it still reaches a coach who has muted
+  // general chat_message notifications. Defaults push ON; intentionally not in the settings UI yet
+  // (so it can't be silenced there). No DB CHECK on event_type, so this is a TS-union change only.
+  | 'chat_mention';
 
 export interface AppNotification {
   id: string;

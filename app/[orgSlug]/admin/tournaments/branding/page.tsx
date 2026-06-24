@@ -24,6 +24,7 @@ interface BrandingSettings {
   themeCardStyle: string | null;
   colorMode: 'dark' | 'light';
   publicHiddenPages: PublicPageKey[];
+  coachNamesShowOnPublic: boolean;
 }
 
 function errorMessage(err: unknown, fallback: string) {
@@ -52,6 +53,7 @@ export default function TournamentBrandingPage() {
   const [cardStyle, setCardStyle] = useState('default');
   const [colorMode, setColorMode] = useState<'dark' | 'light'>('dark');
   const [publicHiddenPages, setPublicHiddenPages] = useState<PublicPageKey[]>([]);
+  const [coachNamesShowOnPublic, setCoachNamesShowOnPublic] = useState(false);
 
   const [successOpen, setSuccessOpen] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -94,6 +96,7 @@ export default function TournamentBrandingPage() {
         setCardStyle(canUseAdvancedBranding ? data.themeCardStyle ?? 'default' : 'default');
         setColorMode(data.colorMode ?? 'dark');
         setPublicHiddenPages(normalizeHiddenPublicPages(data.publicHiddenPages));
+        setCoachNamesShowOnPublic(data.coachNamesShowOnPublic === true);
         if (data.themePrimary && canUseAdvancedBranding) {
           setPresetKey('custom');
           setCustomPrimary(data.themePrimary);
@@ -107,8 +110,12 @@ export default function TournamentBrandingPage() {
 
   const isDirty = useMemo(() => {
     if (!saved) return false;
+    // Public-site controls (page visibility + coach-name toggle) are available on every plan.
+    const publicSiteDirty =
+      normalizeHiddenPublicPages(publicHiddenPages).join('|') !== normalizeHiddenPublicPages(saved.publicHiddenPages).join('|') ||
+      coachNamesShowOnPublic !== (saved.coachNamesShowOnPublic === true);
     if (!canUseAdvancedBranding) {
-      return normalizeHiddenPublicPages(publicHiddenPages).join('|') !== normalizeHiddenPublicPages(saved.publicHiddenPages).join('|');
+      return publicSiteDirty;
     }
     const savedPresetKey = saved.themePrimary && canUseAdvancedBranding ? 'custom' : (saved.themePreset ?? 'platform');
     const savedFontKey = canUseAdvancedBranding ? saved.themeFont ?? 'system' : 'system';
@@ -124,9 +131,9 @@ export default function TournamentBrandingPage() {
       fontKey !== savedFontKey ||
       cardStyle !== savedCardStyle ||
       colorMode !== (saved.colorMode ?? 'dark') ||
-      normalizeHiddenPublicPages(publicHiddenPages).join('|') !== normalizeHiddenPublicPages(saved.publicHiddenPages).join('|')
+      publicSiteDirty
     );
-  }, [saved, presetKey, customPrimary, customAccent, fontKey, cardStyle, colorMode, publicHiddenPages, canUseAdvancedBranding]);
+  }, [saved, presetKey, customPrimary, customAccent, fontKey, cardStyle, colorMode, publicHiddenPages, coachNamesShowOnPublic, canUseAdvancedBranding]);
 
   const previewTheme = useMemo(() => {
     if (presetKey === 'custom' && canUseAdvancedBranding) {
@@ -157,9 +164,11 @@ export default function TournamentBrandingPage() {
             themeCardStyle: safeCardStyle,
             colorMode,
             publicHiddenPages: normalizedHiddenPages,
+            coachNamesShowOnPublic,
           }
         : {
             publicHiddenPages: normalizedHiddenPages,
+            coachNamesShowOnPublic,
           };
 
       const res = await fetch(`/api/admin/tournament-branding?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, {
@@ -183,6 +192,7 @@ export default function TournamentBrandingPage() {
           colorMode,
         } : {}),
         publicHiddenPages: normalizedHiddenPages,
+        coachNamesShowOnPublic,
       } : null);
       setSuccessMsg('Branding settings saved.');
       setSuccessOpen(true);
@@ -339,6 +349,21 @@ export default function TournamentBrandingPage() {
               );
             })}
           </div>
+
+          {/* Coach-name visibility — a public PII control, available on every plan (mig 150). */}
+          <label className={styles.pageSelector} style={{ marginTop: '0.65rem', alignItems: 'flex-start' }}>
+            <input
+              type="checkbox"
+              checked={coachNamesShowOnPublic}
+              onChange={() => setCoachNamesShowOnPublic(v => !v)}
+            />
+            <span>
+              <strong>Show coach names</strong>
+              <span className={styles.compactNote} style={{ margin: 0 }}>
+                Display each team&apos;s coach name on the public Teams cards, team profiles, and schedule search. Off by default to keep coach names private. Coach names always stay visible in your admin views and the Coaches Portal.
+              </span>
+            </span>
+          </label>
         </div>
       </div>
 

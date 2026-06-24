@@ -51,7 +51,7 @@ export default async function TournamentHomeContent({
   const allTeams  = await getTeams(tournament.id, readOptions);
   // Sanitize before any of these rows reach a client component (MyTournamentCard) —
   // see J6-001 / toPublicTeam. allTeams stays raw for server-only registration math.
-  const teams     = allTeams.filter(team => team.status === 'accepted').map(toPublicTeam);
+  const teams     = allTeams.filter(team => team.status === 'accepted').map(team => toPublicTeam(team, tournament.coachNamesShowOnPublic === true));
   const divisions = await getDivisions(tournament.id, readOptions);
   const venues  = await getVenues(tournament.id, readOptions);
   const activeRegistrations = allTeams.filter(team => team.status !== 'rejected');

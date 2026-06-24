@@ -1,27 +1,45 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-06-22 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-06-23 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 50 divergence(s)** across dev/prod.
+**⚠️ 93 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 0 | 0 | — |
-| Columns | 0 | 3 | 23 |
-| Indexes | 4 | 3 | 0 |
-| Constraints | 7 | 9 | — |
-| RLS / CHECK | 0 | 1 | 0 (RLS state) |
+| Tables | 2 | 0 | — |
+| Columns | 18 | 3 | 23 |
+| Indexes | 15 | 3 | 0 |
+| Constraints | 18 | 9 | — |
+| RLS / CHECK | 1 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (0)
-_none_
+### Only in DEV (2)
+- `chat_message_reactions`
+- `chat_poll_votes`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (0)
-_none_
+### Only in DEV (18)
+- `chat_message_reactions.created_at`
+- `chat_message_reactions.emoji`
+- `chat_message_reactions.id`
+- `chat_message_reactions.message_id`
+- `chat_message_reactions.removed_at`
+- `chat_message_reactions.room_id`
+- `chat_message_reactions.user_id`
+- `chat_messages.pinned_at`
+- `chat_messages.pinned_by_user_id`
+- `chat_poll_votes.created_at`
+- `chat_poll_votes.id`
+- `chat_poll_votes.message_id`
+- `chat_poll_votes.option_id`
+- `chat_poll_votes.removed_at`
+- `chat_poll_votes.room_id`
+- `chat_poll_votes.user_id`
+- `organizations.team_limit`
+- `tournaments.coach_names_show_on_public`
 
 ### Only in PROD (3)
 - `resources.created_at`
@@ -54,7 +72,18 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (4)
+### Only in DEV (15)
+- `chat_message_reactions_message_idx`
+- `chat_message_reactions_pkey`
+- `chat_message_reactions_room_idx`
+- `chat_message_reactions_unique`
+- `chat_messages_pinned_idx`
+- `chat_poll_votes_message_idx`
+- `chat_poll_votes_pkey`
+- `chat_poll_votes_room_idx`
+- `chat_poll_votes_unique`
+- `chat_rooms_surface_ref_nosub_uniq`
+- `chat_rooms_surface_ref_sub_uniq`
 - `league_practices_recurrence_idx`
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
@@ -69,8 +98,19 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (7)
+### Only in DEV (18)
 - `announcements.announcements_tournament_id_fkey`
+- `chat_message_reactions.chat_message_reactions_message_id_fkey`
+- `chat_message_reactions.chat_message_reactions_pkey`
+- `chat_message_reactions.chat_message_reactions_room_id_fkey`
+- `chat_message_reactions.chat_message_reactions_unique`
+- `chat_message_reactions.chat_message_reactions_user_id_fkey`
+- `chat_messages.chat_messages_pinned_by_user_id_fkey`
+- `chat_poll_votes.chat_poll_votes_message_id_fkey`
+- `chat_poll_votes.chat_poll_votes_pkey`
+- `chat_poll_votes.chat_poll_votes_room_id_fkey`
+- `chat_poll_votes.chat_poll_votes_unique`
+- `chat_poll_votes.chat_poll_votes_user_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
 - `games.games_age_group_id_fkey`
@@ -93,8 +133,8 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (0)
-_none_
+### CHECK only in DEV (1)
+- `chat_message_reactions.chat_message_reactions_emoji_check`
 
 ### CHECK only in PROD (1)
 - `tournaments.tournaments_status_check`

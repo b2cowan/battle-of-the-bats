@@ -58,8 +58,8 @@ interface ChannelPrefs {
 function systemDefaults(eventType: NotificationEventType, role: string): ChannelPrefs {
   return {
     bell:  true,
-    // Chat is the chat-app model: push ON by default (the only event type that does), email OFF.
-    push:  eventType === 'chat_message',
+    // Chat is the chat-app model: push ON by default (chat message + @mention), email OFF.
+    push:  eventType === 'chat_message' || eventType === 'chat_mention',
     // payment_failed defaults to email=true for owners and admins
     email: eventType === 'payment_failed' && (role === 'owner' || role === 'admin'),
   };

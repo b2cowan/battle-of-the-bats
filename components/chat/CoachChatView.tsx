@@ -27,11 +27,32 @@ type RoomListItem = {
   readOnly: boolean;
 };
 
+/** Retract the caller's own message (server enforces ownership). Throws on failure so ChatPanel's
+ *  optimistic delete rolls the bubble back. (Named distinctly from the server-only chat-service
+ *  helper of similar purpose to avoid confusion across the client/server boundary.) */
+async function requestDeleteOwnMessage(roomId: string, messageId: string): Promise<void> {
+  const res = await fetch(`/api/chat/rooms/${roomId}/messages/${messageId}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Delete failed');
+}
+
 export default function CoachChatView() {
   const [rooms, setRooms] = useState<RoomListItem[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // On desktop (≥1024px) the room list is a PERSISTENT sidebar, so the "Rooms" back control is
+  // redundant there — only render it on mobile (full-swap list↔conversation). Default false (mobile)
+  // for SSR; corrected on mount so it's never shown on a desktop pane.
+  const [isDesktop, setIsDesktop] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,7 +104,8 @@ export default function CoachChatView() {
     const multi = rooms.length > 1;
 
     const roomList = (
-      <div className={styles.sidebar} aria-label="Your chats">
+      <div className={styles.sidebar} aria-label="Your tournament chats">
+        <p className={styles.sidebarHead}>Your tournament chats</p>
         {rooms.map((r) => {
           const active = r.room.id === selected;
           return (
@@ -123,10 +145,16 @@ export default function CoachChatView() {
               roomId={selectedRoom.room.id}
               roomName={selectedRoom.room.name}
               unreadCount={selectedRoom.unreadCount}
+              onDeleteOwn={(messageId) => requestDeleteOwnMessage(selectedRoom.room.id, messageId)}
               iconBefore={<MessageSquare size={14} aria-hidden />}
               headerRight={
-                multi ? (
-                  <button type="button" className={styles.backBtn} onClick={() => setSelected(null)}>
+                multi && !isDesktop ? (
+                  <button
+                    type="button"
+                    className={styles.backBtn}
+                    onClick={() => setSelected(null)}
+                    aria-label="Back to your tournament chats"
+                  >
                     <ChevronLeft size={18} aria-hidden /> <span className={styles.backBtnLabel}>Rooms</span>
                   </button>
                 ) : undefined
