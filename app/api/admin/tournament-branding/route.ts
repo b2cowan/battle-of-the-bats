@@ -7,6 +7,7 @@ import { normalizeHiddenPublicPages } from '@/lib/public-pages';
 import { hasPlanFeature } from '@/lib/plan-features';
 import type { PublicPageKey } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { fetchAsDataUrl, detectBackgroundHex } from '@/lib/pwa-icon';
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 const VALID_PRESETS = new Set(Object.keys(PRESETS));
@@ -19,7 +20,19 @@ const PLUS_VISUAL_FIELDS = [
   'themeFont',
   'themeCardStyle',
   'colorMode',
+  'iconBgColor',
+  'appName',
 ] as const;
+
+const APP_NAME_MAX = 30;
+
+/** Auto-detect the app-icon tile colour the same way the icon routes do: sample the
+ *  effective logo's own background. Used to seed/show the "Auto" option in the UI. */
+async function suggestIconBg(logoUrl: string | null): Promise<string | null> {
+  if (!logoUrl) return null;
+  const dataUrl = await fetchAsDataUrl(logoUrl);
+  return dataUrl ? detectBackgroundHex(dataUrl) : null;
+}
 
 export const GET = withObservability(async (req: Request) => {
   const url = new URL(req.url);
@@ -38,7 +51,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data, error } = await supabaseAdmin
     .from('tournaments')
-    .select('logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, color_mode, require_score_finalization')
+    .select('logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, color_mode, icon_bg_color, app_name, require_score_finalization')
     .eq('id', tournamentId)
     .eq('org_id', ctx.org.id)
     .single();
@@ -53,6 +66,20 @@ export const GET = withObservability(async (req: Request) => {
     .eq('org_id', ctx.org.id)
     .maybeSingle();
 
+  // For the App Icon control: auto-sample the colour the icon would use by default.
+  // The icon resolves the effective logo as tournament logo → org logo, so mirror that
+  // fallback here. Only worth computing for plans that can use advanced branding.
+  let iconBgSuggested: string | null = null;
+  if (hasPlanFeature(ctx.org.planId, 'advanced_tournament_branding')) {
+    let effectiveLogo = data.logo_url as string | null;
+    if (!effectiveLogo) {
+      const { data: orgRow } = await supabaseAdmin
+        .from('organizations').select('logo_url').eq('id', ctx.org.id).maybeSingle();
+      effectiveLogo = orgRow?.logo_url ?? null;
+    }
+    iconBgSuggested = await suggestIconBg(effectiveLogo);
+  }
+
   return NextResponse.json({
     logoUrl:                  data.logo_url,
     heroBannerUrl:            data.hero_banner_url,
@@ -62,6 +89,9 @@ export const GET = withObservability(async (req: Request) => {
     themeFont:                data.theme_font,
     themeCardStyle:           data.theme_card_style,
     colorMode:                data.color_mode ?? 'dark',
+    iconBgColor:              data.icon_bg_color ?? null,
+    iconBgSuggested,
+    appName:                  data.app_name ?? null,
     requireScoreFinalization: data.require_score_finalization,
     publicHiddenPages:        normalizeHiddenPublicPages(pageData?.public_hidden_pages),
     coachNamesShowOnPublic:   pageData?.coach_names_show_on_public === true,
@@ -87,6 +117,8 @@ export const PATCH = withObservability(async (req: Request) => {
     themeFont?: string | null;
     themeCardStyle?: string | null;
     colorMode?: 'dark' | 'light' | null;
+    iconBgColor?: string | null;
+    appName?: string | null;
     publicHiddenPages?: PublicPageKey[] | null;
     coachNamesShowOnPublic?: boolean | null;
     requireScoreFinalization?: boolean | null;
@@ -181,6 +213,23 @@ export const PATCH = withObservability(async (req: Request) => {
       );
     }
     updates.theme_card_style = style === 'default' ? null : style;
+  }
+
+  if ('iconBgColor' in body) {
+    if (body.iconBgColor === null) {
+      updates.icon_bg_color = null;
+    } else {
+      const hex = String(body.iconBgColor);
+      if (!HEX_RE.test(hex)) {
+        return NextResponse.json({ error: 'Invalid hex color for iconBgColor' }, { status: 400 });
+      }
+      updates.icon_bg_color = hex;
+    }
+  }
+
+  if ('appName' in body) {
+    const trimmed = body.appName == null ? '' : String(body.appName).trim();
+    updates.app_name = trimmed ? trimmed.slice(0, APP_NAME_MAX) : null;
   }
 
   if ('colorMode'                in body) updates.color_mode                 = body.colorMode === 'light' ? 'light' : null;

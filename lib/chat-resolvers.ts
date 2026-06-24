@@ -81,20 +81,29 @@ async function activeProgramYearIds(programYearIds: (string | null)[]): Promise<
 /**
  * Resolve the full chat roster for a tournament: the deduped set of logged-in coach user_ids plus
  * the "Not yet joined" teams. Pure DB joins — no auth-admin lookups (cheap; callers hydrate display
- * names separately only for the handful of rows they render). Pass `divisionId` to scope to one
- * division (the spine is `teams`, which carries `division_id`, so every downstream join inherits it).
+ * names separately only for the handful of rows they render). Pass `divisionIds` to scope to a SET of
+ * divisions (a division room can cover several): the spine is `teams`, which carries `division_id`, so
+ * every downstream join inherits the filter. Semantics:
+ *   • `null` / `undefined` → ALL divisions (the "All coaches" room).
+ *   • a non-empty array     → only teams in those divisions (a division sub-room).
+ *   • an EMPTY array        → nobody (a mis-scoped division room resolves to no participants — never
+ *                             falls back to "all", so a settings glitch can't leak the whole roster).
  */
 export async function resolveTournamentChatParticipants(
   tournamentId: string,
-  divisionId?: string | null,
+  divisionIds?: string[] | null,
 ): Promise<TournamentChatParticipants> {
-  // ── 1. The spine: the tournament's registered teams (optionally one division) ──
+  // A division room with no valid divisions covers nobody (do NOT treat empty as "all" — that would
+  // turn a mis-scoped sub-room into the everyone room).
+  if (Array.isArray(divisionIds) && divisionIds.length === 0) return { userIds: [], pending: [] };
+
+  // ── 1. The spine: the tournament's registered teams (optionally a division set) ──
   let teamsQuery = supabaseAdmin
     .from('teams')
     .select('id, name, coach, email, division_id, status')
     .eq('tournament_id', tournamentId)
     .neq('status', 'rejected'); // a rejected registration is dead — not a participant
-  if (divisionId) teamsQuery = teamsQuery.eq('division_id', divisionId);
+  if (divisionIds && divisionIds.length > 0) teamsQuery = teamsQuery.in('division_id', divisionIds);
 
   const { data: teamsData, error: teamsError } = await teamsQuery;
   if (teamsError) throw teamsError;

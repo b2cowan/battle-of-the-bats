@@ -1,5 +1,5 @@
 {
   "_comment": "Migration watermark for the snapshot-freshness gate (scripts/check-snapshot-freshness.mjs). highestMigration + migrationCount record the state of supabase/migrations/ at the last `npm run refresh:snapshots`. The gate FAILS when supabase/migrations/ has advanced beyond this (a migration landed without a snapshot refresh+commit). See DATA_DICTIONARY_PLAN.md §11. Written by refresh-db-snapshots.mjs — do not hand-edit.",
-  "highestMigration": 151,
-  "migrationCount": 152
+  "highestMigration": 153,
+  "migrationCount": 154
 }

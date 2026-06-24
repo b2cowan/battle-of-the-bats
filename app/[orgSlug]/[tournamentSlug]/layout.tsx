@@ -40,7 +40,9 @@ export async function generateMetadata({
     if (org && org.subscriptionStatus !== 'canceled') {
       const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
       if (tournament) {
-        appleTitle = tournament.name;
+        // iOS home-screen label: organizer's custom app name if set, else the event name.
+        // Plus-gated (matches the logo/theme read-gating) so a downgraded org reverts.
+        appleTitle = (canUseAdvancedTournamentBranding(org) && tournament.appName?.trim()) || tournament.name;
         ogTitle = tournament.name;
         ogDescription = `Live scores, schedule and standings · Hosted by ${org.name} on FieldLogicHQ.`;
       }

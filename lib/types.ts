@@ -292,6 +292,14 @@ export interface Tournament {
   themeFont?: string | null;
   themeCardStyle?: string | null;
   colorMode?: 'dark' | 'light' | null;
+  /** App-icon (home-screen/PWA) tile background. '#rrggbb' forces the tile colour;
+   *  null = auto-detect from the logo's own background (mig 152). Read only by the
+   *  apple-touch + Android maskable icon routes. */
+  iconBgColor?: string | null;
+  /** Custom home-screen label (manifest short_name + iOS title). Blank/null = derive
+   *  from the tournament name as before (mig 153). The full name still drives the
+   *  install prompt + browser title. */
+  appName?: string | null;
   publicHiddenPages?: PublicPageKey[];
   /** When true, team coach names render on the public tournament pages (Teams cards,
    *  team profile header, schedule search). Defaults to false — coach names are private

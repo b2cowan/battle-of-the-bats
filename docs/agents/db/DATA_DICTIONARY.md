@@ -458,7 +458,9 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 <!-- dict:col:tournaments.theme_font -->
 <!-- dict:col:tournaments.theme_card_style -->
 <!-- dict:col:tournaments.color_mode -->
-**Branding/theming block** (`logo_url`, `hero_banner_url`, `theme_preset`, `theme_primary`, `theme_accent`, `theme_font`, `theme_card_style`, `color_mode`) — public-page appearance overrides. `color_mode`: only `'light'` is honored; anything else → null (default dark) ([lib/db.ts:2503](../../../lib/db.ts#L2503)).
+<!-- dict:col:tournaments.icon_bg_color -->
+<!-- dict:col:tournaments.app_name -->
+**Branding/theming block** (`logo_url`, `hero_banner_url`, `theme_preset`, `theme_primary`, `theme_accent`, `theme_font`, `theme_card_style`, `color_mode`, `icon_bg_color`, `app_name`) — public-page appearance overrides. `color_mode`: only `'light'` is honored; anything else → null (default dark) ([lib/db.ts:2503](../../../lib/db.ts#L2503)). **`icon_bg_color`** (text, nullable; mig 152) — organizer override for the installed home-screen (PWA) **app-icon tile background**. `'#rrggbb'` (HEX-validated app-side) forces the tile colour; **NULL = auto-detect** the colour from the logo's own edge pixels (the default). Read **only** by the apple-touch (`apple-icon.tsx`) + Android maskable (`icon-maskable`) icon routes via `resolveBrandedLogo` ([lib/pwa-icon.tsx](../../../lib/pwa-icon.tsx)) — override wins, else `detectBackgroundHex`, else `ICON_DARK`. Set in Public Site → Advanced Branding → **App Icon** (Plus-gated, `manage_branding`). A colour that contrasts with the logo reads as a deliberate border; matching = seamless. **`app_name`** (text, nullable; mig 153) — organizer's custom home-screen label for the installed PWA. Trimmed, ≤30 chars app-side; **blank/NULL = derive from the tournament name** (manifest `short_name` truncates to ~12 chars; iOS uses the name as-is) — the default. Used as the manifest `short_name` ([manifest.webmanifest/route.ts](../../../app/[orgSlug]/[tournamentSlug]/manifest.webmanifest/route.ts)) + the `apple-mobile-web-app-title` ([layout.tsx](../../../app/[orgSlug]/[tournamentSlug]/layout.tsx)); the manifest `name`, install-prompt title, and browser `<title>` still use the full tournament name. Set in Public Site → Advanced Branding → **App Icon** (Plus-gated, `manage_branding`). _Dev/prod:_ both nullable, no default.
 
 <!-- dict:col:tournaments.require_score_finalization -->
 **`require_score_finalization`** (bool, nullable) — per-tournament override of the org score-finalization policy; cascades `tournament ?? org.require_score_finalization ?? false` ([lib/tournament-score-policy.ts:19](../../../lib/tournament-score-policy.ts#L19)).
@@ -1652,7 +1654,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 2. **`is_archived` is a soft-hide for the admin list only** — independent of billing and of program-year status. Archiving does **not** complete/archive program years and does **not** trigger a Stripe sync.
 3. **No hard-delete from the UI.** `deleteRepTeam` ([lib/db.ts:3848](../../../lib/db.ts#L3848)) does a hard `DELETE` but is wired to **no HTTP route**; the only user-facing removal is `is_archived=true` via PATCH. Rows otherwise die only by FK CASCADE.
 4. **`slug` is the PUBLIC URL key, addressed internally by UUID `teamId`.** Public team + tryout pages resolve `getRepTeamBySlug` ([lib/db.ts:3785](../../../lib/db.ts#L3785)); the coach portal never uses it. Create slugifies the name with **no min length**, but `bulkRenameTeamSlugs` enforces 3–80 chars, lowercase alphanumeric with internal hyphens (no leading/trailing hyphen) — so existing slugs can violate the bulk-rename rule.
-5. **Create triggers `syncRepTeamBilling` ONLY when `org.planId==='club'`** (fire-and-forget). Non-Club orgs never sync on team create.
+5. **No billing sync on create (Club Repackaging, 2026-06-22).** The per-team `$19/team beyond 3` Stripe meter and `syncRepTeamBilling` are **retired** — a Club / Club · Association subscription includes its whole coaching staff up to the plan's team cap. Create now enforces a **capacity cap** instead: it blocks the (cap+1)th non-archived team via `getNonArchivedRepTeamCount` vs the effective `teamLimit` ([app/api/admin/rep-teams/teams/route.ts](../../../app/api/admin/rep-teams/teams/route.ts)). The same cap is enforced on the ownership-transfer adoption path ([lib/team-ownership-transfer.ts](../../../lib/team-ownership-transfer.ts)).
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -1715,7 +1717,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 2. **The "one active program year per team" rule is APP-enforced, not a DB constraint** — the DB only has `UNIQUE(team_id, year)`; the activate transition (and the create route) guard against a second `active` year.
 3. **Status transitions are forward-only — `draft→active→completed→archived`, enforced ONLY on the admin route** (`VALID_TRANSITIONS`; invalid → 422). **Provisioning bypasses it** — a self-serve team-workspace inserts `status:'active'` directly ([lib/team-workspace-provisioning.ts:184](../../../lib/team-workspace-provisioning.ts#L184)), skipping the guard.
 4. **`budget_amount` + `auto_reminders_enabled` are COACH-side fields** — the org-admin program-year PATCH deliberately omits `budgetAmount` even though `updateRepProgramYear` supports it ([lib/db.ts:3987](../../../lib/db.ts#L3987)). An org admin editing a program year cannot touch the budget or the reminder toggle.
-5. **Completing/archiving triggers a Club-only billing sync** (fire-and-forget).
+5. **No billing sync on completing/archiving (Club Repackaging, 2026-06-22).** The former Club-only per-team Stripe sync is **retired** — program-year status changes no longer trigger any billing call. Club capacity is a flat per-plan team cap, not a per-team meter.
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -5079,7 +5081,7 @@ One generic engine, three tables: **chat_rooms** (a conversation, typed by `surf
 **`ref_id`** (uuid, NN) — the subject the room is about (tournamentId for `tournament`, orgId for `coach_peer`, …). App-layer reference, no DB FK (varies by surface). **UNIQUE per conversation identity (mig 149):** partial unique indexes enforce ONE room per `(surface, ref_id)` when `ref_sub_id IS NULL` and per `(surface, ref_id, ref_sub_id)` otherwise — added after a creation race produced duplicate rooms (a coach saw the same tournament chat twice); `ensureTournamentChatRoom` catches the unique-violation and re-fetches the winner.
 
 <!-- dict:col:chat_rooms.ref_sub_id -->
-**`ref_sub_id`** (uuid, nullable) — optional sub-scope (e.g. a division for a tournament sub-room).
+**`ref_sub_id`** (uuid, nullable) — sub-room identity. For `tournament`: **NULL = the default "All coaches" room** (one per tournament, zero-config, undeletable); a **fresh opaque uuid = an organizer-created division room** whose covered divisions ride `settings.divisionIds`. The mig-149 partial-unique guard keys on `(surface, ref_id, ref_sub_id)`, and each division room gets a fresh uuid, so no two rooms collide (even with identical division sets/names).
 
 <!-- dict:col:chat_rooms.name -->
 **`name`** (text, NN) — display name.
@@ -5091,7 +5093,7 @@ One generic engine, three tables: **chat_rooms** (a conversation, typed by `surf
 **`is_archived`** (bool, NN, default false) — archived rooms are read-only (the INSERT policy requires `is_archived = false`). A tournament room **stays readable** after archive (owner decision 2026-06-19).
 
 <!-- dict:col:chat_rooms.settings -->
-**`settings`** (jsonb, NN, default `{}`) — per-room flags (`coach_post_enabled`, `is_read_only`, `max_retention_days`); reserved for the surface phase.
+**`settings`** (jsonb, NN, default `{}`) — per-room config. For a tournament **division room** it holds **`divisionIds: string[]`** — the divisions the room covers; membership AUTO-MAINTAINS as `resolveTournamentChatParticipants(tournamentId, divisionIds)` re-derives the coaches in those divisions (`roomDivisionIds()` in `lib/chat-service.ts` is the single source of truth; the All-coaches room leaves this empty). Other flags (`coach_post_enabled`, `is_read_only`, `max_retention_days`) remain reserved for later surfaces.
 
 ## `chat_room_members`
 <!-- dict:table:chat_room_members -->

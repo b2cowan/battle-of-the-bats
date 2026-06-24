@@ -310,6 +310,8 @@ export async function cloneTournament(
       tournamentInsert.theme_font = source.theme_font ?? null;
       tournamentInsert.theme_card_style = source.theme_card_style ?? null;
       tournamentInsert.color_mode = source.color_mode ?? null;
+      tournamentInsert.icon_bg_color = source.icon_bg_color ?? null;
+      tournamentInsert.app_name = source.app_name ?? null;
     }
 
     if (options.includePublicPages) {
@@ -710,6 +712,8 @@ export async function populateTournamentFrom(
     theme_font: source.theme_font ?? null,
     theme_card_style: source.theme_card_style ?? null,
     color_mode: source.color_mode ?? null,
+    icon_bg_color: source.icon_bg_color ?? null,
+    app_name: source.app_name ?? null,
     public_hidden_pages: Array.isArray(source.public_hidden_pages) ? source.public_hidden_pages : [],
     // Carry coach-name visibility (mig 150) so populating from a source can't silently re-expose
     // (or hide) coach names against the organizer's saved choice.
@@ -2555,6 +2559,8 @@ function mapTournament(r: any): Tournament {
     themeFont:                r.theme_font ?? null,
     themeCardStyle:           r.theme_card_style ?? null,
     colorMode:                (r.color_mode === 'light' ? 'light' : null) as 'light' | null,
+    iconBgColor:              r.icon_bg_color ?? null,
+    appName:                  r.app_name ?? null,
     publicHiddenPages:        Array.isArray(r.public_hidden_pages) ? r.public_hidden_pages : [],
     coachNamesShowOnPublic:   r.coach_names_show_on_public === true,
     requireScoreFinalization: r.require_score_finalization ?? null,

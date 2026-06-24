@@ -1,56 +1,34 @@
-/* Mobile (default): slide-over overlay anchored to the right edge, below the admin top bar. */
+/* Manage room — a viewport slide-over (portaled to <body>, like the in-app help drawer), so it never
+   touches the chat layout: dimming + blurred backdrop, a fixed-width panel sliding in from the RIGHT
+   (the side its header button sits on), full-width on narrow screens. */
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 60;
+  z-index: 700;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  animation: chatManageFade 0.2s ease;
 }
 
 .panel {
   position: fixed;
-  top: calc(48px + env(safe-area-inset-top, 0px));
+  top: 0;
   right: 0;
   bottom: 0;
-  z-index: 61;
-  width: min(88vw, 380px);
+  z-index: 701;
+  width: min(420px, 100vw);
   display: flex;
   flex-direction: column;
   background: var(--card-bg);
   border-left: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35);
+  box-shadow: -8px 0 48px rgba(0, 0, 0, 0.55);
+  outline: none;
+  animation: chatManageIn 0.22s ease;
 }
-
-/* Always mounted (so the desktop dock can animate); hide on mobile when closed. */
-@media (max-width: 1023px) {
-  .panel:not(.panelOpen) { display: none; }
-  .backdrop:not(.backdropOpen) { display: none; }
-}
-
-/* Desktop: dock into the chat layout as a side column that animates its width (no snap). */
-@media (min-width: 1024px) {
-  .backdrop { display: none; }
-  .panel {
-    position: relative;
-    inset: auto;
-    top: auto;
-    z-index: auto;
-    width: 0;
-    overflow: hidden;
-    box-shadow: none;
-    /* Transparent border is always present (1px, structural) so it can't be clipped by overflow:hidden
-       when collapsed; its colour cross-fades with the width on open/close. */
-    border: 1px solid transparent;
-    border-radius: 0 var(--radius) var(--radius) 0;
-    transition: width 0.2s ease, border-color 0.2s ease;
-  }
-  .panelOpen {
-    width: 340px;
-    border-color: rgba(var(--blueprint-blue-rgb), 0.2);
-  }
-}
-
+@keyframes chatManageFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes chatManageIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 @media (prefers-reduced-motion: reduce) {
-  .panel { transition: none; }
+  .backdrop, .panel { animation: none; }
 }
 
 .head {
@@ -185,17 +163,18 @@
 .tagOrg { color: var(--info); border: 1px solid rgba(var(--info-rgb), 0.4); }
 .tagMuted { color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.45); }
 
-/* Destructive room control, separated and pushed to the bottom away from the open gesture. */
-.dangerZone {
+/* Room settings (rename / close / delete) for the open room — separated + pushed to the bottom,
+   away from the open gesture, so a destructive action isn't the first thing under the thumb. */
+.roomSettings {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 0.4rem;
   margin-top: auto;
   padding-top: 0.85rem;
-  border-top: 1px solid rgba(var(--danger-rgb), 0.25);
+  border-top: 1px solid rgba(var(--danger-rgb), 0.22);
 }
-.dangerLabel {
+.settingsLabel {
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;

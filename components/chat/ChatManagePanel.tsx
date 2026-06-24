@@ -1,17 +1,19 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { X, Lock, Unlock, VolumeX, Volume2, Copy, Check, Mail, Users } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { X, VolumeX, Volume2, Copy, Check, Mail, UserCog, Pencil, Lock, Unlock, Trash2 } from 'lucide-react';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import styles from './ChatManagePanel.module.css';
 
 /**
- * Organizer moderation drawer for Tournament Chat — the roster (Members + "Not yet joined") and the
- * room controls (mute / close), pulled OFF the main chat screen so the conversation can fill it like
- * a real messaging app. Renders as an accessible slide-over on mobile and docks beside the chat on
- * desktop (one `open` state drives both; CSS handles the difference). Always mounted (so the desktop
- * dock animates its width rather than snapping the chat column); `inert` + transforms hide it when
- * closed. Presentational — the page owns the data + handlers.
+ * "Manage room" drawer for organizer Tournament Chat — everything about the OPEN room in one place:
+ * the roster (Members + "Not yet joined"), per-member moderation (mute), and the room settings
+ * (rename / close / delete). The left "Rooms" panel only switches/creates rooms; this panel manages
+ * the one that's open. A viewport slide-over PORTALED to <body> (the in-app help-drawer pattern): it
+ * floats over the whole screen with a dimming backdrop + body scroll-lock, so it never touches the
+ * chat layout. ~420px from the right, full-width on narrow screens. Presentational — the page owns the
+ * data + handlers.
  */
 
 export type ChatMember = {
@@ -53,28 +55,39 @@ function inviteMailto(email: string): string {
 type Props = {
   open: boolean;
   onClose: () => void;
-  isArchived: boolean;
   members: ChatMember[];
   pending: ChatPending[];
   busy: boolean;
-  onToggleClose: (close: boolean) => void;
   onToggleMute: (member: ChatMember, mute: boolean) => void;
   onCopyInvite: (p: ChatPending) => void;
   copiedId: string | null;
+  // ── Room settings (the open room) ──
+  isArchived: boolean;
+  onToggleClose: (close: boolean) => void;
+  /** Rename — only provided for division rooms (the All-coaches room is fixed). */
+  onRename?: () => void;
+  /** Delete — only provided when allowed (an empty division room). */
+  onDelete?: () => void;
+  /** Why delete is unavailable, shown when onDelete is absent (e.g. All-coaches room / has messages). */
+  deleteNote?: string;
 };
 
 export default function ChatManagePanel({
-  open, onClose, isArchived, members, pending, busy, onToggleClose, onToggleMute, onCopyInvite, copiedId,
+  open, onClose, members, pending, busy, onToggleMute, onCopyInvite, copiedId,
+  isArchived, onToggleClose, onRename, onDelete, deleteNote,
 }: Props) {
   const panelRef = useRef<HTMLElement>(null);
   const prevFocusRef = useRef<HTMLElement | null>(null);
   const mutedCount = members.filter(isMuted).length;
 
-  // Dialog behaviour while open: focus in, Escape to close, focus trap, restore focus on close.
+  // Dialog behaviour while open: focus in (without scrolling the page), Escape to close, focus trap,
+  // restore focus on close. (No body scroll-lock — the backdrop covers the chat, and on the mobile
+  // admin layout the scroll container is the content area, not <body>, so locking the body does
+  // nothing useful here and can shift the mobile viewport.)
   useEffect(() => {
     if (!open) return;
     prevFocusRef.current = (document.activeElement as HTMLElement) ?? null;
-    panelRef.current?.focus();
+    panelRef.current?.focus({ preventScroll: true });
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { onClose(); return; }
       if (e.key !== 'Tab' || !panelRef.current) return;
@@ -90,37 +103,26 @@ export default function ChatManagePanel({
     document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('keydown', onKeyDown);
-      prevFocusRef.current?.focus();
+      prevFocusRef.current?.focus({ preventScroll: true });
     };
   }, [open, onClose]);
 
-  function handleToggleClose() {
-    if (!isArchived && typeof window !== 'undefined' &&
-      !window.confirm('Close this conversation? Coaches will be able to read it but not post until you reopen it.')) {
-      return;
-    }
-    onToggleClose(!isArchived);
-  }
+  if (!open || typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <>
-      <div
-        className={`${styles.backdrop}${open ? ` ${styles.backdropOpen}` : ''}`}
-        onClick={onClose}
-        role="presentation"
-      />
+      <div className={styles.backdrop} onClick={onClose} role="presentation" />
       <aside
         ref={panelRef}
         id="chat-manage-panel"
-        className={`${styles.panel}${open ? ` ${styles.panelOpen}` : ''}`}
-        aria-label="Chat management"
+        className={styles.panel}
+        aria-label="Manage room"
         role="dialog"
         aria-modal="true"
         tabIndex={-1}
-        inert={open ? undefined : true}
       >
         <div className={styles.head}>
-          <span className={styles.headTitle}><Users size={15} aria-hidden /> Manage chat</span>
+          <span className={styles.headTitle}><UserCog size={15} aria-hidden /> Manage room</span>
           <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close manage panel">
             <X size={16} aria-hidden />
           </button>
@@ -216,23 +218,36 @@ export default function ChatManagePanel({
             )}
           </div>
 
-          {/* Room control — danger zone, kept away from the open gesture at the top. */}
-          <div className={styles.dangerZone}>
-            <span className={styles.dangerLabel}>Room control</span>
+          {/* Room settings — for the open room; pushed to the bottom, away from the open gesture. */}
+          <div className={styles.roomSettings}>
+            <span className={styles.settingsLabel}>Room settings</span>
             {isArchived && (
-              <p className={styles.note}>This conversation is <strong>closed</strong> — coaches can read it but cannot post.</p>
+              <p className={styles.note}>This room is <strong>closed</strong> — coaches can read it but cannot post.</p>
+            )}
+            {onRename && (
+              <button type="button" className="btn btn-ghost btn-data" onClick={onRename} disabled={busy}>
+                <Pencil size={14} aria-hidden /> Rename room
+              </button>
             )}
             <button
               type="button"
               className={isArchived ? 'btn btn-ghost btn-data' : 'btn btn-danger btn-data'}
-              onClick={handleToggleClose}
+              onClick={() => onToggleClose(!isArchived)}
               disabled={busy}
             >
               {isArchived ? <><Unlock size={14} aria-hidden /> Reopen room</> : <><Lock size={14} aria-hidden /> Close room</>}
             </button>
+            {onDelete ? (
+              <button type="button" className="btn btn-danger btn-data" onClick={onDelete} disabled={busy}>
+                <Trash2 size={14} aria-hidden /> Delete room
+              </button>
+            ) : (
+              deleteNote && <p className={styles.note}>{deleteNote}</p>
+            )}
           </div>
         </div>
       </aside>
-    </>
+    </>,
+    document.body,
   );
 }

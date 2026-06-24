@@ -157,6 +157,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.roomContext {
+  color: var(--white-40);
+  font-size: 0.7rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .roTag {
   font-size: 0.6rem;
   text-transform: uppercase;

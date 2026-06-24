@@ -12485,6 +12485,24 @@
         "column_default": "false"
       },
       {
+        "table_name": "tournaments",
+        "pos": 39,
+        "column_name": "icon_bg_color",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "tournaments",
+        "pos": 40,
+        "column_name": "app_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "venue_facilities",
         "pos": 1,
         "column_name": "id",

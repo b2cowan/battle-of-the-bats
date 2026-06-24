@@ -11,6 +11,7 @@ import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
 import { withObservability } from '@/lib/observability';
 import {
   getTournamentChatRoom,
+  getTournamentRoomById,
   getMembership,
   muteMember,
   unmuteMember,
@@ -26,15 +27,19 @@ type Params = { params: Promise<{ tournamentId: string }> };
 
 type ModerateBody = {
   action?: 'mute' | 'unmute' | 'delete' | 'close' | 'reopen' | 'pin' | 'unpin';
+  /** which room to act on; omit for the default "All coaches" room (back-compat). */
+  roomId?: string;
   targetUserId?: string;
   messageId?: string;
   hours?: number;
 };
 
 /**
- * POST /api/admin/tournaments/[tournamentId]/chat/moderate — organizer moderation. Actions:
- *   mute (≤72h, post-only block — they keep reading) / unmute / delete (soft) / close / reopen.
- * Service-role only (the engine deliberately denies these to `authenticated`).
+ * POST /api/admin/tournaments/[tournamentId]/chat/moderate — organizer moderation, per room. Actions:
+ *   mute (≤72h, post-only block — they keep reading) / unmute / delete (soft) / close / reopen / pin / unpin.
+ * Pass `roomId` to target a division room; omit it for the default "All coaches" room. The room is
+ * verified to belong to this tournament. Service-role only (the engine deliberately denies these to
+ * `authenticated`).
  */
 export const POST = withObservability(async (req: NextRequest, { params }: Params) => {
   const { tournamentId } = await params;
@@ -51,10 +56,13 @@ export const POST = withObservability(async (req: NextRequest, { params }: Param
     return NextResponse.json({ error: requiresPlanCopy('tournament_chat'), gated: true }, { status: 403 });
   }
 
-  const room = await getTournamentChatRoom(tournamentId);
-  if (!room) return NextResponse.json({ error: 'Chat is not set up for this tournament yet.' }, { status: 404 });
-
   const body = (await req.json().catch(() => ({}))) as ModerateBody;
+
+  // Target room: an explicit roomId (verified to belong to this tournament) or the default All-coaches room.
+  const room = body.roomId
+    ? await getTournamentRoomById(tournamentId, body.roomId)
+    : await getTournamentChatRoom(tournamentId);
+  if (!room) return NextResponse.json({ error: 'Chat is not set up for this tournament yet.' }, { status: 404 });
 
   switch (body.action) {
     case 'mute': {

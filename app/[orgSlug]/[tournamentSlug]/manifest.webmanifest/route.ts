@@ -61,7 +61,13 @@ export async function GET(
       ]
     : PLATFORM_ICONS;
 
-  const shortName = tournament.name.length > 12 ? tournament.name.slice(0, 12).trim() : tournament.name;
+  // Launcher label under the icon: the organizer's custom app name if set, else the
+  // tournament name truncated to ~12 chars (manifest short_name convention). The full
+  // `name` below stays the tournament name (install prompt / app switcher / splash).
+  // Plus-gated like the logo/theme — a downgraded org reverts to the derived label.
+  const customAppName = advanced ? tournament.appName?.trim() || null : null;
+  const shortName = customAppName
+    ?? (tournament.name.length > 12 ? tournament.name.slice(0, 12).trim() : tournament.name);
 
   const manifest = {
     name: tournament.name,

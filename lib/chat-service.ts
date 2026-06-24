@@ -26,7 +26,13 @@ import {
  * mark-read are also routed server-side so we can attach notifications, rate-limits, and mute / closed
  * enforcement in code (an RLS WITH CHECK can't compare old-vs-new, so it can't police those).
  *
- * One room per tournament (ref_sub_id = NULL). Division sub-rooms are a deferred second pass.
+ * ROOM MODEL — "Division Rooms" (channels):
+ *   • The default "All coaches" room has `ref_sub_id = NULL` (one per tournament, zero-config, never
+ *     deletable). Its membership is every coach in the tournament.
+ *   • Organizer-created division rooms each get an opaque `ref_sub_id` (a fresh uuid) and carry their
+ *     covered-division set in `settings.divisionIds`. Membership = organizers + every coach whose team
+ *     is in one of those divisions, AUTO-MAINTAINED as teams register (the resolver re-derives it).
+ *   `roomDivisionIds(room)` is the single source of truth for a room's scope (NULL ⇒ all divisions).
  */
 
 export const CHAT_SURFACE_TOURNAMENT = 'tournament';
@@ -103,6 +109,9 @@ export type ChatRoomListItem = {
   /** the caller's own mute expiry, if muted (composer disable) */
   selfMutedUntil: string | null;
   readOnly: boolean;
+  /** the tournament name this room belongs to — a secondary label so a coach can tell apart several
+   *  rooms in one tournament (e.g. "All coaches" vs "Championship") and same-named rooms across events. */
+  contextLabel: string | null;
 };
 
 type RoomRow = {
@@ -132,6 +141,21 @@ function mapRoom(row: RoomRow): ChatRoom {
 }
 
 const ROOM_COLS = 'id, org_id, surface, ref_id, ref_sub_id, name, is_archived, settings, created_at';
+
+/** Max length for an organizer-chosen division-room name. */
+export const MAX_ROOM_NAME_LENGTH = 80;
+
+/**
+ * The division set a tournament room covers — the single source of truth for a room's scope:
+ *   • the "All coaches" room (`ref_sub_id === null`) → `null` (ALL divisions).
+ *   • a division room → its `settings.divisionIds` (an empty/garbage set → `[]`, i.e. nobody; a
+ *     mis-scoped sub-room never silently widens to "all").
+ */
+export function roomDivisionIds(room: ChatRoom): string[] | null {
+  if (room.refSubId == null) return null;
+  const raw = (room.settings as Record<string, unknown> | null)?.divisionIds;
+  return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string' && x.length > 0) : [];
+}
 
 // ── Display-name hydration ──────────────────────────────────────────────────
 
@@ -176,7 +200,7 @@ export async function hydrateUserDisplay(
 
 // ── Rooms ─────────────────────────────────────────────────────────────────────
 
-/** The single tournament-level room for a tournament (ref_sub_id IS NULL), or null. */
+/** The default "All coaches" room for a tournament (ref_sub_id IS NULL), or null. */
 export async function getTournamentChatRoom(tournamentId: string): Promise<ChatRoom | null> {
   const { data, error } = await supabaseAdmin
     .from('chat_rooms')
@@ -240,6 +264,127 @@ export async function ensureTournamentChatRoom(params: {
   return mapRoom(data);
 }
 
+/**
+ * Every chat room for a tournament — the "All coaches" room (ref_sub_id NULL) FIRST, then the
+ * organizer-created division rooms oldest-first. Read-only; does not create the default room.
+ */
+export async function listTournamentChatRooms(tournamentId: string): Promise<ChatRoom[]> {
+  const { data, error } = await supabaseAdmin
+    .from('chat_rooms')
+    .select(ROOM_COLS)
+    .eq('surface', CHAT_SURFACE_TOURNAMENT)
+    .eq('ref_id', tournamentId);
+  if (error) throw error;
+  const rooms = (data ?? []).map((r) => mapRoom(r as RoomRow));
+  rooms.sort((a, b) => {
+    // All-coaches (ref_sub_id NULL) always first; the rest by creation order.
+    if ((a.refSubId == null) !== (b.refSubId == null)) return a.refSubId == null ? -1 : 1;
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+  return rooms;
+}
+
+/** Fetch a room and confirm it belongs to this tournament (surface=tournament, ref_id=tournamentId). */
+export async function getTournamentRoomById(tournamentId: string, roomId: string): Promise<ChatRoom | null> {
+  const room = await getRoomById(roomId);
+  if (!room || room.surface !== CHAT_SURFACE_TOURNAMENT || room.refId !== tournamentId) return null;
+  return room;
+}
+
+/**
+ * Create an organizer-composed division room (a fresh opaque `ref_sub_id` + `settings.divisionIds`),
+ * then sync its membership. Validates the name and that the chosen divisions belong to the tournament.
+ * The mig-149 partial-unique guard keys on (surface, ref_id, ref_sub_id), and ref_sub_id is a fresh
+ * uuid, so two division rooms never collide (even with identical division sets or names).
+ */
+export async function createTournamentDivisionRoom(params: {
+  tournamentId: string;
+  name: string;
+  divisionIds: string[];
+  createdByUserId: string;
+}): Promise<ChatRoom> {
+  const name = params.name.trim();
+  if (!name) throw new ChatError('invalid', 'Room name is required.', 400);
+  if (name.length > MAX_ROOM_NAME_LENGTH) {
+    throw new ChatError('invalid', `Room name is too long (max ${MAX_ROOM_NAME_LENGTH} characters).`, 400);
+  }
+  const requested = [...new Set(params.divisionIds.filter(Boolean))];
+  if (requested.length === 0) throw new ChatError('invalid', 'Pick at least one division.', 400);
+
+  const { data: tournament, error: tErr } = await supabaseAdmin
+    .from('tournaments')
+    .select('id, org_id')
+    .eq('id', params.tournamentId)
+    .maybeSingle<{ id: string; org_id: string }>();
+  if (tErr) throw tErr;
+  if (!tournament) throw new ChatError('not_found', 'Tournament not found.', 404);
+
+  // Only divisions that actually belong to this tournament (anti-tamper).
+  const { data: divRows, error: dErr } = await supabaseAdmin
+    .from('divisions')
+    .select('id')
+    .eq('tournament_id', params.tournamentId)
+    .in('id', requested);
+  if (dErr) throw dErr;
+  const divisionIds = (divRows ?? []).map((r) => r.id as string);
+  if (divisionIds.length === 0) {
+    throw new ChatError('invalid', 'None of the selected divisions belong to this tournament.', 400);
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('chat_rooms')
+    .insert({
+      org_id: tournament.org_id,
+      surface: CHAT_SURFACE_TOURNAMENT,
+      ref_id: params.tournamentId,
+      ref_sub_id: randomUUID(),
+      name,
+      settings: { divisionIds },
+      created_by_user_id: params.createdByUserId,
+    })
+    .select(ROOM_COLS)
+    .single<RoomRow>();
+  if (error) throw error;
+
+  const room = mapRoom(data);
+  await syncTournamentChatRoom({ room });
+  return room;
+}
+
+/** Rename a room (organizer). Trims + length-checks; works on any room. */
+export async function renameChatRoom(roomId: string, name: string): Promise<void> {
+  const trimmed = name.trim();
+  if (!trimmed) throw new ChatError('invalid', 'Room name is required.', 400);
+  if (trimmed.length > MAX_ROOM_NAME_LENGTH) {
+    throw new ChatError('invalid', `Room name is too long (max ${MAX_ROOM_NAME_LENGTH} characters).`, 400);
+  }
+  const { error } = await supabaseAdmin.from('chat_rooms').update({ name: trimmed }).eq('id', roomId);
+  if (error) throw error;
+}
+
+/**
+ * Delete a division room. PROTECTED two ways:
+ *   • the default "All coaches" room (ref_sub_id NULL) can never be deleted (there is always a home room);
+ *   • a room with ANY messages can never be deleted — only closed — so conversation history is never
+ *     destroyed. Delete is therefore a cleanup tool for a mis-created (empty) room only.
+ * (Membership + reactions/votes cascade on room_id FK; an empty room has none of consequence.)
+ */
+export async function deleteTournamentChatRoom(room: ChatRoom): Promise<void> {
+  if (room.refSubId == null) {
+    throw new ChatError('forbidden', 'The All coaches room can be closed but not deleted.', 403);
+  }
+  const { count, error: countErr } = await supabaseAdmin
+    .from('chat_messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('room_id', room.id);
+  if (countErr) throw countErr;
+  if ((count ?? 0) > 0) {
+    throw new ChatError('forbidden', 'A room with messages can be closed but not deleted.', 403);
+  }
+  const { error } = await supabaseAdmin.from('chat_rooms').delete().eq('id', room.id);
+  if (error) throw error;
+}
+
 // ── Membership ──────────────────────────────────────────────────────────────
 
 type MemberRow = {
@@ -297,12 +442,13 @@ async function getHostModeratorUserIds(orgId: string): Promise<string[]> {
  */
 export async function syncTournamentChatRoom(params: {
   room: ChatRoom;
-  divisionId?: string | null;
 }): Promise<{ activeCount: number; pending: PendingChatCoach[] }> {
   const { room } = params;
+  // Scope is derived from the room itself: NULL ref_sub_id ⇒ all coaches; a division room ⇒ only the
+  // coaches in its covered divisions. The "Not yet joined" list is scoped the same way.
   const { userIds: coachIds, pending } = await resolveTournamentChatParticipants(
     room.refId,
-    params.divisionId ?? null,
+    roomDivisionIds(room),
   );
   const moderatorIds = await getHostModeratorUserIds(room.orgId);
 
@@ -363,22 +509,53 @@ async function ensureMembershipRow(roomId: string, userId: string): Promise<'pre
 }
 
 /**
- * Self-heal one coach's membership: if a room exists for the tournament and the user is a CURRENT
- * participant, ensure they hold an active member row (unless an admin removed them). Self-guarding —
- * it verifies participation before inserting, so it is safe to call with any (userId, tournamentId)
- * pair (membership is the sole access key, so a wrong insert would leak the room). Returns the room
- * when the coach has access, else null.
+ * Self-heal a coach into EVERY tournament room they belong to: the "All coaches" room + each division
+ * room whose covered divisions include the coach's team(s). Self-guarding PER ROOM — division rooms are
+ * gated by the scoped resolver (the coach must resolve as a participant within that room's divisions),
+ * so a wrong insert can't leak a room the coach isn't in (membership is the sole access key). Never
+ * revives an admin-removed row. `participationConfirmed` skips the All-coaches participation re-check
+ * when the caller already established it (the listRoomsForUser hot path). Returns the tournament's rooms.
+ *
+ * NOTE: a division room currently costs one scoped resolver call here. Rooms-per-tournament is small
+ * and this only runs when a coach opens their chat list; resolving the coach's divisions once is a
+ * future optimization if room counts ever grow.
+ */
+async function healCoachTournamentMemberships(
+  userId: string,
+  tournamentId: string,
+  opts: { participationConfirmed: boolean },
+): Promise<ChatRoom[]> {
+  const rooms = await listTournamentChatRooms(tournamentId);
+  let tournamentParticipant: boolean | null = opts.participationConfirmed ? true : null;
+  await Promise.all(
+    rooms.map(async (room) => {
+      const divisionIds = roomDivisionIds(room);
+      if (divisionIds === null) {
+        // All-coaches room — gated on tournament participation (only one such room, so the lazy check runs once).
+        if (tournamentParticipant === null) {
+          tournamentParticipant = await isTournamentChatParticipant(userId, tournamentId);
+        }
+        if (tournamentParticipant) await ensureMembershipRow(room.id, userId);
+      } else {
+        const { userIds } = await resolveTournamentChatParticipants(tournamentId, divisionIds);
+        if (userIds.includes(userId)) await ensureMembershipRow(room.id, userId);
+      }
+    }),
+  );
+  return rooms;
+}
+
+/**
+ * Self-heal one coach's memberships across all of a tournament's rooms (see
+ * healCoachTournamentMemberships). Returns the "All coaches" room when the coach has (non-removed)
+ * access to it, else null — preserving this helper's original contract for any caller.
  */
 export async function ensureCoachMembership(userId: string, tournamentId: string): Promise<ChatRoom | null> {
-  const room = await getTournamentChatRoom(tournamentId);
-  if (!room) return null;
-
-  const existing = await getMembership(room.id, userId);
-  if (existing) return existing.status === 'removed' ? null : room;
-
-  if (!(await isTournamentChatParticipant(userId, tournamentId))) return null;
-  const state = await ensureMembershipRow(room.id, userId);
-  return state === 'removed' ? null : room;
+  const rooms = await healCoachTournamentMemberships(userId, tournamentId, { participationConfirmed: false });
+  const allRoom = rooms.find((r) => r.refSubId == null) ?? null;
+  if (!allRoom) return null;
+  const membership = await getMembership(allRoom.id, userId);
+  return membership && membership.status !== 'removed' ? allRoom : null;
 }
 
 // ── Room list (coach-facing) ────────────────────────────────────────────────
@@ -414,14 +591,14 @@ async function lastMessageFor(roomId: string): Promise<{ at: string; preview: st
  * a coach who signed in after the organizer opened chat still finds their room.
  */
 export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem[]> {
-  // Self-heal: ensure a membership row for every tournament the coach participates in that has a
-  // room. tournamentIds are already participation-confirmed by resolveTournamentsForCoach, so use
-  // the unchecked row helper (avoids re-running the inverse resolver once per tournament).
+  // Self-heal: ensure a membership row in every room the coach belongs to — the All-coaches room PLUS
+  // each division room covering their team's division — for every tournament they participate in.
+  // tournamentIds are already participation-confirmed by resolveTournamentsForCoach (so the All-coaches
+  // heal is cheap); division rooms are gated by the scoped resolver inside the helper.
   const tournamentIds = await resolveTournamentsForCoach(userId);
   await Promise.all(tournamentIds.map(async (tid) => {
     try {
-      const room = await getTournamentChatRoom(tid);
-      if (room) await ensureMembershipRow(room.id, userId);
+      await healCoachTournamentMemberships(userId, tid, { participationConfirmed: true });
     } catch (err) {
       console.error('[chat-service] membership self-heal failed (non-fatal):', err);
     }
@@ -445,6 +622,19 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
   if (roomErr) throw roomErr;
   const roomById = new Map((roomRows ?? []).map(r => [r.id, mapRoom(r as RoomRow)]));
 
+  // Tournament names for the rooms' subjects → a per-room context label (one batched lookup).
+  const tournamentIdsForRooms = [...new Set([...roomById.values()].map((r) => r.refId))];
+  const tournamentNameById = new Map<string, string>();
+  if (tournamentIdsForRooms.length > 0) {
+    const { data: tRows, error: tErr } = await supabaseAdmin
+      .from('tournaments')
+      .select('id, name')
+      .in('id', tournamentIdsForRooms);
+    // Non-fatal: a failure just means rooms render without their context label.
+    if (tErr) console.error('[chat-service] room context-label lookup failed (non-fatal):', tErr);
+    for (const t of tRows ?? []) tournamentNameById.set(t.id as string, t.name as string);
+  }
+
   // Per-room last-message + unread in parallel (was O(rooms) sequential round-trips).
   const items = (await Promise.all(memberships.map(async (m) => {
     const room = roomById.get(m.room_id as string);
@@ -462,6 +652,7 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
       isModerator: m.member_role === 'moderator',
       selfMutedUntil: mutedUntil && new Date(mutedUntil) > new Date() ? mutedUntil : null,
       readOnly: room.isArchived,
+      contextLabel: tournamentNameById.get(room.refId) ?? null,
     } as ChatRoomListItem;
   }))).filter((x): x is ChatRoomListItem => x !== null);
   // Most-recently-active room first; rooms with no messages sink to the bottom.
@@ -1300,7 +1491,94 @@ export async function getRoomRoster(room: ChatRoom): Promise<{
   });
   members.sort((a, b) => a.name.localeCompare(b.name));
 
-  // "Not yet joined" — recompute live so newly-resolved coaches drop off automatically.
-  const { pending } = await resolveTournamentChatParticipants(room.refId);
+  // "Not yet joined" — recompute live so newly-resolved coaches drop off automatically. Scoped to the
+  // room's divisions so a division room only shows the teams it actually covers.
+  const { pending } = await resolveTournamentChatParticipants(room.refId, roomDivisionIds(room));
   return { members, pending };
+}
+
+// ── Admin multi-room overview ────────────────────────────────────────────────
+
+/** One row in the organizer room switcher: name, archive state, scope, and live counts. */
+export type AdminChatRoomSummary = {
+  id: string;
+  name: string;
+  isArchived: boolean;
+  /** null = the default "All coaches" room (undeletable); a uuid = an organizer-created division room. */
+  refSubId: string | null;
+  /** the divisions this room covers (empty for the All-coaches room). */
+  divisionIds: string[];
+  /** active members (organizers + resolved coaches). */
+  memberCount: number;
+  /** teams in scope whose coach hasn't signed in yet. */
+  pendingCount: number;
+  /** most recent message timestamp (null = no messages yet) — drives the switcher's activity order. */
+  lastMessageAt: string | null;
+};
+
+/**
+ * The organizer's room switcher data: ensures the default room exists, then reconciles membership for
+ * EVERY room (so counts are live + newly-registered coaches land in the right rooms) and returns a
+ * summary per room. Order: the "All coaches" room is PINNED first (the home/announcements channel),
+ * then division rooms by most-recent message (most active first; empty rooms sink).
+ */
+export async function listTournamentChatRoomSummaries(
+  tournamentId: string,
+  createdByUserId: string,
+): Promise<AdminChatRoomSummary[]> {
+  await ensureTournamentChatRoom({ tournamentId, createdByUserId });
+  const rooms = await listTournamentChatRooms(tournamentId);
+  const summaries = await Promise.all(
+    rooms.map(async (room) => {
+      const [sync, last] = await Promise.all([syncTournamentChatRoom({ room }), lastMessageFor(room.id)]);
+      return {
+        id: room.id,
+        name: room.name,
+        isArchived: room.isArchived,
+        refSubId: room.refSubId,
+        divisionIds: roomDivisionIds(room) ?? [],
+        memberCount: sync.activeCount,
+        pendingCount: sync.pending.length,
+        lastMessageAt: last?.at ?? null,
+      };
+    }),
+  );
+  summaries.sort((a, b) => {
+    // All-coaches (ref_sub_id NULL) always pinned first.
+    if ((a.refSubId == null) !== (b.refSubId == null)) return a.refSubId == null ? -1 : 1;
+    // Then most-recently-active first; rooms with no messages sink to the bottom.
+    return (b.lastMessageAt ?? '').localeCompare(a.lastMessageAt ?? '');
+  });
+  return summaries;
+}
+
+/** A division choice for the "New room" composer: name + how many (non-rejected) teams it holds. */
+export type ChatDivisionOption = { id: string; name: string; teamCount: number };
+
+/** The tournament's divisions with team counts, for the division multi-select in the room composer. */
+export async function getTournamentDivisionsForChat(tournamentId: string): Promise<ChatDivisionOption[]> {
+  const [divRes, teamRes] = await Promise.all([
+    supabaseAdmin
+      .from('divisions')
+      .select('id, name, display_order')
+      .eq('tournament_id', tournamentId)
+      .order('display_order', { ascending: true }),
+    supabaseAdmin
+      .from('teams')
+      .select('division_id')
+      .eq('tournament_id', tournamentId)
+      .neq('status', 'rejected'), // match the chat participant spine (a rejected reg is not a member)
+  ]);
+  if (divRes.error) throw divRes.error;
+  if (teamRes.error) throw teamRes.error;
+  const countByDivision = new Map<string, number>();
+  for (const t of teamRes.data ?? []) {
+    const d = t.division_id as string | null;
+    if (d) countByDivision.set(d, (countByDivision.get(d) ?? 0) + 1);
+  }
+  return (divRes.data ?? []).map((d) => ({
+    id: d.id as string,
+    name: d.name as string,
+    teamCount: countByDivision.get(d.id as string) ?? 0,
+  }));
 }

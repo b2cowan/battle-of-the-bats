@@ -14,6 +14,11 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { hasCapability } from '@/lib/roles';
 import styles from './branding.module.css';
 
+// Mirror of lib/pwa-icon ICON_DARK (that module is server-only — it can't be imported
+// into this client component). The shared truth lives there; this is the UI default
+// shown when no logo colour has been sampled yet.
+const ICON_DARK_FALLBACK = '#0a0a12';
+
 interface BrandingSettings {
   logoUrl: string | null;
   heroBannerUrl: string | null;
@@ -23,6 +28,9 @@ interface BrandingSettings {
   themeFont: string | null;
   themeCardStyle: string | null;
   colorMode: 'dark' | 'light';
+  iconBgColor: string | null;
+  iconBgSuggested: string | null;
+  appName: string | null;
   publicHiddenPages: PublicPageKey[];
   coachNamesShowOnPublic: boolean;
 }
@@ -31,7 +39,10 @@ function errorMessage(err: unknown, fallback: string) {
   return err instanceof Error ? err.message : fallback;
 }
 
-type SectionKey = 'publicPages' | 'logo' | 'theme' | 'heroBanner' | 'fontFamily' | 'cardStyle';
+const sameHex = (a: string | null, b: string | null) =>
+  (a ?? '').toLowerCase() === (b ?? '').toLowerCase();
+
+type SectionKey = 'publicPages' | 'logo' | 'appIcon' | 'theme' | 'heroBanner' | 'fontFamily' | 'cardStyle';
 
 export default function TournamentBrandingPage() {
   const { currentTournament } = useTournament();
@@ -52,6 +63,9 @@ export default function TournamentBrandingPage() {
   const [fontKey, setFontKey] = useState('system');
   const [cardStyle, setCardStyle] = useState('default');
   const [colorMode, setColorMode] = useState<'dark' | 'light'>('dark');
+  const [iconBg, setIconBg] = useState<string | null>(null);          // override; null = auto
+  const [iconBgSuggested, setIconBgSuggested] = useState<string | null>(null);
+  const [appName, setAppName] = useState('');                          // blank = use event name
   const [publicHiddenPages, setPublicHiddenPages] = useState<PublicPageKey[]>([]);
   const [coachNamesShowOnPublic, setCoachNamesShowOnPublic] = useState(false);
 
@@ -64,6 +78,7 @@ export default function TournamentBrandingPage() {
   const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
     publicPages: true,
     logo: false,
+    appIcon: false,
     theme: false,
     heroBanner: false,
     fontFamily: false,
@@ -95,6 +110,9 @@ export default function TournamentBrandingPage() {
         setFontKey(canUseAdvancedBranding ? data.themeFont ?? 'system' : 'system');
         setCardStyle(canUseAdvancedBranding ? data.themeCardStyle ?? 'default' : 'default');
         setColorMode(data.colorMode ?? 'dark');
+        setIconBg(canUseAdvancedBranding ? data.iconBgColor ?? null : null);
+        setIconBgSuggested(data.iconBgSuggested ?? null);
+        setAppName(canUseAdvancedBranding ? data.appName ?? '' : '');
         setPublicHiddenPages(normalizeHiddenPublicPages(data.publicHiddenPages));
         setCoachNamesShowOnPublic(data.coachNamesShowOnPublic === true);
         if (data.themePrimary && canUseAdvancedBranding) {
@@ -131,9 +149,11 @@ export default function TournamentBrandingPage() {
       fontKey !== savedFontKey ||
       cardStyle !== savedCardStyle ||
       colorMode !== (saved.colorMode ?? 'dark') ||
+      !sameHex(iconBg, saved.iconBgColor) ||
+      appName.trim() !== (saved.appName ?? '') ||
       publicSiteDirty
     );
-  }, [saved, presetKey, customPrimary, customAccent, fontKey, cardStyle, colorMode, publicHiddenPages, coachNamesShowOnPublic, canUseAdvancedBranding]);
+  }, [saved, presetKey, customPrimary, customAccent, fontKey, cardStyle, colorMode, iconBg, appName, publicHiddenPages, coachNamesShowOnPublic, canUseAdvancedBranding]);
 
   const previewTheme = useMemo(() => {
     if (presetKey === 'custom' && canUseAdvancedBranding) {
@@ -141,6 +161,10 @@ export default function TournamentBrandingPage() {
     }
     return resolveTheme(presetKey, null, null);
   }, [presetKey, customPrimary, customAccent, canUseAdvancedBranding]);
+
+  // App-icon preview tile colour: the override if set, else the auto-sampled colour,
+  // else the dark default. Lower-cased so the native colour input stays controlled.
+  const effectiveIconBg = (iconBg ?? iconBgSuggested ?? ICON_DARK_FALLBACK).toLowerCase();
 
   function showError(msg: string) {
     setErrorMsg(msg);
@@ -163,6 +187,8 @@ export default function TournamentBrandingPage() {
             themeFont: safeFontKey,
             themeCardStyle: safeCardStyle,
             colorMode,
+            iconBgColor: iconBg,
+            appName: appName.trim() || null,
             publicHiddenPages: normalizedHiddenPages,
             coachNamesShowOnPublic,
           }
@@ -190,6 +216,8 @@ export default function TournamentBrandingPage() {
           themeFont: safeFontKey,
           themeCardStyle: safeCardStyle,
           colorMode,
+          iconBgColor: iconBg,
+          appName: appName.trim() || null,
         } : {}),
         publicHiddenPages: normalizedHiddenPages,
         coachNamesShowOnPublic,
@@ -223,6 +251,7 @@ export default function TournamentBrandingPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Upload failed');
       setLogoPreview(data.logoUrl);
+      setIconBgSuggested(data.iconBgSuggested ?? null);
       setSaved(prev => prev ? { ...prev, logoUrl: data.logoUrl } : null);
       setSuccessMsg('Tournament logo updated.');
       setSuccessOpen(true);
@@ -242,6 +271,7 @@ export default function TournamentBrandingPage() {
       const res = await fetch(`/api/admin/tournament-logo?tournamentId=${encodeURIComponent(tournamentId)}${orgParam}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Remove failed');
       setLogoPreview(null);
+      setIconBgSuggested(null);
       setSaved(prev => prev ? { ...prev, logoUrl: null } : null);
       setSuccessMsg('Logo removed.');
       setSuccessOpen(true);
@@ -430,6 +460,119 @@ export default function TournamentBrandingPage() {
               </div>
             </div>
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleLogoChange} style={{ display: 'none' }} />
+          </div>
+        </div>
+      )}
+
+      {/* ── App Icon ──────────────────────────────── */}
+      {!canUseAdvancedBranding ? (
+        <div className={styles.card}>
+          <div className={`${styles.sectionTitleRow} ${styles.lockedCardHeader}`}>
+            <h2 className={styles.sectionTitle}>App Icon</h2>
+            <span className={styles.lockedBadge}>Locked</span>
+          </div>
+          <p className={styles.lockedHint}>Customize the home-screen icon fans get when they add this event to their phone.</p>
+        </div>
+      ) : (
+        <div className={styles.card}>
+          <button
+            type="button"
+            className={styles.accordionTrigger}
+            onClick={() => toggleSection('appIcon')}
+            aria-expanded={openSections.appIcon}
+          >
+            <h2 className={styles.sectionTitle}>App Icon</h2>
+            <ChevronDown size={14} className={`${styles.chevron} ${openSections.appIcon ? styles.chevronOpen : ''}`} aria-hidden />
+          </button>
+          <div className={styles.accordionBody} data-open={openSections.appIcon || undefined}>
+            <p className={styles.compactNote}>
+              How this event looks when a fan adds it to their phone&apos;s home screen. We match the background to your logo automatically — override it below for a different colour or a border.
+            </p>
+            <div className={styles.iconLayout}>
+              <div className={styles.iconPreview}>
+                <div className={styles.iconTile} style={{ background: effectiveIconBg }}>
+                  {logoPreview
+                    ? <img src={logoPreview} alt="" className={styles.iconTileImg} />
+                    : <span className={styles.iconTilePlaceholder} aria-hidden="true"><ImageIcon size={26} /></span>}
+                </div>
+                <span className={styles.iconAppName}>{appName.trim() || currentTournament?.name || 'Your event'}</span>
+              </div>
+
+              <div className={styles.iconControls}>
+                <div className={styles.iconNameField}>
+                  <label className={styles.label} htmlFor="app-name">App name</label>
+                  <input
+                    id="app-name"
+                    type="text"
+                    className="form-input"
+                    style={{ maxWidth: '260px' }}
+                    maxLength={30}
+                    value={appName}
+                    placeholder={currentTournament?.name ?? 'Your event'}
+                    onChange={e => setAppName(e.target.value)}
+                  />
+                  <p className={styles.inheritNote}>Shown under the icon. About 12 characters fit — try initials if your name is long. Leave blank to use the event name.</p>
+                </div>
+
+                <span className={styles.label}>Background</span>
+                <div className={styles.iconBgOptions}>
+                  <button
+                    type="button"
+                    aria-pressed={iconBg === null}
+                    className={`${styles.iconBgOption} ${iconBg === null ? styles.iconBgOptionActive : ''}`}
+                    onClick={() => setIconBg(null)}
+                  >
+                    <span className={styles.iconBgChip} style={{ background: iconBgSuggested ?? ICON_DARK_FALLBACK }} aria-hidden />
+                    Auto
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={sameHex(iconBg, '#ffffff')}
+                    className={`${styles.iconBgOption} ${sameHex(iconBg, '#ffffff') ? styles.iconBgOptionActive : ''}`}
+                    onClick={() => setIconBg('#ffffff')}
+                  >
+                    <span className={styles.iconBgChip} style={{ background: '#ffffff' }} aria-hidden />
+                    White
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={sameHex(iconBg, ICON_DARK_FALLBACK)}
+                    className={`${styles.iconBgOption} ${sameHex(iconBg, ICON_DARK_FALLBACK) ? styles.iconBgOptionActive : ''}`}
+                    onClick={() => setIconBg(ICON_DARK_FALLBACK)}
+                  >
+                    <span className={styles.iconBgChip} style={{ background: ICON_DARK_FALLBACK }} aria-hidden />
+                    Dark
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={sameHex(iconBg, previewTheme.primary)}
+                    className={`${styles.iconBgOption} ${sameHex(iconBg, previewTheme.primary) ? styles.iconBgOptionActive : ''}`}
+                    onClick={() => setIconBg(previewTheme.primary.toLowerCase())}
+                  >
+                    <span className={styles.iconBgChip} style={{ background: previewTheme.primary }} aria-hidden />
+                    Brand
+                  </button>
+                </div>
+
+                <div className={styles.iconCustomRow}>
+                  <label className={styles.label} htmlFor="icon-bg-custom" style={{ margin: 0 }}>Custom colour</label>
+                  <input
+                    id="icon-bg-custom"
+                    type="color"
+                    className={styles.colorInput}
+                    value={effectiveIconBg}
+                    onChange={e => setIconBg(e.target.value)}
+                  />
+                  {iconBg !== null && (
+                    <button type="button" className="btn btn-ghost btn-data" onClick={() => setIconBg(null)}>
+                      Back to auto
+                    </button>
+                  )}
+                </div>
+
+                <p className={styles.inheritNote}>A colour that contrasts with your logo shows as a border. Leave on Auto to match seamlessly.</p>
+              </div>
+            </div>
           </div>
         </div>
       )}

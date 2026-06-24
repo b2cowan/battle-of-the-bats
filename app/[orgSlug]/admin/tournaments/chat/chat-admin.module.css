@@ -19,16 +19,14 @@
   }
 }
 
+/* The chat region: the conversation fills it. The Rooms + Manage panels are viewport overlays
+   (portaled to <body>, like the in-app help drawer), so they never touch this layout — the chat is
+   never squeezed or shifted. Sole fill-the-page child of .chatPage. */
 .chatLayout {
   flex: 1 1 auto;
   height: 100%;
   min-height: 0;
   display: flex;
-}
-/* Desktop: a small gap so the docked manage panel reads as a separate rounded card — only while
-   the panel is open (when closed it collapses to width 0, so the gap would strand 12px). */
-@media (min-width: 1024px) {
-  .chatLayoutOpen { gap: 0.75rem; }
 }
 
 /* Mobile: cancel the admin content area's 1rem side gutter so the chat is edge-to-edge, and lock the
@@ -49,10 +47,16 @@
   display: flex;
 }
 
+.roomsBtn,
 .manageBtn {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
+}
+/* Mobile: the Rooms toggle collapses to its icon so the room-name title keeps its width. */
+@media (max-width: 900px) {
+  .roomsBtnLabel { display: none; }
+  .roomsBtn { gap: 0.25rem; }
 }
 /* The count shown beside the icon only when the "Members" label is hidden (mobile). */
 .manageBtnCount {

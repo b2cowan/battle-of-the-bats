@@ -25,6 +25,9 @@ type RoomListItem = {
   isModerator: boolean;
   selfMutedUntil: string | null;
   readOnly: boolean;
+  /** the tournament this room belongs to — shown when the room name doesn't already carry it (e.g. a
+   *  division room like "Championship"), so several rooms in one event stay easy to tell apart. */
+  contextLabel: string | null;
 };
 
 /** Retract the caller's own message (server enforces ownership). Throws on failure so ChatPanel's
@@ -124,6 +127,9 @@ export default function CoachChatView() {
                   {r.room.name}
                   {r.readOnly && <span className={styles.roTag}>Closed</span>}
                 </span>
+                {r.contextLabel && !r.room.name.startsWith(r.contextLabel) && (
+                  <span className={styles.roomContext}>{r.contextLabel}</span>
+                )}
                 <span className={styles.roomPreview}>{r.lastMessagePreview ?? 'No messages yet'}</span>
               </div>
               {r.unreadCount > 0 && (

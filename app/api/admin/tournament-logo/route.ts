@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { hasCapability } from '@/lib/roles';
 import { withObservability } from '@/lib/observability';
+import { sampleBackgroundHex } from '@/lib/pwa-icon';
 
 const BUCKET   = 'org-logos';
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -73,7 +74,11 @@ export const POST = withObservability(async (req: Request) => {
 
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 
-  return NextResponse.json({ logoUrl });
+  // Auto-sample the new logo's background so the App Icon control can refresh its
+  // "Auto" suggestion without a second round-trip. Null on any failure (handled UI-side).
+  const iconBgSuggested = await sampleBackgroundHex(Buffer.from(bytes));
+
+  return NextResponse.json({ logoUrl, iconBgSuggested });
 }, { route: '/api/admin/tournament-logo' });
 
 export const DELETE = withObservability(async (req: Request) => {
