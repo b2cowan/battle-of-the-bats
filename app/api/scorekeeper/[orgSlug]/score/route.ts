@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getScore as getOfficialScore } from '@/app/api/official/[orgSlug]/score/route';
+import { getScore as getOfficialScore } from '@/app/api/official/[orgSlug]/score/get-score';
 import { getAuthContextWithScope, unauthorized, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import {
