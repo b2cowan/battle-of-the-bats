@@ -1,4 +1,4 @@
--- 146_chat_message_pins.sql
+-- 147_chat_message_pins.sql
 -- Pinned messages for Tournament Chat (Phase 3B). A message is "pinned" when pinned_at IS NOT NULL;
 -- multiple messages may be pinned per room. Pinning is a MODERATOR action performed via the service
 -- role: the column-scoped `authenticated` UPDATE grant on chat_messages is limited to

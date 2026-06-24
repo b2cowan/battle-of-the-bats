@@ -1,4 +1,4 @@
--- Migration 150: per-tournament toggle for showing team COACH NAMES on the public site.
+-- Migration 151: per-tournament toggle for showing team COACH NAMES on the public site.
 -- The team's coach name (teams.coach) has always rendered on the public tournament pages
 -- (Teams listing cards, the team profile header, and the schedule team search). Some
 -- organizers consider a coach's name personal information they'd rather not publish, so this

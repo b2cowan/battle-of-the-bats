@@ -1,4 +1,4 @@
--- 147_chat_message_reactions.sql
+-- 148_chat_message_reactions.sql
 -- Emoji reactions for Tournament Chat (Phase 3C). A reaction = one (message, user, emoji) tuple from
 -- a FIXED seven-emoji set. This is the chat program's SECOND realtime-published table (after
 -- chat_messages), so it repeats the make-or-break engine discipline:

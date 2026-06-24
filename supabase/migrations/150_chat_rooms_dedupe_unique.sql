@@ -1,4 +1,4 @@
--- 149_chat_rooms_dedupe_unique.sql
+-- 150_chat_rooms_dedupe_unique.sql
 -- Fix + prevent DUPLICATE chat rooms for the same conversation. A TOCTOU race in
 -- ensureTournamentChatRoom (no unique constraint on the room's identity) let two rooms be created for
 -- the same (surface, ref_id, ref_sub_id) within milliseconds — so a coach saw the SAME tournament chat

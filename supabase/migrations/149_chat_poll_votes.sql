@@ -1,4 +1,4 @@
--- 148_chat_poll_votes.sql
+-- 149_chat_poll_votes.sql
 -- Poll votes for Tournament Chat (Phase 3C). A poll is a CHAT MESSAGE whose metadata carries the
 -- question's options + settings (multiple-choice, anonymous, closed_at) — so creating and closing a
 -- poll ride the EXISTING chat_messages realtime (INSERT/UPDATE), with NO new table for the poll
@@ -6,7 +6,7 @@
 -- live-updating store is the VOTES — this table — which is the platform's THIRD realtime-published
 -- table (after chat_messages and chat_message_reactions).
 --
--- This table is a near-twin of chat_message_reactions (mig 147) and follows the same hard-won engine
+-- This table is a near-twin of chat_message_reactions (mig 148) and follows the same hard-won engine
 -- discipline, RE-PROVEN on the live dev DB by scripts/validate-chat-slice.mjs BEFORE any poll UI:
 --   • REPLICA IDENTITY FULL is set BEFORE the table joins the supabase_realtime publication
 --     (the games realtime lesson, migs 130/132).
@@ -17,7 +17,7 @@
 -- audited server route as the service role (membership / mute / poll-open / single-vs-multi enforced
 -- in code). A browser cannot write this table at all → no spoof/escalate surface.
 --
--- SOFT-DELETE, NOT HARD DELETE (the mig-147 spike finding): changing or retracting a vote sets
+-- SOFT-DELETE, NOT HARD DELETE (the mig-148 spike finding): changing or retracting a vote sets
 -- `removed_at`; the row is never DELETEd. Supabase realtime does NOT RLS-gate hard-DELETE events
 -- (PK-only old row → membership check fails OPEN → leaks to non-members). Keeping every vote event an
 -- INSERT/UPDATE (full new row) makes the room_id filter + RLS evaluate correctly. Active vote =
