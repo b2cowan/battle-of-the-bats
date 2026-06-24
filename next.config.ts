@@ -1,6 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // sharp is a Next.js *default* external server package, but under the Turbopack
+  // production build + pnpm's non-hoisted node_modules its runtime deps (detect-libc,
+  // the @img/* native binaries, semver) are NOT traced into the deployed Lambda. That
+  // makes `import sharp` throw "Cannot find module 'detect-libc'" at module load and
+  // 500 every route importing it (tournament branding, logo upload, PWA icon routes).
+  // Force sharp's dependency closure into the output file trace for all routes.
+  outputFileTracingIncludes: {
+    '/**': [
+      './node_modules/detect-libc/**/*',
+      './node_modules/semver/**/*',
+      './node_modules/@img/**/*',
+    ],
+  },
   async redirects() {
     return [
       // Redirect .com to .ca (canonical domain)
