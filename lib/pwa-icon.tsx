@@ -113,7 +113,7 @@ export async function resolveBrandedLogo(
   org: Pick<Organization, 'id' | 'planId' | 'logoUrl'>,
   tournamentSlug: string,
   origin: string,
-): Promise<{ src: string; bg: string | null } | null> {
+): Promise<{ src: string; bg: string | null; scale: number | null } | null> {
   if (!canUseAdvancedTournamentBranding(org)) return null;
   try {
     const t = await getPublicTournamentBySlug(org.id, tournamentSlug);
@@ -125,7 +125,10 @@ export async function resolveBrandedLogo(
     if (!src) return null;
     // Organizer override wins (Public Site → App Icon); else auto-sample the logo.
     const override = t?.iconBgColor && ICON_HEX_RE.test(t.iconBgColor) ? t.iconBgColor : null;
-    return { src, bg: override ?? await detectBackgroundHex(src) };
+    // Logo-size override (mig 154); the raw stored value (null = default). Each icon
+    // route applies it to its own base box and clamps to its own safe ceiling.
+    const scale = typeof t?.iconScale === 'number' ? t.iconScale : null;
+    return { src, bg: override ?? await detectBackgroundHex(src), scale };
   } catch {
     return null;
   }

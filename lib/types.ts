@@ -300,6 +300,10 @@ export interface Tournament {
    *  from the tournament name as before (mig 153). The full name still drives the
    *  install prompt + browser title. */
   appName?: string | null;
+  /** App-icon logo SIZE (zoom): relative size where 100 = the tuned default. Range
+   *  70–125 (clamped); null = default look (mig 154). Read only by the apple-touch +
+   *  Android maskable icon routes, which each clamp to their own safe ceiling. */
+  iconScale?: number | null;
   publicHiddenPages?: PublicPageKey[];
   /** When true, team coach names render on the public tournament pages (Teams cards,
    *  team profile header, schedule search). Defaults to false — coach names are private

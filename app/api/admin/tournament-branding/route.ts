@@ -22,9 +22,14 @@ const PLUS_VISUAL_FIELDS = [
   'colorMode',
   'iconBgColor',
   'appName',
+  'iconScale',
 ] as const;
 
 const APP_NAME_MAX = 30;
+// App-icon logo size (zoom): relative to the tuned default (100). Clamped server-side
+// regardless of client; each icon route then clamps further to its own safe ceiling.
+const ICON_SCALE_MIN = 70;
+const ICON_SCALE_MAX = 125;
 
 /** Auto-detect the app-icon tile colour the same way the icon routes do: sample the
  *  effective logo's own background. Used to seed/show the "Auto" option in the UI. */
@@ -51,7 +56,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data, error } = await supabaseAdmin
     .from('tournaments')
-    .select('logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, color_mode, icon_bg_color, app_name, require_score_finalization')
+    .select('logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, color_mode, icon_bg_color, app_name, app_icon_scale, require_score_finalization')
     .eq('id', tournamentId)
     .eq('org_id', ctx.org.id)
     .single();
@@ -92,6 +97,7 @@ export const GET = withObservability(async (req: Request) => {
     iconBgColor:              data.icon_bg_color ?? null,
     iconBgSuggested,
     appName:                  data.app_name ?? null,
+    iconScale:                data.app_icon_scale ?? null,
     requireScoreFinalization: data.require_score_finalization,
     publicHiddenPages:        normalizeHiddenPublicPages(pageData?.public_hidden_pages),
     coachNamesShowOnPublic:   pageData?.coach_names_show_on_public === true,
@@ -119,6 +125,7 @@ export const PATCH = withObservability(async (req: Request) => {
     colorMode?: 'dark' | 'light' | null;
     iconBgColor?: string | null;
     appName?: string | null;
+    iconScale?: number | null;
     publicHiddenPages?: PublicPageKey[] | null;
     coachNamesShowOnPublic?: boolean | null;
     requireScoreFinalization?: boolean | null;
@@ -230,6 +237,20 @@ export const PATCH = withObservability(async (req: Request) => {
   if ('appName' in body) {
     const trimmed = body.appName == null ? '' : String(body.appName).trim();
     updates.app_name = trimmed ? trimmed.slice(0, APP_NAME_MAX) : null;
+  }
+
+  if ('iconScale' in body) {
+    if (body.iconScale == null) {
+      updates.app_icon_scale = null;
+    } else {
+      const n = Math.round(Number(body.iconScale));
+      if (!Number.isFinite(n)) {
+        return NextResponse.json({ error: 'Invalid app icon scale' }, { status: 400 });
+      }
+      const clamped = Math.max(ICON_SCALE_MIN, Math.min(ICON_SCALE_MAX, n));
+      // Store the default (100) as NULL so "unset = default" stays clean.
+      updates.app_icon_scale = clamped === 100 ? null : clamped;
+    }
   }
 
   if ('colorMode'                in body) updates.color_mode                 = body.colorMode === 'light' ? 'light' : null;

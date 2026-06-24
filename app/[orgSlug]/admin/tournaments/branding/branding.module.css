@@ -508,6 +508,38 @@
   gap: 0.6rem;
 }
 
+/* App-icon "Logo size" slider (mig 154) */
+.iconSizeField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border-2);
+}
+
+.iconSizeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.iconSizeSlider {
+  width: 100%;
+  max-width: 260px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.iconSizeScale {
+  display: flex;
+  justify-content: space-between;
+  max-width: 260px;
+  font-size: 0.68rem;
+  color: var(--white-40);
+}
+
 .upgradeNote {
   margin: 0.75rem 0 0;
   font-size: 0.78rem;

@@ -74,10 +74,13 @@ export default async function AppleIcon({
     // Branded: tile painted the logo's own sampled background colour so the logo
     // reads as one seamless field (no white-card-on-dark look); falls back to the
     // dark square for transparent wordmarks. iOS only rounds the corners (no
-    // circular crop), so the logo runs near edge-to-edge (156 of 180 ≈ 87%).
+    // circular crop), so the logo runs near edge-to-edge (156 of 180 ≈ 87% default).
+    // The organizer's "Logo size" override (mig 154) scales that base box; clamped to
+    // a 110–172 safe range so it never spills past the rounded-corner safe area.
     // branded.src is guaranteed raster (fetchAsDataUrl rejects SVG/non-raster), so
     // satori renders it reliably — no try/catch needed (one wouldn't catch
     // streaming errors).
+    const box = Math.max(110, Math.min(172, Math.round(156 * (branded.scale ?? 100) / 100)));
     return new ImageResponse(
       (
         <div
@@ -91,7 +94,7 @@ export default async function AppleIcon({
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={branded.src} width={156} height={156} style={{ objectFit: 'contain' }} alt="" />
+          <img src={branded.src} width={box} height={box} style={{ objectFit: 'contain' }} alt="" />
         </div>
       ),
       { ...size },

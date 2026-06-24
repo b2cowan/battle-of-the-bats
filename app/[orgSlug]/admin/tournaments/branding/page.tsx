@@ -31,9 +31,15 @@ interface BrandingSettings {
   iconBgColor: string | null;
   iconBgSuggested: string | null;
   appName: string | null;
+  iconScale: number | null;
   publicHiddenPages: PublicPageKey[];
   coachNamesShowOnPublic: boolean;
 }
+
+// App-icon "Logo size" slider: relative to the tuned default (100). Stored null = 100.
+const ICON_SCALE_MIN = 70;
+const ICON_SCALE_MAX = 125;
+const ICON_SCALE_DEFAULT = 100;
 
 function errorMessage(err: unknown, fallback: string) {
   return err instanceof Error ? err.message : fallback;
@@ -66,6 +72,7 @@ export default function TournamentBrandingPage() {
   const [iconBg, setIconBg] = useState<string | null>(null);          // override; null = auto
   const [iconBgSuggested, setIconBgSuggested] = useState<string | null>(null);
   const [appName, setAppName] = useState('');                          // blank = use event name
+  const [iconScale, setIconScale] = useState(ICON_SCALE_DEFAULT);       // 100 = default size
   const [publicHiddenPages, setPublicHiddenPages] = useState<PublicPageKey[]>([]);
   const [coachNamesShowOnPublic, setCoachNamesShowOnPublic] = useState(false);
 
@@ -113,6 +120,7 @@ export default function TournamentBrandingPage() {
         setIconBg(canUseAdvancedBranding ? data.iconBgColor ?? null : null);
         setIconBgSuggested(data.iconBgSuggested ?? null);
         setAppName(canUseAdvancedBranding ? data.appName ?? '' : '');
+        setIconScale(canUseAdvancedBranding ? (data.iconScale ?? ICON_SCALE_DEFAULT) : ICON_SCALE_DEFAULT);
         setPublicHiddenPages(normalizeHiddenPublicPages(data.publicHiddenPages));
         setCoachNamesShowOnPublic(data.coachNamesShowOnPublic === true);
         if (data.themePrimary && canUseAdvancedBranding) {
@@ -151,9 +159,10 @@ export default function TournamentBrandingPage() {
       colorMode !== (saved.colorMode ?? 'dark') ||
       !sameHex(iconBg, saved.iconBgColor) ||
       appName.trim() !== (saved.appName ?? '') ||
+      iconScale !== (saved.iconScale ?? ICON_SCALE_DEFAULT) ||
       publicSiteDirty
     );
-  }, [saved, presetKey, customPrimary, customAccent, fontKey, cardStyle, colorMode, iconBg, appName, publicHiddenPages, coachNamesShowOnPublic, canUseAdvancedBranding]);
+  }, [saved, presetKey, customPrimary, customAccent, fontKey, cardStyle, colorMode, iconBg, appName, iconScale, publicHiddenPages, coachNamesShowOnPublic, canUseAdvancedBranding]);
 
   const previewTheme = useMemo(() => {
     if (presetKey === 'custom' && canUseAdvancedBranding) {
@@ -165,6 +174,11 @@ export default function TournamentBrandingPage() {
   // App-icon preview tile colour: the override if set, else the auto-sampled colour,
   // else the dark default. Lower-cased so the native colour input stays controlled.
   const effectiveIconBg = (iconBg ?? iconBgSuggested ?? ICON_DARK_FALLBACK).toLowerCase();
+
+  // Preview tracks the iOS framing (the tile is a rounded square, like iPhone): scale
+  // the 156/180 base box by the slider, clamped to the same 110–172 safe range the
+  // apple-touch icon route uses, expressed as a % of the tile.
+  const iconPreviewPct = `${(Math.max(110, Math.min(172, Math.round(156 * iconScale / 100))) / 180 * 100).toFixed(1)}%`;
 
   function showError(msg: string) {
     setErrorMsg(msg);
@@ -189,6 +203,7 @@ export default function TournamentBrandingPage() {
             colorMode,
             iconBgColor: iconBg,
             appName: appName.trim() || null,
+            iconScale: iconScale === ICON_SCALE_DEFAULT ? null : iconScale,
             publicHiddenPages: normalizedHiddenPages,
             coachNamesShowOnPublic,
           }
@@ -218,6 +233,7 @@ export default function TournamentBrandingPage() {
           colorMode,
           iconBgColor: iconBg,
           appName: appName.trim() || null,
+          iconScale: iconScale === ICON_SCALE_DEFAULT ? null : iconScale,
         } : {}),
         publicHiddenPages: normalizedHiddenPages,
         coachNamesShowOnPublic,
@@ -486,13 +502,13 @@ export default function TournamentBrandingPage() {
           </button>
           <div className={styles.accordionBody} data-open={openSections.appIcon || undefined}>
             <p className={styles.compactNote}>
-              How this event looks when a fan adds it to their phone&apos;s home screen. We match the background to your logo automatically — override it below for a different colour or a border.
+              How this event looks when a fan adds it to their phone&apos;s home screen. We match the background to your logo automatically — override it below for a different colour or a border, and use the slider to size your logo. Changes apply to new home-screen installs (phones keep the icon they already saved), so use the preview here as your guide.
             </p>
             <div className={styles.iconLayout}>
               <div className={styles.iconPreview}>
                 <div className={styles.iconTile} style={{ background: effectiveIconBg }}>
                   {logoPreview
-                    ? <img src={logoPreview} alt="" className={styles.iconTileImg} />
+                    ? <img src={logoPreview} alt="" className={styles.iconTileImg} style={{ width: iconPreviewPct, height: iconPreviewPct }} />
                     : <span className={styles.iconTilePlaceholder} aria-hidden="true"><ImageIcon size={26} /></span>}
                 </div>
                 <span className={styles.iconAppName}>{appName.trim() || currentTournament?.name || 'Your event'}</span>
@@ -571,6 +587,34 @@ export default function TournamentBrandingPage() {
                 </div>
 
                 <p className={styles.inheritNote}>A colour that contrasts with your logo shows as a border. Leave on Auto to match seamlessly.</p>
+
+                <div className={styles.iconSizeField}>
+                  <div className={styles.iconSizeHeader}>
+                    <label className={styles.label} htmlFor="icon-scale" style={{ margin: 0 }}>Logo size</label>
+                    {iconScale !== ICON_SCALE_DEFAULT && (
+                      <button type="button" className="btn btn-ghost btn-data" onClick={() => setIconScale(ICON_SCALE_DEFAULT)}>
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    id="icon-scale"
+                    type="range"
+                    className={styles.iconSizeSlider}
+                    min={ICON_SCALE_MIN}
+                    max={ICON_SCALE_MAX}
+                    step={1}
+                    value={iconScale}
+                    onChange={e => setIconScale(Number(e.target.value))}
+                    aria-label="App icon logo size"
+                  />
+                  <div className={styles.iconSizeScale} aria-hidden="true">
+                    <span>Small</span>
+                    <span>Default</span>
+                    <span>Large</span>
+                  </div>
+                  <p className={styles.inheritNote}>Drag to size your logo in the icon. Android keeps a little more edge padding so its round icon never crops your logo.</p>
+                </div>
               </div>
             </div>
           </div>

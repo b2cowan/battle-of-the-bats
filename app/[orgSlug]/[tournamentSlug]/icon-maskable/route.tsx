@@ -30,6 +30,12 @@ const SIZE = 512;
 // tile is painted the logo's own background colour, so the surrounding padding is
 // invisible regardless.
 const LOGO_BOX = 280;
+// The organizer's "Logo size" override (mig 154) scales LOGO_BOX, but is hard-capped
+// at the corner-safe maximum (288²: corners ≈203.6px from centre, just inside the safe
+// circle radius 0.4×512 ≈ 204.8px), so even at the largest slider setting a square logo
+// is never clipped by Android's mask.
+const LOGO_BOX_MIN = 196;
+const LOGO_BOX_MAX = 288;
 const ICON_HEADERS = { 'Cache-Control': 'public, max-age=600, must-revalidate' } as const;
 
 export async function GET(
@@ -54,6 +60,7 @@ export async function GET(
     // safe-zone padding invisible AND means Android's circular crop only eats the
     // matched background — never a visible frame. Falls back to the dark square for
     // transparent wordmarks.
+    const box = Math.max(LOGO_BOX_MIN, Math.min(LOGO_BOX_MAX, Math.round(LOGO_BOX * (branded.scale ?? 100) / 100)));
     return new ImageResponse(
       (
         <div
@@ -67,7 +74,7 @@ export async function GET(
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={branded.src} width={LOGO_BOX} height={LOGO_BOX} style={{ objectFit: 'contain' }} alt="" />
+          <img src={branded.src} width={box} height={box} style={{ objectFit: 'contain' }} alt="" />
         </div>
       ),
       { width: SIZE, height: SIZE, headers: ICON_HEADERS },
