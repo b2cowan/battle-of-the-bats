@@ -53,7 +53,7 @@ export default async function TournamentHomeContent({
   // see J6-001 / toPublicTeam. allTeams stays raw for server-only registration math.
   const teams     = allTeams.filter(team => team.status === 'accepted').map(team => toPublicTeam(team, tournament.coachNamesShowOnPublic === true));
   const divisions = await getDivisions(tournament.id, readOptions);
-  const venues  = await getVenues(tournament.id, readOptions);
+  const venues  = await getVenues(tournament.id, { ...readOptions, includeFacilities: true });
   const activeRegistrations = allTeams.filter(team => team.status !== 'rejected');
 
   const registration = getRegistrationState(tournament, divisions, activeRegistrations);

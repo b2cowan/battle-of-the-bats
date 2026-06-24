@@ -1737,6 +1737,7 @@ export default function AdminSchedulePage() {
           getGroupName={getGroupName}
           formatDate={formatDate}
           statusBadge={statusBadge}
+          venues={venues}
         />
       ) : filterGroup === 'all' ? (
         <div className={s.compactList}>
@@ -3123,7 +3124,7 @@ function hasSplitPoolGames(games: any[], pools: any[]): boolean {
   );
 }
 
-function PlayoffBracketView({ games, teams, division, canBuildManualBracket, onBuildBracket, onStartFromStandings, onEdit, onDelete, getGroupName, formatDate, statusBadge }: any) {
+function PlayoffBracketView({ games, teams, division, venues, canBuildManualBracket, onBuildBracket, onStartFromStandings, onEdit, onDelete, getGroupName, formatDate, statusBadge }: any) {
   if (games.length === 0) {
     return (
       <div className="empty-state" style={{ padding: '4rem' }}>
@@ -3171,7 +3172,7 @@ function PlayoffBracketView({ games, teams, division, canBuildManualBracket, onB
                 </h3>
                 <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, var(--blueprint-blue), transparent)' }} />
               </div>
-              <BracketColumns columns={columns} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} />
+              <BracketColumns columns={columns} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} venues={venues} />
             </div>
           );
         })}
@@ -3183,7 +3184,7 @@ function PlayoffBracketView({ games, teams, division, canBuildManualBracket, onB
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
                 <h3 style={{ color: 'var(--white-40)', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>Other</h3>
               </div>
-              <BracketColumns columns={buildBracketColumns(unassigned)} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} />
+              <BracketColumns columns={buildBracketColumns(unassigned)} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} venues={venues} />
             </div>
           );
         })()}
@@ -3207,7 +3208,7 @@ function PlayoffBracketView({ games, teams, division, canBuildManualBracket, onB
               </h3>
               <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, var(--blueprint-blue), transparent)' }} />
             </div>
-            <BracketColumns columns={buildBracketColumns(grp.games)} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} />
+            <BracketColumns columns={buildBracketColumns(grp.games)} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} venues={venues} />
           </div>
         ))}
       </div>
@@ -3218,7 +3219,7 @@ function PlayoffBracketView({ games, teams, division, canBuildManualBracket, onB
   const columns = buildBracketColumns(games);
   return (
     <div style={{ padding: '2rem 0.75rem 0' }}>
-      <BracketColumns columns={columns} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} />
+      <BracketColumns columns={columns} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} venues={venues} />
     </div>
   );
 }

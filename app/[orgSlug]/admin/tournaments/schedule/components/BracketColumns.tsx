@@ -38,11 +38,31 @@ export function buildBracketColumns(games: any[]) {
 }
 
 /**
+ * Resolve a game's location label LIVE from the venues array, so a facility (or
+ * venue) rename propagates to the bracket immediately. Falls back to the
+ * denormalized games.location snapshot for free-text venues, pre-save preview
+ * rows, or when the managed venue can't be found.
+ */
+function resolveGameLocation(g: any, venues?: any[]): string {
+  if (venues && g.venueId) {
+    const venue = venues.find((v: any) => v.id === g.venueId);
+    if (venue) {
+      const facility = g.venueFacilityId
+        ? venue.facilities?.find((f: any) => f.id === g.venueFacilityId)
+        : null;
+      return facility ? `${venue.name} — ${facility.name}` : venue.name;
+    }
+  }
+  return g.location || 'TBD';
+}
+
+/**
  * Read-only bracket diagram. Pass `readOnly` to drop the per-game edit/delete
  * affordances (the auto-generator preview shows structure only — editing happens
- * inline on the main screen via BracketEditor).
+ * inline on the main screen via BracketEditor). Pass `venues` (with facilities)
+ * so location labels resolve live instead of from the stored snapshot.
  */
-export default function BracketColumns({ columns, onEdit, onDelete, formatDate, readOnly = false }: any) {
+export default function BracketColumns({ columns, onEdit, onDelete, formatDate, readOnly = false, venues }: any) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const connectorMatchups = columns.flatMap((c: any) => c.games).map((g: any) => ({
     id: g.id,
@@ -170,7 +190,7 @@ export default function BracketColumns({ columns, onEdit, onDelete, formatDate, 
                   }}>
                     <div className="flex items-center" style={{ gap: '5px' }}><Calendar size={10} className="text-primary-light opacity-50" /> {g.date ? formatDate(g.date) : 'TBD'}</div>
                     <div className="flex items-center" style={{ gap: '5px', justifyContent: 'flex-end' }}><Clock size={10} className="text-primary-light opacity-50" /> {g.time ? formatTime(g.time) : 'TBD'}</div>
-                    <div className="flex items-center" style={{ gap: '5px', gridColumn: 'span 2' }}><MapPin size={10} className="text-primary-light opacity-50" /> {g.location || 'TBD'}</div>
+                    <div className="flex items-center" style={{ gap: '5px', gridColumn: 'span 2' }}><MapPin size={10} className="text-primary-light opacity-50" /> {resolveGameLocation(g, venues)}</div>
                   </div>
                 </div>
               </div>

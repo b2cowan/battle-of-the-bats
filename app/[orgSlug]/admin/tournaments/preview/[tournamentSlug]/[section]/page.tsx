@@ -48,7 +48,7 @@ export default async function TournamentPreviewSectionPage({
       getGames(tournament.id, readOptions),
       getTeams(tournament.id, readOptions),
       getDivisions(tournament.id, readOptions),
-      getVenues(tournament.id, readOptions),
+      getVenues(tournament.id, { ...readOptions, includeFacilities: true }),
     ]);
     const initialData: PublicTournamentPageData = {
       organization: {

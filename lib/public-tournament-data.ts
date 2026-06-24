@@ -166,7 +166,7 @@ export async function getPublicTournamentPageData(
     const [games, teams, venues, divisions, announcements] = await Promise.all([
       getGames(tournament.id, { admin: true }),
       getTeams(tournament.id, { admin: true }),
-      getVenues(tournament.id, { admin: true }),
+      getVenues(tournament.id, { admin: true, includeFacilities: true }),
       getDivisions(tournament.id, { admin: true }),
       getAnnouncements(tournament.id, { admin: true }),
     ]);
@@ -193,7 +193,7 @@ export async function getPublicTournamentPageData(
       getDivisions(tournament.id, { admin: true }),
       getGames(tournament.id, { admin: true }),
       getTeams(tournament.id, { admin: true }),
-      getVenues(tournament.id, { admin: true }),
+      getVenues(tournament.id, { admin: true, includeFacilities: true }),
     ]);
     return {
       ...base,
