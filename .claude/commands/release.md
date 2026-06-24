@@ -114,6 +114,26 @@ npm run check:migrations
 
 **Skip this step for `dev` releases** (the check compares dev↔prod; it's a production gate).
 
+### 1d-2 — Deploy-only / native-dependency verification (master / promote targets only)
+
+Some failures **cannot be caught locally or by the TypeScript check** — they only appear in the deployed Amplify Lambda, because local has the full `node_modules` and a different bundler path. The worst class is **native/compiled dependencies** (e.g. `sharp` and its `@img/*` / `detect-libc` deps) and **build-config changes**: these can crash at *module load*, which throws **before** `withObservability`'s try/catch, so the in-house observability dashboard never records it — only Amplify CloudWatch shows it (this is the 2026-06-24 `sharp` "Failed to load branding settings" prod-500 incident; see memory `reference_sharp_turbopack_webpack`).
+
+So before any **master** or **promote** release, ask: does this release touch **build config** (`next.config.ts`, the `build` script in `package.json`, `amplify.yml`) **or** code that imports a **native/compiled module** (`sharp`, `@img/*`, or any package shipping a `.node` binary)?
+
+```powershell
+git diff --name-only origin/master..origin/dev
+```
+- **No** such files → continue.
+- **Yes** → it must have been verified on the **deployed dev environment**, not just locally. Confirm the dev Amplify build SUCCEEDED for the head commit, then exercise the affected path on `https://dev.d3ld0l2bgmmlga.amplifyapp.com` and check the dev compute logs are clean. For image/`sharp` changes, the public app-icon route is the canonical probe (it both loads AND runs `sharp`):
+  ```powershell
+  # expect: 200 image/png  (a 500 = native module not bundled — DO NOT PROMOTE)
+  curl.exe -s -o NUL -w "%{http_code} %{content_type}`n" "https://dev.d3ld0l2bgmmlga.amplifyapp.com/{orgSlug}/{tournamentSlug}/apple-icon"
+  # expect: 0 events
+  $start = [DateTimeOffset]::UtcNow.AddMinutes(-15).ToUnixTimeMilliseconds()
+  aws logs filter-log-events --log-group-name /aws/amplify/d3ld0l2bgmmlga --log-stream-name-prefix dev --start-time $start --filter-pattern 'detect-libc' --region us-east-2 --query 'length(events)' --output text
+  ```
+  If it has **not** been verified on deployed dev, **STOP** and do that first — local `npm run build` / `tsc` passing is **not** sufficient evidence for this class of change.
+
 ### 1e — Release summary
 
 After all checks pass:
@@ -126,6 +146,7 @@ Push:     current branch → [TARGET]
 Commits:  [N commits ahead of target, not counting the pending commit if dirty]
 TS check: ✅ clean
 Migrations: [master/promote only: ✅ prod in sync / ✖ prod BEHIND dev — see check:migrations | dev: n/a]
+Deploy-only: [master/promote only: ✅ verified on deployed dev / n/a — no native/build-config changes | dev: n/a]
 AWS CLI:  [✅ available / ⚠️  not configured — log fetching unavailable]
 
 [If working tree was dirty, include this block:]
