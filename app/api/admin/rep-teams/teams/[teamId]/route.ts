@@ -3,7 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } f
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getRepTeam, updateRepTeam, getRepProgramYears } from '@/lib/db';
+import { getRepTeam, updateRepTeam, getRepProgramYears, getNonArchivedRepTeamCount } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -74,6 +74,25 @@ export const PATCH = withObservability(async (req: Request,
   if ('description' in body) fields.description = body.description?.trim() || null;
   if ('color' in body) fields.color = body.color?.trim() || null;
   if (typeof body.isArchived === 'boolean') fields.isArchived = body.isArchived;
+
+  // Capacity enforcement (Club Repackaging): un-archiving returns a team to the org's active
+  // (counted) set, so it must respect the plan team cap exactly like create/adopt do. Only the
+  // archived→active transition can push a club over; archiving or other field edits are unaffected.
+  if (body.isArchived === false && team.isArchived) {
+    const cap = ctx!.org.teamLimit;
+    if (cap < 9999) {
+      const currentCount = await getNonArchivedRepTeamCount(ctx!.org.id);
+      if (currentCount >= cap) {
+        const nextStep = ctx!.org.planId === 'club'
+          ? ' Upgrade to Club · Association to add up to 30 teams.'
+          : ' Contact us to raise your team limit for a larger association.';
+        return NextResponse.json(
+          { error: `You've reached your plan's limit of ${cap} teams.${nextStep}`, code: 'team_limit_reached' },
+          { status: 409 },
+        );
+      }
+    }
+  }
 
   const updated = await updateRepTeam(teamId, fields);
   return NextResponse.json({ team: updated });

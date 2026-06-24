@@ -55,7 +55,7 @@ async function getOrgDetail(id: string) {
   const { data: org, error } = await supabaseAdmin
     .from('organizations')
     .select(
-      'id, name, slug, plan_id, tournament_limit, subscription_status, subscription_period, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, free_floor'
+      'id, name, slug, plan_id, tournament_limit, team_limit, subscription_status, subscription_period, current_period_end, stripe_customer_id, stripe_subscription_id, created_at, enabled_addons, free_floor'
     )
     .eq('id', id)
     .single();
@@ -531,6 +531,7 @@ export default async function OrgDetailPage({
         orgSlug={org.slug as string}
         currentPlanId={org.plan_id as string}
         currentTournamentLimit={effectiveTournamentLimit ?? ((org.tournament_limit as number | null) ?? 1)}
+        currentTeamLimit={(org.team_limit as number | null) ?? null}
         planOptions={planOptions}
         canManageSupport={auth ? hasPlatformPermission(auth.role, 'manage_support') : false}
         canManageBilling={auth ? hasPlatformPermission(auth.role, 'manage_billing') : false}

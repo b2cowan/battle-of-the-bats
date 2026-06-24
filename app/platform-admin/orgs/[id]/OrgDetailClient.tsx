@@ -101,6 +101,7 @@ interface Props {
   orgSlug: string;
   currentPlanId: string;
   currentTournamentLimit: number;
+  currentTeamLimit: number | null;
   planOptions: PlanOption[];
   canManageSupport: boolean;
   canManageBilling: boolean;
@@ -194,6 +195,7 @@ export default function OrgDetailClient({
   orgSlug,
   currentPlanId,
   currentTournamentLimit,
+  currentTeamLimit,
   planOptions,
   canManageSupport,
   canManageBilling,
@@ -238,6 +240,9 @@ export default function OrgDetailClient({
   const initialPlan = planOptions.find(plan => plan.id === currentPlanId);
   const [planId, setPlanId] = useState(currentPlanId);
   const [tournamentLimit, setTournamentLimit] = useState(String(currentTournamentLimit));
+  // Per-org custom team cap (Club Repackaging) — blank = the plan band default; a number raises the
+  // cap for a "custom above 30" Club · Association deal. Only meaningful on the Club bands.
+  const [teamLimit, setTeamLimit] = useState(currentTeamLimit != null ? String(currentTeamLimit) : '');
   const [planReason, setPlanReason] = useState('');
   const [planConfirmOpen, setPlanConfirmOpen] = useState(false);
   const [planSaving, setPlanSaving] = useState(false);
@@ -283,6 +288,9 @@ export default function OrgDetailClient({
     const nextPlan = planOptions.find(plan => plan.id === nextPlanId);
     setPlanId(nextPlanId);
     setTournamentLimit(String(nextPlan?.defaultTournamentLimit ?? currentTournamentLimit));
+    // Custom team cap is band-specific; reset it on a plan switch (blank = the new band's default),
+    // restoring the stored value only when switching back to the org's current plan.
+    setTeamLimit(nextPlanId === currentPlanId && currentTeamLimit != null ? String(currentTeamLimit) : '');
     setPlanSaved(false);
     setPlanError('');
   }
@@ -293,6 +301,14 @@ export default function OrgDetailClient({
     if (!Number.isFinite(parsedLimit) || parsedLimit < 0) {
       setPlanError('Tournament limit must be zero or higher');
       return;
+    }
+    const trimmedTeamLimit = teamLimit.trim();
+    if (trimmedTeamLimit !== '') {
+      const parsedTeamLimit = Number(trimmedTeamLimit);
+      if (!Number.isInteger(parsedTeamLimit) || parsedTeamLimit < 1 || parsedTeamLimit > 1000) {
+        setPlanError('Custom team limit must be a whole number from 1 to 1000 (or blank for the plan default)');
+        return;
+      }
     }
     if (!planReason.trim()) {
       setPlanError('Reason is required');
@@ -314,6 +330,8 @@ export default function OrgDetailClient({
         body: JSON.stringify({
           planId,
           tournamentLimit: parsedLimit,
+          // Blank clears any custom cap (falls back to the plan band default); a number raises it.
+          teamLimit: teamLimit.trim() === '' ? null : Number(teamLimit),
           reason: planReason,
         }),
       });
@@ -690,7 +708,10 @@ export default function OrgDetailClient({
   const wouldBeOverLimit = Number.isFinite(parsedTournamentLimit) &&
     parsedTournamentLimit < 9999 &&
     tournaments.length > parsedTournamentLimit;
-  const planChanged = planId !== currentPlanId || parsedTournamentLimit !== currentTournamentLimit;
+  const parsedTeamLimitValue = teamLimit.trim() === '' ? null : Number(teamLimit);
+  const teamLimitChanged = parsedTeamLimitValue !== (currentTeamLimit ?? null);
+  const isClubBand = planId === 'club' || planId === 'club_large';
+  const planChanged = planId !== currentPlanId || parsedTournamentLimit !== currentTournamentLimit || teamLimitChanged;
   const tabItems: Array<{ id: TabId; label: string; count?: number }> = [
     { id: 'support', label: 'Support', count: notes.length + pendingOwnershipTransfers.length },
     { id: 'billing', label: 'Billing & Access', count: activeOverrides.length },
@@ -1297,6 +1318,27 @@ export default function OrgDetailClient({
                     </p>
                   )}
                 </div>
+
+                {isClubBand && (
+                <div className={styles.formRow}>
+                  <label className={styles.formLabel}>Custom Team Limit</label>
+                  <input
+                    className={styles.formInput}
+                    type="number"
+                    min={1}
+                    max={1000}
+                    value={teamLimit}
+                    onChange={e => { setTeamLimit(e.target.value); setPlanSaved(false); }}
+                    placeholder={`Plan default (${planId === 'club_large' ? 30 : 15})`}
+                    disabled={!canManageBilling}
+                  />
+                  <p className={styles.warningNote}>
+                    Leave blank to use the {planId === 'club_large' ? 'Club · Association' : 'Club'} band default
+                    ({planId === 'club_large' ? 30 : 15} teams). Set a higher number only for a custom “above 30”
+                    association deal — it raises the cap, never lowers it.
+                  </p>
+                </div>
+                )}
 
                 <div className={styles.formRow}>
                   <label className={styles.formLabel}>Reason *</label>
@@ -1918,6 +1960,9 @@ export default function OrgDetailClient({
               <div className={styles.modalPreview}>
                 <div>Plan: {initialPlan?.label ?? currentPlanId} to {selectedPlan?.label ?? planId}</div>
                 <div>Limit: {fmtLimit(currentTournamentLimit)} to {fmtLimit(parsedTournamentLimit)}</div>
+                {teamLimitChanged && (
+                  <div>Team cap: {currentTeamLimit ?? 'plan default'} to {parsedTeamLimitValue ?? 'plan default'}</div>
+                )}
                 <div>Reason: {planReason}</div>
               </div>
               {planId === 'tournament' && (

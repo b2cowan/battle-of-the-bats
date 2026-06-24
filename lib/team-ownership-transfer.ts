@@ -6,7 +6,8 @@ import { isStripeConfigured } from './billing-mock';
 import { stripe } from './stripe';
 import { supabaseAdmin } from './supabase-admin';
 import { getTeamOrgLinkSummary, type TeamOrgLinkSummary } from './team-org-links';
-import { PLAN_CONFIG } from './plan-config';
+import { PLAN_CONFIG, getEffectiveTeamLimit } from './plan-config';
+import { getNonArchivedRepTeamCount } from './db';
 import type { OrgPlan } from './types';
 import type { TeamWorkspace, TeamWorkspaceBillingMode } from './team-workspace-entitlements';
 
@@ -41,6 +42,7 @@ type OwnershipOrgRow = {
   plan_id: string | null;
   enabled_addons: unknown;
   account_kind: string | null;
+  team_limit: number | null;
 };
 
 export type TeamOwnershipTransferResult =
@@ -188,7 +190,7 @@ function orgHasRepTeamsModule(org: OwnershipOrgRow): boolean {
 async function fetchOrg(orgId: string): Promise<OwnershipOrgRow | null> {
   const { data, error } = await supabaseAdmin
     .from('organizations')
-    .select('id, name, slug, plan_id, enabled_addons, account_kind')
+    .select('id, name, slug, plan_id, enabled_addons, account_kind, team_limit')
     .eq('id', orgId)
     .maybeSingle();
   if (error) throw error;
@@ -559,6 +561,22 @@ export async function completeTeamOwnershipTransfer(input: {
       status: 409,
       error: 'The target organization must have Club or the Rep Teams module before ownership transfer can complete.',
     };
+  }
+
+  // Capacity enforcement (Club Repackaging): adopting a team into a Club / Club · Association org
+  // consumes one of its capped team slots, exactly like creating a rep team. Mirror the create-route
+  // guard so the transfer path can't push a club past its plan band (or its custom raised cap). The
+  // effective cap honours the per-org override; 9999 ≈ uncapped (so addon-based grants are unaffected).
+  const targetCap = getEffectiveTeamLimit((targetOrg.plan_id ?? 'tournament') as OrgPlan, targetOrg.team_limit);
+  if (targetCap < 9999) {
+    const currentCount = await getNonArchivedRepTeamCount(targetOrg.id);
+    if (currentCount >= targetCap) {
+      return {
+        ok: false,
+        status: 409,
+        error: `The target organization is already at its team limit (${targetCap}). Raise its team limit or upgrade its plan before completing this transfer.`,
+      };
+    }
   }
 
   const previousSubscriptionId = found.workspace.stripe_subscription_id ?? null;

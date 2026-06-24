@@ -658,9 +658,9 @@ export default function BillingPage() {
         <div className={styles.billingNudgeCard}>
           <div className={styles.billingNudgeIcon}><Link2 size={18} /></div>
           <div className={styles.billingNudgeBody}>
-            <h2 className={styles.billingNudgeTitle}>Parent organization paying for this Coaches Portal?</h2>
+            <h2 className={styles.billingNudgeTitle}>Part of a club or association?</h2>
             <p className={styles.billingNudgeCopy}>
-              Start with a Basic visibility link, then ask the organization to take over billing. Your Coaches Portal stays coach-operated, and roster, document, accounting, and ownership access do not move.
+              Add a Basic visibility link so the organization can see your team — your Coaches Portal stays coach-operated, and roster, document, accounting, and ownership access stay with you. If the organization is on Club, transferring the team into it includes the Premium portal for the whole coaching staff.
             </p>
           </div>
           <Link className="btn btn-lime btn-data" href={`/${currentOrg.slug}/coaches/link-org`}>
