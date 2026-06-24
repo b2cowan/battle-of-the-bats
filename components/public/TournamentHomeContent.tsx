@@ -142,9 +142,36 @@ export default async function TournamentHomeContent({
   // Champions for the completed-home banner (J6-052). allGames (raw, all statuses)
   // so playoff finals aren't filtered out; teams here is the public-safe array (id+name).
   const champions = isCompletedTournament ? deriveChampions(allGames, teams, sortedDivisions) : [];
-  const ageRange = sortedDivisions.length > 0
-    ? `${sortedDivisions[0].name} - ${sortedDivisions[sortedDivisions.length - 1].name}`
-    : 'Divisions TBA';
+  // Third hero stat — adaptive. When every division name parses as an age (U13,
+  // 13U, "Under 13"), show a true low-to-high age range, ordered by the actual
+  // number rather than the organizer's list order. When any division isn't
+  // age-style (Gold, Senior, Blue — names with no inherent order), a range is
+  // meaningless, so fall back to the tournament length in days, which is always
+  // valid regardless of how divisions are named.
+  const parseDivisionAge = (name: string): number | null => {
+    const m = name.match(/\bu[\s-]?(\d{1,2})\b/i)      // U13, U-13, U 13
+           || name.match(/\b(\d{1,2})\s?u\b/i)         // 13U
+           || name.match(/\bunder[\s-]?(\d{1,2})\b/i); // Under 13
+    return m ? parseInt(m[1], 10) : null;
+  };
+  const divisionAges = sortedDivisions.map(d => parseDivisionAge(d.name));
+  const allAgeStyle = sortedDivisions.length > 0 && divisionAges.every(n => n !== null);
+
+  let thirdStatLabel = 'Days';
+  let thirdStatValue = 'TBA';
+  if (allAgeStyle) {
+    const nums = divisionAges as number[];
+    const minAge = Math.min(...nums);
+    const maxAge = Math.max(...nums);
+    thirdStatLabel = 'Age Range';
+    thirdStatValue = minAge === maxAge ? `U${minAge}` : `U${minAge} - U${maxAge}`;
+  } else if (startDate && endDate) {
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const dayCount = Math.round(
+      (new Date(endDate + 'T00:00:00').getTime() - new Date(startDate + 'T00:00:00').getTime()) / msPerDay
+    ) + 1;
+    thirdStatValue = String(Math.max(1, dayCount));
+  }
 
   const getTeamName     = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';
   const getDivisionName = (id: string) => divisions.find(g => g.id === id)?.name ?? '';
@@ -655,8 +682,8 @@ export default async function TournamentHomeContent({
               </div>
               <div className={styles.statDivider} />
               <div className={styles.stat}>
-                <span className={`${styles.statNum} ${styles.ageRangeText}`}>{ageRange}</span>
-                <span className={styles.statLabel}>Age Range</span>
+                <span className={allAgeStyle ? `${styles.statNum} ${styles.ageRangeText}` : styles.statNum}>{thirdStatValue}</span>
+                <span className={styles.statLabel}>{thirdStatLabel}</span>
               </div>
             </div>
           )}
