@@ -16,7 +16,10 @@ frontend:
         - echo "NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL" >> .env.production
         - echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env.production
         - echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> .env.production
-        - pnpm run build
+        # Webpack production build (next build --webpack) uses far more heap than the
+        # Turbopack default and OOMs the build worker on the 8GiB Standard instance.
+        # NODE_OPTIONS is inherited by Next's build workers; raise the old-space limit.
+        - NODE_OPTIONS=--max-old-space-size=6144 pnpm run build
   artifacts:
     baseDirectory: .next
     files:
