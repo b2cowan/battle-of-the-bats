@@ -43,7 +43,7 @@ export type CoachUpgradeMigrationSummary = {
   retryCount?: number;
   lastRetryAt?: string;
   acknowledgedAt?: string;
-  roster: { migrated: number; failed: number; needGuardian: string[]; nameSplitUncertain: string[] };
+  roster: { migrated: number; failed: number; needGuardian: string[] };
   schedule: { migrated: number; cancelled: number; failed: number };
   fees: { migrated: number; markedPaid: number; dueDateDefaulted: number; skippedZero: number; skippedNoPlayer: number; failed: number };
   announcementsMigrated: false;
@@ -56,7 +56,7 @@ function emptySummary(programYearId: string): CoachUpgradeMigrationSummary {
     ok: true,
     programYearId,
     migratedAt: new Date().toISOString(),
-    roster: { migrated: 0, failed: 0, needGuardian: [], nameSplitUncertain: [] },
+    roster: { migrated: 0, failed: 0, needGuardian: [] },
     schedule: { migrated: 0, cancelled: 0, failed: 0 },
     fees: { migrated: 0, markedPaid: 0, dueDateDefaulted: 0, skippedZero: 0, skippedNoPlayer: 0, failed: 0 },
     announcementsMigrated: false,

@@ -1418,7 +1418,7 @@ export interface RepBudgetPlan {
 export interface RepInstallmentPreviewRow {
   playerId: string;
   playerFirstName: string;
-  playerLastName: string;
+  playerLastName: string | null;
   installments: { installmentNumber: number; dueDate: string; amount: number }[];
 }
 

@@ -126,7 +126,7 @@ export const GET = withObservability(async (_req: Request,
 
     return {
       playerId:       p.id,
-      playerName:     `${p.player_first_name} ${p.player_last_name}`,
+      playerName:     [p.player_first_name, p.player_last_name].filter(Boolean).join(' '),
       remainingDues:  Math.round(outstanding * 100) / 100,
       entry:          entry ? mapEntry(entry) : null,
     };
@@ -214,7 +214,7 @@ export const POST = withObservability(async (req: Request,
   const rebatePct    = Number(fundraiser.player_rebate_percent);
   const rebateAmount = Math.round(raised * rebatePct / 100 * 100) / 100;
   const today        = new Date().toISOString().slice(0, 10);
-  const playerName   = `${player.player_first_name} ${player.player_last_name}`;
+  const playerName   = [player.player_first_name, player.player_last_name].filter(Boolean).join(' ');
 
   // 1 — Create team ledger income entry
   const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);

@@ -83,7 +83,7 @@ export const GET = withObservability(async (req: Request,
         .select('id, player_first_name, player_last_name')
         .in('id', playerIds);
       for (const p of players ?? []) {
-        nameMap.set(p.id, `${p.player_first_name} ${p.player_last_name}`);
+        nameMap.set(p.id, [p.player_first_name, p.player_last_name].filter(Boolean).join(' '));
       }
     }
 

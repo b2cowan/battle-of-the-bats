@@ -86,7 +86,7 @@ export const POST = withObservability(async (req: Request) => {
         .map(
           i =>
             `<li style="margin-bottom:0.5rem;">
-              <strong>${i.playerFirstName} ${i.playerLastName}</strong> — ${fmt(i.amount)} due ${fmtDate(i.dueDate)}
+              <strong>${[i.playerFirstName, i.playerLastName].filter(Boolean).join(' ')}</strong> — ${fmt(i.amount)} due ${fmtDate(i.dueDate)}
               (Installment ${i.installmentNumber} of ${i.totalInstallments})
             </li>`,
         )

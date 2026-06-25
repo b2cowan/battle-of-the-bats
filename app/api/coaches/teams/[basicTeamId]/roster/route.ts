@@ -44,7 +44,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     const { input, error } = normalizeBasicCoachTeamPlayerBody(body);
     if (error) return json({ error }, 400);
-    if (!input.name) return json({ error: 'A player name is required.' }, 400);
+    if (!input.firstName) return json({ error: 'A player first name is required.' }, 400);
 
     const player = await createBasicCoachTeamPlayer({
       basicCoachTeamId: basicTeamId,

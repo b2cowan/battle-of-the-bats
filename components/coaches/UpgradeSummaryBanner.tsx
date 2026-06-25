@@ -7,7 +7,7 @@ type MigrationSummary = {
   ok?: boolean;
   programYearId?: string;
   retryCount?: number;
-  roster?: { migrated: number; needGuardian?: string[]; nameSplitUncertain?: string[] };
+  roster?: { migrated: number; needGuardian?: string[] };
   schedule?: { migrated: number; cancelled: number };
   fees?: { migrated: number; dueDateDefaulted: number; skippedZero: number; skippedNoPlayer: number };
   announcementsMigrated?: boolean;
@@ -85,9 +85,7 @@ export default function UpgradeSummaryBanner({ orgSlug, teamId }: { orgSlug: str
 
   const checkThese: string[] = [];
   const needGuardian = r.needGuardian?.length ?? 0;
-  const nameUncertain = r.nameSplitUncertain?.length ?? 0;
   if (needGuardian) checkThese.push(`${needGuardian} player${needGuardian === 1 ? ' is' : 's are'} missing guardian contact info — add it on the Roster (dues reminders need an email).`);
-  if (nameUncertain) checkThese.push(`${nameUncertain} player name${nameUncertain === 1 ? '' : 's'} may need a first/last name fix.`);
   if (f.dueDateDefaulted) checkThese.push(`${f.dueDateDefaulted} fee${f.dueDateDefaulted === 1 ? '' : 's'} got a default due date — confirm the real date on the Dues tab.`);
   if (f.skippedNoPlayer) checkThese.push(`${f.skippedNoPlayer} fee${f.skippedNoPlayer === 1 ? ' was' : 's were'} not linked to a player and weren't carried over.`);
   if (f.skippedZero) checkThese.push(`${f.skippedZero} $0 fee${f.skippedZero === 1 ? ' was' : 's were'} skipped.`);

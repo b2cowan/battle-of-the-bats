@@ -35,7 +35,7 @@ export const PATCH = withObservability(async (req: NextRequest, { params }: Rout
     return json({ ok: true, player });
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
-    if (message === 'A player name is required.') return json({ error: message }, 400);
+    if (message === 'A player first name is required.') return json({ error: message }, 400);
     console.error('[coaches roster PATCH] error:', error);
     return json({ error: 'Could not update the player.' }, 500);
   }

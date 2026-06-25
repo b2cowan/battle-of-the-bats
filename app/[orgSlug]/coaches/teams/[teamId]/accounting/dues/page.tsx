@@ -191,7 +191,7 @@ export default function CoachesDuesPage({
 
   function buildDuesExportRows() {
     return players.map(p => ({
-      player:    `${p.player.playerFirstName} ${p.player.playerLastName}`,
+      player:    [p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' '),
       totalDues: p.schedule?.totalAmount ?? '',
       credits:   p.totalCredits || '',
       paid:      p.schedule ? p.paidAmount : '',
@@ -567,7 +567,7 @@ export default function CoachesDuesPage({
                       onClick={() => { setSelected(p); setEditingSchedule(false); setAddingCredit(false); setSaveError(''); }}
                     >
                       <td className={styles.td}>
-                        {p.player.playerFirstName} {p.player.playerLastName}
+                        {[p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' ')}
                       </td>
                       <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>
                         {p.schedule ? fmt(p.schedule.totalAmount) : '—'}
@@ -700,7 +700,7 @@ export default function CoachesDuesPage({
                             <tbody>
                               {surplusData.breakdown.map(row => (
                                 <tr key={row.playerId} className={styles.tr}>
-                                  <td className={styles.td}>{row.playerFirstName} {row.playerLastName}</td>
+                                  <td className={styles.td}>{[row.playerFirstName, row.playerLastName].filter(Boolean).join(' ')}</td>
                                   <td className={styles.td} style={{ color: balanceColor(row.rollingBalance), fontVariantNumeric: 'tabular-nums' }}>
                                     {fmt(row.rollingBalance)}
                                   </td>
@@ -732,7 +732,7 @@ export default function CoachesDuesPage({
           <div className={styles.slideOver} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>
-                {selected.player.playerFirstName} {selected.player.playerLastName}
+                {[selected.player.playerFirstName, selected.player.playerLastName].filter(Boolean).join(' ')}
               </span>
               <button className={styles.modalCloseBtn} onClick={() => { setSelected(null); setEditingSchedule(false); setAddingCredit(false); }}>
                 <X size={18} />

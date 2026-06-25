@@ -776,7 +776,7 @@ export default function BudgetPlannerPage({
                         </div>
                         {preview.slice(0, 10).map(row => (
                           <div key={row.playerId} className={styles.previewRow}>
-                            <span>{row.playerLastName}, {row.playerFirstName}</span>
+                            <span>{[row.playerLastName, row.playerFirstName].filter(Boolean).join(', ')}</span>
                             {row.installments.map((inst, i) => (
                               <span key={i} style={{ textAlign: 'right' }}>{fmt(inst.amount)}</span>
                             ))}
