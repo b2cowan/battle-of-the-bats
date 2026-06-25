@@ -237,6 +237,11 @@ export default function TeamProfilePage({
                   {poolName && <> · {poolName}</>}
                   {team.coach && <> · {team.coach}</>}
                 </p>
+                {!standings.isChampion && (standings.isRunnerUp || standings.inPlayoffSpot) && (
+                  <span className={styles.heroStatusChip}>
+                    {standings.isRunnerUp ? 'Runner-up' : 'In playoff spot'}
+                  </span>
+                )}
               </div>
               <div className={styles.heroActions}>
                 <button
@@ -292,25 +297,8 @@ export default function TeamProfilePage({
             </div>
           </div>
 
-          {/* Stat tiles */}
+          {/* Stat tiles — detail metrics not already shown in the hero strip */}
           <div className={styles.statGrid}>
-            <div className={styles.statTile}>
-              <span className={styles.statTileLabel}>POINTS</span>
-              <span className={`${styles.statTileValue} ${styles.statTileAccent}`}>{standings.pts}</span>
-            </div>
-            <div className={standings.isChampion ? `${styles.statTile} ${styles.statTileChampion}` : styles.statTile}>
-              <span className={styles.statTileLabel}>{standings.isChampion ? 'RESULT' : 'POOL RANK'}</span>
-              <span className={styles.statTileValue}>
-                {standings.isChampion ? <Trophy size={26} style={{ color: 'var(--warning)' }} /> : (standings.poolRankLabel ?? '—')}
-              </span>
-              {standings.isChampion ? (
-                <span className={styles.statTileChampionSub}>Champions</span>
-              ) : standings.isRunnerUp ? (
-                <span className={styles.statTileSub}>Runner-up</span>
-              ) : standings.inPlayoffSpot ? (
-                <span className={styles.statTileSub}>In playoff spot</span>
-              ) : null}
-            </div>
             <div className={styles.statTile}>
               <span className={styles.statTileLabel}>RUNS FOR</span>
               <span className={styles.statTileValue}>{standings.rf}</span>

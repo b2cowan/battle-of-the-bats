@@ -110,6 +110,20 @@
   font-weight: 500;
 }
 
+.heroStatusChip {
+  display: inline-block;
+  margin-top: 0.4rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--team-color, var(--primary)) 24%, transparent);
+  border: 1px solid color-mix(in srgb, var(--team-color, var(--primary)) 40%, transparent);
+  color: var(--team-accent);
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .heroActions {
   display: flex;
   align-items: center;
@@ -195,15 +209,9 @@
 
 .statGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.625rem;
   margin-bottom: 0.75rem;
-}
-
-@media (max-width: 640px) {
-  .statGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 .statTile {
@@ -595,6 +603,7 @@
   .heroActions {
     width: 100%;
     margin-left: 0;
+    flex-wrap: wrap;
   }
 
   .followHeroBtn {

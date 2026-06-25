@@ -1646,16 +1646,13 @@ a.gameRow { cursor: pointer; }
 
 .scorebugName {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.3rem;
   font-family: var(--font-data);
   font-size: 0.82rem;
   font-weight: 900;
   color: var(--white);
   letter-spacing: 0.02em;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .scorebugStar {
@@ -1784,9 +1781,10 @@ a.gameRow { cursor: pointer; }
 
 .scorebugNameText {
   min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 /* "Tap to open team" affordance at the end of the name. */
