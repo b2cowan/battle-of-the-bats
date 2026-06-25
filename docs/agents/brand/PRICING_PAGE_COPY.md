@@ -19,7 +19,7 @@ The sections below document all copy changes applied to the live pages after the
 > Do **not** reintroduce trial-length language (14/30/90-day) anywhere in live copy. The body trial sections are retained below only as historical record.
 
 > ### 🔁 RENAME — "League Starter"/"League" → "League"/"League Plus" (applied 2026-06-13)
-> The $89 paid tier is now **"League Plus"** on the live pages (was "League"). A new **free "League"** house-league floor (1 season / 1 division / 8 teams; internal `free_floor='league_starter'`, capped beta) sits below it, mirroring Tournament (free) / Tournament Plus (paid). **Read every "League" in the body sections below as "League Plus"** unless it clearly means the free floor or the **"House League"** module. Internal keys are unchanged (`plan_id='league'`, Stripe). The free "League" **public pricing card** is held for the Free-Tier Phase-9 launch — until then the live pricing page shows "League Plus" as the $89 tier and does not advertise the free "League". Never write "League Starter"/"Starter" in customer copy. Full inventory + rules: `docs/projects/active/LEAGUE_REBRAND_PLAN.md`.
+> The $89 paid tier is now **"League Plus"** on the live pages (was "League"). A new **free "League"** house-league floor (1 season / 1 division / 8 teams; internal `free_floor='league_starter'`, capped beta) sits below it, mirroring Tournament (free) / Tournament Plus (paid). **Read every "League" in the body sections below as "League Plus"** unless it clearly means the free floor or the **"House League"** module. Internal keys are unchanged (`plan_id='league'`, Stripe). The free "League" **public pricing card** is held for the Free-Tier Phase-9 launch — until then the live pricing page shows "League Plus" as the $89 tier and does not advertise the free "League". Never write "League Starter"/"Starter" in customer copy. Full inventory + rules: `docs/projects/archive/LEAGUE_REBRAND_PLAN.md`.
 
 > ### 🏷️ NAMING CANON — the coach product (reaffirmed 2026-06-17)
 > Per the Brand Strategy **Coaches Portal Unification Addendum (2026-05-25)**, the coach product is **one customer-facing product: "Coaches Portal"**, with two access tiers:
@@ -59,6 +59,27 @@ Owner-ratified from the 2026-06-22 pricing & product review. **Canonical numbers
 **League naming (ratified 2026-06-22):** the $89 tier is **League Plus**; the free "League" floor stays held for its own launch. No new public change beyond keeping the page on "League Plus."
 
 **Acquisition emphasis (persona pages / positioning):** lead Club and `/for-clubs` acquisition messaging toward the **mid-size dual-stream club (~8–14 teams)** — numerous, self-serve-able, sits in the lower band. Focus, not exclusion.
+
+### 🆕 Coaches Portal "Explore" page upsell — APPROVED 2026-06-25 (build-ready)
+
+In-app copy for the **free standalone-coach** Explore page (the rediscovery home for a free team, e.g. `/coaches/team/[id]/explore`). Replaces the single quiet org-only nudge with **two ranked messages**. Owner-approved 2026-06-25 via `/marketing`; price verified against `docs/agents/strategy/PLAN_PRICING_FACTS.md` (no drift), features verified against the live in-product upsell vocabulary (ScopeShelf / ScopeCeilingInterest). Naming canon: **Premium Coaches Portal** (never "Coach Premium" / "Coaches Portal Premium" / "Team plan").
+
+**Intro line** — scope "free" to the cards so it doesn't fight the paid block: "…Turn on what's useful for your team — and ignore what isn't. **These are all free.**" *(was "It's all free.")*
+
+**PRIMARY block — upgrade THIS team (prominent, elevated card):**
+- Eyebrow: **PREMIUM COACHES PORTAL**
+- Heading: **Ready for the full toolkit?**
+- Body: "Upgrading keeps everything you've already entered — your roster, schedule and fees come straight across, nothing to re-type. Premium adds the tools for running a whole season:"
+- Features (verified — matches in-product vocabulary): **Game lineups · Attendance tracking · Team documents · Dues schedules & automatic reminders · A season budget · Carry your roster into next season**
+- Reassurance: "Everything above stays free."
+- Price: **$29/month per team** *(monthly only — owner choice; no annual line on this surface)*
+- CTA: **"Upgrade to Premium →"** when the team-plan checkout gate is open (dev / post-launch → `/coaches/start`) / **"See everything it includes →"** when gated (prod pre-launch → `/for-coaches`).
+
+> **Canon extension (owner decision 2026-06-25):** "Carry your roster into next season" (season rollover) is newly added to the approved Premium upsell vocabulary — it was NOT previously in the ScopeShelf/ScopeCeilingInterest set. **Fundraisers and payables remain intentionally OUT** of the upsell vocabulary (real features, not part of the pitch).
+
+**SECONDARY line — whole org (quieter, demoted, links `/pricing`):**
+- "**Running a whole club or league?** FieldLogicHQ runs the entire organization — every team's rosters and schedules, your accounting, a public website for your members, and full tournament management with automated scheduling and brackets." → CTA "See organization plans →"
+- Accuracy note: public website = League and up, accounting = Club; listed as general organization capabilities, **not** attributed to a specific price.
 
 ### Phase 1 amendments (applied 2026-05-27)
 - `/for-tournament-organizers` planNote → "Free through Dec 31, 2026 — Founding Season · $390/year from Jan 2027"; CTA → "Start Free — No Credit Card →"

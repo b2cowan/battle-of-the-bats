@@ -14,6 +14,23 @@
   }
 }
 
+/* Standalone (org-less) coach portal only — present the chat as a centered, contained card on
+   desktop instead of an edge-to-edge slab with a 820px reading column floating in dead bands.
+   Scoped via the `[data-chat-contained]` marker, set ONLY on the standalone route (NOT on the
+   league/club portal, which keeps its deliberate full-bleed — that portal carries the generic
+   `[data-chat-fullbleed]` page-scroll-lock marker but not this one). The attribute selector stays
+   global while `.host` is module-local. The vertical inset + the panel's own border/radius read it
+   as a focused app surface; the empty space becomes intentional margin. */
+@media (min-width: 1024px) {
+  :global([data-chat-contained]) .host {
+    height: calc(100dvh - 3rem);
+    max-width: var(--chat-shell-max, 960px);
+    margin: 1.5rem auto;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+}
+
 .empty {
   flex: 1 1 auto;
   min-height: 0;

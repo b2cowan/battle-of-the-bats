@@ -11,7 +11,7 @@ import HelpTooltip from '@/components/help/HelpTooltip';
 import styles from './house-league.module.css';
 import type { LeagueSeason, LeagueSeasonSummary, LeagueSeasonStatus } from '@/lib/types';
 import type { LeagueCapKind } from '@/lib/free-floor';
-import { SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
+import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -308,7 +308,7 @@ export default function HouseLeaguePage() {
                   value={form.sport}
                   onChange={e => setForm(f => ({ ...f, sport: e.target.value }))}
                 >
-                  {SPORT_OPTIONS.map(s => (
+                  {OFFERED_SPORT_OPTIONS.map(s => (
                     <option key={s.id} value={s.id}>{s.label}</option>
                   ))}
                 </select>

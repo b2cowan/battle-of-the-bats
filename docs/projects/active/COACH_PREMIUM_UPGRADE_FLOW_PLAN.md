@@ -129,7 +129,7 @@ On provisioning of an upgrade-with-team-id, seeds the new Premium first season f
 - Synchronous best-effort at provisioning (owner decision), so the portal is populated on first load.
 - Emits the post-upgrade "check these" summary.
 
-> **Architecture decision (2026-06-19, owner-confirmed):** keep the free/paid portals as separate models + migrate on upgrade; do NOT unify onto shared tier-gated tables now (the Tournament free/Plus analogy is invalid — no shared org row to flip). Unification kept as a future "account-per-free-coach" option. Enforce **Premium ≥ Free** on every new free feature. Full record + the 9-agent analysis: [COACH_PORTAL_ARCHITECTURE_DECISION.md](COACH_PORTAL_ARCHITECTURE_DECISION.md).
+> **Architecture decision (2026-06-19, owner-confirmed):** keep the free/paid portals as separate models + migrate on upgrade; do NOT unify onto shared tier-gated tables now (the Tournament free/Plus analogy is invalid — no shared org row to flip). Unification kept as a future "account-per-free-coach" option. Enforce **Premium ≥ Free** on every new free feature. Full record + the 9-agent analysis: [COACH_PORTAL_ARCHITECTURE_DECISION.md](../archive/COACH_PORTAL_ARCHITECTURE_DECISION.md).
 
 ### Phase 5 — Companion: in-portal season & division management — ✅ BUILT on `dev` (2026-06-19); spun into its own plan
 **Now tracked in [COACH_PREMIUM_PHASE5_SEASON_DIVISION_PLAN.md](COACH_PREMIUM_PHASE5_SEASON_DIVISION_PLAN.md) + PM brief.** Built with no migration and no shared-core (`lib/db.ts`/`lib/types.ts`) edits; typecheck + focused lint clean; adversarial-reviewed. Original scope below.

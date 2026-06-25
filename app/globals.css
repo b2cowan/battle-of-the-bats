@@ -264,6 +264,31 @@ body {
   line-height: 1.6;
 }
 
+/* Full-bleed app route (the coach-portal chat) — the chat owns the dynamic viewport and
+   scrolls ONLY internally. The shell's `.content:has([data-chat-fullbleed])` pins itself to
+   100dvh, but the SCROLL CONTAINER is an ancestor: `body { min-height: 100vh }` makes the page
+   taller than the dynamic viewport on mobile (100vh > 100dvh while the address bar is showing),
+   and the global `<main>` reserves a mobile bottom-nav gutter (padding-bottom) below it — so the
+   page can still scroll, dragging the chat's fixed header up under the top bar and leaving dead
+   space above the bottom nav. Neutralize the whole ancestor chain on this route so nothing above
+   the chat can scroll. (Same `:has()` mechanism the shell already uses; degrades to today's
+   behaviour where `:has()` is unsupported.) */
+html:has([data-chat-fullbleed]),
+body:has([data-chat-fullbleed]) {
+  min-height: 0;
+  height: 100dvh;
+  overflow: hidden;
+}
+/* Target the ROOT scroll container by id — NOT a bare `main:has(...)`, which would also match a
+   nested portal <main> (the league/club coaches shell uses its own <main> with a tuned bottom gutter
+   + negative-margin chat wrapper); overriding its padding here would shift that chat's composer. */
+#main-content:has([data-chat-fullbleed]) {
+  min-height: 0;
+  height: 100dvh;
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
 /* ─── FieldLogic Platform Tokens (additive — do not replace existing tokens) ─── */
 :root {
   /* FieldLogic palette */
@@ -727,6 +752,12 @@ h1, h2, h3, h4, h5, h6 {
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+/* Hide Edge/IE's native password reveal ("eye") + clear ("x") controls — they
+   double up with our own custom show/hide toggle across login, signup, invite,
+   register, etc. Keep only the app's button. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear { display: none; }
 
 /* Date inputs — dark popup + FieldLogicHQ logic-lime indicator icon */
 input[type="date"],

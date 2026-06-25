@@ -23,8 +23,10 @@ export default async function CoachTeamChatPage({ params }: RouteParams) {
   // shell drop its 100vh page-minimum on this route so the chat owns exactly the chrome-bounded
   // (dynamic) viewport — no phantom scroll / dead space (see chat.module.css).
   await resolveCoachTeamPage(basicTeamId, '/chat');
+  // `data-chat-fullbleed` = lock the page scroll (shell + globals); `data-chat-contained` = present
+  // the conversation as a centered card on desktop (standalone portal only — see CoachChatView.module.css).
   return (
-    <div className={styles.chatWrap} data-chat-fullbleed>
+    <div className={styles.chatWrap} data-chat-fullbleed data-chat-contained>
       <CoachChatView />
     </div>
   );

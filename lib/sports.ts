@@ -35,10 +35,10 @@ export interface SportOption {
 }
 
 /**
- * Canonical, ordered list of selectable sports. Used by the league/rep/coach sport
- * dropdowns (which support any sport). The TOURNAMENT picker uses the narrower
- * TOURNAMENT_SPORT_OPTIONS — per owner decision (2026-06-18) it only offers sports we
- * genuinely support yet, never a half-built one.
+ * Canonical, ordered list of ALL known sports — the full vocabulary for normalizing and
+ * labelling stored values (incl. legacy data) and the SportId type. This is NOT what the
+ * dropdowns show: every customer-facing picker offers the narrower OFFERED_SPORT_OPTIONS
+ * (softball + baseball) so we never advertise a sport we don't support yet.
  */
 export const SPORT_OPTIONS: readonly SportOption[] = [
   { id: 'softball', label: 'Softball' },
@@ -55,16 +55,24 @@ export const SPORT_OPTIONS: readonly SportOption[] = [
 export const DEFAULT_SPORT: SportId = 'softball';
 
 /**
- * Sports with a fully tailored SportPack today. The TOURNAMENT sport picker only offers
- * these plus 'other' (a neutral fallback), and the list grows as packs are added — we
- * never surface a sport whose tournament experience we can't do well yet.
+ * Sports actually OFFERED in pickers today. Multi-sport is paused (owner, 2026-06-24) —
+ * softball + baseball only until we expand. EVERY customer-facing sport dropdown (coach
+ * signup, rep teams, house-league seasons, onboarding, and the tournament picker) sources
+ * this list, NOT the full SPORT_OPTIONS, so we never advertise a sport we can't run well yet.
+ * Narrowing the offered list (rather than the canonical SPORT_OPTIONS) keeps existing-data
+ * labels intact; expanding later = add an id here (plus a SportPack for tailored behaviour).
  */
-export const TAILORED_SPORT_IDS: readonly SportId[] = ['softball', 'basketball'];
-
-/** What the tournament-creation sport picker offers (Phase 1 consumer). */
-export const TOURNAMENT_SPORT_OPTIONS: readonly SportOption[] = SPORT_OPTIONS.filter(
-  o => TAILORED_SPORT_IDS.includes(o.id) || o.id === 'other',
+export const OFFERED_SPORT_IDS: readonly SportId[] = ['softball', 'baseball'];
+export const OFFERED_SPORT_OPTIONS: readonly SportOption[] = SPORT_OPTIONS.filter(o =>
+  OFFERED_SPORT_IDS.includes(o.id),
 );
+
+/**
+ * What the tournament-creation sport picker offers — the same softball + baseball set as the
+ * other pickers (kept as a distinct name in case tournaments ever diverge). Was softball +
+ * basketball + "Other" during the (now-paused) multi-sport build; realigned 2026-06-25.
+ */
+export const TOURNAMENT_SPORT_OPTIONS: readonly SportOption[] = OFFERED_SPORT_OPTIONS;
 
 const SPORT_ID_SET = new Set<string>(SPORT_OPTIONS.map(o => o.id));
 const ID_BY_LABEL_LOWER = new Map<string, SportId>(
@@ -162,7 +170,37 @@ const SOFTBALL_PACK: SportPack = {
   startVerb: 'First pitch',
 };
 
-// First non-softball pack — proves the model. Basketball: points (not runs), four
+// Baseball ≈ softball scoring (runs, innings, first pitch, diamond, mercy/diff cap), so it
+// reads as baseball end-to-end instead of falling back to the neutral generic pack. Default
+// 9 innings (organizers can change it). One of the two sports we offer today.
+const BASEBALL_PACK: SportPack = {
+  id: 'baseball',
+  label: 'Baseball',
+  score: {
+    for: 'Runs For',
+    against: 'Runs Against',
+    diff: 'Run Diff',
+    forAbbr: 'RF',
+    againstAbbr: 'RA',
+    diffAbbr: 'RD',
+    unit: 'Run',
+    unitPlural: 'Runs',
+  },
+  defaultTieBreakers: ['h2h', 'rd', 'rf', 'ra'],
+  pointsPerWin: 2,
+  pointsPerDraw: 1,
+  usesDraws: true,
+  standingsPrimary: 'points',
+  hasDiffCap: true,
+  diffCapLabel: 'Max run differential per game',
+  defaultFacilityType: 'diamond',
+  periodLabel: 'Inning',
+  periodLabelPlural: 'Innings',
+  defaultPeriodCount: 9,
+  startVerb: 'First pitch',
+};
+
+// First differently-scored pack — proves the model. Basketball: points (not runs), four
 // quarters, ranked by win % (no points total), no mercy/diff cap, played on a court.
 const BASKETBALL_PACK: SportPack = {
   id: 'basketball',
@@ -223,6 +261,7 @@ const GENERIC_PACK: SportPack = {
 
 const TAILORED_PACKS: Partial<Record<SportId, SportPack>> = {
   softball: SOFTBALL_PACK,
+  baseball: BASEBALL_PACK,
   basketball: BASKETBALL_PACK,
 };
 

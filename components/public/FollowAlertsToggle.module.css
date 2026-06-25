@@ -1,0 +1,49 @@
+/* components/public/FollowAlertsToggle.module.css
+   The `pill` variant — used in the mobile follow-actions strip under the
+   "Next Up" card — renders the alerts toggle as a compact pill that matches the
+   sibling "My Team Games" / "Add to Calendar" links, so all three read as one
+   tidy row of follow-actions rather than a heavyweight CTA. The desktop rail
+   keeps the default inline `btn` form (variant="default"). */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid rgba(var(--primary-rgb), 0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.55rem;
+  background: rgba(var(--primary-rgb), 0.08);
+  color: var(--primary-light);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.pill:hover {
+  background: rgba(var(--primary-rgb), 0.14);
+  border-color: rgba(var(--primary-rgb), 0.5);
+}
+
+.pill:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* "Alerts on" — the brand active state: a solid lime fill with dark text,
+   mirroring the global `btn-lime` treatment. A tinted lime *text* read fine on
+   the dark app shell but is near-invisible on the public site's white surface
+   (the public light theme never remaps --logic-lime), so the "on" state fills
+   instead — readable in both modes and a stronger switched-on signal. */
+.pillOn {
+  border-color: var(--logic-lime);
+  background: var(--logic-lime);
+  color: var(--pitch-black);
+}
+
+.pillOn:hover {
+  background: rgba(var(--logic-lime-rgb), 0.85);
+  border-color: rgba(var(--logic-lime-rgb), 0.85);
+}

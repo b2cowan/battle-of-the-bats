@@ -38,17 +38,17 @@ export default function TeamSectionShell({
           <h1 className={styles.identityName}>{teamName}</h1>
           <p className={styles.identityMeta}>{title}</p>
         </div>
+        {help && (
+          <div className={styles.identityHelp}>
+            <HelpButton help={help} label={title} iconOnly />
+          </div>
+        )}
       </div>
 
       <section className={shared.section}>
         <div className={shared.sectionHeader}>
           <h2 className={shared.sectionTitle}>{title}</h2>
-          {(meta || help) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              {meta}
-              {help && <HelpButton help={help} label={title} />}
-            </div>
-          )}
+          {meta && <div style={{ marginLeft: 'auto' }}>{meta}</div>}
         </div>
         {children}
       </section>

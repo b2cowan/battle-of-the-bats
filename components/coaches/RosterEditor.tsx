@@ -391,6 +391,7 @@ function PlayerForm({
       {/* Date of birth — optional, purpose-driven, consent-gated minor PII. */}
       {showDob ? (
         <div className={styles.panel}>
+          <p className={styles.panelTitle}>Date of birth</p>
           <p className={styles.panelNote}>
             Optional. Some tournaments need player ages for division eligibility — only add a date of
             birth if you need it.
@@ -432,6 +433,7 @@ function PlayerForm({
       {/* Parent/guardian contact + note — optional. */}
       {showContact ? (
         <div className={styles.panel}>
+          <p className={styles.panelTitle}>Parent / guardian contact</p>
           <p className={styles.panelNote}>
             Optional. Used later to message parents about your team — never shared publicly.
           </p>

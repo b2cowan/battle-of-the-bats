@@ -1,5 +1,7 @@
 # Assistant Coaches — Building-Block Note
 
+> **Superseded for scope/decisions by the full review:** `ASSISTANT_COACHES_PLAN.md` (+ `ASSISTANT_COACHES_PM_BRIEF.md`), 2026-06-24. That review is code-grounded and decision-ready; this note is retained as the origin concept. **Key correction from the review:** "chat-only first" is not a cheap safe default — today an assistant added to a team's staff inherits *full* head-coach access (roster PII, money, mass-email), so V1's real work is a least-privilege assistant role that closes that over-grant. Chat then picks assistants up for free.
+
 **What this is:** a small, reusable platform concept — not a standalone project. It is **introduced inside Project 2 (In-Org Coach-to-Coach Chat)** but is written up separately because more than one feature will lean on it.
 
 ## The concept

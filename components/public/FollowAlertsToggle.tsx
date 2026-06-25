@@ -24,17 +24,35 @@ import {
   readFanAlertsOptIn,
   verifyFanAlertsLive,
 } from '@/lib/fan-alerts';
+import styles from './FollowAlertsToggle.module.css';
 
 interface Props {
   orgSlug: string;
   tournamentSlug: string;
   tournamentId: string;
   team: { id: string; name: string };
+  /**
+   * 'pill' renders the toggle as a compact pill matching the sibling
+   * "My Team Games" / "Add to Calendar" follow-actions — used in the mobile
+   * strip so all three read as one tidy row. 'default' (the desktop rail +
+   * anywhere else) keeps the inline `btn` form.
+   */
+  variant?: 'default' | 'pill';
 }
 
 type State = 'off' | 'pending' | 'on' | 'error';
 
-export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournamentId, team }: Props) {
+export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournamentId, team, variant = 'default' }: Props) {
+  const pill = variant === 'pill';
+  const iconSize = pill ? 12 : 14;
+  // Shorter label in the compact pill row so three actions fit inline on a phone.
+  const offLabel = pill ? 'Score alerts' : 'Get score alerts';
+  // In pill mode use ONLY the local pill class (the global `btn` padding/colour
+  // would override the compact look); 'btn-lime' maps to the lime "on" state.
+  const btnClass = (color: string) =>
+    pill
+      ? [styles.pill, color === 'btn-lime' ? styles.pillOn : ''].filter(Boolean).join(' ')
+      : ['btn', color, 'btn-sm'].filter(Boolean).join(' ');
   const [supported, setSupported] = useState(true);
   // iOS push only works once the app is on the home screen — surface that instead
   // of rendering nothing (J6-048).
@@ -158,8 +176,8 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournament
   if (iosInstall) {
     return (
       <>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setIosHint(v => !v)}>
-          <BellPlus size={14} /> Get score alerts
+        <button type="button" className={btnClass('btn-ghost')} onClick={() => setIosHint(v => !v)}>
+          <BellPlus size={iconSize} /> {offLabel}
         </button>
         {iosHint && (
           <span style={{ display: 'block', width: '100%', fontSize: '0.7rem', color: 'var(--white-55)' }}>
@@ -174,24 +192,24 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournament
 
   if (state === 'pending') {
     return (
-      <button type="button" className="btn btn-ghost btn-sm" disabled>
-        <Loader2 size={14} /> Working…
+      <button type="button" className={btnClass('btn-ghost')} disabled>
+        <Loader2 size={iconSize} /> Working…
       </button>
     );
   }
 
   if (state === 'on') {
     return (
-      <button type="button" className="btn btn-lime btn-sm" onClick={disable}>
-        <BellRing size={14} /> Alerts on
+      <button type="button" className={btnClass('btn-lime')} onClick={disable}>
+        <BellRing size={iconSize} /> Alerts on
       </button>
     );
   }
 
   return (
     <>
-      <button type="button" className="btn btn-ghost btn-sm" onClick={enable}>
-        {state === 'error' ? <BellOff size={14} /> : <Bell size={14} />} Get score alerts
+      <button type="button" className={btnClass('btn-ghost')} onClick={enable}>
+        {state === 'error' ? <BellOff size={iconSize} /> : <Bell size={iconSize} />} {offLabel}
       </button>
       {state === 'error' && msg && (
         <span style={{ fontSize: '0.7rem', color: 'var(--white-55)', flexBasis: '100%' }}>{msg}</span>

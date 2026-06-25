@@ -18,7 +18,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/lib/free-floor';
 import type { FreeFloor, OrgPlan, TournamentFormat, FacilityType } from '@/lib/types';
 import { FACILITY_TYPE_LABELS } from '@/lib/types';
-import { SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
+import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 import PricingSection from '@/components/PricingSection';
 import styles from './onboarding.module.css';
 
@@ -1758,7 +1758,7 @@ export default function OnboardingPage() {
                   value={leagueSeasonForm.sport}
                   onChange={e => setLeagueSeasonForm(form => ({ ...form, sport: e.target.value }))}
                 >
-                  {SPORT_OPTIONS.map(s => (
+                  {OFFERED_SPORT_OPTIONS.map(s => (
                     <option key={s.id} value={s.id}>{s.label}</option>
                   ))}
                 </select>

@@ -1165,6 +1165,17 @@
 .helpButton:hover {
   color: var(--primary-light, #D9F99D);
 }
+/* Icon-only round "?" — for tight spots (hero/identity band corner). Compact and
+   self-contained so it never collides with surrounding header content. */
+.helpButtonIconOnly {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  gap: 0;
+  border-radius: 999px;
+  justify-content: center;
+}
 .helpButton:focus-visible,
 .helpDrawerClose:focus-visible {
   outline: 2px solid var(--primary-light, #D9F99D);

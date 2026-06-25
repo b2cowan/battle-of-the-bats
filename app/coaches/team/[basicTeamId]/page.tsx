@@ -131,10 +131,11 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
             {metaParts.length > 0 ? metaParts.join(' · ') : 'Your team home'}
           </p>
         </div>
-        <div style={{ marginLeft: 'auto', position: 'relative' }}>
+        <div className={styles.identityHelp}>
           <HelpButton
             help={{ module: 'coaches', sectionIds: ['overview'], fullGuideHref: '/coaches/help#overview' }}
             label="Overview"
+            iconOnly
           />
         </div>
       </div>
@@ -173,15 +174,15 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
           >
             <ol className={styles.firstRunSteps}>
               <li className={styles.firstRunStep}>
-                <span className={styles.firstRunStepIcon}><Users size={15} aria-hidden /></span>
+                <span className={styles.firstRunStepIcon}><Users size={15} aria-hidden /></span>{' '}
                 Add your players to build the roster
               </li>
               <li className={styles.firstRunStep}>
-                <span className={styles.firstRunStepIcon}><CalendarDays size={15} aria-hidden /></span>
+                <span className={styles.firstRunStepIcon}><CalendarDays size={15} aria-hidden /></span>{' '}
                 Add practices and games to the schedule
               </li>
               <li className={styles.firstRunStep}>
-                <span className={styles.firstRunStepIcon}><Megaphone size={15} aria-hidden /></span>
+                <span className={styles.firstRunStepIcon}><Megaphone size={15} aria-hidden /></span>{' '}
                 Send your first announcement to parents
               </li>
             </ol>

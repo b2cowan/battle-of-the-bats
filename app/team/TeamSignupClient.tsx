@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { SPORT_OPTIONS as SHARED_SPORT_OPTIONS } from '@/lib/sports';
+import { OFFERED_SPORT_OPTIONS as SHARED_SPORT_OPTIONS } from '@/lib/sports';
 import {
   ArrowRight,
   CalendarDays,
@@ -54,23 +54,24 @@ const DRAFT_KEY = 'fieldlogichq.coaches.signup.draft';
 // Coach signup stores the display label (legacy free-text convention), so we map to labels.
 const SPORT_OPTIONS: string[] = SHARED_SPORT_OPTIONS.map(o => o.label);
 
-/** Snap a free-text sport (Basic teams store it as free text) onto a Premium option; unknown →
- *  'Other', blank/missing → the default ('Softball'). Case-insensitive. */
+/** Snap a free-text sport (Basic teams store it as free text) onto an offered option; unknown
+ *  or blank → the default ('Softball'). 'Other' is no longer offered (softball + baseball only).
+ *  Case-insensitive. */
 function normalizeSport(value: string | null | undefined): string {
   const trimmed = (value ?? '').trim();
   if (!trimmed) return 'Softball';
-  return SPORT_OPTIONS.find(option => option.toLowerCase() === trimmed.toLowerCase()) ?? 'Other';
+  return SPORT_OPTIONS.find(option => option.toLowerCase() === trimmed.toLowerCase()) ?? 'Softball';
 }
 
 const VALUE_POINTS = [
   ['Roster and documents', 'Keep player details, jersey numbers, positions, and season documents in one coach-owned workspace.'],
   ['Schedule and game day', 'Plan practices, games, attendance, and baseball/softball lineups from the same calendar.'],
   ['Dues and budget', 'Track player dues, expenses, payment requests, budget lines, and reminders without a club admin account.'],
-  ['Parent-org ready', 'Link a club later for Basic visibility or billing without transferring roster, documents, accounting, or ownership.'],
+  ['Club-ready when your org joins', 'If your organization moves to FieldLogicHQ, your portal carries over automatically — your roster, budget and documents stay yours.'],
 ] as const;
 
 const WORKFLOW_STEPS = [
-  ['1', 'Activate the team', 'Start from scratch or claim a tournament team contact.'],
+  ['1', 'Activate the team', 'Start fresh, or carry over your team details from a recent tournament.'],
   ['2', 'Run the season', 'Use the Coaches Portal for roster, schedule, dues, documents, attendance, and lineups.'],
   ['3', 'Grow locally', 'Create a free-tier round robin or exhibition weekend when nearby teams want more games.'],
 ] as const;
@@ -123,6 +124,10 @@ export default function TeamSignupClient({
   const reactivationOrgSlug = searchParams.get('reactivateOrgSlug')?.trim() || null;
   const reactivationTeamName = searchParams.get('teamName')?.trim() || '';
   const isReactivation = Boolean(reactivationOrgSlug);
+  // Warm upgrade: the coach arrived from a free team's "Upgrade to Premium" CTA (team prefilled).
+  // Not a tournament claim, not a reactivation. Drives a focused confirm-&-pay layout instead of
+  // the cold acquisition pitch.
+  const isWarmUpgrade = !claim && !isReactivation && Boolean(prefillBasicTeamId);
   const [teamName, setTeamName] = useState(claim?.teamName ?? prefillTeamName ?? reactivationTeamName);
   const [sport, setSport] = useState(normalizeSport(prefillSport));
   // Season is no longer asked at signup — it defaults silently (claim season, else current year).
@@ -327,28 +332,30 @@ export default function TeamSignupClient({
 
   return (
     <main className={styles.page}>
-      <section className={styles.signupSurface}>
+      <section className={styles.signupSurface} data-warm={isWarmUpgrade ? 'true' : undefined}>
         <div className={styles.copyPane}>
-          <p className={styles.eyebrow}>{claim ? 'Tournament team claim' : isReactivation ? 'Coaches Portal reactivation' : 'Coaches Portal Premium'}</p>
-          <h1 className={styles.title}>{claim ? 'Upgrade this team in Coaches Portal' : isReactivation ? 'Reactivate Premium without starting over.' : 'From tournament weekend to season workspace.'}</h1>
+          <p className={styles.eyebrow}>{claim ? 'Tournament team claim' : isReactivation ? 'Coaches Portal reactivation' : 'Premium Coaches Portal'}</p>
+          <h1 className={styles.title}>{claim ? 'Upgrade this team in Coaches Portal' : isReactivation ? 'Reactivate Premium without starting over.' : isWarmUpgrade ? `Upgrade ${cleanTeamName || 'your team'} to Premium.` : 'From tournament weekend to season workspace.'}</h1>
           <p className={styles.lede}>
             {claim
-              ? `${claim.tournamentName} already has your team details. Confirm the season setup, create or sign into the contact account, and activate Coaches Portal Premium.`
+              ? `${claim.tournamentName} already has your team details. Confirm the season setup, create or sign into the contact account, and activate the Premium Coaches Portal.`
               : isReactivation
                 ? 'Restart your Premium subscription during the retention window and restore the same team workspace instead of creating a duplicate.'
-              : 'One competitive team gets its own Coaches Portal for roster, schedule, dues, budget, documents, attendance, lineups, reminders, and a free local tournament slot.'}
+              : isWarmUpgrade
+                ? 'You\'re one step from Premium — confirm your team and billing below, and you\'re in.'
+              : 'One team, one place — roster, schedule, dues, budget, and documents, managed without a club admin account. Plus a free local tournament slot when your team wants more games.'}
           </p>
 
-          {!claim && (
+          {!claim && !isWarmUpgrade && (
             <div className={styles.heroActions}>
-              <a href="#team-signup-form" className={styles.heroPrimary}>Start Coaches Portal</a>
+              <a href="#team-signup-form" className={styles.heroPrimary}>Get started</a>
               <Link href="/pricing#team-pricing" className={styles.heroSecondary}>Compare pricing</Link>
             </div>
           )}
 
           <div className={styles.pricePanel}>
             <div>
-              <p className={styles.priceLabel}>Coaches Portal Premium</p>
+              <p className={styles.priceLabel}>Premium Coaches Portal</p>
               <p className={styles.price}>{planPrice}</p>
             </div>
             <div className={styles.priceMeta}>
@@ -357,7 +364,7 @@ export default function TeamSignupClient({
             </div>
           </div>
 
-          {!claim && (
+          {!claim && !isWarmUpgrade && (
             <>
               <div className={styles.workspacePreview} aria-label="Coaches Portal preview">
                 <div className={styles.previewHeader}>
@@ -400,30 +407,42 @@ export default function TeamSignupClient({
             </>
           )}
 
-          <div className={styles.benefitGrid}>
-            {[
-              claim
-                ? ['Prefilled claim', 'Your tournament team details start the workspace setup.']
-                : ['Coach-owned', 'The buyer lands in the Coaches Portal, not org onboarding.'],
-              ['Team-scoped', 'Access is limited to the entitled rep team and active coach.'],
-              ['Club-safe', 'Parent organizations do not receive roster, document, accounting, or ownership access unless both sides approve a transfer.'],
-            ].map(([label, body]) => (
-              <div className={styles.benefit} key={label}>
-                <Check size={14} />
-                <div>
-                  <p>{label}</p>
-                  <span>{body}</span>
+          {isWarmUpgrade && (
+            <div className={styles.carryOver}>
+              <p className={styles.carryOverTitle}>Everything you&apos;ve entered comes with you</p>
+              <p className={styles.carryOverBody}>
+                Your roster, schedule and fees transfer into Premium automatically — nothing to
+                re-enter, and your free team stays available as history. Cancel anytime.
+              </p>
+            </div>
+          )}
+
+          {!isWarmUpgrade && (
+            <div className={styles.benefitGrid}>
+              {[
+                claim
+                  ? ['Prefilled from your tournament', 'Your team details from the tournament start the setup — no re-typing.']
+                  : ['Your workspace, your call', 'The Coaches Portal belongs to you as the coach — not your club\'s admin account.'],
+                ['One team, no overlap', 'It\'s just your team. Other coaches and admins in your organization don\'t automatically get in.'],
+                ['Your data stays yours', 'If your club is on FieldLogicHQ they can see your team exists, but your roster, budget and documents stay yours unless you choose to share.'],
+              ].map(([label, body]) => (
+                <div className={styles.benefit} key={label}>
+                  <Check size={14} />
+                  <div>
+                    <p>{label}</p>
+                    <span>{body}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <form id="team-signup-form" className={styles.formPane} onSubmit={handleSubmit}>
           <div className={styles.formHeader}>
             <div>
-              <p className={styles.formKicker}>{claim ? 'Secure claim' : 'Start setup'}</p>
-              <h2>{claim ? 'Activate from tournament' : isReactivation ? 'Reactivate Premium' : 'Create your Coaches Portal'}</h2>
+              <p className={styles.formKicker}>{claim ? 'Secure claim' : isWarmUpgrade ? 'Confirm your upgrade' : 'Start setup'}</p>
+              <h2>{claim ? 'Activate from tournament' : isWarmUpgrade ? 'Confirm and pay' : isReactivation ? 'Reactivate Premium' : 'Create your Coaches Portal'}</h2>
             </div>
             <Users size={22} />
           </div>
@@ -558,13 +577,15 @@ export default function TeamSignupClient({
           {error && <div className={styles.errorBox}>{error}</div>}
 
           <button type="submit" className={styles.primaryButton} disabled={!canSubmit}>
-            <span>{busyLabel || (isAuthenticated ? (isReactivation ? 'Start reactivation' : 'Start checkout') : authMode === 'signup' ? 'Create account and checkout' : 'Sign in and checkout')}</span>
+            <span>{busyLabel || (isAuthenticated ? (isWarmUpgrade ? 'Upgrade now' : isReactivation ? 'Start reactivation' : 'Start checkout') : authMode === 'signup' ? 'Create account and checkout' : 'Sign in and checkout')}</span>
             <ArrowRight size={16} />
           </button>
 
           <div className={styles.footerRow}>
             <span><CalendarDays size={14} /> {seasonName}</span>
-            <Link href="/pricing">Compare plans</Link>
+            {isWarmUpgrade
+              ? <span className={styles.footerNote}>Cancel anytime</span>
+              : <Link href="/pricing">Compare plans</Link>}
           </div>
         </form>
       </section>

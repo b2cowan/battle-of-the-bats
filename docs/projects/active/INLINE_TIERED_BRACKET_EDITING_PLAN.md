@@ -13,7 +13,7 @@
 **Status note:** Planned (Phase 2 remains). A first hotfix has already shipped on `dev` — see "Already done" below.
 **Owner agent:** /plan → implementation on `dev`
 **Created:** 2026-06-19
-**Related:** [PLAYOFF_BRACKET_BUILDER_UX_PLAN.md](./PLAYOFF_BRACKET_BUILDER_UX_PLAN.md), [BRACKET_GRAPH_LAYOUT_PLAN.md](./BRACKET_GRAPH_LAYOUT_PLAN.md), unified bracket engine (`lib/playoff-bracket.ts`)
+**Related:** [PLAYOFF_BRACKET_BUILDER_UX_PLAN.md](./PLAYOFF_BRACKET_BUILDER_UX_PLAN.md), [BRACKET_GRAPH_LAYOUT_PLAN.md](../archive/BRACKET_GRAPH_LAYOUT_PLAN.md), unified bracket engine (`lib/playoff-bracket.ts`)
 
 ---
 

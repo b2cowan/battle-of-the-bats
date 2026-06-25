@@ -906,7 +906,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                       className={styles.myGamesLink}
                       onClick={showFollowedTeamGames}
                     >
-                      <Star size={11} /> My Team Games
+                      <Star size={11} /> My Games
                     </button>
                   )}
                   <button
@@ -914,7 +914,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                     className={styles.myGamesLink}
                     onClick={handleAddToCalendar}
                   >
-                    <CalendarPlus size={11} /> Add to Calendar
+                    <CalendarPlus size={11} /> Calendar
                   </button>
                   {fanAlertsEnabled && selectedTournament && selectedTournament.status !== 'completed' && (
                     <FollowAlertsToggle
@@ -922,6 +922,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                       tournamentSlug={tournamentSlug}
                       tournamentId={selectedTournament.id}
                       team={{ id: followedTeam.id, name: followedTeam.name }}
+                      variant="pill"
                     />
                   )}
                 </div>
@@ -968,50 +969,29 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
               ) : (
                 <div className={styles.mobileDivisionPill}>{activeG?.name ?? 'Division'}</div>
               )}
-              {!isPlayoffOnly && (
-              <div className={styles.mobileStageControl} role="group" aria-label="Schedule stage">
-                <button
-                  type="button"
-                  className={`${styles.mobileStageBtn} ${viewMode === 'pool' ? styles.mobileStageBtnActive : ''}`}
-                  aria-pressed={viewMode === 'pool'}
-                  onClick={() => setViewMode('pool')}
-                >
-                  Pool Play
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.mobileStageBtn} ${viewMode === 'playoff' ? styles.mobileStageBtnActive : ''}`}
-                  aria-pressed={viewMode === 'playoff'}
-                  onClick={() => setViewMode('playoff')}
-                >
-                  Playoffs
-                </button>
-              </div>
-              )}
             </div>
-            {/* Search + List/Bracket on the same row */}
-            {activeVisibility !== 'unpublished' && (
-              <div className={styles.mobileSearchBracketRow}>
-                {/* Search is useless in the bracket diagram → hide it there (keep the toggle). */}
-                {!(viewMode === 'playoff' && bracketLayout === 'bracket') && (
-                <div className={`${styles.teamFilter} ${styles.mobileTeamFilter}`}>
-                  <Search size={14} className={styles.teamFilterIcon} />
-                  <input
-                    type="text"
-                    className="form-input"
-                    list="schedule-mobile-team-options"
-                    placeholder={showCoachNames ? 'Search team or coach...' : 'Search team...'}
-                    value={teamSearch}
-                    onChange={e => setTeamSearch(e.target.value)}
-                  />
-                  <datalist id="schedule-mobile-team-options">
-                    {activeVisibility === 'published' && divisionTeams.map(team => (
-                      <option key={team.id} value={team.name}>{team.coach}</option>
-                    ))}
-                  </datalist>
-                  {teamSearch && (
-                    <button type="button" className={styles.clearFilter} onClick={() => setTeamSearch('')} aria-label="Clear team filter"><X size={12} /></button>
-                  )}
+            {/* Stage toggle anchored left; the playoff List/Bracket display toggle
+                grows in to its right — kept off the search row so search never shrinks. */}
+            {(!isPlayoffOnly || viewMode === 'playoff') && (
+              <div className={styles.mobileStageRow}>
+                {!isPlayoffOnly && (
+                <div className={styles.mobileStageControl} role="group" aria-label="Schedule stage">
+                  <button
+                    type="button"
+                    className={`${styles.mobileStageBtn} ${viewMode === 'pool' ? styles.mobileStageBtnActive : ''}`}
+                    aria-pressed={viewMode === 'pool'}
+                    onClick={() => setViewMode('pool')}
+                  >
+                    Pool Play
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.mobileStageBtn} ${viewMode === 'playoff' ? styles.mobileStageBtnActive : ''}`}
+                    aria-pressed={viewMode === 'playoff'}
+                    onClick={() => setViewMode('playoff')}
+                  >
+                    Playoffs
+                  </button>
                 </div>
                 )}
                 {viewMode === 'playoff' && (
@@ -1021,6 +1001,8 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                       className={`${styles.segmentButton} ${bracketLayout === 'list' ? styles.segmentActive : ''}`}
                       aria-pressed={bracketLayout === 'list'}
                       onClick={() => setBracketLayout('list')}
+                      aria-label="List view"
+                      title="List view"
                     >
                       <List size={14} />
                     </button>
@@ -1029,10 +1011,30 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                       className={`${styles.segmentButton} ${bracketLayout === 'bracket' ? styles.segmentActive : ''}`}
                       aria-pressed={bracketLayout === 'bracket'}
                       onClick={() => setBracketLayout('bracket')}
+                      aria-label="Bracket view"
+                      title="Bracket view"
                     >
                       <LayoutTemplate size={14} />
                     </button>
                   </div>
+                )}
+              </div>
+            )}
+            {/* Search on its own full-width row. Plain free-text filter — no native
+                datalist, so it reads as a search box, not a dropdown. Hidden in the
+                bracket diagram (search is useless against it). */}
+            {activeVisibility !== 'unpublished' && !(viewMode === 'playoff' && bracketLayout === 'bracket') && (
+              <div className={`${styles.teamFilter} ${styles.mobileTeamFilter} ${styles.mobileSearchRow}`}>
+                <Search size={14} className={styles.teamFilterIcon} />
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder={showCoachNames ? 'Search team or coach...' : 'Search team...'}
+                  value={teamSearch}
+                  onChange={e => setTeamSearch(e.target.value)}
+                />
+                {teamSearch && (
+                  <button type="button" className={styles.clearFilter} onClick={() => setTeamSearch('')} aria-label="Clear team filter"><X size={12} /></button>
                 )}
               </div>
             )}

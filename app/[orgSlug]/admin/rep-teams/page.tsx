@@ -9,7 +9,7 @@ import HelpCallout from '@/components/help/HelpCallout';
 import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel';
 import styles from './rep-teams.module.css';
 import type { RepTeam, RepTeamGroup } from '@/lib/types';
-import { SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
+import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 
 function slugify(s: string): string {
   return s.toLowerCase().trim()
@@ -530,7 +530,7 @@ export default function RepTeamsPage() {
                 <label className={styles.label} htmlFor="rt-sport">Sport</label>
                 <select id="rt-sport" className={styles.select} value={form.sport}
                   onChange={e => setForm(f => ({ ...f, sport: e.target.value }))}>
-                  {SPORT_OPTIONS.map(s => (
+                  {OFFERED_SPORT_OPTIONS.map(s => (
                     <option key={s.id} value={s.id}>{s.label}</option>
                   ))}
                 </select>

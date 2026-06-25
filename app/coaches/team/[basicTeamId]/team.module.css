@@ -100,9 +100,11 @@
   );
 }
 
+/* Anchored LEFT so the oversized initials sit behind the monogram + name (echoing
+   the team identity) and never collide with the help control in the top-right corner. */
 .identityWatermark {
   position: absolute;
-  right: -0.5rem;
+  left: -0.75rem;
   top: 50%;
   transform: translateY(-50%);
   margin: 0;
@@ -114,6 +116,15 @@
   opacity: 0.07;
   user-select: none;
   pointer-events: none;
+}
+
+/* Help "?" trigger pinned to the band's top-right corner, shared by the Overview
+   and every section sub-route so it never shifts position between pages. */
+.identityHelp {
+  position: relative;
+  margin-left: auto;
+  align-self: flex-start;
+  flex-shrink: 0;
 }
 
 .identityMonogram {

@@ -17,6 +17,17 @@
   align-items: start;
 }
 
+/* Warm upgrade (arrived from a free team's "Upgrade to Premium"): the form IS the task, so it
+   becomes the wider, primary column beside a trimmed confirm summary. With the cold pitch gated
+   out, the two columns balance and the empty space below the form disappears. */
+.signupSurface[data-warm='true'] {
+  grid-template-columns: minmax(0, 0.72fr) minmax(440px, 1.28fr);
+}
+
+.signupSurface[data-warm='true'] .title {
+  font-size: 2rem;
+}
+
 .copyPane {
   padding-top: 1.5rem;
 }
@@ -73,13 +84,16 @@
   text-decoration: none;
 }
 
+/* Scroll-anchor shortcut to the form on the long cold page — a navigation aid, not the purchase
+   action. Kept as a ghost so the lime fill is reserved for the single submit button (one primary
+   action per surface). */
 .heroPrimary {
-  background: var(--logic-lime);
-  color: var(--pitch-black);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.5);
+  color: var(--logic-lime);
 }
 
 .heroPrimary:hover {
-  background: #fff;
+  background: rgba(var(--logic-lime-rgb), 0.1);
 }
 
 .heroSecondary {
@@ -101,6 +115,31 @@
   background: rgba(var(--blueprint-blue-rgb), 0.06);
   padding: 1.4rem;
   margin-bottom: 1.5rem;
+}
+
+/* Warm-upgrade reassurance: closes the "everything carries over" loop opened on the Explore card,
+   right before the coach pays. Lime-tinted to read as positive confirmation, not another pitch. */
+.carryOver {
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  background: rgba(var(--logic-lime-rgb), 0.05);
+  padding: 1.1rem 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.carryOverTitle {
+  margin: 0 0 0.4rem;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.carryOverBody {
+  margin: 0;
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  line-height: 1.6;
 }
 
 .workspacePreview {
@@ -565,6 +604,11 @@
 
 .footerRow a:hover {
   color: var(--logic-lime);
+}
+
+/* Quiet reassurance that replaces the "Compare plans" link in the warm upgrade footer. */
+.footerRow span.footerNote {
+  color: var(--data-gray);
 }
 
 .inlineAction {
