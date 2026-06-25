@@ -2,6 +2,7 @@
 import React, { useRef } from 'react';
 import { Calendar, Clock, MapPin, Trophy, Pencil, Trash2 } from 'lucide-react';
 import { bracketRoundInfo, computeBracketColumns, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
+import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { formatTime } from '@/lib/utils';
 import BracketConnectors from './BracketConnectors';
 import BracketZoomFrame from './BracketZoomFrame';
@@ -35,25 +36,6 @@ export function buildBracketColumns(games: any[]) {
   return [...groups.values()]
     .sort((a, b) => a.rank - b.rank)
     .map(grp => ({ key: grp.key, title: grp.title, games: grp.games.sort(sortByCode) }));
-}
-
-/**
- * Resolve a game's location label LIVE from the venues array, so a facility (or
- * venue) rename propagates to the bracket immediately. Falls back to the
- * denormalized games.location snapshot for free-text venues, pre-save preview
- * rows, or when the managed venue can't be found.
- */
-function resolveGameLocation(g: any, venues?: any[]): string {
-  if (venues && g.venueId) {
-    const venue = venues.find((v: any) => v.id === g.venueId);
-    if (venue) {
-      const facility = g.venueFacilityId
-        ? venue.facilities?.find((f: any) => f.id === g.venueFacilityId)
-        : null;
-      return facility ? `${venue.name} — ${facility.name}` : venue.name;
-    }
-  }
-  return g.location || 'TBD';
 }
 
 /**
@@ -190,7 +172,7 @@ export default function BracketColumns({ columns, onEdit, onDelete, formatDate, 
                   }}>
                     <div className="flex items-center" style={{ gap: '5px' }}><Calendar size={10} className="text-primary-light opacity-50" /> {g.date ? formatDate(g.date) : 'TBD'}</div>
                     <div className="flex items-center" style={{ gap: '5px', justifyContent: 'flex-end' }}><Clock size={10} className="text-primary-light opacity-50" /> {g.time ? formatTime(g.time) : 'TBD'}</div>
-                    <div className="flex items-center" style={{ gap: '5px', gridColumn: 'span 2' }}><MapPin size={10} className="text-primary-light opacity-50" /> {resolveGameLocation(g, venues)}</div>
+                    <div className="flex items-center" style={{ gap: '5px', gridColumn: 'span 2' }}><MapPin size={10} className="text-primary-light opacity-50" /> {(venues ? resolveGameVenueLabel(g, venues) : g.location) || 'TBD'}</div>
                   </div>
                 </div>
               </div>

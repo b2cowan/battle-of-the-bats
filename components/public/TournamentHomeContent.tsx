@@ -13,6 +13,7 @@ import { deriveChampions } from '@/lib/champions';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import SharePageButton from '@/components/public/SharePageButton';
 import LocationLink from '@/components/LocationLink';
+import { resolveGameVenueLabel } from '@/lib/venue-label';
 import MyTournamentCard from '@/components/public/MyTournamentCard';
 import { toPublicTeam } from '@/lib/public-tournament-data';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
@@ -325,7 +326,7 @@ export default async function TournamentHomeContent({
                       <span className={styles.quickGameTeams}>
                         {game.homeTeamId ? getTeamName(game.homeTeamId) : (game.homePlaceholder ?? 'TBD')} vs {game.awayTeamId ? getTeamName(game.awayTeamId) : (game.awayPlaceholder ?? 'TBD')}
                       </span>
-                      <span className={styles.quickGameMeta}>{game.location || getDivisionName(game.divisionId)}</span>
+                      <span className={styles.quickGameMeta}>{resolveGameVenueLabel(game, venues) || getDivisionName(game.divisionId)}</span>
                     </Link>
                   );
                 })}
@@ -363,7 +364,7 @@ export default async function TournamentHomeContent({
             ) : (
               <div className={styles.venueShortcutList}>
                 {venueShortcuts.map(item => (
-                  <LocationLink key={item.key} location={item.location || item.label} venue={item.venue} size="sm" />
+                  <LocationLink key={item.key} location={item.label} venue={item.venue} size="sm" />
                 ))}
               </div>
             )}
@@ -579,7 +580,7 @@ export default async function TournamentHomeContent({
                   <span className={styles.teamName}>{getTeamName(game.awayTeamId)}</span>
                 </div>
                 <div className={styles.gameLocation}>
-                  <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
+                  <LocationLink location={resolveGameVenueLabel(game, venues)} venue={getVenue(game.venueId)} size="sm" />
                 </div>
               </div>
             ))}
