@@ -2,13 +2,13 @@
 
 **Generated:** 2026-06-25 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 51 divergence(s)** across dev/prod.
+**⚠️ 50 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
 | Columns | 0 | 3 | 23 |
-| Indexes | 5 | 3 | 0 |
+| Indexes | 4 | 3 | 0 |
 | Constraints | 7 | 9 | — |
 | RLS / CHECK | 0 | 1 | 0 (RLS state) |
 
@@ -54,12 +54,11 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (5)
+### Only in DEV (4)
 - `league_practices_recurrence_idx`
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
 - `league_practices_team_idx`
-- `team_workspaces_stripe_subscription_id_uniq`
 
 ### Only in PROD (3)
 - `league_practices_recurrence_group_id_idx`
