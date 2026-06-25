@@ -814,7 +814,6 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                     </div>
                     <div className={styles.scorebugBody}>
                       <div className={styles.scorebugName}>
-                        <Star size={11} fill="currentColor" className={styles.scorebugStar} />
                         <span className={styles.scorebugNameText}>{followedTeam.name}</span>
                         <ChevronRight size={13} className={styles.scorebugGo} aria-hidden="true" />
                       </div>
