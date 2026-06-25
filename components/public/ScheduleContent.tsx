@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { Calendar, CalendarPlus, Trophy, List, LayoutTemplate, Search, ChevronDown, Star, X, Megaphone } from 'lucide-react';
-import { Game, PublicTeam, Division, Tournament, Venue, Announcement } from '@/lib/types';
+import { Calendar, CalendarPlus, Trophy, List, LayoutTemplate, Search, ChevronDown, ChevronRight, Star, X, Megaphone } from 'lucide-react';
+import { Game, PublicTeam, Division, Tournament, Announcement } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
@@ -104,7 +104,6 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   const [games, setGames]           = useState<Game[]>(() => initialData?.games ?? []);
   const [teams, setTeams]           = useState<PublicTeam[]>(() => initialData?.teams ?? []);
   const [divisions, setDivisions]   = useState<Division[]>(() => initialData?.divisions ?? []);
-  const [venues, setVenues]         = useState<Venue[]>(() => initialData?.venues ?? []);
   const [announcements, setAnnouncements] = useState<Announcement[]>(() => initialData?.announcements ?? []);
   // Session-only dismissal — a pinned rain-delay notice returns on the next visit
   // until the organizer unpins it (we don't let fans permanently bury urgent news).
@@ -177,7 +176,6 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       setGames(data?.games ?? []);
       setTeams(data?.teams ?? []);
       setDivisions(groups);
-      setVenues(data?.venues ?? []);
       setAnnouncements(data?.announcements ?? []);
       if (groups.length > 0) {
         const pref = getDivisionPref(orgSlug);
@@ -482,27 +480,6 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       orgSlug,
       tournamentSlug,
     });
-  }
-
-  /** Compact venue label for schedule rows — venue name + optional facility (J6-014).
-   *  Uses game.location (plain string) when no managed Venue record is linked,
-   *  consistent with the game-detail page pattern. */
-  function getVenueLabel(game: Game): string | null {
-    const venue = game.venueId ? venues.find(v => v.id === game.venueId) ?? null : null;
-    const facility = venue?.facilities?.find(f => f.id === game.venueFacilityId) ?? null;
-    const rawLocation = game.location?.trim() ?? '';
-    const venueName = venue?.name || rawLocation;
-    if (!venueName) {
-      return game.scheduleFacilityLaneLabel?.trim() || null;
-    }
-    let facilityLabel = facility?.name ?? '';
-    if (!facilityLabel && rawLocation && venue?.name && rawLocation.toLowerCase().startsWith(venue.name.toLowerCase())) {
-      facilityLabel = rawLocation
-        .slice(venue.name.length)
-        .replace(/^\s*(?:-|–|—|,)\s*/, '')
-        .trim();
-    }
-    return facilityLabel ? `${venueName} — ${facilityLabel}` : venueName;
   }
 
   function inferPool(game: Game, allGames: Game[]): string | null {
@@ -824,6 +801,11 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
               <div className={styles.scorebugBar}>
                 {followedTeam ? (
                   <>
+                    <Link
+                      href={`/${orgSlug}/${tournamentSlug}/teams/${followedTeam.id}`}
+                      className={styles.scorebugLink}
+                      aria-label={`${followedTeam.name} — view team page`}
+                    >
                     <div
                       className={styles.scorebugAvatar}
                       style={{ background: `hsl(${teamAvatarHue(followedTeam.name)}, 58%, 38%)` }}
@@ -833,7 +815,8 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                     <div className={styles.scorebugBody}>
                       <div className={styles.scorebugName}>
                         <Star size={11} fill="currentColor" className={styles.scorebugStar} />
-                        {followedTeam.name}
+                        <span className={styles.scorebugNameText}>{followedTeam.name}</span>
+                        <ChevronRight size={13} className={styles.scorebugGo} aria-hidden="true" />
                       </div>
                       <div className={styles.scorebugMeta}>
                         <span>
@@ -876,18 +859,18 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                           <div className={styles.scorebugNextTime}>
                             {followedNextGame.time ? formatTime(followedNextGame.time) : 'TBD'}
                           </div>
-                          {(() => { const vl = getVenueLabel(followedNextGame); return vl ? <div className={styles.scorebugNextVenue}>{vl}</div> : null; })()}
                         </>
                       ) : null}
                     </div>
+                    </Link>
                     <button
                       type="button"
                       className={styles.scorebugStop}
                       onClick={stopFollowing}
-                      aria-label={`Stop following ${followedTeam.name}`}
-                      title="Stop following"
+                      aria-label={`Following ${followedTeam.name} — tap to unfollow`}
+                      title="Following — tap to unfollow"
                     >
-                      <X size={13} />
+                      <Star size={16} fill="currentColor" />
                     </button>
                   </>
                 ) : (
@@ -1443,6 +1426,11 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                 {/* Scorebug card */}
                 <div className={styles.railCard}>
                   <div className={styles.railCardHeader}>
+                    <Link
+                      href={`/${orgSlug}/${tournamentSlug}/teams/${followedTeam.id}`}
+                      className={styles.railIdentityLink}
+                      aria-label={`${followedTeam.name} — view team page`}
+                    >
                     <div
                       className={styles.railAvatar}
                       style={{ background: `hsl(${teamAvatarHue(followedTeam.name)}, 58%, 38%)` }}
@@ -1452,7 +1440,8 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                     <div className={styles.railTeamInfo}>
                       <div className={styles.railTeamName}>
                         <Star size={11} fill="currentColor" className={styles.railTeamStar} />
-                        {followedTeam.name}
+                        <span className={styles.railTeamNameText}>{followedTeam.name}</span>
+                        <ChevronRight size={12} className={styles.scorebugGo} aria-hidden="true" />
                       </div>
                       <div className={styles.railTeamMeta}>
                         <span>
@@ -1471,6 +1460,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                         )}
                       </div>
                     </div>
+                    </Link>
                     <div className={styles.railScoreArea}>
                       {followedCurrentGame ? (
                         <>
@@ -1492,7 +1482,6 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                           <div className={styles.railNextTime}>
                             {followedNextGame.time ? formatTime(followedNextGame.time) : 'TBD'}
                           </div>
-                          {(() => { const vl = getVenueLabel(followedNextGame); return vl ? <div className={styles.railNextVenue}>{vl}</div> : null; })()}
                         </>
                       ) : null}
                     </div>

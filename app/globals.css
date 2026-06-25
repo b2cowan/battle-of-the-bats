@@ -544,15 +544,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  background: var(--primary);
   color: var(--white);
   box-shadow: var(--glow-sm);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  background: var(--primary);
   box-shadow: var(--glow);
   transform: translateY(-1px);
+  filter: brightness(1.08);
 }
 
 .btn-outline {
@@ -872,7 +873,7 @@ select optgroup {
 .tab-btn:hover { color: var(--white); background: var(--white-10); }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  background: var(--primary);
   color: var(--white);
   box-shadow: var(--glow-sm);
 }
@@ -903,7 +904,7 @@ select optgroup {
 .segment:hover { color: var(--white); background: var(--white-10); }
 
 .segment.active {
-  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  background: var(--primary);
   color: var(--white);
   box-shadow: var(--glow-sm);
 }

@@ -1770,34 +1770,59 @@ a.gameRow { cursor: pointer; }
   line-height: 1.1;
 }
 
-.scorebugNextVenue {
-  font-family: var(--font-data);
-  font-size: 0.54rem;
-  font-weight: 600;
-  color: var(--white-35);
-  max-width: 7rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.1;
+/* Identity link wrapping the avatar + body + next-up block → public team page. */
+.scorebugLink {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-sm);
 }
 
+.scorebugNameText {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* "Tap to open team" affordance at the end of the name. */
+.scorebugGo {
+  flex-shrink: 0;
+  color: var(--white-35);
+}
+
+.scorebugLink:hover .scorebugNameText {
+  text-decoration: underline;
+}
+
+.scorebugLink:hover .scorebugGo {
+  color: var(--white-55);
+}
+
+/* Filled star = "you're following"; tap to unfollow (turns danger on hover).
+   Replaces the old bare X, which read as "dismiss this banner" rather than unfollow. */
 .scorebugStop {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  border: 1px solid rgba(var(--primary-rgb), 0.25);
-  border-radius: 2px;
+  width: 34px;
+  height: 34px;
+  margin-left: 0.1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--white-35);
+  color: var(--primary-light);
   cursor: pointer;
   transition: color 0.12s, border-color 0.12s, background 0.12s;
 }
 
-.scorebugStop:hover {
+.scorebugStop:hover,
+.scorebugStop:focus-visible {
   color: var(--danger);
   border-color: rgba(var(--danger-rgb), 0.4);
   background: rgba(var(--danger-rgb), 0.1);
@@ -2283,6 +2308,7 @@ a.broadcastCard { cursor: pointer; }
   display: flex;
   align-items: center;
   gap: 0.28rem;
+  min-width: 0;
   font-family: var(--font-data);
   font-size: 0.8rem;
   font-weight: 900;
@@ -2290,6 +2316,33 @@ a.broadcastCard { cursor: pointer; }
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.railTeamNameText {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Rail identity (avatar + name + record) links to the public team page,
+   mirroring the mobile scorebug strip. */
+.railIdentityLink {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.railIdentityLink:hover .railTeamNameText {
+  text-decoration: underline;
+}
+
+.railIdentityLink:hover .scorebugGo {
+  color: var(--white-55);
 }
 
 .railTeamStar {
@@ -2355,18 +2408,6 @@ a.broadcastCard { cursor: pointer; }
   color: var(--white-55);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  line-height: 1.1;
-}
-
-.railNextVenue {
-  font-family: var(--font-data);
-  font-size: 0.52rem;
-  font-weight: 600;
-  color: var(--white-35);
-  max-width: 8rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   line-height: 1.1;
 }
 

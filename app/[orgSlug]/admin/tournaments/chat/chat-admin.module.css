@@ -36,6 +36,16 @@
   .chatPage {
     margin-inline: -1rem;
     overflow: hidden;
+    /* The admin content area's height comes from flex-grow, so a child's height:100%
+       collapses to content height here (same caveat the desktop rule above documents) — the
+       panel shrank to its content and the composer floated up off the bottom nav ("push up").
+       Pin to the viewport minus the fixed top app-bar + bottom nav (the exact insets
+       .adminMain pads for) so the conversation fills the chrome-bounded area. */
+    height: calc(
+      100dvh
+      - 48px - env(safe-area-inset-top) - 0.5rem
+      - 80px - env(safe-area-inset-bottom) - var(--admin-strip-h, 0px)
+    );
   }
 }
 

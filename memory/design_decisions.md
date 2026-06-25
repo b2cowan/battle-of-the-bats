@@ -4,6 +4,32 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-25 — Followed-team scorebug strip (public Schedule): unfollow = filled star (never a bare ✕), identity links to team page, venue dropped from the compact strip
+
+**Decision (owner-flagged /design + /ux review of the public Schedule followed-team banner, mobile + desktop rail):** three fixes to the `.scorebugBar` strip and its desktop `.railCard` twin.
+
+1. **The unfollow control is a FILLED STAR, never a bare ✕.** The strip's trailing control called `stopFollowing()` (unfollow + lose score alerts) but rendered a bare `X` — which universally reads "dismiss this banner," so a fan tidying their screen would silently unfollow. Replaced with a filled `Star` (`fill="currentColor"`, `--primary-light`) matching the canonical `TeamFollowStar` metaphor used elsewhere; hover/`focus-visible` flips to `--danger` to signal removal. Touch target bumped 26→34px, box border dropped (`1px solid transparent` at rest, danger-tinted on hover). A star never reads as "close," so the dismiss/unfollow confusion is gone. (The desktop rail's unfollow was already a worded `✕ Unfollow {team}` button — unambiguous — so it was left as-is.)
+2. **The identity area links to the public team page.** Avatar + name/record/opponent + the next-up block are wrapped in a `next/link` → `/{orgSlug}/{tournamentSlug}/teams/{id}`, with a small trailing `ChevronRight` (`--white-35`) after the team name as the tap affordance + name-underline on hover. The unfollow star stays a **sibling** button (can't nest interactive-in-anchor) with a touch of left margin so it isn't mis-tapped. Applied to both the mobile strip and the desktop rail identity for parity.
+3. **Venue removed from the compact strip.** The next-up column's venue line was hard-capped (`max-width: 7rem` / `8rem`) and chronically truncated ("Lions Sports Field — …"), starving the opponent line — two columns truncating at once. The strip is an at-a-glance **who + when**; **where** is a heading-there detail that still lives in the game-detail page, team page, and the expanded mobile dock. Dropping it collapses the right column to 3 clean lines and frees width for the opponent. The now-dead `getVenueLabel` helper + `venues` state were removed from this component.
+
+**Rationale:** Owner: the banner cut off text, the ✕ "implies I am removing just this banner but it makes me not follow the team," and asked whether the field was needed + whether the banner could open the team page. Root cause of the truncation was two truncating columns fighting for width with the lowest-value one (venue) capped narrow; the ✕ was a destructive action wearing a dismiss icon. Reserve the at-a-glance strip for who/when, make the one control honestly say "unfollow" via the platform's star language, and make the informational area navigable.
+
+**Applies to:** `components/public/ScheduleContent.tsx` (mobile `.scorebugBar` + desktop `.railCard`; new `.scorebugLink`/`.scorebugNameText`/`.scorebugGo`, `.railIdentityLink`/`.railTeamNameText`; star-for-X; removed venue render + `getVenueLabel` + `venues` state/`Venue` import) and `app/[orgSlug]/schedule/schedule.module.css` (new link/name/chevron classes, restyled `.scorebugStop` as a star toggle, removed `.scorebugNextVenue`/`.railNextVenue`). No new tokens, no literal hex. **Generalizes:** a follow/unfollow control is the platform's filled-star toggle (filled = following, tap = unfollow, danger on hover) — **never a bare ✕**, which reads as "dismiss this surface" and turns an unfollow into an accidental tap; an at-a-glance status strip carries who/when, not where (venue belongs in detail surfaces); and the informational area of such a strip should link to the entity's own page (chevron affordance, name-underline on hover), with any destructive control kept as a separated sibling target.
+
+### 2026-06-25 — Retire the gradient button: `.btn-primary` / `.tab-btn.active` / `.segment.active` flatten to solid `--primary`
+
+**Decision (owner: "retire the gradient button"):** the three functional controls that shipped a `linear-gradient(135deg, var(--primary), var(--primary-light))` fill are flattened to a **solid `var(--primary)`** background. This enforces the long-standing principle (design_principles.md → "What We Deliberately Avoid": *gradients on functional UI elements — decorative use only; never on buttons or form inputs*), which `.btn-primary` had been violating.
+
+- **`.btn-primary`** — rest = flat `var(--primary)` + `--glow-sm`; the old gradient-swap hover is replaced by a token-clean lift: keep `var(--primary)`, raise to `--glow`, `translateY(-1px)`, `filter: brightness(1.08)`. (The previous hover swapped to `--primary-light` first — logic-lime by default, on which `--white` text fails contrast — so flat `--primary` is also the more legible state.)
+- **`.tab-btn.active`** and **`.segment.active`** — same gradient → flat `var(--primary)` (kept `--white` text + `--glow-sm`).
+- **Left alone (decorative, allowed):** `.public-page-header` (180° bg wash) and `.divider` (90° hairline fade).
+
+**Rationale:** A gradient on the primary action competed with the established brand CTA (`btn-lime`, flat lime fill + dark text), and broke the no-gradient-on-functional-UI rule. A flat per-org `--primary` fill reads cleaner, keeps multi-tenant theming intact, and recreates the hover "press" with shadow + translate + brightness rather than a colour-stop swap.
+
+**Applies to:** `app/globals.css` (`.btn-primary` + `:hover`, `.tab-btn.active`, `.segment.active`). Token-only, no new tokens, no literal hex. Affects every primary button, active tab, and active segment platform-wide. **Generalizes:** primary/active controls use a flat `var(--primary)` fill — never a `--primary → --primary-light` gradient; hover lift comes from shadow/translate/brightness, not a gradient swap. Reserve gradients for decorative surfaces (headers, dividers) only.
+
+---
+
 ### 2026-06-25 — Public Schedule mobile controls: search is a plain search (no native datalist), playoff display toggle off the search row
 
 **Decision (owner-flagged /design+/ux review of the public tournament Schedule, mobile — "is it a search or a dropdown?" + "Playoffs shrinks it too small; move the bracket/list toggle"):** two fixes to `ScheduleContent` mobile controls.
