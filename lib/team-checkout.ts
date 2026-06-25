@@ -119,6 +119,20 @@ function metadataValue(value: string | number | null | undefined): string {
   return value == null ? '' : String(value).slice(0, 500);
 }
 
+/**
+ * True when an error is a Postgres unique-violation on team_workspaces.stripe_subscription_id —
+ * i.e. a concurrent webhook event already provisioned the workspace for this subscription (mig 156).
+ */
+function isSubscriptionUniqueViolation(err: unknown): boolean {
+  const e = err as { code?: string; message?: string; details?: string } | null;
+  if (e?.code !== '23505') return false;
+  // Match the specific partial-unique index (mig 156) by NAME, with the column substring as a
+  // fallback — both appear in the PostgrestError (constraint name in .message, the offending key
+  // in .details). Any OTHER 23505 (a different table/index) rethrows, so we never swallow it.
+  const text = `${e.message ?? ''} ${e.details ?? ''}`;
+  return text.includes('team_workspaces_stripe_subscription_id_uniq') || text.includes('stripe_subscription_id');
+}
+
 export function normalizeTeamCheckoutRequest(body: Record<string, unknown>): TeamCheckoutRequest {
   const teamName = cleanText(body.teamName, '', 120);
   if (!teamName) {
@@ -569,38 +583,58 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
 
   await assertTeamWorkspaceClaimAvailableForProvisioning(parsed.teamWorkspaceClaimId);
 
-  const result = await provisionStandaloneTeamWorkspace({
-    ownerUserId: parsed.ownerUserId,
-    ownerEmail: parsed.ownerEmail,
-    teamName: parsed.teamName,
-    teamSlug: parsed.teamSlug,
-    workspaceName: parsed.workspaceName,
-    workspaceSlug: parsed.workspaceSlug,
-    sport: parsed.sport,
-    division: parsed.division,
-    seasonName: parsed.seasonName,
-    seasonYear: parsed.seasonYear,
-    source: parsed.source,
-    sourceTournamentId: parsed.sourceTournamentId,
-    sourceTournamentTeamId: parsed.sourceTournamentTeamId,
-    // A verified upgrade carries its free team explicitly → back-link to THAT team. When absent
-    // (brand-new team or tournament claim) pass undefined so the provisioner keeps its existing
-    // fallback: deriving the free team from the source tournament registration.
-    basicCoachTeamId: parsed.basicCoachTeamId ?? undefined,
-    billingMode: 'team_direct',
-    billingOwnerUserId: parsed.ownerUserId,
-    subscriptionStatus: mapStripeStatusToOrgStatus(params.subscriptionStatus),
-    stripeCustomerId: params.stripeCustomerId,
-    stripeSubscriptionId: params.stripeSubscriptionId,
-    stripeSubscriptionItemId: params.stripeSubscriptionItemId,
-    currentPeriodEnd: params.currentPeriodEnd,
-    entitlementSource: 'team_plan',
-    entitlementStatus: mapStripeStatusToTeamEntitlementStatus(params.subscriptionStatus),
-    eventSource: params.eventSource,
-    sourceEventId: params.sourceEventId,
-    actorUserId: parsed.ownerUserId,
-    actorEmail: parsed.ownerEmail,
-  });
+  let result: ProvisionStandaloneTeamWorkspaceResult;
+  try {
+    result = await provisionStandaloneTeamWorkspace({
+      ownerUserId: parsed.ownerUserId,
+      ownerEmail: parsed.ownerEmail,
+      teamName: parsed.teamName,
+      teamSlug: parsed.teamSlug,
+      workspaceName: parsed.workspaceName,
+      workspaceSlug: parsed.workspaceSlug,
+      sport: parsed.sport,
+      division: parsed.division,
+      seasonName: parsed.seasonName,
+      seasonYear: parsed.seasonYear,
+      source: parsed.source,
+      sourceTournamentId: parsed.sourceTournamentId,
+      sourceTournamentTeamId: parsed.sourceTournamentTeamId,
+      // A verified upgrade carries its free team explicitly → back-link to THAT team. When absent
+      // (brand-new team or tournament claim) pass undefined so the provisioner keeps its existing
+      // fallback: deriving the free team from the source tournament registration.
+      basicCoachTeamId: parsed.basicCoachTeamId ?? undefined,
+      billingMode: 'team_direct',
+      billingOwnerUserId: parsed.ownerUserId,
+      subscriptionStatus: mapStripeStatusToOrgStatus(params.subscriptionStatus),
+      stripeCustomerId: params.stripeCustomerId,
+      stripeSubscriptionId: params.stripeSubscriptionId,
+      stripeSubscriptionItemId: params.stripeSubscriptionItemId,
+      currentPeriodEnd: params.currentPeriodEnd,
+      entitlementSource: 'team_plan',
+      entitlementStatus: mapStripeStatusToTeamEntitlementStatus(params.subscriptionStatus),
+      eventSource: params.eventSource,
+      sourceEventId: params.sourceEventId,
+      actorUserId: parsed.ownerUserId,
+      actorEmail: parsed.ownerEmail,
+    });
+  } catch (err) {
+    // Lost the race for this subscription: a concurrent webhook event (checkout.session.completed
+    // and customer.subscription.created fire together) already created the workspace, and the unique
+    // index on team_workspaces.stripe_subscription_id (mig 156) rejected this second insert. The
+    // loser's org was already rolled back inside the provisioner. Resolve to already_exists so the
+    // webhook returns 200, provisions no duplicate, and sends NO second welcome email.
+    if (isSubscriptionUniqueViolation(err)) {
+      const { data: winner } = await supabaseAdmin
+        .from('team_workspaces')
+        .select('workspace_org_id')
+        .eq('stripe_subscription_id', params.stripeSubscriptionId)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return { provisioned: false, reason: 'already_exists', workspaceOrgId: (winner?.workspace_org_id as string) ?? null };
+    }
+    throw err;
+  }
 
   if (parsed.teamWorkspaceClaimId) {
     await markTeamWorkspaceClaimed({

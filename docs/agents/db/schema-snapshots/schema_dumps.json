@@ -16213,6 +16213,11 @@
       },
       {
         "tablename": "team_workspaces",
+        "indexname": "team_workspaces_stripe_subscription_id_uniq",
+        "indexdef": "CREATE UNIQUE INDEX team_workspaces_stripe_subscription_id_uniq ON public.team_workspaces USING btree (stripe_subscription_id) WHERE (stripe_subscription_id IS NOT NULL)"
+      },
+      {
+        "tablename": "team_workspaces",
         "indexname": "team_workspaces_workspace_org_unique",
         "indexdef": "CREATE UNIQUE INDEX team_workspaces_workspace_org_unique ON public.team_workspaces USING btree (workspace_org_id)"
       },
@@ -18724,6 +18729,42 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 14,
+        "column_name": "first_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 15,
+        "column_name": "last_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 16,
+        "column_name": "guardian_first_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 17,
+        "column_name": "guardian_last_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "basic_coach_team_registrations",
@@ -26858,7 +26899,7 @@
         "column_name": "player_last_name",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {

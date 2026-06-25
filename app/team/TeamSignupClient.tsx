@@ -180,7 +180,9 @@ export default function TeamSignupClient({
             email: string;
           }>;
           if (draft.teamName) setTeamName(draft.teamName);
-          if (draft.sport) setSport(draft.sport);
+          // In a warm upgrade the sport is locked to the free team's (the picker is hidden) — don't
+          // let a stale saved draft override that prefill.
+          if (draft.sport && !isWarmUpgrade) setSport(draft.sport);
           if (draft.billingCycle) setBillingCycle(draft.billingCycle);
           if (draft.email) setEmail(draft.email);
         } catch {
@@ -201,7 +203,7 @@ export default function TeamSignupClient({
         setIsAuthenticated(false);
       })
       .finally(() => setCheckingAuth(false));
-  }, [draftKey, searchParams]);
+  }, [draftKey, searchParams, isWarmUpgrade]);
 
   function saveDraft() {
     window.sessionStorage.setItem(draftKey, JSON.stringify({
@@ -462,14 +464,18 @@ export default function TeamSignupClient({
                 disabled={busy}
               />
             </label>
-            <label className={styles.field}>
-              <span>Sport</span>
-              <select value={sport} onChange={event => setSport(event.target.value)} disabled={busy}>
-                {SPORT_OPTIONS.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </label>
+            {/* Warm upgrade already knows the sport (carried from the free team), so the picker
+                is hidden — the value still rides along to checkout. Cold/claim signups pick it. */}
+            {!isWarmUpgrade && (
+              <label className={styles.field}>
+                <span>Sport</span>
+                <select value={sport} onChange={event => setSport(event.target.value)} disabled={busy}>
+                  {SPORT_OPTIONS.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </label>
+            )}
             <p className={styles.previewLine}>
               Portal URL preview: <span>fieldlogichq.ca/{previewSlug}</span>
             </p>

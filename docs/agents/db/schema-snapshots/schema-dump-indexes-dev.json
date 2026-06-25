@@ -1681,6 +1681,11 @@
   },
   {
     "tablename": "team_workspaces",
+    "indexname": "team_workspaces_stripe_subscription_id_uniq",
+    "indexdef": "CREATE UNIQUE INDEX team_workspaces_stripe_subscription_id_uniq ON public.team_workspaces USING btree (stripe_subscription_id) WHERE (stripe_subscription_id IS NOT NULL)"
+  },
+  {
+    "tablename": "team_workspaces",
     "indexname": "team_workspaces_workspace_org_unique",
     "indexdef": "CREATE UNIQUE INDEX team_workspaces_workspace_org_unique ON public.team_workspaces USING btree (workspace_org_id)"
   },

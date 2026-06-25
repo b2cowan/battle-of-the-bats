@@ -2,13 +2,13 @@
 
 **Generated:** 2026-06-25 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 55 divergence(s)** across dev/prod.
+**⚠️ 51 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
-| Columns | 4 | 3 | 24 |
-| Indexes | 4 | 3 | 0 |
+| Columns | 0 | 3 | 23 |
+| Indexes | 5 | 3 | 0 |
 | Constraints | 7 | 9 | — |
 | RLS / CHECK | 0 | 1 | 0 (RLS state) |
 
@@ -20,18 +20,15 @@ _none_
 _none_
 
 ## Columns
-### Only in DEV (4)
-- `basic_coach_team_players.first_name`
-- `basic_coach_team_players.guardian_first_name`
-- `basic_coach_team_players.guardian_last_name`
-- `basic_coach_team_players.last_name`
+### Only in DEV (0)
+_none_
 
 ### Only in PROD (3)
 - `resources.created_at`
 - `rule_items.created_at`
 - `rules.created_at`
 
-### Type/nullability/default changed (24)
+### Type/nullability/default changed (23)
 - `announcements.body` — dev: `text|text|YES|` | prod: `text|text|NO|`
 - `announcements.published_at` — dev: `timestamp with time zone|timestamptz|NO|now()` | prod: `timestamp with time zone|timestamptz|NO|`
 - `diamonds.address` — dev: `text|text|YES|` | prod: `text|text|NO|`
@@ -41,7 +38,6 @@ _none_
 - `divisions.requires_pool_selection` — dev: `boolean|bool|NO|false` | prod: `boolean|bool|YES|false`
 - `games.is_playoff` — dev: `boolean|bool|NO|false` | prod: `boolean|bool|YES|false`
 - `games.location` — dev: `text|text|YES|` | prod: `text|text|NO|`
-- `rep_roster_players.player_last_name` — dev: `text|text|YES|` | prod: `text|text|NO|`
 - `resources.display_order` — dev: `integer|int4|NO|0` | prod: `integer|int4|YES|0`
 - `resources.id` — dev: `uuid|uuid|NO|gen_random_uuid()` | prod: `uuid|uuid|NO|uuid_generate_v4()`
 - `rule_items.display_order` — dev: `integer|int4|NO|0` | prod: `integer|int4|YES|0`
@@ -58,11 +54,12 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (4)
+### Only in DEV (5)
 - `league_practices_recurrence_idx`
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
 - `league_practices_team_idx`
+- `team_workspaces_stripe_subscription_id_uniq`
 
 ### Only in PROD (3)
 - `league_practices_recurrence_group_id_idx`

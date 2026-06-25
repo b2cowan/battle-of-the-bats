@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import CheckoutProvisioning from './CheckoutProvisioning';
 
 type PageProps = {
   searchParams: Promise<{ session_id?: string }>;
@@ -20,6 +20,12 @@ function getOrgSlug(row: WorkspaceLookup | null): string | null {
 export default async function CoachesPortalCheckoutCompletePage({ searchParams }: PageProps) {
   const { session_id: sessionId } = await searchParams;
 
+  // Resolve the provisioned workspace's org slug, if the webhook has finished. Two guards matter:
+  //  1. redirect() MUST run OUTSIDE the try/catch below — it works by throwing, so catching here
+  //     would swallow it and the buyer would never advance (a real bug this page used to have).
+  //  2. limit(1) keeps the lookup resilient if a duplicate workspace row exists for one
+  //     subscription, so we still land the buyer in a portal instead of erroring out.
+  let orgSlug: string | null = null;
   if (sessionId) {
     try {
       const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -32,30 +38,19 @@ export default async function CoachesPortalCheckoutCompletePage({ searchParams }
           .from('team_workspaces')
           .select('workspace_org_id, organizations!workspace_org_id(slug)')
           .eq('stripe_subscription_id', subscriptionId)
+          .order('created_at', { ascending: true })
+          .limit(1)
           .maybeSingle();
 
-        const orgSlug = getOrgSlug(data as WorkspaceLookup | null);
-        if (orgSlug) redirect(`/${orgSlug}/coaches?success=1`);
+        orgSlug = getOrgSlug(data as WorkspaceLookup | null);
       }
     } catch (error) {
       console.error('[coaches checkout complete] lookup error:', error);
     }
   }
 
-  return (
-    <main style={{ minHeight: '70vh', display: 'grid', placeItems: 'center', padding: '2rem' }}>
-      <div style={{ maxWidth: 520 }}>
-        <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 800 }}>
-          Coaches Portal checkout
-        </p>
-        <h1 style={{ fontSize: '2rem', margin: '0.35rem 0 0.75rem' }}>Your Coaches Portal is almost ready</h1>
-        <p style={{ color: 'rgba(255,255,255,0.72)', lineHeight: 1.6 }}>
-          Payment succeeded and FieldLogicHQ is finishing the workspace setup. Refresh this page in a moment.
-        </p>
-        <Link href="/pricing" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-          Back to pricing
-        </Link>
-      </div>
-    </main>
-  );
+  if (orgSlug) redirect(`/${orgSlug}/coaches?success=1`);
+
+  // Not provisioned yet → a self-polling screen that advances into the portal automatically.
+  return <CheckoutProvisioning />;
 }
