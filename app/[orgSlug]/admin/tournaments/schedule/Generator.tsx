@@ -1323,7 +1323,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
 
             <div className="form-group">
               <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                Available Scheduling Dates
+                Available Scheduling Dates{' '}
                 <button type="button" className="btn btn-ghost btn-sm" onClick={addDateSlot} style={{ color: 'var(--logic-lime)' }}>
                   <Plus size={14} /> Add Date
                 </button>

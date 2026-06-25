@@ -120,7 +120,7 @@ export default async function TryoutLandingPage({
                 marginBottom: '1.25rem',
               }}
             >
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'currentColor', flexShrink: 0 }} />
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'currentColor', flexShrink: 0 }} />{' '}
               Accepting Applications
             </div>
             <div>

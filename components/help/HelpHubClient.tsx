@@ -122,7 +122,7 @@ export default function HelpHubClient({
       {rolePaths.length > 0 && (
         <details className={styles.helpHubNewHere}>
           <summary className={styles.helpHubNewHereSummary}>
-            <span className={styles.helpHubNewHereCaret} aria-hidden="true">&#9654;</span>
+            <span className={styles.helpHubNewHereCaret} aria-hidden="true">&#9654;</span>{' '}
             New to FieldLogicHQ?
             <span className={styles.helpHubNewHereHint}>Getting-started paths by role</span>
           </summary>

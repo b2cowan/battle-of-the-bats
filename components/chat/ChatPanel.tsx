@@ -1816,7 +1816,7 @@ export default function ChatPanel({
                   </button>
                 )}
                 <label className={styles.pollMultiLabel}>
-                  <input type="checkbox" checked={pollMultiple} onChange={(e) => setPollMultiple(e.target.checked)} />
+                  <input type="checkbox" checked={pollMultiple} onChange={(e) => setPollMultiple(e.target.checked)} />{' '}
                   Allow multiple answers
                 </label>
               </div>

@@ -1050,7 +1050,7 @@ export default function AdminTournamentsPage({
                                       type="checkbox" 
                                       checked={row.poolCount >= 2}
                                       onChange={e => togglePoolsForDiv(row.id, e.target.checked)}
-                                    />
+                                    />{' '}
                                     Use Pools
                                   </label>
                                 </div>
@@ -1107,8 +1107,8 @@ export default function AdminTournamentsPage({
                         <input 
                           type="checkbox" 
                           checked={useWelcomeMsg} 
-                          onChange={e => setUseWelcomeMsg(e.target.checked)} 
-                        />
+                          onChange={e => setUseWelcomeMsg(e.target.checked)}
+                        />{' '}
                         Create default welcome announcement
                       </label>
                     </div>

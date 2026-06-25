@@ -1133,7 +1133,7 @@ export default function OrgDetailClient({
                           onClick={() => setActiveTab('billing')}
                         >
                           Cancel Subscription in Billing &amp; Access
-                        </button>
+                        </button>{' '}
                         , then reload the preflight here.
                       </p>
                     ) : (
@@ -1186,7 +1186,7 @@ export default function OrgDetailClient({
                               type="checkbox"
                               checked={deleteOrgNotifyOwner}
                               onChange={e => setDeleteOrgNotifyOwner(e.target.checked)}
-                            />
+                            />{' '}
                             Send account closure notification to org owner
                           </label>
                         </div>
@@ -1197,7 +1197,7 @@ export default function OrgDetailClient({
                                 type="checkbox"
                                 checked={deleteOrgDeleteStripeCustomer}
                                 onChange={e => setDeleteOrgDeleteStripeCustomer(e.target.checked)}
-                              />
+                              />{' '}
                               Delete Stripe customer record (GDPR erasure only — removes billing history from Stripe)
                             </label>
                           </div>
@@ -1829,7 +1829,7 @@ export default function OrgDetailClient({
                     type="checkbox"
                     checked={cancelSubNotifyOwner}
                     onChange={e => setCancelSubNotifyOwner(e.target.checked)}
-                  />
+                  />{' '}
                   Send cancellation confirmation email to org owner
                 </label>
               </div>

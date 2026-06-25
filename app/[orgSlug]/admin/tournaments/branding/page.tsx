@@ -538,7 +538,7 @@ export default function TournamentBrandingPage() {
                     className={`${styles.iconBgOption} ${iconBg === null ? styles.iconBgOptionActive : ''}`}
                     onClick={() => setIconBg(null)}
                   >
-                    <span className={styles.iconBgChip} style={{ background: iconBgSuggested ?? ICON_DARK_FALLBACK }} aria-hidden />
+                    <span className={styles.iconBgChip} style={{ background: iconBgSuggested ?? ICON_DARK_FALLBACK }} aria-hidden />{' '}
                     Auto
                   </button>
                   <button
@@ -547,7 +547,7 @@ export default function TournamentBrandingPage() {
                     className={`${styles.iconBgOption} ${sameHex(iconBg, '#ffffff') ? styles.iconBgOptionActive : ''}`}
                     onClick={() => setIconBg('#ffffff')}
                   >
-                    <span className={styles.iconBgChip} style={{ background: '#ffffff' }} aria-hidden />
+                    <span className={styles.iconBgChip} style={{ background: '#ffffff' }} aria-hidden />{' '}
                     White
                   </button>
                   <button
@@ -556,7 +556,7 @@ export default function TournamentBrandingPage() {
                     className={`${styles.iconBgOption} ${sameHex(iconBg, ICON_DARK_FALLBACK) ? styles.iconBgOptionActive : ''}`}
                     onClick={() => setIconBg(ICON_DARK_FALLBACK)}
                   >
-                    <span className={styles.iconBgChip} style={{ background: ICON_DARK_FALLBACK }} aria-hidden />
+                    <span className={styles.iconBgChip} style={{ background: ICON_DARK_FALLBACK }} aria-hidden />{' '}
                     Dark
                   </button>
                   <button
@@ -565,7 +565,7 @@ export default function TournamentBrandingPage() {
                     className={`${styles.iconBgOption} ${sameHex(iconBg, previewTheme.primary) ? styles.iconBgOptionActive : ''}`}
                     onClick={() => setIconBg(previewTheme.primary.toLowerCase())}
                   >
-                    <span className={styles.iconBgChip} style={{ background: previewTheme.primary }} aria-hidden />
+                    <span className={styles.iconBgChip} style={{ background: previewTheme.primary }} aria-hidden />{' '}
                     Brand
                   </button>
                 </div>

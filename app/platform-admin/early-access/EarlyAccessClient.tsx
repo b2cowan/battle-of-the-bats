@@ -632,7 +632,7 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
               </div>
 
               <label className={styles.fieldLabel}>
-                Status
+                Status{' '}
                 <select
                   value={draftStatus}
                   onChange={event => setDraftStatus(event.target.value as EarlyAccessStatus)}
@@ -645,7 +645,7 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
               </label>
 
               <label className={styles.fieldLabel}>
-                Converted organization
+                Converted organization{' '}
                 <select
                   value={draftConvertedOrgId}
                   onChange={event => setDraftConvertedOrgId(event.target.value)}
@@ -661,7 +661,7 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
               </label>
 
               <label className={styles.fieldLabel}>
-                Follow-up due
+                Follow-up due{' '}
                 <input
                   type="date"
                   value={draftFollowUpDueAt}
@@ -671,7 +671,7 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
               </label>
 
               <label className={styles.fieldLabel}>
-                Next action
+                Next action{' '}
                 <textarea
                   value={draftNextAction}
                   onChange={event => setDraftNextAction(event.target.value)}
@@ -682,7 +682,7 @@ export default function EarlyAccessClient({ organizations, canManageGrowth }: Pr
               </label>
 
               <label className={styles.fieldLabel}>
-                Internal notes
+                Internal notes{' '}
                 <textarea
                   value={draftNotes}
                   onChange={event => setDraftNotes(event.target.value)}

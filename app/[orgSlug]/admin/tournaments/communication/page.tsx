@@ -402,7 +402,7 @@ export default function AdminCommunicationPage() {
                           <div className={styles.divisionCheckList}>
                             <span className={styles.divisionFilterLabel}>Division visibility</span>
                             <label className={styles.divisionCheckRow}>
-                              <input type="checkbox" checked={siteDivisionIds.size === 0} onChange={() => setSiteDivisionIds(new Set())} />
+                              <input type="checkbox" checked={siteDivisionIds.size === 0} onChange={() => setSiteDivisionIds(new Set())} />{' '}
                               All divisions
                             </label>
                             <div className={styles.divisionCheckIndent}>
@@ -884,7 +884,7 @@ export default function AdminCommunicationPage() {
                     <div className={styles.divisionCheckList}>
                       <span className={styles.divisionFilterLabel}>Division visibility</span>
                       <label className={styles.divisionCheckRow}>
-                        <input type="checkbox" checked={siteDivisionIds.size === 0} onChange={() => setSiteDivisionIds(new Set())} />
+                        <input type="checkbox" checked={siteDivisionIds.size === 0} onChange={() => setSiteDivisionIds(new Set())} />{' '}
                         All divisions
                       </label>
                       <div className={styles.divisionCheckIndent}>

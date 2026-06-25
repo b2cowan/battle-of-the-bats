@@ -585,7 +585,7 @@ export default function TournamentSummaryPage() {
               <div className={styles.repeatModalBody}>
                 <div className={styles.repeatFormGrid}>
                   <label className={styles.fieldLabel}>
-                    Tournament name *
+                    Tournament name *{' '}
                     <input
                       className="form-input"
                       value={repeatSetupForm.name}
@@ -601,7 +601,7 @@ export default function TournamentSummaryPage() {
                     />
                   </label>
                   <label className={styles.fieldLabel}>
-                    Year *
+                    Year *{' '}
                     <input
                       className="form-input"
                       type="number"
@@ -612,7 +612,7 @@ export default function TournamentSummaryPage() {
                     />
                   </label>
                   <label className={styles.fieldLabel}>
-                    Public link *
+                    Public link *{' '}
                     <input
                       className="form-input"
                       value={repeatSetupForm.slug}

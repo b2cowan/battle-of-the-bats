@@ -277,7 +277,7 @@ export default function RegistrationFieldsSettingsPage() {
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--white-70)' }}>
-                      <input type="checkbox" checked={edit.required} onChange={e => setEditing(prev => ({ ...prev, [field.id]: { ...edit, required: e.target.checked } }))} />
+                      <input type="checkbox" checked={edit.required} onChange={e => setEditing(prev => ({ ...prev, [field.id]: { ...edit, required: e.target.checked } }))} />{' '}
                       Required
                     </label>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -315,7 +315,7 @@ export default function RegistrationFieldsSettingsPage() {
           </div>
         )}
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '1rem', color: 'var(--white-70)' }}>
-          <input type="checkbox" checked={draft.required} onChange={e => setDraft(d => ({ ...d, required: e.target.checked }))} />
+          <input type="checkbox" checked={draft.required} onChange={e => setDraft(d => ({ ...d, required: e.target.checked }))} />{' '}
           Required on public registration
         </label>
         <div className={styles.formFooter}>

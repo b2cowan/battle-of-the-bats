@@ -200,7 +200,7 @@ export default async function TeamPublicPage({
                   marginBottom: '0.35rem',
                 }}
               >
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'currentColor', flexShrink: 0 }} />
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'currentColor', flexShrink: 0 }} />{' '}
                 Tryouts Open
               </div>
               <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#f0f0f0' }}>

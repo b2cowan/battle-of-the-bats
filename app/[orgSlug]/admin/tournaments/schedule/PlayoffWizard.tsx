@@ -1612,7 +1612,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div className="form-group">
                     <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      Playoff Dates
+                      Playoff Dates{' '}
                       <button type="button" className="btn btn-ghost btn-sm" onClick={addDateSlot} style={{ color: 'var(--logic-lime)' }}>
                         <Plus size={14} /> Add Date
                       </button>

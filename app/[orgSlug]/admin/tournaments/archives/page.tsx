@@ -123,7 +123,7 @@ export default function AdminArchivesPage() {
       {/* Sealed Records */}
       <div className={styles.sectionBlock}>
         <div className={styles.sectionHeading}>
-          Sealed Records
+          Sealed Records{' '}
           <span className={styles.sectionCount}>{archives.length}</span>
         </div>
         {archives.length === 0 ? (
@@ -194,7 +194,7 @@ export default function AdminArchivesPage() {
       {/* Archived — Pending Seal */}
       <div className={styles.sectionBlock}>
         <div className={styles.sectionHeading}>
-          Archived — Pending Seal
+          Archived — Pending Seal{' '}
           <span className={styles.sectionCount}>{archivedUnsealed.length}</span>
         </div>
         {archivedUnsealed.length === 0 ? (

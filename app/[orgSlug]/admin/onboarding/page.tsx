@@ -1739,7 +1739,7 @@ export default function OnboardingPage() {
           <div className={styles.inlineList}>
             <div className={styles.modalGridTwo}>
               <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
-                Season name *
+                Season name *{' '}
                 <input
                   className="form-input"
                   value={leagueSeasonForm.name}
@@ -1752,7 +1752,7 @@ export default function OnboardingPage() {
                 </span>
               </label>
               <label className={styles.fieldLabel}>
-                Sport
+                Sport{' '}
                 <select
                   className="form-select"
                   value={leagueSeasonForm.sport}
@@ -1764,7 +1764,7 @@ export default function OnboardingPage() {
                 </select>
               </label>
               <label className={styles.fieldLabel}>
-                Division
+                Division{' '}
                 <input
                   className="form-input"
                   value={leagueSeasonForm.division}
@@ -1773,7 +1773,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={styles.fieldLabel}>
-                Season starts
+                Season starts{' '}
                 <input
                   className="form-input"
                   type="date"
@@ -1783,7 +1783,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={styles.fieldLabel}>
-                Season ends
+                Season ends{' '}
                 <input
                   className="form-input"
                   type="date"
@@ -1793,7 +1793,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
-                Public description
+                Public description{' '}
                 <textarea
                   className="form-textarea"
                   rows={3}
@@ -1896,7 +1896,7 @@ export default function OnboardingPage() {
           <div className={styles.inlineList}>
             <div className={styles.modalGridTwo}>
               <label className={styles.fieldLabel}>
-                Registration opens
+                Registration opens{' '}
                 <input
                   className="form-input"
                   type="datetime-local"
@@ -1905,7 +1905,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={styles.fieldLabel}>
-                Registration closes
+                Registration closes{' '}
                 <input
                   className="form-input"
                   type="datetime-local"
@@ -1914,7 +1914,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
-                Registration fee
+                Registration fee{' '}
                 <input
                   className="form-input"
                   type="number"
@@ -1926,7 +1926,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={`${styles.fieldLabel} ${styles.fullWidthField}`}>
-                Waiver text
+                Waiver text{' '}
                 <textarea
                   className="form-textarea"
                   rows={4}
@@ -1982,7 +1982,7 @@ export default function OnboardingPage() {
                 type="checkbox"
                 checked={leagueWantsTournamentSetup}
                 onChange={e => setLeagueWantsTournamentSetup(e.target.checked)}
-              />
+              />{' '}
               Set up a tournament after this league season is saved
             </label>
             <div className={styles.emptyModalState}>
@@ -2050,7 +2050,7 @@ export default function OnboardingPage() {
         (
           <>
             <label className={styles.fieldLabel}>
-              Tournament name *
+              Tournament name *{' '}
               <input
                 className="form-input"
                 value={tournamentForm.name}
@@ -2067,7 +2067,7 @@ export default function OnboardingPage() {
 
             <div className={styles.modalGridTwo}>
               <label className={styles.fieldLabel}>
-                Start date *
+                Start date *{' '}
                 <input
                   className="form-input"
                   type="date"
@@ -2077,7 +2077,7 @@ export default function OnboardingPage() {
                 />
               </label>
               <label className={styles.fieldLabel}>
-                End date *
+                End date *{' '}
                 <input
                   className="form-input"
                   type="date"
@@ -2121,7 +2121,7 @@ export default function OnboardingPage() {
             </div>
 
             <label className={styles.fieldLabel}>
-              Public link
+              Public link{' '}
               <input
                 className="form-input"
                 value={tournamentForm.slug}
@@ -2225,7 +2225,7 @@ export default function OnboardingPage() {
                         type="checkbox"
                         checked={row.poolCount >= 2}
                         onChange={e => e.target.checked ? updateDivisionPools(row.id, 2) : updateDivisionPools(row.id, 0)}
-                      />
+                      />{' '}
                       Pools/groups
                     </label>
                     <button
@@ -2256,7 +2256,7 @@ export default function OnboardingPage() {
                             type="checkbox"
                             checked={row.requiresPoolSelection}
                             onChange={e => updateDivisionRow(row.id, current => ({ ...current, requiresPoolSelection: e.target.checked }))}
-                          />
+                          />{' '}
                           Team chooses pool/group
                         </label>
                       </div>
@@ -2294,7 +2294,7 @@ export default function OnboardingPage() {
         (
           <div className={styles.inlineList}>
             <label className={styles.checkboxLine}>
-              <input type="checkbox" checked={useWelcomeMsg} onChange={e => setUseWelcomeMsg(e.target.checked)} />
+              <input type="checkbox" checked={useWelcomeMsg} onChange={e => setUseWelcomeMsg(e.target.checked)} />{' '}
               Publish a welcome announcement
             </label>
             {useWelcomeMsg && (
@@ -2324,19 +2324,19 @@ export default function OnboardingPage() {
               </div>
               <div className={styles.venueDraftGrid}>
                 <label className={styles.fieldLabel}>
-                  Venue name *
+                  Venue name *{' '}
                   <input className="form-input" value={venueDraft.name} onChange={e => updateVenueDraft('name', e.target.value)} placeholder="Lions Field" />
                 </label>
                 <label className={styles.fieldLabel}>
-                  Street address
+                  Street address{' '}
                   <input className="form-input" value={venueDraft.street} onChange={e => updateVenueDraft('street', e.target.value)} placeholder="123 Main St" />
                 </label>
                 <label className={styles.fieldLabel}>
-                  City
+                  City{' '}
                   <input className="form-input" value={venueDraft.city} onChange={e => updateVenueDraft('city', e.target.value)} placeholder="Milton" />
                 </label>
                 <label className={styles.fieldLabel}>
-                  Province
+                  Province{' '}
                   <select className="form-select" value={venueDraft.province} onChange={e => updateVenueDraft('province', e.target.value)}>
                     <option value="">Select province</option>
                     {CANADIAN_PROVINCES.map(province => (
@@ -2345,11 +2345,11 @@ export default function OnboardingPage() {
                   </select>
                 </label>
                 <label className={styles.fieldLabel}>
-                  Postal code
+                  Postal code{' '}
                   <input className="form-input" value={venueDraft.postalCode} onChange={e => updateVenueDraft('postalCode', e.target.value.toUpperCase())} placeholder="A1A 1A1" />
                 </label>
                 <label className={styles.fieldLabel}>
-                  Country
+                  Country{' '}
                   <input className="form-input" value={venueDraft.country} onChange={e => updateVenueDraft('country', e.target.value)} />
                 </label>
               </div>
@@ -2358,7 +2358,7 @@ export default function OnboardingPage() {
               <div className={styles.venueSurfaceBlock}>
                 <div className={styles.venueSurfaceRow}>
                   <label className={styles.fieldLabel}>
-                    How many *
+                    How many *{' '}
                     <input
                       className="form-input"
                       type="number"
@@ -2371,7 +2371,7 @@ export default function OnboardingPage() {
                     />
                   </label>
                   <label className={styles.fieldLabel}>
-                    Surface type *
+                    Surface type *{' '}
                     <select
                       className="form-select"
                       value={venueDraft.facilityType}
@@ -2393,7 +2393,7 @@ export default function OnboardingPage() {
               </div>
 
               <label className={`${styles.fieldLabel} ${styles.venueNotesField}`} style={{ display: 'block' }}>
-                Notes
+                Notes{' '}
                 <input className="form-input" value={venueDraft.notes} onChange={e => updateVenueDraft('notes', e.target.value)} placeholder="Parking, entrance, field number" style={{ marginTop: '0.35rem' }} />
               </label>
               <div className={styles.venueComposerAction}>

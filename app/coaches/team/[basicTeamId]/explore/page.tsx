@@ -2,6 +2,7 @@ import { resolveCoachTeamPage } from '@/lib/coach-team-page';
 import { getBasicCoachTeamForUser } from '@/lib/basic-coach-teams';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
+import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import CoachExploreCatalog from '@/components/coaches/CoachExploreCatalog';
 import TeamSectionShell from '@/components/coaches/TeamSectionShell';
 
@@ -19,10 +20,17 @@ export async function generateMetadata({ params }: RouteParams) {
 export default async function CoachTeamExplorePage({ params }: RouteParams) {
   const { basicTeamId } = await params;
   const { team } = await resolveCoachTeamPage(basicTeamId, '/explore');
+  // Same server-side checkout gate the rest of the portal uses (see ScopeShelf): open in dev
+  // (team plan ungated) → the real self-serve upgrade; gated in prod → the info explainer.
+  const checkoutOpen = !(await getPlanGatingMap()).team;
 
   return (
     <TeamSectionShell teamName={team.name} title="Explore">
-      <CoachExploreCatalog basicTeamId={basicTeamId} activatedFeatures={team.activatedFeatures} />
+      <CoachExploreCatalog
+        basicTeamId={basicTeamId}
+        activatedFeatures={team.activatedFeatures}
+        checkoutOpen={checkoutOpen}
+      />
     </TeamSectionShell>
   );
 }

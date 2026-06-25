@@ -1366,7 +1366,7 @@ export default function CoachesSchedulePage({
               {needsRecurrence(form.eventType) && (
                 <div className={`${styles.field} ${styles.formGridFull}`}>
                   <label className={styles.label}>
-                    <input type="checkbox" checked={form.isRecurring} onChange={e => setForm(f => ({ ...f, isRecurring: e.target.checked }))} style={{ marginRight: '0.4rem' }} />
+                    <input type="checkbox" checked={form.isRecurring} onChange={e => setForm(f => ({ ...f, isRecurring: e.target.checked }))} style={{ marginRight: '0.4rem' }} />{' '}
                     Recurring (weekly)
                   </label>
                 </div>

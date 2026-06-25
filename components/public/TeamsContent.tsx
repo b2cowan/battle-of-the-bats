@@ -198,7 +198,7 @@ function TeamCard({
           {liveGame && (
             <span className={styles.liveLine}>
               <span className={styles.liveBadge}>
-                <span className={styles.liveDot} />
+                <span className={styles.liveDot} />{' '}
                 LIVE
               </span>
               <span className={styles.liveOpp}>vs {liveOpponent ? cleanTeamName(liveOpponent) : 'TBD'}</span>

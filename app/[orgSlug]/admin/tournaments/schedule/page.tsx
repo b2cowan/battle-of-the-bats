@@ -1212,7 +1212,7 @@ export default function AdminSchedulePage() {
               className={styles.publishStatusText}
               title="Published with real team names"
             >
-              <span className={styles.publishStatusDot} aria-hidden />
+              <span className={styles.publishStatusDot} aria-hidden />{' '}
               Published
             </span>
           );

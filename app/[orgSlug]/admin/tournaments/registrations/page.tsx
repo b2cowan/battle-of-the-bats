@@ -1263,7 +1263,7 @@ export default function UnifiedTeamsPage() {
           {team.status === 'accepted' && effectiveFee.totalFeeAmount ? (
             <details className={styles.teamDetailSection}>
               <summary className={styles.teamDetailSummary}>
-                Payment
+                Payment{' '}
                 <span className={`badge badge-${PAYMENT_STATUS_STYLE[pStatus]}`}>{PAYMENT_STATUS_LABEL[pStatus]}</span>
               </summary>
               <div className={styles.teamDetailPanel}>

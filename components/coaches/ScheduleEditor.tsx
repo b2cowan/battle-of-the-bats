@@ -354,7 +354,7 @@ function EventForm({
       />
 
       <label className={styles.fieldLabel}>
-        Starts
+        Starts{' '}
         <input
           className={styles.input}
           type="datetime-local"
@@ -365,7 +365,7 @@ function EventForm({
       </label>
 
       <label className={styles.fieldLabel}>
-        Ends (optional)
+        Ends (optional){' '}
         <input
           className={styles.input}
           type="datetime-local"

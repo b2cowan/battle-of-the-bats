@@ -469,7 +469,7 @@ export default function TeamSignupClient({
                 disabled={busy}
                 aria-pressed={billingCycle === 'annual'}
               >
-                Seasonal
+                Seasonal{' '}
                 <span>{formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD</span>
               </button>
               <button
@@ -479,7 +479,7 @@ export default function TeamSignupClient({
                 disabled={busy}
                 aria-pressed={billingCycle === 'monthly'}
               >
-                Monthly
+                Monthly{' '}
                 <span>{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD</span>
               </button>
             </div>

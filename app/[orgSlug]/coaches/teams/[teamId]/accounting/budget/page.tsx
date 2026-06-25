@@ -561,7 +561,7 @@ export default function BudgetPlannerPage({
                     type="checkbox"
                     checked={form.usePeriods}
                     onChange={e => setForm(f => ({ ...f, usePeriods: e.target.checked }))}
-                  />
+                  />{' '}
                   Split by period
                 </label>
               </div>

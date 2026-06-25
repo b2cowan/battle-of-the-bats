@@ -433,7 +433,7 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
                 onChange={e => handleInheritToggle(e.target.checked)}
               />
               <label htmlFor="inherit-periods" style={{ fontSize: '0.85rem', color: 'var(--white-80)', cursor: 'pointer' }}>
-                Inherit installment due dates from budget periods
+                Inherit installment due dates from budget periods{' '}
                 <span style={{ display: 'block', fontSize: '0.76rem', color: 'var(--white-40)' }}>
                   When using custom schedule, due dates will be pre-filled from this line&apos;s period dates.
                 </span>

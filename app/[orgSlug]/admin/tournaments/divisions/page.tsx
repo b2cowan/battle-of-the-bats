@@ -463,7 +463,7 @@ export default function DivisionsPage() {
               {/* ── Division Contact ── */}
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label">
-                  Division Contact
+                  Division Contact{' '}
                   <span style={{ marginLeft: '0.4rem', fontWeight: 400, color: 'var(--white-40)', fontSize: '0.72rem', textTransform: 'none', letterSpacing: 0 }}>Optional</span>
                 </label>
                 <select className="form-select" value={form.contactMemberId} onChange={e => setForm(f => ({ ...f, contactMemberId: e.target.value }))}>

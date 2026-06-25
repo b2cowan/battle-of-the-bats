@@ -274,7 +274,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
               type="checkbox"
               checked={foundingSeasonOnly}
               onChange={e => setFoundingSeasonOnly(e.target.checked)}
-            />
+            />{' '}
             Founding Season only
           </label>
           <label className={styles.filterCheckbox}>
@@ -282,7 +282,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
               type="checkbox"
               checked={freeFloorOnly}
               onChange={e => setFreeFloorOnly(e.target.checked)}
-            />
+            />{' '}
             League Starter only
           </label>
           <label className={styles.filterCheckbox}>
@@ -290,7 +290,7 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
               type="checkbox"
               checked={emptyOrgOnly}
               onChange={e => setEmptyOrgOnly(e.target.checked)}
-            />
+            />{' '}
             Empty orgs only
           </label>
           {attentionFilter && (

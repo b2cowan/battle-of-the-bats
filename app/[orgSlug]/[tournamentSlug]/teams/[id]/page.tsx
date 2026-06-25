@@ -347,7 +347,7 @@ export default function TeamProfilePage({
                   <div className={styles.nextGameLabel}>
                     {liveGame ? (
                       <span className={styles.liveTag}>
-                        <span className={styles.liveDot} />
+                        <span className={styles.liveDot} />{' '}
                         LIVE
                       </span>
                     ) : (

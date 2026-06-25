@@ -986,7 +986,7 @@ export default function MembersPage() {
                 )}
                 <div className={styles.field} style={{ marginTop: manageTarget.role === 'owner' ? 0 : '0.75rem', marginBottom: 0 }}>
                   <label className={styles.label}>
-                    Display Name
+                    Display Name{' '}
                     <span className={styles.optional}>(optional)</span>
                   </label>
                   <input
@@ -1000,7 +1000,7 @@ export default function MembersPage() {
                 </div>
                 <div className={styles.field} style={{ marginTop: '0.6rem', marginBottom: 0 }}>
                   <label className={styles.label}>
-                    Title
+                    Title{' '}
                     <span className={styles.optional}>(optional)</span>
                   </label>
                   <input

@@ -14,6 +14,10 @@ const eslintConfig = defineConfig([
       "react-hooks/static-components": "warn",
       "react-hooks/preserve-manual-memoization": "warn",
       "react/no-unescaped-entities": "warn",
+      // Guard against the recurring "bold word</strong>\nnext word" → "wordnext word"
+      // space-drop: when an inline element and adjacent text are split across lines with no
+      // explicit space, the rendered space is lost. Forces an explicit {' '} / same-line space.
+      "react/jsx-child-element-spacing": "warn",
     },
   },
   // Override default ignores of eslint-config-next.

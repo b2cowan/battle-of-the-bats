@@ -1155,7 +1155,7 @@ export default function TournamentSetupWizard({
           <div className={styles.workflowModalBody}>
             <div className={styles.modalGridTwo}>
               <label className={styles.fieldLabel}>
-                Tournament name *
+                Tournament name *{' '}
                 <input
                   className="form-input"
                   value={cloneNameForm.name}
@@ -1170,7 +1170,7 @@ export default function TournamentSetupWizard({
                 />
               </label>
               <label className={styles.fieldLabel}>
-                Public link *
+                Public link *{' '}
                 <input
                   className="form-input"
                   value={cloneNameForm.slug}
@@ -1183,7 +1183,7 @@ export default function TournamentSetupWizard({
                 />
               </label>
               <label className={styles.fieldLabel}>
-                Start date *
+                Start date *{' '}
                 <input
                   className="form-input"
                   type="date"
@@ -1197,7 +1197,7 @@ export default function TournamentSetupWizard({
                 />
               </label>
               <label className={styles.fieldLabel}>
-                End date *
+                End date *{' '}
                 <input
                   className="form-input"
                   type="date"
@@ -1308,7 +1308,7 @@ export default function TournamentSetupWizard({
             </div>
           )}
           <label className={styles.fieldLabel}>
-            Tournament name
+            Tournament name{' '}
             <input
               className="form-input"
               value={tournamentForm.name}
@@ -1322,11 +1322,11 @@ export default function TournamentSetupWizard({
           </label>
           <div className={styles.modalGridTwo}>
             <label className={styles.fieldLabel}>
-              Start date
+              Start date{' '}
               <input className="form-input" type="date" value={tournamentForm.startDate} min={getTodayDateValue()} onChange={e => { markFormTouched(); updateTournamentStartDate(e.target.value); }} />
             </label>
             <label className={styles.fieldLabel}>
-              End date
+              End date{' '}
               <input className="form-input" type="date" value={tournamentForm.endDate} min={tournamentForm.startDate || getTodayDateValue()} disabled={!tournamentForm.startDate} onChange={e => { markFormTouched(); updateTournamentEndDate(e.target.value); }} />
             </label>
           </div>
@@ -1361,7 +1361,7 @@ export default function TournamentSetupWizard({
             </div>
           </div>
           <label className={styles.fieldLabel}>
-            Public link
+            Public link{' '}
             <input
               className="form-input"
               value={tournamentForm.slug}
@@ -1446,7 +1446,7 @@ export default function TournamentSetupWizard({
                         poolNames: e.target.checked ? ['Pool A', 'Pool B'] : ['Pool A'],
                         requiresPoolSelection: e.target.checked ? current.requiresPoolSelection : false,
                       }))}
-                    />
+                    />{' '}
                     Use pools
                   </label>
                   <button type="button" className={styles.iconOnlyButton} onClick={() => setDivisionRows(prev => prev.filter(item => item.id !== row.id))} aria-label={`Remove ${row.name || 'division'}`}>
@@ -1457,11 +1457,11 @@ export default function TournamentSetupWizard({
                   <div className={styles.poolSetupPanel}>
                     <div className={styles.poolControlsRow}>
                       <label className={styles.poolMiniField}>
-                        Pool count
+                        Pool count{' '}
                         <input className="form-input" type="number" min="2" max="4" value={row.poolCount} onChange={e => updateDivisionPools(row.id, Number(e.target.value))} />
                       </label>
                       <label className={styles.compactCheckbox}>
-                        <input type="checkbox" checked={row.requiresPoolSelection} onChange={e => updateDivisionRow(row.id, current => ({ ...current, requiresPoolSelection: e.target.checked }))} />
+                        <input type="checkbox" checked={row.requiresPoolSelection} onChange={e => updateDivisionRow(row.id, current => ({ ...current, requiresPoolSelection: e.target.checked }))} />{' '}
                         Registrant picks pool
                       </label>
                     </div>
@@ -1492,7 +1492,7 @@ export default function TournamentSetupWizard({
       (
         <div className={styles.inlineList}>
           <label className={styles.checkboxLine}>
-            <input type="checkbox" checked={useWelcomeMsg} onChange={e => setUseWelcomeMsg(e.target.checked)} />
+            <input type="checkbox" checked={useWelcomeMsg} onChange={e => setUseWelcomeMsg(e.target.checked)} />{' '}
             Publish a welcome announcement
           </label>
           {useWelcomeMsg && <textarea className="form-textarea" rows={4} value={welcomeMsg} onChange={e => setWelcomeMsg(e.target.value)} />}
@@ -1589,7 +1589,7 @@ export default function TournamentSetupWizard({
                 <label className={styles.fieldLabel}>Street address<input className="form-input" value={venueDraft.street} onChange={e => updateVenueDraft('street', e.target.value)} placeholder="123 Main St" /></label>
                 <label className={styles.fieldLabel}>City<input className="form-input" value={venueDraft.city} onChange={e => updateVenueDraft('city', e.target.value)} placeholder="Milton" /></label>
                 <label className={styles.fieldLabel}>
-                  Province
+                  Province{' '}
                   <select className="form-select" value={venueDraft.province} onChange={e => updateVenueDraft('province', e.target.value)}>
                     <option value="">Select province</option>
                     {CANADIAN_PROVINCES.map(province => <option key={province} value={province}>{province}</option>)}

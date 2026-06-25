@@ -677,7 +677,7 @@ export default function ScheduleTimeline({
         <div className={styles.conflictLegend}>
           {hasOverlap && (
             <span className={styles.legendItem} data-kind="overlap">
-              <span className={styles.legendSwatch} aria-hidden />
+              <span className={styles.legendSwatch} aria-hidden />{' '}
               Overlapping booking at the same field — needs a different slot
             </span>
           )}
