@@ -176,9 +176,7 @@ export default function RosterPage({
   }
 
   async function handleAdd() {
-    if (!addForm.playerFirstName.trim() || !addForm.playerLastName.trim() ||
-        !addForm.guardianFirstName.trim() || !addForm.guardianLastName.trim() ||
-        !addForm.guardianEmail.trim()) return;
+    if (!addForm.playerFirstName.trim()) return; // first name required; last + guardian optional
 
     setAdding(true);
     try {
@@ -189,14 +187,14 @@ export default function RosterPage({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             playerFirstName:   addForm.playerFirstName.trim(),
-            playerLastName:    addForm.playerLastName.trim(),
+            playerLastName:    addForm.playerLastName.trim() || null,
             playerDateOfBirth: addForm.playerDateOfBirth || null,
             playerNumber:      addForm.playerNumber.trim() || null,
             primaryPosition:   addForm.primaryPosition.trim() || null,
             secondaryPosition: addForm.secondaryPosition.trim() || null,
-            guardianFirstName: addForm.guardianFirstName.trim(),
-            guardianLastName:  addForm.guardianLastName.trim(),
-            guardianEmail:     addForm.guardianEmail.trim(),
+            guardianFirstName: addForm.guardianFirstName.trim() || null,
+            guardianLastName:  addForm.guardianLastName.trim() || null,
+            guardianEmail:     addForm.guardianEmail.trim() || null,
             guardianPhone:     addForm.guardianPhone.trim() || null,
             notes:             addForm.notes.trim() || null,
           }),
@@ -209,7 +207,7 @@ export default function RosterPage({
       // Append the created player to local state (it appends server-side too) rather than refetching —
       // a refetch here could stomp an in-flight reorder's optimistic state.
       if (data.player) setPlayers(prev => [...prev, data.player]);
-      showFeedback('success', `${addForm.playerFirstName} ${addForm.playerLastName} added to roster.`);
+      showFeedback('success', `${[addForm.playerFirstName.trim(), addForm.playerLastName.trim()].filter(Boolean).join(' ')} added to roster.`);
     } catch (e: unknown) {
       showFeedback('danger', errorMessage(e, 'Failed to add player.'));
     } finally {
@@ -442,7 +440,7 @@ export default function RosterPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-pln">
-                  Last Name <span style={{ color: '#f87171' }}>*</span>
+                  Last Name <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>(optional)</span>
                 </label>
                 <input id="add-pln" className={styles.input} type="text"
                   value={addForm.playerLastName}
@@ -480,7 +478,7 @@ export default function RosterPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-gfn">
-                  Guardian First Name <span style={{ color: '#f87171' }}>*</span>
+                  Guardian First Name <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>(optional)</span>
                 </label>
                 <input id="add-gfn" className={styles.input} type="text"
                   value={addForm.guardianFirstName}
@@ -489,7 +487,7 @@ export default function RosterPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-gln">
-                  Guardian Last Name <span style={{ color: '#f87171' }}>*</span>
+                  Guardian Last Name <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>(optional)</span>
                 </label>
                 <input id="add-gln" className={styles.input} type="text"
                   value={addForm.guardianLastName}
@@ -498,7 +496,7 @@ export default function RosterPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-gem">
-                  Guardian Email <span style={{ color: '#f87171' }}>*</span>
+                  Guardian Email <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>(optional)</span>
                 </label>
                 <input id="add-gem" className={styles.input} type="email"
                   value={addForm.guardianEmail}
@@ -528,12 +526,7 @@ export default function RosterPage({
                 type="button"
                 className="btn btn-primary"
                 onClick={handleAdd}
-                disabled={
-                  adding ||
-                  !addForm.playerFirstName.trim() || !addForm.playerLastName.trim() ||
-                  !addForm.guardianFirstName.trim() || !addForm.guardianLastName.trim() ||
-                  !addForm.guardianEmail.trim()
-                }
+                disabled={adding || !addForm.playerFirstName.trim()}
               >
                 {adding ? 'Adding…' : 'Add Player'}
               </button>
@@ -600,7 +593,7 @@ function SortableRow({
         {p.playerNumber ?? <span style={{ opacity: 0.3 }}>—</span>}
       </td>
       <td className={styles.td}>
-        <span className={styles.playerName}>{p.playerFirstName} {p.playerLastName}</span>
+        <span className={styles.playerName}>{[p.playerFirstName, p.playerLastName].filter(Boolean).join(' ')}</span>
       </td>
       <td className={styles.td} style={{ fontSize: '0.85rem' }}>
         {[p.primaryPosition, p.secondaryPosition].filter(Boolean).join(' / ') || <span style={{ opacity: 0.3 }}>-</span>}

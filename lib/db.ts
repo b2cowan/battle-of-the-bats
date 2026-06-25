@@ -4487,7 +4487,7 @@ export async function createRepRosterPlayer(fields: {
   source?: 'tryout' | 'admin_manual';
   tryoutRegistrationId?: string | null;
   playerFirstName: string;
-  playerLastName: string;
+  playerLastName: string | null;
   playerDateOfBirth?: string | null;
   playerNumber?: string | null;
   primaryPosition?: string | null;
@@ -4545,7 +4545,7 @@ export async function createRepRosterPlayer(fields: {
 
 export async function updateRepRosterPlayer(playerId: string, fields: {
   playerFirstName?: string;
-  playerLastName?: string;
+  playerLastName?: string | null;
   playerDateOfBirth?: string | null;
   playerNumber?: string | null;
   primaryPosition?: string | null;

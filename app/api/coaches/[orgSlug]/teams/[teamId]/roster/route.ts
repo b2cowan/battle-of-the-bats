@@ -52,9 +52,9 @@ export const POST = withObservability(async (req: Request,
   const body = await req.json();
   const { playerFirstName, playerLastName, guardianFirstName, guardianLastName, guardianEmail } = body;
 
-  if (!playerFirstName?.trim() || !playerLastName?.trim() ||
-      !guardianFirstName?.trim() || !guardianLastName?.trim() || !guardianEmail?.trim()) {
-    return NextResponse.json({ error: 'Player name and guardian name/email are required' }, { status: 400 });
+  // First name required; last name + guardian are optional (consistent first/last model).
+  if (!playerFirstName?.trim()) {
+    return NextResponse.json({ error: 'A player first name is required.' }, { status: 400 });
   }
 
   const player = await createRepRosterPlayer({
@@ -63,14 +63,14 @@ export const POST = withObservability(async (req: Request,
     orgId: ctx!.org.id,
     source: 'admin_manual',
     playerFirstName: playerFirstName.trim(),
-    playerLastName: playerLastName.trim(),
+    playerLastName: playerLastName?.trim() || null,
     playerDateOfBirth: body.playerDateOfBirth?.trim() || null,
     playerNumber: body.playerNumber?.trim() || null,
     primaryPosition: body.primaryPosition?.trim() || null,
     secondaryPosition: body.secondaryPosition?.trim() || null,
-    guardianFirstName: guardianFirstName.trim(),
-    guardianLastName: guardianLastName.trim(),
-    guardianEmail: guardianEmail.trim(),
+    guardianFirstName: guardianFirstName?.trim() || null,
+    guardianLastName: guardianLastName?.trim() || null,
+    guardianEmail: guardianEmail?.trim() || null,
     guardianPhone: body.guardianPhone?.trim() || null,
     notes: body.notes?.trim() || null,
     adminNotes: body.adminNotes?.trim() || null,

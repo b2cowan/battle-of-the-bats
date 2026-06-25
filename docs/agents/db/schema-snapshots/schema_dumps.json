@@ -839,6 +839,42 @@
         "column_default": "now()"
       },
       {
+        "table_name": "basic_coach_team_players",
+        "pos": 14,
+        "column_name": "first_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 15,
+        "column_name": "last_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 16,
+        "column_name": "guardian_first_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "basic_coach_team_players",
+        "pos": 17,
+        "column_name": "guardian_last_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "basic_coach_team_registrations",
         "pos": 1,
         "column_name": "id",
@@ -8971,7 +9007,7 @@
         "column_name": "player_last_name",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {

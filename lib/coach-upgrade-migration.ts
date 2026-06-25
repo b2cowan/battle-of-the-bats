@@ -64,29 +64,6 @@ function emptySummary(programYearId: string): CoachUpgradeMigrationSummary {
   };
 }
 
-/** Split a single free-text name into first/last. Last whitespace token = surname; everything
- *  before it = first name. 1-token (no surname) or 3+-token names are flagged uncertain so the
- *  coach reviews them. player_first/last_name are NOT NULL, so a 1-token name keeps last = ''. */
-function splitName(full: string): { first: string; last: string; uncertain: boolean } {
-  const tokens = (full ?? '').trim().split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return { first: 'Unknown', last: '', uncertain: true };
-  if (tokens.length === 1) return { first: tokens[0], last: '', uncertain: true };
-  return {
-    first: tokens.slice(0, -1).join(' '),
-    last: tokens[tokens.length - 1],
-    uncertain: tokens.length > 2,
-  };
-}
-
-/** Split an OPTIONAL guardian name into first/last (guardian fields are nullable as of mig 139, so
- *  a blank guardian stays fully null — never fabricated). */
-function splitGuardian(full: string | null): { first: string | null; last: string | null } {
-  const tokens = (full ?? '').trim().split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return { first: null, last: null };
-  if (tokens.length === 1) return { first: tokens[0], last: null };
-  return { first: tokens.slice(0, -1).join(' '), last: tokens[tokens.length - 1] };
-}
-
 const EVENT_TYPE_MAP: Record<'practice' | 'game' | 'event', RepEventType> = {
   practice: 'practice',
   game: 'scrimmage', // Free never tracked a result, so no loss; coach can reclassify
@@ -117,27 +94,24 @@ export async function migrateBasicTeamIntoWorkspace(params: {
 
     const players = await getBasicCoachTeamPlayers(basicCoachTeamId);
     for (const p of players) {
-      const label = p.name?.trim() || p.id;
-      const name = splitName(p.name);
-      // Review flags are recomputed from the Basic source on every run (including for already-copied
-      // players), so the summary stays complete + accurate across retries.
-      if (name.uncertain) summary.roster.nameSplitUncertain.push(label);
-      if (!p.contactEmail || !p.guardianName) summary.roster.needGuardian.push(label);
+      const label = p.name?.trim() || p.firstName || p.id;
+      // Names map 1:1 now (free + Premium both store first/last) — no split, no "uncertain name" flag.
+      // Recomputed every run (incl. already-copied players) so the summary stays accurate across retries.
+      if (!p.contactEmail || !p.guardianFirstName) summary.roster.needGuardian.push(label);
 
       if (playerIdMap.has(p.id)) { summary.roster.migrated++; continue; } // already copied — skip
       try {
-        const guardian = splitGuardian(p.guardianName);
         const created = await createRepRosterPlayer({
           programYearId,
           teamId,
           orgId,
           source: 'admin_manual',
-          playerFirstName: name.first,
-          playerLastName: name.last,
+          playerFirstName: p.firstName,
+          playerLastName: p.lastName,
           playerDateOfBirth: p.dateOfBirth,
           playerNumber: p.jerseyNumber,
-          guardianFirstName: guardian.first,
-          guardianLastName: guardian.last,
+          guardianFirstName: p.guardianFirstName,
+          guardianLastName: p.guardianLastName,
           guardianEmail: p.contactEmail,
           guardianPhone: p.contactPhone,
           notes: p.notes,

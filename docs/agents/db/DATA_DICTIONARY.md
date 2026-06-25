@@ -1313,7 +1313,15 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 **`basic_coach_team_id`** (FK → `basic_coach_teams.id` ON DELETE CASCADE, NOT NULL) — the team; the only structural anchor (no `org_id`).
 
 <!-- dict:col:basic_coach_team_players.name -->
-**`name`** (text, NOT NULL) — player display name, single field (NOT split first/last — matches the `tournament_roster_players` snapshot target).
+**`name`** (text, NOT NULL) — composed "First Last" **back-compat denormalization** (mig 155). The roster now collects first/last (see below); the app keeps `name` populated (composed) on every write so the `tournament_roster_players` snapshot + legacy read sites stay unchanged. Source of truth for entry + upgrade = `first_name`/`last_name`.
+
+<!-- dict:col:basic_coach_team_players.first_name -->
+<!-- dict:col:basic_coach_team_players.last_name -->
+**`first_name` / `last_name`** (text, nullable; mig 155) — split player name (first required app-layer, **last optional** so mononyms work). Backfilled from the legacy single `name` (last token = surname). Maps **1:1** to `rep_roster_players.player_first_name`/`player_last_name` on upgrade — no guess, no "uncertain name" flag.
+
+<!-- dict:col:basic_coach_team_players.guardian_first_name -->
+<!-- dict:col:basic_coach_team_players.guardian_last_name -->
+**`guardian_first_name` / `guardian_last_name`** (text, nullable; mig 155) — split guardian name (both optional); `guardian_name` kept composed for back-compat. Maps 1:1 to the Premium guardian first/last.
 
 <!-- dict:col:basic_coach_team_players.jersey_number -->
 **`jersey_number`** (text, nullable) — jersey #; **text** so leading zeros / non-numeric are allowed (mirrors `tournament_roster_players`).
@@ -1772,7 +1780,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_roster_players.player_first_name -->
 <!-- dict:col:rep_roster_players.player_last_name -->
-**`player_first_name` / `player_last_name`** (text, NOT NULL) — required on every write; list ordered by `display_order` then last name (mig 142). (Split, unlike `basic_coach_team_players.name`.)
+**`player_first_name` (NOT NULL) / `player_last_name` (nullable as of mig 155)** — first required, **last optional** (matches the free side 1:1; mononyms carry over with a NULL last name). List ordered by `display_order` then last name (mig 142).
 
 <!-- dict:col:rep_roster_players.player_date_of_birth -->
 **`player_date_of_birth`** (date, nullable) — optional; **not** consent-gated (gotcha 4).

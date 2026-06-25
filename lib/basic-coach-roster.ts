@@ -21,10 +21,14 @@ import { supabaseAdmin } from './supabase-admin';
 export type BasicCoachTeamPlayer = {
   id: string;
   basicCoachTeamId: string;
-  name: string;
+  name: string; // composed "First Last" — kept populated for back-compat (tournament snapshot, displays)
+  firstName: string;
+  lastName: string | null;
   jerseyNumber: string | null;
   dateOfBirth: string | null; // 'YYYY-MM-DD' or null
-  guardianName: string | null;
+  guardianName: string | null; // composed, back-compat
+  guardianFirstName: string | null;
+  guardianLastName: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
   notes: string | null;
@@ -33,12 +37,17 @@ export type BasicCoachTeamPlayer = {
   updatedAt: string;
 };
 
-/** A normalized create/update payload — already trimmed + null-coerced by the route. */
+/** A normalized create/update payload — already trimmed + null-coerced by the route.
+ *  `name` / `guardianName` are DERIVED (composed) by `normalizeBasicCoachTeamPlayerBody`. */
 export type BasicCoachTeamPlayerInput = {
-  name?: string;
+  firstName?: string;
+  lastName?: string | null;
+  name?: string; // derived; not set by clients
   jerseyNumber?: string | null;
   dateOfBirth?: string | null;
-  guardianName?: string | null;
+  guardianFirstName?: string | null;
+  guardianLastName?: string | null;
+  guardianName?: string | null; // derived
   contactEmail?: string | null;
   contactPhone?: string | null;
   notes?: string | null;
@@ -48,9 +57,13 @@ type BasicCoachTeamPlayerRow = {
   id: string;
   basic_coach_team_id: string;
   name: string;
+  first_name: string | null;
+  last_name: string | null;
   jersey_number: string | null;
   date_of_birth: string | null;
   guardian_name: string | null;
+  guardian_first_name: string | null;
+  guardian_last_name: string | null;
   contact_email: string | null;
   contact_phone: string | null;
   notes: string | null;
@@ -60,16 +73,27 @@ type BasicCoachTeamPlayerRow = {
 };
 
 const PLAYER_COLUMNS =
-  'id, basic_coach_team_id, name, jersey_number, date_of_birth, guardian_name, contact_email, contact_phone, notes, display_order, created_at, updated_at';
+  'id, basic_coach_team_id, name, first_name, last_name, jersey_number, date_of_birth, guardian_name, guardian_first_name, guardian_last_name, contact_email, contact_phone, notes, display_order, created_at, updated_at';
+
+/** Compose a single display name from first + last (last optional). Empty → ''. */
+export function composeName(first: string | null | undefined, last: string | null | undefined): string {
+  return [first, last].map(s => (s ?? '').trim()).filter(Boolean).join(' ');
+}
 
 function mapPlayer(row: BasicCoachTeamPlayerRow): BasicCoachTeamPlayer {
+  // first_name is backfilled for every existing row, but coalesce off the legacy `name` defensively.
+  const firstName = (row.first_name ?? '').trim() || (row.name ?? '').trim();
   return {
     id: row.id,
     basicCoachTeamId: row.basic_coach_team_id,
     name: row.name,
+    firstName,
+    lastName: row.last_name,
     jerseyNumber: row.jersey_number,
     dateOfBirth: row.date_of_birth,
     guardianName: row.guardian_name,
+    guardianFirstName: row.guardian_first_name,
+    guardianLastName: row.guardian_last_name,
     contactEmail: row.contact_email,
     contactPhone: row.contact_phone,
     notes: row.notes,
@@ -83,9 +107,13 @@ function mapPlayer(row: BasicCoachTeamPlayerRow): BasicCoachTeamPlayer {
  *  (so PATCH only writes the fields the caller actually provided). `name` is never nulled. */
 function toDbPayload(input: BasicCoachTeamPlayerInput): Record<string, unknown> {
   const out: Record<string, unknown> = {};
+  if (input.firstName !== undefined) out.first_name = input.firstName;
+  if (input.lastName !== undefined) out.last_name = input.lastName;
   if (input.name !== undefined) out.name = input.name;
   if (input.jerseyNumber !== undefined) out.jersey_number = input.jerseyNumber;
   if (input.dateOfBirth !== undefined) out.date_of_birth = input.dateOfBirth;
+  if (input.guardianFirstName !== undefined) out.guardian_first_name = input.guardianFirstName;
+  if (input.guardianLastName !== undefined) out.guardian_last_name = input.guardianLastName;
   if (input.guardianName !== undefined) out.guardian_name = input.guardianName;
   if (input.contactEmail !== undefined) out.contact_email = input.contactEmail;
   if (input.contactPhone !== undefined) out.contact_phone = input.contactPhone;
@@ -119,13 +147,24 @@ const CONTACT_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // a legitimate client). The UI enforces shorter limits; these are the backstop for a direct API
 // call, so an authenticated coach can't bloat storage on their own rows by bypassing the form.
 const MAX_LENGTHS: Record<string, { max: number; label: string }> = {
-  name: { max: 160, label: 'name' },
+  firstName: { max: 80, label: 'first name' },
+  lastName: { max: 80, label: 'last name' },
   jerseyNumber: { max: 16, label: 'jersey number' },
-  guardianName: { max: 160, label: 'guardian name' },
+  guardianFirstName: { max: 80, label: 'guardian first name' },
+  guardianLastName: { max: 80, label: 'guardian last name' },
   contactEmail: { max: 200, label: 'contact email' },
   contactPhone: { max: 40, label: 'contact phone' },
   notes: { max: 600, label: 'note' },
 };
+
+/** Split a legacy single name into first/last (last whitespace token = surname; 1-token = first only).
+ *  Used only as a back-compat fallback for any caller still sending a single `name`. */
+function splitSingleName(full: string): { first: string; last: string | null } {
+  const tokens = full.trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return { first: '', last: null };
+  if (tokens.length === 1) return { first: tokens[0], last: null };
+  return { first: tokens.slice(0, -1).join(' '), last: tokens[tokens.length - 1] };
+}
 
 export function normalizeBasicCoachTeamPlayerBody(
   body: Record<string, unknown>,
@@ -137,9 +176,35 @@ export function normalizeBasicCoachTeamPlayerBody(
     return s ? s : null;
   };
 
-  if (body.name !== undefined) input.name = trimmed(body.name);
+  // Player name — prefer split first/last; fall back to splitting a legacy single `name`.
+  if (body.firstName !== undefined || body.lastName !== undefined) {
+    if (body.firstName !== undefined) input.firstName = trimmed(body.firstName);
+    if (body.lastName !== undefined) input.lastName = trimmedOrNull(body.lastName);
+  } else if (body.name !== undefined) {
+    const split = splitSingleName(trimmed(body.name));
+    input.firstName = split.first;
+    input.lastName = split.last;
+  }
+  // Compose the back-compat `name` only when BOTH parts are known (a form save always sends both),
+  // so a partial patch can never clobber the stored name with half of it.
+  if (input.firstName !== undefined && input.lastName !== undefined) {
+    input.name = composeName(input.firstName, input.lastName);
+  }
+
+  // Guardian name — same pattern (fully optional).
+  if (body.guardianFirstName !== undefined || body.guardianLastName !== undefined) {
+    if (body.guardianFirstName !== undefined) input.guardianFirstName = trimmedOrNull(body.guardianFirstName);
+    if (body.guardianLastName !== undefined) input.guardianLastName = trimmedOrNull(body.guardianLastName);
+  } else if (body.guardianName !== undefined) {
+    const split = splitSingleName(trimmed(body.guardianName));
+    input.guardianFirstName = split.first || null;
+    input.guardianLastName = split.last;
+  }
+  if (input.guardianFirstName !== undefined && input.guardianLastName !== undefined) {
+    input.guardianName = composeName(input.guardianFirstName, input.guardianLastName) || null;
+  }
+
   if (body.jerseyNumber !== undefined) input.jerseyNumber = trimmedOrNull(body.jerseyNumber);
-  if (body.guardianName !== undefined) input.guardianName = trimmedOrNull(body.guardianName);
   if (body.contactEmail !== undefined) {
     const email = trimmedOrNull(body.contactEmail);
     if (email !== null && !CONTACT_EMAIL_RE.test(email)) {
@@ -186,8 +251,8 @@ export async function createBasicCoachTeamPlayer(params: {
   createdByUserId: string;
   input: BasicCoachTeamPlayerInput;
 }): Promise<BasicCoachTeamPlayer> {
-  const name = (params.input.name ?? '').trim();
-  if (!name) throw new Error('A player name is required.');
+  const firstName = (params.input.firstName ?? '').trim();
+  if (!firstName) throw new Error('A player first name is required.');
 
   // Append: one past the current highest display_order (robust against gaps).
   const { data: top, error: topError } = await supabaseAdmin
@@ -200,7 +265,11 @@ export async function createBasicCoachTeamPlayer(params: {
   if (topError) throw topError;
   const nextOrder = (top?.display_order ?? -1) + 1;
 
-  const payload = toDbPayload({ ...params.input, name });
+  const payload = toDbPayload({
+    ...params.input,
+    firstName,
+    name: params.input.name || composeName(firstName, params.input.lastName ?? null),
+  });
   const { data, error } = await supabaseAdmin
     .from('basic_coach_team_players')
     .insert({
@@ -235,8 +304,8 @@ export async function updateBasicCoachTeamPlayer(params: {
     if (error) throw error;
     return data ? mapPlayer(data as BasicCoachTeamPlayerRow) : null;
   }
-  if ('name' in payload && !String(payload.name ?? '').trim()) {
-    throw new Error('A player name is required.');
+  if ('first_name' in payload && !String(payload.first_name ?? '').trim()) {
+    throw new Error('A player first name is required.');
   }
 
   const { data, error } = await supabaseAdmin

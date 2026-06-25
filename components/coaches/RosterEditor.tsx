@@ -30,10 +30,12 @@ type Props = {
 };
 
 type PlayerInput = {
-  name: string;
+  firstName: string;
+  lastName: string | null;
   jerseyNumber: string | null;
   dateOfBirth: string | null;
-  guardianName: string | null;
+  guardianFirstName: string | null;
+  guardianLastName: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
   notes: string | null;
@@ -280,11 +282,13 @@ function SortableRow({
 }
 
 type FormState = {
-  name: string;
+  firstName: string;
+  lastName: string;
   jerseyNumber: string;
   dateOfBirth: string;
   dobConsent: boolean;
-  guardianName: string;
+  guardianFirstName: string;
+  guardianLastName: string;
   contactEmail: string;
   contactPhone: string;
   notes: string;
@@ -302,13 +306,15 @@ function PlayerForm({
   onCancel: () => void;
 }) {
   const [form, setForm] = useState<FormState>({
-    name: player?.name ?? '',
+    firstName: player?.firstName ?? '',
+    lastName: player?.lastName ?? '',
     jerseyNumber: player?.jerseyNumber ?? '',
     dateOfBirth: player?.dateOfBirth ?? '',
     // Consent is required afresh whenever a DOB is ADDED or CHANGED (see dobConsentRequired
     // below). An unchanged previously-saved DOB is exempt, so this starts unticked.
     dobConsent: false,
-    guardianName: player?.guardianName ?? '',
+    guardianFirstName: player?.guardianFirstName ?? '',
+    guardianLastName: player?.guardianLastName ?? '',
     contactEmail: player?.contactEmail ?? '',
     contactPhone: player?.contactPhone ?? '',
     notes: player?.notes ?? '',
@@ -317,7 +323,7 @@ function PlayerForm({
   // automatically when editing a player that already has that data.
   const [showDob, setShowDob] = useState(!!player?.dateOfBirth);
   const [showContact, setShowContact] = useState(
-    !!(player?.guardianName || player?.contactEmail || player?.contactPhone || player?.notes),
+    !!(player?.guardianFirstName || player?.guardianLastName || player?.contactEmail || player?.contactPhone || player?.notes),
   );
 
   const set = (patch: Partial<FormState>) => setForm(f => ({ ...f, ...patch }));
@@ -327,7 +333,7 @@ function PlayerForm({
   // Storing a NEW or CHANGED minor DOB requires a fresh guardian-consent acknowledgment; an
   // existing DOB left unchanged on edit does not re-prompt (it was acknowledged when first added).
   const dobConsentRequired = dobValue.length > 0 && dobValue !== originalDob;
-  const nameValid = form.name.trim().length > 0;
+  const nameValid = form.firstName.trim().length > 0;
   const dobNeedsConsent = dobConsentRequired && !form.dobConsent;
   // A contact email is optional, but if one is typed it must be a valid format —
   // mirrors the server guard so a malformed address can't be saved and silently
@@ -339,10 +345,12 @@ function PlayerForm({
   function submit() {
     if (!canSave) return;
     onSubmit({
-      name: form.name.trim(),
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim() || null,
       jerseyNumber: form.jerseyNumber.trim() || null,
       dateOfBirth: form.dateOfBirth.trim() || null,
-      guardianName: form.guardianName.trim() || null,
+      guardianFirstName: form.guardianFirstName.trim() || null,
+      guardianLastName: form.guardianLastName.trim() || null,
       contactEmail: form.contactEmail.trim() || null,
       contactPhone: form.contactPhone.trim() || null,
       notes: form.notes.trim() || null,
@@ -363,12 +371,20 @@ function PlayerForm({
         />
         <input
           className={styles.nameInput}
-          placeholder="Player name"
-          maxLength={120}
+          placeholder="First name"
+          maxLength={80}
           autoFocus
-          value={form.name}
-          onChange={e => set({ name: e.target.value })}
-          aria-label="Player name"
+          value={form.firstName}
+          onChange={e => set({ firstName: e.target.value })}
+          aria-label="First name"
+        />
+        <input
+          className={styles.nameInput}
+          placeholder="Last name (optional)"
+          maxLength={80}
+          value={form.lastName}
+          onChange={e => set({ lastName: e.target.value })}
+          aria-label="Last name"
         />
       </div>
 
@@ -421,11 +437,19 @@ function PlayerForm({
           </p>
           <input
             className={styles.input}
-            placeholder="Parent / guardian name"
-            maxLength={120}
-            value={form.guardianName}
-            onChange={e => set({ guardianName: e.target.value })}
-            aria-label="Parent or guardian name"
+            placeholder="Parent / guardian first name"
+            maxLength={80}
+            value={form.guardianFirstName}
+            onChange={e => set({ guardianFirstName: e.target.value })}
+            aria-label="Parent or guardian first name"
+          />
+          <input
+            className={styles.input}
+            placeholder="Parent / guardian last name (optional)"
+            maxLength={80}
+            value={form.guardianLastName}
+            onChange={e => set({ guardianLastName: e.target.value })}
+            aria-label="Parent or guardian last name"
           />
           <input
             className={styles.input}

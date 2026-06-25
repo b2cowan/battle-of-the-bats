@@ -1090,7 +1090,7 @@ export interface RepRosterPlayer {
   tryoutRegistrationId: string | null;
   source: 'tryout' | 'admin_manual';
   playerFirstName: string;
-  playerLastName: string;
+  playerLastName: string | null;
   playerDateOfBirth: string | null;
   playerNumber: string | null;
   primaryPosition: string | null;

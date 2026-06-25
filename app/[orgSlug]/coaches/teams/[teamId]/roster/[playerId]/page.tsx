@@ -25,7 +25,7 @@ interface EditForm {
 function playerToForm(p: RepRosterPlayer): EditForm {
   return {
     playerFirstName:   p.playerFirstName,
-    playerLastName:    p.playerLastName,
+    playerLastName:    p.playerLastName ?? '',
     playerDateOfBirth: p.playerDateOfBirth ?? '',
     playerNumber:      p.playerNumber ?? '',
     primaryPosition:   p.primaryPosition ?? '',
@@ -87,7 +87,7 @@ export default function PlayerDetailPage({
 
   const isDirty = player && form && (
     form.playerFirstName   !== player.playerFirstName   ||
-    form.playerLastName    !== player.playerLastName    ||
+    form.playerLastName    !== (player.playerLastName ?? '') ||
     form.playerDateOfBirth !== (player.playerDateOfBirth ?? '') ||
     form.playerNumber      !== (player.playerNumber ?? '')      ||
     form.primaryPosition   !== (player.primaryPosition ?? '')   ||
@@ -111,14 +111,14 @@ export default function PlayerDetailPage({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             playerFirstName:    form.playerFirstName.trim(),
-            playerLastName:     form.playerLastName.trim(),
+            playerLastName:     form.playerLastName.trim() || null,
             playerDateOfBirth:  form.playerDateOfBirth || null,
             playerNumber:       form.playerNumber.trim() || null,
             primaryPosition:    form.primaryPosition.trim() || null,
             secondaryPosition:  form.secondaryPosition.trim() || null,
-            guardianFirstName:  form.guardianFirstName.trim(),
-            guardianLastName:   form.guardianLastName.trim(),
-            guardianEmail:      form.guardianEmail.trim(),
+            guardianFirstName:  form.guardianFirstName.trim() || null,
+            guardianLastName:   form.guardianLastName.trim() || null,
+            guardianEmail:      form.guardianEmail.trim() || null,
             guardianPhone:      form.guardianPhone.trim() || null,
             notes:              form.notes.trim() || null,
             adminNotes:         form.adminNotes.trim() || null,
@@ -184,14 +184,14 @@ export default function PlayerDetailPage({
         <span><ChevronRight size={12} /></span>
         <Link href={`${base}/roster`}>Roster</Link>
         <span><ChevronRight size={12} /></span>
-        <span>{player.playerFirstName} {player.playerLastName}</span>
+        <span>{[player.playerFirstName, player.playerLastName].filter(Boolean).join(' ')}</span>
       </div>
 
       {/* Header */}
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div>
-            <h1 className={styles.pageTitle}>{player.playerFirstName} {player.playerLastName}</h1>
+            <h1 className={styles.pageTitle}>{[player.playerFirstName, player.playerLastName].filter(Boolean).join(' ')}</h1>
             <p className={styles.pageSub}>{assignment.teamName} — {assignment.programYearName}</p>
           </div>
         </div>
