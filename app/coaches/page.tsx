@@ -15,6 +15,7 @@ import {
   COACHES_TEAMS_PATH,
   coachTeamPath,
 } from '@/lib/coaches-portal-routes';
+import { excludeActivePremiumUpgrades } from '@/lib/coach-team-page';
 import styles from './coaches-portal.module.css';
 
 export const metadata = { title: 'Coaches Portal' };
@@ -41,11 +42,15 @@ export default async function CoachesPortalPage() {
   // Narrowed string for use inside closures (control-flow narrowing is lost in the .map below).
   const email = user.email;
 
-  const [contexts, basicTeams, claimable] = await Promise.all([
+  const [contexts, allBasicTeams, claimable] = await Promise.all([
     getUserAccessContexts({ id: user.id, email }),
     getBasicCoachTeamsForUser(user.id),
     getClaimableRegistrationsForUser(user.id, email),
   ]);
+  // A team upgraded to a LIVE Premium portal is the coach's Premium team now, not a free one — drop
+  // it from the free "Your teams" list (its team page also redirects into Premium). Canceled
+  // upgrades stay (the free team is usable again).
+  const basicTeams = await excludeActivePremiumUpgrades(allBasicTeams);
 
   const workspaceContexts = contexts.filter(context => context.kind === 'coaches_premium');
   const hasTournamentRecords = contexts.some(context => context.id === 'coaches-basic:tournament-records');

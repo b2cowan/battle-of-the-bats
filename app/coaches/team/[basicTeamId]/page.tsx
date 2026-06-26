@@ -17,6 +17,7 @@ import {
   COACHES_TOURNAMENTS_PATH,
   coachTeamPath,
 } from '@/lib/coaches-portal-routes';
+import { getActivePremiumPortalSlug } from '@/lib/coach-team-page';
 import HelpButton from '@/components/help/HelpButton';
 import TeamHQ from '@/components/coaches/TeamHQ';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -88,6 +89,12 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
   const team = await getBasicCoachTeamForUser({ userId: user.id, basicCoachTeamId: basicTeamId });
   if (!team) {
     notFound();
+  }
+
+  // Upgraded to a live Premium portal → send the coach there (the free overview is read-only history).
+  const premiumSlug = await getActivePremiumPortalSlug(team.teamWorkspaceId);
+  if (premiumSlug) {
+    redirect(`/${premiumSlug}/coaches`);
   }
 
   const [history, players, events, fees, announcements, announcementRecipientSummary] = await Promise.all([

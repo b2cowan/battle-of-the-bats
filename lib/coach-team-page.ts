@@ -1,9 +1,54 @@
 import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { getBasicCoachTeamForUser } from '@/lib/basic-coach-teams';
 import { coachTeamPath } from '@/lib/coaches-portal-routes';
 import type { BasicCoachTeam } from '@/lib/basic-coach-teams';
+
+/**
+ * The org slug of the LIVE Premium portal a free Basic team has been upgraded to, or null. Keeps an
+ * upgraded free team from becoming a stale, editable parallel: once Premium is live the coach is sent
+ * to the Premium portal (which already holds the migrated roster/schedule/fees). When the Premium
+ * subscription is CANCELED this returns null and the free team is usable again.
+ */
+export async function getActivePremiumPortalSlug(teamWorkspaceId: string | null): Promise<string | null> {
+  if (!teamWorkspaceId) return null;
+  const { data } = await supabaseAdmin
+    .from('team_workspaces')
+    .select('subscription_status, organizations!workspace_org_id(slug)')
+    .eq('id', teamWorkspaceId)
+    .maybeSingle<{
+      subscription_status: string | null;
+      organizations: { slug: string | null } | { slug: string | null }[] | null;
+    }>();
+  if (!data || !data.subscription_status || data.subscription_status === 'canceled') return null;
+  const org = Array.isArray(data.organizations) ? data.organizations[0] : data.organizations;
+  return org?.slug ?? null;
+}
+
+/**
+ * Drop any free Basic teams that have been upgraded to a LIVE Premium portal. To the coach those are
+ * now their Premium team (reached via the Premium workspace), not a free team — so they must not
+ * appear in the free "Your teams" list. Canceled upgrades are kept (the free team is usable again).
+ * Batched: one lookup covers all of the listed teams' workspaces.
+ */
+export async function excludeActivePremiumUpgrades<T extends { teamWorkspaceId: string | null }>(
+  teams: T[],
+): Promise<T[]> {
+  const workspaceIds = teams.map(t => t.teamWorkspaceId).filter((id): id is string => !!id);
+  if (workspaceIds.length === 0) return teams;
+  const { data } = await supabaseAdmin
+    .from('team_workspaces')
+    .select('id, subscription_status')
+    .in('id', workspaceIds);
+  const liveWorkspaceIds = new Set(
+    (data ?? [])
+      .filter(w => w.subscription_status && w.subscription_status !== 'canceled')
+      .map(w => w.id as string),
+  );
+  return teams.filter(t => !(t.teamWorkspaceId && liveWorkspaceIds.has(t.teamWorkspaceId)));
+}
 
 /**
  * Shared guard for every team-scoped Coaches Portal page (Overview + the section sub-routes
@@ -35,6 +80,13 @@ export async function resolveCoachTeamPage(
   const team = await getBasicCoachTeamForUser({ userId: user.id, basicCoachTeamId: basicTeamId });
   if (!team) {
     notFound();
+  }
+
+  // Upgraded to a LIVE Premium portal → the free shell is read-only history; send the coach to their
+  // Premium portal (where the migrated data lives) so there's never a stale editable parallel.
+  const premiumSlug = await getActivePremiumPortalSlug(team.teamWorkspaceId);
+  if (premiumSlug) {
+    redirect(`/${premiumSlug}/coaches`);
   }
 
   return { userId: user.id, email: user.email, team };
