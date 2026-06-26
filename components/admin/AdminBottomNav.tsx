@@ -6,10 +6,11 @@ import {
   Users, MoreHorizontal,
   LogOut, X, ChevronRight, ChevronDown,
   LayoutGrid, CalendarDays, UserCheck,
-  ExternalLink, FileText, MessageSquarePlus, Globe,
+  ExternalLink, FileText, MessageSquarePlus, Globe, Download,
   type LucideIcon,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
+import { isStandalonePWA } from '@/lib/device';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
@@ -44,6 +45,9 @@ export default function AdminBottomNav() {
   const currentOrgSlug = currentOrg?.slug;
   const [moreOpen, setMoreOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  // Hide the "Download app" item once running as the installed PWA (nothing to install
+  // inside the app). Resolved after mount to avoid an SSR/hydration mismatch.
+  const [isStandalone, setIsStandalone] = useState(false);
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const worklist = useAdminWorklist();
@@ -112,6 +116,10 @@ export default function AdminBottomNav() {
     const href = item.key ? `${base}/${item.key}` : base;
     return pathname === href || pathname.startsWith(href + '/');
   });
+
+  useEffect(() => {
+    setIsStandalone(isStandalonePWA());
+  }, []);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -343,6 +351,21 @@ export default function AdminBottomNav() {
                 <ExternalLink size={15} />
                 <span>{tournamentPreviewLabel}</span>
               </Link>
+            )}
+
+            {!isStandalone && (
+              <button
+                className={`${styles.dropItem} ${styles.dropUtilItem}`}
+                onClick={() => {
+                  setMoreOpen(false);
+                  window.dispatchEvent(new Event('flhq:show-install'));
+                }}
+                role="menuitem"
+                id="admin-mob-download-app"
+              >
+                <Download size={15} />
+                <span>Download app</span>
+              </button>
             )}
 
             <button

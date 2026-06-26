@@ -4,6 +4,21 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-26 — Public playoff bracket: fix dark-on-dark elevation collapse (recess the canvas, lift the cards, graduate the labels)
+
+**Decision (owner-flagged /design review of the public Standings playoff bracket on a dark org theme — "how dark the playoff brackets are"):** the bracket read as a flat charcoal void because of a token collapse, not just theme darkness. **Root cause:** the matchup cards (`.bracketMatchup` = `--bg-card`) resolve to the SAME value as the panel they sit in (`.bracketSection` = `--surface`) — `#111827` in the dark theme, `#FFFFFF` in the public light theme — so the cards had zero elevation and were held together only by a 25%-opacity brand border; layered with `--white-35` round labels (~2.3:1) and a `--white-03` status strip, the whole tree disappeared. Four fixes, all bracket-scoped and correct in BOTH the dark org theme and the white public light theme:
+
+1. **Recess the canvas** — `.bracketTreeOuter` (desktop) + `.bracketList` (mobile) get `background: var(--surface-2)`, giving the cards a darker/greyer bed to float on in both modes.
+2. **Lift the cards** — `.bracketMatchup` background becomes `linear-gradient(0deg, var(--white-5), var(--white-5)), var(--bg-card)` + `box-shadow: var(--highlight-top)` (the same top-inner-highlight the Champion card uses), so a card whose base colour equals the panel still reads as a raised tile.
+3. **Graduate the section labels** — `.bracketRoundLabel`, `.bracketThirdLabel`, `.bracketListRoundLabel` go `--white-35 → --white-50`. They're real `--font-data` headings (QUARTERFINALS/SEMIFINALS/FINALS), so this is the same rule as the 2026-06-25 light-mode decision ("real labels use `--white-50`/`--data-gray`, never the structural-faint `--white-35`"), applied to dark.
+4. **Surface the status eyebrow** — `.bracketMatchupStatus` background `--white-03 → --white-5` so the date/Final-pill band is visible.
+
+**Rationale:** The fix targets the elevation collapse at its root (card vs panel sharing a colour) rather than recolouring one element, and because it leans on `--surface-2` / `--white-5` / `--highlight-top` it improves both themes at once. No per-theme overrides, no new tokens, no literal hex.
+
+**Applies to:** `app/[orgSlug]/standings/standings.module.css` (`.bracketTreeOuter`, `.bracketList`, `.bracketMatchup`, `.bracketMatchupStatus`, `.bracketRoundLabel`, `.bracketThirdLabel`, `.bracketListRoundLabel`). **Generalizes:** a "card on a panel" pattern breaks wherever `--bg-card` and `--surface` resolve to the same value (true in both dark and light here) — such cards need an explicit lift (`--white-5` overlay + `--highlight-top`) AND/OR a recessed parent canvas (`--surface-2`) to register as elevated; never rely on a faint brand border alone, and keep real `--font-data` section headings on `--white-50`/`--data-gray`, not `--white-35/-30`.
+
+---
+
 ### 2026-06-25 — Followed-team scorebug strip (public Schedule): unfollow = filled star (never a bare ✕), identity links to team page, venue dropped from the compact strip
 
 **Decision (owner-flagged /design + /ux review of the public Schedule followed-team banner, mobile + desktop rail):** three fixes to the `.scorebugBar` strip and its desktop `.railCard` twin.

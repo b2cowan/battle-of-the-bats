@@ -8,6 +8,15 @@
 
 ---
 
+### 2026-06-25 — Premium Coaches Portal exit: cancel-only, no downgrade-to-free
+**Status:** Decided (ratified 2026-06-25)
+**Decision:** A Premium Coaches Portal coach has **no self-serve "downgrade to free (Basic Coaches Portal)" path** — by design. **"Cancel Premium" is the single exit**: it cancels the subscription, the Premium workspace goes inactive into the retention window, and the only return is **reactivating the same Premium** within that window (after which it purges). **No reverse data migration** (Premium roster/schedule/fees are *not* carried back into the free Basic team) and **no data export** on cancel. We deliberately do **not** make it easy to flip-flop between paid and free.
+**Rationale:** Coaches don't need an easy paid↔free bounce, and because free Basic and Premium are **separate data models** (free is a *subset* — lineups/attendance/budget/documents don't exist in free), a "downgrade" would be inherently lossy. Cancel-with-reactivation is sufficient. Chosen as the "make cancel honest & safe" option over building parity, **minus the export** (owner ruling, 2026-06-25, after a code-mapped analysis of the org-vs-coach exit paths).
+**Contrast:** Intentionally **differs from orgs**, where Tournament Plus → free Tournament is a clean self-serve downgrade (same org flips to the free tier, data retained). For coaches it is cancel-only.
+**Affects:** packaging/exit model, coach cancel copy, coach-portal data hygiene. Pre-launch — the intended model from launch, not a change to live behavior.
+**Handoff:** → `/marketing` (pre-launch) the Cancel Premium flow must state up front, *before confirm*, exactly what cancel does: the Premium portal + its data stay only through the reactivation window then are removed; the original free team remains but with **pre-upgrade data only**; Premium-era work does not carry back — so there is no "where did my data go" surprise. · Code: a data-hygiene fix (a cancelled/purged portal must not leave the free team pointing at a dead workspace) is being done this session, outside this log. · **Not building:** a downgrade-to-free UI, a reverse migration, or an export.
+**Relates to:** the coach-portal free-vs-paid **separate-models** architecture decision (org-less `basic_coach_*` free vs org-scoped `rep_*` paid; copy-migrate on upgrade; "account-per-free-coach" unification noted as a future option). This exit-model decision is downstream of that separation.
+
 ### 2026-06-22 — Adopt a Business Decisions Log + `/strategy` steward
 **Status:** Decided
 **Decision:** Durable business decisions (pricing, packaging, positioning, GTM, monetization) are tracked here and stewarded by the `/strategy` agent, which hands copy to `/marketing`, gates to `/billing`, and plans to `/plan`. Scope = all business decisions, not just pricing.

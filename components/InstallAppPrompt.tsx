@@ -41,7 +41,7 @@ function ShareIcon() {
   );
 }
 
-type Mode = 'hidden' | 'ios' | 'ios-chrome' | 'android';
+type Mode = 'hidden' | 'ios' | 'ios-chrome' | 'android' | 'generic';
 
 interface Props {
   /** Name shown in the prompt copy (the installed name comes from the manifest). */
@@ -75,7 +75,22 @@ export default function InstallAppPrompt({
   const [mode, setMode] = useState<Mode>('hidden');
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
 
+  // Always capture the native install event — independent of dismissal/standalone —
+  // so a manual "Download app" tap (see the flhq:show-install listener below) can fire
+  // it later, even after the auto-banner was dismissed. Chromium re-fires this on
+  // client-side navigations; the host layout stays mounted, so the latest event wins.
   useEffect(() => {
+    const onBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferred(e as BeforeInstallPromptEvent);
+    };
+    window.addEventListener('beforeinstallprompt', onBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', onBeforeInstall);
+  }, []);
+
+  // Auto-show gating: decides whether the banner appears on its own this visit.
+  useEffect(() => {
+    if (mode !== 'hidden') return; // a manual/active prompt is already showing
     const ua = navigator.userAgent;
 
     const raw = localStorage.getItem(dismissKey);
@@ -120,23 +135,35 @@ export default function InstallAppPrompt({
       window.matchMedia?.('(pointer: coarse)')?.matches === true || /Android/i.test(ua);
     if (!isTouchPrimary) return;
 
-    // Android Chromium: wait for the native install prompt.
-    const onBeforeInstall = (e: Event) => {
-      e.preventDefault();
-      // Chromium re-fires `beforeinstallprompt` on client-side (History API)
-      // navigations. The host layout stays mounted across those navigations,
-      // so without re-checking the dismissal here the banner re-appears on
-      // every screen change even after the user dismissed it.
-      const stored = localStorage.getItem(dismissKey);
-      if (stored && Date.now() - parseInt(stored, 10) < DISMISS_MS) return;
-      // Also re-check follow state on each navigation (J6-045).
-      if (followKey && localStorage.getItem(followKey)) return;
-      setDeferred(e as BeforeInstallPromptEvent);
-      setMode('android');
-    };
-    window.addEventListener('beforeinstallprompt', onBeforeInstall);
-    return () => window.removeEventListener('beforeinstallprompt', onBeforeInstall);
-  }, [dismissKey, orgSlug, tournamentSlug]);
+    // Android Chromium: show once the native install event has been captured above.
+    if (deferred) setMode('android');
+  }, [mode, deferred, dismissKey, orgSlug, tournamentSlug]);
+
+  // Manual trigger (e.g. the admin "More → Download app" item). Force-shows the prompt,
+  // bypassing the dismissal/follow/engagement gates since the user explicitly asked for
+  // it. Standalone is still respected — there's nothing to install inside the app.
+  useEffect(() => {
+    function onShow() {
+      if ((window.navigator as { standalone?: boolean }).standalone === true) return;
+      if (window.matchMedia?.('(display-mode: standalone)')?.matches) return;
+      const ua = navigator.userAgent;
+      if (/iPhone|iPad|iPod/i.test(ua)) {
+        setMode(/CriOS/i.test(ua) ? 'ios-chrome' : 'ios');
+        return;
+      }
+      // Android with the native event ready → one-tap install; otherwise fall back to
+      // generic browser-menu instructions so the button always does something useful.
+      setMode(deferred ? 'android' : 'generic');
+    }
+    window.addEventListener('flhq:show-install', onShow);
+    return () => window.removeEventListener('flhq:show-install', onShow);
+  }, [deferred]);
+
+  // If the manual trigger raced ahead of the native install event and we showed the
+  // generic fallback, upgrade to the one-tap Install button once the event arrives.
+  useEffect(() => {
+    if (mode === 'generic' && deferred) setMode('android');
+  }, [mode, deferred]);
 
   function dismiss() {
     localStorage.setItem(dismissKey, String(Date.now()));
@@ -162,6 +189,8 @@ export default function InstallAppPrompt({
         <p className={styles.instructions}>
           {mode === 'android' ? (
             <>{subtitle}</>
+          ) : mode === 'generic' ? (
+            <>Open your browser menu, then tap <strong>Add to Home Screen</strong> or <strong>Install app</strong></>
           ) : mode === 'ios-chrome' ? (
             <>Tap <strong>⋯</strong> in the top-right, then <strong>Add to Home Screen</strong></>
           ) : (

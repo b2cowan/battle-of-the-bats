@@ -33,19 +33,26 @@
    pane to its area (overflow hidden + the messages list owns the only scroll) so the page can't
    rubber-band and lift the composer off the bottom nav. */
 @media (max-width: 900px) {
+  /* Pin the conversation to the viewport, anchored BETWEEN the fixed top app-bar and the
+     fixed bottom nav. Earlier we sized it with `height: calc(100dvh - bars)`, but that height
+     still has to resolve down a chain of flex/percentage ancestors (adminMain is flex-grown,
+     not definite) — which collapsed unreliably in some engines, dropping the panel to content
+     height so the composer floated up. position:fixed + top/bottom insets give the panel a
+     DEFINITE box straight from the viewport, independent of any ancestor height resolution.
+     The chat is the only content on this route, so taking it out of the (now-empty) admin
+     content flow is fine; the Rooms/Manage slide-overs are portaled to <body> and unaffected.
+     z-index stays below the top bar (250) and nav (300) so the chrome always wins. */
   .chatPage {
-    margin-inline: -1rem;
+    position: fixed;
+    inset:
+      calc(48px + env(safe-area-inset-top) + 0.5rem)
+      0
+      calc(70px + env(safe-area-inset-bottom) + var(--admin-strip-h, 0px))
+      0;
+    height: auto;
+    margin-inline: 0;
     overflow: hidden;
-    /* The admin content area's height comes from flex-grow, so a child's height:100%
-       collapses to content height here (same caveat the desktop rule above documents) — the
-       panel shrank to its content and the composer floated up off the bottom nav ("push up").
-       Pin to the viewport minus the fixed top app-bar + bottom nav (the exact insets
-       .adminMain pads for) so the conversation fills the chrome-bounded area. */
-    height: calc(
-      100dvh
-      - 48px - env(safe-area-inset-top) - 0.5rem
-      - 80px - env(safe-area-inset-bottom) - var(--admin-strip-h, 0px)
-    );
+    z-index: 1;
   }
 }
 
