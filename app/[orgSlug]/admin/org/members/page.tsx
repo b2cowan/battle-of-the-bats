@@ -211,7 +211,7 @@ export default function MembersPage() {
   const [reinvitingId, setReinvitingId] = useState<string | null>(null);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
-  const [removeImpact, setRemoveImpact] = useState<{ tournamentCount: number; divisionCount: number; otherOrgCount: number; coachingAssignmentCount: number } | null>(null);
+  const [removeImpact, setRemoveImpact] = useState<{ tournamentCount: number; divisionCount: number; otherOrgCount: number; coachingAssignmentCount: number; basicCoachTeamCount: number } | null>(null);
   const [capDraft, setCapDraft] = useState<Record<string, boolean>>({});
   const [capSaving, setCapSaving] = useState(false);
   const [manageDraftRepGroupIds, setManageDraftRepGroupIds] = useState<string[]>([]);
@@ -623,13 +623,14 @@ export default function MembersPage() {
                       )}
                       {confirmRemoveId === m.id ? (
                         <div className={styles.inlineConfirm}>
-                          {/* J4-036: membership-only vs full account deletion depends on whether the
-                              person belongs to other orgs. Until the impact loads, show the cautious
-                              (account-deletion) copy. */}
-                          {removeImpact && removeImpact.otherOrgCount > 0 ? (
+                          {/* J4-036 + free-coach safeguard: removal is membership-only (account kept)
+                              whenever the person has off-org presence — another organization OR an
+                              active free Coaches Portal. Only a true sole-presence account is deleted.
+                              Until the impact loads, show the cautious (account-deletion) copy. */}
+                          {removeImpact && (removeImpact.otherOrgCount > 0 || removeImpact.basicCoachTeamCount > 0) ? (
                             <p className={styles.inlineConfirmText}>
-                              This will <strong>remove them from this organization</strong>. Their account
-                              and access to their {removeImpact.otherOrgCount} other organization{removeImpact.otherOrgCount !== 1 ? 's' : ''} are kept.
+                              This will <strong>remove them from this organization</strong>. Their account is kept
+                              {removeImpact.otherOrgCount > 0 ? `, along with access to their ${removeImpact.otherOrgCount} other organization${removeImpact.otherOrgCount !== 1 ? 's' : ''}` : ''}.
                             </p>
                           ) : (
                             <p className={styles.inlineConfirmText}>
@@ -674,7 +675,7 @@ export default function MembersPage() {
                             setRemoveImpact(null);
                             const impactRes = await fetch(`/api/admin/members/${m.id}${orgQuery}`);
                             if (impactRes.ok) {
-                              const impactData = await impactRes.json() as { tournamentCount: number; divisionCount: number; otherOrgCount: number; coachingAssignmentCount: number };
+                              const impactData = await impactRes.json() as { tournamentCount: number; divisionCount: number; otherOrgCount: number; coachingAssignmentCount: number; basicCoachTeamCount: number };
                               setRemoveImpact(impactData);
                             }
                           }}

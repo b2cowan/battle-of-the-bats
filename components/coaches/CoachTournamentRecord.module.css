@@ -7,6 +7,19 @@
   padding: 2rem 1.5rem 4rem;
 }
 
+/* Back link to the Tournaments list (Premium shell only) */
+.recordBackLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  font-size: 0.82rem;
+  color: var(--white-55);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+.recordBackLink:hover { color: var(--white-90); }
+
 /* ── Header ─────────────────────────────────────────────────────────────── */
 .header {
   display: flex;

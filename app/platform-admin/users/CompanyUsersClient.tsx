@@ -244,7 +244,9 @@ export default function CompanyUsersClient({ users: initial, bootstrapEmails, ca
                   </span>
                 </td>
                 <td className={styles.dateCell}>{fmtDate(u.createdAt)}</td>
-                <td className={styles.dateCell}>{u.invitedBy || '—'}</td>
+                <td className={styles.invitedByCell}>
+                  <span className={styles.invitedByValue} title={u.invitedBy || undefined}>{u.invitedBy || '—'}</span>
+                </td>
                 <td className={styles.actionsCell}>
                   {rowErr[u.id] && <span className={styles.rowError}>{rowErr[u.id]}</span>}
                   {!isBootstrap(u.email) && canManageUsers && (
@@ -290,7 +292,7 @@ export default function CompanyUsersClient({ users: initial, bootstrapEmails, ca
             <div className={styles.modalActions}>
               <button
                 type="button"
-                className={styles.resetBtn}
+                className={styles.cancelBtn}
                 onClick={() => setPendingRemove(null)}
                 disabled={busy[pendingRemove.id]}
               >

@@ -7,8 +7,8 @@ import HelpCallout from '@/components/help/HelpCallout';
 import MetricCard from '@/components/platform-admin/MetricCard';
 import {
   getDashboardData, getCronFreshness, getErrorGroups,
-  normalizeEnv, normalizeWindow, OBS_WINDOWS, ISSUES_PAGE_SIZE,
-  type ObsEnv, type ObsWindowKey,
+  normalizeWindow, OBS_WINDOWS, ISSUES_PAGE_SIZE,
+  type ObsWindowKey,
 } from '@/lib/observability/dashboard';
 import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import CallsVsErrorsChart from './CallsVsErrorsChart';
@@ -34,7 +34,6 @@ const SEVERITY_OPTIONS = ['critical', 'error', 'warning', 'info'];
 const STATUS_OPTIONS = ['open', 'resolved', 'ignored', 'snoozed'];
 
 interface SearchParamsShape {
-  env?: string;
   window?: string;
   severity?: string;
   status?: string;
@@ -45,7 +44,6 @@ interface SearchParamsShape {
 }
 
 interface ResolvedParams {
-  env: ObsEnv;
   window: ObsWindowKey;
   severity: string;
   status: string;
@@ -58,7 +56,6 @@ interface ResolvedParams {
 function buildHref(p: ResolvedParams, extra: Partial<ResolvedParams> = {}): string {
   const next = { ...p, ...extra };
   const sp = new URLSearchParams();
-  if (next.env !== 'production') sp.set('env', next.env);
   if (next.window !== '24h') sp.set('window', next.window);
   if (next.severity) sp.set('severity', next.severity);
   if (next.status) sp.set('status', next.status);
@@ -108,7 +105,6 @@ export default async function ObservabilityDashboardPage({
 
   const sp = await searchParams;
   const params: ResolvedParams = {
-    env: normalizeEnv(sp.env),
     window: normalizeWindow(sp.window),
     severity: SEVERITY_OPTIONS.includes(sp.severity ?? '') ? sp.severity! : '',
     // Default to the actionable view (Open) on a bare visit; `status=all` is the explicit
@@ -121,7 +117,7 @@ export default async function ObservabilityDashboardPage({
   };
 
   const [data, freshness, issues] = await Promise.all([
-    getDashboardData(params.env, params.window),
+    getDashboardData(params.window),
     getCronFreshness(),
     getErrorGroups({ ...params, status: params.status === 'all' ? '' : params.status }),
   ]);
@@ -154,17 +150,6 @@ export default async function ObservabilityDashboardPage({
           <h1 className={styles.title}>Observability</h1>
         </div>
         <div className={styles.toolbar}>
-          <div className={styles.segmented} role="group" aria-label="Environment">
-            {(['production', 'dev'] as ObsEnv[]).map(e => (
-              <Link
-                key={e}
-                href={buildHref(params, { env: e, offset: 0 })}
-                className={`${styles.segLink} ${params.env === e ? styles.segActive : ''}`}
-              >
-                {e === 'production' ? 'Production' : 'Dev'}
-              </Link>
-            ))}
-          </div>
           <div className={styles.segmented} role="group" aria-label="Time window">
             {(Object.keys(OBS_WINDOWS) as ObsWindowKey[]).map(wk => (
               <Link
@@ -298,12 +283,11 @@ export default async function ObservabilityDashboardPage({
       <HelpCallout
         variant="info"
         title="What is an issue?"
-        body="Each row is one distinct error fingerprint — a flood of identical failures collapses into a single triable issue. Use the filters to narrow by severity, status, environment, route, or org. Click an issue to read scrubbed samples and resolve / ignore / snooze it."
+        body="Each row is one distinct error fingerprint — a flood of identical failures collapses into a single triable issue. This dashboard shows this environment's errors (production on the live site, dev on the dev site). Use the filters to narrow by severity, status, route, or org. Click an issue to read scrubbed samples and resolve / ignore / snooze it."
       />
 
       <form method="GET" action="/platform-admin/observability" className={styles.filterBar}>
-        {/* Preserve env + window across a filter submit */}
-        {params.env !== 'production' && <input type="hidden" name="env" value={params.env} />}
+        {/* Preserve window across a filter submit */}
         {params.window !== '24h' && <input type="hidden" name="window" value={params.window} />}
         <input type="search" name="q" defaultValue={params.q} placeholder="Search title / error / route…" className={styles.filterInput} />
         <select name="severity" defaultValue={params.severity} className={styles.filterSelect} aria-label="Severity">
@@ -318,7 +302,7 @@ export default async function ObservabilityDashboardPage({
         <input type="text" name="org" defaultValue={params.org} placeholder="Org slug…" className={styles.filterInput} style={{ maxWidth: 140 }} />
         <button type="submit" className={styles.filterBtn}>Filter</button>
         <IssuesExportClient
-          filters={{ env: params.env, severity: params.severity, status: params.status, route: params.route, org: params.org, q: params.q }}
+          filters={{ severity: params.severity, status: params.status, route: params.route, org: params.org, q: params.q }}
           disabled={issues.rows.length === 0}
         />
         {hasFilters && <Link href={buildHref({ ...params, severity: '', status: 'all', route: '', org: '', q: '', offset: 0 })} className={styles.filterClear}>Clear</Link>}

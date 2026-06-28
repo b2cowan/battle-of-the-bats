@@ -1,4 +1,4 @@
-﻿.page { max-width: 1300px; }
+﻿.page { max-width: 1600px; }
 
 .header {
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
@@ -71,6 +71,17 @@
   font-size: 0.65rem;
 }
 
+.tsDate {
+  display: block;
+  color: var(--fl-text);
+}
+
+.tsTime {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--data-gray);
+}
+
 .emailCell {
   color: var(--data-gray);
   white-space: nowrap;
@@ -102,6 +113,7 @@
   font-size: 0.72rem;
   color: var(--fl-text);
   text-decoration: none;
+  white-space: nowrap;
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   transition: color 0.15s, border-color 0.15s;
 }
@@ -115,7 +127,7 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .orgFilterLink {
@@ -140,7 +152,7 @@
 }
 
 .valueDetails {
-  max-width: 260px;
+  max-width: 290px;
 }
 
 .valueDetails summary {

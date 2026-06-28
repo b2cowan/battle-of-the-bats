@@ -283,26 +283,40 @@ function buildTournamentRegistrationContext(summary: TournamentRegistrationSumma
   const hasAnyRegistration = (summary.registrationCount ?? 0) > 0;
   const teams = summary.teams ?? [];
 
-  // A coach whose teams have no tournament registration should land on a real team
-  // home, not the empty tournament-records archive. One bare team → that team's
-  // org-less home; multiple bare teams → the portal hub which lists them.
-  if (!hasAnyRegistration) {
-    const teamLabel = summary.teamCount === 1 ? '1 team' : `${summary.teamCount} teams`;
-    const destination = teams.length === 1 ? coachTeamPath(teams[0].id) : COACHES_HOME_PATH;
+  // A coach with exactly ONE team always lands on that team's home — never the flat
+  // tournament-records archive nor the hub. The team's own Tournaments tab carries its
+  // registration history, so the archive adds nothing for a single-team coach. (Holds
+  // whether or not the team has registered for anything yet.)
+  if (teams.length === 1) {
     return {
       id: 'coaches-basic:teams',
       kind: 'coaches_basic',
-      title: teams.length === 1 ? teams[0].name : 'Your teams',
+      title: teams[0].name,
       subtitle: 'Coaches Portal',
-      detail: teams.length === 1 ? 'Team home' : teamLabel,
+      detail: 'Team home',
       badgeLabel: 'Coach',
-      destination,
+      destination: coachTeamPath(teams[0].id),
       sortOrder: 40,
     };
   }
 
+  // Multiple bare teams (no registration anywhere) → the portal hub, which lists them.
+  if (!hasAnyRegistration) {
+    return {
+      id: 'coaches-basic:teams',
+      kind: 'coaches_basic',
+      title: 'Your teams',
+      subtitle: 'Coaches Portal',
+      detail: `${summary.teamCount} teams`,
+      badgeLabel: 'Coach',
+      destination: COACHES_HOME_PATH,
+      sortOrder: 40,
+    };
+  }
+
+  // Multiple teams with registrations → the cross-team tournament-records archive.
   const tournamentLabel = summary.tournamentCount === 1 ? '1 tournament' : `${summary.tournamentCount} tournaments`;
-  const teamLabel = summary.teamCount === 1 ? '1 team' : `${summary.teamCount} teams`;
+  const teamLabel = `${summary.teamCount} teams`;
 
   return {
     id: 'coaches-basic:tournament-records',

@@ -560,12 +560,19 @@ export async function ensureCoachMembership(userId: string, tournamentId: string
 
 // ── Room list (coach-facing) ────────────────────────────────────────────────
 
-async function unreadCountForMember(roomId: string, lastReadAt: string | null): Promise<number> {
+async function unreadCountForMember(
+  roomId: string,
+  lastReadAt: string | null,
+  userId: string,
+): Promise<number> {
   let q = supabaseAdmin
     .from('chat_messages')
     .select('id', { count: 'exact', head: true })
     .eq('room_id', roomId)
-    .is('deleted_at', null);
+    .is('deleted_at', null)
+    // A message you sent is never "unread" to you — exclude own messages so posting doesn't
+    // self-badge. Keep system messages (null sender) counted.
+    .or(`sender_user_id.is.null,sender_user_id.neq.${userId}`);
   if (lastReadAt) q = q.gt('sent_at', lastReadAt);
   const { count, error } = await q;
   if (error) throw error;
@@ -641,7 +648,7 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
     if (!room) return null;
     const [last, unreadCount] = await Promise.all([
       lastMessageFor(room.id),
-      unreadCountForMember(room.id, m.last_read_at as string | null),
+      unreadCountForMember(room.id, m.last_read_at as string | null, userId),
     ]);
     const mutedUntil = m.muted_until as string | null;
     return {
@@ -669,7 +676,7 @@ export async function getUnreadTotalForUser(userId: string): Promise<number> {
     .eq('status', 'active');
   if (error) throw error;
   const counts = await Promise.all((memberships ?? []).map(m =>
-    unreadCountForMember(m.room_id as string, m.last_read_at as string | null)));
+    unreadCountForMember(m.room_id as string, m.last_read_at as string | null, userId)));
   return counts.reduce((sum, c) => sum + c, 0);
 }
 

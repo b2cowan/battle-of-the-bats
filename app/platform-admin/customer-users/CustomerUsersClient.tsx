@@ -138,6 +138,21 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
 
   const [deleteModal, setDeleteModal]   = useState<DeleteModal>(null);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  // Free-coach deletion impact, lazily fetched when the delete modal opens (null = not yet loaded).
+  const [deleteImpact, setDeleteImpact] = useState<{ totalTeams: number; soleOwnedTeams: number } | null>(null);
+
+  function openDeleteModal(userId: string, email: string) {
+    setOpenMenuId(null);
+    setDeleteConfirmText('');
+    setDeleteImpact(null);
+    setDeleteModal({ userId, email });
+    void (async () => {
+      try {
+        const res = await fetch(`/api/platform-admin/users/${encodeURIComponent(userId)}/delete`);
+        if (res.ok) setDeleteImpact(await res.json() as { totalTeams: number; soleOwnedTeams: number });
+      } catch { /* non-fatal — modal still works without the impact hint */ }
+    })();
+  }
 
   const [notesModal, setNotesModal]   = useState<NotesModal>(null);
   const [notes, setNotes]             = useState<NoteRow[]>([]);
@@ -618,7 +633,7 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
                             <button
                               className={`${styles.menuItem} ${styles.menuItemDanger}`}
                               type="button"
-                              onClick={() => { setOpenMenuId(null); setDeleteConfirmText(''); setDeleteModal({ userId: row.userId, email: row.email }); }}
+                              onClick={() => openDeleteModal(row.userId, row.email)}
                             >
                               Delete User
                             </button>
@@ -757,6 +772,21 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
                   </ul>
                 </div>
               )}
+              {deleteImpact && deleteImpact.totalTeams > 0 && (
+                <div className={styles.modalWarning}>
+                  <strong>
+                    Runs {deleteImpact.totalTeams} free coaching team{deleteImpact.totalTeams !== 1 ? 's' : ''} (Coaches Portal)
+                  </strong>
+                  {deleteImpact.soleOwnedTeams > 0 ? (
+                    <>
+                      {' '}— {deleteImpact.soleOwnedTeams} of them {deleteImpact.soleOwnedTeams !== 1 ? 'are' : 'is'} sole-owned and will be
+                      {' '}<strong>permanently deleted</strong>, including roster, players, fees, and history.
+                    </>
+                  ) : (
+                    <>{' '}— all have other active members and will survive (only this user&apos;s membership is removed).</>
+                  )}
+                </div>
+              )}
               <p className={styles.modalBody}>
                 This permanently removes <strong>{deleteModal.email}</strong> from FieldLogicHQ.
                 Organization data is not deleted automatically. Type the user&apos;s email to confirm.
@@ -775,7 +805,7 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
                 <button
                   className={styles.modalCancel}
                   type="button"
-                  onClick={() => { setDeleteModal(null); setDeleteConfirmText(''); }}
+                  onClick={() => { setDeleteModal(null); setDeleteConfirmText(''); setDeleteImpact(null); }}
                 >
                   Cancel
                 </button>

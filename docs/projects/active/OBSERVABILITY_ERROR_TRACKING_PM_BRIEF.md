@@ -81,12 +81,12 @@ Today there is **no screen at all** for production errors — the data is being 
 - **A "Calls vs. Errors over time" line chart** — two lines over a selectable time window (e.g. last 24 hours / 7 days), so we can see at a glance whether errors are spiking. *(Same hand-built chart style as the coaches' Budget-vs-Actual chart — no new charting library.)*
 - **Four headline metric cards:** **Total errors**, **Error rate %**, **Open issues**, and **Affected orgs** — the "how bad is it right now" summary, reusing the existing platform-admin metric-card look.
 - **A small "data freshness" chip** — e.g. "Last rollup 3 min ago." Until Phase 4 turns on the automatic 5-minute aggregation job, this chip will read "rollup not yet enabled," and the chart will compute its numbers live from the raw metrics instead. This is expected and handled gracefully — no broken/empty screen.
-- **An environment toggle (Production / Dev), defaulting to Production** — so day-to-day we only see real customer-facing errors, but we can flip to Dev to inspect things captured from local/dev work.
+- ~~**An environment toggle (Production / Dev), defaulting to Production**~~ — **REMOVED 2026-06-26.** Each deployment reads only its own database, so the production site shows production errors and the dev site shows dev errors automatically — the toggle filtered within one database and its "off" side always looked empty/broken. Use the dev deployment's dashboard to see dev errors.
 
 ### 2. The issue list (below the dashboard)
 - A **filterable, paginated table of "issues."** An *issue* is one unique kind of error (e.g. "TypeError in /api/register") — a thousand repeats of the same failure collapse into one row with an occurrence count, instead of a thousand lines of noise.
 - Each row shows: a **severity badge** (critical/error/warning/info, colour-coded), the **status** (open/resolved/ignored/snoozed), the **issue title**, the **route**, **how many times it's happened**, **how many orgs are affected**, and **when it was last seen**.
-- **Filters** across the top (a simple "Filter" form like the existing Audit Log): severity, status, environment, route, org, and a free-text search. So we can answer "show me all open *critical* issues in production" in a couple of clicks.
+- **Filters** across the top (a simple "Filter" form like the existing Audit Log): severity, status, route, org, and a free-text search. So we can answer "show me all open *critical* issues" in a couple of clicks. *(Environment filter removed 2026-06-26 — see the dashboard note above.)*
 - Clicking a row opens that issue's detail page.
 
 ### 3. The issue detail page
@@ -123,11 +123,11 @@ A new **"observability" access area** is added to the platform-admin permission 
 
 Phase 2 is "done" when:
 1. A permitted admin can open **/platform-admin/observability** and see the calls-vs-errors chart, the four metric cards, and the freshness chip render without error — including the graceful "rollup not yet enabled" state before Phase 4.
-2. The issue list shows real captured issues and can be **filtered** by severity, status, env, route, org, and search, with working pagination.
+2. The issue list shows real captured issues and can be **filtered** by severity, status, route, org, and search, with working pagination. *(Env filter removed 2026-06-26.)*
 3. Clicking an issue opens a detail page showing the header, occurrence sparkline, and **scrubbed** sample events (stack + context) — with no raw PII/secrets visible.
 4. A product/super_admin can **resolve, ignore, and snooze** an issue; the list reflects the new status; and each action writes a **platform audit-log** entry.
 5. A **support** user sees the same dashboard/list/detail but the triage controls are **disabled**, and a direct API call to change status as support is **rejected (403)**.
-6. The **environment toggle** works and **defaults to Production**.
+6. ~~The **environment toggle** works and **defaults to Production**.~~ **Superseded 2026-06-26** — toggle removed; each deployment shows only its own database's errors.
 7. Static checks pass (typecheck + focused lint), the dev server restarts clean (login 200, no Supabase EACCES), and the change is reviewed (adversarial pass like Phase 1) before hand-off.
 
 ## Open product decisions (need the owner's call — recommended defaults in **bold**)
@@ -144,7 +144,7 @@ These are small and all have a sensible default; flagging them so the UX matches
 
 ## Verification note for the owner (testing on dev)
 
-Errors are already being captured on dev. Because the dev Supabase project tags **localhost-captured** rows as `dev` and **dev-branch-deployed** rows as `production`, when you test locally you'll want to flip the dashboard's **environment toggle to "Dev"** to see the errors you generate on your machine. The Production default is correct for real operations; it just means localhost data hides under the Dev toggle. Final visual verification is yours to do in the browser.
+Errors are already being captured on dev. **(Updated 2026-06-26 — the environment toggle has been removed.)** Each deployment's dashboard now shows only its own database's errors, so to inspect errors generated on dev, open the observability page on the **dev deployment** (its own URL), not the production site. Final visual verification is yours to do in the browser.
 
 ---
 
@@ -248,7 +248,7 @@ Phases 1–2 record every failure and give us a screen to triage them; Phase 4 m
    - Each run stamps a heartbeat. The dashboard's freshness chip — which today says "Rollup not yet enabled (Phase 4)" — automatically switches to "**Last rollup N min ago**" and turns amber if a job silently stops **or keeps failing** (the pre-build design review caught that the original chip would have stayed green while a job ran-but-failed; fixed in scope). The "orgs affected" number on an issue also stays consistent when old raw events are purged, instead of silently pointing at deleted rows.
 2. **A manual "Run sweep now" backstop.** A super-admin-only API endpoint runs the exact same fold + cleanup on demand — useful if a scheduled job ever misbehaves, and it's audit-logged like every other consequential platform-admin action. *(We verified the scheduler **is available** on both our dev and prod databases, so this is a backstop, not the primary path.)*
 3. **Critical errors now page us by email.** The **first time** a new critical-severity failure appears (payments, billing webhooks, login/signup, registration, org creation), an email goes to **fieldlogichq@gmail.com** with the error name, the route, which org was affected, and a direct link to the issue's detail page in platform-admin. It is deliberately **de-noised**: roughly one email per *distinct* issue — a thousand repeats of the same failure produce **one** email, not a thousand. We also email when an existing issue **escalates** to critical for the first time, and when a previously-resolved critical issue **comes back** (a regression). De-noising caveat (locked): across one resolve-then-recur cycle a regression can produce **at most two** emails — one for an in-week recurrence and one if it's still recurring after the 7-day auto-reopen window — never per-occurrence. Alerts fire only for **production** errors and only for **server-side** captures, and only when the production environment flag is **explicitly** set (so a dev-site deploy fails closed) — local dev noise and the public browser-error endpoint can never spam the inbox.
-4. **One plumbing fix rides along (found by the pre-build design review).** The environment label our *deployed* branches stamp on captured errors was never actually passed through the build — so the dev-site deployment labels its errors "production" today and would have triggered production alerts. Phase 4 fixes the build config so only the real production site can page us. Visible side-effect: errors from the dev-site deployment will finally show under the dashboard's **Dev** toggle instead of Production.
+4. **One plumbing fix rides along (found by the pre-build design review).** The environment label our *deployed* branches stamp on captured errors was never actually passed through the build — so the dev-site deployment labels its errors "production" today and would have triggered production alerts. Phase 4 fixes the build config so only the real production site can page us. Visible side-effect: errors from the dev-site deployment are tagged `dev` instead of `production`. *(2026-06-26: the dashboard's Dev/Production toggle was since removed — dev errors are viewed on the dev deployment's own dashboard.)*
 
 ## Who is alerted, and about what
 

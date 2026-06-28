@@ -2,6 +2,13 @@
 
 > **Created:** 2026-06-23 · **Owner-driven QA pass.** You execute these as different support personas; report findings back (template at the bottom); I fix.
 > Grounded in a full code map of `platform-admin` (7-area parallel sweep, 2026-06-23). The "Pre-identified issues" below were **confirmed in code by that map** — verify them first, they're the highest-yield.
+>
+> ### Workflow — FIX-AS-WE-GO (updated 2026-06-26, owner directive)
+> We **do not batch fixes to the end.** Each finding runs a tight loop: **discover → fix immediately → owner verifies in-browser → mark ✅ Fixed → next task.** Fixing on the spot keeps verification cheap (the owner is already on the screen) and avoids a full re-walk later.
+> **Two exceptions are routed/parked, not auto-fixed:**
+> - **[DECISION]** items — need an owner product call first (surface the trade-off, don't decide).
+> - **Dependency-blocked** items — e.g. billing-path copy owned by `/billing`, visual rules owned by `/design`. Routed via a paste-able prompt; the ratified result lands in a follow-up.
+> Clear fixes (copy, CSS/layout, self-contained logic) are done on the spot. `/review` is offered at **logical chunk boundaries** for substantive changes — not per trivial fix. Restart-required changes (shared modules / `proxy.ts` / config) are flagged and the dev server restarted before the owner re-tests.
 
 ## How to use this
 - Each walkthrough is a **task a real support person would do**, with the click-path, what a **correct** result looks like, and a **⚠ Watch for** list (the specific ways it can break).
@@ -29,12 +36,13 @@ Disposition key: **[FIXED]** done this pass · **[SWEEP]** trivial club_large/la
 | H10 | Marketing email audience | A Club · Association org would have wrongly received the "upgrade to Club" email. | **[FIXED]** 2026-06-23 |
 | H11 | Dev-tools seeder + Agent Playbook | Stale $179 Club price + Club · Association absent (couldn't seed it). | **[FIXED]** 2026-06-23 (one internal badge label still cosmetic) |
 | H13 | Org feature gates (org venue library, league/club settings) | **A Club · Association org was being denied org-venue + league/club settings features** — those gates hardcoded only league+club. | **[FIXED]** 2026-06-23 |
+| H14 | Org detail → Plan & Limit ("plan change billing clarity") | **Operators assumed changing the plan changes what the customer is billed** — but the action writes access only and never calls Stripe (charge/proration/cancel). Worse, setting an org to free unlinks the sub from our record while the real Stripe sub keeps charging. | **[FIXED]** 2026-06-26 — added an always-on "this changes access only, not billing" banner, target-aware billing-path warnings (free-comp / re-price desync / stop-billing-via-Cancel), a rewritten confirm modal + success state, and a corrected tooltip. Also logged the in-app paid→paid upgrade-proration gap to BUSINESS_DECISIONS.md (2026-06-26). Upstream peers M2/M5/M6 still open. |
 
 ### Medium severity
 | # | Where | Issue | Disposition |
 |---|---|---|---|
 | M1 | Customer Users screen | Org plan shown as a raw code ("club_large") instead of the label. | **[FIXED]** 2026-06-23 |
-| M2 | Bulk operations → Plan Change | Silently **resets a custom tournament limit** and **leaves a stale Stripe link** on paid→paid moves, with no preview warning. | **[FIX]** add warning + Stripe note |
+| M2 | Bulk operations → Plan Change | Silently **resets a custom tournament limit** and **leaves a stale Stripe link** on paid→paid moves, with no preview warning. | **[FIXED]** 2026-06-26 — Plan Change now shows a billing-clarity note (changes access only / resets the tournament limit to the plan default / never calls Stripe / re-price per-org or in Stripe), plus a red stop-billing warning when the target is free. Behavior unchanged; the operator is now warned. |
 | M3 | Platform roles | The **Billing role can also ban/reset/edit customers** (it carries support powers) — may be wider than intended. | **[DECISION]** scope the role |
 | M4 | Audit log | **Text search only searches the current page** (100 rows) — a real action can look like it never happened. | **[FIX]** |
 | M5 | Org detail → Cancel | **Cancel button hidden** when an active paid org has lost its Stripe link — no in-UI path to cancel. | **[FIX]** |
@@ -181,3 +189,19 @@ Screenshot: <if handy>
 ```
 
 Batch them however you like (per persona, per session). Anything matching a **[H#]/[M#]** above is already confirmed — just note "confirmed H4" and I'll prioritize. New ones I'll reproduce, classify, and fix.
+
+---
+
+## Findings — live capture (owner walkthrough, in progress)
+
+> **Status legend (fix-as-we-go):** ✅ Fixed + owner-verified · 🔧 Fixed, verify pending · 🟡 [DECISION] routed (awaiting owner call) · ⏳ Routed to `/billing` or `/design` (copy/visual pending) · ◻ Open (clear fix, not yet done).
+
+### Phase A — Internal Tooling & Setup (Persona 5 + Dev-Tools) — COMPLETE 2026-06-26
+
+- **A.1 — H11 CONFIRMED FIXED ✅.** Dev-tools seeder shows both new bands at correct prices: **Club $219/mo** and **Club · Association $379/mo** (stale $179 gone; tile present). Operators can seed/test the new band.
+- **A.1 — NEW (cosmetic).** Seeding a Club · Association org shows the **raw key "club_large"** in the green success banner ("…(plan: club_large)") and as the org-list **badge text "CLUB LARGE"** instead of the friendly **"Club · Association."** Badge **colour is correct** (Club-family purple) — text only. *Severity: cosmetic (operator-only). Fold into label sweep.*
+- **A.1 — NEW (nice-to-have).** Seed success banner names the org but not its **slug/link** — operator can't click through to the new org. *Severity: cosmetic. Optional.*
+- **A.2 — FIXED LIVE 2026-06-26 ✅.** Platform Users table overflowed horizontally ("Invited By" clipped, sideways scroll). Fixed: fixed column widths + truncate-with-tooltip on long values + wrapping action buttons → fits the panel, no horizontal scroll. *(Cosmetic CSS/layout; applied with owner go-ahead.)*
+- **A.2 — NEW (annoying / footgun).** **Cannot remove the only stored staff user.** Removing a lone Support teammate is blocked with *"Cannot remove the last active platform admin"* — the guard counts only **database-stored** staff and **ignores the built-in (env) bootstrap super-admin**, and it **mislabels a Support account as "admin."** Real impact: bootstrap-admin + one stored teammate → can't remove that teammate without first adding a second. **Workaround: Deactivate** (no such guard) cuts off access. *Severity: annoying. Fix: count bootstrap admins in the guard + correct the message. Not in pre-identified list.*
+- **A.2 — minor (low).** Create flow: button says **"Create"** while the heading says **"Invite Company User"** (wording mismatch). Setup link **is** shown with a "share with the new user" label + Copy, so the silent-no-email risk is *partly* signposted — could be more explicit ("no email was sent"). *Severity: cosmetic/low.*
+

@@ -154,6 +154,39 @@ async function resolveUniqueOrgSlug(baseValue: string): Promise<string> {
   throw new TeamWorkspaceProvisioningError('workspace_slug_unavailable', 'Could not find an available workspace URL.');
 }
 
+/** A unique-violation on organizations.slug. createOrganization rethrows as a plain Error (the PG
+ *  `code` is lost), so match the constraint NAME in the message — narrow on purpose: a bare 23505
+ *  code-match would over-match any other unique index on organizations. */
+function isOrgSlugUniqueViolation(err: unknown): boolean {
+  return (err as { message?: string } | null)?.message?.includes('organizations_slug_key') ?? false;
+}
+
+/**
+ * resolveUniqueOrgSlug → createOrganization is a check-then-insert: a concurrent provisioner (the two
+ * Stripe events for one checkout fire together) can claim the same slug between our SELECT and INSERT,
+ * tripping organizations_slug_key with a 500. Retry on exactly that conflict with a freshly resolved
+ * slug so the loser simply lands on `base-2`; the genuine duplicate is then caught downstream by the
+ * team_workspaces.stripe_subscription_id guard (mig 156), which the webhook resolves to already_exists.
+ * Bounded so a truly exhausted namespace still surfaces an error.
+ */
+async function createWorkspaceOrgWithUniqueSlug(workspaceName: string, slugBase: string): Promise<Organization> {
+  let lastErr: unknown = null;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const slug = await resolveUniqueOrgSlug(slugBase);
+    try {
+      return await createOrganization(workspaceName, slug, 'team', {
+        accountKind: 'team_workspace',
+        teamWorkspaceStatus: 'active',
+        isDiscoverable: false,
+      });
+    } catch (err) {
+      if (!isOrgSlugUniqueViolation(err)) throw err;
+      lastErr = err;
+    }
+  }
+  throw lastErr ?? new TeamWorkspaceProvisioningError('workspace_slug_unavailable', 'Could not find an available workspace URL.');
+}
+
 async function resolveUniqueTeamSlug(orgId: string, baseValue: string): Promise<string> {
   const base = slugify(baseValue) || 'team';
   for (let index = 0; index < 50; index += 1) {
@@ -218,7 +251,6 @@ export async function provisionStandaloneTeamWorkspace(
   const billingMode = input.billingMode ?? 'team_direct';
   const entitlementSource = input.entitlementSource ?? 'team_plan';
   const entitlementStatus = input.entitlementStatus ?? subscriptionStatus;
-  const workspaceSlug = await resolveUniqueOrgSlug(input.workspaceSlug ?? workspaceName);
   const basicCoachTeamId = input.basicCoachTeamId !== undefined
     ? input.basicCoachTeamId
     : await findBasicCoachTeamIdForTournamentRegistration(input.sourceTournamentTeamId);
@@ -226,11 +258,7 @@ export async function provisionStandaloneTeamWorkspace(
   let createdOrgId: string | null = null;
 
   try {
-    const org = await createOrganization(workspaceName, workspaceSlug, 'team', {
-      accountKind: 'team_workspace',
-      teamWorkspaceStatus: 'active',
-      isDiscoverable: false,
-    });
+    const org = await createWorkspaceOrgWithUniqueSlug(workspaceName, input.workspaceSlug ?? workspaceName);
     createdOrgId = org.id;
 
     const orgPatch: Record<string, string | null> = {

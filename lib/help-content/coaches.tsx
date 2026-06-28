@@ -23,7 +23,7 @@ const coachesHelp: HelpPageContent = {
             <li><strong>Tournaments</strong> — every tournament you&apos;ve registered the team for, with status and schedule.</li>
           </ul>
           <p>Four more tools — <strong>Roster</strong>, <strong>Schedule</strong>, <strong>Fees</strong>, and <strong>Announcements</strong> — are free too, but stay hidden until you turn them on from <strong>Explore</strong>. That keeps the portal simple if all you need is your tournament record.</p>
-          <p><strong>Coaches Portal Premium</strong> is the paid upgrade. It adds game-day tools (positions, attendance, lineups), recurring scheduling and calendar sync, dues automation and a season budget, and document storage. Each tool below notes what Premium adds.</p>
+          <p><strong>Coaches Portal Premium</strong> is the paid upgrade. It adds game-day tools (positions, attendance, lineups), recurring scheduling and calendar sync, dues automation and a season budget, and document storage. Each tool below notes what Premium adds. On Premium, <strong>every tool is already in your sidebar</strong> — there&apos;s no Explore step; the four-tools-off model just above applies to the free portal. See <strong>Getting around your Premium portal</strong> below for the tour.</p>
         </>
       ),
     },
@@ -61,10 +61,11 @@ const coachesHelp: HelpPageContent = {
       heading: 'How to turn on the tools you need',
       summary: 'Roster, Schedule, Fees, and Announcements are free but off by default — turn them on from Explore.',
       keywords: ['explore', 'turn on', 'activate', 'enable tools', 'roster schedule fees announcements', 'sections missing'],
-      searchText: 'explore turn on activate enable team tools roster schedule fees announcements free progressive disclosure where is my roster tab missing section',
+      searchText: 'explore turn on activate enable team tools roster schedule fees announcements free progressive disclosure where is my roster tab missing section premium all tools already on no explore step sidebar',
       content: (
         <>
-          <p>To keep things uncluttered, the four team tools start switched off. Open <strong>Explore</strong> (always in the menu) to see them:</p>
+          <p><em>This applies to the free portal.</em> On <strong>Coaches Portal Premium</strong> every tool is already in your sidebar, so there&apos;s nothing to turn on — you can skip this section.</p>
+          <p>To keep the free portal uncluttered, the four team tools start switched off. Open <strong>Explore</strong> (always in the menu) to see them:</p>
           <ul>
             <li><strong>Roster</strong> — enter your team once and reuse it for your next tournament registration.</li>
             <li><strong>Schedule</strong> — your tournament games plus your own practices, in one calendar.</li>
@@ -82,7 +83,7 @@ const coachesHelp: HelpPageContent = {
       heading: 'How to build your roster',
       summary: 'Add players, reorder them, and store optional ages and parent contacts.',
       keywords: ['add player', 'roster', 'jersey number', 'parent contact', 'date of birth', 'reorder'],
-      searchText: 'add player roster jersey number date of birth age guardian parent contact email phone reorder drag remove player edit player walk-on',
+      searchText: 'add player roster jersey number date of birth age guardian parent contact email phone reorder drag remove player edit player walk-on positions handedness jersey size medical allergies emergency contact attendance player profile premium',
       content: (
         <>
           <p>Turn on <strong>Roster</strong> from Explore, then click <strong>Add player</strong>.</p>
@@ -93,7 +94,7 @@ const coachesHelp: HelpPageContent = {
             <li>Drag the handle to reorder players. Use the pencil to edit and the trash icon to remove.</li>
           </ol>
           <p>Your roster is yours — build it once and reuse it for every tournament you join.</p>
-          <p><strong>Coaches Portal Premium adds:</strong> player positions, attendance at every practice and game, and game-day lineups and batting orders.</p>
+          <p><strong>Coaches Portal Premium adds:</strong> a full player profile (positions, handedness, jersey size, allergies/medical notes and an emergency contact), attendance at every practice and game, game-day lineups and batting orders, and roster export to Excel, CSV, or PDF.</p>
         </>
       ),
     },
@@ -185,16 +186,27 @@ const coachesHelp: HelpPageContent = {
       group: 'Tournaments',
       heading: 'Your tournament records',
       summary: 'See every tournament you’ve entered, with status and schedule, across organizations.',
-      keywords: ['tournaments', 'registration', 'tournament records', 'status', 'schedule', 'history', 'accepted', 'payment', 'how to pay', 'entry fee'],
-      searchText: 'tournaments tournament records registrations status schedule history across organizations bracket standings my registrations accepted what happens next payment how to pay entry fee deposit instructions pay the organizer e-transfer schedule published',
+      keywords: ['tournaments', 'registration', 'tournament records', 'status', 'schedule', 'history', 'accepted', 'payment', 'how to pay', 'entry fee', 'live', 'premium tournaments'],
+      searchText: 'tournaments tournament records registrations status schedule history across organizations bracket standings my registrations accepted what happens next payment how to pay entry fee deposit instructions pay the organizer e-transfer schedule published premium tournaments sidebar section live status today scores full record inside portal never leave free portal',
       content: (
         <>
-          <p>The <strong>Tournaments</strong> section lists every tournament you&apos;ve registered the team for — across any organization — with its registration status and schedule. Your team&apos;s tournament history also appears on the Overview.</p>
+          <p>The <strong>Tournaments</strong> section lists every tournament you&apos;ve registered the team for — across any organization — with its registration status and schedule.</p>
+          <p><strong>On Coaches Portal Premium</strong>, Tournaments is its own item in your sidebar: a list of your events with live status — an event that&apos;s underway shows <strong>Live</strong> or <strong>Today</strong>, otherwise it shows where your registration stands. Open one and the <strong>full record opens right inside your Premium portal</strong> — the live schedule and scores, your status, how to pay, roster submission, and the organizer&apos;s announcements. You don&apos;t leave your portal to follow a tournament.</p>
           <p>Open a tournament record to see where your team stands and when it plays. The organizer running that tournament controls its schedule, brackets, and standings; your portal shows you the live view.</p>
           <p>Once the organizer <strong>accepts</strong> your team, the record adds a <strong>What&apos;s next</strong> checklist and a <strong>Payment</strong> section. If there&apos;s an entry fee to pay, the organizer&apos;s instructions — how and where to send it — appear right there under <strong>How to pay</strong>, so you don&apos;t have to dig back through your acceptance email. Your games appear automatically once the organizer publishes the schedule.</p>
         </>
       ),
       faqs: [
+        {
+          id: 'faq-premium-tournaments-where',
+          question: 'Where are my tournaments in the Premium portal?',
+          answerText: 'On Coaches Portal Premium, open the Tournaments item in your sidebar. It lists every tournament your team is entered in with live status (a live event shows Live or Today). Open one to see the full record inside your portal — live schedule and scores, your status, how to pay, roster submission, and the organizer’s announcements. You never get sent back to the free portal.',
+          keywords: ['premium tournaments', 'where tournaments', 'tournaments sidebar', 'live tournament', 'tournament record premium'],
+          popular: true,
+          answer: (
+            <p>On <strong>Coaches Portal Premium</strong>, open the <strong>Tournaments</strong> item in your sidebar. It lists every tournament your team is entered in with live status (a live event shows <strong>Live</strong> or <strong>Today</strong>). Open one to see the full record inside your portal — live schedule and scores, your status, how to pay, roster submission, and the organizer&apos;s announcements. You&apos;re never sent back to the free portal.</p>
+          ),
+        },
         {
           id: 'faq-pay-entry-fee',
           question: 'How do I pay the tournament entry fee?',
@@ -271,14 +283,16 @@ const coachesHelp: HelpPageContent = {
       heading: 'What Coaches Portal Premium adds',
       summary: 'The serious-operator upgrade — game-day tools, automation, budget, and documents.',
       keywords: ['coaches portal premium', 'upgrade', 'premium', 'paid coaches portal'],
-      searchText: 'coaches portal premium upgrade paid lineup builder attendance dues automation team budget document storage carries over organization joins start next season new season division team settings multi season year over year',
+      searchText: 'coaches portal premium upgrade paid lineup builder attendance dues automation team budget document storage carries over organization joins start next season new season division team settings multi season year over year player profile medical allergies emergency contact handedness bats throws jersey size attendance snapshot per player dues roster export pdf excel csv',
       content: (
         <>
           <p><strong>Coaches Portal Premium</strong> keeps everything in your free portal and adds the tools for running a full competitive season:</p>
           <ul>
-            <li>Player positions, attendance, and game-day lineups and batting orders.</li>
+            <li>A full <strong>player profile</strong> for everyone on your roster — positions, handedness and jersey size, allergies/medical notes and an emergency contact, plus that player&apos;s attendance and dues at a glance.</li>
+            <li>Attendance at every practice and game, and game-day lineups and batting orders.</li>
             <li>Recurring schedule events and calendar sync.</li>
             <li>Dues automation — installment schedules, due dates, and overdue reminders — plus a season budget with expenses and fundraiser credits.</li>
+            <li>Export your roster to Excel, CSV, or a print-ready PDF.</li>
             <li>Document storage for waivers and team forms (see below).</li>
             <li>A <strong>Settings</strong> area to start your next season yourself and set your team&apos;s division (see below).</li>
           </ul>
@@ -287,6 +301,18 @@ const coachesHelp: HelpPageContent = {
       ),
       faqs: [
         {
+          id: 'faq-premium-player-profile',
+          question: 'What can I keep on each player?',
+          answerText: 'On Premium, open any player from your Roster to see their full profile. Alongside name, date of birth, jersey number and positions, you can record handedness (bats/throws), jersey size, allergies or medical notes, and an emergency contact. When medical notes are present, a flag shows at the top so it is not missed on game day. The profile also shows that player’s attendance this season and their dues balance at a glance, plus any documents on file.',
+          keywords: ['player profile', 'medical', 'allergies', 'emergency contact', 'handedness', 'bats', 'throws', 'jersey size', 'attendance', 'dues', 'player details'],
+          answer: (
+            <>
+              <p>On Premium, open any player from your <strong>Roster</strong> to see their full profile. Alongside name, date of birth, jersey number and positions, you can record <strong>handedness</strong> (bats/throws), <strong>jersey size</strong>, <strong>allergies or medical notes</strong>, and an <strong>emergency contact</strong>.</p>
+              <p>When a player has medical notes, a flag appears at the top of their profile so it&apos;s never missed on game day. The profile also shows that player&apos;s <strong>attendance</strong> this season and their <strong>dues balance</strong> at a glance, plus any documents on file.</p>
+            </>
+          ),
+        },
+        {
           id: 'faq-premium-cancel',
           question: 'What happens to my data if my team is no longer on Premium?',
           answerText: 'Your free portal and tournament records stay available. Premium tools switch off, and Premium-only data is retained for a window so it can be restored where possible rather than starting over.',
@@ -294,6 +320,37 @@ const coachesHelp: HelpPageContent = {
           answer: (
             <p>Your free portal and tournament records stay available. Premium tools switch off, and Premium-only data is retained for a window so it can be restored where possible instead of starting over.</p>
           ),
+        },
+      ],
+    },
+    {
+      id: 'premium-portal-tour',
+      group: 'Coaches Portal Premium',
+      heading: 'Getting around your Premium portal',
+      summary: 'Where everything lives on Premium: the sidebar sections, the setup dashboard, and the at-a-glance snapshot.',
+      keywords: ['premium portal', 'sidebar', 'navigation', 'dashboard', 'overview', 'season setup', 'at a glance', 'snapshot', 'tooltips', 'help button', 'where is', 'required', 'optional', 'skip', 'skip step', 'progress bar'],
+      searchText: 'premium portal layout sidebar navigation sections overview roster schedule tournaments chat announcements accounting documents history settings season setup checklist onboarding dashboard your team at a glance snapshot roster size next event dues outstanding question mark tooltips help button getting around find required optional skip skip step mark complete progress bar status only required step is roster optional jerseys positions schedule lineups budget skip the ones you wont use done or skipped open the setup guide drawer',
+      content: (
+        <>
+          <p>On Premium, everything is in the left sidebar — no turning tools on. You&apos;ll see <strong>Overview</strong>, <strong>Roster</strong>, <strong>Schedule</strong>, <strong>Tournaments</strong>, <strong>Chat</strong>, <strong>Announcements</strong>, <strong>Accounting</strong>, <strong>Documents</strong>, <strong>History</strong>, and <strong>Settings</strong>.</p>
+          <p>Your <strong>Overview</strong> is built to get you going:</p>
+          <ul>
+            <li><strong>Season setup</strong> — a checklist that shows your progress at a glance. Adding your <strong>roster</strong> is the only required step; everything else (jersey numbers and positions, your schedule, game lineups, and a budget) is <strong>optional</strong>. For each optional step you can either set it up or hit <strong>Skip</strong> if you won&apos;t use it — both tick it off, so the progress bar fills as you decide. The whole panel disappears once every step is either done or skipped, leaving you with the run-mode view below.</li>
+            <li><strong>Your team at a glance</strong> — a quick snapshot of your roster size, your next event, and any dues still owed, each linking straight to that section.</li>
+          </ul>
+          <p>Stuck on a term? Look for the small <strong>?</strong> icons next to items for a one-line explanation, or the <strong>Help</strong> button in the page header — or <strong>Open the setup guide</strong> in the season-setup panel — to open this guide right beside what you&apos;re doing.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-setup-required-optional',
+          question: 'Do I have to finish every setup step on Premium?',
+          answer: (
+            <p>No. Only <strong>adding your roster</strong> is required. The rest — jersey numbers and positions, your schedule, game lineups, and a budget — are <strong>optional</strong>. Set up the ones you want, and hit <strong>Skip</strong> on any you won&apos;t use. Skipping ticks the step off just like finishing it, so once every step is done or skipped the setup panel disappears on its own. You can always come back to a skipped step later from the sidebar.</p>
+          ),
+          answerText: 'No. Only adding your roster is required on Premium. The other steps — jersey numbers and positions, your schedule, game lineups, and a budget — are optional. Set up the ones you want and hit Skip on any you will not use; skipping ticks the step off just like finishing it, so once every step is done or skipped the setup panel disappears. You can return to a skipped step later from the sidebar.',
+          keywords: ['skip setup step', 'required step', 'optional step', 'finish setup', 'do i have to', 'budget optional', 'positions optional', 'schedule optional', 'mark complete'],
+          popular: true,
         },
       ],
     },
@@ -364,17 +421,17 @@ const coachesHelp: HelpPageContent = {
       group: 'Coaches Portal Premium',
       heading: 'Linking your team to a parent organization (Premium)',
       summary: 'Connect a Premium team to a club or league for recognition, or hand it over entirely.',
-      keywords: ['link organization', 'parent org', 'club', 'basic visibility', 'ownership transfer', 'premium'],
-      searchText: 'link organization parent org club league association basic visibility link ownership transfer team becomes org owned premium workspace',
+      keywords: ['link organization', 'parent org', 'club', 'basic visibility', 'ownership transfer', 'premium', 'settings', 'invite'],
+      searchText: 'link organization parent org club league association basic visibility link ownership transfer team becomes org owned premium workspace settings organization invite banner overview org invited my team review accept decline where to link',
       content: (
         <>
-          <p>If your team runs in the <strong>Premium team workspace</strong> and belongs to a parent club, league, or association, use <strong>Link Organization</strong> in that workspace to connect them. (The free standalone portal doesn&apos;t have this; it applies once your team is on Premium.)</p>
+          <p>If your team runs in the <strong>Premium team workspace</strong> and belongs to a parent club, league, or association, open <strong>Settings → Organization</strong> to connect them. (The free standalone portal doesn&apos;t have this; it applies once your team is on Premium.)</p>
           <p>There are two levels, from lighter to stronger:</p>
           <ul>
             <li><strong>Basic visibility</strong> — records the association only. It does not change who runs the team or give the organization access to your roster, documents, or accounting.</li>
             <li><strong>Ownership transfer</strong> — the team becomes fully org-owned. After both sides approve, roster, schedule, documents, budget, and accounting move under the organization.</li>
           </ul>
-          <p>If an organization invites your team first, review the invitation on the same page and accept or decline it.</p>
+          <p>Usually the organization starts this — if a club or league <strong>invites your team</strong>, a banner appears on your <strong>Overview</strong> to review the invitation and accept or decline. You don&apos;t need to go looking for it.</p>
         </>
       ),
       faqs: [

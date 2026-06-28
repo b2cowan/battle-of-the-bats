@@ -9,6 +9,7 @@ import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import CoachesSidebar from '@/components/coaches/CoachesSidebar';
 import CoachesBottomNav from '@/components/coaches/CoachesBottomNav';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
+import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import styles from './coaches.module.css';
 
 export const metadata: Metadata = {
@@ -70,18 +71,22 @@ export default async function CoachesLayout({
   return (
     <OrgProvider>
       <CoachesProvider orgSlug={orgSlug}>
-        <div className={styles.coachesShell}>
-          <CoachesSidebar orgSlug={orgSlug} />
-          <main className={styles.coachesMain}>
-            {children}
-          </main>
-        </div>
-        <CoachesBottomNav />
-        <InstallAppPrompt
-          appName="FieldLogicHQ"
-          subtitle="Your teams, schedules and scores — one tap away."
-          dismissKey="flhq-install-member"
-        />
+        {/* Hosts the in-context "?" help slide-over for the team work pages (drawer +
+            guide content load lazily on first click — no bundle cost until used). */}
+        <HelpDrawerProvider>
+          <div className={styles.coachesShell}>
+            <CoachesSidebar orgSlug={orgSlug} />
+            <main className={styles.coachesMain}>
+              {children}
+            </main>
+          </div>
+          <CoachesBottomNav />
+          <InstallAppPrompt
+            appName="FieldLogicHQ"
+            subtitle="Your teams, schedules and scores — one tap away."
+            dismissKey="flhq-install-member"
+          />
+        </HelpDrawerProvider>
       </CoachesProvider>
     </OrgProvider>
   );

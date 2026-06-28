@@ -1,17 +1,48 @@
 'use client';
 import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, AlertTriangle, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection';
+import PositionSelect from '@/components/coaches/PositionSelect';
+import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
+import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import {
+  BATS_OPTIONS, THROWS_OPTIONS, JERSEY_SIZE_OPTIONS,
+  BATS_LABELS, THROWS_LABELS, JERSEY_SIZE_LABELS,
+} from '@/lib/rep-roster-options';
 import styles from '../../../../coaches.module.css';
 import type { RepRosterPlayer } from '@/lib/types';
+import type { RepPlayerAttendanceSummary, RepPlayerDuesSummary } from '@/lib/db';
+
+const ATTN_CHIP: Record<string, string> = {
+  attending: styles.badgeActive,
+  late:      styles.badgeCompleted,
+  absent:    styles.badgeOverdue,
+  unknown:   styles.badgeDraft,
+};
+const ATTN_LABEL: Record<string, string> = {
+  attending: 'Present', late: 'Late', absent: 'Absent', unknown: '—',
+};
+
+function formatShortDate(s: string): string {
+  if (!s) return '';
+  const iso = s.length === 10 ? `${s}T00:00:00` : s;
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? s : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+function money(n: number): string {
+  return `$${n.toFixed(2)}`;
+}
 
 const STATUS_CSS: Record<string, string> = {
   active:   styles.badgeActive,
   inactive: styles.badgeDraft,
 };
+
+// Rep teams don't carry a sport yet — default to the softball/baseball diamond.
+const PROFILE_POSITIONS = getSportPack(DEFAULT_SPORT).positions;
 
 interface EditForm {
   playerFirstName: string; playerLastName: string;
@@ -19,24 +50,66 @@ interface EditForm {
   primaryPosition: string; secondaryPosition: string;
   guardianFirstName: string; guardianLastName: string;
   guardianEmail: string; guardianPhone: string;
-  notes: string; adminNotes: string;
+  notes: string;
+  medicalNotes: string; emergencyContactName: string; emergencyContactPhone: string;
+  bats: string; throws: string; jerseySize: string;
+}
+
+// Legacy/migrated data sometimes stored the literal word "null"/"undefined" as text.
+// Treat those as empty so they never display or get re-saved.
+function clean(v: string | null | undefined): string {
+  const s = (v ?? '').trim();
+  return s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined' ? '' : (v ?? '');
 }
 
 function playerToForm(p: RepRosterPlayer): EditForm {
   return {
-    playerFirstName:   p.playerFirstName,
-    playerLastName:    p.playerLastName ?? '',
+    playerFirstName:   clean(p.playerFirstName),
+    playerLastName:    clean(p.playerLastName),
     playerDateOfBirth: p.playerDateOfBirth ?? '',
-    playerNumber:      p.playerNumber ?? '',
-    primaryPosition:   p.primaryPosition ?? '',
-    secondaryPosition: p.secondaryPosition ?? '',
-    guardianFirstName: p.guardianFirstName ?? '',
-    guardianLastName:  p.guardianLastName ?? '',
-    guardianEmail:     p.guardianEmail ?? '',
-    guardianPhone:     p.guardianPhone ?? '',
-    notes:             p.notes ?? '',
-    adminNotes:        p.adminNotes ?? '',
+    playerNumber:      clean(p.playerNumber),
+    primaryPosition:   clean(p.primaryPosition),
+    secondaryPosition: clean(p.secondaryPosition),
+    guardianFirstName: clean(p.guardianFirstName),
+    guardianLastName:  clean(p.guardianLastName),
+    guardianEmail:     clean(p.guardianEmail),
+    guardianPhone:     clean(p.guardianPhone),
+    notes:             clean(p.notes),
+    medicalNotes:          clean(p.medicalNotes),
+    emergencyContactName:  clean(p.emergencyContactName),
+    emergencyContactPhone: clean(p.emergencyContactPhone),
+    bats:        p.bats ?? '',
+    throws:      p.throws ?? '',
+    jerseySize:  p.jerseySize ?? '',
   };
+}
+
+function ageFromDob(dob: string | null | undefined): number | null {
+  if (!dob) return null;
+  // Parse the YYYY-MM-DD as a LOCAL date — `new Date('2017-01-02')` is UTC midnight,
+  // which shifts the day (and the birthday) back one in western-hemisphere timezones.
+  const [y, m, d] = dob.slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return null;
+  const birth = new Date(y, m - 1, d);
+  if (isNaN(birth.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const mm = now.getMonth() - birth.getMonth();
+  if (mm < 0 || (mm === 0 && now.getDate() < birth.getDate())) age--;
+  return age >= 0 && age < 130 ? age : null;
+}
+
+// Season labels are often auto-named with the team in them — strip a leading
+// team-name prefix so the subtitle doesn't repeat the team name.
+function seasonLabel(season: string | null | undefined, teamName: string): string {
+  const s = (season ?? '').trim();
+  if (!s) return '';
+  const t = teamName.trim();
+  if (t && s.toLowerCase().startsWith(t.toLowerCase())) {
+    const stripped = s.slice(t.length).replace(/^[\s—–-]+/, '').trim();
+    if (stripped) return stripped;
+  }
+  return s;
 }
 
 function errorMessage(error: unknown, fallback: string) {
@@ -54,8 +127,11 @@ export default function PlayerDetailPage({
 
   const [player, setPlayer] = useState<RepRosterPlayer | null>(null);
   const [form, setForm] = useState<EditForm | null>(null);
+  const [attendance, setAttendance] = useState<RepPlayerAttendanceSummary | null>(null);
+  const [dues, setDues] = useState<RepPlayerDuesSummary | null>(null);
   const [fetching, setFetching] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
   const [togglingStatus, setTogglingStatus] = useState(false);
 
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -76,6 +152,8 @@ export default function PlayerDetailPage({
       if (!res.ok) throw new Error(data.error ?? 'Failed to load player');
       setPlayer(data.player);
       setForm(playerToForm(data.player));
+      setAttendance(data.attendance ?? null);
+      setDues(data.dues ?? null);
     } catch (e: unknown) {
       showFeedback('danger', errorMessage(e, 'Failed to load.'));
     } finally {
@@ -85,20 +163,9 @@ export default function PlayerDetailPage({
 
   useEffect(() => { if (!assignmentsLoading) void Promise.resolve().then(load); }, [assignmentsLoading, load]);
 
-  const isDirty = player && form && (
-    form.playerFirstName   !== player.playerFirstName   ||
-    form.playerLastName    !== (player.playerLastName ?? '') ||
-    form.playerDateOfBirth !== (player.playerDateOfBirth ?? '') ||
-    form.playerNumber      !== (player.playerNumber ?? '')      ||
-    form.primaryPosition   !== (player.primaryPosition ?? '')   ||
-    form.secondaryPosition !== (player.secondaryPosition ?? '') ||
-    form.guardianFirstName !== (player.guardianFirstName ?? '') ||
-    form.guardianLastName  !== (player.guardianLastName ?? '')  ||
-    form.guardianEmail     !== (player.guardianEmail ?? '')     ||
-    form.guardianPhone     !== (player.guardianPhone ?? '')     ||
-    form.notes             !== (player.notes ?? '')             ||
-    form.adminNotes        !== (player.adminNotes ?? '')
-  );
+  // Compare against the cleaned baseline (playerToForm) — not the raw player — so a
+  // legacy literal "null"/"undefined" value doesn't show a phantom "unsaved changes" on load.
+  const isDirty = !!(player && form && JSON.stringify(form) !== JSON.stringify(playerToForm(player)));
 
   async function handleSave() {
     if (!form || !player) return;
@@ -121,7 +188,12 @@ export default function PlayerDetailPage({
             guardianEmail:      form.guardianEmail.trim() || null,
             guardianPhone:      form.guardianPhone.trim() || null,
             notes:              form.notes.trim() || null,
-            adminNotes:         form.adminNotes.trim() || null,
+            medicalNotes:          form.medicalNotes.trim() || null,
+            emergencyContactName:  form.emergencyContactName.trim() || null,
+            emergencyContactPhone: form.emergencyContactPhone.trim() || null,
+            bats:        form.bats || null,
+            throws:      form.throws || null,
+            jerseySize:  form.jerseySize || null,
           }),
         },
       );
@@ -129,7 +201,8 @@ export default function PlayerDetailPage({
       if (!res.ok) throw new Error(data.error ?? 'Failed to save');
       setPlayer(data.player);
       setForm(playerToForm(data.player));
-      showFeedback('success', 'Player saved.');
+      setSavedFlash(true);
+      window.setTimeout(() => setSavedFlash(false), 2500);
     } catch (e: unknown) {
       showFeedback('danger', errorMessage(e, 'Failed to save.'));
     } finally {
@@ -174,8 +247,12 @@ export default function PlayerDetailPage({
   }
   if (!player || !form) return <p className={styles.muted}>Player not found.</p>;
 
+  const attnKnown = attendance ? attendance.attending + attendance.absent + attendance.late : 0;
+  const attnRate = attnKnown > 0 ? Math.round((attendance!.attending / attnKnown) * 100) : 0;
+
   return (
     <div className={styles.page}>
+      <UnsavedChangesGuard active={isDirty} />
       {/* Breadcrumb */}
       <div className={styles.breadcrumb}>
         <Link href={`/${orgSlug}/coaches`}>Coaches Portal</Link>
@@ -191,8 +268,15 @@ export default function PlayerDetailPage({
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div>
-            <h1 className={styles.pageTitle}>{[player.playerFirstName, player.playerLastName].filter(Boolean).join(' ')}</h1>
-            <p className={styles.pageSub}>{assignment.teamName} — {assignment.programYearName}</p>
+            <h1 className={styles.pageTitle}>{[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}</h1>
+            <p className={styles.pageSub}>
+              {[
+                player.playerNumber ? `#${player.playerNumber}` : null,
+                ageFromDob(player.playerDateOfBirth) !== null ? `Age ${ageFromDob(player.playerDateOfBirth)}` : null,
+                seasonLabel(assignment.programYearName, assignment.teamName)
+                  ? `${seasonLabel(assignment.programYearName, assignment.teamName)} season` : null,
+              ].filter(Boolean).join(' · ')}
+            </p>
           </div>
         </div>
       </div>
@@ -203,9 +287,11 @@ export default function PlayerDetailPage({
         <span className={`${styles.badge} ${STATUS_CSS[player.status] ?? styles.badgeDraft}`}>
           {player.status === 'active' ? 'Active' : 'Inactive'}
         </span>
-        <span className={`${styles.badge} ${player.source === 'tryout' ? styles.badgeTryout : styles.badgeManual}`}>
-          {player.source === 'tryout' ? 'Tryout' : 'Manual'}
-        </span>
+        {player.medicalNotes && (
+          <span className={styles.medicalFlag} title="This player has medical notes on file">
+            <AlertTriangle size={12} /> Medical info
+          </span>
+        )}
         <button
           type="button"
           className="btn btn-ghost"
@@ -250,24 +336,49 @@ export default function PlayerDetailPage({
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="primary-position">Primary Position</label>
-            <input id="primary-position" className={styles.input} type="text"
+            <PositionSelect id="primary-position" positions={PROFILE_POSITIONS}
+              selectClass={styles.select} inputClass={styles.input}
               value={form.primaryPosition}
-              onChange={e => setForm(f => f ? { ...f, primaryPosition: e.target.value } : f)}
-              maxLength={20} />
+              onChange={v => setForm(f => f ? { ...f, primaryPosition: v } : f)} />
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="secondary-position">Secondary Position</label>
-            <input id="secondary-position" className={styles.input} type="text"
+            <PositionSelect id="secondary-position" positions={PROFILE_POSITIONS}
+              selectClass={styles.select} inputClass={styles.input}
               value={form.secondaryPosition}
-              onChange={e => setForm(f => f ? { ...f, secondaryPosition: e.target.value } : f)}
-              maxLength={20} />
+              onChange={v => setForm(f => f ? { ...f, secondaryPosition: v } : f)} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="bats">Bats</label>
+            <select id="bats" className={styles.select} value={form.bats}
+              onChange={e => setForm(f => f ? { ...f, bats: e.target.value } : f)}>
+              <option value="">—</option>
+              {BATS_OPTIONS.map(o => <option key={o} value={o}>{BATS_LABELS[o]}</option>)}
+            </select>
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="throws">Throws</label>
+            <select id="throws" className={styles.select} value={form.throws}
+              onChange={e => setForm(f => f ? { ...f, throws: e.target.value } : f)}>
+              <option value="">—</option>
+              {THROWS_OPTIONS.map(o => <option key={o} value={o}>{THROWS_LABELS[o]}</option>)}
+            </select>
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="jersey-size">Jersey Size</label>
+            <select id="jersey-size" className={styles.select} value={form.jerseySize}
+              onChange={e => setForm(f => f ? { ...f, jerseySize: e.target.value } : f)}>
+              <option value="">—</option>
+              {JERSEY_SIZE_OPTIONS.map(o => <option key={o} value={o}>{JERSEY_SIZE_LABELS[o]}</option>)}
+            </select>
           </div>
           <div className={`${styles.field} ${styles.formGridFull}`}>
-            <label className={styles.label} htmlFor="pnotes">Notes</label>
-            <textarea id="pnotes" className={styles.textarea} rows={2}
+            <label className={styles.label} htmlFor="pnotes">Notes (private)</label>
+            <textarea id="pnotes" className={styles.textarea} rows={3}
               value={form.notes}
               onChange={e => setForm(f => f ? { ...f, notes: e.target.value } : f)}
-              maxLength={500} />
+              placeholder="Private notes for your coaching staff — not visible to families"
+              maxLength={1000} />
           </div>
         </div>
       </div>
@@ -296,6 +407,9 @@ export default function PlayerDetailPage({
               value={form.guardianEmail}
               onChange={e => setForm(f => f ? { ...f, guardianEmail: e.target.value } : f)}
               maxLength={120} />
+            {form.guardianEmail.trim() && (
+              <a className={styles.contactLink} href={`mailto:${form.guardianEmail.trim()}`}>Email guardian</a>
+            )}
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="gph">Phone</label>
@@ -303,31 +417,44 @@ export default function PlayerDetailPage({
               value={form.guardianPhone}
               onChange={e => setForm(f => f ? { ...f, guardianPhone: e.target.value } : f)}
               maxLength={20} />
+            {form.guardianPhone.trim() && (
+              <a className={styles.contactLink} href={`tel:${form.guardianPhone.replace(/[^\d+]/g, '')}`}>Call or text</a>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Admin notes */}
+      {/* Safety */}
       <div className={styles.detailSection}>
-        <p className={styles.detailSectionTitle}>Admin Notes (private)</p>
-        <textarea className={styles.textarea} rows={3}
-          value={form.adminNotes}
-          onChange={e => setForm(f => f ? { ...f, adminNotes: e.target.value } : f)}
-          placeholder="Internal notes — not visible to families"
-          maxLength={1000} />
-      </div>
-
-      {/* Save bar */}
-      {isDirty && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '1.5rem' }}>
-          <button type="button" className="btn btn-ghost" onClick={() => setForm(playerToForm(player))}>
-            Discard
-          </button>
-          <button type="button" className="btn btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving…' : 'Save Changes'}
-          </button>
+        <p className={styles.detailSectionTitle}>Safety</p>
+        <div className={styles.formGrid}>
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label} htmlFor="medical">Allergies / medical notes</label>
+            <textarea id="medical" className={styles.textarea} rows={2}
+              value={form.medicalNotes}
+              onChange={e => setForm(f => f ? { ...f, medicalNotes: e.target.value } : f)}
+              placeholder="Allergies, conditions, medications — visible to coaching staff"
+              maxLength={1000} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="ecn">Emergency contact name</label>
+            <input id="ecn" className={styles.input} type="text"
+              value={form.emergencyContactName}
+              onChange={e => setForm(f => f ? { ...f, emergencyContactName: e.target.value } : f)}
+              maxLength={80} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="ecp">Emergency contact phone</label>
+            <input id="ecp" className={styles.input} type="tel"
+              value={form.emergencyContactPhone}
+              onChange={e => setForm(f => f ? { ...f, emergencyContactPhone: e.target.value } : f)}
+              maxLength={20} />
+            {form.emergencyContactPhone.trim() && (
+              <a className={styles.contactLink} href={`tel:${form.emergencyContactPhone.replace(/[^\d+]/g, '')}`}>Call</a>
+            )}
+          </div>
         </div>
-      )}
+      </div>
 
       {/* Documents */}
       <div className={styles.detailSection}>
@@ -338,11 +465,92 @@ export default function PlayerDetailPage({
         />
       </div>
 
-      {/* Dues placeholder */}
+      {/* Attendance */}
       <div className={styles.detailSection}>
-        <p className={styles.detailSectionTitle}>Dues</p>
-        <p className={styles.detailPlaceholder}>Dues configuration and payment tracking coming in a future phase.</p>
+        <p className={styles.detailSectionTitle}>Attendance</p>
+        {!attendance || attendance.total === 0 ? (
+          <p className={styles.detailPlaceholder}>No attendance recorded yet this season.</p>
+        ) : (
+          <>
+            <div className={styles.statStrip}>
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{attnRate}%</span><span className={styles.statBoxLabel}>Attendance</span></div>
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.attending}</span><span className={styles.statBoxLabel}>Present</span></div>
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.late}</span><span className={styles.statBoxLabel}>Late</span></div>
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.absent}</span><span className={styles.statBoxLabel}>Absent</span></div>
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.total}</span><span className={styles.statBoxLabel}>Recorded</span></div>
+            </div>
+            {attendance.recent.length > 0 && (
+              <>
+                <p className={styles.miniListLabel}>Last {attendance.recent.length} sessions</p>
+                <ul className={styles.miniList}>
+                  {attendance.recent.map(r => (
+                    <li key={r.eventId} className={styles.miniRow}>
+                      <span className={styles.miniRowMain}>{r.name}</span>
+                      <span className={styles.miniRowMeta}>{formatShortDate(r.startsAt)}</span>
+                      <span className={`${styles.badge} ${ATTN_CHIP[r.status] ?? styles.badgeDraft}`}>{ATTN_LABEL[r.status] ?? r.status}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </>
+        )}
       </div>
+
+      {/* Dues */}
+      <div className={styles.detailSection}>
+        <div className={styles.sectionHeadRow}>
+          <p className={styles.detailSectionTitle} style={{ margin: 0 }}>Dues</p>
+          <Link href={`${base}/accounting/dues`} className={styles.contactLink} style={{ marginTop: 0 }}>Manage dues →</Link>
+        </div>
+        {!dues || !dues.hasSchedule ? (
+          <p className={styles.detailPlaceholder}>No dues set for this player this season.</p>
+        ) : (
+          <>
+            <div className={styles.statStrip}>
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.totalAssessed)}</span><span className={styles.statBoxLabel}>Assessed</span></div>
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.totalPaid)}</span><span className={styles.statBoxLabel}>Paid</span></div>
+              {dues.totalCredits > 0 && (
+                <div className={styles.statBox}><span className={styles.statBoxValue}>{money(dues.totalCredits)}</span><span className={styles.statBoxLabel}>Credits</span></div>
+              )}
+              <div className={styles.statBox}>
+                <span className={styles.statBoxValue} data-tone={dues.balance > 0 ? 'danger' : 'good'}>{money(dues.balance)}</span>
+                <span className={styles.statBoxLabel}>Balance</span>
+              </div>
+            </div>
+            <p className={styles.miniListLabel}>
+              {dues.paidInstallmentCount}/{dues.installmentCount} installments paid
+              {dues.overdue ? ' · overdue' : dues.nextDueDate ? ` · next due ${formatShortDate(dues.nextDueDate)}` : ''}
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* Save bar — viewport-pinned while there are unsaved changes, no matter where you scroll.
+          The spacer reserves scroll room so the bar never covers the last card. */}
+      {(isDirty || savedFlash) && <div aria-hidden className={styles.saveBarSpacer} />}
+      {(isDirty || savedFlash) && (
+        <div className={styles.saveBar} role="region" aria-label="Unsaved changes">
+          <div className={styles.saveBarInner}>
+            <span className={`${styles.saveBarStatus} ${savedFlash && !isDirty ? styles.saveBarStatusSaved : ''}`}>
+              {savedFlash && !isDirty
+                ? <><Check size={15} /> Saved</>
+                : <><span className={styles.saveDot} /> Unsaved changes</>}
+            </span>
+            {isDirty && (
+              <div className={styles.saveBarActions}>
+                <button type="button" className="btn btn-ghost" disabled={saving}
+                  onClick={() => setForm(playerToForm(player))}>
+                  Discard
+                </button>
+                <button type="button" className="btn btn-lime" onClick={handleSave} disabled={saving}>
+                  {saving ? 'Saving…' : 'Save changes'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <FeedbackModal
         isOpen={feedbackOpen}

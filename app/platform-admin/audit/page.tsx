@@ -116,9 +116,14 @@ async function getDistinctActions(): Promise<string[]> {
 // Intentional local exception to the shared lib/format-date.ts helpers: the
 // audit log keeps SECOND-level precision (forensic accuracy) which the shared
 // fmtAbsoluteDateTime deliberately omits. Always absolute, never relative.
-function fmtDateTime(iso: string) {
-  return new Date(iso).toLocaleString('en-CA', {
+// Rendered as two stacked lines (date over time) to keep the column narrow.
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-CA', {
     year: 'numeric', month: 'short', day: 'numeric',
+  });
+}
+function fmtTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-CA', {
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
 }
@@ -253,7 +258,10 @@ export default async function AuditLogPage({
             )}
             {rows.map(row => (
               <tr key={row.id}>
-                <td className={styles.tsCell}>{fmtDateTime(row.createdAt)}</td>
+                <td className={styles.tsCell}>
+                  <span className={styles.tsDate}>{fmtDate(row.createdAt)}</span>
+                  <span className={styles.tsTime}>{fmtTime(row.createdAt)}</span>
+                </td>
                 <td className={styles.emailCell}>{row.actorEmail}</td>
                 <td>
                   {row.orgId && row.orgName ? (

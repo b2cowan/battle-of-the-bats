@@ -712,6 +712,11 @@ export default function OrgDetailClient({
   const teamLimitChanged = parsedTeamLimitValue !== (currentTeamLimit ?? null);
   const isClubBand = planId === 'club' || planId === 'club_large';
   const planChanged = planId !== currentPlanId || parsedTournamentLimit !== currentTournamentLimit || teamLimitChanged;
+  // Billing clarity (walkthrough finding B.1): this screen writes access only, never Stripe.
+  // These derived flags drive the warnings that tell the operator the real billing path.
+  const hasLiveStripeSub = Boolean(stripeSubscriptionId) && subscriptionStatus !== 'canceled';
+  const targetIsPaid = planId !== 'tournament';
+  const targetIsFree = planId === 'tournament';
   const tabItems: Array<{ id: TabId; label: string; count?: number }> = [
     { id: 'support', label: 'Support', count: notes.length + pendingOwnershipTransfers.length },
     { id: 'billing', label: 'Billing & Access', count: activeOverrides.length },
@@ -1258,7 +1263,7 @@ export default function OrgDetailClient({
                   Plan And Tournament Limit
                   <HelpTooltip
                     title="Plan And Tournament Limit"
-                    body="Plan changes can affect billing, tournament access, and Stripe subscription state. Free Tournament changes clear Stripe subscription fields and leave the account active."
+                    body="This changes the org's access (plan + limits) only — it never touches Stripe. No charge, refund, proration, or cancellation happens here; the confirm step explains the real path to change billing. Setting the free Tournament plan only clears the stored Stripe subscription fields and leaves the account active — it does not cancel a live subscription. The only Stripe-touching control is Cancel Subscription."
                   />
                 </h3>
                 {planSaved && <span className={styles.savedIndicator}>Saved</span>}
@@ -1283,6 +1288,18 @@ export default function OrgDetailClient({
                     summary above instead of a form full of disabled fields (PAR-007). */}
                 {canManageBilling && (
                 <>
+                <div className={`${styles.billingClarity} ${styles.billingClarityInfo}`}>
+                  <p>
+                    <strong>This changes access only — not billing.</strong> Saving updates the
+                    org&rsquo;s plan and limits here and audit-logs your reason. It does <strong>not</strong> touch
+                    Stripe: no charge, refund, proration, subscription, or cancellation happens from this screen.
+                  </p>
+                  <p>
+                    To start, re-price, or stop what the customer actually pays, use the paths called out below
+                    and on the confirm step. The only control here that reaches Stripe is{' '}
+                    <strong>Cancel Subscription</strong>.
+                  </p>
+                </div>
                 <div className={styles.formRow}>
                   <label className={styles.formLabel}>Plan</label>
                   <select
@@ -1353,7 +1370,69 @@ export default function OrgDetailClient({
                   />
                 </div>
 
+                {/* Forward-looking billing path for the pending change (B.1). */}
+                {planChanged && targetIsPaid && !hasLiveStripeSub && (
+                  <div className={`${styles.billingClarity} ${styles.billingClarityCaution}`}>
+                    <p>
+                      ⚠️ This org has no active subscription. The plan you&rsquo;re setting is a{' '}
+                      <strong>free comp</strong> — the org gets the access, but <strong>nothing will be
+                      billed</strong>. To start billing, ask the owner to upgrade from their in-app Billing
+                      page, or create the subscription in the Stripe Dashboard.
+                    </p>
+                  </div>
+                )}
+                {planChanged && targetIsPaid && hasLiveStripeSub && (
+                  <div className={`${styles.billingClarity} ${styles.billingClarityCaution}`}>
+                    <p>
+                      ⚠️ This org has an active Stripe subscription. Changing the plan here will{' '}
+                      <strong>not</strong> re-price it — Stripe keeps charging the current amount and the two
+                      go out of sync. To re-price: a <strong>downgrade</strong> is done by the owner from their
+                      in-app Billing page (prorated automatically); an <strong>upgrade</strong> must be done in
+                      the Stripe Dashboard.
+                    </p>
+                  </div>
+                )}
+                {planChanged && targetIsFree && hasLiveStripeSub && (
+                  <div className={`${styles.billingClarity} ${styles.billingClarityDanger}`}>
+                    <p>
+                      🛑 Setting this org to free will <strong>not</strong> stop its Stripe billing — the
+                      subscription keeps charging, and afterward this console can no longer cancel it.{' '}
+                      <strong>To stop billing, use Cancel Subscription instead</strong> (that one does cancel in
+                      Stripe). Only set the plan to free after the subscription is already cancelled.
+                    </p>
+                  </div>
+                )}
+
                 {planError && <div className={styles.rowError}>{planError}</div>}
+
+                {planSaved && (
+                  <div className={`${styles.billingClarity} ${styles.billingClarityInfo}`}>
+                    <p>
+                      ✅ Plan and access updated. Access changes are live now.{' '}
+                      <strong>No billing changed</strong> — Stripe was not contacted.
+                    </p>
+                    {targetIsPaid && !hasLiveStripeSub && (
+                      <p>
+                        This is a <strong>free comp</strong> until a subscription exists. Next step: the owner
+                        upgrades from their Billing page, or you create the subscription in the Stripe Dashboard.
+                      </p>
+                    )}
+                    {targetIsPaid && hasLiveStripeSub && (
+                      <p>
+                        ⚠️ The Stripe subscription still bills at its previous price and is now out of sync with
+                        this plan. Re-price via the owner&rsquo;s in-app downgrade (prorated) or the Stripe
+                        Dashboard (upgrades).
+                      </p>
+                    )}
+                    {targetIsFree && hasLiveStripeSub && (
+                      <p>
+                        🛑 The Stripe subscription was <strong>not</strong> cancelled and is still charging — and
+                        is no longer linked here. Cancel it directly in the Stripe Dashboard. (In future, run
+                        Cancel Subscription before setting an org to free.)
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <button type="submit" className={styles.saveBtn} disabled={planSaving || !planChanged}>
                   {planSaving ? 'Saving...' : 'Review Change'}
@@ -1953,9 +2032,14 @@ export default function OrgDetailClient({
             aria-labelledby="plan-change-title"
           >
             <div>
-              <div className={styles.sectionTitle} id="plan-change-title">Confirm Plan Change</div>
+              <div className={styles.sectionTitle} id="plan-change-title">
+                Change plan &amp; access — this does not change billing
+              </div>
               <p className={styles.modalCopy}>
-                Apply this account billing change? The update will be audit-logged with your reason.
+                This updates this org&rsquo;s plan and limits in FieldLogicHQ and records your reason in the audit
+                log. It takes effect immediately for what the org can access. <strong>It does not touch Stripe</strong> —
+                no charge, refund, proration, subscription, or cancellation happens from this screen. To change what
+                the customer actually pays, use the path below.
               </p>
               <div className={styles.modalPreview}>
                 <div>Plan: {initialPlan?.label ?? currentPlanId} to {selectedPlan?.label ?? planId}</div>
@@ -1965,9 +2049,41 @@ export default function OrgDetailClient({
                 )}
                 <div>Reason: {planReason}</div>
               </div>
-              {planId === 'tournament' && (
+              {targetIsPaid && !hasLiveStripeSub && (
+                <div className={`${styles.billingClarity} ${styles.billingClarityCaution}`}>
+                  <p>
+                    ⚠️ This org has no active subscription. The plan you&rsquo;re setting is a{' '}
+                    <strong>free comp</strong> — the org gets the access, but <strong>nothing will be
+                    billed</strong>. To start billing, ask the owner to upgrade from their in-app Billing page,
+                    or create the subscription in the Stripe Dashboard.
+                  </p>
+                </div>
+              )}
+              {targetIsPaid && hasLiveStripeSub && (
+                <div className={`${styles.billingClarity} ${styles.billingClarityCaution}`}>
+                  <p>
+                    ⚠️ This org has an active Stripe subscription. Changing the plan here will{' '}
+                    <strong>not</strong> re-price it — Stripe keeps charging the current amount, and the two
+                    will be out of sync. To re-price: a <strong>downgrade</strong> is done by the owner in their
+                    in-app Billing page (prorated automatically); an <strong>upgrade</strong> must be done in the
+                    Stripe Dashboard.
+                  </p>
+                </div>
+              )}
+              {targetIsFree && hasLiveStripeSub && (
+                <div className={`${styles.billingClarity} ${styles.billingClarityDanger}`}>
+                  <p>
+                    🛑 Setting this org to free will <strong>not</strong> stop its Stripe billing — the
+                    subscription keeps charging, and afterward this console can no longer cancel it.{' '}
+                    <strong>To stop billing, use Cancel Subscription instead</strong> (that one does cancel in
+                    Stripe). Only set the plan to free after the subscription is already cancelled.
+                  </p>
+                </div>
+              )}
+              {targetIsFree && !hasLiveStripeSub && (
                 <p className={styles.warningNote}>
-                  Tournament is the free plan. Saving will clear Stripe subscription fields and set status to active.
+                  Tournament is the free plan. Saving will clear the stored Stripe subscription fields and set
+                  status to active. (No live subscription is linked, so nothing is billing.)
                 </p>
               )}
               {wouldBeOverLimit && (
@@ -1984,15 +2100,15 @@ export default function OrgDetailClient({
                 onClick={() => setPlanConfirmOpen(false)}
                 disabled={planSaving}
               >
-                Cancel
+                Back
               </button>
               <button
                 type="button"
-                className={styles.confirmBtn}
+                className={styles.applyBtn}
                 onClick={handlePlanSave}
                 disabled={planSaving}
               >
-                {planSaving ? 'Saving...' : 'Apply Change'}
+                {planSaving ? 'Saving...' : 'Apply plan & access change'}
               </button>
             </div>
           </section>

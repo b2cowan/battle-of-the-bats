@@ -97,7 +97,18 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
   tournament_chat:                   'tournament_plus',
 };
 
+/**
+ * Per-plan feature grants that bypass the rank ladder.
+ * The per-team Premium "team" plan ranks at the free tier for tournament
+ * features, but the paid Coaches Portal explicitly includes PDF exports
+ * (roster, schedule, lineup cards, etc.).
+ */
+const PLAN_FEATURE_GRANTS: Partial<Record<OrgPlan, PlanFeature[]>> = {
+  team: ['pdf_exports'],
+};
+
 export function hasPlanFeature(planId: OrgPlan, feature: PlanFeature): boolean {
+  if (PLAN_FEATURE_GRANTS[planId]?.includes(feature)) return true;
   return PLAN_RANK[planId] >= PLAN_RANK[FEATURE_MIN_PLAN[feature]];
 }
 

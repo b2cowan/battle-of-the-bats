@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutGrid, Calendar, Users, DollarSign, FileText,
   History, MoreHorizontal, X, ChevronRight, LogOut,
-  Link2, HelpCircle, Settings, MessageSquare,
+  HelpCircle, Settings, MessageSquare, Trophy,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -13,11 +13,12 @@ import { useChatUnread } from '@/lib/use-chat-unread';
 import styles from './CoachesBottomNav.module.css';
 
 const TEAM_MORE = [
-  { key: '/roster',     icon: Users,      label: 'Roster'     },
-  { key: '/accounting', icon: DollarSign, label: 'Accounting' },
-  { key: '/documents',  icon: FileText,   label: 'Documents'  },
-  { key: '/history',    icon: History,    label: 'History'    },
-  { key: '/settings',   icon: Settings,   label: 'Settings'   },
+  { key: '/roster',      icon: Users,      label: 'Roster'      },
+  { key: '/tournaments', icon: Trophy,     label: 'Tournaments' },
+  { key: '/accounting',  icon: DollarSign, label: 'Accounting'  },
+  { key: '/documents',   icon: FileText,   label: 'Documents'   },
+  { key: '/history',     icon: History,    label: 'History'     },
+  { key: '/settings',    icon: Settings,   label: 'Settings'    },
 ];
 
 export default function CoachesBottomNav() {
@@ -33,12 +34,10 @@ export default function CoachesBottomNav() {
   const teamMatch    = pathname.match(/\/coaches\/teams\/([^/]+)/);
   const currentTeamId = teamMatch?.[1] ?? null;
   const teamBase     = currentTeamId ? `${base}/teams/${currentTeamId}` : null;
-  const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
 
   const isOnTeamMore = currentTeamId
     ? TEAM_MORE.some(({ key }) => pathname.startsWith(`${base}/teams/${currentTeamId}${key}`))
     : false;
-  const isOnWorkspaceMore = isTeamWorkspace && pathname.startsWith(`${base}/link-org`);
   const isOnSchedule = currentTeamId
     ? pathname.startsWith(`${base}/teams/${currentTeamId}/schedule`)
     : false;
@@ -125,7 +124,7 @@ export default function CoachesBottomNav() {
       {/* More */}
       <div ref={moreRef} className={styles.moreWrap}>
         <button
-          className={`${styles.tab} ${(moreOpen || isOnTeamMore || isOnWorkspaceMore) ? styles.active : ''}`}
+          className={`${styles.tab} ${(moreOpen || isOnTeamMore) ? styles.active : ''}`}
           onClick={() => setMoreOpen(o => !o)}
           id="coaches-mob-more"
           aria-haspopup="true"
@@ -134,9 +133,9 @@ export default function CoachesBottomNav() {
           <span className={styles.iconWrap}>
             {moreOpen
               ? <X size={22} strokeWidth={2} />
-              : <MoreHorizontal size={22} strokeWidth={(moreOpen || isOnTeamMore || isOnWorkspaceMore) ? 2.5 : 1.8} />
+              : <MoreHorizontal size={22} strokeWidth={(moreOpen || isOnTeamMore) ? 2.5 : 1.8} />
             }
-            {(isOnTeamMore || isOnWorkspaceMore) && !moreOpen && <span className={styles.activeDot} />}
+            {isOnTeamMore && !moreOpen && <span className={styles.activeDot} />}
           </span>
           <span className={styles.label}>More</span>
         </button>
@@ -162,21 +161,6 @@ export default function CoachesBottomNav() {
                     </Link>
                   );
                 })}
-                <div className={styles.dropDivider} />
-              </>
-            )}
-            {isTeamWorkspace && (
-              <>
-                <div className={styles.dropSectionLabel}>Workspace</div>
-                <Link
-                  href={`${base}/link-org`}
-                  className={`${styles.dropItem} ${isOnWorkspaceMore ? styles.dropActive : ''}`}
-                  role="menuitem"
-                >
-                  <Link2 size={17} />
-                  <span>Link Organization</span>
-                  <ChevronRight size={14} className={styles.dropChevron} />
-                </Link>
                 <div className={styles.dropDivider} />
               </>
             )}

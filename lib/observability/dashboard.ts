@@ -14,7 +14,6 @@
 import 'server-only';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-export type ObsEnv = 'production' | 'dev';
 export type ObsSeverity = 'critical' | 'error' | 'warning' | 'info';
 export type ObsStatus = 'open' | 'resolved' | 'ignored' | 'snoozed';
 
@@ -33,9 +32,6 @@ export function isUuid(v: string): boolean {
   return UUID_RE.test(v);
 }
 
-export function normalizeEnv(v: string | undefined): ObsEnv {
-  return v === 'dev' ? 'dev' : 'production';
-}
 export function normalizeWindow(v: string | undefined): ObsWindowKey {
   return v === '7d' || v === '30d' ? v : '24h';
 }
@@ -83,7 +79,11 @@ export interface DashboardData {
   eventsCapped: boolean;       // true when breakdowns were computed over a capped event set
 }
 
-export async function getDashboardData(env: ObsEnv, windowKey: ObsWindowKey): Promise<DashboardData> {
+// Each deployment reads only its OWN Supabase project, so the database IS the environment boundary —
+// there is no cross-env filtering here. The `env` column is still written on every event (a secondary
+// tag), but the dashboard shows everything in this deployment's DB. (The old Production/Dev toggle was
+// removed 2026-06-26 — it filtered within one project and read as broken on its empty side.)
+export async function getDashboardData(windowKey: ObsWindowKey): Promise<DashboardData> {
   const w = OBS_WINDOWS[windowKey];
   const now = Date.now();
   const startMs = now - w.ms;
@@ -107,48 +107,40 @@ export async function getDashboardData(env: ObsEnv, windowKey: ObsWindowKey): Pr
     supabaseAdmin
       .from('request_metrics_rollup')
       .select('bucket_start, call_count, error_count')
-      .eq('env', env)
       .gte('bucket_start', startIso)
       .limit(20000),
     supabaseAdmin
       .from('request_metrics_raw')
       .select('flushed_at, call_count, error_count')
-      .eq('env', env)
       .gte('flushed_at', startIso)
       .limit(20000),
     supabaseAdmin
       .from('error_events')
       .select('occurred_at, route, status_code, source, org_id')
-      .eq('env', env)
       .gte('occurred_at', startIso)
       .order('occurred_at', { ascending: false })
       .limit(EVENTS_CAP),
     supabaseAdmin
       .from('error_events')
       .select('id', { count: 'exact', head: true })
-      .eq('env', env)
       .gte('occurred_at', startIso),
     supabaseAdmin
       .from('error_groups')
       .select('id', { count: 'exact', head: true })
-      .eq('env', env)
       .eq('status', 'open'),
     // Expired snoozes count as "open" again — nothing auto-reopens them until Phase 4 cron.
     supabaseAdmin
       .from('error_groups')
       .select('id', { count: 'exact', head: true })
-      .eq('env', env)
       .eq('status', 'snoozed')
       .lt('snooze_until', nowIso),
     supabaseAdmin
       .from('error_groups')
       .select('id', { count: 'exact', head: true })
-      .eq('env', env)
       .gte('first_seen_at', startIso),
     supabaseAdmin
       .from('error_groups')
       .select('first_seen_at, resolved_at')
-      .eq('env', env)
       .eq('status', 'resolved')
       .not('resolved_at', 'is', null)
       .order('resolved_at', { ascending: false })
@@ -268,7 +260,6 @@ export interface IssueRow {
 }
 
 export interface IssueFilters {
-  env: ObsEnv;
   severity: string;
   status: string;
   route: string;
@@ -316,7 +307,6 @@ export async function getErrorGroups(
     const { data } = await supabaseAdmin
       .from('error_events')
       .select('group_id')
-      .eq('env', f.env)
       .ilike('org_slug', `%${org}%`)
       .limit(5000);
     groupIdFilter = [...new Set((data ?? []).map(r => r.group_id as string))];
@@ -326,7 +316,6 @@ export async function getErrorGroups(
   let q = supabaseAdmin
     .from('error_groups')
     .select(ISSUE_SELECT)
-    .eq('env', f.env)
     .order('last_seen_at', { ascending: false })
     .range(f.offset, f.offset + ISSUES_PAGE_SIZE - 1);
 
@@ -356,7 +345,6 @@ export async function getErrorGroupsForExport(f: IssueFilters, cap = EXPORT_CAP)
     const { data } = await supabaseAdmin
       .from('error_events')
       .select('group_id')
-      .eq('env', f.env)
       .ilike('org_slug', `%${org}%`)
       .limit(5000);
     groupIdFilter = [...new Set((data ?? []).map(r => r.group_id as string))];
@@ -366,7 +354,6 @@ export async function getErrorGroupsForExport(f: IssueFilters, cap = EXPORT_CAP)
   let q = supabaseAdmin
     .from('error_groups')
     .select(ISSUE_SELECT)
-    .eq('env', f.env)
     .order('last_seen_at', { ascending: false })
     .limit(cap);
 

@@ -141,7 +141,13 @@ export interface SportPack {
   defaultPeriodCount: number;
   /** Phrase before "in …" in the pre-event countdown ("First pitch", "Tip-off", "Kickoff"). */
   startVerb: string;
+  /** Roster positions offered as a dropdown (empty = free-text only). Shared vocabulary
+   *  with game lineups so a player's position reads the same everywhere. */
+  positions: string[];
 }
+
+/** Diamond fielding positions — shared by softball and baseball. */
+const DIAMOND_POSITIONS = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'DH'];
 
 const SOFTBALL_PACK: SportPack = {
   id: 'softball',
@@ -168,6 +174,7 @@ const SOFTBALL_PACK: SportPack = {
   periodLabelPlural: 'Innings',
   defaultPeriodCount: 7,
   startVerb: 'First pitch',
+  positions: DIAMOND_POSITIONS,
 };
 
 // Baseball ≈ softball scoring (runs, innings, first pitch, diamond, mercy/diff cap), so it
@@ -198,6 +205,7 @@ const BASEBALL_PACK: SportPack = {
   periodLabelPlural: 'Innings',
   defaultPeriodCount: 9,
   startVerb: 'First pitch',
+  positions: DIAMOND_POSITIONS,
 };
 
 // First differently-scored pack — proves the model. Basketball: points (not runs), four
@@ -227,6 +235,7 @@ const BASKETBALL_PACK: SportPack = {
   periodLabelPlural: 'Quarters',
   defaultPeriodCount: 4,
   startVerb: 'Tip-off',
+  positions: ['PG', 'SG', 'SF', 'PF', 'C'],
 };
 
 // Neutral fallback for any sport without a tailored pack yet (incl. 'other'). Sport-safe
@@ -257,6 +266,7 @@ const GENERIC_PACK: SportPack = {
   periodLabelPlural: 'Periods',
   defaultPeriodCount: 2,
   startVerb: 'Tournament starts',
+  positions: [],
 };
 
 const TAILORED_PACKS: Partial<Record<SportId, SportPack>> = {

@@ -1,7 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Archive, CalendarPlus, Pencil } from 'lucide-react';
+import { Archive, CalendarPlus, Link2, Pencil } from 'lucide-react';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -191,6 +191,30 @@ export default function TeamSettingsPage({
           </div>
         )}
       </section>
+
+      {/* ── Organization ─────────────────────────────────────────────────── */}
+      {scope.isStandalone && (
+        <section className={styles.setupPanel} aria-labelledby="org-title">
+          <div className={styles.setupHeader}>
+            <div>
+              <p className={styles.setupKicker}>Organization</p>
+              <h2 id="org-title" className={styles.setupTitle}>Parent organization</h2>
+            </div>
+            <Link2 size={18} style={{ color: 'rgba(255,255,255,0.3)' }} />
+          </div>
+          <p style={{ margin: '0 0 0.7rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
+            Belong to a club or league? Connect your team for recognition, or transfer it in entirely.
+            Most teams are invited by their organization — if that happens, you&apos;ll see it on your Overview and here.
+          </p>
+          <Link
+            href={`/${orgSlug}/coaches/link-org`}
+            className={styles.btnSecondary}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+          >
+            <Link2 size={15} /> Manage organization link
+          </Link>
+        </section>
+      )}
 
       {modalOpen && (
         <StartNextSeasonModal

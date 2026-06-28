@@ -3,8 +3,11 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { ALL_CAPABILITY_KEYS, hasCapability } from '@/lib/roles';
 import type { OrgRole } from '@/lib/types';
-import { sendEmail, memberSuspendedHtml } from '@/lib/email';
-import { cleanupBasicCoachTeamsForUserDeletion } from '@/lib/basic-coach-teams';
+import { sendEmail, memberSuspendedHtml, memberRemovedHtml } from '@/lib/email';
+import {
+  cleanupBasicCoachTeamsForUserDeletion,
+  countActiveBasicCoachTeamMembershipsForUser,
+} from '@/lib/basic-coach-teams';
 import { withObservability } from '@/lib/observability';
 
 const VALID_CAPABILITIES = new Set<string>(ALL_CAPABILITY_KEYS);
@@ -49,6 +52,7 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     { count: divisionCount },
     { count: otherOrgCount },
     { count: coachingAssignmentCount },
+    basicCoachTeamCount,
   ] = await Promise.all([
     supabaseAdmin
       .from('tournaments')
@@ -70,6 +74,10 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
       .from('rep_team_coaches')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', target.user_id),
+    // Free (Basic) Coaches Portal teams. An active free portal counts as off-org presence: it now
+    // forces the membership-only (account-preserving) path in DELETE, so the warning reassures the
+    // admin the portal is kept rather than (as before) silently destroying it.
+    countActiveBasicCoachTeamMembershipsForUser(target.user_id),
   ]);
 
   return NextResponse.json({
@@ -77,6 +85,7 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     divisionCount: divisionCount ?? 0,
     otherOrgCount: otherOrgCount ?? 0,
     coachingAssignmentCount: coachingAssignmentCount ?? 0,
+    basicCoachTeamCount,
   });
 }, { route: '/api/admin/members/[memberId]' });
 
@@ -121,21 +130,32 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   const { data: { user: targetAuthUser } } = await supabaseAdmin.auth.admin.getUserById(target.user_id);
   const targetEmail = targetAuthUser?.email ?? null;
 
-  // J4-036: does this user belong to OTHER organizations? "Remove member" used to call
-  // auth.admin.deleteUser unconditionally — destroying a multi-org person's entire account
-  // (their own free Coaches Portal workspace, every other club) and orphaning those orgs. When
-  // other memberships exist, remove ONLY this org's membership row + its scope rows; hard-delete
-  // the account ONLY when this is the user's sole membership (owner-approved: gated, not removed).
-  const { count: otherMembershipCount } = await supabaseAdmin
-    .from('organization_members')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', target.user_id)
-    .neq('organization_id', org.id);
+  // J4-036: does this user have any presence BEYOND this org? "Remove member" used to call
+  // auth.admin.deleteUser unconditionally — destroying a person's entire account (their other clubs,
+  // and — silently — their free Coaches Portal teams/roster/fees/history) and orphaning that data.
+  // Preserve the account and remove ONLY this org's membership row + scope rows whenever off-org
+  // presence exists; hard-delete ONLY a true sole-presence account (owner-approved: gated, not removed).
+  //
+  // Off-org presence = (a) membership in another organization OR (b) an active free (Basic) Coaches
+  // Portal. A free portal is org-less (not an organization_members row), so it was invisible to the
+  // original check and a free-only coach fell through to hard-delete — the data-loss footgun this closes.
+  const [{ count: otherMembershipCount }, basicCoachTeamCount] = await Promise.all([
+    supabaseAdmin
+      .from('organization_members')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', target.user_id)
+      .neq('organization_id', org.id),
+    countActiveBasicCoachTeamMembershipsForUser(target.user_id),
+  ]);
 
-  if ((otherMembershipCount ?? 0) > 0) {
+  const hasOtherOrg = (otherMembershipCount ?? 0) > 0;
+  const hasFreeCoachPortal = basicCoachTeamCount > 0;
+
+  if (hasOtherOrg || hasFreeCoachPortal) {
     // Membership-only removal: drop this org's member row + its scope/assignment rows.
     // (These FK to organization_members.id; delete them explicitly since we're not cascading
-    // via the auth user.)
+    // via the auth user.) The account, other orgs, and the free Coaches Portal are all preserved —
+    // this path runs neither cleanupBasicCoachTeamsForUserDeletion nor deleteUser.
     await supabaseAdmin.from('org_member_tournament_assignments').delete().eq('org_member_id', memberId);
     await supabaseAdmin.from('org_member_rep_group_scopes').delete().eq('member_id', memberId);
     // Note: tournaments.default_contact_member_id and divisions(age_groups).contact_member_id both
@@ -155,8 +175,31 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
       actor_id: ctx.user.id,
       target_id: target.user_id,
       action: 'member_removed',
-      payload: { email: targetEmail, role: target.role, membershipOnly: true, otherOrgs: otherMembershipCount },
+      payload: {
+        email: targetEmail,
+        role: target.role,
+        membershipOnly: true,
+        otherOrgs: otherMembershipCount ?? 0,
+        basicCoachTeams: basicCoachTeamCount,
+        preservedReason: hasOtherOrg ? 'other_org' : 'basic_coach_portal',
+      },
     });
+
+    // The account survives, so a courtesy "your access was removed" notice is meaningful (mirrors
+    // the suspension notice). Best-effort — never block the removal on email delivery.
+    if (targetEmail) {
+      void (async () => {
+        try {
+          await sendEmail(
+            targetEmail,
+            `Your access to ${org.name} was removed`,
+            memberRemovedHtml({ orgName: org.name }),
+          );
+        } catch (e) {
+          console.error('[members] removal email failed:', e);
+        }
+      })();
+    }
 
     return NextResponse.json({ ok: true, membershipOnly: true });
   }

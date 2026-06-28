@@ -10,7 +10,6 @@ import type { CSSProperties } from 'react';
  */
 
 interface ExportFilters {
-  env: string;
   severity: string;
   status: string;
   route: string;
@@ -20,7 +19,6 @@ interface ExportFilters {
 
 function buildUrl(f: ExportFilters, format: 'xlsx' | 'csv'): string {
   const p = new URLSearchParams();
-  if (f.env && f.env !== 'production') p.set('env', f.env);
   if (f.severity) p.set('severity', f.severity);
   if (f.status) p.set('status', f.status);
   if (f.route) p.set('route', f.route);

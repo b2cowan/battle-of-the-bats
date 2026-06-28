@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformAreaApi } from '@/lib/platform-auth';
-import { getErrorGroupsForExport, normalizeEnv, type IssueFilters } from '@/lib/observability/dashboard';
+import { getErrorGroupsForExport, type IssueFilters } from '@/lib/observability/dashboard';
 import { withObservability } from '@/lib/observability';
 
 const SEVERITY_OPTIONS = ['critical', 'error', 'warning', 'info'];
@@ -23,7 +23,6 @@ export const GET = withObservability(async (req: NextRequest) => {
 
   const sp = req.nextUrl.searchParams;
   const filters: IssueFilters = {
-    env: normalizeEnv(sp.get('env') ?? undefined),
     severity: SEVERITY_OPTIONS.includes(sp.get('severity') ?? '') ? sp.get('severity')! : '',
     status: STATUS_OPTIONS.includes(sp.get('status') ?? '') ? sp.get('status')! : '',
     route: (sp.get('route') ?? '').slice(0, 120),
@@ -75,7 +74,7 @@ export const GET = withObservability(async (req: NextRequest) => {
     return new NextResponse(buffer as ArrayBuffer, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="observability-issues-${filters.env}-${date}.xlsx"`,
+        'Content-Disposition': `attachment; filename="observability-issues-${date}.xlsx"`,
       },
     });
   }
@@ -87,7 +86,7 @@ export const GET = withObservability(async (req: NextRequest) => {
   return new NextResponse(lines.join('\n'), {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="observability-issues-${filters.env}-${date}.csv"`,
+      'Content-Disposition': `attachment; filename="observability-issues-${date}.csv"`,
     },
   });
 }, { route: '/api/platform-admin/observability/issues/export' });

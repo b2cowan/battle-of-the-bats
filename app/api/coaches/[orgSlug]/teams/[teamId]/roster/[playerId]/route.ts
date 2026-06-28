@@ -6,9 +6,18 @@ import {
   getActiveRepProgramYear,
   getRepRosterPlayer,
   updateRepRosterPlayer,
+  getRepPlayerAttendanceSummary,
+  getRepPlayerDuesSummary,
 } from '@/lib/db';
 import type { RepRosterStatus } from '@/lib/types';
+import { BATS_OPTIONS, THROWS_OPTIONS, JERSEY_SIZE_OPTIONS, normalizeOption } from '@/lib/rep-roster-options';
 import { withObservability } from '@/lib/observability';
+
+function trimmedOrNull(v: unknown): string | null {
+  if (typeof v !== 'string') return null;
+  const t = v.trim();
+  return t.length ? t : null;
+}
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -44,7 +53,12 @@ export const GET = withObservability(async (_req: Request,
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ player });
+  const [attendance, dues] = await Promise.all([
+    getRepPlayerAttendanceSummary(playerId, resolved.programYear.id),
+    getRepPlayerDuesSummary(playerId, resolved.programYear.id),
+  ]);
+
+  return NextResponse.json({ player, attendance, dues });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]' });
 
 export const PATCH = withObservability(async (req: Request,
@@ -75,6 +89,12 @@ export const PATCH = withObservability(async (req: Request,
     guardianPhone:    body.guardianPhone     !== undefined ? (body.guardianPhone?.trim() || null) : undefined,
     notes:            body.notes            !== undefined ? (body.notes?.trim() || null)          : undefined,
     adminNotes:       body.adminNotes       !== undefined ? (body.adminNotes?.trim() || null)     : undefined,
+    medicalNotes:          body.medicalNotes          !== undefined ? trimmedOrNull(body.medicalNotes)          : undefined,
+    emergencyContactName:  body.emergencyContactName  !== undefined ? trimmedOrNull(body.emergencyContactName)  : undefined,
+    emergencyContactPhone: body.emergencyContactPhone !== undefined ? trimmedOrNull(body.emergencyContactPhone) : undefined,
+    bats:        body.bats        !== undefined ? normalizeOption(body.bats, BATS_OPTIONS)               : undefined,
+    throws:      body.throws      !== undefined ? normalizeOption(body.throws, THROWS_OPTIONS)           : undefined,
+    jerseySize:  body.jerseySize  !== undefined ? normalizeOption(body.jerseySize, JERSEY_SIZE_OPTIONS)  : undefined,
   });
 
   return NextResponse.json({ player: updated });

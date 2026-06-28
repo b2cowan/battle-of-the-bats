@@ -1,10 +1,11 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowLeft, Users, Calendar, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Link2, Settings, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Users, Calendar, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { useChatUnread } from '@/lib/use-chat-unread';
+import { teamWorkspaceDisplayName } from '@/lib/coaches-portal-routes';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -13,6 +14,7 @@ const TEAM_NAV = [
   { label: 'Overview',    href: '',           icon: LayoutDashboard },
   { label: 'Roster',      href: '/roster',    icon: Users },
   { label: 'Schedule',    href: '/schedule',  icon: Calendar },
+  { label: 'Tournaments', href: '/tournaments', icon: Trophy },
   { label: 'Chat',        href: '/chat',      icon: MessageSquare },
   { label: 'Announcements', href: '/announcements', icon: Megaphone },
   { label: 'Accounting',  href: '/accounting',icon: DollarSign },
@@ -44,41 +46,54 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           <p className={styles.sidebarPortalLabel}>Coaches Portal</p>
           {currentOrg?.id && <NotificationBell orgId={currentOrg.id} />}
         </div>
-        <p className={styles.sidebarOrgName}>{currentOrg?.name ?? orgSlug}</p>
-        <Link href={`/${orgSlug}`} className={styles.sidebarBackLink}>
-          <ArrowLeft size={12} />
-          Back to {currentOrg?.name ?? 'org page'}
-        </Link>
+        <p className={styles.sidebarOrgName}>
+          {isTeamWorkspace ? teamWorkspaceDisplayName(currentOrg?.name) : (currentOrg?.name ?? orgSlug)}
+        </p>
+        {/* A standalone workspace IS the Coaches Portal — there's no separate org to go
+            "back" to, so the link only appears for real orgs (league/club). */}
+        {!isTeamWorkspace && (
+          <Link href={`/${orgSlug}`} className={styles.sidebarBackLink}>
+            <ArrowLeft size={12} />
+            Back to {currentOrg?.name ?? 'org page'}
+          </Link>
+        )}
       </div>
 
-      {/* Team list */}
-      <div className={styles.sidebarSection}>
-        <p className={styles.sidebarSectionLabel}>My Teams</p>
-        {assignments.map(a => (
-          <Link
-            key={a.teamId}
-            href={`${base}/teams/${a.teamId}`}
-            className={`${styles.sidebarItem}${currentTeamId === a.teamId ? ` ${styles.sidebarItemActive}` : ''}`}
-          >
-            {a.teamColor && (
-              <span
-                style={{ width: 10, height: 10, borderRadius: 2, background: a.teamColor, flexShrink: 0, marginTop: 2 }}
-              />
-            )}
-            <span className={styles.sidebarTeamInfo}>
-              <span>{a.teamName}</span>
-              <span className={styles.sidebarTeamYear}>{a.programYearName}</span>
-            </span>
-          </Link>
-        ))}
-      </div>
+      {/* Team list — a switcher, so it only earns its place with 2+ teams. With a single
+          team (always the case for a standalone Premium workspace) the team name is already
+          the sidebar label, so the list would just repeat it. */}
+      {assignments.length > 1 && (
+        <div className={styles.sidebarSection}>
+          <p className={styles.sidebarSectionLabel}>My Teams</p>
+          {assignments.map(a => (
+            <Link
+              key={a.teamId}
+              href={`${base}/teams/${a.teamId}`}
+              className={`${styles.sidebarItem}${currentTeamId === a.teamId ? ` ${styles.sidebarItemActive}` : ''}`}
+            >
+              {a.teamColor && (
+                <span
+                  style={{ width: 10, height: 10, borderRadius: 2, background: a.teamColor, flexShrink: 0, marginTop: 2 }}
+                />
+              )}
+              <span className={styles.sidebarTeamInfo}>
+                <span>{a.teamName}</span>
+                <span className={styles.sidebarTeamYear}>{a.programYearName}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* Team-scoped nav — only when inside a team */}
       {currentTeamId && currentAssignment && (
         <>
           <div className={styles.sidebarDivider} />
           <div className={styles.sidebarSection}>
-            <p className={styles.sidebarSectionLabel}>{currentAssignment.teamName}</p>
+            {/* With one team the header already names it, so this label would just repeat. */}
+            {assignments.length > 1 && (
+              <p className={styles.sidebarSectionLabel}>{currentAssignment.teamName}</p>
+            )}
             {TEAM_NAV.map(({ label, href, icon: Icon }) => {
               const fullHref = `${base}/teams/${currentTeamId}${href}`;
               const isActive = href === ''
@@ -101,15 +116,6 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
       )}
       <div className={styles.sidebarDivider} />
       <div className={styles.sidebarSection}>
-        {isTeamWorkspace && (
-          <Link
-            href={`${base}/link-org`}
-            className={`${styles.sidebarItem}${pathname === `${base}/link-org` ? ` ${styles.sidebarItemActive}` : ''}`}
-          >
-            <Link2 size={14} />
-            Link Organization
-          </Link>
-        )}
         <Link
           href={`${base}/help`}
           className={`${styles.sidebarItem}${pathname === `${base}/help` ? ` ${styles.sidebarItemActive}` : ''}`}

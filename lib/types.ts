@@ -1102,6 +1102,13 @@ export interface RepRosterPlayer {
   guardianPhone: string | null;
   notes: string | null;
   adminNotes: string | null;
+  // Wave B player-profile fields (mig 157)
+  medicalNotes: string | null;
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
+  bats: string | null;        // 'L' | 'R' | 'S'
+  throws: string | null;      // 'L' | 'R'
+  jerseySize: string | null;  // YS|YM|YL|AS|AM|AL|AXL
   createdAt: string;
   updatedAt: string;
 }

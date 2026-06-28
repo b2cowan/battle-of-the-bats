@@ -4454,6 +4454,12 @@ function mapRepRosterPlayer(r: any): RepRosterPlayer {
     guardianPhone: r.guardian_phone,
     notes: r.notes,
     adminNotes: r.admin_notes,
+    medicalNotes: r.medical_notes ?? null,
+    emergencyContactName: r.emergency_contact_name ?? null,
+    emergencyContactPhone: r.emergency_contact_phone ?? null,
+    bats: r.bats ?? null,
+    throws: r.throws ?? null,
+    jerseySize: r.jersey_size ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -4498,6 +4504,12 @@ export async function createRepRosterPlayer(fields: {
   guardianPhone?: string | null;
   notes?: string | null;
   adminNotes?: string | null;
+  medicalNotes?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  bats?: string | null;
+  throws?: string | null;
+  jerseySize?: string | null;
   sourceBasicPlayerId?: string | null;
 }): Promise<RepRosterPlayer> {
   // Append new players at the end of the manual roster order (parity with the Basic roster — a coach
@@ -4534,6 +4546,12 @@ export async function createRepRosterPlayer(fields: {
       guardian_phone: fields.guardianPhone ?? null,
       notes: fields.notes ?? null,
       admin_notes: fields.adminNotes ?? null,
+      medical_notes: fields.medicalNotes ?? null,
+      emergency_contact_name: fields.emergencyContactName ?? null,
+      emergency_contact_phone: fields.emergencyContactPhone ?? null,
+      bats: fields.bats ?? null,
+      throws: fields.throws ?? null,
+      jersey_size: fields.jerseySize ?? null,
       display_order: nextDisplayOrder,
       source_basic_player_id: fields.sourceBasicPlayerId ?? null,
     })
@@ -4557,6 +4575,12 @@ export async function updateRepRosterPlayer(playerId: string, fields: {
   guardianPhone?: string | null;
   notes?: string | null;
   adminNotes?: string | null;
+  medicalNotes?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  bats?: string | null;
+  throws?: string | null;
+  jerseySize?: string | null;
 }): Promise<RepRosterPlayer> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.playerFirstName !== undefined) patch.player_first_name = fields.playerFirstName;
@@ -4572,6 +4596,12 @@ export async function updateRepRosterPlayer(playerId: string, fields: {
   if (fields.guardianPhone !== undefined) patch.guardian_phone = fields.guardianPhone;
   if (fields.notes !== undefined) patch.notes = fields.notes;
   if (fields.adminNotes !== undefined) patch.admin_notes = fields.adminNotes;
+  if (fields.medicalNotes !== undefined) patch.medical_notes = fields.medicalNotes;
+  if (fields.emergencyContactName !== undefined) patch.emergency_contact_name = fields.emergencyContactName;
+  if (fields.emergencyContactPhone !== undefined) patch.emergency_contact_phone = fields.emergencyContactPhone;
+  if (fields.bats !== undefined) patch.bats = fields.bats;
+  if (fields.throws !== undefined) patch.throws = fields.throws;
+  if (fields.jerseySize !== undefined) patch.jersey_size = fields.jerseySize;
   const { data, error } = await supabaseAdmin
     .from('rep_roster_players')
     .update(patch)
@@ -4585,6 +4615,98 @@ export async function updateRepRosterPlayer(playerId: string, fields: {
 export async function deleteRepRosterPlayer(playerId: string): Promise<void> {
   const { error } = await supabaseAdmin.from('rep_roster_players').delete().eq('id', playerId);
   if (error) throw error;
+}
+
+// ── Player profile roll-ups (Wave B) ──────────────────────────────────────────
+
+export interface RepPlayerAttendanceSummary {
+  total: number;      // sessions with attendance recorded for this player
+  attending: number;
+  absent: number;
+  late: number;
+  unknown: number;
+  recent: { eventId: string; name: string; eventType: string; startsAt: string; status: string }[];
+}
+
+/** Season attendance for ONE player: status counts + the 10 most-recent sessions.
+ *  Counts only non-cancelled events the coach actually marked. */
+export async function getRepPlayerAttendanceSummary(
+  playerId: string, programYearId: string,
+): Promise<RepPlayerAttendanceSummary> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_event_attendance')
+    .select('status, rep_team_events!inner(id, name, event_type, starts_at, status)')
+    .eq('player_id', playerId)
+    .eq('program_year_id', programYearId)
+    .eq('rep_team_events.status', 'scheduled');
+  if (error) throw error;
+  const rows = (data ?? []) as any[];
+  const summary: RepPlayerAttendanceSummary = { total: 0, attending: 0, absent: 0, late: 0, unknown: 0, recent: [] };
+  for (const r of rows) {
+    summary.total++;
+    if (r.status === 'attending') summary.attending++;
+    else if (r.status === 'absent') summary.absent++;
+    else if (r.status === 'late') summary.late++;
+    else summary.unknown++;
+  }
+  summary.recent = rows
+    .filter(r => r.rep_team_events)
+    .sort((a, b) => String(b.rep_team_events.starts_at).localeCompare(String(a.rep_team_events.starts_at)))
+    .slice(0, 10)
+    .map(r => ({
+      eventId: r.rep_team_events.id,
+      name: r.rep_team_events.name,
+      eventType: r.rep_team_events.event_type,
+      startsAt: r.rep_team_events.starts_at,
+      status: r.status,
+    }));
+  return summary;
+}
+
+export interface RepPlayerDuesSummary {
+  hasSchedule: boolean;
+  totalAssessed: number;
+  totalPaid: number;
+  totalCredits: number;
+  balance: number;        // assessed − paid − credits (can be negative if over-credited)
+  overdue: boolean;
+  nextDueDate: string | null;
+  installmentCount: number;
+  paidInstallmentCount: number;
+}
+
+/** Dues summary for ONE player this season. Mirrors the team dues route's balance math. */
+export async function getRepPlayerDuesSummary(
+  playerId: string, programYearId: string,
+): Promise<RepPlayerDuesSummary> {
+  const schedule = await getRepPlayerDuesSchedule(playerId, programYearId);
+  const installments = schedule ? await getRepPlayerDuesInstallments(schedule.id) : [];
+  const { data: creditRows, error } = await supabaseAdmin
+    .from('rep_dues_credits')
+    .select('amount')
+    .eq('player_id', playerId)
+    .eq('program_year_id', programYearId);
+  if (error) throw error;
+
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+  const totalAssessed = schedule?.totalAmount ?? 0;
+  const totalPaid = installments.filter(i => i.paidAt).reduce((s, i) => s + i.amount, 0);
+  const totalCredits = (creditRows ?? []).reduce((s, c: any) => s + Number(c.amount), 0);
+  const today = new Date().toISOString().slice(0, 10);
+  return {
+    hasSchedule: !!schedule,
+    totalAssessed: round2(totalAssessed),
+    totalPaid: round2(totalPaid),
+    totalCredits: round2(totalCredits),
+    balance: round2(totalAssessed - totalPaid - totalCredits),
+    overdue: installments.some(i => !i.paidAt && i.dueDate < today),
+    nextDueDate: installments
+      .filter(i => !i.paidAt && i.dueDate >= today)
+      .map(i => i.dueDate)
+      .sort((a, b) => a.localeCompare(b))[0] ?? null,
+    installmentCount: installments.length,
+    paidInstallmentCount: installments.filter(i => i.paidAt).length,
+  };
 }
 
 // Team Events

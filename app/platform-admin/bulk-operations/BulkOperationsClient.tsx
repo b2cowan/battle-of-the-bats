@@ -357,12 +357,31 @@ export default function BulkOperationsClient({
             )}
 
             {actionType === 'plan_change' && (
-              <label className={styles.field}>
-                <span>Target Plan</span>
-                <select className={styles.select} value={targetPlan} onChange={event => setTargetPlan(event.target.value)}>
-                  {PLANS.map(plan => <option key={plan} value={plan}>{PLAN_LABELS[plan]}</option>)}
-                </select>
-              </label>
+              <>
+                <label className={styles.field}>
+                  <span>Target Plan</span>
+                  <select className={styles.select} value={targetPlan} onChange={event => setTargetPlan(event.target.value)}>
+                    {PLANS.map(plan => <option key={plan} value={plan}>{PLAN_LABELS[plan]}</option>)}
+                  </select>
+                </label>
+                <div className={`${styles.billingClarity} ${styles.billingClarityCaution}`}>
+                  <p>
+                    <strong>This changes access only — not billing.</strong> A plan change here updates each
+                    org&rsquo;s plan and resets its tournament limit to the new plan&rsquo;s default. It does{' '}
+                    <strong>not</strong> touch Stripe — no charge, refund, proration, or cancellation. Any paid
+                    org keeps billing at its old price and goes out of sync. Re-price each org from its own
+                    Billing &amp; Access screen (downgrades, prorated) or the Stripe Dashboard (upgrades).
+                  </p>
+                  {targetPlan === 'tournament' && (
+                    <p>
+                      🛑 For orgs with a live subscription, setting them to free will <strong>not</strong> stop
+                      Stripe billing — it unlinks the subscription from our records while the real one keeps
+                      charging, and it can no longer be cancelled from here afterward. Cancel each subscription
+                      first (per-org <strong>Cancel Subscription</strong>) or in the Stripe Dashboard.
+                    </p>
+                  )}
+                </div>
+              </>
             )}
 
             {actionType === 'module_addon_enablement' && (

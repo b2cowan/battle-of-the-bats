@@ -1152,6 +1152,19 @@ export function memberSuspendedHtml(p: {
   `);
 }
 
+export function memberRemovedHtml(p: {
+  orgName: string;
+}) {
+  // org.name is admin-editable → escape before interpolating into the (different) recipient's HTML body.
+  const org = escapeEmailHtml(p.orgName);
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your access to ${org} was removed</h2>
+    <p>An administrator at <strong>${org}</strong> has removed your access on <strong>FieldLogicHQ</strong>.</p>
+    <p style="color:rgba(241,245,249,0.7);">You no longer have access to this workspace. If you think this was a mistake, please contact an administrator at ${org} directly — they can re-invite you.</p>
+    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This message is about your access to ${org} only. Your account and any other organizations, teams, or coaching portals you belong to are unaffected.</p>
+  `);
+}
+
 export function orgDeletionRequestHtml(p: {
   orgName: string;
   orgSlug: string;

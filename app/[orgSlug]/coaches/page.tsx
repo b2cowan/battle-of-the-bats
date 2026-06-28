@@ -1,11 +1,10 @@
 'use client';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { use } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { use, useEffect } from 'react';
 import { Users } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useCoaches } from '@/lib/coaches-context';
-import HelpCallout from '@/components/help/HelpCallout';
 import CoachTournamentAwarenessBanner from '@/components/marketing/CoachTournamentAwarenessBanner';
 import styles from './coaches.module.css';
 
@@ -26,61 +25,36 @@ export default function CoachesDashboard({
   const { currentOrg } = useOrg();
   const { assignments, loading } = useCoaches();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
+  // Post-checkout arrival (`?success=1`) — carried through to the team landing so its welcome
+  // (the "your team came with you" summary) reads correctly.
   const checkoutSucceeded = searchParams.get('success') === '1';
 
+  // One team → skip this hub and land straight in the portal, the way a single tournament
+  // skips the org chooser. The hub only earns its place with 2+ teams (a real switcher).
+  // A standalone Premium workspace is always exactly one team, so it always lands inside.
+  useEffect(() => {
+    if (loading || assignments.length !== 1) return;
+    const qs = checkoutSucceeded ? '?success=1' : '';
+    router.replace(`/${orgSlug}/coaches/teams/${assignments[0].teamId}${qs}`);
+  }, [loading, assignments, orgSlug, checkoutSucceeded, router]);
+
   if (loading) return <div className={styles.loadingState}>Loading teams…</div>;
+  if (assignments.length === 1) return <div className={styles.loadingState}>Opening your portal…</div>;
 
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div>
-            <h1 className={styles.pageTitle}>{isTeamWorkspace ? 'Coaches Portal' : 'My Teams'}</h1>
+            <h1 className={styles.pageTitle}>My Teams</h1>
             <p className={styles.pageSub}>
-              {currentOrg?.name} - {isTeamWorkspace ? 'Coaches Portal Premium' : 'Coaches Portal'}
+              {currentOrg?.name} · Coaches Portal
             </p>
           </div>
         </div>
       </div>
-
-      {checkoutSucceeded && isTeamWorkspace && assignments.length > 0 && (
-        <HelpCallout
-          variant="info"
-          title="Coaches Portal ready"
-          body="Checkout is complete and your Coaches Portal is active."
-          cta={{ label: `Open ${assignments[0].teamName}`, href: `/${orgSlug}/coaches/teams/${assignments[0].teamId}` }}
-        />
-      )}
-
-      {assignments.length > 0 && (
-        <HelpCallout
-          variant="info"
-          title={isTeamWorkspace ? 'Welcome to Coaches Portal Premium' : 'Welcome to your coaching portal'}
-          body={
-            isTeamWorkspace
-              ? 'This premium portal is scoped to your team, with roster, schedule, dues, budget, and documents in one place.'
-              : "You're the operator - your org handles tryouts and setup; you run day-to-day. Start by exploring your team below."
-          }
-          dismissible
-          localStorageKey={`flhq-help-dismissed-coaches-welcome-${orgSlug}`}
-        />
-      )}
-
-      {assignments.length > 0 && (
-        <CoachTournamentAwarenessBanner orgSlug={orgSlug} isTeamWorkspace={isTeamWorkspace} />
-      )}
-
-      {assignments.length > 0 && isTeamWorkspace && (
-        <HelpCallout
-          variant="tip"
-          title="Link a parent organization"
-          body="If your team belongs to a club or association, you can request a Basic visibility link or review an invitation from the org. The connection does not take over billing or your team data."
-          cta={{ label: 'Manage org links', href: `/${orgSlug}/coaches/link-org` }}
-          dismissible
-          localStorageKey={`flhq-help-dismissed-team-link-${orgSlug}`}
-        />
-      )}
 
       {assignments.length === 0 ? (
         <div className={styles.emptyState}>
@@ -137,6 +111,15 @@ export default function CoachesDashboard({
               </div>
             </Link>
           ))}
+        </div>
+      )}
+
+      {/* Secondary tip — demoted below the team grid so the coach's actual teams are the
+          first thing they see. (This hub is only reached with 2+ teams; single-team and
+          standalone Premium coaches land straight in their portal.) */}
+      {assignments.length > 1 && (
+        <div className={styles.tips}>
+          <CoachTournamentAwarenessBanner orgSlug={orgSlug} isTeamWorkspace={isTeamWorkspace} />
         </div>
       )}
     </div>

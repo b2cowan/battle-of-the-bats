@@ -1,4 +1,4 @@
-﻿.page { max-width: 900px; }
+﻿.page { max-width: 1200px; }
 
 .header {
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
@@ -45,7 +45,7 @@
 
 .table th {
   text-align: left;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.55rem;
   font-size: 0.55rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -56,9 +56,10 @@
 }
 
 .table td {
-  padding: 0.75rem;
+  padding: 0.6rem 0.7rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 .table tr:hover td {
@@ -68,7 +69,8 @@
 .emailCell {
   color: var(--fl-text);
   font-family: monospace;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
 }
 
 .dateCell {
@@ -76,11 +78,25 @@
   white-space: nowrap;
 }
 
-.actionsCell {
+.invitedByCell {
+  color: var(--data-gray);
+}
+
+.invitedByValue {
+  display: block;
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: monospace;
+  font-size: 0.72rem;
+}
+
+.actionsCell {
   display: flex;
+  justify-content: flex-end;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .resetBtn {
@@ -89,7 +105,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 0.35rem 0.75rem;
+  padding: 0.35rem 0.6rem;
   background: rgba(var(--logic-lime-rgb), 0.06);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
   color: var(--logic-lime);
@@ -235,8 +251,8 @@
 }
 
 .roleSelect {
-  min-width: 8rem;
-  padding: 0.3rem 0.5rem;
+  min-width: 6.25rem;
+  padding: 0.3rem 0.4rem;
   border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
   background: rgba(255, 255, 255, 0.04);
   color: var(--fl-text);
@@ -340,7 +356,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 0.35rem 0.75rem;
+  padding: 0.35rem 0.6rem;
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: var(--danger);
@@ -350,6 +366,24 @@
 }
 .removeBtn:hover:not(:disabled) { background: rgba(239, 68, 68, 0.16); }
 .removeBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Neutral cancel/back-out for confirm modals — never lime, never red. */
+.cancelBtn {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.6rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--data-gray);
+  cursor: pointer;
+  transition: border-color 0.15s;
+  white-space: nowrap;
+}
+.cancelBtn:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.25); }
+.cancelBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .modalBackdrop {
   position: fixed;

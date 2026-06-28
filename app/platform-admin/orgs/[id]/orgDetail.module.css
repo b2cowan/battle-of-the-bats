@@ -692,6 +692,31 @@
 
 .confirmBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* Affirmative confirm (lime) for routine/reversible actions — e.g. plan change.
+   Geometry matches .confirmBtn so it pairs cleanly with .cancelBtn in a modal.
+   Reserve the red .confirmBtn for destructive/irreversible confirms only. */
+.applyBtn {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+  color: var(--logic-lime);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.applyBtn:hover:not(:disabled) {
+  background: rgba(var(--logic-lime-rgb), 0.18);
+  border-color: rgba(var(--logic-lime-rgb), 0.6);
+}
+
+.applyBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .cancelBtn {
   font-family: var(--font-data);
   font-size: 0.6rem;
@@ -972,6 +997,44 @@
   line-height: 1.5;
   color: #fcd34d;
   margin: 0.2rem 0 0;
+}
+
+/* Billing-clarity banners for the plan-change form + confirm modal.
+   The operator plan change writes access only — never Stripe. These call that out
+   so an operator doesn't assume it re-prices the customer. */
+.billingClarity {
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  line-height: 1.55;
+  padding: 0.7rem 0.85rem;
+  margin: 0 0 0.75rem;
+  border-radius: 4px;
+}
+
+.billingClarity p {
+  margin: 0;
+}
+
+.billingClarity p + p {
+  margin-top: 0.5rem;
+}
+
+.billingClarityInfo {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--data-gray);
+}
+
+.billingClarityCaution {
+  border: 1px solid rgba(252, 211, 77, 0.4);
+  background: rgba(252, 211, 77, 0.08);
+  color: #fcd34d;
+}
+
+.billingClarityDanger {
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.1);
+  color: #fca5a5;
 }
 
 @media (max-width: 960px) {

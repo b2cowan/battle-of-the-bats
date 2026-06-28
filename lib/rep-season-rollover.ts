@@ -200,6 +200,13 @@ export async function startNextRepSeason(params: {
           guardianEmail: p.guardianEmail,
           guardianPhone: p.guardianPhone,
           notes: p.notes,
+          // Player-intrinsic profile fields persist across seasons (safety/handedness/size)
+          medicalNotes: p.medicalNotes,
+          emergencyContactName: p.emergencyContactName,
+          emergencyContactPhone: p.emergencyContactPhone,
+          bats: p.bats,
+          throws: p.throws,
+          jerseySize: p.jerseySize,
           // adminNotes + tryoutRegistrationId intentionally dropped (stale staff/tryout provenance)
         });
         playerIdMap.set(p.id, created.id);

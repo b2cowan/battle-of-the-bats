@@ -10,6 +10,16 @@ export const COACHES_CLAIM_PATH = '/coaches/claim';
 export const COACHES_CHECKOUT_COMPLETE_PATH = '/coaches/checkout/complete';
 export const COACHES_HELP_PATH = '/coaches/help';
 
+/** A standalone Premium workspace org is always named `"{teamName} Coaches Portal"`
+ *  (see team-checkout/provisioning). Surfacing that raw name next to portal chrome that
+ *  already says "Coaches Portal" stutters — strip the suffix for display so the user sees
+ *  just their team. Falls back to the original if stripping leaves nothing. */
+export function teamWorkspaceDisplayName(orgName: string | null | undefined): string {
+  const name = (orgName ?? '').trim();
+  const stripped = name.replace(/\s*Coaches Portal\s*$/i, '').trim();
+  return stripped || name;
+}
+
 /** Build the path to a single org-less Basic coach team home. */
 export function coachTeamPath(basicCoachTeamId: string): string {
   return `${COACHES_TEAM_PATH}/${basicCoachTeamId}`;

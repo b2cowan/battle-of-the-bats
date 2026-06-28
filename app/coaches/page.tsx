@@ -56,6 +56,19 @@ export default async function CoachesPortalPage() {
   const hasTournamentRecords = contexts.some(context => context.id === 'coaches-basic:tournament-records');
   const isEmpty = basicTeams.length === 0 && workspaceContexts.length === 0 && !hasTournamentRecords && claimable.length === 0;
 
+  // Skip the hub when there's nothing to choose between: a coach with exactly ONE team
+  // (a free team home OR a Premium workspace) lands straight on that team. The hub only
+  // earns its place when there's a real choice (2+ teams, or a mix). A pending claim is
+  // an action that needs the hub, so never auto-advance past it. Tournament records and
+  // the conversion pitch are reachable from within the single team, so they don't block
+  // the redirect.
+  if (claimable.length === 0 && basicTeams.length + workspaceContexts.length === 1) {
+    if (basicTeams.length === 1) {
+      redirect(coachTeamPath(basicTeams[0].id));
+    }
+    redirect(workspaceContexts[0].destination);
+  }
+
   // Persona-conditional pitch (CP-10): only nudge a coach toward something they don't
   // already have. No pitch for Premium-workspace coaches, the truly-empty (the empty
   // state owns that), or coaches who already run BOTH a free team home + tournaments.

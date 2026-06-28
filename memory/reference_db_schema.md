@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-06-26 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-06-28 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-06-26
+# DB Schema Reference — 2026-06-28
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -161,7 +161,7 @@ id (uuid), team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizat
 - Indexes: rep_program_years_team_id_year_key
 
 ### rep_roster_players
-id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, player_first_name NOT NULL, player_last_name, player_date_of_birth, player_number, guardian_first_name, guardian_last_name, guardian_email, guardian_phone, status, source, tryout_registration_id (uuid) → rep_tryout_registrations.id, notes, admin_notes, created_at, updated_at, primary_position, secondary_position, display_order (integer), source_basic_player_id (uuid)
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, player_first_name NOT NULL, player_last_name, player_date_of_birth, player_number, guardian_first_name, guardian_last_name, guardian_email, guardian_phone, status, source, tryout_registration_id (uuid) → rep_tryout_registrations.id, notes, admin_notes, created_at, updated_at, primary_position, secondary_position, display_order (integer), source_basic_player_id (uuid), medical_notes, emergency_contact_name, emergency_contact_phone, bats, throws, jersey_size
 - Indexes: rep_roster_players_email_idx, rep_roster_players_src_basic_player_uq, rep_roster_players_year_idx
 
 ### rep_season_surplus

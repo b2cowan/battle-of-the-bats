@@ -1817,6 +1817,20 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_roster_players.source_basic_player_id -->
 **`source_basic_player_id`** (uuid, nullable; mig 143) — provenance tag: the `basic_coach_team_players.id` this row was copied from during a free→Premium upgrade (Phase 4). Written ONLY by the upgrade migration/retry path; coach-created rows leave it NULL. Backs **idempotent retry** of a partial upgrade — a partial-unique index `(program_year_id, source_basic_player_id) WHERE source_basic_player_id IS NOT NULL` guarantees a given Basic player can only be copied once (a re-run / concurrent retry skips it). Not a FK (loose tag; the Basic row may be edited/removed independently).
 
+<!-- dict:col:rep_roster_players.medical_notes -->
+**`medical_notes`** (text, nullable; mig 157) — Wave B safety field: allergies / medical conditions / medication, coach-staff-visible. Presence drives a "Medical info" flag on the player profile. Free text.
+
+<!-- dict:col:rep_roster_players.emergency_contact_name -->
+<!-- dict:col:rep_roster_players.emergency_contact_phone -->
+**`emergency_contact_name`** / **`emergency_contact_phone`** (text, nullable; mig 157) — Wave B emergency contact for game-day. Free text; phone is tap-to-call in the UI. Distinct from the guardian contact.
+
+<!-- dict:col:rep_roster_players.bats -->
+<!-- dict:col:rep_roster_players.throws -->
+**`bats`** / **`throws`** (text, nullable; mig 157) — handedness. App-enforced values (`lib/rep-roster-options.ts`): `bats` ∈ {L,R,S (switch)}, `throws` ∈ {L,R}. No DB CHECK (kept flexible); validated/normalized in the roster API.
+
+<!-- dict:col:rep_roster_players.jersey_size -->
+**`jersey_size`** (text, nullable; mig 157) — uniform size. App-enforced fixed list (`lib/rep-roster-options.ts`): YS, YM, YL, AS, AM, AL, AXL. No DB CHECK; validated/normalized in the roster API.
+
 ### `rep_team_coaches`
 <!-- dict:table:rep_team_coaches -->
 

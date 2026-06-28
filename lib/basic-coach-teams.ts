@@ -289,6 +289,61 @@ export async function countActiveTeamMembers(basicCoachTeamId: string): Promise<
 }
 
 /**
+ * Cheap existence/count of a user's ACTIVE Basic coach-team memberships (one membership row per
+ * team per user, so this equals the number of free Coaches Portal teams they're on). Drives the
+ * org-removal "off-org presence" safeguard (account preserved when > 0) and the removal-impact
+ * warning. Head count only — does not hydrate team rows (keep the hot removal path light).
+ */
+export async function countActiveBasicCoachTeamMembershipsForUser(userId: string): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from('basic_coach_team_users')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('status', 'active');
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/**
+ * The ids of Basic coach teams a user is an active member of AND is the SOLE active member of —
+ * i.e. exactly the teams that a hard account-delete would orphan (so they get deleted outright).
+ * Single source of truth for "what a user-delete destroys": both `cleanupBasicCoachTeamsForUserDeletion`
+ * (which deletes them) and the platform-admin pre-delete warning (which counts them) call this, so
+ * the "will be deleted" set can never drift from the "is deleted" set.
+ */
+export async function getSoleOwnedActiveBasicCoachTeamIds(userId: string): Promise<string[]> {
+  const { data: memberships, error: mErr } = await supabaseAdmin
+    .from('basic_coach_team_users')
+    .select('basic_coach_team_id')
+    .eq('user_id', userId)
+    .eq('status', 'active');
+  if (mErr) throw mErr;
+
+  const teamIds = [...new Set((memberships ?? []).map(r => r.basic_coach_team_id as string))];
+  const soleOwned: string[] = [];
+  for (const teamId of teamIds) {
+    if ((await countActiveTeamMembers(teamId)) <= 1) soleOwned.push(teamId);
+  }
+  return soleOwned;
+}
+
+/**
+ * Free-coach impact of deleting a user account — for the platform-admin delete confirmation
+ * (informed-consent warning). `totalTeams` = active Coaches Portal teams the user is on;
+ * `soleOwnedTeams` = how many of those would be PERMANENTLY DELETED (zero remaining members),
+ * carrying their roster/players/fees/history with them.
+ */
+export async function getBasicCoachTeamDeletionImpactForUser(
+  userId: string,
+): Promise<{ totalTeams: number; soleOwnedTeams: number }> {
+  const [totalTeams, soleOwned] = await Promise.all([
+    countActiveBasicCoachTeamMembershipsForUser(userId),
+    getSoleOwnedActiveBasicCoachTeamIds(userId),
+  ]);
+  return { totalTeams, soleOwnedTeams: soleOwned.length };
+}
+
+/**
  * Resolve a single org-less Basic coach team for the signed-in coach, ownership-checked
  * via `basic_coach_team_users`. Returns null when the team does not exist or the user is
  * not an active member — the org-less team-profile route (`/coaches/team/[basicTeamId]`)
@@ -932,19 +987,9 @@ export async function getClaimableRegistrationsForUser(
  * own no sole-member teams).
  */
 export async function cleanupBasicCoachTeamsForUserDeletion(userId: string): Promise<string[]> {
-  // Teams this user is an active member of.
-  const { data: memberships, error: mErr } = await supabaseAdmin
-    .from('basic_coach_team_users')
-    .select('basic_coach_team_id')
-    .eq('user_id', userId)
-    .eq('status', 'active');
-  if (mErr) throw mErr;
-
-  const teamIds = [...new Set((memberships ?? []).map(r => r.basic_coach_team_id as string))];
-  const soleMemberTeamIds: string[] = [];
-  for (const teamId of teamIds) {
-    if ((await countActiveTeamMembers(teamId)) <= 1) soleMemberTeamIds.push(teamId);
-  }
+  // Sole-member teams = exactly the ones a user-delete would orphan. Shared resolver so this
+  // "what gets deleted" set stays identical to the platform-admin pre-delete warning's count.
+  const soleMemberTeamIds = await getSoleOwnedActiveBasicCoachTeamIds(userId);
 
   if (soleMemberTeamIds.length > 0) {
     const { error: delErr } = await supabaseAdmin

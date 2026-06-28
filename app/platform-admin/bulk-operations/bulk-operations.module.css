@@ -105,6 +105,37 @@
   color: var(--logic-lime);
 }
 
+/* Billing-clarity note for the bulk Plan Change action — this writes access only,
+   never Stripe (matches the org-detail screen, walkthrough finding B.1/M2). */
+.billingClarity {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 4px;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.billingClarity p {
+  margin: 0;
+}
+
+.billingClarity p + p {
+  margin-top: 0.5rem;
+}
+
+.billingClarityCaution {
+  border: 1px solid rgba(252, 211, 77, 0.4);
+  background: rgba(252, 211, 77, 0.08);
+  color: #fcd34d;
+}
+
+.billingClarityDanger {
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.1);
+  color: #fca5a5;
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(340px, 0.8fr);
