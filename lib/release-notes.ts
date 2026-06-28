@@ -44,6 +44,20 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-06-28',
+    title: 'See what’s new — and edit your schedule',
+    highlights: [
+      {
+        category: 'new',
+        text: 'There’s now a “What’s New” button — and a public changelog page — so you can keep up with every improvement we ship without hunting for it.',
+      },
+      {
+        category: 'improved',
+        text: 'In the Coaches Portal, you can now edit a game or practice after it’s on the schedule — change the time, place, or opponent without deleting and re-adding it — and you’ll be asked to confirm before any unsaved edit is lost.',
+      },
+    ],
+  },
+  {
     date: '2026-06-26',
     title: 'Install the app to your phone',
     highlights: [
