@@ -27110,6 +27110,60 @@
         "column_default": null
       },
       {
+        "table_name": "rep_roster_players",
+        "pos": 24,
+        "column_name": "medical_notes",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_roster_players",
+        "pos": 25,
+        "column_name": "emergency_contact_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_roster_players",
+        "pos": 26,
+        "column_name": "emergency_contact_phone",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_roster_players",
+        "pos": 27,
+        "column_name": "bats",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_roster_players",
+        "pos": 28,
+        "column_name": "throws",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_roster_players",
+        "pos": 29,
+        "column_name": "jersey_size",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_season_surplus",
         "pos": 1,
         "column_name": "id",
