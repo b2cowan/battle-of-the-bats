@@ -142,11 +142,11 @@ Customer-facing releases get a changelog entry that ships **in the same release*
 npm run draft:notes
 ```
 - The script prints a grouped draft (New / Improved / Fixed) from the conventional commits in range, a **paste-ready skeleton** for `lib/release-notes.ts`, the **dropped** (internal) commits, and the suggested release tag. It never writes anything.
-- **Rewrite** the skeleton into plain customer language (drop internal jargon; the `text` lines are raw commit subjects). Set a real `title`. Pull back any wrongly-dropped customer-facing item.
-- Prepend the finished entry to `RELEASE_ENTRIES` (newest first) and commit it to `dev` (its own commit, or fold into the release commit) **before** promoting. `LATEST_RELEASE_DATE` derives automatically → the in-app "new" dot fires for everyone on deploy.
-- **No customer-facing changes this release?** The script says so — **skip the entry** (don't publish "internal fixes"). Note "no release note (internal-only)" in the summary.
+- **Rewrite** the skeleton into plain customer language (drop internal jargon; the `text` lines are raw commit subjects). Set a real `title`. Pull back any wrongly-dropped customer-facing item. This is your *working draft* — not yet what the user sees.
+- **MANDATORY marketing review (before presenting to the user):** run the working draft through `/marketing` for a brand/tone pass. Hand `/marketing` the proposed entry (title + highlights) and have it tighten wording, fix voice, and flag anything off-brand or over-claiming. Apply its revisions. **Only present the release-notes entry to the user AFTER `/marketing` has revised it** — the user approves the marketing-polished copy, never the raw draft. Note in the summary that the entry is "marketing-reviewed."
+- After the user approves the marketing-reviewed copy: prepend the finished entry to `RELEASE_ENTRIES` (newest first) and commit it to `dev` (its own commit, or fold into the release commit) **before** promoting. `LATEST_RELEASE_DATE` derives automatically → the in-app "new" dot fires for everyone on deploy.
+- **No customer-facing changes this release?** The script says so — **skip the entry** (don't publish "internal fixes"), and skip the marketing review too. Note "no release note (internal-only)" in the summary.
 - **Multiple promotions the same day?** Merge into the single dated entry rather than adding a second same-date entry.
-- Tone-check with `/marketing` only if you want it — not required.
 
 This step is **skipped for `dev` releases** (notes publish at the production promotion, not on staging pushes).
 
