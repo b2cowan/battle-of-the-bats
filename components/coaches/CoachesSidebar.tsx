@@ -8,6 +8,7 @@ import { useChatUnread } from '@/lib/use-chat-unread';
 import { teamWorkspaceDisplayName } from '@/lib/coaches-portal-routes';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import WhatsNewButton from '@/components/whats-new/WhatsNewButton';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 const TEAM_NAV = [
@@ -44,7 +45,12 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
       <div className={styles.sidebarHeader}>
         <div className={styles.sidebarHeaderTop}>
           <p className={styles.sidebarPortalLabel}>Coaches Portal</p>
-          {currentOrg?.id && <NotificationBell orgId={currentOrg.id} />}
+          {currentOrg?.id && (
+            <div className="flex items-center gap-1 ml-auto">
+              <WhatsNewButton />
+              <NotificationBell orgId={currentOrg.id} />
+            </div>
+          )}
         </div>
         <p className={styles.sidebarOrgName}>
           {isTeamWorkspace ? teamWorkspaceDisplayName(currentOrg?.name) : (currentOrg?.name ?? orgSlug)}

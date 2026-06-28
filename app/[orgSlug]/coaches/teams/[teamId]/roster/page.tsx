@@ -14,6 +14,7 @@ import { useOrg } from '@/lib/org-context';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import PositionSelect from '@/components/coaches/PositionSelect';
+import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { teamInitials, teamColorFromName } from '@/lib/teamBadge';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
@@ -236,6 +237,12 @@ export default function RosterPage({
   }
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+
+  const addDirty = addOpen && JSON.stringify(addForm) !== JSON.stringify(BLANK);
+  function requestCloseAdd() {
+    if (addDirty && !window.confirm('Discard this new player?')) return;
+    setAddOpen(false);
+  }
 
   // ── Export helpers ───────────────────────────────────────────────────────────
 
@@ -475,12 +482,14 @@ export default function RosterPage({
       )}
 
       {/* Add player modal */}
+      <UnsavedChangesGuard active={addDirty} />
+
       {addOpen && (
-        <div className={styles.modalOverlay} onClick={() => setAddOpen(false)}>
+        <div className={styles.modalOverlay} onClick={requestCloseAdd}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Add Player</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setAddOpen(false)}><X size={16} /></button>
+              <button className={styles.modalCloseBtn} onClick={requestCloseAdd}><X size={16} /></button>
             </div>
 
             <div className={styles.formGrid}>
@@ -574,7 +583,7 @@ export default function RosterPage({
             </div>
 
             <div className={styles.modalFooter}>
-              <button type="button" className="btn btn-ghost" onClick={() => setAddOpen(false)}>Cancel</button>
+              <button type="button" className="btn btn-ghost" onClick={requestCloseAdd}>Cancel</button>
               <button
                 type="button"
                 className="btn btn-primary"

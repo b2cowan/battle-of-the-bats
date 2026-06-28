@@ -8,6 +8,39 @@
 
 ---
 
+### 2026-06-28 — Mobile app + public tournament discovery: one role-routed app, web-first, store-wrap on trigger
+**Status:** Proposed (owner accepts the direction in principle; no build committed)
+**Decision (proposed):**
+1. **ONE role-routed app, not several.** A single branded FieldLogicHQ app serves four end-user audiences through login-driven sections: (1) tournament **fan**, (2) tournament **coach**, (3) tournament **admin/volunteer**, (4) **premium coach**. Premium coach stays a **section inside the one app**, not a separate app — revisit splitting only if retention data later justifies it.
+2. **Distribution model = "one app, distributed on the web now and in the stores later." The web app *is* the app.** Build features on the web (lands for all users immediately, no app-review tax); when a trigger appears, wrap the finished web app in a **thin native shell (Capacitor-style)** and submit to Apple App Store + Google Play. Explicitly **NOT** a separate rebuilt-from-scratch native codebase (React Native) — that discards the existing mobile-first UX investment and adds a permanent second-codebase maintenance tax for no audience-visible benefit.
+3. **Wrap on a trigger, not a date.** Pursue the store wrapper when one appears: (a) demand for App-Store presence/credibility from owners or prospects, (b) iOS push-notification reliability complaints (the one real gap the existing PWA leaves), (c) a premium-coach daily-use product case, or (d) a native-hardware need.
+4. **Public tournament discovery directory = the strategic crown jewel / marketing flywheel.** Every tournament on the platform discoverable in one place → network effect (more tournaments → more fans browsing → more organizers want in). **Build on the public WEB first** (SEO-indexable, shareable, search-discoverable) — an app-only directory throws away the marketing value. The same directory becomes the app's logged-out front door. Highest-leverage first concrete piece; helps the platform whether or not the store app ever ships.
+5. **Directory visibility = OPT-IN per tournament.** Default is **not** public, so we never publish data an organizer didn't deliberately choose to surface — important for youth-sport privacy (PIPEDA). Live scores/schedules are the logged-out hook; anything with player PII stays behind login.
+**Rationale:** Motivation is **end-user experience + credibility**, not internal ops. The platform is already mobile-first with a working PWA, so the marginal value of native is store presence + reliable iOS push — both captured cheaply by a wrapper, expensively by a rewrite. The directory is the real growth asset and is a *web* feature (SEO/shareability) that an app surfaces, so web-first both de-risks and front-loads the value. (Strategy discussion, 2026-06-28.)
+**Costs (when wrapping):** Apple Developer Program **$99 USD/yr** ongoing (+ Mac or cloud-Mac build service ~$20–60/mo); Google Play **$25 USD** one-time. Wrapper is **one effort covering both platforms**. Apple may scrutinize "just a website wrapper" apps — native push + existing offline shell + browsable directory give it enough native substance to clear review.
+**Affects:** roadmap sequencing, positioning/credibility, marketing acquisition (directory = top-of-funnel), product (opt-in visibility control). **No pricing change.**
+**Handoff:**
+HANDOFF → `/plan`
+- Own the phased plan + PM brief. First concrete piece = the **opt-in public tournament discovery directory on web** (visibility toggle default-off, logged-out browse of live scores/schedules, PII behind login, SEO/shareable). Native store-wrap is a later, trigger-gated phase — scope it but don't sequence it ahead of the directory.
+HANDOFF → `/marketing` (later, not yet)
+- When the directory nears ship: positioning/copy for the public directory as a discovery surface + acquisition framing; messaging for the eventual store presence. Do not write directory copy until `/plan` defines the surface.
+**Relates to:** the existing fan PWA / offline shell + alerts work, the Coaches Portal architecture (premium-coach section), and the public tournament experience.
+
+### 2026-06-28 — Publish public release notes + a "shipped + loose horizon" forward view
+**Status:** Decided (ratified 2026-06-28)
+**Decision:** FieldLogicHQ will communicate product progress publicly via: **(1)** a public **`/changelog`** page on the marketing site listing shipped items (grouped New / Improved / Fixed), plus an **"On the horizon"** section of **3–6 undated themes** — deliberately **no dated public roadmap**; **(2)** an **in-app "What's New"** surface for logged-in admins & coaches with a seen-badge; **(3)** **no email channel in V1** — held for *major* releases later, to the existing consented early-access list (`release_notifications_consent`); **(4)** note generation is **draft-then-approve**, hung off the existing `/release` flow — **never fully auto-published**.
+**Rationale:** Visible momentum drives retention/trust for monthly subscribers; a public changelog is self-serve answer to "do you support X / what's coming" and serves as sales proof next to `/pricing`. **Undated** horizon (not a committed roadmap) captures the trust upside without owning broken public deadlines or tipping the schedule to competitors. Human-in-the-loop publish prevents internal jargon/premature context leaking to customers. No-migration V1 keeps build cost/risk low (notes ship as versioned content with each release, so notes and features cannot drift).
+**Affects:** positioning (public momentum/transparency posture), marketing site (new `/changelog`), in-app admin/coach chrome, the `/release` process, roadmap sequencing.
+**Handoff:**
+HANDOFF → `/marketing`
+- Author the `/changelog` page copy + section framing (New / Improved / Fixed; "On the horizon" intro) in brand voice; ensure it reads as proof-of-momentum, not a promise of dates.
+- Tone-check generated release-note drafts at publish time (plain customer language, no internal scope jargon).
+- Add a changelog link in marketing nav/footer alongside `/pricing` + persona pages.
+HANDOFF → `/plan`
+- Owns `docs/projects/active/RELEASE_NOTES_CHANGELOG_PLAN.md` (+ PM brief) — P1 public changelog + content model, P2 in-app What's New + seen-badge, P3 `/release` draft-and-tag automation.
+**Not in V1 (deferred):** email-on-release to the consented list; cross-device seen-state; a "tell us what to build next" feedback hook from the horizon section.
+**Relates to:** the `/release` agent workflow and the existing early-access consented-email list.
+
 ### 2026-06-26 — In-app paid→paid UPGRADE proration is not built (resolves Club-band open question)
 **Status:** Decided (current-state truth + interim posture; tracks a build gap)
 **Decision:** There is **no in-app path to upgrade between paid plans with proration** — and that is the **known, accepted interim state**, not a silent bug. Self-serve checkout always opens a *new* subscription, so an org that already pays and "upgrades" to a higher paid tier (Tournament Plus → League Plus, or **Club → Club · Association**) would get a **second, parallel subscription = double-billing** rather than a re-priced single one. In-app re-pricing-with-proration exists **only on the downgrade direction** (a paid→lower-paid or paid→free move reconciles Stripe correctly). **Interim rule until the upgrade path is built: paid→higher-paid moves must be done in the Stripe Dashboard** (edit the subscription item + apply proration manually); do not route an existing paying org through self-serve checkout to upgrade.

@@ -4,6 +4,11 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-06-28 — Global marketing footer: brand block (6/12) + two labelled link columns (3/12 each), not one tall stack
+**Decision:** The site-wide marketing footer (`components/Footer.tsx`) splits its links into **two labelled columns** instead of one. Layout: brand wordmark + tagline at `col-span-12 md:col-span-6`, then two link columns at `col-span-6 md:col-span-3` each — **Product** (Discover, Pricing, What’s New) and **Get started** (Start Free, Coaches, Sign In). On mobile the brand block is full-width and the two link columns sit side-by-side (`col-span-6`). Keeps existing idioms: `hud-label` column headers, `font-mono text-xs text-data-gray` links, `hover:text-logic-lime`, wordmark + tagline + copyright row unchanged. The per-page "hide the link for the route you're on" filter is applied **per column**, and a column with zero remaining links hides its heading. No new tokens, no literal hex.
+**Rationale:** The prior 8/12 brand + 4/12 single "Platform" column left a large empty middle and read as one tall narrow ribbon, worsening as links were added (it hit 6 with the new What’s New link). Two balanced columns fill the width, group links by intent (browse vs. act), and scale to a future third "Company/Legal" column without another reflow.
+**Applies to:** `components/Footer.tsx` (global — every marketing/static-root page: `/`, `/discover`, `/pricing`, `/for-*`, `/coaches*`, `/changelog`, `/auth*`).
+
 ### 2026-06-27 — Coaches Portal setup panel, refinement: status bar tracks ALL steps with skip-as-checkoff, and the setup-guide link opens the in-context help DRAWER (not a page nav) — SUPERSEDES parts of the 2026-06-26 entry
 
 **Decision (owner follow-up on the post-upgrade Premium Coaches Portal team Overview):** two refinements to the same-day required/optional setup model.

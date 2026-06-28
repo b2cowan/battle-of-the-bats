@@ -134,6 +134,22 @@ git diff --name-only origin/master..origin/dev
   ```
   If it has **not** been verified on deployed dev, **STOP** and do that first — local `npm run build` / `tsc` passing is **not** sufficient evidence for this class of change.
 
+### 1d-3 — Release notes (master / promote targets only)
+
+Customer-facing releases get a changelog entry that ships **in the same release** (the public `/changelog` page + the in-app "What's New" both read `lib/release-notes.ts`). This is **draft-then-approve** — never auto-published. Because the note ships with the code, it must be **committed on `dev` before the promotion**.
+
+```powershell
+npm run draft:notes
+```
+- The script prints a grouped draft (New / Improved / Fixed) from the conventional commits in range, a **paste-ready skeleton** for `lib/release-notes.ts`, the **dropped** (internal) commits, and the suggested release tag. It never writes anything.
+- **Rewrite** the skeleton into plain customer language (drop internal jargon; the `text` lines are raw commit subjects). Set a real `title`. Pull back any wrongly-dropped customer-facing item.
+- Prepend the finished entry to `RELEASE_ENTRIES` (newest first) and commit it to `dev` (its own commit, or fold into the release commit) **before** promoting. `LATEST_RELEASE_DATE` derives automatically → the in-app "new" dot fires for everyone on deploy.
+- **No customer-facing changes this release?** The script says so — **skip the entry** (don't publish "internal fixes"). Note "no release note (internal-only)" in the summary.
+- **Multiple promotions the same day?** Merge into the single dated entry rather than adding a second same-date entry.
+- Tone-check with `/marketing` only if you want it — not required.
+
+This step is **skipped for `dev` releases** (notes publish at the production promotion, not on staging pushes).
+
 ### 1e — Release summary
 
 After all checks pass:
@@ -147,6 +163,7 @@ Commits:  [N commits ahead of target, not counting the pending commit if dirty]
 TS check: ✅ clean
 Migrations: [master/promote only: ✅ prod in sync / ✖ prod BEHIND dev — see check:migrations | dev: n/a]
 Deploy-only: [master/promote only: ✅ verified on deployed dev / n/a — no native/build-config changes | dev: n/a]
+Release notes: [master/promote only: ✅ entry committed on dev / ⏭ skipped — internal-only release | dev: n/a]
 AWS CLI:  [✅ available / ⚠️  not configured — log fetching unavailable]
 
 [If working tree was dirty, include this block:]
@@ -195,6 +212,13 @@ git push origin HEAD:dev
 ```powershell
 git push origin dev:master
 ```
+
+**Tag the release (master / promote, after a successful push):** so the next `npm run draft:notes` range is exact. Use the date the entry carries.
+```powershell
+git tag release/$(Get-Date -Format yyyy-MM-dd)
+git push origin release/$(Get-Date -Format yyyy-MM-dd)
+```
+(If a tag for today already exists — a second same-day promotion — skip; the merged note already covers it.)
 
 **Promote target** (`/release promote` only):
 ```powershell
@@ -261,6 +285,12 @@ https://console.aws.amazon.com/amplify/home#/apps/d3ld0l2bgmmlga/deployments
 After confirmation, run:
 ```powershell
 git push origin origin/dev:master
+```
+
+Then **tag the release** (skip if today's tag already exists):
+```powershell
+git tag release/$(Get-Date -Format yyyy-MM-dd)
+git push origin release/$(Get-Date -Format yyyy-MM-dd)
 ```
 
 Note: `/release promote` skips the TypeScript check (the code already built successfully in Amplify dev — no need to re-check locally).

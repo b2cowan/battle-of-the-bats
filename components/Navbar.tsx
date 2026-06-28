@@ -34,6 +34,7 @@ function isMarketingPath(pathname: string) {
     pathname.startsWith('/for-') ||
     pathname.startsWith('/coaches') ||
     pathname.startsWith('/pricing') ||
+    pathname.startsWith('/changelog') ||
     pathname.startsWith('/auth') ||
     pathname.startsWith('/my')
   );

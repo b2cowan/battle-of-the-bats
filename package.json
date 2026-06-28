@@ -15,7 +15,8 @@
     "check:dictionary": "node scripts/check-dictionary-coverage.mjs",
     "check:snapshots": "node scripts/check-snapshot-freshness.mjs",
     "check:migrations": "node scripts/check-prod-migration-drift.mjs",
-    "refresh:snapshots": "node scripts/refresh-db-snapshots.mjs"
+    "refresh:snapshots": "node scripts/refresh-db-snapshots.mjs",
+    "draft:notes": "node scripts/draft-release-notes.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

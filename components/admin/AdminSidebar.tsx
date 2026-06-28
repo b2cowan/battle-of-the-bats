@@ -12,6 +12,7 @@ import {
 import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import WhatsNewButton from '@/components/whats-new/WhatsNewButton';
 import { signOut } from '@/lib/auth';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { useOrg } from '@/lib/org-context';
@@ -262,7 +263,12 @@ export default function AdminSidebar() {
             <div className={styles.logoSub}>{currentOrg?.name ?? 'Admin'}</div>
           </div>
         </div>
-        {currentOrg?.id && <NotificationBell orgId={currentOrg.id} />}
+        {currentOrg?.id && (
+          <div className="flex items-center gap-1 ml-auto">
+            <WhatsNewButton />
+            <NotificationBell orgId={currentOrg.id} />
+          </div>
+        )}
       </div>
 
       <div className={styles.sidebarScroll}>

@@ -5,6 +5,7 @@ import { Users2, UserPlus, ShieldCheck, BookOpen, ChevronDown, Settings2, Mail, 
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { PLAN_CONFIG } from '@/lib/plan-config';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpTooltip from '@/components/help/HelpTooltip';
@@ -226,7 +227,10 @@ export default function MembersPage() {
     if (!currentOrg) return;
     loadMembers();
     loadTournaments();
-    loadRepGroups();
+    // Rep groups only exist on Club-tier (module_rep_teams). Skip the fetch on
+    // other plans — the endpoint would correctly 403 and leave a red error in
+    // the console for an optional, gracefully-hidden assignment section.
+    if (hasModuleEntitlement(currentOrg, 'module_rep_teams')) loadRepGroups();
   }, [currentOrg]);
 
   async function loadMembers() {

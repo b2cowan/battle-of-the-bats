@@ -1,0 +1,255 @@
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.hero {
+  padding: 6rem 0 4rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.heroBg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 15% 0%, rgba(var(--blueprint-blue-rgb), 0.1) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.heroEyebrow {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.heroTitle {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 5.5vw, 4rem);
+  font-weight: 900;
+  color: var(--fl-text);
+  line-height: 1.05;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.01em;
+}
+
+.heroAccent {
+  color: var(--logic-lime);
+}
+
+.heroSub {
+  font-family: var(--font-data);
+  font-size: 0.95rem;
+  color: var(--data-gray);
+  max-width: 56ch;
+  line-height: 1.7;
+}
+
+/* ── Section scaffolding ─────────────────────────────────────────────────── */
+.section,
+.horizonSection {
+  padding: 4.5rem 0;
+}
+
+.horizonSection {
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  background: rgba(var(--blueprint-blue-rgb), 0.04);
+}
+
+.sectionEyebrow {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-weight: 900;
+  color: var(--fl-text);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-bottom: 1rem;
+}
+
+.sectionSub {
+  font-family: var(--font-data);
+  font-size: 0.9rem;
+  color: var(--data-gray);
+  max-width: 56ch;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+/* ── Timeline of releases ────────────────────────────────────────────────── */
+.timeline {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: 14rem 1fr;
+  gap: 2rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+}
+
+.entry:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.entryMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.entryDate {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--logic-lime);
+}
+
+.entryTitle {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  line-height: 1.25;
+}
+
+.highlights {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.highlight {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.highlightText {
+  font-family: var(--font-data);
+  font-size: 0.9rem;
+  color: var(--data-gray);
+  line-height: 1.6;
+  padding-top: 0.1rem;
+}
+
+/* ── Category tags ───────────────────────────────────────────────────────── */
+.tag {
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid transparent;
+  min-width: 4.75rem;
+  text-align: center;
+}
+
+.tagNew {
+  background: rgba(var(--logic-lime-rgb), 0.14);
+  border-color: rgba(var(--logic-lime-rgb), 0.35);
+  color: var(--logic-lime);
+}
+
+.tagImproved {
+  background: rgba(var(--blueprint-blue-rgb), 0.3);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.7);
+  color: var(--fl-text);
+}
+
+.tagFixed {
+  background: transparent;
+  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
+  color: var(--data-gray);
+}
+
+/* ── On the horizon ──────────────────────────────────────────────────────── */
+.horizonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1.25rem;
+}
+
+.horizonCard {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(var(--blueprint-blue-rgb), 0.06);
+  padding: 1.5rem;
+}
+
+.horizonCardTitle {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  margin-bottom: 0.6rem;
+  line-height: 1.25;
+}
+
+.horizonCardBody {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  color: var(--data-gray);
+  line-height: 1.65;
+}
+
+/* ── Bottom CTA ──────────────────────────────────────────────────────────── */
+.ctaSection {
+  padding: 5rem 0 6rem;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
+  text-align: center;
+}
+
+.ctaTitle {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 900;
+  color: var(--fl-text);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-bottom: 2rem;
+  max-width: 24ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ctaAccent {
+  color: var(--logic-lime);
+}
+
+.ctaActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .entry {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}

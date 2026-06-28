@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
   buildFilename, serializeRows, serializeHeaders, downloadPDF, DEFAULT_PDF_SETTINGS,
@@ -147,6 +148,34 @@ function isoFromInputs(date: string, time: string) {
   return `${date}T${time}`;
 }
 
+// ISO/stored datetime → a `datetime-local` input value (YYYY-MM-DDTHH:mm, local).
+function toLocalInput(iso: string | null | undefined): string {
+  if (!iso) return '';
+  if (/[zZ]|[+-]\d\d:?\d\d$/.test(iso)) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso.slice(0, 16);
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  return iso.slice(0, 16);
+}
+
+function eventToForm(e: RepTeamEvent): EventForm {
+  return {
+    ...BLANK_FORM,
+    eventType: e.eventType,
+    name: e.name ?? '',
+    description: e.description ?? '',
+    startsAt: toLocalInput(e.startsAt),
+    endsAt: toLocalInput(e.endsAt),
+    location: e.location ?? '',
+    opponent: e.opponent ?? '',
+    homeAway: e.homeAway ?? '',
+    parentEventId: e.parentEventId ?? '',
+    isRecurring: false, // edit a single occurrence's details; recurrence isn't re-editable here
+  };
+}
+
 function monthKey(iso: string) {
   const d = new Date(iso);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -269,7 +298,10 @@ export default function CoachesSchedulePage({
   const [cursorDate, setCursorDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   const [selectedEvent, setSelectedEvent] = useState<RepTeamEvent | null>(null);
+  const [slideTab, setSlideTab] = useState<'attendance' | 'lineup' | 'result'>('attendance');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [formBaseline, setFormBaseline] = useState('');
   const [addTypeMenuOpen, setAddTypeMenuOpen] = useState(false);
   const [form, setForm] = useState<EventForm>(BLANK_FORM);
   const [saving, setSaving] = useState(false);
@@ -389,12 +421,79 @@ export default function CoachesSchedulePage({
 
   function openAddForm(type: RepEventType) {
     setAddTypeMenuOpen(false);
-    setForm({ ...BLANK_FORM, eventType: type });
+    const blank = { ...BLANK_FORM, eventType: type };
+    setForm(blank);
+    setFormBaseline(JSON.stringify(blank));
+    setEditingEventId(null);
     setSaveError('');
     setShowAddForm(true);
   }
 
+  function openEditForm(event: RepTeamEvent) {
+    const f = eventToForm(event);
+    setForm(f);
+    setFormBaseline(JSON.stringify(f));
+    setEditingEventId(event.id);
+    setSaveError('');
+    closeSelectedEvent();
+    setShowAddForm(true);
+  }
+
+  const formDirty = showAddForm && JSON.stringify(form) !== formBaseline;
+
+  // Tabs for the event slide-over (keeps it short instead of one long stack)
+  const isGameEvent = !!selectedEvent &&
+    ['league_game', 'tournament_game', 'scrimmage'].includes(selectedEvent.eventType);
+  const slideTabs: { key: 'attendance' | 'lineup' | 'result'; label: string }[] = [{ key: 'attendance', label: 'Attendance' }];
+  if (isLineupEvent(selectedEvent)) slideTabs.push({ key: 'lineup', label: 'Lineup' });
+  if (isGameEvent) slideTabs.push({ key: 'result', label: 'Result' });
+  const activeSlideTab = slideTabs.some(t => t.key === slideTab) ? slideTab : 'attendance';
+
+  function openEvent(event: RepTeamEvent) {
+    setSlideTab('attendance');
+    setSelectedEvent(event);
+  }
+
+  function requestCloseForm() {
+    if (formDirty && !window.confirm('Discard your changes to this event?')) return;
+    setShowAddForm(false);
+    setEditingEventId(null);
+  }
+
+  async function handleUpdate() {
+    if (!editingEventId) return;
+    setSaveError('');
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${editingEventId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          description: form.description.trim() || null,
+          startsAt: form.startsAt || null,
+          endsAt: form.endsAt || null,
+          location: form.location.trim() || null,
+          opponent: form.opponent.trim() || null,
+          homeAway: form.homeAway || null,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(d.error ?? 'Save failed');
+      }
+      setShowAddForm(false);
+      setEditingEventId(null);
+      await fetchEvents();
+    } catch (e: unknown) {
+      setSaveError(errorMessage(e, 'Save failed'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleSave() {
+    if (editingEventId) return handleUpdate();
     setSaveError('');
     setSaving(true);
     try {
@@ -794,7 +893,7 @@ export default function CoachesSchedulePage({
           <div className={styles.calMonthLabel}>{label}</div>
           <div className={styles.calEventList}>
             {evts.map(e => (
-              <EventChip key={e.id} event={e} onClick={() => setSelectedEvent(e)} />
+              <EventChip key={e.id} event={e} onClick={() => openEvent(e)} />
             ))}
           </div>
         </div>
@@ -823,7 +922,7 @@ export default function CoachesSchedulePage({
                 {dayEvents.length === 0
                   ? <span className={styles.calWeekEmpty}>—</span>
                   : dayEvents.map(e => (
-                    <EventChip key={e.id} event={e} onClick={() => setSelectedEvent(e)} />
+                    <EventChip key={e.id} event={e} onClick={() => openEvent(e)} />
                   ))
                 }
               </div>
@@ -865,7 +964,7 @@ export default function CoachesSchedulePage({
                     className={styles.calMonthEventDot}
                     style={{ background: EVENT_COLORS[e.eventType], ...(e.status === 'cancelled' ? { opacity: 0.55, textDecoration: 'line-through' } : {}) }}
                     title={e.status === 'cancelled' ? `${e.name} (cancelled)` : e.name}
-                    onClick={() => setSelectedEvent(e)}
+                    onClick={() => openEvent(e)}
                   >
                     {e.name.slice(0, 14)}
                   </button>
@@ -1014,6 +1113,72 @@ export default function CoachesSchedulePage({
               {selectedEvent.isRecurring && <><dt>Recurring</dt><dd>Yes (weekly practice)</dd></>}
             </dl>
 
+            {/* Primary actions — kept at the top so they're never buried under attendance/lineup */}
+            <div className={styles.slideOverActions}>
+              {!deleteConfirm ? (
+                <>
+                  <button className={styles.btnSecondary} disabled={saving} onClick={() => openEditForm(selectedEvent)}>
+                    Edit details
+                  </button>
+                  <button className={styles.btnGhost} disabled={saving} onClick={handleToggleCancel}>
+                    {selectedEvent.status === 'cancelled' ? 'Restore event' : 'Cancel event'}
+                  </button>
+                  <button className={styles.btnDanger} onClick={() => setDeleteConfirm({ eventId: selectedEvent.id, isRecurring: selectedEvent.isRecurring })}>
+                    Delete
+                  </button>
+                </>
+              ) : (
+                <div className={styles.deleteConfirm}>
+                  <p className={styles.deleteConfirmMsg}>
+                    {deleteConfirm.isRecurring ? 'Delete this recurring practice:' : `Delete "${selectedEvent.name}"?`}
+                  </p>
+                  <div className={styles.deleteConfirmBtns}>
+                    {deleteConfirm.isRecurring ? (
+                      <>
+                        <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'one')}>This only</button>
+                        <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'remaining')}>This &amp; future</button>
+                        <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'all')}>All</button>
+                      </>
+                    ) : (
+                      <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'one')}>Confirm delete</button>
+                    )}
+                    <button className={styles.btnGhost} onClick={() => setDeleteConfirm(null)}>Cancel</button>
+                  </div>
+                  {saveError && <p className={styles.errorText}>{saveError}</p>}
+                </div>
+              )}
+            </div>
+
+            {selectedEvent.eventType === 'external_tournament' && (
+              <div style={{ marginTop: '0.75rem' }}>
+                <button className={styles.btnSecondary} onClick={() => {
+                  setSelectedEvent(null);
+                  openAddForm('tournament_game');
+                  setForm(f => ({ ...f, parentEventId: selectedEvent.id, name: `${selectedEvent.name} – Game` }));
+                }}>
+                  + Add Game Slot
+                </button>
+              </div>
+            )}
+
+            {slideTabs.length > 1 && (
+              <div className={styles.slideTabs} role="tablist">
+                {slideTabs.map(t => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeSlideTab === t.key}
+                    className={`${styles.slideTab} ${activeSlideTab === t.key ? styles.slideTabActive : ''}`}
+                    onClick={() => setSlideTab(t.key)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {activeSlideTab === 'attendance' && (
             <div className={styles.attendanceSection}>
               <div className={styles.attendanceHeader}>
                 <div>
@@ -1099,8 +1264,9 @@ export default function CoachesSchedulePage({
               </div>
               {attendanceError && <p className={styles.errorText}>{attendanceError}</p>}
             </div>
+            )}
 
-            {isLineupEvent(selectedEvent) && (
+            {activeSlideTab === 'lineup' && isLineupEvent(selectedEvent) && (
               <div className={styles.lineupSection}>
                 <div className={styles.lineupHeader}>
                   <div>
@@ -1249,8 +1415,8 @@ export default function CoachesSchedulePage({
               </div>
             )}
 
-            {/* Score */}
-            {(selectedEvent.eventType === 'league_game' || selectedEvent.eventType === 'tournament_game' || selectedEvent.eventType === 'scrimmage') && (
+            {/* Result */}
+            {activeSlideTab === 'result' && (selectedEvent.eventType === 'league_game' || selectedEvent.eventType === 'tournament_game' || selectedEvent.eventType === 'scrimmage') && (
               <div className={styles.scoreSection}>
                 {selectedEvent.homeScore != null ? (
                   <div className={styles.scoreDisplay}>
@@ -1296,65 +1462,20 @@ export default function CoachesSchedulePage({
               </div>
             )}
 
-            {/* Add game slot for tournaments */}
-            {selectedEvent.eventType === 'external_tournament' && (
-              <div style={{ marginTop: '1rem' }}>
-                <button className={styles.btnSecondary} onClick={() => {
-                  setSelectedEvent(null);
-                  openAddForm('tournament_game');
-                  setForm(f => ({ ...f, parentEventId: selectedEvent.id, name: `${selectedEvent.name} – Game` }));
-                }}>
-                  + Add Game Slot
-                </button>
-              </div>
-            )}
-
-            {/* Cancel / restore + Delete */}
-            <div className={styles.slideOverActions}>
-              {!deleteConfirm ? (
-                <>
-                  <button className={styles.btnGhost} disabled={saving} onClick={handleToggleCancel}>
-                    {selectedEvent.status === 'cancelled' ? 'Restore event' : 'Cancel event'}
-                  </button>
-                  <button className={styles.btnDanger} onClick={() => setDeleteConfirm({ eventId: selectedEvent.id, isRecurring: selectedEvent.isRecurring })}>
-                    Delete
-                  </button>
-                </>
-              ) : (
-                <div className={styles.deleteConfirm}>
-                  <p className={styles.deleteConfirmMsg}>
-                    {deleteConfirm.isRecurring
-                      ? 'Delete this recurring practice:'
-                      : `Delete "${selectedEvent.name}"?`
-                    }
-                  </p>
-                  <div className={styles.deleteConfirmBtns}>
-                    {deleteConfirm.isRecurring ? (
-                      <>
-                        <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'one')}>This only</button>
-                        <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'remaining')}>This & future</button>
-                        <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'all')}>All</button>
-                      </>
-                    ) : (
-                      <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'one')}>Confirm delete</button>
-                    )}
-                    <button className={styles.btnGhost} onClick={() => setDeleteConfirm(null)}>Cancel</button>
-                  </div>
-                  {saveError && <p className={styles.errorText}>{saveError}</p>}
-                </div>
-              )}
-            </div>
           </div>
         </div>
       )}
 
-      {/* ── Add event modal ────────────────────────────────────────────────── */}
+      {/* Warn before leaving with unsaved event / attendance / lineup edits */}
+      <UnsavedChangesGuard active={formDirty || attendanceDirty || lineupDirty} />
+
+      {/* ── Add / edit event modal ─────────────────────────────────────────── */}
       {showAddForm && (
-        <div className={styles.modalOverlay} onClick={() => setShowAddForm(false)}>
+        <div className={styles.modalOverlay} onClick={requestCloseForm}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add {EVENT_LABELS[form.eventType]}</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setShowAddForm(false)}><X size={16} /></button>
+              <h3 className={styles.modalTitle}>{editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}</h3>
+              <button className={styles.modalCloseBtn} onClick={requestCloseForm}><X size={16} /></button>
             </div>
 
             <div className={styles.formGrid}>
@@ -1363,7 +1484,7 @@ export default function CoachesSchedulePage({
                 <input className={styles.input} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder={`${EVENT_LABELS[form.eventType]} name`} />
               </div>
 
-              {needsRecurrence(form.eventType) && (
+              {needsRecurrence(form.eventType) && !editingEventId && (
                 <div className={`${styles.field} ${styles.formGridFull}`}>
                   <label className={styles.label}>
                     <input type="checkbox" checked={form.isRecurring} onChange={e => setForm(f => ({ ...f, isRecurring: e.target.checked }))} style={{ marginRight: '0.4rem' }} />{' '}
@@ -1442,9 +1563,9 @@ export default function CoachesSchedulePage({
             {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
 
             <div className={styles.modalFooter}>
-              <button className={styles.btnGhost} onClick={() => setShowAddForm(false)}>Cancel</button>
+              <button className={styles.btnGhost} onClick={requestCloseForm}>Cancel</button>
               <button className={styles.btnPrimary} disabled={saving || !form.name.trim()} onClick={handleSave}>
-                {saving ? 'Saving…' : 'Save'}
+                {saving ? 'Saving…' : editingEventId ? 'Save changes' : 'Save'}
               </button>
             </div>
           </div>

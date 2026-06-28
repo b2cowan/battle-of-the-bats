@@ -4,7 +4,29 @@ import { usePathname } from 'next/navigation';
 import { isCoachPortalShellPath } from '@/lib/coaches-portal-routes';
 
 // Static top-level routes that live outside the org-slug space and should show the footer.
-const STATIC_ROOTS = new Set(['discover', 'pricing', 'auth', 'coaches', 'blog']);
+const STATIC_ROOTS = new Set(['discover', 'pricing', 'auth', 'coaches', 'blog', 'changelog']);
+
+// Footer link columns. Each group renders as a labelled column; the link for the
+// page you're currently on is filtered out, and a column with no remaining links
+// hides its heading.
+const FOOTER_GROUPS = [
+  {
+    heading: 'Product',
+    links: [
+      ['Discover', '/discover'],
+      ['Pricing', '/pricing'],
+      ['What’s New', '/changelog'],
+    ],
+  },
+  {
+    heading: 'Get started',
+    links: [
+      ['Start Free', '/auth/signup'],
+      ['Coaches', '/coaches/start'],
+      ['Sign In', '/auth/login'],
+    ],
+  },
+] as const;
 
 export default function Footer() {
   const pathname = usePathname();
@@ -28,7 +50,7 @@ export default function Footer() {
     <footer className="border-t border-blueprint-blue/30 bg-pitch-black mt-24">
       <div className="max-w-6xl mx-auto px-6 py-12">
         <div className="grid grid-cols-12 gap-8 mb-12">
-          <div className="col-span-12 md:col-span-8">
+          <div className="col-span-12 md:col-span-6">
             <div className="font-mono font-bold text-xl tracking-tighter mb-3">
               <span className="text-fl-text">FIELD</span>
               <span className="text-logic-lime">LOGIC</span>
@@ -39,18 +61,24 @@ export default function Footer() {
             </p>
           </div>
 
-          <div className="col-span-12 md:col-span-4">
-            <div className="hud-label mb-4">Platform</div>
-            <ul className="space-y-2">
-              {([['Start Free', '/auth/signup'], ['Discover', '/discover'], ['Coaches', '/coaches/start'], ['Pricing', '/pricing'], ['Sign In', '/auth/login']] as const).filter(([, href]) => href !== pathname).map(([label, href]) => (
-                <li key={href}>
-                  <Link href={href} className="font-mono text-xs text-data-gray hover:text-logic-lime transition-colors">
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {FOOTER_GROUPS.map(group => {
+            const links = group.links.filter(([, href]) => href !== pathname);
+            if (links.length === 0) return null;
+            return (
+              <div key={group.heading} className="col-span-6 md:col-span-3">
+                <div className="hud-label mb-4">{group.heading}</div>
+                <ul className="space-y-2">
+                  {links.map(([label, href]) => (
+                    <li key={href}>
+                      <Link href={href} className="font-mono text-xs text-data-gray hover:text-logic-lime transition-colors">
+                        {label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
         </div>
 
         <div className="border-t border-blueprint-blue/20 pt-6">

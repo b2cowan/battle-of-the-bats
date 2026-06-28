@@ -989,13 +989,19 @@
 }
 .modalCloseBtn:hover { color: rgba(255,255,255,0.8); }
 
+/* Sticky footer — pins to the modal's bottom so Save stays visible while a long
+   modal body scrolls. Inert (sits normally) when the modal doesn't scroll. */
 .modalFooter {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
-  margin-top: 1.25rem;
-  padding-top: 1rem;
+  margin: 1.25rem -1.5rem -1.5rem;   /* bleed to the modal edges (modal padding = 1.5rem) */
+  padding: 1rem 1.5rem;
   border-top: 1px solid rgba(255,255,255,0.07);
+  background: var(--card-bg);
 }
 
 /* ── Form fields ────────────────────────────────────────────────────────── */
@@ -1458,7 +1464,29 @@
 }
 .slideOverDetails dt { color: var(--white-35); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
 .slideOverDetails dd { color: var(--white-90); margin: 0; }
-.slideOverActions { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.07); display: flex; gap: 0.5rem; }
+.slideOverActions { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.07); display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* Tabs inside the event slide-over (Attendance / Lineup / Result) */
+.slideTabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin: 1.25rem 0 0.25rem;
+}
+.slideTab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--white-45);
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+.slideTab:hover { color: var(--white-75); }
+.slideTabActive { color: var(--blueprint-blue); border-bottom-color: var(--blueprint-blue); }
 
 .eventTypePill { font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
 
@@ -1729,11 +1757,13 @@
 .deleteConfirmMsg { font-size: 0.88rem; color: rgba(255,255,255,0.7); margin: 0; }
 .deleteConfirmBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
+/* Primary action — logic-lime fill, dark text (app-wide convention, matches the
+   global .btn-lime and the lime Add Event / Add Player / profile-save buttons). */
 .btnPrimary {
   display: inline-flex; align-items: center; gap: 0.35rem;
-  background: var(--blueprint-blue); color: var(--white);
+  background: var(--logic-lime); color: var(--pitch-black);
   border: none; border-radius: 6px; padding: 0.45rem 0.9rem;
-  font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+  font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s;
 }
 .btnPrimary:hover { opacity: 0.88; }
 .btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
