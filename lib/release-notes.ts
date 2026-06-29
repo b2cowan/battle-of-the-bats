@@ -44,6 +44,24 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-06-29',
+    title: 'Set your lineup in a click — and get your tournament found',
+    highlights: [
+      {
+        category: 'new',
+        text: 'In the Premium Coaches Portal, the lineup tool now does the heavy lifting: auto-build a fair batting order and fielding positions, with a heads-up when two players land in the same spot or someone’s about to sit two innings in a row. Save a lineup to reuse next game, and print a full-page dugout sheet for the bench.',
+      },
+      {
+        category: 'improved',
+        text: 'Also in the Premium Coaches Portal, setting up a game, practice, or tournament now shows only the fields that matter for that event and names your games for you. Games can carry the details parents always ask about — arrival time, field or diamond number, and uniform — plus a location address that opens in maps and labelled links (a drill video, a rules page, a field map) you can attach to any event.',
+      },
+      {
+        category: 'new',
+        text: 'There’s now a public tournament finder where anyone can browse and search events by sport, location, and date. Listing is your choice — switch any tournament on (it’s off by default) and it links straight to your existing public page. It’s free.',
+      },
+    ],
+  },
+  {
     date: '2026-06-28',
     title: 'See what’s new — and edit your schedule',
     highlights: [
