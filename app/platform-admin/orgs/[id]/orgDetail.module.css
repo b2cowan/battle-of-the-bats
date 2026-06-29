@@ -516,12 +516,13 @@
 }
 
 .planSafetyGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.65rem;
 }
 
 .planMetric {
+  flex: 1 1 0;
   min-width: 0;
   padding: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.07);
@@ -632,7 +633,7 @@
   flex-basis: 100%;
 }
 
-.expiredWarning {
+.expiringWarning {
   font-family: var(--font-data);
   font-size: 0.6rem;
   font-weight: 700;
@@ -941,6 +942,12 @@
   overflow-wrap: anywhere;
 }
 
+/* Space a billing-clarity / warning box off the summary box it follows in confirm modals */
+.modalPreview + .billingClarity,
+.modalPreview + .warningNote {
+  margin-top: 0.85rem;
+}
+
 .modalActions {
   display: flex;
   justify-content: flex-end;
@@ -1067,7 +1074,7 @@
   .contextGrid,
   .workflowGrid,
   .planSafetyGrid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .snapshotItem {

@@ -13,6 +13,7 @@ import { DEFAULT_ROSTER_WAIVER_TEXT, ROSTER_WAIVER_TEXT_MAX_LENGTH } from '@/lib
 import type { GameTimingScope, TieBreakerScope, FeeScope, TournamentStatus, TournamentFormat } from '@/lib/types';
 import TieBreakerEditor from '@/components/admin/TieBreakerEditor';
 import { normalizeTieBreakers, clampRunDiffCap, DEFAULT_TIE_BREAKERS, type TieBreaker } from '@/lib/tie-breakers';
+import { CANADIAN_PROVINCES } from '@/lib/canadian-provinces';
 import styles from '../../branding/branding.module.css';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
@@ -122,6 +123,9 @@ export default function TournamentEventSettingsPage() {
   // Contact visibility per audience — default on so existing events are unchanged (migration 120)
   const [contactShowToCoaches, setContactShowToCoaches] = useState(true);
   const [contactShowOnPublic, setContactShowOnPublic] = useState(true);
+  // Public discovery directory opt-in (migration 158) — default OFF (privacy-safe).
+  const [listInDirectory, setListInDirectory] = useState(false);
+  const [directoryProvince, setDirectoryProvince] = useState('');
   const [orgMembers, setOrgMembers] = useState<OrgMemberOption[]>([]);
   const [ownerMember, setOwnerMember] = useState<OrgMemberOption | null>(null);
 
@@ -161,6 +165,8 @@ export default function TournamentEventSettingsPage() {
     notifyMode: 'all' as 'all' | 'assigned',
     contactShowToCoaches: true,
     contactShowOnPublic: true,
+    listInDirectory: false,
+    directoryProvince: '',
   });
 
   // Save lifecycle
@@ -222,6 +228,9 @@ export default function TournamentEventSettingsPage() {
         // Absent (legacy rows) means visible, matching the column default.
         const csCoaches = t.contact_show_to_coaches !== false;
         const csPublic = t.contact_show_on_public !== false;
+        // Public directory opt-in (migration 158) — absent/false means unlisted.
+        const listInDir = t.list_in_directory === true;
+        const dirProvince = typeof t.directory_province === 'string' ? t.directory_province : '';
         const gd = typeof t.settings?.game_duration_minutes === 'number' ? t.settings.game_duration_minutes : 90;
         const buf = typeof t.settings?.buffer_minutes === 'number' ? t.settings.buffer_minutes : 15;
         const venueMoveBuf = typeof t.settings?.schedule_travel_venue_buffer_minutes === 'number' ? t.settings.schedule_travel_venue_buffer_minutes : 0;
@@ -312,6 +321,8 @@ export default function TournamentEventSettingsPage() {
         setNotifyMode(nm);
         setContactShowToCoaches(csCoaches);
         setContactShowOnPublic(csPublic);
+        setListInDirectory(listInDir);
+        setDirectoryProvince(dirProvince);
         setSaved(s => ({
           ...s,
           name, year, slug, status,
@@ -325,6 +336,7 @@ export default function TournamentEventSettingsPage() {
           tieBreakerScope: tbs, tieBreakers: safeTb, runDiffCap: rdCapStr,
           notifyTeamsOnComplete: notify, defaultContactMemberId: contactId, notifyMode: nm,
           contactShowToCoaches: csCoaches, contactShowOnPublic: csPublic,
+          listInDirectory: listInDir, directoryProvince: dirProvince,
           coachEmailConfirmation: ceConfirm, coachEmailAcceptance: ceAccept,
           coachEmailRejection: ceReject, coachEmailPayment: cePay,
           coachEmailSchedule: ceSchedule, coachEmailGameDay: ceGameDay,
@@ -434,6 +446,8 @@ export default function TournamentEventSettingsPage() {
                 notifyMode,
                 contactShowToCoaches,
                 contactShowOnPublic,
+                listInDirectory,
+                directoryProvince,
               },
             }),
           }),
@@ -525,6 +539,7 @@ export default function TournamentEventSettingsPage() {
           tieBreakerScope, tieBreakers: [...tieBreakers], runDiffCap,
           scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
           contactShowToCoaches, contactShowOnPublic,
+          listInDirectory, directoryProvince,
           coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
           coachEmailSchedule, coachEmailGameDay, coachEmailPauseAll,
           rosterRequire, rosterRequireDob, rosterRequireJersey, rosterRequireWaiver,
@@ -552,6 +567,7 @@ export default function TournamentEventSettingsPage() {
     rosterRequire, rosterRequireDob, rosterRequireJersey, rosterRequireWaiver,
     rosterWaiverText, rosterMinPlayers, rosterMaxPlayers,
     contactShowToCoaches, contactShowOnPublic,
+    listInDirectory, directoryProvince,
   ]);
 
   // ── Auto-save effect — fires 1.2 s after any non-status, non-slug change ──
@@ -589,6 +605,8 @@ export default function TournamentEventSettingsPage() {
       notifyMode !== saved.notifyMode ||
       contactShowToCoaches !== saved.contactShowToCoaches ||
       contactShowOnPublic !== saved.contactShowOnPublic ||
+      listInDirectory !== saved.listInDirectory ||
+      directoryProvince !== saved.directoryProvince ||
       coachEmailConfirmation !== saved.coachEmailConfirmation ||
       coachEmailAcceptance !== saved.coachEmailAcceptance ||
       coachEmailRejection !== saved.coachEmailRejection ||
@@ -619,6 +637,7 @@ export default function TournamentEventSettingsPage() {
     tieBreakers, tieBreakerScope, runDiffCap,
     scorePolicyMode, notifyTeamsOnComplete, defaultContactMemberId, notifyMode,
     contactShowToCoaches, contactShowOnPublic,
+    listInDirectory, directoryProvince,
     coachEmailConfirmation, coachEmailAcceptance, coachEmailRejection, coachEmailPayment,
     coachEmailSchedule, coachEmailGameDay, coachEmailPauseAll,
     rosterRequire, rosterRequireDob, rosterRequireJersey, rosterRequireWaiver,
@@ -892,6 +911,54 @@ export default function TournamentEventSettingsPage() {
           </div>
 
           <hr className={styles.cardDivider} />
+
+          {/* Public discovery directory listing (migration 158) — opt-in, default off */}
+          <div className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p className={styles.subSectionLabel} style={{ margin: 0 }}>List in public tournament directory</p>
+              <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>
+                Show this tournament on the FieldLogicHQ public directory, where anyone can discover it by sport, region, and date. Off by default.
+              </p>
+            </div>
+            <div className={styles.segmentedControl} role="radiogroup" aria-label="List in public tournament directory">
+              {([[true, 'On'], [false, 'Off']] as const).map(([val, lbl]) => (
+                <button
+                  key={String(val)}
+                  type="button"
+                  role="radio"
+                  aria-checked={listInDirectory === val}
+                  onClick={() => setListInDirectory(val)}
+                  className={`${styles.segmentButton} ${listInDirectory === val ? styles.segmentButtonActive : ''}`}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {listInDirectory && (
+            <>
+              <p className={styles.descriptionText} style={{ margin: '0.6rem 0 0' }}>
+                The directory shows your event name, dates, sport, and live scores, and links to your existing public pages. <strong>Player information always stays private.</strong> Your listing appears only once the tournament is set to Active or Completed — a draft stays hidden.
+              </p>
+              <div className="form-group" style={{ marginTop: '0.75rem' }}>
+                <label className="form-label">Province / territory</label>
+                <select
+                  className="form-select"
+                  value={directoryProvince}
+                  onChange={e => setDirectoryProvince(e.target.value)}
+                >
+                  <option value="">— Select a region —</option>
+                  {CANADIAN_PROVINCES.map(p => (
+                    <option key={p.code} value={p.code}>{p.name}</option>
+                  ))}
+                </select>
+                <p className={styles.descriptionText} style={{ margin: '0.25rem 0 0' }}>
+                  Lets people filter the directory by where your tournament is held.
+                </p>
+              </div>
+            </>
+          )}
 
           {/* Dates */}
           <div className="form-row form-row-2">

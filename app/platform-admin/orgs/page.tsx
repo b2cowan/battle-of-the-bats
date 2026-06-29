@@ -104,9 +104,11 @@ async function getOrgs() {
   const lastSignInByUser = new Map(
     (authUsersResult.data?.users ?? []).map(u => [u.id, u.last_sign_in_at ?? null]),
   );
-  const expiredOverrideOrgIds = new Set(
+  // Orgs with an active override expiring within the next 14 days (and not yet lapsed). Expired
+  // overrides auto-drop and stop granting access on their own, so we flag UPCOMING lapses to action.
+  const expiringSoonOverrideOrgIds = new Set(
     ((overridesResult.data ?? []) as Array<{ org_id: string; expires_at: string | null }>)
-      .filter(o => o.expires_at && o.expires_at < now)
+      .filter(o => o.expires_at && o.expires_at >= now && o.expires_at <= trialWindowEnd)
       .map(o => o.org_id),
   );
 
@@ -136,7 +138,7 @@ async function getOrgs() {
       isFreeFloor:        (r.free_floor as string | null) === 'league_starter',
       missingOwner:       !ownerOrgIds.has(id),
       ownerInactive:      ownerIds.length > 0 && (!mostRecentOwnerSignIn || mostRecentOwnerSignIn < inactiveOwnerCutoff),
-      expiredOverride:    expiredOverrideOrgIds.has(id),
+      expiringSoonOverride: expiringSoonOverrideOrgIds.has(id),
       trialEndingSoon:    status === 'trialing' && Boolean(currentPeriodEnd) && (currentPeriodEnd as string) <= trialWindowEnd,
       // Empty = no content of any kind AND at most the single owner as a member.
       emptyOrg:           !orgsWithContent.has(id) && (memberCounts.get(id) ?? 0) <= 1,

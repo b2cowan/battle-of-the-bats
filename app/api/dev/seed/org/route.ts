@@ -69,7 +69,7 @@ export async function POST(req: Request) {
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     org = data;
-    log.push(`Created org: ${devOrgName} (plan: ${plan})`);
+    log.push(`Created org: ${devOrgName} (plan: ${planConfig.label})`);
   } else {
     // Update plan if caller explicitly requested one
     const { error } = await supabaseAdmin
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
       .update({ plan_id: plan, tournament_limit: planConfig.tournamentLimit })
       .eq('id', org.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    log.push(`Org already exists — updated to plan: ${plan}`);
+    log.push(`Org already exists — updated to plan: ${planConfig.label}`);
   }
 
   // Auth user

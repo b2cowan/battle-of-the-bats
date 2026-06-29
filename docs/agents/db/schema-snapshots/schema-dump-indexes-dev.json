@@ -1445,6 +1445,26 @@
     "indexdef": "CREATE INDEX rep_team_lineup_entries_player_idx ON public.rep_team_lineup_entries USING btree (player_id)"
   },
   {
+    "tablename": "rep_team_lineup_templates",
+    "indexname": "rep_team_lineup_templates_name_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_lineup_templates_name_uniq ON public.rep_team_lineup_templates USING btree (team_id, program_year_id, lower(btrim(name)))"
+  },
+  {
+    "tablename": "rep_team_lineup_templates",
+    "indexname": "rep_team_lineup_templates_org_idx",
+    "indexdef": "CREATE INDEX rep_team_lineup_templates_org_idx ON public.rep_team_lineup_templates USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_team_lineup_templates",
+    "indexname": "rep_team_lineup_templates_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_lineup_templates_pkey ON public.rep_team_lineup_templates USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_lineup_templates",
+    "indexname": "rep_team_lineup_templates_team_idx",
+    "indexdef": "CREATE INDEX rep_team_lineup_templates_team_idx ON public.rep_team_lineup_templates USING btree (team_id, program_year_id)"
+  },
+  {
     "tablename": "rep_team_lineups",
     "indexname": "rep_team_lineups_event_id_key",
     "indexdef": "CREATE UNIQUE INDEX rep_team_lineups_event_id_key ON public.rep_team_lineups USING btree (event_id)"
@@ -1788,6 +1808,11 @@
     "tablename": "tournaments",
     "indexname": "idx_tournaments_results_notified_at",
     "indexdef": "CREATE INDEX idx_tournaments_results_notified_at ON public.tournaments USING btree (results_notified_at DESC) WHERE (results_notified_at IS NOT NULL)"
+  },
+  {
+    "tablename": "tournaments",
+    "indexname": "tournaments_list_in_directory_idx",
+    "indexdef": "CREATE INDEX tournaments_list_in_directory_idx ON public.tournaments USING btree (list_in_directory) WHERE (list_in_directory = true)"
   },
   {
     "tablename": "tournaments",

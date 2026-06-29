@@ -295,7 +295,15 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--logic-lime);
+  margin: 0 0 0.4rem;
+}
+
+.inviteHint {
   margin: 0 0 1rem;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--data-gray);
 }
 
 .inviteForm {}

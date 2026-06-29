@@ -32,7 +32,7 @@ const repTeamsHelp: HelpPageContent = {
       searchText: 'rep teams club plan add-on access owner treasurer admin permission cost allocation owner treasurer only coach scoped per-team billing entitlement module',
       content: (
         <>
-          <p>Rep Teams comes with the <strong>Club</strong> plan, or it can be added for specific teams as an add-on. If your org doesn&apos;t have it, the module is hidden.</p>
+          <p>Rep Teams is included with the <strong>Club</strong> plan. If your org doesn&apos;t have it, the module is hidden.</p>
           <p>Within the module, access varies by role:</p>
           <ul>
             <li><strong>Owners and admins</strong> — create teams and program years, run tryouts, publish document templates, and move program years through their lifecycle.</li>

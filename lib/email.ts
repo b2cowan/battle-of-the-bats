@@ -1849,7 +1849,7 @@ export function spotlightFullPictureHtml(p: {
       <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
         <li>Tournament and Tournament Plus: free for your founding season through December 31</li>
         <li>House League, Rep Teams, and Accounting: available on League and Club (also free through December 31 for founding organizations)</li>
-        <li>Tournament Coach Portal for coaches tracking their teams</li>
+        <li>Coaches Portal for coaches tracking their teams</li>
       </ul>
     </div>
 

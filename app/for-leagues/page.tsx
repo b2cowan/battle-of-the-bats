@@ -18,7 +18,7 @@ const CROSS_SELLS = [
   {
     label: 'Club',
     q: 'Also running rep teams?',
-    body: 'Club combines everything in League Plus with rep teams, accounting, org-wide financials, and three Coaches Portal accounts — for clubs that do it all.',
+    body: 'Club combines everything in League Plus with rep teams, accounting, org-wide financials, and a Premium Coaches Portal for your whole coaching staff — every team, no per-team fee — for clubs that do it all.',
     cta: 'Express interest in Club',
     initialPlanInterest: ['club'],
     initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],

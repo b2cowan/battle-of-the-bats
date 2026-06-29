@@ -193,9 +193,9 @@ function MatchNode({
       <rect
         width={NODE_WIDTH} height={NODE_HEIGHT} rx={8}
         style={{
-          fill:        'var(--surface)',
-          stroke:      node.isLive ? 'var(--primary)' : 'rgba(var(--primary-rgb), 0.45)',
-          strokeWidth: '1',
+          fill:        'var(--bracket-card, var(--surface))',
+          stroke:      node.isLive ? 'var(--primary)' : 'rgba(var(--primary-rgb), 0.85)',
+          strokeWidth: node.isLive ? '1' : '1.25',
           filter:      node.isLive ? 'url(#glow-primary)' : undefined,
         }}
       />

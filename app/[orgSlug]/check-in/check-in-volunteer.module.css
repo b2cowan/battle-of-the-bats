@@ -54,9 +54,9 @@
 .banner {
   margin-bottom: 0.85rem;
   padding: 0.6rem 0.85rem;
-  border: 1px solid rgba(245, 158, 11, 0.5);
-  background: rgba(245, 158, 11, 0.1);
-  color: #fcd9a3;
+  border: 1px solid rgba(var(--warning-rgb), 0.5);
+  background: rgba(var(--warning-rgb), 0.1);
+  color: var(--warning);
   border-radius: 6px;
   font-size: 0.82rem;
   line-height: 1.4;

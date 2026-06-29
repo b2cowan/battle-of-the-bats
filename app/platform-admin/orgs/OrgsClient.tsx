@@ -36,7 +36,7 @@ interface OrgRow {
   isFreeFloor: boolean;
   missingOwner: boolean;
   ownerInactive: boolean;
-  expiredOverride: boolean;
+  expiringSoonOverride: boolean;
   trialEndingSoon: boolean;
   emptyOrg: boolean;
 }
@@ -49,17 +49,17 @@ interface Props {
 
 // Attention filters drilled into from the dashboard Action Queue (?filter=…)
 const ATTENTION_LABELS: Record<string, string> = {
-  trial_ending:      'Trials ending soon',
-  expired_overrides: 'Expired overrides',
-  no_owner:          'Missing owner',
-  owner_inactive:    'Owner inactive',
+  trial_ending:       'Trials ending soon',
+  expiring_overrides: 'Overrides expiring soon',
+  no_owner:           'Missing owner',
+  owner_inactive:     'Owner inactive',
 };
 
 function matchesAttentionFilter(org: OrgRow, filter: string): boolean {
-  if (filter === 'trial_ending')      return org.trialEndingSoon;
-  if (filter === 'expired_overrides') return org.expiredOverride;
-  if (filter === 'no_owner')          return org.missingOwner;
-  if (filter === 'owner_inactive')    return org.ownerInactive;
+  if (filter === 'trial_ending')       return org.trialEndingSoon;
+  if (filter === 'expiring_overrides') return org.expiringSoonOverride;
+  if (filter === 'no_owner')           return org.missingOwner;
+  if (filter === 'owner_inactive')     return org.ownerInactive;
   return true;
 }
 
@@ -381,14 +381,6 @@ export default function OrgsClient({ orgs, initialStatus, initialFilter }: Props
                     <div className={styles.actionGroup}>
                       <Link href={`/platform-admin/orgs/${org.id}`} className={styles.viewLink}>
                         View
-                      </Link>
-                      <Link
-                        href={`/${org.slug}/admin`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={styles.adminLink}
-                      >
-                        Admin
                       </Link>
                     </div>
                   </td>

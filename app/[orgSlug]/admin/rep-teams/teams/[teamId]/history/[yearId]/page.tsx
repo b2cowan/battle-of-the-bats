@@ -275,7 +275,7 @@ export default function PastYearDetailPage({
                         {e.result ? (
                           <span style={{ color: RESULT_COLOR[e.result] ?? 'inherit', fontWeight: 600, textTransform: 'capitalize' }}>
                             {e.result}
-                            {e.homeScore != null && e.awayScore != null && ` (${e.homeScore}–${e.awayScore})`}
+                            {e.teamScore != null && e.opponentScore != null && ` (${e.teamScore}–${e.opponentScore})`}
                           </span>
                         ) : '—'}
                       </td>

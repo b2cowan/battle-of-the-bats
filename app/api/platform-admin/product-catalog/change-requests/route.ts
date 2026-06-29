@@ -5,8 +5,16 @@ import { recordCatalogChangeApplication } from '@/lib/platform-catalog-approval'
 import { sanitizePlatformChangeNote } from '@/lib/platform-change-note';
 import { upsertPlanConfigOverride } from '@/lib/plan-config-db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getStripe } from '@/lib/stripe';
+import {
+  validateStripePriceForSlot,
+  hardBlockMessage,
+  type PriceValidationResult,
+} from '@/lib/stripe-price-validation';
 import { withObservability } from '@/lib/observability';
+
+// Stored on the catalog application + audit record. Full validation result when a price was set,
+// or a sentinel when nothing was validated (slot cleared, or an already-current no-op).
+type StripePriceValidationRecord = PriceValidationResult | { checked: boolean };
 
 const VALID_TYPES = new Set(['plan_version', 'feature_matrix', 'addon', 'pricing', 'grandfathering', 'campaign', 'trial']);
 const VALID_STATUSES = new Set(['draft', 'needs_review', 'approved', 'rejected', 'implemented', 'canceled']);
@@ -179,7 +187,7 @@ async function applyStripePriceUpdateProposal(
   | {
       ok: true;
       stripePrice: StripePriceRow;
-      stripeValidation: { checked: boolean; active?: boolean; product?: string | null };
+      stripeValidation: StripePriceValidationRecord;
       alreadyCurrent?: boolean;
     }
   | { ok: false; response: NextResponse }
@@ -256,28 +264,27 @@ async function applyStripePriceUpdateProposal(
     };
   }
 
-  const secretKey = process.env.STRIPE_SECRET_KEY ?? '';
-  const keyEnvironment = secretKey.startsWith('sk_live_') ? 'live' : secretKey ? 'sandbox' : null;
-  let stripeValidation: { checked: boolean; active?: boolean; product?: string | null } = { checked: false };
+  // Validate the proposed price against the slot before applying. Hard-block on anything that's
+  // never valid (missing / inactive / one-time / wrong interval / wrong currency / wrong environment);
+  // warnings (amount mismatch / reuse / wrong product) are recorded and surfaced for an explicit
+  // confirm in the UI. Skips the Stripe lookup when the slot's environment can't be checked here.
+  let stripeValidation: StripePriceValidationRecord = { checked: false };
 
-  if (proposal.proposedPriceId && keyEnvironment && current.environment === keyEnvironment) {
-    try {
-      const price = await getStripe().prices.retrieve(proposal.proposedPriceId);
-      stripeValidation = {
-        checked: true,
-        active: price.active,
-        product: typeof price.product === 'string' ? price.product : price.product?.id ?? null,
-      };
-      if (!price.active) {
-        return {
-          ok: false,
-          response: NextResponse.json({ error: 'Stripe price exists but is inactive.' }, { status: 400 }),
-        };
-      }
-    } catch (error) {
+  if (proposal.proposedPriceId) {
+    const validation = await validateStripePriceForSlot(proposal.proposedPriceId, {
+      slotId: current.id,
+      planId: current.plan_id,
+      billingCycle: current.billing_cycle,
+      environment: current.environment,
+    });
+    stripeValidation = validation;
+    if (validation.hardBlock) {
       return {
         ok: false,
-        response: NextResponse.json({ error: (error as Error).message || 'Stripe price validation failed' }, { status: 400 }),
+        response: NextResponse.json(
+          { error: `Stripe price validation failed — ${hardBlockMessage(validation)}`, validation },
+          { status: 400 },
+        ),
       };
     }
   }

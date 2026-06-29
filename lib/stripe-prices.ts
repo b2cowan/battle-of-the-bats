@@ -34,6 +34,19 @@ export async function getStripePriceId(
   return data?.price_id ?? null;
 }
 
+/**
+ * H8 price-guard (runtime): is a Stripe price wired for this plan+cycle in the current environment?
+ * Cheap DB lookup, no Stripe call — the heavy "is the price valid" check happens at config time
+ * (see lib/stripe-price-validation.ts). The in-app upgrade card uses this to keep checkout CLOSED
+ * for a plan toggled "Live" with no price configured, so it can't open a broken checkout.
+ */
+export async function isPlanCheckoutPriceConfigured(
+  planId: OrgPlan | string,
+  billingCycle: BillingCycle | string,
+): Promise<boolean> {
+  return (await getStripePriceId(planId, billingCycle)) != null;
+}
+
 export async function getPlanFromPriceId(
   priceId: string,
 ): Promise<{ planId: string; billingCycle: string } | null> {

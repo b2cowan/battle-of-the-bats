@@ -181,11 +181,11 @@ export default function CoachesDuesPage({
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    fetch('/api/admin/org/pdf-settings')
+    fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`)
       .then(r => r.ok ? r.json() : {})
       .then(d => setPdfSettings(d as OrgPdfSettings))
       .catch(() => setPdfSettings(null));
-  }, []);
+  }, [orgSlug]);
 
   // ── Export helpers ───────────────────────────────────────────────────────────
 

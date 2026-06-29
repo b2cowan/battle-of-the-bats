@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-06-28 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-06-29 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-06-28
+# DB Schema Reference — 2026-06-29
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -70,8 +70,8 @@ id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, org_id (uuid) → o
 - Indexes: tournament_registration_fields_org_idx, tournament_registration_fields_tournament_idx
 
 ### tournaments
-id (uuid), year (integer) NOT NULL, name NOT NULL, slug, status, is_active (boolean), start_date, end_date, contact_email, fee_schedule_mode, deposit_amount (numeric), deposit_due_date, total_fee_amount (numeric), total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, require_score_finalization (boolean), color_mode, created_at, notify_teams_on_complete (boolean), results_notified_at, results_notification_sent_count (integer), org_id (uuid) → organizations.id NOT NULL, settings (jsonb), default_contact_member_id (uuid) → organization_members.id, notify_mode, public_hidden_pages (jsonb), contact_show_on_public (boolean), contact_show_to_coaches (boolean), sport, coach_names_show_on_public (boolean), icon_bg_color, app_name, app_icon_scale
-- Indexes: idx_tournaments_created_at, idx_tournaments_results_notified_at, tournaments_org_id_idx, tournaments_org_slug_live_unique
+id (uuid), year (integer) NOT NULL, name NOT NULL, slug, status, is_active (boolean), start_date, end_date, contact_email, fee_schedule_mode, deposit_amount (numeric), deposit_due_date, total_fee_amount (numeric), total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, require_score_finalization (boolean), color_mode, created_at, notify_teams_on_complete (boolean), results_notified_at, results_notification_sent_count (integer), org_id (uuid) → organizations.id NOT NULL, settings (jsonb), default_contact_member_id (uuid) → organization_members.id, notify_mode, public_hidden_pages (jsonb), contact_show_on_public (boolean), contact_show_to_coaches (boolean), sport, coach_names_show_on_public (boolean), icon_bg_color, app_name, app_icon_scale, list_in_directory (boolean), directory_province
+- Indexes: idx_tournaments_created_at, idx_tournaments_results_notified_at, tournaments_list_in_directory_idx, tournaments_org_id_idx, tournaments_org_slug_live_unique
 
 ### venue_facilities
 id (uuid), venue_id (uuid) → diamonds.id NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, name NOT NULL, facility_type, display_order (integer), notes, source_org_facility_id (uuid) → org_venue_facilities.id, created_at, settings (jsonb)
@@ -181,7 +181,7 @@ id (uuid), event_id (uuid) → rep_team_events.id NOT NULL, player_id (uuid) →
 - Indexes: rep_team_event_attendance_event_id_player_id_key, rep_team_event_attendance_event_idx, rep_team_event_attendance_player_idx, rep_team_event_attendance_team_idx
 
 ### rep_team_events
-id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, home_score (integer), away_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid)
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, team_score (integer), opponent_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid), arrival_time, field_number, uniform, location_address, resources (jsonb)
 - Indexes: rep_team_events_parent_idx, rep_team_events_src_basic_event_uq, rep_team_events_year_idx
 
 ### rep_team_expenses
@@ -195,6 +195,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, display_o
 ### rep_team_lineup_entries
 id (uuid), lineup_id (uuid) → rep_team_lineups.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, batting_order (integer), starter (boolean), inning_positions (jsonb), notes, created_at, updated_at
 - Indexes: rep_team_lineup_entries_batting_order_idx, rep_team_lineup_entries_lineup_id_player_id_key, rep_team_lineup_entries_lineup_idx, rep_team_lineup_entries_player_idx
+
+### rep_team_lineup_templates
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, name NOT NULL, lineup_mode, inning_count (integer), entries (jsonb), created_by (uuid), created_at, updated_at
+- Indexes: rep_team_lineup_templates_name_uniq, rep_team_lineup_templates_org_idx, rep_team_lineup_templates_team_idx
 
 ### rep_team_lineups
 id (uuid), event_id (uuid) → rep_team_events.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, lineup_mode, inning_count (integer), notes, updated_by (uuid), created_at, updated_at
@@ -497,11 +501,11 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) →
 
 ## Tables by count
 
-Total: **119 tables** across 10 modules.
+Total: **120 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 26 tables
+- Rep Teams: 27 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables

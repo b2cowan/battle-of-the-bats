@@ -435,6 +435,12 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 <!-- dict:col:tournaments.coach_names_show_on_public -->
 **`coach_names_show_on_public`** (boolean, NOT NULL, default `false`; mig 150) — public-site visibility toggle for team **coach names** (`teams.coach`). Default `false` = coach names are **private** on the public site (this changed existing tournaments: any event that previously showed coach names publicly hides them until an organizer opts back in). When `false`, the name is stripped to `''` at the J6-001 choke point `toPublicTeam(t, showCoachName)` ([lib/public-tournament-data.ts](../../../lib/public-tournament-data.ts)) so it never reaches any anonymous payload — Teams cards, team profile, schedule search/datalist, `/api/public/tournament-data`, `/api/public/team-profile` — not merely hidden in the UI. Governs the **public site only**: coach names stay visible in admin views and the Coaches Portal. Does **not** affect coach *emails* (already excluded from public payloads). Surfaced in Public Site → Public Pages as "Show coach names" (all plans, `manage_branding` capability); carried on clone/populate with the public-pages block. _Dev/prod:_ identical (both default `false`).
 
+<!-- dict:col:tournaments.list_in_directory -->
+**`list_in_directory`** (boolean, NOT NULL, default `false`; mig 158) — organizer **opt-in** for the public cross-platform discovery directory ([/discover](../../../app/discover/page.tsx)). Default `false` = every tournament starts **unlisted** (no backfill); only an explicit opt-in in Event Settings → Tournament Overview lists it. **ANDed with the public-status gate** at directory query time (`status IN ('active','completed')`), so a flagged-but-draft/archived tournament never surfaces — the directory introduces no second visibility model and only links to already-public pages (player PII stays behind the existing `toPublicTeam` choke point). Available on **all plans** (no tier gate). Set via the `update` action in [api/admin/tournaments/route.ts](../../../app/api/admin/tournaments/route.ts); mapped as `listInDirectory` in `mapTournament` ([lib/db.ts](../../../lib/db.ts)). Partial index `tournaments_list_in_directory_idx` (`WHERE list_in_directory = true`) supports the platform-wide directory query. _Dev/prod:_ ⚠ mig 158 **DEV-only / prod-pending**.
+
+<!-- dict:col:tournaments.directory_province -->
+**`directory_province`** (text, nullable; mig 158) — optional Canadian province/territory **code** (e.g. `'ON'`) captured when an organizer opts into the directory; powers the directory's location filter. NULL = unset. Allowed values are **app-enforced** via [lib/canadian-provinces.ts](../../../lib/canadian-provinces.ts) (`isProvinceCode`) — the `update` API whitelists to a recognized code, else writes NULL — **not** a DB CHECK constraint (matches the project's allowed-values convention). Mapped as `directoryProvince` in `mapTournament`. _Dev/prod:_ ⚠ mig 158 DEV-only / prod-pending.
+
 <!-- dict:col:tournaments.fee_schedule_mode -->
 **`fee_schedule_mode`** (text, NOT NULL, default `'tournament'`; `tournament|division`) — selects tournament-level vs per-division fee fields in `resolveFeeSchedule` ([register/page.tsx:65](../../../app/[orgSlug]/[tournamentSlug]/register/page.tsx#L65)). Shadowed by `settings.fee_scope` — gotcha 5. `mapTournament` normalizes non-`'division'` → `'tournament'`.
 
@@ -1866,8 +1872,8 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **Purpose:** the unified per-team, per-season calendar — practices, games (`league_game`/`tournament_game`/`scrimmage`), multi-day `external_tournament`s, and generic `team_event`s.
 
 **Gotchas (read first):**
-1. **TWO self-FKs, opposite meaning AND cascade:** `parent_event_id` (ON DELETE **CASCADE**) links a `tournament_game` child to its `external_tournament` parent (deleting the parent cascade-deletes child game slots); `recurrence_parent_id` (ON DELETE **SET NULL**) links generated recurring-practice instances to a series anchor. Easy to confuse.
-2. **⚠️ The recurring-practice series anchor is broken.** `createRepTeamEvents` mints `parentId = randomUUID()` and stamps every child's `recurrence_parent_id` with it (the first occurrence stays NULL); the promised "back-fill the anchor to point to itself" never executes ([events/route.ts:132,145,149](../../../app/api/coaches/%5BorgSlug%5D/teams/%5BteamId%5D/events/route.ts#L132)). So children point at a UUID that is **no row's `id`**, and the anchor's own `recurrence_parent_id` is NULL. The **delete-"this & future"** path (`anchorId = recurrenceParentId ?? eventId`, [events/[eventId]/route.ts:94](../../../app/api/coaches/%5BorgSlug%5D/teams/%5BteamId%5D/events/%5BeventId%5D/route.ts#L94)) deletes the *other* children but **never the anchor occurrence** — and the matching *edit*-future helper (`updateRepTeamEventsByRecurrenceParent`, [lib/db.ts:4635](../../../lib/db.ts#L4635)) is **dead code with no caller**, so no edit-this-&-future path is actually wired.
+1. **TWO self-FKs, opposite meaning AND cascade:** `parent_event_id` (ON DELETE **CASCADE**) links a `tournament_game` child to its `external_tournament` parent (deleting the parent cascade-deletes child game slots); `recurrence_parent_id` (ON DELETE **SET NULL**) links generated recurring-series instances (practice / league_game / team_event) to their series anchor. Easy to confuse.
+2. **✓ FIXED 2026-06-29 — recurring series anchor is now correct.** The recurring POST gives the **first occurrence an explicit `id` = anchor**, inserts it FIRST, then inserts the later occurrences with `recurrence_parent_id = anchor` (anchor-before-children, so the self-FK is always satisfied — never relies on intra-statement FK timing). So an occurrence is now resolved as `{id = anchor} ∪ {recurrence_parent_id = anchor}`. **Edit-this/future/all** is wired via `updateRepTeamEventSeries` ([lib/db.ts](../../../lib/db.ts)) — non-temporal fields apply directly; a new start/end clock time is applied per occurrence preserving each date; the anchor is covered via the `id.eq` branch. **Delete-"this & future"** now also removes the clicked occurrence unconditionally, so deleting from the first occurrence removes it too. ⚠ Series created BEFORE this fix keep the old broken anchor (children → a non-row UUID, first occurrence `recurrence_parent_id` NULL) — series ops on those won't reach the first occurrence; only affects pre-2026-06-29 rows. (Recurrence was practice-only before this; league games & team events can now recur, scrimmages/tournament games stay one-off.)
 3. **`result` is never auto-derived server-side** — stored exactly as sent; the only auto-fill (`hs>as?'win':…`) is **client-side** ([schedule/page.tsx:471](../../../app/%5BorgSlug%5D/coaches/teams/%5BteamId%5D/schedule/page.tsx#L471)). API callers that set scores without `result` leave it NULL.
 4. **Recurrence is practice-only and timezone-naive** — `isRecurring` on any non-`practice` type is silently ignored; occurrence dates are built from local-time strings with no offset (can shift across a UTC boundary).
 5. **A `SECURITY DEFINER` trigger** rewrites `rep_team_event_attendance`'s scope columns when this event's `org_id`/`team_id`/`program_year_id` change (mig 069) — dormant in practice (app never updates those).
@@ -1893,7 +1899,22 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **`starts_at`** (timestamptz, NOT NULL) — sort + range-filter key; generated per occurrence for recurring practices. **`ends_at`** (nullable).
 
 <!-- dict:col:rep_team_events.location -->
-**`location`** (text, nullable) — one of two columns eligible for a "this & future" bulk edit (with `ends_at`).
+**`location`** (text, nullable) — the place **NAME** (e.g. "Sherwood Park"); shown on the schedule + the coach's "recent locations" chips. One of two columns eligible for a "this & future" bulk edit (with `ends_at`). Free text, no venue FK (the org venue library is admin/league-club only and not exposed to the coaches portal). Split from `location_address` so the chips show a friendly name while the map link uses the real address.
+
+<!-- dict:col:rep_team_events.location_address -->
+**`location_address`** (text, nullable; mig 161) — optional **street address** for the location, used only to build the Google Maps link (the maps query prefers the address, falling back to the `location` name). Mirrors the tournament `diamonds.name`/`diamonds.address` split. The recent-location chips remember + refill it alongside the name. Folded into the ICS `LOCATION` so a synced calendar's map resolves.
+
+<!-- dict:col:rep_team_events.arrival_time -->
+**`arrival_time`** (text, nullable; mig 160) — game-day detail: a "be there by" clock time as `HH:mm` (24h), same day as `starts_at`. No CHECK; shape is UI-enforced. Shown on the event detail + folded into the ICS export description. Tier-2 game-day field.
+
+<!-- dict:col:rep_team_events.field_number -->
+**`field_number`** (text, nullable; mig 160) — game-day detail: the diamond/field label *within* the `location` (e.g. "Diamond 2"). Free text, no FK (mirrors `location`'s no-FK stance). Appended to the location label in the detail + the ICS `LOCATION`. Tier-2 game-day field.
+
+<!-- dict:col:rep_team_events.uniform -->
+**`uniform`** (text, nullable; mig 160) — game-day detail: uniform/jersey note (e.g. "Home whites"). **Game-types only** (UI-gated, cleared when the event type changes away from a game). Tier-2 game-day field.
+
+<!-- dict:col:rep_team_events.resources -->
+**`resources`** (jsonb, nullable; mig 162) — Phase 4 per-event resource links: an array of typed entries `{ type: 'link', label, url }`. V1 = labelled web links only (drill video / rules / field map / flyer); the `type` field reserves room for `'file'` later (V2, reusing Documents storage) with no schema change. **App-validated/capped, NOT by DB constraints** ([lib/rep-event-resources.ts](../../../lib/rep-event-resources.ts)): each entry needs a non-empty label + an http(s) URL; max 10 per event; empty/invalid rows dropped server-side (`sanitizeResources`). Stored NULL when empty. Coach/assistant-facing in V1 (no parent/player login yet). Read for free via the event row; threaded through create/single-update/series-update.
 
 <!-- dict:col:rep_team_events.opponent -->
 **`opponent`** (text, nullable) — **game-types only** (UI-gated).
@@ -1901,12 +1922,14 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_team_events.home_away -->
 **`home_away`** (text, nullable; CHECK `home|away|neutral`) — game context only.
 
+<!-- dict:col:rep_team_events.team_score -->
+<!-- dict:col:rep_team_events.opponent_score -->
 <!-- dict:col:rep_team_events.home_score -->
 <!-- dict:col:rep_team_events.away_score -->
-**`home_score` / `away_score`** (int, nullable) — game scores; written via PATCH only. (The coach UI labels them "Home"/"Away"; no code binds `home_score` to the rep team specifically.)
+**`team_score` / `opponent_score`** (int, nullable; mig 158 — RENAMED from `home_score`/`away_score`) — **team-relative**: the coach's team's score vs the opponent's, NOT literal home/away (a single-team product — "home_score = us" was the implicit assumption, now explicit). `result` derives from these (`team_score > opponent_score → win`); the independent `home_away` tag is what enables home/away record splits. Written via PATCH only. (Tournament `games` + `league_games` keep true `home_score`/`away_score` — multi-team contexts where home/away is real.) **⚠ mig 158 is DEV-ONLY / PROD-PENDING** — prod still carries the old `home_score`/`away_score` names (anchors kept above until prod is migrated at release; remove them then).
 
 <!-- dict:col:rep_team_events.result -->
-**`result`** (text, nullable; CHECK `win|loss|tie`) — manual (gotcha 3).
+**`result`** (text, nullable; CHECK `win|loss|tie`) — derived from `team_score`/`opponent_score` on score save (manual override allowed); see gotcha 3.
 
 <!-- dict:col:rep_team_events.parent_event_id -->
 **`parent_event_id`** (FK → self, ON DELETE CASCADE, nullable) — `tournament_game` → its `external_tournament` parent (gotcha 1); indexed.
@@ -2021,6 +2044,40 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_team_lineup_entries.notes -->
 **`notes`** (text, nullable; ≤500 chars app-enforced).
+
+### `rep_team_lineup_templates`
+<!-- dict:table:rep_team_lineup_templates -->
+
+**Purpose:** a coach's reusable, **named** "base start" lineup (e.g. "Gold medal game") that can be loaded onto any future game as an editable starting point. Distinct from `rep_team_lineups` (which is 1:1 per event, full-replace-on-save); a template is **not** event-bound. Added by migration 159 (Coach Lineup Builder Phase 4; `/dba` Finding #29 — new dedicated table, single-table `entries jsonb` option). **⚠ DEV-ONLY / PROD-PENDING at author time** (mig 159 not yet applied to prod).
+
+**Gotchas (read first):**
+1. **Convenience snapshot, NOT an analytics surface** — `entries` is a denormalized jsonb array (option 2 of Finding #29). Do not query across templates for stats; the live `rep_team_lineups`/`_entries` remain the relational source.
+2. **Program-year-scoped (V1).** `entries` key on `player_id`; season rollover mints **new** player_ids, so a template does not transparently carry across seasons. The loader maps to the **current active roster** and **silently skips** players no longer rostered (reports how many were skipped).
+3. **Loading fills the editable grid (unsaved)** — never a silent save; the coach still saves the event lineup explicitly. Saving an event lineup never writes here, and vice-versa.
+4. **One name per team-season, case-insensitive** — an **expression-based** unique **index** `rep_team_lineup_templates_name_uniq (team_id, program_year_id, lower(btrim(name)))` (not a partial index); a duplicate name → 409 (app-friendly message). App also caps templates at **50 per team-season** (enforced in-process at the create route, not a DB constraint — a benign TOCTOU could allow 51).
+5. **Coach-managed via service role** (`supabaseAdmin`) behind the coach-team auth guard; RLS write policies (mig 159, mirroring mig 071: coaches on assigned teams + org admins, `WITH CHECK`) are a defense-in-depth backstop.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_lineup_templates.org_id -->
+<!-- dict:col:rep_team_lineup_templates.team_id -->
+<!-- dict:col:rep_team_lineup_templates.program_year_id -->
+**`org_id` / `team_id` / `program_year_id`** (all FK, NOT NULL, CASCADE) — scope; sourced from the URL/context + active program year, **not** the request body. Indexed: `_team_idx (team_id, program_year_id)` for the list query, `_org_idx (org_id)` for RLS.
+
+<!-- dict:col:rep_team_lineup_templates.name -->
+**`name`** (text, NOT NULL; CHECK `1 ≤ char_length(btrim(name)) ≤ 80`) — the coach-chosen label; unique per team-season case-insensitively (gotcha 4).
+
+<!-- dict:col:rep_team_lineup_templates.lineup_mode -->
+**`lineup_mode`** (text, NOT NULL, default `'everyone_bats'`; CHECK `nine_player|everyone_bats`) — captured so a loaded template restores the mode.
+
+<!-- dict:col:rep_team_lineup_templates.inning_count -->
+**`inning_count`** (int, NOT NULL, default 7; CHECK `1 ≤ n ≤ 12`) — the grid width the template was built at; restored on load.
+
+<!-- dict:col:rep_team_lineup_templates.entries -->
+**`entries`** (jsonb, NOT NULL, default `'[]'`) — array of `{ playerId, battingOrder: int|null, starter: bool, inningPositions: Record<string,string> }`, mirroring an event lineup's per-player shape but keyed by `player_id` for roster remapping on load (gotcha 2). Position value domain matches `rep_team_lineup_entries.inning_positions`.
+
+<!-- dict:col:rep_team_lineup_templates.created_by -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who saved the template.
 
 ### `rep_tryout_registrations`
 <!-- dict:table:rep_tryout_registrations -->
@@ -2726,7 +2783,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 - **`league_notification_log` is DEAD/legacy.** Created in mig 020 as the original broadcast log, it has **zero reads/writes** in current code and was **superseded by `league_email_log`**. Naming trap: the admin "Notifications" page (`notifications/page.tsx`) actually writes `league_email_log` via the `/email` route. Different schema (`audience_type`/`audience_label`/`recipient_count` vs `scope`/`audience`/`count_sent`+`count_skipped`).
 - **RLS is ENABLED on all 8 tables and mig 020 defines real org-member + public-read policies — but every code path uses `supabaseAdmin` (service role, RLS-bypassing); enforcement is app-layer.** Admin routes gate on `hasCapability(role, caps, 'module_house_league')` **+** `hasModuleEntitlement(org, 'module_house_league')` (the League/Club plan gate) **+**, for writes, role `owner`/`league_admin` (registrar can manage regs but not place/reassign). The lone exception: the **practices** POST/PATCH routes gate on capability+role but **NOT** `hasModuleEntitlement` — a slightly weaker gate than the sibling routes.
 - **UK spelling `'cancelled'`** is the CHECK value on both `league_games` and `league_practices` (and `'postponed'` on games is allowed-but-dead) — never US `'canceled'`, which would fail the CHECK. Cancels are **soft** (status flips, row persists); `deleteLeagueTeam` is a hard delete but its FKs SET-NULL registrations and CASCADE games.
-- **The `league_practices` recurrence model is the symmetric-`recurrence_group_id` kind, NOT a parent-anchor — so it has NO orphan/anchor bug** (unlike Phase-4a `rep_team_events`). All occurrences in a series share one `recurrence_group_id`; `cancelPractice('all')` keys off it alone (catches every member), `'remaining'` adds `scheduled_at >= clicked`. Verified by reading the helper; stated explicitly so a future reader doesn't assume the rep defect exists here.
+- **The `league_practices` recurrence model is the symmetric-`recurrence_group_id` kind, NOT a parent-anchor — so it has NO orphan/anchor bug** (the `rep_team_events` parent-anchor defect this once contrasted was fixed 2026-06-29). All occurrences in a series share one `recurrence_group_id`; `cancelPractice('all')` keys off it alone (catches every member), `'remaining'` adds `scheduled_at >= clicked`. Verified by reading the helper; stated explicitly so a future reader doesn't assume the rep defect exists here.
 - **Dev/prod:** all 8 tables are **column-, constraint-, and CHECK-identical** dev↔prod. The **only** divergence is **`league_practices` indexes** (the domain's headline drift): mig `077_league_practices_dev_sync.sql` is **dev-only**, so dev has hand-named indexes incl. a **PARTIAL** recurrence index (`WHERE recurrence_group_id IS NOT NULL`) and a dev-only `schedule_idx(season_id, scheduled_at)`, while prod has auto-named indexes, a **FULL** recurrence index, and **no schedule index**. The `DRIFT_dev_vs_prod.md` "Definition changed (0)" line **masks** this — it diffs by index *name*, so the partial-vs-full difference shows up only as separate add/drop entries. (mig 078's `org_id` + `org_idx` was applied to both.)
 
 ---
@@ -2995,7 +3052,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **Gotchas (read first):**
 1. **`org_id` write-blocking bug — ✓ FIXED 2026-06-10** — same class as `league_games`: `org_id` is `NOT NULL`, no default, no trigger (live probe); at commit `6deac4a` `createPractices` omitted it ([lib/db.ts:3412](../../../lib/db.ts#L3412)) → NOT-NULL violation on every practice create. **Fixed:** `createPractices` now writes `org_id` (via `LeaguePracticeInput.orgId`, from `ctx.org.id`). (Domain gotcha 1.)
 2. **Insert-only + SOFT-cancel — no edit, no hard delete.** Only `get`/`create`/`cancel` helpers exist; `cancelPractice` flips `status='cancelled'` (the row persists). The `[practiceId]` route accepts only `action:'cancel'`.
-3. **Recurrence is symmetric `recurrence_group_id`, NOT a parent-anchor — NO orphan bug** (unlike `rep_team_events`). All occurrences share one `recurrence_group_id` (a plain uuid, not an FK/unique); `cancelPractice('all')` matches by it alone, `'remaining'` adds `.gte('scheduled_at', clicked)` (≥, so it includes the clicked one). Series are created by the route assigning one `randomUUID()` to a batch.
+3. **Recurrence is symmetric `recurrence_group_id`, NOT a parent-anchor — NO orphan bug** (the `rep_team_events` parent-anchor defect this once contrasted was fixed 2026-06-29). All occurrences share one `recurrence_group_id` (a plain uuid, not an FK/unique); `cancelPractice('all')` matches by it alone, `'remaining'` adds `.gte('scheduled_at', clicked)` (≥, so it includes the clicked one). Series are created by the route assigning one `randomUUID()` to a batch.
 4. **`status` CHECK is only `scheduled|cancelled`** — narrower than games (no `completed`/`postponed`). UK `'cancelled'`.
 5. **Weaker auth gate:** the practices POST/PATCH routes gate on capability + role but **not** `hasModuleEntitlement('module_house_league')` (the other league routes do).
 6. **`scheduled_at` may be NULL** yet `cancelPractice`'s `'remaining'` path uses `p.scheduled_at!` (non-null assertion) — a null anchor would compare against null. Timestamps are built as naive local strings (server-TZ trap, shared with games).
@@ -4172,7 +4229,7 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 **`snapshot_date`** (date, NOT NULL; UNIQUE) — calendar day of the snapshot (today sliced to `YYYY-MM-DD`); the upsert conflict target (one row/day).
 
 <!-- dict:col:platform_metric_snapshots.metrics -->
-**`metrics`** (jsonb, NOT NULL, default `{}`) — the full `getCommandCenterStats` blob. Key catalog: `generatedAt`; `totals{organizations,users,tournaments,teams,estimatedMrr,estimatedArr}`; `subscription{byPlan,byStatus,statusByPlan,trialEndingSoon}`; `growth{newOrgs7/30/90,newOrgsByPlan,earlyAccessTotal,newLeads7,convertedLeads,conversionRate,…}`; `usage{tournaments*,teamsTotal,leagueSeasons*,repTeams*,accountingEntriesTotal,moduleCounts}`; `lifecycle{cancellations,downgrades,recoveries,recoveryRate30}`; `alerts{pastDue,trialEndingSoon,retentionAlertCount,expiredOverrides,orgsWithoutOwner,…}`. **Never read back.**
+**`metrics`** (jsonb, NOT NULL, default `{}`) — the full `getCommandCenterStats` blob. Key catalog: `generatedAt`; `totals{organizations,users,tournaments,teams,estimatedMrr,estimatedArr}`; `subscription{byPlan,byStatus,statusByPlan,trialEndingSoon}`; `growth{newOrgs7/30/90,newOrgsByPlan,earlyAccessTotal,newLeads7,convertedLeads,conversionRate,…}`; `usage{tournaments*,teamsTotal,leagueSeasons*,repTeams*,accountingEntriesTotal,moduleCounts}`; `lifecycle{cancellations,downgrades,recoveries,recoveryRate30}`; `alerts{pastDue,trialEndingSoon,retentionAlertCount,overridesExpiringSoon,orgsWithoutOwner,…}`. **Never read back.**
 
 <!-- dict:col:platform_metric_snapshots.source -->
 **`source`** (text, NOT NULL, default `'manual'`, no CHECK) — how the snapshot was created; only ever `'manual'` (the writer defaults it; the only caller passes `'manual'`).

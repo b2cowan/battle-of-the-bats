@@ -128,8 +128,10 @@ export default function AdminSidebar() {
   const hasMultipleWorkspaces = useHasMultipleWorkspaces();
 
   const hasOnlyTournamentWorkspace = !!currentOrg && canUseModule('module_tournaments') && !canSeePublicSite && !canSeeAccounting && !canSeeHouseLeague && !canSeeRepTeams;
-  // Org venue library is a League/Club feature — not available to Tournament or Tournament Plus subscribers
-  const hasOrgVenueLibrary = !!currentOrg && ['league', 'club'].includes(currentOrg.planId);
+  // Org venue library is a League/Club-band feature (League Plus, Club, Club · Association) —
+  // not available to Tournament or Tournament Plus subscribers. Must match the API + page gates,
+  // which include 'club_large' (Club · Association) — omitting it hid the nav for that paid band.
+  const hasOrgVenueLibrary = !!currentOrg && ['league', 'club', 'club_large'].includes(currentOrg.planId);
   const showTournamentSummary = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
   const tournamentGroups = TOUR_GROUPS.map(group =>
     group.key === 'operations' && showTournamentSummary
@@ -251,24 +253,24 @@ export default function AdminSidebar() {
     <aside className={styles.sidebar}>
       {/* Logo */}
       <div className={styles.logo}>
-        <div className={styles.logoLockup}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG logo */}
-          <img className={styles.brandLogo} src="/favicon.svg" alt="" width={30} height={30} aria-hidden />
-          <div>
+        <div className={styles.logoTopRow}>
+          <div className={styles.logoLockup}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG logo */}
+            <img className={styles.brandLogo} src="/favicon.svg" alt="" width={30} height={30} aria-hidden />
             <div className={styles.logoMain}>
               <span className={styles.logoField}>Field</span>
               <span className={styles.logoLogic}>Logic</span>
               <span className={styles.logoHq}>HQ</span>
             </div>
-            <div className={styles.logoSub}>{currentOrg?.name ?? 'Admin'}</div>
           </div>
+          {currentOrg?.id && (
+            <div className="flex items-center gap-1 ml-auto self-start shrink-0">
+              <WhatsNewButton />
+              <NotificationBell orgId={currentOrg.id} />
+            </div>
+          )}
         </div>
-        {currentOrg?.id && (
-          <div className="flex items-center gap-1 ml-auto">
-            <WhatsNewButton />
-            <NotificationBell orgId={currentOrg.id} />
-          </div>
-        )}
+        <div className={styles.logoSub}>{currentOrg?.name ?? 'Admin'}</div>
       </div>
 
       <div className={styles.sidebarScroll}>

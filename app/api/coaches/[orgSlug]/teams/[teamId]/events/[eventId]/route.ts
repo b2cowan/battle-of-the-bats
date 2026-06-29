@@ -6,9 +6,11 @@ import {
   getActiveRepProgramYear,
   getRepTeamEventById,
   updateRepTeamEvent,
+  updateRepTeamEventSeries,
   deleteRepTeamEvent,
   deleteRepTeamEventsByRecurrenceParent,
 } from '@/lib/db';
+import { sanitizeResources } from '@/lib/rep-event-resources';
 import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -46,6 +48,35 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   const body = await req.json();
+
+  // Series edit: when a recurring event is saved with scope 'remaining' (this + future) or 'all',
+  // bulk-apply the shared fields + time-of-day across the series (each occurrence keeps its date).
+  const scope = new URL(req.url).searchParams.get('scope') ?? 'one';
+  if (scope !== 'one' && event.isRecurring) {
+    if (scope !== 'remaining' && scope !== 'all') {
+      return NextResponse.json({ error: 'scope must be one, remaining, or all' }, { status: 400 });
+    }
+    const anchorId = event.recurrenceParentId ?? eventId;
+    const startTime = typeof body.startsAt === 'string' && body.startsAt ? body.startsAt.slice(11, 16) : null;
+    const endTime = typeof body.endsAt === 'string' && body.endsAt ? body.endsAt.slice(11, 16) : null;
+    await updateRepTeamEventSeries(anchorId, scope, scope === 'remaining' ? event.startsAt : null, {
+      name: body.name !== undefined ? (body.name?.trim() || undefined) : undefined,
+      description: body.description !== undefined ? (body.description?.trim() || null) : undefined,
+      location: body.location !== undefined ? (body.location?.trim() || null) : undefined,
+      locationAddress: body.locationAddress !== undefined ? (body.locationAddress?.trim() || null) : undefined,
+      fieldNumber: body.fieldNumber !== undefined ? (body.fieldNumber?.trim() || null) : undefined,
+      uniform: body.uniform !== undefined ? (body.uniform?.trim() || null) : undefined,
+      resources: body.resources !== undefined ? sanitizeResources(body.resources) : undefined,
+      opponent: body.opponent !== undefined ? (body.opponent?.trim() || null) : undefined,
+      homeAway: body.homeAway !== undefined ? (body.homeAway || null) : undefined,
+      arrivalTime: body.arrivalTime !== undefined ? (body.arrivalTime?.trim() || null) : undefined,
+      startTime,
+      endTime,
+    });
+    const refreshed = await getRepTeamEventById(eventId);
+    return NextResponse.json({ event: refreshed });
+  }
+
   const fields: Parameters<typeof updateRepTeamEvent>[1] = {};
 
   if (body.name !== undefined)        fields.name = body.name?.trim() || undefined;
@@ -53,10 +84,15 @@ export const PATCH = withObservability(async (req: Request,
   if (body.startsAt !== undefined)    fields.startsAt = body.startsAt;
   if (body.endsAt !== undefined)      fields.endsAt = body.endsAt || null;
   if (body.location !== undefined)    fields.location = body.location?.trim() || null;
+  if (body.locationAddress !== undefined) fields.locationAddress = body.locationAddress?.trim() || null;
+  if (body.arrivalTime !== undefined) fields.arrivalTime = body.arrivalTime?.trim() || null;
+  if (body.fieldNumber !== undefined) fields.fieldNumber = body.fieldNumber?.trim() || null;
+  if (body.uniform !== undefined)     fields.uniform = body.uniform?.trim() || null;
+  if (body.resources !== undefined)   fields.resources = sanitizeResources(body.resources);
   if (body.opponent !== undefined)    fields.opponent = body.opponent?.trim() || null;
   if (body.homeAway !== undefined)    fields.homeAway = body.homeAway || null;
-  if (body.homeScore !== undefined)   fields.homeScore = body.homeScore != null ? Number(body.homeScore) : null;
-  if (body.awayScore !== undefined)   fields.awayScore = body.awayScore != null ? Number(body.awayScore) : null;
+  if (body.teamScore !== undefined)     fields.teamScore = body.teamScore != null ? Number(body.teamScore) : null;
+  if (body.opponentScore !== undefined) fields.opponentScore = body.opponentScore != null ? Number(body.opponentScore) : null;
 
   if (body.result !== undefined) {
     const r = body.result;
@@ -104,8 +140,11 @@ export const DELETE = withObservability(async (req: Request,
       await deleteRepTeamEvent(anchorId);
     } else if (scope === 'remaining') {
       await deleteRepTeamEventsByRecurrenceParent(anchorId, event.startsAt);
-      // Delete the event itself too (it won't be caught by the parent query if it IS the anchor)
-      if (event.recurrenceParentId) await deleteRepTeamEvent(eventId);
+      // Delete the clicked event itself: the parent query only matches CHILDREN (recurrence_parent_id),
+      // so when the clicked event IS the anchor it's not caught above; deleting it here is a harmless
+      // no-op for a child (already removed). This makes "this & future" from the first occurrence
+      // remove it too.
+      await deleteRepTeamEvent(eventId);
     } else {
       return NextResponse.json({ error: 'scope must be one, remaining, or all' }, { status: 400 });
     }

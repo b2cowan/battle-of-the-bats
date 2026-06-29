@@ -6,7 +6,11 @@ import {
 import { sanitizePlatformChangeNote } from '@/lib/platform-change-note';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getStripe } from '@/lib/stripe';
+import {
+  validateStripePriceForSlot,
+  hardBlockMessage,
+  type PriceValidationResult,
+} from '@/lib/stripe-price-validation';
 import { withObservability } from '@/lib/observability';
 
 function unauthorized() {
@@ -80,29 +84,24 @@ export const PATCH = withObservability(async (req: Request) => {
     });
   }
 
-  const secretKey = process.env.STRIPE_SECRET_KEY ?? '';
-  const keyEnvironment = secretKey.startsWith('sk_live_') ? 'live' : secretKey ? 'sandbox' : null;
-  let stripeValidation: { checked: boolean; active?: boolean; product?: string | null } = { checked: false };
+  // Validate the price against the slot before applying (same rules as the change-request flow):
+  // hard-block anything never-valid, record warnings for an explicit confirm in the UI, and skip
+  // the Stripe lookup when the slot's environment can't be checked in this environment.
+  let stripeValidation: PriceValidationResult | { checked: boolean } = { checked: false };
 
-  if (price_id && keyEnvironment && current.environment === keyEnvironment) {
-    try {
-      const price = await getStripe().prices.retrieve(price_id);
-      stripeValidation = {
-        checked: true,
-        active: price.active,
-        product: typeof price.product === 'string' ? price.product : price.product?.id ?? null,
-      };
-      if (!price.active) {
-        return new Response(JSON.stringify({ error: 'Stripe price exists but is inactive.' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-    } catch (error) {
-      return new Response(JSON.stringify({ error: (error as Error).message || 'Stripe price validation failed' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+  if (price_id) {
+    const validation = await validateStripePriceForSlot(price_id, {
+      slotId: id,
+      planId: current.plan_id,
+      billingCycle: current.billing_cycle,
+      environment: current.environment,
+    });
+    stripeValidation = validation;
+    if (validation.hardBlock) {
+      return new Response(
+        JSON.stringify({ error: `Stripe price validation failed — ${hardBlockMessage(validation)}`, validation }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } },
+      );
     }
   }
 

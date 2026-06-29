@@ -4,7 +4,7 @@ import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from 
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
@@ -2566,6 +2566,8 @@ function mapTournament(r: any): Tournament {
     iconScale:                r.app_icon_scale ?? null,
     publicHiddenPages:        Array.isArray(r.public_hidden_pages) ? r.public_hidden_pages : [],
     coachNamesShowOnPublic:   r.coach_names_show_on_public === true,
+    listInDirectory:          r.list_in_directory === true,
+    directoryProvince:        r.directory_province ?? null,
     requireScoreFinalization: r.require_score_finalization ?? null,
     settings:                 (r.settings && typeof r.settings === 'object') ? r.settings : {},
   };
@@ -3753,7 +3755,7 @@ export async function getRepTeams(orgId: string, groupId?: string | null, scopeG
 
 // ── Rep Team Groups ────────────────────────────────────────────────────────────
 
-import type { RepTeamGroup } from './types';
+import type { RepTeamGroup, RepEventResource } from './types';
 
 function mapRepTeamGroup(r: any): RepTeamGroup {
   return {
@@ -4723,10 +4725,15 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
     startsAt: r.starts_at,
     endsAt: r.ends_at ?? null,
     location: r.location ?? null,
+    locationAddress: r.location_address ?? null,
+    arrivalTime: r.arrival_time ?? null,
+    fieldNumber: r.field_number ?? null,
+    uniform: r.uniform ?? null,
+    resources: Array.isArray(r.resources) ? r.resources : [],
     opponent: r.opponent ?? null,
     homeAway: r.home_away ?? null,
-    homeScore: r.home_score ?? null,
-    awayScore: r.away_score ?? null,
+    teamScore: r.team_score ?? null,
+    opponentScore: r.opponent_score ?? null,
     result: r.result ?? null,
     parentEventId: r.parent_event_id ?? null,
     isRecurring: r.is_recurring ?? false,
@@ -4766,6 +4773,9 @@ export async function getRepTeamEventById(eventId: string): Promise<RepTeamEvent
 }
 
 export interface CreateRepTeamEventFields {
+  /** Optional explicit row id — used to make a recurring series' first row the real anchor that
+   *  its later occurrences reference (so "this & future / all" operations resolve correctly). */
+  id?: string;
   programYearId: string;
   teamId: string;
   orgId: string;
@@ -4775,6 +4785,11 @@ export interface CreateRepTeamEventFields {
   startsAt: string;
   endsAt?: string | null;
   location?: string | null;
+  locationAddress?: string | null;
+  arrivalTime?: string | null;
+  fieldNumber?: string | null;
+  uniform?: string | null;
+  resources?: RepEventResource[];
   opponent?: string | null;
   homeAway?: 'home' | 'away' | 'neutral' | null;
   parentEventId?: string | null;
@@ -4798,6 +4813,11 @@ export async function createRepTeamEvent(fields: CreateRepTeamEventFields): Prom
       starts_at: fields.startsAt,
       ends_at: fields.endsAt ?? null,
       location: fields.location ?? null,
+      location_address: fields.locationAddress ?? null,
+      arrival_time: fields.arrivalTime ?? null,
+      field_number: fields.fieldNumber ?? null,
+      uniform: fields.uniform ?? null,
+      resources: fields.resources ?? null,
       opponent: fields.opponent ?? null,
       home_away: fields.homeAway ?? null,
       parent_event_id: fields.parentEventId ?? null,
@@ -4817,6 +4837,7 @@ export async function createRepTeamEvents(rows: CreateRepTeamEventFields[]): Pro
   const { data, error } = await supabaseAdmin
     .from('rep_team_events')
     .insert(rows.map(f => ({
+      ...(f.id ? { id: f.id } : {}),
       program_year_id: f.programYearId,
       team_id: f.teamId,
       org_id: f.orgId,
@@ -4826,6 +4847,11 @@ export async function createRepTeamEvents(rows: CreateRepTeamEventFields[]): Pro
       starts_at: f.startsAt,
       ends_at: f.endsAt ?? null,
       location: f.location ?? null,
+      location_address: f.locationAddress ?? null,
+      arrival_time: f.arrivalTime ?? null,
+      field_number: f.fieldNumber ?? null,
+      uniform: f.uniform ?? null,
+      resources: f.resources ?? null,
       opponent: f.opponent ?? null,
       home_away: f.homeAway ?? null,
       parent_event_id: f.parentEventId ?? null,
@@ -4847,10 +4873,15 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   startsAt?: string;
   endsAt?: string | null;
   location?: string | null;
+  locationAddress?: string | null;
+  arrivalTime?: string | null;
+  fieldNumber?: string | null;
+  uniform?: string | null;
+  resources?: RepEventResource[];
   opponent?: string | null;
   homeAway?: 'home' | 'away' | 'neutral' | null;
-  homeScore?: number | null;
-  awayScore?: number | null;
+  teamScore?: number | null;
+  opponentScore?: number | null;
   result?: 'win' | 'loss' | 'tie' | null;
   status?: 'scheduled' | 'cancelled';
 }): Promise<RepTeamEvent> {
@@ -4861,10 +4892,15 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   if (fields.startsAt !== undefined)    patch.starts_at = fields.startsAt;
   if (fields.endsAt !== undefined)      patch.ends_at = fields.endsAt;
   if (fields.location !== undefined)    patch.location = fields.location;
+  if (fields.locationAddress !== undefined) patch.location_address = fields.locationAddress;
+  if (fields.arrivalTime !== undefined) patch.arrival_time = fields.arrivalTime;
+  if (fields.fieldNumber !== undefined) patch.field_number = fields.fieldNumber;
+  if (fields.uniform !== undefined)     patch.uniform = fields.uniform;
+  if (fields.resources !== undefined)   patch.resources = fields.resources;
   if (fields.opponent !== undefined)    patch.opponent = fields.opponent;
   if (fields.homeAway !== undefined)    patch.home_away = fields.homeAway;
-  if (fields.homeScore !== undefined)   patch.home_score = fields.homeScore;
-  if (fields.awayScore !== undefined)   patch.away_score = fields.awayScore;
+  if (fields.teamScore !== undefined)     patch.team_score = fields.teamScore;
+  if (fields.opponentScore !== undefined) patch.opponent_score = fields.opponentScore;
   if (fields.result !== undefined)      patch.result = fields.result;
   if (fields.status !== undefined)      patch.status = fields.status;
   const { data, error } = await supabaseAdmin
@@ -4875,6 +4911,62 @@ export async function updateRepTeamEvent(eventId: string, fields: {
     .single();
   if (error) throw error;
   return mapRepTeamEvent(data);
+}
+
+// Bulk-edit a recurring series. scope 'all' = every occurrence; 'remaining' = this one + later
+// (starts_at >= fromStartsAt). Non-temporal fields apply directly; a new start/end clock time is
+// applied to each occurrence while PRESERVING that occurrence's own date (the series keeps its
+// per-week dates, only the time-of-day shifts). Occurrence dates are never bulk-changed. Resolves
+// occurrences as {anchor row id} ∪ {rows whose recurrence_parent_id = anchor} so a corrected series
+// is fully covered. Returns the number of occurrences updated.
+export async function updateRepTeamEventSeries(
+  anchorId: string,
+  scope: 'all' | 'remaining',
+  fromStartsAt: string | null,
+  fields: {
+    name?: string;
+    description?: string | null;
+    location?: string | null;
+    locationAddress?: string | null;
+    fieldNumber?: string | null;
+    uniform?: string | null;
+    resources?: RepEventResource[];
+    opponent?: string | null;
+    homeAway?: 'home' | 'away' | 'neutral' | null;
+    arrivalTime?: string | null;
+    startTime?: string | null; // 'HH:mm' — applied to each occurrence's own date
+    endTime?: string | null;   // 'HH:mm' — applied only when provided (empty leaves ends untouched)
+  },
+): Promise<number> {
+  let q = supabaseAdmin
+    .from('rep_team_events')
+    .select('id, starts_at')
+    .or(`id.eq.${anchorId},recurrence_parent_id.eq.${anchorId}`);
+  if (scope === 'remaining' && fromStartsAt) q = q.gte('starts_at', fromStartsAt);
+  const { data: rows, error } = await q;
+  if (error) throw error;
+
+  const base: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.name !== undefined)            base.name = fields.name;
+  if (fields.description !== undefined)     base.description = fields.description;
+  if (fields.location !== undefined)        base.location = fields.location;
+  if (fields.locationAddress !== undefined) base.location_address = fields.locationAddress;
+  if (fields.fieldNumber !== undefined)     base.field_number = fields.fieldNumber;
+  if (fields.uniform !== undefined)         base.uniform = fields.uniform;
+  if (fields.resources !== undefined)       base.resources = fields.resources;
+  if (fields.opponent !== undefined)        base.opponent = fields.opponent;
+  if (fields.homeAway !== undefined)        base.home_away = fields.homeAway;
+  if (fields.arrivalTime !== undefined)     base.arrival_time = fields.arrivalTime;
+
+  for (const row of rows ?? []) {
+    const patch: Record<string, unknown> = { ...base };
+    const date = (row.starts_at as string).slice(0, 10);
+    if (fields.startTime) patch.starts_at = `${date}T${fields.startTime}:00`;
+    if (fields.endTime)   patch.ends_at = `${date}T${fields.endTime}:00`;
+    const { error: uErr } = await supabaseAdmin.from('rep_team_events').update(patch).eq('id', row.id);
+    if (uErr) throw uErr;
+  }
+  return (rows ?? []).length;
 }
 
 export async function updateRepTeamEventsByRecurrenceParent(
@@ -5087,6 +5179,100 @@ export async function replaceRepTeamLineupEntries(
     .select();
   if (error) throw error;
   return (data ?? []).map(mapRepTeamLineupEntry);
+}
+
+// ── Rep team lineup TEMPLATES (mig 159) ───────────────────────────────────────
+// Named, reusable "base start" lineups (Phase 4). Single table; `entries` is a jsonb
+// snapshot keyed by player_id (remapped to the current roster on load — see Finding #29).
+
+/** Coerce the stored/sent jsonb into clean template entries (defensive on read AND write). */
+function normalizeTemplateEntries(raw: unknown): RepTeamLineupTemplateEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const out: RepTeamLineupTemplateEntry[] = [];
+  for (const e of raw) {
+    if (!e || typeof e !== 'object') continue;
+    const o = e as Record<string, unknown>;
+    const playerId = typeof o.playerId === 'string' ? o.playerId : '';
+    if (!playerId) continue;
+    const battingOrder = typeof o.battingOrder === 'number' && Number.isFinite(o.battingOrder)
+      ? o.battingOrder : null;
+    const starter = o.starter !== false;
+    const ipRaw = o.inningPositions && typeof o.inningPositions === 'object' && !Array.isArray(o.inningPositions)
+      ? o.inningPositions as Record<string, unknown> : {};
+    const inningPositions: Record<string, string> = {};
+    for (const [k, v] of Object.entries(ipRaw)) if (typeof v === 'string' && v) inningPositions[k] = v;
+    out.push({ playerId, battingOrder, starter, inningPositions });
+  }
+  return out;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRepTeamLineupTemplate(r: any): RepTeamLineupTemplate {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    teamId: r.team_id,
+    programYearId: r.program_year_id,
+    name: r.name,
+    lineupMode: r.lineup_mode,
+    inningCount: r.inning_count,
+    entries: normalizeTemplateEntries(r.entries),
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepTeamLineupTemplates(
+  teamId: string,
+  programYearId: string,
+): Promise<RepTeamLineupTemplate[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_lineup_templates')
+    .select('*')
+    .eq('team_id', teamId)
+    .eq('program_year_id', programYearId)
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamLineupTemplate);
+}
+
+export async function createRepTeamLineupTemplate(fields: {
+  orgId: string;
+  teamId: string;
+  programYearId: string;
+  name: string;
+  lineupMode: RepLineupMode;
+  inningCount: number;
+  entries: RepTeamLineupTemplateEntry[];
+  createdBy?: string | null;
+}): Promise<RepTeamLineupTemplate> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_lineup_templates')
+    .insert({
+      org_id: fields.orgId,
+      team_id: fields.teamId,
+      program_year_id: fields.programYearId,
+      name: fields.name.trim(),
+      lineup_mode: fields.lineupMode,
+      inning_count: fields.inningCount,
+      entries: normalizeTemplateEntries(fields.entries),
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamLineupTemplate(data);
+}
+
+/** Scoped delete (team_id guards against cross-team deletes even if RLS is bypassed). */
+export async function deleteRepTeamLineupTemplate(id: string, teamId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_team_lineup_templates')
+    .delete()
+    .eq('id', id)
+    .eq('team_id', teamId);
+  if (error) throw error;
 }
 
 // Document Templates

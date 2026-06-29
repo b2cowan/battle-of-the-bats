@@ -144,7 +144,8 @@ export default function CompanyUsersClient({ users: initial, bootstrapEmails, ca
 
       {showInvite && canManageUsers && (
         <div className={styles.inviteCard}>
-          <h2 className={styles.inviteTitle}>Invite Company User</h2>
+          <h2 className={styles.inviteTitle}>Add Company User</h2>
+          <p className={styles.inviteHint}>No email is sent. After creating, copy the one-time setup link shown below and share it securely with the new user.</p>
           <form onSubmit={handleInvite} className={styles.inviteForm}>
             <div className={styles.inviteRow}>
               <div className={styles.inviteField}>

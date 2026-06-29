@@ -329,7 +329,7 @@ export default function AdminSchedulePage({
               {selectedEvent.location && <><dt>Location</dt><dd>{selectedEvent.location}</dd></>}
               {selectedEvent.opponent && <><dt>Opponent</dt><dd>{selectedEvent.opponent}</dd></>}
               {selectedEvent.homeAway && <><dt>Home/Away</dt><dd style={{ textTransform: 'capitalize' }}>{selectedEvent.homeAway}</dd></>}
-              {selectedEvent.homeScore != null && <><dt>Score</dt><dd>{selectedEvent.homeScore}–{selectedEvent.awayScore} <strong style={{ color: selectedEvent.result === 'win' ? '#22c55e' : selectedEvent.result === 'loss' ? '#ef4444' : '#f59e0b' }}>{selectedEvent.result?.toUpperCase()}</strong></dd></>}
+              {selectedEvent.teamScore != null && <><dt>Score</dt><dd>{selectedEvent.teamScore}–{selectedEvent.opponentScore} <strong style={{ color: selectedEvent.result === 'win' ? '#22c55e' : selectedEvent.result === 'loss' ? '#ef4444' : '#f59e0b' }}>{selectedEvent.result?.toUpperCase()}</strong></dd></>}
               {selectedEvent.description && <><dt>Notes</dt><dd>{selectedEvent.description}</dd></>}
             </dl>
           </div>

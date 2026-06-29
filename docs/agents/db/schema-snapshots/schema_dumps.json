@@ -9679,7 +9679,7 @@
       {
         "table_name": "rep_team_events",
         "pos": 13,
-        "column_name": "home_score",
+        "column_name": "team_score",
         "data_type": "integer",
         "udt_name": "int4",
         "is_nullable": "YES",
@@ -9688,7 +9688,7 @@
       {
         "table_name": "rep_team_events",
         "pos": 14,
-        "column_name": "away_score",
+        "column_name": "opponent_score",
         "data_type": "integer",
         "udt_name": "int4",
         "is_nullable": "YES",
@@ -9772,6 +9772,51 @@
         "column_name": "source_basic_event_id",
         "data_type": "uuid",
         "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 24,
+        "column_name": "arrival_time",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 25,
+        "column_name": "field_number",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 26,
+        "column_name": "uniform",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 27,
+        "column_name": "location_address",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 28,
+        "column_name": "resources",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -10111,6 +10156,105 @@
       {
         "table_name": "rep_team_lineup_entries",
         "pos": 9,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "pos": 4,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "pos": 5,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "pos": 6,
+        "column_name": "lineup_mode",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'everyone_bats'::text"
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "pos": 7,
+        "column_name": "inning_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "7"
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "pos": 8,
+        "column_name": "entries",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'[]'::jsonb"
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "pos": 9,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "pos": 11,
         "column_name": "updated_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
@@ -12602,6 +12746,24 @@
         "column_default": null
       },
       {
+        "table_name": "tournaments",
+        "pos": 42,
+        "column_name": "list_in_directory",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "tournaments",
+        "pos": 43,
+        "column_name": "directory_province",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "venue_facilities",
         "pos": 1,
         "column_name": "id",
@@ -14120,6 +14282,34 @@
         "foreign_table": "rep_roster_players",
         "foreign_column": "id",
         "constraint_name": "rep_team_lineup_entries_player_id_fkey"
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_lineup_templates_created_by_fkey"
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_lineup_templates_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_lineup_templates_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_team_lineup_templates",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_lineup_templates_team_id_fkey"
       },
       {
         "table_name": "rep_team_lineups",
@@ -16031,6 +16221,26 @@
         "indexdef": "CREATE INDEX rep_team_lineup_entries_player_idx ON public.rep_team_lineup_entries USING btree (player_id)"
       },
       {
+        "tablename": "rep_team_lineup_templates",
+        "indexname": "rep_team_lineup_templates_name_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_lineup_templates_name_uniq ON public.rep_team_lineup_templates USING btree (team_id, program_year_id, lower(btrim(name)))"
+      },
+      {
+        "tablename": "rep_team_lineup_templates",
+        "indexname": "rep_team_lineup_templates_org_idx",
+        "indexdef": "CREATE INDEX rep_team_lineup_templates_org_idx ON public.rep_team_lineup_templates USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_lineup_templates",
+        "indexname": "rep_team_lineup_templates_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_lineup_templates_pkey ON public.rep_team_lineup_templates USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_lineup_templates",
+        "indexname": "rep_team_lineup_templates_team_idx",
+        "indexdef": "CREATE INDEX rep_team_lineup_templates_team_idx ON public.rep_team_lineup_templates USING btree (team_id, program_year_id)"
+      },
+      {
         "tablename": "rep_team_lineups",
         "indexname": "rep_team_lineups_event_id_key",
         "indexdef": "CREATE UNIQUE INDEX rep_team_lineups_event_id_key ON public.rep_team_lineups USING btree (event_id)"
@@ -16374,6 +16584,11 @@
         "tablename": "tournaments",
         "indexname": "idx_tournaments_results_notified_at",
         "indexdef": "CREATE INDEX idx_tournaments_results_notified_at ON public.tournaments USING btree (results_notified_at DESC) WHERE (results_notified_at IS NOT NULL)"
+      },
+      {
+        "tablename": "tournaments",
+        "indexname": "tournaments_list_in_directory_idx",
+        "indexdef": "CREATE INDEX tournaments_list_in_directory_idx ON public.tournaments USING btree (list_in_directory) WHERE (list_in_directory = true)"
       },
       {
         "tablename": "tournaments",
@@ -17652,6 +17867,30 @@
       {
         "kind": "RLS",
         "table_name": "rep_team_lineup_entries",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_lineup_templates",
+        "detail": "rep_team_lineup_templates_inning_count_check",
+        "check_clause": "((inning_count >= 1) AND (inning_count <= 12))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_lineup_templates",
+        "detail": "rep_team_lineup_templates_lineup_mode_check",
+        "check_clause": "(lineup_mode = ANY (ARRAY['nine_player'::text, 'everyone_bats'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_lineup_templates",
+        "detail": "rep_team_lineup_templates_name_check",
+        "check_clause": "((char_length(btrim(name)) >= 1) AND (char_length(btrim(name)) <= 80))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_lineup_templates",
         "detail": "ENABLED",
         "check_clause": null
       },

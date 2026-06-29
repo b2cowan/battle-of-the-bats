@@ -480,6 +480,21 @@ export async function syncTournamentChatRoom(params: {
 
   // Coaches: insert missing as active members; never touch an existing (possibly-moderated) row.
   const moderatorSet = new Set(moderatorIds);
+
+  // Demote stale organizers: a 'moderator' row whose user is no longer an active org owner/admin
+  // is an ex-admin (there is no coach→moderator promotion path). If they still resolve as a coach,
+  // drop them to 'member'; otherwise leave the row alone (admin may have removed them deliberately).
+  const coachSet = new Set(coachIds);
+  for (const [userId, cur] of existing) {
+    if (cur.role === 'moderator' && !moderatorSet.has(userId) && coachSet.has(userId)) {
+      await supabaseAdmin
+        .from('chat_room_members')
+        .update({ member_role: 'member' })
+        .eq('room_id', room.id)
+        .eq('user_id', userId);
+    }
+  }
+
   for (const userId of coachIds) {
     if (moderatorSet.has(userId)) continue; // already handled as a moderator
     if (!existing.has(userId)) {

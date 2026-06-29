@@ -54,8 +54,13 @@ export const DELETE = withObservability(async (_req: NextRequest, { params }: Pa
     return NextResponse.json({ error: 'Bootstrap admin cannot be removed.' }, { status: 400 });
   }
 
-  if (active.length === 0) {
-    return NextResponse.json({ error: 'Cannot remove the last active platform admin.' }, { status: 400 });
+  // Safety net: never leave the platform with nobody who can administer it. The configured
+  // bootstrap admin(s) always count as a fallback (they can't be removed via UI), so a stored
+  // teammate can be removed whenever a bootstrap admin exists or another active user remains.
+  // (Previously this counted only DB-stored users and ignored the bootstrap admin, so removing
+  // the last stored teammate — even a Support user — was wrongly blocked as "the last admin".)
+  if (active.length === 0 && envList.length === 0) {
+    return NextResponse.json({ error: 'Cannot remove the last platform user — configure a bootstrap admin first.' }, { status: 400 });
   }
 
   // Delete auth user

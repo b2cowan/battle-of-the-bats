@@ -270,8 +270,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Define the structure',
       heading: 'Branding, scoring, and event settings',
       summary: 'Review tournament-specific controls that affect public appearance, scoring rules, billing visibility, and who can help administer the event.',
-      keywords: ['settings', 'branding', 'scoring', 'subscription', 'members', 'access', 'scorekeepers', 'tie-breaker', 'game timing', 'app icon'],
-      searchText: 'settings access members branding logo hero banner scoring finalization subscription plan tournament settings scorekeeper score finalization role members permissions public appearance tie-breaker tiebreaker ranking standings head to head run differential coin toss game timing game length duration buffer turnaround app icon home screen icon icon background colour color border app name custom short name initials add to home screen pwa icon logo size logo zoom resize logo make logo bigger smaller new installs',
+      keywords: ['settings', 'branding', 'scoring', 'subscription', 'members', 'access', 'scorekeepers', 'tie-breaker', 'game timing', 'app icon', 'public directory', 'discover tournaments'],
+      searchText: 'settings access members branding logo hero banner scoring finalization subscription plan tournament settings scorekeeper score finalization role members permissions public appearance tie-breaker tiebreaker ranking standings head to head run differential coin toss game timing game length duration buffer turnaround app icon home screen icon icon background colour color border app name custom short name initials add to home screen pwa icon logo size logo zoom resize logo make logo bigger smaller new installs public directory discover discovery list tournament publicly tournament directory find tournaments browse tournaments province region opt in listing',
       links: [
         { label: 'Event Settings', href: '../tournaments/settings/event' },
         { label: 'Branding', href: '../tournaments/branding' },
@@ -281,7 +281,7 @@ const tournamentsHelp: HelpPageContent = {
         <>
           <p>Use <strong>Event Settings</strong> and <strong>Branding</strong> for tournament-specific administration after the core setup is in place.</p>
           <p><strong>Branding</strong> controls the tournament public appearance. Free tournaments use the default FieldLogicHQ look; Tournament Plus and above can give a tournament its own identity — a custom logo, colours, hero banner, fonts, and a custom <strong>App Icon</strong> (the icon and name fans see when they add the event to their phone&rsquo;s home screen).</p>
-          <p><strong>Event Settings</strong> controls dates, fee scope, score finalization, tie-breaker rules, game timing, and the Plus-only post-event results notification. When enabled, accepted team contacts receive the public results links once when the tournament is marked completed.</p>
+          <p><strong>Event Settings</strong> controls dates, fee scope, score finalization, tie-breaker rules, game timing, whether the tournament is listed in the public tournament directory, and the Plus-only post-event results notification. When enabled, accepted team contacts receive the public results links once when the tournament is marked completed.</p>
           <p><strong>Members</strong> helps you review who can administer tournament work. Keep access limited to people who need to manage setup, registrations, schedule, results, or communications.</p>
           <p><strong>Subscription</strong> stays inside tournament admin for Tournament and Tournament Plus users, so upgrade prompts do not send tournament-only organizers into organization admin billing pages.</p>
         </>
@@ -306,6 +306,19 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['branding', 'logo', 'hero', 'public site'],
           answer: (
             <p>Yes. Use <strong>Branding</strong> under tournament settings when a tournament needs its own public identity separate from the default organization look.</p>
+          ),
+        },
+        {
+          id: 'faq-public-directory',
+          question: 'How do I list my tournament in the public directory?',
+          answerText: 'Open Event Settings and turn on "List in public tournament directory". It is off by default and available on every plan. When it is on, pick a province so people can find your event by region. Listing adds your tournament to the public FieldLogicHQ directory, which shows your event name, dates, sport, and live scores and links to your existing public pages — player information always stays private. Your listing only appears once the tournament is Active or Completed; a draft stays hidden even with the toggle on. Turn it off any time to remove the tournament from the directory.',
+          keywords: ['public directory', 'discover', 'discovery', 'list tournament', 'tournament directory', 'find tournaments', 'browse tournaments', 'public listing', 'province', 'region', 'opt in'],
+          answer: (
+            <>
+              <p>Open <strong>Event Settings</strong> and turn on <strong>List in public tournament directory</strong>. It&rsquo;s <strong>off by default</strong> and available on every plan, so a tournament is only listed when you choose to list it.</p>
+              <p>When it&rsquo;s on, pick a <strong>province</strong> so people can find your event by region. Listing adds your tournament to the public FieldLogicHQ directory, which shows your event name, dates, sport, and live scores and links to your existing public pages. <strong>Player information always stays private.</strong></p>
+              <p>Your listing only appears once the tournament is <strong>Active</strong> or <strong>Completed</strong> — a draft stays hidden even with the toggle on. Turn the toggle off any time to remove the tournament from the directory.</p>
+            </>
           ),
         },
         {

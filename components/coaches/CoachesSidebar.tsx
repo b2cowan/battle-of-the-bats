@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ArrowLeft, Users, Calendar, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ArrowLeft, Users, Calendar, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut } from 'lucide-react';
+import { signOut } from '@/lib/auth';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { useChatUnread } from '@/lib/use-chat-unread';
@@ -26,9 +27,15 @@ const TEAM_NAV = [
 
 export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { assignments } = useCoaches();
   const { currentOrg } = useOrg();
   const chatUnread = useChatUnread();
+
+  async function handleSignOut() {
+    await signOut();
+    router.push('/auth/login');
+  }
 
   const teamMatch = pathname.match(/\/coaches\/teams\/([^/]+)/);
   const currentTeamId = teamMatch?.[1] ?? null;
@@ -131,6 +138,14 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           <HelpCircle size={14} />
           Help
         </Link>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className={`${styles.sidebarItem} ${styles.sidebarLogout}`}
+        >
+          <LogOut size={14} />
+          Sign out
+        </button>
       </div>
     </nav>
   );

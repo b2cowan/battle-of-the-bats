@@ -333,3 +333,350 @@ export async function downloadPDF(
   const doc = buildTablePDF(jsPDF, autoTable, { title, subtitle, headers, rows, settings, groups });
   doc.save(filename);
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+//  Dugout-wall lineup posters (Coach Lineup Builder Phase 3)
+//  A high-contrast, pen-fillable poster — NOT the generic report table. Blank
+//  cells print as empty boxes the coach fills in by hand at the field; an
+//  explicitly-benched cell prints "BN". Drawn with jsPDF primitives for exact
+//  control over fixed row heights, thick grid lines, and empty boxes.
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Bench sentinel stored in a lineup cell (matches lib/lineup-analysis BENCH_POSITION). */
+const POSTER_BENCH = 'Bench';
+const POSTER_MARGIN = 13; // mm — a touch tighter than reports to win grid width
+
+/** Full-name labels for diamond position codes, used in the poster legend. Driven by the
+ *  Sport Pack's `positions` for *which* codes appear; this only supplies human names.
+ *  A future non-diamond sport would supply its own labels (codes fall back to themselves). */
+const DIAMOND_POSITION_LABELS: Record<string, string> = {
+  P: 'Pitcher', C: 'Catcher', '1B': 'First base', '2B': 'Second base', '3B': 'Third base',
+  SS: 'Shortstop', LF: 'Left field', CF: 'Center field', RF: 'Right field',
+  OF: 'Outfield', DH: 'Designated hitter', EH: 'Extra hitter',
+};
+
+/** Build the `{ code, label }[]` legend from a Sport Pack's position codes. */
+export function buildPositionLegend(codes: string[]): { code: string; label: string }[] {
+  return codes.map(code => ({ code, label: DIAMOND_POSITION_LABELS[code] ?? code }));
+}
+
+export interface LineupPosterPlayer {
+  /** Batting slot number as a string ('' for a 9-player-mode bench/sub with no slot). */
+  battingOrder: string;
+  /** Display name, e.g. "#12 Jane Smith". */
+  name: string;
+  /** True for a 9-player-mode non-starter (rendered after the order, tagged "sub"). */
+  isSub: boolean;
+  /** inning(string) → position code. '' = blank (prints an empty box); 'Bench' = sit. */
+  inningPositions: Record<string, string>;
+}
+
+export interface LineupPosterOptions {
+  teamName: string;
+  opponent?: string | null;
+  /** Drives the matchup separator: 'away' → "@", everything else → "vs". */
+  homeAway?: 'home' | 'away' | 'neutral' | null;
+  /** Pre-formatted date/time line, e.g. "Sat, Jun 28, 2026 · 10:00 a.m." */
+  dateLabel: string;
+  /** Shown on the batting-order card (not the poster). */
+  eventName?: string;
+  inningCount: number;
+  players: LineupPosterPlayer[];
+  legend: { code: string; label: string }[];
+  /** When set, the coach's lineup notes print at the foot of the poster (e.g. opponent scouting). */
+  includeNotes?: boolean;
+  notes?: string | null;
+  /** Header accent colour (org PDF accent); text auto-contrasts. */
+  accentColor: string;
+  showBranding: boolean;
+}
+
+/** Matchup separator: away games read "@ Opponent", home/neutral read "vs Opponent". */
+function matchupSeparator(homeAway?: 'home' | 'away' | 'neutral' | null): string {
+  return homeAway === 'away' ? '@' : 'vs';
+}
+
+const clampNum = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+
+/** Shorten text to fit a max width in the current font, adding an ellipsis. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function fitText(doc: any, text: string, maxW: number): string {
+  if (doc.getTextWidth(text) <= maxW) return text;
+  let t = text;
+  while (t.length > 1 && doc.getTextWidth(t + '…') > maxW) t = t.slice(0, -1);
+  return t + '…';
+}
+
+/**
+ * Build the dugout-wall poster (landscape): team/opponent/date header, a
+ * batting-order × innings grid with empty boxes for blank cells, and a position
+ * legend along the bottom. Returns the jsPDF doc (caller saves it).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildLineupPosterDoc(jsPDFClass: any, opts: LineupPosterOptions): any {
+  const doc = new jsPDFClass({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const M = POSTER_MARGIN;
+  const accent = hexToRgb(opts.accentColor || '#1e293b');
+  const headText = isDark(opts.accentColor || '#1e293b') ? [255, 255, 255] : [20, 20, 30];
+
+  // ── Header band ───────────────────────────────────────────────────────────
+  doc.setFillColor(accent.r, accent.g, accent.b);
+  doc.rect(0, 0, pageW, 4, 'F');
+
+  let y = 15;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(15, 15, 25);
+  const title = opts.opponent
+    ? `${opts.teamName}   ${matchupSeparator(opts.homeAway)}   ${opts.opponent}`
+    : opts.teamName;
+  doc.text(fitText(doc, title, pageW - 2 * M - 60), M, y);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(70, 70, 90);
+  doc.text(opts.dateLabel, pageW - M, y, { align: 'right' });
+
+  y += 5;
+  doc.setDrawColor(accent.r, accent.g, accent.b);
+  doc.setLineWidth(0.6);
+  doc.line(M, y, pageW - M, y);
+
+  // ── Optional coach notes (printed at the foot) — measured first so the grid reserves room ──
+  const notesText = opts.includeNotes && opts.notes ? opts.notes.trim() : '';
+  let notesLines: string[] = [];
+  if (notesText) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    notesLines = doc.splitTextToSize(notesText, pageW - 2 * M);
+    if (notesLines.length > 6) {
+      notesLines = notesLines.slice(0, 6);
+      notesLines[5] = fitText(doc, `${notesLines[5]} …`, pageW - 2 * M);
+    }
+  }
+  const notesReserve = notesLines.length ? notesLines.length * 4 + 7 : 0;
+
+  // ── Grid geometry ─────────────────────────────────────────────────────────
+  const gridTop = y + 5;
+  const legendReserve = 18 + notesReserve; // legend + branding (+ optional notes) below the grid
+  const gridBottom = pageH - M - legendReserve;
+  const gridArea = gridBottom - gridTop;
+
+  const inningCount = Math.max(1, opts.inningCount); // defensive: UI constrains to 1–12
+  const colNumW = 13;
+  const colNameW = 56;
+  const innW = (pageW - 2 * M - colNumW - colNameW) / inningCount;
+  const totalW = pageW - 2 * M;
+  const headerRowH = 9;
+  const n = Math.max(1, opts.players.length);
+  const bodyRowH = clampNum((gridArea - headerRowH) / n, 6, 13);
+  const gridEnd = gridTop + headerRowH + bodyRowH * opts.players.length;
+
+  const colNameX = M + colNumW;
+  const innX = (i: number) => M + colNumW + colNameW + innW * i; // left of inning i (0-based)
+
+  // ── Header row ────────────────────────────────────────────────────────────
+  doc.setFillColor(accent.r, accent.g, accent.b);
+  doc.rect(M, gridTop, totalW, headerRowH, 'F');
+  doc.setTextColor(headText[0], headText[1], headText[2]);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  const hMid = gridTop + headerRowH / 2;
+  doc.text('#', M + colNumW / 2, hMid, { align: 'center', baseline: 'middle' });
+  doc.text('Batter', colNameX + 3, hMid, { align: 'left', baseline: 'middle' });
+  for (let i = 0; i < inningCount; i++) {
+    doc.text(String(i + 1), innX(i) + innW / 2, hMid, { align: 'center', baseline: 'middle' });
+  }
+
+  // ── Body: zebra fills + text ──────────────────────────────────────────────
+  opts.players.forEach((p, k) => {
+    const top = gridTop + headerRowH + k * bodyRowH;
+    const mid = top + bodyRowH / 2;
+    if (k % 2 === 1) {
+      doc.setFillColor(247, 247, 250);
+      doc.rect(M, top, totalW, bodyRowH, 'F');
+    }
+    // batting number
+    if (p.battingOrder) {
+      doc.setTextColor(20, 20, 30);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text(p.battingOrder, M + colNumW / 2, mid, { align: 'center', baseline: 'middle' });
+    }
+    // name
+    doc.setFont('helvetica', p.isSub ? 'normal' : 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(p.isSub ? 90 : 20, p.isSub ? 90 : 20, p.isSub ? 110 : 30);
+    const nm = p.isSub ? `${p.name}  (sub)` : p.name;
+    doc.text(fitText(doc, nm, colNameW - 5), colNameX + 3, mid, { align: 'left', baseline: 'middle' });
+    // innings — blank stays an empty box; Bench → "BN"
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(25, 25, 35);
+    for (let i = 0; i < inningCount; i++) {
+      const raw = p.inningPositions[String(i + 1)] || '';
+      if (!raw) continue;
+      const label = raw === POSTER_BENCH ? 'BN' : raw;
+      if (raw === POSTER_BENCH) doc.setTextColor(150, 150, 165);
+      doc.text(label, innX(i) + innW / 2, mid, { align: 'center', baseline: 'middle' });
+      if (raw === POSTER_BENCH) doc.setTextColor(25, 25, 35);
+    }
+  });
+
+  // ── Grid lines (drawn over fills/text; thin enough not to obscure) ─────────
+  doc.setDrawColor(30, 30, 40);
+  // horizontal: top, header/body split, each body row, bottom
+  const hLines: number[] = [gridTop, gridTop + headerRowH];
+  for (let k = 1; k <= opts.players.length; k++) hLines.push(gridTop + headerRowH + k * bodyRowH);
+  hLines.forEach((ly, idx) => {
+    doc.setLineWidth(idx === 0 || idx === hLines.length - 1 ? 0.8 : 0.3);
+    doc.line(M, ly, M + totalW, ly);
+  });
+  // vertical: outer + structural separators (after #, after Batter) + inning dividers
+  for (let i = 0; i <= inningCount; i++) {
+    const vx = innX(i);
+    doc.setLineWidth(i === inningCount ? 0.8 : 0.3);
+    doc.line(vx, gridTop, vx, gridEnd);
+  }
+  doc.setLineWidth(0.8); doc.line(M, gridTop, M, gridEnd);              // left edge
+  doc.setLineWidth(0.6); doc.line(colNameX, gridTop, colNameX, gridEnd); // after #
+  doc.line(colNameX + colNameW, gridTop, colNameX + colNameW, gridEnd);  // after Batter
+
+  // ── Legend (kept above any notes block) ────────────────────────────────────
+  const legendY = clampNum(gridEnd + 6, gridTop, pageH - M - 8 - notesReserve);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(80, 80, 100);
+  const parts = opts.legend.map(l => `${l.code} ${l.label}`);
+  parts.push('BN Bench');
+  const legendStr = `Positions:   ${parts.join('     ')}     ·     Blank box = fill in at the field`;
+  const lines = doc.splitTextToSize(legendStr, totalW);
+  doc.text(lines, M, legendY);
+
+  // ── Optional coach notes block (bottom-anchored, e.g. opponent scouting) ────
+  if (notesLines.length) {
+    const notesTop = pageH - M - notesReserve + 4;
+    doc.setDrawColor(210, 210, 220);
+    doc.setLineWidth(0.3);
+    doc.line(M, notesTop - 3, M + totalW, notesTop - 3);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(90, 90, 110);
+    doc.text('NOTES', M, notesTop);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(40, 40, 55);
+    doc.text(notesLines, M, notesTop + 4.5);
+  }
+
+  if (opts.showBranding) {
+    doc.setFontSize(7);
+    doc.setTextColor(150, 150, 165);
+    doc.text('Generated by FieldLogicHQ', pageW - M, pageH - 5, { align: 'right' });
+  }
+
+  return doc;
+}
+
+/**
+ * Build the stripped batting-order card (portrait): team/opponent/date and a
+ * large-type batting order for the scorekeeper / dugout. Subs listed at the foot.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildBattingOrderCardDoc(jsPDFClass: any, opts: LineupPosterOptions): any {
+  const doc = new jsPDFClass({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const M = 18;
+  const accent = hexToRgb(opts.accentColor || '#1e293b');
+
+  doc.setFillColor(accent.r, accent.g, accent.b);
+  doc.rect(0, 0, pageW, 5, 'F');
+
+  let y = 20;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.setTextColor(15, 15, 25);
+  const title = opts.opponent
+    ? `${opts.teamName} ${matchupSeparator(opts.homeAway)} ${opts.opponent}`
+    : opts.teamName;
+  doc.text(fitText(doc, title, pageW - 2 * M), pageW / 2, y, { align: 'center' });
+
+  y += 7;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(90, 90, 110);
+  doc.text([opts.dateLabel, opts.eventName].filter(Boolean).join('  ·  '), pageW / 2, y, { align: 'center' });
+
+  y += 9;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(accent.r, accent.g, accent.b);
+  doc.text('BATTING ORDER', pageW / 2, y, { align: 'center' });
+  y += 4;
+  doc.setDrawColor(accent.r, accent.g, accent.b);
+  doc.setLineWidth(0.6);
+  doc.line(M, y, pageW - M, y);
+
+  const batters = opts.players.filter(p => p.battingOrder);
+  const subs = opts.players.filter(p => p.isSub || !p.battingOrder);
+
+  const listTop = y + 6;
+  const listBottom = pageH - M - (subs.length ? 22 : 10);
+  const rowH = clampNum((listBottom - listTop) / Math.max(1, batters.length), 9, 18);
+
+  batters.forEach((p, k) => {
+    const top = listTop + k * rowH;
+    const mid = top + rowH / 2;
+    if (k % 2 === 1) {
+      doc.setFillColor(247, 247, 250);
+      doc.rect(M, top, pageW - 2 * M, rowH, 'F');
+    }
+    doc.setTextColor(accent.r, accent.g, accent.b);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text(p.battingOrder, M + 4, mid, { align: 'left', baseline: 'middle' });
+    doc.setTextColor(20, 20, 30);
+    doc.setFontSize(15);
+    doc.text(fitText(doc, p.name, pageW - 2 * M - 24), M + 18, mid, { align: 'left', baseline: 'middle' });
+    doc.setDrawColor(225, 225, 232);
+    doc.setLineWidth(0.2);
+    doc.line(M, top + rowH, pageW - M, top + rowH);
+  });
+
+  if (subs.length) {
+    const sy = pageH - M - 14;
+    doc.setDrawColor(accent.r, accent.g, accent.b);
+    doc.setLineWidth(0.4);
+    doc.line(M, sy, pageW - M, sy);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(90, 90, 110);
+    doc.text('Subs', M, sy + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(40, 40, 55);
+    doc.text(fitText(doc, subs.map(s => s.name).join(',  '), pageW - 2 * M - 18), M + 16, sy + 6);
+  }
+
+  if (opts.showBranding) {
+    doc.setFontSize(7);
+    doc.setTextColor(150, 150, 165);
+    doc.text('Generated by FieldLogicHQ', pageW - M, pageH - 6, { align: 'right' });
+  }
+
+  return doc;
+}
+
+/** Lazy-load jsPDF and save the dugout-wall positions-by-inning poster. */
+export async function downloadLineupPoster(filename: string, opts: LineupPosterOptions): Promise<void> {
+  const { default: jsPDF } = await import('jspdf');
+  buildLineupPosterDoc(jsPDF, opts).save(filename);
+}
+
+/** Lazy-load jsPDF and save the stripped batting-order card. */
+export async function downloadBattingOrderCard(filename: string, opts: LineupPosterOptions): Promise<void> {
+  const { default: jsPDF } = await import('jspdf');
+  buildBattingOrderCardDoc(jsPDF, opts).save(filename);
+}

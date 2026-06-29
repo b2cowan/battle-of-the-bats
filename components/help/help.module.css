@@ -198,6 +198,29 @@
   margin-top: 1px;
 }
 
+/* Bottom placement — applied by HelpTooltip when the trigger is too near the top
+   of the viewport to fit the popover above it. Flips the popover and caret below. */
+.tooltipBottom .tooltipPopover {
+  bottom: auto;
+  top: calc(100% + 10px);
+}
+
+.tooltipBottom .tooltipPopover::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: #1a1f2e;
+}
+
+.tooltipBottom .tooltipPopover::before {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: rgba(79, 163, 224, 0.25);
+  margin-top: 0;
+  margin-bottom: 1px;
+}
+
 .tooltipTitle {
   font-size: 0.8rem;
   font-weight: 700;

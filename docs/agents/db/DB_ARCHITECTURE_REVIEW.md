@@ -13,14 +13,64 @@
 | Severity | Open | Addressed | Accepted Risk |
 |---|---|---|---|
 | Critical | 0 | 0 | 0 |
-| High | 0 | 7 | 1 |
+| High | 1 | 7 | 1 |
 | Medium | 0 | 4 | 2 |
 | Low | 0 | 4 | 3 |
-| Advisory | 6 | 1 | 0 |
+| Advisory | 8 | 1 | 0 |
+
+> **Newest (2026-06-28):** #27 rep game scoring should be team-relative (`team_score`/`opponent_score`) not home/away-assumed — **High, fix now while pre-launch/cheap**; #28 lineup/stats analytics readiness — model sound, keep future stats in own leaf tables (Advisory); #29 Phase-4 lineup templates → new dedicated table, not the event-bound `rep_team_lineups` (Advisory).
 
 ---
 
 ## Open Findings
+
+---
+
+### [2026-06-28] — Finding #27: rep game scoring is home/away-labelled but team-relative in practice — adopt explicit team-relative scoring (`team_score`/`opponent_score`)
+
+**Severity:** High (data integrity + future analytics; pre-implementation decision)
+**Finding:** `rep_team_events` stores `home_score`/`away_score` (int) + a separate `home_away` tag (CHECK `home|away|neutral`), but nothing binds the scores to the coach's team. The app derives `result` as `home_score > away_score → win` (`handleScoreSave` / `handleScoreSave` in the schedule page), i.e. it **assumes the coach's team is always the home side**, and the score-entry UI labels the two boxes "Home"/"Away" with **no link to `home_away`**. Consequences: (1) **away games can be recorded backwards** — if a coach enters the literal home team's runs in the "Home" box for an away game, a win is stored as a loss; (2) **future "home record vs away record" splits are unreliable** because we can't trust which score is the coach's team; (3) the column names actively mislead any future direct SQL / stats module. The DATA_DICTIONARY already hedges this (`home_score`/`away_score`: *"The coach UI labels them 'Home'/'Away'; no code binds `home_score` to the rep team specifically."*).
+**Tables affected:** `rep_team_events`
+**Recommendation:**
+- **Store team-relative:** add `team_score` + `opponent_score` (int, nullable). `result` derives unambiguously (`team_score > opponent_score → win`). Keep `home_away` as the independent context tag — that is what enables clean home/away record splits later (`GROUP BY home_away` over `result`).
+- **Scoreboard presentation stays correct** by deriving from `home_away` at render (if `home_away='away'`, show `team_score` on the away side), instead of storing literal home/away.
+- **Backfill is 1:1 and safe** precisely because the current code already treats home = the coach's team: `team_score := home_score`, `opponent_score := away_score`. **Pre-check (read-only, live dev+prod) the count of rep game rows with a non-null score before migrating** — the Premium coach portal is effectively pre-launch (test data only), so this is almost certainly ~0 real rows and a trivial/no-op backfill. Do it **now while cheap.**
+- Keep old columns for one release (additive add + backfill), drop in a follow-up after code is cut over; or drop immediately if the live pre-check shows 0 real rows. Update `result` derivation to remove the home-assumption.
+- **DATA_DICTIONARY + dev/prod snapshots in the same unit of work**; this is exactly the kind of CHECK/semantic change `check-prod-migration-drift.mjs` is blind to — verify live.
+**Status:** Addressed (dev) 2026-06-28 — owner chose team-relative. **Mig 158** RENAMEs `home_score→team_score`, `away_score→opponent_score` on `rep_team_events` (dev-applied; ⚠ **PROD-PENDING** — apply at release, then drop the transitional `home_score`/`away_score` anchors in DATA_DICTIONARY). Code cut over: type `RepTeamEvent`, db mapper + `updateRepTeamEvent`, events PATCH route, coach schedule (score entry relabelled "Your team / Opponent", result derives `team>opp`), admin rep history + schedule views. `home_away` retained as independent context tag. Snapshots refreshed; `check:dictionary` green. Tournament `games` + `league_games` untouched (true home/away).
+
+---
+
+### [2026-06-28] — Finding #28: Lineup/stats analytics readiness — model is sound; keep future game-stats in their own leaf tables, do NOT overload lineup data
+
+**Severity:** Advisory (future-readiness; no action required now)
+**Finding:** Reviewed whether the rep-team model can later answer "W/L with this lineup" / "W/L when player X starts at pitcher" and support a real game-stats module. **It can, with no rebuild.** Everything is ID-linked: `rep_team_events` (result/score/event_type/home_away, `year_idx`) ⇄ `rep_team_lineups` (1:1 per event, `rep_team_lineups_event_id_key`) ⇄ `rep_team_lineup_entries` (`player_id` FK, `batting_order`, `starter`, `inning_positions` jsonb; `player_idx`, `lineup_idx`, unique `(lineup_id, player_id)`) ⇄ `rep_team_event_attendance`. The example questions are plain joins; "started at pitcher" = `inning_positions->>'1' = 'P'`.
+**Tables affected:** `rep_team_lineup_entries`, `rep_team_events` (+ future stats tables)
+**Recommendation:**
+- **`inning_positions` JSONB is the only soft spot** — fine for the app and light queries. At **team scale** (tens of games, ~15 players per season) even full scans are negligible; **no index needed now**. If a query ever proves slow, add an **expression index** (`(inning_positions->>'1')`) or a GIN index — additive, deferrable. Do **not** normalize the per-inning map into rows just for the app's sake.
+- **Plan vs actual — confirmed:** a lineup is the *planned* assignment. A real stats module must live in **its own normalized leaf tables keyed by `(event_id, player_id)`** with denormalized `org_id`/`team_id`/`program_year_id` (mirror the established rep_* leaf pattern — Findings #5/#6). Do **not** add stat columns to lineup/entries or to `rep_team_events`.
+- **Recommended future shape (do NOT pre-build):** `rep_player_game_stats(event_id, player_id, org_id, team_id, program_year_id, …, UNIQUE(event_id, player_id))` for the box-score line; optionally `rep_game_position_appearances(event_id, player_id, inning, position, …)` for actual (vs planned) per-inning play — which is also where a **derived read-model** from the lineup JSONB would live if planned positions ever need to be queried relationally at scale.
+- **Sport-neutrality:** stat vocab differs by sport (baseball vs basketball). When the stats module is scoped, decide between a typed-per-sport table and a `stats jsonb` bag keyed by **Sport-Pack-defined** stat codes (`lib/sports.ts`). Flag as a design decision for that project, not now.
+- **Results already structured on the event** (score + `result`) — keep them there (see Finding #27 for the score-semantics fix that makes these analytics trustworthy).
+**Status:** Open (informational) — no migration now; revisit when a game-stats module is scoped.
+
+---
+
+### [2026-06-28] — Finding #29: Phase-4 named lineup templates — new dedicated table(s), do NOT overload the event-bound `rep_team_lineups`
+
+**Severity:** Advisory (pre-implementation decision)
+**Finding:** The lineup builder plan (`docs/projects/active/COACH_LINEUP_BUILDER_PLAN.md`, Phase 4) adds **named, reusable lineup templates** ("Gold medal game"). Reusing `rep_team_lineups` with a nullable `event_id` + `name` is a poor fit: that table has **`event_id NOT NULL` + unique `rep_team_lineups_event_id_key`** (one lineup per event) and its entries are **full-replace-on-save, 1:1 with an event** — templates are not event-bound, so this would muddy the event-lineup invariants.
+**Tables affected:** `rep_team_lineups` (avoid), new `rep_team_lineup_templates` (+ optional entries)
+**Recommendation:**
+- **New dedicated store**, `rep_*` prefixed, scoped by `team_id` + `program_year_id` + `org_id` (NOT NULL, **indexed** — don't repeat the Finding #13 missed-index miss), with `name`, `lineup_mode`, `inning_count`. Two clean options:
+  1. **Header + entries pair** (`rep_team_lineup_templates` + `rep_team_lineup_template_entries`, mirroring the lineups/entries shape, entries keyed by `player_id`) — most consistent with existing conventions.
+  2. **Single table with `entries jsonb`** — acceptable and lighter **because templates are a convenience snapshot, not an analytics surface** (unlike live lineups). Avoids a fourth lineup-shaped table.
+  Recommend option 2 for footprint unless we expect to query across templates; either is fine — the key point is **not** reusing the event-bound table.
+- **Scope to `program_year_id` for V1.** Template entries key on `player_id`, and the season rollover creates **new** roster rows (new `player_id`s), so a template can't transparently carry across seasons — note this caveat; cross-season reuse (map by jersey/name) is a future concern.
+- **On load:** map to the current active roster, **silently skip players no longer rostered** (report how many were skipped). Loads into the editable (unsaved) grid — no silent overwrite (matches the plan).
+- **RLS:** add write policies mirroring **migration 071** (coaches on their assigned teams via `rep_team_coaches` + org-admin), with `WITH CHECK`. Service-role app paths still work, but write policies should exist before any client-side access.
+- Migration + DATA_DICTIONARY + dev/prod snapshots in the same unit of work (this is the one phase of the lineup plan that needs a migration).
+**Status:** Open — recommendation issued 2026-06-28; applies when Phase 4 is built.
 
 ---
 

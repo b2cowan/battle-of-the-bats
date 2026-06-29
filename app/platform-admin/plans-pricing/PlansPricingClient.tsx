@@ -689,6 +689,14 @@ export default function PlansPricingClient({
     [catalogChangeRequests],
   );
 
+  // Every change request still awaiting action — review (needs_review) or implementation (approved) —
+  // across ALL types, not just Stripe price edits, so the banner can't hide a pending launch approval.
+  // Matches the Approval Queue's "Action Needed" count (drafts are the submitter's WIP, excluded).
+  const pendingChangeRequests = useMemo(
+    () => catalogChangeRequests.filter(request => ['needs_review', 'approved'].includes(request.status)),
+    [catalogChangeRequests],
+  );
+
   const pendingStripePriceRequestByRow = useMemo(() => {
     const pending = new Map<string, CatalogChangeRequestRow>();
     for (const request of pendingStripePriceRequests) {
@@ -1747,12 +1755,12 @@ export default function PlansPricingClient({
         </div>
       </section>
 
-      {pendingStripePriceRequests.length > 0 && (
+      {pendingChangeRequests.length > 0 && (
         <section className={styles.pendingApprovalBanner}>
           <div>
-            <div className={styles.sectionTitle}>Pricing Approval Queue</div>
+            <div className={styles.sectionTitle}>Approval Queue</div>
             <p className={styles.sectionDesc}>
-              {pendingStripePriceRequests.length} Stripe price change request{pendingStripePriceRequests.length === 1 ? '' : 's'} waiting for review or application.
+              {pendingChangeRequests.length} change request{pendingChangeRequests.length === 1 ? '' : 's'} waiting for review or application — including plan availability, pricing, and Stripe price changes.
             </p>
           </div>
           <Link className={styles.activateBtn} href="/platform-admin/change-requests">

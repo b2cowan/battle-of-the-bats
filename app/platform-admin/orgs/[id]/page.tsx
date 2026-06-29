@@ -2,10 +2,11 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getEffectiveTournamentLimit, PLAN_CONFIG } from '@/lib/plan-config';
+import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from '@/lib/plan-config';
 import { hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
 import { fmtAbsoluteDate } from '@/lib/format-date';
 import type { OrgPlan } from '@/lib/types';
+import HelpTooltip from '@/components/help/HelpTooltip';
 import OrgDetailClient from './OrgDetailClient';
 import styles from './orgDetail.module.css';
 
@@ -124,6 +125,17 @@ async function getTournaments(orgId: string) {
     startDate: t.start_date as string | null,
     endDate:   t.end_date as string | null,
   }));
+}
+
+// Non-archived rep-team count — the figure a Club band's team cap is measured against
+// (mirrors the customer-facing "X of N teams" readout; rep_teams is the only team type that counts).
+async function getRepTeamCount(orgId: string) {
+  const { count } = await supabaseAdmin
+    .from('rep_teams')
+    .select('*', { count: 'exact', head: true })
+    .eq('org_id', orgId)
+    .eq('is_archived', false);
+  return count ?? 0;
 }
 
 async function getOverrides(orgId: string) {
@@ -284,6 +296,14 @@ function isExpiredOverride(expiresAt: string | null) {
   return new Date(expiresAt) < new Date();
 }
 
+// Expiring within the next 14 days but not yet lapsed — the actionable "extend or let lapse" window.
+function isExpiringSoonOverride(expiresAt: string | null) {
+  if (!expiresAt) return false;
+  const exp = new Date(expiresAt).getTime();
+  const now = Date.now();
+  return exp > now && exp <= now + 14 * 86_400_000;
+}
+
 const MODULE_LABELS: Record<string, string> = {
   module_tournaments:    'Tournaments',
   module_communications: 'Communications',
@@ -337,8 +357,24 @@ export default async function OrgDetailPage({
   const effectiveTournamentLimit = planCfg
     ? getEffectiveTournamentLimit(org.plan_id as OrgPlan, org.tournament_limit as number | null)
     : null;
-  const activeOverrides = overrides.filter(o => !o.revokedAt);
-  const expiredActiveOverrides = activeOverrides.filter(o => isExpiredOverride(o.expiresAt));
+  // Team-capacity readout — only the Club bands have a finite team cap, so only pay for the
+  // count query for those orgs (mirrors the scope-wall-count guard above).
+  const currentIsClubBand = org.plan_id === 'club' || org.plan_id === 'club_large';
+  const teamCount = currentIsClubBand ? await getRepTeamCount(id) : 0;
+  const effectiveTeamLimit = currentIsClubBand
+    ? getEffectiveTeamLimit(org.plan_id as OrgPlan, (org.team_limit as number | null) ?? null)
+    : null;
+  // "(custom)" only when the stored per-org cap actually RAISES the band default — a stored value
+  // at/below the default is ignored by getEffectiveTeamLimit (Math.max), so it isn't a real custom deal.
+  const teamLimitIsCustom = currentIsClubBand && effectiveTeamLimit !== null &&
+    effectiveTeamLimit !== (planCfg?.teamLimit ?? null);
+  const hasOverCapTeams = currentIsClubBand && effectiveTeamLimit !== null &&
+    effectiveTeamLimit < 9999 && teamCount > effectiveTeamLimit;
+  // Expired overrides auto-drop out of "Active" (they stop granting access on their own), so the
+  // snapshot count below matches the client's Active list + tab badge, which also exclude expired.
+  const activeOverrides = overrides.filter(o => !o.revokedAt && !isExpiredOverride(o.expiresAt));
+  // The actionable attention item is now overrides expiring within the next 14 days.
+  const expiringSoonOverrides = activeOverrides.filter(o => isExpiringSoonOverride(o.expiresAt));
   const hasFreePlanBillingMismatch = org.plan_id === 'tournament' && (
     subscriptionStatus === 'trialing' ||
     Boolean(org.stripe_subscription_id) ||
@@ -353,8 +389,9 @@ export default async function OrgDetailPage({
     ...(subscriptionStatus === 'past_due' ? ['Subscription is past due. Review billing and owner contact before support-sensitive changes.'] : []),
     ...(subscriptionStatus === 'canceled' ? ['Subscription is canceled. Confirm access expectations before making support changes.'] : []),
     ...(hasFreePlanBillingMismatch ? ['Free Tournament billing state is inconsistent. The plan should be active with no Stripe subscription.'] : []),
-    ...(expiredActiveOverrides.length > 0 ? [`${expiredActiveOverrides.length} active override${expiredActiveOverrides.length === 1 ? '' : 's'} expired and should be revoked or extended.`] : []),
+    ...(expiringSoonOverrides.length > 0 ? [`${expiringSoonOverrides.length} active override${expiringSoonOverrides.length === 1 ? '' : 's'} expiring within 14 days — extend or let lapse.`] : []),
     ...(hasOverLimitTournaments ? [`This org has ${tournaments.length} non-archived tournaments against a limit of ${effectiveTournamentLimit}.`] : []),
+    ...(hasOverCapTeams ? [`This org has ${teamCount} teams against its cap of ${effectiveTeamLimit}.`] : []),
   ];
 
   return (
@@ -384,14 +421,6 @@ export default async function OrgDetailPage({
               </span>
             )}
           </div>
-          <Link
-            href={`/${org.slug}/admin`}
-            target="_blank"
-            rel="noreferrer"
-            className={styles.adminLink}
-          >
-            Open Admin
-          </Link>
         </div>
       </header>
 
@@ -421,6 +450,14 @@ export default async function OrgDetailPage({
             {tournaments.length}{effectiveTournamentLimit !== null && effectiveTournamentLimit < 9999 ? ` / ${effectiveTournamentLimit}` : ''}
           </span>
         </div>
+        {currentIsClubBand && (
+          <div className={styles.snapshotItem}>
+            <span className={styles.fieldLabel}>Teams</span>
+            <span className={styles.fieldValue}>
+              {teamCount}{effectiveTeamLimit !== null && effectiveTeamLimit < 9999 ? ` / ${effectiveTeamLimit}` : ''}{teamLimitIsCustom ? ' (custom)' : ''}
+            </span>
+          </div>
+        )}
         <div className={styles.snapshotItem}>
           <span className={styles.fieldLabel}>Billing Period</span>
           <span className={styles.fieldValue}>{(org.subscription_period as string | null) ?? 'Not set'}</span>
@@ -430,7 +467,13 @@ export default async function OrgDetailPage({
           <span className={styles.fieldValue}>{fmtNullableDate((org.current_period_end as string | null) ?? null)}</span>
         </div>
         <div className={styles.snapshotItem}>
-          <span className={styles.fieldLabel}>Active Overrides</span>
+          <span className={styles.fieldLabel}>
+            Active Overrides
+            <HelpTooltip
+              title="Active Overrides"
+              body="Counts active comps and timed grants (subscription-status holds and feature-access trials). Plan and limit changes — including a custom team cap — are NOT counted here; those edit the account directly. All grants are audit-logged."
+            />
+          </span>
           <span className={styles.fieldValue}>{activeOverrides.length}</span>
         </div>
       </section>
@@ -532,6 +575,10 @@ export default async function OrgDetailPage({
         currentPlanId={org.plan_id as string}
         currentTournamentLimit={effectiveTournamentLimit ?? ((org.tournament_limit as number | null) ?? 1)}
         currentTeamLimit={(org.team_limit as number | null) ?? null}
+        teamCount={teamCount}
+        effectiveTeamLimit={effectiveTeamLimit}
+        currentIsClubBand={currentIsClubBand}
+        teamLimitIsCustom={teamLimitIsCustom}
         planOptions={planOptions}
         canManageSupport={auth ? hasPlatformPermission(auth.role, 'manage_support') : false}
         canManageBilling={auth ? hasPlatformPermission(auth.role, 'manage_billing') : false}

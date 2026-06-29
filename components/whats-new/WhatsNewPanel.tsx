@@ -40,7 +40,7 @@ function formatDate(iso: string): string {
 
 export default function WhatsNewPanel({ triggerRef, onClose }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; maxHeight: number } | null>(null);
 
   // Position the panel relative to the trigger, escaping any sidebar clipping by
   // portaling to <body> with fixed coords. Prefer to the right of the trigger
@@ -59,7 +59,10 @@ export default function WhatsNewPanel({ triggerRef, onClose }: Props) {
       }
       left = Math.max(MARGIN, Math.min(left, window.innerWidth - PANEL_WIDTH - MARGIN));
       top = Math.max(MARGIN, top);
-      setPos({ top, left });
+      // Cap height to the space left below the panel's top so the sticky footer
+      // ("See all updates") can never run off the bottom of a short mobile screen.
+      const maxHeight = Math.max(160, window.innerHeight - top - MARGIN);
+      setPos({ top, left, maxHeight });
     }
     place();
     window.addEventListener('resize', place);
@@ -88,7 +91,7 @@ export default function WhatsNewPanel({ triggerRef, onClose }: Props) {
       data-whats-new-panel
       role="dialog"
       aria-label="What's new"
-      style={pos ? { top: pos.top, left: pos.left } : { visibility: 'hidden' }}
+      style={pos ? { top: pos.top, left: pos.left, maxHeight: pos.maxHeight } : { visibility: 'hidden' }}
     >
       <div className={styles.panelHeader}>
         <span className={styles.panelTitle}>What’s new</span>

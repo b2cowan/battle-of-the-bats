@@ -13,6 +13,7 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { sendEmail, SITE_URL, tournamentResultsFinalizedHtml, resolveCoachRecipient, coachEmailsPaused } from '@/lib/email';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { ROSTER_WAIVER_TEXT_MAX_LENGTH } from '@/lib/roster-requirements';
+import { isProvinceCode } from '@/lib/canadian-provinces';
 import { withObservability } from '@/lib/observability';
 
 function isDateValue(value: unknown): value is string {
@@ -504,6 +505,14 @@ export const POST = withObservability(async (req: Request) => {
       // Contact visibility toggles (migration 120) — control each audience independently.
       if (data.contactShowToCoaches !== undefined) updates.contact_show_to_coaches = Boolean(data.contactShowToCoaches);
       if (data.contactShowOnPublic !== undefined) updates.contact_show_on_public = Boolean(data.contactShowOnPublic);
+
+      // Public discovery directory opt-in (migration 158) — default off, available on
+      // every plan (no tier gate). Province powers the directory's location filter and
+      // is whitelisted to recognized CA codes (else cleared).
+      if (data.listInDirectory !== undefined) updates.list_in_directory = Boolean(data.listInDirectory);
+      if (data.directoryProvince !== undefined) {
+        updates.directory_province = isProvinceCode(data.directoryProvince) ? data.directoryProvince : null;
+      }
 
       if (data.startDate !== undefined || data.endDate !== undefined) {
         const hasStartDateUpdate = data.startDate !== undefined;

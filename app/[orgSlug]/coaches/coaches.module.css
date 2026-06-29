@@ -115,6 +115,22 @@
   font-weight: 600;
 }
 
+/* Sign out — a button styled as a sidebar item, in the danger tone used by the
+   mobile "More" menu and the free-coach shell footer. */
+.sidebarLogout {
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  color: #f87171;
+}
+.sidebarLogout:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+
 .sidebarDivider {
   height: 1px;
   background: rgba(255,255,255,0.06);
@@ -1004,6 +1020,28 @@
   background: var(--card-bg);
 }
 
+/* Event form modal — a touch wider so the date/time pickers have room. Drop the modal's
+   bottom padding so the sticky Save footer sits flush to the bottom edge (no gap showing
+   form content beneath the strip); zero the footer's own bottom bleed to match. */
+.eventFormModal { max-width: 600px; padding-bottom: 0; }
+.eventFormModal .modalFooter { margin-bottom: 0; }
+
+/* Recurring-series save scope chooser — replaces the footer when editing a repeating event. */
+.editScope {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1.25rem -1.5rem 0;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  background: var(--card-bg);
+}
+.editScopeMsg { margin: 0; font-size: 0.85rem; font-weight: 600; color: var(--white-90); }
+.editScopeBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
 /* ── Form fields ────────────────────────────────────────────────────────── */
 .formGrid {
   display: grid;
@@ -1022,6 +1060,15 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+/* Quiet "optional" hint inline in a field label. */
+.labelOptional {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--white-35);
+  font-size: 0.72rem;
+  margin-left: 0.3rem;
+}
 
 .input, .select, .textarea {
   background: var(--white-05);
@@ -1037,6 +1084,88 @@
   border-color: rgba(var(--blueprint-blue-rgb), 0.5);
 }
 .textarea { resize: vertical; min-height: 70px; }
+
+/* ── Grouped event form (When / Where / Who) ───────────────────────────────── */
+/* padding-bottom lets the last field (Notes) scroll clear of the sticky Save footer. */
+.formBody { display: flex; flex-direction: column; gap: 0.85rem; padding-bottom: 2.5rem; }
+.formSection {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 0.8rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.formSectionTitle {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--white-45);
+}
+.formSectionGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+
+/* Tap-to-fill "recent locations" chips (themed replacement for the native datalist popup). */
+.locationChips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.locationChipsLabel {
+  font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--white-35); margin-right: 0.1rem;
+}
+.locationChip {
+  background: var(--white-05);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 999px;
+  color: var(--white-75);
+  padding: 0.26rem 0.7rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+}
+.locationChip:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
+.locationChipActive {
+  background: rgba(var(--logic-lime-rgb), 0.16);
+  border-color: var(--logic-lime);
+  color: var(--logic-lime);
+}
+.formHint { margin: 0; font-size: 0.72rem; color: var(--white-45); line-height: 1.4; }
+.formCheck {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--white-90);
+  cursor: pointer;
+}
+.formCheck input { accent-color: var(--logic-lime, #84cc16); cursor: pointer; }
+
+/* Segmented Home / Away / Neutral choice — lime active fill (coach accent) */
+.segChoice {
+  display: inline-flex;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 7px;
+  overflow: hidden;
+  width: fit-content;
+}
+.segBtn {
+  padding: 0.42rem 1rem;
+  background: var(--white-05);
+  border: none;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  color: var(--white-55);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.segBtn:last-child { border-right: none; }
+.segBtn:hover { background: rgba(255,255,255,0.09); }
+.segBtnActive, .segBtnActive:hover { background: var(--logic-lime, #84cc16); color: #0f1123; }
+
+@media (max-width: 520px) {
+  .formSectionGrid { grid-template-columns: 1fr; }
+}
 
 /* ── Detail form (player detail page) ──────────────────────────────────── */
 .detailSection {
@@ -1367,17 +1496,74 @@
   transition: background 0.1s;
 }
 .addEventMenuItem:hover { background: rgba(255,255,255,0.06); }
+/* Tournament game nests under Tournament so the parent/child relationship is visible. */
+.addEventMenuSubItem { padding-left: 2.1rem; position: relative; }
+.addEventMenuSubItem::before {
+  content: '↳';
+  position: absolute;
+  left: 1.05rem;
+  color: var(--white-35);
+  font-size: 0.82rem;
+}
 
 .wltWidget {
-  display: inline-flex;
-  align-items: center;
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  width: fit-content;
+  max-width: 100%;
   background: rgba(255,255,255,0.04);
   border: 1px solid var(--border-2);
   border-radius: 8px;
-  padding: 0.6rem 1.25rem;
+  padding: 0.7rem 1.1rem;
   margin-bottom: 1.5rem;
 }
+.wltMain { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
+.wltScope { font-size: 0.78rem; color: var(--white-45); }
+.wltControls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.wltCountLabel {
+  font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--white-35);
+}
+.wltToggles { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.wltToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--white-05);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 999px;
+  color: var(--white-45);
+  padding: 0.2rem 0.62rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+.wltToggle:hover { background: rgba(255,255,255,0.09); }
+.wltToggleActive {
+  background: rgba(var(--logic-lime-rgb), 0.16);
+  border-color: var(--logic-lime);
+  color: var(--logic-lime);
+}
+.wltBreakdownToggle {
+  background: none; border: none; color: var(--white-45);
+  font-size: 0.72rem; cursor: pointer; padding: 0.2rem; text-decoration: underline;
+  margin-left: auto;
+}
+.wltBreakdownToggle:hover { color: var(--white-75); }
+.wltBreakdown {
+  display: flex; flex-direction: column; gap: 0.3rem;
+  border-top: 1px solid var(--border-2); padding-top: 0.5rem;
+}
+.wltBreakdownRow { display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; font-size: 0.78rem; }
+.wltBreakdownRow[data-on="false"] { opacity: 0.5; }
+.wltBreakdownLabel { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--white-55); }
+.wltBreakdownDot {
+  width: 6px; height: 6px; border-radius: 999px; background: var(--logic-lime); flex-shrink: 0;
+}
+.wltBreakdownRow[data-on="false"] .wltBreakdownDot { background: transparent; }
+.wltBreakdownVal { color: var(--white-90); font-variant-numeric: tabular-nums; }
 .wltLabel { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--white-35); }
 .wltRow { display: flex; align-items: baseline; gap: 0.4rem; }
 .wltW  { font-size: 1.4rem; font-weight: 900; color: var(--success); line-height: 1; }
@@ -1416,8 +1602,14 @@
   transition: background 0.1s;
 }
 .eventChip:hover { background: rgba(255,255,255,0.07); }
-.eventChipTime { font-size: 0.78rem; color: rgba(255,255,255,0.4); min-width: 5.5rem; }
-.eventChipName { font-size: 0.88rem; color: var(--white-90); flex: 1; }
+.eventChipTime { font-size: 0.78rem; color: rgba(255,255,255,0.4); min-width: 5.5rem; flex-shrink: 0; }
+.eventChipName {
+  font-size: 0.88rem; color: var(--white-90); flex: 1;
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.eventChipOpp { color: var(--white-45); }
+.eventChipTrail { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+.eventChipScore { font-size: 0.82rem; font-weight: 700; color: var(--white-90); font-variant-numeric: tabular-nums; }
 .eventChipResult { font-size: 0.7rem; font-weight: 700; }
 
 .calWeekGrid { display: grid; grid-template-columns: repeat(7,1fr); gap: 0.5rem; overflow-x: auto; }
@@ -1457,14 +1649,58 @@
   border-radius: var(--radius); padding: 1.5rem;
   width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; margin-left: auto;
 }
+/* Lineup tab needs room to show all innings without horizontal scroll on desktop */
+.slideOverWide { max-width: min(1180px, 96vw); }
 .slideOverTitle { font-size: 1.2rem; font-weight: 800; color: var(--white-90); margin: 0.5rem 0 1rem; }
-.slideOverDetails {
-  display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 1rem;
-  font-size: 0.88rem; margin-bottom: 1rem;
+.slideOverActions { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.07); display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+/* Destructive pair pushed to the right, separated from the everyday Edit/Add-game actions. */
+.slideOverActionsRight { margin-left: auto; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+/* Compact one-line event summary (replaces the tall label/value list). */
+/* Event resource links — editable rows in the form, tappable rows in the detail panel. */
+.resourceRow { display: flex; gap: 0.4rem; align-items: center; }
+.resourceRow .input:first-child { flex: 0 0 34%; min-width: 0; }
+.resourceRow .input:nth-child(2) { flex: 1; min-width: 0; }
+.resourceRemove {
+  flex-shrink: 0;
+  background: none; border: none; cursor: pointer;
+  color: var(--white-35); padding: 0.25rem; line-height: 0; border-radius: 6px;
 }
-.slideOverDetails dt { color: var(--white-35); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
-.slideOverDetails dd { color: var(--white-90); margin: 0; }
-.slideOverActions { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.07); display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.resourceRemove:hover { color: var(--danger); background: rgba(255,255,255,0.06); }
+.resourceList { display: flex; flex-direction: column; gap: 0.3rem; margin: 0 0 0.75rem; }
+.resourceLink {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  background: var(--white-05); border: 1px solid var(--border-2); border-radius: 7px;
+  color: var(--logic-lime); padding: 0.4rem 0.6rem; font-size: 0.84rem; font-weight: 600;
+  cursor: pointer; text-align: left; width: 100%; transition: background 0.1s, border-color 0.1s;
+}
+.resourceLink:hover { background: rgba(255,255,255,0.09); border-color: rgba(var(--logic-lime-rgb),0.4); }
+.resourceLinkLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--white-90); }
+
+.slideOverMeta { margin: 0 0 0.6rem; font-size: 0.9rem; color: var(--white-90); line-height: 1.5; }
+/* Tappable Google Maps link on the event location (reuses the shared maps helper). */
+.slideOverMapLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--logic-lime);
+  font-weight: 600;
+  text-decoration: none;
+}
+.slideOverMapLink:hover { text-decoration: underline; }
+.slideOverNotes { margin: 0 0 0.25rem; font-size: 0.85rem; color: var(--white-55); line-height: 1.45; white-space: pre-wrap; }
+
+/* Mobile: the event detail panel rises as a full-width bottom sheet (scoped via .slideOverScrim
+   so the add/edit form modal stays centered). Keeps the tabbed content clear of the bottom nav. */
+@media (max-width: 600px) {
+  .modalOverlay.slideOverScrim { align-items: flex-end; padding: 0; }
+  .slideOverScrim .slideOver {
+    max-width: 100%;
+    width: 100%;
+    max-height: 92vh;
+    margin: 0;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+}
 
 /* Tabs inside the event slide-over (Attendance / Lineup / Result) */
 .slideTabs {
@@ -1535,30 +1771,60 @@
   justify-content: flex-end;
 }
 
+/* Metric chips that double as status filters — count always shown; colour = status, selected
+   chip fills its own status tint + border. "All" selected uses the lime convention. */
+.attendanceFilters { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.attFilter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--white-05);
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  color: var(--white-55);
+  padding: 0.22rem 0.6rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+.attFilter:hover { background: rgba(255,255,255,0.09); }
+.attFilterCount { font-variant-numeric: tabular-nums; opacity: 0.85; }
+/* Status colours on the chip icon so each chip reads as a metric even when unselected. */
+.attFilter[data-status="attending"] svg { color: var(--success); }
+.attFilter[data-status="late"] svg { color: var(--warning); }
+.attFilter[data-status="absent"] svg { color: var(--danger); }
+.attFilter[data-status="unknown"] svg { color: var(--white-45); }
+/* Selected = filled in the status's own colour. */
+.attFilterActive[data-status="attending"] { background: rgba(var(--success-rgb),0.16); border-color: var(--success); color: var(--success); }
+.attFilterActive[data-status="late"] { background: rgba(var(--warning-rgb),0.16); border-color: var(--warning); color: var(--warning); }
+.attFilterActive[data-status="absent"] { background: rgba(var(--danger-rgb),0.14); border-color: var(--danger); color: var(--danger); }
+.attFilterActive[data-status="unknown"] { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.3); color: var(--white-90); }
+.attFilterActiveAll { background: rgba(var(--logic-lime-rgb),0.16); border-color: var(--logic-lime); color: var(--logic-lime); }
+
 .attendanceList {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
+/* One compact line per player: name (truncates) · icon status control · note toggle. The note
+   input, when open, wraps to a full-width second line (flex-basis:100%). */
 .attendanceRow {
-  display: grid;
-  grid-template-columns: minmax(120px, 1fr) auto;
-  gap: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  padding: 0.65rem;
+  gap: 0.4rem 0.5rem;
+  padding: 0.4rem 0.55rem;
   background: rgba(255,255,255,0.035);
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 8px;
 }
 
-.attendancePlayer {
-  min-width: 0;
-}
-
 .attendancePlayerName {
-  display: block;
-  font-size: 0.88rem;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.86rem;
   color: var(--white-90);
   font-weight: 650;
   white-space: nowrap;
@@ -1567,25 +1833,21 @@
 }
 
 .attendanceStatusGroup {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.25rem;
-  grid-column: 1 / -1;
+  display: inline-flex;
+  gap: 0.2rem;
+  flex-shrink: 0;
 }
 
 .attendanceStatusBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
-  min-height: 34px;
-  padding: 0.25rem 0.35rem;
+  width: 34px;
+  height: 32px;
   border: 1px solid var(--white-10);
   border-radius: 6px;
   background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.58);
-  font-size: 0.75rem;
-  font-weight: 700;
+  color: rgba(255,255,255,0.5);
   cursor: pointer;
 }
 
@@ -1613,14 +1875,40 @@
 }
 
 .attendanceStatusBtnActive[data-status="unknown"] {
-  background: rgba(148,163,184,0.13);
-  border-color: rgba(148,163,184,0.28);
-  color: var(--data-gray);
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.22);
+  color: var(--white-75);
+}
+
+/* On-demand note: a small glyph at the row end; lime dot when the player has a note. */
+.attendanceNoteToggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 32px;
+  border: none;
+  background: none;
+  color: var(--white-35);
+  cursor: pointer;
+  border-radius: 6px;
+  position: relative;
+}
+.attendanceNoteToggle:hover { color: var(--white-75); background: rgba(255,255,255,0.06); }
+.attendanceNoteToggle[data-has="true"] { color: var(--logic-lime); }
+.attendanceNoteToggle[data-has="true"]::after {
+  content: '';
+  position: absolute;
+  top: 5px; right: 4px;
+  width: 5px; height: 5px;
+  border-radius: 999px;
+  background: var(--logic-lime);
 }
 
 .attendanceNoteInput {
-  grid-column: 1 / -1;
-  min-height: 34px;
+  flex-basis: 100%;
+  min-height: 32px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.09);
   border-radius: 6px;
@@ -1634,11 +1922,21 @@
   border-color: rgba(var(--blueprint-blue-rgb), 0.5);
 }
 
+/* Sticky action bar pinned to the bottom of the slide-over, so Save/Clear/PDF stay
+   visible while a long attendance list or lineup grid scrolls. Bleeds to the panel
+   edges (slide-over padding = 1.5rem). Inert when content doesn't scroll. */
 .attendanceFooter {
+  position: sticky;
+  bottom: -1.5rem;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 0.65rem;
   flex-wrap: wrap;
+  margin: 0.9rem -1.5rem -1.5rem;
+  padding: 0.8rem 1.5rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
+  background: var(--card-bg);
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 .lineupSection {
@@ -1656,6 +1954,228 @@
   align-items: flex-start;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+/* Auto-fill (lineup generator) dropdown */
+.lineupAutoWrap { position: relative; align-self: flex-end; }
+.lineupAutoMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 60;
+  width: 270px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.85rem;
+  background: var(--card-bg);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+}
+.lineupAutoMenu .lineupControlLabel { min-width: 0; }
+.lineupAutoNote { margin: 0; font-size: 0.72rem; color: var(--white-45); line-height: 1.4; }
+
+/* Print menu — lives in the sticky footer, so it opens UPWARD to stay on-screen */
+.lineupPdfWrap { position: relative; }
+.lineupPdfMenu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  z-index: 60;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.45rem;
+  background: var(--card-bg);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+}
+.lineupPdfItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--white-90);
+}
+.lineupPdfItem:hover { background: rgba(var(--blueprint-blue-rgb), 0.12); }
+.lineupPdfItem strong { font-size: 0.85rem; font-weight: 700; }
+.lineupPdfItem span { font-size: 0.72rem; color: var(--white-45); line-height: 1.35; }
+.lineupPdfNotesToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.2rem;
+  padding: 0.5rem 0.65rem 0.3rem;
+  border-top: 1px solid var(--border-2);
+  cursor: pointer;
+  font-size: 0.76rem;
+  color: var(--white-90);
+}
+.lineupPdfNotesToggle input { cursor: pointer; accent-color: var(--logic-lime, #84cc16); }
+
+/* Lineup templates menu (Save as / Start from) */
+.lineupTemplateSection { display: flex; flex-direction: column; gap: 0.45rem; }
+.lineupTemplateSection + .lineupTemplateSection {
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border-2);
+}
+.lineupTemplateHead {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.42);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.lineupTemplateList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; max-height: 190px; overflow-y: auto; }
+.lineupTemplateRow { display: flex; align-items: stretch; gap: 0.3rem; }
+.lineupTemplateLoad {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  text-align: left;
+  padding: 0.4rem 0.55rem;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--white-90);
+  min-width: 0;
+}
+.lineupTemplateLoad:hover { background: rgba(var(--blueprint-blue-rgb), 0.12); }
+.lineupTemplateLoad strong { font-size: 0.82rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lineupTemplateLoad span { font-size: 0.7rem; color: var(--white-45); }
+.lineupTemplateDelete {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  color: var(--white-45);
+  cursor: pointer;
+}
+.lineupTemplateDelete:hover { background: rgba(var(--danger-rgb, 239,68,68), 0.15); color: var(--danger); }
+
+/* Inline notice (e.g. "Loaded template …") above the lineup grid */
+.lineupNotice {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  color: var(--logic-lime, #84cc16);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Playing-time summary (collapsible, below the lineup grid) */
+.lineupSummary { margin: 0.75rem 0 0.25rem; }
+.lineupSummaryToggle {
+  background: none;
+  border: none;
+  color: var(--blueprint-blue);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+.lineupSummaryToggle:hover { text-decoration: underline; }
+.lineupSummaryWrap { overflow-x: auto; margin-top: 0.4rem; }
+.lineupSummaryTable {
+  border-collapse: collapse;
+  font-size: 0.76rem;
+  width: 100%;
+}
+.lineupSummaryTable th {
+  padding: 0.35rem 0.45rem;
+  text-align: center;
+  color: var(--white-40);
+  font-weight: 700;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  white-space: nowrap;
+}
+.lineupSummaryTable td {
+  padding: 0.3rem 0.45rem;
+  text-align: center;
+  color: var(--white-75);
+  border-bottom: 1px solid var(--white-05);
+}
+.lineupSummaryTable tr:last-child td { border-bottom: none; }
+.lineupSummaryName { text-align: left !important; color: var(--white-90) !important; white-space: nowrap; }
+.lineupSummaryBody { margin-top: 0.5rem; }
+
+/* Shared team fairness verdict line */
+.lineupFairness {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  font-size: 0.8rem; color: var(--white-75); margin-bottom: 0.6rem;
+}
+.lineupFairPill {
+  font-size: 0.64rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 0.15rem 0.5rem; border-radius: 999px;
+  background: rgba(var(--success-rgb), 0.14); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.3);
+}
+.lineupFairPillWarn {
+  background: rgba(var(--warning-rgb), 0.14); color: var(--warning); border-color: rgba(var(--warning-rgb), 0.3);
+}
+
+/* Shared per-player "on field" gauge (snapshotBar idiom) */
+.lineupGauge { display: inline-flex; align-items: center; gap: 0.4rem; min-width: 122px; }
+.lineupGaugeTrack { flex: 1; height: 6px; border-radius: 999px; background: var(--border-2); overflow: hidden; }
+.lineupGaugeFill { display: block; height: 100%; border-radius: 999px; background: var(--logic-lime); }
+.lineupGaugeFill[data-warn="true"] { background: var(--warning); }
+.lineupGaugeCap { font-size: 0.7rem; color: var(--white-45); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Heat cells (desktop grid) */
+.lineupHeatCell { border-radius: 4px; font-weight: 600; }
+.lineupZero { color: var(--white-25); }
+
+/* Desktop grid vs mobile chips swap */
+.lineupSummaryMobile { display: none; }
+@media (max-width: 640px) {
+  .lineupSummaryDesktop { display: none; }
+  .lineupSummaryMobile { display: flex; flex-direction: column; gap: 0.35rem; }
+}
+.lineupChipRow {
+  display: flex; flex-direction: column; gap: 0.3rem;
+  padding: 0.55rem 0; border-bottom: 1px solid var(--white-05);
+}
+.lineupChipRow:last-child { border-bottom: none; }
+.lineupChipName { font-size: 0.85rem; font-weight: 600; color: var(--white-90); }
+.lineupChips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.lineupChip {
+  font-size: 0.72rem; font-weight: 700; color: var(--white-90);
+  padding: 0.12rem 0.45rem; border-radius: 5px; border: 1px solid var(--border-2);
+}
+
+/* Lineup checks + fair-play hints above the grid */
+.lineupInsights {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0.25rem 0 0.6rem;
+}
+.lineupHint {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--white-45);
+}
+.lineupHint a { color: var(--blueprint-blue); text-decoration: none; }
+.lineupHint a:hover { text-decoration: underline; }
+.lineupWarn {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--warning);
 }
 
 .lineupControls {
@@ -1743,7 +2263,7 @@
 }
 
 .lineupPositionSelect {
-  width: 76px;
+  width: 58px;
   min-height: 32px;
   background: var(--white-05);
   border: 1px solid rgba(255,255,255,0.12);

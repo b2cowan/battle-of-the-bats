@@ -12,8 +12,17 @@ const SIZE_CLASS = { sm: styles.tooltipSm, md: styles.tooltipMd };
 
 export default function HelpTooltip({ title, body, size = 'sm' }: HelpTooltipProps) {
   const [open, setOpen] = useState(false);
+  const [placement, setPlacement] = useState<'top' | 'bottom'>('top');
   const wrapRef = useRef<HTMLSpanElement>(null);
   const popoverId = useId();
+
+  // Open below the trigger when there isn't room above it (trigger near the top of
+  // the viewport), so the popover never gets clipped by the window's top edge.
+  function show() {
+    const rect = wrapRef.current?.getBoundingClientRect();
+    if (rect) setPlacement(rect.top < 240 ? 'bottom' : 'top');
+    setOpen(true);
+  }
   // True while a pointer (mouse/touch) is driving the interaction, so the
   // tap-to-toggle (onClick) and keyboard-focus-to-open (onFocus) paths don't
   // fight: a tap fires focus AND click, which would otherwise open-then-close.
@@ -36,8 +45,8 @@ export default function HelpTooltip({ title, body, size = 'sm' }: HelpTooltipPro
   return (
     <span
       ref={wrapRef}
-      className={`${styles.tooltip} ${SIZE_CLASS[size]}`}
-      onMouseEnter={() => setOpen(true)}
+      className={`${styles.tooltip} ${SIZE_CLASS[size]} ${placement === 'bottom' ? styles.tooltipBottom : ''}`}
+      onMouseEnter={show}
       onMouseLeave={() => setOpen(false)}
     >
       <button
@@ -49,8 +58,8 @@ export default function HelpTooltip({ title, body, size = 'sm' }: HelpTooltipPro
         // was cancelled mid-way (e.g. a tap that turned into a scroll).
         onPointerUp={() => { pointerDriven.current = false; }}
         onPointerCancel={() => { pointerDriven.current = false; }}
-        onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
-        onFocus={() => { if (!pointerDriven.current) setOpen(true); }}
+        onClick={e => { e.stopPropagation(); if (open) setOpen(false); else show(); }}
+        onFocus={() => { if (!pointerDriven.current) show(); }}
         onBlur={() => { setOpen(false); pointerDriven.current = false; }}
         onKeyDown={e => { if (e.key === 'Escape') setOpen(false); }}
         aria-label={title}

@@ -10,6 +10,7 @@ import {
   createRepTeamEvents,
 } from '@/lib/db';
 import type { RepEventType } from '@/lib/types';
+import { sanitizeResources } from '@/lib/rep-event-resources';
 import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -91,12 +92,17 @@ export const POST = withObservability(async (req: Request,
     startsAt,
     endsAt = null,
     location = null,
+    locationAddress = null,
+    arrivalTime = null,
+    fieldNumber = null,
+    uniform = null,
     opponent = null,
     homeAway = null,
     parentEventId = null,
     isRecurring = false,
     recurrenceRule = null,
   } = body;
+  const resources = sanitizeResources(body.resources);
 
   if (!eventType || !name?.trim()) {
     return NextResponse.json({ error: 'eventType and name are required' }, { status: 400 });
@@ -109,11 +115,14 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Invalid eventType' }, { status: 400 });
   }
 
-  if (isRecurring && eventType === 'practice') {
+  // Event types that may recur weekly (practices, league games, generic team events). Scrimmages
+  // and tournament games stay one-off (tournament-bound / ad hoc).
+  const RECURRABLE: RepEventType[] = ['practice', 'league_game', 'team_event'];
+  if (isRecurring && RECURRABLE.includes(eventType)) {
     const { dayOfWeek, startDate, endDate, startTime, endTime = null } = recurrenceRule ?? {};
     if (dayOfWeek == null || !startDate || !endDate || !startTime) {
       return NextResponse.json(
-        { error: 'recurrenceRule must include dayOfWeek, startDate, endDate, startTime for recurring practices' },
+        { error: 'recurrenceRule must include dayOfWeek, startDate, endDate, startTime for a recurring series' },
         { status: 400 },
       );
     }
@@ -126,25 +135,39 @@ export const POST = withObservability(async (req: Request,
       return NextResponse.json({ error: 'No occurrences generated in the given date range' }, { status: 400 });
     }
 
-    const parentId = randomUUID();
+    // The first occurrence IS the series anchor: give it an explicit id and point every later
+    // occurrence's recurrence_parent_id at it (a real FK target), so "this & future / all" edits
+    // and deletes resolve the whole series.
+    const anchorId = randomUUID();
+    const isGame = eventType === 'scrimmage' || eventType === 'league_game' || eventType === 'tournament_game';
     const rows = occurrences.map((occ, i) => ({
+      ...(i === 0 ? { id: anchorId } : {}),
       programYearId: programYear.id,
       teamId: team.id,
       orgId: ctx!.org.id,
-      eventType: 'practice' as RepEventType,
+      eventType,
       name: name.trim(),
       description: description?.trim() || null,
       startsAt: occ.startsAt,
       endsAt: occ.endsAt,
       location: location?.trim() || null,
+      locationAddress: locationAddress?.trim() || null,
+      arrivalTime: arrivalTime?.trim() || null,
+      fieldNumber: fieldNumber?.trim() || null,
+      uniform: isGame ? (uniform?.trim() || null) : null,
+      resources: resources.length ? resources : undefined,
+      opponent: isGame ? (opponent?.trim() || null) : null,
+      homeAway: isGame ? (homeAway || null) : null,
       isRecurring: true,
       recurrenceRule,
-      recurrenceParentId: i === 0 ? null : parentId,
+      recurrenceParentId: i === 0 ? null : anchorId,
     }));
 
-    const events = await createRepTeamEvents(rows);
-    // Back-fill recurrenceParentId on the first row to point to itself as anchor
-    // (first row has no parent — it IS the parent; subsequent rows reference it)
+    // Insert the anchor FIRST, then the children that reference it — so the self-referencing
+    // recurrence_parent_id FK is always satisfied (never relies on intra-statement FK timing).
+    const [anchor] = await createRepTeamEvents([rows[0]]);
+    const children = rows.length > 1 ? await createRepTeamEvents(rows.slice(1)) : [];
+    const events = [anchor, ...children];
     return NextResponse.json({ events, count: events.length }, { status: 201 });
   }
 
@@ -162,6 +185,11 @@ export const POST = withObservability(async (req: Request,
     startsAt,
     endsAt: endsAt || null,
     location: location?.trim() || null,
+    locationAddress: locationAddress?.trim() || null,
+    arrivalTime: arrivalTime?.trim() || null,
+    fieldNumber: fieldNumber?.trim() || null,
+    uniform: uniform?.trim() || null,
+    resources: resources.length ? resources : undefined,
     opponent: opponent?.trim() || null,
     homeAway: homeAway || null,
     parentEventId: parentEventId || null,

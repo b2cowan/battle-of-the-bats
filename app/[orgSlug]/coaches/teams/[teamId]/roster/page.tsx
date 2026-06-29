@@ -15,6 +15,7 @@ import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import PositionSelect from '@/components/coaches/PositionSelect';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { teamInitials, teamColorFromName } from '@/lib/teamBadge';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
@@ -140,11 +141,11 @@ export default function RosterPage({
   useEffect(() => { if (!assignmentsLoading) void Promise.resolve().then(load); }, [assignmentsLoading, load]);
 
   useEffect(() => {
-    fetch('/api/admin/org/pdf-settings')
+    fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`)
       .then(r => r.ok ? r.json() : {})
       .then(d => setPdfSettings(d as OrgPdfSettings))
       .catch(() => setPdfSettings(null));
-  }, []);
+  }, [orgSlug]);
 
   async function handleToggleStatus(player: RepRosterPlayer) {
     const newStatus = player.status === 'active' ? 'inactive' : 'active';
@@ -237,10 +238,17 @@ export default function RosterPage({
   }
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+  const confirm = useConfirm();
 
   const addDirty = addOpen && JSON.stringify(addForm) !== JSON.stringify(BLANK);
-  function requestCloseAdd() {
-    if (addDirty && !window.confirm('Discard this new player?')) return;
+  async function requestCloseAdd() {
+    if (addDirty && !(await confirm({
+      title: 'Discard new player?',
+      message: 'You haven’t added this player yet. Discard what you’ve entered?',
+      confirmText: 'Discard',
+      cancelText: 'Keep editing',
+      tone: 'danger',
+    }))) return;
     setAddOpen(false);
   }
 

@@ -5,6 +5,18 @@ import styles from './orgDetail.module.css';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { fmtAbsoluteDate, fmtAbsoluteDateTime, fmtSince, fmtDaysLeft } from '@/lib/format-date';
 
+// Platform-admin styles set the console's monospace font per-element, so an unstyled checkbox/radio
+// <label> falls back to the browser default (wrong font AND larger size). Reuse this on every
+// checkbox label in this screen so they all match the surrounding console text.
+const CHECKBOX_LABEL_STYLE = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  cursor: 'pointer',
+  fontFamily: 'var(--font-data)',
+  fontSize: '0.75rem',
+} as const;
+
 interface Override {
   id: string;
   type: string;
@@ -75,6 +87,7 @@ interface PlanOption {
 
 type CancelSubPreflight = {
   planLabel: string;
+  stripeSubscriptionId: string | null;
   activeTournamentCount: number;
   tournaments: Array<{ id: string; name: string; status: string }>;
   shutsDown: string[];
@@ -102,6 +115,10 @@ interface Props {
   currentPlanId: string;
   currentTournamentLimit: number;
   currentTeamLimit: number | null;
+  teamCount: number;
+  effectiveTeamLimit: number | null;
+  currentIsClubBand: boolean;
+  teamLimitIsCustom: boolean;
   planOptions: PlanOption[];
   canManageSupport: boolean;
   canManageBilling: boolean;
@@ -136,7 +153,7 @@ const ADDON_MODULE_LABELS: Record<string, string> = {
 const OVERRIDE_TYPE_LABELS: Record<string, string> = {
   subscription_status: 'Subscription Status',
   comp_period:         'Comp Period',
-  module_addon:        'Module Add-on',
+  module_addon:        'Feature Access',
 };
 
 type ApiErrorBody = { error?: string };
@@ -180,6 +197,20 @@ function isExpired(expiresAt: string | null) {
   return new Date(expiresAt) < new Date();
 }
 
+// Today as a local YYYY-MM-DD string, used as the minimum selectable expiry date.
+function todayLocalDate() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Live but lapsing within the next 14 days — the actionable "extend or let lapse" window.
+function isExpiringSoon(expiresAt: string | null) {
+  if (!expiresAt) return false;
+  const exp = new Date(expiresAt).getTime();
+  const now = Date.now();
+  return exp > now && exp <= now + 14 * 86_400_000;
+}
+
 const daysLeftLabel = (iso: string) => fmtDaysLeft(iso);
 
 function tournamentStatusClass(status: string, styles: Record<string, string>) {
@@ -196,6 +227,10 @@ export default function OrgDetailClient({
   currentPlanId,
   currentTournamentLimit,
   currentTeamLimit,
+  teamCount,
+  effectiveTeamLimit,
+  currentIsClubBand,
+  teamLimitIsCustom,
   planOptions,
   canManageSupport,
   canManageBilling,
@@ -523,12 +558,14 @@ export default function OrgDetailClient({
   const [showHistory, setShowHistory] = useState(false);
   const [revokeConfirm, setRevokeConfirm] = useState<Record<string, boolean>>({});
   const [revoking, setRevoking] = useState<Record<string, boolean>>({});
+  const [revokeError, setRevokeError] = useState<Record<string, string>>({});
 
   const [showForm, setShowForm] = useState(false);
   const [formType, setFormType] = useState<'subscription_status' | 'comp_period' | 'module_addon'>('subscription_status');
   const [formValue, setFormValue] = useState('active');
   const [formAddons, setFormAddons] = useState<string[]>([]);
-  const [formExpires, setFormExpires] = useState('');
+  const [formExpiryDate, setFormExpiryDate] = useState('');
+  const [formExpiryTime, setFormExpiryTime] = useState('');
   const [formReason, setFormReason] = useState('');
   const [formSaving, setFormSaving] = useState(false);
   const [formError, setFormError] = useState('');
@@ -699,8 +736,10 @@ export default function OrgDetailClient({
     }
   }
 
-  const activeOverrides = overrides.filter(o => !o.revokedAt);
-  const historicalOverrides = overrides.filter(o => o.revokedAt);
+  // An expired override auto-drops out of "Active" into history (it already stopped granting access
+  // on its own) — so the Active list only holds live overrides, and history holds revoked OR expired.
+  const activeOverrides = overrides.filter(o => !o.revokedAt && !isExpired(o.expiresAt));
+  const historicalOverrides = overrides.filter(o => o.revokedAt || isExpired(o.expiresAt));
   const currentOwners = members.filter(m => m.role === 'owner');
   const eligibleNewOwners = members.filter(m => m.role !== 'owner' && m.status === 'active');
   const selectedPlan = planOptions.find(plan => plan.id === planId) ?? initialPlan;
@@ -717,6 +756,16 @@ export default function OrgDetailClient({
   const hasLiveStripeSub = Boolean(stripeSubscriptionId) && subscriptionStatus !== 'canceled';
   const targetIsPaid = planId !== 'tournament';
   const targetIsFree = planId === 'tournament';
+  // M5: an active paid org can lose its Stripe link yet still need cancellation processed
+  // (set status → canceled, archive tournaments, start the retention window). The Cancel action
+  // is safe without a link — it only skips the Stripe call. So show it for any active paid org,
+  // not just ones with a stored Stripe subscription, and warn when no link is on file.
+  // Union (not replacement): a stored Stripe link ALWAYS keeps Cancel reachable — even on the free
+  // plan — so a desynced "free plan, link not cleared" org can still be cancelled from the console.
+  const hasStripeLink = Boolean(stripeSubscriptionId);
+  const isPaidPlanNow = currentPlanId !== 'tournament';
+  const canCancelSubscription =
+    canManageBilling && subscriptionStatus !== 'canceled' && (isPaidPlanNow || hasStripeLink);
   const tabItems: Array<{ id: TabId; label: string; count?: number }> = [
     { id: 'support', label: 'Support', count: notes.length + pendingOwnershipTransfers.length },
     { id: 'billing', label: 'Billing & Access', count: activeOverrides.length },
@@ -727,15 +776,31 @@ export default function OrgDetailClient({
 
   async function handleRevoke(oid: string) {
     setRevoking(r => ({ ...r, [oid]: true }));
+    setRevokeError(e => { const next = { ...e }; delete next[oid]; return next; });
     try {
       const res = await fetch(`/api/platform-admin/orgs/${orgId}/overrides/${oid}`, {
         method: 'DELETE',
       });
-      if (!res.ok) return;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        // Surface the real failure instead of silently doing nothing (H5: no error on failure).
+        setRevokeError(e => ({ ...e, [oid]: data?.error ?? 'Revoke failed — nothing was changed.' }));
+        return;
+      }
+      // Reflect the server's actual revoker + timestamp, not a "superuser" placeholder (H5).
+      const revoked = data?.override;
       setOverrides(prev => prev.map(o =>
-        o.id === oid ? { ...o, revokedAt: new Date().toISOString(), revokedBy: 'superuser' } : o
+        o.id === oid
+          ? {
+              ...o,
+              revokedAt: revoked?.revoked_at ?? new Date().toISOString(),
+              revokedBy: revoked?.revoked_by ?? o.revokedBy,
+            }
+          : o
       ));
       setRevokeConfirm(r => ({ ...r, [oid]: false }));
+    } catch {
+      setRevokeError(e => ({ ...e, [oid]: 'Revoke failed — please try again.' }));
     } finally {
       setRevoking(r => ({ ...r, [oid]: false }));
     }
@@ -748,8 +813,20 @@ export default function OrgDetailClient({
       return;
     }
     if (formType === 'module_addon' && formAddons.length === 0) {
-      setFormError('Select at least one module to grant');
+      setFormError('Select at least one section to grant');
       return;
+    }
+    // Build the expiry once here so the future-check and the submitted value can't drift apart.
+    let expiresAtIso: string | undefined;
+    if (formExpiryDate) {
+      // Reject a past (or invalid) expiry — it would create an override that is already lapsed
+      // and grants nothing. A blank time means end-of-day, so "today" is still valid.
+      const expiry = new Date(`${formExpiryDate}T${formExpiryTime || '23:59'}`);
+      if (Number.isNaN(expiry.getTime()) || expiry.getTime() <= Date.now()) {
+        setFormError('Expiry must be in the future.');
+        return;
+      }
+      expiresAtIso = expiry.toISOString();
     }
     setFormSaving(true);
     setFormError('');
@@ -760,7 +837,8 @@ export default function OrgDetailClient({
       };
       if (formType === 'subscription_status') body.value = formValue;
       if (formType === 'module_addon') body.target = { addons: formAddons };
-      if (formExpires) body.expires_at = new Date(formExpires).toISOString();
+      // Blank time = end-of-day, so "expires Dec 31" keeps access on through all of Dec 31.
+      if (expiresAtIso) body.expires_at = expiresAtIso;
 
       const res = await fetch(`/api/platform-admin/orgs/${orgId}/overrides`, {
         method: 'POST',
@@ -789,7 +867,8 @@ export default function OrgDetailClient({
 
       setShowForm(false);
       setFormReason('');
-      setFormExpires('');
+      setFormExpiryDate('');
+      setFormExpiryTime('');
       setFormValue('active');
       setFormAddons([]);
       setFormType('subscription_status');
@@ -1186,7 +1265,7 @@ export default function OrgDetailClient({
                           />
                         </div>
                         <div className={styles.formRow}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                          <label style={CHECKBOX_LABEL_STYLE}>
                             <input
                               type="checkbox"
                               checked={deleteOrgNotifyOwner}
@@ -1197,7 +1276,7 @@ export default function OrgDetailClient({
                         </div>
                         {deleteOrgPreflight.stripeCustomerId && (
                           <div className={styles.formRow}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                            <label style={CHECKBOX_LABEL_STYLE}>
                               <input
                                 type="checkbox"
                                 checked={deleteOrgDeleteStripeCustomer}
@@ -1260,9 +1339,9 @@ export default function OrgDetailClient({
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h3 className={styles.sectionTitle}>
-                  Plan And Tournament Limit
+                  Plan And Limits
                   <HelpTooltip
-                    title="Plan And Tournament Limit"
+                    title="Plan And Limits"
                     body="This changes the org's access (plan + limits) only — it never touches Stripe. No charge, refund, proration, or cancellation happens here; the confirm step explains the real path to change billing. Setting the free Tournament plan only clears the stored Stripe subscription fields and leaves the account active — it does not cancel a live subscription. The only Stripe-touching control is Cancel Subscription."
                   />
                 </h3>
@@ -1275,13 +1354,21 @@ export default function OrgDetailClient({
                     <strong>{initialPlan?.label ?? currentPlanId}</strong>
                   </div>
                   <div className={styles.planMetric}>
-                    <span className={styles.fieldLabel}>Current Limit</span>
+                    <span className={styles.fieldLabel}>Current Tournament Limit</span>
                     <strong>{fmtLimit(currentTournamentLimit)}</strong>
                   </div>
                   <div className={styles.planMetric}>
                     <span className={styles.fieldLabel}>Non-Archived Tournaments</span>
                     <strong>{tournaments.length}</strong>
                   </div>
+                  {currentIsClubBand && (
+                    <div className={styles.planMetric}>
+                      <span className={styles.fieldLabel}>Teams</span>
+                      <strong>
+                        {teamCount}{effectiveTeamLimit !== null ? ` / ${fmtLimit(effectiveTeamLimit)}` : ''}{teamLimitIsCustom ? ' (custom)' : ''}
+                      </strong>
+                    </div>
+                  )}
                 </div>
 
                 {/* Editable controls only for billing roles; observers see the read-only
@@ -1448,7 +1535,7 @@ export default function OrgDetailClient({
                   Active Overrides
                   <HelpTooltip
                     title="Active Overrides"
-                    body="Overrides let you manually grant subscription access states or comp periods without rewriting the account's base billing fields. All changes are audit-logged with a required reason."
+                    body="Overrides let you manually grant subscription access states or comp periods without rewriting the account's base billing fields. Plan and limit changes — including a custom team cap — are NOT overrides; they edit the account directly and are not counted here. All changes are audit-logged with a required reason."
                   />
                 </h3>
                 {canManageBilling && (
@@ -1469,16 +1556,16 @@ export default function OrgDetailClient({
                   >
                     <option value="subscription_status">Subscription Status</option>
                     <option value="comp_period">Comp Period</option>
-                    <option value="module_addon">Module Trial (timed)</option>
+                    <option value="module_addon">Feature Access Trial (timed)</option>
                   </select>
                 </div>
 
                 {formType === 'module_addon' && (
                   <div className={styles.formRow}>
-                    <label className={styles.formLabel}>Modules to grant</label>
+                    <label className={styles.formLabel}>Sections to grant</label>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
                       {Object.keys(ADDON_MODULE_LABELS).map(m => (
-                        <label key={m} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer' }}>
+                        <label key={m} style={CHECKBOX_LABEL_STYLE}>
                           <input
                             type="checkbox"
                             checked={formAddons.includes(m)}
@@ -1507,14 +1594,47 @@ export default function OrgDetailClient({
                   </div>
                 )}
 
+                {formType === 'comp_period' && (
+                  <div className={styles.formRow}>
+                    <p className={styles.warningNote}>
+                      ⚠ Comp Period is a <strong>billing/founding-season tag only — it grants no section or plan access.</strong>{' '}
+                      It marks the account as comped (e.g. for the Founding cohort badge) but does not unlock any feature.
+                      To actually give an org access, use a <strong>Feature Access Trial (timed)</strong> for specific sections or a{' '}
+                      <strong>Subscription Status</strong> override to change the account&apos;s access state.
+                    </p>
+                  </div>
+                )}
+
                 <div className={styles.formRow}>
                   <label className={styles.formLabel}>Expires (optional)</label>
-                  <input
-                    type="datetime-local"
-                    className={styles.formInput}
-                    value={formExpires}
-                    onChange={e => setFormExpires(e.target.value)}
-                  />
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'stretch' }}>
+                    <input
+                      type="date"
+                      className={styles.formInput}
+                      style={{ flex: '1 1 auto' }}
+                      value={formExpiryDate}
+                      min={todayLocalDate()}
+                      onChange={e => {
+                        setFormExpiryDate(e.target.value);
+                        // Clearing the date disables (and should reset) the time, so a stale time
+                        // can't be silently carried into a later submit.
+                        if (!e.target.value) setFormExpiryTime('');
+                      }}
+                      aria-label="Expiry date (optional)"
+                    />
+                    <input
+                      type="time"
+                      className={styles.formInput}
+                      style={{ flex: '0 0 8rem' }}
+                      value={formExpiryTime}
+                      onChange={e => setFormExpiryTime(e.target.value)}
+                      disabled={!formExpiryDate}
+                      aria-label="Expiry time (optional)"
+                    />
+                  </div>
+                  <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.55rem', opacity: 0.7 }}>
+                    Pick a date. Time is optional — leave it blank to expire at the end of that day (23:59).
+                  </span>
                 </div>
 
                 <div className={styles.formRow}>
@@ -1553,18 +1673,16 @@ export default function OrgDetailClient({
                       )}
                       {o.expiresAt && (
                         <span className={styles.overrideExpiry}>
-                          {isExpired(o.expiresAt)
-                            ? `expired ${fmtDate(o.expiresAt)}`
-                            : `reverts ${fmtDate(o.expiresAt)}${daysLeftLabel(o.expiresAt)}`}
+                          reverts {fmtDate(o.expiresAt)}{daysLeftLabel(o.expiresAt)}
                         </span>
                       )}
                       <span className={styles.overrideReason}>{o.reason}</span>
                       <span className={styles.overrideBy}>by {o.createdBy} - {fmtDateTime(o.createdAt)}</span>
                     </div>
 
-                    {isExpired(o.expiresAt) && (
-                      <div className={styles.expiredWarning}>
-                        Expired on {fmtDate(o.expiresAt!)} - revoke or extend
+                    {isExpiringSoon(o.expiresAt) && (
+                      <div className={styles.expiringWarning}>
+                        Expires {fmtDate(o.expiresAt!)}{daysLeftLabel(o.expiresAt!)} - extend or let it lapse
                       </div>
                     )}
 
@@ -1595,6 +1713,9 @@ export default function OrgDetailClient({
                           Revoke
                         </button>
                       )}
+                      {revokeError[o.id] && (
+                        <span className={styles.rowError}>{revokeError[o.id]}</span>
+                      )}
                       </div>
                     )}
                   </div>
@@ -1608,7 +1729,7 @@ export default function OrgDetailClient({
                   className={styles.historyToggle}
                   onClick={() => setShowHistory(h => !h)}
                 >
-                  {showHistory ? 'Hide' : 'Show'} {historicalOverrides.length} revoked override{historicalOverrides.length !== 1 ? 's' : ''}
+                  {showHistory ? 'Hide' : 'Show'} {historicalOverrides.length} past override{historicalOverrides.length !== 1 ? 's' : ''}
                 </button>
                 {showHistory && (
                   <div className={styles.overrideList}>
@@ -1619,7 +1740,9 @@ export default function OrgDetailClient({
                           {o.value && <span className={styles.overrideValue}>{o.value}</span>}
                           <span className={styles.overrideReason}>{o.reason}</span>
                           <span className={styles.overrideBy}>by {o.createdBy} - {fmtDateTime(o.createdAt)}</span>
-                          <span className={styles.overrideBy}>revoked by {o.revokedBy} - {fmtDateTime(o.revokedAt!)}</span>
+                          {o.revokedAt
+                            ? <span className={styles.overrideBy}>revoked by {o.revokedBy} - {fmtDateTime(o.revokedAt)}</span>
+                            : o.expiresAt && <span className={styles.overrideBy}>expired {fmtDateTime(o.expiresAt)}</span>}
                         </div>
                       </div>
                     ))}
@@ -1629,15 +1752,25 @@ export default function OrgDetailClient({
             )}
             </section>
 
-            {canManageBilling && stripeSubscriptionId && subscriptionStatus !== 'canceled' && (
+            {canCancelSubscription && (
               <section className={styles.section}>
                 <div className={styles.sectionHeader}>
                   <h3 className={styles.sectionTitle}>Cancel Subscription</h3>
                 </div>
-                <p className={styles.warningNote}>
-                  Cancels the Stripe subscription, sets this account to canceled, and archives non-archived tournaments.
-                  Account data is retained for 90 days. Add an internal note after canceling to document the customer-facing context.
-                </p>
+                {hasStripeLink ? (
+                  <p className={styles.warningNote}>
+                    Cancels the Stripe subscription, sets this account to canceled, and archives non-archived tournaments.
+                    Account data is retained for 90 days. Add an internal note after canceling to document the customer-facing context.
+                  </p>
+                ) : (
+                  <p className={styles.warningNote}>
+                    ⚠ No Stripe subscription is linked to this account, so this will <strong>not</strong> cancel anything
+                    in Stripe. It sets the account to canceled, archives non-archived tournaments, and starts the 90-day
+                    retention window. <strong>If the customer may still have a live subscription in Stripe, cancel it
+                    directly in the Stripe Dashboard</strong> — this action cannot reach it. Add an internal note afterward
+                    to document the context.
+                  </p>
+                )}
                 {cancelSubDone ? (
                   <p className={styles.savedIndicator}>Subscription canceled — refresh to see updated account state.</p>
                 ) : (
@@ -1668,12 +1801,12 @@ export default function OrgDetailClient({
                 <span className={styles.fieldValue}>{scopeWallHitCount}</span>
               </div>
             )}
-            <h3 className={styles.sectionTitle}>Module Overrides</h3>
+            <h3 className={styles.sectionTitle}>Section Access Overrides</h3>
             {!canManageProduct && (
-              <p className={styles.emptyNote}>Requires product access to change module overrides.</p>
+              <p className={styles.emptyNote}>Requires product access to change section access overrides.</p>
             )}
             {overrideableModules.length === 0 ? (
-              <p className={styles.emptyNote}>All add-on modules are included in this org&apos;s plan.</p>
+              <p className={styles.emptyNote}>All add-on sections are included in this org&apos;s plan.</p>
             ) : (
               <>
                 <div className={styles.addonGrid}>
@@ -1871,8 +2004,10 @@ export default function OrgDetailClient({
               {!cancelSubPreflightLoading && cancelSubPreflight && (
                 <>
                   <p className={styles.modalCopy}>
-                    Cancels the Stripe subscription and sets this account to canceled.
-                    All non-archived tournaments will be archived and data retained for {cancelSubPreflight.retentionDays} days.
+                    {cancelSubPreflight.stripeSubscriptionId
+                      ? 'Cancels the Stripe subscription and sets this account to canceled.'
+                      : 'No Stripe subscription is linked, so nothing is cancelled in Stripe — verify the Stripe Dashboard directly if the customer may still have a live subscription. This sets the account to canceled.'}
+                    {' '}All non-archived tournaments will be archived and data retained for {cancelSubPreflight.retentionDays} days.
                     This cannot be undone without resubscribing.
                   </p>
                   {cancelSubPreflight.shutsDown.length > 0 && (
@@ -1902,8 +2037,8 @@ export default function OrgDetailClient({
                   placeholder="Why is this subscription being canceled? (recorded in audit log)"
                 />
               </div>
-              <div className={styles.formRow}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <div className={styles.formRow} style={{ marginTop: '0.85rem' }}>
+                <label style={CHECKBOX_LABEL_STYLE}>
                   <input
                     type="checkbox"
                     checked={cancelSubNotifyOwner}

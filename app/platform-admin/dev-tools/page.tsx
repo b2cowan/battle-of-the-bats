@@ -405,7 +405,7 @@ function OrgListPanel({
                   className={styles.planBadge}
                   style={{ color: pc.text, borderColor: pc.border, background: pc.bg }}
                 >
-                  {org.plan_id.replace('_', ' ')}
+                  {planBadgeLabel(org.plan_id)}
                 </span>
 
                 {/* Wipe action */}

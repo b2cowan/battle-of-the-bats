@@ -149,12 +149,13 @@ export default async function PlatformOverviewPage() {
     supabaseAdmin
       .from('platform_catalog_change_requests')
       .select('id', { count: 'exact', head: true })
-      .eq('request_type', 'pricing')
-      .in('status', ['draft', 'needs_review', 'approved'])
-      .contains('proposal', { kind: 'stripe_price_update' }),
+      .in('status', ['needs_review', 'approved']),
   ]);
   const orgTotal = stats.totals.organizations;
-  const pendingPricingRequests = pricingRequestResult.count ?? 0;
+  // Any catalog change request still awaiting action (review or implementation), across ALL request
+  // types — plan availability ("Live") toggles, plan config, and Stripe prices — so a pending launch
+  // approval is visible on first login. Matches the Approval Queue's "Action Needed" definition.
+  const pendingApprovalRequests = pricingRequestResult.count ?? 0;
   const lastVisitLabel = previousVisit ? `Last visit ${fmtDateTime(previousVisit.visited_at)}` : 'First tracked visit';
   const earlyAccessStatusRows = ['new', 'qualified', 'contacted', 'pilot_candidate', 'converted']
     .map(status => ({ status, count: stats.growth.earlyAccessByStatus[status] ?? 0 }))
@@ -203,14 +204,14 @@ export default async function PlatformOverviewPage() {
           <AlertItem label="Trials ending soon" value={stats.alerts.trialEndingSoon} href="/platform-admin/orgs?filter=trial_ending" tone={stats.alerts.trialEndingSoon > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="New leads" value={stats.alerts.newEarlyAccessLeads} href={canEarlyAccess ? '/platform-admin/early-access' : undefined} title={canEarlyAccess ? undefined : 'Requires growth or product access'} tone={stats.alerts.newEarlyAccessLeads > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Retention records" value={stats.alerts.retentionAlertCount} href={canRetention ? '/platform-admin/retention' : undefined} title={canRetention ? undefined : 'Requires billing or support access'} tone={stats.alerts.retentionAlertCount > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Price approvals" value={pendingPricingRequests} href={canChangeRequests ? '/platform-admin/change-requests' : undefined} title={canChangeRequests ? undefined : 'Requires product or billing access'} tone={pendingPricingRequests > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Expired overrides" value={stats.alerts.expiredOverrides} href="/platform-admin/orgs?filter=expired_overrides" tone={stats.alerts.expiredOverrides > 0 ? 'warn' : 'neutral'} />
+          <AlertItem label="Approval queue" value={pendingApprovalRequests} href={canChangeRequests ? '/platform-admin/change-requests' : undefined} title={canChangeRequests ? undefined : 'Requires product or billing access'} tone={pendingApprovalRequests > 0 ? 'warn' : 'neutral'} />
+          <AlertItem label="Overrides expiring soon" value={stats.alerts.overridesExpiringSoon} href="/platform-admin/orgs?filter=expiring_overrides" tone={stats.alerts.overridesExpiringSoon > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Missing owners" value={stats.alerts.orgsWithoutOwner} href="/platform-admin/orgs?filter=no_owner" tone={stats.alerts.orgsWithoutOwner > 0 ? 'warn' : 'neutral'} />
           <AlertItem label="Owner inactive" value={stats.alerts.orgsWithInactiveOwner} href="/platform-admin/orgs?filter=owner_inactive" tone={stats.alerts.orgsWithInactiveOwner > 0 ? 'warn' : 'neutral'} />
         </div>
-        {!canActionBillingAlerts && (stats.alerts.trialEndingSoon > 0 || stats.alerts.expiredOverrides > 0) && (
+        {!canActionBillingAlerts && (stats.alerts.trialEndingSoon > 0 || stats.alerts.overridesExpiringSoon > 0) && (
           <p className={styles.alertRoleNote}>
-            Trials ending soon and expired overrides require billing access — contact the billing team to action them.
+            Trials ending soon and overrides expiring soon require billing access — contact the billing team to action them.
           </p>
         )}
       </section>

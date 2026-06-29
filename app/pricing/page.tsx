@@ -326,9 +326,9 @@ export default async function PricingPage() {
               </p>
               <p className={styles.clubBody}>
                 League Plus is focused on house league registration, divisions, seasons, public organization
-                pages, and registrar workflows. Club adds rep teams and accounting — plus three Coaches
-                Portal accounts for your coaching staff — for organizations that need the complete
-                operating system.
+                pages, and registrar workflows. Club adds rep teams and accounting — plus a Premium Coaches
+                Portal for your whole coaching staff, every team included with no per-team fee — for
+                organizations that need the complete operating system.
               </p>
               <p className={styles.clubBody}>
                 If you want either tier, start on a live tournament plan now or express interest below.

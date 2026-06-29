@@ -3,7 +3,7 @@ import type { HelpPageContent } from './index';
 const accountingHelp: HelpPageContent = {
   title: 'Accounting',
   role: 'Treasurer, Admin, Owner',
-  intro: 'Accounting tracks all financial activity for your organization — tournament and org-wide income and expenses, season budgets, and rep-team cost allocations. It is part of the Club plan (or available as an add-on). Owners and treasurers work here by default; an admin needs the accounting permission granted by the owner.',
+  intro: 'Accounting tracks all financial activity for your organization — tournament and org-wide income and expenses, season budgets, and rep-team cost allocations. It is included with the Club plan. Owners and treasurers work here by default; an admin needs the accounting permission granted by the owner.',
   sections: [
     {
       id: 'who-can-use',
@@ -14,7 +14,7 @@ const accountingHelp: HelpPageContent = {
       searchText: 'accounting access club plan add-on enable module treasurer admin owner permission capability access restricted who can use unlock contact owner',
       content: (
         <>
-          <p>Accounting is part of the <strong>Club</strong> plan, or it can be added to your plan as an add-on. If your organization doesn&apos;t have it, the Accounting area shows an <strong>Access Restricted</strong> message — ask your organization owner to enable it.</p>
+          <p>Accounting is included with the <strong>Club</strong> plan. If your organization doesn&apos;t have it, the Accounting area shows an <strong>Access Restricted</strong> message — ask your organization owner about moving to Club.</p>
           <p>Once it&apos;s enabled, who can do what:</p>
           <ul>
             <li><strong>Owners and treasurers</strong> — full access: create ledgers, record entries, run budgets and reminders.</li>

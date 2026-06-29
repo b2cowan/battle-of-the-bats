@@ -128,6 +128,19 @@ This is **not greenfield** — a partial surface already exists and is linked in
 
 *Fast-follows parked by these decisions: city-level location filter; age-group/entry-fee filters (once structured); org-level listing default; premium/featured placement.*
 
+## Launch checklist (HOLD until production launch)
+
+The build is on `dev` and uncommitted. Before/at the production release that ships the directory:
+
+- [ ] **Apply migration 158 to PROD** (`--prod`) + refresh snapshots + re-run `check:migrations` GREEN, **before** promoting any directory-reading code (else prod 500s).
+- [ ] Promote the directory code to `master`/production.
+- [ ] **Publish the marketing messaging** (drafted by `/marketing` 2026-06-28, held until launch — brand rule: no marketing of unshipped features). Honest framing locked: "get discovered" not "we put you on Google"; "discoverable" not "top of Google"; opt-in + privacy stated; free on every plan; no pricing claim. Three pieces:
+  - **`/changelog` (New):** *"A public tournament directory — get your event found"* — "There's now one place for families, players, and visiting teams to find tournaments running on FieldLogicHQ. Switch on directory listing for any tournament and people can find it by sport, region, and date, then go straight to your live scores, schedule, and standings. You decide when to list — it's off until you turn it on — it's free on every plan, and player information always stays private." (Runs through the changelog draft-then-approve flow.)
+  - **`/for-tournament-organizers` section — heading "Get your tournament found":** "List your event in the public FieldLogicHQ tournament directory and families, players, and visiting teams can discover it by sport, region, and date — and land right on your live scores and schedule. It's free on every plan, you choose when to list, and there's nothing extra to build: the public page you already have does the work." + optional free-tier line: "Even on the free Tournament plan, your event can be found online — no upgrade required."
+  - **In-product nudge (Event Settings, beside the toggle, shown when off):** "**Want more teams and fans to find this event?** List it in the public tournament directory so families can discover it by sport, region, and date. Your choice, free, and player information always stays private." + optional always-visible caption: "*Free exposure for your event — you decide when to list.*"
+- [ ] **Decide top-nav placement at launch.** `/discover` is linked in the **footer** ("Discover") today but is **not** in the visible top nav (Tournaments / Leagues / Clubs / Coaches / Pricing). As the growth/front-door surface, `/marketing` + `/design` should decide whether to elevate it into the top nav and what to call it ("Discover" vs "Browse tournaments") with the launch push.
+- [ ] Post-launch: confirm the page is being indexed (search-console / `site:` check) once crawlers have had time — do **not** promise ranking.
+
 ## Out of scope (later phases — noted only, do not build here)
 
 - **Native store-wrapper** (thin Capacitor-style shell → App Store + Google Play) — trigger-gated later phase per the strategy entry.

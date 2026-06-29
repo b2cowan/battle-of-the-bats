@@ -770,7 +770,7 @@ const SPOTLIGHT_FULL_PICTURE_PREVIEW = W(`
     <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
       <li>Tournament and Tournament Plus: free for your founding season through December 31</li>
       <li>House League, Rep Teams, and Accounting: available on League and Club (also free through December 31)</li>
-      <li>Tournament Coach Portal for coaches tracking their teams</li>
+      <li>Coaches Portal for coaches tracking their teams</li>
     </ul>
   </div>
   <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">

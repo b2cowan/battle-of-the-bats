@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Check, Loader, X } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import type { PlatformChangeApplicationRow, PlatformChangeRequestRow } from './types';
+import type { PriceValidationResult } from '@/lib/stripe-price-validation';
 import styles from './change-requests.module.css';
 
 type StripePriceUpdateProposal = {
@@ -335,6 +336,10 @@ export default function ChangeRequestsClient({
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  // Stripe-price validation surfaced in the approval detail view (the "Catalog vs Stripe" panel).
+  const [priceValidation, setPriceValidation] = useState<PriceValidationResult | null>(null);
+  const [validatingPrice, setValidatingPrice] = useState(false);
+  const [warnConfirmed, setWarnConfirmed] = useState(false);
 
   const applicationsByRequest = useMemo(() => {
     const grouped = new Map<string, PlatformChangeApplicationRow[]>();
@@ -394,6 +399,28 @@ export default function ChangeRequestsClient({
     [requests, selectedRequestId],
   );
   const selectedApplications = selectedRequest ? applicationsByRequest.get(selectedRequest.id) ?? [] : [];
+
+  // When a Stripe-price request is opened, validate the proposed price against the slot so the
+  // operator sees the Catalog-vs-Stripe checks (and any warnings) before approving.
+  useEffect(() => {
+    setWarnConfirmed(false);
+    setPriceValidation(null);
+    if (!selectedRequest) return;
+    const proposal = getStripePriceProposal(selectedRequest);
+    if (!proposal || !proposal.proposedPriceId) return;
+    let cancelled = false;
+    setValidatingPrice(true);
+    fetch('/api/platform-admin/product-catalog/change-requests/validate-price', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: selectedRequest.id }),
+    })
+      .then(r => r.json())
+      .then(j => { if (!cancelled) setPriceValidation((j?.validation as PriceValidationResult | null) ?? null); })
+      .catch(() => { if (!cancelled) setPriceValidation(null); })
+      .finally(() => { if (!cancelled) setValidatingPrice(false); });
+    return () => { cancelled = true; };
+  }, [selectedRequest]);
 
   async function updateStatus(request: PlatformChangeRequestRow, status: string) {
     setBusy(`${request.id}:${status}`);
@@ -474,12 +501,16 @@ export default function ChangeRequestsClient({
     }
   }
 
-  function renderActions(request: PlatformChangeRequestRow) {
+  function renderActions(
+    request: PlatformChangeRequestRow,
+    opts?: { approveDisabled?: boolean; approveTitle?: string },
+  ) {
     if (!canManageProduct) return <span className={styles.muted}>Read only</span>;
 
     const generatedLabel = generatedApplyLabel(request);
     const isBusy = busy?.startsWith(`${request.id}:`);
     if (isBusy) return <Loader size={14} className={styles.spin} />;
+    const approveDisabled = Boolean(opts?.approveDisabled);
 
     if (request.status === 'draft') {
       return (
@@ -492,7 +523,7 @@ export default function ChangeRequestsClient({
     if (request.status === 'needs_review') {
       return (
         <span className={styles.actionStack}>
-          <button className={styles.primaryBtn} onClick={() => updateStatus(request, 'approved')}>
+          <button className={styles.primaryBtn} onClick={() => updateStatus(request, 'approved')} disabled={approveDisabled} title={opts?.approveTitle}>
             <Check size={13} />
             {generatedLabel ? 'Approve & Apply' : 'Approve'}
           </button>
@@ -506,7 +537,7 @@ export default function ChangeRequestsClient({
 
     if (request.status === 'approved') {
       return (
-        <button className={styles.primaryBtn} onClick={() => updateStatus(request, generatedLabel ? 'approved' : 'implemented')}>
+        <button className={styles.primaryBtn} onClick={() => updateStatus(request, generatedLabel ? 'approved' : 'implemented')} disabled={approveDisabled} title={opts?.approveTitle}>
           <Check size={13} />
           {generatedLabel ? `Apply ${generatedLabel}` : 'Mark Implemented'}
         </button>
@@ -749,6 +780,54 @@ export default function ChangeRequestsClient({
                 )}
               </section>
 
+              {getStripePriceProposal(selectedRequest)?.proposedPriceId && (
+                <section className={styles.detailSection}>
+                  <h3>Stripe price check</h3>
+                  {validatingPrice ? (
+                    <p className={styles.muted}>Checking price against Stripe…</p>
+                  ) : !priceValidation ? (
+                    <p className={styles.muted}>Could not validate this price.</p>
+                  ) : (
+                    <div>
+                      {!priceValidation.validated && (
+                        <p style={{ color: '#f59e0b', fontSize: '0.72rem', marginTop: 0 }}>
+                          Not checked against Stripe in this environment — {priceValidation.skippedReason}
+                        </p>
+                      )}
+                      <ul style={{ listStyle: 'none', padding: 0, margin: '0.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        {priceValidation.checks.map(c => (
+                          <li key={c.key} style={{ display: 'flex', gap: '0.5rem', fontSize: '0.72rem', alignItems: 'baseline' }}>
+                            <span style={{ fontWeight: 700, color: c.status === 'pass' ? '#4ade80' : c.status === 'warn' ? '#f59e0b' : c.status === 'fail' ? '#f87171' : '#94a3b8' }}>
+                              {c.status === 'pass' ? '✓' : c.status === 'warn' ? '⚠' : c.status === 'fail' ? '✗' : '–'}
+                            </span>
+                            <span>
+                              {c.label}
+                              {c.actual && (
+                                <span style={{ color: '#94a3b8' }}>
+                                  {' '}— {c.actual}{c.expected && c.expected !== c.actual ? ` (expected ${c.expected})` : ''}
+                                </span>
+                              )}
+                              {c.detail && <span style={{ color: '#94a3b8' }}> — {c.detail}</span>}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      {priceValidation.hardBlock && (
+                        <p style={{ color: '#f87171', fontWeight: 700, fontSize: '0.72rem' }}>
+                          This price can’t be applied — resolve the ✗ items above.
+                        </p>
+                      )}
+                      {!priceValidation.hardBlock && priceValidation.warn && (
+                        <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', color: '#f59e0b', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}>
+                          <input type="checkbox" checked={warnConfirmed} onChange={e => setWarnConfirmed(e.target.checked)} />
+                          <span>I’ve reviewed the ⚠ warnings and want to apply this price anyway.</span>
+                        </label>
+                      )}
+                    </div>
+                  )}
+                </section>
+              )}
+
               <section className={styles.detailSection}>
                 <h3>Stage History</h3>
                 <div className={styles.historyList}>
@@ -771,7 +850,15 @@ export default function ChangeRequestsClient({
               <button type="button" className={styles.secondaryBtn} onClick={() => setSelectedRequestId(null)}>
                 Close
               </button>
-              <div className={styles.modalActions}>{renderActions(selectedRequest)}</div>
+              <div className={styles.modalActions}>{renderActions(selectedRequest, (() => {
+                const isPrice = Boolean(getStripePriceProposal(selectedRequest)?.proposedPriceId);
+                if (!isPrice) return undefined;
+                if (validatingPrice) return { approveDisabled: true, approveTitle: 'Validating price…' };
+                if (!priceValidation) return undefined;
+                if (priceValidation.hardBlock) return { approveDisabled: true, approveTitle: 'This price failed validation and cannot be applied.' };
+                if (priceValidation.warn && !warnConfirmed) return { approveDisabled: true, approveTitle: 'Review the warnings and confirm before applying.' };
+                return undefined;
+              })())}</div>
             </div>
           </div>
         </div>

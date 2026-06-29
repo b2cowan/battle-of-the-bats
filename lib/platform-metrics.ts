@@ -177,7 +177,12 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       .filter(member => (member.status ?? 'active') !== 'suspended')
       .map(member => member.organization_id)
   );
-  const expiredOverrides = overrides.filter(row => row.expires_at && row.expires_at < now).length;
+  // Overrides expiring within the next 14 days (and not yet lapsed): the actionable set.
+  // Expired ones auto-drop and stop granting access on their own, so we surface UPCOMING lapses to
+  // action (extend / let lapse) rather than nag about ones already moot.
+  const overridesExpiringSoon = overrides.filter(
+    row => row.expires_at && row.expires_at >= now && row.expires_at <= trialWindowEnd,
+  ).length;
   const authUserById = new Map(
     (authUsersRes.data?.users ?? []).map(user => [user.id, user])
   );
@@ -352,7 +357,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       trialEndingSoon,
       newEarlyAccessLeads: earlyAccessByStatus.new ?? 0,
       retentionAlertCount,
-      expiredOverrides,
+      overridesExpiringSoon,
       orgsWithoutOwner,
       orgsWithInactiveOwner,
     },

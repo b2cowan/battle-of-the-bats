@@ -310,6 +310,14 @@ export interface Tournament {
    *  on the public site by default (migration 150). Governs the public site only; coach
    *  names stay visible in admin + the Coaches Portal. */
   coachNamesShowOnPublic?: boolean;
+  /** Opt-in flag for the public cross-platform discovery directory (/discover).
+   *  Default false — a tournament is only listed when the organizer deliberately
+   *  turns this on (migration 158). ANDed with the public-status gate at query
+   *  time, so a flagged-but-draft tournament never surfaces. */
+  listInDirectory?: boolean;
+  /** Optional province code (e.g. 'ON') for the directory's location filter;
+   *  captured at opt-in time. Null = unset (migration 158). */
+  directoryProvince?: string | null;
   requireScoreFinalization?: boolean | null;
   notifyTeamsOnComplete?: boolean;
   resultsNotifiedAt?: string | null;
@@ -1115,6 +1123,13 @@ export interface RepRosterPlayer {
 
 export type RepLineupMode = 'nine_player' | 'everyone_bats';
 
+// A labelled resource attached to a coach event (Phase 4). V1 = 'link'; 'file' reserved for V2.
+export interface RepEventResource {
+  type: 'link' | 'file';
+  label: string;
+  url: string;
+}
+
 export interface RepTeamEvent {
   id: string;
   programYearId: string;
@@ -1125,11 +1140,19 @@ export interface RepTeamEvent {
   description: string | null;
   startsAt: string;
   endsAt: string | null;
-  location: string | null;
+  location: string | null;          // human-readable place NAME (shows on schedule + chips)
+  locationAddress: string | null;   // optional street address (mig 161) — powers the Maps link
+  // Game-day detail (mig 160), all optional / UI-shaped free text:
+  arrivalTime: string | null;   // "be there by" clock time, HH:mm (same day as startsAt)
+  fieldNumber: string | null;   // diamond/field label within the location, e.g. "Diamond 2"
+  uniform: string | null;       // game-day uniform/jersey note (games only, UI-gated)
+  resources: RepEventResource[]; // per-event labelled links (mig 162), app-validated/capped
   opponent: string | null;
   homeAway: 'home' | 'away' | 'neutral' | null;
-  homeScore: number | null;
-  awayScore: number | null;
+  // Team-relative scoring (mig 158): your team's score vs the opponent's, NOT literal
+  // home/away. `result` derives from these; `homeAway` is independent context for splits.
+  teamScore: number | null;
+  opponentScore: number | null;
   result: 'win' | 'loss' | 'tie' | null;
   parentEventId: string | null;
   isRecurring: boolean;
@@ -1176,6 +1199,30 @@ export interface RepTeamLineupEntry {
   starter: boolean;
   inningPositions: Record<string, string>;
   notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// A per-player slot inside a saved lineup TEMPLATE (mig 159). Keyed by player_id so the
+// loader can remap to the current roster; mirrors a lineup entry minus the stored notes.
+export interface RepTeamLineupTemplateEntry {
+  playerId: string;
+  battingOrder: number | null;
+  starter: boolean;
+  inningPositions: Record<string, string>;
+}
+
+// A named, reusable "base start" lineup, program-year-scoped (mig 159 / Phase 4).
+export interface RepTeamLineupTemplate {
+  id: string;
+  orgId: string;
+  teamId: string;
+  programYearId: string;
+  name: string;
+  lineupMode: RepLineupMode;
+  inningCount: number;
+  entries: RepTeamLineupTemplateEntry[];
+  createdBy: string | null;
   createdAt: string;
   updatedAt: string;
 }

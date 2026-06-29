@@ -14,6 +14,7 @@
   --surface-2:   #0F172A;
   --bg-surface:  var(--surface);
   --bg-raised:   #141D2B;
+  --bracket-card: #1E293B;
   --bg-inset:    rgba(0, 0, 0, 0.2);
   --bg-card:     var(--bg-surface);
 
@@ -130,6 +131,7 @@
   --surface-2:   #F0F3FA;
   --bg-surface:  var(--surface);
   --bg-raised:   #FFFFFF;
+  --bracket-card: #FFFFFF;
   --bg-inset:    rgba(15, 17, 35, 0.04);
   --bg-card:     var(--bg-surface);
 

@@ -15,8 +15,8 @@ export { downloadXLSX } from './xlsx';
 export type { ICSEventInput } from './ics';
 export { downloadICS } from './ics';
 
-export type { OrgPdfSettings } from './pdf';
-export { DEFAULT_PDF_SETTINGS, downloadPDF } from './pdf';
+export type { OrgPdfSettings, LineupPosterOptions, LineupPosterPlayer } from './pdf';
+export { DEFAULT_PDF_SETTINGS, downloadPDF, downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend } from './pdf';
 
 export type { ExportCatalogEntry } from './catalog';
 export {

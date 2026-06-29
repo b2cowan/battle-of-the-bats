@@ -104,7 +104,7 @@ const coachesHelp: HelpPageContent = {
       heading: 'How to build your team schedule',
       summary: 'Add practices, games, and team events to one calendar.',
       keywords: ['coach schedule', 'practice', 'game', 'team event', 'opponent', 'calendar'],
-      searchText: 'coach schedule add practice game team event opponent location start end time calendar list edit remove event recurring premium',
+      searchText: 'coach schedule add practice game team event opponent location address start end time calendar list edit remove event recurring premium tournament multi day week month view event types arrival call time field diamond number uniform map link recent locations',
       content: (
         <>
           <p>Turn on <strong>Schedule</strong> from Explore, then click <strong>Add event</strong>.</p>
@@ -115,7 +115,7 @@ const coachesHelp: HelpPageContent = {
             <li>Edit or remove any event with the pencil and trash icons.</li>
           </ol>
           <p>Events list in date order so your whole season reads top to bottom.</p>
-          <p><strong>Coaches Portal Premium adds:</strong> recurring events (set repeating practices once), attendance taken straight from each event, and syncing your schedule to your phone&apos;s calendar.</p>
+          <p><strong>Coaches Portal Premium adds:</strong> more event types (league and tournament games, scrimmages, team events, and multi-day tournaments), <strong>List / Week / Month</strong> calendar views, game-day details (arrival/call time, field/diamond #, uniform) with a tap-to-open map link, recurring events (set repeating practices once), attendance taken straight from each event, and syncing your schedule to your phone&apos;s calendar. See <strong>Tournaments, games &amp; calendar views</strong> and <strong>Game-day details</strong> below.</p>
         </>
       ),
     },
@@ -351,6 +351,132 @@ const coachesHelp: HelpPageContent = {
           answerText: 'No. Only adding your roster is required on Premium. The other steps — jersey numbers and positions, your schedule, game lineups, and a budget — are optional. Set up the ones you want and hit Skip on any you will not use; skipping ticks the step off just like finishing it, so once every step is done or skipped the setup panel disappears. You can return to a skipped step later from the sidebar.',
           keywords: ['skip setup step', 'required step', 'optional step', 'finish setup', 'do i have to', 'budget optional', 'positions optional', 'schedule optional', 'mark complete'],
           popular: true,
+        },
+      ],
+    },
+    {
+      id: 'recipe-premium-schedule',
+      group: 'Coaches Portal Premium',
+      heading: 'Tournaments, games & calendar views (Premium)',
+      summary: 'On Premium your schedule handles every event type, spreads multi-day tournaments across all their days, and keeps tournament games grouped under their tournament.',
+      keywords: ['premium schedule', 'tournament', 'multi-day tournament', 'tournament game', 'calendar view', 'week view', 'month view', 'game slot', 'event types'],
+      searchText: 'premium schedule calendar list week month view multi day tournament spans every day date range day 1 of 3 add event types league game tournament game scrimmage practice team event tournament which tournament attach group game slot orphaned loose all day event sorts first nested add game',
+      content: (
+        <>
+          <p>On <strong>Coaches Portal Premium</strong>, your <strong>Schedule</strong> grows from the free practice/game/event list into a full team calendar with <strong>List</strong>, <strong>Week</strong>, and <strong>Month</strong> views and more event types: league games, tournament games, scrimmages, practices, team events, and multi-day tournaments.</p>
+          <p><strong>Multi-day tournaments span the calendar.</strong> Give a <strong>Tournament</strong> a start and end date and it shows on <em>every</em> day it runs — each day in the week view is labelled &ldquo;Day 1/3&rdquo;, &ldquo;Day 2/3&rdquo;, and the month view shows it as one connected run (later days carry a small &ldquo;&rsaquo;&rdquo; marker). In the list it reads as a date range (e.g. &ldquo;Jul 1–3&rdquo;). All-day tournaments sort to the top of each day, above your timed games and practices.</p>
+          <p><strong>Tournament games stay grouped under their tournament.</strong> When you add an event, <strong>Game (Tournament)</strong> sits tucked under <strong>Tournament</strong> in the picker. Adding one asks <strong>which tournament</strong> it belongs to and files it there, so you never end up with a loose game tied to nothing. You can also open a tournament and use <strong>+ Add game</strong> to drop a game straight onto its days. If you haven&apos;t created a tournament yet, the form points you to add one first.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-premium-tournament-spans',
+          question: 'Why does my tournament only show on its first day?',
+          answerText: 'Give the tournament an end date as well as a start date. On the Premium schedule a tournament with a date range shows on every day it runs — in the week view each day is labelled Day 1/3, Day 2/3, and the month view shows it as one connected run. In the list it reads as a date range like Jul 1 to 3.',
+          keywords: ['tournament one day', 'multi-day tournament', 'tournament not spanning', 'end date', 'date range'],
+          popular: true,
+          answer: (
+            <p>Give the tournament an <strong>end date</strong> as well as a start date. On the Premium schedule a tournament with a date range shows on <strong>every</strong> day it runs — in the week view each day is labelled &ldquo;Day 1/3&rdquo;, &ldquo;Day 2/3&rdquo;, and the month view shows it as one connected run. In the list it reads as a date range like &ldquo;Jul 1–3&rdquo;.</p>
+          ),
+        },
+        {
+          id: 'faq-premium-add-tournament-game',
+          question: 'How do I add games to a tournament?',
+          answerText: 'Two ways. From the Add Event menu pick Game (Tournament) — it sits nested under Tournament — and choose which tournament it belongs to. Or open the tournament and use + Add game, which files the game under it automatically and drops it on the tournament’s days. Either way the game stays grouped under its tournament rather than floating loose. If you have not created a tournament yet, the form prompts you to add one first.',
+          keywords: ['add tournament game', 'game tournament', 'attach game', 'which tournament', 'group games'],
+          answer: (
+            <>
+              <p>Two ways. From the <strong>Add Event</strong> menu pick <strong>Game (Tournament)</strong> — it sits nested under <strong>Tournament</strong> — and choose <strong>which tournament</strong> it belongs to. Or open the tournament and use <strong>+ Add game</strong>, which files the game under it and drops it on the tournament&apos;s days.</p>
+              <p>Either way the game stays grouped under its tournament instead of floating loose. If you haven&apos;t created a tournament yet, the form points you to add one first.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-game-day-details',
+      group: 'Coaches Portal Premium',
+      heading: 'Game-day details: arrival, field, uniform, links & the map (Premium)',
+      summary: 'Add an arrival/call time, diamond/field number, uniform, and resource links to an event — and split the place name from a street address that powers a tap-to-open map.',
+      keywords: ['arrival time', 'call time', 'be there by', 'field number', 'diamond number', 'uniform', 'jersey', 'location', 'address', 'google maps', 'map link', 'recent locations', 'links', 'attach link', 'resources'],
+      searchText: 'arrival call time be there by field diamond number uniform jersey what to wear home whites location place name street address google maps open in maps map link recent locations chips tap to fill calendar export ics spreadsheet excel csv arrival field uniform columns game day details premium links attach link resource drill video rules page field map flyer youtube google doc url open in new tab',
+      content: (
+        <>
+          <p>When you add or edit an event on the <strong>Premium</strong> schedule, a few optional details make game day smoother. Leave any of them blank if you don&apos;t need them.</p>
+          <ul>
+            <li><strong>Arrival / call time</strong> — a &ldquo;be there by&rdquo; time separate from the start (e.g. arrive 5:15 for a 6:00 game). Shows on the event and travels with the calendar export.</li>
+            <li><strong>Field / Diamond #</strong> — which specific diamond or field at the venue (e.g. &ldquo;Diamond 2&rdquo;), shown right beside the location.</li>
+            <li><strong>Uniform</strong> (games only) — what to wear, e.g. &ldquo;Home whites.&rdquo;</li>
+          </ul>
+          <p><strong>Location, name vs. address.</strong> <em>Location</em> is the place name a coach recognizes (&ldquo;Sherwood Park&rdquo;) — it&apos;s what shows on the schedule. <em>Address</em> is an optional street address that powers the map. On the event, the location becomes a tappable <strong>open-in-Google-Maps</strong> link that uses the address when you&apos;ve added one (and searches the name if you haven&apos;t).</p>
+          <p><strong>Recent locations.</strong> Under the location box, a row of <strong>Recent</strong> chips shows places your team has already used — tap one to fill in both the name and its saved address in a single tap.</p>
+          <p>Arrival time, field/diamond, and uniform also flow into your exports: they appear in the spreadsheet download and ride along in the calendar (.ics) export, so a synced phone calendar shows them too.</p>
+          <p><strong>Links.</strong> Every event has a <strong>Links</strong> section where you can attach labelled web links — a drill video, a rules page, a field map, a practice-plan doc, a flyer. Give each a short label and paste the address; the form hints what fits each event type. On the event they show as tappable rows with a matching icon (video / map / doc) and open in a new tab. You can add up to 10. (Links are for you and your staff right now; a player/parent view may come later.)</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-game-day-map',
+          question: 'How do I get the map link to open the right place?',
+          answerText: 'Fill in the Address field on the event (a street address), not just the Location name. The open-in-Google-Maps link on the event uses the address when one is present, and falls back to searching the location name when it is blank. Tapping a Recent location chip fills both the name and its saved address for you.',
+          keywords: ['map link', 'google maps', 'address', 'wrong location', 'open in maps', 'directions'],
+          popular: true,
+          answer: (
+            <p>Fill in the <strong>Address</strong> field on the event (a street address), not just the <strong>Location</strong> name. The open-in-Google-Maps link uses the address when one is present, and falls back to searching the location name when it&apos;s blank. Tapping a <strong>Recent</strong> location chip fills both the name and its saved address for you.</p>
+          ),
+        },
+        {
+          id: 'faq-attach-links',
+          question: 'Can I attach a link (drill video, rules, field map) to an event?',
+          answerText: 'Yes, on Premium. Every event has a Links section — give each link a short label and paste its web address (a YouTube drill, a Google Doc plan, a rules page, a field map, a flyer). They show on the event as tappable rows and open in a new tab; you can add up to 10. The address has to be a real web link. Links are coach/staff-facing for now.',
+          keywords: ['attach link', 'add link', 'links', 'resources', 'drill video', 'rules', 'field map', 'flyer', 'youtube', 'google doc'],
+          answer: (
+            <p>Yes, on Premium. Every event has a <strong>Links</strong> section — give each link a short <strong>label</strong> and paste its web <strong>address</strong> (a YouTube drill, a Google Doc plan, a rules page, a field map, a flyer). They show on the event as tappable rows and open in a new tab; you can add up to 10. The address must be a real web link. Links are coach/staff-facing for now.</p>
+          ),
+        },
+        {
+          id: 'faq-arrival-vs-start',
+          question: 'What’s the difference between arrival time and start time?',
+          answerText: 'Start (and end) is when the game or practice actually runs. Arrival / call time is an optional earlier "be there by" time for warm-up or check-in. Both show on the event, and the arrival time is included in the calendar export so families see it.',
+          keywords: ['arrival time', 'call time', 'start time', 'be there by', 'warm up'],
+          answer: (
+            <p><strong>Start</strong> (and end) is when the game or practice actually runs. <strong>Arrival / call time</strong> is an optional earlier &ldquo;be there by&rdquo; time for warm-up or check-in. Both show on the event, and the arrival time rides along in the calendar export so families see it.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-attendance',
+      group: 'Coaches Portal Premium',
+      heading: 'Taking attendance (Premium)',
+      summary: 'Open an event to mark who’s In, Late, Out, or hasn’t replied — with at-a-glance counts, quick filters, one-tap marking, and optional per-player notes.',
+      keywords: ['attendance', 'who is coming', 'in out late', 'no reply', 'mark attendance', 'roster check', 'attendance note', 'all in'],
+      searchText: 'attendance mark who is coming going not going in out late no reply unknown counts filter chips tap to set one tap status note per player lime dot all in reset bulk premium event attendance roster headcount available',
+      content: (
+        <>
+          <p>On <strong>Premium</strong>, open any event and pick the <strong>Attendance</strong> tab to track who&apos;s coming. Each player is one of four states: <strong>In</strong>, <strong>Late</strong>, <strong>Out</strong>, or <strong>No reply</strong> (not marked yet).</p>
+          <p>At the top, a <strong>color-coded count bar</strong> shows the totals at a glance — All, In, Late, Out, and No reply. <strong>Tap any count to filter</strong> the list to just those players (tap it again to show everyone); great for working through the &ldquo;No reply&rdquo; pile until it&apos;s empty.</p>
+          <p>Each player sits on a <strong>single line</strong>: tap the <strong>In / Late / Out / No-reply</strong> icon to set their status — one tap, no menus. To add a quick note (&ldquo;leaving early&rdquo;, &ldquo;ride needed&rdquo;), tap the <strong>note icon</strong> at the end of the row; players who already have a note show a small <strong>lime dot</strong> so you can spot them. Use <strong>All in</strong> to mark everyone present at once, or <strong>Reset</strong> to clear back to No reply. Click <strong>Save attendance</strong> when you&apos;re done.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-attendance-filter',
+          question: 'How do I see just who hasn’t replied (or just who’s out)?',
+          answerText: 'On the Attendance tab, tap a count in the top bar — All, In, Late, Out, or No reply — to filter the list to that group; tap it again to show everyone. Each player still has a one-tap In/Late/Out/No-reply control, so you can clear the No reply group quickly.',
+          keywords: ['filter attendance', 'no reply', 'who is out', 'attendance counts', 'going not going'],
+          answer: (
+            <p>On the Attendance tab, tap a count in the top bar — <strong>All</strong>, <strong>In</strong>, <strong>Late</strong>, <strong>Out</strong>, or <strong>No reply</strong> — to filter to that group; tap it again to show everyone. Each player keeps a one-tap status control, so you can clear the <strong>No reply</strong> pile fast.</p>
+          ),
+        },
+        {
+          id: 'faq-attendance-note',
+          question: 'How do I add a note to a player’s attendance?',
+          answerText: 'Tap the note icon at the end of that player’s row to open a note field (e.g. leaving early, ride needed). Players who already have a note show a small lime dot on the note icon. Notes save with the rest of the attendance when you tap Save attendance.',
+          keywords: ['attendance note', 'player note', 'leaving early', 'note icon'],
+          answer: (
+            <p>Tap the <strong>note icon</strong> at the end of that player&apos;s row to open a note field (e.g. &ldquo;leaving early&rdquo;). Players who already have a note show a small <strong>lime dot</strong> on the icon. Notes save with the rest when you tap <strong>Save attendance</strong>.</p>
+          ),
         },
       ],
     },

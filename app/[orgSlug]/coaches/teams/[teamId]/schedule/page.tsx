@@ -1,17 +1,31 @@
 'use client';
 import { use, useState, useEffect, useCallback } from 'react';
-import { Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Clock3, Plus, Save, X, Trophy, Swords, Shield, Dumbbell, Users } from 'lucide-react';
+import { Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Clock3, Plus, Save, X, Trophy, Swords, Shield, Dumbbell, Users, GripVertical } from 'lucide-react';
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { analyzeLineup } from '@/lib/lineup-analysis';
+import { generateBestLineup, type PositionPolicy, type FillMode } from '@/lib/lineup-generator';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
-  buildFilename, serializeRows, serializeHeaders, downloadPDF, DEFAULT_PDF_SETTINGS,
-  type ExportColumnDef, type ICSEventInput, type OrgPdfSettings,
+  buildFilename, serializeRows, serializeHeaders, DEFAULT_PDF_SETTINGS,
+  downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend,
+  type ExportColumnDef, type ICSEventInput, type OrgPdfSettings, type LineupPosterPlayer,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
+import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote } from 'lucide-react';
+import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import styles from '../../../coaches.module.css';
 import type {
   RepAttendanceStatus,
@@ -21,7 +35,9 @@ import type {
   RepTeamEventAttendance,
   RepTeamLineup,
   RepTeamLineupEntry,
+  RepTeamLineupTemplate,
   RepEventType,
+  RepEventResource,
 } from '@/lib/types';
 
 // ── Export definition ─────────────────────────────────────────────────────────
@@ -29,10 +45,14 @@ import type {
 const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Date',       key: 'date',      format: 'date' },
   { label: 'Time',       key: 'time',      format: 'text' },
+  { label: 'Arrival',    key: 'arrival',   format: 'text' },
   { label: 'Event Type', key: 'eventType', format: 'text' },
   { label: 'Name',       key: 'name',      format: 'text' },
   { label: 'Opponent',   key: 'opponent',  format: 'text' },
   { label: 'Location',   key: 'location',  format: 'text' },
+  { label: 'Address',    key: 'address',   format: 'text' },
+  { label: 'Field',      key: 'field',     format: 'text' },
+  { label: 'Uniform',    key: 'uniform',   format: 'text' },
   { label: 'Home/Away',  key: 'homeAway',  format: 'text' },
 ];
 
@@ -65,20 +85,84 @@ const EVENT_ICONS: Record<RepEventType, React.ElementType> = {
   team_event:          Users,
 };
 
+// Attendance statuses, ordered present → not-present → unset. Drives BOTH the per-player icon
+// control and the metric/filter chips (label used by the chips; control is icon-only).
 const ATTENDANCE_OPTIONS: {
   value: RepAttendanceStatus;
   label: string;
   icon: React.ElementType;
 }[] = [
-  { value: 'unknown', label: 'Unknown', icon: CircleHelp },
   { value: 'attending', label: 'In', icon: CheckCircle2 },
-  { value: 'absent', label: 'Out', icon: CircleSlash },
   { value: 'late', label: 'Late', icon: Clock3 },
+  { value: 'absent', label: 'Out', icon: CircleSlash },
+  { value: 'unknown', label: 'No reply', icon: CircleHelp },
+];
+
+// Add-event menu order. Tournament games nest visually under Tournament so a coach sees the
+// relationship (a game slot belongs to a tournament) right where they create one.
+const ADD_MENU: { type: RepEventType; nested?: boolean }[] = [
+  { type: 'external_tournament' },
+  { type: 'tournament_game', nested: true },
+  { type: 'scrimmage' },
+  { type: 'league_game' },
+  { type: 'practice' },
+  { type: 'team_event' },
 ];
 
 const GAME_EVENT_TYPES: RepEventType[] = ['league_game', 'tournament_game', 'scrimmage'];
 const LINEUP_POSITIONS = ['', 'P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'DH', 'EH', 'Bench'];
+// Canonical order for the playing-time summary columns
+const POSITION_ORDER = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'DH', 'EH'];
+
+// Lime "heat" intensity for a usage count (more innings → stronger tint). Token-safe via
+// the logic-lime rgb channel; capped so white text stays legible.
+function heatStyle(count: number) {
+  if (!count) return undefined;
+  return { background: `rgba(var(--logic-lime-rgb), ${Math.min(0.55, 0.1 + count * 0.09)})` };
+}
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Which event types capture an opponent + home/away, and which can recur. Pure functions of
+// the type so the form, the open helpers, and save can all share one source of truth.
+const needsOpponent = (t: RepEventType) => GAME_EVENT_TYPES.includes(t);
+// Event types that can be set to repeat weekly: practices, league games, generic team events.
+const RECURRABLE_TYPES: RepEventType[] = ['practice', 'league_game', 'team_event'];
+const needsRecurrence = (t: RepEventType) => RECURRABLE_TYPES.includes(t);
+
+// Prefix used to auto-name an event. Games derive "{prefix} vs {opponent}"; other types use it
+// as a friendly default when the coach leaves the name blank.
+const EVENT_NAME_PREFIX: Record<RepEventType, string> = {
+  external_tournament: 'Tournament',
+  tournament_game: 'Tournament Game',
+  scrimmage: 'Scrimmage',
+  league_game: 'League Game',
+  practice: 'Practice',
+  team_event: 'Team Event',
+};
+
+/** Auto-derived name for a game type from its opponent ('' when not a game / no opponent yet). */
+function deriveGameName(type: RepEventType, opponent: string): string {
+  const opp = opponent.trim();
+  return needsOpponent(type) && opp ? `${EVENT_NAME_PREFIX[type]} vs ${opp}` : '';
+}
+
+const HOME_AWAY_CHOICES: { value: string; label: string }[] = [
+  { value: 'home', label: 'Home' },
+  { value: 'away', label: 'Away' },
+  { value: 'neutral', label: 'Neutral' },
+];
+
+/** Add hours to a `datetime-local` string ("YYYY-MM-DDThh:mm"), returning the same format. */
+function addHoursLocal(dtLocal: string, hours: number): string {
+  const d = new Date(dtLocal);
+  if (Number.isNaN(d.getTime())) return '';
+  d.setHours(d.getHours() + hours);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/** Default start time for a brand-new event: the viewed day at 6:00 PM (round, :00 minutes). */
+const DEFAULT_EVENT_HOUR = '18:00';
 
 type ViewMode = 'list' | 'week' | 'month';
 
@@ -89,6 +173,11 @@ interface EventForm {
   startsAt: string;
   endsAt: string;
   location: string;
+  locationAddress: string;
+  arrivalTime: string;
+  fieldNumber: string;
+  uniform: string;
+  resources: RepEventResource[];
   opponent: string;
   homeAway: string;
   parentEventId: string;
@@ -121,6 +210,11 @@ const BLANK_FORM: EventForm = {
   startsAt: '',
   endsAt: '',
   location: '',
+  locationAddress: '',
+  arrivalTime: '',
+  fieldNumber: '',
+  uniform: '',
+  resources: [],
   opponent: '',
   homeAway: '',
   parentEventId: '',
@@ -142,6 +236,44 @@ function fmtDate(iso: string) {
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+// Google Maps deep link for a place/address. The lightweight `?q=` form 302-redirects straight
+// to the result; the heavier `/maps/search/?api=1` web-app URL can open to a blank, perpetually
+// loading tab (fresh tab with no Google session / a consent gate), so we use `?q=` here.
+function mapsHref(query: string): string {
+  return `https://www.google.com/maps?q=${encodeURIComponent(query)}`;
+}
+
+// Pick a recognizable icon for a resource link from its URL (video / map / doc / generic).
+function resourceIcon(url: string): React.ElementType {
+  const u = url.toLowerCase();
+  if (/youtube\.com|youtu\.be|vimeo\.com/.test(u)) return Video;
+  if (/maps\.google|google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps/.test(u)) return MapPin;
+  if (/docs\.google|drive\.google|sheets\.google|\.pdf(\?|$)|notion\.so|dropbox\.com/.test(u)) return FileText;
+  return Link2;
+}
+
+// Per-type placeholder hints for the resource-link rows.
+function resourceHint(type: RepEventType): { label: string; url: string } {
+  switch (type) {
+    case 'external_tournament': return { label: 'e.g. Tournament rules', url: 'https://… rules or schedule' };
+    case 'practice':            return { label: 'e.g. Drill video', url: 'https://youtube.com/…' };
+    case 'team_event':          return { label: 'e.g. Event flyer', url: 'https://…' };
+    default:                    return needsOpponent(type)
+      ? { label: 'e.g. Field map', url: 'https://maps.google.com/…' }
+      : { label: 'e.g. Rules', url: 'https://…' };
+  }
+}
+
+// "HH:mm" (24h, as stored for arrival_time) → friendly 12-hour clock ("5:15 PM").
+function fmtClock(hhmm: string): string {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
+  if (!m) return hhmm;
+  const h = Number(m[1]); const mins = m[2];
+  const period = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${mins} ${period}`;
 }
 
 function isoFromInputs(date: string, time: string) {
@@ -169,6 +301,11 @@ function eventToForm(e: RepTeamEvent): EventForm {
     startsAt: toLocalInput(e.startsAt),
     endsAt: toLocalInput(e.endsAt),
     location: e.location ?? '',
+    locationAddress: e.locationAddress ?? '',
+    arrivalTime: e.arrivalTime ?? '',
+    fieldNumber: e.fieldNumber ?? '',
+    uniform: e.uniform ?? '',
+    resources: (e.resources ?? []).map(r => ({ ...r })),
     opponent: e.opponent ?? '',
     homeAway: e.homeAway ?? '',
     parentEventId: e.parentEventId ?? '',
@@ -186,6 +323,44 @@ function weekKey(iso: string) {
   const monday = new Date(d);
   monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   return monday.toISOString().slice(0, 10);
+}
+
+// ── Multi-day tournament spanning ───────────────────────────────────────────────
+// A tournament container (external_tournament) occupies every day from its start date
+// through its end date inclusive; every other event occupies only its start day.
+function dayStr(iso: string) { return iso.slice(0, 10); }
+
+// Whole days between two YYYY-MM-DD keys (UTC anchored so DST never shifts the count).
+function daysBetween(a: string, b: string) {
+  return Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
+}
+
+function shortDate(dayKey: string) {
+  return new Date(`${dayKey}T00:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+}
+
+function tournamentSpan(e: RepTeamEvent): { start: string; end: string; days: number } | null {
+  if (e.eventType !== 'external_tournament' || !e.startsAt) return null;
+  const start = dayStr(e.startsAt);
+  const end = e.endsAt && dayStr(e.endsAt) >= start ? dayStr(e.endsAt) : start;
+  return { start, end, days: daysBetween(start, end) + 1 };
+}
+
+function eventOnDay(e: RepTeamEvent, dayKey: string): boolean {
+  if (!e.startsAt) return false;
+  const span = tournamentSpan(e);
+  if (span) return dayKey >= span.start && dayKey <= span.end;
+  return dayStr(e.startsAt) === dayKey;
+}
+
+// Order a single day's events: all-day tournaments first, then by start time.
+function sortDayEvents(list: RepTeamEvent[]): RepTeamEvent[] {
+  return [...list].sort((a, b) => {
+    const at = a.eventType === 'external_tournament' ? 0 : 1;
+    const bt = b.eventType === 'external_tournament' ? 0 : 1;
+    if (at !== bt) return at - bt;
+    return (a.startsAt ?? '').localeCompare(b.startsAt ?? '');
+  });
 }
 
 // ── Components ────────────────────────────────────────────────────────────────
@@ -207,6 +382,18 @@ function sortLineupRows(rows: LineupPlayerRow[]) {
     if (aOrder !== bOrder) return aOrder - bOrder;
     if (a.starter !== b.starter) return a.starter ? -1 : 1;
     return playerDisplayName(a.player).localeCompare(playerDisplayName(b.player));
+  });
+}
+
+// Batting order = the row's position in the (drag-ordered) list — no manual numbers,
+// so a coach can't type the same slot twice. everyone_bats: all bat 1..N; nine_player:
+// starters bat 1..9 in order, bench get no slot.
+function renumberBattingOrder(rows: LineupPlayerRow[], mode: RepLineupMode): LineupPlayerRow[] {
+  let n = 0;
+  return rows.map(r => {
+    if (mode === 'everyone_bats') return { ...r, starter: true, battingOrder: String(++n) };
+    if (r.starter && n < 9) return { ...r, battingOrder: String(++n) };
+    return { ...r, battingOrder: '' };
   });
 }
 
@@ -232,10 +419,95 @@ function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-function EventChip({ event, onClick }: { event: RepTeamEvent; onClick: () => void }) {
+// One drag-sortable lineup row. Batting order = drag position (auto-numbered), so duplicate
+// slot numbers are impossible. Lives in this module so it shares styles + helpers.
+function SortableLineupRow({
+  row, battingNumber, mode, inningCount, onStarterToggle, onPositionChange,
+}: {
+  row: LineupPlayerRow;
+  battingNumber: string;
+  mode: RepLineupMode;
+  inningCount: number;
+  onStarterToggle: (playerId: string, checked: boolean) => void;
+  onPositionChange: (playerId: string, inning: number, value: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.player.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
+  return (
+    <tr ref={setNodeRef} style={style}>
+      <td>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+          <button
+            type="button"
+            aria-label={`Drag to reorder ${playerDisplayName(row.player)} in the batting order`}
+            {...attributes}
+            {...listeners}
+            style={{ background: 'none', border: 'none', padding: 2, lineHeight: 0, cursor: 'grab', color: 'rgba(255,255,255,0.35)', touchAction: 'none' }}
+          >
+            <GripVertical size={14} />
+          </button>
+          <span style={{ minWidth: '1.2ch', textAlign: 'center', fontVariantNumeric: 'tabular-nums', color: battingNumber ? 'var(--white-90)' : 'rgba(255,255,255,0.3)' }}>
+            {battingNumber || '–'}
+          </span>
+        </div>
+      </td>
+      {mode === 'nine_player' && (
+        <td>
+          <input
+            type="checkbox"
+            checked={row.starter}
+            onChange={e => onStarterToggle(row.player.id, e.target.checked)}
+            aria-label={`Starter for ${playerDisplayName(row.player)}`}
+          />
+        </td>
+      )}
+      <td className={styles.lineupPlayerCell}>
+        <span>{playerDisplayName(row.player)}</span>
+      </td>
+      {Array.from({ length: inningCount }, (_, index) => {
+        const inning = index + 1;
+        return (
+          <td key={inning}>
+            <select
+              className={styles.lineupPositionSelect}
+              value={row.inningPositions[String(inning)] ?? ''}
+              onChange={e => onPositionChange(row.player.id, inning, e.target.value)}
+              aria-label={`Inning ${inning} position for ${playerDisplayName(row.player)}`}
+            >
+              {LINEUP_POSITIONS.map(position => (
+                <option key={position || 'blank'} value={position}>{position || '-'}</option>
+              ))}
+            </select>
+          </td>
+        );
+      })}
+    </tr>
+  );
+}
+
+function EventChip({ event, onClick, dayKey }: { event: RepTeamEvent; onClick: () => void; dayKey?: string }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
   const cancelled = event.status === 'cancelled';
+  // Lead text (the slot that normally shows the start time). Tournaments are all-day and may
+  // run multiple days, so they read as a date range (list view) or "Day n/N" (a specific
+  // calendar day) instead of a misleading clock time.
+  const span = tournamentSpan(event);
+  let lead: string;
+  if (span) {
+    lead = dayKey
+      ? (span.days > 1 ? `Day ${daysBetween(span.start, dayKey) + 1}/${span.days}` : 'All day')
+      : (span.days > 1 ? `${shortDate(span.start)}–${shortDate(span.end)}` : shortDate(span.start));
+  } else {
+    lead = event.startsAt ? fmtTime(event.startsAt) : '';
+  }
+  // Opponent safety-net: games auto-name "League Game vs Lady Jays" (opponent already in the name),
+  // so only append "vs/@ {opp}" when the opponent is set but NOT already in the name.
+  const opp = event.opponent?.trim();
+  const showOpp = !!opp && !event.name.toLowerCase().includes(opp.toLowerCase());
+  const oppSuffix = showOpp ? ` · ${event.homeAway === 'away' ? '@' : 'vs'} ${opp}` : '';
+  // Final score (team-relative: your team first) for a played game.
+  const hasScore = !span && event.teamScore != null && event.opponentScore != null;
   return (
     <button
       className={styles.eventChip}
@@ -243,38 +515,139 @@ function EventChip({ event, onClick }: { event: RepTeamEvent; onClick: () => voi
       onClick={onClick}
     >
       <Icon size={12} style={{ color, flexShrink: 0 }} />
-      <span className={styles.eventChipTime}>
-        {event.startsAt ? fmtTime(event.startsAt) : ''}
+      <span className={styles.eventChipTime}>{lead}</span>
+      <span className={styles.eventChipName} style={cancelled ? { textDecoration: 'line-through' } : undefined}>
+        {event.name}{oppSuffix && <span className={styles.eventChipOpp}>{oppSuffix}</span>}
       </span>
-      <span className={styles.eventChipName} style={cancelled ? { textDecoration: 'line-through' } : undefined}>{event.name}</span>
-      {cancelled ? (
-        <span className={styles.eventChipResult} style={{ color: '#f59e0b' }}>CANCELLED</span>
-      ) : event.result && (
-        <span className={styles.eventChipResult} style={{
-          color: event.result === 'win' ? '#22c55e' : event.result === 'loss' ? '#ef4444' : '#f59e0b',
-        }}>
-          {event.result.toUpperCase()}
-        </span>
-      )}
+      <span className={styles.eventChipTrail}>
+        {cancelled ? (
+          <span className={styles.eventChipResult} style={{ color: '#f59e0b' }}>CANCELLED</span>
+        ) : (
+          <>
+            {hasScore && <span className={styles.eventChipScore}>{event.teamScore}–{event.opponentScore}</span>}
+            {!span && event.result && (
+              <span className={styles.eventChipResult} style={{
+                color: event.result === 'win' ? '#22c55e' : event.result === 'loss' ? '#ef4444' : '#f59e0b',
+              }}>
+                {event.result.toUpperCase()}
+              </span>
+            )}
+          </>
+        )}
+      </span>
     </button>
   );
 }
 
-function WLTWidget({ events }: { events: RepTeamEvent[] }) {
-  const games = events.filter(e => e.eventType === 'league_game' && e.result && e.status !== 'cancelled');
-  const w = games.filter(e => e.result === 'win').length;
-  const l = games.filter(e => e.result === 'loss').length;
-  const t = games.filter(e => e.result === 'tie').length;
-  if (!games.length) return null;
+// Season-record categories + their default inclusion. Owner-decided default = League + Tournament
+// count, Scrimmage excluded; the coach can toggle each and the choice is remembered per team.
+const WLT_CATS: { key: RepEventType; label: string }[] = [
+  { key: 'league_game', label: 'League' },
+  { key: 'tournament_game', label: 'Tournament' },
+  { key: 'scrimmage', label: 'Scrimmage' },
+];
+const WLT_DEFAULT: Record<string, boolean> = { league_game: true, tournament_game: true, scrimmage: false };
+
+function tallyResults(list: RepTeamEvent[]) {
+  return {
+    w: list.filter(e => e.result === 'win').length,
+    l: list.filter(e => e.result === 'loss').length,
+    t: list.filter(e => e.result === 'tie').length,
+  };
+}
+
+function WLTWidget({ events, teamId }: { events: RepTeamEvent[]; teamId: string }) {
+  const storageKey = `flhq.coachWlt.${teamId}`;
+  const [included, setIncluded] = useState<Record<string, boolean>>(WLT_DEFAULT);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
+
+  // Remembered choice loads after mount (avoids an SSR/hydration mismatch); defaults stand until then.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) setIncluded({ ...WLT_DEFAULT, ...JSON.parse(raw) });
+    } catch { /* ignore unreadable storage */ }
+  }, [storageKey]);
+
+  function toggle(key: string) {
+    setIncluded(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }
+
+  // Any finalized, non-cancelled game across the three game types is a candidate; the widget only
+  // appears once at least one exists (so the toggles are discoverable even if a category is off).
+  const candidates = events.filter(e => GAME_EVENT_TYPES.includes(e.eventType) && e.result && e.status !== 'cancelled');
+  if (!candidates.length) return null;
+
+  const { w, l, t } = tallyResults(candidates.filter(e => included[e.eventType]));
+
+  // Scope caption — states exactly what the number counts, so a "0–0" beside a visible WIN
+  // (e.g. a scrimmage that's excluded by default) never reads as broken.
+  const activeLabels = WLT_CATS.filter(c => included[c.key]).map(c => c.label);
+  const scope = activeLabels.length === 0
+    ? 'No categories selected'
+    : activeLabels.length === WLT_CATS.length
+      ? 'All games'
+      : activeLabels.join(' + ');
+
   return (
     <div className={styles.wltWidget}>
       <span className={styles.wltLabel}>Season Record</span>
-      <div className={styles.wltRow}>
-        <span className={styles.wltW}>{w}<small>W</small></span>
-        <span className={styles.wltSep}>–</span>
-        <span className={styles.wltL}>{l}<small>L</small></span>
-        {t > 0 && <><span className={styles.wltSep}>–</span><span className={styles.wltT}>{t}<small>T</small></span></>}
+      <div className={styles.wltMain}>
+        <div className={styles.wltRow}>
+          <span className={styles.wltW}>{w}<small>W</small></span>
+          <span className={styles.wltSep}>–</span>
+          <span className={styles.wltL}>{l}<small>L</small></span>
+          {t > 0 && <><span className={styles.wltSep}>–</span><span className={styles.wltT}>{t}<small>T</small></span></>}
+        </div>
+        <span className={styles.wltScope}>{scope}</span>
       </div>
+      <div className={styles.wltControls}>
+        <span className={styles.wltCountLabel}>Counting:</span>
+        <div className={styles.wltToggles} role="group" aria-label="Include in season record">
+          {WLT_CATS.map(c => (
+            <button
+              key={c.key}
+              type="button"
+              aria-pressed={!!included[c.key]}
+              className={`${styles.wltToggle} ${included[c.key] ? styles.wltToggleActive : ''}`}
+              onClick={() => toggle(c.key)}
+            >
+              {included[c.key] && <Check size={12} aria-hidden />}
+              {c.label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className={styles.wltBreakdownToggle}
+          onClick={() => setBreakdownOpen(o => !o)}
+          aria-expanded={breakdownOpen}
+        >
+          {breakdownOpen ? 'Hide breakdown' : 'Breakdown'}
+        </button>
+      </div>
+      {breakdownOpen && (
+        <div className={styles.wltBreakdown}>
+          {WLT_CATS.map(c => {
+            const cat = tallyResults(candidates.filter(e => e.eventType === c.key));
+            const total = cat.w + cat.l + cat.t;
+            const on = !!included[c.key];
+            return (
+              <div key={c.key} className={styles.wltBreakdownRow} data-on={on ? 'true' : 'false'}>
+                <span className={styles.wltBreakdownLabel}>
+                  <span className={styles.wltBreakdownDot} aria-hidden />
+                  {c.label}
+                </span>
+                <span className={styles.wltBreakdownVal}>{total ? `${cat.w}–${cat.l}${cat.t ? `–${cat.t}` : ''}` : '—'}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -289,6 +662,9 @@ export default function CoachesSchedulePage({
   const { orgSlug, teamId } = use(params);
   const { assignments, loading: ctxLoading } = useCoaches();
   const { currentOrg } = useOrg();
+  // Sport vocabulary (period word, position legend) routes through the Sport Pack.
+  // The coach portal is softball/baseball today; a team-sport field would feed this later.
+  const sportPack = getSportPack(DEFAULT_SPORT);
 
   const [events, setEvents] = useState<RepTeamEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -301,6 +677,10 @@ export default function CoachesSchedulePage({
   const [slideTab, setSlideTab] = useState<'attendance' | 'lineup' | 'result'>('attendance');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  // Whether the event being edited belongs to a recurring series (drives the "this / future / all"
+  // save scope chooser) and whether that chooser is currently shown.
+  const [editingRecurring, setEditingRecurring] = useState(false);
+  const [editScopeOpen, setEditScopeOpen] = useState(false);
   const [formBaseline, setFormBaseline] = useState('');
   const [addTypeMenuOpen, setAddTypeMenuOpen] = useState(false);
   const [form, setForm] = useState<EventForm>(BLANK_FORM);
@@ -312,10 +692,30 @@ export default function CoachesSchedulePage({
   const [attendanceSaving, setAttendanceSaving] = useState(false);
   const [attendanceDirty, setAttendanceDirty] = useState(false);
   const [attendanceError, setAttendanceError] = useState('');
+  // Attendance metric-filter ('all' or a status) + which rows have their note input expanded.
+  const [attendanceFilter, setAttendanceFilter] = useState<RepAttendanceStatus | 'all'>('all');
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [lineupMode, setLineupMode] = useState<RepLineupMode>('everyone_bats');
-  const [lineupInningCount, setLineupInningCount] = useState(7);
+  const [lineupInningCount, setLineupInningCount] = useState(sportPack.defaultPeriodCount);
   const [lineupNotes, setLineupNotes] = useState('');
   const [lineupRows, setLineupRows] = useState<LineupPlayerRow[]>([]);
+  const [autoFillOpen, setAutoFillOpen] = useState(false);
+  const [lineupPdfOpen, setLineupPdfOpen] = useState(false);
+  const [pdfIncludeNotes, setPdfIncludeNotes] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [templates, setTemplates] = useState<RepTeamLineupTemplate[]>([]);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [templateError, setTemplateError] = useState('');
+  const [lineupNotice, setLineupNotice] = useState('');
+  const [autoPolicy, setAutoPolicy] = useState<PositionPolicy>('balanced');
+  const [autoFillMode, setAutoFillMode] = useState<FillMode>('empty');
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const confirm = useConfirm();
+  const lineupSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
   const [lineupLoading, setLineupLoading] = useState(false);
   const [lineupSaving, setLineupSaving] = useState(false);
   const [lineupDirty, setLineupDirty] = useState(false);
@@ -346,11 +746,23 @@ export default function CoachesSchedulePage({
   }, [fetchEvents]);
 
   useEffect(() => {
-    fetch('/api/admin/org/pdf-settings')
+    fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`)
       .then(r => r.ok ? r.json() : {})
       .then(d => setPdfSettings(d as OrgPdfSettings))
       .catch(() => setPdfSettings(null));
-  }, []);
+  }, [orgSlug]);
+
+  // Saved lineup templates are team + active-program-year scoped (not per event) — load once.
+  const reloadTemplates = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setTemplates(data.templates ?? []);
+    } catch { /* non-blocking — templates are optional */ }
+  }, [orgSlug, teamId]);
+
+  useEffect(() => { void Promise.resolve().then(reloadTemplates); }, [reloadTemplates]);
 
   useEffect(() => {
     if (!selectedEvent) {
@@ -399,9 +811,9 @@ export default function CoachesSchedulePage({
         if (lineupCapable) {
           const mode = data.lineup?.lineupMode ?? 'everyone_bats';
           setLineupMode(mode);
-          setLineupInningCount(data.lineup?.inningCount ?? 7);
+          setLineupInningCount(data.lineup?.inningCount ?? sportPack.defaultPeriodCount);
           setLineupNotes(data.lineup?.notes ?? '');
-          setLineupRows(buildLineupRows(players, data.entries ?? [], mode));
+          setLineupRows(renumberBattingOrder(sortLineupRows(buildLineupRows(players, data.entries ?? [], mode)), mode));
         } else {
           setLineupRows([]);
         }
@@ -415,18 +827,89 @@ export default function CoachesSchedulePage({
 
     fetchAttendance();
     return () => { cancelled = true; };
-  }, [orgSlug, selectedEvent, teamId]);
+  }, [orgSlug, selectedEvent, teamId, sportPack.defaultPeriodCount]);
 
   // ── Add event ───────────────────────────────────────────────────────────────
 
-  function openAddForm(type: RepEventType) {
+  function openAddForm(type: RepEventType, overrides?: Partial<EventForm>) {
     setAddTypeMenuOpen(false);
-    const blank = { ...BLANK_FORM, eventType: type };
+    // Pre-seed a sensible start (viewed day at 6:00 PM, :00 minutes) and a 2-hour end, so the
+    // native time picker never defaults to the current minute and "Ends" starts populated.
+    const defaultStart = `${cursorDate}T${DEFAULT_EVENT_HOUR}`;
+    // Games default to "Home" so the printout "@/vs" and the win/loss side are never left blank.
+    // `overrides` (e.g. a tournament game-slot's parent + name) are folded into the baseline too,
+    // so a pre-seeded form doesn't read as "unsaved" before the coach touches anything.
+    const blank = {
+      ...BLANK_FORM,
+      eventType: type,
+      homeAway: needsOpponent(type) ? 'home' : '',
+      startsAt: defaultStart,
+      endsAt: addHoursLocal(defaultStart, 2),
+      ...overrides,
+    };
     setForm(blank);
     setFormBaseline(JSON.stringify(blank));
     setEditingEventId(null);
+    setEditingRecurring(false);
+    setEditScopeOpen(false);
     setSaveError('');
     setShowAddForm(true);
+  }
+
+  // Change the event type inside the form without losing shared fields: reset only the
+  // type-specific bits (opponent/home-away, recurrence). The name is left alone (it auto-names
+  // from the opponent at save time if the coach left it blank).
+  function changeEventType(next: RepEventType) {
+    setForm(f => {
+      const out: EventForm = { ...f, eventType: next };
+      if (!needsOpponent(next)) { out.opponent = ''; out.homeAway = ''; out.uniform = ''; }
+      else if (!out.homeAway) { out.homeAway = 'home'; }
+      if (!needsRecurrence(next)) { out.isRecurring = false; }
+      if (next !== 'tournament_game') { out.parentEventId = ''; }
+      return out;
+    });
+  }
+
+  // Attach a new tournament game to a parent tournament. Pre-fills the game's date to the
+  // tournament's start day (keeping any time the coach already set) so a game-slot lands inside
+  // its tournament's span instead of on today's date.
+  function selectParentTournament(id: string) {
+    setForm(f => {
+      if (!id) return { ...f, parentEventId: '' };
+      const t = events.find(e => e.id === id);
+      const next: EventForm = { ...f, parentEventId: id };
+      if (t?.startsAt) {
+        const time = f.startsAt.slice(11, 16) || DEFAULT_EVENT_HOUR;
+        next.startsAt = `${dayStr(t.startsAt)}T${time}`;
+        next.endsAt = addHoursLocal(next.startsAt, 2);
+      }
+      return next;
+    });
+  }
+
+  // Resource-link row editing.
+  function addResource() {
+    setForm(f => f.resources.length >= MAX_EVENT_RESOURCES ? f : { ...f, resources: [...f.resources, { type: 'link', label: '', url: '' }] });
+  }
+  function updateResource(index: number, patch: Partial<RepEventResource>) {
+    setForm(f => ({ ...f, resources: f.resources.map((r, i) => i === index ? { ...r, ...patch } : r) }));
+  }
+  function removeResource(index: number) {
+    setForm(f => ({ ...f, resources: f.resources.filter((_, i) => i !== index) }));
+  }
+
+  /** Name to persist: the coach's text, or a friendly default so a blank name never blocks a save. */
+  function eventNameForSave(f: EventForm): string {
+    return f.name.trim() || deriveGameName(f.eventType, f.opponent) || EVENT_NAME_PREFIX[f.eventType];
+  }
+
+  // Changing the start keeps the end 2 hours later, unless the coach has set a custom end.
+  function setStartsAt(value: string) {
+    setForm(f => {
+      const prevAutoEnd = f.startsAt ? addHoursLocal(f.startsAt, 2) : '';
+      const endIsAuto = f.endsAt === '' || f.endsAt === prevAutoEnd;
+      return { ...f, startsAt: value, endsAt: endIsAuto && value ? addHoursLocal(value, 2) : f.endsAt };
+    });
   }
 
   function openEditForm(event: RepTeamEvent) {
@@ -434,12 +917,54 @@ export default function CoachesSchedulePage({
     setForm(f);
     setFormBaseline(JSON.stringify(f));
     setEditingEventId(event.id);
+    setEditingRecurring(event.isRecurring);
+    setEditScopeOpen(false);
     setSaveError('');
     closeSelectedEvent();
     setShowAddForm(true);
   }
 
   const formDirty = showAddForm && JSON.stringify(form) !== formBaseline;
+  // Event-form view helpers (drive the per-type sections + the Save guard).
+  const recurringSeries = needsRecurrence(form.eventType) && form.isRecurring;
+  // Tournament-game attachment: the active (non-cancelled) tournaments a new game can hang under.
+  const tournamentOptions = events
+    .filter(e => e.eventType === 'external_tournament' && e.status !== 'cancelled')
+    .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
+  // Recent locations this team has already used — a free, zero-infra suggestion list so a coach
+  // can reuse a regular field in one tap (most-recent first, de-duped by name, capped). Each
+  // carries its remembered address so a chip refills both the name and the map address.
+  const recentLocations = (() => {
+    const seen = new Set<string>();
+    const out: { name: string; address: string }[] = [];
+    for (const e of [...events].sort((a, b) => (b.startsAt ?? '').localeCompare(a.startsAt ?? ''))) {
+      const name = e.location?.trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ name, address: e.locationAddress?.trim() ?? '' });
+      if (out.length >= 12) break;
+    }
+    return out;
+  })();
+  const addingTournamentGame = form.eventType === 'tournament_game' && !editingEventId;
+  // Block saving an orphaned game slot: a new tournament game must have a parent. (A parent set
+  // via the in-detail "+ Add game" shortcut counts even if its tournament is cancelled and so
+  // absent from the picker, so this keys off the actual parent, not the options list.)
+  const tournamentParentMissing = addingTournamentGame && !form.parentEventId;
+  const formHasStart = recurringSeries
+    ? Boolean(form.startTime && form.startDate && form.endDate)
+    : Boolean(form.startsAt);
+  // A resource row blocks save only if it has content but is incomplete/has a bad URL; fully-empty
+  // rows are fine (dropped on save).
+  const resourcesInvalid = form.resources.some(r => {
+    const has = r.label.trim() || r.url.trim();
+    return has && (!r.label.trim() || !isValidResourceUrl(r.url));
+  });
+  const recurrencePreview = recurringSeries && form.startDate && form.startTime
+    ? `Adds a ${EVENT_LABELS[form.eventType].toLowerCase()} every ${DAYS_OF_WEEK[Number(form.dayOfWeek)] ?? ''}${form.endDate ? ` from ${form.startDate} through ${form.endDate}` : ` starting ${form.startDate}`} at ${form.startTime}.`
+    : '';
 
   // Tabs for the event slide-over (keeps it short instead of one long stack)
   const isGameEvent = !!selectedEvent &&
@@ -449,31 +974,265 @@ export default function CoachesSchedulePage({
   if (isGameEvent) slideTabs.push({ key: 'result', label: 'Result' });
   const activeSlideTab = slideTabs.some(t => t.key === slideTab) ? slideTab : 'attendance';
 
+  // Compact one-line summary for the slide-over header (replaces the tall label/value list).
+  // Tournaments (multi-day containers) show a date range and no clock time; "@" = away.
+  const isTournamentContainer = selectedEvent?.eventType === 'external_tournament';
+  const matchupSep = selectedEvent?.homeAway === 'away' ? '@' : 'vs';
+  const eventMeta = selectedEvent ? [
+    selectedEvent.startsAt
+      ? (isTournamentContainer && selectedEvent.endsAt
+          ? `${fmtDate(selectedEvent.startsAt)} – ${fmtDate(selectedEvent.endsAt)}`
+          : fmtDate(selectedEvent.startsAt))
+      : null,
+    (!isTournamentContainer && selectedEvent.startsAt)
+      ? `${fmtTime(selectedEvent.startsAt)}${selectedEvent.endsAt ? ` – ${fmtTime(selectedEvent.endsAt)}` : ''}`
+      : null,
+    selectedEvent.arrivalTime ? `Arrive ${fmtClock(selectedEvent.arrivalTime)}` : null,
+    selectedEvent.opponent ? `${matchupSep} ${selectedEvent.opponent}${selectedEvent.homeAway === 'neutral' ? ' (neutral)' : ''}` : null,
+    selectedEvent.isRecurring ? 'Repeats weekly' : null,
+  ].filter(Boolean) as string[] : [];
+  // Location is rendered separately as a tappable Google Maps link (reusing the shared helper),
+  // with the optional field/diamond # appended to the label (the maps query stays the location).
+  const locationLabel = selectedEvent
+    ? [selectedEvent.location, selectedEvent.fieldNumber].filter(Boolean).join(' · ')
+    : '';
+
+  // Lineup checks + fair-play tally (pure; recomputed as the grid changes)
+  const lineupAnalysis = analyzeLineup(
+    lineupRows.map(r => ({ playerId: r.player.id, inningPositions: r.inningPositions })),
+    lineupInningCount,
+  );
+  const fairPlayByPlayer = new Map(lineupAnalysis.fairPlay.map(f => [f.playerId, f]));
+  const summaryPositions = POSITION_ORDER.filter(pos => lineupAnalysis.fairPlay.some(f => (f.positionCounts[pos] ?? 0) > 0));
+  const benchVals = lineupAnalysis.fairPlay.map(f => f.benched);
+  const benchMin = benchVals.length ? Math.min(...benchVals) : 0;
+  const benchMax = benchVals.length ? Math.max(...benchVals) : 0;
+
+  // Shared per-player "on field" gauge (used by both the desktop grid and mobile chips)
+  function onFieldGauge(fp?: { onField: number; benched: number; consecutiveBench: boolean }) {
+    const onF = fp?.onField ?? 0;
+    const pct = lineupInningCount ? Math.round((onF / lineupInningCount) * 100) : 0;
+    return (
+      <span className={styles.lineupGauge}>
+        <span className={styles.lineupGaugeTrack}>
+          <span className={styles.lineupGaugeFill} data-warn={fp?.consecutiveBench ? 'true' : undefined} style={{ width: `${pct}%` }} />
+        </span>
+        <span className={styles.lineupGaugeCap}>{onF}/{lineupInningCount} · sits {fp?.benched ?? 0}</span>
+      </span>
+    );
+  }
+
+  function clearLineup() {
+    setLineupRows(rows => rows.map(r => ({ ...r, inningPositions: {} })));
+    setLineupDirty(true);
+    setLineupNotice('');
+  }
+
+  async function handleAutoFill() {
+    // No silent overwrite: regenerating a grid with assignments asks first.
+    if (autoFillMode === 'regenerate') {
+      const hasAny = lineupRows.some(r => Object.values(r.inningPositions).some(Boolean));
+      if (hasAny && !(await confirm({
+        title: 'Regenerate lineup?',
+        message: 'This replaces the positions currently in the grid. Continue?',
+        confirmText: 'Regenerate',
+        cancelText: 'Keep current',
+        tone: 'warning',
+      }))) return;
+    }
+    // In 9-player mode only the starters take the field; bench players sit every inning.
+    const fielders = lineupMode === 'nine_player' ? lineupRows.filter(r => r.starter) : lineupRows;
+    const benchOnly = lineupMode === 'nine_player' ? lineupRows.filter(r => !r.starter) : [];
+
+    const generated = generateBestLineup({
+      players: fielders.map(r => ({
+        playerId: r.player.id,
+        primaryPosition: r.player.primaryPosition,
+        secondaryPosition: r.player.secondaryPosition,
+        inningPositions: r.inningPositions,
+      })),
+      inningCount: lineupInningCount,
+      policy: autoPolicy,
+      fillMode: autoFillMode,
+    });
+
+    const benchAllInnings: Record<string, string> = {};
+    for (let inn = 1; inn <= lineupInningCount; inn++) benchAllInnings[String(inn)] = 'Bench';
+
+    setLineupRows(rows => rows.map(r => {
+      if (lineupMode === 'nine_player' && benchOnly.some(b => b.player.id === r.player.id)) {
+        return { ...r, inningPositions: autoFillMode === 'empty' ? { ...benchAllInnings, ...r.inningPositions } : benchAllInnings };
+      }
+      return { ...r, inningPositions: generated.get(r.player.id) ?? r.inningPositions };
+    }));
+    setLineupDirty(true);
+    setLineupNotice('');
+    setAutoFillOpen(false);
+  }
+
+  // The current grid as a reusable template payload (mirrors the lineup save shape, minus notes).
+  function lineupTemplatePayload() {
+    return lineupRows.map(row => ({
+      playerId: row.player.id,
+      battingOrder: lineupMode === 'nine_player' && !row.starter ? null : (Number(row.battingOrder) || null),
+      starter: lineupMode === 'nine_player' ? row.starter : true,
+      inningPositions: row.inningPositions,
+    }));
+  }
+
+  async function handleSaveTemplate() {
+    const name = newTemplateName.trim();
+    if (!name || lineupRows.length === 0) return;
+    setTemplateSaving(true);
+    setTemplateError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, lineupMode, inningCount: lineupInningCount, entries: lineupTemplatePayload() }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(d.error ?? 'Could not save template');
+      }
+      setNewTemplateName('');
+      await reloadTemplates();
+      setLineupNotice(`Saved “${name}” as a template.`);
+      setTemplatesOpen(false);
+    } catch (e: unknown) {
+      setTemplateError(errorMessage(e, 'Could not save template'));
+    } finally {
+      setTemplateSaving(false);
+    }
+  }
+
+  // Load a template into the editable grid (unsaved). Maps by current roster player_id and
+  // silently skips players no longer rostered; players not in the template reset to blank.
+  async function applyTemplate(t: RepTeamLineupTemplate) {
+    const hasAny = lineupRows.some(r => Object.values(r.inningPositions).some(Boolean));
+    if (hasAny && !(await confirm({
+      title: 'Start from template?',
+      message: `Replace the current lineup with “${t.name}”? Unsaved changes will be lost.`,
+      confirmText: 'Load template',
+      cancelText: 'Keep current',
+      tone: 'warning',
+    }))) return;
+
+    const byId = new Map(t.entries.map(e => [e.playerId, e]));
+    const rosterIds = new Set(lineupRows.map(r => r.player.id));
+    const skipped = t.entries.filter(e => !rosterIds.has(e.playerId)).length;
+
+    setLineupMode(t.lineupMode);
+    setLineupInningCount(t.inningCount);
+    setLineupRows(rows => renumberBattingOrder(sortLineupRows(rows.map(row => {
+      const e = byId.get(row.player.id);
+      if (e) {
+        return {
+          ...row,
+          starter: e.starter,
+          battingOrder: e.battingOrder != null ? String(e.battingOrder) : '',
+          inningPositions: { ...e.inningPositions },
+        };
+      }
+      // Current-roster player who wasn't in the template → blank slot.
+      return { ...row, starter: t.lineupMode === 'everyone_bats', battingOrder: '', inningPositions: {} };
+    })), t.lineupMode));
+    setLineupDirty(true);
+    setTemplatesOpen(false);
+    setLineupNotice(skipped > 0
+      ? `Loaded “${t.name}” — skipped ${skipped} player${skipped === 1 ? '' : 's'} no longer on the roster.`
+      : `Loaded “${t.name}” — review and save when ready.`);
+  }
+
+  async function handleDeleteTemplate(t: RepTeamLineupTemplate) {
+    if (!(await confirm({
+      title: 'Delete template?',
+      message: `Delete the saved template “${t.name}”? This can't be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Keep',
+      tone: 'warning',
+    }))) return;
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates/${t.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(d.error ?? 'Could not delete template');
+      }
+      await reloadTemplates();
+    } catch (e: unknown) {
+      setTemplateError(errorMessage(e, 'Could not delete template'));
+    }
+  }
+
+  function handleLineupDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setLineupRows(rows => {
+      const oldIndex = rows.findIndex(r => r.player.id === active.id);
+      const newIndex = rows.findIndex(r => r.player.id === over.id);
+      if (oldIndex < 0 || newIndex < 0) return rows;
+      return renumberBattingOrder(arrayMove(rows, oldIndex, newIndex), lineupMode);
+    });
+    setLineupDirty(true);
+  }
+
+  function handleLineupStarterToggle(playerId: string, checked: boolean) {
+    setLineupRows(rows => renumberBattingOrder(
+      rows.map(r => r.player.id === playerId ? { ...r, starter: checked } : r),
+      lineupMode,
+    ));
+    setLineupDirty(true);
+  }
+
   function openEvent(event: RepTeamEvent) {
     setSlideTab('attendance');
+    setAttendanceFilter('all');
+    setExpandedNotes(new Set());
     setSelectedEvent(event);
   }
 
-  function requestCloseForm() {
-    if (formDirty && !window.confirm('Discard your changes to this event?')) return;
-    setShowAddForm(false);
-    setEditingEventId(null);
+  function toggleNote(playerId: string) {
+    setExpandedNotes(prev => {
+      const next = new Set(prev);
+      if (next.has(playerId)) next.delete(playerId); else next.add(playerId);
+      return next;
+    });
   }
 
-  async function handleUpdate() {
+  async function requestCloseForm() {
+    if (formDirty && !(await confirm({
+      title: 'Discard changes?',
+      message: 'You have unsaved changes to this event. Discard them?',
+      confirmText: 'Discard',
+      cancelText: 'Keep editing',
+      tone: 'danger',
+    }))) return;
+    setShowAddForm(false);
+    setEditingEventId(null);
+    setEditingRecurring(false);
+    setEditScopeOpen(false);
+  }
+
+  // scope 'one' = just this occurrence; 'remaining' = this + future; 'all' = the whole series.
+  async function handleUpdate(scope: 'one' | 'remaining' | 'all' = 'one') {
     if (!editingEventId) return;
     setSaveError('');
     setSaving(true);
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${editingEventId}`, {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${editingEventId}?scope=${scope}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: form.name.trim(),
+          name: eventNameForSave(form),
           description: form.description.trim() || null,
           startsAt: form.startsAt || null,
           endsAt: form.endsAt || null,
           location: form.location.trim() || null,
+          locationAddress: form.locationAddress.trim() || null,
+          arrivalTime: form.arrivalTime || null,
+          fieldNumber: form.fieldNumber.trim() || null,
+          uniform: form.uniform.trim() || null,
+          resources: form.resources,
           opponent: form.opponent.trim() || null,
           homeAway: form.homeAway || null,
         }),
@@ -484,6 +1243,8 @@ export default function CoachesSchedulePage({
       }
       setShowAddForm(false);
       setEditingEventId(null);
+      setEditingRecurring(false);
+      setEditScopeOpen(false);
       await fetchEvents();
     } catch (e: unknown) {
       setSaveError(errorMessage(e, 'Save failed'));
@@ -493,21 +1254,31 @@ export default function CoachesSchedulePage({
   }
 
   async function handleSave() {
-    if (editingEventId) return handleUpdate();
+    if (editingEventId) {
+      // A recurring edit must always go through the scope chooser (this / future / all), never
+      // silently save one occurrence — guard here too, not only on the button.
+      if (editingRecurring) { setEditScopeOpen(true); return; }
+      return handleUpdate('one');
+    }
     setSaveError('');
     setSaving(true);
     try {
       const body: Record<string, unknown> = {
         eventType: form.eventType,
-        name: form.name.trim(),
+        name: eventNameForSave(form),
         description: form.description.trim() || null,
         location: form.location.trim() || null,
+        locationAddress: form.locationAddress.trim() || null,
+        arrivalTime: form.arrivalTime || null,
+        fieldNumber: form.fieldNumber.trim() || null,
+        uniform: form.uniform.trim() || null,
+        resources: form.resources,
         opponent: form.opponent.trim() || null,
         homeAway: form.homeAway || null,
         parentEventId: form.parentEventId || null,
       };
 
-      if (form.eventType === 'practice' && form.isRecurring) {
+      if (needsRecurrence(form.eventType) && form.isRecurring) {
         body.isRecurring = true;
         body.recurrenceRule = {
           dayOfWeek: Number(form.dayOfWeek),
@@ -547,7 +1318,7 @@ export default function CoachesSchedulePage({
 
   // ── Score entry ─────────────────────────────────────────────────────────────
 
-  const [scoreForm, setScoreForm] = useState<{ homeScore: string; awayScore: string; result: string } | null>(null);
+  const [scoreForm, setScoreForm] = useState<{ teamScore: string; opponentScore: string; result: string } | null>(null);
 
   function closeSelectedEvent() {
     setSelectedEvent(null);
@@ -556,21 +1327,40 @@ export default function CoachesSchedulePage({
     setLineupRows([]);
     setLineupError('');
     setLineupDirty(false);
+    setAutoFillOpen(false);
+    setLineupPdfOpen(false);
+    setPdfIncludeNotes(false);
+    setTemplatesOpen(false);
+    setTemplateError('');
+    setNewTemplateName('');
+    setLineupNotice('');
+  }
+
+  // Closing the event panel with unsaved attendance/lineup edits asks first.
+  async function requestCloseSlideOver() {
+    if ((attendanceDirty || lineupDirty) && !(await confirm({
+      title: 'Discard changes?',
+      message: 'You have unsaved attendance or lineup changes. Discard them?',
+      confirmText: 'Discard',
+      cancelText: 'Keep editing',
+      tone: 'danger',
+    }))) return;
+    closeSelectedEvent();
   }
 
   async function handleScoreSave() {
     if (!selectedEvent || !scoreForm) return;
     setSaving(true);
     try {
-      const hs = Number(scoreForm.homeScore);
-      const as = Number(scoreForm.awayScore);
+      const ts = Number(scoreForm.teamScore);
+      const os = Number(scoreForm.opponentScore);
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${selectedEvent.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          homeScore: hs,
-          awayScore: as,
-          result: scoreForm.result || (hs > as ? 'win' : hs < as ? 'loss' : 'tie'),
+          teamScore: ts,
+          opponentScore: os,
+          result: scoreForm.result || (ts > os ? 'win' : ts < os ? 'loss' : 'tie'),
         }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
@@ -643,6 +1433,7 @@ export default function CoachesSchedulePage({
   function setAllAttendance(status: RepAttendanceStatus) {
     setAttendanceRows(rows => rows.map(row => ({ ...row, status })));
     setAttendanceDirty(true);
+    setAttendanceFilter('all'); // a status filter would empty out after a bulk set — show the result
   }
 
   async function handleAttendanceSave() {
@@ -673,13 +1464,6 @@ export default function CoachesSchedulePage({
     }
   }
 
-  function updateLineupRow(playerId: string, patch: Partial<LineupPlayerRow>) {
-    setLineupRows(rows => rows.map(row => (
-      row.player.id === playerId ? { ...row, ...patch } : row
-    )));
-    setLineupDirty(true);
-  }
-
   function updateLineupPosition(playerId: string, inning: number, position: string) {
     setLineupRows(rows => rows.map(row => (
       row.player.id === playerId
@@ -697,11 +1481,10 @@ export default function CoachesSchedulePage({
 
   function handleLineupModeChange(mode: RepLineupMode) {
     setLineupMode(mode);
-    setLineupRows(rows => rows.map((row, index) => (
-      mode === 'everyone_bats'
-        ? { ...row, starter: true, battingOrder: row.battingOrder || String(index + 1) }
-        : { ...row, starter: index < 9, battingOrder: index < 9 ? row.battingOrder || String(index + 1) : '' }
-    )));
+    setLineupRows(rows => renumberBattingOrder(
+      rows.map((row, index) => mode === 'everyone_bats' ? { ...row, starter: true } : { ...row, starter: index < 9 }),
+      mode,
+    ));
     setLineupDirty(true);
   }
 
@@ -733,8 +1516,10 @@ export default function CoachesSchedulePage({
       }
       const data: { entries?: RepTeamLineupEntry[]; lineup?: RepTeamLineup } = await res.json();
       setLineupDirty(false);
+      setLineupNotice('');
       if (data.entries) {
-        setLineupRows(buildLineupRows(lineupRows.map(row => row.player), data.entries, data.lineup?.lineupMode ?? lineupMode));
+        const loadedMode = data.lineup?.lineupMode ?? lineupMode;
+        setLineupRows(renumberBattingOrder(sortLineupRows(buildLineupRows(lineupRows.map(row => row.player), data.entries, loadedMode)), loadedMode));
       }
     } catch (e: unknown) {
       setLineupError(errorMessage(e, 'Lineup save failed'));
@@ -743,31 +1528,61 @@ export default function CoachesSchedulePage({
     }
   }
 
-  async function handleLineupPDF() {
-    if (!selectedEvent || lineupRows.length === 0) return;
+  // Shared poster/card content — the live grid as a printable lineup payload. Sorted so
+  // batters lead (blank batting order sorts last → 9-player subs trail). Blank cells stay
+  // blank (empty boxes on the poster); Bench prints "BN".
+  function buildPosterOptions() {
+    if (!selectedEvent || lineupRows.length === 0) return null;
     const settings: OrgPdfSettings = {
       ...DEFAULT_PDF_SETTINGS,
       ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
-      orientation: 'landscape',
-      reportDensity: 'compact',
     };
-    const inningHeaders = Array.from({ length: lineupInningCount }, (_, index) => `${index + 1}`);
-    const headers = ['Bat', 'Player', 'Role', ...inningHeaders, 'Notes'];
-    const rows = sortLineupRows(lineupRows).map(row => [
-      lineupMode === 'nine_player' && !row.starter ? '' : row.battingOrder,
-      playerDisplayName(row.player),
-      lineupMode === 'nine_player' ? row.starter ? 'Starter' : 'Bench' : 'Hitter',
-      ...inningHeaders.map(inning => row.inningPositions[inning] || ''),
-      row.notes,
-    ]);
-    const teamName = assignment?.teamName ?? teamId;
-    await downloadPDF(
-      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'lineup', scope: selectedEvent.name || teamName }, 'pdf'),
-      lineupMode === 'nine_player' ? '9 Player Ball Lineup' : 'Everyone Bats Lineup',
-      `${teamName} - ${selectedEvent.name} - ${fmtDate(selectedEvent.startsAt)}`,
-      headers,
-      rows,
-      settings,
+    const players: LineupPosterPlayer[] = sortLineupRows(lineupRows).map(row => {
+      const isSub = lineupMode === 'nine_player' && !row.starter;
+      return {
+        battingOrder: isSub ? '' : row.battingOrder,
+        name: playerDisplayName(row.player),
+        isSub,
+        inningPositions: row.inningPositions,
+      };
+    });
+    return {
+      teamName: assignment?.teamName ?? teamId,
+      opponent: selectedEvent.opponent,
+      homeAway: selectedEvent.homeAway,        // 'away' → "@", else "vs"
+      dateLabel: selectedEvent.startsAt ? `${fmtDate(selectedEvent.startsAt)} · ${fmtTime(selectedEvent.startsAt)}` : '',
+      eventName: selectedEvent.name,
+      inningCount: lineupInningCount,
+      players,
+      // Legend mirrors the actual lineup-cell vocabulary (incl. EH); Bench is added by the
+      // builder. LINEUP_POSITIONS is the source of what a coach can put in a cell.
+      legend: buildPositionLegend(LINEUP_POSITIONS.filter(p => p && p !== 'Bench')),
+      includeNotes: pdfIncludeNotes,           // print the lineup notes at the foot of the poster
+      notes: lineupNotes,
+      accentColor: settings.accentColor,
+      showBranding: settings.showBranding,
+    };
+  }
+
+  async function handleLineupPoster() {
+    if (!selectedEvent) return;
+    const opts = buildPosterOptions();
+    if (!opts) return;
+    setLineupPdfOpen(false);
+    await downloadLineupPoster(
+      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'lineup', scope: selectedEvent.name || opts.teamName }, 'pdf'),
+      opts,
+    );
+  }
+
+  async function handleBattingCard() {
+    if (!selectedEvent) return;
+    const opts = buildPosterOptions();
+    if (!opts) return;
+    setLineupPdfOpen(false);
+    await downloadBattingOrderCard(
+      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'batting-order', scope: selectedEvent.name || opts.teamName }, 'pdf'),
+      opts,
     );
   }
 
@@ -775,10 +1590,14 @@ export default function CoachesSchedulePage({
     return events.map(e => ({
       date:      e.startsAt ? e.startsAt.slice(0, 10) : '',
       time:      e.startsAt ? new Date(e.startsAt).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true }) : '',
+      arrival:   e.arrivalTime ? fmtClock(e.arrivalTime) : '',
       eventType: EVENT_LABELS[e.eventType] ?? e.eventType,
       name:      e.name,
       opponent:  e.opponent ?? '',
       location:  e.location ?? '',
+      address:   e.locationAddress ?? '',
+      field:     e.fieldNumber ?? '',
+      uniform:   e.uniform ?? '',
       homeAway:  e.homeAway ?? '',
     }));
   }
@@ -808,19 +1627,26 @@ export default function CoachesSchedulePage({
   async function handleExportICS() {
     const icsEvents: ICSEventInput[] = events
       .filter(e => e.startsAt)
-      .map(e => ({
-        gameId:    e.id,
-        title:     e.opponent
-          ? `${e.name} vs ${e.opponent}`
-          : e.name,
-        date:      e.startsAt!.slice(0, 10),
-        time:      new Date(e.startsAt!).toTimeString().slice(0, 5),
-        durationHours: e.endsAt
-          ? Math.max(0.5, (new Date(e.endsAt).getTime() - new Date(e.startsAt!).getTime()) / 3600000)
-          : 2,
-        location:  e.location ?? undefined,
-        description: e.description ?? undefined,
-      }));
+      .map(e => {
+        // Game-day detail rides the calendar entry: field/diamond joins the location, while
+        // arrival + uniform lead the description so they sync to a coach's/parent's phone.
+        const prefixLines = [
+          e.arrivalTime ? `Arrive by ${fmtClock(e.arrivalTime)}` : null,
+          e.uniform ? `Uniform: ${e.uniform}` : null,
+        ].filter(Boolean);
+        const description = [prefixLines.join('\n'), e.description ?? ''].filter(Boolean).join('\n\n') || undefined;
+        return {
+          gameId:    e.id,
+          title:     e.opponent ? `${e.name} vs ${e.opponent}` : e.name,
+          date:      e.startsAt!.slice(0, 10),
+          time:      new Date(e.startsAt!).toTimeString().slice(0, 5),
+          durationHours: e.endsAt
+            ? Math.max(0.5, (new Date(e.endsAt).getTime() - new Date(e.startsAt!).getTime()) / 3600000)
+            : 2,
+          location:  [[e.location, e.fieldNumber].filter(Boolean).join(' · '), e.locationAddress].filter(Boolean).join(', ') || undefined,
+          description,
+        };
+      });
     const filename = buildFilename(
       { org: currentOrg?.slug, dataset: 'schedule', scope: assignment?.teamName },
       'ics',
@@ -912,7 +1738,7 @@ export default function CoachesSchedulePage({
       <div className={styles.calWeekGrid}>
         {days.map(day => {
           const key = day.toISOString().slice(0, 10);
-          const dayEvents = events.filter(e => e.startsAt?.slice(0, 10) === key);
+          const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
           return (
             <div key={key} className={styles.calWeekDay}>
               <div className={styles.calWeekDayLabel}>
@@ -922,7 +1748,7 @@ export default function CoachesSchedulePage({
                 {dayEvents.length === 0
                   ? <span className={styles.calWeekEmpty}>—</span>
                   : dayEvents.map(e => (
-                    <EventChip key={e.id} event={e} onClick={() => openEvent(e)} />
+                    <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} />
                   ))
                 }
               </div>
@@ -952,23 +1778,32 @@ export default function CoachesSchedulePage({
         {cells.map((day, i) => {
           if (!day) return <div key={i} className={styles.calMonthCell} />;
           const key = day.toISOString().slice(0, 10);
-          const dayEvents = events.filter(e => e.startsAt?.slice(0, 10) === key);
+          const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
           const isToday = key === new Date().toISOString().slice(0, 10);
           return (
             <div key={key} className={`${styles.calMonthCell} ${isToday ? styles.calMonthCellToday : ''}`}>
               <span className={styles.calMonthDayNum}>{day.getDate()}</span>
               <div className={styles.calMonthDayEvents}>
-                {dayEvents.slice(0, 3).map(e => (
-                  <button
-                    key={e.id}
-                    className={styles.calMonthEventDot}
-                    style={{ background: EVENT_COLORS[e.eventType], ...(e.status === 'cancelled' ? { opacity: 0.55, textDecoration: 'line-through' } : {}) }}
-                    title={e.status === 'cancelled' ? `${e.name} (cancelled)` : e.name}
-                    onClick={() => openEvent(e)}
-                  >
-                    {e.name.slice(0, 14)}
-                  </button>
-                ))}
+                {dayEvents.slice(0, 3).map(e => {
+                  // Multi-day tournament: continuation days get a "›" lead so the span reads as one run.
+                  const span = tournamentSpan(e);
+                  const isCont = !!span && key > span.start;
+                  const label = span && span.days > 1 ? `${isCont ? '› ' : ''}${e.name}` : e.name;
+                  const title = span
+                    ? `${e.name} (${shortDate(span.start)}–${shortDate(span.end)})${e.status === 'cancelled' ? ' · cancelled' : ''}`
+                    : (e.status === 'cancelled' ? `${e.name} (cancelled)` : e.name);
+                  return (
+                    <button
+                      key={e.id}
+                      className={styles.calMonthEventDot}
+                      style={{ background: EVENT_COLORS[e.eventType], ...(e.status === 'cancelled' ? { opacity: 0.55, textDecoration: 'line-through' } : {}) }}
+                      title={title}
+                      onClick={() => openEvent(e)}
+                    >
+                      {label.slice(0, 14)}
+                    </button>
+                  );
+                })}
                 {dayEvents.length > 3 && (
                   <span className={styles.calMonthMoreDots}>+{dayEvents.length - 3} more</span>
                 )}
@@ -980,8 +1815,6 @@ export default function CoachesSchedulePage({
     );
   }
 
-  const needsOpponent = (t: RepEventType) => ['tournament_game', 'scrimmage', 'league_game'].includes(t);
-  const needsRecurrence = (t: RepEventType) => t === 'practice';
 
   return (
     <div className={styles.page}>
@@ -1025,17 +1858,25 @@ export default function CoachesSchedulePage({
           {/* Add event — coach-portal primary actions are btn-lime (CP-1), not the
               shared blueprint-blue .btnPrimary used by in-modal save buttons. */}
           <div className={styles.addEventWrap}>
-            <button className="btn btn-lime" onClick={() => setAddTypeMenuOpen(v => !v)}>
-              <Plus size={15} /> Add Event
+            <button
+              className="btn btn-lime"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem' }}
+              onClick={() => setAddTypeMenuOpen(v => !v)}
+            >
+              <Plus size={13} /> Add Event
             </button>
             {addTypeMenuOpen && (
               <div className={styles.addEventMenu}>
-                {(Object.keys(EVENT_LABELS) as RepEventType[]).map(t => {
-                  const Icon = EVENT_ICONS[t];
+                {ADD_MENU.map(({ type, nested }) => {
+                  const Icon = EVENT_ICONS[type];
                   return (
-                    <button key={t} className={styles.addEventMenuItem} onClick={() => openAddForm(t)}>
-                      <Icon size={14} style={{ color: EVENT_COLORS[t] }} />
-                      {EVENT_LABELS[t]}
+                    <button
+                      key={type}
+                      className={`${styles.addEventMenuItem}${nested ? ` ${styles.addEventMenuSubItem}` : ''}`}
+                      onClick={() => openAddForm(type)}
+                    >
+                      <Icon size={14} style={{ color: EVENT_COLORS[type] }} />
+                      {EVENT_LABELS[type]}
                     </button>
                   );
                 })}
@@ -1046,7 +1887,7 @@ export default function CoachesSchedulePage({
       </div>
 
       {/* W/L/T widget */}
-      <WLTWidget events={events} />
+      <WLTWidget events={events} teamId={teamId} />
 
       {/* Navigator for week/month */}
       {view !== 'list' && (
@@ -1079,8 +1920,8 @@ export default function CoachesSchedulePage({
 
       {/* ── Detail slide-over ─────────────────────────────────────────────── */}
       {selectedEvent && (
-        <div className={styles.modalOverlay} onClick={closeSelectedEvent}>
-          <div className={styles.slideOver} onClick={e => e.stopPropagation()}>
+        <div className={`${styles.modalOverlay} ${styles.slideOverScrim}`} onClick={requestCloseSlideOver}>
+          <div className={`${styles.slideOver}${activeSlideTab === 'lineup' ? ` ${styles.slideOverWide}` : ''}`} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 {(() => { const Icon = EVENT_ICONS[selectedEvent.eventType]; return <Icon size={16} style={{ color: EVENT_COLORS[selectedEvent.eventType] }} />; })()}
@@ -1091,41 +1932,105 @@ export default function CoachesSchedulePage({
                   <span className={styles.eventTypePill} style={{ background: '#f59e0b22', color: '#f59e0b' }}>Cancelled</span>
                 )}
               </div>
-              <button className={styles.modalCloseBtn} onClick={closeSelectedEvent}>
+              <button className={styles.modalCloseBtn} onClick={requestCloseSlideOver}>
                 <X size={18} />
               </button>
             </div>
             <h2 className={styles.slideOverTitle}>{selectedEvent.name}</h2>
 
-            <dl className={styles.slideOverDetails}>
-              {selectedEvent.startsAt && (
-                <>
-                  <dt>Date</dt>
-                  <dd>{fmtDate(selectedEvent.startsAt)}</dd>
-                  <dt>Time</dt>
-                  <dd>{fmtTime(selectedEvent.startsAt)}{selectedEvent.endsAt ? ` – ${fmtTime(selectedEvent.endsAt)}` : ''}</dd>
-                </>
-              )}
-              {selectedEvent.location && <><dt>Location</dt><dd>{selectedEvent.location}</dd></>}
-              {selectedEvent.opponent && <><dt>Opponent</dt><dd>{selectedEvent.opponent}</dd></>}
-              {selectedEvent.homeAway && <><dt>Home/Away</dt><dd style={{ textTransform: 'capitalize' }}>{selectedEvent.homeAway}</dd></>}
-              {selectedEvent.description && <><dt>Notes</dt><dd>{selectedEvent.description}</dd></>}
-              {selectedEvent.isRecurring && <><dt>Recurring</dt><dd>Yes (weekly practice)</dd></>}
-            </dl>
+            {eventMeta.length > 0 && (
+              <p className={styles.slideOverMeta}>{eventMeta.join('  ·  ')}</p>
+            )}
+            {(locationLabel || selectedEvent.uniform) && (
+              <p className={styles.slideOverMeta}>
+                {locationLabel && (
+                  (selectedEvent.locationAddress || selectedEvent.location) ? (
+                    <a
+                      href={mapsHref(selectedEvent.locationAddress || selectedEvent.location || locationLabel)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.slideOverMapLink}
+                      title={selectedEvent.locationAddress ? `Open ${selectedEvent.locationAddress} in Google Maps` : `Search ${locationLabel} in Google Maps`}
+                      onClick={e => {
+                        // Open the map explicitly rather than relying on the anchor default —
+                        // inside the modal the plain new-tab navigation was landing on about:blank.
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(
+                          mapsHref(selectedEvent.locationAddress || selectedEvent.location || locationLabel),
+                          '_blank',
+                          'noopener,noreferrer',
+                        );
+                      }}
+                    >
+                      <MapPin size={13} aria-hidden />{locationLabel}
+                    </a>
+                  ) : (
+                    /* only a field/diamond # with no place name or address — nothing useful to map */
+                    <span>{locationLabel}</span>
+                  )
+                )}
+                {locationLabel && selectedEvent.uniform ? '  ·  ' : ''}
+                {selectedEvent.uniform && <span>Uniform: {selectedEvent.uniform}</span>}
+              </p>
+            )}
+            {selectedEvent.description && (
+              <p className={styles.slideOverNotes}>{selectedEvent.description}</p>
+            )}
 
-            {/* Primary actions — kept at the top so they're never buried under attendance/lineup */}
+            {selectedEvent.resources && selectedEvent.resources.length > 0 && (
+              <div className={styles.resourceList}>
+                {selectedEvent.resources.map((r, i) => {
+                  const RIcon = resourceIcon(r.url);
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      className={styles.resourceLink}
+                      title={r.url}
+                      onClick={() => window.open(r.url, '_blank', 'noopener,noreferrer')}
+                    >
+                      <RIcon size={14} aria-hidden />
+                      <span className={styles.resourceLinkLabel}>{r.label}</span>
+                      <ExternalLink size={12} aria-hidden style={{ opacity: 0.5, flexShrink: 0 }} />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Actions — Edit (+ tournament Add game) lead; Cancel/Delete grouped to the right so
+                the destructive pair is separated from the everyday action. Kept above the tabs. */}
             <div className={styles.slideOverActions}>
               {!deleteConfirm ? (
                 <>
                   <button className={styles.btnSecondary} disabled={saving} onClick={() => openEditForm(selectedEvent)}>
                     Edit details
                   </button>
-                  <button className={styles.btnGhost} disabled={saving} onClick={handleToggleCancel}>
-                    {selectedEvent.status === 'cancelled' ? 'Restore event' : 'Cancel event'}
-                  </button>
-                  <button className={styles.btnDanger} onClick={() => setDeleteConfirm({ eventId: selectedEvent.id, isRecurring: selectedEvent.isRecurring })}>
-                    Delete
-                  </button>
+                  {selectedEvent.eventType === 'external_tournament' && (
+                    <button className={styles.btnSecondary} disabled={saving} onClick={() => {
+                      const ev = selectedEvent;
+                      setSelectedEvent(null);
+                      // Seed the game on the tournament's start day so it lands inside the span.
+                      const start = `${ev.startsAt ? dayStr(ev.startsAt) : cursorDate}T${DEFAULT_EVENT_HOUR}`;
+                      openAddForm('tournament_game', {
+                        parentEventId: ev.id,
+                        name: `${ev.name} – Game`,
+                        startsAt: start,
+                        endsAt: addHoursLocal(start, 2),
+                      });
+                    }}>
+                      + Add game
+                    </button>
+                  )}
+                  <div className={styles.slideOverActionsRight}>
+                    <button className={styles.btnGhost} disabled={saving} onClick={handleToggleCancel}>
+                      {selectedEvent.status === 'cancelled' ? 'Restore event' : 'Cancel event'}
+                    </button>
+                    <button className={styles.btnDanger} onClick={() => setDeleteConfirm({ eventId: selectedEvent.id, isRecurring: selectedEvent.isRecurring })}>
+                      Delete
+                    </button>
+                  </div>
                 </>
               ) : (
                 <div className={styles.deleteConfirm}>
@@ -1149,18 +2054,6 @@ export default function CoachesSchedulePage({
               )}
             </div>
 
-            {selectedEvent.eventType === 'external_tournament' && (
-              <div style={{ marginTop: '0.75rem' }}>
-                <button className={styles.btnSecondary} onClick={() => {
-                  setSelectedEvent(null);
-                  openAddForm('tournament_game');
-                  setForm(f => ({ ...f, parentEventId: selectedEvent.id, name: `${selectedEvent.name} – Game` }));
-                }}>
-                  + Add Game Slot
-                </button>
-              </div>
-            )}
-
             {slideTabs.length > 1 && (
               <div className={styles.slideTabs} role="tablist">
                 {slideTabs.map(t => (
@@ -1178,17 +2071,14 @@ export default function CoachesSchedulePage({
               </div>
             )}
 
-            {activeSlideTab === 'attendance' && (
+            {activeSlideTab === 'attendance' && (() => {
+            const filteredRows = attendanceFilter === 'all'
+              ? attendanceRows
+              : attendanceRows.filter(row => row.status === attendanceFilter);
+            return (
             <div className={styles.attendanceSection}>
               <div className={styles.attendanceHeader}>
-                <div>
-                  <h3 className={styles.attendanceTitle}>Attendance</h3>
-                  <p className={styles.attendanceSummary}>
-                    {attendanceRows.length
-                      ? `${attendanceRows.filter(row => row.status === 'attending').length} in, ${attendanceRows.filter(row => row.status === 'absent').length} out, ${attendanceRows.filter(row => row.status === 'late').length} late`
-                      : 'No active players available'}
-                  </p>
-                </div>
+                <h3 className={styles.attendanceTitle}>Attendance</h3>
                 <div className={styles.attendanceBulkActions}>
                   <button
                     type="button"
@@ -1209,17 +2099,50 @@ export default function CoachesSchedulePage({
                 </div>
               </div>
 
+              {/* Metric chips that double as filters — counts are always visible; tap to focus. */}
+              {attendanceRows.length > 0 && (
+                <div className={styles.attendanceFilters} role="group" aria-label="Filter attendance by status">
+                  <button
+                    type="button"
+                    aria-pressed={attendanceFilter === 'all'}
+                    className={`${styles.attFilter} ${attendanceFilter === 'all' ? styles.attFilterActiveAll : ''}`}
+                    onClick={() => setAttendanceFilter('all')}
+                  >
+                    All <span className={styles.attFilterCount}>{attendanceRows.length}</span>
+                  </button>
+                  {ATTENDANCE_OPTIONS.map(option => {
+                    const Icon = option.icon;
+                    const count = attendanceRows.filter(row => row.status === option.value).length;
+                    const active = attendanceFilter === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        data-status={option.value}
+                        aria-pressed={active}
+                        className={`${styles.attFilter} ${active ? styles.attFilterActive : ''}`}
+                        onClick={() => setAttendanceFilter(active ? 'all' : option.value)}
+                      >
+                        <Icon size={13} /> {option.label} <span className={styles.attFilterCount}>{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               {attendanceLoading ? (
                 <div className={styles.attendanceEmpty}>Loading attendance...</div>
               ) : attendanceRows.length === 0 ? (
                 <div className={styles.attendanceEmpty}>Add active players to the roster before marking attendance.</div>
+              ) : filteredRows.length === 0 ? (
+                <div className={styles.attendanceEmpty}>No players in this group.</div>
               ) : (
                 <div className={styles.attendanceList}>
-                  {attendanceRows.map(row => (
+                  {filteredRows.map(row => {
+                    const noteOpen = expandedNotes.has(row.player.id);
+                    return (
                     <div key={row.player.id} className={styles.attendanceRow}>
-                      <div className={styles.attendancePlayer}>
-                        <span className={styles.attendancePlayerName}>{playerDisplayName(row.player)}</span>
-                      </div>
+                      <span className={styles.attendancePlayerName}>{playerDisplayName(row.player)}</span>
                       <div className={styles.attendanceStatusGroup} role="group" aria-label={`Attendance for ${playerDisplayName(row.player)}`}>
                         {ATTENDANCE_OPTIONS.map(option => {
                           const Icon = option.icon;
@@ -1228,26 +2151,41 @@ export default function CoachesSchedulePage({
                               key={option.value}
                               type="button"
                               aria-pressed={row.status === option.value}
+                              aria-label={option.label}
+                              title={option.label}
                               className={`${styles.attendanceStatusBtn} ${row.status === option.value ? styles.attendanceStatusBtnActive : ''}`}
                               data-status={option.value}
                               onClick={() => setPlayerAttendance(row.player.id, { status: option.value })}
                             >
-                              <Icon size={13} />
-                              {option.label}
+                              <Icon size={15} />
                             </button>
                           );
                         })}
                       </div>
-                      <input
-                        className={styles.attendanceNoteInput}
-                        value={row.note}
-                        onChange={e => setPlayerAttendance(row.player.id, { note: e.target.value })}
-                        placeholder="Note"
-                        aria-label={`Attendance note for ${playerDisplayName(row.player)}`}
-                        maxLength={500}
-                      />
+                      <button
+                        type="button"
+                        className={styles.attendanceNoteToggle}
+                        data-has={row.note ? 'true' : undefined}
+                        aria-label={`${noteOpen ? 'Hide' : 'Add'} note for ${playerDisplayName(row.player)}`}
+                        aria-expanded={noteOpen}
+                        title={row.note ? 'Edit note' : 'Add note'}
+                        onClick={() => toggleNote(row.player.id)}
+                      >
+                        <StickyNote size={15} />
+                      </button>
+                      {noteOpen && (
+                        <input
+                          className={styles.attendanceNoteInput}
+                          value={row.note}
+                          onChange={e => setPlayerAttendance(row.player.id, { note: e.target.value })}
+                          placeholder="Note (e.g. leaving early)"
+                          aria-label={`Attendance note for ${playerDisplayName(row.player)}`}
+                          maxLength={500}
+                        />
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -1264,7 +2202,8 @@ export default function CoachesSchedulePage({
               </div>
               {attendanceError && <p className={styles.errorText}>{attendanceError}</p>}
             </div>
-            )}
+            );
+            })()}
 
             {activeSlideTab === 'lineup' && isLineupEvent(selectedEvent) && (
               <div className={styles.lineupSection}>
@@ -1303,84 +2242,166 @@ export default function CoachesSchedulePage({
                         ))}
                       </select>
                     </label>
+                    <div className={styles.lineupAutoWrap}>
+                      <button
+                        type="button"
+                        className={styles.btnSecondary}
+                        disabled={lineupRows.length === 0}
+                        onClick={() => setAutoFillOpen(v => !v)}
+                      >
+                        Auto-fill ▾
+                      </button>
+                      {autoFillOpen && (
+                        <div className={styles.lineupAutoMenu}>
+                          <label className={styles.lineupControlLabel}>
+                            <span>Positions</span>
+                            <select className={styles.select} value={autoPolicy} onChange={e => setAutoPolicy(e.target.value as PositionPolicy)}>
+                              <option value="competitive">Competitive — best positions</option>
+                              <option value="balanced">Balanced — primary + secondary</option>
+                              <option value="development">Development — rotate everywhere</option>
+                            </select>
+                          </label>
+                          <label className={styles.lineupControlLabel}>
+                            <span>Fill</span>
+                            <select className={styles.select} value={autoFillMode} onChange={e => setAutoFillMode(e.target.value as FillMode)}>
+                              <option value="empty">Fill empty spots only</option>
+                              <option value="regenerate">Regenerate all</option>
+                            </select>
+                          </label>
+                          <p className={styles.lineupAutoNote}>
+                            Even bench rotation &amp; no back-to-back sits always apply. It&apos;s a starting point — tweak after.
+                          </p>
+                          <button type="button" className={styles.btnPrimary} onClick={handleAutoFill}>Generate</button>
+                        </div>
+                      )}
+                    </div>
+                    <div className={styles.lineupAutoWrap}>
+                      <button
+                        type="button"
+                        className={styles.btnSecondary}
+                        disabled={lineupRows.length === 0}
+                        onClick={() => { setTemplatesOpen(v => !v); setTemplateError(''); }}
+                        aria-expanded={templatesOpen}
+                      >
+                        Templates ▾
+                      </button>
+                      {templatesOpen && (
+                        <div className={styles.lineupAutoMenu}>
+                          <div className={styles.lineupTemplateSection}>
+                            <span className={styles.lineupTemplateHead}>Start from a saved template</span>
+                            {templates.length === 0 ? (
+                              <p className={styles.lineupAutoNote}>No saved templates yet — build a lineup, then save it below.</p>
+                            ) : (
+                              <ul className={styles.lineupTemplateList}>
+                                {templates.map(t => (
+                                  <li key={t.id} className={styles.lineupTemplateRow}>
+                                    <button type="button" className={styles.lineupTemplateLoad} onClick={() => applyTemplate(t)}>
+                                      <strong>{t.name}</strong>
+                                      <span>{t.lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · {t.inningCount} {sportPack.periodLabelPlural.toLowerCase()}</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={styles.lineupTemplateDelete}
+                                      aria-label={`Delete template ${t.name}`}
+                                      title="Delete template"
+                                      onClick={() => handleDeleteTemplate(t)}
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                          <div className={styles.lineupTemplateSection}>
+                            <span className={styles.lineupTemplateHead}>Save current lineup as a template</span>
+                            <input
+                              className={styles.input}
+                              value={newTemplateName}
+                              onChange={e => setNewTemplateName(e.target.value)}
+                              placeholder="e.g. Gold medal game"
+                              maxLength={80}
+                              aria-label="New template name"
+                            />
+                            <button
+                              type="button"
+                              className={styles.btnPrimary}
+                              disabled={!newTemplateName.trim() || templateSaving || lineupRows.length === 0}
+                              onClick={handleSaveTemplate}
+                            >
+                              {templateSaving ? 'Saving…' : 'Save as template'}
+                            </button>
+                            {templateError && <p className={styles.errorText}>{templateError}</p>}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
+
+                {lineupRows.length > 0 && (
+                  <div className={styles.lineupInsights}>
+                    {lineupNotice && <p className={styles.lineupNotice}>{lineupNotice}</p>}
+                    <p className={styles.lineupHint}>
+                      Batting order follows your{' '}
+                      <Link href={`/${orgSlug}/coaches/teams/${teamId}/roster`}>roster order</Link>
+                      {' '}— drag to reorder there.
+                    </p>
+                    {lineupAnalysis.hasConflicts && (
+                      <p className={styles.lineupWarn}>
+                        ⚠ Position clash: {lineupAnalysis.conflicts.map(c => `two at ${c.position} in inning ${c.inning}`).join(' · ')}
+                      </p>
+                    )}
+                    {lineupAnalysis.benchSpread && (lineupAnalysis.benchSpread.max - lineupAnalysis.benchSpread.min) > 1 && (
+                      <p className={styles.lineupWarn}>
+                        ⚠ Uneven bench time — players sit between {lineupAnalysis.benchSpread.min} and {lineupAnalysis.benchSpread.max} innings.
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {lineupLoading ? (
                   <div className={styles.attendanceEmpty}>Loading lineup...</div>
                 ) : lineupRows.length === 0 ? (
                   <div className={styles.attendanceEmpty}>Add active players to the roster before creating a lineup.</div>
                 ) : (
-                  <div className={styles.lineupTableWrap}>
-                    <table className={styles.lineupTable}>
-                      <thead>
-                        <tr>
-                          <th>Bat</th>
-                          {lineupMode === 'nine_player' && <th>Start</th>}
-                          <th>Player</th>
-                          {Array.from({ length: lineupInningCount }, (_, index) => (
-                            <th key={index + 1}>{index + 1}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sortLineupRows(lineupRows).map(row => (
-                          <tr key={row.player.id}>
-                            <td>
-                              <input
-                                className={styles.lineupOrderInput}
-                                type="number"
-                                min={1}
-                                max={99}
-                                value={lineupMode === 'nine_player' && !row.starter ? '' : row.battingOrder}
-                                disabled={lineupMode === 'nine_player' && !row.starter}
-                                onChange={e => updateLineupRow(row.player.id, { battingOrder: e.target.value })}
-                                aria-label={`Batting order for ${playerDisplayName(row.player)}`}
-                              />
-                            </td>
-                            {lineupMode === 'nine_player' && (
-                              <td>
-                                <input
-                                  type="checkbox"
-                                  checked={row.starter}
-                                  onChange={e => updateLineupRow(row.player.id, {
-                                    starter: e.target.checked,
-                                    battingOrder: e.target.checked && !row.battingOrder
-                                      ? String(Math.min(lineupRows.filter(r => r.starter).length + 1, 9))
-                                      : row.battingOrder,
-                                  })}
-                                  aria-label={`Starter for ${playerDisplayName(row.player)}`}
-                                />
-                              </td>
-                            )}
-                            <td className={styles.lineupPlayerCell}>
-                              <span>{playerDisplayName(row.player)}</span>
-                              {(row.player.primaryPosition || row.player.secondaryPosition) && (
-                                <small>{[row.player.primaryPosition, row.player.secondaryPosition].filter(Boolean).join(' / ')}</small>
-                              )}
-                            </td>
+                  <DndContext sensors={lineupSensors} collisionDetection={closestCenter} onDragEnd={handleLineupDragEnd}>
+                    <div className={styles.lineupTableWrap}>
+                      <table className={styles.lineupTable}>
+                        <thead>
+                          <tr>
+                            <th>Bat</th>
+                            {lineupMode === 'nine_player' && <th>Start</th>}
+                            <th>Player</th>
                             {Array.from({ length: lineupInningCount }, (_, index) => {
                               const inning = index + 1;
+                              const clash = lineupAnalysis.conflictInnings.has(inning);
                               return (
-                                <td key={inning}>
-                                  <select
-                                    className={styles.lineupPositionSelect}
-                                    value={row.inningPositions[String(inning)] ?? ''}
-                                    onChange={e => updateLineupPosition(row.player.id, inning, e.target.value)}
-                                    aria-label={`Inning ${inning} position for ${playerDisplayName(row.player)}`}
-                                  >
-                                    {LINEUP_POSITIONS.map(position => (
-                                      <option key={position || 'blank'} value={position}>{position || '-'}</option>
-                                    ))}
-                                  </select>
-                                </td>
+                                <th key={inning} style={clash ? { color: 'var(--danger)' } : undefined} title={clash ? 'Two players share a position this inning' : undefined}>
+                                  {inning}{clash ? ' ⚠' : ''}
+                                </th>
                               );
                             })}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          <SortableContext items={lineupRows.map(r => r.player.id)} strategy={verticalListSortingStrategy}>
+                            {lineupRows.map(row => (
+                              <SortableLineupRow
+                                key={row.player.id}
+                                row={row}
+                                battingNumber={row.battingOrder}
+                                mode={lineupMode}
+                                inningCount={lineupInningCount}
+                                onStarterToggle={handleLineupStarterToggle}
+                                onPositionChange={updateLineupPosition}
+                              />
+                            ))}
+                          </SortableContext>
+                        </tbody>
+                      </table>
+                    </div>
+                  </DndContext>
                 )}
 
                 <textarea
@@ -1388,9 +2409,78 @@ export default function CoachesSchedulePage({
                   rows={2}
                   value={lineupNotes}
                   onChange={e => { setLineupNotes(e.target.value); setLineupDirty(true); }}
-                  placeholder="Lineup notes"
+                  placeholder="Lineup notes (opponent scouting, reminders) — can be printed on the dugout poster"
                   maxLength={1000}
                 />
+
+                {lineupRows.length > 0 && (
+                  <div className={styles.lineupSummary}>
+                    <button type="button" className={styles.lineupSummaryToggle} onClick={() => setSummaryOpen(v => !v)} aria-expanded={summaryOpen}>
+                      {summaryOpen ? '▾' : '▸'} Playing-time summary
+                    </button>
+                    {summaryOpen && (
+                      <div className={styles.lineupSummaryBody}>
+                        {/* Shared team fairness verdict */}
+                        <div className={styles.lineupFairness}>
+                          Bench: {benchMin === benchMax ? `${benchMin}` : `${benchMin}–${benchMax}`} {benchMax === 1 ? 'inning' : 'innings'} each
+                          <span className={`${styles.lineupFairPill} ${benchMax - benchMin > 1 ? styles.lineupFairPillWarn : ''}`}>
+                            {benchMax - benchMin > 1 ? 'Uneven' : 'Balanced'}
+                          </span>
+                        </div>
+
+                        {/* Desktop: heat grid */}
+                        <div className={styles.lineupSummaryDesktop}>
+                          <div className={styles.lineupSummaryWrap}>
+                            <table className={styles.lineupSummaryTable}>
+                              <thead>
+                                <tr>
+                                  <th>Player</th>
+                                  <th title="Innings on the field vs benched">On field</th>
+                                  {summaryPositions.map(pos => <th key={pos}>{pos}</th>)}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {lineupRows.map(row => {
+                                  const fp = fairPlayByPlayer.get(row.player.id);
+                                  return (
+                                    <tr key={row.player.id}>
+                                      <td className={styles.lineupSummaryName}>{playerDisplayName(row.player)}</td>
+                                      <td>{onFieldGauge(fp)}</td>
+                                      {summaryPositions.map(pos => {
+                                        const n = fp?.positionCounts[pos] ?? 0;
+                                        return <td key={pos} className={styles.lineupHeatCell} style={heatStyle(n)}>{n || <span className={styles.lineupZero}>·</span>}</td>;
+                                      })}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Mobile: per-player chips */}
+                        <div className={styles.lineupSummaryMobile}>
+                          {lineupRows.map(row => {
+                            const fp = fairPlayByPlayer.get(row.player.id);
+                            const played = summaryPositions.filter(pos => (fp?.positionCounts[pos] ?? 0) > 0);
+                            return (
+                              <div key={row.player.id} className={styles.lineupChipRow}>
+                                <span className={styles.lineupChipName}>{playerDisplayName(row.player)}</span>
+                                {onFieldGauge(fp)}
+                                <span className={styles.lineupChips}>
+                                  {played.map(pos => (
+                                    <span key={pos} className={styles.lineupChip} style={heatStyle(fp!.positionCounts[pos])}>{pos}×{fp!.positionCounts[pos]}</span>
+                                  ))}
+                                  {played.length === 0 && <span className={styles.lineupZero}>—</span>}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className={styles.attendanceFooter}>
                   <button
@@ -1403,12 +2493,45 @@ export default function CoachesSchedulePage({
                   </button>
                   <button
                     type="button"
-                    className={styles.btnGhost}
+                    className={styles.btnSecondary}
                     disabled={lineupRows.length === 0}
-                    onClick={handleLineupPDF}
+                    onClick={clearLineup}
                   >
-                    Lineup PDF
+                    Clear
                   </button>
+                  <div className={styles.lineupPdfWrap}>
+                    <button
+                      type="button"
+                      className={styles.btnSecondary}
+                      disabled={lineupRows.length === 0}
+                      onClick={() => setLineupPdfOpen(v => !v)}
+                      aria-expanded={lineupPdfOpen}
+                    >
+                      Print ▾
+                    </button>
+                    {lineupPdfOpen && (
+                      <div className={styles.lineupPdfMenu}>
+                        <button type="button" className={styles.lineupPdfItem} onClick={handleLineupPoster}>
+                          <strong>Dugout poster</strong>
+                          <span>Positions by {sportPack.periodLabel.toLowerCase()} — blank boxes to pen in at the field</span>
+                        </button>
+                        <button type="button" className={styles.lineupPdfItem} onClick={handleBattingCard}>
+                          <strong>Batting order card</strong>
+                          <span>Large-type order for the scorekeeper or dugout</span>
+                        </button>
+                        {lineupNotes.trim() && (
+                          <label className={styles.lineupPdfNotesToggle}>
+                            <input
+                              type="checkbox"
+                              checked={pdfIncludeNotes}
+                              onChange={e => setPdfIncludeNotes(e.target.checked)}
+                            />
+                            <span>Print lineup notes on the poster</span>
+                          </label>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   {lineupDirty && <span className={styles.attendanceUnsaved}>Unsaved changes</span>}
                 </div>
                 {lineupError && <p className={styles.errorText}>{lineupError}</p>}
@@ -1418,11 +2541,11 @@ export default function CoachesSchedulePage({
             {/* Result */}
             {activeSlideTab === 'result' && (selectedEvent.eventType === 'league_game' || selectedEvent.eventType === 'tournament_game' || selectedEvent.eventType === 'scrimmage') && (
               <div className={styles.scoreSection}>
-                {selectedEvent.homeScore != null ? (
+                {selectedEvent.teamScore != null ? (
                   <div className={styles.scoreDisplay}>
-                    <span className={styles.scoreNum} style={{ color: '#22c55e' }}>{selectedEvent.homeScore}</span>
+                    <span className={styles.scoreNum} style={{ color: '#22c55e' }}>{selectedEvent.teamScore}</span>
                     <span className={styles.scoreSep}>–</span>
-                    <span className={styles.scoreNum} style={{ color: '#ef4444' }}>{selectedEvent.awayScore}</span>
+                    <span className={styles.scoreNum} style={{ color: '#ef4444' }}>{selectedEvent.opponentScore}</span>
                     {selectedEvent.result && (
                       <span className={styles.resultBadge} style={{
                         color: selectedEvent.result === 'win' ? '#22c55e' : selectedEvent.result === 'loss' ? '#ef4444' : '#f59e0b',
@@ -1430,22 +2553,28 @@ export default function CoachesSchedulePage({
                         {selectedEvent.result.toUpperCase()}
                       </span>
                     )}
-                    <button className={styles.btnGhost} onClick={() => setScoreForm({ homeScore: String(selectedEvent.homeScore ?? ''), awayScore: String(selectedEvent.awayScore ?? ''), result: selectedEvent.result ?? '' })}>
+                    <button className={styles.btnGhost} onClick={() => setScoreForm({ teamScore: String(selectedEvent.teamScore ?? ''), opponentScore: String(selectedEvent.opponentScore ?? ''), result: selectedEvent.result ?? '' })}>
                       Edit score
                     </button>
                   </div>
                 ) : (
-                  <button className={styles.btnSecondary} onClick={() => setScoreForm({ homeScore: '', awayScore: '', result: '' })}>
+                  <button className={styles.btnSecondary} onClick={() => setScoreForm({ teamScore: '', opponentScore: '', result: '' })}>
                     Enter score
                   </button>
                 )}
                 {scoreForm && (
                   <div className={styles.scoreForm}>
                     <div className={styles.scoreFormRow}>
-                      <input className={styles.input} style={{ width: '5rem' }} type="number" min={0} placeholder="Home" value={scoreForm.homeScore} onChange={e => setScoreForm(s => s && ({ ...s, homeScore: e.target.value }))} />
-                      <span>–</span>
-                      <input className={styles.input} style={{ width: '5rem' }} type="number" min={0} placeholder="Away" value={scoreForm.awayScore} onChange={e => setScoreForm(s => s && ({ ...s, awayScore: e.target.value }))} />
-                      <select className={styles.select} style={{ width: '8rem' }} value={scoreForm.result} onChange={e => setScoreForm(s => s && ({ ...s, result: e.target.value }))}>
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.72rem', color: 'var(--white-45)' }}>
+                        Your team
+                        <input className={styles.input} style={{ width: '5rem' }} type="number" min={0} value={scoreForm.teamScore} onChange={e => setScoreForm(s => s && ({ ...s, teamScore: e.target.value }))} />
+                      </label>
+                      <span style={{ alignSelf: 'flex-end', paddingBottom: '0.5rem' }}>–</span>
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.72rem', color: 'var(--white-45)' }}>
+                        Opponent
+                        <input className={styles.input} style={{ width: '5rem' }} type="number" min={0} value={scoreForm.opponentScore} onChange={e => setScoreForm(s => s && ({ ...s, opponentScore: e.target.value }))} />
+                      </label>
+                      <select className={styles.select} style={{ width: '8rem', alignSelf: 'flex-end' }} value={scoreForm.result} onChange={e => setScoreForm(s => s && ({ ...s, result: e.target.value }))}>
                         <option value="">Auto</option>
                         <option value="win">Win</option>
                         <option value="loss">Loss</option>
@@ -1453,7 +2582,7 @@ export default function CoachesSchedulePage({
                       </select>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button className={styles.btnPrimary} disabled={saving} onClick={handleScoreSave}>Save</button>
+                      <button className={styles.btnPrimary} disabled={saving || scoreForm.teamScore.trim() === '' || scoreForm.opponentScore.trim() === ''} onClick={handleScoreSave}>Save</button>
                       <button className={styles.btnGhost} onClick={() => setScoreForm(null)}>Cancel</button>
                     </div>
                     {saveError && <p className={styles.errorText}>{saveError}</p>}
@@ -1472,102 +2601,314 @@ export default function CoachesSchedulePage({
       {/* ── Add / edit event modal ─────────────────────────────────────────── */}
       {showAddForm && (
         <div className={styles.modalOverlay} onClick={requestCloseForm}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+          <div className={`${styles.modal} ${styles.eventFormModal}`} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>{editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}</h3>
               <button className={styles.modalCloseBtn} onClick={requestCloseForm}><X size={16} /></button>
             </div>
 
-            <div className={styles.formGrid}>
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Name *</label>
-                <input className={styles.input} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder={`${EVENT_LABELS[form.eventType]} name`} />
-              </div>
-
-              {needsRecurrence(form.eventType) && !editingEventId && (
-                <div className={`${styles.field} ${styles.formGridFull}`}>
-                  <label className={styles.label}>
-                    <input type="checkbox" checked={form.isRecurring} onChange={e => setForm(f => ({ ...f, isRecurring: e.target.checked }))} style={{ marginRight: '0.4rem' }} />{' '}
-                    Recurring (weekly)
-                  </label>
+            <div className={styles.formBody}>
+              {/* Type — changeable on add (keeps shared fields); fixed once an event exists. */}
+              {!editingEventId && (
+                <div className={styles.field}>
+                  <label className={styles.label}>Event type</label>
+                  <select className={styles.select} value={form.eventType} onChange={e => changeEventType(e.target.value as RepEventType)}>
+                    {(Object.keys(EVENT_LABELS) as RepEventType[]).map(t => (
+                      <option key={t} value={t}>{EVENT_LABELS[t]}</option>
+                    ))}
+                  </select>
                 </div>
               )}
 
-              {form.eventType === 'practice' && form.isRecurring ? (
-                <>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Day of Week *</label>
-                    <select className={styles.select} value={form.dayOfWeek} onChange={e => setForm(f => ({ ...f, dayOfWeek: e.target.value }))}>
-                      {DAYS_OF_WEEK.map((d, i) => <option key={i} value={i}>{d}</option>)}
-                    </select>
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Start Time *</label>
-                    <input className={styles.input} type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>End Time</label>
-                    <input className={styles.input} type="time" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Start Date *</label>
-                    <input className={styles.input} type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>End Date *</label>
-                    <input className={styles.input} type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Start *</label>
-                    <input className={styles.input} type="datetime-local" value={form.startsAt} onChange={e => setForm(f => ({ ...f, startsAt: e.target.value }))} />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>End</label>
-                    <input className={styles.input} type="datetime-local" value={form.endsAt} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))} />
-                  </div>
-                </>
-              )}
-
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Location</label>
-                <input className={styles.input} value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Field, arena, etc." />
+              {/* Name — headline; auto-fills from the opponent for games. */}
+              <div className={styles.field}>
+                <label className={styles.label}>Name</label>
+                <input
+                  className={styles.input}
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder={needsOpponent(form.eventType) ? `${EVENT_NAME_PREFIX[form.eventType]} vs opponent` : `${EVENT_NAME_PREFIX[form.eventType]} name`}
+                />
+                {needsOpponent(form.eventType) && (
+                  <p className={styles.formHint}>Leave blank to name it from the opponent (e.g. &ldquo;Scrimmage vs Lady Jays&rdquo;).</p>
+                )}
               </div>
 
+              {/* TOURNAMENT — a tournament game must belong to a tournament, so a coach can't
+                  create an orphaned, parent-less game slot. */}
+              {addingTournamentGame && (
+                <section className={styles.formSection}>
+                  <h4 className={styles.formSectionTitle}>Tournament</h4>
+                  {tournamentOptions.length === 0 ? (
+                    <div className={styles.field}>
+                      <p className={styles.formHint}>
+                        A tournament game belongs to a tournament, and you haven&apos;t added one yet.
+                      </p>
+                      <button type="button" className={styles.btnSecondary} onClick={() => changeEventType('external_tournament')}>
+                        Create a tournament first
+                      </button>
+                    </div>
+                  ) : (
+                    <div className={styles.field}>
+                      <label className={styles.label}>Which tournament?</label>
+                      <select className={styles.select} value={form.parentEventId} onChange={e => selectParentTournament(e.target.value)}>
+                        <option value="">Select a tournament…</option>
+                        {tournamentOptions.map(t => (
+                          <option key={t.id} value={t.id}>
+                            {t.name}{t.startsAt ? ` (${shortDate(dayStr(t.startsAt))})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      <p className={styles.formHint}>The game shows under this tournament&apos;s days — never as a loose slot.</p>
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {/* Editing an existing tournament game: show which tournament it belongs to. */}
+              {form.eventType === 'tournament_game' && editingEventId && (
+                <section className={styles.formSection}>
+                  <h4 className={styles.formSectionTitle}>Tournament</h4>
+                  <p className={styles.formHint}>
+                    Part of {events.find(e => e.id === form.parentEventId)?.name ?? 'a tournament'}.
+                  </p>
+                </section>
+              )}
+
+              {/* WHEN */}
+              <section className={styles.formSection}>
+                <h4 className={styles.formSectionTitle}>When</h4>
+                {needsRecurrence(form.eventType) && !editingEventId && (
+                  <label className={styles.formCheck}>
+                    <input type="checkbox" checked={form.isRecurring} onChange={e => setForm(f => ({ ...f, isRecurring: e.target.checked }))} />
+                    <span>Repeat weekly</span>
+                  </label>
+                )}
+                {form.eventType === 'external_tournament' ? (
+                  <>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Start date</label>
+                      <input className={styles.input} type="date" value={form.startsAt.slice(0, 10)} onChange={e => setForm(f => ({ ...f, startsAt: e.target.value ? `${e.target.value}T00:00` : '' }))} />
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label}>End date</label>
+                      <input className={styles.input} type="date" value={form.endsAt.slice(0, 10)} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value ? `${e.target.value}T00:00` : '' }))} />
+                    </div>
+                  </>
+                ) : recurringSeries ? (
+                  <>
+                    <div className={styles.formSectionGrid}>
+                      <div className={styles.field}>
+                        <label className={styles.label}>Day of week</label>
+                        <select className={styles.select} value={form.dayOfWeek} onChange={e => setForm(f => ({ ...f, dayOfWeek: e.target.value }))}>
+                          {DAYS_OF_WEEK.map((d, i) => <option key={i} value={i}>{d}</option>)}
+                        </select>
+                      </div>
+                      <div className={styles.field}>
+                        <label className={styles.label}>Start time</label>
+                        <input className={styles.input} type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} />
+                      </div>
+                      <div className={styles.field}>
+                        <label className={styles.label}>End time</label>
+                        <input className={styles.input} type="time" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} />
+                      </div>
+                      <div className={styles.field}>
+                        <label className={styles.label}>Arrival time <span className={styles.labelOptional}>optional</span></label>
+                        <input className={styles.input} type="time" value={form.arrivalTime} onChange={e => setForm(f => ({ ...f, arrivalTime: e.target.value }))} />
+                      </div>
+                      <div className={styles.field}>
+                        <label className={styles.label}>First date</label>
+                        <input className={styles.input} type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
+                      </div>
+                      <div className={styles.field}>
+                        <label className={styles.label}>Last date</label>
+                        <input className={styles.input} type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
+                      </div>
+                    </div>
+                    {recurrencePreview && <p className={styles.formHint}>{recurrencePreview}</p>}
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Starts</label>
+                      <input className={styles.input} type="datetime-local" value={form.startsAt} onChange={e => setStartsAt(e.target.value)} />
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Ends</label>
+                      <input className={styles.input} type="datetime-local" value={form.endsAt} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))} />
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Arrival / call time <span className={styles.labelOptional}>optional</span></label>
+                      <input className={styles.input} type="time" value={form.arrivalTime} onChange={e => setForm(f => ({ ...f, arrivalTime: e.target.value }))} />
+                      <p className={styles.formHint}>A &ldquo;be there by&rdquo; time before the start — shows on the event and the calendar export.</p>
+                    </div>
+                  </>
+                )}
+              </section>
+
+              {/* WHERE — place NAME + field/diamond # side by side, an optional street ADDRESS
+                  (powers the map link) below, and tap-to-fill "recent" chips that refill both. */}
+              <section className={styles.formSection}>
+                <h4 className={styles.formSectionTitle}>Where</h4>
+                <div className={styles.formSectionGrid}>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Location</label>
+                    <input
+                      className={styles.input}
+                      value={form.location}
+                      onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
+                      placeholder="e.g. Sherwood Park"
+                    />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Field / Diamond # <span className={styles.labelOptional}>optional</span></label>
+                    <input
+                      className={styles.input}
+                      value={form.fieldNumber}
+                      onChange={e => setForm(f => ({ ...f, fieldNumber: e.target.value }))}
+                      placeholder="e.g. Diamond 2"
+                    />
+                  </div>
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>Address <span className={styles.labelOptional}>optional</span></label>
+                  <input
+                    className={styles.input}
+                    value={form.locationAddress}
+                    onChange={e => setForm(f => ({ ...f, locationAddress: e.target.value }))}
+                    placeholder="Street address — powers the “open in Maps” link"
+                  />
+                </div>
+                {recentLocations.length > 0 && (
+                  <div className={styles.locationChips}>
+                    <span className={styles.locationChipsLabel}>Recent:</span>
+                    {recentLocations.slice(0, 6).map(loc => (
+                      <button
+                        key={loc.name}
+                        type="button"
+                        className={`${styles.locationChip} ${form.location.trim().toLowerCase() === loc.name.toLowerCase() ? styles.locationChipActive : ''}`}
+                        onClick={() => setForm(f => ({ ...f, location: loc.name, locationAddress: loc.address }))}
+                        title={loc.address || undefined}
+                      >
+                        {loc.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* WHO — games only */}
               {needsOpponent(form.eventType) && (
-                <>
+                <section className={styles.formSection}>
+                  <h4 className={styles.formSectionTitle}>Who</h4>
                   <div className={styles.field}>
                     <label className={styles.label}>Opponent</label>
                     <input className={styles.input} value={form.opponent} onChange={e => setForm(f => ({ ...f, opponent: e.target.value }))} placeholder="Team name" />
                   </div>
                   <div className={styles.field}>
                     <label className={styles.label}>Home / Away</label>
-                    <select className={styles.select} value={form.homeAway} onChange={e => setForm(f => ({ ...f, homeAway: e.target.value }))}>
-                      <option value="">—</option>
-                      <option value="home">Home</option>
-                      <option value="away">Away</option>
-                      <option value="neutral">Neutral</option>
-                    </select>
+                    <div className={styles.segChoice} role="group" aria-label="Home or away">
+                      {HOME_AWAY_CHOICES.map(c => (
+                        <button
+                          key={c.value}
+                          type="button"
+                          className={`${styles.segBtn} ${form.homeAway === c.value ? styles.segBtnActive : ''}`}
+                          onClick={() => setForm(f => ({ ...f, homeAway: c.value }))}
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className={styles.formHint}>Sets your dugout printout (&ldquo;@&rdquo; vs &ldquo;vs&rdquo;) and which side your win/loss counts on.</p>
                   </div>
-                </>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Uniform <span className={styles.labelOptional}>optional</span></label>
+                    <input
+                      className={styles.input}
+                      value={form.uniform}
+                      onChange={e => setForm(f => ({ ...f, uniform: e.target.value }))}
+                      placeholder="e.g. Home whites"
+                    />
+                  </div>
+                </section>
               )}
 
-              <div className={`${styles.field} ${styles.formGridFull}`}>
+              {/* LINKS / RESOURCES — labelled URLs (drill video, rules, field map, flyer). */}
+              <section className={styles.formSection}>
+                <h4 className={styles.formSectionTitle}>Links <span className={styles.labelOptional}>optional</span></h4>
+                {form.resources.length === 0 && (
+                  <p className={styles.formHint}>Attach labelled links — a drill video, rules page, field map, or doc. They open in a new tab.</p>
+                )}
+                {form.resources.map((r, i) => {
+                  const hint = resourceHint(form.eventType);
+                  const badUrl = r.url.trim() !== '' && !isValidResourceUrl(r.url);
+                  return (
+                    <div key={i} className={styles.resourceRow}>
+                      <input
+                        className={styles.input}
+                        value={r.label}
+                        onChange={e => updateResource(i, { label: e.target.value })}
+                        placeholder={hint.label}
+                        maxLength={120}
+                        aria-label="Link label"
+                      />
+                      <input
+                        className={styles.input}
+                        style={badUrl ? { borderColor: 'var(--danger)' } : undefined}
+                        value={r.url}
+                        onChange={e => updateResource(i, { url: e.target.value })}
+                        placeholder={hint.url}
+                        inputMode="url"
+                        aria-label="Link URL"
+                      />
+                      <button type="button" className={styles.resourceRemove} onClick={() => removeResource(i)} aria-label="Remove link">
+                        <X size={15} />
+                      </button>
+                    </div>
+                  );
+                })}
+                {resourcesInvalid && <p className={styles.errorText}>Each link needs a label and a valid web address (http/https).</p>}
+                {form.resources.length < MAX_EVENT_RESOURCES ? (
+                  <button type="button" className={styles.btnSecondary} onClick={addResource}>+ Add link</button>
+                ) : (
+                  <p className={styles.formHint}>Up to {MAX_EVENT_RESOURCES} links per event.</p>
+                )}
+              </section>
+
+              {/* NOTES */}
+              <div className={styles.field}>
                 <label className={styles.label}>Notes</label>
-                <textarea className={styles.textarea} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} />
+                <textarea className={styles.textarea} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="Anything the team should know" />
               </div>
             </div>
 
             {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
 
-            <div className={styles.modalFooter}>
-              <button className={styles.btnGhost} onClick={requestCloseForm}>Cancel</button>
-              <button className={styles.btnPrimary} disabled={saving || !form.name.trim()} onClick={handleSave}>
-                {saving ? 'Saving…' : editingEventId ? 'Save changes' : 'Save'}
-              </button>
-            </div>
+            {/* Editing one occurrence of a repeating series → choose how far the change reaches. */}
+            {editScopeOpen ? (
+              <div className={styles.editScope}>
+                <p className={styles.editScopeMsg}>Apply your changes to:</p>
+                <div className={styles.editScopeBtns}>
+                  <button className={styles.btnSecondary} disabled={saving} onClick={() => handleUpdate('one')}>This event only</button>
+                  <button className={styles.btnSecondary} disabled={saving} onClick={() => handleUpdate('remaining')}>This &amp; future</button>
+                  <button className={styles.btnSecondary} disabled={saving} onClick={() => handleUpdate('all')}>All events</button>
+                  <button className={styles.btnGhost} disabled={saving} onClick={() => setEditScopeOpen(false)}>Back</button>
+                </div>
+                <p className={styles.formHint}>Repeating series — &ldquo;This &amp; future&rdquo; and &ldquo;All&rdquo; keep each event&apos;s own date and shift the rest.</p>
+                {saveError && <p className={styles.errorText}>{saveError}</p>}
+              </div>
+            ) : (
+              <div className={styles.modalFooter}>
+                <button className={styles.btnGhost} onClick={requestCloseForm}>Cancel</button>
+                <button
+                  className={styles.btnPrimary}
+                  disabled={saving || !formHasStart || tournamentParentMissing || resourcesInvalid}
+                  onClick={editingEventId && editingRecurring ? () => setEditScopeOpen(true) : handleSave}
+                >
+                  {saving ? 'Saving…' : editingEventId ? 'Save changes' : 'Save'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
