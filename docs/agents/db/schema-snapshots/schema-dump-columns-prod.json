@@ -9676,7 +9676,7 @@
   },
   {
     "table_name": "rep_team_events",
-    "column_name": "home_score",
+    "column_name": "team_score",
     "data_type": "integer",
     "udt_name": "int4",
     "is_nullable": "YES",
@@ -9685,7 +9685,7 @@
   },
   {
     "table_name": "rep_team_events",
-    "column_name": "away_score",
+    "column_name": "opponent_score",
     "data_type": "integer",
     "udt_name": "int4",
     "is_nullable": "YES",
@@ -9772,6 +9772,51 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 23
+  },
+  {
+    "table_name": "rep_team_events",
+    "column_name": "arrival_time",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 24
+  },
+  {
+    "table_name": "rep_team_events",
+    "column_name": "field_number",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 25
+  },
+  {
+    "table_name": "rep_team_events",
+    "column_name": "uniform",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 26
+  },
+  {
+    "table_name": "rep_team_events",
+    "column_name": "location_address",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 27
+  },
+  {
+    "table_name": "rep_team_events",
+    "column_name": "resources",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 28
   },
   {
     "table_name": "rep_team_expenses",
@@ -10114,6 +10159,105 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 9
+  },
+  {
+    "table_name": "rep_team_lineup_templates",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_team_lineup_templates",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_team_lineup_templates",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "rep_team_lineup_templates",
+    "column_name": "program_year_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "rep_team_lineup_templates",
+    "column_name": "name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "rep_team_lineup_templates",
+    "column_name": "lineup_mode",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'everyone_bats'::text",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "rep_team_lineup_templates",
+    "column_name": "inning_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "NO",
+    "column_default": "7",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "rep_team_lineup_templates",
+    "column_name": "entries",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'[]'::jsonb",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "rep_team_lineup_templates",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "rep_team_lineup_templates",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "rep_team_lineup_templates",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 11
   },
   {
     "table_name": "rep_team_lineups",
@@ -12625,6 +12769,24 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 40
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "list_in_directory",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 41
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "directory_province",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 42
   },
   {
     "table_name": "venue_facilities",

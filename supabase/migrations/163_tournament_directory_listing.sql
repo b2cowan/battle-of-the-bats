@@ -1,4 +1,5 @@
--- Migration 158: opt-in PUBLIC DISCOVERY DIRECTORY listing (per tournament).
+-- Migration 163: opt-in PUBLIC DISCOVERY DIRECTORY listing (per tournament).
+-- (Renumbered from 158 → 163 to resolve a duplicate 158 with the rep-event relative-score migration.)
 -- Backs the cross-platform tournament discovery directory (/discover). Listing is
 -- OPT-IN per tournament and DEFAULT OFF — we never surface a tournament an organizer
 -- didn't deliberately choose to list (youth-sport / PIPEDA privacy safeguard). The

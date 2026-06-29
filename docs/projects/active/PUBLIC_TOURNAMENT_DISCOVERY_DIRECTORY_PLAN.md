@@ -61,7 +61,7 @@ This is **not greenfield** — a partial surface already exists and is linked in
 
 ### Phase 1 — Opt-in foundation (data + organizer toggle)
 
-- [ ] **Migration `158_tournament_directory_listing.sql`** (FIRST task — migration-first). Next free number confirmed = **158** (highest existing = 157). Additive + `IF NOT EXISTS`:
+- [ ] **Migration `163_tournament_directory_listing.sql`** (FIRST task — migration-first; renumbered from 158 to resolve a duplicate 158). Additive + `IF NOT EXISTS`:
   ```sql
   ALTER TABLE tournaments
     ADD COLUMN IF NOT EXISTS list_in_directory boolean NOT NULL DEFAULT false;

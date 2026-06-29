@@ -2,49 +2,28 @@
 
 **Generated:** 2026-06-29 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 86 divergence(s)** across dev/prod.
+**⚠️ 50 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 1 | 0 | — |
-| Columns | 20 | 5 | 23 |
-| Indexes | 9 | 3 | 0 |
-| Constraints | 12 | 9 | — |
-| RLS / CHECK | 3 | 1 | 0 (RLS state) |
+| Tables | 0 | 0 | — |
+| Columns | 0 | 3 | 23 |
+| Indexes | 4 | 3 | 0 |
+| Constraints | 7 | 9 | — |
+| RLS / CHECK | 0 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (1)
-- `rep_team_lineup_templates`
+### Only in DEV (0)
+_none_
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (20)
-- `rep_team_events.arrival_time`
-- `rep_team_events.field_number`
-- `rep_team_events.location_address`
-- `rep_team_events.opponent_score`
-- `rep_team_events.resources`
-- `rep_team_events.team_score`
-- `rep_team_events.uniform`
-- `rep_team_lineup_templates.created_at`
-- `rep_team_lineup_templates.created_by`
-- `rep_team_lineup_templates.entries`
-- `rep_team_lineup_templates.id`
-- `rep_team_lineup_templates.inning_count`
-- `rep_team_lineup_templates.lineup_mode`
-- `rep_team_lineup_templates.name`
-- `rep_team_lineup_templates.org_id`
-- `rep_team_lineup_templates.program_year_id`
-- `rep_team_lineup_templates.team_id`
-- `rep_team_lineup_templates.updated_at`
-- `tournaments.directory_province`
-- `tournaments.list_in_directory`
+### Only in DEV (0)
+_none_
 
-### Only in PROD (5)
-- `rep_team_events.away_score`
-- `rep_team_events.home_score`
+### Only in PROD (3)
 - `resources.created_at`
 - `rule_items.created_at`
 - `rules.created_at`
@@ -75,16 +54,11 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (9)
+### Only in DEV (4)
 - `league_practices_recurrence_idx`
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
 - `league_practices_team_idx`
-- `rep_team_lineup_templates_name_uniq`
-- `rep_team_lineup_templates_org_idx`
-- `rep_team_lineup_templates_pkey`
-- `rep_team_lineup_templates_team_idx`
-- `tournaments_list_in_directory_idx`
 
 ### Only in PROD (3)
 - `league_practices_recurrence_group_id_idx`
@@ -95,18 +69,13 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (12)
+### Only in DEV (7)
 - `announcements.announcements_tournament_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
 - `games.games_age_group_id_fkey`
 - `games.games_away_team_id_fkey`
 - `games.games_tournament_id_fkey`
-- `rep_team_lineup_templates.rep_team_lineup_templates_created_by_fkey`
-- `rep_team_lineup_templates.rep_team_lineup_templates_org_id_fkey`
-- `rep_team_lineup_templates.rep_team_lineup_templates_pkey`
-- `rep_team_lineup_templates.rep_team_lineup_templates_program_year_id_fkey`
-- `rep_team_lineup_templates.rep_team_lineup_templates_team_id_fkey`
 - `teams.teams_tournament_id_fkey`
 
 ### Only in PROD (9)
@@ -124,10 +93,8 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (3)
-- `rep_team_lineup_templates.rep_team_lineup_templates_inning_count_check`
-- `rep_team_lineup_templates.rep_team_lineup_templates_lineup_mode_check`
-- `rep_team_lineup_templates.rep_team_lineup_templates_name_check`
+### CHECK only in DEV (0)
+_none_
 
 ### CHECK only in PROD (1)
 - `tournaments.tournaments_status_check`
