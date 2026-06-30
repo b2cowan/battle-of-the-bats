@@ -16,6 +16,7 @@ import { isGameLive, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/ga
 import { tournamentToday } from '@/lib/timezone';
 import { downloadTeamScheduleICS } from '@/lib/team-calendar';
 import LocationLink from '@/components/LocationLink';
+import { resolveGameVenueLabel } from '@/lib/venue-label';
 import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
 import FollowTeamPicker from '@/components/public/FollowTeamPicker';
 import homeStyles from '@/app/[orgSlug]/Home.module.css';
@@ -214,7 +215,7 @@ export default function MyTournamentCard({
             <span className={homeStyles.myTeamLiveScore}>{liveScore}</span>
           </div>
           <strong>vs {opponent}</strong>
-          <LocationLink location={liveGame.location} venue={venue} size="sm" />
+          <LocationLink location={resolveGameVenueLabel(liveGame, venues)} venue={venue} size="sm" />
         </div>
       ) : nextGame ? (
         <div className={homeStyles.myTeamGame}>
@@ -229,7 +230,7 @@ export default function MyTournamentCard({
             )}
           </div>
           <strong>Next game vs {opponent}</strong>
-          <LocationLink location={nextGame.location} venue={venue} size="sm" />
+          <LocationLink location={resolveGameVenueLabel(nextGame, venues)} venue={venue} size="sm" />
         </div>
       ) : latestResult ? (
         <div className={homeStyles.myTeamGame}>

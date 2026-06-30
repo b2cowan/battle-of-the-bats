@@ -9,7 +9,7 @@ import { useChatUnread } from '@/lib/use-chat-unread';
 import { teamWorkspaceDisplayName } from '@/lib/coaches-portal-routes';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import NotificationBell from '@/components/notifications/NotificationBell';
-import WhatsNewButton from '@/components/whats-new/WhatsNewButton';
+import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 const TEAM_NAV = [
@@ -54,7 +54,6 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           <p className={styles.sidebarPortalLabel}>Coaches Portal</p>
           {currentOrg?.id && (
             <div className="flex items-center gap-1 ml-auto">
-              <WhatsNewButton />
               <NotificationBell orgId={currentOrg.id} />
             </div>
           )}
@@ -137,6 +136,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
         >
           <HelpCircle size={14} />
           Help
+          <ReleaseDot />
         </Link>
         <button
           type="button"

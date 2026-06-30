@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Trophy, Minus, Plus, Maximize } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
 import { formatPoolName, formatTime } from '@/lib/utils';
-import type { Game, PublicTeam } from '@/lib/types';
+import type { Game, PublicTeam, Venue } from '@/lib/types';
 import type { BracketNode } from '@/lib/types/bracket';
+import { resolveGameFieldLabel } from '@/lib/venue-label';
 import { bracketRoundInfo, computeBracketColumns, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
 import styles from './LogicSyncBracket.module.css';
 
@@ -22,6 +23,10 @@ const NODE_HEIGHT = 104;
 const NODE_GAP    = 24;
 const NODE_WIDTH  = 220;
 const V_PAD       = 32;
+
+// Stable empty-venues default — a fresh `[]` in the prop default would be a new
+// reference each render, re-running the node-build effect (which deps on venues).
+const EMPTY_VENUES: Venue[] = [];
 
 // ── meta strip layout constants ────────────────────────────────────────────────
 const META_H      = 18;   // height of the top date/status strip
@@ -72,7 +77,7 @@ function cleanPlaceholder(text: string): string {
   return `${m[1]} ${formatPoolName(m[2])}`;
 }
 
-function makeNode(game: Game, round: number, position: number, teams: PublicTeam[]): BracketNode {
+function makeNode(game: Game, round: number, position: number, teams: PublicTeam[], venues: Venue[]): BracketNode {
   const resolveName = (id: string, placeholder: string | undefined) =>
     isReal(id)
       ? (teams.find(t => t.id === id)?.name ?? (displayBracketRefs(placeholder) || 'TBD'))
@@ -102,11 +107,12 @@ function makeNode(game: Game, round: number, position: number, teams: PublicTeam
     date: game.date ?? '',
     time: game.time ?? '',
     status: (game.status ?? 'scheduled') as BracketNode['status'],
+    venueLabel: resolveGameFieldLabel(game, venues),
   };
 }
 
-function buildNodes(cols: { title: string; games: Game[] }[], teams: PublicTeam[]): BracketNode[] {
-  return cols.flatMap((col, ci) => col.games.map((g, pi) => makeNode(g, ci, pi, teams)));
+function buildNodes(cols: { title: string; games: Game[] }[], teams: PublicTeam[], venues: Venue[]): BracketNode[] {
+  return cols.flatMap((col, ci) => col.games.map((g, pi) => makeNode(g, ci, pi, teams, venues)));
 }
 
 // ── SVG Y-position ────────────────────────────────────────────────────────────
@@ -161,7 +167,6 @@ function MatchNode({
     ? new Date(node.date + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
     : '';
   const timeText = node.time ? formatTime(node.time) : '';
-  const metaText = [dateText, timeText].filter(Boolean).join(' · ');
 
   // status badge
   const statusLabel =
@@ -174,6 +179,13 @@ function MatchNode({
     : statusLabel === 'Pending'   ? 'var(--warning)'
     : statusLabel === 'Cancelled' ? 'var(--white-35)'
     : null;
+
+  // venue (field/diamond) rides the meta line for upcoming games — when a status
+  // badge occupies the right of the strip (finished/cancelled games), it would
+  // collide, so the venue yields (the score is the focus post-game anyway).
+  const fieldText = node.venueLabel ? node.venueLabel.trim().slice(0, 18) : '';
+  const metaText = [dateText, timeText, (fieldText && !statusLabel) ? fieldText : '']
+    .filter(Boolean).join(' · ');
 
   // team name truncation (shorter when trophy icon precedes)
   const homeName = (node.homeTeam?.name ?? 'TBD').slice(0, isHomeWin ? 17 : 20);
@@ -199,6 +211,11 @@ function MatchNode({
           filter:      node.isLive ? 'url(#glow-primary)' : undefined,
         }}
       />
+      {/* hover / focus affordance — transparent until a .clickableNode ancestor is
+          hovered or keyboard-focused (see module CSS); invisible when not clickable. */}
+      <rect className={styles.hoverRing}
+        width={NODE_WIDTH} height={NODE_HEIGHT} rx={8}
+        style={{ fill: 'none', stroke: 'var(--primary)', strokeWidth: '1.5' }} />
       {/* meta strip background */}
       <rect width={NODE_WIDTH} height={META_H} rx={8}
         style={{ fill: 'rgba(var(--primary-rgb), 0.08)' }} />
@@ -394,9 +411,11 @@ function BracketScroller({ children }: { children: React.ReactNode }) {
     drag.current.active = false;
     setGrabbing(false);
   }
-  // Swallow the click that ends a pan so a drag-pan never reads as a tap.
+  // Swallow the click that ends a pan so a drag-pan never reads as a tap — and
+  // preventDefault too, so dragging across a card link can't trigger navigation
+  // (stopPropagation alone wouldn't cancel an <a>'s default action).
   function onClickCapture(e: React.MouseEvent<HTMLDivElement>) {
-    if (drag.current.moved) { e.stopPropagation(); drag.current.moved = false; }
+    if (drag.current.moved) { e.preventDefault(); e.stopPropagation(); drag.current.moved = false; }
   }
 
   return (
@@ -454,9 +473,14 @@ interface LogicSyncBracketProps {
   tournamentId: string;
   highlightTeamId?: string;
   requireFinalization?: boolean;
+  /** Venues (with facilities) used to resolve each game's live field label. */
+  venues?: Venue[];
+  /** When both slugs are provided, each card links to its public game-detail page. */
+  orgSlug?: string;
+  tournamentSlug?: string;
 }
 
-export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, requireFinalization = true }: LogicSyncBracketProps) {
+export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, requireFinalization = true, venues = EMPTY_VENUES, orgSlug, tournamentSlug }: LogicSyncBracketProps) {
   // stable client ref — createClient() from @supabase/ssr creates a new instance on every
   // render, so calling it at component body level and including it in useEffect deps causes
   // infinite re-subscription loops. useRef ensures one instance per component mount.
@@ -556,8 +580,8 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
   useEffect(() => {
     const cols = buildColumns(games);
     setColumns(cols);
-    setNodes(buildNodes(cols, teams));
-  }, [games, teams]);
+    setNodes(buildNodes(cols, teams, venues));
+  }, [games, teams, venues]);
 
   // Realtime subscription — score updates pulse the LIVE badge
   useEffect(() => {
@@ -624,6 +648,19 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
   }
 
   if (nodes.length === 0) return null;
+
+  // Cards link to the public game-detail page only when both slugs are supplied.
+  const canLink = !!orgSlug && !!tournamentSlug;
+
+  // Team spotlight — only dim non-matching nodes when the followed team is ACTUALLY
+  // placed in this bracket. A pre-seeded bracket is all placeholders (Seed #1,
+  // Winner QF1…) whose ids never equal a real followed-team id, so without this
+  // guard every node greys to 25% and the whole bracket becomes unreadable. When
+  // the team isn't present (placeholders / eliminated / other tier) show the full
+  // bracket at full opacity instead.
+  const highlightPresent = !!highlightTeamId && nodes.some(n =>
+    n.homeTeam?.id === highlightTeamId || n.awayTeam?.id === highlightTeamId
+  );
 
   // Champion — the decided final's winner drives the spotlight banner. For double
   // elimination that is the grand-final reset (if played) or the grand final.
@@ -925,24 +962,31 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
                 node={node}
                 x={pos.x}
                 y={pos.y}
-                isHighlighted={!highlightTeamId || nodeMatchesTeam}
+                isHighlighted={!highlightPresent || nodeMatchesTeam}
                 showHighlightRing={nodeMatchesTeam}
                 requireFinalization={requireFinalization}
               />
             );
             // While the draw-day reveal plays, wrap each card in a group that
             // animates its staggered entrance (the wrapper's transform/opacity
-            // composes with MatchNode's positioning transform).
-            return d != null ? (
-              <g
-                key={node.id}
-                className={styles.revealNode}
-                style={{ ['--d']: `${d}ms` } as React.CSSProperties}
-              >
-                {matchNode}
-              </g>
-            ) : (
-              <g key={node.id}>{matchNode}</g>
+            // composes with MatchNode's positioning transform). When the tournament
+            // slugs are known, the wrapper is a native SVG <a> linking to the public
+            // game-detail page (keyboard-focusable + accessible); the reveal class
+            // and stagger var ride the same element so the two compose.
+            const linkHref = canLink ? `/${orgSlug}/${tournamentSlug}/schedule/${node.id}` : null;
+            const cls = [linkHref ? styles.clickableNode : '', d != null ? styles.revealNode : '']
+              .filter(Boolean).join(' ') || undefined;
+            const style = d != null ? ({ ['--d']: `${d}ms` } as React.CSSProperties) : undefined;
+            if (linkHref) {
+              const label = `View game details: ${node.homeTeam?.name ?? 'TBD'} vs ${node.awayTeam?.name ?? 'TBD'}`;
+              return (
+                <a key={node.id} href={linkHref} aria-label={label} className={cls} style={style}>
+                  {matchNode}
+                </a>
+              );
+            }
+            return (
+              <g key={node.id} className={cls} style={style}>{matchNode}</g>
             );
           })
         )}

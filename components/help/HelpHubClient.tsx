@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Search, X } from 'lucide-react';
+import WhatsNewHelpLink from '@/components/whats-new/WhatsNewHelpLink';
 import styles from './help.module.css';
 
 export interface HelpHubCard {
@@ -60,6 +61,7 @@ export default function HelpHubClient({
       <div className={styles.helpHubHeader}>
         <h1 className={styles.helpHubTitle}>{title}</h1>
         <p className={styles.helpHubSubtitle}>{subtitle}</p>
+        <WhatsNewHelpLink />
       </div>
 
       {/* ── Search ─────────────────────────────────────────────────────── */}

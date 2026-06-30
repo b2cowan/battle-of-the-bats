@@ -5,6 +5,7 @@ import { getGames, getTeams, getDivisions, getVenues, getTournaments, getStandin
 import { normalizeTieBreakers } from '@/lib/tie-breakers';
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
+import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import styles from './results.module.css';
@@ -40,7 +41,7 @@ export default function ResultsPage() {
     async function fetchResults() {
       setGames(await getGames(selectedTournament!.id));
       setTeams(await getTeams(selectedTournament!.id));
-      setVenues(await getVenues(selectedTournament!.id));
+      setVenues(await getVenues(selectedTournament!.id, { includeFacilities: true }));
       // divisions are now fetched in init or when tournament changes
       const groups = await getDivisions(selectedTournament!.id);
       setDivisions(groups);
@@ -357,7 +358,7 @@ export default function ResultsPage() {
                       <span className="badge badge-primary">
                         {divisions.find(g => g.id === game.divisionId)?.name}
                       </span>
-                      <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
+                      <LocationLink location={resolveGameVenueLabel(game, venues)} venue={getVenue(game.venueId)} size="sm" />
                     </div>
                     <div className={styles.scoreRow}>
                       <div className={`${styles.teamScore} ${winner === 'home' ? styles.winner : ''}`}>

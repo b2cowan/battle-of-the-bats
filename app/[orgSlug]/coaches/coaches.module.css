@@ -1,3 +1,93 @@
+/* ════════════════════════════════════════════════════════════════════════
+   MOBILE SYSTEM — canonical breakpoints + shared primitives (2026-06-29)
+   Source of truth: memory/design_decisions.md → "Coaches Portal mobile
+   conventions". Plan: docs/projects/active/COACHES_PORTAL_MOBILE_PLAN.md.
+
+   TWO breakpoints only — do NOT reintroduce 600 / 520 / other content widths:
+     • 900px = SHELL reflow   (sidebar → bottom nav; main gains bottom padding)
+     • 640px = CONTENT reflow (tables→cards, multi-col→1-col, overlay→sheet,
+                               form-grid→1-col, segmented controls wrap)
+
+   Shared primitives (a surface opts in, so each sweep stays a small diff):
+     • .tableAsCards            list-table → stacked cards @640 (Roster idiom)
+     • .scrollX / .scrollXSticky genuine 2-D grid: x-scroll + sticky first column
+                               (never silent sideways scroll — pair with a hint)
+     • .sheetOnMobile          overlay → bottom-sheet @640 (add to .modalOverlay)
+     • .stickyActionBar        safe-area sticky footer (env(safe-area-inset-bottom))
+   Existing instances that already embody these: .lineupTableWrap (scrollX),
+   .rosterTable reflow (tableAsCards), .modalFooter/.attendanceFooter/.editScope/
+   .saveBar (stickyActionBar). New surfaces should reuse the generic class.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* tableAsCards — add to the table's WRAPPER div (e.g. `${tableWrap} ${tableAsCards}`)
+   around a list-shaped <table> (≤~5 data cols, one record/row). @640 the wrapper
+   sheds its border/scroll, thead hides, each row becomes a bordered card, and each
+   cell is a label/value line via td[data-label]::before (cells without a
+   data-label render value-only — use for the trailing action cell). */
+@media (max-width: 640px) {
+  .tableAsCards { border: none !important; overflow: visible; }
+  .tableAsCards table,
+  .tableAsCards tbody,
+  .tableAsCards tr,
+  .tableAsCards td { display: block; width: auto; }
+  .tableAsCards thead { display: none; }
+  .tableAsCards tr {
+    border: 1px solid var(--border-2);
+    border-radius: 10px;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.65rem;
+    background: rgba(255,255,255,0.025);
+  }
+  .tableAsCards td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.28rem 0 !important;
+    border-bottom: none !important;
+    text-align: right;
+  }
+  .tableAsCards td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    text-align: left;
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--white-35);
+  }
+}
+
+/* scrollX — controlled horizontal scroll for a genuine 2-D grid (lineup
+   rows×innings, the 7-day week). .scrollXSticky additionally pins the first
+   column so the row label stays visible. ALWAYS pair with a visible "swipe →"
+   affordance in the surface (a one-time hint) — never a silent sideways scroll. */
+.scrollX {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+}
+.scrollXSticky th:first-child,
+.scrollXSticky td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--card-bg);
+}
+
+/* stickyActionBar — generic safe-area sticky footer for action rows that must
+   stay reachable while content scrolls. Compose your own padding/edge-bleed. */
+.stickyActionBar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--card-bg);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* ── Shell ──────────────────────────────────────────────────────────────── */
 .coachesShell {
   display: flex;
@@ -181,6 +271,14 @@
   margin: 0.25rem 0 0;
   color: var(--white-40);
   font-size: 0.9rem;
+}
+
+/* Mobile: compact the page header so it doesn't read as a hero and steal the first
+   screen of an operating tool — give the records back the top of the viewport. */
+@media (max-width: 640px) {
+  .pageHeader { margin-bottom: 1.25rem; gap: 0.75rem; }
+  .pageTitle { font-size: 1.35rem; }
+  .headerIcon { width: 40px; height: 40px; }
 }
 
 /* Demoted secondary tips below the team grid */
@@ -908,6 +1006,24 @@
 
 .rowActionCell { text-align: right; white-space: nowrap; }
 
+/* Mobile-only up/down reorder (replaces touch drag, which is disabled in card
+   mode). Hidden on desktop where the drag grip handles reordering. */
+.rosterMoveControls { display: none; }
+.rosterMoveBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  color: var(--white-55);
+  cursor: pointer;
+}
+.rosterMoveBtn:hover { background: rgba(255,255,255,0.09); color: var(--white-90); }
+.rosterMoveBtn:disabled { opacity: 0.3; cursor: default; }
+
 /* Let header help popovers (e.g. the Source "?") escape instead of being clipped.
    Safe because the roster table is width:100% — it compresses rather than
    needing horizontal scroll, and reflows to cards on small screens. */
@@ -955,7 +1071,20 @@
   }
   .rosterTable .playerCellTd::before { content: none; }
   .rosterTable .guardianStack { align-items: flex-end; text-align: right; }
-  .rosterTable .rowActionCell { justify-content: flex-end; }
+  .rosterTable .rowActionCell {
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-top: 0.5rem !important;
+    margin-top: 0.4rem;
+    border-top: 1px solid var(--white-05) !important;
+  }
+  /* Reorder controls appear (left), the status toggle grows to the ≥40px floor (right). */
+  .rosterMoveControls { display: inline-flex; gap: 0.4rem; }
+  .rosterStatusBtn {
+    min-height: 40px;
+    padding: 0.4rem 0.9rem !important;
+    font-size: 0.85rem !important;
+  }
 }
 
 /* ── Modal ──────────────────────────────────────────────────────────────── */
@@ -1004,6 +1133,20 @@
   line-height: 1;
 }
 .modalCloseBtn:hover { color: rgba(255,255,255,0.8); }
+
+/* Mobile back arrow — replaces the X when a modal goes full-screen (see the
+   sheetOnMobile @640 block). Hidden on desktop. */
+.modalBackBtn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--white-75);
+  cursor: pointer;
+  padding: 0.1rem;
+  line-height: 0;
+  margin-right: 0.1rem;
+}
+.modalBackBtn:hover { color: var(--white-90); }
 
 /* Sticky footer — pins to the modal's bottom so Save stays visible while a long
    modal body scrolls. Inert (sits normally) when the modal doesn't scroll. */
@@ -1163,8 +1306,17 @@
 .segBtn:hover { background: rgba(255,255,255,0.09); }
 .segBtnActive, .segBtnActive:hover { background: var(--logic-lime, #84cc16); color: #0f1123; }
 
-@media (max-width: 520px) {
+/* Form grids collapse to one column at the content breakpoint (migrated 520→640). */
+@media (max-width: 640px) {
   .formSectionGrid { grid-template-columns: 1fr; }
+  /* Event Links rows (label + url side-by-side) stack so neither input squashes. */
+  .resourceRow { flex-wrap: wrap; }
+  .resourceRow .input:first-child,
+  .resourceRow .input:nth-child(2) { flex: 1 1 100%; }
+  /* Equal-width segmented choices (Home/Away/Neutral) go full-width rather than
+     squashing their labels. */
+  .segChoice { display: flex; width: 100%; }
+  .segBtn { flex: 1; text-align: center; }
 }
 
 /* ── Detail form (player detail page) ──────────────────────────────────── */
@@ -1621,6 +1773,15 @@
 .calWeekDayEvents { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.4rem; min-height: 60px; }
 .calWeekEmpty { font-size: 0.78rem; color: rgba(255,255,255,0.15); padding: 0.25rem 0; }
 
+/* Mobile: the 7-col week grid reflows to a vertical day-stack (header + its
+   event rows; empty days collapse to a thin "—") — no silent sideways scroll. */
+@media (max-width: 640px) {
+  .calWeekGrid { grid-template-columns: 1fr; gap: 0.4rem; overflow-x: visible; }
+  .calWeekDay { min-width: 0; }
+  .calWeekDayEvents { min-height: 0; padding: 0.35rem 0.4rem; }
+  .calWeekEmpty { padding: 0.1rem 0.2rem; }
+}
+
 .calMonthGrid {
   display: grid; grid-template-columns: repeat(7,1fr); gap: 1px;
   background: rgba(255,255,255,0.06);
@@ -1655,6 +1816,11 @@
 .slideOverActions { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.07); display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
 /* Destructive pair pushed to the right, separated from the everyday Edit/Add-game actions. */
 .slideOverActionsRight { margin-left: auto; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+/* On mobile the auto-margin pushed Cancel/Delete to the far edge, leaving a big gap that
+   read as an orphaned "Cancel event". Drop the push so the actions group tightly. */
+@media (max-width: 640px) {
+  .slideOverActionsRight { margin-left: 0; }
+}
 /* Compact one-line event summary (replaces the tall label/value list). */
 /* Event resource links — editable rows in the form, tappable rows in the detail panel. */
 .resourceRow { display: flex; gap: 0.4rem; align-items: center; }
@@ -1689,22 +1855,55 @@
 .slideOverMapLink:hover { text-decoration: underline; }
 .slideOverNotes { margin: 0 0 0.25rem; font-size: 0.85rem; color: var(--white-55); line-height: 1.45; white-space: pre-wrap; }
 
-/* Mobile: the event detail panel rises as a full-width bottom sheet (scoped via .slideOverScrim
-   so the add/edit form modal stays centered). Keeps the tabbed content clear of the bottom nav. */
-@media (max-width: 600px) {
-  .modalOverlay.slideOverScrim { align-items: flex-end; padding: 0; }
+/* sheetOnMobile — overlay → full-width bottom sheet @640. The generic modifier
+   (.sheetOnMobile on the .modalOverlay) targets its single panel child, so any
+   overlay opts in (event detail slide-over + the add/edit event form modal).
+   .slideOverScrim is the legacy alias kept for the detail panel. Migrated 600→640. */
+@media (max-width: 640px) {
+  /* Full-screen modal: the panel covers the viewport edge-to-edge (no rounded sheet),
+     scrolls internally, and the page behind is scroll-locked in JS. z-index sits ABOVE
+     the bottom nav (300) so the sticky Save bar isn't hidden behind it. */
+  .modalOverlay.sheetOnMobile,
+  .modalOverlay.slideOverScrim { align-items: stretch; padding: 0; z-index: 400; }
+  .sheetOnMobile > *,
   .slideOverScrim .slideOver {
     max-width: 100%;
     width: 100%;
-    max-height: 92vh;
+    height: 100dvh;
+    max-height: 100dvh;
     margin: 0;
-    border-radius: var(--radius) var(--radius) 0 0;
+    border-radius: 0;
+    /* Trim the side gutters (was 24px) so content uses the width; keep top/bottom. */
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+  /* Sticky footers/scope bars re-bleed to the tighter 0.9rem side edges (vertical
+     bleed unchanged). */
+  .slideOverScrim .attendanceFooter,
+  .sheetOnMobile .modalFooter,
+  .slideOverScrim .editScope,
+  .sheetOnMobile .editScope {
+    margin-left: -0.9rem;
+    margin-right: -0.9rem;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+  /* Back arrow replaces the X; header reads left → right. */
+  .modalBackBtn { display: inline-flex; }
+  .sheetOnMobile .modalCloseBtn,
+  .slideOverScrim .modalCloseBtn { display: none; }
+  .sheetOnMobile .modalHeader,
+  .slideOverScrim .modalHeader { justify-content: flex-start; gap: 0.6rem; }
+  /* A sticky footer (Save) clears the home indicator. */
+  .sheetOnMobile .modalFooter {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   }
 }
 
 /* Tabs inside the event slide-over (Attendance / Lineup / Result) */
 .slideTabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.25rem;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   margin: 1.25rem 0 0.25rem;
@@ -1726,13 +1925,22 @@
 
 .eventTypePill { font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
 
-.scoreSection { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.07); }
-.scoreDisplay { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-.scoreNum { font-size: 2rem; font-weight: 900; line-height: 1; }
-.scoreSep { font-size: 1.2rem; color: rgba(255,255,255,0.3); }
-.resultBadge { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; }
-.scoreForm { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; }
-.scoreFormRow { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+/* Final score on the event header for game events (replaces the old Result tab).
+   Neutral numerals + a colour-coded result badge (EventChip parity); W/L/T is always derived. */
+.eventScoreLine { margin: 0.1rem 0 0.7rem; }
+.eventScore { display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; }
+.eventScoreValue { font-size: 1.2rem; font-weight: 800; color: var(--white-90); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.eventScoreEdit { background: none; border: none; padding: 0.4rem 0.2rem; min-height: 36px; font-size: 0.8rem; color: var(--white-45); text-decoration: underline; cursor: pointer; }
+.eventScoreEdit:hover { color: var(--white-70); }
+.eventScoreAdd { display: inline-flex; align-items: center; gap: 0.3rem; min-height: 40px; padding: 0.4rem 0.8rem; background: var(--white-5); border: 1px solid var(--border-2); border-radius: 8px; font-size: 0.82rem; font-weight: 600; color: var(--white-70); cursor: pointer; }
+.eventScoreAdd:hover { background: var(--white-8); color: var(--white-90); }
+
+.resultBadge { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
+.scoreForm { display: flex; flex-direction: column; gap: 0.55rem; }
+.scoreFormRow { display: flex; align-items: flex-end; gap: 0.5rem; flex-wrap: wrap; }
+.scoreFieldLabel { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.72rem; color: var(--white-45); }
+.scoreFormSep { align-self: flex-end; padding-bottom: 0.5rem; color: var(--white-45); }
+.scoreFormActions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 
 .attendanceSection {
   margin-top: 0.9rem;
@@ -1832,51 +2040,57 @@
   text-overflow: ellipsis;
 }
 
+/* Status control: ONE connected segmented pill (not 4 floating boxes) — a single
+   border frames the group, thin dividers split the segments, and only the chosen
+   status fills with its colour. Far calmer down a 12-player list. */
 .attendanceStatusGroup {
   display: inline-flex;
-  gap: 0.2rem;
   flex-shrink: 0;
+  border: 1px solid var(--white-10);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
 }
 
 .attendanceStatusBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 32px;
-  border: 1px solid var(--white-10);
-  border-radius: 6px;
-  background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.5);
+  width: 36px;
+  height: 34px;
+  border: none;
+  border-right: 1px solid var(--white-10);
+  border-radius: 0;
+  background: transparent;
+  color: rgba(255,255,255,0.45);
   cursor: pointer;
+  transition: background 0.1s, color 0.1s;
 }
+.attendanceStatusBtn:last-child { border-right: none; }
 
 .attendanceStatusBtn:hover {
   background: rgba(255,255,255,0.07);
   color: rgba(255,255,255,0.82);
 }
 
+/* Active segment fills its status colour — no inner border (the group frames it). */
 .attendanceStatusBtnActive[data-status="attending"] {
-  background: rgba(var(--success-rgb), 0.16);
-  border-color: rgba(var(--success-rgb), 0.35);
+  background: rgba(var(--success-rgb), 0.18);
   color: var(--success);
 }
 
 .attendanceStatusBtnActive[data-status="absent"] {
-  background: rgba(var(--danger-rgb), 0.14);
-  border-color: rgba(var(--danger-rgb), 0.35);
+  background: rgba(var(--danger-rgb), 0.16);
   color: var(--danger);
 }
 
 .attendanceStatusBtnActive[data-status="late"] {
-  background: rgba(var(--warning-rgb), 0.16);
-  border-color: rgba(var(--warning-rgb), 0.35);
+  background: rgba(var(--warning-rgb), 0.18);
   color: var(--warning);
 }
 
 .attendanceStatusBtnActive[data-status="unknown"] {
-  background: rgba(255,255,255,0.10);
-  border-color: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.12);
   color: var(--white-75);
 }
 
@@ -1920,6 +2134,13 @@
 .attendanceNoteInput:focus {
   outline: none;
   border-color: rgba(var(--blueprint-blue-rgb), 0.5);
+}
+
+/* Mobile: bump the dense attendance controls to ≥36px so they clear the
+   touch-target floor (desktop keeps the compact 34/30px density). */
+@media (max-width: 640px) {
+  .attendanceStatusBtn { width: 36px; height: 36px; }
+  .attendanceNoteToggle { width: 36px; height: 36px; }
 }
 
 /* Sticky action bar pinned to the bottom of the slide-over, so Save/Clear/PDF stay
@@ -1974,7 +2195,64 @@
   box-shadow: 0 12px 32px rgba(0,0,0,0.5);
 }
 .lineupAutoMenu .lineupControlLabel { min-width: 0; }
+
+/* Mobile: a 270px menu anchored to a half-width grid cell overflows the screen edge,
+   so it rises as an on-screen panel spanning the modal width (like the Print menu). */
+@media (max-width: 640px) {
+  .lineupAutoMenu {
+    position: fixed;
+    left: 0.9rem;
+    right: 0.9rem;
+    top: auto;
+    bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-height: 62vh;
+    overflow-y: auto;
+  }
+}
 .lineupAutoNote { margin: 0; font-size: 0.72rem; color: var(--white-45); line-height: 1.4; }
+
+/* Footer tools (undo / redo / clear / print) — icon buttons, left cluster. The
+   auto-save status sits opposite (right). */
+.lineupFooterTools { display: inline-flex; align-items: center; gap: 0.3rem; }
+.footerIconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  color: var(--white-65);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+.footerIconBtn:hover:not(:disabled) { background: rgba(255,255,255,0.1); color: var(--white-90); }
+.footerIconBtn:disabled { opacity: 0.3; cursor: default; }
+
+/* Auto-save status (replaces the Save button) — quiet "Saving…/Saved" or a retry. */
+.saveStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--white-45);
+  white-space: nowrap;
+}
+.saveStatus svg { color: var(--success); }
+.saveRetry {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  color: var(--danger);
+  text-decoration: underline;
+}
 
 /* Print menu — lives in the sticky footer, so it opens UPWARD to stay on-screen */
 .lineupPdfWrap { position: relative; }
@@ -1992,6 +2270,18 @@
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
   border-radius: 10px;
   box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+}
+
+/* Mobile: the fixed-width menu would overflow off the print button's left anchor,
+   so span the modal width (gutter to gutter) just above the footer. */
+@media (max-width: 640px) {
+  .lineupPdfMenu {
+    position: fixed;
+    left: 0.9rem;
+    right: 0.9rem;
+    bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+    width: auto;
+  }
 }
 .lineupPdfItem {
   display: flex;
@@ -2273,6 +2563,59 @@
   font-size: 0.78rem;
 }
 
+/* One-time-ish scroll affordance above the grid (mobile only) — the lineup is a
+   genuine 2-D grid (players × innings) so it scrolls horizontally; cue it. */
+.lineupScrollHint { display: none; }
+@media (max-width: 640px) {
+  .lineupScrollHint {
+    display: block;
+    margin: 0 0 0.4rem;
+    font-size: 0.72rem;
+    color: var(--white-45);
+    font-weight: 600;
+  }
+  /* Drag-to-reorder is impractical inside a horizontally-scrolling pinned column on
+     touch; the batting order follows the roster (and the hint says so), so hide the
+     grip on mobile — consistent with disabling roster card drag on touch. */
+  .lineupGrip { display: none; }
+  /* Sticky lead columns so the batting number + player name stay visible while
+     innings scroll. The Start column is mode-conditional, so the player-cell
+     offset is driven by --lineup-lead (set on the table from lineupMode). */
+  .lineupTable th:first-child,
+  .lineupTable td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    box-sizing: border-box;
+    width: 3.4rem;            /* fits the up/down arrows + a double-digit batting order */
+    min-width: 3.4rem;
+    max-width: 3.4rem;
+    background: var(--card-bg);
+  }
+  /* Prefixed with .lineupTable so the opaque sticky background beats the base
+     `.lineupTable th` translucent header fill on specificity — otherwise the
+     scrolling inning header bleeds through the pinned Player/Start header cells. */
+  .lineupTable .lineupColStart {
+    position: sticky;
+    left: 3.4rem;
+    z-index: 2;
+    box-sizing: border-box;
+    width: 2.4rem;
+    min-width: 2.4rem;
+    max-width: 2.4rem;
+    background: var(--card-bg);
+  }
+  .lineupTable .lineupColPlayer,
+  .lineupTable .lineupPlayerCell {
+    position: sticky;
+    left: var(--lineup-lead, 2.8rem);
+    z-index: 2;
+    min-width: 8rem;
+    background: var(--card-bg);
+    box-shadow: 6px 0 8px -6px rgba(0,0,0,0.55);   /* edge cue where the scroll begins */
+  }
+}
+
 .deleteConfirm { display: flex; flex-direction: column; gap: 0.5rem; }
 .deleteConfirmMsg { font-size: 0.88rem; color: rgba(255,255,255,0.7); margin: 0; }
 .deleteConfirmBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
@@ -2370,4 +2713,93 @@
   margin-top: 0.8rem;
   color: var(--white-45);
   font-size: 0.8rem;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   SCHEDULE mobile sweep — round 2 (2026-06-29): Add-button, event-row text,
+   lineup settings grid, mobile lineup reorder, Lineup⇄Playing-time toggle.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Lineup sub-view toggle (Lineup ⇄ Playing time) — desktop + mobile, replaces the
+   old stacked collapsible summary. */
+.lineupViewToggle {
+  display: inline-flex;
+  border: 1px solid var(--white-10);
+  border-radius: 7px;
+  overflow: hidden;
+  margin-bottom: 0.85rem;
+}
+.lineupViewBtn {
+  flex: 1;
+  min-width: 6.5rem;
+  text-align: center;
+  background: none;
+  border: none;
+  color: var(--white-45);
+  padding: 0.42rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+.lineupViewBtn:hover:not(:disabled) { background: rgba(255,255,255,0.06); color: var(--white-90); }
+.lineupViewBtn:disabled { opacity: 0.4; cursor: default; }
+.lineupViewBtnActive,
+.lineupViewBtnActive:hover {
+  background: rgba(var(--blueprint-blue-rgb), 0.15);
+  color: var(--blueprint-blue);
+}
+
+/* Mobile-only up/down reorder in the lineup's batting-number column (the drag grip
+   is hidden on touch). A compact vertical pair sized for the narrow pinned column. */
+.lineupMoveControls { display: none; }
+
+@media (max-width: 640px) {
+  /* #2 — Add Event collapses to a compact "+" (label hidden, tighter padding). */
+  .addEventLabel { display: none; }
+  .addEventBtn { padding: 0.4rem 0.55rem !important; }
+
+  /* #3 — event rows wrap so the full name + opponent + score + result all show:
+     line 1 = time … score/result; line 2 = the (untruncated) name. */
+  .eventChip { flex-wrap: wrap; align-items: center; row-gap: 0.15rem; }
+  .eventChipTime { order: 1; }
+  .eventChipTrail { order: 2; margin-left: auto; }
+  .eventChipName {
+    order: 3;
+    flex-basis: 100%;
+    white-space: normal;
+    overflow: visible;
+    line-height: 1.3;
+  }
+
+  /* #6 — lineup settings as a tidy 2×2 grid (Format | Innings / Auto-fill | Templates)
+     instead of a wrapping row with an over-wide Innings select. */
+  .lineupControls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    align-items: end;
+    width: 100%;
+  }
+  .lineupControlLabel { min-width: 0; }
+  .lineupAutoWrap { width: 100%; }
+  .lineupAutoWrap > button { width: 100%; justify-content: center; }
+
+  /* #7 — mobile reorder arrows */
+  .lineupMoveControls { display: inline-flex; flex-direction: column; gap: 1px; }
+  .lineupMoveBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: none;
+    border: none;
+    border-radius: 3px;
+    color: var(--white-45);
+    cursor: pointer;
+    padding: 0;
+  }
+  .lineupMoveBtn:hover:not(:disabled) { background: rgba(255,255,255,0.1); color: var(--white-90); }
+  .lineupMoveBtn:disabled { opacity: 0.25; cursor: default; }
 }

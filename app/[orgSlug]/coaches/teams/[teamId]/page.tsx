@@ -5,6 +5,7 @@ import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { ArrowRight, Building2, Calendar, CheckCircle2, Circle, DollarSign, MinusCircle, Users } from 'lucide-react';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
+import SeasonRecordWidget from '@/components/coaches/SeasonRecordWidget';
 import HelpButton from '@/components/help/HelpButton';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
@@ -79,6 +80,7 @@ export default function TeamOverviewPage({
   const [teamDivision, setTeamDivision] = useState<string | null>(null);
   // Run-mode snapshot ("Your team at a glance")
   const [nextEvent, setNextEvent] = useState<RepTeamEvent | null>(null);
+  const [seasonGames, setSeasonGames] = useState<RepTeamEvent[]>([]);
   const [duesOutstanding, setDuesOutstanding] = useState<number | null>(null);
   const [duesOverdueCount, setDuesOverdueCount] = useState(0);
   // Paid vs total dues installments → the Dues snapshot mini-gauge.
@@ -109,6 +111,7 @@ export default function TeamOverviewPage({
       const activePlayers = (rosterData.players ?? []).filter(player => player.status === 'active');
       const events = eventsData.events ?? [];
       const games = events.filter(event => ['league_game', 'tournament_game', 'scrimmage'].includes(event.eventType));
+      setSeasonGames(games);
 
       setSetupStats({
         activeRosterCount: activePlayers.length,
@@ -547,6 +550,10 @@ export default function TeamOverviewPage({
           })}
         </div>
       </section>
+
+      {/* Season record — moved here from the Schedule (a glanceable team metric belongs on the
+          dashboard). Renders nothing until at least one game is finalized. */}
+      <SeasonRecordWidget events={seasonGames} teamId={teamId} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Users, ChevronRight, Plus, X, GripVertical, AlertTriangle } from 'lucide-react';
+import { Users, ChevronRight, Plus, X, GripVertical, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -169,14 +169,9 @@ export default function RosterPage({
     }
   }
 
-  async function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = players.findIndex(p => p.id === active.id);
-    const newIndex = players.findIndex(p => p.id === over.id);
-    if (oldIndex < 0 || newIndex < 0) return;
-    const prev = players;
-    const next = arrayMove(players, oldIndex, newIndex);
+  // Persist a new player order (optimistic, reverts on failure). Shared by the
+  // desktop drag handler and the mobile up/down move buttons.
+  async function persistOrder(next: RepRosterPlayer[], prev: RepRosterPlayer[]) {
     setPlayers(next); // optimistic
     try {
       const res = await fetch(
@@ -195,6 +190,23 @@ export default function RosterPage({
       setPlayers(prev); // revert
       showFeedback('danger', errorMessage(e, 'Could not save the new order.'));
     }
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = players.findIndex(p => p.id === active.id);
+    const newIndex = players.findIndex(p => p.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    await persistOrder(arrayMove(players, oldIndex, newIndex), players);
+  }
+
+  // Mobile reorder: drag is disabled on touch (the grip is hidden in card mode),
+  // so up/down buttons keep reordering possible on a phone.
+  async function movePlayer(index: number, dir: -1 | 1) {
+    const target = index + dir;
+    if (target < 0 || target >= players.length) return;
+    await persistOrder(arrayMove(players, index, target), players);
   }
 
   async function handleAdd() {
@@ -470,7 +482,7 @@ export default function RosterPage({
                 </thead>
                 <tbody>
                   <SortableContext items={players.map(p => p.id)} strategy={verticalListSortingStrategy}>
-                    {players.map(p => (
+                    {players.map((p, i) => (
                       <SortableRow
                         key={p.id}
                         player={p}
@@ -479,6 +491,9 @@ export default function RosterPage({
                         onToggle={handleToggleStatus}
                         dragDisabled={players.length < 2}
                         isDuplicateNumber={!!p.playerNumber && dupNumbers.has(p.playerNumber.trim())}
+                        index={i}
+                        count={players.length}
+                        onMove={movePlayer}
                       />
                     ))}
                   </SortableContext>
@@ -633,6 +648,9 @@ function SortableRow({
   onToggle,
   dragDisabled,
   isDuplicateNumber,
+  index,
+  count,
+  onMove,
 }: {
   player: RepRosterPlayer;
   base: string;
@@ -640,6 +658,9 @@ function SortableRow({
   onToggle: (player: RepRosterPlayer) => void;
   dragDisabled: boolean;
   isDuplicateNumber: boolean;
+  index: number;
+  count: number;
+  onMove: (index: number, dir: -1 | 1) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id, disabled: dragDisabled });
   const style = {
@@ -696,9 +717,32 @@ function SortableRow({
         </span>
       </td>
       <td className={`${styles.td} ${styles.rowActionCell}`}>
+        {/* Mobile-only reorder (drag is disabled on touch — the grip is hidden in card mode) */}
+        {!dragDisabled && (
+          <span className={styles.rosterMoveControls}>
+            <button
+              type="button"
+              className={styles.rosterMoveBtn}
+              aria-label={`Move ${[p.playerFirstName, p.playerLastName].filter(Boolean).join(' ')} up`}
+              disabled={index === 0}
+              onClick={() => onMove(index, -1)}
+            >
+              <ChevronUp size={16} />
+            </button>
+            <button
+              type="button"
+              className={styles.rosterMoveBtn}
+              aria-label={`Move ${[p.playerFirstName, p.playerLastName].filter(Boolean).join(' ')} down`}
+              disabled={index === count - 1}
+              onClick={() => onMove(index, 1)}
+            >
+              <ChevronDown size={16} />
+            </button>
+          </span>
+        )}
         <button
           type="button"
-          className="btn btn-ghost"
+          className={`btn btn-ghost ${styles.rosterStatusBtn}`}
           style={{ fontSize: '0.78rem', padding: '0.25rem 0.5rem', color: 'var(--white-45)', opacity: togglingId === p.id ? 0.5 : 1 }}
           disabled={togglingId === p.id}
           onClick={() => onToggle(p)}

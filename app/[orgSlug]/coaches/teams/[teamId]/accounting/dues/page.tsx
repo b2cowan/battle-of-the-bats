@@ -543,7 +543,7 @@ export default function CoachesDuesPage({
         <div className={styles.emptyState}>No active roster players found.</div>
       ) : (
         <>
-          <div className={styles.tableWrap}>
+          <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -566,22 +566,22 @@ export default function CoachesDuesPage({
                       style={{ cursor: 'pointer' }}
                       onClick={() => { setSelected(p); setEditingSchedule(false); setAddingCredit(false); setSaveError(''); }}
                     >
-                      <td className={styles.td}>
+                      <td className={styles.td} data-label="Player">
                         {[p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' ')}
                       </td>
-                      <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                      <td className={styles.td} data-label="Total Dues" style={{ fontVariantNumeric: 'tabular-nums' }}>
                         {p.schedule ? fmt(p.schedule.totalAmount) : '—'}
                       </td>
-                      <td className={styles.td} style={{ color: p.totalCredits > 0 ? '#4ade80' : 'rgba(255,255,255,0.3)', fontVariantNumeric: 'tabular-nums' }}>
+                      <td className={styles.td} data-label="Credits" style={{ color: p.totalCredits > 0 ? '#4ade80' : 'rgba(255,255,255,0.3)', fontVariantNumeric: 'tabular-nums' }}>
                         {p.totalCredits > 0 ? `-${fmt(p.totalCredits)}` : '—'}
                       </td>
-                      <td className={styles.td} style={{ color: '#4ade80', fontVariantNumeric: 'tabular-nums' }}>
+                      <td className={styles.td} data-label="Paid" style={{ color: '#4ade80', fontVariantNumeric: 'tabular-nums' }}>
                         {p.schedule ? fmt(p.paidAmount) : '—'}
                       </td>
-                      <td className={styles.td} style={{ color: balanceColor(p.rollingBalance), fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
+                      <td className={styles.td} data-label="Balance" style={{ color: balanceColor(p.rollingBalance), fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
                         {p.schedule ? fmt(p.rollingBalance) : '—'}
                       </td>
-                      <td className={styles.td}>
+                      <td className={styles.td} data-label="Status">
                         <span style={{ color, fontSize: '0.82rem', fontWeight: 500 }}>{label}</span>
                       </td>
                       <td className={styles.td}>

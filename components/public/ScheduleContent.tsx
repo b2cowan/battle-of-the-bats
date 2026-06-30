@@ -2,15 +2,15 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { Calendar, CalendarPlus, Trophy, List, LayoutTemplate, Search, ChevronDown, ChevronRight, Star, X, Megaphone } from 'lucide-react';
-import { Game, PublicTeam, Division, Tournament, Announcement } from '@/lib/types';
+import { Game, PublicTeam, Division, Tournament, Announcement, Venue } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import YearSelector from '@/components/YearSelector';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
-import { LogicSyncBracket } from '@/components/bracket/LogicSyncBracket';
-import { bracketRoundInfo, bracketRoundLabel, groupGamesByBracketId } from '@/lib/playoff-bracket';
+import { TieredBracket } from '@/components/bracket/TieredBracket';
+import { bracketRoundInfo, bracketRoundLabel, inferGamePool } from '@/lib/playoff-bracket';
 import { computePlacementStandings } from '@/lib/playoff-standings';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
@@ -103,6 +103,7 @@ interface Props {
 export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = false, initialData }: Props) {
   const [games, setGames]           = useState<Game[]>(() => initialData?.games ?? []);
   const [teams, setTeams]           = useState<PublicTeam[]>(() => initialData?.teams ?? []);
+  const [venues, setVenues]         = useState<Venue[]>(() => initialData?.venues ?? []);
   const [divisions, setDivisions]   = useState<Division[]>(() => initialData?.divisions ?? []);
   const [announcements, setAnnouncements] = useState<Announcement[]>(() => initialData?.announcements ?? []);
   // Session-only dismissal — a pinned rain-delay notice returns on the next visit
@@ -175,6 +176,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       setSelectedTournament(current);
       setGames(data?.games ?? []);
       setTeams(data?.teams ?? []);
+      setVenues(data?.venues ?? []);
       setDivisions(groups);
       setAnnouncements(data?.announcements ?? []);
       if (groups.length > 0) {
@@ -482,31 +484,10 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     });
   }
 
+  // Pool attribution shared with the public Standings + tiered bracket (single
+  // source of truth in lib/playoff-bracket) so every surface attributes identically.
   function inferPool(game: Game, allGames: Game[]): string | null {
-    for (const pool of pools) {
-      const bare = pool.name.replace(/^Pool\s+/i, '').trim();
-      const tag  = `Pool ${bare}`;
-      if (game.homePlaceholder?.includes(tag) || game.awayPlaceholder?.includes(tag)) return pool.name;
-    }
-    const ph = game.homePlaceholder || game.awayPlaceholder || '';
-    const winnerCode = ph.match(/(?:Winner|Loser) ([\w-]+)/)?.[1];
-    if (winnerCode) {
-      const source = allGames.find(g =>
-        g.bracketCode === winnerCode && g.isPlayoff && g.id !== game.id &&
-        (game.bracketId ? g.bracketId === game.bracketId : true)
-      );
-      if (source) return inferPool(source, allGames);
-    }
-    if (game.bracketId) {
-      for (const sibling of allGames) {
-        if (sibling.id === game.id || sibling.bracketId !== game.bracketId || !sibling.isPlayoff) continue;
-        for (const pool of pools) {
-          const bare = pool.name.replace(/^Pool\s+/i, '').trim();
-          if (sibling.homePlaceholder?.includes(`Pool ${bare}`) || sibling.awayPlaceholder?.includes(`Pool ${bare}`)) return pool.name;
-        }
-      }
-    }
-    return null;
+    return inferGamePool(game, allGames, pools);
   }
 
   const hasPoolPlaceholders = pools.length >= 2 && filtered.some(g =>
@@ -1249,64 +1230,15 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                   );
                 }
 
-                const bracketHasPools = pools.length >= 2 && bracketGames.some(g =>
-                  pools.some(p => {
-                    const bare = p.name.replace(/^Pool\s+/i, '').trim();
-                    return g.homePlaceholder?.includes(`Pool ${bare}`) || g.awayPlaceholder?.includes(`Pool ${bare}`);
-                  })
-                );
-
-                if (bracketHasPools) {
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
-                      {pools.map(pool => {
-                        const poolGames = bracketGames.filter(g => inferPool(g, bracketGames) === pool.name);
-                        if (poolGames.length === 0) return null;
-                        return (
-                          <div key={pool.id}>
-                            <PoolHeader name={`${formatPoolName(pool.name)} Playoffs`} />
-                            <LogicSyncBracket
-                              games={poolGames}
-                              teams={teams}
-                              tournamentId={selectedTournament!.id}
-                              highlightTeamId={followedTeamId ?? undefined}
-                              requireFinalization={requireFinalization}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                }
-
-                // Tiered (or per-bracket) split: pools don't drive it, but the games
-                // span ≥2 independent brackets (each tier its own bracket_id, reusing
-                // codes) — render one bracket per group so tiers stay separate.
-                const bracketGroups = groupGamesByBracketId(bracketGames);
-                if (bracketGroups.length > 1) {
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
-                      {bracketGroups.map((grp, i) => (
-                        <div key={grp.key}>
-                          <PoolHeader name={grp.label || `Bracket ${i + 1}`} />
-                          <LogicSyncBracket
-                            games={grp.games}
-                            teams={teams}
-                            tournamentId={selectedTournament!.id}
-                            highlightTeamId={followedTeamId ?? undefined}
-                            requireFinalization={requireFinalization}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  );
-                }
-
                 return (
-                  <LogicSyncBracket
+                  <TieredBracket
                     games={bracketGames}
                     teams={teams}
+                    pools={pools}
                     tournamentId={selectedTournament!.id}
+                    orgSlug={orgSlug}
+                    tournamentSlug={tournamentSlug ?? ''}
+                    venues={venues}
                     highlightTeamId={followedTeamId ?? undefined}
                     requireFinalization={requireFinalization}
                   />

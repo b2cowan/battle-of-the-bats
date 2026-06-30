@@ -14,7 +14,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home } from 'lucide-react';
 import NotificationBell from '@/components/notifications/NotificationBell';
-import WhatsNewButton from '@/components/whats-new/WhatsNewButton';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { resolvePhase, isWithinEventDates, PHASE_LABEL } from '@/lib/tournament-phase';
@@ -57,7 +56,6 @@ export default function AdminMobileTopBar() {
       </div>
       {currentOrg?.id && (
         <div className={`${styles.bellSlot} flex items-center gap-1`}>
-          <WhatsNewButton />
           <NotificationBell orgId={currentOrg.id} />
         </div>
       )}

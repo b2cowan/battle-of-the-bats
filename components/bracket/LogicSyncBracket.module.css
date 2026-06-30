@@ -39,3 +39,23 @@
     animation: none;
   }
 }
+
+/* Clickable match card — the whole node is a link to the game-detail page.
+ * The affordance is a border ring that lights up on hover / keyboard focus
+ * (reusing the live-node primary border in the card's own visual vocabulary).
+ * No transform — a scale would desync the SVG connectors and layout math. */
+.clickableNode {
+  cursor: pointer;
+}
+.clickableNode:focus-visible {
+  outline: none;
+}
+.hoverRing {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+.clickableNode:hover .hoverRing,
+.clickableNode:focus-visible .hoverRing {
+  opacity: 1;
+}

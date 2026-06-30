@@ -12,4 +12,6 @@ export interface BracketNode {
   date: string;
   time: string;
   status: 'scheduled' | 'submitted' | 'completed' | 'cancelled';
+  /** Short field/diamond label resolved LIVE from venues (e.g. "Diamond 2"); '' when unknown. */
+  venueLabel?: string;
 }

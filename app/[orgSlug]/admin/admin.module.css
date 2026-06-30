@@ -22,6 +22,12 @@
 
 .adminMainFocused {
   min-height: 100vh;
+  /* Focused flows (help, onboarding) scroll on the document, not inside .adminMain.
+     .adminMain sets overflow-y:auto for the standard app-shell scroll; left in place
+     that intervening scroll container neutralises the help TOC's position:sticky, so
+     the side nav never pins. Restore natural document scroll here (the mobile rules
+     already do this for small screens). */
+  overflow: visible;
 }
 
 .adminPreviewShell {

@@ -8,6 +8,44 @@
 
 ---
 
+### 2026-06-29 — Tryout & Evaluation suite is bundled into the Premium Coaches Portal (no per-player fee)
+**Status:** Decided (ratified 2026-06-29)
+**Decision:** The full tryout & player-evaluation suite — candidate check-in/bib, blind scoring, configurable rubrics, multi-evaluator scoring, ranked roster decisions, offer/release comms — and the broader development/engagement features on the Coaches Portal roadmap are **included in the existing Premium Coaches Portal at no additional charge** ($29/mo per team standalone, or included for a club's whole coaching staff under Club). **No per-player fee, no per-tryout fee, no separate add-on, no new plan, no price change.** Lone open packaging sub-question: whether the compliance/audit export (consent log) leans Club-tier — default is keep it all-Premium unless the owner wants a Club hook. (Price points themselves are unchanged and remain governed by `PLAN_PRICING_FACTS.md`.)
+**Rationale:** Bundling **is** the competitive wedge. Every dedicated tryout/evaluation tool monetizes per-player ($4–$10/player/yr — TeamGenius, SkillShark) or standalone (~$799/yr — Rizzler); a 60-player club pays $240–$600/yr elsewhere and **$0 incremental here**, on a tool that also runs their roster, lineup, schedule, and accounting. A per-player or add-on surcharge would discard that advantage and tax the exact coach-adoption loop the portal is built on. Logged so no future chat re-introduces a per-player tryout charge. From the 2026-06-29 4-pass Coaches Portal brainstorm + owner ratification.
+**Affects:** packaging/inclusions (what the Premium Coaches Portal includes), positioning (bundled-vs-per-player stance). **No price/plan/capacity value changes.**
+**Handoff:**
+HANDOFF → `/billing` (when a tryout/eval phase is built)
+- Gate the suite to the Premium Coaches Portal plan (no per-player meter, no add-on SKU); reflect the inclusion in `PLAN_PRICING_FACTS.md` + `lib/plan-config.ts` in the same unit of work; run the drift check. Resolve the consent-log Club-tier sub-question with the owner.
+HANDOFF → `/marketing` (later, near ship — not yet)
+- Frame tryout/evaluation as **included** in the Premium Coaches Portal; lead with "no per-player fees" as the explicit contrast vs per-player competitors. Do not write surface copy until `/plan` defines the surface.
+**Relates to:** the 2026-06-22 "whole coaching staff included in Club / retire per-team meter" + "$29 standalone" decisions (this extends the same bundled posture to tryout/eval); the two 2026-06-29 Coaches Portal scope decisions below (no play-by-play; aggregation upload-only); the active `COACHES_PORTAL_TRYOUTS_EVAL_PLAN.md` + PM brief.
+
+---
+
+### 2026-06-29 — Coaches Portal stays operations-first: no live play-by-play / scorekeeping product line
+**Status:** Decided (ratified 2026-06-29)
+**Decision:** FieldLogicHQ will **not** build a live scorekeeping / play-by-play (per-at-bat, per-pitch) logging surface in the Coaches Portal. Consequently the entire **pro-analytics tier that depends on play-by-play data is OUT of scope** for now — explicitly: Quality At-Bat %, situational/RISP & count splits, opponent scout cards, win-probability "game story" graphics, auto-written post-game narratives, and the proactive "coaching pulse" regression-alert digest. The Premium Coaches Portal competes on **coaching operations + tryouts/evaluation + player development/engagement**, not in-game stat capture. All planned Coaches Portal roadmap work is chosen to avoid play-by-play: the active **Tryouts & Evaluation** project (Phases 1–2) and the planned Phases 3 (roster/development), 4 (engagement/retention), 5 (pitcher safety — pitch-*count* per outing only, not pitch-by-pitch).
+**Rationale:** A scorekeeping/analytics capability is a **different product identity** (it competes with GameChanger, not TeamSnap), depends on sustained per-at-bat data discipline that **volunteer coaches won't reliably maintain** on a phone mid-game, and is a months-long platform bet. A 4-pass multi-agent brainstorm (2026-06-29: tryout/eval ideation → premier-suite "wow" scan → owner-filtered consolidation) confirmed every premium-analytics "wow" feature sits on a play-by-play foundation the product deliberately won't build. Owner ruling: stay operations-first; the higher-confidence value (run tryout day, evaluate players, track development, drive engagement) needs none of it. **No pricing/packaging/gate change** — this is a product-scope and roadmap-sequencing boundary.
+**Affects:** roadmap sequencing (defines what Coaches Portal phases are/aren't built), product identity/positioning (operations + development, not analytics). No price/packaging/gate values change.
+**Handoff:**
+HANDOFF → `/plan`
+- Treat "no play-by-play / scorekeeping surface" as a **standing scope guardrail** for all Coaches Portal planning. The active `docs/projects/active/COACHES_PORTAL_TRYOUTS_EVAL_PLAN.md` (+ PM brief) already reflects it; future phase plans (P3–P5) must stay within it. Pitcher safety (P5) is **pitch-count-per-outing**, not per-pitch logging (the optional pitch-arsenal charting idea, which would need per-pitch entry, is flagged optional/out unless a pitching-coach audience asks).
+**Relates to:** the 2026-06-29 user-upload-only stat-aggregation decision below (the *only* sanctioned path to "our own metrics" given no play-by-play); the 2026-06-25 Premium Coaches Portal separate-models / cancel-only decisions; the 2026-06-28 "premium coach is a section in the one app" decision.
+
+---
+
+### 2026-06-29 — Cross-platform stat aggregation is user-upload-only (no vendor contracts near-term)
+**Status:** Decided (direction + constraint; the feature itself is **parked**, not scheduled) — ratified 2026-06-29
+**Decision:** The future vision of FieldLogicHQ **aggregating a player's stats from other platforms and producing our own metrics** is **parked** (not now). When pursued, the **near-term path is coach-initiated upload of data the coach already owns** — i.e. a CSV the coach exports from a tool they already pay for (GameChanger, Blast, Pocket Radar, etc.) and uploads to us. That path needs **no vendor contract** because the coach owns the export. **Live API integrations with those vendors (which require contracts) are a deliberately later, bigger step — not the first move.** Established fact behind the constraint: **there is no free third-party source of a specific youth player's stats** (that data lives inside paid tools); the only genuinely free public datasets are **pro-league** stats, useful solely as generic benchmark/reference lines, never per-player youth data.
+**Rationale:** Aggregation is the credible long-term answer to "produce our own stats" **without** building play-by-play (see the decision above), but live integrations carry contract, cost, and dependency risk that isn't warranted pre-scale. User-initiated upload captures most of the value at near-zero partnership risk and keeps us as the **aggregation/insight layer** rather than a data-pipeline operator. Surfaced and ruled on by the owner during the 2026-06-29 Coaches Portal strategy consolidation.
+**Affects:** roadmap sequencing (parks a feature + fixes its eventual build shape), monetization/partnership posture (no near-term vendor deals), product positioning (aggregation layer, not scorekeeper). **No pricing/packaging/gate change.**
+**Handoff:**
+HANDOFF → `/plan` (later, when un-parked)
+- When this is scheduled, scope it as **import-your-own-export first** (coach-uploaded CSV → mapped onto our player profiles/metrics), explicitly **deferring vendor API integrations** to a later phase that would require contract/legal review. Do not sequence an API integration ahead of the upload path.
+**Relates to:** the 2026-06-29 "no play-by-play" decision above (this is the sanctioned alternative route to our-own-metrics); the "bring-your-own-data bridge" concept from the premier-suite scan.
+
+---
+
 ### 2026-06-29 — Single source of truth for product-defining data (governance principle)
 **Status:** Decided (ratified 2026-06-29)
 **Decision:** Every **product-defining data element** — plan prices, capacity/limits, availability/gating, trial lengths, founding-season dates, plan/module labels, and "what a plan includes" — has **ONE designated authority**. Every other surface (customer copy, emails, the operator console, docs) **reads/derives** from that authority and **never copies** it. Two binding corollaries: **(a) no "ghost controls"** — an operator control must *enforce* what it displays or be removed; **(b) drift is made un-mergeable** via a CI ratchet, extending the pattern already used for the DB data-dictionary and design tokens to plan facts. The canonical human-readable record remains **`PLAN_PRICING_FACTS.md`** (kept matched to `lib/plan-config.ts`). **This is governance / data-quality — NOT a pricing or packaging change; no price, plan, gate, or capacity value changes.**

@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { flushSync } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, X } from 'lucide-react';
+import { Search, X, List } from 'lucide-react';
 import type { HelpFaq, HelpSection } from '@/lib/help-content';
 import { resolveSectionId, resolveFaqId } from '@/lib/help-content';
 import HelpSectionBlock from './HelpSectionBlock';
+import WhatsNewHelpLink from '@/components/whats-new/WhatsNewHelpLink';
 import styles from './help.module.css';
 
 interface HelpPageLayoutProps {
@@ -68,6 +69,14 @@ export default function HelpPageLayout({
   faqs = EMPTY_FAQS,
 }: HelpPageLayoutProps) {
   const [query, setQuery] = useState('');
+  // Mobile-only: the "Sections" drawer (the section selector) open state.
+  const [tocOpen, setTocOpen] = useState(false);
+  const closeToc = () => setTocOpen(false);
+  // On mobile the bar (What's New + search) is fixed to the top of the screen.
+  // Measure it so the article can be padded clear of it (a fixed bar is out of
+  // flow, so the content would otherwise start underneath it).
+  const tocBarRef = useRef<HTMLDivElement>(null);
+  const [barHeight, setBarHeight] = useState(0);
   // SSR-safe: no hash read during render; applied after mount via effect below.
   // Track which TOC group is currently expanded (auto-driven by scroll-spy).
   // null means "all groups revealed" (search mode).
@@ -227,37 +236,74 @@ export default function HelpPageLayout({
     return () => observer.disconnect();
   }, [groupedSections]);
 
+  // Keep the measured bar height current — it changes with the search-result meta
+  // line and across the mobile/desktop breakpoint.
+  useEffect(() => {
+    const el = tocBarRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const update = () => setBarHeight(el.getBoundingClientRect().height);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const hasResults = sectionMatches.length > 0 || faqMatches.length > 0;
+  const pageStyle = barHeight
+    ? ({ '--help-bar-h': `${barHeight}px` } as CSSProperties)
+    : undefined;
 
   return (
-    <div className={styles.helpPage}>
+    <div className={styles.helpPage} style={pageStyle}>
       {/* ── Sticky TOC sidebar ─────────────────────────────────────────────── */}
       <aside className={styles.helpSidePanel} aria-label="Help navigation">
         <nav className={styles.helpTocSticky} aria-label="Guide contents">
 
-          {/* In-guide search */}
+          {/* The bar: What's New + search. Sticky in the column on desktop; fixed
+              to the top of the screen on mobile (measured so the article clears it). */}
+          <div className={styles.helpTocBar} ref={tocBarRef}>
+
+          {/* What's New lives at the top of the side nav (not the article header)
+              so it stays reachable while scrolling the guide. */}
+          <div className={styles.helpSideWhatsNew}>
+            <WhatsNewHelpLink />
+          </div>
+
+          {/* In-guide search + (mobile) section-drawer toggle */}
           <div className={styles.helpSearchPanel}>
-            <div className={styles.helpSearchBox}>
-              <Search size={15} className={styles.helpSearchIcon} />
-              <input
-                id="help-search"
-                type="search"
-                value={query}
-                onChange={event => setQuery(event.target.value)}
-                placeholder={searchPlaceholder ?? 'Search this guide...'}
-                className={styles.helpSearchInput}
-                aria-label="Search this guide"
-              />
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => setQuery('')}
-                  className={styles.helpSearchClear}
-                  aria-label="Clear search"
-                >
-                  <X size={13} />
-                </button>
-              )}
+            <div className={styles.helpSearchRow}>
+              <div className={styles.helpSearchBox}>
+                <Search size={15} className={styles.helpSearchIcon} />
+                <input
+                  id="help-search"
+                  type="search"
+                  value={query}
+                  onChange={event => setQuery(event.target.value)}
+                  placeholder={searchPlaceholder ?? 'Search this guide...'}
+                  className={styles.helpSearchInput}
+                  aria-label="Search this guide"
+                />
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    className={styles.helpSearchClear}
+                    aria-label="Clear search"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+              <button
+                type="button"
+                className={styles.helpTocToggle}
+                onClick={() => setTocOpen(o => !o)}
+                aria-expanded={tocOpen}
+                aria-controls="help-toc-drawer"
+              >
+                <List size={15} aria-hidden />
+                Sections
+              </button>
             </div>
             {hasSearch && (
               <p className={styles.helpSearchMeta}>
@@ -267,10 +313,26 @@ export default function HelpPageLayout({
               </p>
             )}
           </div>
+          </div>
 
-          {/* TOC groups */}
+          {/* Section list — inline on desktop; a pinned section-selector drawer on mobile */}
           {groupedSections.length > 0 && (
-            <div className={styles.helpTocGroups}>
+            <nav
+              id="help-toc-drawer"
+              className={`${styles.helpTocGroups} ${tocOpen ? styles.helpTocGroupsOpen : ''}`}
+              aria-label="Guide sections"
+            >
+              <div className={styles.helpTocDrawerHead}>
+                <span>Sections</span>
+                <button
+                  type="button"
+                  onClick={closeToc}
+                  className={styles.helpTocDrawerClose}
+                  aria-label="Close sections"
+                >
+                  <X size={16} aria-hidden />
+                </button>
+              </div>
               {groupedSections.map(({ group, subgroups }, gi) => {
                 // TOC excludes hideFromContents sections (they still render in the body).
                 const visibleSubgroups = subgroups
@@ -308,6 +370,7 @@ export default function HelpPageLayout({
                               onClick={(e) => {
                                 e.preventDefault();
                                 window.history.replaceState(null, '', `#${id}`);
+                                closeToc();
                                 revealAndScroll(id);
                               }}
                             >
@@ -320,7 +383,7 @@ export default function HelpPageLayout({
                   </div>
                 );
               })}
-            </div>
+            </nav>
           )}
         </nav>
       </aside>

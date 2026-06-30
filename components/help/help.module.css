@@ -253,12 +253,17 @@
 /* ── Side panel & sticky TOC ─────────────────────────────────────────────── */
 .helpSidePanel {
   min-width: 0;
+  /* Stretch to the full grid-row height (the tall article column) so the sticky
+     TOC inside has room to travel. .helpPage uses align-items:start, which would
+     otherwise shrink this column to the nav's own height — leaving the sticky
+     nothing to stick against, so it falls away the moment you scroll. */
+  align-self: stretch;
 }
 
 .helpTocSticky {
   position: sticky;
-  top: 82px;
-  max-height: calc(100vh - 104px);
+  top: 1.5rem;
+  max-height: calc(100vh - 3rem);
   overflow-y: auto;
   padding-right: 2px;
   /* quiet scrollbar */
@@ -270,9 +275,35 @@
   min-width: 0;
 }
 
+/* What's New, pinned at the top of the sticky TOC */
+.helpSideWhatsNew {
+  margin-bottom: 0.9rem;
+}
+
 /* Search box inside the sticky TOC */
 .helpSearchPanel {
   margin-bottom: 1.1rem;
+}
+
+/* Search box + (mobile) "Sections" drawer toggle share a row. */
+.helpSearchRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.helpSearchRow .helpSearchBox {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Mobile-only affordances — hidden on desktop, switched on in the media query. */
+.helpTocToggle {
+  display: none;
+}
+
+.helpTocDrawerHead {
+  display: none;
 }
 
 .helpSearchBox {
@@ -847,15 +878,104 @@
 @media (max-width: 860px) {
   .helpPage {
     grid-template-columns: 1fr;
-    gap: 1.25rem;
+    gap: 0;
   }
 
+  /* The bar is fixed to the top of the screen; its wrapper goes inert so it no
+     longer reserves space in the (now single-column) flow. */
   .helpTocSticky {
     position: static;
     max-height: none;
-    border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
-    padding-bottom: 1rem;
+    overflow: visible;
+  }
+
+  .helpTocBar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    padding: 0.7rem 1rem;
+    background: #080c14;
+    border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  }
+
+  /* Clear the fixed bar. Its height is measured into --help-bar-h; the fallback
+     covers the first paint before measurement. */
+  .helpMain {
+    padding-top: calc(var(--help-bar-h, 92px) + 0.5rem);
+  }
+
+  .helpSideWhatsNew {
     margin-bottom: 0.5rem;
+  }
+
+  .helpSearchPanel {
+    margin-bottom: 0;
+  }
+
+  /* The "Sections" button that opens the drawer, next to the search box. */
+  .helpTocToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    padding: 0 0.8rem;
+    font-family: var(--font-data);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--logic-lime);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+    border-radius: 2px;
+    cursor: pointer;
+  }
+
+  /* Section selector: hidden until opened, then a full-screen drawer. */
+  .helpTocGroups {
+    display: none;
+  }
+
+  .helpTocGroupsOpen {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    overflow-y: auto;
+    padding: 0 1.25rem 2rem;
+    background: var(--pitch-black, #07090f);
+  }
+
+  .helpTocGroupsOpen .helpTocDrawerHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    padding: 0.9rem 0;
+    margin-bottom: 0.4rem;
+    background: var(--pitch-black, #07090f);
+    border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+    font-family: var(--font-data);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--logic-lime);
+  }
+
+  .helpTocDrawerClose {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: none;
+    color: var(--white-40, rgba(255, 255, 255, 0.5));
+    cursor: pointer;
   }
 
   .helpTocGroupCollapsed .helpTocChildren {

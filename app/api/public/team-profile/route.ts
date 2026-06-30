@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getOrganizationBySlug, getTournamentsByOrg, getTeams, getDivisions, getGames } from '@/lib/db';
+import { getOrganizationBySlug, getTournamentsByOrg, getTeams, getDivisions, getGames, getVenues } from '@/lib/db';
 import { computeTournamentStandings } from '@/lib/tie-breakers';
 import type { Game } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { toPublicTeam } from '@/lib/public-tournament-data';
+import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { decidedFinalFor } from '@/lib/champions';
 
 export const dynamic = 'force-dynamic';
@@ -32,10 +33,11 @@ export const GET = withObservability(async (req: Request) => {
   const tournament = tournaments.find(t => t.slug === tournamentSlug) ?? null;
   if (!tournament) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const [teams, divisions, games] = await Promise.all([
+  const [teams, divisions, games, venues] = await Promise.all([
     getTeams(tournament.id, { admin: true }),
     getDivisions(tournament.id, { admin: true }),
     getGames(tournament.id, { admin: true }),
+    getVenues(tournament.id, { admin: true, includeFacilities: true }),
   ]);
 
   const team = teams.find(t => t.id === teamId);
@@ -113,6 +115,9 @@ export const GET = withObservability(async (req: Request) => {
     })
     .map(g => ({
       ...g,
+      // Resolve the venue label LIVE so a facility rename ("2" → "Diamond 2")
+      // shows immediately instead of the snapshot baked onto the game at schedule time.
+      location: resolveGameVenueLabel(g, venues),
       homeTeamName: teamMap[g.homeTeamId] ?? g.homePlaceholder ?? 'TBD',
       awayTeamName: teamMap[g.awayTeamId] ?? g.awayPlaceholder ?? 'TBD',
     }));

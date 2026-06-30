@@ -754,6 +754,55 @@ export function groupGamesByBracketId<T extends { bracketId?: string | null; bra
   return enriched.map(({ key, label, games }) => ({ key, label, games }));
 }
 
+/** Minimal shape needed to attribute a playoff game to its source pool. */
+export interface PoolInferableGame {
+  id: string;
+  isPlayoff?: boolean;
+  bracketId?: string;
+  bracketCode?: string;
+  homePlaceholder?: string;
+  awayPlaceholder?: string;
+}
+
+/**
+ * Attribute a playoff game to the pool it descends from, by walking its
+ * `Pool X` / `Winner <code>` / `Loser <code>` placeholders (and, as a last
+ * resort, its bracket-id siblings). Returns the matching pool name, or null when
+ * the game can't be tied to a pool (cross-pool / un-pooled bracket). Shared by
+ * the public Schedule list, the playoff bracket split, and the tiered bracket so
+ * pool attribution stays identical across surfaces.
+ */
+export function inferGamePool<G extends PoolInferableGame>(
+  game: G,
+  allGames: G[],
+  pools: { name: string }[],
+): string | null {
+  for (const pool of pools) {
+    const bare = pool.name.replace(/^Pool\s+/i, '').trim();
+    const tag = `Pool ${bare}`;
+    if (game.homePlaceholder?.includes(tag) || game.awayPlaceholder?.includes(tag)) return pool.name;
+  }
+  const ph = game.homePlaceholder || game.awayPlaceholder || '';
+  const winnerCode = ph.match(/(?:Winner|Loser) ([\w-]+)/)?.[1];
+  if (winnerCode) {
+    const source = allGames.find(g =>
+      g.bracketCode === winnerCode && g.isPlayoff && g.id !== game.id &&
+      (game.bracketId ? g.bracketId === game.bracketId : true),
+    );
+    if (source) return inferGamePool(source, allGames, pools);
+  }
+  if (game.bracketId) {
+    for (const sibling of allGames) {
+      if (sibling.id === game.id || sibling.bracketId !== game.bracketId || !sibling.isPlayoff) continue;
+      for (const pool of pools) {
+        const bare = pool.name.replace(/^Pool\s+/i, '').trim();
+        if (sibling.homePlaceholder?.includes(`Pool ${bare}`) || sibling.awayPlaceholder?.includes(`Pool ${bare}`)) return pool.name;
+      }
+    }
+  }
+  return null;
+}
+
 export interface BracketTimingGame {
   code?: string | null;
   home?: string | null;

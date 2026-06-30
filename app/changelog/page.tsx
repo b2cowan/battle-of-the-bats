@@ -6,6 +6,7 @@ import {
   CATEGORY_LABELS,
   type ReleaseCategory,
 } from '@/lib/release-notes';
+import MarkReleasesSeen from '@/components/whats-new/MarkReleasesSeen';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -35,6 +36,7 @@ const CATEGORY_CLASS: Record<ReleaseCategory, string> = {
 export default function ChangelogPage() {
   return (
     <main className="bg-pitch-black min-h-screen">
+      <MarkReleasesSeen />
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className={styles.hero}>

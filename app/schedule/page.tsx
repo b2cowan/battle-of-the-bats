@@ -4,6 +4,7 @@ import { Calendar, Clock, MapPin, Trophy, List, LayoutTemplate } from 'lucide-re
 import { getGames, getTeams, getDivisions, getVenues, getTournaments } from '@/lib/db';
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
+import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { bracketRoundInfo, computeBracketColumns } from '@/lib/playoff-bracket';
 import styles from './schedule.module.css';
@@ -174,7 +175,7 @@ export default function SchedulePage() {
       setLoading(true);
       setGames(await getGames(selectedTournament!.id));
       setTeams(await getTeams(selectedTournament!.id));
-      setVenues(await getVenues(selectedTournament!.id));
+      setVenues(await getVenues(selectedTournament!.id, { includeFacilities: true }));
       const groups = await getDivisions(selectedTournament!.id);
       setDivisions(groups);
       if (!activeGroup && groups.length > 0) setActiveGroup(groups[0].id);
@@ -428,7 +429,7 @@ export default function SchedulePage() {
                                 </div>
                                 <div className={styles.gameMeta}>
                                   <span className="badge badge-primary">{activeG?.name ?? ''}</span>
-                                  <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
+                                  <LocationLink location={resolveGameVenueLabel(game, venues)} venue={getVenue(game.venueId)} size="sm" />
                                 </div>
                                 {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}
                               </div>
@@ -475,7 +476,7 @@ export default function SchedulePage() {
                                     </div>
                                     <div className={styles.gameMeta}>
                                       <span className="badge badge-primary">{game.bracketCode || 'Playoff'}</span>
-                                      <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
+                                      <LocationLink location={resolveGameVenueLabel(game, venues)} venue={getVenue(game.venueId)} size="sm" />
                                     </div>
                                     {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}
                                   </div>
@@ -511,7 +512,7 @@ export default function SchedulePage() {
                           <span className="badge badge-primary">
                             {game.isPlayoff ? (game.bracketCode || 'Playoff') : (divisions.find(g => g.id === game.divisionId)?.name ?? '')}
                           </span>
-                          <LocationLink location={game.location} venue={getVenue(game.venueId)} size="sm" />
+                          <LocationLink location={resolveGameVenueLabel(game, venues)} venue={getVenue(game.venueId)} size="sm" />
                         </div>
                         {game.notes && <p className={styles.gameNotes}>{game.notes}</p>}
                       </div>

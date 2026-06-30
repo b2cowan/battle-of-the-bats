@@ -683,7 +683,7 @@ export default async function TournamentHomeContent({
               </div>
               <div className={styles.statDivider} />
               <div className={styles.stat}>
-                <span className={allAgeStyle ? `${styles.statNum} ${styles.ageRangeText}` : styles.statNum}>{thirdStatValue}</span>
+                <span className={allAgeStyle && thirdStatValue.includes('-') ? `${styles.statNum} ${styles.ageRangeText}` : styles.statNum}>{thirdStatValue}</span>
                 <span className={styles.statLabel}>{thirdStatLabel}</span>
               </div>
             </div>

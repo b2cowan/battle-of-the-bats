@@ -1,6 +1,6 @@
 'use client';
-import { use, useState, useEffect, useCallback } from 'react';
-import { Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Clock3, Plus, Save, X, Trophy, Swords, Shield, Dumbbell, Users, GripVertical } from 'lucide-react';
+import { use, useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
+import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, CircleHelp, CircleSlash, Clock3, Plus, X, Trophy, Swords, Shield, Dumbbell, Users, GripVertical } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -24,7 +24,7 @@ import {
   type ExportColumnDef, type ICSEventInput, type OrgPdfSettings, type LineupPosterPlayer,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
-import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote } from 'lucide-react';
+import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, Undo2, Redo2, Eraser, Printer } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import styles from '../../../coaches.module.css';
 import type {
@@ -365,10 +365,19 @@ function sortDayEvents(list: RepTeamEvent[]): RepTeamEvent[] {
 
 // ── Components ────────────────────────────────────────────────────────────────
 
+// Defensive: a bad import / seed can leave a name part as the literal string
+// "null"/"undefined" (truthy, so a plain filter(Boolean) keeps it) — treat those as blank.
+function cleanNamePart(part: string | null | undefined): string {
+  const s = (part ?? '').trim();
+  return s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined' ? '' : s;
+}
+
+function playerName(player: RepRosterPlayer): string {
+  return [cleanNamePart(player.playerFirstName), cleanNamePart(player.playerLastName)].filter(Boolean).join(' ');
+}
+
 function playerDisplayName(player: RepRosterPlayer) {
-  return [player.playerNumber ? `#${player.playerNumber}` : '', player.playerFirstName, player.playerLastName]
-    .filter(Boolean)
-    .join(' ');
+  return [player.playerNumber ? `#${player.playerNumber}` : '', playerName(player)].filter(Boolean).join(' ');
 }
 
 function isLineupEvent(event: RepTeamEvent | null) {
@@ -422,7 +431,7 @@ function errorMessage(error: unknown, fallback: string) {
 // One drag-sortable lineup row. Batting order = drag position (auto-numbered), so duplicate
 // slot numbers are impossible. Lives in this module so it shares styles + helpers.
 function SortableLineupRow({
-  row, battingNumber, mode, inningCount, onStarterToggle, onPositionChange,
+  row, battingNumber, mode, inningCount, onStarterToggle, onPositionChange, index, count, onMove,
 }: {
   row: LineupPlayerRow;
   battingNumber: string;
@@ -430,6 +439,9 @@ function SortableLineupRow({
   inningCount: number;
   onStarterToggle: (playerId: string, checked: boolean) => void;
   onPositionChange: (playerId: string, inning: number, value: string) => void;
+  index: number;
+  count: number;
+  onMove: (index: number, dir: -1 | 1) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.player.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
@@ -437,22 +449,32 @@ function SortableLineupRow({
     <tr ref={setNodeRef} style={style}>
       <td>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+          {/* Desktop: drag grip. Mobile: up/down arrows (grip is hidden on touch). */}
           <button
             type="button"
             aria-label={`Drag to reorder ${playerDisplayName(row.player)} in the batting order`}
+            className={styles.lineupGrip}
             {...attributes}
             {...listeners}
             style={{ background: 'none', border: 'none', padding: 2, lineHeight: 0, cursor: 'grab', color: 'rgba(255,255,255,0.35)', touchAction: 'none' }}
           >
             <GripVertical size={14} />
           </button>
+          <span className={styles.lineupMoveControls}>
+            <button type="button" className={styles.lineupMoveBtn} aria-label={`Move ${playerDisplayName(row.player)} up`} disabled={index === 0} onClick={() => onMove(index, -1)}>
+              <ChevronUp size={14} />
+            </button>
+            <button type="button" className={styles.lineupMoveBtn} aria-label={`Move ${playerDisplayName(row.player)} down`} disabled={index === count - 1} onClick={() => onMove(index, 1)}>
+              <ChevronDown size={14} />
+            </button>
+          </span>
           <span style={{ minWidth: '1.2ch', textAlign: 'center', fontVariantNumeric: 'tabular-nums', color: battingNumber ? 'var(--white-90)' : 'rgba(255,255,255,0.3)' }}>
             {battingNumber || '–'}
           </span>
         </div>
       </td>
       {mode === 'nine_player' && (
-        <td>
+        <td className={styles.lineupColStart}>
           <input
             type="checkbox"
             checked={row.starter}
@@ -539,119 +561,6 @@ function EventChip({ event, onClick, dayKey }: { event: RepTeamEvent; onClick: (
   );
 }
 
-// Season-record categories + their default inclusion. Owner-decided default = League + Tournament
-// count, Scrimmage excluded; the coach can toggle each and the choice is remembered per team.
-const WLT_CATS: { key: RepEventType; label: string }[] = [
-  { key: 'league_game', label: 'League' },
-  { key: 'tournament_game', label: 'Tournament' },
-  { key: 'scrimmage', label: 'Scrimmage' },
-];
-const WLT_DEFAULT: Record<string, boolean> = { league_game: true, tournament_game: true, scrimmage: false };
-
-function tallyResults(list: RepTeamEvent[]) {
-  return {
-    w: list.filter(e => e.result === 'win').length,
-    l: list.filter(e => e.result === 'loss').length,
-    t: list.filter(e => e.result === 'tie').length,
-  };
-}
-
-function WLTWidget({ events, teamId }: { events: RepTeamEvent[]; teamId: string }) {
-  const storageKey = `flhq.coachWlt.${teamId}`;
-  const [included, setIncluded] = useState<Record<string, boolean>>(WLT_DEFAULT);
-  const [breakdownOpen, setBreakdownOpen] = useState(false);
-
-  // Remembered choice loads after mount (avoids an SSR/hydration mismatch); defaults stand until then.
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) setIncluded({ ...WLT_DEFAULT, ...JSON.parse(raw) });
-    } catch { /* ignore unreadable storage */ }
-  }, [storageKey]);
-
-  function toggle(key: string) {
-    setIncluded(prev => {
-      const next = { ...prev, [key]: !prev[key] };
-      try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch { /* ignore */ }
-      return next;
-    });
-  }
-
-  // Any finalized, non-cancelled game across the three game types is a candidate; the widget only
-  // appears once at least one exists (so the toggles are discoverable even if a category is off).
-  const candidates = events.filter(e => GAME_EVENT_TYPES.includes(e.eventType) && e.result && e.status !== 'cancelled');
-  if (!candidates.length) return null;
-
-  const { w, l, t } = tallyResults(candidates.filter(e => included[e.eventType]));
-
-  // Scope caption — states exactly what the number counts, so a "0–0" beside a visible WIN
-  // (e.g. a scrimmage that's excluded by default) never reads as broken.
-  const activeLabels = WLT_CATS.filter(c => included[c.key]).map(c => c.label);
-  const scope = activeLabels.length === 0
-    ? 'No categories selected'
-    : activeLabels.length === WLT_CATS.length
-      ? 'All games'
-      : activeLabels.join(' + ');
-
-  return (
-    <div className={styles.wltWidget}>
-      <span className={styles.wltLabel}>Season Record</span>
-      <div className={styles.wltMain}>
-        <div className={styles.wltRow}>
-          <span className={styles.wltW}>{w}<small>W</small></span>
-          <span className={styles.wltSep}>–</span>
-          <span className={styles.wltL}>{l}<small>L</small></span>
-          {t > 0 && <><span className={styles.wltSep}>–</span><span className={styles.wltT}>{t}<small>T</small></span></>}
-        </div>
-        <span className={styles.wltScope}>{scope}</span>
-      </div>
-      <div className={styles.wltControls}>
-        <span className={styles.wltCountLabel}>Counting:</span>
-        <div className={styles.wltToggles} role="group" aria-label="Include in season record">
-          {WLT_CATS.map(c => (
-            <button
-              key={c.key}
-              type="button"
-              aria-pressed={!!included[c.key]}
-              className={`${styles.wltToggle} ${included[c.key] ? styles.wltToggleActive : ''}`}
-              onClick={() => toggle(c.key)}
-            >
-              {included[c.key] && <Check size={12} aria-hidden />}
-              {c.label}
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          className={styles.wltBreakdownToggle}
-          onClick={() => setBreakdownOpen(o => !o)}
-          aria-expanded={breakdownOpen}
-        >
-          {breakdownOpen ? 'Hide breakdown' : 'Breakdown'}
-        </button>
-      </div>
-      {breakdownOpen && (
-        <div className={styles.wltBreakdown}>
-          {WLT_CATS.map(c => {
-            const cat = tallyResults(candidates.filter(e => e.eventType === c.key));
-            const total = cat.w + cat.l + cat.t;
-            const on = !!included[c.key];
-            return (
-              <div key={c.key} className={styles.wltBreakdownRow} data-on={on ? 'true' : 'false'}>
-                <span className={styles.wltBreakdownLabel}>
-                  <span className={styles.wltBreakdownDot} aria-hidden />
-                  {c.label}
-                </span>
-                <span className={styles.wltBreakdownVal}>{total ? `${cat.w}–${cat.l}${cat.t ? `–${cat.t}` : ''}` : '—'}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function CoachesSchedulePage({
@@ -674,7 +583,7 @@ export default function CoachesSchedulePage({
   const [cursorDate, setCursorDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   const [selectedEvent, setSelectedEvent] = useState<RepTeamEvent | null>(null);
-  const [slideTab, setSlideTab] = useState<'attendance' | 'lineup' | 'result'>('attendance');
+  const [slideTab, setSlideTab] = useState<'attendance' | 'lineup'>('attendance');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   // Whether the event being edited belongs to a recurring series (drives the "this / future / all"
@@ -710,7 +619,9 @@ export default function CoachesSchedulePage({
   const [lineupNotice, setLineupNotice] = useState('');
   const [autoPolicy, setAutoPolicy] = useState<PositionPolicy>('balanced');
   const [autoFillMode, setAutoFillMode] = useState<FillMode>('empty');
-  const [summaryOpen, setSummaryOpen] = useState(false);
+  // Lineup tab sub-view: the grid (editable) vs the playing-time summary — toggled
+  // rather than stacked so the slide-over stays short.
+  const [lineupView, setLineupView] = useState<'lineup' | 'summary'>('lineup');
   const confirm = useConfirm();
   const lineupSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -721,6 +632,39 @@ export default function CoachesSchedulePage({
   const [lineupDirty, setLineupDirty] = useState(false);
   const [lineupError, setLineupError] = useState('');
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
+
+  // ── Lineup undo/redo — snapshots of the editable lineup state. pushLineupUndo() is
+  // called at the start of each user mutation (capturing the PRE-change state); auto-save
+  // persists the result, so undo is the safety net for the "auto-saved a mis-tap" case. ──
+  // Notes are intentionally NOT part of the snapshot — they change per-keystroke and aren't
+  // pushed to history, so excluding them keeps undo from collaterally rolling back a typed note.
+  type LineupSnap = { rows: LineupPlayerRow[]; mode: RepLineupMode; innings: number };
+  const [lineupHistory, setLineupHistory] = useState<{ undo: LineupSnap[]; redo: LineupSnap[] }>({ undo: [], redo: [] });
+  const lineupSnap = (): LineupSnap => ({ rows: lineupRows, mode: lineupMode, innings: lineupInningCount });
+  function pushLineupUndo() {
+    const snap = lineupSnap();
+    setLineupHistory(h => ({ undo: [...h.undo, snap].slice(-60), redo: [] }));
+  }
+  function applyLineupSnap(s: LineupSnap) {
+    setLineupRows(s.rows);
+    setLineupMode(s.mode);
+    setLineupInningCount(s.innings);
+    setLineupDirty(true);
+  }
+  function undoLineup() {
+    if (lineupHistory.undo.length === 0) return;
+    const prev = lineupHistory.undo[lineupHistory.undo.length - 1];
+    const cur = lineupSnap();
+    applyLineupSnap(prev);
+    setLineupHistory(h => ({ undo: h.undo.slice(0, -1), redo: [...h.redo, cur] }));
+  }
+  function redoLineup() {
+    if (lineupHistory.redo.length === 0) return;
+    const next = lineupHistory.redo[lineupHistory.redo.length - 1];
+    const cur = lineupSnap();
+    applyLineupSnap(next);
+    setLineupHistory(h => ({ undo: [...h.undo, cur], redo: h.redo.slice(0, -1) }));
+  }
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
@@ -763,6 +707,64 @@ export default function CoachesSchedulePage({
   }, [orgSlug, teamId]);
 
   useEffect(() => { void Promise.resolve().then(reloadTemplates); }, [reloadTemplates]);
+
+  // Lock background scroll while a full-screen modal (detail or add/edit) is open on
+  // mobile, so only the modal scrolls.
+  const anyModalOpen = !!selectedEvent || showAddForm;
+  useEffect(() => {
+    if (!anyModalOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [anyModalOpen]);
+
+  // Reset lineup undo/redo when the open event changes (history is per-event).
+  useEffect(() => { setLineupHistory({ undo: [], redo: [] }); }, [selectedEvent?.id]);
+
+  // Signatures of the latest edited state — a save only clears "dirty" if the state
+  // still matches what it persisted, so an edit made DURING a save isn't silently lost.
+  const lineupSig = () => JSON.stringify({ m: lineupMode, i: lineupInningCount, n: lineupNotes, r: lineupRows.map(r => [r.player.id, r.battingOrder, r.starter, r.inningPositions]) });
+  const lineupSigRef = useRef('');
+  useEffect(() => { lineupSigRef.current = lineupSig(); }, [lineupRows, lineupMode, lineupInningCount, lineupNotes]); // eslint-disable-line react-hooks/exhaustive-deps
+  const attendanceSig = () => JSON.stringify(attendanceRows.map(r => [r.player.id, r.status, r.note]));
+  const attendanceSigRef = useRef('');
+  useEffect(() => { attendanceSigRef.current = attendanceSig(); }, [attendanceRows]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Close the lineup popovers (Auto-fill / Templates / Print) on an outside tap or Escape.
+  const autoFillRef = useRef<HTMLDivElement>(null);
+  const templatesRef = useRef<HTMLDivElement>(null);
+  const pdfRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!autoFillOpen && !templatesOpen && !lineupPdfOpen) return;
+    function closeMenus() { setAutoFillOpen(false); setTemplatesOpen(false); setLineupPdfOpen(false); }
+    function onDown(e: PointerEvent) {
+      const t = e.target as Node;
+      if (autoFillRef.current?.contains(t) || templatesRef.current?.contains(t) || pdfRef.current?.contains(t)) return;
+      closeMenus();
+    }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') closeMenus(); }
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [autoFillOpen, templatesOpen, lineupPdfOpen]);
+
+  // Auto-save the lineup ~0.9s after the last change (debounced) — no Save button.
+  // Skips while a save is in flight (lineupSaving) so rapid edits don't fire concurrent
+  // PUTs; the effect re-runs when the save finishes (lineupSaving drops) to flush the rest.
+  useEffect(() => {
+    if (!lineupDirty || lineupSaving || !selectedEvent || lineupLoading || lineupRows.length === 0) return;
+    const t = setTimeout(() => { void handleLineupSave(); }, 900);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lineupDirty, lineupSaving, lineupRows, lineupNotes, lineupMode, lineupInningCount]);
+
+  // Auto-save attendance ~0.7s after the last change (a status tap is meant to stick).
+  useEffect(() => {
+    if (!attendanceDirty || attendanceSaving || !selectedEvent || attendanceLoading || attendanceRows.length === 0) return;
+    const t = setTimeout(() => { void handleAttendanceSave(); }, 700);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attendanceDirty, attendanceSaving, attendanceRows]);
 
   useEffect(() => {
     if (!selectedEvent) {
@@ -969,9 +971,8 @@ export default function CoachesSchedulePage({
   // Tabs for the event slide-over (keeps it short instead of one long stack)
   const isGameEvent = !!selectedEvent &&
     ['league_game', 'tournament_game', 'scrimmage'].includes(selectedEvent.eventType);
-  const slideTabs: { key: 'attendance' | 'lineup' | 'result'; label: string }[] = [{ key: 'attendance', label: 'Attendance' }];
+  const slideTabs: { key: 'attendance' | 'lineup'; label: string }[] = [{ key: 'attendance', label: 'Attendance' }];
   if (isLineupEvent(selectedEvent)) slideTabs.push({ key: 'lineup', label: 'Lineup' });
-  if (isGameEvent) slideTabs.push({ key: 'result', label: 'Result' });
   const activeSlideTab = slideTabs.some(t => t.key === slideTab) ? slideTab : 'attendance';
 
   // Compact one-line summary for the slide-over header (replaces the tall label/value list).
@@ -1022,7 +1023,16 @@ export default function CoachesSchedulePage({
     );
   }
 
-  function clearLineup() {
+  async function clearLineup() {
+    const hasAny = lineupRows.some(r => Object.values(r.inningPositions).some(Boolean));
+    if (hasAny && !(await confirm({
+      title: 'Clear all positions?',
+      message: 'This empties every inning for every player. You can undo it right after.',
+      confirmText: 'Clear',
+      cancelText: 'Keep',
+      tone: 'warning',
+    }))) return;
+    pushLineupUndo();
     setLineupRows(rows => rows.map(r => ({ ...r, inningPositions: {} })));
     setLineupDirty(true);
     setLineupNotice('');
@@ -1059,6 +1069,7 @@ export default function CoachesSchedulePage({
     const benchAllInnings: Record<string, string> = {};
     for (let inn = 1; inn <= lineupInningCount; inn++) benchAllInnings[String(inn)] = 'Bench';
 
+    pushLineupUndo();
     setLineupRows(rows => rows.map(r => {
       if (lineupMode === 'nine_player' && benchOnly.some(b => b.player.id === r.player.id)) {
         return { ...r, inningPositions: autoFillMode === 'empty' ? { ...benchAllInnings, ...r.inningPositions } : benchAllInnings };
@@ -1122,6 +1133,7 @@ export default function CoachesSchedulePage({
     const rosterIds = new Set(lineupRows.map(r => r.player.id));
     const skipped = t.entries.filter(e => !rosterIds.has(e.playerId)).length;
 
+    pushLineupUndo();
     setLineupMode(t.lineupMode);
     setLineupInningCount(t.inningCount);
     setLineupRows(rows => renumberBattingOrder(sortLineupRows(rows.map(row => {
@@ -1167,6 +1179,7 @@ export default function CoachesSchedulePage({
   function handleLineupDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
+    pushLineupUndo();
     setLineupRows(rows => {
       const oldIndex = rows.findIndex(r => r.player.id === active.id);
       const newIndex = rows.findIndex(r => r.player.id === over.id);
@@ -1176,7 +1189,18 @@ export default function CoachesSchedulePage({
     setLineupDirty(true);
   }
 
+  // Mobile reorder (the drag grip is hidden on touch): move a player up/down in the
+  // batting order. Mirrors the drag path — same renumber + dirty marking.
+  function moveLineupRow(index: number, dir: -1 | 1) {
+    const target = index + dir;
+    if (target < 0 || target >= lineupRows.length) return;
+    pushLineupUndo();
+    setLineupRows(rows => renumberBattingOrder(arrayMove(rows, index, target), lineupMode));
+    setLineupDirty(true);
+  }
+
   function handleLineupStarterToggle(playerId: string, checked: boolean) {
+    pushLineupUndo();
     setLineupRows(rows => renumberBattingOrder(
       rows.map(r => r.player.id === playerId ? { ...r, starter: checked } : r),
       lineupMode,
@@ -1188,6 +1212,7 @@ export default function CoachesSchedulePage({
     setSlideTab('attendance');
     setAttendanceFilter('all');
     setExpandedNotes(new Set());
+    setLineupView('lineup');
     setSelectedEvent(event);
   }
 
@@ -1318,7 +1343,7 @@ export default function CoachesSchedulePage({
 
   // ── Score entry ─────────────────────────────────────────────────────────────
 
-  const [scoreForm, setScoreForm] = useState<{ teamScore: string; opponentScore: string; result: string } | null>(null);
+  const [scoreForm, setScoreForm] = useState<{ teamScore: string; opponentScore: string } | null>(null);
 
   function closeSelectedEvent() {
     setSelectedEvent(null);
@@ -1336,11 +1361,15 @@ export default function CoachesSchedulePage({
     setLineupNotice('');
   }
 
-  // Closing the event panel with unsaved attendance/lineup edits asks first.
+  // Auto-save means closing should FLUSH any pending edits, not prompt to discard. Only if a
+  // flush genuinely fails do we ask before closing (so the coach doesn't lose work silently).
   async function requestCloseSlideOver() {
-    if ((attendanceDirty || lineupDirty) && !(await confirm({
-      title: 'Discard changes?',
-      message: 'You have unsaved attendance or lineup changes. Discard them?',
+    let ok = true;
+    if (lineupDirty) ok = (await handleLineupSave()) && ok;
+    if (attendanceDirty) ok = (await handleAttendanceSave()) && ok;
+    if (!ok && !(await confirm({
+      title: 'Changes not saved',
+      message: 'We couldn’t save your latest changes. Close anyway and discard them?',
       confirmText: 'Discard',
       cancelText: 'Keep editing',
       tone: 'danger',
@@ -1360,7 +1389,9 @@ export default function CoachesSchedulePage({
         body: JSON.stringify({
           teamScore: ts,
           opponentScore: os,
-          result: scoreForm.result || (ts > os ? 'win' : ts < os ? 'loss' : 'tie'),
+          // Result is always derived from the score — no manual override. A stored W/L/T that
+          // contradicts the numbers would silently corrupt the Season Record.
+          result: ts > os ? 'win' : ts < os ? 'loss' : 'tie',
         }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
@@ -1436,8 +1467,9 @@ export default function CoachesSchedulePage({
     setAttendanceFilter('all'); // a status filter would empty out after a bulk set — show the result
   }
 
-  async function handleAttendanceSave() {
-    if (!selectedEvent) return;
+  async function handleAttendanceSave(): Promise<boolean> {
+    if (!selectedEvent) return true;
+    const sigAtSave = attendanceSig();
     setAttendanceSaving(true);
     setAttendanceError('');
     try {
@@ -1456,15 +1488,18 @@ export default function CoachesSchedulePage({
         const d = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(d.error ?? 'Attendance save failed');
       }
-      setAttendanceDirty(false);
+      if (attendanceSigRef.current === sigAtSave) setAttendanceDirty(false);
+      return true;
     } catch (e: unknown) {
       setAttendanceError(errorMessage(e, 'Attendance save failed'));
+      return false;
     } finally {
       setAttendanceSaving(false);
     }
   }
 
   function updateLineupPosition(playerId: string, inning: number, position: string) {
+    pushLineupUndo();
     setLineupRows(rows => rows.map(row => (
       row.player.id === playerId
         ? {
@@ -1480,6 +1515,7 @@ export default function CoachesSchedulePage({
   }
 
   function handleLineupModeChange(mode: RepLineupMode) {
+    pushLineupUndo();
     setLineupMode(mode);
     setLineupRows(rows => renumberBattingOrder(
       rows.map((row, index) => mode === 'everyone_bats' ? { ...row, starter: true } : { ...row, starter: index < 9 }),
@@ -1488,8 +1524,9 @@ export default function CoachesSchedulePage({
     setLineupDirty(true);
   }
 
-  async function handleLineupSave() {
-    if (!selectedEvent) return;
+  async function handleLineupSave(): Promise<boolean> {
+    if (!selectedEvent) return true;
+    const sigAtSave = lineupSig();
     setLineupSaving(true);
     setLineupError('');
     try {
@@ -1514,15 +1551,15 @@ export default function CoachesSchedulePage({
         const d = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(d.error ?? 'Lineup save failed');
       }
-      const data: { entries?: RepTeamLineupEntry[]; lineup?: RepTeamLineup } = await res.json();
-      setLineupDirty(false);
+      await res.json().catch(() => ({}));
+      // Only mark clean if nothing changed during the round-trip; otherwise leave it
+      // dirty so the pending debounce saves the newer state (no silent loss / stomp).
+      if (lineupSigRef.current === sigAtSave) setLineupDirty(false);
       setLineupNotice('');
-      if (data.entries) {
-        const loadedMode = data.lineup?.lineupMode ?? lineupMode;
-        setLineupRows(renumberBattingOrder(sortLineupRows(buildLineupRows(lineupRows.map(row => row.player), data.entries, loadedMode)), loadedMode));
-      }
+      return true;
     } catch (e: unknown) {
       setLineupError(errorMessage(e, 'Lineup save failed'));
+      return false;
     } finally {
       setLineupSaving(false);
     }
@@ -1859,11 +1896,12 @@ export default function CoachesSchedulePage({
               shared blueprint-blue .btnPrimary used by in-modal save buttons. */}
           <div className={styles.addEventWrap}>
             <button
-              className="btn btn-lime"
+              className={`btn btn-lime ${styles.addEventBtn}`}
+              aria-label="Add event"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem' }}
               onClick={() => setAddTypeMenuOpen(v => !v)}
             >
-              <Plus size={13} /> Add Event
+              <Plus size={13} /> <span className={styles.addEventLabel}>Add Event</span>
             </button>
             {addTypeMenuOpen && (
               <div className={styles.addEventMenu}>
@@ -1885,9 +1923,6 @@ export default function CoachesSchedulePage({
           </div>
         </div>
       </div>
-
-      {/* W/L/T widget */}
-      <WLTWidget events={events} teamId={teamId} />
 
       {/* Navigator for week/month */}
       {view !== 'list' && (
@@ -1923,6 +1958,7 @@ export default function CoachesSchedulePage({
         <div className={`${styles.modalOverlay} ${styles.slideOverScrim}`} onClick={requestCloseSlideOver}>
           <div className={`${styles.slideOver}${activeSlideTab === 'lineup' ? ` ${styles.slideOverWide}` : ''}`} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
+              <button className={styles.modalBackBtn} aria-label="Back" onClick={requestCloseSlideOver}><ArrowLeft size={20} /></button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 {(() => { const Icon = EVENT_ICONS[selectedEvent.eventType]; return <Icon size={16} style={{ color: EVENT_COLORS[selectedEvent.eventType] }} />; })()}
                 <span className={styles.eventTypePill} style={{ background: EVENT_COLORS[selectedEvent.eventType] + '22', color: EVENT_COLORS[selectedEvent.eventType] }}>
@@ -1974,6 +2010,60 @@ export default function CoachesSchedulePage({
                 {selectedEvent.uniform && <span>Uniform: {selectedEvent.uniform}</span>}
               </p>
             )}
+
+            {/* Final score — the headline fact of a played game lives in the header, not behind a
+                tab. W/L/T is always derived from the two numbers (no manual override). */}
+            {isGameEvent && (
+              <div className={styles.eventScoreLine}>
+                {scoreForm ? (
+                  <div className={styles.scoreForm}>
+                    <div className={styles.scoreFormRow}>
+                      <label className={styles.scoreFieldLabel}>
+                        <span>Your team</span>
+                        <input className={styles.input} style={{ width: '4.5rem' }} type="number" min={0} inputMode="numeric" autoFocus value={scoreForm.teamScore} onChange={e => setScoreForm(s => s && ({ ...s, teamScore: e.target.value }))} />
+                      </label>
+                      <span className={styles.scoreFormSep}>–</span>
+                      <label className={styles.scoreFieldLabel}>
+                        <span>Opponent</span>
+                        <input className={styles.input} style={{ width: '4.5rem' }} type="number" min={0} inputMode="numeric" value={scoreForm.opponentScore} onChange={e => setScoreForm(s => s && ({ ...s, opponentScore: e.target.value }))} />
+                      </label>
+                      {(() => {
+                        const t = scoreForm.teamScore.trim(), o = scoreForm.opponentScore.trim();
+                        if (t === '' || o === '') return null;
+                        const r = Number(t) > Number(o) ? 'win' : Number(t) < Number(o) ? 'loss' : 'tie';
+                        return (
+                          <span className={styles.resultBadge} style={{ alignSelf: 'flex-end', paddingBottom: '0.5rem', color: r === 'win' ? '#22c55e' : r === 'loss' ? '#ef4444' : '#f59e0b' }}>
+                            {r.toUpperCase()}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                    <div className={styles.scoreFormActions}>
+                      <button className={styles.btnPrimary} disabled={saving || scoreForm.teamScore.trim() === '' || scoreForm.opponentScore.trim() === ''} onClick={handleScoreSave}>Save</button>
+                      <button className={styles.btnGhost} onClick={() => setScoreForm(null)}>Cancel</button>
+                    </div>
+                    {saveError && <p className={styles.errorText}>{saveError}</p>}
+                  </div>
+                ) : selectedEvent.teamScore != null ? (
+                  <div className={styles.eventScore}>
+                    <span className={styles.eventScoreValue}>{selectedEvent.teamScore} – {selectedEvent.opponentScore}</span>
+                    {selectedEvent.result && (
+                      <span className={styles.resultBadge} style={{ color: selectedEvent.result === 'win' ? '#22c55e' : selectedEvent.result === 'loss' ? '#ef4444' : '#f59e0b' }}>
+                        {selectedEvent.result.toUpperCase()}
+                      </span>
+                    )}
+                    <button className={styles.eventScoreEdit} onClick={() => setScoreForm({ teamScore: String(selectedEvent.teamScore ?? ''), opponentScore: String(selectedEvent.opponentScore ?? '') })}>
+                      Edit score
+                    </button>
+                  </div>
+                ) : (
+                  <button className={styles.eventScoreAdd} onClick={() => setScoreForm({ teamScore: '', opponentScore: '' })}>
+                    + Add final score
+                  </button>
+                )}
+              </div>
+            )}
+
             {selectedEvent.description && (
               <p className={styles.slideOverNotes}>{selectedEvent.description}</p>
             )}
@@ -2120,10 +2210,12 @@ export default function CoachesSchedulePage({
                         type="button"
                         data-status={option.value}
                         aria-pressed={active}
+                        aria-label={`${option.label}: ${count}`}
+                        title={option.label}
                         className={`${styles.attFilter} ${active ? styles.attFilterActive : ''}`}
                         onClick={() => setAttendanceFilter(active ? 'all' : option.value)}
                       >
-                        <Icon size={13} /> {option.label} <span className={styles.attFilterCount}>{count}</span>
+                        <Icon size={14} /> <span className={styles.attFilterCount}>{count}</span>
                       </button>
                     );
                   })}
@@ -2189,24 +2281,47 @@ export default function CoachesSchedulePage({
                 </div>
               )}
 
-              <div className={styles.attendanceFooter}>
-                <button
-                  type="button"
-                  className={styles.btnPrimary}
-                  disabled={!attendanceDirty || attendanceSaving || attendanceLoading}
-                  onClick={handleAttendanceSave}
-                >
-                  <Save size={14} /> {attendanceSaving ? 'Saving...' : 'Save attendance'}
-                </button>
-                {attendanceDirty && <span className={styles.attendanceUnsaved}>Unsaved changes</span>}
-              </div>
-              {attendanceError && <p className={styles.errorText}>{attendanceError}</p>}
+              {attendanceRows.length > 0 && (
+                <div className={styles.attendanceFooter}>
+                  <span className={styles.saveStatus} aria-live="polite">
+                    {attendanceError
+                      ? <button type="button" className={styles.saveRetry} onClick={handleAttendanceSave}>Couldn’t save · Retry</button>
+                      : (attendanceSaving || attendanceDirty)
+                        ? 'Saving…'
+                        : <><Check size={13} /> Saved</>}
+                  </span>
+                </div>
+              )}
             </div>
             );
             })()}
 
             {activeSlideTab === 'lineup' && isLineupEvent(selectedEvent) && (
               <div className={styles.lineupSection}>
+                {/* Toggle the editable grid vs the playing-time summary (not stacked). */}
+                <div className={styles.lineupViewToggle} role="tablist" aria-label="Lineup view">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={lineupView === 'lineup'}
+                    className={`${styles.lineupViewBtn} ${lineupView === 'lineup' ? styles.lineupViewBtnActive : ''}`}
+                    onClick={() => setLineupView('lineup')}
+                  >
+                    Lineup
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={lineupView === 'summary'}
+                    className={`${styles.lineupViewBtn} ${lineupView === 'summary' ? styles.lineupViewBtnActive : ''}`}
+                    disabled={lineupRows.length === 0}
+                    onClick={() => setLineupView('summary')}
+                  >
+                    Playing time
+                  </button>
+                </div>
+
+                {lineupView === 'lineup' && (<>
                 <div className={styles.lineupHeader}>
                   <div>
                     <h3 className={styles.attendanceTitle}>Lineup</h3>
@@ -2235,19 +2350,19 @@ export default function CoachesSchedulePage({
                         className={styles.select}
                         aria-label="Lineup innings"
                         value={lineupInningCount}
-                        onChange={e => { setLineupInningCount(Number(e.target.value)); setLineupDirty(true); }}
+                        onChange={e => { pushLineupUndo(); setLineupInningCount(Number(e.target.value)); setLineupDirty(true); }}
                       >
                         {Array.from({ length: 12 }, (_, index) => index + 1).map(count => (
                           <option key={count} value={count}>{count}</option>
                         ))}
                       </select>
                     </label>
-                    <div className={styles.lineupAutoWrap}>
+                    <div className={styles.lineupAutoWrap} ref={autoFillRef}>
                       <button
                         type="button"
                         className={styles.btnSecondary}
                         disabled={lineupRows.length === 0}
-                        onClick={() => setAutoFillOpen(v => !v)}
+                        onClick={() => { setAutoFillOpen(v => !v); setTemplatesOpen(false); setLineupPdfOpen(false); }}
                       >
                         Auto-fill ▾
                       </button>
@@ -2275,12 +2390,12 @@ export default function CoachesSchedulePage({
                         </div>
                       )}
                     </div>
-                    <div className={styles.lineupAutoWrap}>
+                    <div className={styles.lineupAutoWrap} ref={templatesRef}>
                       <button
                         type="button"
                         className={styles.btnSecondary}
                         disabled={lineupRows.length === 0}
-                        onClick={() => { setTemplatesOpen(v => !v); setTemplateError(''); }}
+                        onClick={() => { setTemplatesOpen(v => !v); setTemplateError(''); setAutoFillOpen(false); setLineupPdfOpen(false); }}
                         aria-expanded={templatesOpen}
                       >
                         Templates ▾
@@ -2343,9 +2458,9 @@ export default function CoachesSchedulePage({
                   <div className={styles.lineupInsights}>
                     {lineupNotice && <p className={styles.lineupNotice}>{lineupNotice}</p>}
                     <p className={styles.lineupHint}>
-                      Batting order follows your{' '}
+                      Starts from your{' '}
                       <Link href={`/${orgSlug}/coaches/teams/${teamId}/roster`}>roster order</Link>
-                      {' '}— drag to reorder there.
+                      {' '}— drag (or use ↑↓ on mobile) to set this game&apos;s batting order.
                     </p>
                     {lineupAnalysis.hasConflicts && (
                       <p className={styles.lineupWarn}>
@@ -2366,13 +2481,17 @@ export default function CoachesSchedulePage({
                   <div className={styles.attendanceEmpty}>Add active players to the roster before creating a lineup.</div>
                 ) : (
                   <DndContext sensors={lineupSensors} collisionDetection={closestCenter} onDragEnd={handleLineupDragEnd}>
+                    <p className={styles.lineupScrollHint}>Swipe across innings →</p>
                     <div className={styles.lineupTableWrap}>
-                      <table className={styles.lineupTable}>
+                      <table
+                        className={styles.lineupTable}
+                        style={{ '--lineup-lead': lineupMode === 'nine_player' ? '5.8rem' : '3.4rem' } as CSSProperties}
+                      >
                         <thead>
                           <tr>
                             <th>Bat</th>
-                            {lineupMode === 'nine_player' && <th>Start</th>}
-                            <th>Player</th>
+                            {lineupMode === 'nine_player' && <th className={styles.lineupColStart}>Start</th>}
+                            <th className={styles.lineupColPlayer}>Player</th>
                             {Array.from({ length: lineupInningCount }, (_, index) => {
                               const inning = index + 1;
                               const clash = lineupAnalysis.conflictInnings.has(inning);
@@ -2386,7 +2505,7 @@ export default function CoachesSchedulePage({
                         </thead>
                         <tbody>
                           <SortableContext items={lineupRows.map(r => r.player.id)} strategy={verticalListSortingStrategy}>
-                            {lineupRows.map(row => (
+                            {lineupRows.map((row, i) => (
                               <SortableLineupRow
                                 key={row.player.id}
                                 row={row}
@@ -2395,6 +2514,9 @@ export default function CoachesSchedulePage({
                                 inningCount={lineupInningCount}
                                 onStarterToggle={handleLineupStarterToggle}
                                 onPositionChange={updateLineupPosition}
+                                index={i}
+                                count={lineupRows.length}
+                                onMove={moveLineupRow}
                               />
                             ))}
                           </SortableContext>
@@ -2412,13 +2534,10 @@ export default function CoachesSchedulePage({
                   placeholder="Lineup notes (opponent scouting, reminders) — can be printed on the dugout poster"
                   maxLength={1000}
                 />
+                </>)}
 
-                {lineupRows.length > 0 && (
+                {lineupView === 'summary' && lineupRows.length > 0 && (
                   <div className={styles.lineupSummary}>
-                    <button type="button" className={styles.lineupSummaryToggle} onClick={() => setSummaryOpen(v => !v)} aria-expanded={summaryOpen}>
-                      {summaryOpen ? '▾' : '▸'} Playing-time summary
-                    </button>
-                    {summaryOpen && (
                       <div className={styles.lineupSummaryBody}>
                         {/* Shared team fairness verdict */}
                         <div className={styles.lineupFairness}>
@@ -2478,36 +2597,32 @@ export default function CoachesSchedulePage({
                           })}
                         </div>
                       </div>
-                    )}
                   </div>
                 )}
 
+                {lineupRows.length > 0 && (
                 <div className={styles.attendanceFooter}>
-                  <button
-                    type="button"
-                    className={styles.btnPrimary}
-                    disabled={!lineupDirty || lineupSaving || lineupLoading || lineupRows.length === 0}
-                    onClick={handleLineupSave}
-                  >
-                    <Save size={14} /> {lineupSaving ? 'Saving...' : 'Save lineup'}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.btnSecondary}
-                    disabled={lineupRows.length === 0}
-                    onClick={clearLineup}
-                  >
-                    Clear
-                  </button>
-                  <div className={styles.lineupPdfWrap}>
+                  <div className={styles.lineupFooterTools}>
+                    <button type="button" className={styles.footerIconBtn} aria-label="Undo" title="Undo" disabled={lineupHistory.undo.length === 0} onClick={undoLineup}>
+                      <Undo2 size={18} />
+                    </button>
+                    <button type="button" className={styles.footerIconBtn} aria-label="Redo" title="Redo" disabled={lineupHistory.redo.length === 0} onClick={redoLineup}>
+                      <Redo2 size={18} />
+                    </button>
+                    <button type="button" className={styles.footerIconBtn} aria-label="Clear positions" title="Clear positions" disabled={lineupRows.length === 0} onClick={clearLineup}>
+                      <Eraser size={18} />
+                    </button>
+                    <div className={styles.lineupPdfWrap} ref={pdfRef}>
                     <button
                       type="button"
-                      className={styles.btnSecondary}
+                      className={styles.footerIconBtn}
+                      aria-label="Print"
+                      title="Print"
                       disabled={lineupRows.length === 0}
-                      onClick={() => setLineupPdfOpen(v => !v)}
+                      onClick={() => { setLineupPdfOpen(v => !v); setAutoFillOpen(false); setTemplatesOpen(false); }}
                       aria-expanded={lineupPdfOpen}
                     >
-                      Print ▾
+                      <Printer size={18} />
                     </button>
                     {lineupPdfOpen && (
                       <div className={styles.lineupPdfMenu}>
@@ -2531,62 +2646,16 @@ export default function CoachesSchedulePage({
                         )}
                       </div>
                     )}
+                    </div>
                   </div>
-                  {lineupDirty && <span className={styles.attendanceUnsaved}>Unsaved changes</span>}
+                  <span className={styles.saveStatus} aria-live="polite">
+                    {lineupError
+                      ? <button type="button" className={styles.saveRetry} onClick={handleLineupSave}>Couldn’t save · Retry</button>
+                      : (lineupSaving || lineupDirty)
+                        ? 'Saving…'
+                        : <><Check size={13} /> Saved</>}
+                  </span>
                 </div>
-                {lineupError && <p className={styles.errorText}>{lineupError}</p>}
-              </div>
-            )}
-
-            {/* Result */}
-            {activeSlideTab === 'result' && (selectedEvent.eventType === 'league_game' || selectedEvent.eventType === 'tournament_game' || selectedEvent.eventType === 'scrimmage') && (
-              <div className={styles.scoreSection}>
-                {selectedEvent.teamScore != null ? (
-                  <div className={styles.scoreDisplay}>
-                    <span className={styles.scoreNum} style={{ color: '#22c55e' }}>{selectedEvent.teamScore}</span>
-                    <span className={styles.scoreSep}>–</span>
-                    <span className={styles.scoreNum} style={{ color: '#ef4444' }}>{selectedEvent.opponentScore}</span>
-                    {selectedEvent.result && (
-                      <span className={styles.resultBadge} style={{
-                        color: selectedEvent.result === 'win' ? '#22c55e' : selectedEvent.result === 'loss' ? '#ef4444' : '#f59e0b',
-                      }}>
-                        {selectedEvent.result.toUpperCase()}
-                      </span>
-                    )}
-                    <button className={styles.btnGhost} onClick={() => setScoreForm({ teamScore: String(selectedEvent.teamScore ?? ''), opponentScore: String(selectedEvent.opponentScore ?? ''), result: selectedEvent.result ?? '' })}>
-                      Edit score
-                    </button>
-                  </div>
-                ) : (
-                  <button className={styles.btnSecondary} onClick={() => setScoreForm({ teamScore: '', opponentScore: '', result: '' })}>
-                    Enter score
-                  </button>
-                )}
-                {scoreForm && (
-                  <div className={styles.scoreForm}>
-                    <div className={styles.scoreFormRow}>
-                      <label style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.72rem', color: 'var(--white-45)' }}>
-                        Your team
-                        <input className={styles.input} style={{ width: '5rem' }} type="number" min={0} value={scoreForm.teamScore} onChange={e => setScoreForm(s => s && ({ ...s, teamScore: e.target.value }))} />
-                      </label>
-                      <span style={{ alignSelf: 'flex-end', paddingBottom: '0.5rem' }}>–</span>
-                      <label style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.72rem', color: 'var(--white-45)' }}>
-                        Opponent
-                        <input className={styles.input} style={{ width: '5rem' }} type="number" min={0} value={scoreForm.opponentScore} onChange={e => setScoreForm(s => s && ({ ...s, opponentScore: e.target.value }))} />
-                      </label>
-                      <select className={styles.select} style={{ width: '8rem', alignSelf: 'flex-end' }} value={scoreForm.result} onChange={e => setScoreForm(s => s && ({ ...s, result: e.target.value }))}>
-                        <option value="">Auto</option>
-                        <option value="win">Win</option>
-                        <option value="loss">Loss</option>
-                        <option value="tie">Tie</option>
-                      </select>
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button className={styles.btnPrimary} disabled={saving || scoreForm.teamScore.trim() === '' || scoreForm.opponentScore.trim() === ''} onClick={handleScoreSave}>Save</button>
-                      <button className={styles.btnGhost} onClick={() => setScoreForm(null)}>Cancel</button>
-                    </div>
-                    {saveError && <p className={styles.errorText}>{saveError}</p>}
-                  </div>
                 )}
               </div>
             )}
@@ -2600,9 +2669,10 @@ export default function CoachesSchedulePage({
 
       {/* ── Add / edit event modal ─────────────────────────────────────────── */}
       {showAddForm && (
-        <div className={styles.modalOverlay} onClick={requestCloseForm}>
+        <div className={`${styles.modalOverlay} ${styles.sheetOnMobile}`} onClick={requestCloseForm}>
           <div className={`${styles.modal} ${styles.eventFormModal}`} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
+              <button className={styles.modalBackBtn} aria-label="Back" onClick={requestCloseForm}><ArrowLeft size={20} /></button>
               <h3 className={styles.modalTitle}>{editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}</h3>
               <button className={styles.modalCloseBtn} onClick={requestCloseForm}><X size={16} /></button>
             </div>
@@ -2619,20 +2689,6 @@ export default function CoachesSchedulePage({
                   </select>
                 </div>
               )}
-
-              {/* Name — headline; auto-fills from the opponent for games. */}
-              <div className={styles.field}>
-                <label className={styles.label}>Name</label>
-                <input
-                  className={styles.input}
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder={needsOpponent(form.eventType) ? `${EVENT_NAME_PREFIX[form.eventType]} vs opponent` : `${EVENT_NAME_PREFIX[form.eventType]} name`}
-                />
-                {needsOpponent(form.eventType) && (
-                  <p className={styles.formHint}>Leave blank to name it from the opponent (e.g. &ldquo;Scrimmage vs Lady Jays&rdquo;).</p>
-                )}
-              </div>
 
               {/* TOURNAMENT — a tournament game must belong to a tournament, so a coach can't
                   create an orphaned, parent-less game slot. */}
@@ -2874,6 +2930,23 @@ export default function CoachesSchedulePage({
                   <p className={styles.formHint}>Up to {MAX_EVENT_RESOURCES} links per event.</p>
                 )}
               </section>
+
+              {/* NAME — demoted from the headline: games (and the rest) auto-name from their
+                  type + opponent, so a custom label is an optional override, not a title field. */}
+              <div className={styles.field}>
+                <label className={styles.label}>Name <span className={styles.labelOptional}>optional</span></label>
+                <input
+                  className={styles.input}
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder={needsOpponent(form.eventType) ? `Auto: ${EVENT_NAME_PREFIX[form.eventType]} vs opponent` : `Auto: ${EVENT_NAME_PREFIX[form.eventType]}`}
+                />
+                <p className={styles.formHint}>
+                  {needsOpponent(form.eventType)
+                    ? 'Leave blank to name it from the opponent (e.g. “Scrimmage vs Lady Jays”).'
+                    : 'Leave blank to use the default name.'}
+                </p>
+              </div>
 
               {/* NOTES */}
               <div className={styles.field}>

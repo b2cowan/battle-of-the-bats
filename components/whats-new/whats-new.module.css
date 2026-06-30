@@ -41,6 +41,35 @@
   pointer-events: none;
 }
 
+/* ── Help-nav "new release" dot + What's-New help link ───────────────────── */
+.navDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 0.4rem;
+  border-radius: 999px;
+  background: var(--logic-lime);
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.helpLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--logic-lime);
+  text-decoration: none;
+}
+
+.helpLink:hover {
+  text-decoration: underline;
+}
+
 /* ── Popover panel (portaled to body, fixed-positioned at open) ──────────── */
 .panel {
   position: fixed;

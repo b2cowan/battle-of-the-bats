@@ -6,10 +6,10 @@ import CoinTossRecorder from '@/components/admin/CoinTossRecorder';
 import { normalizeTieBreakers, BREAKER_LABELS } from '@/lib/tie-breakers';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
-import { Division, Game, PublicTeam, Tournament } from '@/lib/types';
+import { Division, Game, PublicTeam, Tournament, Venue } from '@/lib/types';
 import YearSelector from '@/components/YearSelector';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
-import { LogicSyncBracket } from '@/components/bracket/LogicSyncBracket';
+import { TieredBracket } from '@/components/bracket/TieredBracket';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import { formatPoolName, formatTime } from '@/lib/utils';
 import styles from '@/app/[orgSlug]/standings/standings.module.css';
@@ -77,6 +77,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
   const [divisions, setDivisions]           = useState<Division[]>(() => initialData?.divisions ?? []);
   const [games, setGames]                   = useState<Game[]>(() => initialData?.games ?? []);
   const [teams, setTeams]                   = useState<PublicTeam[]>(() => initialData?.teams ?? []);
+  const [venues, setVenues]                 = useState<Venue[]>(() => initialData?.venues ?? []);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>(() => initialData?.tournaments ?? []);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(() => initialData?.tournament ?? null);
   const [contactEmail, setContactEmail] = useState<string | null>(
@@ -168,6 +169,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
       setDivisions(groups);
       setGames(data?.games ?? []);
       setTeams(data?.teams ?? []);
+      setVenues(data?.venues ?? []);
       setStandingsByDivision((data?.standingsByDivision as Record<string, StandingResult[]>) ?? {});
       if (groups.length > 0) {
         const pref = getDivisionPref(orgSlug);
@@ -408,10 +410,14 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
         <Trophy size={16} className={styles.bracketSectionIcon} />
         <span className={styles.bracketSectionTitle}>PLAYOFF BRACKET</span>
       </div>
-      <LogicSyncBracket
+      <TieredBracket
         games={activeGames.filter(g => g.isPlayoff)}
         teams={teams}
+        pools={pools}
         tournamentId={selectedTournament!.id}
+        orgSlug={orgSlug}
+        tournamentSlug={tournamentSlug ?? ''}
+        venues={venues}
         highlightTeamId={followedTeamId ?? undefined}
         requireFinalization={requireFinalization}
       />

@@ -579,9 +579,16 @@
 .liveRow[data-live='live']   { border-left-color: var(--logic-lime); }
 .liveRow[data-live='review'] { border-left-color: var(--warning); }
 
-.liveRowMain {
+/* Badge on its own eyebrow line so a wider "IN REVIEW" never squeezes the matchup
+   into a narrow wrapping column — keeps LIVE + IN REVIEW tiles aligned. */
+.liveStatusRow {
   display: flex;
   align-items: center;
+}
+
+.liveRowMain {
+  display: flex;
+  align-items: baseline;
   gap: 0.5rem;
 }
 

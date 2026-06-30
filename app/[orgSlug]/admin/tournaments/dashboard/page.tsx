@@ -1489,10 +1489,12 @@ export default function AdminDashboard() {
               className={styles.liveRow}
               data-live={lg.status === 'submitted' ? 'review' : 'live'}
             >
-              <div className={styles.liveRowMain}>
+              <div className={styles.liveStatusRow}>
                 <span className={`badge ${lg.status === 'submitted' ? 'badge-warning' : 'badge-primary'} ${styles.liveBadge}`}>
                   {lg.status === 'submitted' ? 'IN REVIEW' : 'LIVE'}
                 </span>
+              </div>
+              <div className={styles.liveRowMain}>
                 <span className={styles.liveMatchup}>
                   {lg.awayTeamName} <span className={styles.liveAt}>@</span> {lg.homeTeamName}
                 </span>

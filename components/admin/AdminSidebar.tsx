@@ -12,7 +12,7 @@ import {
 import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import NotificationBell from '@/components/notifications/NotificationBell';
-import WhatsNewButton from '@/components/whats-new/WhatsNewButton';
+import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import { signOut } from '@/lib/auth';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { useOrg } from '@/lib/org-context';
@@ -265,7 +265,6 @@ export default function AdminSidebar() {
           </div>
           {currentOrg?.id && (
             <div className="flex items-center gap-1 ml-auto self-start shrink-0">
-              <WhatsNewButton />
               <NotificationBell orgId={currentOrg.id} />
             </div>
           )}
@@ -631,6 +630,7 @@ export default function AdminSidebar() {
             rel="noopener noreferrer"
           >
             <HelpCircle size={15} /> Help
+            <ReleaseDot />
           </Link>
           <FeedbackLauncher className={styles.footerLink} label="Send feedback" />
           <button type="button" onClick={handleLogout} className={styles.logoutBtn} id="admin-logout">
