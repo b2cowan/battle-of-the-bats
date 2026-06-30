@@ -59,6 +59,18 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
         category: 'new',
         text: 'There’s now a public tournament finder where anyone can browse and search events by sport, location, and date. Listing is your choice — switch any tournament on (it’s off by default) and it links straight to your existing public page. It’s free.',
       },
+      {
+        category: 'new',
+        text: 'In the Premium Coaches Portal, your team’s win–loss–tie record now sits right on the team overview. You decide which games count — league and tournament are in by default, scrimmages are out — and tap to see the breakdown.',
+      },
+      {
+        category: 'improved',
+        text: 'The Premium Coaches Portal’s schedule is far easier to use on a phone now — the week stacks day-by-day instead of scrolling sideways, buttons are bigger and easier to tap, and adding or editing a game is within thumb’s reach.',
+      },
+      {
+        category: 'improved',
+        text: 'On a tournament’s public playoff bracket, every upcoming game now shows its field or diamond, and tapping a game opens its full page — score, directions, and what’s on the line. The bracket also looks the same on the Standings page as on the Schedule, and a renamed field now shows its new name everywhere.',
+      },
     ],
   },
   {
@@ -158,7 +170,7 @@ export const HORIZON_THEMES: HorizonTheme[] = [
   },
   {
     title: 'A richer Coaches Portal',
-    body: 'More for the people running a team day to day — including dedicated assistant-coach access with the right level of permission.',
+    body: 'More for the people running a team day to day — dedicated assistant-coach access with the right level of permission, plus tryouts and player evaluations built in.',
   },
   {
     title: 'A sharper standings experience',
