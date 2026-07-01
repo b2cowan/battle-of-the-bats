@@ -1139,6 +1139,56 @@ export interface RepTryoutSession {
   updatedAt: string;
 }
 
+export interface RepTryoutRubricCategory {
+  key: string;              // stable id a score row references
+  label: string;
+  weight: number;           // relative weight in the composite ranking
+  instructions?: string;    // optional evaluator guidance
+}
+
+/** The evaluation scorecard for a tryout — 1 per tryout (Phase 2B, mig 166). */
+export interface RepTryoutRubric {
+  id: string;
+  tryoutId: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  name: string | null;
+  scaleMax: number;         // 5 or 10
+  categories: RepTryoutRubricCategory[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A no-account co-coach scoring link (Phase 2B.2). token_hash is never surfaced. */
+export interface RepTryoutEvaluatorSession {
+  id: string;
+  tryoutId: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  evaluatorName: string | null;
+  expiresAt: string;
+  revokedAt: string | null;
+  createdAt: string;
+}
+
+/** One evaluator score for one candidate on one rubric category (Phase 2B.2). */
+export interface RepTryoutScore {
+  id: string;
+  evaluatorSessionId: string;
+  registrationId: string;
+  tryoutId: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  categoryKey: string;
+  score: number;
+  note: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface RepRosterPlayer {
   id: string;
   programYearId: string;

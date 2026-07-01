@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-06-30 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-07-01 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-06-30
+# DB Schema Reference — 2026-07-01
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -212,9 +212,21 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id
 - Indexes: rep_teams_org_id_slug_key
 
+### rep_tryout_evaluator_sessions
+id (uuid), tryout_id (uuid) → rep_tryouts.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, evaluator_name, token_hash NOT NULL, expires_at NOT NULL, revoked_at, created_at
+- Indexes: rep_tryout_evaluator_sessions_org_idx, rep_tryout_evaluator_sessions_token_uq, rep_tryout_evaluator_sessions_tryout_idx
+
 ### rep_tryout_registrations
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, admin_notes, submitted_at, updated_at, consent_data_collection (boolean), consent_email_comms (boolean), consent_eligibility (boolean), consent_at, consent_ip, bib_number, is_checked_in (boolean), checked_in_at
-- Indexes: rep_tryout_registrations_email_idx, rep_tryout_registrations_status_idx, rep_tryout_registrations_year_idx
+- Indexes: rep_tryout_registrations_bib_uq, rep_tryout_registrations_email_idx, rep_tryout_registrations_status_idx, rep_tryout_registrations_year_idx
+
+### rep_tryout_rubrics
+id (uuid), tryout_id (uuid) → rep_tryouts.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, name, scale_max, categories (jsonb), created_at, updated_at
+- Indexes: rep_tryout_rubrics_org_idx, rep_tryout_rubrics_team_idx, rep_tryout_rubrics_tryout_uq
+
+### rep_tryout_scores
+id (uuid), evaluator_session_id (uuid) → rep_tryout_evaluator_sessions.id NOT NULL, registration_id (uuid) → rep_tryout_registrations.id NOT NULL, tryout_id (uuid) → rep_tryouts.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, category_key NOT NULL, score NOT NULL, note, created_at, updated_at
+- Indexes: rep_tryout_scores_evaluator_session_id_registration_id_cate_key, rep_tryout_scores_org_idx, rep_tryout_scores_reg_idx, rep_tryout_scores_tryout_idx
 
 ### rep_tryout_sessions
 id (uuid), tryout_id (uuid) → rep_tryouts.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, starts_at NOT NULL, ends_at, location, location_address, field_number, label, status, created_at, updated_at
@@ -509,11 +521,11 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) →
 
 ## Tables by count
 
-Total: **122 tables** across 10 modules.
+Total: **125 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 29 tables
+- Rep Teams: 32 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables

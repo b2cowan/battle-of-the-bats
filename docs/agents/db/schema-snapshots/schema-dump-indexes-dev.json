@@ -1515,6 +1515,31 @@
     "indexdef": "CREATE UNIQUE INDEX rep_teams_pkey ON public.rep_teams USING btree (id)"
   },
   {
+    "tablename": "rep_tryout_evaluator_sessions",
+    "indexname": "rep_tryout_evaluator_sessions_org_idx",
+    "indexdef": "CREATE INDEX rep_tryout_evaluator_sessions_org_idx ON public.rep_tryout_evaluator_sessions USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_tryout_evaluator_sessions",
+    "indexname": "rep_tryout_evaluator_sessions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_tryout_evaluator_sessions_pkey ON public.rep_tryout_evaluator_sessions USING btree (id)"
+  },
+  {
+    "tablename": "rep_tryout_evaluator_sessions",
+    "indexname": "rep_tryout_evaluator_sessions_token_uq",
+    "indexdef": "CREATE UNIQUE INDEX rep_tryout_evaluator_sessions_token_uq ON public.rep_tryout_evaluator_sessions USING btree (token_hash)"
+  },
+  {
+    "tablename": "rep_tryout_evaluator_sessions",
+    "indexname": "rep_tryout_evaluator_sessions_tryout_idx",
+    "indexdef": "CREATE INDEX rep_tryout_evaluator_sessions_tryout_idx ON public.rep_tryout_evaluator_sessions USING btree (tryout_id)"
+  },
+  {
+    "tablename": "rep_tryout_registrations",
+    "indexname": "rep_tryout_registrations_bib_uq",
+    "indexdef": "CREATE UNIQUE INDEX rep_tryout_registrations_bib_uq ON public.rep_tryout_registrations USING btree (program_year_id, bib_number) WHERE (bib_number IS NOT NULL)"
+  },
+  {
     "tablename": "rep_tryout_registrations",
     "indexname": "rep_tryout_registrations_email_idx",
     "indexdef": "CREATE INDEX rep_tryout_registrations_email_idx ON public.rep_tryout_registrations USING btree (guardian_email)"
@@ -1533,6 +1558,51 @@
     "tablename": "rep_tryout_registrations",
     "indexname": "rep_tryout_registrations_year_idx",
     "indexdef": "CREATE INDEX rep_tryout_registrations_year_idx ON public.rep_tryout_registrations USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_tryout_rubrics",
+    "indexname": "rep_tryout_rubrics_org_idx",
+    "indexdef": "CREATE INDEX rep_tryout_rubrics_org_idx ON public.rep_tryout_rubrics USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_tryout_rubrics",
+    "indexname": "rep_tryout_rubrics_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_tryout_rubrics_pkey ON public.rep_tryout_rubrics USING btree (id)"
+  },
+  {
+    "tablename": "rep_tryout_rubrics",
+    "indexname": "rep_tryout_rubrics_team_idx",
+    "indexdef": "CREATE INDEX rep_tryout_rubrics_team_idx ON public.rep_tryout_rubrics USING btree (team_id)"
+  },
+  {
+    "tablename": "rep_tryout_rubrics",
+    "indexname": "rep_tryout_rubrics_tryout_uq",
+    "indexdef": "CREATE UNIQUE INDEX rep_tryout_rubrics_tryout_uq ON public.rep_tryout_rubrics USING btree (tryout_id)"
+  },
+  {
+    "tablename": "rep_tryout_scores",
+    "indexname": "rep_tryout_scores_evaluator_session_id_registration_id_cate_key",
+    "indexdef": "CREATE UNIQUE INDEX rep_tryout_scores_evaluator_session_id_registration_id_cate_key ON public.rep_tryout_scores USING btree (evaluator_session_id, registration_id, category_key)"
+  },
+  {
+    "tablename": "rep_tryout_scores",
+    "indexname": "rep_tryout_scores_org_idx",
+    "indexdef": "CREATE INDEX rep_tryout_scores_org_idx ON public.rep_tryout_scores USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_tryout_scores",
+    "indexname": "rep_tryout_scores_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_tryout_scores_pkey ON public.rep_tryout_scores USING btree (id)"
+  },
+  {
+    "tablename": "rep_tryout_scores",
+    "indexname": "rep_tryout_scores_reg_idx",
+    "indexdef": "CREATE INDEX rep_tryout_scores_reg_idx ON public.rep_tryout_scores USING btree (registration_id)"
+  },
+  {
+    "tablename": "rep_tryout_scores",
+    "indexname": "rep_tryout_scores_tryout_idx",
+    "indexdef": "CREATE INDEX rep_tryout_scores_tryout_idx ON public.rep_tryout_scores USING btree (tryout_id)"
   },
   {
     "tablename": "rep_tryout_sessions",

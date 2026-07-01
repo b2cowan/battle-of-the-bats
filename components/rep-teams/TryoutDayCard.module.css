@@ -165,3 +165,58 @@
   .scrim { align-items: flex-end; padding: 0; }
   .modal { max-width: none; border-radius: 14px 14px 0 0; max-height: 90vh; }
 }
+
+/* ── Live scoreboard (Phase 2B.2) ─────────────────────────────────────────── */
+.pollDot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--logic-lime, #a3e635);
+  display: inline-block;
+  animation: tryoutPulse 1.8s ease-in-out infinite;
+}
+@keyframes tryoutPulse { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+.evalChips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.85rem; }
+.evalChip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.75rem; font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem;
+}
+.evalChipMean { color: rgba(255,255,255,0.45); font-weight: 500; }
+.evalChipBias { border-color: rgba(251,191,36,0.4); background: rgba(251,191,36,0.08); }
+.biasFlag {
+  display: inline-flex; align-items: center; gap: 0.15rem;
+  color: rgba(251,191,36,0.95); font-weight: 700;
+}
+
+.scoreRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: 3px solid var(--logic-lime, #a3e635);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+}
+.rank {
+  flex: 0 0 auto;
+  min-width: 2rem;
+  font-size: 0.9rem; font-weight: 800;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+}
+.scoreMain { flex: 1 1 auto; min-width: 0; }
+.bib {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  color: var(--logic-lime, #a3e635);
+}
+.compositeWrap { flex: 0 0 auto; text-align: right; }
+.composite {
+  font-size: 1.15rem; font-weight: 800; color: #f0f0f0;
+  font-variant-numeric: tabular-nums; line-height: 1;
+}
+.compositeUnit { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-top: 0.15rem; }

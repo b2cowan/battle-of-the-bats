@@ -55,6 +55,11 @@ export const POST = withObservability(async (req: Request,
   const last = typeof body.playerLastName === 'string' ? body.playerLastName.trim().slice(0, 80) : '';
   if (!first) return NextResponse.json({ errors: { playerFirstName: 'Player first name is required' } }, { status: 400 });
 
+  const guardianEmail = typeof body.guardianEmail === 'string' ? body.guardianEmail.trim().slice(0, 200) : '';
+  if (guardianEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail)) {
+    return NextResponse.json({ errors: { guardianEmail: 'Enter a valid email address' } }, { status: 400 });
+  }
+
   const registration = await createRepTryoutRegistration({
     programYearId: r.programYear.id,
     teamId: r.teamId,
@@ -64,7 +69,7 @@ export const POST = withObservability(async (req: Request,
     // guardian details unknown at walk-up; stored empty (NOT NULL), filled in later
     guardianFirstName: '',
     guardianLastName: '',
-    guardianEmail: typeof body.guardianEmail === 'string' ? body.guardianEmail.trim().slice(0, 200) : '',
+    guardianEmail,
     guardianPhone: null,
   });
   await updateRepTryoutCheckin(registration.id, { isCheckedIn: true });

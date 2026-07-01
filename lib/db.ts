@@ -4,7 +4,7 @@ import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from 
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
@@ -4674,18 +4674,235 @@ const bibValue = (b: string | null): number => (b ? parseInt(b, 10) || 0 : 0);
  *  once assigned), sorted by bib. */
 export async function getRepTryoutCheckinList(programYearId: string): Promise<RepTryoutRegistration[]> {
   const all = await getRepTryoutRegistrations(programYearId);
-  const active = all.filter(r => r.status !== 'declined' && r.status !== 'withdrawn');
+  let active = all.filter(r => r.status !== 'declined' && r.status !== 'withdrawn');
 
   const hasBib = (r: RepTryoutRegistration) => r.bibNumber != null && r.bibNumber !== '';
   let next = active.reduce((m, r) => Math.max(m, bibValue(r.bibNumber)), 0) + 1;
   const missing = active.filter(r => !hasBib(r)).sort((a, b) => a.submittedAt.localeCompare(b.submittedAt));
+  let conflict = false;
   for (const r of missing) {
-    await updateRepTryoutCheckin(r.id, { bibNumber: String(next) });
-    r.bibNumber = String(next);
-    next++;
+    try {
+      await updateRepTryoutCheckin(r.id, { bibNumber: String(next) });
+      r.bibNumber = String(next);
+      next++;
+    } catch {
+      // A concurrent load already took this bib (unique index, mig 166) — leave this candidate for
+      // the next load rather than 500. Rare (one coach/one device is the norm).
+      conflict = true;
+    }
+  }
+  if (conflict) {
+    active = (await getRepTryoutRegistrations(programYearId))
+      .filter(r => r.status !== 'declined' && r.status !== 'withdrawn');
   }
 
   return active.sort((a, b) => bibValue(a.bibNumber) - bibValue(b.bibNumber));
+}
+
+/** Read-only candidate list (active, bib-sorted) — NO bib auto-assignment. Used by the no-account
+ *  evaluator token boundary so a link-holder can never trigger a write. Bib assignment stays in the
+ *  coach-authenticated check-in flow (`getRepTryoutCheckinList`). */
+export async function getRepTryoutCheckinListReadOnly(programYearId: string): Promise<RepTryoutRegistration[]> {
+  const all = await getRepTryoutRegistrations(programYearId);
+  return all
+    .filter(r => r.status !== 'declined' && r.status !== 'withdrawn')
+    .sort((a, b) => bibValue(a.bibNumber) - bibValue(b.bibNumber));
+}
+
+function mapRepTryoutRubric(r: any): RepTryoutRubric {
+  return {
+    id: r.id,
+    tryoutId: r.tryout_id,
+    programYearId: r.program_year_id,
+    teamId: r.team_id,
+    orgId: r.org_id,
+    name: r.name ?? null,
+    scaleMax: r.scale_max ?? 5,
+    categories: Array.isArray(r.categories) ? r.categories : [],
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepTryoutRubric(tryoutId: string): Promise<RepTryoutRubric | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_rubrics')
+    .select('*')
+    .eq('tryout_id', tryoutId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTryoutRubric(data) : null;
+}
+
+/** Create or update the tryout's single scorecard (1 per tryout — upsert on tryout_id). */
+export async function upsertRepTryoutRubric(fields: {
+  tryoutId: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  name?: string | null;
+  scaleMax: number;
+  categories: RepTryoutRubricCategory[];
+}): Promise<RepTryoutRubric> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_rubrics')
+    .upsert({
+      tryout_id: fields.tryoutId,
+      program_year_id: fields.programYearId,
+      team_id: fields.teamId,
+      org_id: fields.orgId,
+      name: fields.name ?? null,
+      scale_max: fields.scaleMax,
+      categories: fields.categories,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'tryout_id' })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTryoutRubric(data);
+}
+
+// Tryout Evaluator Scoring (Phase 2B.2) — no-account co-coach links + their scores.
+
+function mapRepTryoutEvaluatorSession(r: any): RepTryoutEvaluatorSession {
+  return {
+    id: r.id,
+    tryoutId: r.tryout_id,
+    programYearId: r.program_year_id,
+    teamId: r.team_id,
+    orgId: r.org_id,
+    evaluatorName: r.evaluator_name ?? null,
+    expiresAt: r.expires_at,
+    revokedAt: r.revoked_at ?? null,
+    createdAt: r.created_at,
+  };
+}
+
+/** Mint a no-account evaluator scoring link. Caller supplies the pre-hashed token + expiry. */
+export async function createRepTryoutEvaluatorSession(fields: {
+  tryoutId: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  evaluatorName?: string | null;
+  tokenHash: string;
+  expiresAt: string;
+}): Promise<RepTryoutEvaluatorSession> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_evaluator_sessions')
+    .insert({
+      tryout_id: fields.tryoutId,
+      program_year_id: fields.programYearId,
+      team_id: fields.teamId,
+      org_id: fields.orgId,
+      evaluator_name: fields.evaluatorName ?? null,
+      token_hash: fields.tokenHash,
+      expires_at: fields.expiresAt,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTryoutEvaluatorSession(data);
+}
+
+/** All evaluator links for a tryout (head-coach management view), newest first. */
+export async function getRepTryoutEvaluatorSessions(tryoutId: string): Promise<RepTryoutEvaluatorSession[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_evaluator_sessions')
+    .select('*')
+    .eq('tryout_id', tryoutId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTryoutEvaluatorSession);
+}
+
+/** Resolve an evaluator session by its token hash — the no-account scoring page's only key. */
+export async function getRepTryoutEvaluatorSessionByTokenHash(tokenHash: string): Promise<RepTryoutEvaluatorSession | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_evaluator_sessions')
+    .select('*')
+    .eq('token_hash', tokenHash)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTryoutEvaluatorSession(data) : null;
+}
+
+/** Revoke a link — a non-null revoked_at blocks all further score writes. Caller verifies ownership. */
+export async function revokeRepTryoutEvaluatorSession(id: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_tryout_evaluator_sessions')
+    .update({ revoked_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+function mapRepTryoutScore(r: any): RepTryoutScore {
+  return {
+    id: r.id,
+    evaluatorSessionId: r.evaluator_session_id,
+    registrationId: r.registration_id,
+    tryoutId: r.tryout_id,
+    programYearId: r.program_year_id,
+    teamId: r.team_id,
+    orgId: r.org_id,
+    categoryKey: r.category_key,
+    score: r.score,
+    note: r.note ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+/** Record (or overwrite) one evaluator's score for one candidate on one rubric category. */
+export async function upsertRepTryoutScore(fields: {
+  evaluatorSessionId: string;
+  registrationId: string;
+  tryoutId: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  categoryKey: string;
+  score: number;
+  note?: string | null;
+}): Promise<RepTryoutScore> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_scores')
+    .upsert({
+      evaluator_session_id: fields.evaluatorSessionId,
+      registration_id: fields.registrationId,
+      tryout_id: fields.tryoutId,
+      program_year_id: fields.programYearId,
+      team_id: fields.teamId,
+      org_id: fields.orgId,
+      category_key: fields.categoryKey,
+      score: fields.score,
+      note: fields.note ?? null,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'evaluator_session_id,registration_id,category_key' })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTryoutScore(data);
+}
+
+/** Every score for a tryout — the head-coach dashboard aggregates these. */
+export async function getRepTryoutScores(tryoutId: string): Promise<RepTryoutScore[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_scores')
+    .select('*')
+    .eq('tryout_id', tryoutId);
+  if (error) throw error;
+  return (data ?? []).map(mapRepTryoutScore);
+}
+
+/** Scores written by one evaluator session — rehydrates their scoring page. */
+export async function getRepTryoutScoresForEvaluator(evaluatorSessionId: string): Promise<RepTryoutScore[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_scores')
+    .select('*')
+    .eq('evaluator_session_id', evaluatorSessionId);
+  if (error) throw error;
+  return (data ?? []).map(mapRepTryoutScore);
 }
 
 // Roster Players

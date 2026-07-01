@@ -120,6 +120,80 @@ const coachesHelp: HelpPageContent = {
       ),
     },
     {
+      id: 'recipe-run-tryouts',
+      group: 'Your team tools',
+      heading: 'How to run tryout day',
+      summary: 'Set up sessions and a scorecard, check players in from your phone, invite helpers to score, and see a live ranked scoreboard — kept fair with blind evaluation.',
+      keywords: ['tryouts', 'tryout day', 'check-in', 'bib numbers', 'blind evaluation', 'walk-up', 'scorecard', 'evaluators', 'scoreboard', 'ranking'],
+      searchText: 'tryouts tryout day sessions dates times location field check in check-in bib number auto assign blind evaluation names hidden anonymous walk up walk-up add candidate print roster sheet paper backup provincial window OBA softball ontario schedule marker premium run tryouts evaluate players scorecard rubric categories skills weight rating scale 1-5 1-10 hitting fielding throwing speed attitude evaluators assistant helper no login link score scoring rate players live scoreboard ranked ranking composite weighted average bias runs hot runs cold consensus',
+      content: (
+        <>
+          <p>Open the <strong>Tryouts</strong> tab for your team to run tryout day from your phone — set up, check-in, scoring, and a live ranked scoreboard all live here.</p>
+          <ol>
+            <li><strong>Add your sessions.</strong> On the <strong>Tryout Day</strong> card, add each date and time (and location/field). They appear on your <strong>team schedule</strong> as read-only tryout markers.</li>
+            <li><strong>Build your scorecard.</strong> On the <strong>Evaluation scorecard</strong> card, list what you&apos;re rating — for example Hitting, Fielding, Throwing, Speed — each with a weight, on a 1–5 or 1–10 scale. A starter set is filled in for you; adjust it to how you evaluate.</li>
+            <li><strong>Keep it fair with Blind evaluation.</strong> It&apos;s on by default: on tryout day players show as <strong>bib numbers only</strong>, with names hidden until you turn it off.</li>
+            <li><strong>Open day-of check-in.</strong> Every candidate gets an <strong>auto-assigned bib number</strong>. Tap a player to check them in — a live &quot;X of Y checked in&quot; count keeps you oriented, and an <strong>Undo</strong> appears if you tap the wrong one. You can also <strong>print a paper backup sheet</strong> for spotty cell service (bib numbers only when blind).</li>
+            <li><strong>Add walk-ups.</strong> If a player shows up without registering, add them with just their name (guardian details can wait) — they&apos;re checked in on the spot.</li>
+            <li><strong>Invite evaluators to score.</strong> On the <strong>Evaluators</strong> card, add a helper by name to get them a private scoring link — <strong>no login, no app</strong>. It works for 48 hours and you can turn it off any time. They rate each player on your scorecard from their own phone (bib numbers only while Blind evaluation is on).</li>
+            <li><strong>Watch the live scoreboard.</strong> The <strong>Live scoreboard</strong> ranks players by their weighted average across everyone scoring, and updates on its own as scores come in. If an evaluator&apos;s scores drift from the group, they&apos;re gently flagged &quot;runs hot/cold&quot; so you can weigh their input.</li>
+          </ol>
+          <p>Pick a tryout date outside the standard provincial tryout window and you&apos;ll get a friendly heads-up — safe to ignore if your team isn&apos;t affiliated.</p>
+          <p>You manage tryouts for your own team whether you coach independently or as part of a club. Opening registration and reviewing applicants (offers, accept, decline) stays with your club admin in the org&apos;s Rep Teams area.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-tryout-blind',
+          question: 'Why do I only see bib numbers, not names, at tryouts?',
+          answerText: 'Blind evaluation is on by default so tryouts stay fair — players show as bib numbers with names hidden. Turn Blind evaluation off on the Tryout Day card if you want names shown.',
+          keywords: ['blind', 'bib numbers', 'names hidden', 'anonymous', 'fair'],
+          answer: (
+            <p><strong>Blind evaluation</strong> is on by default so tryouts stay fair — players show as bib numbers with names hidden. Turn it off on the <strong>Tryout Day</strong> card if you&apos;d rather see names.</p>
+          ),
+        },
+        {
+          id: 'faq-tryout-vs-admin',
+          question: 'Where do families register for tryouts, and who accepts players?',
+          answerText: 'Families register through the public tryout form, and applicants are reviewed — offered, accepted, or declined — in the org admin Rep Teams area, which your club admin handles. Your Tryouts tab is for running tryout day: sessions, check-in, and the printable sheet.',
+          keywords: ['registration', 'applicants', 'accept', 'offer', 'sign up', 'admin'],
+          answer: (
+            <p>Families register through the public tryout form, and applicants are reviewed — offered, accepted, or declined — in the org&apos;s <strong>Rep Teams</strong> admin area (your club admin handles that). Your <strong>Tryouts</strong> tab is for running tryout <em>day</em>: sessions, check-in, and the printable sheet.</p>
+          ),
+        },
+        {
+          id: 'faq-tryout-evaluators',
+          question: 'Can someone help me score players without an account?',
+          answerText: 'Yes. On the Evaluators card, add a helper by name and you get a private scoring link to text or email them — no login and no app. The link works for 48 hours and you can turn it off any time. They rate players on your scorecard from their own phone, and their scores flow into your live scoreboard. While Blind evaluation is on they only see bib numbers, not names.',
+          keywords: ['evaluators', 'evaluator', 'assistant', 'helper', 'scoring link', 'no login', 'no account', 'score', 'invite'],
+          answer: (
+            <>
+              <p>Yes. On the <strong>Evaluators</strong> card, add a helper by name and you get a <strong>private scoring link</strong> to text or email them — no login and no app. The link works for <strong>48 hours</strong> and you can turn it off any time.</p>
+              <p>They rate players on your scorecard from their own phone, and their scores flow into your <strong>Live scoreboard</strong>. While Blind evaluation is on they only see <strong>bib numbers</strong>, not names.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-tryout-bias',
+          question: 'What does “runs hot” or “runs cold” mean on the scoreboard?',
+          answerText: 'It is a neutral heads-up that one evaluator tends to score higher (runs hot) or lower (runs cold) than the group overall. It does not change anyone’s scores or the ranking — it just helps you weigh that person’s input. It only appears once an evaluator has scored enough players to be meaningful, so a small panel won’t trip false flags.',
+          keywords: ['runs hot', 'runs cold', 'bias', 'evaluator', 'consensus', 'scoreboard', 'fair'],
+          answer: (
+            <p>It&apos;s a neutral heads-up that one evaluator tends to score <strong>higher (runs hot)</strong> or <strong>lower (runs cold)</strong> than the group overall. It doesn&apos;t change anyone&apos;s scores or the ranking — it just helps you weigh that person&apos;s input. It only shows once an evaluator has scored enough players to be meaningful, so a small panel won&apos;t trip false flags.</p>
+          ),
+        },
+        {
+          id: 'faq-tryout-scorecard-edit',
+          question: 'Can I change my scorecard after scoring has started?',
+          answerText: 'You can rename a category and change its weight any time. To protect scores already given, you can’t remove a category that players have been scored on — keep it (renaming is fine) or start a fresh tryout. Adding new categories is always allowed.',
+          keywords: ['scorecard', 'rubric', 'edit', 'change', 'category', 'weight', 'delete'],
+          answer: (
+            <p>You can <strong>rename</strong> a category and change its <strong>weight</strong> any time. To protect scores already given, you can&apos;t <strong>remove</strong> a category that players have been scored on — keep it (renaming is fine). Adding new categories is always allowed.</p>
+          ),
+        },
+      ],
+    },
+    {
       id: 'recipe-track-dues',
       group: 'Your team tools',
       heading: 'How to track team fees',

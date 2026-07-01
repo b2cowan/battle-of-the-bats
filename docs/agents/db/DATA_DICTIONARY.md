@@ -2142,7 +2142,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_tryout_registrations.bib_number -->
 <!-- dict:col:rep_tryout_registrations.is_checked_in -->
 <!-- dict:col:rep_tryout_registrations.checked_in_at -->
-**`bib_number` / `is_checked_in` / `checked_in_at`** (text / boolean NOT NULL default false / timestamptz; **mig 165**) — tryout-day candidate fields. `bib_number` is text (allows alpha bibs; app sorts numerically); **one bib + check-in per candidate per tryout** for V1 (per-session check-in deferred). Set from the coaches-portal day-of check-in view.
+**`bib_number` / `is_checked_in` / `checked_in_at`** (text / boolean NOT NULL default false / timestamptz; **mig 165**) — tryout-day candidate fields. `bib_number` is text (allows alpha bibs; app sorts numerically); **one bib + check-in per candidate per tryout** for V1 (per-session check-in deferred). Set from the coaches-portal day-of check-in view. **mig 166** adds partial unique index `rep_tryout_registrations_bib_uq (program_year_id, bib_number) WHERE bib_number IS NOT NULL` — no duplicate bibs within a tryout (NULLs repeat freely for unbibbed candidates).
 
 <!-- dict:col:rep_tryout_registrations.submitted_at -->
 **`submitted_at`** (timestamptz, NOT NULL, default now()) — **the create stamp** (this table has no `created_at`); admin list orders `submitted_at DESC`.
@@ -2199,6 +2199,78 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_tryout_sessions.created_at -->
 <!-- dict:col:rep_tryout_sessions.updated_at -->
 **`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()).
+
+### `rep_tryout_rubrics`
+<!-- dict:table:rep_tryout_rubrics -->
+
+**Purpose:** the **evaluation scorecard** for a tryout — 1 per tryout (Phase 2B). The whole rubric lives in `categories` (JSONB) so its shape evolves without migrations; cloning a prior tryout's rubric is an app-level copy. **mig 166.** Service-role only; **RLS ENABLED, no policies.** Anchors on `rep_tryouts` (DBA Finding #30); future score rows reference the category `key`s.
+
+<!-- dict:col:rep_tryout_rubrics.tryout_id -->
+**`tryout_id`** (FK → `rep_tryouts.id`, NOT NULL, **UNIQUE** → one rubric per tryout).
+
+<!-- dict:col:rep_tryout_rubrics.program_year_id -->
+<!-- dict:col:rep_tryout_rubrics.team_id -->
+<!-- dict:col:rep_tryout_rubrics.org_id -->
+**`program_year_id` / `team_id` / `org_id`** (FK, NOT NULL, denormalized) — rep_* leaf scoping (one-hop `org_id`).
+
+<!-- dict:col:rep_tryout_rubrics.name -->
+**`name`** (text, nullable) — the scorecard's label (e.g. "U15 AAA tryout scorecard").
+
+<!-- dict:col:rep_tryout_rubrics.scale_max -->
+**`scale_max`** (smallint, NOT NULL, default 5; CHECK 5 or 10) — the rating scale (1–5 or 1–10).
+
+<!-- dict:col:rep_tryout_rubrics.categories -->
+**`categories`** (jsonb, NOT NULL, default `[]`) — the rubric: array of `{ key, label, weight, instructions? }`. `key` is the stable id a score row references; `weight` drives the composite ranking. App-shaped (no CHECK).
+
+<!-- dict:col:rep_tryout_rubrics.created_at -->
+<!-- dict:col:rep_tryout_rubrics.updated_at -->
+**`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()).
+
+### `rep_tryout_evaluator_sessions`
+<!-- dict:table:rep_tryout_evaluator_sessions -->
+
+**Purpose:** a **no-account co-coach scoring link** (Phase 2B.2). The head coach generates one per evaluator; the raw token lives only in the URL — only its SHA-256 `token_hash` is stored. **mig 167.** Service-role only; **RLS ENABLED, no policies.**
+
+<!-- dict:col:rep_tryout_evaluator_sessions.tryout_id -->
+**`tryout_id`** (FK → `rep_tryouts.id`, NOT NULL).
+<!-- dict:col:rep_tryout_evaluator_sessions.program_year_id -->
+<!-- dict:col:rep_tryout_evaluator_sessions.team_id -->
+<!-- dict:col:rep_tryout_evaluator_sessions.org_id -->
+**`program_year_id` / `team_id` / `org_id`** (FK, NOT NULL, denormalized) — one-hop scoping.
+<!-- dict:col:rep_tryout_evaluator_sessions.evaluator_name -->
+**`evaluator_name`** (text, nullable) — who's scoring (attribution + bias view).
+<!-- dict:col:rep_tryout_evaluator_sessions.token_hash -->
+**`token_hash`** (text, NOT NULL, UNIQUE) — SHA-256 of the link token; the **raw token is never stored** (matches `team_workspace_claims`). Server hashes the incoming token to resolve the session.
+<!-- dict:col:rep_tryout_evaluator_sessions.expires_at -->
+**`expires_at`** (timestamptz, NOT NULL) — ≤48h from creation (app-enforced); checked on every score write.
+<!-- dict:col:rep_tryout_evaluator_sessions.revoked_at -->
+**`revoked_at`** (timestamptz, nullable) — head coach can revoke; a non-null value **blocks all writes** (checked server-side on every score).
+<!-- dict:col:rep_tryout_evaluator_sessions.created_at -->
+**`created_at`** (timestamptz, NOT NULL, default now()).
+
+### `rep_tryout_scores`
+<!-- dict:table:rep_tryout_scores -->
+
+**Purpose:** one **evaluator score per candidate per rubric category** (Phase 2B.2). Upsert-only (unique key), so re-scoring overwrites. Aggregated at read time (weighted by `rep_tryout_rubrics.categories[].weight`) into the composite ranking; the head-coach dashboard **polls** (no Realtime — deliberate, keeps minors' scores off any client RLS-SELECT path). **mig 167.** Service-role only; **RLS ENABLED, no policies.**
+
+<!-- dict:col:rep_tryout_scores.evaluator_session_id -->
+**`evaluator_session_id`** (FK → `rep_tryout_evaluator_sessions.id`, NOT NULL) — who scored.
+<!-- dict:col:rep_tryout_scores.registration_id -->
+**`registration_id`** (FK → `rep_tryout_registrations.id`, NOT NULL) — the candidate.
+<!-- dict:col:rep_tryout_scores.tryout_id -->
+<!-- dict:col:rep_tryout_scores.program_year_id -->
+<!-- dict:col:rep_tryout_scores.team_id -->
+<!-- dict:col:rep_tryout_scores.org_id -->
+**`tryout_id` / `program_year_id` / `team_id` / `org_id`** (FK, NOT NULL, denormalized) — one-hop scoping.
+<!-- dict:col:rep_tryout_scores.category_key -->
+**`category_key`** (text, NOT NULL) — matches a `rep_tryout_rubrics.categories[].key`.
+<!-- dict:col:rep_tryout_scores.score -->
+**`score`** (smallint, NOT NULL, **CHECK 1–10** via `rep_tryout_scores_score_check`) — the rating. DB caps it at 1–10; the POST additionally clamps to the rubric's `scale_max` (5 or 10).
+<!-- dict:col:rep_tryout_scores.note -->
+**`note`** (text, nullable) — optional evaluator note.
+<!-- dict:col:rep_tryout_scores.created_at -->
+<!-- dict:col:rep_tryout_scores.updated_at -->
+**`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()). **UNIQUE(evaluator_session_id, registration_id, category_key)** — upsert, no dup rows.
 
 ### `rep_document_templates`
 <!-- dict:table:rep_document_templates -->

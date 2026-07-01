@@ -3024,6 +3024,46 @@
     "foreign_column": null
   },
   {
+    "table_name": "rep_tryout_evaluator_sessions",
+    "constraint_name": "rep_tryout_evaluator_sessions_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_evaluator_sessions",
+    "constraint_name": "rep_tryout_evaluator_sessions_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_tryout_evaluator_sessions",
+    "constraint_name": "rep_tryout_evaluator_sessions_program_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "program_year_id",
+    "foreign_table": "rep_program_years",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_evaluator_sessions",
+    "constraint_name": "rep_tryout_evaluator_sessions_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_evaluator_sessions",
+    "constraint_name": "rep_tryout_evaluator_sessions_tryout_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tryout_id",
+    "foreign_table": "rep_tryouts",
+    "foreign_column": "id"
+  },
+  {
     "table_name": "rep_tryout_registrations",
     "constraint_name": "rep_tryout_registrations_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -3053,6 +3093,126 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_rubrics",
+    "constraint_name": "rep_tryout_rubrics_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_rubrics",
+    "constraint_name": "rep_tryout_rubrics_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_tryout_rubrics",
+    "constraint_name": "rep_tryout_rubrics_program_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "program_year_id",
+    "foreign_table": "rep_program_years",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_rubrics",
+    "constraint_name": "rep_tryout_rubrics_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_rubrics",
+    "constraint_name": "rep_tryout_rubrics_tryout_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tryout_id",
+    "foreign_table": "rep_tryouts",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_scores",
+    "constraint_name": "rep_tryout_scores_evaluator_session_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "evaluator_session_id",
+    "foreign_table": "rep_tryout_evaluator_sessions",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_scores",
+    "constraint_name": "rep_tryout_scores_evaluator_session_id_registration_id_cate_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "evaluator_session_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_tryout_scores",
+    "constraint_name": "rep_tryout_scores_evaluator_session_id_registration_id_cate_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "registration_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_tryout_scores",
+    "constraint_name": "rep_tryout_scores_evaluator_session_id_registration_id_cate_key",
+    "constraint_type": "UNIQUE",
+    "column_name": "category_key",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_tryout_scores",
+    "constraint_name": "rep_tryout_scores_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_scores",
+    "constraint_name": "rep_tryout_scores_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_tryout_scores",
+    "constraint_name": "rep_tryout_scores_program_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "program_year_id",
+    "foreign_table": "rep_program_years",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_scores",
+    "constraint_name": "rep_tryout_scores_registration_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "registration_id",
+    "foreign_table": "rep_tryout_registrations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_scores",
+    "constraint_name": "rep_tryout_scores_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_scores",
+    "constraint_name": "rep_tryout_scores_tryout_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tryout_id",
+    "foreign_table": "rep_tryouts",
     "foreign_column": "id"
   },
   {
