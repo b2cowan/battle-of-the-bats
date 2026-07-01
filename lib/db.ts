@@ -4461,28 +4461,83 @@ export async function updateRepTryoutRegistrationStatus(
   return mapRepTryoutRegistration(data);
 }
 
+/** Optional roster fields set at accept time (identity/guardian are carried from the registration). */
+export interface TryoutAcceptRosterFields {
+  playerNumber?: string | null;
+  primaryPosition?: string | null;
+  jerseySize?: string | null;
+}
+
+/** Optional dues schedule attached at accept time. Amounts are dollars; records what's owed (no charge). */
+export interface TryoutAcceptDues {
+  totalAmount: number;
+  notes?: string | null;
+  installments: Array<{ installmentNumber?: number; amount: number; dueDate: string }>;
+}
+
+/** Typed accept failures the routes translate to 404/409/400 (rather than a bare 500). */
+export class TryoutAcceptError extends Error {
+  code: 'not_found' | 'not_offered' | 'dues_invalid';
+  constructor(code: 'not_found' | 'not_offered' | 'dues_invalid', message: string) {
+    super(message);
+    this.name = 'TryoutAcceptError';
+    this.code = code;
+  }
+}
+
+/**
+ * Accept an OFFERED tryout registration onto the roster — atomically. Delegates the multi-table write
+ * (roster insert + status='accepted' + optional dues schedule/installments) to the mig-169 RPC so a
+ * mid-way failure rolls back cleanly instead of half-landing a player. Caller-agnostic: the admin
+ * route, the coach route, and 2B.5's token accept all reuse it (auth is enforced by the caller).
+ *
+ * With no opts the behaviour matches the pre-2B.4 admin accept exactly (roster + status, no dues) —
+ * but now transactional and guarded against a double-accept race.
+ */
 export async function acceptTryoutAndAddToRoster(
   regId: string,
+  opts?: { roster?: TryoutAcceptRosterFields; dues?: TryoutAcceptDues | null },
 ): Promise<{ registration: RepTryoutRegistration; player: RepRosterPlayer }> {
-  const reg = await getRepTryoutRegistration(regId);
-  if (!reg) throw new Error('Tryout registration not found');
+  const pRoster = opts?.roster
+    ? {
+        playerNumber: opts.roster.playerNumber ?? null,
+        primaryPosition: opts.roster.primaryPosition ?? null,
+        jerseySize: opts.roster.jerseySize ?? null,
+      }
+    : null;
 
-  const player = await createRepRosterPlayer({
-    programYearId: reg.programYearId,
-    teamId: reg.teamId,
-    orgId: reg.orgId,
-    source: 'tryout',
-    tryoutRegistrationId: reg.id,
-    playerFirstName: reg.playerFirstName,
-    playerLastName: reg.playerLastName,
-    playerDateOfBirth: reg.playerDateOfBirth,
-    guardianFirstName: reg.guardianFirstName,
-    guardianLastName: reg.guardianLastName,
-    guardianEmail: reg.guardianEmail,
-    guardianPhone: reg.guardianPhone,
+  const pDues = opts?.dues
+    ? {
+        totalAmount: opts.dues.totalAmount,
+        notes: opts.dues.notes ?? null,
+        installments: opts.dues.installments.map((i, idx) => ({
+          installmentNumber: i.installmentNumber ?? idx + 1,
+          amount: i.amount,
+          dueDate: i.dueDate,
+        })),
+      }
+    : null;
+
+  const { data, error } = await supabaseAdmin.rpc('accept_tryout_and_create_dues', {
+    p_reg_id: regId,
+    p_roster: pRoster,
+    p_dues: pDues,
   });
 
-  const registration = await updateRepTryoutRegistrationStatus(regId, 'accepted');
+  if (error) {
+    const msg = error.message || '';
+    if (msg.includes('tryout_accept_reg_not_found')) throw new TryoutAcceptError('not_found', 'Tryout registration not found');
+    if (msg.includes('tryout_accept_not_offered')) throw new TryoutAcceptError('not_offered', 'This applicant is no longer awaiting acceptance.');
+    if (msg.includes('tryout_accept_dues_invalid')) throw new TryoutAcceptError('dues_invalid', 'The fee schedule is invalid — installments must sum to the total.');
+    throw error;
+  }
+
+  const playerId = (data as { playerId?: string } | null)?.playerId;
+  const [registration, player] = await Promise.all([
+    getRepTryoutRegistration(regId),
+    playerId ? getRepRosterPlayer(playerId) : Promise.resolve(null),
+  ]);
+  if (!registration || !player) throw new Error('Accept committed but reloading the record failed');
   return { registration, player };
 }
 

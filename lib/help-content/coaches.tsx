@@ -123,9 +123,9 @@ const coachesHelp: HelpPageContent = {
       id: 'recipe-run-tryouts',
       group: 'Your team tools',
       heading: 'How to run tryout day',
-      summary: 'Run the whole tryout from your phone: sessions, scorecard, check-in, helper scoring, a live ranked scoreboard, and Offer/Waitlist decisions — kept fair with blind evaluation.',
-      keywords: ['tryouts', 'tryout day', 'check-in', 'bib numbers', 'blind evaluation', 'walk-up', 'scorecard', 'evaluators', 'scoreboard', 'ranking', 'decision board', 'offer', 'waitlist', 'reveal names', 'lock scoring'],
-      searchText: 'tryouts tryout day sessions dates times location field check in check-in bib number auto assign blind evaluation names hidden anonymous walk up walk-up add candidate print roster sheet paper backup provincial window OBA softball ontario schedule marker premium run tryouts evaluate players scorecard rubric categories skills weight rating scale 1-5 1-10 hitting fielding throwing speed attitude evaluators assistant helper no login link score scoring rate players live scoreboard ranked ranking composite weighted average bias runs hot runs cold consensus lock scoring freeze reopen reveal names unblind one-way decision board offer waitlist not this season cut pass pick selections roster',
+      summary: 'Run the whole tryout from your phone: sessions, scorecard, check-in, helper scoring, a live ranked scoreboard, Offer/Waitlist decisions, and one-tap accept onto your roster with fees — kept fair with blind evaluation.',
+      keywords: ['tryouts', 'tryout day', 'check-in', 'bib numbers', 'blind evaluation', 'walk-up', 'scorecard', 'evaluators', 'scoreboard', 'ranking', 'decision board', 'offer', 'waitlist', 'reveal names', 'lock scoring', 'accept', 'add to roster', 'fees', 'dues'],
+      searchText: 'tryouts tryout day sessions dates times location field check in check-in bib number auto assign blind evaluation names hidden anonymous walk up walk-up add candidate print roster sheet paper backup provincial window OBA softball ontario schedule marker premium run tryouts evaluate players scorecard rubric categories skills weight rating scale 1-5 1-10 hitting fielding throwing speed attitude evaluators assistant helper no login link score scoring rate players live scoreboard ranked ranking composite weighted average bias runs hot runs cold consensus lock scoring freeze reopen reveal names unblind one-way decision board offer waitlist not this season cut pass pick selections roster accept add to roster onboard finalize fees dues standard fee schedule installments prefilled optional no card charge',
       content: (
         <>
           <p>Open the <strong>Tryouts</strong> tab for your team to run the whole day from your phone — set up, check-in, scoring, a live ranked scoreboard, and your final picks all live here.</p>
@@ -139,10 +139,11 @@ const coachesHelp: HelpPageContent = {
             <li><strong>Watch the live scoreboard.</strong> The <strong>Live scoreboard</strong> ranks players by their weighted average across everyone scoring, and updates on its own as scores come in. If an evaluator&apos;s scores drift from the group, they&apos;re gently flagged &quot;runs hot/cold&quot; so you can weigh their input.</li>
             <li><strong>Lock scoring when you&apos;re done.</strong> Use <strong>Lock scoring</strong> on the scoreboard to freeze all evaluator input — their links stop accepting scores. You can reopen it any time if you need another look.</li>
             <li><strong>Reveal names when you&apos;re ready to decide.</strong> On the Tryout Day card, <strong>Reveal names</strong> turns off blind mode so names show on the scoreboard and decision board. It&apos;s <strong>one-way</strong> — once revealed you can&apos;t switch back to bib-only for this tryout, so you&apos;ll be asked to confirm.</li>
-            <li><strong>Make your picks.</strong> On the <strong>Decision board</strong>, players are listed top-to-bottom by score; for each one tap <strong>Offer</strong>, <strong>Waitlist</strong>, or <strong>Not this season</strong>. A running tally shows where you stand. Your picks feed the applicant list your club admin uses to finalize the roster.</li>
+            <li><strong>Make your picks.</strong> On the <strong>Decision board</strong>, players are listed top-to-bottom by score; for each one tap <strong>Offer</strong>, <strong>Waitlist</strong>, or <strong>Not this season</strong>. A running tally shows where you stand.</li>
+            <li><strong>Accept them onto your roster.</strong> Once you&apos;ve offered a player, tap <strong>Accept → add to roster</strong>. A quick drawer opens with their details already filled in from their registration (name, birthdate, guardian) — add an optional number, position, and jersey size. If your team already charges dues, their <strong>standard fee schedule is pre-filled</strong> and editable; leave it on to set them up with fees, or flip it off to add them now and set fees later. Confirm and they land on your roster in one step (the player and their fees are saved together — nothing half-finishes). Fees only <strong>record what&apos;s owed</strong> — no card is charged.</li>
           </ol>
           <p>Pick a tryout date outside the standard provincial tryout window and you&apos;ll get a friendly heads-up — safe to ignore if your team isn&apos;t affiliated.</p>
-          <p>You run tryouts for your own team whether you coach independently or as part of a club. Your board decisions set who&apos;s offered, waitlisted, or passed; finalizing a player onto the roster (and any org-level applicant management) stays in the org&apos;s Rep Teams admin area.</p>
+          <p>You run tryouts for your own team whether you coach independently or as part of a club. If you coach a club team, accepting a player also finalizes them in the org&apos;s Rep Teams area, where your club admin can manage applicants and fees too.</p>
         </>
       ),
       faqs: [
@@ -167,19 +168,19 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-tryout-waitlist',
           question: 'What’s the difference between Waitlist and Not this season?',
-          answerText: 'On the decision board, Offer means you want the player on the team, Waitlist holds them as a backup you may promote if a spot opens, and Not this season passes on them for now. Your picks feed the applicant list your club admin uses to finalize offers and the roster.',
-          keywords: ['waitlist', 'offer', 'not this season', 'cut', 'pass', 'decision', 'pick'],
+          answerText: 'On the decision board, Offer means you want the player on the team, Waitlist holds them as a backup you may promote if a spot opens, and Not this season passes on them for now. Once you have offered a player, use Accept → add to roster to onboard them (with their fees) in one step.',
+          keywords: ['waitlist', 'offer', 'not this season', 'cut', 'pass', 'decision', 'pick', 'accept', 'roster'],
           answer: (
-            <p>On the <strong>Decision board</strong>: <strong>Offer</strong> means you want the player on the team, <strong>Waitlist</strong> holds them as a backup you may promote if a spot opens, and <strong>Not this season</strong> passes on them for now. Your picks feed the applicant list your club admin uses to finalize offers and the roster.</p>
+            <p>On the <strong>Decision board</strong>: <strong>Offer</strong> means you want the player on the team, <strong>Waitlist</strong> holds them as a backup you may promote if a spot opens, and <strong>Not this season</strong> passes on them for now. Once you&apos;ve offered a player, use <strong>Accept → add to roster</strong> to onboard them — with their fees — in one step.</p>
           ),
         },
         {
           id: 'faq-tryout-vs-admin',
           question: 'Where do families register for tryouts, and who accepts players?',
-          answerText: 'Families register through the public tryout form, and applicants are reviewed — offered, accepted, or declined — in the org admin Rep Teams area, which your club admin handles. Your Tryouts tab is for running tryout day: sessions, check-in, and the printable sheet.',
-          keywords: ['registration', 'applicants', 'accept', 'offer', 'sign up', 'admin'],
+          answerText: 'Families register through the public tryout form. You run tryout day and make your picks on the Tryouts tab, and you can accept an offered player straight onto your roster (with their fees) from the Decision board. If you coach a club team, your club admin can also review and finalize applicants in the org Rep Teams area — you share the same applicant list.',
+          keywords: ['registration', 'applicants', 'accept', 'offer', 'sign up', 'admin', 'roster', 'fees'],
           answer: (
-            <p>Families register through the public tryout form, and applicants are reviewed — offered, accepted, or declined — in the org&apos;s <strong>Rep Teams</strong> admin area (your club admin handles that). Your <strong>Tryouts</strong> tab is for running tryout <em>day</em>: sessions, check-in, and the printable sheet.</p>
+            <p>Families register through the public tryout form. You run tryout <em>day</em> and make your picks on the <strong>Tryouts</strong> tab, and you can <strong>accept</strong> an offered player straight onto your roster (with their fees) from the <strong>Decision board</strong>. If you coach a club team, your club admin can also review and finalize applicants in the org&apos;s <strong>Rep Teams</strong> area — you share the same applicant list.</p>
           ),
         },
         {
@@ -250,8 +251,8 @@ const coachesHelp: HelpPageContent = {
       group: 'Your team tools',
       heading: 'How to message your team',
       summary: 'Email every parent with a contact email on your roster in one send.',
-      keywords: ['announcements', 'email parents', 'message team', 'send announcement', 'contact parents'],
-      searchText: 'announcements email parents message whole team send announcement subject body recipients contact email roster missing email recent announcements log delivery premium',
+      keywords: ['announcements', 'email parents', 'message team', 'send announcement', 'contact parents', 'reuse announcement', 'resend', 'confirm send'],
+      searchText: 'announcements email parents message whole team send announcement subject body recipients contact email roster missing email recent announcements log delivery premium confirm before sending irreversible cannot unsend reuse resend duplicate past announcement send again recipient count updates automatically no refresh unsaved changes draft warning read full message expand',
       content: (
         <>
           <p>Turn on <strong>Announcements</strong> from Explore to email your whole team at once.</p>
@@ -260,18 +261,30 @@ const coachesHelp: HelpPageContent = {
             <li>The recipient count shows how many parents will get it — everyone on your Roster who has a contact email.</li>
             <li>Click <strong>Send announcement</strong>.</li>
           </ol>
-          <p>If a player has no contact email, the page warns you and won&apos;t reach them — add an email on your Roster and use <strong>Refresh</strong> to include them. Every send is saved to a <strong>Recent announcements</strong> log showing whether it sent fully, partly, or failed.</p>
-          <p><strong>Coaches Portal Premium adds:</strong> scheduling announcements ahead of time, automatic dues and event reminders, and seeing who has received each message.</p>
+          <p>If a player has no contact email, the page warns you and won&apos;t reach them — add an email on your Roster to include them. Every send is saved to a <strong>Recent announcements</strong> log showing whether it sent fully, partly, or failed.</p>
+          <p><strong>Coaches Portal Premium adds:</strong> a quick <strong>confirm</strong> before an announcement emails families (it can&apos;t be unsent), a recipient count that <strong>updates on its own</strong> as you add contacts, the ability to reopen a past announcement to <strong>read it in full and reuse it</strong>, and automatic dues and event reminders.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-announcement-no-recipients',
           question: 'Why does it say there’s no one to email?',
-          answerText: 'Announcements only reach players who have a contact email on your Roster. Add a parent/guardian email to each player on the Roster page, then use Refresh on the Announcements page to pick them up.',
+          answerText: 'Announcements only reach players who have a contact email on your Roster. Add a parent/guardian email to each player on the Roster page; the recipient count picks them up when you return to Announcements (or use Refresh contacts on the empty screen).',
           keywords: ['no recipients', 'no one to email', 'contact email', 'announcement'],
           answer: (
-            <p>Announcements only reach players who have a contact email on your Roster. Add a parent/guardian email to each player on the <strong>Roster</strong> page, then use <strong>Refresh</strong> on the Announcements page to pick them up.</p>
+            <p>Announcements only reach players who have a contact email on your <strong>Roster</strong>. Add a parent/guardian email to each player; the recipient count picks them up when you return to Announcements (or use <strong>Refresh contacts</strong> on the empty screen).</p>
+          ),
+        },
+        {
+          id: 'faq-announcement-reuse',
+          question: 'Can I resend or reuse a past announcement?',
+          answerText: 'On Coaches Portal Premium, open any message in the Recent announcements list to read it in full, then choose Reuse to drop its subject and body back into the compose box — edit and send again in seconds. Premium also asks you to confirm before an announcement emails families (it cannot be unsent) and warns you before you leave a half-written message.',
+          keywords: ['reuse', 'resend', 'duplicate announcement', 'send again', 'confirm before sending', 'unsaved changes', 'read full message'],
+          answer: (
+            <>
+              <p>On <strong>Coaches Portal Premium</strong>, open any message in the <strong>Recent announcements</strong> list to read it in full, then choose <strong>Reuse</strong> to drop its subject and body back into the compose box — edit and send again in seconds.</p>
+              <p>Premium also asks you to <strong>confirm</strong> before an announcement emails families (it can&apos;t be unsent), and warns you before you leave a half-written message.</p>
+            </>
           ),
         },
       ],
@@ -431,7 +444,7 @@ const coachesHelp: HelpPageContent = {
           <p>Your <strong>Overview</strong> is built to get you going:</p>
           <ul>
             <li><strong>Season setup</strong> — a checklist that shows your progress at a glance. Adding your <strong>roster</strong> is the only required step; everything else (jersey numbers and positions, your schedule, game lineups, and a budget) is <strong>optional</strong>. For each optional step you can either set it up or hit <strong>Skip</strong> if you won&apos;t use it — both tick it off, so the progress bar fills as you decide. The whole panel disappears once every step is either done or skipped, leaving you with the run-mode view below.</li>
-            <li><strong>Your team at a glance</strong> — quick tiles for your <strong>roster</strong>, <strong>next event</strong>, <strong>dues</strong>, and <strong>budget</strong> (spent vs set), each linking straight to that section. It also surfaces what needs attention: <strong>who&apos;s coming</strong> to the next game (in / out / no-reply), a <strong>Lineup ready / not set</strong> nudge, players <strong>missing a guardian email</strong>, your season record with <strong>recent form, scoring, and current streak</strong>, plus a <strong>This week</strong> line of upcoming events and player <strong>birthdays</strong>.</li>
+            <li><strong>Your team at a glance</strong> — quick tiles for your <strong>roster</strong>, <strong>next event</strong>, <strong>dues</strong>, <strong>budget</strong> (spent vs set), and <strong>tournaments</strong> (next date, plus any <strong>entry fees due</strong>), each linking straight to that section. It also surfaces what needs attention: <strong>who&apos;s coming</strong> to the next game (in / out / no-reply), a <strong>Lineup ready / not set</strong> nudge, players <strong>missing a guardian email</strong>, your season record with <strong>recent form, scoring, and current streak</strong>, plus a <strong>This week</strong> line of upcoming events and player <strong>birthdays</strong>.</li>
           </ul>
           <p>Stuck on a term? Look for the small <strong>?</strong> icons next to items for a one-line explanation, or the <strong>Help</strong> button in the page header — or <strong>Open the setup guide</strong> in the season-setup panel — to open this guide right beside what you&apos;re doing.</p>
         </>

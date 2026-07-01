@@ -8,7 +8,9 @@ import {
   getRepTryoutRegistration,
   updateRepTryoutRegistrationStatus,
   acceptTryoutAndAddToRoster,
+  TryoutAcceptError,
 } from '@/lib/db';
+import { deriveStandardDuesSchedule, validateAcceptDues, normalizeAcceptDues } from '@/lib/tryout-fees';
 import { sendEmail, tryoutOfferHtml, tryoutAcceptedHtml, tryoutDeclinedHtml } from '@/lib/email';
 import type { RepTryoutRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
@@ -54,7 +56,12 @@ export const GET = withObservability(async (_req: Request,
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ registration });
+  // The accept drawer opens with `?feeSuggestion=1` to pre-fill the team's standard fee schedule
+  // (derived from prevailing roster dues — no fee-template exists in the schema).
+  const wantFee = new URL(_req.url).searchParams.get('feeSuggestion') === '1';
+  const suggestedDues = wantFee ? await deriveStandardDuesSchedule(programYear.id) : undefined;
+
+  return NextResponse.json({ registration, suggestedDues });
 }, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/[regId]' });
 
 export const PATCH = withObservability(async (req: Request,
@@ -116,13 +123,33 @@ export const PATCH = withObservability(async (req: Request,
   };
 
   if (newStatus === 'accepted') {
-    const { registration, player } = await acceptTryoutAndAddToRoster(reg.id);
-    sendEmail(
-      reg.guardianEmail,
-      `${team.name} — Welcome to the Team!`,
-      tryoutAcceptedHtml(emailParams),
-    ).catch(e => console.error('[email] tryout accepted:', e));
-    return NextResponse.json({ registration, player });
+    // Optional roster fields + optional dues schedule ride along on the accept (Phase 2B.4). The
+    // upgraded accept is atomic (mig-169 RPC): roster + status + dues all-or-nothing.
+    const roster = body.roster && typeof body.roster === 'object' ? {
+      playerNumber:    typeof body.roster.playerNumber === 'string' ? body.roster.playerNumber.trim() || null : null,
+      primaryPosition: typeof body.roster.primaryPosition === 'string' ? body.roster.primaryPosition.trim() || null : null,
+      jerseySize:      typeof body.roster.jerseySize === 'string' ? body.roster.jerseySize.trim() || null : null,
+    } : undefined;
+
+    const duesError = validateAcceptDues(body.dues);
+    if (duesError) return NextResponse.json({ error: duesError }, { status: 400 });
+    const dues = body.dues ? normalizeAcceptDues(body.dues) : null;
+
+    try {
+      const { registration, player } = await acceptTryoutAndAddToRoster(reg.id, { roster, dues });
+      sendEmail(
+        reg.guardianEmail,
+        `${team.name} — Welcome to the Team!`,
+        tryoutAcceptedHtml(emailParams),
+      ).catch(e => console.error('[email] tryout accepted:', e));
+      return NextResponse.json({ registration, player });
+    } catch (e) {
+      if (e instanceof TryoutAcceptError) {
+        const status = e.code === 'not_found' ? 404 : e.code === 'not_offered' ? 409 : 400;
+        return NextResponse.json({ error: e.message }, { status });
+      }
+      throw e;
+    }
   }
 
   const registration = await updateRepTryoutRegistrationStatus(

@@ -1,0 +1,135 @@
+/* Accept-to-roster + fee-setup drawer (Phase 2B.4). Shared by the admin Rep Teams applicant panel and
+   the coach decision board. Dark coaches/admin theme + lime accent, matching TryoutDayCard.module.css.
+   Right-side slide-over on desktop; full-width bottom sheet on mobile (field-side). */
+
+.scrim {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex; justify-content: flex-end;
+  z-index: 300;
+}
+.panel {
+  width: 100%; max-width: 480px;
+  height: 100%;
+  overflow-y: auto;
+  background: #141414;
+  border-left: 1px solid rgba(255,255,255,0.1);
+  display: flex; flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.header {
+  position: sticky; top: 0; z-index: 1;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  padding: 1.15rem 1.35rem 0.9rem;
+  background: #141414;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.headerTitle { font-size: 1.05rem; font-weight: 800; color: #f0f0f0; margin: 0; }
+.headerSub { font-size: 0.78rem; color: rgba(255,255,255,0.45); margin: 0.2rem 0 0; }
+.closeBtn {
+  flex: 0 0 auto;
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+  background: transparent; color: rgba(255,255,255,0.6); cursor: pointer;
+}
+.closeBtn:hover { color: #f0f0f0; border-color: rgba(255,255,255,0.25); }
+
+.body { padding: 1.1rem 1.35rem 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+
+.section { display: flex; flex-direction: column; gap: 0.6rem; }
+.sectionTitle {
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+  color: rgba(255,255,255,0.5); margin: 0;
+}
+
+/* Read-only identity */
+.readField { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.88rem; }
+.readLabel { color: rgba(255,255,255,0.45); flex: 0 0 auto; }
+.readValue { color: #f0f0f0; text-align: right; word-break: break-word; }
+
+/* Inputs */
+.field { display: flex; flex-direction: column; gap: 0.35rem; }
+.label { font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.6); }
+.input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+  color: #f0f0f0; font-size: 0.9rem;
+  box-sizing: border-box; font-family: inherit;
+  min-height: 44px;
+}
+.input:focus { outline: none; border-color: var(--logic-lime, #a3e635); }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; }
+@media (max-width: 520px) { .row3 { grid-template-columns: 1fr; } }
+
+/* Fees toggle header */
+.feesHead { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.toggle {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: transparent; border: none; padding: 0; cursor: pointer; appearance: none;
+}
+.switch {
+  position: relative; width: 42px; height: 24px; border-radius: 999px;
+  background: rgba(255,255,255,0.15); transition: background 0.15s; flex: 0 0 auto;
+}
+.switchOn { background: var(--logic-lime, #a3e635); }
+.knob {
+  position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+  border-radius: 50%; background: #0A0A0A; transition: transform 0.15s;
+}
+.switchOn .knob { transform: translateX(18px); }
+
+.hint { font-size: 0.76rem; color: rgba(255,255,255,0.4); margin: 0; line-height: 1.4; }
+.hintAccent { color: var(--logic-lime, #a3e635); }
+
+/* Installment rows */
+.instList { display: flex; flex-direction: column; gap: 0.5rem; }
+.instRow { display: grid; grid-template-columns: 1.6rem 1fr 1fr 34px; gap: 0.5rem; align-items: center; }
+.instNum { font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.5); text-align: center; }
+.removeBtn {
+  width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+  background: transparent; color: rgba(255,255,255,0.55); cursor: pointer;
+}
+.removeBtn:hover { color: #f87171; border-color: rgba(248,113,113,0.4); }
+.removeBtn:disabled { opacity: 0.35; cursor: default; }
+
+.instTools { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.15rem; }
+.linkBtn {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.4rem 0.6rem; font-size: 0.78rem; font-weight: 600;
+  border: 1px dashed rgba(255,255,255,0.22); border-radius: 8px;
+  background: transparent; color: rgba(255,255,255,0.8); cursor: pointer;
+}
+.linkBtn:hover { border-color: var(--logic-lime, #a3e635); color: #f0f0f0; }
+
+/* Sum row */
+.sumRow {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.82rem; padding: 0.5rem 0.65rem;
+  border-radius: 8px; background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.sumLabel { color: rgba(255,255,255,0.55); }
+.sumOk { color: var(--logic-lime, #a3e635); font-weight: 700; font-variant-numeric: tabular-nums; }
+.sumBad { color: #fbbf24; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Footer */
+.footer {
+  position: sticky; bottom: 0;
+  display: flex; gap: 0.6rem; justify-content: flex-end;
+  padding: 0.9rem 1.35rem calc(0.9rem + env(safe-area-inset-bottom, 0));
+  background: #141414;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.errText { font-size: 0.78rem; color: #fbbf24; margin: 0 0 0.35rem; }
+
+/* Field-side: full-height bottom sheet on narrow screens. */
+@media (max-width: 640px) {
+  .scrim { align-items: flex-end; }
+  .panel { max-width: none; height: 94vh; border-left: none; border-radius: 16px 16px 0 0; }
+}

@@ -270,6 +270,21 @@
   font-size: 0.78rem; font-weight: 700; color: var(--logic-lime, #a3e635);
 }
 
+/* Decision column: the offer/waitlist/cut group plus (for offered candidates) the Accept action. */
+.decisionCol { display: flex; flex-direction: column; gap: 0.4rem; flex: 0 0 auto; align-items: stretch; }
+.acceptRosterBtn {
+  min-height: 40px; padding: 0 0.85rem;
+  border: 1px solid var(--logic-lime, #a3e635); border-radius: 8px;
+  background: rgba(163,230,53,0.12); color: var(--logic-lime, #a3e635);
+  font-size: 0.8rem; font-weight: 800; cursor: pointer; font-family: inherit; white-space: nowrap;
+}
+.acceptRosterBtn:hover { background: rgba(163,230,53,0.2); }
+.acceptRosterBtn:disabled { opacity: 0.55; cursor: default; }
+
+@media (max-width: 560px) {
+  .decisionCol { width: 100%; }
+}
+
 /* Field-side: let the choice group drop to its own full-width line on narrow screens. */
 @media (max-width: 560px) {
   .scoreRow { flex-wrap: wrap; }

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ListChecks, Check, EyeOff } from 'lucide-react';
+import TryoutAcceptDrawer, { type AcceptIdentity, type AcceptSuggestedDues, type AcceptPayload } from './TryoutAcceptDrawer';
 import styles from './TryoutDayCard.module.css';
 
 type Status = 'pending_review' | 'offered' | 'waitlisted' | 'accepted' | 'declined' | 'withdrawn';
@@ -36,10 +37,14 @@ const CHOICES: { key: Decision; label: string; status: Status }[] = [
   { key: 'cut', label: 'Not this season', status: 'declined' },
 ];
 
+interface AcceptTarget { registrationId: string; identity: AcceptIdentity; suggestedDues: AcceptSuggestedDues | null }
+
 export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [acceptLoadingId, setAcceptLoadingId] = useState<string | null>(null);
+  const [acceptTarget, setAcceptTarget] = useState<AcceptTarget | null>(null);
   const onErrorRef = useRef(onError);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
   const fail = useCallback((m: string) => { if (onErrorRef.current) onErrorRef.current(m); else console.error(m); }, []);
@@ -83,6 +88,41 @@ export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
     } finally {
       setSavingId(null);
     }
+  }
+
+  // Open the accept drawer for an offered candidate: fetch identity + the team's standard fee schedule.
+  async function openAccept(c: Candidate) {
+    if (acceptLoadingId || savingId) return;
+    setAcceptLoadingId(c.registrationId);
+    try {
+      const res = await fetch(`${apiBase}/accept?registrationId=${encodeURIComponent(c.registrationId)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message ?? data.error ?? 'Could not open accept');
+      setAcceptTarget({ registrationId: c.registrationId, identity: data.registration, suggestedDues: data.suggestedDues ?? null });
+    } catch (e: any) {
+      fail(e.message ?? 'Could not open the accept form.');
+    } finally {
+      setAcceptLoadingId(null);
+    }
+  }
+
+  // Confirm accept → atomic roster + optional dues. On success flip the candidate to the Accepted chip.
+  async function confirmAccept(payload: AcceptPayload) {
+    if (!acceptTarget) return;
+    const regId = acceptTarget.registrationId;
+    const res = await fetch(`${apiBase}/accept`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ registrationId: regId, ...payload }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message ?? data.error ?? 'Failed to add the player.');
+    setBoard(b => b ? {
+      ...b,
+      candidates: b.candidates.map(x => x.registrationId === regId ? { ...x, status: 'accepted' } : x),
+      counts: recount(b.candidates, regId, 'accepted'),
+    } : b);
+    setAcceptTarget(null);
   }
 
   if (loading) return null;
@@ -140,25 +180,46 @@ export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
               {accepted ? (
                 <span className={styles.acceptedChip}><Check size={13} /> Accepted</span>
               ) : (
-                <div className={styles.choiceGroup} role="group" aria-label="Decision">
-                  {CHOICES.map(choice => (
+                <div className={styles.decisionCol}>
+                  <div className={styles.choiceGroup} role="group" aria-label="Decision">
+                    {CHOICES.map(choice => (
+                      <button
+                        key={choice.key}
+                        type="button"
+                        className={`${styles.choiceBtn} ${c.status === choice.status ? styles[`choice_${choice.key}`] : ''}`}
+                        onClick={() => decide(c, choice.key)}
+                        disabled={!!savingId}
+                        aria-pressed={c.status === choice.status}
+                      >
+                        {choice.label}
+                      </button>
+                    ))}
+                  </div>
+                  {c.status === 'offered' && (
                     <button
-                      key={choice.key}
                       type="button"
-                      className={`${styles.choiceBtn} ${c.status === choice.status ? styles[`choice_${choice.key}`] : ''}`}
-                      onClick={() => decide(c, choice.key)}
-                      disabled={!!savingId}
-                      aria-pressed={c.status === choice.status}
+                      className={styles.acceptRosterBtn}
+                      onClick={() => openAccept(c)}
+                      disabled={!!savingId || !!acceptLoadingId}
                     >
-                      {choice.label}
+                      {acceptLoadingId === c.registrationId ? 'Opening…' : 'Accept → add to roster'}
                     </button>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
           );
         })}
       </div>
+
+      {acceptTarget && (
+        <TryoutAcceptDrawer
+          identity={acceptTarget.identity}
+          suggestedDues={acceptTarget.suggestedDues}
+          onClose={() => setAcceptTarget(null)}
+          onConfirm={confirmAccept}
+        />
+      )}
     </div>
   );
 }

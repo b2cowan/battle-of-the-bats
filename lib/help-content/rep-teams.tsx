@@ -91,7 +91,7 @@ const repTeamsHelp: HelpPageContent = {
             <li>Turn on <strong>Open Registration</strong> so families can apply from your org&apos;s public page.</li>
             <li>Review incoming applicants in <strong>Pending Review</strong>.</li>
             <li>Use <strong>Extend Offer</strong> to invite a player (the application moves to Offer Extended and the guardian is notified).</li>
-            <li>Use <strong>Accept</strong> only when the player is confirmed — this adds them to the roster and makes them visible to the coach. <strong>Decline</strong> notifies the guardian.</li>
+            <li>Use <strong>Accept</strong> only when the player is confirmed — this opens a short drawer that adds them to the roster (and, optionally, sets up their fees) in one step, and makes them visible to the coach. <strong>Decline</strong> notifies the guardian.</li>
             <li>Close registration when tryouts finish so the public form goes offline.</li>
           </ol>
           <p>The applicant list shows a <strong>Consent</strong> column: when a family submits the public form they confirm consent to data collection and email contact, and the date is captured for your records. Include it in the <strong>applicant export</strong> when you need a documented consent record.</p>
@@ -117,9 +117,9 @@ const repTeamsHelp: HelpPageContent = {
       id: 'recipe-accept-player-to-roster',
       group: 'How-to recipes',
       heading: 'How to accept a player onto a rep roster',
-      summary: 'Move a player from tryout application to coach-visible roster.',
-      keywords: ['accept player', 'roster', 'offer extended', 'coach portal', 'tryout applicant'],
-      searchText: 'accept player roster tryout applicant offer extended accepted coach portal missing player pending review roster visibility',
+      summary: 'Move a player from tryout application to coach-visible roster — with their fees set up in the same step.',
+      keywords: ['accept player', 'roster', 'offer extended', 'coach portal', 'tryout applicant', 'fees', 'dues', 'standard fee'],
+      searchText: 'accept player roster tryout applicant offer extended accepted coach portal missing player pending review roster visibility accept drawer fees dues standard fee schedule installments prefilled editable optional atomic no card charge',
       content: (
         <>
           <p>A player becomes visible to the coach only after the application reaches the accepted state.</p>
@@ -127,11 +127,12 @@ const repTeamsHelp: HelpPageContent = {
             <li>Open the program year&apos;s <strong>Tryouts</strong> tab.</li>
             <li>Find the applicant by player name or guardian email.</li>
             <li>If the player is still pending, extend an offer first if your workflow requires it.</li>
-            <li>Click <strong>Accept</strong> when the player is confirmed.</li>
-            <li>Open the roster or ask the coach to refresh their workspace.</li>
+            <li>Click <strong>Accept</strong> when the player is confirmed. A drawer opens with their details already filled in from their registration; add an optional number/position/jersey size, and choose whether to attach fees.</li>
+            <li>When your team already charges dues, the drawer pre-fills your <strong>standard fee schedule</strong> (the amount and installment plan the rest of the team pays) — edit it, or turn fees off to add them later on the coach&apos;s Dues page. Fees only record what&apos;s owed; no card is charged.</li>
+            <li>Confirm. The roster entry and the fee schedule save together — nothing half-finishes. Open the roster or ask the coach to refresh their workspace.</li>
             <li>If the player is still missing, confirm you accepted them in the same program year the coach is viewing.</li>
           </ol>
-          <p>Declined and offer-only players do not appear on the active roster.</p>
+          <p>Declined and offer-only players do not appear on the active roster. Standalone Premium head coaches can also accept players directly from their own Decision board — the same one-step flow.</p>
         </>
       ),
       faqs: [

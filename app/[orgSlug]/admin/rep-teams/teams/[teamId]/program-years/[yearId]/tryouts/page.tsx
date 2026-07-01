@@ -12,6 +12,7 @@ import {
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
+import TryoutAcceptDrawer, { type AcceptSuggestedDues, type AcceptPayload } from '@/components/rep-teams/TryoutAcceptDrawer';
 import styles from '../../../../../rep-teams.module.css';
 import type { RepTryoutRegistration, RepTryoutRegistrationStatus } from '@/lib/types';
 
@@ -99,6 +100,8 @@ export default function TryoutsPage({
   const [detailNotes, setDetailNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [acceptTarget, setAcceptTarget] = useState<RepTryoutRegistration | null>(null);
+  const [acceptSuggestion, setAcceptSuggestion] = useState<AcceptSuggestedDues | null>(null);
   const [togglingOpen, setTogglingOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addForm, setAddForm] = useState<AddForm>(BLANK);
@@ -177,6 +180,47 @@ export default function TryoutsPage({
     } finally {
       setActionLoading(null);
     }
+  }
+
+  // Open the accept drawer for an offered applicant: pull the team's standard fee schedule to pre-fill.
+  async function openAcceptDrawer(reg: RepTryoutRegistration) {
+    setActionLoading(reg.id);
+    try {
+      const sep = orgQuery ? '&' : '?';
+      const res = await fetch(
+        `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/tryouts/${reg.id}${orgQuery}${sep}feeSuggestion=1`,
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Could not open accept');
+      setAcceptSuggestion(data.suggestedDues ?? null);
+      setAcceptTarget(reg);
+    } catch (e: any) {
+      showFeedback('danger', e.message ?? 'Could not open the accept form.');
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  // Confirm accept → atomic roster + optional dues via the accepted transition.
+  async function handleAcceptConfirm(payload: AcceptPayload) {
+    if (!acceptTarget) return;
+    const res = await fetch(
+      `/api/admin/rep-teams/teams/${params.teamId}/program-years/${params.yearId}/tryouts/${acceptTarget.id}${orgQuery}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'accepted', ...payload }),
+      },
+    );
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error ?? 'Failed to add the player.');
+    setAcceptTarget(null);
+    setAcceptSuggestion(null);
+    setSelected(null);
+    await load();
+    showFeedback('success', payload.dues
+      ? 'Player added to the roster with their fee schedule.'
+      : 'Player added to the roster.');
   }
 
   async function handleSaveNotes() {
@@ -548,7 +592,7 @@ export default function TryoutsPage({
                                   className="btn btn-primary"
                                   style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem' }}
                                   disabled={actionLoading === reg.id}
-                                  onClick={() => handleAction(reg.id, 'accepted')}
+                                  onClick={() => openAcceptDrawer(reg)}
                                 >
                                   {actionLoading === reg.id ? '…' : 'Accept'}
                                 </button>
@@ -717,7 +761,7 @@ export default function TryoutsPage({
                           type="button"
                           className="btn btn-primary"
                           disabled={actionLoading === selected.id}
-                          onClick={() => handleAction(selected.id, 'accepted')}
+                          onClick={() => openAcceptDrawer(selected)}
                         >
                           {actionLoading === selected.id ? '…' : 'Accept → Add to Roster'}
                         </button>
@@ -884,6 +928,23 @@ export default function TryoutsPage({
             </div>
           </div>
         </div>
+      )}
+
+      {acceptTarget && (
+        <TryoutAcceptDrawer
+          identity={{
+            playerFirstName:   acceptTarget.playerFirstName,
+            playerLastName:    acceptTarget.playerLastName,
+            playerDateOfBirth: acceptTarget.playerDateOfBirth,
+            guardianFirstName: acceptTarget.guardianFirstName,
+            guardianLastName:  acceptTarget.guardianLastName,
+            guardianEmail:     acceptTarget.guardianEmail,
+            guardianPhone:     acceptTarget.guardianPhone,
+          }}
+          suggestedDues={acceptSuggestion}
+          onClose={() => { setAcceptTarget(null); setAcceptSuggestion(null); }}
+          onConfirm={handleAcceptConfirm}
+        />
       )}
 
       <FeedbackModal
