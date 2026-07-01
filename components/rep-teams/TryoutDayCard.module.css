@@ -74,6 +74,27 @@
   margin: 0.4rem 0 0;
 }
 
+/* One-way reveal (replaces the two-way blind toggle) */
+.revealBtn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.82rem; font-weight: 700;
+  border: 1px solid rgba(163,230,53,0.4);
+  border-radius: 8px;
+  background: rgba(163,230,53,0.08);
+  color: var(--logic-lime, #a3e635);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.revealBtn:hover { background: rgba(163,230,53,0.14); }
+.revealBtn:disabled { opacity: 0.6; cursor: default; }
+.revealedChip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.78rem; font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  flex: 0 0 auto;
+}
+
 /* Session list */
 .sessionList { display: flex; flex-direction: column; gap: 0.5rem; }
 .sessionRow {
@@ -220,3 +241,38 @@
   font-variant-numeric: tabular-nums; line-height: 1;
 }
 .compositeUnit { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-top: 0.15rem; }
+
+/* ── Decision board (Phase 2B.3) ──────────────────────────────────────────── */
+.tally {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: 0.35rem 0.9rem;
+  padding: 0.6rem 0.75rem; margin-bottom: 0.85rem;
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+}
+.tallyItem { font-size: 0.72rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
+.tallyItem strong { font-size: 1rem; color: #f0f0f0; margin-right: 0.3rem; font-variant-numeric: tabular-nums; }
+
+.choiceGroup { display: flex; gap: 0.35rem; flex: 0 0 auto; }
+.choiceBtn {
+  min-height: 40px; padding: 0 0.7rem;
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+  background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.7);
+  font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  white-space: nowrap;
+}
+.choiceBtn:disabled { opacity: 0.55; cursor: default; }
+.choice_offer   { background: var(--logic-lime, #a3e635); border-color: var(--logic-lime, #a3e635); color: #0A0A0A; }
+.choice_waitlist{ background: rgba(251,191,36,0.9); border-color: rgba(251,191,36,0.9); color: #0A0A0A; }
+.choice_cut     { background: rgba(248,113,113,0.9); border-color: rgba(248,113,113,0.9); color: #0A0A0A; }
+.acceptedChip {
+  display: inline-flex; align-items: center; gap: 0.3rem; flex: 0 0 auto;
+  font-size: 0.78rem; font-weight: 700; color: var(--logic-lime, #a3e635);
+}
+
+/* Field-side: let the choice group drop to its own full-width line on narrow screens. */
+@media (max-width: 560px) {
+  .scoreRow { flex-wrap: wrap; }
+  .choiceGroup { width: 100%; }
+  .choiceBtn { flex: 1 1 auto; }
+}

@@ -15,11 +15,12 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../../../rep-teams.module.css';
 import type { RepTryoutRegistration, RepTryoutRegistrationStatus } from '@/lib/types';
 
-type Tab = 'pending_review' | 'offered' | 'accepted' | 'declined_withdrawn' | 'all';
+type Tab = 'pending_review' | 'offered' | 'waitlisted' | 'accepted' | 'declined_withdrawn' | 'all';
 
 const TAB_LABELS: Record<Tab, string> = {
   pending_review:    'Pending Review',
   offered:           'Offer Extended',
+  waitlisted:        'Waitlist',
   accepted:          'Accepted',
   declined_withdrawn:'Declined / Withdrawn',
   all:               'All',
@@ -28,6 +29,7 @@ const TAB_LABELS: Record<Tab, string> = {
 const STATUS_LABEL: Record<string, string> = {
   pending_review: 'Pending Review',
   offered:        'Offer Extended',
+  waitlisted:     'Waitlisted',
   accepted:       'Accepted',
   declined:       'Declined',
   withdrawn:      'Withdrawn',
@@ -36,6 +38,7 @@ const STATUS_LABEL: Record<string, string> = {
 const STATUS_CSS: Record<string, string> = {
   pending_review: styles.badgePendingReview,
   offered:        styles.badgeOffered,
+  waitlisted:     styles.badgePendingReview,
   accepted:       styles.badgeActive,
   declined:       styles.badgeArchived,
   withdrawn:      styles.badgeDraft,
@@ -141,6 +144,7 @@ export default function TryoutsPage({
   const counts = useMemo<Record<Tab, number>>(() => ({
     pending_review:    registrations.filter(r => r.status === 'pending_review').length,
     offered:           registrations.filter(r => r.status === 'offered').length,
+    waitlisted:        registrations.filter(r => r.status === 'waitlisted').length,
     accepted:          registrations.filter(r => r.status === 'accepted').length,
     declined_withdrawn:registrations.filter(r => r.status === 'declined' || r.status === 'withdrawn').length,
     all:               registrations.length,
@@ -162,10 +166,11 @@ export default function TryoutsPage({
       await load();
       setSelected(null);
       const msg =
-        newStatus === 'offered'   ? 'Offer extended — guardian has been notified.' :
-        newStatus === 'accepted'  ? 'Application accepted — player added to roster.' :
-        newStatus === 'declined'  ? 'Application declined.' :
-        newStatus === 'withdrawn' ? 'Marked as withdrawn.' : 'Updated.';
+        newStatus === 'offered'    ? 'Offer extended — guardian has been notified.' :
+        newStatus === 'waitlisted' ? 'Candidate moved to the waitlist.' :
+        newStatus === 'accepted'   ? 'Application accepted — player added to roster.' :
+        newStatus === 'declined'   ? 'Application declined.' :
+        newStatus === 'withdrawn'  ? 'Marked as withdrawn.' : 'Updated.';
       showFeedback('success', msg);
     } catch (e: any) {
       showFeedback('danger', e.message ?? 'Action failed.');
@@ -558,6 +563,28 @@ export default function TryoutsPage({
                                 </button>
                               </>
                             )}
+                            {reg.status === 'waitlisted' && (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn btn-primary"
+                                  style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem' }}
+                                  disabled={actionLoading === reg.id}
+                                  onClick={() => handleAction(reg.id, 'offered')}
+                                >
+                                  {actionLoading === reg.id ? '…' : 'Extend Offer'}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-ghost"
+                                  style={{ fontSize: '0.78rem', padding: '0.3rem 0.5rem', color: '#f87171' }}
+                                  disabled={actionLoading === reg.id}
+                                  onClick={() => handleAction(reg.id, 'declined')}
+                                >
+                                  Decline
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       )}
@@ -705,7 +732,28 @@ export default function TryoutsPage({
                         </button>
                       </>
                     )}
-                    {(selected.status === 'pending_review' || selected.status === 'offered' || selected.status === 'accepted') && (
+                    {selected.status === 'waitlisted' && (
+                      <>
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          disabled={actionLoading === selected.id}
+                          onClick={() => handleAction(selected.id, 'offered')}
+                        >
+                          {actionLoading === selected.id ? '…' : 'Extend Offer'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-ghost"
+                          style={{ color: '#f87171' }}
+                          disabled={actionLoading === selected.id}
+                          onClick={() => handleAction(selected.id, 'declined')}
+                        >
+                          Decline
+                        </button>
+                      </>
+                    )}
+                    {(selected.status === 'pending_review' || selected.status === 'offered' || selected.status === 'waitlisted' || selected.status === 'accepted') && (
                       <button
                         type="button"
                         className="btn btn-ghost"

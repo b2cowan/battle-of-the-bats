@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ClipboardList, Plus, Pencil, Trash2, UserCheck } from 'lucide-react';
+import { ClipboardList, Plus, Pencil, Trash2, UserCheck, Eye, EyeOff } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { getTryoutWindowNotice } from '@/lib/tryout-windows';
 import type { RepTryout, RepTryoutSession } from '@/lib/types';
 import styles from './TryoutDayCard.module.css';
@@ -59,10 +60,11 @@ function formatWhen(session: RepTryoutSession): string {
 export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, onError }: Props) {
   const base = apiBase;
 
+  const confirm = useConfirm();
   const [tryout, setTryout] = useState<RepTryout | null>(null);
   const [sessions, setSessions] = useState<RepTryoutSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [togglingBlind, setTogglingBlind] = useState(false);
+  const [revealing, setRevealing] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -92,23 +94,30 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
 
   const isAnonymous = tryout?.isAnonymous ?? true;
 
-  async function toggleBlind() {
-    if (!canWrite || togglingBlind) return;
-    setTogglingBlind(true);
-    const next = !isAnonymous;
+  // Reveal is ONE-WAY and confirmed — once names are shown they can't be re-hidden.
+  async function revealNames() {
+    if (!canWrite || revealing) return;
+    const ok = await confirm({
+      title: 'Reveal player names?',
+      message: 'Names will show on the check-in screen, scoreboard, and decision board. This can’t be undone — you can’t switch back to bib-only for this tryout.',
+      confirmText: 'Reveal names',
+      tone: 'warning',
+    });
+    if (!ok) return;
+    setRevealing(true);
     try {
       const res = await fetch(`${base}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isAnonymous: next }),
+        body: JSON.stringify({ isAnonymous: false }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to update');
+      if (!res.ok) throw new Error(data.error ?? 'Failed to reveal names');
       setTryout(data.tryout);
     } catch (e: any) {
-      fail(e.message ?? 'Failed to update blind mode.');
+      fail(e.message ?? 'Failed to reveal names.');
     } finally {
-      setTogglingBlind(false);
+      setRevealing(false);
     }
   }
 
@@ -186,25 +195,27 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
           <h3 className={styles.title}><ClipboardList size={16} /> Tryout Day</h3>
           <p className={styles.subtitle}>Sessions appear on the team schedule.</p>
         </div>
-        {canWrite && (
-          <button
-            type="button"
-            className={styles.blindToggle}
-            onClick={toggleBlind}
-            disabled={togglingBlind}
-            aria-pressed={isAnonymous}
-            title="Blind evaluation hides player names (bib numbers only) until you reveal them"
-          >
-            <span className={`${styles.switch} ${isAnonymous ? styles.switchOn : ''}`}>
-              <span className={styles.knob} />
-            </span>
-            Blind: {isAnonymous ? 'On' : 'Off'}
-          </button>
+        {isAnonymous ? (
+          canWrite && (
+            <button
+              type="button"
+              className={styles.revealBtn}
+              onClick={revealNames}
+              disabled={revealing}
+              title="Reveal player names (one-way — can’t switch back to bib-only)"
+            >
+              <Eye size={14} /> Reveal names
+            </button>
+          )
+        ) : (
+          <span className={styles.revealedChip} title="Names are shown for this tryout">
+            <EyeOff size={13} /> Names revealed
+          </span>
         )}
       </div>
 
       {isAnonymous && (
-        <p className={styles.blindHint}>Names are hidden (bib numbers only) on tryout day until you turn this off.</p>
+        <p className={styles.blindHint}><strong>Blind evaluation is on</strong> — players show as bib numbers only. Reveal names when you’re ready to make decisions (one-way).</p>
       )}
 
       {sessions.length === 0 ? (

@@ -11,6 +11,7 @@ import {
   getRepTryoutScores,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { rankTryoutCandidates } from '@/lib/tryout-scoring';
 import type { RepProgramYear } from '@/lib/types';
 
 type Resolved =
@@ -52,59 +53,19 @@ export const GET = withObservability(async (_req: Request,
 
   const evalName = new Map(sessions.map(s => [s.id, s.evaluatorName]));
 
-  // Index scores by candidate → category → list of raw values, plus per-evaluator running totals.
-  const byCandidate = new Map<string, Map<string, number[]>>();
+  // Ranked candidate rows come from the shared helper (single-sourced with the decision board).
+  const candidateRows = rankTryoutCandidates(candidates, categories, scores, { blind });
+
+  // Per-evaluator running totals for the bias flag (scoreboard-only concern).
   const evalSum = new Map<string, { sum: number; n: number }>();
   const evalCandidates = new Map<string, Set<string>>();
   for (const s of scores) {
-    if (!byCandidate.has(s.registrationId)) byCandidate.set(s.registrationId, new Map());
-    const cat = byCandidate.get(s.registrationId)!;
-    (cat.get(s.categoryKey) ?? cat.set(s.categoryKey, []).get(s.categoryKey)!).push(s.score);
     const agg = evalSum.get(s.evaluatorSessionId) ?? { sum: 0, n: 0 };
     agg.sum += s.score; agg.n += 1; evalSum.set(s.evaluatorSessionId, agg);
-    (evalCandidates.get(s.evaluatorSessionId) ?? evalCandidates.set(s.evaluatorSessionId, new Set()).get(s.evaluatorSessionId)!).add(s.registrationId);
+    let set = evalCandidates.get(s.evaluatorSessionId);
+    if (!set) { set = new Set(); evalCandidates.set(s.evaluatorSessionId, set); }
+    set.add(s.registrationId);
   }
-
-  const avg = (xs: number[]) => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
-
-  // Composite = weight-normalized mean of each category's cross-evaluator average.
-  const candidateRows = candidates.map(c => {
-    const cat = byCandidate.get(c.id);
-    const categoryAverages: Record<string, number | null> = {};
-    let weighted = 0; let usedWeight = 0; let anyScore = false;
-    const evaluatorsSeen = new Set<string>();
-    for (const s of scores) if (s.registrationId === c.id) evaluatorsSeen.add(s.evaluatorSessionId);
-    for (const def of categories) {
-      const a = cat ? avg(cat.get(def.key) ?? []) : null;
-      categoryAverages[def.key] = a;
-      if (a != null) {
-        anyScore = true;
-        const w = def.weight > 0 ? def.weight : 0;
-        if (w > 0) { weighted += a * w; usedWeight += w; }
-      }
-    }
-    // Fall back to an even mean if weights are all zero but scores exist.
-    let composite: number | null = null;
-    if (anyScore) {
-      composite = usedWeight > 0 ? weighted / usedWeight
-        : avg(Object.values(categoryAverages).filter((v): v is number => v != null));
-    }
-    return {
-      registrationId: c.id,
-      bib: c.bibNumber ?? null,
-      name: blind ? null : `${c.playerFirstName} ${c.playerLastName}`.trim(),
-      composite: composite != null ? Math.round(composite * 100) / 100 : null,
-      evaluatorCount: evaluatorsSeen.size,
-      categoryAverages,
-    };
-  });
-
-  candidateRows.sort((a, b) => {
-    if (a.composite == null && b.composite == null) return 0;
-    if (a.composite == null) return 1;
-    if (b.composite == null) return -1;
-    return b.composite - a.composite;
-  });
 
   // Bias: an evaluator whose overall mean drifts from the consensus (runs hot / cold).
   // Consensus = mean of each evaluator's OWN mean (equal weight per evaluator) — not a pooled mean of

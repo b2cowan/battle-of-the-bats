@@ -123,33 +123,54 @@ const coachesHelp: HelpPageContent = {
       id: 'recipe-run-tryouts',
       group: 'Your team tools',
       heading: 'How to run tryout day',
-      summary: 'Set up sessions and a scorecard, check players in from your phone, invite helpers to score, and see a live ranked scoreboard — kept fair with blind evaluation.',
-      keywords: ['tryouts', 'tryout day', 'check-in', 'bib numbers', 'blind evaluation', 'walk-up', 'scorecard', 'evaluators', 'scoreboard', 'ranking'],
-      searchText: 'tryouts tryout day sessions dates times location field check in check-in bib number auto assign blind evaluation names hidden anonymous walk up walk-up add candidate print roster sheet paper backup provincial window OBA softball ontario schedule marker premium run tryouts evaluate players scorecard rubric categories skills weight rating scale 1-5 1-10 hitting fielding throwing speed attitude evaluators assistant helper no login link score scoring rate players live scoreboard ranked ranking composite weighted average bias runs hot runs cold consensus',
+      summary: 'Run the whole tryout from your phone: sessions, scorecard, check-in, helper scoring, a live ranked scoreboard, and Offer/Waitlist decisions — kept fair with blind evaluation.',
+      keywords: ['tryouts', 'tryout day', 'check-in', 'bib numbers', 'blind evaluation', 'walk-up', 'scorecard', 'evaluators', 'scoreboard', 'ranking', 'decision board', 'offer', 'waitlist', 'reveal names', 'lock scoring'],
+      searchText: 'tryouts tryout day sessions dates times location field check in check-in bib number auto assign blind evaluation names hidden anonymous walk up walk-up add candidate print roster sheet paper backup provincial window OBA softball ontario schedule marker premium run tryouts evaluate players scorecard rubric categories skills weight rating scale 1-5 1-10 hitting fielding throwing speed attitude evaluators assistant helper no login link score scoring rate players live scoreboard ranked ranking composite weighted average bias runs hot runs cold consensus lock scoring freeze reopen reveal names unblind one-way decision board offer waitlist not this season cut pass pick selections roster',
       content: (
         <>
-          <p>Open the <strong>Tryouts</strong> tab for your team to run tryout day from your phone — set up, check-in, scoring, and a live ranked scoreboard all live here.</p>
+          <p>Open the <strong>Tryouts</strong> tab for your team to run the whole day from your phone — set up, check-in, scoring, a live ranked scoreboard, and your final picks all live here.</p>
           <ol>
             <li><strong>Add your sessions.</strong> On the <strong>Tryout Day</strong> card, add each date and time (and location/field). They appear on your <strong>team schedule</strong> as read-only tryout markers.</li>
             <li><strong>Build your scorecard.</strong> On the <strong>Evaluation scorecard</strong> card, list what you&apos;re rating — for example Hitting, Fielding, Throwing, Speed — each with a weight, on a 1–5 or 1–10 scale. A starter set is filled in for you; adjust it to how you evaluate.</li>
-            <li><strong>Keep it fair with Blind evaluation.</strong> It&apos;s on by default: on tryout day players show as <strong>bib numbers only</strong>, with names hidden until you turn it off.</li>
+            <li><strong>Keep it fair with Blind evaluation.</strong> It&apos;s on by default: players show as <strong>bib numbers only</strong>, with names hidden until you deliberately reveal them (step 8).</li>
             <li><strong>Open day-of check-in.</strong> Every candidate gets an <strong>auto-assigned bib number</strong>. Tap a player to check them in — a live &quot;X of Y checked in&quot; count keeps you oriented, and an <strong>Undo</strong> appears if you tap the wrong one. You can also <strong>print a paper backup sheet</strong> for spotty cell service (bib numbers only when blind).</li>
             <li><strong>Add walk-ups.</strong> If a player shows up without registering, add them with just their name (guardian details can wait) — they&apos;re checked in on the spot.</li>
             <li><strong>Invite evaluators to score.</strong> On the <strong>Evaluators</strong> card, add a helper by name to get them a private scoring link — <strong>no login, no app</strong>. It works for 48 hours and you can turn it off any time. They rate each player on your scorecard from their own phone (bib numbers only while Blind evaluation is on).</li>
             <li><strong>Watch the live scoreboard.</strong> The <strong>Live scoreboard</strong> ranks players by their weighted average across everyone scoring, and updates on its own as scores come in. If an evaluator&apos;s scores drift from the group, they&apos;re gently flagged &quot;runs hot/cold&quot; so you can weigh their input.</li>
+            <li><strong>Lock scoring when you&apos;re done.</strong> Use <strong>Lock scoring</strong> on the scoreboard to freeze all evaluator input — their links stop accepting scores. You can reopen it any time if you need another look.</li>
+            <li><strong>Reveal names when you&apos;re ready to decide.</strong> On the Tryout Day card, <strong>Reveal names</strong> turns off blind mode so names show on the scoreboard and decision board. It&apos;s <strong>one-way</strong> — once revealed you can&apos;t switch back to bib-only for this tryout, so you&apos;ll be asked to confirm.</li>
+            <li><strong>Make your picks.</strong> On the <strong>Decision board</strong>, players are listed top-to-bottom by score; for each one tap <strong>Offer</strong>, <strong>Waitlist</strong>, or <strong>Not this season</strong>. A running tally shows where you stand. Your picks feed the applicant list your club admin uses to finalize the roster.</li>
           </ol>
           <p>Pick a tryout date outside the standard provincial tryout window and you&apos;ll get a friendly heads-up — safe to ignore if your team isn&apos;t affiliated.</p>
-          <p>You manage tryouts for your own team whether you coach independently or as part of a club. Opening registration and reviewing applicants (offers, accept, decline) stays with your club admin in the org&apos;s Rep Teams area.</p>
+          <p>You run tryouts for your own team whether you coach independently or as part of a club. Your board decisions set who&apos;s offered, waitlisted, or passed; finalizing a player onto the roster (and any org-level applicant management) stays in the org&apos;s Rep Teams admin area.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-tryout-blind',
           question: 'Why do I only see bib numbers, not names, at tryouts?',
-          answerText: 'Blind evaluation is on by default so tryouts stay fair — players show as bib numbers with names hidden. Turn Blind evaluation off on the Tryout Day card if you want names shown.',
-          keywords: ['blind', 'bib numbers', 'names hidden', 'anonymous', 'fair'],
+          answerText: 'Blind evaluation is on by default so tryouts stay fair — players show as bib numbers with names hidden. When you are ready to make decisions, use Reveal names on the Tryout Day card. Revealing is one-way: once names are shown you cannot switch back to bib-only for that tryout, so you will be asked to confirm.',
+          keywords: ['blind', 'bib numbers', 'names hidden', 'anonymous', 'fair', 'reveal names', 'one-way'],
           answer: (
-            <p><strong>Blind evaluation</strong> is on by default so tryouts stay fair — players show as bib numbers with names hidden. Turn it off on the <strong>Tryout Day</strong> card if you&apos;d rather see names.</p>
+            <p><strong>Blind evaluation</strong> is on by default so tryouts stay fair — players show as bib numbers with names hidden. When you&apos;re ready to decide, use <strong>Reveal names</strong> on the <strong>Tryout Day</strong> card. Revealing is <strong>one-way</strong>: once names are shown you can&apos;t switch back to bib-only for that tryout, so you&apos;ll be asked to confirm first.</p>
+          ),
+        },
+        {
+          id: 'faq-tryout-lock',
+          question: 'How do I stop evaluators from changing scores?',
+          answerText: 'Use Lock scoring on the Live scoreboard to freeze all evaluator input — their links stop accepting scores and show a "scoring is closed" message. It is reversible: choose Reopen scoring if you need another look. Locking is a clean cutoff before you make your picks.',
+          keywords: ['lock', 'lock scoring', 'freeze', 'close', 'reopen', 'evaluators'],
+          answer: (
+            <p>Use <strong>Lock scoring</strong> on the Live scoreboard to freeze all evaluator input — their links stop accepting scores and show a &quot;scoring is closed&quot; message. It&apos;s reversible: choose <strong>Reopen scoring</strong> if you need another look. A clean cutoff before you make your picks.</p>
+          ),
+        },
+        {
+          id: 'faq-tryout-waitlist',
+          question: 'What’s the difference between Waitlist and Not this season?',
+          answerText: 'On the decision board, Offer means you want the player on the team, Waitlist holds them as a backup you may promote if a spot opens, and Not this season passes on them for now. Your picks feed the applicant list your club admin uses to finalize offers and the roster.',
+          keywords: ['waitlist', 'offer', 'not this season', 'cut', 'pass', 'decision', 'pick'],
+          answer: (
+            <p>On the <strong>Decision board</strong>: <strong>Offer</strong> means you want the player on the team, <strong>Waitlist</strong> holds them as a backup you may promote if a spot opens, and <strong>Not this season</strong> passes on them for now. Your picks feed the applicant list your club admin uses to finalize offers and the roster.</p>
           ),
         },
         {

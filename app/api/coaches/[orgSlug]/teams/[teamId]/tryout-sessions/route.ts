@@ -15,7 +15,7 @@ import type { RepProgramYear } from '@/lib/types';
 
 type Resolved =
   | { ok: false; res: Response }
-  | { ok: true; orgId: string; teamId: string; programYear: RepProgramYear };
+  | { ok: true; orgId: string; teamId: string; userId: string; programYear: RepProgramYear };
 
 /** Resolve + authorize the assigned coach for this team, on the team's ACTIVE program year. */
 async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> {
@@ -35,7 +35,7 @@ async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> 
   if (!programYear) {
     return { ok: false, res: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
   }
-  return { ok: true, orgId: ctx.org.id, teamId, programYear };
+  return { ok: true, orgId: ctx.org.id, teamId, userId: ctx.user.id, programYear };
 }
 
 export const GET = withObservability(async (_req: Request,
@@ -87,8 +87,24 @@ export const PATCH = withObservability(async (req: Request,
 
   const body = await req.json();
   const tryout = await getOrCreateRepTryout({ programYearId: r.programYear.id, teamId: r.teamId, orgId: r.orgId });
-  const updated = typeof body.isAnonymous === 'boolean'
-    ? await updateRepTryout(tryout.id, { isAnonymous: body.isAnonymous })
-    : tryout;
+
+  const patch: { isAnonymous?: boolean; scoresLockedAt?: string | null; scoresLockedBy?: string | null } = {};
+
+  // Reveal is ONE-WAY: blind (true) → revealed (false) is allowed; re-blinding once revealed is not
+  // (evaluators have already seen names — re-hiding would be theatre and hurts trust in the record).
+  if (typeof body.isAnonymous === 'boolean' && body.isAnonymous !== tryout.isAnonymous) {
+    if (body.isAnonymous === true && tryout.isAnonymous === false) {
+      return NextResponse.json({ error: 'already_revealed', message: 'Names have already been revealed — this can’t be undone.' }, { status: 409 });
+    }
+    patch.isAnonymous = body.isAnonymous;
+  }
+
+  // Score lock is reversible: lock freezes evaluator input; reopen clears it.
+  if (typeof body.lockScores === 'boolean') {
+    if (body.lockScores) { patch.scoresLockedAt = new Date().toISOString(); patch.scoresLockedBy = r.userId; }
+    else { patch.scoresLockedAt = null; patch.scoresLockedBy = null; }
+  }
+
+  const updated = Object.keys(patch).length ? await updateRepTryout(tryout.id, patch) : tryout;
   return NextResponse.json({ tryout: updated });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-sessions' });

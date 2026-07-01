@@ -2123,7 +2123,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **`guardian_first_name` / `guardian_last_name` / `guardian_email` / `guardian_phone`** — first/last/email NOT NULL; `guardian_email` targets all transactional emails + is indexed (gotcha 8); all copied to the roster on accept.
 
 <!-- dict:col:rep_tryout_registrations.status -->
-**`status`** (text, NOT NULL, default `'pending_review'`; CHECK `pending_review|offered|accepted|declined|withdrawn`) — transitions in code (gotchas 3–5).
+**`status`** (text, NOT NULL, default `'pending_review'`; CHECK `pending_review|offered|waitlisted|accepted|declined|withdrawn`) — transitions in code (gotchas 3–5). `waitlisted` added **mig 168** (Phase 2B.3 decision board: Offer→offered, Waitlist→waitlisted, Not this season→declined); distinct from `pending_review` (undecided) so 2B.5 can auto-promote from the waitlist.
 
 <!-- dict:col:rep_tryout_registrations.admin_notes -->
 **`admin_notes`** (text, nullable) — internal reviewer notes (vs guardian `player_notes`).

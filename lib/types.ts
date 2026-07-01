@@ -1021,7 +1021,7 @@ export interface RepTeamGroup {
   displayOrder: number;
   createdAt: string;
 }
-export type RepTryoutRegistrationStatus = 'pending_review' | 'offered' | 'accepted' | 'declined' | 'withdrawn';
+export type RepTryoutRegistrationStatus = 'pending_review' | 'offered' | 'waitlisted' | 'accepted' | 'declined' | 'withdrawn';
 export type RepRosterStatus = 'active' | 'inactive' | 'released';
 export type RepEventType =
   | 'external_tournament'

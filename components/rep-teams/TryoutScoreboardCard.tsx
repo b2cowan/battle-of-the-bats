@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Trophy, TrendingUp, TrendingDown, EyeOff } from 'lucide-react';
+import { Trophy, TrendingUp, TrendingDown, EyeOff, Lock, LockOpen } from 'lucide-react';
 import styles from './TryoutDayCard.module.css';
 
 interface CategoryDef { key: string; label: string; weight: number }
@@ -26,15 +26,20 @@ interface Scoreboard {
 interface Props {
   /** Scoreboard API, e.g. `/api/coaches/{orgSlug}/teams/{teamId}/tryout-scoreboard`. */
   apiBase: string;
+  /** Tryout-settings API (the sessions route) used to lock/reopen scoring. Omit to hide the control. */
+  settingsBase?: string;
   onError?: (msg: string) => void;
 }
 
 const POLL_MS = 6000;
 
-export default function TryoutScoreboardCard({ apiBase, onError }: Props) {
+export default function TryoutScoreboardCard({ apiBase, settingsBase, onError }: Props) {
   const [board, setBoard] = useState<Scoreboard | null>(null);
   const [loading, setLoading] = useState(true);
+  const [locking, setLocking] = useState(false);
   const inFlight = useRef(false);
+  // Bumped on every lock toggle so a poll response fetched BEFORE the toggle can't overwrite it.
+  const gen = useRef(0);
   // Keep onError behind a ref so `fail` (→ `load` → the polling effect) stays stable across parent
   // re-renders — otherwise reporting an error would tear down and restart the interval.
   const onErrorRef = useRef(onError);
@@ -44,11 +49,13 @@ export default function TryoutScoreboardCard({ apiBase, onError }: Props) {
   const load = useCallback(async (quiet: boolean) => {
     if (inFlight.current) return;
     inFlight.current = true;
+    const myGen = gen.current;
     try {
       const res = await fetch(apiBase);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load scoreboard');
-      setBoard(data);
+      // Discard a response that a lock toggle superseded while it was in flight.
+      if (myGen === gen.current) setBoard(data);
     } catch (e: any) {
       if (!quiet) fail(e.message ?? 'Failed to load scoreboard.');
     } finally {
@@ -67,6 +74,27 @@ export default function TryoutScoreboardCard({ apiBase, onError }: Props) {
     return () => clearInterval(id);
   }, [load]);
 
+  async function toggleLock() {
+    if (!settingsBase || !board || locking) return;
+    setLocking(true);
+    try {
+      const res = await fetch(settingsBase, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lockScores: !board.locked }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error ?? 'Failed to update scoring lock'); }
+      // Invalidate any in-flight poll, reflect the new state immediately, then reconcile.
+      gen.current++;
+      setBoard(b => b ? { ...b, locked: !b.locked } : b);
+      await load(false);
+    } catch (e: any) {
+      fail(e.message ?? 'Failed to update scoring lock.');
+    } finally {
+      setLocking(false);
+    }
+  }
+
   if (loading) return null;
   if (!board) return null;
 
@@ -79,13 +107,19 @@ export default function TryoutScoreboardCard({ apiBase, onError }: Props) {
         <div>
           <h3 className={styles.title}>
             <Trophy size={16} /> Live scoreboard
-            <span className={styles.pollDot} aria-hidden />
+            {!board.locked && <span className={styles.pollDot} aria-hidden />}
           </h3>
           <p className={styles.subtitle}>
-            Ranked by weighted average across evaluators. Updates automatically.
+            Ranked by weighted average across evaluators. {board.locked ? 'Scoring is closed.' : 'Updates automatically.'}
             {board.blind && <> <EyeOff size={12} style={{ verticalAlign: '-1px' }} /> Blind — bib numbers only.</>}
           </p>
         </div>
+        {settingsBase && (
+          <button type="button" className={styles.revealBtn} onClick={toggleLock} disabled={locking}
+            title={board.locked ? 'Reopen scoring for evaluators' : 'Freeze evaluator scoring'}>
+            {board.locked ? <><LockOpen size={14} /> Reopen scoring</> : <><Lock size={14} /> Lock scoring</>}
+          </button>
+        )}
       </div>
 
       {board.evaluators.length > 0 && (

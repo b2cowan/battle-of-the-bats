@@ -18795,7 +18795,7 @@
         "kind": "CHECK",
         "table_name": "rep_tryout_registrations",
         "detail": "rep_tryout_registrations_status_check",
-        "check_clause": "(status = ANY (ARRAY['pending_review'::text, 'offered'::text, 'accepted'::text, 'declined'::text, 'withdrawn'::text]))"
+        "check_clause": "(status = ANY (ARRAY['pending_review'::text, 'offered'::text, 'waitlisted'::text, 'accepted'::text, 'declined'::text, 'withdrawn'::text]))"
       },
       {
         "kind": "RLS",

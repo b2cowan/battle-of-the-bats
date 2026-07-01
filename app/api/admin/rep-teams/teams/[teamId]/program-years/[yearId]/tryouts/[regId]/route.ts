@@ -21,8 +21,9 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
 }
 
 const VALID_TRANSITIONS: Record<RepTryoutRegistrationStatus, RepTryoutRegistrationStatus[]> = {
-  pending_review: ['offered', 'declined', 'withdrawn'],
-  offered:        ['accepted', 'declined', 'withdrawn'],
+  pending_review: ['offered', 'waitlisted', 'declined', 'withdrawn'],
+  offered:        ['accepted', 'waitlisted', 'declined', 'withdrawn'],
+  waitlisted:     ['offered', 'declined', 'withdrawn'],
   accepted:       ['withdrawn'],
   declined:       [],
   withdrawn:      [],
@@ -143,6 +144,9 @@ export const PATCH = withObservability(async (req: Request,
       tryoutDeclinedHtml(emailParams),
     ).catch(e => console.error('[email] tryout declined:', e));
   }
+  // Note: 'waitlisted' intentionally sends NO guardian email here — waitlist communication (and
+  // auto-promote-on-lapse) is owned by Phase 2B.5 (offer/release emails), which adds the template
+  // and copy via /marketing. Until then a waitlist placement is a silent, coach-facing state.
 
   return NextResponse.json({ registration });
 }, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/[regId]' });

@@ -7,6 +7,7 @@ import TryoutDayCard from '@/components/rep-teams/TryoutDayCard';
 import TryoutRubricCard from '@/components/rep-teams/TryoutRubricCard';
 import TryoutEvaluatorsCard from '@/components/rep-teams/TryoutEvaluatorsCard';
 import TryoutScoreboardCard from '@/components/rep-teams/TryoutScoreboardCard';
+import TryoutDecisionBoard from '@/components/rep-teams/TryoutDecisionBoard';
 import styles from '../../../coaches.module.css';
 
 export default function CoachTryoutsPage({
@@ -56,6 +57,12 @@ export default function CoachTryoutsPage({
 
       <TryoutScoreboardCard
         apiBase={`/api/coaches/${orgSlug}/teams/${teamId}/tryout-scoreboard`}
+        settingsBase={`/api/coaches/${orgSlug}/teams/${teamId}/tryout-sessions`}
+        onError={(m) => { setFeedbackMsg(m); setFeedbackOpen(true); }}
+      />
+
+      <TryoutDecisionBoard
+        apiBase={`/api/coaches/${orgSlug}/teams/${teamId}/tryout-decisions`}
         onError={(m) => { setFeedbackMsg(m); setFeedbackOpen(true); }}
       />
 
