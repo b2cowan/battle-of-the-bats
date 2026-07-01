@@ -1535,6 +1535,56 @@
     "indexdef": "CREATE INDEX rep_tryout_registrations_year_idx ON public.rep_tryout_registrations USING btree (program_year_id)"
   },
   {
+    "tablename": "rep_tryout_sessions",
+    "indexname": "rep_tryout_sessions_org_idx",
+    "indexdef": "CREATE INDEX rep_tryout_sessions_org_idx ON public.rep_tryout_sessions USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_tryout_sessions",
+    "indexname": "rep_tryout_sessions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_tryout_sessions_pkey ON public.rep_tryout_sessions USING btree (id)"
+  },
+  {
+    "tablename": "rep_tryout_sessions",
+    "indexname": "rep_tryout_sessions_starts_idx",
+    "indexdef": "CREATE INDEX rep_tryout_sessions_starts_idx ON public.rep_tryout_sessions USING btree (starts_at)"
+  },
+  {
+    "tablename": "rep_tryout_sessions",
+    "indexname": "rep_tryout_sessions_team_idx",
+    "indexdef": "CREATE INDEX rep_tryout_sessions_team_idx ON public.rep_tryout_sessions USING btree (team_id)"
+  },
+  {
+    "tablename": "rep_tryout_sessions",
+    "indexname": "rep_tryout_sessions_tryout_idx",
+    "indexdef": "CREATE INDEX rep_tryout_sessions_tryout_idx ON public.rep_tryout_sessions USING btree (tryout_id)"
+  },
+  {
+    "tablename": "rep_tryout_sessions",
+    "indexname": "rep_tryout_sessions_year_idx",
+    "indexdef": "CREATE INDEX rep_tryout_sessions_year_idx ON public.rep_tryout_sessions USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_tryouts",
+    "indexname": "rep_tryouts_org_idx",
+    "indexdef": "CREATE INDEX rep_tryouts_org_idx ON public.rep_tryouts USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_tryouts",
+    "indexname": "rep_tryouts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_tryouts_pkey ON public.rep_tryouts USING btree (id)"
+  },
+  {
+    "tablename": "rep_tryouts",
+    "indexname": "rep_tryouts_program_year_uq",
+    "indexdef": "CREATE UNIQUE INDEX rep_tryouts_program_year_uq ON public.rep_tryouts USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_tryouts",
+    "indexname": "rep_tryouts_team_idx",
+    "indexdef": "CREATE INDEX rep_tryouts_team_idx ON public.rep_tryouts USING btree (team_id)"
+  },
+  {
     "tablename": "request_metrics_raw",
     "indexname": "idx_request_metrics_raw_flushed",
     "indexdef": "CREATE INDEX idx_request_metrics_raw_flushed ON public.request_metrics_raw USING btree (flushed_at)"

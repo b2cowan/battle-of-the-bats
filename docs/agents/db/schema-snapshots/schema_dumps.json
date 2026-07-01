@@ -6023,6 +6023,15 @@
         "column_default": null
       },
       {
+        "table_name": "organizations",
+        "pos": 35,
+        "column_name": "privacy_policy_url",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "plan_config_overrides",
         "pos": 1,
         "column_name": "id",
@@ -10766,6 +10775,285 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_tryout_registrations",
+        "pos": 17,
+        "column_name": "consent_data_collection",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "pos": 18,
+        "column_name": "consent_email_comms",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "pos": 19,
+        "column_name": "consent_eligibility",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "pos": 20,
+        "column_name": "consent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "pos": 21,
+        "column_name": "consent_ip",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "pos": 22,
+        "column_name": "bib_number",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "pos": 23,
+        "column_name": "is_checked_in",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "pos": 24,
+        "column_name": "checked_in_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 2,
+        "column_name": "tryout_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 3,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 4,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 5,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 6,
+        "column_name": "starts_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 7,
+        "column_name": "ends_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 8,
+        "column_name": "location",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 9,
+        "column_name": "location_address",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 10,
+        "column_name": "field_number",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 11,
+        "column_name": "label",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 12,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'scheduled'::text"
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 13,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "pos": 14,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_tryouts",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_tryouts",
+        "pos": 2,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryouts",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryouts",
+        "pos": 4,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryouts",
+        "pos": 5,
+        "column_name": "is_anonymous",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "table_name": "rep_tryouts",
+        "pos": 6,
+        "column_name": "scores_locked_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryouts",
+        "pos": 7,
+        "column_name": "scores_locked_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryouts",
+        "pos": 8,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_tryouts",
+        "pos": 9,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "request_metrics_raw",
         "pos": 1,
         "column_name": "id",
@@ -14424,6 +14712,55 @@
         "constraint_name": "rep_tryout_registrations_team_id_fkey"
       },
       {
+        "table_name": "rep_tryout_sessions",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_tryout_sessions_org_id_fkey"
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_tryout_sessions_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_tryout_sessions_team_id_fkey"
+      },
+      {
+        "table_name": "rep_tryout_sessions",
+        "column_name": "tryout_id",
+        "foreign_table": "rep_tryouts",
+        "foreign_column": "id",
+        "constraint_name": "rep_tryout_sessions_tryout_id_fkey"
+      },
+      {
+        "table_name": "rep_tryouts",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_tryouts_org_id_fkey"
+      },
+      {
+        "table_name": "rep_tryouts",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_tryouts_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_tryouts",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_tryouts_team_id_fkey"
+      },
+      {
         "table_name": "resources",
         "column_name": "tournament_id",
         "foreign_table": "tournaments",
@@ -16311,6 +16648,56 @@
         "indexdef": "CREATE INDEX rep_tryout_registrations_year_idx ON public.rep_tryout_registrations USING btree (program_year_id)"
       },
       {
+        "tablename": "rep_tryout_sessions",
+        "indexname": "rep_tryout_sessions_org_idx",
+        "indexdef": "CREATE INDEX rep_tryout_sessions_org_idx ON public.rep_tryout_sessions USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_tryout_sessions",
+        "indexname": "rep_tryout_sessions_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_tryout_sessions_pkey ON public.rep_tryout_sessions USING btree (id)"
+      },
+      {
+        "tablename": "rep_tryout_sessions",
+        "indexname": "rep_tryout_sessions_starts_idx",
+        "indexdef": "CREATE INDEX rep_tryout_sessions_starts_idx ON public.rep_tryout_sessions USING btree (starts_at)"
+      },
+      {
+        "tablename": "rep_tryout_sessions",
+        "indexname": "rep_tryout_sessions_team_idx",
+        "indexdef": "CREATE INDEX rep_tryout_sessions_team_idx ON public.rep_tryout_sessions USING btree (team_id)"
+      },
+      {
+        "tablename": "rep_tryout_sessions",
+        "indexname": "rep_tryout_sessions_tryout_idx",
+        "indexdef": "CREATE INDEX rep_tryout_sessions_tryout_idx ON public.rep_tryout_sessions USING btree (tryout_id)"
+      },
+      {
+        "tablename": "rep_tryout_sessions",
+        "indexname": "rep_tryout_sessions_year_idx",
+        "indexdef": "CREATE INDEX rep_tryout_sessions_year_idx ON public.rep_tryout_sessions USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_tryouts",
+        "indexname": "rep_tryouts_org_idx",
+        "indexdef": "CREATE INDEX rep_tryouts_org_idx ON public.rep_tryouts USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_tryouts",
+        "indexname": "rep_tryouts_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_tryouts_pkey ON public.rep_tryouts USING btree (id)"
+      },
+      {
+        "tablename": "rep_tryouts",
+        "indexname": "rep_tryouts_program_year_uq",
+        "indexdef": "CREATE UNIQUE INDEX rep_tryouts_program_year_uq ON public.rep_tryouts USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_tryouts",
+        "indexname": "rep_tryouts_team_idx",
+        "indexdef": "CREATE INDEX rep_tryouts_team_idx ON public.rep_tryouts USING btree (team_id)"
+      },
+      {
         "tablename": "request_metrics_raw",
         "indexname": "idx_request_metrics_raw_flushed",
         "indexdef": "CREATE INDEX idx_request_metrics_raw_flushed ON public.request_metrics_raw USING btree (flushed_at)"
@@ -17951,6 +18338,24 @@
       {
         "kind": "RLS",
         "table_name": "rep_tryout_registrations",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_tryout_sessions",
+        "detail": "rep_tryout_sessions_status_check",
+        "check_clause": "(status = ANY (ARRAY['scheduled'::text, 'cancelled'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_tryout_sessions",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_tryouts",
         "detail": "ENABLED",
         "check_clause": null
       },

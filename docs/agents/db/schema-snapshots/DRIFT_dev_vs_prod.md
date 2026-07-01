@@ -1,27 +1,59 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-06-29 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-06-30 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 50 divergence(s)** across dev/prod.
+**⚠️ 104 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 0 | 0 | — |
-| Columns | 0 | 3 | 23 |
-| Indexes | 4 | 3 | 0 |
-| Constraints | 7 | 9 | — |
-| RLS / CHECK | 0 | 1 | 0 (RLS state) |
+| Tables | 2 | 0 | — |
+| Columns | 32 | 3 | 23 |
+| Indexes | 14 | 3 | 0 |
+| Constraints | 16 | 9 | — |
+| RLS / CHECK | 1 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (0)
-_none_
+### Only in DEV (2)
+- `rep_tryout_sessions`
+- `rep_tryouts`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (0)
-_none_
+### Only in DEV (32)
+- `organizations.privacy_policy_url`
+- `rep_tryout_registrations.bib_number`
+- `rep_tryout_registrations.checked_in_at`
+- `rep_tryout_registrations.consent_at`
+- `rep_tryout_registrations.consent_data_collection`
+- `rep_tryout_registrations.consent_eligibility`
+- `rep_tryout_registrations.consent_email_comms`
+- `rep_tryout_registrations.consent_ip`
+- `rep_tryout_registrations.is_checked_in`
+- `rep_tryout_sessions.created_at`
+- `rep_tryout_sessions.ends_at`
+- `rep_tryout_sessions.field_number`
+- `rep_tryout_sessions.id`
+- `rep_tryout_sessions.label`
+- `rep_tryout_sessions.location`
+- `rep_tryout_sessions.location_address`
+- `rep_tryout_sessions.org_id`
+- `rep_tryout_sessions.program_year_id`
+- `rep_tryout_sessions.starts_at`
+- `rep_tryout_sessions.status`
+- `rep_tryout_sessions.team_id`
+- `rep_tryout_sessions.tryout_id`
+- `rep_tryout_sessions.updated_at`
+- `rep_tryouts.created_at`
+- `rep_tryouts.id`
+- `rep_tryouts.is_anonymous`
+- `rep_tryouts.org_id`
+- `rep_tryouts.program_year_id`
+- `rep_tryouts.scores_locked_at`
+- `rep_tryouts.scores_locked_by`
+- `rep_tryouts.team_id`
+- `rep_tryouts.updated_at`
 
 ### Only in PROD (3)
 - `resources.created_at`
@@ -54,11 +86,21 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (4)
+### Only in DEV (14)
 - `league_practices_recurrence_idx`
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
 - `league_practices_team_idx`
+- `rep_tryout_sessions_org_idx`
+- `rep_tryout_sessions_pkey`
+- `rep_tryout_sessions_starts_idx`
+- `rep_tryout_sessions_team_idx`
+- `rep_tryout_sessions_tryout_idx`
+- `rep_tryout_sessions_year_idx`
+- `rep_tryouts_org_idx`
+- `rep_tryouts_pkey`
+- `rep_tryouts_program_year_uq`
+- `rep_tryouts_team_idx`
 
 ### Only in PROD (3)
 - `league_practices_recurrence_group_id_idx`
@@ -69,13 +111,22 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (7)
+### Only in DEV (16)
 - `announcements.announcements_tournament_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
 - `games.games_age_group_id_fkey`
 - `games.games_away_team_id_fkey`
 - `games.games_tournament_id_fkey`
+- `rep_tryout_sessions.rep_tryout_sessions_org_id_fkey`
+- `rep_tryout_sessions.rep_tryout_sessions_pkey`
+- `rep_tryout_sessions.rep_tryout_sessions_program_year_id_fkey`
+- `rep_tryout_sessions.rep_tryout_sessions_team_id_fkey`
+- `rep_tryout_sessions.rep_tryout_sessions_tryout_id_fkey`
+- `rep_tryouts.rep_tryouts_org_id_fkey`
+- `rep_tryouts.rep_tryouts_pkey`
+- `rep_tryouts.rep_tryouts_program_year_id_fkey`
+- `rep_tryouts.rep_tryouts_team_id_fkey`
 - `teams.teams_tournament_id_fkey`
 
 ### Only in PROD (9)
@@ -93,8 +144,8 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (0)
-_none_
+### CHECK only in DEV (1)
+- `rep_tryout_sessions.rep_tryout_sessions_status_check`
 
 ### CHECK only in PROD (1)
 - `tournaments.tournaments_status_check`

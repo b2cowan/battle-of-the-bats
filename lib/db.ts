@@ -4,7 +4,7 @@ import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from 
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
@@ -2520,6 +2520,7 @@ function mapOrg(r: any): Organization {
     teamWorkspaceStatus:   r.team_workspace_status ?? null,
     isDiscoverable:        r.is_discoverable ?? true,
     freeFloor:             r.free_floor ?? null,
+    privacyPolicyUrl:      r.privacy_policy_url ?? null,
   };
 }
 
@@ -4332,7 +4333,48 @@ function mapRepTryoutRegistration(r: any): RepTryoutRegistration {
     guardianPhone: r.guardian_phone,
     status: r.status,
     adminNotes: r.admin_notes,
+    consentDataCollection: r.consent_data_collection ?? null,
+    consentEmailComms: r.consent_email_comms ?? null,
+    consentEligibility: r.consent_eligibility ?? null,
+    consentAt: r.consent_at ?? null,
+    consentIp: r.consent_ip ?? null,
+    bibNumber: r.bib_number ?? null,
+    isCheckedIn: r.is_checked_in ?? false,
+    checkedInAt: r.checked_in_at ?? null,
     submittedAt: r.submitted_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+function mapRepTryout(r: any): RepTryout {
+  return {
+    id: r.id,
+    programYearId: r.program_year_id,
+    teamId: r.team_id,
+    orgId: r.org_id,
+    isAnonymous: r.is_anonymous ?? true,
+    scoresLockedAt: r.scores_locked_at ?? null,
+    scoresLockedBy: r.scores_locked_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+function mapRepTryoutSession(r: any): RepTryoutSession {
+  return {
+    id: r.id,
+    tryoutId: r.tryout_id,
+    programYearId: r.program_year_id,
+    teamId: r.team_id,
+    orgId: r.org_id,
+    startsAt: r.starts_at,
+    endsAt: r.ends_at ?? null,
+    location: r.location ?? null,
+    locationAddress: r.location_address ?? null,
+    fieldNumber: r.field_number ?? null,
+    label: r.label ?? null,
+    status: r.status ?? 'scheduled',
+    createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
 }
@@ -4369,6 +4411,12 @@ export async function createRepTryoutRegistration(fields: {
   guardianLastName: string;
   guardianEmail: string;
   guardianPhone?: string | null;
+  // Consent capture (Phase 1.1). consentAt/consentIp are stamped server-side by the caller.
+  consentDataCollection?: boolean | null;
+  consentEmailComms?: boolean | null;
+  consentEligibility?: boolean | null;
+  consentAt?: string | null;
+  consentIp?: string | null;
 }): Promise<RepTryoutRegistration> {
   const { data, error } = await supabaseAdmin
     .from('rep_tryout_registrations')
@@ -4384,6 +4432,11 @@ export async function createRepTryoutRegistration(fields: {
       guardian_last_name: fields.guardianLastName,
       guardian_email: fields.guardianEmail,
       guardian_phone: fields.guardianPhone ?? null,
+      consent_data_collection: fields.consentDataCollection ?? null,
+      consent_email_comms: fields.consentEmailComms ?? null,
+      consent_eligibility: fields.consentEligibility ?? null,
+      consent_at: fields.consentAt ?? null,
+      consent_ip: fields.consentIp ?? null,
     })
     .select()
     .single();
@@ -4431,6 +4484,208 @@ export async function acceptTryoutAndAddToRoster(
 
   const registration = await updateRepTryoutRegistrationStatus(regId, 'accepted');
   return { registration, player };
+}
+
+/** Candidate day-of check-in / bib assignment (Phase 2A). */
+export async function updateRepTryoutCheckin(
+  regId: string,
+  fields: { isCheckedIn?: boolean; bibNumber?: string | null },
+): Promise<RepTryoutRegistration> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.isCheckedIn !== undefined) {
+    patch.is_checked_in = fields.isCheckedIn;
+    patch.checked_in_at = fields.isCheckedIn ? new Date().toISOString() : null;
+  }
+  if (fields.bibNumber !== undefined) patch.bib_number = fields.bibNumber;
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_registrations')
+    .update(patch)
+    .eq('id', regId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTryoutRegistration(data);
+}
+
+// ── Tryout workspace + sessions (Phase 2A) ──────────────────────────────────
+
+export async function getRepTryout(programYearId: string): Promise<RepTryout | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryouts')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTryout(data) : null;
+}
+
+/** Lazily create the tryout workspace for a program year (1:1). Idempotent: returns the existing
+ *  row if one already exists (handles the unique-constraint race). */
+export async function getOrCreateRepTryout(fields: {
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+}): Promise<RepTryout> {
+  const existing = await getRepTryout(fields.programYearId);
+  if (existing) return existing;
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryouts')
+    .insert({
+      program_year_id: fields.programYearId,
+      team_id: fields.teamId,
+      org_id: fields.orgId,
+    })
+    .select()
+    .single();
+  if (error) {
+    // Unique-violation race: another request created it first — return that row.
+    const again = await getRepTryout(fields.programYearId);
+    if (again) return again;
+    throw error;
+  }
+  return mapRepTryout(data);
+}
+
+export async function updateRepTryout(
+  tryoutId: string,
+  fields: { isAnonymous?: boolean; scoresLockedAt?: string | null; scoresLockedBy?: string | null },
+): Promise<RepTryout> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.isAnonymous !== undefined) patch.is_anonymous = fields.isAnonymous;
+  if (fields.scoresLockedAt !== undefined) patch.scores_locked_at = fields.scoresLockedAt;
+  if (fields.scoresLockedBy !== undefined) patch.scores_locked_by = fields.scoresLockedBy;
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryouts')
+    .update(patch)
+    .eq('id', tryoutId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTryout(data);
+}
+
+export async function getRepTryoutSessions(tryoutId: string): Promise<RepTryoutSession[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_sessions')
+    .select('*')
+    .eq('tryout_id', tryoutId)
+    .order('starts_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTryoutSession);
+}
+
+/** Scheduled (non-cancelled) tryout sessions for a team — the calendar PROJECTION source the coach
+ *  schedule view unions in (no rep_team_events row is ever created for a tryout). */
+export async function getRepTryoutSessionsForTeam(teamId: string): Promise<RepTryoutSession[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_sessions')
+    .select('*')
+    .eq('team_id', teamId)
+    .eq('status', 'scheduled')
+    .order('starts_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTryoutSession);
+}
+
+export async function getRepTryoutSessionById(sessionId: string): Promise<RepTryoutSession | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_sessions')
+    .select('*')
+    .eq('id', sessionId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTryoutSession(data) : null;
+}
+
+export async function createRepTryoutSession(fields: {
+  tryoutId: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  startsAt: string;
+  endsAt?: string | null;
+  location?: string | null;
+  locationAddress?: string | null;
+  fieldNumber?: string | null;
+  label?: string | null;
+}): Promise<RepTryoutSession> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_sessions')
+    .insert({
+      tryout_id: fields.tryoutId,
+      program_year_id: fields.programYearId,
+      team_id: fields.teamId,
+      org_id: fields.orgId,
+      starts_at: fields.startsAt,
+      ends_at: fields.endsAt ?? null,
+      location: fields.location ?? null,
+      location_address: fields.locationAddress ?? null,
+      field_number: fields.fieldNumber ?? null,
+      label: fields.label ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTryoutSession(data);
+}
+
+export async function updateRepTryoutSession(
+  sessionId: string,
+  fields: {
+    startsAt?: string;
+    endsAt?: string | null;
+    location?: string | null;
+    locationAddress?: string | null;
+    fieldNumber?: string | null;
+    label?: string | null;
+    status?: 'scheduled' | 'cancelled';
+  },
+): Promise<RepTryoutSession> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.startsAt !== undefined) patch.starts_at = fields.startsAt;
+  if (fields.endsAt !== undefined) patch.ends_at = fields.endsAt;
+  if (fields.location !== undefined) patch.location = fields.location;
+  if (fields.locationAddress !== undefined) patch.location_address = fields.locationAddress;
+  if (fields.fieldNumber !== undefined) patch.field_number = fields.fieldNumber;
+  if (fields.label !== undefined) patch.label = fields.label;
+  if (fields.status !== undefined) patch.status = fields.status;
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_sessions')
+    .update(patch)
+    .eq('id', sessionId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTryoutSession(data);
+}
+
+export async function deleteRepTryoutSession(sessionId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_tryout_sessions')
+    .delete()
+    .eq('id', sessionId);
+  if (error) throw error;
+}
+
+const bibValue = (b: string | null): number => (b ? parseInt(b, 10) || 0 : 0);
+
+/** Day-of check-in candidate list (Phase 2A): active candidates (not declined/withdrawn) for a
+ *  program year, with sequential bib numbers auto-assigned to any that don't have one yet (stable
+ *  once assigned), sorted by bib. */
+export async function getRepTryoutCheckinList(programYearId: string): Promise<RepTryoutRegistration[]> {
+  const all = await getRepTryoutRegistrations(programYearId);
+  const active = all.filter(r => r.status !== 'declined' && r.status !== 'withdrawn');
+
+  const hasBib = (r: RepTryoutRegistration) => r.bibNumber != null && r.bibNumber !== '';
+  let next = active.reduce((m, r) => Math.max(m, bibValue(r.bibNumber)), 0) + 1;
+  const missing = active.filter(r => !hasBib(r)).sort((a, b) => a.submittedAt.localeCompare(b.submittedAt));
+  for (const r of missing) {
+    await updateRepTryoutCheckin(r.id, { bibNumber: String(next) });
+    r.bibNumber = String(next);
+    next++;
+  }
+
+  return active.sort((a, b) => bibValue(a.bibNumber) - bibValue(b.bibNumber));
 }
 
 // Roster Players

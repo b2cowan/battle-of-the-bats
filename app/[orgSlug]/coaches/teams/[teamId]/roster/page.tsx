@@ -73,6 +73,16 @@ function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
+// A bad import/seed can leave a name part as the literal string "null"/"undefined" (truthy, so a
+// plain filter(Boolean) keeps it). Treat those as blank — same rule the schedule view uses.
+function cleanNamePart(part: string | null | undefined): string {
+  const s = (part ?? '').trim();
+  return s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined' ? '' : s;
+}
+function playerFullName(p: { playerFirstName: string | null; playerLastName: string | null }): string {
+  return [cleanNamePart(p.playerFirstName), cleanNamePart(p.playerLastName)].filter(Boolean).join(' ');
+}
+
 // Season labels are often auto-named with the team in them (e.g.
 // "toronto blue jays5 2026"). The team name already appears in the breadcrumb,
 // sidebar, and title — strip a leading team-name prefix so the subtitle doesn't stutter.
@@ -81,8 +91,13 @@ function seasonLabel(season: string | null | undefined, teamName: string): strin
   if (!s) return '';
   const t = teamName.trim();
   if (t && s.toLowerCase().startsWith(t.toLowerCase())) {
-    const stripped = s.slice(t.length).replace(/^[\s—–-]+/, '').trim();
-    if (stripped) return stripped;
+    const rest = s.slice(t.length);
+    // Only strip a WHOLE-WORD team-name prefix (next char is a separator or end), so a team
+    // like "Jay" doesn't mangle a season "Jays 2026".
+    if (rest === '' || /^[\s—–-]/.test(rest)) {
+      const stripped = rest.replace(/^[\s—–-]+/, '').trim();
+      if (stripped) return stripped;
+    }
   }
   return s;
 }
@@ -271,8 +286,8 @@ export default function RosterPage({
       playerNumber:      p.playerNumber ?? '',
       primaryPosition:   p.primaryPosition ?? '',
       secondaryPosition: p.secondaryPosition ?? '',
-      playerFirstName:   p.playerFirstName,
-      playerLastName:    p.playerLastName,
+      playerFirstName:   cleanNamePart(p.playerFirstName),
+      playerLastName:    cleanNamePart(p.playerLastName),
       playerDateOfBirth: p.playerDateOfBirth ?? '',
       guardianName:      [p.guardianFirstName, p.guardianLastName].filter(Boolean).join(' '),
       guardianEmail:     p.guardianEmail ?? '',
@@ -436,11 +451,12 @@ export default function RosterPage({
           />
           <button
             type="button"
-            className="btn btn-lime"
+            className={`btn btn-lime ${styles.addPlayerBtn}`}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem' }}
             onClick={() => { setAddForm(BLANK); setAddOpen(true); }}
+            aria-label="Add player"
           >
-            <Plus size={13} /> Add Player
+            <Plus size={15} /> <span className={styles.addPlayerLabel}>Add Player</span>
           </button>
         </div>
       </div>
@@ -460,7 +476,12 @@ export default function RosterPage({
             <div className={styles.rosterMeta}>
               {players.length >= 2 ? (
                 <span className={styles.rosterHint}>
-                  <GripVertical size={13} /> Drag to set the order players appear in
+                  <span className={styles.rosterHintDrag}>
+                    <GripVertical size={13} /> Drag to set the order players appear in
+                  </span>
+                  <span className={styles.rosterHintMove}>
+                    <ChevronUp size={12} /><ChevronDown size={12} /> Use the arrows to set the order players appear in
+                  </span>
                 </span>
               ) : <span />}
               {nudge && <span className={styles.rosterNudge}>{nudge}</span>}
@@ -668,7 +689,7 @@ function SortableRow({
     transition,
     opacity: isDragging ? 0.6 : 1,
   };
-  const fullName = [p.playerFirstName, p.playerLastName].filter(Boolean).join(' ');
+  const fullName = playerFullName(p);
   return (
     <tr ref={setNodeRef} style={style} className={styles.tr}>
       <td className={`${styles.td} ${styles.gripTd}`} style={{ width: 28, paddingLeft: '0.25rem', paddingRight: 0 }}>
@@ -696,6 +717,43 @@ function SortableRow({
             {teamInitials(fullName)}
           </span>
           <Link href={`${base}/roster/${p.id}`} className={styles.playerNameLink}>{fullName}</Link>
+          {/* Mobile only: jersey # + status fold into the header row (their own rows are hidden). */}
+          <span className={styles.playerCellMeta}>
+            {p.playerNumber && (
+              <span
+                className={`${styles.playerNumBadge}${isDuplicateNumber ? ` ${styles.playerNumBadgeDup}` : ''}`}
+                title={isDuplicateNumber ? 'Another player wears this number' : undefined}
+              >
+                #{p.playerNumber}
+              </span>
+            )}
+            <span className={`${styles.badge} ${STATUS_CSS[p.status] ?? styles.badgeDraft}`}>
+              {p.status === 'active' ? 'Active' : 'Inactive'}
+            </span>
+            {/* Reorder arrows live here on mobile (drag is disabled on touch); hidden on desktop. */}
+            {!dragDisabled && (
+              <span className={styles.rosterMoveControls}>
+                <button
+                  type="button"
+                  className={styles.rosterMoveBtn}
+                  aria-label={`Move ${fullName} up`}
+                  disabled={index === 0}
+                  onClick={() => onMove(index, -1)}
+                >
+                  <ChevronUp size={15} />
+                </button>
+                <button
+                  type="button"
+                  className={styles.rosterMoveBtn}
+                  aria-label={`Move ${fullName} down`}
+                  disabled={index === count - 1}
+                  onClick={() => onMove(index, 1)}
+                >
+                  <ChevronDown size={15} />
+                </button>
+              </span>
+            )}
+          </span>
         </span>
       </td>
       <td className={styles.td} data-label="Positions" style={{ fontSize: '0.85rem' }}>
@@ -717,29 +775,8 @@ function SortableRow({
         </span>
       </td>
       <td className={`${styles.td} ${styles.rowActionCell}`}>
-        {/* Mobile-only reorder (drag is disabled on touch — the grip is hidden in card mode) */}
-        {!dragDisabled && (
-          <span className={styles.rosterMoveControls}>
-            <button
-              type="button"
-              className={styles.rosterMoveBtn}
-              aria-label={`Move ${[p.playerFirstName, p.playerLastName].filter(Boolean).join(' ')} up`}
-              disabled={index === 0}
-              onClick={() => onMove(index, -1)}
-            >
-              <ChevronUp size={16} />
-            </button>
-            <button
-              type="button"
-              className={styles.rosterMoveBtn}
-              aria-label={`Move ${[p.playerFirstName, p.playerLastName].filter(Boolean).join(' ')} down`}
-              disabled={index === count - 1}
-              onClick={() => onMove(index, 1)}
-            >
-              <ChevronDown size={16} />
-            </button>
-          </span>
-        )}
+        {/* Desktop-only status toggle. On mobile this is hidden — deactivate from the player
+            profile instead (it's a rare action), which keeps the roster card compact. */}
         <button
           type="button"
           className={`btn btn-ghost ${styles.rosterStatusBtn}`}

@@ -98,6 +98,11 @@ const ATTENDANCE_OPTIONS: {
   { value: 'unknown', label: 'No reply', icon: CircleHelp },
 ];
 
+// Quick status → {label, icon} lookup for the per-player status badge.
+const ATTENDANCE_BY_VALUE = Object.fromEntries(
+  ATTENDANCE_OPTIONS.map(o => [o.value, o]),
+) as Record<RepAttendanceStatus, (typeof ATTENDANCE_OPTIONS)[number]>;
+
 // Add-event menu order. Tournament games nest visually under Tournament so a coach sees the
 // relationship (a game slot belongs to a tournament) right where they create one.
 const ADD_MENU: { type: RepEventType; nested?: boolean }[] = [
@@ -431,7 +436,7 @@ function errorMessage(error: unknown, fallback: string) {
 // One drag-sortable lineup row. Batting order = drag position (auto-numbered), so duplicate
 // slot numbers are impossible. Lives in this module so it shares styles + helpers.
 function SortableLineupRow({
-  row, battingNumber, mode, inningCount, onStarterToggle, onPositionChange, index, count, onMove,
+  row, battingNumber, mode, inningCount, onStarterToggle, onPositionChange, index, count, onMove, onRemove,
 }: {
   row: LineupPlayerRow;
   battingNumber: string;
@@ -442,6 +447,7 @@ function SortableLineupRow({
   index: number;
   count: number;
   onMove: (index: number, dir: -1 | 1) => void;
+  onRemove: (playerId: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.player.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
@@ -484,7 +490,16 @@ function SortableLineupRow({
         </td>
       )}
       <td className={styles.lineupPlayerCell}>
-        <span>{playerDisplayName(row.player)}</span>
+        <span className={styles.lineupPlayerName}>{playerDisplayName(row.player)}</span>
+        <button
+          type="button"
+          className={styles.lineupRemoveBtn}
+          aria-label={`Remove ${playerDisplayName(row.player)} from the lineup`}
+          title="Not coming — remove from lineup"
+          onClick={() => onRemove(row.player.id)}
+        >
+          <X size={13} />
+        </button>
       </td>
       {Array.from({ length: inningCount }, (_, index) => {
         const inning = index + 1;
@@ -583,6 +598,9 @@ export default function CoachesSchedulePage({
   const [cursorDate, setCursorDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   const [selectedEvent, setSelectedEvent] = useState<RepTeamEvent | null>(null);
+  // Mobile month view: a tapped day with >1 event opens this bottom-sheet day list (a single
+  // event opens its detail directly). Desktop keeps the in-cell text chips, so this stays null.
+  const [daySheet, setDaySheet] = useState<{ dateKey: string; events: RepTeamEvent[] } | null>(null);
   const [slideTab, setSlideTab] = useState<'attendance' | 'lineup'>('attendance');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
@@ -603,7 +621,8 @@ export default function CoachesSchedulePage({
   const [attendanceError, setAttendanceError] = useState('');
   // Attendance metric-filter ('all' or a status) + which rows have their note input expanded.
   const [attendanceFilter, setAttendanceFilter] = useState<RepAttendanceStatus | 'all'>('all');
-  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+  // Which player's RSVP editor is open (one at a time). null = all collapsed.
+  const [rsvpEditId, setRsvpEditId] = useState<string | null>(null);
   const [lineupMode, setLineupMode] = useState<RepLineupMode>('everyone_bats');
   const [lineupInningCount, setLineupInningCount] = useState(sportPack.defaultPeriodCount);
   const [lineupNotes, setLineupNotes] = useState('');
@@ -710,7 +729,7 @@ export default function CoachesSchedulePage({
 
   // Lock background scroll while a full-screen modal (detail or add/edit) is open on
   // mobile, so only the modal scrolls.
-  const anyModalOpen = !!selectedEvent || showAddForm;
+  const anyModalOpen = !!selectedEvent || showAddForm || !!daySheet;
   useEffect(() => {
     if (!anyModalOpen) return;
     const prev = document.body.style.overflow;
@@ -812,10 +831,13 @@ export default function CoachesSchedulePage({
         }));
         if (lineupCapable) {
           const mode = data.lineup?.lineupMode ?? 'everyone_bats';
+          // Players marked Out (absent) are left out of the lineup; they appear under "Not playing".
+          const absentIds = new Set((data.attendance ?? []).filter(a => a.status === 'absent').map(a => a.playerId));
+          const playingPlayers = players.filter(p => !absentIds.has(p.id));
           setLineupMode(mode);
           setLineupInningCount(data.lineup?.inningCount ?? sportPack.defaultPeriodCount);
           setLineupNotes(data.lineup?.notes ?? '');
-          setLineupRows(renumberBattingOrder(sortLineupRows(buildLineupRows(players, data.entries ?? [], mode)), mode));
+          setLineupRows(renumberBattingOrder(sortLineupRows(buildLineupRows(playingPlayers, data.entries ?? [], mode)), mode));
         } else {
           setLineupRows([]);
         }
@@ -830,6 +852,25 @@ export default function CoachesSchedulePage({
     fetchAttendance();
     return () => { cancelled = true; };
   }, [orgSlug, selectedEvent, teamId, sportPack.defaultPeriodCount]);
+
+  // Attendance is the single source of truth for who's playing: the lineup always reflects the
+  // non-absent active players. A player marked Out drops out of the batting order/positions; one
+  // no longer Out is added back with a fresh slot. Runs whenever attendance changes (either tab).
+  useEffect(() => {
+    if (!selectedEvent || !isLineupEvent(selectedEvent)) return;
+    const playing = attendanceRows.filter(r => r.status !== 'absent');
+    const playingIds = new Set(playing.map(r => r.player.id));
+    setLineupRows(prev => {
+      const present = new Set(prev.map(r => r.player.id));
+      const kept = prev.filter(r => playingIds.has(r.player.id));
+      const toAdd = playing.filter(r => !present.has(r.player.id));
+      if (toAdd.length === 0 && kept.length === prev.length) return prev;
+      const added: LineupPlayerRow[] = toAdd.map(r => ({
+        player: r.player, battingOrder: '', starter: lineupMode === 'everyone_bats', inningPositions: {}, notes: '',
+      }));
+      return renumberBattingOrder([...kept, ...added], lineupMode);
+    });
+  }, [attendanceRows, selectedEvent, lineupMode]);
 
   // ── Add event ───────────────────────────────────────────────────────────────
 
@@ -1199,6 +1240,19 @@ export default function CoachesSchedulePage({
     setLineupDirty(true);
   }
 
+  // Remove a player from this game's lineup = mark them Out in attendance; the sync above drops
+  // them from the batting order/positions. Reversible via "Add to lineup".
+  function removeFromLineup(playerId: string) {
+    setPlayerAttendance(playerId, { status: 'absent' });
+    setLineupDirty(true);
+  }
+
+  // Add a player back: clears their Out status; the sync gives them a fresh lineup slot.
+  function addToLineup(playerId: string) {
+    setPlayerAttendance(playerId, { status: 'attending' });
+    setLineupDirty(true);
+  }
+
   function handleLineupStarterToggle(playerId: string, checked: boolean) {
     pushLineupUndo();
     setLineupRows(rows => renumberBattingOrder(
@@ -1211,17 +1265,18 @@ export default function CoachesSchedulePage({
   function openEvent(event: RepTeamEvent) {
     setSlideTab('attendance');
     setAttendanceFilter('all');
-    setExpandedNotes(new Set());
+    setRsvpEditId(null);
     setLineupView('lineup');
+    setDaySheet(null);
     setSelectedEvent(event);
   }
 
-  function toggleNote(playerId: string) {
-    setExpandedNotes(prev => {
-      const next = new Set(prev);
-      if (next.has(playerId)) next.delete(playerId); else next.add(playerId);
-      return next;
-    });
+  // "+N more" in a month cell (and any future day tap): a single event opens its detail
+  // straight away; several open a day list (bottom-sheet) so the coach can pick one.
+  function openDay(dateKey: string, dayEvents: RepTeamEvent[]) {
+    if (dayEvents.length === 0) return;
+    if (dayEvents.length === 1) { openEvent(dayEvents[0]); return; }
+    setDaySheet({ dateKey, events: dayEvents });
   }
 
   async function requestCloseForm() {
@@ -1842,7 +1897,13 @@ export default function CoachesSchedulePage({
                   );
                 })}
                 {dayEvents.length > 3 && (
-                  <span className={styles.calMonthMoreDots}>+{dayEvents.length - 3} more</span>
+                  <button
+                    type="button"
+                    className={styles.calMonthMoreDots}
+                    onClick={() => openDay(key, dayEvents)}
+                  >
+                    +{dayEvents.length - 3} more
+                  </button>
                 )}
               </div>
             </div>
@@ -1871,16 +1932,8 @@ export default function CoachesSchedulePage({
             <p className={styles.pageSub}>{assignment.programYearName}</p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Export */}
-          <ExportMenu
-            formats={['xlsx', 'csv', 'ics']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            onExportICS={handleExportICS}
-            disabled={events.length === 0}
-          />
-          {/* View toggle */}
+        <div className={styles.scheduleToolbar}>
+          {/* View toggle (left) */}
           <div className={styles.viewToggle}>
             {(['list', 'week', 'month'] as ViewMode[]).map(v => (
               <button
@@ -1892,6 +1945,15 @@ export default function CoachesSchedulePage({
               </button>
             ))}
           </div>
+          {/* Export + Add (right) */}
+          <div className={styles.scheduleToolbarActions}>
+            <ExportMenu
+              formats={['xlsx', 'csv', 'ics']}
+              onExportXLSX={handleExportXLSX}
+              onExportCSV={handleExportCSV}
+              onExportICS={handleExportICS}
+              disabled={events.length === 0}
+            />
           {/* Add event — coach-portal primary actions are btn-lime (CP-1), not the
               shared blueprint-blue .btnPrimary used by in-modal save buttons. */}
           <div className={styles.addEventWrap}>
@@ -1920,6 +1982,7 @@ export default function CoachesSchedulePage({
                 })}
               </div>
             )}
+          </div>
           </div>
         </div>
       </div>
@@ -1952,6 +2015,27 @@ export default function CoachesSchedulePage({
           : view === 'week'  ? renderWeekView()
           : renderMonthView()
       }
+
+      {/* ── Day list (mobile month-cell tap) ──────────────────────────────── */}
+      {daySheet && (
+        <div className={`${styles.modalOverlay} ${styles.daySheetOverlay}`} onClick={() => setDaySheet(null)}>
+          <div className={styles.daySheet} onClick={e => e.stopPropagation()}>
+            <div className={styles.daySheetHeader}>
+              <h2 className={styles.daySheetTitle}>
+                {new Date(`${daySheet.dateKey}T00:00:00`).toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' })}
+              </h2>
+              <button className={styles.modalCloseBtn} aria-label="Close" onClick={() => setDaySheet(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className={styles.calEventList}>
+              {sortDayEvents(daySheet.events).map(e => (
+                <EventChip key={e.id} event={e} dayKey={daySheet.dateKey} onClick={() => openEvent(e)} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Detail slide-over ─────────────────────────────────────────────── */}
       {selectedEvent && (
@@ -2231,49 +2315,60 @@ export default function CoachesSchedulePage({
               ) : (
                 <div className={styles.attendanceList}>
                   {filteredRows.map(row => {
-                    const noteOpen = expandedNotes.has(row.player.id);
+                    const cur = ATTENDANCE_BY_VALUE[row.status] ?? ATTENDANCE_BY_VALUE.unknown;
+                    const StatusIcon = cur.icon;
+                    const isSet = row.status !== 'unknown';
+                    const editing = rsvpEditId === row.player.id;
                     return (
-                    <div key={row.player.id} className={styles.attendanceRow}>
+                    <div key={row.player.id} className={styles.attendanceRow} data-editing={editing ? 'true' : undefined}>
                       <span className={styles.attendancePlayerName}>{playerDisplayName(row.player)}</span>
-                      <div className={styles.attendanceStatusGroup} role="group" aria-label={`Attendance for ${playerDisplayName(row.player)}`}>
-                        {ATTENDANCE_OPTIONS.map(option => {
-                          const Icon = option.icon;
-                          return (
-                            <button
-                              key={option.value}
-                              type="button"
-                              aria-pressed={row.status === option.value}
-                              aria-label={option.label}
-                              title={option.label}
-                              className={`${styles.attendanceStatusBtn} ${row.status === option.value ? styles.attendanceStatusBtnActive : ''}`}
-                              data-status={option.value}
-                              onClick={() => setPlayerAttendance(row.player.id, { status: option.value })}
-                            >
-                              <Icon size={15} />
-                            </button>
-                          );
-                        })}
-                      </div>
+                      {/* Current status — same icon + colour as the filter chips. */}
+                      <span className={styles.attendanceStatusBadge} data-status={row.status} title={cur.label}>
+                        <StatusIcon size={14} />
+                        <span className={styles.attendanceStatusBadgeLabel}>{cur.label}</span>
+                      </span>
+                      {row.note && !editing && (
+                        <span className={styles.attendanceNoteFlag} title={row.note} aria-label="Has a note">
+                          <StickyNote size={13} />
+                        </span>
+                      )}
                       <button
                         type="button"
-                        className={styles.attendanceNoteToggle}
-                        data-has={row.note ? 'true' : undefined}
-                        aria-label={`${noteOpen ? 'Hide' : 'Add'} note for ${playerDisplayName(row.player)}`}
-                        aria-expanded={noteOpen}
-                        title={row.note ? 'Edit note' : 'Add note'}
-                        onClick={() => toggleNote(row.player.id)}
+                        className={styles.rsvpBtn}
+                        aria-expanded={editing}
+                        aria-label={`${isSet ? 'Edit' : 'Set'} attendance for ${playerDisplayName(row.player)}`}
+                        onClick={() => setRsvpEditId(editing ? null : row.player.id)}
                       >
-                        <StickyNote size={15} />
+                        {isSet ? 'Edit RSVP' : 'RSVP'}
                       </button>
-                      {noteOpen && (
-                        <input
-                          className={styles.attendanceNoteInput}
-                          value={row.note}
-                          onChange={e => setPlayerAttendance(row.player.id, { note: e.target.value })}
-                          placeholder="Note (e.g. leaving early)"
-                          aria-label={`Attendance note for ${playerDisplayName(row.player)}`}
-                          maxLength={500}
-                        />
+                      {editing && (
+                        <div className={styles.rsvpEditor}>
+                          <div className={styles.rsvpOptions} role="group" aria-label={`Set attendance for ${playerDisplayName(row.player)}`}>
+                            {ATTENDANCE_OPTIONS.map(option => {
+                              const Icon = option.icon;
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  data-status={option.value}
+                                  aria-pressed={row.status === option.value}
+                                  className={`${styles.rsvpOption} ${row.status === option.value ? styles.rsvpOptionActive : ''}`}
+                                  onClick={() => setPlayerAttendance(row.player.id, { status: option.value })}
+                                >
+                                  <Icon size={16} /> {option.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <input
+                            className={styles.attendanceNoteInput}
+                            value={row.note}
+                            onChange={e => setPlayerAttendance(row.player.id, { note: e.target.value })}
+                            placeholder="Note (e.g. leaving early)"
+                            aria-label={`Attendance note for ${playerDisplayName(row.player)}`}
+                            maxLength={500}
+                          />
+                        </div>
                       )}
                     </div>
                     );
@@ -2478,7 +2573,11 @@ export default function CoachesSchedulePage({
                 {lineupLoading ? (
                   <div className={styles.attendanceEmpty}>Loading lineup...</div>
                 ) : lineupRows.length === 0 ? (
-                  <div className={styles.attendanceEmpty}>Add active players to the roster before creating a lineup.</div>
+                  <div className={styles.attendanceEmpty}>
+                    {attendanceRows.length === 0
+                      ? 'Add active players to the roster before creating a lineup.'
+                      : 'Everyone is marked Out — add players back below to build a lineup.'}
+                  </div>
                 ) : (
                   <DndContext sensors={lineupSensors} collisionDetection={closestCenter} onDragEnd={handleLineupDragEnd}>
                     <p className={styles.lineupScrollHint}>Swipe across innings →</p>
@@ -2496,7 +2595,7 @@ export default function CoachesSchedulePage({
                               const inning = index + 1;
                               const clash = lineupAnalysis.conflictInnings.has(inning);
                               return (
-                                <th key={inning} style={clash ? { color: 'var(--danger)' } : undefined} title={clash ? 'Two players share a position this inning' : undefined}>
+                                <th key={inning} className={styles.lineupColInning} style={clash ? { color: 'var(--danger)' } : undefined} title={clash ? 'Two players share a position this inning' : undefined}>
                                   {inning}{clash ? ' ⚠' : ''}
                                 </th>
                               );
@@ -2517,6 +2616,7 @@ export default function CoachesSchedulePage({
                                 index={i}
                                 count={lineupRows.length}
                                 onMove={moveLineupRow}
+                                onRemove={removeFromLineup}
                               />
                             ))}
                           </SortableContext>
@@ -2525,6 +2625,33 @@ export default function CoachesSchedulePage({
                     </div>
                   </DndContext>
                 )}
+
+                {/* Not playing — players marked Out; tap to add any back into the lineup. */}
+                {(() => {
+                  const notPlaying = attendanceRows.filter(r => r.status === 'absent');
+                  if (notPlaying.length === 0) return null;
+                  return (
+                    <div className={styles.lineupNotPlaying}>
+                      <p className={styles.lineupNotPlayingHead}>Not playing · {notPlaying.length}</p>
+                      <div className={styles.lineupNotPlayingList}>
+                        {notPlaying.map(r => (
+                          <div key={r.player.id} className={styles.lineupNotPlayingRow}>
+                            <span className={styles.lineupNotPlayingName}>
+                              <CircleSlash size={13} aria-hidden /> {playerDisplayName(r.player)}
+                            </span>
+                            <button
+                              type="button"
+                              className={styles.lineupAddBackBtn}
+                              onClick={() => addToLineup(r.player.id)}
+                            >
+                              Add to lineup
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <textarea
                   className={styles.textarea}

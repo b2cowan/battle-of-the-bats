@@ -329,14 +329,14 @@ const coachesHelp: HelpPageContent = {
       heading: 'Getting around your Premium portal',
       summary: 'Where everything lives on Premium: the sidebar sections, the setup dashboard, and the at-a-glance snapshot.',
       keywords: ['premium portal', 'sidebar', 'navigation', 'dashboard', 'overview', 'season setup', 'at a glance', 'snapshot', 'tooltips', 'help button', 'where is', 'required', 'optional', 'skip', 'skip step', 'progress bar'],
-      searchText: 'premium portal layout sidebar navigation sections overview roster schedule tournaments chat announcements accounting documents history settings season setup checklist onboarding dashboard your team at a glance snapshot roster size next event dues outstanding question mark tooltips help button getting around find required optional skip skip step mark complete progress bar status only required step is roster optional jerseys positions schedule lineups budget skip the ones you wont use done or skipped open the setup guide drawer',
+      searchText: 'premium portal layout sidebar navigation sections overview roster schedule tournaments chat announcements accounting documents history settings season setup checklist onboarding dashboard your team at a glance snapshot roster size next event dues outstanding budget spent remaining set tile who is coming next game headcount in out no reply attendance lineup ready not set nudge missing guardian email flag season record recent form scored allowed differential current streak won lost win loss this week what is coming up birthdays next game question mark tooltips help button getting around find required optional skip skip step mark complete progress bar status only required step is roster optional jerseys positions schedule lineups budget skip the ones you wont use done or skipped open the setup guide drawer',
       content: (
         <>
           <p>On Premium, everything is in the left sidebar — no turning tools on. You&apos;ll see <strong>Overview</strong>, <strong>Roster</strong>, <strong>Schedule</strong>, <strong>Tournaments</strong>, <strong>Chat</strong>, <strong>Announcements</strong>, <strong>Accounting</strong>, <strong>Documents</strong>, <strong>History</strong>, and <strong>Settings</strong>.</p>
           <p>Your <strong>Overview</strong> is built to get you going:</p>
           <ul>
             <li><strong>Season setup</strong> — a checklist that shows your progress at a glance. Adding your <strong>roster</strong> is the only required step; everything else (jersey numbers and positions, your schedule, game lineups, and a budget) is <strong>optional</strong>. For each optional step you can either set it up or hit <strong>Skip</strong> if you won&apos;t use it — both tick it off, so the progress bar fills as you decide. The whole panel disappears once every step is either done or skipped, leaving you with the run-mode view below.</li>
-            <li><strong>Your team at a glance</strong> — a quick snapshot of your roster size, your next event, and any dues still owed, each linking straight to that section.</li>
+            <li><strong>Your team at a glance</strong> — quick tiles for your <strong>roster</strong>, <strong>next event</strong>, <strong>dues</strong>, and <strong>budget</strong> (spent vs set), each linking straight to that section. It also surfaces what needs attention: <strong>who&apos;s coming</strong> to the next game (in / out / no-reply), a <strong>Lineup ready / not set</strong> nudge, players <strong>missing a guardian email</strong>, your season record with <strong>recent form, scoring, and current streak</strong>, plus a <strong>This week</strong> line of upcoming events and player <strong>birthdays</strong>.</li>
           </ul>
           <p>Stuck on a term? Look for the small <strong>?</strong> icons next to items for a one-line explanation, or the <strong>Help</strong> button in the page header — or <strong>Open the setup guide</strong> in the season-setup panel — to open this guide right beside what you&apos;re doing.</p>
         </>
@@ -360,10 +360,11 @@ const coachesHelp: HelpPageContent = {
       heading: 'Tournaments, games & calendar views (Premium)',
       summary: 'On Premium your schedule handles every event type, spreads multi-day tournaments across all their days, and keeps tournament games grouped under their tournament.',
       keywords: ['premium schedule', 'tournament', 'multi-day tournament', 'tournament game', 'calendar view', 'week view', 'month view', 'game slot', 'event types'],
-      searchText: 'premium schedule calendar list week month view multi day tournament spans every day date range day 1 of 3 add event types league game tournament game scrimmage practice team event tournament which tournament attach group game slot orphaned loose all day event sorts first nested add game',
+      searchText: 'premium schedule calendar list week month view multi day tournament spans every day date range day 1 of 3 add event types league game tournament game scrimmage practice team event tournament which tournament attach group game slot orphaned loose all day event sorts first nested add game phone mobile month view colored strips plus more N more day list tap open',
       content: (
         <>
           <p>On <strong>Coaches Portal Premium</strong>, your <strong>Schedule</strong> grows from the free practice/game/event list into a full team calendar with <strong>List</strong>, <strong>Week</strong>, and <strong>Month</strong> views and more event types: league games, tournament games, scrimmages, practices, team events, and multi-day tournaments.</p>
+          <p>On a phone, the <strong>Month</strong> view shows each day&apos;s events as small colored strips (up to three); if a day has more, tap <strong>&ldquo;+ N more&rdquo;</strong> to open that day&apos;s full list.</p>
           <p><strong>Multi-day tournaments span the calendar.</strong> Give a <strong>Tournament</strong> a start and end date and it shows on <em>every</em> day it runs — each day in the week view is labelled &ldquo;Day 1/3&rdquo;, &ldquo;Day 2/3&rdquo;, and the month view shows it as one connected run (later days carry a small &ldquo;&rsaquo;&rdquo; marker). In the list it reads as a date range (e.g. &ldquo;Jul 1–3&rdquo;). All-day tournaments sort to the top of each day, above your timed games and practices.</p>
           <p><strong>Tournament games stay grouped under their tournament.</strong> When you add an event, <strong>Game (Tournament)</strong> sits tucked under <strong>Tournament</strong> in the picker. Adding one asks <strong>which tournament</strong> it belongs to and files it there, so you never end up with a loose game tied to nothing. You can also open a tournament and use <strong>+ Add game</strong> to drop a game straight onto its days. If you haven&apos;t created a tournament yet, the form points you to add one first.</p>
         </>
@@ -449,14 +450,14 @@ const coachesHelp: HelpPageContent = {
       id: 'recipe-attendance',
       group: 'Coaches Portal Premium',
       heading: 'Taking attendance (Premium)',
-      summary: 'Open an event to mark who’s In, Late, Out, or hasn’t replied — with at-a-glance counts, quick filters, one-tap marking, and optional per-player notes.',
-      keywords: ['attendance', 'who is coming', 'in out late', 'no reply', 'mark attendance', 'roster check', 'attendance note', 'all in'],
-      searchText: 'attendance mark who is coming going not going in out late no reply unknown counts filter chips tap to set one tap status note per player lime dot all in reset bulk premium event attendance roster headcount available',
+      summary: 'Open an event to set each player to In, Late, Out, or No reply with an RSVP button — at-a-glance status symbols, quick filters, and an optional note. Anyone marked Out drops out of that game’s lineup.',
+      keywords: ['attendance', 'who is coming', 'in out late', 'no reply', 'mark attendance', 'rsvp', 'edit rsvp', 'status symbol', 'roster check', 'attendance note', 'all in', 'not playing'],
+      searchText: 'attendance mark who is coming going not going in out late no reply unknown counts filter chips status symbol rsvp button edit rsvp open choices set status note per player note icon all in reset bulk premium event attendance roster headcount available not playing drops out of lineup remove from lineup add back single source auto save',
       content: (
         <>
           <p>On <strong>Premium</strong>, open any event and pick the <strong>Attendance</strong> tab to track who&apos;s coming. Each player is one of four states: <strong>In</strong>, <strong>Late</strong>, <strong>Out</strong>, or <strong>No reply</strong> (not marked yet).</p>
           <p>At the top, a <strong>color-coded count bar</strong> shows the totals at a glance — All, In, Late, Out, and No reply. <strong>Tap any count to filter</strong> the list to just those players (tap it again to show everyone); great for working through the &ldquo;No reply&rdquo; pile until it&apos;s empty.</p>
-          <p>Each player sits on a <strong>single line</strong>: tap the <strong>In / Late / Out / No-reply</strong> icon to set their status — one tap, no menus. To add a quick note (&ldquo;leaving early&rdquo;, &ldquo;ride needed&rdquo;), tap the <strong>note icon</strong> at the end of the row; players who already have a note show a small <strong>lime dot</strong> so you can spot them. Use <strong>All in</strong> to mark everyone present at once, or <strong>Reset</strong> to clear back to No reply. Click <strong>Save attendance</strong> when you&apos;re done.</p>
+          <p>Each player shows their <strong>current status as a small colored symbol</strong> — the same icons as the count bar — next to an <strong>RSVP</strong> button. Tap <strong>RSVP</strong> (or <strong>Edit RSVP</strong> once a status is set) to open the four choices and an optional <strong>note</strong> (&ldquo;leaving early&rdquo;, &ldquo;ride needed&rdquo;); pick one and the status symbol updates right away. Only one player&apos;s chooser is open at a time, so a long roster stays tidy. Use <strong>All in</strong> to mark everyone present at once, or <strong>Reset</strong> to clear back to No reply. Your changes <strong>save automatically</strong>.</p>
         </>
       ),
       faqs: [
@@ -472,10 +473,22 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-attendance-note',
           question: 'How do I add a note to a player’s attendance?',
-          answerText: 'Tap the note icon at the end of that player’s row to open a note field (e.g. leaving early, ride needed). Players who already have a note show a small lime dot on the note icon. Notes save with the rest of the attendance when you tap Save attendance.',
-          keywords: ['attendance note', 'player note', 'leaving early', 'note icon'],
+          answerText: 'Tap RSVP (or Edit RSVP) on that player and type in the note field there (e.g. leaving early, ride needed). Players who already have a note show a small note icon on their row; open their RSVP to read or change it. Notes save automatically with the rest of the attendance.',
+          keywords: ['attendance note', 'player note', 'leaving early', 'note icon', 'rsvp note'],
           answer: (
-            <p>Tap the <strong>note icon</strong> at the end of that player&apos;s row to open a note field (e.g. &ldquo;leaving early&rdquo;). Players who already have a note show a small <strong>lime dot</strong> on the icon. Notes save with the rest when you tap <strong>Save attendance</strong>.</p>
+            <p>Tap <strong>RSVP</strong> (or <strong>Edit RSVP</strong>) on that player and type in the <strong>note</strong> field there (e.g. &ldquo;leaving early&rdquo;). Players who already have a note show a small <strong>note icon</strong> on their row; open their RSVP to read or change it. Notes <strong>save automatically</strong> with the rest of the attendance.</p>
+          ),
+        },
+        {
+          id: 'faq-attendance-lineup',
+          question: 'If I mark a player Out, do they come off the game lineup?',
+          answerText: 'Yes. Attendance is the single source of who is playing, so anyone marked Out drops out of that game lineup — they leave the batting order and field positions and move to a Not playing list under the lineup. Tap Add to lineup there, or change their attendance back, to bring them in again. You can also remove a player straight from the Lineup tab with the x on their row, which marks them Out.',
+          keywords: ['remove from lineup', 'not playing', 'out of lineup', 'mark out', 'add to lineup', 'absent lineup', 'who is playing'],
+          answer: (
+            <>
+              <p>Yes. Attendance is the <strong>single source of who&apos;s playing</strong>, so anyone marked <strong>Out</strong> drops out of that game&apos;s lineup — they leave the batting order and field positions and move to a <strong>Not playing</strong> list under the lineup.</p>
+              <p>Tap <strong>Add to lineup</strong> there (or change their attendance back) to bring them in again. You can also remove a player straight from the <strong>Lineup</strong> tab with the <strong>&times;</strong> on their row, which marks them Out.</p>
+            </>
           ),
         },
       ],

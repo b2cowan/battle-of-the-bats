@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, Users, Calendar, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut } from 'lucide-react';
+import { ArrowLeft, Users, Calendar, ClipboardList, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
@@ -16,6 +16,7 @@ const TEAM_NAV = [
   { label: 'Overview',    href: '',           icon: LayoutDashboard },
   { label: 'Roster',      href: '/roster',    icon: Users },
   { label: 'Schedule',    href: '/schedule',  icon: Calendar },
+  { label: 'Tryouts',     href: '/tryouts',   icon: ClipboardList },
   { label: 'Tournaments', href: '/tournaments', icon: Trophy },
   { label: 'Chat',        href: '/chat',      icon: MessageSquare },
   { label: 'Announcements', href: '/announcements', icon: Megaphone },

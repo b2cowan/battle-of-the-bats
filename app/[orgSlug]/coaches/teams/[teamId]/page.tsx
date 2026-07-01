@@ -3,7 +3,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
-import { ArrowRight, Building2, Calendar, CheckCircle2, Circle, DollarSign, MinusCircle, Users } from 'lucide-react';
+import { ArrowRight, Building2, Cake, Calendar, CheckCircle2, Circle, DollarSign, MinusCircle, Trophy, Users, Wallet } from 'lucide-react';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
 import SeasonRecordWidget from '@/components/coaches/SeasonRecordWidget';
 import HelpButton from '@/components/help/HelpButton';
@@ -12,6 +12,8 @@ import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { getCoachGuidance } from '@/lib/coach-guidance';
 import styles from '../../coaches.module.css';
 import type { RepRosterPlayer, RepTeamEvent } from '@/lib/types';
+
+const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
 
 const STATUS_LABEL: Record<string, string> = {
   draft: 'Draft',
@@ -81,10 +83,24 @@ export default function TeamOverviewPage({
   // Run-mode snapshot ("Your team at a glance")
   const [nextEvent, setNextEvent] = useState<RepTeamEvent | null>(null);
   const [seasonGames, setSeasonGames] = useState<RepTeamEvent[]>([]);
+  // Events in the next 7 days (grouped) for the "This week" line.
+  const [weekSummary, setWeekSummary] = useState<{ practices: number; games: number; other: number; total: number } | null>(null);
+  // Active players with no guardian email (blocks dues reminders + announcements) → Roster nudge.
+  const [missingEmailCount, setMissingEmailCount] = useState(0);
+  // Whether the next game already has a lineup set → Next-up tile flag (null = unknown / not a game).
+  const [nextLineupReady, setNextLineupReady] = useState<boolean | null>(null);
   const [duesOutstanding, setDuesOutstanding] = useState<number | null>(null);
   const [duesOverdueCount, setDuesOverdueCount] = useState(0);
   // Paid vs total dues installments → the Dues snapshot mini-gauge.
   const [duesProgress, setDuesProgress] = useState<{ paid: number; total: number } | null>(null);
+  // Season budget vs actual spend → Budget tile.
+  const [budget, setBudget] = useState<{ amount: number | null; spent: number } | null>(null);
+  // Player birthdays in the next 7 days → a small "this week" touch.
+  const [birthdays, setBirthdays] = useState<{ name: string; inDays: number }[]>([]);
+  // In/Late/Out/No-reply headcount for the next event → Next-up tile.
+  const [nextAttendance, setNextAttendance] = useState<{ in: number; late: number; out: number; noReply: number } | null>(null);
+  // Tournament registrations summary → Tournaments tile.
+  const [tournaments, setTournaments] = useState<{ count: number; pending: number; nextDate: string | null; liveNow: boolean } | null>(null);
   // Optional setup steps the coach has chosen to skip (per-team, remembered locally).
   const [skippedSteps, setSkippedSteps] = useState<Set<string>>(new Set());
   // Contextual org-invite banner (only when an org has actually invited this team)
@@ -107,11 +123,12 @@ export default function TeamOverviewPage({
 
       const rosterData: { players?: RepRosterPlayer[] } = await rosterRes.json();
       const eventsData: { events?: RepTeamEvent[] } = await eventsRes.json();
-      const budgetData: { budgetAmount?: number | null } = await budgetRes.json();
+      const budgetData: { budgetAmount?: number | null; totalExpenses?: number } = await budgetRes.json();
       const activePlayers = (rosterData.players ?? []).filter(player => player.status === 'active');
       const events = eventsData.events ?? [];
-      const games = events.filter(event => ['league_game', 'tournament_game', 'scrimmage'].includes(event.eventType));
+      const games = events.filter(event => GAME_EVENT_TYPES.includes(event.eventType));
       setSeasonGames(games);
+      setMissingEmailCount(activePlayers.filter(p => !p.guardianEmail?.trim()).length);
 
       setSetupStats({
         activeRosterCount: activePlayers.length,
@@ -122,6 +139,7 @@ export default function TeamOverviewPage({
         gameCount: games.length,
         budgetSet: budgetData.budgetAmount != null,
       });
+      setBudget({ amount: budgetData.budgetAmount ?? null, spent: budgetData.totalExpenses ?? 0 });
 
       // Next upcoming event for the snapshot
       const now = Date.now();
@@ -129,6 +147,33 @@ export default function TeamOverviewPage({
         .filter(e => e.status === 'scheduled' && new Date(e.startsAt).getTime() >= now)
         .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
       setNextEvent(upcoming[0] ?? null);
+
+      // Events in the next 7 days, grouped for the "This week" line.
+      const weekAhead = now + 7 * 86400000;
+      const thisWeek = events.filter(e => {
+        const t = new Date(e.startsAt).getTime();
+        return e.status === 'scheduled' && t >= now && t <= weekAhead;
+      });
+      const wkGames = thisWeek.filter(e => GAME_EVENT_TYPES.includes(e.eventType)).length;
+      const wkPractices = thisWeek.filter(e => e.eventType === 'practice').length;
+      setWeekSummary({ games: wkGames, practices: wkPractices, other: thisWeek.length - wkGames - wkPractices, total: thisWeek.length });
+
+      // Player birthdays in the next 7 days (active roster).
+      const today0 = new Date(); today0.setHours(0, 0, 0, 0);
+      const upcomingBdays = activePlayers
+        .map(p => {
+          const dob = p.playerDateOfBirth;
+          if (!dob) return null;
+          const d = new Date(`${dob}T00:00:00`);
+          if (Number.isNaN(d.getTime())) return null;
+          const next = new Date(today0.getFullYear(), d.getMonth(), d.getDate());
+          if (next.getTime() < today0.getTime()) next.setFullYear(today0.getFullYear() + 1);
+          const inDays = Math.round((next.getTime() - today0.getTime()) / 86400000);
+          return inDays >= 0 && inDays <= 7 ? { name: (p.playerFirstName || 'Player').trim(), inDays } : null;
+        })
+        .filter((b): b is { name: string; inDays: number } => b !== null)
+        .sort((a, b) => a.inDays - b.inDays);
+      setBirthdays(upcomingBdays);
 
       // Dues outstanding + overdue count (best-effort — dues failure never breaks the page)
       if (duesRes.ok) {
@@ -190,6 +235,76 @@ export default function TeamOverviewPage({
     return () => { cancelled = true; };
   }, [loading, orgSlug, teamId]);
 
+  // Next-game lineup readiness for the "Next up" tile — only when the next event is a game.
+  // "Ready" = at least one player has a position assigned in the saved lineup.
+  useEffect(() => {
+    setNextLineupReady(null);
+    if (!nextEvent || !GAME_EVENT_TYPES.includes(nextEvent.eventType)) return;
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${nextEvent.id}/lineup`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(json => {
+        if (cancelled || !json) return;
+        const entries = (json.entries ?? []) as { inningPositions?: Record<string, string> }[];
+        setNextLineupReady(entries.some(e => Object.values(e.inningPositions ?? {}).some(Boolean)));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+    // Keyed on the event's id/type (not the object identity) so a fresh loadSetup doesn't re-fetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgSlug, teamId, nextEvent?.id, nextEvent?.eventType]);
+
+  // In/Late/Out/No-reply headcount for the next event → shown on the Next-up tile (once the coach
+  // has marked at least one player). Active players with no mark count as "no reply".
+  useEffect(() => {
+    setNextAttendance(null);
+    if (!nextEvent) return;
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${nextEvent.id}/attendance`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(json => {
+        if (cancelled || !json) return;
+        const rows = (json.attendance ?? []) as { status?: string }[];
+        const total = ((json.players ?? []) as unknown[]).length;
+        const c = { in: 0, late: 0, out: 0, noReply: 0 };
+        rows.forEach(r => {
+          if (r.status === 'attending') c.in += 1;
+          else if (r.status === 'late') c.late += 1;
+          else if (r.status === 'absent') c.out += 1;
+        });
+        c.noReply = Math.max(0, total - c.in - c.late - c.out);
+        setNextAttendance(c.in + c.late + c.out > 0 ? c : null);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgSlug, teamId, nextEvent?.id]);
+
+  // Tournament registrations summary (count, next date, pending, live today) → Tournaments tile.
+  useEffect(() => {
+    if (loading) return;
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-history`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(json => {
+        if (cancelled || !json) return;
+        const hist = (json.history ?? []) as { registration: { status: string }; tournament: { startDate: string | null; endDate: string | null } | null }[];
+        const todayStr = new Date().toISOString().slice(0, 10);
+        let count = 0; let pending = 0; let liveNow = false; let nextDate: string | null = null;
+        for (const h of hist) {
+          count += 1;
+          if (h.registration.status === 'pending') pending += 1;
+          const s = h.tournament?.startDate ?? null;
+          const e = h.tournament?.endDate ?? s;
+          if (s && e && s <= todayStr && todayStr <= e) liveNow = true;
+          if (s && (e ?? s) >= todayStr && (!nextDate || s < nextDate)) nextDate = s;
+        }
+        setTournaments({ count, pending, nextDate, liveNow });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [loading, orgSlug, teamId]);
+
   // Org-invite banner — show only when an organization has actually invited this team
   // to connect (org-initiated). Self-serve linking lives quietly in Settings otherwise.
   const isWorkspaceOrg = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
@@ -222,6 +337,18 @@ export default function TeamOverviewPage({
 
   const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
   const helpHref = `/${orgSlug}/coaches/help`;
+  // The season label drops a leading copy of the team name so the subtitle doesn't repeat the
+  // title — orgs often name a program year "<Team> <Year>" (e.g. "Blue Jays 2026").
+  const teamNameTrim = assignment.teamName?.trim() ?? '';
+  const yearNameTrim = assignment.programYearName?.trim() ?? '';
+  // Only strip when the team name is a WHOLE-WORD prefix (next char is a separator or the end),
+  // so a team like "Jay" doesn't mangle a season "Jays 2026" into "s 2026".
+  const afterTeam = teamNameTrim && yearNameTrim.toLowerCase().startsWith(teamNameTrim.toLowerCase())
+    ? yearNameTrim.slice(teamNameTrim.length)
+    : null;
+  const seasonLabel = afterTeam !== null && (afterTeam === '' || /^[\s\-–—]/.test(afterTeam))
+    ? (afterTeam.replace(/^[\s\-–—]+/, '').trim() || yearNameTrim)
+    : yearNameTrim;
   // Required = the spine of a team (season is automatic, roster is the one true must).
   // Everything else is OPTIONAL: pointed to, auto-checks when done, skippable, and never
   // blocks reaching 100% / retiring the panel.
@@ -305,7 +432,10 @@ export default function TeamOverviewPage({
   // step is done-or-skipped, so the coach explicitly clears each optional step.
   const requiredDone = coreItems.every(item => item.complete);
   const allSatisfied = setupItems.every(isSatisfied);
-  const showSetupPanel = !allSatisfied;
+  // Hold the panel until the setup status is actually known — otherwise a still-loading page
+  // computes "incomplete" (roster/optional default to not-done) and flashes the setup panel
+  // before the live dashboard. The snapshot tiles below already show their own loading state.
+  const showSetupPanel = !setupLoading && !allSatisfied;
 
   // While the roster is missing, lead with the "build your roster" guidance; after that
   // the remaining items are all optional, so the header just labels them as such.
@@ -323,6 +453,10 @@ export default function TeamOverviewPage({
       sub: 'active players',
       href: `${base}/roster`,
       tone: 'default' as const,
+      flag: (!setupLoading && missingEmailCount > 0)
+        ? { text: `${missingEmailCount} missing email`, tone: 'warn' as 'ok' | 'warn' }
+        : null,
+      headcount: null as { in: number; late: number; out: number; noReply: number } | null,
       // Jersey + position readiness across the active roster.
       progress: (!setupLoading && setupStats && setupStats.activeRosterCount > 0)
         ? {
@@ -342,6 +476,12 @@ export default function TeamOverviewPage({
       sub: nextEvent ? (nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Upcoming event')) : 'Add an event',
       href: `${base}/schedule`,
       tone: 'default' as const,
+      flag: (nextEvent && GAME_EVENT_TYPES.includes(nextEvent.eventType) && nextLineupReady !== null)
+        ? (nextLineupReady
+            ? { text: 'Lineup ready', tone: 'ok' as 'ok' | 'warn' }
+            : { text: 'Lineup not set', tone: 'warn' as 'ok' | 'warn' })
+        : null,
+      headcount: nextAttendance,
       progress: null,
     },
     {
@@ -356,6 +496,8 @@ export default function TeamOverviewPage({
           : duesOutstanding > 0 ? 'outstanding' : 'nothing owed',
       href: `${base}/accounting`,
       tone: (duesOverdueCount > 0 ? 'danger' : 'default') as 'default' | 'danger',
+      flag: null as { text: string; tone: 'ok' | 'warn' } | null,
+      headcount: null as { in: number; late: number; out: number; noReply: number } | null,
       // Paid vs total installments collected this season.
       progress: (!setupLoading && duesProgress)
         ? {
@@ -366,6 +508,49 @@ export default function TeamOverviewPage({
             tone: (duesOverdueCount > 0 ? 'danger' : 'default') as 'default' | 'danger',
           }
         : null,
+    },
+    {
+      key: 'budget',
+      label: 'Budget',
+      icon: Wallet,
+      value: setupLoading ? '…'
+        : (!budget || budget.amount == null) ? 'No budget'
+          : formatMoney(budget.amount - budget.spent),
+      sub: (!budget || budget.amount == null)
+        ? 'Set a budget'
+        : `${formatMoney(budget.spent)} of ${formatMoney(budget.amount)} spent`,
+      href: `${base}/accounting/budget-vs-actual`,
+      tone: (budget && budget.amount != null && budget.spent > budget.amount ? 'danger' : 'default') as 'default' | 'danger',
+      flag: null as { text: string; tone: 'ok' | 'warn' } | null,
+      headcount: null as { in: number; late: number; out: number; noReply: number } | null,
+      // Spent vs budgeted this season.
+      progress: (!setupLoading && budget && budget.amount != null && budget.amount > 0)
+        ? {
+            value: Math.min(budget.spent, budget.amount),
+            total: budget.amount,
+            label: `${Math.round((budget.spent / budget.amount) * 100)}%`,
+            title: `${formatMoney(budget.spent)} spent of ${formatMoney(budget.amount)} budget`,
+            tone: (budget.spent > budget.amount ? 'danger' : 'default') as 'default' | 'danger',
+          }
+        : null,
+    },
+    {
+      key: 'tournaments',
+      label: 'Tournaments',
+      icon: Trophy,
+      value: tournaments == null ? '…'
+        : tournaments.liveNow ? 'Live now'
+          : tournaments.nextDate ? formatEventDate(`${tournaments.nextDate}T00:00:00`)
+            : tournaments.count > 0 ? 'None upcoming'
+              : 'None yet',
+      sub: tournaments && tournaments.count > 0
+        ? `${tournaments.count} registered${tournaments.pending > 0 ? ` · ${tournaments.pending} pending` : ''}`
+        : 'Register for a tournament',
+      href: `${base}/tournaments`,
+      tone: 'default' as const,
+      flag: null as { text: string; tone: 'ok' | 'warn' } | null,
+      headcount: null as { in: number; late: number; out: number; noReply: number } | null,
+      progress: null,
     },
   ];
 
@@ -436,15 +621,19 @@ export default function TeamOverviewPage({
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
               <h1 className={styles.pageTitle}>{assignment.teamName}</h1>
               {isTeamWorkspace && <span className={styles.titlePremiumBadge}>Premium</span>}
-              <span className={`${styles.badge} ${STATUS_CSS[assignment.programYearStatus] ?? styles.badgeDraft}`}>
-                {STATUS_LABEL[assignment.programYearStatus] ?? assignment.programYearStatus}
-              </span>
+              {/* Status badge only when it's NOT the everyday "active" case — an active team
+                  needs no label; draft/completed/archived seasons get one so it's noticed. */}
+              {assignment.programYearStatus !== 'active' && (
+                <span className={`${styles.badge} ${STATUS_CSS[assignment.programYearStatus] ?? styles.badgeDraft}`}>
+                  {STATUS_LABEL[assignment.programYearStatus] ?? assignment.programYearStatus}
+                </span>
+              )}
               {teamDivision && (
                 <span className={`${styles.badge} ${styles.badgeManual}`}>{teamDivision}</span>
               )}
             </div>
             <p className={styles.pageSub}>
-              {assignment.programYearName} -{' '}
+              {seasonLabel} -{' '}
               {assignment.coachRole === 'head_coach' ? 'Head Coach' : 'Assistant Coach'}
             </p>
           </div>
@@ -529,7 +718,11 @@ export default function TeamOverviewPage({
           {snapshotCards.map(card => {
             const Icon = card.icon;
             return (
-              <Link key={card.key} href={card.href} className={styles.snapshotCard}>
+              <Link
+                key={card.key}
+                href={card.href}
+                className={`${styles.snapshotCard}${card.key === 'schedule' ? ` ${styles.snapshotCardWide}` : ''}`}
+              >
                 <span className={styles.snapshotHead}><Icon size={14} aria-hidden /> {card.label}</span>
                 <span className={styles.snapshotValue} data-tone={card.tone}>{card.value}</span>
                 <span className={styles.snapshotSub}>{card.sub}</span>
@@ -545,14 +738,51 @@ export default function TeamOverviewPage({
                     <span className={styles.snapshotBarPct}>{card.progress.label}</span>
                   </span>
                 )}
+                {card.flag && (
+                  <span className={styles.snapshotFlag} data-tone={card.flag.tone}>{card.flag.text}</span>
+                )}
+                {card.headcount && (
+                  <span className={styles.snapshotHeadcount} aria-label="Attendance for the next event">
+                    <span data-s="in">{card.headcount.in} in</span>
+                    {card.headcount.late > 0 && <span data-s="late">{card.headcount.late} late</span>}
+                    <span data-s="out">{card.headcount.out} out</span>
+                    {card.headcount.noReply > 0 && <span data-s="noreply">{card.headcount.noReply} no&nbsp;reply</span>}
+                  </span>
+                )}
               </Link>
             );
           })}
         </div>
       </section>
 
-      {/* Season record — moved here from the Schedule (a glanceable team metric belongs on the
-          dashboard). Renders nothing until at least one game is finalized. */}
+      {/* This week — events in the next 7 days + any player birthdays. */}
+      {((weekSummary && weekSummary.total > 0) || birthdays.length > 0) && (
+        <div className={styles.weekStrip}>
+          {weekSummary && weekSummary.total > 0 && (
+            <span className={styles.weekItem}>
+              <Calendar size={13} aria-hidden /> This week:{' '}
+              {[
+                weekSummary.games > 0 ? `${weekSummary.games} game${weekSummary.games === 1 ? '' : 's'}` : null,
+                weekSummary.practices > 0 ? `${weekSummary.practices} practice${weekSummary.practices === 1 ? '' : 's'}` : null,
+                weekSummary.other > 0 ? `${weekSummary.other} other` : null,
+              ].filter(Boolean).join(' · ')}
+            </span>
+          )}
+          {birthdays.length > 0 && (
+            <span className={styles.weekItem}>
+              <Cake size={13} aria-hidden />{' '}
+              {birthdays.length === 1
+                ? `${birthdays[0].name}’s birthday${birthdays[0].inDays === 0 ? ' today' : birthdays[0].inDays === 1 ? ' tomorrow' : ''}`
+                : `${birthdays.length} birthdays this week`}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Season — record, recent form, scoring, and streak. Renders nothing until a game is finalized. */}
+      {seasonGames.some(g => g.result && g.status !== 'cancelled') && (
+        <p className={styles.sectionKicker}>Season</p>
+      )}
       <SeasonRecordWidget events={seasonGames} teamId={teamId} />
     </div>
   );

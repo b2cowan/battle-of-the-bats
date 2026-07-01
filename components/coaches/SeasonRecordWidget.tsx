@@ -22,6 +22,15 @@ function tallyResults(list: RepTeamEvent[]) {
   };
 }
 
+function resultLetter(r?: string | null) { return r === 'win' ? 'W' : r === 'loss' ? 'L' : 'T'; }
+
+// "W 7–4 vs Lions" style label for a finalized game (score + matchup when available).
+function formLabel(e: RepTeamEvent): string {
+  const score = e.teamScore != null && e.opponentScore != null ? ` ${e.teamScore}–${e.opponentScore}` : '';
+  const opp = e.opponent ? ` ${e.homeAway === 'away' ? '@' : 'vs'} ${e.opponent}` : '';
+  return `${resultLetter(e.result)}${score}${opp}`;
+}
+
 /**
  * Season W–L–T record with per-category include toggles (remembered per team) + a breakdown.
  * Lives on the team Overview (moved off the Schedule 2026-06-29). Renders nothing until at
@@ -64,6 +73,25 @@ export default function SeasonRecordWidget({ events, teamId }: { events: RepTeam
       ? 'All games'
       : activeLabels.join(' + ');
 
+  // Recent form (last 5) + last result, scoped to the same included categories as the W–L count.
+  const scoped = candidates
+    .filter(e => included[e.eventType])
+    .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
+  const recent = [...scoped.slice(0, 5)].reverse(); // oldest → newest, left to right
+  const last = scoped[0];
+
+  // Scoring totals (sport-neutral "Scored / Allowed") + current streak, scoped to the same set.
+  const scoredFor = scoped.reduce((s, e) => s + (e.teamScore ?? 0), 0);
+  const scoredAgainst = scoped.reduce((s, e) => s + (e.opponentScore ?? 0), 0);
+  const diff = scoredFor - scoredAgainst;
+  const hasScores = scoped.some(e => e.teamScore != null && e.opponentScore != null);
+  const streakType = scoped[0]?.result ?? null;
+  let streakCount = 0;
+  for (const g of scoped) { if (g.result === streakType) streakCount += 1; else break; }
+  const streakLabel = streakType && streakCount > 0
+    ? `${streakType === 'win' ? 'Won' : streakType === 'loss' ? 'Lost' : 'Tied'} ${streakCount}`
+    : '';
+
   return (
     <div className={styles.wltWidget}>
       <span className={styles.wltLabel}>Season Record</span>
@@ -76,6 +104,29 @@ export default function SeasonRecordWidget({ events, teamId }: { events: RepTeam
         </div>
         <span className={styles.wltScope}>{scope}</span>
       </div>
+      {recent.length > 0 && (
+        <div className={styles.wltForm}>
+          <span className={styles.wltFormPips} aria-label="Recent form, oldest to newest">
+            {recent.map((g, i) => (
+              <span key={i} className={styles.wltPip} data-r={g.result ?? undefined} title={formLabel(g)}>
+                {resultLetter(g.result)}
+              </span>
+            ))}
+          </span>
+          {last && <span className={styles.wltLast}>Last: {formLabel(last)}</span>}
+        </div>
+      )}
+      {(streakLabel || hasScores) && (
+        <div className={styles.wltStats}>
+          {streakLabel && <span className={styles.wltStreak} data-r={streakType ?? undefined}>{streakLabel}</span>}
+          {hasScores && (
+            <span className={styles.wltScoring}>
+              Scored <strong>{scoredFor}</strong> · Allowed <strong>{scoredAgainst}</strong>
+              <span className={styles.wltDiff} data-pos={diff >= 0 ? 'true' : 'false'}>{diff >= 0 ? `+${diff}` : diff}</span>
+            </span>
+          )}
+        </div>
+      )}
       <div className={styles.wltControls}>
         <span className={styles.wltCountLabel}>Counting:</span>
         <div className={styles.wltToggles} role="group" aria-label="Include in season record">

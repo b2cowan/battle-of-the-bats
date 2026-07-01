@@ -3056,6 +3056,78 @@
     "foreign_column": "id"
   },
   {
+    "table_name": "rep_tryout_sessions",
+    "constraint_name": "rep_tryout_sessions_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_sessions",
+    "constraint_name": "rep_tryout_sessions_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_tryout_sessions",
+    "constraint_name": "rep_tryout_sessions_program_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "program_year_id",
+    "foreign_table": "rep_program_years",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_sessions",
+    "constraint_name": "rep_tryout_sessions_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_sessions",
+    "constraint_name": "rep_tryout_sessions_tryout_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tryout_id",
+    "foreign_table": "rep_tryouts",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryouts",
+    "constraint_name": "rep_tryouts_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryouts",
+    "constraint_name": "rep_tryouts_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_tryouts",
+    "constraint_name": "rep_tryouts_program_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "program_year_id",
+    "foreign_table": "rep_program_years",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryouts",
+    "constraint_name": "rep_tryouts_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
     "table_name": "request_metrics_raw",
     "constraint_name": "request_metrics_raw_pkey",
     "constraint_type": "PRIMARY KEY",

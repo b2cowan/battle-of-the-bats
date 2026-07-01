@@ -1,0 +1,167 @@
+/* Tryout Day setup card — Phase 2A. Dark coaches/admin theme, lime accent (var-with-fallback,
+   matching register.module.css). Reuses HelpCallout for the provincial-window notice. */
+
+.card {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #f0f0f0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.subtitle {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.45);
+  margin: 0.15rem 0 0;
+}
+
+/* Blind toggle (sibling of the Registration toggle) */
+.blindToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  user-select: none;
+  /* reset native button chrome (was rendering as a light pill, hiding the white label) */
+  background: transparent;
+  border: none;
+  padding: 0;
+  appearance: none;
+}
+.blindToggle:disabled { opacity: 0.6; cursor: default; }
+.switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.15);
+  transition: background 0.15s;
+  flex: 0 0 auto;
+}
+.switchOn { background: var(--logic-lime, #a3e635); }
+.knob {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #0A0A0A;
+  transition: transform 0.15s;
+}
+.switchOn .knob { transform: translateX(18px); }
+.blindHint {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+  margin: 0.4rem 0 0;
+}
+
+/* Session list */
+.sessionList { display: flex; flex-direction: column; gap: 0.5rem; }
+.sessionRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: 3px solid var(--logic-lime, #a3e635);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+}
+.sessionMain { flex: 1 1 auto; min-width: 0; }
+.sessionWhen { font-size: 0.88rem; font-weight: 600; color: #f0f0f0; }
+.sessionMeta { font-size: 0.8rem; color: rgba(255,255,255,0.45); margin-top: 0.1rem; }
+.sessionActions { display: flex; gap: 0.25rem; flex: 0 0 auto; }
+.iconBtn {
+  width: 34px; height: 34px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+}
+.iconBtn:hover { color: #f0f0f0; border-color: rgba(255,255,255,0.25); }
+.iconDanger:hover { color: #f87171; border-color: rgba(248,113,113,0.4); }
+
+.empty {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.4);
+  padding: 0.5rem 0 0.75rem;
+}
+
+.actions { margin-top: 0.85rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.addBtn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.85rem; font-weight: 600;
+  border: 1px dashed rgba(255,255,255,0.22);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+}
+.addBtn:hover { border-color: var(--logic-lime, #a3e635); color: #f0f0f0; }
+
+/* Modal */
+.scrim {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+  z-index: 200;
+}
+.modal {
+  width: 100%; max-width: 460px;
+  max-height: 92vh; overflow-y: auto;
+  background: #141414;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+}
+.modalTitle { font-size: 1.05rem; font-weight: 800; color: #f0f0f0; margin: 0 0 1rem; }
+.field { margin-bottom: 0.85rem; }
+.label {
+  display: block; font-size: 0.8rem; font-weight: 600;
+  color: rgba(255,255,255,0.6); margin-bottom: 0.35rem;
+}
+.input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  color: #f0f0f0; font-size: 0.9rem;
+  box-sizing: border-box; font-family: inherit;
+}
+.input:focus { outline: none; border-color: var(--logic-lime, #a3e635); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
+.modalActions {
+  display: flex; gap: 0.5rem; justify-content: flex-end;
+  margin-top: 1.25rem;
+}
+.warnWrap { margin: 0.25rem 0 0.85rem; }
+
+@media (max-width: 640px) {
+  .scrim { align-items: flex-end; padding: 0; }
+  .modal { max-width: none; border-radius: 14px 14px 0 0; max-height: 90vh; }
+}

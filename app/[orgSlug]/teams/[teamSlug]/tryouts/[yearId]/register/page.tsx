@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getOrganizationBySlug, getRepTeamBySlug, getRepProgramYear } from '@/lib/db';
+import { getOrgPrivacyPolicyHref } from '@/lib/privacy-policy';
 import TryoutRegisterForm from '@/components/rep-teams/TryoutRegisterForm';
 
 export const dynamic = 'force-dynamic';
@@ -125,6 +126,8 @@ export default async function TryoutRegisterPage({
             yearId={yearId}
             teamName={team.name}
             yearName={programYear.name}
+            orgName={org.name}
+            privacyPolicyHref={getOrgPrivacyPolicyHref(org)}
           />
         )}
       </div>

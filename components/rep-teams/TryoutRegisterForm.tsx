@@ -10,6 +10,9 @@ interface Props {
   yearId: string;
   teamName: string;
   yearName: string;
+  orgName: string;
+  /** Privacy-policy URL when the org has one set; null → consent renders without a link. */
+  privacyPolicyHref?: string | null;
 }
 
 interface FormState {
@@ -35,6 +38,8 @@ export default function TryoutRegisterForm({
   yearId,
   teamName,
   yearName,
+  orgName,
+  privacyPolicyHref,
 }: Props) {
   const [form, setForm] = useState<FormState>({
     playerFirstName: '',
@@ -51,6 +56,15 @@ export default function TryoutRegisterForm({
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<SuccessResult | null>(null);
+  const [consent, setConsent] = useState({ data: false, email: false, eligibility: false });
+
+  function setConsentField(field: 'data' | 'email' | 'eligibility', value: boolean) {
+    const next = { ...consent, [field]: value };
+    setConsent(next);
+    // Clear the consent error only once all three are actually confirmed — un-ticking a box
+    // should not dismiss the "please confirm" message.
+    if (next.data && next.email && next.eligibility) clearFieldError('consent');
+  }
 
   function clearFieldError(field: string) {
     setErrors(prev => {
@@ -74,6 +88,12 @@ export default function TryoutRegisterForm({
     setGlobalError(null);
     setErrors({});
 
+    if (!consent.data || !consent.email || !consent.eligibility) {
+      setErrors({ consent: 'Please confirm the three boxes above before submitting.' });
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const res = await fetch(
         `/api/rep-teams/${orgSlug}/${teamSlug}/tryouts/${yearId}/register`,
@@ -89,6 +109,9 @@ export default function TryoutRegisterForm({
             guardianLastName:  form.guardianLastName,
             guardianEmail:     form.guardianEmail,
             guardianPhone:     form.guardianPhone || undefined,
+            consentDataCollection: consent.data,
+            consentEmailComms:     consent.email,
+            consentEligibility:    consent.eligibility,
           }),
         },
       );
@@ -262,6 +285,65 @@ export default function TryoutRegisterForm({
             />
           </div>
         </div>
+      </div>
+
+      {/* ── Section 3: Consent ─────────────────────────────────────────── */}
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>Before you submit, please confirm</h2>
+        <div className={styles.consentList}>
+          <label className={styles.consentItem}>
+            <input
+              type="checkbox"
+              className={styles.consentCheckbox}
+              checked={consent.data}
+              onChange={e => setConsentField('data', e.target.checked)}
+            />
+            <span className={styles.consentText}>
+              I agree to {orgName} collecting and using this player&apos;s information to run tryouts and manage the team
+              {privacyPolicyHref ? (
+                <>
+                  , as described in their{' '}
+                  <a
+                    href={privacyPolicyHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.consentLink}
+                  >
+                    privacy policy
+                  </a>
+                  .
+                </>
+              ) : (
+                '.'
+              )}
+            </span>
+          </label>
+
+          <label className={styles.consentItem}>
+            <input
+              type="checkbox"
+              className={styles.consentCheckbox}
+              checked={consent.email}
+              onChange={e => setConsentField('email', e.target.checked)}
+            />
+            <span className={styles.consentText}>
+              I agree to receive emails from {orgName} about this tryout and the team.
+            </span>
+          </label>
+
+          <label className={styles.consentItem}>
+            <input
+              type="checkbox"
+              className={styles.consentCheckbox}
+              checked={consent.eligibility}
+              onChange={e => setConsentField('eligibility', e.target.checked)}
+            />
+            <span className={styles.consentText}>
+              I&apos;m this player&apos;s parent or legal guardian, and they&apos;re eligible to try out.
+            </span>
+          </label>
+        </div>
+        {errors.consent && <p className={styles.errorMsg} style={{ marginTop: '0.6rem' }}>{errors.consent}</p>}
       </div>
 
       {/* ── Submit ───────────────────────────────────────────────────────── */}

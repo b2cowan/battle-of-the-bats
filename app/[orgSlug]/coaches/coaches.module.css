@@ -245,6 +245,10 @@
   gap: 1rem;
 }
 
+/* Trailing header controls (export / + add / view toggle / help) pin to the right — including
+   when they wrap below the title on narrow screens — for a consistent, standard placement. */
+.pageHeader > *:last-child:not(.pageHeaderLeft) { margin-left: auto; }
+
 .headerIcon {
   width: 48px;
   height: 48px;
@@ -414,6 +418,51 @@
   font-weight: 700;
   color: var(--white-45);
   white-space: nowrap;
+}
+
+/* Small status line inside a snapshot card (e.g. "Lineup not set", "2 missing email"). */
+.snapshotFlag {
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.snapshotFlag[data-tone="ok"] { color: var(--logic-lime); }
+.snapshotFlag[data-tone="warn"] { color: #f59e0b; }
+
+/* In/Late/Out/No-reply headcount for the next event (on the Next-up tile). */
+.snapshotHeadcount {
+  display: flex; flex-wrap: wrap; gap: 0.2rem 0.6rem; margin-top: 0.4rem;
+  font-size: 0.74rem; font-weight: 700;
+}
+.snapshotHeadcount [data-s="in"]      { color: var(--success); }
+.snapshotHeadcount [data-s="late"]    { color: var(--warning); }
+.snapshotHeadcount [data-s="out"]     { color: var(--danger); }
+.snapshotHeadcount [data-s="noreply"] { color: var(--white-45); }
+
+/* "This week" orientation line (events + birthdays) under the glance tiles. */
+.weekStrip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.25rem;
+  margin: 0.85rem 0 0;
+  color: var(--white-55);
+  font-size: 0.82rem;
+}
+.weekStrip svg { color: var(--white-40); flex-shrink: 0; }
+.weekItem { display: inline-flex; align-items: center; gap: 0.4rem; }
+
+/* Mobile: denser glance — "Next up" leads full-width, Roster + Dues sit as a compact pair
+   beneath it, so the snapshot fits without the tall stacked scroll. */
+@media (max-width: 640px) {
+  .sectionKicker { margin: 1rem 0 0.5rem; }
+  .snapshotGrid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .snapshotCard { padding: 0.65rem 0.75rem; gap: 0.15rem; border-radius: 9px; }
+  .snapshotHead { font-size: 0.64rem; gap: 0.3rem; }
+  .snapshotValue { font-size: 1.15rem; }
+  .snapshotSub { font-size: 0.7rem; }
+  .snapshotBar { margin-top: 0.35rem; }
+  .snapshotCardWide { grid-column: 1 / -1; order: -1; }
 }
 
 /* ── Contextual org-invite banner ───────────────────────────────────────── */
@@ -955,6 +1004,12 @@
   font-size: 0.76rem;
   color: var(--warning);
 }
+/* Reorder hint: drag variant (desktop) vs arrows variant (mobile, where drag is disabled). */
+.rosterHintDrag, .rosterHintMove { display: inline-flex; align-items: center; gap: 0.3rem; }
+.rosterHintMove { display: none; }
+
+/* "Add Player" label collapses to a "+" on mobile (matches the other screens' add buttons). */
+.addPlayerLabel { display: inline; }
 
 .thWithHelp { display: inline-flex; align-items: center; gap: 0.3rem; }
 
@@ -988,6 +1043,15 @@
   transition: color 0.12s;
 }
 .playerNameLink:hover { color: var(--blueprint-blue); text-decoration: underline; }
+
+/* Mobile header meta: jersey # + status badges fold into the player row (their own rows hide). */
+.playerCellMeta { display: none; }
+.playerNumBadge {
+  font-size: 0.72rem; font-weight: 800; color: var(--white-70);
+  background: var(--white-8); border-radius: 6px; padding: 0.1rem 0.42rem;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.playerNumBadgeDup { color: var(--warning); }
 
 /* Duplicate jersey number flag (warn, don't block) */
 .jerseyDup {
@@ -1040,8 +1104,8 @@
   .rosterTable tr {
     border: 1px solid var(--border-2);
     border-radius: 10px;
-    padding: 0.65rem 0.85rem;
-    margin-bottom: 0.65rem;
+    padding: 0.5rem 0.7rem;
+    margin-bottom: 0.5rem;
     background: rgba(255,255,255,0.025);
   }
   .rosterTable td {
@@ -1049,10 +1113,20 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    padding: 0.28rem 0 !important;
+    padding: 0.16rem 0 !important;
     border-bottom: none !important;
     text-align: right;
   }
+  /* Jersey # + Status fold into the player header on mobile — hide their own rows. */
+  .rosterTable td[data-label="#"],
+  .rosterTable td[data-label="Status"] { display: none; }
+  .playerCell { width: 100%; }
+  .playerCellMeta { display: inline-flex; align-items: center; gap: 0.4rem; margin-left: auto; flex-shrink: 0; }
+  /* Hint + add-button swaps on mobile. */
+  .rosterHintDrag { display: none; }
+  .rosterHintMove { display: inline-flex; }
+  .addPlayerLabel { display: none; }
+  .addPlayerBtn { padding: 0.45rem 0.6rem !important; }
   .rosterTable td::before {
     content: attr(data-label);
     flex-shrink: 0;
@@ -1065,26 +1139,18 @@
   .rosterTable td:not([data-label])::before { content: none; }
   .rosterTable .gripTd { display: none; }
   .rosterTable .playerCellTd {
-    padding-bottom: 0.55rem !important;
-    margin-bottom: 0.4rem;
+    padding-bottom: 0.4rem !important;
+    margin-bottom: 0.3rem;
     border-bottom: 1px solid var(--white-05) !important;
   }
   .rosterTable .playerCellTd::before { content: none; }
   .rosterTable .guardianStack { align-items: flex-end; text-align: right; }
-  .rosterTable .rowActionCell {
-    justify-content: space-between;
-    gap: 0.5rem;
-    padding-top: 0.5rem !important;
-    margin-top: 0.4rem;
-    border-top: 1px solid var(--white-05) !important;
-  }
-  /* Reorder controls appear (left), the status toggle grows to the ≥40px floor (right). */
-  .rosterMoveControls { display: inline-flex; gap: 0.4rem; }
-  .rosterStatusBtn {
-    min-height: 40px;
-    padding: 0.4rem 0.9rem !important;
-    font-size: 0.85rem !important;
-  }
+  /* Deactivate moves to the player profile on mobile — drop the whole action row so the
+     card is just header + positions + guardian. */
+  .rosterTable .rowActionCell { display: none; }
+  /* Reorder arrows sit in the header meta on mobile, compact. */
+  .rosterMoveControls { display: inline-flex; gap: 0.25rem; }
+  .rosterMoveBtn { width: 30px; height: 30px; border-radius: 7px; }
 }
 
 /* ── Modal ──────────────────────────────────────────────────────────────── */
@@ -1602,6 +1668,22 @@
 }
 
 /* ── Calendar (Phase 6J) ──────────────────────────────────────────────────── */
+/* Schedule header toolbar: takes its own full-width row below the title; the view toggle sits
+   on the left and the export + add controls pin to the right. */
+.scheduleToolbar {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.scheduleToolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
 .viewToggle {
   display: flex;
   border: 1px solid var(--white-10);
@@ -1662,6 +1744,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+  /* The "Season" kicker above provides the separation from the tiles. */
+  margin-top: 0;
   width: fit-content;
   max-width: 100%;
   background: rgba(255,255,255,0.04);
@@ -1672,6 +1756,33 @@
 }
 .wltMain { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
 .wltScope { font-size: 0.78rem; color: var(--white-45); }
+/* Recent form: last 5 W/L/T pips (oldest → newest) + a "Last: …" detail line. */
+.wltForm { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.wltFormPips { display: inline-flex; gap: 3px; }
+.wltPip {
+  width: 17px; height: 17px; border-radius: 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 800; color: var(--pitch-black);
+  background: var(--white-15);
+}
+.wltPip[data-r="win"] { background: var(--logic-lime); }
+.wltPip[data-r="loss"] { background: var(--danger); color: var(--white); }
+.wltPip[data-r="tie"] { background: #f59e0b; }
+.wltLast { font-size: 0.78rem; color: var(--white-55); }
+/* Scoring totals + current streak row. */
+.wltStats { display: flex; align-items: center; gap: 0.6rem 0.9rem; flex-wrap: wrap; font-size: 0.82rem; }
+.wltStreak {
+  font-weight: 800; font-size: 0.76rem; padding: 0.12rem 0.5rem; border-radius: 999px;
+  border: 1px solid var(--white-10); color: var(--white-70);
+}
+.wltStreak[data-r="win"]  { color: var(--success); border-color: rgba(var(--success-rgb),0.4); background: rgba(var(--success-rgb),0.12); }
+.wltStreak[data-r="loss"] { color: var(--danger);  border-color: rgba(var(--danger-rgb),0.4);  background: rgba(var(--danger-rgb),0.12); }
+.wltStreak[data-r="tie"]  { color: var(--warning); border-color: rgba(var(--warning-rgb),0.4); background: rgba(var(--warning-rgb),0.12); }
+.wltScoring { color: var(--white-55); display: inline-flex; align-items: center; gap: 0.4rem; }
+.wltScoring strong { color: var(--white-90); font-variant-numeric: tabular-nums; }
+.wltDiff { font-weight: 800; font-variant-numeric: tabular-nums; }
+.wltDiff[data-pos="true"]  { color: var(--success); }
+.wltDiff[data-pos="false"] { color: var(--danger); }
 .wltControls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .wltCountLabel {
   font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
@@ -1792,17 +1903,58 @@
   font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
   color: rgba(255,255,255,0.3); text-align: center;
 }
-.calMonthCell { background: var(--pitch-black); min-height: 80px; padding: 0.35rem; }
+/* min-width:0 lets each 1fr column actually shrink to fit the viewport — without it a
+   no-wrap event label sets a min-content floor and the 7-col grid overflows sideways
+   (clipping Saturday + a horizontal scrollbar on narrow screens). */
+.calMonthCell { background: var(--pitch-black); min-height: 80px; padding: 0.35rem; min-width: 0; overflow: hidden; }
 .calMonthCellToday { background: rgba(var(--blueprint-blue-rgb),0.07); }
 .calMonthDayNum { font-size: 0.78rem; color: var(--white-35); }
-.calMonthDayEvents { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+.calMonthDayEvents { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; min-width: 0; }
 .calMonthEventDot {
-  display: block; font-size: 0.68rem; padding: 1px 4px; border-radius: 3px;
+  display: block; max-width: 100%; font-size: 0.68rem; padding: 1px 4px; border-radius: 3px;
   color: var(--white); border: none; cursor: pointer; text-align: left;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.9;
 }
 .calMonthEventDot:hover { opacity: 1; }
-.calMonthMoreDots { font-size: 0.67rem; color: rgba(255,255,255,0.3); padding-left: 2px; }
+.calMonthMoreDots {
+  font-size: 0.67rem; color: rgba(255,255,255,0.35); padding: 0 2px;
+  background: none; border: none; cursor: pointer; text-align: left; display: block;
+}
+.calMonthMoreDots:hover { color: rgba(255,255,255,0.6); }
+
+/* Mobile month view: keep the text strips (up to 3 + "+N more"), just shrink them so they fit
+   the narrow cell and ellipsis-truncate — the familiar Google-Calendar month look. */
+@media (max-width: 640px) {
+  .calMonthHeader { padding: 0.3rem 0.1rem; font-size: 0.56rem; letter-spacing: 0.02em; }
+  /* Tighter top padding + a flush-to-top, tight-leading day number frees vertical room
+     for the event strips below. */
+  .calMonthCell { min-height: 58px; padding: 0.12rem 0.18rem 0.22rem; }
+  .calMonthDayNum { font-size: 0.68rem; line-height: 1; display: block; margin-bottom: 4px; }
+  .calMonthDayEvents { gap: 1px; margin-top: 0; }
+  .calMonthEventDot { font-size: 0.6rem; padding: 0 3px; border-radius: 2px; line-height: 1.45; }
+  .calMonthMoreDots { font-size: 0.58rem; }
+}
+
+/* Day list (mobile month-cell tap) — centered card on desktop, bottom-sheet on phones.
+   z-index clears the mobile bottom nav (300), matching the detail slide-over. */
+.daySheetOverlay { z-index: 400; }
+.daySheet {
+  background: var(--card-bg);
+  border: 1px solid rgba(var(--blueprint-blue-rgb),0.3);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem 1.4rem;
+  width: 100%; max-width: 460px; max-height: 80vh; overflow-y: auto; margin: auto;
+}
+.daySheetHeader { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.85rem; }
+.daySheetTitle { font-size: 1rem; font-weight: 700; color: var(--white-90); margin: 0; }
+@media (max-width: 640px) {
+  .daySheetOverlay { align-items: flex-end; padding: 0; }
+  .daySheet {
+    max-width: 100%; margin: 0; max-height: 80vh;
+    border-radius: var(--radius) var(--radius) 0 0; border-bottom: none;
+    padding-bottom: calc(1.2rem + env(safe-area-inset-bottom, 0px));
+  }
+}
 
 .slideOver {
   background: var(--card-bg);
@@ -2135,6 +2287,54 @@
   outline: none;
   border-color: rgba(var(--blueprint-blue-rgb), 0.5);
 }
+
+/* Per-player status badge — same icon + colour as the filter chips, so a glance reads the row. */
+.attendanceStatusBadge {
+  display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
+  font-size: 0.76rem; font-weight: 700;
+  padding: 0.2rem 0.5rem; border-radius: 999px;
+  border: 1px solid var(--white-10); background: rgba(255,255,255,0.03);
+  color: var(--white-45);
+}
+.attendanceStatusBadge[data-status="attending"] { color: var(--success); border-color: rgba(var(--success-rgb),0.4); background: rgba(var(--success-rgb),0.12); }
+.attendanceStatusBadge[data-status="late"]      { color: var(--warning); border-color: rgba(var(--warning-rgb),0.4); background: rgba(var(--warning-rgb),0.12); }
+.attendanceStatusBadge[data-status="absent"]    { color: var(--danger);  border-color: rgba(var(--danger-rgb),0.4);  background: rgba(var(--danger-rgb),0.12); }
+.attendanceStatusBadge[data-status="unknown"]   { color: var(--white-45); }
+
+.attendanceNoteFlag { display: inline-flex; flex-shrink: 0; color: var(--logic-lime); }
+
+/* "RSVP" / "Edit RSVP" — opens the per-player editor below the row. */
+.rsvpBtn {
+  flex-shrink: 0;
+  font-size: 0.76rem; font-weight: 700;
+  padding: 0.32rem 0.7rem; border-radius: 6px;
+  border: 1px solid rgba(var(--blueprint-blue-rgb),0.4);
+  background: rgba(var(--blueprint-blue-rgb),0.12);
+  color: var(--blueprint-blue);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rsvpBtn:hover { background: rgba(var(--blueprint-blue-rgb),0.2); }
+
+.attendanceRow[data-editing="true"] { border-color: rgba(var(--blueprint-blue-rgb),0.4); }
+
+/* The on-demand RSVP editor: the four status options + the note input, wrapping to a full-width
+   second line under the row. */
+.rsvpEditor { flex-basis: 100%; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.25rem; }
+.rsvpOptions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.rsvpOption {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  min-height: 38px; padding: 0.4rem 0.7rem; border-radius: 8px;
+  border: 1px solid var(--white-10); background: rgba(255,255,255,0.03);
+  color: var(--white-70); font-size: 0.82rem; font-weight: 600; cursor: pointer;
+}
+.rsvpOption svg { color: rgba(255,255,255,0.5); }
+.rsvpOption:hover { background: rgba(255,255,255,0.07); }
+.rsvpOptionActive[data-status="attending"] { background: rgba(var(--success-rgb),0.16); border-color: var(--success); color: var(--success); }
+.rsvpOptionActive[data-status="late"]      { background: rgba(var(--warning-rgb),0.16); border-color: var(--warning); color: var(--warning); }
+.rsvpOptionActive[data-status="absent"]    { background: rgba(var(--danger-rgb),0.14); border-color: var(--danger); color: var(--danger); }
+.rsvpOptionActive[data-status="unknown"]   { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); color: var(--white-90); }
+.rsvpOptionActive svg { color: inherit; }
 
 /* Mobile: bump the dense attendance controls to ≥36px so they clear the
    touch-target floor (desktop keeps the compact 34/30px density). */
@@ -2512,6 +2712,9 @@
   white-space: nowrap;
 }
 
+/* Inning header number centers over its position-select column (Bat/Start/Player stay left). */
+.lineupTable th.lineupColInning { text-align: center; }
+
 .lineupTable td {
   padding: 0.4rem;
   border-bottom: 1px solid rgba(255,255,255,0.055);
@@ -2537,6 +2740,9 @@
 
 .lineupPlayerCell {
   min-width: 160px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .lineupPlayerCell span {
@@ -2544,6 +2750,40 @@
   color: var(--white-90);
   font-weight: 650;
 }
+.lineupPlayerName { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lineupRemoveBtn {
+  flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 5px;
+  border: none; background: none; color: var(--white-30); cursor: pointer;
+}
+.lineupRemoveBtn:hover { background: rgba(var(--danger-rgb),0.16); color: var(--danger); }
+
+/* "Not playing" — players marked Out, with one-tap add-back into the lineup. */
+.lineupNotPlaying {
+  margin-top: 0.75rem; padding: 0.6rem 0.7rem;
+  border: 1px dashed var(--white-10); border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+}
+.lineupNotPlayingHead {
+  margin: 0 0 0.5rem; font-size: 0.7rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--white-40);
+}
+.lineupNotPlayingList { display: flex; flex-direction: column; gap: 0.35rem; }
+.lineupNotPlayingRow { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.lineupNotPlayingName {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-size: 0.85rem; color: var(--white-60);
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lineupNotPlayingName svg { color: var(--danger); flex-shrink: 0; }
+.lineupAddBackBtn {
+  flex-shrink: 0; font-size: 0.76rem; font-weight: 700;
+  padding: 0.3rem 0.65rem; border-radius: 6px;
+  border: 1px solid rgba(var(--blueprint-blue-rgb),0.4);
+  background: rgba(var(--blueprint-blue-rgb),0.12);
+  color: var(--blueprint-blue); cursor: pointer;
+}
+.lineupAddBackBtn:hover { background: rgba(var(--blueprint-blue-rgb),0.2); }
 
 .lineupPlayerCell small {
   display: block;

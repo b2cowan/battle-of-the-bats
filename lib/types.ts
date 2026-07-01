@@ -255,6 +255,9 @@ export interface Organization {
   isDiscoverable: boolean;
   /** Free-floor entitlement profile (NULL/undefined = none). See FreeFloor + lib/free-floor.ts. */
   freeFloor?: FreeFloor;
+  /** Optional external privacy-policy URL. The consent gate links to it when set (see
+   *  lib/privacy-policy.ts getOrgPrivacyPolicyHref). NULL/undefined = no policy → no link. */
+  privacyPolicyUrl?: string | null;
 }
 
 export interface OrganizationMember {
@@ -1086,7 +1089,53 @@ export interface RepTryoutRegistration {
   guardianPhone: string | null;
   status: RepTryoutRegistrationStatus;
   adminNotes: string | null;
+  // Consent capture (PIPEDA/CASL), Phase 1.1. All three are required by the app to submit, so a
+  // non-null consentAt means all three were ticked. NULL on pre-gate rows = no consent on record.
+  consentDataCollection: boolean | null;
+  consentEmailComms: boolean | null;
+  consentEligibility: boolean | null;
+  consentAt: string | null;     // server timestamp at submit
+  consentIp: string | null;     // best-effort client IP, captured server-side only
+  // Tryout-day candidate fields (Phase 2A, mig 165). One bib + check-in per candidate per tryout.
+  bibNumber: string | null;
+  isCheckedIn: boolean;
+  checkedInAt: string | null;
   submittedAt: string;
+  updatedAt: string;
+}
+
+/** The tryout/evaluation workspace — 1:1 with a program year (mig 165). Owns blind-mode + the
+ *  Phase-2B score-lock; FK anchor for sessions and future 2B tables. */
+export interface RepTryout {
+  id: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  isAnonymous: boolean;        // blind evaluation default-ON
+  scoresLockedAt: string | null;  // reserved for Phase 2B one-way reveal/lock
+  scoresLockedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type RepTryoutSessionStatus = 'scheduled' | 'cancelled';
+
+/** A scheduled date/time/location block of a tryout (mig 165). Projected onto the coach schedule
+ *  at read time as a distinct read-only item — never a rep_team_events row. */
+export interface RepTryoutSession {
+  id: string;
+  tryoutId: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  startsAt: string;
+  endsAt: string | null;
+  location: string | null;
+  locationAddress: string | null;
+  fieldNumber: string | null;
+  label: string | null;
+  status: RepTryoutSessionStatus;
+  createdAt: string;
   updatedAt: string;
 }
 

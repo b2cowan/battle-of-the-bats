@@ -7,6 +7,7 @@ import {
 } from '@/lib/db';
 import { sendEmail, tryoutRegistrationConfirmationHtml } from '@/lib/email';
 import { withObservability } from '@/lib/observability';
+import { clientIpFrom } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,6 +70,15 @@ export const POST = withObservability(async (req: Request,
   if (!guardianEmail)    errors.guardianEmail     = 'Guardian email is required';
   else if (!isValidEmail(guardianEmail)) errors.guardianEmail = 'Enter a valid email address';
 
+  // Consent gate (PIPEDA/CASL): all three must be explicitly true. We do NOT trust a client-sent
+  // timestamp/IP — those are stamped server-side below.
+  const consentDataCollection = body.consentDataCollection === true;
+  const consentEmailComms     = body.consentEmailComms === true;
+  const consentEligibility    = body.consentEligibility === true;
+  if (!consentDataCollection || !consentEmailComms || !consentEligibility) {
+    errors.consent = 'Please confirm the three boxes above before submitting.';
+  }
+
   if (Object.keys(errors).length > 0) {
     return NextResponse.json({ errors }, { status: 400 });
   }
@@ -85,6 +95,11 @@ export const POST = withObservability(async (req: Request,
     guardianLastName:  guardianLast!,
     guardianEmail:    guardianEmail!,
     guardianPhone:    guardianPhone,
+    consentDataCollection,
+    consentEmailComms,
+    consentEligibility,
+    consentAt:        new Date().toISOString(),
+    consentIp:        clientIpFrom(req),
   });
 
   void (async () => {

@@ -261,7 +261,7 @@ export default function PlayerDetailPage({
         <span><ChevronRight size={12} /></span>
         <Link href={`${base}/roster`}>Roster</Link>
         <span><ChevronRight size={12} /></span>
-        <span>{[player.playerFirstName, player.playerLastName].filter(Boolean).join(' ')}</span>
+        <span>{[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}</span>
       </div>
 
       {/* Header */}

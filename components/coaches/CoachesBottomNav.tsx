@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Calendar, MessageSquare, Trophy,
   Users, Megaphone, DollarSign, FileText, History,
-  MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings,
+  MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -23,6 +23,7 @@ const TEAM_TABS = [
 
 // Remaining team sections — surfaced under More.
 const MORE_TEAM = [
+  { key: '/tryouts',       icon: ClipboardList, label: 'Tryouts'    },
   { key: '/tournaments',   icon: Trophy,     label: 'Tournaments'   },
   { key: '/announcements', icon: Megaphone,  label: 'Announcements' },
   { key: '/accounting',    icon: DollarSign, label: 'Accounting'    },

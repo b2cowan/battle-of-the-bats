@@ -22,6 +22,8 @@ Fix the one compliance gap and ship the cheapest universal win first; then the f
 ## Phase 1 — Compliance + quick win (ship first; small, low-risk, standalone)
 
 > **Build-ready breakdown:** `COACHES_PORTAL_TRYOUTS_EVAL_PHASE1_PLAN.md` (handed to `/plan` 2026-06-29 — code-grounded task list; 1.1 build-ready, 1.2 blocked on one owner trigger decision).
+>
+> ⏸ **PAUSED 2026-06-30 (owner):** both Phase 1 items deferred — they are family/parent-facing, and all parent/guardian/athlete-user work waits for a dedicated "parent users on the platform" decision **at the end of this project**. Focus moves to coach-facing value (Phase 2 + Phase 3). 1.1 (consent gate) is a live-compliance fix, not a parent feature — owner to confirm whether to keep it standalone. See the **Parent/athlete-facing deferral** note below.
 
 ### 1.1 Tryout registration consent + compliance capture (PIPEDA/CASL) — BLOCKER, do first
 - Add three individually-ticked consent checkboxes to the existing public `TryoutRegisterForm` before Submit: (a) PIPEDA data-collection consent, (b) CASL email-communication consent, (c) eligibility/guardian confirmation.
@@ -99,6 +101,13 @@ A "tryout" gets its **own dedicated surface, NOT a schedule event.** Owner ratio
 ## Decisions OPEN (need owner / routed agent)
 - **Consent-log Club-tier sub-question:** keep the compliance/audit export in Premium (default) or lean it Club-tier where the org admin is the compliance buyer? → resolve with `/billing` at build.
 - **No-account evaluator session links:** confirm acceptable security posture (see guardrails).
+
+## Parent/athlete-facing deferral (owner, 2026-06-30)
+The owner is **deferring all parent/guardian/athlete-USER work** until a dedicated decision at the **end of this project** ("how do we incorporate parent users to the platform"). Rationale: a parent/athlete user class means many more users + an identity/auth/PIPEDA expansion not needed yet. **Focus = coach-facing value first.**
+
+- **Coach-facing (the focus now — needs NO parent accounts):** Phase 2 tryout day suite (check-in, bib, blind scoring, rubric, multi-evaluator scoring via no-account co-coach links, ranked board, accept-to-roster, depth chart, date-check) + all of Phase 3 (IDP, playing-time heat map, returning-player history, manual measurables, depth chart) + the coach-only parts of Phase 4 (practice planner, W-L-T dashboard) and Phase 5 (pitch-count ledger, pitch-arsenal).
+- **Parent/athlete-facing (DEFERRED → revisit with the parent-users decision):** Phase 1.2 pre-game RSVP; Phase 4 athlete/parent season portfolio + habit-streak tracker; Phase 5 athlete-self-report arm-care check-in; and the family-facing registration/consent + offer/release-email surfaces (Phase 1.1, Phase 2B.5) — these use email/token today (no accounts), but they are the "parent communication" layer and are bucketed here for a coherent parent-user decision.
+- **1.1 consent gate caveat:** it is a *compliance fix* for a live exposure, not a parent feature — flagged for a standalone keep-or-pause owner call (see Phase 1 plan status).
 
 ## Guardrails (binding)
 - **Sport-neutral:** every position/skill/score label routes through `getSportPack(team.sport ?? DEFAULT_SPORT)` — no hard-coded "Runs/Innings/diamond/P-C-1B/windmill" outside the SportPack registry + Canadian template copy. ⚠ **Pre-work:** the roster page, player profile, and lineup generator currently call `getSportPack(DEFAULT_SPORT)` / hard-code `FIELD_POSITIONS` despite `RepTeam.sport` being populated — fix that one-PR violation before metrics features build on top of it.

@@ -135,6 +135,9 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 <!-- dict:col:organizations.email_opt_out_at -->
 **`email_marketing_opt_out` / `email_opt_out_at`** (bool default false, partial-indexed `idx_organizations_email_opt_out WHERE true` / timestamptz) — marketing-email suppression; `email-sender.ts` skips sends when true. _Writes:_ `/unsubscribe` route (set), `email/resubscribe` (clear). **Not on the `Organization` type** (email subsystem only).
 
+<!-- dict:col:organizations.privacy_policy_url -->
+**`privacy_policy_url`** (text, nullable; **mig 164**) — optional external privacy-policy URL. The forward-compatible **"pipe"** the tryout consent gate links to when set; NULL = no policy → consent renders without a link. Resolved via the single seam `getOrgPrivacyPolicyHref` ([lib/privacy-policy.ts](../../../lib/privacy-policy.ts)); the future in-platform org privacy page wires into the same helper. _Reads:_ `mapOrg` → `Organization.privacyPolicyUrl`. No admin-settings editor yet (lands with the League/Club public-site privacy page).
+
 ---
 
 ## `organization_members`
@@ -2125,8 +2128,77 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_tryout_registrations.admin_notes -->
 **`admin_notes`** (text, nullable) — internal reviewer notes (vs guardian `player_notes`).
 
+<!-- dict:col:rep_tryout_registrations.consent_data_collection -->
+<!-- dict:col:rep_tryout_registrations.consent_email_comms -->
+<!-- dict:col:rep_tryout_registrations.consent_eligibility -->
+**`consent_data_collection` / `consent_email_comms` / `consent_eligibility`** (boolean, nullable; **mig 164**) — guardian consent captured at public submit: PIPEDA data-collection, CASL email, and guardian+eligibility confirmation. **All three are REQUIRED by the app to submit** (server re-checks `=== true`), so a non-NULL `consent_at` implies all three were true. Nullable, **no backfill** → pre-gate rows stay NULL = "no consent on record" (gotcha 7).
+
+<!-- dict:col:rep_tryout_registrations.consent_at -->
+**`consent_at`** (timestamptz, nullable; **mig 164**) — server clock at the moment consent was given; the admin **Compliance** column + consent export key off this.
+
+<!-- dict:col:rep_tryout_registrations.consent_ip -->
+**`consent_ip`** (text, nullable; **mig 164**) — best-effort client IP at consent time, captured **server-side only** (`clientIpFrom`, never from the request body); audit use only, marked **sensitive** in exports.
+
+<!-- dict:col:rep_tryout_registrations.bib_number -->
+<!-- dict:col:rep_tryout_registrations.is_checked_in -->
+<!-- dict:col:rep_tryout_registrations.checked_in_at -->
+**`bib_number` / `is_checked_in` / `checked_in_at`** (text / boolean NOT NULL default false / timestamptz; **mig 165**) — tryout-day candidate fields. `bib_number` is text (allows alpha bibs; app sorts numerically); **one bib + check-in per candidate per tryout** for V1 (per-session check-in deferred). Set from the coaches-portal day-of check-in view.
+
 <!-- dict:col:rep_tryout_registrations.submitted_at -->
 **`submitted_at`** (timestamptz, NOT NULL, default now()) — **the create stamp** (this table has no `created_at`); admin list orders `submitted_at DESC`.
+
+### `rep_tryouts`
+<!-- dict:table:rep_tryouts -->
+
+**Purpose:** the **tryout/evaluation workspace** — 1:1 with a program year (the tryout cycle). Owns blind-mode + (Phase 2B) score-lock config and is the FK anchor for `rep_tryout_sessions` and the future 2B tables (rubrics / evaluator-sessions / scores). Created lazily when a coach first sets up tryout day. NOT a game event (kept off `rep_team_events`). **mig 165.** Service-role only; **RLS ENABLED, no policies** (anon REST reads zero rows). See DB_ARCHITECTURE_REVIEW Finding #30.
+
+<!-- dict:col:rep_tryouts.program_year_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL, **UNIQUE** → 1:1) — the tryout cycle's season spine; `tryout_open`/`tryout_description` stay on the program year (V1), this row holds evaluation config.
+
+<!-- dict:col:rep_tryouts.team_id -->
+<!-- dict:col:rep_tryouts.org_id -->
+**`team_id` / `org_id`** (FK, NOT NULL, denormalized) — rep_* leaf scoping (one-hop `org_id`).
+
+<!-- dict:col:rep_tryouts.is_anonymous -->
+**`is_anonymous`** (boolean, NOT NULL, default **true**) — BLIND evaluation default-ON: day-of + scoring views show bib numbers and hide names until a deliberate reveal.
+
+<!-- dict:col:rep_tryouts.scores_locked_at -->
+<!-- dict:col:rep_tryouts.scores_locked_by -->
+**`scores_locked_at` / `scores_locked_by`** (timestamptz / uuid, nullable) — reserved for the Phase 2B one-way score-lock + names-reveal (irreversible, audited). Dormant in 2A.
+
+<!-- dict:col:rep_tryouts.created_at -->
+<!-- dict:col:rep_tryouts.updated_at -->
+**`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()).
+
+### `rep_tryout_sessions`
+<!-- dict:table:rep_tryout_sessions -->
+
+**Purpose:** the scheduled **date/time/location blocks** of a tryout (one row per block → multi-day support). The coach schedule view **projects these onto the calendar at read time** as a distinct, read-only "Tryout" item — **no `rep_team_events` row is created** (single source of truth; keeps tryouts out of game W-L / next-event aggregates by construction). **mig 165.** Service-role only; **RLS ENABLED, no policies.**
+
+<!-- dict:col:rep_tryout_sessions.tryout_id -->
+**`tryout_id`** (FK → `rep_tryouts.id`, NOT NULL, ON DELETE CASCADE) — parent tryout workspace.
+
+<!-- dict:col:rep_tryout_sessions.program_year_id -->
+<!-- dict:col:rep_tryout_sessions.team_id -->
+<!-- dict:col:rep_tryout_sessions.org_id -->
+**`program_year_id` / `team_id` / `org_id`** (FK, NOT NULL, denormalized) — rep_* leaf scoping (one-hop `org_id`, not via `rep_tryouts`).
+
+<!-- dict:col:rep_tryout_sessions.starts_at -->
+<!-- dict:col:rep_tryout_sessions.ends_at -->
+**`starts_at`** (timestamptz, NOT NULL) / **`ends_at`** (nullable) — the block's time; `starts_at` is indexed for the schedule-union range read.
+
+<!-- dict:col:rep_tryout_sessions.location -->
+<!-- dict:col:rep_tryout_sessions.location_address -->
+<!-- dict:col:rep_tryout_sessions.field_number -->
+<!-- dict:col:rep_tryout_sessions.label -->
+**`location` / `location_address` / `field_number` / `label`** (text, nullable) — where, plus an optional block label; mirrors the `rep_team_events` location fields.
+
+<!-- dict:col:rep_tryout_sessions.status -->
+**`status`** (text, NOT NULL, default `'scheduled'`; CHECK `scheduled|cancelled`) — a cancelled session is retained for history but drops off the calendar projection.
+
+<!-- dict:col:rep_tryout_sessions.created_at -->
+<!-- dict:col:rep_tryout_sessions.updated_at -->
+**`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()).
 
 ### `rep_document_templates`
 <!-- dict:table:rep_document_templates -->

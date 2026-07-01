@@ -71,6 +71,9 @@ const TRYOUT_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Admin Notes',      key: 'adminNotes',       format: 'text',     sensitive: true },
   { label: 'Submitted At',     key: 'submittedAt',      format: 'date' },
   { label: 'Status',           key: 'status',           format: 'text' },
+  { label: 'Consent Given',    key: 'consentGiven',     format: 'text' },
+  { label: 'Consent Date',     key: 'consentDate',      format: 'text' },
+  { label: 'Consent IP',       key: 'consentIp',        format: 'text',     sensitive: true },
 ];
 
 export default function TryoutsPage({
@@ -274,6 +277,9 @@ export default function TryoutsPage({
       adminNotes:       r.adminNotes ?? '',
       submittedAt:      r.submittedAt.slice(0, 10),
       status:           STATUS_LABEL[r.status] ?? r.status,
+      consentGiven:     r.consentAt ? 'Yes' : 'No',
+      consentDate:      r.consentAt ? r.consentAt.slice(0, 10) : '',
+      consentIp:        r.consentIp ?? '',
     }));
   }
 
@@ -470,6 +476,7 @@ export default function TryoutsPage({
                     <th className={styles.tryoutTh}>Guardian Email</th>
                     <th className={styles.tryoutTh}>Submitted</th>
                     <th className={styles.tryoutTh}>Status</th>
+                    <th className={styles.tryoutTh}>Consent</th>
                     {canWrite && <th className={styles.tryoutTh}>Actions</th>}
                   </tr>
                 </thead>
@@ -502,6 +509,18 @@ export default function TryoutsPage({
                         <span className={`${styles.badge} ${STATUS_CSS[reg.status] ?? ''}`}>
                           {STATUS_LABEL[reg.status] ?? reg.status}
                         </span>
+                      </td>
+                      <td className={styles.tryoutTd} style={{ fontSize: '0.82rem' }}>
+                        {reg.consentAt ? (
+                          <span
+                            title={`Consent recorded ${new Date(reg.consentAt).toLocaleString('en-CA')}`}
+                            style={{ color: 'var(--logic-lime, #a3e635)', whiteSpace: 'nowrap' }}
+                          >
+                            ✓ {new Date(reg.consentAt).toLocaleDateString('en-CA')}
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--white-40)' }}>No consent on record</span>
+                        )}
                       </td>
                       {canWrite && (
                         <td className={styles.tryoutTd} onClick={e => e.stopPropagation()}>

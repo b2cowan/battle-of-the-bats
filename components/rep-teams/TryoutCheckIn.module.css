@@ -1,0 +1,133 @@
+/* Day-of tryout check-in — Phase 2A. Mobile-first, field-side: big tap targets, three-cue check-in
+   state (fill + icon + label + left-border, never colour alone), sunlight-friendly. */
+
+.wrap { max-width: 640px; }
+
+.backLink {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.82rem; color: rgba(255,255,255,0.5);
+  text-decoration: none; margin-bottom: 1rem;
+}
+.backLink:hover { color: rgba(255,255,255,0.8); }
+
+/* Sticky header: progress + blind chip + search */
+.header {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--pitch-black, #0A0A0A);
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+.progressRow {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+.progressText { font-size: 0.95rem; font-weight: 800; color: #f0f0f0; }
+.progressText .total { color: rgba(255,255,255,0.45); font-weight: 600; }
+.blindChip {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.72rem; font-weight: 700;
+  padding: 0.25rem 0.6rem; border-radius: 999px;
+  background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(99,102,241,0.35);
+  color: #c7d2fe;
+  white-space: nowrap;
+}
+.bar { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.1); overflow: hidden; }
+.barFill { height: 100%; background: var(--success, #4ade80); transition: width 0.2s; }
+
+.search {
+  width: 100%; margin-top: 0.75rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; padding: 0.6rem 0.75rem;
+  color: #f0f0f0; font-size: 0.9rem; box-sizing: border-box;
+}
+.search:focus { outline: none; border-color: var(--logic-lime, #a3e635); }
+
+.addBtn {
+  margin-top: 0.6rem;
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.5rem 0.85rem; font-size: 0.85rem; font-weight: 600;
+  border: 1px dashed rgba(255,255,255,0.22); border-radius: 8px;
+  background: transparent; color: rgba(255,255,255,0.8); cursor: pointer;
+}
+.addBtn:hover { border-color: var(--logic-lime, #a3e635); color: #f0f0f0; }
+
+/* Candidate rows */
+.list { display: flex; flex-direction: column; gap: 0.5rem; }
+.row {
+  display: flex; align-items: center; gap: 0.85rem;
+  width: 100%; text-align: left;
+  min-height: 56px; padding: 0.5rem 0.85rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-left: 3px solid transparent;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+  color: inherit; cursor: pointer;
+  appearance: none;
+}
+.rowChecked {
+  border-left-color: var(--logic-lime, #a3e635);
+  background: rgba(163,230,53,0.06);
+}
+.row:disabled { opacity: 0.5; cursor: default; }
+
+.bib {
+  flex: 0 0 auto; min-width: 2.2rem;
+  font-family: var(--font-data, 'IBM Plex Mono', monospace);
+  font-size: 1.15rem; font-weight: 800; color: #f0f0f0;
+}
+.main { flex: 1 1 auto; min-width: 0; }
+.name { font-size: 0.95rem; font-weight: 600; color: #f0f0f0; }
+.meta { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 0.05rem; }
+.bibOnly { font-size: 0.95rem; font-weight: 600; color: rgba(255,255,255,0.55); }
+
+/* Three cues: structure (fill/outline), icon, label */
+.state { flex: 0 0 auto; display: flex; align-items: center; gap: 0.45rem; }
+.stateIcon {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto;
+}
+.iconOn { background: var(--logic-lime, #a3e635); color: #0A0A0A; }
+.iconOff { border: 2px solid rgba(255,255,255,0.25); color: transparent; }
+.stateLabel { font-size: 0.78rem; font-weight: 600; }
+.labelOn { color: var(--success, #4ade80); }
+.labelOff { color: rgba(255,255,255,0.4); }
+@media (max-width: 420px) { .stateLabel { display: none; } } /* icon+structure carry it on tiny screens */
+
+.undo {
+  flex: 0 0 auto;
+  font-size: 0.75rem; font-weight: 700; color: var(--logic-lime, #a3e635);
+  background: transparent; border: none; cursor: pointer; padding: 0.35rem 0.4rem;
+}
+
+.empty { font-size: 0.9rem; color: rgba(255,255,255,0.45); padding: 1.5rem 0; text-align: center; }
+
+/* Walk-up sheet (reuses the TryoutDayCard modal shape) */
+.scrim {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 200;
+}
+.modal {
+  width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto;
+  background: #141414; border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px; padding: 1.25rem 1.5rem;
+}
+.modalTitle { font-size: 1.05rem; font-weight: 800; color: #f0f0f0; margin: 0 0 1rem; }
+.field { margin-bottom: 0.85rem; }
+.label { display: block; font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 0.35rem; }
+.input {
+  width: 100%; background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+  padding: 0.6rem 0.75rem; color: #f0f0f0; font-size: 0.9rem; box-sizing: border-box;
+}
+.input:focus { outline: none; border-color: var(--logic-lime, #a3e635); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.modalActions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.25rem; }
+
+@media (max-width: 640px) {
+  .scrim { align-items: flex-end; padding: 0; }
+  .modal { max-width: none; border-radius: 14px 14px 0 0; }
+  .row2 { grid-template-columns: 1fr; }
+}

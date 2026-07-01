@@ -81,8 +81,8 @@ const repTeamsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to open tryouts and review applicants',
       summary: 'Turn on the public tryout form, process applications, and close registration when evaluations are done.',
-      keywords: ['tryouts', 'open registration', 'applicants', 'offer', 'accept', 'decline'],
-      searchText: 'open tryouts review applicants public tryout form registration pending review extend offer accept decline close registration add applicant offer extended',
+      keywords: ['tryouts', 'open registration', 'applicants', 'offer', 'accept', 'decline', 'consent', 'compliance'],
+      searchText: 'open tryouts review applicants public tryout form registration pending review extend offer accept decline close registration add applicant offer extended consent guardian consent privacy data collection PIPEDA CASL compliance consent column consent record export',
       content: (
         <>
           <p>Tryout registration belongs to a specific team program year.</p>
@@ -94,9 +94,24 @@ const repTeamsHelp: HelpPageContent = {
             <li>Use <strong>Accept</strong> only when the player is confirmed — this adds them to the roster and makes them visible to the coach. <strong>Decline</strong> notifies the guardian.</li>
             <li>Close registration when tryouts finish so the public form goes offline.</li>
           </ol>
-          <p>If an applicant registered outside the form, use <strong>Add Applicant</strong> so the decision history stays with the program year.</p>
+          <p>The applicant list shows a <strong>Consent</strong> column: when a family submits the public form they confirm consent to data collection and email contact, and the date is captured for your records. Include it in the <strong>applicant export</strong> when you need a documented consent record.</p>
+          <p>If an applicant registered outside the form, use <strong>Add Applicant</strong> so the decision history stays with the program year — note that manually added applicants won&apos;t carry a form consent record.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-tryout-consent',
+          question: 'Do families consent to us collecting their information?',
+          answerText: 'Yes. The public tryout form requires the parent or guardian to confirm consent before they can submit — to data collection, to email contact, and that they are the guardian and the player is eligible to try out. The Tryouts list shows a Consent column with the date it was given, and you can include the consent record in the applicant export when you need it for compliance. Applicants you enter manually with Add Applicant do not carry a form consent record.',
+          keywords: ['consent', 'privacy', 'PIPEDA', 'CASL', 'compliance', 'guardian consent', 'data collection', 'consent record'],
+          answer: (
+            <>
+              <p>Yes. The public tryout form requires the parent or guardian to confirm consent before they can submit — to data collection, to email contact, and that they are the guardian and the player is eligible to try out.</p>
+              <p>The <strong>Tryouts</strong> list shows a <strong>Consent</strong> column with the date it was given, and you can include the consent record in the <strong>applicant export</strong> when you need it for compliance. Applicants you enter manually with <strong>Add Applicant</strong> won&apos;t carry a form consent record.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'recipe-accept-player-to-roster',
