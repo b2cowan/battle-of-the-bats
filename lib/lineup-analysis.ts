@@ -28,6 +28,14 @@ export interface PlayerFairPlay {
   positionCounts: Record<string, number>; // position code → innings played there
 }
 
+/** An inning where one or more required field positions could not be filled even though a player
+ *  was idle (benched or unassigned) — usually the result of "Never" constraints leaving no eligible
+ *  player for a spot. Only computed when the caller passes the sport's field positions. */
+export interface UnfilledFieldPositions {
+  inning: number;
+  positions: string[];
+}
+
 export interface LineupAnalysis {
   conflicts: LineupConflict[];
   conflictInnings: Set<number>;
@@ -36,6 +44,8 @@ export interface LineupAnalysis {
   hasConflicts: boolean;
   /** Spread of bench innings across players (fairness at a glance); null if no rows. */
   benchSpread: { min: number; max: number } | null;
+  /** Fillable-but-empty field positions per inning (empty unless fieldPositions was supplied). */
+  unfilledFieldPositions: UnfilledFieldPositions[];
 }
 
 export interface AnalyzableRow {
@@ -43,20 +53,27 @@ export interface AnalyzableRow {
   inningPositions: Record<string, string>;
 }
 
-export function analyzeLineup(rows: AnalyzableRow[], inningCount: number): LineupAnalysis {
+export function analyzeLineup(
+  rows: AnalyzableRow[],
+  inningCount: number,
+  fieldPositions?: string[],
+): LineupAnalysis {
   const conflicts: LineupConflict[] = [];
   const conflictInnings = new Set<number>();
   const inningFill: InningFill[] = [];
+  const unfilledFieldPositions: UnfilledFieldPositions[] = [];
+  const fieldList = fieldPositions ?? [];
 
   for (let inn = 1; inn <= inningCount; inn++) {
     const key = String(inn);
     const counts = new Map<string, number>();
     let onField = 0;
     let benched = 0;
+    let idle = 0; // benched OR blank — a player who could have covered an open spot
     for (const r of rows) {
       const pos = r.inningPositions[key] ?? '';
-      if (pos === BENCH_POSITION) { benched++; continue; }
-      if (!pos) continue;
+      if (pos === BENCH_POSITION) { benched++; idle++; continue; }
+      if (!pos) { idle++; continue; }
       onField++;
       counts.set(pos, (counts.get(pos) ?? 0) + 1);
     }
@@ -65,6 +82,12 @@ export function analyzeLineup(rows: AnalyzableRow[], inningCount: number): Lineu
         conflicts.push({ inning: inn, position: pos, count });
         conflictInnings.add(inn);
       }
+    }
+    // A required field position with no holder, while a player sits idle, is a fillable hole
+    // (typically a "Never" constraint left no eligible player) — worth flagging to the coach.
+    if (fieldList.length && idle > 0) {
+      const empty = fieldList.filter(fp => !counts.has(fp));
+      if (empty.length) unfilledFieldPositions.push({ inning: inn, positions: empty });
     }
     inningFill.push({ inning: inn, onField, benched });
   }
@@ -98,5 +121,6 @@ export function analyzeLineup(rows: AnalyzableRow[], inningCount: number): Lineu
     fairPlay,
     hasConflicts: conflicts.length > 0,
     benchSpread,
+    unfilledFieldPositions,
   };
 }

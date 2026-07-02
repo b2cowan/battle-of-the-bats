@@ -1,16 +1,20 @@
 'use client';
-import { useState, useRef, useEffect, useId } from 'react';
+import { useState, useRef, useEffect, useId, type ReactNode } from 'react';
 import styles from './help.module.css';
 
 interface HelpTooltipProps {
   title: string;
-  body: string;
+  /** Plain-text body (default). Ignored when `content` is provided. */
+  body?: string;
+  /** Optional rich body — pass structured JSX (lists, labelled rows) for content that
+   *  doesn't read well as a single paragraph. Falls back to `body` when omitted. */
+  content?: ReactNode;
   size?: 'sm' | 'md';
 }
 
 const SIZE_CLASS = { sm: styles.tooltipSm, md: styles.tooltipMd };
 
-export default function HelpTooltip({ title, body, size = 'sm' }: HelpTooltipProps) {
+export default function HelpTooltip({ title, body, content, size = 'sm' }: HelpTooltipProps) {
   const [open, setOpen] = useState(false);
   const [placement, setPlacement] = useState<'top' | 'bottom'>('top');
   const wrapRef = useRef<HTMLSpanElement>(null);
@@ -70,7 +74,7 @@ export default function HelpTooltip({ title, body, size = 'sm' }: HelpTooltipPro
       {open && (
         <div id={popoverId} className={styles.tooltipPopover} role="tooltip">
           <p className={styles.tooltipTitle}>{title}</p>
-          <p className={styles.tooltipBody}>{body}</p>
+          {content ?? <p className={styles.tooltipBody}>{body}</p>}
         </div>
       )}
     </span>

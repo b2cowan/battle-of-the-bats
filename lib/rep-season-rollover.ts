@@ -207,6 +207,7 @@ export async function startNextRepSeason(params: {
           bats: p.bats,
           throws: p.throws,
           jerseySize: p.jerseySize,
+          lineupProfile: p.lineupProfile, // Best/Okay/Never + pitcher/A-squad persist across seasons
           // adminNotes + tryoutRegistrationId intentionally dropped (stale staff/tryout provenance)
         });
         playerIdMap.set(p.id, created.id);

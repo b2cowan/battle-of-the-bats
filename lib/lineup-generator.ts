@@ -3,10 +3,18 @@
 // back-to-back sits when avoidable); ties are broken RANDOMLY so each "Generate" gives a
 // natural, non-repetitive rotation rather than the same rigid roster-order blocks.
 //
-// Diamond fielding positions (softball/baseball). The coach portal is softball/baseball
-// today; a future sport would supply its own field-position list.
+// Each player carries position preferences (Lineup Intelligence, P1):
+//   • never[]     — a HARD exclusion: the player is never auto-assigned these, in any mode.
+//   • preferred[] — ranked "Best" spots (rank 1 first); shapes who takes each position but
+//                   never overrides the fairness/bench guarantees above.
+//   • canPlay[]   — "Okay" fallback spots, below preferred.
+// If a position has no eligible player (e.g. everyone left has it in never[]) it is left BLANK
+// rather than aborting the inning — the analysis layer surfaces the hole to the coach.
+//
+// The on-field positions to assign are passed in per call (GenerateOptions.fieldPositions),
+// sourced from the team's Sport Pack — the generator stays sport-neutral and never hard-codes
+// position codes. Softball/baseball supply the 9 diamond spots; other sports supply their own.
 
-const FIELD_POSITIONS = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF'];
 const BENCH = 'Bench';
 
 /** Fisher–Yates shuffle (runtime randomness — this runs in the browser, not a workflow). */
@@ -24,9 +32,35 @@ export type FillMode = 'empty' | 'regenerate';
 
 export interface GeneratorPlayer {
   playerId: string;
-  primaryPosition: string | null;
-  secondaryPosition: string | null;
+  preferred: string[]; // ordered "Best" positions (rank 1 first)
+  canPlay: string[];   // "Okay" positions (below preferred)
+  never: string[];     // hard exclusions — never auto-assigned here, any mode
   inningPositions: Record<string, string>; // existing grid (honored when fillMode = 'empty')
+}
+
+interface PrefMaps {
+  prefRankOf: Map<string, Map<string, number>>; // playerId → (position → 0-based rank among Best)
+  canOf: Map<string, Set<string>>;              // playerId → Okay positions
+  neverOf: Map<string, Set<string>>;            // playerId → hard-excluded positions
+}
+
+/** Precompute per-player preference lookups (uppercased, field-scoped). Rank is 0-based over the
+ *  player's Best positions in order (contiguous — non-field entries are skipped, not counted). */
+function buildPrefMaps(players: GeneratorPlayer[], fieldSet: Set<string>): PrefMaps {
+  const prefRankOf = new Map<string, Map<string, number>>();
+  const canOf = new Map<string, Set<string>>();
+  const neverOf = new Map<string, Set<string>>();
+  for (const p of players) {
+    const ranks = new Map<string, number>();
+    for (const pos of p.preferred ?? []) {
+      const n = norm(pos);
+      if (n && fieldSet.has(n) && !ranks.has(n)) ranks.set(n, ranks.size);
+    }
+    prefRankOf.set(p.playerId, ranks);
+    canOf.set(p.playerId, new Set((p.canPlay ?? []).map(norm).filter(x => fieldSet.has(x))));
+    neverOf.set(p.playerId, new Set((p.never ?? []).map(norm)));
+  }
+  return { prefRankOf, canOf, neverOf };
 }
 
 export interface GenerateOptions {
@@ -34,14 +68,16 @@ export interface GenerateOptions {
   inningCount: number;
   policy: PositionPolicy;
   fillMode: FillMode;
+  /** On-field positions to assign, exactly one player each per inning (from the Sport Pack). */
+  fieldPositions: string[];
 }
 
 const norm = (s: string | null | undefined) => (s ?? '').toUpperCase().trim();
 
 /** Returns playerId → { inning(string) → position }. Only field positions + Bench are written. */
 export function generateLineup(opts: GenerateOptions): Map<string, Record<string, string>> {
-  const { players, inningCount, policy, fillMode } = opts;
-  const fieldSet = new Set(FIELD_POSITIONS);
+  const { players, inningCount, policy, fillMode, fieldPositions } = opts;
+  const fieldSet = new Set(fieldPositions);
 
   const result = new Map<string, Record<string, string>>();
   for (const p of players) {
@@ -53,8 +89,7 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
   let lastBench = new Set<string>();
   const posPlays = new Map<string, Map<string, number>>(); // playerId → position → times played
 
-  const primaryOf = (p: GeneratorPlayer) => (fieldSet.has(norm(p.primaryPosition)) ? norm(p.primaryPosition) : '');
-  const secondaryOf = (p: GeneratorPlayer) => (fieldSet.has(norm(p.secondaryPosition)) ? norm(p.secondaryPosition) : '');
+  const { prefRankOf, canOf, neverOf } = buildPrefMaps(players, fieldSet);
   const bump = (id: string, pos: string) => {
     let m = posPlays.get(id);
     if (!m) { m = new Map(); posPlays.set(id, m); }
@@ -81,7 +116,7 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
     }
 
     const available = players.filter(p => !lockedPlayers.has(p.playerId));
-    const openPositions = FIELD_POSITIONS.filter(pos => !lockedPositions.has(pos));
+    const openPositions = fieldPositions.filter(pos => !lockedPositions.has(pos));
     const onFieldNeeded = Math.min(openPositions.length, available.length);
     const benchNeeded = available.length - onFieldNeeded;
 
@@ -103,22 +138,13 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
     }
 
     // Assign open positions to the on-field players per policy. Shuffle the pool so a tied
-    // choice (e.g. several players whose primary is the same spot) varies between runs.
+    // choice (e.g. several players who all prefer the same spot) varies between runs.
     const unassigned = new Map(available.filter(p => !benched.has(p.playerId)).map(p => [p.playerId, p]));
     for (const pos of openPositions) {
-      const pool = shuffle([...unassigned.values()]);
-      if (pool.length === 0) break;
-      let pick: GeneratorPlayer | undefined;
-      if (policy === 'competitive') {
-        pick = pool.find(p => primaryOf(p) === pos)
-          ?? pool.find(p => secondaryOf(p) === pos)
-          ?? leastPlayed(pool, pos, playedCount);
-      } else if (policy === 'balanced') {
-        const matches = pool.filter(p => primaryOf(p) === pos || secondaryOf(p) === pos);
-        pick = leastPlayed(matches.length ? matches : pool, pos, playedCount);
-      } else {
-        pick = leastPlayed(pool, pos, playedCount);
-      }
+      // Hard 'never' filter: a player is never eligible for a position they can't play.
+      const eligible = shuffle([...unassigned.values()].filter(p => !neverOf.get(p.playerId)!.has(pos)));
+      if (eligible.length === 0) continue; // no eligible player → leave blank, keep filling the rest
+      const pick = pickForPosition(pos, eligible, policy, prefRankOf, canOf, playedCount);
       if (!pick) continue;
       result.get(pick.playerId)![key] = pos;
       unassigned.delete(pick.playerId);
@@ -127,6 +153,43 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
   }
 
   return result;
+}
+
+/** Choose a player for one open position from an already-shuffled, never-filtered pool.
+ *  competitive → the player for whom this is the highest-priority Best spot (tie: least played);
+ *  balanced    → rotate among anyone who prefers OR can play it (else least played overall);
+ *  development → least played overall, ignoring preferences (maximizes variety). */
+function pickForPosition(
+  pos: string,
+  pool: GeneratorPlayer[],
+  policy: PositionPolicy,
+  prefRankOf: Map<string, Map<string, number>>,
+  canOf: Map<string, Set<string>>,
+  playedCount: (id: string, pos: string) => number,
+): GeneratorPlayer | undefined {
+  if (policy === 'development') return leastPlayed(pool, pos, playedCount);
+
+  const rankAt = (p: GeneratorPlayer) => prefRankOf.get(p.playerId)?.get(pos);
+  const canAt = (p: GeneratorPlayer) => canOf.get(p.playerId)?.has(pos) ?? false;
+
+  if (policy === 'competitive') {
+    const prefMatches = pool.filter(p => rankAt(p) !== undefined);
+    if (prefMatches.length) {
+      let best: GeneratorPlayer | undefined, bestRank = Infinity, bestPlayed = Infinity;
+      for (const p of prefMatches) {
+        const r = rankAt(p)!, pl = playedCount(p.playerId, pos);
+        if (r < bestRank || (r === bestRank && pl < bestPlayed)) { bestRank = r; bestPlayed = pl; best = p; }
+      }
+      return best;
+    }
+    const canMatches = pool.filter(canAt);
+    if (canMatches.length) return leastPlayed(canMatches, pos, playedCount);
+    return leastPlayed(pool, pos, playedCount);
+  }
+
+  // balanced
+  const matches = pool.filter(p => rankAt(p) !== undefined || canAt(p));
+  return leastPlayed(matches.length ? matches : pool, pos, playedCount);
 }
 
 function leastPlayed(
@@ -147,20 +210,19 @@ function leastPlayed(
  *  pick the best of several randomized passes — mirrors the tournament scheduler's
  *  candidate-and-score approach. */
 function scoreLineup(assignment: Map<string, Record<string, string>>, opts: GenerateOptions): number {
-  const { players, inningCount, policy } = opts;
-  const fieldSet = new Set(FIELD_POSITIONS);
-  const isPref = (p: GeneratorPlayer, pos: string) => {
-    const pr = norm(p.primaryPosition), se = norm(p.secondaryPosition);
-    return { primary: pr === pos, secondary: se === pos };
-  };
+  const { players, inningCount, policy, fieldPositions } = opts;
+  const fieldSet = new Set(fieldPositions);
+  const { prefRankOf, canOf } = buildPrefMaps(players, fieldSet);
 
   const benchCounts: number[] = [];
   let backToBack = 0;
-  let prefPrimary = 0, prefSecondary = 0, offPref = 0;
+  let prefTop = 0, prefOther = 0, canHit = 0, offPref = 0;
   let varietyBonus = 0;
 
   for (const p of players) {
     const grid = assignment.get(p.playerId) ?? {};
+    const ranks = prefRankOf.get(p.playerId)!;
+    const can = canOf.get(p.playerId)!;
     let bench = 0, prevBench = false;
     const distinct = new Set<string>();
     for (let inn = 1; inn <= inningCount; inn++) {
@@ -169,9 +231,10 @@ function scoreLineup(assignment: Map<string, Record<string, string>>, opts: Gene
       prevBench = false;
       if (!pos || !fieldSet.has(pos)) continue;
       distinct.add(pos);
-      const pref = isPref(p, pos);
-      if (pref.primary) prefPrimary++;
-      else if (pref.secondary) prefSecondary++;
+      const rank = ranks.get(pos);
+      if (rank === 0) prefTop++;
+      else if (rank !== undefined) prefOther++;
+      else if (can.has(pos)) canHit++;
       else offPref++;
     }
     benchCounts.push(bench);
@@ -187,7 +250,7 @@ function scoreLineup(assignment: Map<string, Record<string, string>>, opts: Gene
       if (pos === BENCH) onBench++;
       else if (fieldSet.has(pos)) filled++;
     }
-    const couldFill = Math.min(FIELD_POSITIONS.length, players.length - onBench);
+    const couldFill = Math.min(fieldPositions.length, players.length - onBench);
     unfilled += Math.max(0, couldFill - filled);
   }
 
@@ -195,9 +258,9 @@ function scoreLineup(assignment: Map<string, Record<string, string>>, opts: Gene
 
   // Fairness is paramount: heavy penalties for uneven bench + back-to-back + holes.
   let score = -benchSpread * 6 - backToBack * 10 - unfilled * 4;
-  // Policy fit shapes the positions.
-  if (policy === 'competitive') score += prefPrimary * 2 + prefSecondary * 0.5 - offPref * 1.5;
-  else if (policy === 'balanced') score += (prefPrimary + prefSecondary) * 1 - offPref * 1;
+  // Policy fit shapes the positions (top Best spot rewarded most in competitive).
+  if (policy === 'competitive') score += prefTop * 2.5 + prefOther * 1.5 + canHit * 0.5 - offPref * 1.5;
+  else if (policy === 'balanced') score += (prefTop + prefOther) * 1 + canHit * 0.75 - offPref * 1;
   else score += varietyBonus * 1.5; // development rewards position variety
   return score;
 }

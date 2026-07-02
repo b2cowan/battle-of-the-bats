@@ -391,7 +391,7 @@ const coachesHelp: HelpPageContent = {
       heading: 'What Coaches Portal Premium adds',
       summary: 'The serious-operator upgrade — game-day tools, automation, budget, and documents.',
       keywords: ['coaches portal premium', 'upgrade', 'premium', 'paid coaches portal'],
-      searchText: 'coaches portal premium upgrade paid lineup builder attendance dues automation team budget document storage carries over organization joins start next season new season division team settings multi season year over year player profile medical allergies emergency contact handedness bats throws jersey size attendance snapshot per player dues roster export pdf excel csv',
+      searchText: 'coaches portal premium upgrade paid lineup builder attendance dues automation team budget document storage carries over organization joins start next season new season division team settings multi season year over year player profile positions best okay never ranked positions never play position preferences medical allergies emergency contact handedness bats throws jersey size attendance snapshot per player dues roster export pdf excel csv',
       content: (
         <>
           <p><strong>Coaches Portal Premium</strong> keeps everything in your free portal and adds the tools for running a full competitive season:</p>
@@ -411,12 +411,13 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-premium-player-profile',
           question: 'What can I keep on each player?',
-          answerText: 'On Premium, open any player from your Roster to see their full profile. Alongside name, date of birth, jersey number and positions, you can record handedness (bats/throws), jersey size, allergies or medical notes, and an emergency contact. When medical notes are present, a flag shows at the top so it is not missed on game day. The profile also shows that player’s attendance this season and their dues balance at a glance, plus any documents on file.',
-          keywords: ['player profile', 'medical', 'allergies', 'emergency contact', 'handedness', 'bats', 'throws', 'jersey size', 'attendance', 'dues', 'player details'],
+          answerText: 'On Premium, open any player from your Roster to see their full profile. You set their positions with one Positions picker — tap a position to cycle it through Best, Okay, or Never, and rank your Best spots in priority order (reorder with the arrows). Best are their go-to spots, Okay are fill-in spots, and Never is a hard block the game-day auto-fill will never assign. Alongside name, date of birth and jersey number you can also record handedness (bats/throws), jersey size, allergies or medical notes, and an emergency contact. When medical notes are present, a flag shows at the top so it is not missed on game day. The profile also shows that player’s attendance this season and their dues balance at a glance, plus any documents on file. If you set Primary/Secondary positions before, they carry over automatically as that player’s top two Best.',
+          keywords: ['player profile', 'positions', 'best okay never', 'never play', 'ranked positions', 'position preferences', 'primary secondary position', 'medical', 'allergies', 'emergency contact', 'handedness', 'bats', 'throws', 'jersey size', 'attendance', 'dues', 'player details'],
           answer: (
             <>
-              <p>On Premium, open any player from your <strong>Roster</strong> to see their full profile. Alongside name, date of birth, jersey number and positions, you can record <strong>handedness</strong> (bats/throws), <strong>jersey size</strong>, <strong>allergies or medical notes</strong>, and an <strong>emergency contact</strong>.</p>
-              <p>When a player has medical notes, a flag appears at the top of their profile so it&apos;s never missed on game day. The profile also shows that player&apos;s <strong>attendance</strong> this season and their <strong>dues balance</strong> at a glance, plus any documents on file.</p>
+              <p>On Premium, open any player from your <strong>Roster</strong> to see their full profile. Set their positions with one <strong>Positions</strong> picker — tap a position to cycle it through <strong>Best</strong>, <strong>Okay</strong>, or <strong>Never</strong>, and rank your Best spots in priority order (reorder with the arrows). <strong>Best</strong> are their go-to spots, <strong>Okay</strong> are fill-in spots, and <strong>Never</strong> is a hard block the game-day auto-fill will never assign.</p>
+              <p>Alongside name, date of birth and jersey number you can also record <strong>handedness</strong> (bats/throws), <strong>jersey size</strong>, <strong>allergies or medical notes</strong>, and an <strong>emergency contact</strong>. When a player has medical notes, a flag appears at the top of their profile so it&apos;s never missed on game day. The profile also shows that player&apos;s <strong>attendance</strong> this season and their <strong>dues balance</strong> at a glance, plus any documents on file.</p>
+              <p>If you set <strong>Primary</strong>/<strong>Secondary</strong> positions before, they carry over automatically as that player&apos;s top two <strong>Best</strong> — nothing to re-enter.</p>
             </>
           ),
         },
@@ -560,7 +561,7 @@ const coachesHelp: HelpPageContent = {
       heading: 'Taking attendance (Premium)',
       summary: 'Open an event to set each player to In, Late, Out, or No reply with an RSVP button — at-a-glance status symbols, quick filters, and an optional note. Anyone marked Out drops out of that game’s lineup.',
       keywords: ['attendance', 'who is coming', 'in out late', 'no reply', 'mark attendance', 'rsvp', 'edit rsvp', 'status symbol', 'roster check', 'attendance note', 'all in', 'not playing'],
-      searchText: 'attendance mark who is coming going not going in out late no reply unknown counts filter chips status symbol rsvp button edit rsvp open choices set status note per player note icon all in reset bulk premium event attendance roster headcount available not playing drops out of lineup remove from lineup add back single source auto save',
+      searchText: 'attendance mark who is coming going not going in out late no reply unknown counts filter chips status symbol rsvp button edit rsvp open choices set status note per player note icon all in reset bulk premium event attendance roster headcount available not playing drops out of lineup remove from lineup add back single source auto save auto-fill auto fill generate lineup who plays where best okay never position preferences ranked positions cant fill position lineup warning fair playing time',
       content: (
         <>
           <p>On <strong>Premium</strong>, open any event and pick the <strong>Attendance</strong> tab to track who&apos;s coming. Each player is one of four states: <strong>In</strong>, <strong>Late</strong>, <strong>Out</strong>, or <strong>No reply</strong> (not marked yet).</p>
@@ -596,6 +597,18 @@ const coachesHelp: HelpPageContent = {
             <>
               <p>Yes. Attendance is the <strong>single source of who&apos;s playing</strong>, so anyone marked <strong>Out</strong> drops out of that game&apos;s lineup — they leave the batting order and field positions and move to a <strong>Not playing</strong> list under the lineup.</p>
               <p>Tap <strong>Add to lineup</strong> there (or change their attendance back) to bring them in again. You can also remove a player straight from the <strong>Lineup</strong> tab with the <strong>&times;</strong> on their row, which marks them Out.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-lineup-autofill-positions',
+          question: 'How does Auto-fill decide who plays where?',
+          answerText: 'Auto-fill uses the positions you set on each player’s profile. It never puts a player at a position you marked Never, and it favors each player’s Best positions in the order you ranked them (Okay spots are used as fill-ins). It still shares playing time fairly and avoids sitting the same players two innings in a row. If a spot genuinely can’t be filled — for example everyone available has it set to Never — Auto-fill leaves that cell blank and shows a warning instead of forcing a bad fit, so you can adjust it by hand. Auto-fill always gives you a starting point you can edit before the game.',
+          keywords: ['auto-fill', 'auto fill', 'generate lineup', 'fill lineup', 'never position', 'best position', 'ranked positions', 'position preferences', 'cant fill position', 'blank position', 'lineup warning', 'who plays where'],
+          answer: (
+            <>
+              <p><strong>Auto-fill</strong> uses the positions you set on each player&apos;s profile. It <strong>never</strong> puts a player at a position you marked <strong>Never</strong>, and it favors each player&apos;s <strong>Best</strong> positions in the order you ranked them (<strong>Okay</strong> spots are used as fill-ins). It still shares playing time fairly and avoids sitting the same players two innings in a row.</p>
+              <p>If a spot genuinely can&apos;t be filled — for example everyone available has it set to <strong>Never</strong> — Auto-fill leaves that cell blank and shows a <strong>warning</strong> instead of forcing a bad fit, so you can set it by hand. Auto-fill always gives you a starting point you can edit before the game.</p>
             </>
           ),
         },

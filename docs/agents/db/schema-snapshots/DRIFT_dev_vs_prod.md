@@ -1,16 +1,16 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-07-01 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-07-02 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 173 divergence(s)** across dev/prod.
+**⚠️ 181 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 5 | 0 | — |
-| Columns | 64 | 3 | 23 |
-| Indexes | 28 | 3 | 0 |
+| Columns | 70 | 3 | 23 |
+| Indexes | 29 | 3 | 0 |
 | Constraints | 34 | 9 | — |
-| RLS / CHECK | 3 | 1 | 0 (RLS state) |
+| RLS / CHECK | 4 | 1 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (5)
@@ -24,8 +24,9 @@
 _none_
 
 ## Columns
-### Only in DEV (64)
+### Only in DEV (70)
 - `organizations.privacy_policy_url`
+- `rep_roster_players.lineup_profile`
 - `rep_tryout_evaluator_sessions.created_at`
 - `rep_tryout_evaluator_sessions.evaluator_name`
 - `rep_tryout_evaluator_sessions.expires_at`
@@ -44,6 +45,11 @@ _none_
 - `rep_tryout_registrations.consent_email_comms`
 - `rep_tryout_registrations.consent_ip`
 - `rep_tryout_registrations.is_checked_in`
+- `rep_tryout_registrations.offer_expires_at`
+- `rep_tryout_registrations.offer_responded_at`
+- `rep_tryout_registrations.offer_response`
+- `rep_tryout_registrations.offer_sent_at`
+- `rep_tryout_registrations.offer_token_hash`
 - `rep_tryout_rubrics.categories`
 - `rep_tryout_rubrics.created_at`
 - `rep_tryout_rubrics.id`
@@ -121,7 +127,7 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (28)
+### Only in DEV (29)
 - `league_practices_recurrence_idx`
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
@@ -131,6 +137,7 @@ _none_
 - `rep_tryout_evaluator_sessions_token_uq`
 - `rep_tryout_evaluator_sessions_tryout_idx`
 - `rep_tryout_registrations_bib_uq`
+- `rep_tryout_registrations_offer_token_uq`
 - `rep_tryout_rubrics_org_idx`
 - `rep_tryout_rubrics_pkey`
 - `rep_tryout_rubrics_team_idx`
@@ -211,7 +218,8 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (3)
+### CHECK only in DEV (4)
+- `rep_tryout_registrations.rep_tryout_registrations_offer_response_check`
 - `rep_tryout_rubrics.rep_tryout_rubrics_scale_max_check`
 - `rep_tryout_scores.rep_tryout_scores_score_check`
 - `rep_tryout_sessions.rep_tryout_sessions_status_check`

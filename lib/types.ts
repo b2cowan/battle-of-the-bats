@@ -1196,6 +1196,22 @@ export interface RepTryoutScore {
   updatedAt: string;
 }
 
+// Lineup Intelligence player profile (mig 171). Additive richness ON TOP of primary/secondary,
+// which stay authoritative for the top-two "Best" positions. Null on legacy rows and on rows
+// created by non-picker paths (quick-add, tryout-accept, season rollover). Shape + vocabulary are
+// app-enforced (lib/lineup-profile.ts, validated against the team Sport Pack) — no DB CHECK.
+export interface LineupPitcherProfile {
+  rank: number;              // 1 = ace; lower number = higher priority (P2)
+  maxInnings: number | null; // per-player arm-care cap; null = use the season default (P2)
+}
+export interface LineupProfile {
+  morePreferred: string[];   // "Best" positions ranked 3+ (primary/secondary hold ranks 1 & 2)
+  canPlay: string[];         // "Okay" — fill in if needed
+  never: string[];           // hard exclusions the auto-fill will NEVER assign
+  pitcher: LineupPitcherProfile | null; // P2; null = not a pitcher
+  aSquad: boolean;           // P4; gold-medal starter
+}
+
 export interface RepRosterPlayer {
   id: string;
   programYearId: string;
@@ -1223,6 +1239,8 @@ export interface RepRosterPlayer {
   bats: string | null;        // 'L' | 'R' | 'S'
   throws: string | null;      // 'L' | 'R'
   jerseySize: string | null;  // YS|YM|YL|AS|AM|AL|AXL
+  // Lineup Intelligence profile (mig 171) — enriches auto-fill; null on legacy/non-picker rows.
+  lineupProfile: LineupProfile | null;
   createdAt: string;
   updatedAt: string;
 }

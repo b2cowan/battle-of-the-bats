@@ -144,10 +144,18 @@ export interface SportPack {
   /** Roster positions offered as a dropdown (empty = free-text only). Shared vocabulary
    *  with game lineups so a player's position reads the same everywhere. */
   positions: string[];
+  /** The on-field positions the lineup auto-fill assigns — exactly one player each, per
+   *  inning/period. A subset of `positions`, excluding bat-only / catch-all roles (DH, the
+   *  generic OF). Empty when the sport has no fixed fielding slots (auto-fill degrades to a
+   *  no-op). Keep the generator sport-neutral by passing this in, never hard-coding codes. */
+  fieldPositions: string[];
 }
 
-/** Diamond fielding positions — shared by softball and baseball. */
-const DIAMOND_POSITIONS = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'DH'];
+/** Diamond field positions the lineup auto-fill assigns — the 9 standard defensive spots,
+ *  one player each per inning. Shared by softball and baseball. */
+const DIAMOND_FIELD_POSITIONS = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF'];
+/** Full diamond roster vocabulary — the 9 field spots plus the generic OF catch-all and DH. */
+const DIAMOND_POSITIONS = [...DIAMOND_FIELD_POSITIONS, 'OF', 'DH'];
 
 const SOFTBALL_PACK: SportPack = {
   id: 'softball',
@@ -175,6 +183,7 @@ const SOFTBALL_PACK: SportPack = {
   defaultPeriodCount: 7,
   startVerb: 'First pitch',
   positions: DIAMOND_POSITIONS,
+  fieldPositions: DIAMOND_FIELD_POSITIONS,
 };
 
 // Baseball ≈ softball scoring (runs, innings, first pitch, diamond, mercy/diff cap), so it
@@ -206,6 +215,7 @@ const BASEBALL_PACK: SportPack = {
   defaultPeriodCount: 9,
   startVerb: 'First pitch',
   positions: DIAMOND_POSITIONS,
+  fieldPositions: DIAMOND_FIELD_POSITIONS,
 };
 
 // First differently-scored pack — proves the model. Basketball: points (not runs), four
@@ -236,6 +246,7 @@ const BASKETBALL_PACK: SportPack = {
   defaultPeriodCount: 4,
   startVerb: 'Tip-off',
   positions: ['PG', 'SG', 'SF', 'PF', 'C'],
+  fieldPositions: ['PG', 'SG', 'SF', 'PF', 'C'],
 };
 
 // Neutral fallback for any sport without a tailored pack yet (incl. 'other'). Sport-safe
@@ -267,6 +278,7 @@ const GENERIC_PACK: SportPack = {
   defaultPeriodCount: 2,
   startVerb: 'Tournament starts',
   positions: [],
+  fieldPositions: [],
 };
 
 const TAILORED_PACKS: Partial<Record<SportId, SportPack>> = {

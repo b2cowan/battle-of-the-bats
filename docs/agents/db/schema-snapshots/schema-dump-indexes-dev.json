@@ -1546,6 +1546,11 @@
   },
   {
     "tablename": "rep_tryout_registrations",
+    "indexname": "rep_tryout_registrations_offer_token_uq",
+    "indexdef": "CREATE UNIQUE INDEX rep_tryout_registrations_offer_token_uq ON public.rep_tryout_registrations USING btree (offer_token_hash) WHERE (offer_token_hash IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_tryout_registrations",
     "indexname": "rep_tryout_registrations_pkey",
     "indexdef": "CREATE UNIQUE INDEX rep_tryout_registrations_pkey ON public.rep_tryout_registrations USING btree (id)"
   },

@@ -3757,7 +3757,7 @@ export async function getRepTeams(orgId: string, groupId?: string | null, scopeG
 
 // ── Rep Team Groups ────────────────────────────────────────────────────────────
 
-import type { RepTeamGroup, RepEventResource } from './types';
+import type { RepTeamGroup, RepEventResource, LineupProfile } from './types';
 
 function mapRepTeamGroup(r: any): RepTeamGroup {
   return {
@@ -4158,6 +4158,7 @@ export interface CoachingAssignment {
   teamName: string;
   teamSlug: string;
   teamColor: string | null;
+  teamSport: string;
   programYearId: string;
   programYearName: string;
   programYearStatus: RepProgramYearStatus;
@@ -4171,7 +4172,7 @@ type CoachingAssignmentRow = {
   team_id: string;
   program_year_id: string;
   coach_role: string;
-  rep_teams?: { name?: string | null; slug?: string | null; color?: string | null } | null;
+  rep_teams?: { name?: string | null; slug?: string | null; color?: string | null; sport?: string | null } | null;
   rep_program_years?: { name?: string | null; status?: RepProgramYearStatus | null } | null;
 };
 
@@ -4264,7 +4265,7 @@ export async function getCoachingAssignmentsForUser(
       team_id,
       program_year_id,
       coach_role,
-      rep_teams!team_id ( name, slug, color ),
+      rep_teams!team_id ( name, slug, color, sport ),
       rep_program_years!program_year_id ( name, status )
     `)
     .eq('org_id', orgId)
@@ -4293,6 +4294,7 @@ export async function getCoachingAssignmentsForUser(
     teamName: r.rep_teams?.name ?? '',
     teamSlug: r.rep_teams?.slug ?? '',
     teamColor: r.rep_teams?.color ?? null,
+    teamSport: r.rep_teams?.sport ?? DEFAULT_SPORT,
     programYearId: r.program_year_id,
     programYearName: r.rep_program_years?.name ?? '',
     programYearStatus: r.rep_program_years?.status as RepProgramYearStatus,
@@ -5117,6 +5119,7 @@ function mapRepRosterPlayer(r: any): RepRosterPlayer {
     bats: r.bats ?? null,
     throws: r.throws ?? null,
     jerseySize: r.jersey_size ?? null,
+    lineupProfile: (r.lineup_profile ?? null) as LineupProfile | null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -5167,6 +5170,7 @@ export async function createRepRosterPlayer(fields: {
   bats?: string | null;
   throws?: string | null;
   jerseySize?: string | null;
+  lineupProfile?: LineupProfile | null;
   sourceBasicPlayerId?: string | null;
 }): Promise<RepRosterPlayer> {
   // Append new players at the end of the manual roster order (parity with the Basic roster — a coach
@@ -5209,6 +5213,7 @@ export async function createRepRosterPlayer(fields: {
       bats: fields.bats ?? null,
       throws: fields.throws ?? null,
       jersey_size: fields.jerseySize ?? null,
+      lineup_profile: fields.lineupProfile ?? null,
       display_order: nextDisplayOrder,
       source_basic_player_id: fields.sourceBasicPlayerId ?? null,
     })
@@ -5238,6 +5243,7 @@ export async function updateRepRosterPlayer(playerId: string, fields: {
   bats?: string | null;
   throws?: string | null;
   jerseySize?: string | null;
+  lineupProfile?: LineupProfile | null;
 }): Promise<RepRosterPlayer> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.playerFirstName !== undefined) patch.player_first_name = fields.playerFirstName;
@@ -5259,6 +5265,7 @@ export async function updateRepRosterPlayer(playerId: string, fields: {
   if (fields.bats !== undefined) patch.bats = fields.bats;
   if (fields.throws !== undefined) patch.throws = fields.throws;
   if (fields.jerseySize !== undefined) patch.jersey_size = fields.jerseySize;
+  if (fields.lineupProfile !== undefined) patch.lineup_profile = fields.lineupProfile;
   const { data, error } = await supabaseAdmin
     .from('rep_roster_players')
     .update(patch)

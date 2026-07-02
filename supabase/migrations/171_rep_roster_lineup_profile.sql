@@ -1,0 +1,21 @@
+-- Lineup Intelligence P1 (docs/projects/active/COACHES_PORTAL_LINEUP_INTELLIGENCE_PLAN.md):
+-- a per-player jsonb profile that enriches lineup auto-fill beyond primary/secondary position.
+--
+-- ADDITIVE + nullable. primary_position and secondary_position (mig 070) STAY authoritative for
+-- the top-two "Best" positions; this column carries only the EXTRA richness, so every existing
+-- reader/writer of those columns keeps working untouched. A NULL profile => the generator/readers
+-- fall back to primary/secondary alone (legacy rows and quick-add/tryout-accept/rollover paths).
+--
+-- Shape (app-enforced in lib/lineup-profile.ts — NOT DB constraints, so the vocabulary can evolve
+-- without an ALTER TABLE, mirroring this table's other UI-shaped fields):
+--   {
+--     "morePreferred": ["3B"],        -- "Best" positions ranked 3+ (ranks 1 & 2 live in the columns)
+--     "canPlay":       ["1B"],        -- "Okay" — fill in if needed
+--     "never":         ["P","C"],     -- hard exclusions the auto-fill will NEVER assign
+--     "pitcher":       { "rank": 1, "maxInnings": 2 } | null,  -- P2; absent/null = not a pitcher
+--     "aSquad":        true           -- P4; gold-medal starter
+--   }
+-- Positions are validated against the team's Sport Pack at write time. Legacy rows stay NULL and
+-- are filled in prospectively by coach edits. Reversible (DROP COLUMN) with no data dependency.
+ALTER TABLE rep_roster_players
+  ADD COLUMN IF NOT EXISTS lineup_profile jsonb;

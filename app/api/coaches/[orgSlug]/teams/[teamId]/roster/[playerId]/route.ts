@@ -9,8 +9,10 @@ import {
   getRepPlayerAttendanceSummary,
   getRepPlayerDuesSummary,
 } from '@/lib/db';
-import type { RepRosterStatus } from '@/lib/types';
+import type { RepRosterStatus, LineupProfile } from '@/lib/types';
 import { BATS_OPTIONS, THROWS_OPTIONS, JERSEY_SIZE_OPTIONS, normalizeOption } from '@/lib/rep-roster-options';
+import { getSportPack } from '@/lib/sports';
+import { buildLineupProfileWrite } from '@/lib/lineup-profile';
 import { withObservability } from '@/lib/observability';
 
 function trimmedOrNull(v: unknown): string | null {
@@ -66,7 +68,7 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId, playerId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx } = resolved;
+  const { ctx, team } = resolved;
 
   const player = await getRepRosterPlayer(playerId);
   if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id) {
@@ -75,13 +77,30 @@ export const PATCH = withObservability(async (req: Request,
 
   const body = await req.json();
 
+  // Lineup Intelligence: the Best/Okay/Never picker sends a `lineupProfile` payload; derive the
+  // primary/secondary columns + the stored profile from it server-side so they can't drift. Falls
+  // back to explicit primary/secondary for legacy/quick-add-style callers.
+  let positionWrite: {
+    primaryPosition?: string | null;
+    secondaryPosition?: string | null;
+    lineupProfile?: LineupProfile | null;
+  };
+  if (body.lineupProfile != null) {
+    const validPositions = getSportPack(team.sport).positions;
+    positionWrite = buildLineupProfileWrite(body.lineupProfile, validPositions);
+  } else {
+    positionWrite = {
+      primaryPosition:  body.primaryPosition  !== undefined ? (body.primaryPosition?.trim() || null)   : undefined,
+      secondaryPosition:body.secondaryPosition!== undefined ? (body.secondaryPosition?.trim() || null) : undefined,
+    };
+  }
+
   const updated = await updateRepRosterPlayer(playerId, {
     playerFirstName:  body.playerFirstName  !== undefined ? String(body.playerFirstName).trim()  : undefined,
     playerLastName:   body.playerLastName   !== undefined ? String(body.playerLastName).trim()   : undefined,
     playerDateOfBirth:body.playerDateOfBirth !== undefined ? (body.playerDateOfBirth || null)     : undefined,
     playerNumber:     body.playerNumber     !== undefined ? (body.playerNumber?.trim() || null)   : undefined,
-    primaryPosition:  body.primaryPosition  !== undefined ? (body.primaryPosition?.trim() || null) : undefined,
-    secondaryPosition:body.secondaryPosition!== undefined ? (body.secondaryPosition?.trim() || null) : undefined,
+    ...positionWrite,
     status:           body.status           !== undefined ? body.status as RepRosterStatus        : undefined,
     guardianFirstName:body.guardianFirstName !== undefined ? String(body.guardianFirstName).trim(): undefined,
     guardianLastName: body.guardianLastName  !== undefined ? String(body.guardianLastName).trim() : undefined,

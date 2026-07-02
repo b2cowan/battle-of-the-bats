@@ -1799,7 +1799,10 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_roster_players.primary_position -->
 <!-- dict:col:rep_roster_players.secondary_position -->
-**`primary_position` / `secondary_position`** (text, nullable; mig 070) — **free text, no CHECK** (any string accepted). Not populated by tryout conversion.
+**`primary_position` / `secondary_position`** (text, nullable; mig 070) — **free text, no CHECK** (any string accepted). Not populated by tryout conversion. **Remain authoritative for the top-two "Best" positions** even after `lineup_profile` (mig 171) — the profile only carries ranks 3+, "Okay", "Never", pitcher & A-squad data. Readers reconstruct the full preferred list as `[primary_position, secondary_position, ...lineup_profile.morePreferred]`.
+
+<!-- dict:col:rep_roster_players.lineup_profile -->
+**`lineup_profile`** (jsonb, nullable; mig 171) — Lineup Intelligence player profile that enriches lineup auto-fill beyond primary/secondary. **Additive**; NULL on legacy rows and on rows created by non-picker paths (quick-add, tryout-accept, season rollover) — the generator/readers fall back to `primary_position`/`secondary_position` alone when it's NULL. Shape (**app-enforced in `lib/lineup-profile.ts`, NO DB CHECK** so the vocabulary can evolve): `{ morePreferred: string[] (Best ranks 3+), canPlay: string[] (Okay), never: string[] (hard exclusions the auto-fill never assigns), pitcher: { rank: number, maxInnings: number|null } | null (P2; null = not a pitcher), aSquad: boolean (P4; gold-medal starter) }`. Positions validated against the team's Sport Pack (`lib/sports.ts`) at write time. See docs/projects/active/COACHES_PORTAL_LINEUP_INTELLIGENCE_PLAN.md.
 
 <!-- dict:col:rep_roster_players.guardian_first_name -->
 <!-- dict:col:rep_roster_players.guardian_last_name -->

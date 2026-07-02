@@ -33,10 +33,6 @@ const STATUS_CSS: Record<string, string> = {
   inactive: styles.badgeDraft,
 };
 
-// Rep teams don't carry a sport yet, so default to the softball/baseball diamond.
-// When teams store a sport, source this from that instead of DEFAULT_SPORT.
-const ROSTER_POSITIONS = getSportPack(DEFAULT_SPORT).positions;
-
 // ── Export definition ─────────────────────────────────────────────────────────
 
 const ROSTER_EXPORT_COLS: ExportColumnDef[] = [
@@ -111,6 +107,9 @@ export default function RosterPage({
   const { assignments, loading: assignmentsLoading } = useCoaches();
   const { currentOrg } = useOrg();
   const assignment = assignments.find(a => a.teamId === teamId);
+  // Quick-add position dropdowns offer the sport's assignable FIELD positions (the ones auto-fill
+  // uses) — not the OF catch-all or DH. PositionSelect keeps a "Custom…" escape for edge cases.
+  const rosterPositions = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT).fieldPositions;
 
   const [players, setPlayers] = useState<RepRosterPlayer[]>([]);
   const [programYear, setProgramYear] = useState<RepProgramYear | null>(null);
@@ -570,14 +569,14 @@ export default function RosterPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-primary-position">Primary Position</label>
-                <PositionSelect id="add-primary-position" positions={ROSTER_POSITIONS}
+                <PositionSelect id="add-primary-position" positions={rosterPositions}
                   selectClass={styles.select} inputClass={styles.input}
                   value={addForm.primaryPosition}
                   onChange={v => setAddForm(f => ({ ...f, primaryPosition: v }))} />
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-secondary-position">Secondary Position</label>
-                <PositionSelect id="add-secondary-position" positions={ROSTER_POSITIONS}
+                <PositionSelect id="add-secondary-position" positions={rosterPositions}
                   selectClass={styles.select} inputClass={styles.input}
                   value={addForm.secondaryPosition}
                   onChange={v => setAddForm(f => ({ ...f, secondaryPosition: v }))} />

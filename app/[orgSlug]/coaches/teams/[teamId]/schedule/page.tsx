@@ -17,6 +17,7 @@ import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { analyzeLineup } from '@/lib/lineup-analysis';
 import { generateBestLineup, type PositionPolicy, type FillMode } from '@/lib/lineup-generator';
+import { playerPositionPrefs } from '@/lib/lineup-profile';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
   buildFilename, serializeRows, serializeHeaders, DEFAULT_PDF_SETTINGS,
@@ -24,7 +25,7 @@ import {
   type ExportColumnDef, type ICSEventInput, type OrgPdfSettings, type LineupPosterPlayer,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
-import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, Undo2, Redo2, Eraser, Printer } from 'lucide-react';
+import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, Undo2, Redo2, Eraser, Printer, ClipboardList } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import styles from '../../../coaches.module.css';
 import type {
@@ -33,6 +34,7 @@ import type {
   RepRosterPlayer,
   RepTeamEvent,
   RepTeamEventAttendance,
+  RepTryoutSession,
   RepTeamLineup,
   RepTeamLineupEntry,
   RepTeamLineupTemplate,
@@ -522,6 +524,23 @@ function SortableLineupRow({
   );
 }
 
+// A tryout session projected onto the calendar — read-only, visually distinct from a game (dashed,
+// clipboard, "Tryout" label), links to the Tryouts tab rather than opening the event editor.
+function TryoutChip({ session, href }: { session: RepTryoutSession; href: string }) {
+  const start = new Date(session.startsAt.slice(0, 19)); // wall-clock, no TZ shift
+  const time = isNaN(start.getTime()) ? '' : start.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
+  const place = [session.label, session.location, session.fieldNumber && `Field ${session.fieldNumber}`].filter(Boolean).join(' · ');
+  return (
+    <Link href={href} className={`${styles.eventChip} ${styles.tryoutChip}`} title="Tryout — opens your Tryouts tab">
+      <span className={styles.eventChipTime}>{time}</span>
+      <span className={styles.eventChipName}>
+        <ClipboardList size={12} style={{ verticalAlign: '-2px', marginRight: 4 }} aria-hidden />
+        Tryout{place ? <span className={styles.eventChipOpp}> · {place}</span> : null}
+      </span>
+    </Link>
+  );
+}
+
 function EventChip({ event, onClick, dayKey }: { event: RepTeamEvent; onClick: () => void; dayKey?: string }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
@@ -586,11 +605,13 @@ export default function CoachesSchedulePage({
   const { orgSlug, teamId } = use(params);
   const { assignments, loading: ctxLoading } = useCoaches();
   const { currentOrg } = useOrg();
-  // Sport vocabulary (period word, position legend) routes through the Sport Pack.
-  // The coach portal is softball/baseball today; a team-sport field would feed this later.
-  const sportPack = getSportPack(DEFAULT_SPORT);
+  // Sport vocabulary (period word, position legend, field positions the auto-fill assigns)
+  // routes through this team's Sport Pack. Falls back to the default sport until the coaching
+  // assignment loads (both offered sports today are diamond, so the fallback is harmless).
+  const sportPack = getSportPack(assignments.find(a => a.teamId === teamId)?.teamSport ?? DEFAULT_SPORT);
 
   const [events, setEvents] = useState<RepTeamEvent[]>([]);
+  const [tryoutSessions, setTryoutSessions] = useState<RepTryoutSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -697,6 +718,12 @@ export default function CoachesSchedulePage({
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setEvents(data.events ?? []);
+      // Tryout sessions are projected onto the calendar as read-only markers. Non-fatal: if this
+      // fails the schedule still works, tryout dates just won't show.
+      try {
+        const tRes = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tryout-sessions`);
+        if (tRes.ok) { const tData = await tRes.json(); setTryoutSessions(tData.sessions ?? []); }
+      } catch { /* ignore — tryout markers are optional */ }
     } catch (e: unknown) {
       setError(errorMessage(e, 'Failed to load events'));
     } finally {
@@ -1043,6 +1070,7 @@ export default function CoachesSchedulePage({
   const lineupAnalysis = analyzeLineup(
     lineupRows.map(r => ({ playerId: r.player.id, inningPositions: r.inningPositions })),
     lineupInningCount,
+    sportPack.fieldPositions,
   );
   const fairPlayByPlayer = new Map(lineupAnalysis.fairPlay.map(f => [f.playerId, f]));
   const summaryPositions = POSITION_ORDER.filter(pos => lineupAnalysis.fairPlay.some(f => (f.positionCounts[pos] ?? 0) > 0));
@@ -1096,15 +1124,20 @@ export default function CoachesSchedulePage({
     const benchOnly = lineupMode === 'nine_player' ? lineupRows.filter(r => !r.starter) : [];
 
     const generated = generateBestLineup({
-      players: fielders.map(r => ({
-        playerId: r.player.id,
-        primaryPosition: r.player.primaryPosition,
-        secondaryPosition: r.player.secondaryPosition,
-        inningPositions: r.inningPositions,
-      })),
+      players: fielders.map(r => {
+        const prefs = playerPositionPrefs(r.player);
+        return {
+          playerId: r.player.id,
+          preferred: prefs.preferred,
+          canPlay: prefs.canPlay,
+          never: prefs.never,
+          inningPositions: r.inningPositions,
+        };
+      }),
       inningCount: lineupInningCount,
       policy: autoPolicy,
       fillMode: autoFillMode,
+      fieldPositions: sportPack.fieldPositions,
     });
 
     const benchAllInnings: Record<string, string> = {};
@@ -1784,7 +1817,7 @@ export default function CoachesSchedulePage({
   const curWeek  = weekKey(cursorDate + 'T00:00:00');
 
   function renderListView() {
-    if (!events.length) {
+    if (!events.length && !tryoutSessions.length) {
       return (
         <CoachEmptyState
           icon={<Calendar size={22} aria-hidden />}
@@ -1804,14 +1837,24 @@ export default function CoachesSchedulePage({
       const mk = monthKey(e.startsAt);
       (grouped[mk] ??= []).push(e);
     }
-    return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([mk, evts]) => {
+    const tryByMonth: Record<string, RepTryoutSession[]> = {};
+    for (const s of tryoutSessions) {
+      const mk = s.startsAt.slice(0, 7); // wall-clock YYYY-MM (consistent with the week/month day slice)
+      (tryByMonth[mk] ??= []).push(s);
+    }
+    const months = Array.from(new Set([...Object.keys(grouped), ...Object.keys(tryByMonth)])).sort((a, b) => a.localeCompare(b));
+    return months.map(mk => {
       const label = new Date(mk + '-01').toLocaleDateString('en-CA', { month: 'long', year: 'numeric' });
+      const trys = (tryByMonth[mk] ?? []).slice().sort((a, b) => a.startsAt.localeCompare(b.startsAt));
       return (
         <div key={mk} className={styles.calMonthGroup}>
           <div className={styles.calMonthLabel}>{label}</div>
           <div className={styles.calEventList}>
-            {evts.map(e => (
+            {(grouped[mk] ?? []).map(e => (
               <EventChip key={e.id} event={e} onClick={() => openEvent(e)} />
+            ))}
+            {trys.map(s => (
+              <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} />
             ))}
           </div>
         </div>
@@ -1831,17 +1874,25 @@ export default function CoachesSchedulePage({
         {days.map(day => {
           const key = day.toISOString().slice(0, 10);
           const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
+          const dayTryouts = tryoutSessions.filter(s => s.startsAt.slice(0, 10) === key);
           return (
             <div key={key} className={styles.calWeekDay}>
               <div className={styles.calWeekDayLabel}>
                 {day.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })}
               </div>
               <div className={styles.calWeekDayEvents}>
-                {dayEvents.length === 0
+                {dayEvents.length === 0 && dayTryouts.length === 0
                   ? <span className={styles.calWeekEmpty}>—</span>
-                  : dayEvents.map(e => (
-                    <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} />
-                  ))
+                  : (
+                    <>
+                      {dayEvents.map(e => (
+                        <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} />
+                      ))}
+                      {dayTryouts.map(s => (
+                        <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} />
+                      ))}
+                    </>
+                  )
                 }
               </div>
             </div>
@@ -1871,6 +1922,7 @@ export default function CoachesSchedulePage({
           if (!day) return <div key={i} className={styles.calMonthCell} />;
           const key = day.toISOString().slice(0, 10);
           const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
+          const dayTryouts = tryoutSessions.filter(s => s.startsAt.slice(0, 10) === key);
           const isToday = key === new Date().toISOString().slice(0, 10);
           return (
             <div key={key} className={`${styles.calMonthCell} ${isToday ? styles.calMonthCellToday : ''}`}>
@@ -1904,6 +1956,16 @@ export default function CoachesSchedulePage({
                   >
                     +{dayEvents.length - 3} more
                   </button>
+                )}
+                {dayTryouts.length > 0 && (
+                  <Link
+                    href={`${base}/tryouts`}
+                    className={styles.calMonthEventDot}
+                    style={{ background: 'transparent', border: '1px dashed rgba(255,255,255,0.4)', color: 'rgba(255,255,255,0.75)' }}
+                    title="Tryout"
+                  >
+                    Tryout
+                  </Link>
                 )}
               </div>
             </div>
@@ -2560,6 +2622,11 @@ export default function CoachesSchedulePage({
                     {lineupAnalysis.hasConflicts && (
                       <p className={styles.lineupWarn}>
                         ⚠ Position clash: {lineupAnalysis.conflicts.map(c => `two at ${c.position} in inning ${c.inning}`).join(' · ')}
+                      </p>
+                    )}
+                    {lineupAnalysis.unfilledFieldPositions.length > 0 && (
+                      <p className={styles.lineupWarn}>
+                        ⚠ Couldn&apos;t fill {lineupAnalysis.unfilledFieldPositions.map(u => `${u.positions.join(', ')} in ${sportPack.periodLabel.toLowerCase()} ${u.inning}`).join(' · ')} — a player may have this spot set to &ldquo;Never,&rdquo; leaving no one eligible.
                       </p>
                     )}
                     {lineupAnalysis.benchSpread && (lineupAnalysis.benchSpread.max - lineupAnalysis.benchSpread.min) > 1 && (

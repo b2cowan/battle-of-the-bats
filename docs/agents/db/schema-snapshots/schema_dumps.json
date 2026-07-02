@@ -9227,6 +9227,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_roster_players",
+        "pos": 30,
+        "column_name": "lineup_profile",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_season_surplus",
         "pos": 1,
         "column_name": "id",
@@ -10931,6 +10940,51 @@
         "table_name": "rep_tryout_registrations",
         "pos": 24,
         "column_name": "checked_in_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "pos": 25,
+        "column_name": "offer_token_hash",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "pos": 26,
+        "column_name": "offer_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "pos": 27,
+        "column_name": "offer_expires_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "pos": 28,
+        "column_name": "offer_response",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "pos": 29,
+        "column_name": "offer_responded_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "YES",
@@ -17045,6 +17099,11 @@
       },
       {
         "tablename": "rep_tryout_registrations",
+        "indexname": "rep_tryout_registrations_offer_token_uq",
+        "indexdef": "CREATE UNIQUE INDEX rep_tryout_registrations_offer_token_uq ON public.rep_tryout_registrations USING btree (offer_token_hash) WHERE (offer_token_hash IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_tryout_registrations",
         "indexname": "rep_tryout_registrations_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_tryout_registrations_pkey ON public.rep_tryout_registrations USING btree (id)"
       },
@@ -18790,6 +18849,12 @@
         "table_name": "rep_tryout_evaluator_sessions",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_tryout_registrations",
+        "detail": "rep_tryout_registrations_offer_response_check",
+        "check_clause": "((offer_response IS NULL) OR (offer_response = ANY (ARRAY['accepted'::text, 'declined'::text])))"
       },
       {
         "kind": "CHECK",

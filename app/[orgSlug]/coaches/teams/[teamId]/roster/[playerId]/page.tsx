@@ -5,9 +5,10 @@ import { ChevronRight, AlertTriangle, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection';
-import PositionSelect from '@/components/coaches/PositionSelect';
+import PositionProfileEditor, { type PositionProfileValue } from '@/components/coaches/PositionProfileEditor';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { playerPositionPrefs } from '@/lib/lineup-profile';
 import {
   BATS_OPTIONS, THROWS_OPTIONS, JERSEY_SIZE_OPTIONS,
   BATS_LABELS, THROWS_LABELS, JERSEY_SIZE_LABELS,
@@ -41,13 +42,10 @@ const STATUS_CSS: Record<string, string> = {
   inactive: styles.badgeDraft,
 };
 
-// Rep teams don't carry a sport yet — default to the softball/baseball diamond.
-const PROFILE_POSITIONS = getSportPack(DEFAULT_SPORT).positions;
-
 interface EditForm {
   playerFirstName: string; playerLastName: string;
   playerDateOfBirth: string; playerNumber: string;
-  primaryPosition: string; secondaryPosition: string;
+  positions: PositionProfileValue;
   guardianFirstName: string; guardianLastName: string;
   guardianEmail: string; guardianPhone: string;
   notes: string;
@@ -68,8 +66,7 @@ function playerToForm(p: RepRosterPlayer): EditForm {
     playerLastName:    clean(p.playerLastName),
     playerDateOfBirth: p.playerDateOfBirth ?? '',
     playerNumber:      clean(p.playerNumber),
-    primaryPosition:   clean(p.primaryPosition),
-    secondaryPosition: clean(p.secondaryPosition),
+    positions:         (() => { const prefs = playerPositionPrefs(p); return { best: prefs.preferred, okay: prefs.canPlay, never: prefs.never }; })(),
     guardianFirstName: clean(p.guardianFirstName),
     guardianLastName:  clean(p.guardianLastName),
     guardianEmail:     clean(p.guardianEmail),
@@ -124,6 +121,10 @@ export default function PlayerDetailPage({
   const { orgSlug, teamId, playerId } = use(params);
   const { assignments, loading: assignmentsLoading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === teamId);
+  // The Positions picker offers the sport's assignable FIELD positions (the ones auto-fill can
+  // actually use) — not the OF catch-all or DH, which the generator never assigns. Falls back to
+  // the default sport until the assignment loads.
+  const profilePositions = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT).fieldPositions;
 
   const [player, setPlayer] = useState<RepRosterPlayer | null>(null);
   const [form, setForm] = useState<EditForm | null>(null);
@@ -181,8 +182,15 @@ export default function PlayerDetailPage({
             playerLastName:     form.playerLastName.trim() || null,
             playerDateOfBirth:  form.playerDateOfBirth || null,
             playerNumber:       form.playerNumber.trim() || null,
-            primaryPosition:    form.primaryPosition.trim() || null,
-            secondaryPosition:  form.secondaryPosition.trim() || null,
+            // Best/Okay/Never picker: the server derives primary/secondary + the stored profile.
+            // Carry any existing pitcher/A-squad data through untouched (edited in P2/P4, not here).
+            lineupProfile: {
+              preferred: form.positions.best,
+              canPlay: form.positions.okay,
+              never: form.positions.never,
+              pitcher: player.lineupProfile?.pitcher ?? null,
+              aSquad: player.lineupProfile?.aSquad ?? false,
+            },
             guardianFirstName:  form.guardianFirstName.trim() || null,
             guardianLastName:   form.guardianLastName.trim() || null,
             guardianEmail:      form.guardianEmail.trim() || null,
@@ -334,19 +342,12 @@ export default function PlayerDetailPage({
               onChange={e => setForm(f => f ? { ...f, playerNumber: e.target.value } : f)}
               maxLength={10} />
           </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="primary-position">Primary Position</label>
-            <PositionSelect id="primary-position" positions={PROFILE_POSITIONS}
-              selectClass={styles.select} inputClass={styles.input}
-              value={form.primaryPosition}
-              onChange={v => setForm(f => f ? { ...f, primaryPosition: v } : f)} />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="secondary-position">Secondary Position</label>
-            <PositionSelect id="secondary-position" positions={PROFILE_POSITIONS}
-              selectClass={styles.select} inputClass={styles.input}
-              value={form.secondaryPosition}
-              onChange={v => setForm(f => f ? { ...f, secondaryPosition: v } : f)} />
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label}>Positions</label>
+            <PositionProfileEditor
+              positions={profilePositions}
+              value={form.positions}
+              onChange={next => setForm(f => f ? { ...f, positions: next } : f)} />
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="bats">Bats</label>
