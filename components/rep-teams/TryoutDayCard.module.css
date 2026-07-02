@@ -270,6 +270,14 @@
   font-size: 0.78rem; font-weight: 700; color: var(--logic-lime, #a3e635);
 }
 
+/* 2B.5: "a spot may have opened" nudge (flag-the-coach; never auto-offers). */
+.offerNudge {
+  margin: 0 0 0.85rem; padding: 0.55rem 0.75rem;
+  font-size: 0.8rem; color: rgba(251,191,36,0.95);
+  border: 1px solid rgba(251,191,36,0.3); border-left: 3px solid rgba(251,191,36,0.6);
+  border-radius: 8px; background: rgba(251,191,36,0.06);
+}
+
 /* Decision column: the offer/waitlist/cut group plus (for offered candidates) the Accept action. */
 .decisionCol { display: flex; flex-direction: column; gap: 0.4rem; flex: 0 0 auto; align-items: stretch; }
 .acceptRosterBtn {

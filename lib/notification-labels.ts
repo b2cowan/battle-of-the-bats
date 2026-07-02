@@ -23,6 +23,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   chat_message:                      'Chat message',
   // Intentionally NOT in NOTIFICATION_SECTIONS — an @mention is always delivered (not user-mutable here).
   chat_mention:                      'Chat @mention',
+  tryout_offer_response:             'Tryout offer response',
 };
 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
@@ -40,6 +41,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   house_league_registration_new:     'A player submits a house league season registration.',
   chat_message:                      'A new message is posted in a tournament chat you are part of.',
   chat_mention:                      'Someone @mentions you in a tournament chat (always delivered).',
+  tryout_offer_response:             'A tryout family accepts or declines an offer via their link — you confirm the roster spot.',
 };
 
 // ── Section groups (org-level preferences page) ────────────────────────────────
@@ -73,7 +75,7 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
   {
     label: 'Coaches Portal',
     module: 'module_rep_teams',
-    eventTypes: ['roster_change_requested', 'coach_access_requested'],
+    eventTypes: ['roster_change_requested', 'coach_access_requested', 'tryout_offer_response'],
   },
   {
     label: 'House League',

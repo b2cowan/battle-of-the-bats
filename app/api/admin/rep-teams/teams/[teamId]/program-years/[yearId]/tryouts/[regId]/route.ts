@@ -11,7 +11,8 @@ import {
   TryoutAcceptError,
 } from '@/lib/db';
 import { deriveStandardDuesSchedule, validateAcceptDues, normalizeAcceptDues } from '@/lib/tryout-fees';
-import { sendEmail, tryoutOfferHtml, tryoutAcceptedHtml, tryoutDeclinedHtml } from '@/lib/email';
+import { applyTryoutDecisionSideEffects } from '@/lib/tryout-notifications';
+import { sendEmail, tryoutAcceptedHtml } from '@/lib/email';
 import type { RepTryoutRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
@@ -158,22 +159,17 @@ export const PATCH = withObservability(async (req: Request,
     body.adminNotes !== undefined ? body.adminNotes : reg.adminNotes,
   );
 
-  if (newStatus === 'offered') {
-    sendEmail(
-      reg.guardianEmail,
-      `${team.name} — Offer Extended`,
-      tryoutOfferHtml(emailParams),
-    ).catch(e => console.error('[email] tryout offer:', e));
-  } else if (newStatus === 'declined') {
-    sendEmail(
-      reg.guardianEmail,
-      `${team.name} — Tryout Update`,
-      tryoutDeclinedHtml(emailParams),
-    ).catch(e => console.error('[email] tryout declined:', e));
-  }
-  // Note: 'waitlisted' intentionally sends NO guardian email here — waitlist communication (and
-  // auto-promote-on-lapse) is owned by Phase 2B.5 (offer/release emails), which adds the template
-  // and copy via /marketing. Until then a waitlist placement is a silent, coach-facing state.
+  // Family-facing side effects (offer link + branded offer/waitlist/release emails) — shared with the
+  // coach decision board so both surfaces behave identically (Phase 2B.5).
+  await applyTryoutDecisionSideEffects({
+    reg: registration,
+    newStatus,
+    teamName: team.name,
+    yearName: programYear.name,
+    orgName: ctx!.org.name,
+    orgLogoUrl: ctx!.org.logoUrl ?? undefined,
+    contactEmail,
+  });
 
   return NextResponse.json({ registration });
 }, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/[regId]' });

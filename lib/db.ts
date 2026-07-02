@@ -8,6 +8,7 @@ import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueF
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
+import { generateOfferToken, hashOfferToken } from './tryout-offer-token';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
 export type { DivisionStandingRow } from './tie-breakers';
@@ -4341,6 +4342,10 @@ function mapRepTryoutRegistration(r: any): RepTryoutRegistration {
     bibNumber: r.bib_number ?? null,
     isCheckedIn: r.is_checked_in ?? false,
     checkedInAt: r.checked_in_at ?? null,
+    offerSentAt: r.offer_sent_at ?? null,
+    offerExpiresAt: r.offer_expires_at ?? null,
+    offerResponse: r.offer_response ?? null,
+    offerRespondedAt: r.offer_responded_at ?? null,
     submittedAt: r.submitted_at,
     updatedAt: r.updated_at,
   };
@@ -4494,6 +4499,129 @@ export class TryoutAcceptError extends Error {
  * With no opts the behaviour matches the pre-2B.4 admin accept exactly (roster + status, no dues) —
  * but now transactional and guarded against a double-accept race.
  */
+// ── Tryout offer response loop (Phase 2B.5) ─────────────────────────────────
+// Errors the public token route + coach routes translate to 404/409/410.
+export class TryoutOfferError extends Error {
+  code: 'not_found' | 'not_offered' | 'expired' | 'already_responded';
+  constructor(code: 'not_found' | 'not_offered' | 'expired' | 'already_responded', message: string) {
+    super(message);
+    this.name = 'TryoutOfferError';
+    this.code = code;
+  }
+}
+
+/** Default offer response window (D3: 7 days, adjustable per call). */
+export const DEFAULT_OFFER_TTL_DAYS = 7;
+
+/**
+ * Mint a fresh no-login response token for an offered candidate and stamp the send + deadline.
+ * Resets any prior response so a re-offer starts clean. Returns the RAW token (for the email URL only)
+ * + the deadline. Caller is responsible for having set status='offered'.
+ */
+export async function extendTryoutOffer(
+  regId: string,
+  ttlDays: number = DEFAULT_OFFER_TTL_DAYS,
+): Promise<{ token: string; expiresAt: string }> {
+  const token = generateOfferToken();
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + ttlDays * 24 * 60 * 60 * 1000);
+  const { error } = await supabaseAdmin
+    .from('rep_tryout_registrations')
+    .update({
+      offer_token_hash: hashOfferToken(token),
+      offer_sent_at: now.toISOString(),
+      offer_expires_at: expiresAt.toISOString(),
+      offer_response: null,
+      offer_responded_at: null,
+      updated_at: now.toISOString(),
+    })
+    .eq('id', regId);
+  if (error) throw error;
+  return { token, expiresAt: expiresAt.toISOString() };
+}
+
+/** Clear all offer state — called on any transition AWAY from 'offered' so a stale link can't be used. */
+export async function clearTryoutOffer(regId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_tryout_registrations')
+    .update({
+      offer_token_hash: null,
+      offer_sent_at: null,
+      offer_expires_at: null,
+      offer_response: null,
+      offer_responded_at: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', regId);
+  if (error) throw error;
+}
+
+/** Resolve a registration by its live offer token (hash lookup). Null if no match. */
+export async function getRepTryoutRegistrationByOfferToken(
+  token: string,
+): Promise<RepTryoutRegistration | null> {
+  // Tokens are base64url(32 bytes) = exactly 43 chars; reject anything else before hashing/DB (parity
+  // with the evaluator token resolver).
+  if (!token || token.length !== 43) return null;
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_registrations')
+    .select('*')
+    .eq('offer_token_hash', hashOfferToken(token))
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTryoutRegistration(data) : null;
+}
+
+/**
+ * Record the guardian's self-serve Accept/Decline via the token page. Single-use + deadline guarded.
+ * Does NOT change `status` (D1: the coach still finalizes) — only writes offer_response/offer_responded_at.
+ * Returns the updated registration so the caller can notify the coach.
+ */
+export async function recordTryoutOfferResponse(
+  token: string,
+  response: 'accepted' | 'declined',
+): Promise<RepTryoutRegistration> {
+  const reg = await getRepTryoutRegistrationByOfferToken(token);
+  if (!reg) throw new TryoutOfferError('not_found', 'This response link is no longer valid.');
+  if (reg.status !== 'offered') throw new TryoutOfferError('not_offered', 'This offer is no longer open.');
+  if (reg.offerRespondedAt) throw new TryoutOfferError('already_responded', 'This offer has already been answered.');
+  if (reg.offerExpiresAt && new Date(reg.offerExpiresAt).getTime() < Date.now()) {
+    throw new TryoutOfferError('expired', 'This offer has expired. Please contact the coaching staff.');
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_registrations')
+    .update({
+      offer_response: response,
+      offer_responded_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', reg.id)
+    .eq('offer_token_hash', hashOfferToken(token)) // re-assert under the same token (belt-and-suspenders)
+    .is('offer_responded_at', null)                 // atomic single-use guard
+    .select()
+    .single();
+  if (error) {
+    // PGRST116 = zero rows matched → another request already answered (lost the single-use race).
+    // Any other error is a real DB/infra failure: rethrow so withObservability captures it as a 500.
+    if ((error as { code?: string }).code === 'PGRST116') {
+      throw new TryoutOfferError('already_responded', 'This offer has already been answered.');
+    }
+    throw error;
+  }
+  return mapRepTryoutRegistration(data);
+}
+
+/** User IDs of coaches assigned to a rep team — the audience for tryout coach notifications. */
+export async function getRepTeamCoachUserIds(teamId: string): Promise<string[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_coaches')
+    .select('user_id')
+    .eq('team_id', teamId);
+  if (error) throw error;
+  return (data ?? []).map((r: { user_id: string }) => r.user_id).filter(Boolean);
+}
+
 export async function acceptTryoutAndAddToRoster(
   regId: string,
   opts?: { roster?: TryoutAcceptRosterFields; dues?: TryoutAcceptDues | null },

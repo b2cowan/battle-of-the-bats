@@ -730,6 +730,8 @@ export default function TryoutsPage({
                 )}
               </div>
 
+              {selected.status === 'offered' && <OfferStateNote reg={selected} />}
+
               {canWrite && (
                 <div className={styles.slideOverSection}>
                   <div className={styles.slideOverSectionTitle}>Actions</div>
@@ -954,6 +956,25 @@ export default function TryoutsPage({
         message={feedbackMsg}
         type={feedbackType}
       />
+    </div>
+  );
+}
+
+/** Compact "where the family's offer response stands" note in the applicant slide-over (2B.5). */
+function OfferStateNote({ reg }: { reg: RepTryoutRegistration }) {
+  const expired = !!reg.offerExpiresAt && new Date(reg.offerExpiresAt).getTime() < Date.now() && !reg.offerRespondedAt;
+  let text: string, color: string;
+  if (reg.offerResponse === 'accepted') { text = '✓ Family accepted the offer — accept below to add them to the roster.'; color = 'var(--logic-lime, #a3e635)'; }
+  else if (reg.offerResponse === 'declined') { text = '✕ Family declined the offer.'; color = '#f87171'; }
+  else if (expired) { text = 'Offer expired — no response by the deadline.'; color = '#fbbf24'; }
+  else if (reg.offerSentAt) {
+    const by = reg.offerExpiresAt ? new Date(reg.offerExpiresAt).toLocaleDateString('en-CA') : null;
+    text = by ? `Awaiting family response — respond by ${by}.` : 'Awaiting family response.'; color = 'var(--white-45, rgba(255,255,255,0.45))';
+  } else { text = 'No response link sent yet.'; color = 'var(--white-45, rgba(255,255,255,0.45))'; }
+  return (
+    <div className={styles.slideOverSection}>
+      <div className={styles.slideOverSectionTitle}>Offer response</div>
+      <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color }}>{text}</p>
     </div>
   );
 }

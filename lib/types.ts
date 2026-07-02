@@ -1100,6 +1100,13 @@ export interface RepTryoutRegistration {
   bibNumber: string | null;
   isCheckedIn: boolean;
   checkedInAt: string | null;
+  // Guardian offer-response loop (Phase 2B.5, mig 170). offerResponse is the family's self-serve
+  // answer via the no-login token page; DISTINCT from status (coach still finalizes the roster add).
+  // The token hash itself is never mapped to the client. offerExpiresAt is the 7-day deadline.
+  offerSentAt: string | null;
+  offerExpiresAt: string | null;
+  offerResponse: 'accepted' | 'declined' | null;
+  offerRespondedAt: string | null;
   submittedAt: string;
   updatedAt: string;
 }
@@ -1643,7 +1650,10 @@ export type NotificationEventType =
   // A targeted @mention — a DISTINCT, higher-priority event so it still reaches a coach who has muted
   // general chat_message notifications. Defaults push ON; intentionally not in the settings UI yet
   // (so it can't be silenced there). No DB CHECK on event_type, so this is a TS-union change only.
-  | 'chat_mention';
+  | 'chat_mention'
+  // A tryout family responded (Accept/Decline) to an offer via the no-login link (Phase 2B.5) — the
+  // coach still finalizes. Bell default on; TS-union change only (no DB CHECK on event_type).
+  | 'tryout_offer_response';
 
 export interface AppNotification {
   id: string;

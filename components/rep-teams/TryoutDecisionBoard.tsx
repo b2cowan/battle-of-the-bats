@@ -14,6 +14,9 @@ interface Candidate {
   composite: number | null;
   evaluatorCount: number;
   status: Status;
+  // 2B.5: the family's self-serve offer response + a lazily-computed deadline lapse (offered rows only).
+  offerResponse?: 'accepted' | 'declined' | null;
+  offerExpired?: boolean;
 }
 interface Counts { offered: number; waitlisted: number; declined: number; accepted: number; pending: number }
 interface Board {
@@ -162,6 +165,15 @@ export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
         <span className={styles.tallyItem} style={{ marginLeft: 'auto' }}><strong>{board.counts.pending}</strong> undecided</span>
       </div>
 
+      {/* 2B.5: a spot may have opened (a family declined or an offer lapsed) and players are waitlisted.
+          We only flag the coach — never auto-offer (D2). */}
+      {board.counts.waitlisted > 0 &&
+        board.candidates.some(c => c.status === 'offered' && (c.offerResponse === 'declined' || c.offerExpired)) && (
+        <p className={styles.offerNudge}>
+          A spot may have opened — <strong>{board.counts.waitlisted}</strong> {board.counts.waitlisted === 1 ? 'player is' : 'players are'} waitlisted. Extend an offer when you&apos;re ready.
+        </p>
+      )}
+
       <div className={styles.sessionList}>
         {board.candidates.map((c, i) => {
           const accepted = c.status === 'accepted';
@@ -196,14 +208,19 @@ export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
                     ))}
                   </div>
                   {c.status === 'offered' && (
-                    <button
-                      type="button"
-                      className={styles.acceptRosterBtn}
-                      onClick={() => openAccept(c)}
-                      disabled={!!savingId || !!acceptLoadingId}
-                    >
-                      {acceptLoadingId === c.registrationId ? 'Opening…' : 'Accept → add to roster'}
-                    </button>
+                    <>
+                      {offerBadge(c)}
+                      <button
+                        type="button"
+                        className={styles.acceptRosterBtn}
+                        onClick={() => openAccept(c)}
+                        disabled={!!savingId || !!acceptLoadingId}
+                      >
+                        {acceptLoadingId === c.registrationId ? 'Opening…'
+                          : c.offerResponse === 'accepted' ? 'Confirm → add to roster'
+                          : 'Accept → add to roster'}
+                      </button>
+                    </>
                   )}
                 </div>
               )}
@@ -222,6 +239,16 @@ export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
       )}
     </div>
   );
+}
+
+/** A small chip showing where a family's offer response stands (offered rows only). */
+function offerBadge(c: Candidate) {
+  let text: string, color: string;
+  if (c.offerResponse === 'accepted') { text = '✓ Family accepted'; color = 'var(--logic-lime, #a3e635)'; }
+  else if (c.offerResponse === 'declined') { text = '✕ Family declined'; color = '#f87171'; }
+  else if (c.offerExpired) { text = 'Offer expired'; color = '#fbbf24'; }
+  else { text = 'Awaiting response'; color = 'rgba(255,255,255,0.45)'; }
+  return <span style={{ fontSize: '0.72rem', fontWeight: 700, color, textAlign: 'right' }}>{text}</span>;
 }
 
 /** Recompute the tally after one candidate's status changes (keeps the header honest without a refetch). */

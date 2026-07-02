@@ -11,12 +11,16 @@ import {
   updateRepTryoutRegistrationStatus,
 } from '@/lib/db';
 import { rankTryoutCandidates } from '@/lib/tryout-scoring';
+import { applyTryoutDecisionSideEffects } from '@/lib/tryout-notifications';
 import { withObservability } from '@/lib/observability';
 import type { RepProgramYear, RepTryoutRegistrationStatus } from '@/lib/types';
 
 type Resolved =
   | { ok: false; res: Response }
-  | { ok: true; orgId: string; teamId: string; programYear: RepProgramYear };
+  | {
+      ok: true; orgId: string; teamId: string; programYear: RepProgramYear;
+      teamName: string; orgName: string; orgLogoUrl?: string; contactEmail?: string;
+    };
 
 async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -28,7 +32,10 @@ async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> 
   if (!assignments.some(a => a.teamId === teamId)) return { ok: false, res: forbidden() };
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) return { ok: false, res: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
-  return { ok: true, orgId: ctx.org.id, teamId, programYear };
+  return {
+    ok: true, orgId: ctx.org.id, teamId, programYear,
+    teamName: team.name, orgName: ctx.org.name, orgLogoUrl: ctx.org.logoUrl, contactEmail: ctx.org.contactEmail ?? undefined,
+  };
 }
 
 // Decision → candidate status. Offer/Waitlist/Not this season are the only board actions.
@@ -59,10 +66,21 @@ export const GET = withObservability(async (_req: Request,
 
   // Withdrawn candidates pulled themselves out — not part of the coach's decision set.
   const inPlay = registrations.filter(reg => reg.status !== 'withdrawn');
-  const statusById = new Map(inPlay.map(reg => [reg.id, reg.status]));
+  const regById = new Map(inPlay.map(reg => [reg.id, reg]));
+  const now = Date.now();
 
+  // 2B.5: surface the family's offer response + a lazily-computed "expired" flag (no status mutation).
   const ranked = rankTryoutCandidates(inPlay, categories, scores, { blind })
-    .map(c => ({ ...c, status: statusById.get(c.registrationId) ?? 'pending_review' }));
+    .map(c => {
+      const reg = regById.get(c.registrationId);
+      const offerExpired = !!reg?.offerExpiresAt && new Date(reg.offerExpiresAt).getTime() < now && !reg?.offerRespondedAt;
+      return {
+        ...c,
+        status: reg?.status ?? 'pending_review',
+        offerResponse: reg?.offerResponse ?? null,
+        offerExpired,
+      };
+    });
 
   const counts = { offered: 0, waitlisted: 0, declined: 0, accepted: 0, pending: 0 };
   for (const reg of inPlay) {
@@ -107,5 +125,18 @@ export const POST = withObservability(async (req: Request,
   }
 
   const updated = await updateRepTryoutRegistrationStatus(registrationId, nextStatus);
+
+  // Family-facing side effects — same shared path as the admin route (offer link + branded emails).
+  // The coach board previously sent NO email on offer/waitlist/cut; 2B.5 makes them consistent.
+  await applyTryoutDecisionSideEffects({
+    reg: updated,
+    newStatus: nextStatus,
+    teamName: r.teamName,
+    yearName: r.programYear.name,
+    orgName: r.orgName,
+    orgLogoUrl: r.orgLogoUrl,
+    contactEmail: r.contactEmail,
+  });
+
   return NextResponse.json({ registrationId, status: updated.status });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-decisions' });

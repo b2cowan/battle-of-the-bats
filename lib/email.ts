@@ -838,6 +838,20 @@ export function tryoutRegistrationConfirmationHtml(p: {
 
 // ── Rep Teams tryout status emails ───────────────────────────────────────────
 
+/** An org-brand line for family-facing tryout emails — features the CLUB's name (and logo if set). */
+function orgBrandHeader(orgName?: string, orgLogoUrl?: string): string {
+  if (!orgName) return '';
+  // Only allow an http(s) logo URL, and escape quotes so it can't break out of the src attribute.
+  const safeLogoUrl = orgLogoUrl && /^https?:\/\//i.test(orgLogoUrl) ? orgLogoUrl.replace(/"/g, '&quot;') : '';
+  const logo = safeLogoUrl
+    ? `<img src="${safeLogoUrl}" alt="" height="32" style="height:32px;width:auto;vertical-align:middle;margin-right:0.6rem;border-radius:4px;">`
+    : '';
+  return `
+    <div style="margin:0 0 1.25rem;">
+      ${logo}<span style="font-size:0.95rem;font-weight:800;color:#F1F5F9;vertical-align:middle;">${escapeHtml(orgName)}</span>
+    </div>`;
+}
+
 export function tryoutOfferHtml(p: {
   guardianFirstName: string;
   playerFirstName: string;
@@ -845,18 +859,65 @@ export function tryoutOfferHtml(p: {
   teamName: string;
   yearName: string;
   contactEmail?: string;
+  // Phase 2B.5 — org-branded offer with a no-login Accept/Decline response link + deadline.
+  orgName?: string;
+  orgLogoUrl?: string;
+  acceptUrl?: string;
+  declineUrl?: string;
+  respondBy?: string; // human-readable deadline, e.g. "July 9, 2026"
 }) {
-  return wrap(`
-    <h2 style="color:#D9F99D;font-size:1.4rem;margin:0 0 1rem;">Offer Extended</h2>
-    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>We&apos;re pleased to let you know that <strong>${p.playerFirstName} ${p.playerLastName}</strong> has been extended an offer to join the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program.</p>
+  const player = escapeHtml(`${p.playerFirstName} ${p.playerLastName}`);
+  const program = `${escapeHtml(p.teamName)} — ${escapeHtml(p.yearName)}`;
+  const respondByLine = p.respondBy
+    ? `<p style="margin:0.75rem 0 0;font-size:0.82rem;color:rgba(241,245,249,0.6);">Please respond by <strong>${escapeHtml(p.respondBy)}</strong>.</p>`
+    : '';
+  // When a response link is available, show Accept/Decline buttons; otherwise fall back to the
+  // "contact the staff" copy (backward-compatible with callers that don't pass a link).
+  const responseBlock = (p.acceptUrl && p.declineUrl)
+    ? `
+    <div style="margin:1.75rem 0;">
+      <a href="${p.acceptUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.8rem 1.75rem;border-radius:4px;text-decoration:none;font-weight:800;font-size:0.85rem;letter-spacing:0.03em;margin:0 0.5rem 0.5rem 0;">Accept the offer &rarr;</a>
+      <a href="${p.declineUrl}" style="display:inline-block;background:transparent;color:rgba(241,245,249,0.75);border:1px solid rgba(241,245,249,0.25);padding:0.8rem 1.5rem;border-radius:4px;text-decoration:none;font-weight:700;font-size:0.85rem;">Decline</a>
+      ${respondByLine}
+      <p style="margin:0.75rem 0 0;font-size:0.78rem;color:rgba(241,245,249,0.4);">No account needed — these links are just for you. Your coach confirms the final roster spot.</p>
+    </div>`
+    : `
     <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.3);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Next Steps</p>
       <p style="margin:0;line-height:1.8;color:rgba(241,245,249,0.75);">
-        Please contact the coaching staff to confirm whether <strong>${p.playerFirstName}</strong> will be accepting this offer.<br>
-        Program: <strong>${p.teamName} — ${p.yearName}</strong>
+        Please contact the coaching staff to confirm whether <strong>${escapeHtml(p.playerFirstName)}</strong> will be accepting this offer.<br>
+        Program: <strong>${program}</strong>
       </p>
-    </div>
+    </div>`;
+  return wrap(`
+    ${orgBrandHeader(p.orgName, p.orgLogoUrl)}
+    <h2 style="color:#D9F99D;font-size:1.4rem;margin:0 0 1rem;">Offer Extended</h2>
+    <p>Hi <strong>${escapeHtml(p.guardianFirstName)}</strong>,</p>
+    <p>Great news — we&apos;d love to have <strong>${player}</strong> on <strong>${program}</strong>. We&apos;re offering them a spot on the roster.</p>
+    ${responseBlock}
+  `);
+}
+
+export function tryoutWaitlistHtml(p: {
+  guardianFirstName: string;
+  playerFirstName: string;
+  playerLastName: string;
+  teamName: string;
+  yearName: string;
+  contactEmail?: string;
+  orgName?: string;
+  orgLogoUrl?: string;
+}) {
+  const player = escapeHtml(`${p.playerFirstName} ${p.playerLastName}`);
+  const program = `${escapeHtml(p.teamName)} — ${escapeHtml(p.yearName)}`;
+  const contact = p.contactEmail ?? ADMIN_EMAIL;
+  return wrap(`
+    ${orgBrandHeader(p.orgName, p.orgLogoUrl)}
+    <h2 style="color:#F1F5F9;font-size:1.4rem;margin:0 0 1rem;">You&apos;re on the Waitlist</h2>
+    <p>Hi <strong>${escapeHtml(p.guardianFirstName)}</strong>,</p>
+    <p>Thank you for trying out for the <strong>${program}</strong> program. <strong>${player}</strong> has been placed on our <strong>waitlist</strong>.</p>
+    <p style="color:rgba(241,245,249,0.7);line-height:1.7;">A waitlist spot means the coaching staff would love to have room for ${escapeHtml(p.playerFirstName)} and will reach out if a place opens up. No action is needed from you right now — we&apos;ll be in touch.</p>
+    <p style="color:rgba(241,245,249,0.55);font-size:0.9rem;">Questions? Reach the coaching staff at <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a>.</p>
   `);
 }
 
@@ -889,13 +950,18 @@ export function tryoutDeclinedHtml(p: {
   teamName: string;
   yearName: string;
   contactEmail?: string;
+  orgName?: string;
+  orgLogoUrl?: string;
 }) {
+  const player = escapeHtml(`${p.playerFirstName} ${p.playerLastName}`);
+  const program = `${escapeHtml(p.teamName)} — ${escapeHtml(p.yearName)}`;
   const contact = p.contactEmail ?? ADMIN_EMAIL;
   return wrap(`
+    ${orgBrandHeader(p.orgName, p.orgLogoUrl)}
     <h2 style="color:#f0f0f0;font-size:1.4rem;margin:0 0 1rem;">Tryout Update</h2>
-    <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
-    <p>Thank you for registering <strong>${p.playerFirstName} ${p.playerLastName}</strong> for the <strong>${p.teamName}</strong> <strong>${p.yearName}</strong> program. After reviewing all applications, we are unfortunately unable to extend an offer at this time.</p>
-    <p style="color:rgba(241,245,249,0.6);">We appreciate <strong>${p.playerFirstName}</strong>&apos;s interest and encourage them to try again in the future. Please reach out to <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a> if you have any questions.</p>
+    <p>Hi <strong>${escapeHtml(p.guardianFirstName)}</strong>,</p>
+    <p>Thank you for registering <strong>${player}</strong> for the <strong>${program}</strong> program. After reviewing all applications, we are unfortunately unable to extend an offer at this time.</p>
+    <p style="color:rgba(241,245,249,0.6);">We genuinely appreciate <strong>${escapeHtml(p.playerFirstName)}</strong>&apos;s effort and interest, and we&apos;d welcome them to try out again in the future. Please reach out to <a href="mailto:${contact}" style="color:#D9F99D;">${contact}</a> with any questions.</p>
   `);
 }
 

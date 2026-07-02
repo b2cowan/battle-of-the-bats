@@ -2147,6 +2147,13 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_tryout_registrations.submitted_at -->
 **`submitted_at`** (timestamptz, NOT NULL, default now()) — **the create stamp** (this table has no `created_at`); admin list orders `submitted_at DESC`.
 
+<!-- dict:col:rep_tryout_registrations.offer_token_hash -->
+<!-- dict:col:rep_tryout_registrations.offer_sent_at -->
+<!-- dict:col:rep_tryout_registrations.offer_expires_at -->
+<!-- dict:col:rep_tryout_registrations.offer_response -->
+<!-- dict:col:rep_tryout_registrations.offer_responded_at -->
+**`offer_token_hash` / `offer_sent_at` / `offer_expires_at` / `offer_response` / `offer_responded_at`** (text / timestamptz / timestamptz / text / timestamptz, all nullable; **mig 170**, Phase 2B.5) — the guardian OFFER-RESPONSE loop. When a coach/admin extends an offer, `offer_token_hash` stores the **SHA-256** of a no-login response token (raw token lives only in the email URL — same posture as `rep_tryout_evaluator_sessions.token_hash`; partial-unique index `rep_tryout_registrations_offer_token_uq WHERE offer_token_hash IS NOT NULL`), `offer_sent_at` stamps the send, and `offer_expires_at` is the **7-day (adjustable) deadline** — enforced **lazily on board view** (no scheduler), and a lapsed offer is surfaced as "expired" but **never auto-mutates `status`** (D2: flag the coach). `offer_response` is the family's self-serve answer via the token page — `'accepted'` / `'declined'` (CHECK), **distinct from `status`** because the coach still finalizes the roster add + fees (D1: accept = coach confirms); `offer_responded_at` stamps it and is the token's **single-use** guard. A non-offered transition clears all five so a re-offer mints a fresh link.
+
 ### `rep_tryouts`
 <!-- dict:table:rep_tryouts -->
 
