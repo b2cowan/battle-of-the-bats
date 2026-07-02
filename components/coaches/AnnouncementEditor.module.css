@@ -27,16 +27,50 @@
   border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
 }
 
+/* One compact recipient line replaces the two oversized stat cards + the verbose note
+   (both said the same thing — a lot of chrome for two numbers). Neutral text-note tier;
+   the amber warning still owns the "N have no email" gap. (2026-07-01) */
+.recipientBar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  color: var(--white-55);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.recipientBar strong { color: var(--white-90); font-weight: 800; font-variant-numeric: tabular-nums; }
+.recipientBarIcon { flex-shrink: 0; color: var(--white-40); }
+
+/* The FREE-portal AnnouncementEditor still uses these two stat cards + a verbose note; the
+   Premium RepAnnouncementEditor collapsed them to .recipientBar above. Kept so the shared
+   stylesheet serves both until the free surface is aligned. */
 .summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
 }
-
-/* Quiet recipient explainer — names WHO gets the announcement + restates the
-   count in words. Text-note tier (the coach can't act from it): no surface,
-   --white-40, never lime (the Users icon matches the text). Shown only when
-   recipientCount > 0; the amber warning owns the zero state. (2026-06-17) */
+.summaryItem {
+  min-width: 0;
+  padding: 0.7rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--highlight-top);
+}
+.summaryItem span {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--white-40);
+  font-size: 0.72rem;
+}
+.summaryItem strong {
+  display: block;
+  color: var(--white);
+  font-size: 1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
 .recipientNote {
   display: flex;
   align-items: center;
@@ -46,7 +80,6 @@
   font-size: 0.78rem;
   line-height: 1.45;
 }
-
 .recipientNoteIcon {
   flex-shrink: 0;
   color: var(--white-40);
@@ -73,30 +106,6 @@
 .missingEmailWarnIcon {
   flex-shrink: 0;
   color: var(--warning);
-}
-
-.summaryItem {
-  min-width: 0;
-  padding: 0.7rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--highlight-top);
-}
-
-.summaryItem span {
-  display: block;
-  margin-bottom: 0.15rem;
-  color: var(--white-40);
-  font-size: 0.72rem;
-}
-
-.summaryItem strong {
-  display: block;
-  color: var(--white);
-  font-size: 1rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
 }
 
 /* No-contacts precondition: a slim text-note warning row (NOT a full
@@ -174,9 +183,11 @@
   gap: 0.55rem;
   padding: 0.9rem;
   background: var(--surface);
-  border: 1px solid var(--border);
+  /* Match the elevated dashboard cards: coach-blue border + real elevation, so the
+     coach portal's cards read as one system. */
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: var(--radius);
-  box-shadow: var(--highlight-top);
+  box-shadow: var(--shadow-sm), var(--highlight-top);
 }
 
 .input,
@@ -275,9 +286,9 @@
   gap: 0.5rem;
   padding: 0.9rem;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: var(--radius);
-  box-shadow: var(--highlight-top);
+  box-shadow: var(--shadow-sm), var(--highlight-top);
 }
 
 .blockHeader {
@@ -376,6 +387,56 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
+
+/* Expandable log rows: tap the header to reveal the full message + a Reuse action. */
+.rowHead {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+  width: 100%;
+  padding: 0 1.3rem 0 0;
+  background: none;
+  border: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  position: relative;
+}
+.rowChevron {
+  position: absolute;
+  top: 0.1rem;
+  right: 0;
+  color: var(--white-35);
+  transition: transform 0.15s;
+}
+.rowChevron[data-open='true'] { transform: rotate(180deg); }
+.bodyFull {
+  margin-top: 0.4rem;
+  color: var(--white-70);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.rowActions { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
+.reuseBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 30px;
+  padding: 0 0.6rem;
+  color: var(--white-70);
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.reuseBtn:hover { color: var(--white); border-color: var(--border); }
 
 @media (max-width: 700px) {
   .summary {

@@ -1,11 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { CheckCircle2, RefreshCw, Send, TriangleAlert, Users, XCircle } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { CheckCircle2, ChevronDown, Copy, RefreshCw, Send, TriangleAlert, Users, XCircle } from 'lucide-react';
 import type {
   RepTeamAnnouncement,
   RepTeamAnnouncementRecipientSummary,
 } from '@/lib/rep-team-announcements';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import styles from './AnnouncementEditor.module.css';
 
 type Props = {
@@ -61,6 +63,10 @@ export default function RepAnnouncementEditor({ orgSlug, teamId }: Props) {
   const [refreshBusy, setRefreshBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const confirm = useConfirm();
+  // Synchronous re-entry guard for the send flow (see requestSend).
+  const sendingRef = useRef(false);
 
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/announcements`;
   const subjectReady = subject.trim().length > 0;
@@ -91,7 +97,53 @@ export default function RepAnnouncementEditor({ orgSlug, teamId }: Props) {
 
   useEffect(() => { void load(false); }, [load]);
 
-  async function sendAnnouncement() {
+  // Quietly re-count recipients whenever the coach returns to this tab — e.g. after adding a
+  // guardian email on the Roster — so they never have to reach for a manual Refresh button.
+  const recountRecipients = useCallback(async () => {
+    try {
+      const res = await fetch(base, { cache: 'no-store' });
+      const data = (await res.json().catch(() => ({}))) as ApiResponse;
+      if (res.ok && data.recipientSummary) setRecipientSummary(data.recipientSummary);
+    } catch { /* silent — a background recount never surfaces an error or clears a notice */ }
+  }, [base]);
+
+  useEffect(() => {
+    function onFocus() { if (!busy) void recountRecipients(); }
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [busy, recountRecipients]);
+
+  async function requestSend() {
+    // `busy` only flips inside doSend (after the confirm resolves), so the Send button stays
+    // enabled while the confirm dialog is open. sendingRef is a synchronous guard so a fast
+    // double-click can't open two confirms and fire two sends.
+    if (!canSend || sendingRef.current) return;
+    sendingRef.current = true;
+    try {
+      const n = recipientSummary.recipientCount;
+      const ok = await confirm({
+        title: 'Send this announcement?',
+        message: `This emails ${n} ${n === 1 ? 'family' : 'families'} right away — it can't be unsent.`,
+        confirmText: 'Send now',
+        cancelText: 'Keep editing',
+      });
+      if (ok) await doSend();
+    } finally {
+      sendingRef.current = false;
+    }
+  }
+
+  // Prefill the compose form from a past announcement (a "reuse / duplicate" shortcut).
+  function reuse(a: RepTeamAnnouncement) {
+    setSubject(a.subject);
+    setBody(a.body);
+    setExpandedId(null);
+    setError(null);
+    setNotice(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function doSend() {
     if (!canSend) return;
     setBusy(true);
     setError(null);
@@ -127,29 +179,16 @@ export default function RepAnnouncementEditor({ orgSlug, teamId }: Props) {
 
   return (
     <div className={styles.editor}>
+      <UnsavedChangesGuard active={subjectReady || bodyReady} />
       {error && <p className={styles.error} role="alert">{error}</p>}
       {notice && <p className={styles.notice}>{notice}</p>}
 
-      <div className={styles.summary} aria-label="Announcement recipients">
-        <div className={styles.summaryItem}>
-          <span>On roster</span>
-          <strong>{recipientSummary.rosterPlayerCount}</strong>
-        </div>
-        <div className={styles.summaryItem}>
-          <span>Recipients</span>
-          <strong>{recipientSummary.recipientCount}</strong>
-        </div>
-      </div>
-
       {hasRecipients && (
-        <p className={styles.recipientNote}>
-          <Users size={13} className={styles.recipientNoteIcon} aria-hidden />
+        <p className={styles.recipientBar}>
+          <Users size={14} className={styles.recipientBarIcon} aria-hidden />
           <span>
-            Each active player with a guardian email gets this —{' '}
-            {recipientSummary.recipientCount === 1
-              ? '1 person'
-              : `${recipientSummary.recipientCount} people`}{' '}
-            will receive it.
+            Sending to <strong>{recipientSummary.recipientCount}</strong>{' '}
+            {recipientSummary.recipientCount === 1 ? 'family' : 'families'} with a guardian email on file.
           </span>
         </p>
       )}
@@ -203,20 +242,10 @@ export default function RepAnnouncementEditor({ orgSlug, teamId }: Props) {
           {!hasRecipients && (
             <span className={styles.formHint}>Add a guardian email on your Roster to send.</span>
           )}
-          {hasRecipients && (
-            <button
-              type="button"
-              className={styles.refreshGhostBtn}
-              onClick={() => load(true)}
-              disabled={refreshBusy || busy}
-            >
-              <RefreshCw size={14} aria-hidden /> {refreshBusy ? 'Checking...' : 'Refresh'}
-            </button>
-          )}
           <button
             type="button"
             className={styles.sendBtn}
-            onClick={sendAnnouncement}
+            onClick={requestSend}
             disabled={!canSend}
           >
             <Send size={15} aria-hidden /> {busy ? 'Sending...' : 'Send announcement'}
@@ -234,22 +263,45 @@ export default function RepAnnouncementEditor({ orgSlug, teamId }: Props) {
           <p className={styles.logNote}>No announcements sent yet.</p>
         ) : (
           <ul className={styles.list}>
-            {announcements.map(announcement => (
-              <li key={announcement.id} className={styles.row}>
-                <span className={styles.statusIcon} data-status={announcement.status}>
-                  {announcement.status === 'failed'
-                    ? <XCircle size={16} aria-hidden />
-                    : <CheckCircle2 size={16} aria-hidden />}
-                </span>
-                <div className={styles.rowMain}>
-                  <span className={styles.name}>{announcement.subject}</span>
-                  <span className={styles.meta}>
-                    {formatSentAt(announcement.sentAt)} - {statusLabel(announcement)}
+            {announcements.map(announcement => {
+              const expanded = expandedId === announcement.id;
+              return (
+                <li key={announcement.id} className={styles.row}>
+                  <span className={styles.statusIcon} data-status={announcement.status}>
+                    {announcement.status === 'failed'
+                      ? <XCircle size={16} aria-hidden />
+                      : <CheckCircle2 size={16} aria-hidden />}
                   </span>
-                  <span className={styles.preview}>{announcement.body}</span>
-                </div>
-              </li>
-            ))}
+                  <div className={styles.rowMain}>
+                    <button
+                      type="button"
+                      className={styles.rowHead}
+                      aria-expanded={expanded}
+                      onClick={() => setExpandedId(expanded ? null : announcement.id)}
+                    >
+                      <span className={styles.name}>{announcement.subject}</span>
+                      <span className={styles.meta}>
+                        {formatSentAt(announcement.sentAt)} · {statusLabel(announcement)}
+                      </span>
+                      <ChevronDown
+                        size={15}
+                        className={styles.rowChevron}
+                        data-open={expanded ? 'true' : undefined}
+                        aria-hidden
+                      />
+                    </button>
+                    <span className={expanded ? styles.bodyFull : styles.preview}>{announcement.body}</span>
+                    {expanded && (
+                      <div className={styles.rowActions}>
+                        <button type="button" className={styles.reuseBtn} onClick={() => reuse(announcement)}>
+                          <Copy size={13} aria-hidden /> Reuse
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

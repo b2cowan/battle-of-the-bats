@@ -149,6 +149,10 @@ export interface SportPack {
    *  generic OF). Empty when the sport has no fixed fielding slots (auto-fill degrades to a
    *  no-op). Keep the generator sport-neutral by passing this in, never hard-coding codes. */
   fieldPositions: string[];
+  /** The one position governed by a pitcher depth chart + arm-care innings caps in the lineup
+   *  builder (e.g. 'P' for the diamond). null when the sport has no such role — the pitching
+   *  UI and generator pitching logic are then skipped entirely. */
+  pitcherPosition: string | null;
 }
 
 /** Diamond field positions the lineup auto-fill assigns — the 9 standard defensive spots,
@@ -184,6 +188,7 @@ const SOFTBALL_PACK: SportPack = {
   startVerb: 'First pitch',
   positions: DIAMOND_POSITIONS,
   fieldPositions: DIAMOND_FIELD_POSITIONS,
+  pitcherPosition: 'P',
 };
 
 // Baseball ≈ softball scoring (runs, innings, first pitch, diamond, mercy/diff cap), so it
@@ -216,6 +221,7 @@ const BASEBALL_PACK: SportPack = {
   startVerb: 'First pitch',
   positions: DIAMOND_POSITIONS,
   fieldPositions: DIAMOND_FIELD_POSITIONS,
+  pitcherPosition: 'P',
 };
 
 // First differently-scored pack — proves the model. Basketball: points (not runs), four
@@ -247,6 +253,7 @@ const BASKETBALL_PACK: SportPack = {
   startVerb: 'Tip-off',
   positions: ['PG', 'SG', 'SF', 'PF', 'C'],
   fieldPositions: ['PG', 'SG', 'SF', 'PF', 'C'],
+  pitcherPosition: null,
 };
 
 // Neutral fallback for any sport without a tailored pack yet (incl. 'other'). Sport-safe
@@ -279,6 +286,7 @@ const GENERIC_PACK: SportPack = {
   startVerb: 'Tournament starts',
   positions: [],
   fieldPositions: [],
+  pitcherPosition: null,
 };
 
 const TAILORED_PACKS: Partial<Record<SportId, SportPack>> = {

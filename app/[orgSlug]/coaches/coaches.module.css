@@ -348,29 +348,42 @@
 .setupGuideLink:hover { text-decoration: underline; }
 
 /* ── Run-mode snapshot ("Your team at a glance") ────────────────────────── */
+/* Even rows on purpose (not "as many as fit", which orphans the 5th tile): 3-up on
+   mid widths, a clean single row of all five on wide desktop. Mobile handled at ≤640. */
 .snapshotGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 0.75rem;
+  align-items: stretch; /* every tile in a row is the same height */
 }
+@media (min-width: 700px)  { .snapshotGrid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1280px) { .snapshotGrid { grid-template-columns: repeat(5, 1fr); } }
 .snapshotCard {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  padding: 1rem 1.1rem;
-  background: var(--white-5);
-  border: 1px solid var(--border-2);
-  border-radius: 10px;
+  min-height: 92px;
+  padding: 0.9rem 1rem;
+  background: var(--white-8);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: var(--radius);
+  /* Real elevation (drop shadow) lifts the card off the near-black page so it reads as a
+     distinct panel; the inner top-highlight crisps the top edge. Keeps the warm rounded skin. */
+  box-shadow: var(--shadow-sm), var(--highlight-top);
   text-decoration: none;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.12s;
 }
 .snapshotCard:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.4);
-  background: var(--white-8);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
+  background: var(--white-10);
+  box-shadow: var(--glow-sm), var(--shadow-sm), var(--highlight-top);
+  transform: translateY(-1px);
 }
+.snapshotCard:hover .snapshotHeadArrow { opacity: 1; transform: translateX(2px); }
 .snapshotHead {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.4rem;
   color: var(--white-50);
   font-size: 0.72rem;
@@ -378,12 +391,25 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+.snapshotHeadLabel { display: inline-flex; align-items: center; gap: 0.4rem; min-width: 0; }
+.snapshotHeadArrow {
+  color: var(--blueprint-blue); opacity: 0.45; flex-shrink: 0;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+/* Headline stat strip above the tiles — big number + small uppercase label, dot-separated. */
+.statStrip { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.35rem 0.85rem; margin: 0 0 1.25rem; }
+.statStripItem { font-size: 0.74rem; color: var(--white-45); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+.statStripItem strong { font-family: var(--font-display); font-size: 1.2rem; font-weight: 800; color: var(--white-90); margin-right: 0.35rem; }
+.statStripDot { color: var(--white-25); font-weight: 700; }
 .snapshotValue {
   font-family: var(--font-display);
-  font-size: 1.45rem;
+  font-size: 1.55rem;
   font-weight: 800;
+  letter-spacing: -0.01em;
   color: var(--white-90);
   line-height: 1.1;
+  margin-top: 0.1rem;
 }
 .snapshotValue[data-tone="danger"] { color: var(--danger); }
 .snapshotSub {
@@ -1744,14 +1770,16 @@
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  /* The "Season" kicker above provides the separation from the tiles. */
-  margin-top: 0;
+  /* Clear separation from the tile row above (no section header there anymore). */
+  margin-top: 1.5rem;
   width: fit-content;
   max-width: 100%;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border-2);
-  border-radius: 8px;
-  padding: 0.7rem 1.1rem;
+  background: var(--white-8);
+  /* Match the snapshot tiles so the two bands read as one system. */
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm), var(--highlight-top);
+  padding: 0.85rem 1.15rem;
   margin-bottom: 1.5rem;
 }
 .wltMain { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
@@ -1872,6 +1900,16 @@
 }
 .eventChipOpp { color: var(--white-45); }
 .eventChipTrail { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+
+/* Tryout session projected onto the calendar — dashed muted accent + read-only link (distinct from
+   a game's solid colour-coded chip). */
+.tryoutChip {
+  border-left-color: rgba(255,255,255,0.32);
+  border-left-style: dashed;
+  text-decoration: none;
+  color: inherit;
+}
+.tryoutChip .eventChipName { color: var(--white-45); }
 .eventChipScore { font-size: 0.82rem; font-weight: 700; color: var(--white-90); font-variant-numeric: tabular-nums; }
 .eventChipResult { font-size: 0.7rem; font-weight: 700; }
 

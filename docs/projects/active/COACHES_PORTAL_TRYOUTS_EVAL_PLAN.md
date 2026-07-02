@@ -68,6 +68,8 @@ A "tryout" gets its **own dedicated surface, NOT a schedule event.** Owner ratio
 
 ### Phase 2B — Score and decide
 
+> **Build-ready plan:** `COACHES_PORTAL_TRYOUTS_EVAL_PHASE2B_PLAN.md` (scoped 2026-07-01 — rubric → multi-evaluator scoring → ranked board → accept-to-roster+fees → offer/release emails; carry-overs = bib-uniqueness + sport-neutrality + reveal-names; 2B tables pre-confirmed in DBA Finding #30).
+
 **2B.1 Configurable evaluation rubric builder**
 - Head coach builds a digital scorecard pre-tryout: name skill categories, pick a 1–5 or 1–10 scale, assign percentage weights, add per-category evaluator instructions. Canadian softball/baseball **starter templates** seeded from the Sport Pack so common criteria appear without effort. Clone-rubric for multi-day reuse.
 - Storage: a `tryout_rubrics` row with categories as JSONB (low migration risk). Option sets follow the established `lib/rep-roster-options.ts` normalize-app-side pattern.

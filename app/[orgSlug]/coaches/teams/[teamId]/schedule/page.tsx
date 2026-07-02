@@ -1125,12 +1125,13 @@ export default function CoachesSchedulePage({
 
     const generated = generateBestLineup({
       players: fielders.map(r => {
-        const prefs = playerPositionPrefs(r.player);
+        const prefs = playerPositionPrefs(r.player, sportPack.pitcherPosition);
         return {
           playerId: r.player.id,
           preferred: prefs.preferred,
           canPlay: prefs.canPlay,
           never: prefs.never,
+          pitcher: r.player.lineupProfile?.pitcher ?? null,
           inningPositions: r.inningPositions,
         };
       }),
@@ -1138,6 +1139,7 @@ export default function CoachesSchedulePage({
       policy: autoPolicy,
       fillMode: autoFillMode,
       fieldPositions: sportPack.fieldPositions,
+      pitcherPosition: sportPack.pitcherPosition,
     });
 
     const benchAllInnings: Record<string, string> = {};

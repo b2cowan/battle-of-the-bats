@@ -86,8 +86,8 @@ export const PATCH = withObservability(async (req: Request,
     lineupProfile?: LineupProfile | null;
   };
   if (body.lineupProfile != null) {
-    const validPositions = getSportPack(team.sport).positions;
-    positionWrite = buildLineupProfileWrite(body.lineupProfile, validPositions);
+    const pack = getSportPack(team.sport);
+    positionWrite = buildLineupProfileWrite(body.lineupProfile, pack.positions, pack.pitcherPosition);
   } else {
     positionWrite = {
       primaryPosition:  body.primaryPosition  !== undefined ? (body.primaryPosition?.trim() || null)   : undefined,

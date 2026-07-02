@@ -82,6 +82,8 @@ export default function TeamOverviewPage({
   const [teamDivision, setTeamDivision] = useState<string | null>(null);
   // Run-mode snapshot ("Your team at a glance")
   const [nextEvent, setNextEvent] = useState<RepTeamEvent | null>(null);
+  // Whole days until the next event (computed at load; null when nothing upcoming) → stat strip.
+  const [nextEventDays, setNextEventDays] = useState<number | null>(null);
   const [seasonGames, setSeasonGames] = useState<RepTeamEvent[]>([]);
   // Events in the next 7 days (grouped) for the "This week" line.
   const [weekSummary, setWeekSummary] = useState<{ practices: number; games: number; other: number; total: number } | null>(null);
@@ -100,7 +102,7 @@ export default function TeamOverviewPage({
   // In/Late/Out/No-reply headcount for the next event → Next-up tile.
   const [nextAttendance, setNextAttendance] = useState<{ in: number; late: number; out: number; noReply: number } | null>(null);
   // Tournament registrations summary → Tournaments tile.
-  const [tournaments, setTournaments] = useState<{ count: number; pending: number; nextDate: string | null; liveNow: boolean } | null>(null);
+  const [tournaments, setTournaments] = useState<{ count: number; pending: number; nextDate: string | null; liveNow: boolean; owed: number; owingCount: number } | null>(null);
   // Optional setup steps the coach has chosen to skip (per-team, remembered locally).
   const [skippedSteps, setSkippedSteps] = useState<Set<string>>(new Set());
   // Contextual org-invite banner (only when an org has actually invited this team)
@@ -146,7 +148,9 @@ export default function TeamOverviewPage({
       const upcoming = events
         .filter(e => e.status === 'scheduled' && new Date(e.startsAt).getTime() >= now)
         .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
-      setNextEvent(upcoming[0] ?? null);
+      const nextUp = upcoming[0] ?? null;
+      setNextEvent(nextUp);
+      setNextEventDays(nextUp ? Math.max(0, Math.ceil((new Date(nextUp.startsAt).getTime() - now) / 86400000)) : null);
 
       // Events in the next 7 days, grouped for the "This week" line.
       const weekAhead = now + 7 * 86400000;
@@ -288,9 +292,14 @@ export default function TeamOverviewPage({
       .then(res => (res.ok ? res.json() : null))
       .then(json => {
         if (cancelled || !json) return;
-        const hist = (json.history ?? []) as { registration: { status: string }; tournament: { startDate: string | null; endDate: string | null } | null }[];
+        const hist = (json.history ?? []) as {
+          registration: { status: string };
+          tournament: { startDate: string | null; endDate: string | null } | null;
+          amountDue?: number | null;
+        }[];
         const todayStr = new Date().toISOString().slice(0, 10);
         let count = 0; let pending = 0; let liveNow = false; let nextDate: string | null = null;
+        let owed = 0; let owingCount = 0;
         for (const h of hist) {
           count += 1;
           if (h.registration.status === 'pending') pending += 1;
@@ -298,8 +307,9 @@ export default function TeamOverviewPage({
           const e = h.tournament?.endDate ?? s;
           if (s && e && s <= todayStr && todayStr <= e) liveNow = true;
           if (s && (e ?? s) >= todayStr && (!nextDate || s < nextDate)) nextDate = s;
+          if ((h.amountDue ?? 0) > 0) { owed += h.amountDue ?? 0; owingCount += 1; }
         }
-        setTournaments({ count, pending, nextDate, liveNow });
+        setTournaments({ count, pending, nextDate, liveNow, owed, owingCount });
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -548,7 +558,9 @@ export default function TeamOverviewPage({
         : 'Register for a tournament',
       href: `${base}/tournaments`,
       tone: 'default' as const,
-      flag: null as { text: string; tone: 'ok' | 'warn' } | null,
+      flag: (tournaments && tournaments.owingCount > 0)
+        ? { text: `${formatMoney(tournaments.owed)} in fees due · ${tournaments.owingCount} to pay`, tone: 'warn' as 'ok' | 'warn' }
+        : null,
       headcount: null as { in: number; late: number; out: number; noReply: number } | null,
       progress: null,
     },
@@ -710,6 +722,23 @@ export default function TeamOverviewPage({
         </section>
       )}
 
+      {/* Headline stat strip — a clean, scannable summary line above the tiles (run-mode only). */}
+      {!showSetupPanel && setupStats && (
+        <div className={styles.statStrip}>
+          <span className={styles.statStripItem}><strong>{setupStats.activeRosterCount}</strong> Players</span>
+          <span className={styles.statStripDot} aria-hidden>·</span>
+          <span className={styles.statStripItem}><strong>{setupStats.eventCount}</strong> Events</span>
+          {nextEventDays != null && (
+            <>
+              <span className={styles.statStripDot} aria-hidden>·</span>
+              <span className={styles.statStripItem}>
+                {nextEventDays === 0 ? 'Next: Today' : nextEventDays === 1 ? 'Next: Tomorrow' : <><strong>{nextEventDays}</strong> days away</>}
+              </span>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Your team at a glance — run-mode snapshot of real data (replaces the old
           quick-links grid, which just duplicated the sidebar). */}
       <section aria-labelledby="snapshot-title">
@@ -723,7 +752,10 @@ export default function TeamOverviewPage({
                 href={card.href}
                 className={`${styles.snapshotCard}${card.key === 'schedule' ? ` ${styles.snapshotCardWide}` : ''}`}
               >
-                <span className={styles.snapshotHead}><Icon size={14} aria-hidden /> {card.label}</span>
+                <span className={styles.snapshotHead}>
+                  <span className={styles.snapshotHeadLabel}><Icon size={14} aria-hidden /> {card.label}</span>
+                  <ArrowRight size={13} className={styles.snapshotHeadArrow} aria-hidden />
+                </span>
                 <span className={styles.snapshotValue} data-tone={card.tone}>{card.value}</span>
                 <span className={styles.snapshotSub}>{card.sub}</span>
                 {card.progress && (
@@ -779,10 +811,8 @@ export default function TeamOverviewPage({
         </div>
       )}
 
-      {/* Season — record, recent form, scoring, and streak. Renders nothing until a game is finalized. */}
-      {seasonGames.some(g => g.result && g.status !== 'cancelled') && (
-        <p className={styles.sectionKicker}>Season</p>
-      )}
+      {/* Season record — recent form, scoring, streak. Self-labeled ("Season Record"), so it
+          flows directly below the tiles without a redundant section header. */}
       <SeasonRecordWidget events={seasonGames} teamId={teamId} />
     </div>
   );

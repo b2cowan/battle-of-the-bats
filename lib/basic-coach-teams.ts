@@ -1,6 +1,8 @@
 import { supabaseAdmin } from './supabase-admin';
 import { isPlatformAdminEmail } from './platform-auth';
 import { deriveCoachLifecycleChip } from './coach-tournament-lifecycle';
+import { buildCoachTournamentStatus } from './coach-status-model';
+import { excludeActivePremiumUpgrades } from './coach-team-page';
 
 export type BasicCoachTeam = {
   id: string;
@@ -63,6 +65,10 @@ export type BasicCoachTournamentHistoryEntry = {
     slug: string;
     name: string;
   } | null;
+  /** Remaining entry fee owed to the organizer for an ACCEPTED registration (null when not
+   *  accepted, or when there's no fee schedule / nothing outstanding). Reuses the canonical
+   *  buildCoachTournamentStatus so it matches the amount shown on the tournament record. */
+  amountDue: number | null;
 };
 
 export type PendingTournamentRegistration = {
@@ -117,6 +123,10 @@ type TournamentTeamRow = {
   registered_at: string;
   tournament_id: string | null;
   division_id: string | null;
+  // Payment fields — only selected by the history query (optional so other callers are unaffected).
+  payment_status?: string | null;
+  deposit_paid?: number | null;
+  total_paid?: number | null;
 };
 
 type RegistrationLinkRow = {
@@ -133,6 +143,21 @@ type TournamentRow = {
   end_date: string | null;
   org_id: string | null;
   status: string;
+  // Fee schedule — only selected by the history query (optional so other callers are unaffected).
+  fee_schedule_mode?: string | null;
+  deposit_amount?: number | null;
+  deposit_due_date?: string | null;
+  total_fee_amount?: number | null;
+  total_fee_due_date?: string | null;
+};
+
+type DivisionFeeRow = {
+  id: string;
+  name: string;
+  deposit_amount: number | null;
+  deposit_due_date: string | null;
+  total_fee_amount: number | null;
+  total_fee_due_date: string | null;
 };
 
 type OrgRow = {
@@ -751,7 +776,7 @@ export async function getBasicCoachTournamentHistoryForTeam(
 
   const { data: registrations, error: registrationError } = await supabaseAdmin
     .from('teams')
-    .select('id, name, coach, email, status, registered_at, tournament_id, division_id')
+    .select('id, name, coach, email, status, registered_at, tournament_id, division_id, payment_status, deposit_paid, total_paid')
     .in('id', registrationIds);
 
   if (registrationError) throw registrationError;
@@ -763,7 +788,7 @@ export async function getBasicCoachTournamentHistoryForTeam(
   const { data: tournaments, error: tournamentError } = tournamentIds.length > 0
     ? await supabaseAdmin
         .from('tournaments')
-        .select('id, name, slug, year, start_date, end_date, org_id, status')
+        .select('id, name, slug, year, start_date, end_date, org_id, status, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
         .in('id', tournamentIds)
     : { data: [], error: null };
 
@@ -771,6 +796,22 @@ export async function getBasicCoachTournamentHistoryForTeam(
 
   const tournamentRows = (tournaments ?? []) as TournamentRow[];
   const tournamentMap = new Map(tournamentRows.map(tournament => [tournament.id, tournament]));
+
+  // Division-level fee schedules (a division fee overrides the tournament fee — resolved inside
+  // buildCoachTournamentStatus). Only fetched for the divisions actually referenced.
+  const divisionIds = [...new Set(((registrations ?? []) as TournamentTeamRow[])
+    .map(row => row.division_id)
+    .filter(Boolean))] as string[];
+  const { data: divisions, error: divisionError } = divisionIds.length > 0
+    ? await supabaseAdmin
+        .from('divisions')
+        .select('id, name, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
+        .in('id', divisionIds)
+    : { data: [], error: null };
+
+  if (divisionError) throw divisionError;
+
+  const divisionMap = new Map(((divisions ?? []) as DivisionFeeRow[]).map(d => [d.id, d]));
 
   const orgIds = [...new Set(tournamentRows.map(tournament => tournament.org_id).filter(Boolean))] as string[];
   const { data: orgs, error: orgError } = orgIds.length > 0
@@ -789,6 +830,45 @@ export async function getBasicCoachTournamentHistoryForTeam(
       const registration = mapRegistration(row, basicCoachTeamId, 'explicit');
       const tournament = row.tournament_id ? tournamentMap.get(row.tournament_id) ?? null : null;
       const org = tournament?.org_id ? orgMap.get(tournament.org_id) ?? null : null;
+      const division = row.division_id ? divisionMap.get(row.division_id) ?? null : null;
+
+      // Outstanding entry fee — only for accepted registrations (a pending one owes nothing yet).
+      let amountDue: number | null = null;
+      if (registration.status === 'accepted') {
+        const status = buildCoachTournamentStatus({
+          team: {
+            divisionId: row.division_id,
+            paymentStatus: row.payment_status ?? null,
+            depositPaid: row.deposit_paid ?? null,
+            totalPaid: row.total_paid ?? null,
+            checkInStatus: null,
+            checkedInAt: null,
+            rosterSubmittedAt: null,
+            rosterConfirmedAt: null,
+            paymentCollectedAt: null,
+          },
+          tournament: tournament
+            ? {
+                feeMode: tournament.fee_schedule_mode ?? null,
+                depositAmount: tournament.deposit_amount ?? null,
+                depositDueDate: tournament.deposit_due_date ?? null,
+                totalFeeAmount: tournament.total_fee_amount ?? null,
+                totalFeeDueDate: tournament.total_fee_due_date ?? null,
+              }
+            : null,
+          division: division
+            ? {
+                id: division.id,
+                name: division.name,
+                depositAmount: division.deposit_amount,
+                depositDueDate: division.deposit_due_date,
+                totalFeeAmount: division.total_fee_amount,
+                totalFeeDueDate: division.total_fee_due_date,
+              }
+            : null,
+        });
+        amountDue = status.fee.amountDue;
+      }
 
       return {
         registration,
@@ -810,6 +890,7 @@ export async function getBasicCoachTournamentHistoryForTeam(
               name: org.name,
             }
           : null,
+        amountDue,
       };
     })
     .sort((a, b) => b.registration.registeredAt.localeCompare(a.registration.registeredAt));
@@ -819,7 +900,13 @@ export async function getBasicCoachTournamentSummary(params: {
   userId: string;
   email?: string | null;
 }) {
-  const teams = await getBasicCoachTournamentTeamsForUser(params);
+  // Drop free teams already upgraded to a LIVE Premium portal — to the coach those are now
+  // their Premium team (reached via the Premium workspace), so the launchpad must not show a
+  // second, free "Coaches Portal" card for them. Mirrors the free /coaches "Your teams" list.
+  // Canceled upgrades are kept (the free team is usable again).
+  const teams = await excludeActivePremiumUpgrades(
+    await getBasicCoachTournamentTeamsForUser(params),
+  );
   const registrationIds = new Set<string>();
   const tournamentIds = new Set<string>();
 

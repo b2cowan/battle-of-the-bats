@@ -30,7 +30,9 @@ function cleanPositions(input: unknown, valid: Set<string>): string[] {
 }
 
 function normalizePitcher(raw: unknown): LineupPitcherProfile | null {
-  if (!raw || typeof raw !== 'object') return null;
+  // Require an explicit `rank` so a stray empty object ({}) never silently enrolls a pitcher
+  // (which would also strip their position buckets). The canonical payload always carries rank.
+  if (!raw || typeof raw !== 'object' || !('rank' in raw)) return null;
   const r = raw as Record<string, unknown>;
   const rankNum = Number(r.rank);
   const rank = Number.isFinite(rankNum) ? Math.min(99, Math.max(1, Math.round(rankNum))) : 1;
@@ -74,20 +76,27 @@ export function normalizeLineupProfile(input: unknown, validPositions: string[])
 export function buildLineupProfileWrite(
   raw: { preferred?: unknown; canPlay?: unknown; never?: unknown; pitcher?: unknown; aSquad?: unknown } | null | undefined,
   validPositions: string[],
+  pitcherPosition?: string | null,
 ): { primaryPosition: string | null; secondaryPosition: string | null; lineupProfile: LineupProfile | null } {
   const valid = new Set(validPositions.map(p => p.toUpperCase()));
-  const neverSet = new Set(cleanPositions(raw?.never, valid));
-  const preferred = cleanPositions(raw?.preferred, valid).filter(p => !neverSet.has(p)); // preferred wins over never
+  const pitcherCode = pitcherPosition ? pitcherPosition.toUpperCase() : null;
+  // The mound is never a fielding preference — pitching lives in the pitcher depth chart. Strip it
+  // from every bucket so it can never be stored as Best/Okay/Never (server-authoritative).
+  const dropMound = (arr: string[]) => (pitcherCode ? arr.filter(c => c !== pitcherCode) : arr);
+
+  const never = dropMound(cleanPositions(raw?.never, valid));
+  const neverSet = new Set(never);
+  const preferred = dropMound(cleanPositions(raw?.preferred, valid)).filter(p => !neverSet.has(p)); // preferred wins over never
   const preferredSet = new Set(preferred);
   // preferred also wins over "Okay": strip any preferred position from canPlay so morePreferred
   // (= preferred ranks 3+) can never be evicted by an overlapping Okay entry.
-  const canPlay = cleanPositions(raw?.canPlay, valid).filter(p => !preferredSet.has(p));
+  const canPlay = dropMound(cleanPositions(raw?.canPlay, valid)).filter(p => !preferredSet.has(p));
   const primaryPosition = preferred[0] ?? null;
   const secondaryPosition = preferred[1] ?? null;
   const lineupProfile = normalizeLineupProfile({
     morePreferred: preferred.slice(2),
     canPlay,
-    never: raw?.never,
+    never,
     pitcher: raw?.pitcher,
     aSquad: raw?.aSquad,
   }, validPositions);
@@ -101,16 +110,21 @@ export function buildLineupProfileWrite(
  */
 export function playerPositionPrefs(
   player: Pick<RepRosterPlayer, 'primaryPosition' | 'secondaryPosition' | 'lineupProfile'>,
+  pitcherPosition?: string | null,
 ): { preferred: string[]; canPlay: string[]; never: string[] } {
   const prof = player.lineupProfile;
-  const never = (prof?.never ?? []).map(up).filter(Boolean);
+  // The mound is never a fielding preference — pitching is managed entirely by the pitcher depth
+  // chart (the "This player pitches" toggle + rank + cap). Exclude it from every fielding bucket,
+  // pitcher or not, so it never appears as a Best/Okay/Never chip (matches the server strip).
+  const mound = pitcherPosition ? up(pitcherPosition) : null;
+  const never = (prof?.never ?? []).map(up).filter(c => !!c && c !== mound);
   const neverSet = new Set(never);
 
   const preferred: string[] = [];
   const seen = new Set<string>();
   for (const raw of [player.primaryPosition, player.secondaryPosition, ...(prof?.morePreferred ?? [])]) {
     const code = up(raw);
-    if (!code || seen.has(code) || neverSet.has(code)) continue;
+    if (!code || code === mound || seen.has(code) || neverSet.has(code)) continue;
     seen.add(code);
     preferred.push(code);
   }
@@ -118,7 +132,7 @@ export function playerPositionPrefs(
   const canPlay: string[] = [];
   for (const raw of prof?.canPlay ?? []) {
     const code = up(raw);
-    if (!code || seen.has(code) || neverSet.has(code) || canPlay.includes(code)) continue;
+    if (!code || code === mound || seen.has(code) || neverSet.has(code) || canPlay.includes(code)) continue;
     canPlay.push(code);
   }
 

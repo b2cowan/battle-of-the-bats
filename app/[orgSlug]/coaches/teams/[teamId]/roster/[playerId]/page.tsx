@@ -46,6 +46,7 @@ interface EditForm {
   playerFirstName: string; playerLastName: string;
   playerDateOfBirth: string; playerNumber: string;
   positions: PositionProfileValue;
+  pitcher: { isPitcher: boolean; rank: number; maxInnings: string }; // maxInnings '' = no cap
   guardianFirstName: string; guardianLastName: string;
   guardianEmail: string; guardianPhone: string;
   notes: string;
@@ -60,13 +61,14 @@ function clean(v: string | null | undefined): string {
   return s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined' ? '' : (v ?? '');
 }
 
-function playerToForm(p: RepRosterPlayer): EditForm {
+function playerToForm(p: RepRosterPlayer, pitcherPos: string | null): EditForm {
   return {
     playerFirstName:   clean(p.playerFirstName),
     playerLastName:    clean(p.playerLastName),
     playerDateOfBirth: p.playerDateOfBirth ?? '',
     playerNumber:      clean(p.playerNumber),
-    positions:         (() => { const prefs = playerPositionPrefs(p); return { best: prefs.preferred, okay: prefs.canPlay, never: prefs.never }; })(),
+    positions:         (() => { const prefs = playerPositionPrefs(p, pitcherPos); return { best: prefs.preferred, okay: prefs.canPlay, never: prefs.never }; })(),
+    pitcher:           (() => { const pit = p.lineupProfile?.pitcher; return { isPitcher: !!pit, rank: pit?.rank ?? 1, maxInnings: pit?.maxInnings != null ? String(pit.maxInnings) : '' }; })(),
     guardianFirstName: clean(p.guardianFirstName),
     guardianLastName:  clean(p.guardianLastName),
     guardianEmail:     clean(p.guardianEmail),
@@ -121,10 +123,10 @@ export default function PlayerDetailPage({
   const { orgSlug, teamId, playerId } = use(params);
   const { assignments, loading: assignmentsLoading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === teamId);
-  // The Positions picker offers the sport's assignable FIELD positions (the ones auto-fill can
-  // actually use) — not the OF catch-all or DH, which the generator never assigns. Falls back to
-  // the default sport until the assignment loads.
-  const profilePositions = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT).fieldPositions;
+  // Positions/pitching vocabulary comes from this team's sport (falls back to the default until the
+  // assignment loads). The picker offers the assignable FIELD positions (not the OF catch-all / DH).
+  const sportPack = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT);
+  const pitcherPos = sportPack.pitcherPosition; // e.g. 'P'; null when the sport has no mound
 
   const [player, setPlayer] = useState<RepRosterPlayer | null>(null);
   const [form, setForm] = useState<EditForm | null>(null);
@@ -152,7 +154,7 @@ export default function PlayerDetailPage({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load player');
       setPlayer(data.player);
-      setForm(playerToForm(data.player));
+      setForm(playerToForm(data.player, pitcherPos));
       setAttendance(data.attendance ?? null);
       setDues(data.dues ?? null);
     } catch (e: unknown) {
@@ -160,13 +162,13 @@ export default function PlayerDetailPage({
     } finally {
       setFetching(false);
     }
-  }, [orgSlug, teamId, playerId]);
+  }, [orgSlug, teamId, playerId, pitcherPos]);
 
   useEffect(() => { if (!assignmentsLoading) void Promise.resolve().then(load); }, [assignmentsLoading, load]);
 
   // Compare against the cleaned baseline (playerToForm) — not the raw player — so a
   // legacy literal "null"/"undefined" value doesn't show a phantom "unsaved changes" on load.
-  const isDirty = !!(player && form && JSON.stringify(form) !== JSON.stringify(playerToForm(player)));
+  const isDirty = !!(player && form && JSON.stringify(form) !== JSON.stringify(playerToForm(player, pitcherPos)));
 
   async function handleSave() {
     if (!form || !player) return;
@@ -182,13 +184,15 @@ export default function PlayerDetailPage({
             playerLastName:     form.playerLastName.trim() || null,
             playerDateOfBirth:  form.playerDateOfBirth || null,
             playerNumber:       form.playerNumber.trim() || null,
-            // Best/Okay/Never picker: the server derives primary/secondary + the stored profile.
-            // Carry any existing pitcher/A-squad data through untouched (edited in P2/P4, not here).
+            // Best/Okay/Never picker + Pitching section: the server derives primary/secondary + the
+            // stored profile. A-squad (P4) is carried through untouched until that phase ships.
             lineupProfile: {
               preferred: form.positions.best,
               canPlay: form.positions.okay,
               never: form.positions.never,
-              pitcher: player.lineupProfile?.pitcher ?? null,
+              pitcher: pitcherPos && form.pitcher.isPitcher
+                ? { rank: form.pitcher.rank, maxInnings: form.pitcher.maxInnings.trim() === '' ? null : Number(form.pitcher.maxInnings) }
+                : null,
               aSquad: player.lineupProfile?.aSquad ?? false,
             },
             guardianFirstName:  form.guardianFirstName.trim() || null,
@@ -208,7 +212,7 @@ export default function PlayerDetailPage({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to save');
       setPlayer(data.player);
-      setForm(playerToForm(data.player));
+      setForm(playerToForm(data.player, pitcherPos));
       setSavedFlash(true);
       window.setTimeout(() => setSavedFlash(false), 2500);
     } catch (e: unknown) {
@@ -234,7 +238,7 @@ export default function PlayerDetailPage({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to update status');
       setPlayer(data.player);
-      setForm(playerToForm(data.player));
+      setForm(playerToForm(data.player, pitcherPos));
     } catch (e: unknown) {
       showFeedback('danger', errorMessage(e, 'Failed to update status.'));
     } finally {
@@ -254,6 +258,12 @@ export default function PlayerDetailPage({
     );
   }
   if (!player || !form) return <p className={styles.muted}>Player not found.</p>;
+
+  // The mound is never a fielding chip — pitching is set only in the Pitching section below. The
+  // chips are the field positions minus the mound.
+  const pickerPositions = pitcherPos
+    ? sportPack.fieldPositions.filter(p => p !== pitcherPos)
+    : sportPack.fieldPositions;
 
   const attnKnown = attendance ? attendance.attending + attendance.absent + attendance.late : 0;
   const attnRate = attnKnown > 0 ? Math.round((attendance!.attending / attnKnown) * 100) : 0;
@@ -345,10 +355,46 @@ export default function PlayerDetailPage({
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label}>Positions</label>
             <PositionProfileEditor
-              positions={profilePositions}
+              positions={pickerPositions}
               value={form.positions}
               onChange={next => setForm(f => f ? { ...f, positions: next } : f)} />
           </div>
+          {pitcherPos && (
+            <div className={`${styles.field} ${styles.formGridFull}`}>
+              <label className={styles.label}>Pitching</label>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', color: 'rgba(255,255,255,0.85)' }}>
+                <input type="checkbox" checked={form.pitcher.isPitcher}
+                  onChange={e => { const on = e.target.checked; setForm(f => f ? { ...f, pitcher: { ...f.pitcher, isPitcher: on } } : f); }} />
+                <span>This player pitches</span>
+              </label>
+              {form.pitcher.isPitcher && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 10 }}>
+                  <div style={{ minWidth: 150 }}>
+                    <label className={styles.label} htmlFor="pitcher-rank">Pitcher rank</label>
+                    <select id="pitcher-rank" className={styles.select}
+                      value={form.pitcher.rank}
+                      onChange={e => setForm(f => f ? { ...f, pitcher: { ...f.pitcher, rank: Number(e.target.value) } } : f)}>
+                      <option value={1}>1 — Ace</option>
+                      <option value={2}>2</option>
+                      <option value={3}>3</option>
+                      <option value={4}>4</option>
+                      <option value={5}>5</option>
+                    </select>
+                  </div>
+                  <div style={{ minWidth: 150 }}>
+                    <label className={styles.label} htmlFor="pitcher-max">Max innings / game</label>
+                    <input id="pitcher-max" className={styles.input} type="number" min={0} max={20}
+                      placeholder="No limit"
+                      value={form.pitcher.maxInnings}
+                      onChange={e => setForm(f => f ? { ...f, pitcher: { ...f.pitcher, maxInnings: e.target.value } } : f)} />
+                  </div>
+                </div>
+              )}
+              <p style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+                Guides the game-day Auto-fill: competitive games lead with your ace; balanced &amp; development games spread innings down the order. Auto-fill never exceeds the max-innings cap.
+              </p>
+            </div>
+          )}
           <div className={styles.field}>
             <label className={styles.label} htmlFor="bats">Bats</label>
             <select id="bats" className={styles.select} value={form.bats}
@@ -541,7 +587,7 @@ export default function PlayerDetailPage({
             {isDirty && (
               <div className={styles.saveBarActions}>
                 <button type="button" className="btn btn-ghost" disabled={saving}
-                  onClick={() => setForm(playerToForm(player))}>
+                  onClick={() => setForm(playerToForm(player, pitcherPos))}>
                   Discard
                 </button>
                 <button type="button" className="btn btn-lime" onClick={handleSave} disabled={saving}>
