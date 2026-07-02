@@ -1,0 +1,100 @@
+/* "Run your tryout" flow header (UX guidance layer). Dark coaches theme + lime accent, matching
+   TryoutDayCard.module.css. Orients a coach: where am I, what's next, how does it all tie together. */
+
+.wrap {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  padding: 1.15rem 1.35rem;
+  margin-bottom: 1.25rem;
+}
+
+.topRow { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.title { font-size: 0.95rem; font-weight: 800; color: #f0f0f0; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+.howBtn {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.6);
+  background: transparent; border: none; cursor: pointer; padding: 0.2rem;
+}
+.howBtn:hover { color: #f0f0f0; }
+
+/* ── Next-action prompt ─────────────────────────────────────────────────────── */
+.next {
+  display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap;
+  margin-top: 1.1rem; padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(163,230,53,0.28); border-left: 3px solid var(--logic-lime, #a3e635);
+  border-radius: 8px; background: rgba(163,230,53,0.06);
+}
+.nextMain { flex: 1 1 auto; min-width: 0; }
+.nextLabel { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--logic-lime, #a3e635); }
+.nextText { font-size: 0.9rem; font-weight: 700; color: #f0f0f0; margin: 0.1rem 0 0.1rem; }
+.nextHint { font-size: 0.8rem; color: rgba(255,255,255,0.55); margin: 0; }
+.nextBtn {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.6rem 1rem; border-radius: 8px; border: none; cursor: pointer;
+  font-size: 0.85rem; font-weight: 800; font-family: inherit;
+  background: var(--logic-lime, #a3e635); color: #0A0A0A; text-decoration: none;
+}
+.nextBtn:hover { background: #b6ef5a; }
+.doneNote { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin: 1.1rem 0 0; }
+
+/* ── "How tryouts work" overview ────────────────────────────────────────────── */
+.how { margin-top: 1rem; padding: 0.9rem 1rem; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; background: rgba(255,255,255,0.02); }
+.howStep { display: flex; gap: 0.6rem; margin-bottom: 0.6rem; font-size: 0.85rem; line-height: 1.5; }
+.howStep:last-child { margin-bottom: 0; }
+.howNum { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; background: rgba(163,230,53,0.15); color: var(--logic-lime, #a3e635); font-size: 0.72rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-top: 0.05rem; }
+.howStep strong { color: #f0f0f0; }
+.howStep span { color: rgba(255,255,255,0.6); }
+
+@media (max-width: 560px) {
+  .next { flex-direction: column; align-items: stretch; }
+  .nextBtn { justify-content: center; }
+}
+
+/* ── Stage tabs (one stage on screen at a time; doubles as the progress tracker) ── */
+.tabBar {
+  display: flex; gap: 0.15rem; margin-bottom: 1.15rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1); overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabBar::-webkit-scrollbar { display: none; }
+.tab {
+  display: inline-flex; align-items: center; gap: 0.45rem; flex: 0 0 auto;
+  padding: 0.7rem 0.95rem; border: none; background: transparent; cursor: pointer;
+  font-family: inherit; font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.5);
+  border-bottom: 2px solid transparent; white-space: nowrap; margin-bottom: -1px;
+}
+.tab:hover { color: rgba(255,255,255,0.85); }
+.tabActive { color: #f0f0f0; border-bottom-color: var(--logic-lime, #a3e635); }
+.tabNum {
+  width: 20px; height: 20px; border-radius: 50%; flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 800;
+  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.55);
+}
+.tabActive .tabNum { background: var(--logic-lime, #a3e635); color: #0A0A0A; }
+.tabDone .tabNum { background: var(--logic-lime, #a3e635); color: #0A0A0A; }
+/* a subtle dot marking the stage the coach *should* be on, when they're viewing a different tab */
+.tabCurrentDot { width: 6px; height: 6px; border-radius: 50%; background: var(--logic-lime, #a3e635); flex: 0 0 auto; }
+
+.panelHidden { display: none; }
+.panelIntro { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 0 0 0.9rem; }
+.panelIntroText { flex: 1 1 240px; font-size: 0.82rem; color: rgba(255,255,255,0.5); margin: 0; line-height: 1.5; }
+.panelAction { flex: 0 0 auto; }
+
+/* ── "Build your team" results footer ───────────────────────────────────────── */
+.results { border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: rgba(255,255,255,0.02); padding: 1.15rem 1.35rem; }
+.resultStats { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-bottom: 1rem; }
+.resultStat { display: flex; flex-direction: column; }
+.resultNum { font-size: 1.5rem; font-weight: 800; color: #f0f0f0; font-variant-numeric: tabular-nums; line-height: 1; }
+.resultLabel { font-size: 0.72rem; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; margin-top: 0.3rem; }
+.resultNumAccent { color: var(--logic-lime, #a3e635); }
+.rosterLink {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.6rem 1rem; border-radius: 8px; text-decoration: none;
+  font-size: 0.85rem; font-weight: 700; color: #f0f0f0;
+  border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.03);
+}
+.rosterLink:hover { border-color: var(--logic-lime, #a3e635); }
+.resultEmpty { font-size: 0.85rem; color: rgba(255,255,255,0.45); margin: 0; }
