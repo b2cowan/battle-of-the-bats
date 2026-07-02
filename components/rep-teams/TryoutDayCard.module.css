@@ -288,6 +288,13 @@
 }
 .acceptRosterBtn:hover { background: rgba(163,230,53,0.2); }
 .acceptRosterBtn:disabled { opacity: 0.55; cursor: default; }
+.resendBtn {
+  align-self: flex-end; padding: 0.15rem 0.2rem;
+  background: transparent; border: none; cursor: pointer; font-family: inherit;
+  font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.5); text-decoration: underline;
+}
+.resendBtn:hover { color: rgba(255,255,255,0.8); }
+.resendBtn:disabled { opacity: 0.5; cursor: default; }
 
 @media (max-width: 560px) {
   .decisionCol { width: 100%; }

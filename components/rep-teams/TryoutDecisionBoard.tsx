@@ -46,6 +46,7 @@ export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [resendingId, setResendingId] = useState<string | null>(null);
   const [acceptLoadingId, setAcceptLoadingId] = useState<string | null>(null);
   const [acceptTarget, setAcceptTarget] = useState<AcceptTarget | null>(null);
   const onErrorRef = useRef(onError);
@@ -90,6 +91,27 @@ export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
       fail(e.message ?? 'Failed to save decision.');
     } finally {
       setSavingId(null);
+    }
+  }
+
+  // Re-send the offer email with a fresh Accept/Decline link + new deadline (clears any prior response).
+  async function resendOffer(c: Candidate) {
+    if (resendingId || savingId) return;
+    setResendingId(c.registrationId);
+    try {
+      const res = await fetch(apiBase, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registrationId: c.registrationId, decision: 'resend' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message ?? data.error ?? 'Failed to resend offer');
+      // Fresh link + deadline + cleared response → the row is back to "awaiting".
+      setBoard(b => b ? { ...b, candidates: b.candidates.map(x => x.registrationId === c.registrationId ? { ...x, offerResponse: null, offerExpired: false } : x) } : b);
+    } catch (e: any) {
+      fail(e.message ?? 'Failed to resend the offer.');
+    } finally {
+      setResendingId(null);
     }
   }
 
@@ -145,6 +167,10 @@ export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
     );
   }
 
+  // Offered candidates whose family has declined — still 'offered' status until the coach acts, so they
+  // sit inside counts.offered. Surface them so the "offered" number never implies a spot is still open.
+  const familyDeclined = board.candidates.filter(c => c.status === 'offered' && c.offerResponse === 'declined').length;
+
   return (
     <div className={styles.card}>
       <div className={styles.head}>
@@ -162,6 +188,7 @@ export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
         <span className={styles.tallyItem}><strong>{board.counts.waitlisted}</strong> waitlist</span>
         <span className={styles.tallyItem}><strong>{board.counts.declined}</strong> passed</span>
         {board.counts.accepted > 0 && <span className={styles.tallyItem}><strong>{board.counts.accepted}</strong> accepted</span>}
+        {familyDeclined > 0 && <span className={styles.tallyItem} style={{ color: '#f87171' }}><strong>{familyDeclined}</strong> declined by family</span>}
         <span className={styles.tallyItem} style={{ marginLeft: 'auto' }}><strong>{board.counts.pending}</strong> undecided</span>
       </div>
 
@@ -220,6 +247,17 @@ export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
                           : c.offerResponse === 'accepted' ? 'Confirm → add to roster'
                           : 'Accept → add to roster'}
                       </button>
+                      {c.offerResponse !== 'accepted' && (
+                        <button
+                          type="button"
+                          className={styles.resendBtn}
+                          onClick={() => resendOffer(c)}
+                          disabled={!!resendingId || !!savingId}
+                          title="Re-send the offer email with a fresh Accept/Decline link + new deadline"
+                        >
+                          {resendingId === c.registrationId ? 'Resending…' : 'Resend offer'}
+                        </button>
+                      )}
                     </>
                   )}
                 </div>

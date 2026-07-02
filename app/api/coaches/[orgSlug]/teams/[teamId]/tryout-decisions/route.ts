@@ -112,14 +112,33 @@ export const POST = withObservability(async (req: Request,
   const body = await req.json().catch(() => ({}));
   const registrationId = typeof body.registrationId === 'string' ? body.registrationId : '';
   const decision = typeof body.decision === 'string' ? body.decision : '';
-  const nextStatus = DECISION_STATUS[decision];
-  if (!nextStatus) return NextResponse.json({ error: 'bad_decision' }, { status: 400 });
 
-  // IDOR + guard: the candidate must be in THIS program year and still decidable
-  // (an accepted candidate is on the roster; a withdrawn one opted out — neither is board-editable).
+  // IDOR + guard: the candidate must be in THIS program year (shared by the resend + decision paths).
   const registrations = await getRepTryoutRegistrations(r.programYear.id);
   const registration = registrations.find(reg => reg.id === registrationId);
   if (!registration) return NextResponse.json({ error: 'not_found' }, { status: 404 });
+
+  const sideEffectCtx = {
+    teamName: r.teamName,
+    yearName: r.programYear.name,
+    orgName: r.orgName,
+    orgLogoUrl: r.orgLogoUrl,
+    contactEmail: r.contactEmail,
+  };
+
+  // Resend: re-send the offer email with a FRESH Accept/Decline link + new deadline, without changing
+  // status. Only valid while an offer is out; re-minting resets any prior family response.
+  if (decision === 'resend') {
+    if (registration.status !== 'offered') {
+      return NextResponse.json({ error: 'not_offered', message: 'You can only resend an offer that is currently extended.' }, { status: 409 });
+    }
+    await applyTryoutDecisionSideEffects({ reg: registration, newStatus: 'offered', ...sideEffectCtx });
+    return NextResponse.json({ registrationId, status: 'offered', resent: true });
+  }
+
+  const nextStatus = DECISION_STATUS[decision];
+  if (!nextStatus) return NextResponse.json({ error: 'bad_decision' }, { status: 400 });
+  // An accepted candidate is on the roster; a withdrawn one opted out — neither is board-editable.
   if (registration.status === 'accepted' || registration.status === 'withdrawn') {
     return NextResponse.json({ error: 'not_editable', message: 'This candidate can no longer be changed from the board.' }, { status: 409 });
   }
@@ -128,15 +147,7 @@ export const POST = withObservability(async (req: Request,
 
   // Family-facing side effects — same shared path as the admin route (offer link + branded emails).
   // The coach board previously sent NO email on offer/waitlist/cut; 2B.5 makes them consistent.
-  await applyTryoutDecisionSideEffects({
-    reg: updated,
-    newStatus: nextStatus,
-    teamName: r.teamName,
-    yearName: r.programYear.name,
-    orgName: r.orgName,
-    orgLogoUrl: r.orgLogoUrl,
-    contactEmail: r.contactEmail,
-  });
+  await applyTryoutDecisionSideEffects({ reg: updated, newStatus: nextStatus, ...sideEffectCtx });
 
   return NextResponse.json({ registrationId, status: updated.status });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-decisions' });
