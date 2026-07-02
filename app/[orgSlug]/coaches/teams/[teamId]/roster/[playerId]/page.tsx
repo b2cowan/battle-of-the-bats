@@ -383,7 +383,7 @@ export default function PlayerDetailPage({
                   </div>
                   <div style={{ minWidth: 150 }}>
                     <label className={styles.label} htmlFor="pitcher-max">Max innings / game</label>
-                    <input id="pitcher-max" className={styles.input} type="number" min={0} max={20}
+                    <input id="pitcher-max" className={styles.input} type="number" min={1} max={20}
                       placeholder="No limit"
                       value={form.pitcher.maxInnings}
                       onChange={e => setForm(f => f ? { ...f, pitcher: { ...f.pitcher, maxInnings: e.target.value } } : f)} />

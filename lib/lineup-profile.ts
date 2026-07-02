@@ -39,7 +39,9 @@ function normalizePitcher(raw: unknown): LineupPitcherProfile | null {
   let maxInnings: number | null = null;
   if (r.maxInnings !== null && r.maxInnings !== undefined && r.maxInnings !== '') {
     const mi = Number(r.maxInnings);
-    maxInnings = Number.isFinite(mi) ? Math.min(99, Math.max(0, Math.round(mi))) : null;
+    // Floor at 1: a cap of 0 would silently bench the pitcher all game (generator uses played < cap).
+    // "No cap" is expressed as null (empty input), never 0. Blank → the guard above keeps it null.
+    maxInnings = Number.isFinite(mi) ? Math.min(99, Math.max(1, Math.round(mi))) : null;
   }
   return { rank, maxInnings };
 }
