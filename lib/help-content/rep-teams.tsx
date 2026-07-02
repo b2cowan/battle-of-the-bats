@@ -90,8 +90,8 @@ const repTeamsHelp: HelpPageContent = {
             <li>Open the team and select the correct program year, then go to <strong>Tryouts</strong>.</li>
             <li>Turn on <strong>Open Registration</strong> so families can apply from your org&apos;s public page.</li>
             <li>Review incoming applicants in <strong>Pending Review</strong>.</li>
-            <li>Use <strong>Extend Offer</strong> to invite a player (the application moves to Offer Extended and the guardian is notified).</li>
-            <li>Use <strong>Accept</strong> only when the player is confirmed — this opens a short drawer that adds them to the roster (and, optionally, sets up their fees) in one step, and makes them visible to the coach. <strong>Decline</strong> notifies the guardian.</li>
+            <li>Use <strong>Extend Offer</strong> to invite a player — the guardian gets a club-branded email with no-login <strong>Accept/Decline</strong> buttons (good for 7 days). The applicant panel then shows where the family stands: <em>awaiting response</em>, <em>family accepted</em>, <em>declined</em>, or <em>expired</em>. A family&apos;s response is recorded but never rosters the player on its own — you still confirm.</li>
+            <li>Use <strong>Accept</strong> once the player is confirmed (typically after the family accepts) — this opens a short drawer that adds them to the roster (and, optionally, sets up their fees) in one step, and makes them visible to the coach. <strong>Decline</strong> sends a warm release note; <strong>Waitlist</strong> sends a waitlist note.</li>
             <li>Close registration when tryouts finish so the public form goes offline.</li>
           </ol>
           <p>The applicant list shows a <strong>Consent</strong> column: when a family submits the public form they confirm consent to data collection and email contact, and the date is captured for your records. Include it in the <strong>applicant export</strong> when you need a documented consent record.</p>

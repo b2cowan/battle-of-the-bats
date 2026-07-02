@@ -1,6 +1,6 @@
 # Coaches Portal Tryouts & Evaluation — Phase 2B.5: Offer / Release Emails + Waitlist Auto-Promote — Implementation Plan
 
-> **Status:** Build-ready — decisions ratified 2026-07-02; building
+> **Status:** ✅ BUILT + committed `cae2b3a0` (2026-07-02) — all phases; `/marketing` tone pass + adversarial `/review` folded in (4 fixes); mig 170 dev-applied/prod-pending; committed as an isolated slice alongside the concurrent Lineup Intelligence commit `c918d8c6` (shared DB snapshot reconciled). Help docs + dev-server restart at handoff. **Phase 2B complete (2B.1–2B.5).**
 > **Created:** 2026-07-02
 > **Branch:** dev
 > **Parent:** docs/projects/active/COACHES_PORTAL_TRYOUTS_EVAL_PHASE2B_PLAN.md (2B.5)
