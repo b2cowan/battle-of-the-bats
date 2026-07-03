@@ -19,6 +19,7 @@ import { toPublicTeam } from '@/lib/public-tournament-data';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import CountUp from '@/components/public/CountUp';
 import Countdown from '@/components/public/Countdown';
+import GetAppLink from '@/components/public/GetAppLink';
 import styles from '@/app/[orgSlug]/Home.module.css';
 
 export default async function TournamentHomeContent({
@@ -648,6 +649,13 @@ export default async function TournamentHomeContent({
               ? ' Thanks for following along — final scores and standings are preserved below.'
               : ' View tournament details and updates in one place.'}
           </p>
+
+          {/* Mobile-only (re)install entry point — the install prompt is only
+              mounted for non-completed events (tournament layout), and preview
+              has no prompt to trigger, so match those conditions here. */}
+          {!isPreview && !isCompletedTournament && (
+            <GetAppLink className={styles.getAppLink} />
+          )}
 
           {!isInProgress && !isCompletedTournament && (
             <div className={styles.registrationStatus}>
