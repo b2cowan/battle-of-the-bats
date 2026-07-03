@@ -44,6 +44,36 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-03',
+    title: 'Run your tryouts start to finish — and bring on assistant coaches',
+    highlights: [
+      {
+        category: 'new',
+        text: 'In the Premium Coaches Portal, you can now run tryouts from start to finish. Set up sessions and check players in on the day, then score candidates with more than one evaluator at once and watch results land on a live scoreboard. Families give their consent right as they register.',
+      },
+      {
+        category: 'new',
+        text: 'When it’s time to decide, make your cuts on a tryout decision board and email offers — families accept or decline straight from the email, no login needed, and a waitlist keeps filling the spots that open up. Say yes to a player and they drop onto your roster, fees and all, in one click.',
+      },
+      {
+        category: 'new',
+        text: 'Also in the Premium Coaches Portal, you can now invite assistant coaches and decide exactly what each one can do — from schedule-only help to a full second-in-command. Team finances and families’ contact details stay private unless you choose to share them, so you can hand off the parts you want help with and keep the rest to yourself.',
+      },
+      {
+        category: 'improved',
+        text: 'The lineup tool now plans around who plays where. On a new depth chart, mark the positions each player handles best, can fill in, or shouldn’t play, and the auto-built lineup follows your call.',
+      },
+      {
+        category: 'improved',
+        text: 'You can now set an innings cap per pitcher to protect young arms — the lineup builder keeps a pitcher from going past their limit.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed a case where a pitcher’s innings cap could accidentally leave them on the bench.',
+      },
+    ],
+  },
+  {
     date: '2026-06-29',
     title: 'Set your lineup in a click — and get your tournament found',
     highlights: [
