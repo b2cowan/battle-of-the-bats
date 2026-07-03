@@ -66,8 +66,9 @@ export async function GET(
   // `name` below stays the tournament name (install prompt / app switcher / splash).
   // Plus-gated like the logo/theme — a downgraded org reverts to the derived label.
   const customAppName = advanced ? tournament.appName?.trim() || null : null;
-  const shortName = customAppName
-    ?? (tournament.name.length > 12 ? tournament.name.slice(0, 12).trim() : tournament.name);
+  // No custom label: use the full tournament name and let the OS truncate with an
+  // ellipsis, rather than hard-cutting mid-word (e.g. "Battle of th").
+  const shortName = customAppName ?? tournament.name;
 
   const manifest = {
     name: tournament.name,
@@ -81,7 +82,6 @@ export async function GET(
     display: 'standalone',
     background_color: '#0a0a0f',
     theme_color: '#0a0a0f',
-    orientation: 'any',
     icons,
   };
 

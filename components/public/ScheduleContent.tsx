@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { Calendar, CalendarPlus, Trophy, List, LayoutTemplate, Search, ChevronDown, ChevronRight, Star, X, Megaphone } from 'lucide-react';
+import { Calendar, CalendarPlus, Trophy, List, LayoutTemplate, Search, ChevronDown, Star, X, Megaphone } from 'lucide-react';
 import { Game, PublicTeam, Division, Tournament, Announcement, Venue } from '@/lib/types';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
@@ -23,6 +23,7 @@ import { downloadTeamScheduleICS } from '@/lib/team-calendar';
 import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
 import FollowTeamPicker from '@/components/public/FollowTeamPicker';
 import RollingNumber from '@/components/public/RollingNumber';
+import MyTeamCard from '@/components/public/MyTeamCard';
 import { teamAvatarHue, teamInitials } from '@/lib/team-color';
 
 // ── bracket helpers ───────────────────────────────────────────────────────────
@@ -439,18 +440,9 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     setFollowedFilterApplied(true);
   }, [divisions, followedFilterApplied, followedTeam, orgSlug]);
 
-  // Auto-scroll to today's games on first load so the core game-day question
-  // ("when/where is my next game") is a glance, not scroll-and-hunt. Runs once.
-  const didAutoScrollRef = useRef(false);
-  useEffect(() => {
-    if (loading || isPreview || didAutoScrollRef.current) return;
-    if (typeof window === 'undefined') return;
-    const el = document.getElementById('schedule-today');
-    if (!el) return;
-    didAutoScrollRef.current = true;
-    // Defer a frame so the follow-team auto-filter has settled the layout first.
-    requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-  }, [loading, isPreview, sortedDates]);
+  // Today's games stay visually highlighted (`.todayGroup`) but the page no longer
+  // auto-scrolls to them on load — the jump scrolled past the header + My Team card
+  // and was disorienting; the card already surfaces the team's next game up top.
 
   function showFollowedTeamGames() {
     if (!followedTeam) return;
@@ -779,88 +771,40 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
           {/* ── Scorebug strip (mobile) / follow prompt ── */}
           {!isPreview && !loading && (
             <>
-              <div className={styles.scorebugBar}>
-                {followedTeam ? (
-                  <>
-                    <Link
-                      href={`/${orgSlug}/${tournamentSlug}/teams/${followedTeam.id}`}
-                      className={styles.scorebugLink}
-                      aria-label={`${followedTeam.name} — view team page`}
-                    >
-                    <div
-                      className={styles.scorebugAvatar}
-                      style={{ background: `hsl(${teamAvatarHue(followedTeam.name)}, 58%, 38%)` }}
-                    >
-                      {teamInitials(followedTeam.name)}
-                    </div>
-                    <div className={styles.scorebugBody}>
-                      <div className={styles.scorebugName}>
-                        <span className={styles.scorebugNameText}>{followedTeam.name}</span>
-                        <ChevronRight size={13} className={styles.scorebugGo} aria-hidden="true" />
-                      </div>
-                      <div className={styles.scorebugMeta}>
-                        <span>
-                          {followedRecord
-                            ? `${followedRecord.w}-${followedRecord.l}-${followedRecord.t}`
-                            : '0-0-0'}
-                        </span>
-                        {followedStandingPos > 0 && (
-                          <>
-                            <span className={styles.scorebugDot}>·</span>
-                            <span>
-                              {ordinal(followedStandingPos)}
-                              {followedTeamPool ? ` · ${followedTeamPool.name}` : ''}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      {followedOpponentName && (
-                        <div className={styles.scorebugOpp}>vs {followedOpponentName}</div>
-                      )}
-                    </div>
-                    <div className={styles.scorebugRight}>
-                      {followedCurrentGame ? (
-                        <>
-                          <span className={styles.scorebugLive}>
-                            <span className={styles.scorebugLiveDot} />LIVE
-                          </span>
-                          <div className={styles.scorebugScoreDisplay}>
-                            <RollingNumber value={followedCurrentGame.awayTeamId === followedTeamId ? followedCurrentGame.awayScore : followedCurrentGame.homeScore} />
-                            <span className={styles.scorebugScoreDash}>-</span>
-                            <RollingNumber value={followedCurrentGame.awayTeamId === followedTeamId ? followedCurrentGame.homeScore : followedCurrentGame.awayScore} />
-                          </div>
-                        </>
-                      ) : followedNextGame ? (
-                        <>
-                          <div className={styles.scorebugNextUp}>NEXT UP</div>
-                          {followedNextGame.date && (
-                            <div className={styles.scorebugNextDate}>{nextUpDateLabel(followedNextGame.date)}</div>
-                          )}
-                          <div className={styles.scorebugNextTime}>
-                            {followedNextGame.time ? formatTime(followedNextGame.time) : 'TBD'}
-                          </div>
-                        </>
-                      ) : null}
-                    </div>
-                    </Link>
-                    <button
-                      type="button"
-                      className={styles.scorebugStop}
-                      onClick={stopFollowing}
-                      aria-label={`Following ${followedTeam.name} — tap to unfollow`}
-                      title="Following — tap to unfollow"
-                    >
-                      <Star size={16} fill="currentColor" />
-                    </button>
-                  </>
-                ) : (
+              {followedTeam ? (
+                <MyTeamCard
+                  layout="strip"
+                  hideOnDesktop
+                  teamName={followedTeam.name}
+                  teamHref={`/${orgSlug}/${tournamentSlug}/teams/${followedTeam.id}`}
+                  recordLabel={followedRecord ? `${followedRecord.w}-${followedRecord.l}-${followedRecord.t}` : '0-0-0'}
+                  rankLabel={followedStandingPos > 0 ? `${ordinal(followedStandingPos)}${followedTeamPool ? ` · ${followedTeamPool.name}` : ''}` : null}
+                  opponentName={followedOpponentName ?? null}
+                  status={
+                    followedCurrentGame
+                      ? {
+                          kind: 'live',
+                          myScore: followedCurrentGame.awayTeamId === followedTeamId ? followedCurrentGame.awayScore : followedCurrentGame.homeScore,
+                          oppScore: followedCurrentGame.awayTeamId === followedTeamId ? followedCurrentGame.homeScore : followedCurrentGame.awayScore,
+                        }
+                      : followedNextGame
+                        ? {
+                            kind: 'next',
+                            dateLabel: followedNextGame.date ? nextUpDateLabel(followedNextGame.date) : null,
+                            timeLabel: followedNextGame.time ? formatTime(followedNextGame.time) : 'TBD',
+                          }
+                        : { kind: 'none' }
+                  }
+                />
+              ) : (
+                <div className={styles.scorebugBar}>
                   <FollowTeamPicker
                     orgSlug={orgSlug}
                     tournamentSlug={tournamentSlug}
                     teams={divisionTeams}
                   />
-                )}
-              </div>
+                </div>
+              )}
               {followedTeam && (
                 <div className={styles.followQuickActions}>
                   {!isMyTeamFilter && (
@@ -1355,74 +1299,29 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
             {followedTeam && !loading && (
               <div className={styles.scheduleRail}>
                 {/* Scorebug card */}
-                <div className={styles.railCard}>
-                  <div className={styles.railCardHeader}>
-                    <Link
-                      href={`/${orgSlug}/${tournamentSlug}/teams/${followedTeam.id}`}
-                      className={styles.railIdentityLink}
-                      aria-label={`${followedTeam.name} — view team page`}
-                    >
-                    <div
-                      className={styles.railAvatar}
-                      style={{ background: `hsl(${teamAvatarHue(followedTeam.name)}, 58%, 38%)` }}
-                    >
-                      {teamInitials(followedTeam.name)}
-                    </div>
-                    <div className={styles.railTeamInfo}>
-                      <div className={styles.railTeamName}>
-                        <Star size={11} fill="currentColor" className={styles.railTeamStar} />
-                        <span className={styles.railTeamNameText}>{followedTeam.name}</span>
-                        <ChevronRight size={12} className={styles.scorebugGo} aria-hidden="true" />
-                      </div>
-                      <div className={styles.railTeamMeta}>
-                        <span>
-                          {followedRecord
-                            ? `${followedRecord.w}-${followedRecord.l}-${followedRecord.t}`
-                            : '0-0-0'}
-                        </span>
-                        {followedStandingPos > 0 && (
-                          <>
-                            <span>·</span>
-                            <span>
-                              {ordinal(followedStandingPos)}
-                              {followedTeamPool ? ` · ${followedTeamPool.name}` : ''}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    </Link>
-                    <div className={styles.railScoreArea}>
-                      {followedCurrentGame ? (
-                        <>
-                          <span className={styles.scorebugLive} style={{ fontSize: '0.52rem' }}>
-                            <span className={styles.scorebugLiveDot} />LIVE
-                          </span>
-                          <div className={styles.railScoreNum}>
-                            <RollingNumber value={followedCurrentGame.awayTeamId === followedTeamId ? followedCurrentGame.awayScore : followedCurrentGame.homeScore} />
-                            <span className={styles.railScoreDash}>-</span>
-                            <RollingNumber value={followedCurrentGame.awayTeamId === followedTeamId ? followedCurrentGame.homeScore : followedCurrentGame.awayScore} />
-                          </div>
-                        </>
-                      ) : followedNextGame ? (
-                        <>
-                          <div className={styles.railNextUp}>NEXT UP</div>
-                          {followedNextGame.date && (
-                            <div className={styles.railNextDate}>{nextUpDateLabel(followedNextGame.date)}</div>
-                          )}
-                          <div className={styles.railNextTime}>
-                            {followedNextGame.time ? formatTime(followedNextGame.time) : 'TBD'}
-                          </div>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-                  {followedOpponentName && (
-                    <div className={styles.railCardBody}>
-                      <div className={styles.railOpp}>vs {followedOpponentName}</div>
-                    </div>
-                  )}
-                </div>
+                <MyTeamCard
+                  layout="rail"
+                  teamName={followedTeam.name}
+                  teamHref={`/${orgSlug}/${tournamentSlug}/teams/${followedTeam.id}`}
+                  recordLabel={followedRecord ? `${followedRecord.w}-${followedRecord.l}-${followedRecord.t}` : '0-0-0'}
+                  rankLabel={followedStandingPos > 0 ? `${ordinal(followedStandingPos)}${followedTeamPool ? ` · ${followedTeamPool.name}` : ''}` : null}
+                  opponentName={followedOpponentName ?? null}
+                  status={
+                    followedCurrentGame
+                      ? {
+                          kind: 'live',
+                          myScore: followedCurrentGame.awayTeamId === followedTeamId ? followedCurrentGame.awayScore : followedCurrentGame.homeScore,
+                          oppScore: followedCurrentGame.awayTeamId === followedTeamId ? followedCurrentGame.homeScore : followedCurrentGame.awayScore,
+                        }
+                      : followedNextGame
+                        ? {
+                            kind: 'next',
+                            dateLabel: followedNextGame.date ? nextUpDateLabel(followedNextGame.date) : null,
+                            timeLabel: followedNextGame.time ? formatTime(followedNextGame.time) : 'TBD',
+                          }
+                        : { kind: 'none' }
+                  }
+                />
 
                 {fanAlertsEnabled && selectedTournament && selectedTournament.status !== 'completed' && (
                   <FollowAlertsToggle

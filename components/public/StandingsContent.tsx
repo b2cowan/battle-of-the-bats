@@ -18,7 +18,7 @@ import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { readFollowedTeamId, isTournamentInProgress } from '@/lib/follow';
 import { isGameLive, isGameUpcoming, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
-import MyTeamStandingsStrip from '@/components/public/MyTeamStandingsStrip';
+import MyTeamCard, { type MyTeamCardStatus } from '@/components/public/MyTeamCard';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 
 type StandingResult = {
@@ -313,6 +313,52 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
     setDivisionPref(orgSlug, divisions.find(g => g.id === id)?.name ?? '');
   }
 
+  // ── Followed-team card (shared MyTeamCard) ────────────────────────────────
+  // Standings shows rank within DIVISION; the single most-relevant status is
+  // live > next > final (last result), matching the Schedule scorebug.
+  function ordinalRank(n: number): string {
+    const suffixes = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return `${n}${suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]}`;
+  }
+  function myTeamDateLabel(date: string): string {
+    if (date === today) return 'Today';
+    const tmrw = new Date(today + 'T12:00:00');
+    tmrw.setDate(tmrw.getDate() + 1);
+    if (date === tmrw.toISOString().slice(0, 10)) return 'Tomorrow';
+    return new Date(date + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+  }
+  const myTeamContextGame = liveFollowedGame ?? nextFollowedGame ?? null;
+  const myTeamOpponentName = (myTeamContextGame && followedTeam)
+    ? (() => {
+        const isHome = myTeamContextGame.homeTeamId === followedTeam.id;
+        const oppId = isHome ? myTeamContextGame.awayTeamId : myTeamContextGame.homeTeamId;
+        return teams.find(t => t.id === oppId)?.name
+          ?? (isHome ? myTeamContextGame.awayPlaceholder : myTeamContextGame.homePlaceholder)
+          ?? null;
+      })()
+    : null;
+  const myTeamScore = (game: Game) => {
+    const isHome = followedTeam ? game.homeTeamId === followedTeam.id : false;
+    return { my: isHome ? game.homeScore : game.awayScore, opp: isHome ? game.awayScore : game.homeScore };
+  };
+  let myTeamStatus: MyTeamCardStatus;
+  if (liveFollowedGame) {
+    const s = myTeamScore(liveFollowedGame);
+    myTeamStatus = { kind: 'live', myScore: s.my, oppScore: s.opp };
+  } else if (nextFollowedGame) {
+    myTeamStatus = {
+      kind: 'next',
+      dateLabel: nextFollowedGame.date ? myTeamDateLabel(nextFollowedGame.date) : null,
+      timeLabel: nextFollowedGame.time ? formatTime(nextFollowedGame.time) : 'TBD',
+    };
+  } else if (latestFollowedScore) {
+    const s = myTeamScore(latestFollowedScore);
+    myTeamStatus = { kind: 'final', myScore: s.my ?? 0, oppScore: s.opp ?? 0 };
+  } else {
+    myTeamStatus = { kind: 'none' };
+  }
+
   function getResultStatusLabel(game: Game) {
     if (game.status === 'submitted' && requireFinalization) return 'Unofficial';
     return 'Final';
@@ -470,17 +516,24 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
           )}
 
           {followedTeam && (
-            <MyTeamStandingsStrip
-              team={followedTeam}
-              rank={followedRank}
-              division={followedDivision}
-              liveGame={liveFollowedGame}
-              nextGame={nextFollowedGame}
-              latestScore={latestFollowedScore}
-              today={today}
-              showJump={!!followedDivision && activeGroup !== followedDivision.id}
-              onJump={showFollowedDivision}
-            />
+            <>
+              <MyTeamCard
+                layout="strip"
+                teamName={followedTeam.name}
+                teamHref={`${teamProfileBaseHref}/${followedTeam.id}`}
+                recordLabel={followedStanding ? `${followedStanding.w}-${followedStanding.l}-${followedStanding.t}` : '0-0-0'}
+                rankLabel={followedRank != null ? `${ordinalRank(followedRank)}${followedDivision ? ` · ${followedDivision.name}` : ''}` : null}
+                opponentName={myTeamOpponentName}
+                status={myTeamStatus}
+              />
+              {!!followedDivision && activeGroup !== followedDivision.id && (
+                <div className={styles.myTeamActions}>
+                  <button type="button" className={styles.myTeamJump} onClick={showFollowedDivision}>
+                    View my division
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {activeGroup && (

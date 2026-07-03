@@ -13,9 +13,10 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Star, ChevronUp, MapPin } from 'lucide-react';
-import type { Game, PublicTeam } from '@/lib/types';
+import { Star, ChevronUp } from 'lucide-react';
+import type { Game, PublicTeam, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
+import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { useFollowedTeam } from '@/lib/follow';
 import { isGameLive, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
@@ -23,6 +24,7 @@ import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import RollingNumber from '@/components/public/RollingNumber';
 import ShareScoreButton from '@/components/public/ShareScoreButton';
+import LocationLink from '@/components/LocationLink';
 import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
 import { teamAvatarHue, teamInitials } from '@/lib/team-color';
 import styles from './MyTeamDock.module.css';
@@ -52,6 +54,7 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, tournamentId, inPr
   const { followedTeamId, unfollow } = useFollowedTeam(orgSlug, tournamentSlug);
   const [teams, setTeams] = useState<PublicTeam[]>([]);
   const [games, setGames] = useState<Game[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [tournamentName, setTournamentName] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -67,6 +70,7 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, tournamentId, inPr
       if (cancelled || !data) return;
       setTeams(data.teams ?? []);
       setGames(data.games ?? []);
+      setVenues(data.venues ?? []);
       setTournamentName(data.tournament?.name ?? '');
       setLoaded(true);
     });
@@ -81,6 +85,7 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, tournamentId, inPr
     onData: data => {
       setTeams(data.teams ?? []);
       setGames(data.games ?? []);
+      if (data.venues) setVenues(data.venues);
     },
   });
 
@@ -145,6 +150,11 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, tournamentId, inPr
   const nextStartMs = nextGame ? gameStartMs(nextGame) : null;
   const countdownMs = nextStartMs != null ? nextStartMs - nowMs : null;
   const scheduleHref = `/${orgSlug}/${tournamentSlug}/schedule`;
+  // Resolve the venue LIVE (a venue/facility rename propagates immediately) instead
+  // of the denormalized game.location snapshot the dock used to show.
+  const venueLabel = resolveGameVenueLabel(game, venues);
+  const venue = game.venueId ? venues.find(v => v.id === game.venueId) ?? null : null;
+  const shareVenueLabel = shareGame ? resolveGameVenueLabel(shareGame, venues) : '';
 
   return (
     <div className={styles.dockWrap} data-expanded={expanded ? 'true' : 'false'}>
@@ -154,10 +164,10 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, tournamentId, inPr
             <span className={styles.expandLabel}>Opponent</span>
             <strong>{opponentName}</strong>
           </div>
-          {game.location && (
+          {venueLabel && (
             <div className={styles.expandRow}>
-              <span className={styles.expandLabel}><MapPin size={12} /> Venue</span>
-              <span>{game.location}</span>
+              <span className={styles.expandLabel}>Venue</span>
+              <LocationLink location={venueLabel} venue={venue} size="sm" />
             </div>
           )}
           {nextGame && (
@@ -183,7 +193,7 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, tournamentId, inPr
               statusLabel={shareIsLive ? 'LIVE' : 'FINAL'}
               live={shareIsLive}
               dateLabel={new Date(shareGame.date + 'T12:00:00').toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-              venueLabel={shareGame.location ?? null}
+              venueLabel={shareVenueLabel || null}
               gameType={shareGame.isPlayoff ? (shareGame.bracketCode || 'Playoff') : null}
             />
           )}

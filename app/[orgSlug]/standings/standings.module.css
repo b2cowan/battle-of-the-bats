@@ -1758,3 +1758,33 @@
     padding-left: 1.5rem;
   }
 }
+
+/* Followed-team card action row (e.g. "View my division") — sits below the shared
+   MyTeamCard on the standings page. Mirrors the Schedule quick-action aesthetic. */
+.myTeamActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: -0.35rem 0 0.9rem;
+}
+
+.myTeamJump {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid rgba(var(--primary-rgb), 0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.7rem;
+  background: rgba(var(--primary-rgb), 0.08);
+  color: var(--primary-light);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.myTeamJump:hover {
+  background: rgba(var(--primary-rgb), 0.14);
+  border-color: rgba(var(--primary-rgb), 0.5);
+}
