@@ -110,6 +110,39 @@ export async function subscribeToPush(): Promise<BrowserPushSubscription> {
   };
 }
 
+/**
+ * Full "enable push on this device" flow for an authenticated staff user:
+ * request permission (if needed), subscribe the device, and persist the
+ * subscription server-side so notify() can reach it.
+ *
+ * Must be called directly from a user-gesture handler (e.g. a button onClick) —
+ * browsers only allow Notification.requestPermission() inside a live gesture, so
+ * don't defer this into an effect after a re-render.
+ *
+ * Returns the subscription endpoint on success. Throws PushPermissionError
+ * (reason 'unsupported' | 'denied' | 'dismissed' | 'unconfigured' | 'failed').
+ */
+export async function enablePushOnThisDevice(): Promise<string> {
+  const sub = await subscribeToPush();
+
+  const res = await fetch('/api/notifications/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      endpoint: sub.endpoint,
+      keys: sub.keys,
+      deviceLabel: sub.deviceLabel,
+    }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({} as { error?: string }));
+    throw new PushPermissionError(data.error ?? 'Failed to save subscription.', 'failed');
+  }
+
+  return sub.endpoint;
+}
+
 /** The current browser push endpoint, if any (used to unsubscribe a fan row). */
 export async function getCurrentPushEndpoint(): Promise<string | null> {
   if (!isPushSupported()) return null;

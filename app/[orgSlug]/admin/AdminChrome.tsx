@@ -8,6 +8,7 @@ import { CancellationGuard } from '@/components/admin/CancellationGuard';
 import { getBillingHref } from '@/lib/billing-urls';
 import { LiveLogicRail } from '@/components/live-logic/LiveLogicRail';
 import AdminMobileTopBar from '@/components/admin/AdminMobileTopBar';
+import EnablePushBanner from '@/components/notifications/EnablePushBanner';
 import { AdminDensityProvider } from '@/lib/admin-density';
 import { AdminWorklistProvider } from '@/lib/admin-worklist';
 import AdminTitleManager from './AdminTitleManager';
@@ -57,6 +58,7 @@ export default function AdminChrome({
       <div className={shellClassName}>
         {!isFocused && <AdminSidebar />}
         <main className={mainClassName}>
+          {!isFocused && <EnablePushBanner />}
           {children}
         </main>
       </div>

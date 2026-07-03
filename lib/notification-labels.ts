@@ -101,6 +101,36 @@ export const ALL_EVENT_TYPES: NotificationEventType[] =
   NOTIFICATION_SECTIONS.flatMap(s => s.eventTypes);
 
 /**
+ * Events whose Push channel is ON by default (when a user has no saved preference row).
+ *
+ * These are the time-sensitive, action-worthy moments an organizer/coach wants on their
+ * phone the instant they happen. Push only ever reaches a *subscribed* device, so a
+ * default of ON here never spams anyone who hasn't opted their device in.
+ *
+ * Kept OFF by default (informational / high-volume — users opt in per event):
+ *   registration_status_changed, registration_deadline_approaching, waitlist_opened,
+ *   house_league_registration_new
+ *
+ * Single source of truth — consumed by both the server dispatch (lib/notify.ts) and the
+ * org preferences UI so the toggles shown always match what actually fires.
+ */
+export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Set([
+  'registration_new',
+  'payment_received',
+  'payment_failed',
+  'score_submitted',
+  'score_disputed',
+  'team_no_show',
+  'roster_change_requested',
+  'coach_access_requested',
+  'tryout_offer_response',
+  'assistant_coach_joined',
+  'assistant_coach_approval_requested',
+  'chat_message',
+  'chat_mention',
+]);
+
+/**
  * The 6 event types that are wired and relevant to a specific tournament.
  *
  * Excluded deliberately:

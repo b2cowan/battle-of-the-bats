@@ -20,7 +20,7 @@ import { useTournament } from '@/lib/tournament-context';
 import { hasCapability, type Capability } from '@/lib/roles';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import { useHasMultipleWorkspaces } from '@/lib/use-has-multiple-workspaces';
-import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
+import { getBillingHref, isTournamentTier, getNotificationSettingsHref } from '@/lib/billing-urls';
 import { isWithinEventDates } from '@/lib/tournament-phase';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
@@ -265,7 +265,10 @@ export default function AdminSidebar() {
           </div>
           {currentOrg?.id && (
             <div className="flex items-center gap-1 ml-auto self-start shrink-0">
-              <NotificationBell orgId={currentOrg.id} />
+              <NotificationBell
+                orgId={currentOrg.id}
+                settingsHref={getNotificationSettingsHref(currentOrg.slug, currentOrg.planId)}
+              />
             </div>
           )}
         </div>

@@ -16,6 +16,12 @@ frontend:
         - echo "NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL" >> .env.production
         - echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env.production
         - echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> .env.production
+        # Web Push (VAPID). Public key is inlined into the client bundle at build
+        # time (browser subscribe needs it); private key + email are read by the
+        # server at runtime to sign pushes. Without these, push silently no-ops.
+        - echo "NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY" >> .env.production
+        - echo "VAPID_PRIVATE_KEY=$VAPID_PRIVATE_KEY" >> .env.production
+        - echo "VAPID_EMAIL=$VAPID_EMAIL" >> .env.production
         # Webpack production build (next build --webpack) uses far more heap than the
         # Turbopack default and OOMs the build worker on the 8GiB Standard instance.
         # NODE_OPTIONS is inherited by Next's build workers; raise the old-space limit.

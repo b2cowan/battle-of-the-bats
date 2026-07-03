@@ -75,7 +75,7 @@ Adding the PWA manifest also means users get a proper home screen icon, full-scr
 Each user has independent preferences per org. They can:
 - Enable or disable individual event types
 - Choose channel per event: **Bell** (in-app), **Push** (phone), **Email**
-- Default: bell ON for everything, push OFF (opt-in), email OFF
+- Default: bell ON for everything; push ON for the action-worthy events (registrations, payments, scores, no-shows, coach requests) and OFF for informational ones — push only reaches devices the user has enabled notifications on; email OFF (except payment-failed for owners/admins). *(Updated 2026-07-03 — Push Enablement.)*
 
 This prevents notification fatigue — an admin who only cares about registrations can silence everything else.
 

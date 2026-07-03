@@ -124,6 +124,30 @@
   color: var(--fl-text);
 }
 
+/* ── Panel footer — subtle settings link ───────────────────────────────────── */
+
+.panelFooter {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.2);
+}
+
+.settingsLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.settingsLink:hover {
+  color: var(--white-90, #f0f0f0);
+}
+
 /* ── Notification rows ─────────────────────────────────────────────────────── */
 
 .notifList {

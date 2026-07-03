@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { CheckCheck, BellOff } from 'lucide-react';
+import Link from 'next/link';
+import { CheckCheck, BellOff, Settings } from 'lucide-react';
 import type { AppNotification } from '@/lib/types';
 import styles from './notifications.module.css';
 
@@ -39,9 +40,11 @@ interface Props {
   orgId: string;
   onClose: () => void;
   onUnreadChange: (count: number) => void;
+  /** When provided, a subtle "Notification settings" link is shown in the panel footer. */
+  settingsHref?: string;
 }
 
-export default function NotificationPanel({ orgId, onClose, onUnreadChange }: Props) {
+export default function NotificationPanel({ orgId, onClose, onUnreadChange, settingsHref }: Props) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading,       setLoading]       = useState(true);
   const [markingAll,    setMarkingAll]    = useState(false);
@@ -153,6 +156,15 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange }: Pr
           })
         )}
       </div>
+
+      {settingsHref && (
+        <div className={styles.panelFooter}>
+          <Link href={settingsHref} className={styles.settingsLink} onClick={onClose}>
+            <Settings size={12} aria-hidden />
+            Notification settings
+          </Link>
+        </div>
+      )}
     </div>
   );
 

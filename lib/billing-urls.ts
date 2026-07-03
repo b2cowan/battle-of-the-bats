@@ -16,3 +16,15 @@ export function getBillingHref(orgSlug: string, planId: OrgPlan | string | undef
     ? `/${orgSlug}/admin/tournaments/settings/subscription`
     : `/${orgSlug}/admin/org/billing`;
 }
+
+/**
+ * Returns the correct notification-settings URL for an org.
+ * Tournament and Tournament Plus users have no org admin concept — the /admin/org
+ * area (incl. the global notification-preferences page) is walled off for them,
+ * so their notification settings live on the per-tournament notifications page.
+ */
+export function getNotificationSettingsHref(orgSlug: string, planId: OrgPlan | string | undefined | null): string {
+  return isTournamentTier(planId)
+    ? `/${orgSlug}/admin/tournaments/settings/notifications`
+    : `/${orgSlug}/admin/org/notifications`;
+}

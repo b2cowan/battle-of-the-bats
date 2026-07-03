@@ -17,6 +17,7 @@ import NotificationBell from '@/components/notifications/NotificationBell';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { resolvePhase, isWithinEventDates, PHASE_LABEL } from '@/lib/tournament-phase';
+import { getNotificationSettingsHref } from '@/lib/billing-urls';
 import styles from './AdminMobileTopBar.module.css';
 
 export default function AdminMobileTopBar() {
@@ -56,7 +57,10 @@ export default function AdminMobileTopBar() {
       </div>
       {currentOrg?.id && (
         <div className={`${styles.bellSlot} flex items-center gap-1`}>
-          <NotificationBell orgId={currentOrg.id} />
+          <NotificationBell
+            orgId={currentOrg.id}
+            settingsHref={getNotificationSettingsHref(currentOrg.slug, currentOrg.planId)}
+          />
         </div>
       )}
     </header>

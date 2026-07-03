@@ -12,6 +12,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { sendEmail } from './email';
 import { sendWebPush } from './web-push';
 import { hasPlanFeature, type PlanFeature } from './plan-features';
+import { PUSH_DEFAULT_ON_EVENTS } from './notification-labels';
 import type { NotificationEventType, OrgPlan } from './types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -58,8 +59,9 @@ interface ChannelPrefs {
 function systemDefaults(eventType: NotificationEventType, role: string): ChannelPrefs {
   return {
     bell:  true,
-    // Chat is the chat-app model: push ON by default (chat message + @mention), email OFF.
-    push:  eventType === 'chat_message' || eventType === 'chat_mention',
+    // Push ON by default for the time-sensitive, action-worthy events (see PUSH_DEFAULT_ON_EVENTS).
+    // Only ever reaches a device that has explicitly opted in, so ON here never spams anyone.
+    push:  PUSH_DEFAULT_ON_EVENTS.has(eventType),
     // payment_failed defaults to email=true for owners and admins
     email: eventType === 'payment_failed' && (role === 'owner' || role === 'admin'),
   };

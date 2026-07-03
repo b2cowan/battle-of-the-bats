@@ -8,11 +8,12 @@ import {
   ALL_EVENT_TYPES,
   NOTIFICATION_EVENT_LABELS,
   NOTIFICATION_EVENT_DESCRIPTIONS,
+  PUSH_DEFAULT_ON_EVENTS,
 } from '@/lib/notification-labels';
 import type { NotificationEventType, NotificationPreference } from '@/lib/types';
 import type { Capability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import PushPermissionPrompt from '@/components/notifications/PushPermissionPrompt';
+import { enablePushOnThisDevice, PushPermissionError } from '@/lib/push-client';
 import styles from './notifications.module.css';
 
 // ── System defaults ────────────────────────────────────────────────────────────
@@ -21,7 +22,7 @@ function systemDefault(eventType: NotificationEventType, role: string): Notifica
   return {
     eventType,
     channelBell:  true,
-    channelPush:  false,
+    channelPush:  PUSH_DEFAULT_ON_EVENTS.has(eventType),
     channelEmail: eventType === 'payment_failed' && (role === 'owner' || role === 'admin'),
   };
 }
@@ -70,8 +71,8 @@ export default function OrgNotificationPreferencesPage() {
   // ── Push-specific state ────────────────────────────────────────────────────
   // null = not yet checked (SSR), false = unsupported, true = supported
   const [pushSupported, setPushSupported] = useState<boolean | null>(null);
-  // The event type whose Push toggle is pending a permission prompt
-  const [pendingPushEventType, setPendingPushEventType] = useState<NotificationEventType | null>(null);
+  // True while a Push toggle is registering this device (OS permission + subscribe).
+  const [enablingPush, setEnablingPush] = useState(false);
 
   // Debounce refs per event type (used for bell/email — push uses explicit save after permission)
   const debounceRefs = useRef<Map<NotificationEventType, ReturnType<typeof setTimeout>>>(new Map());
@@ -153,38 +154,9 @@ export default function OrgNotificationPreferencesPage() {
     }
   }, [orgSlug]);
 
-  // ── Push subscription success ──────────────────────────────────────────────
-
-  function handlePushSuccess(_endpoint: string) {
-    if (!pendingPushEventType) return;
-    // Permission granted + device subscribed — now persist the preference
-    const pref = prefs.get(pendingPushEventType);
-    if (pref) savePref(pref);
-    setPendingPushEventType(null);
-  }
-
-  // ── Push subscription error / dismissed ───────────────────────────────────
-
-  function handlePushError(msg: string) {
-    if (!pendingPushEventType) return;
-    // Revert the optimistic toggle
-    setPrefs(prev => {
-      const current = prev.get(pendingPushEventType);
-      if (!current) return prev;
-      return new Map(prev).set(pendingPushEventType, { ...current, channelPush: false });
-    });
-    setPendingPushEventType(null);
-    setError(msg);
-  }
-
-  function handlePushDismiss() {
-    // User saw the "blocked" instructions and dismissed — revert toggle
-    handlePushError('Push notifications are blocked in this browser. Follow the instructions above to unblock.');
-  }
-
   // ── Optimistic toggle handler ────────────────────────────────────────────────
 
-  function handleToggle(
+  async function handleToggle(
     eventType: NotificationEventType,
     channel: 'channelBell' | 'channelPush' | 'channelEmail',
     value: boolean,
@@ -192,13 +164,36 @@ export default function OrgNotificationPreferencesPage() {
     const current = prefs.get(eventType) ?? systemDefault(eventType, role);
     const updated: NotificationPreference = { ...current, [channel]: value };
 
-    // ── Push-specific flow (turning ON only) ──────────────────────────────────
+    // ── Push-specific flow (turning ON) ───────────────────────────────────────
+    // Register this device directly inside the click gesture so the phone's
+    // "Allow notifications?" dialog appears immediately (it's browser-rendered,
+    // so it's always visible regardless of scroll position — no off-screen step).
     if (channel === 'channelPush' && value === true) {
-      // Optimistically show the toggle on
-      setPrefs(prev => new Map(prev).set(eventType, updated));
-      // Show the permission prompt (it auto-subscribes if already granted)
-      setPendingPushEventType(eventType);
-      // Don't fire debounced save — wait for subscription confirmation
+      setError(null);
+      setPrefs(prev => new Map(prev).set(eventType, updated)); // optimistic ON
+      setEnablingPush(true);
+      try {
+        await enablePushOnThisDevice();
+        savePref(updated);
+      } catch (e) {
+        // Revert the optimistic toggle and explain what happened.
+        setPrefs(prev => {
+          const cur = prev.get(eventType);
+          return cur ? new Map(prev).set(eventType, { ...cur, channelPush: false }) : prev;
+        });
+        const reason = e instanceof PushPermissionError ? e.reason : 'failed';
+        setError(
+          reason === 'denied'
+            ? 'Notifications are blocked for this site. Turn them on in your browser or phone settings, then try again.'
+          : reason === 'unsupported'
+            ? 'This browser doesn’t support push notifications. On iPhone, add the app to your Home Screen first (iOS 16.4+).'
+          : reason === 'unconfigured'
+            ? 'Push isn’t set up on the server yet. Please try again later.'
+          : (e instanceof Error ? e.message : 'Could not enable push notifications.')
+        );
+      } finally {
+        setEnablingPush(false);
+      }
       return;
     }
 
@@ -262,15 +257,6 @@ export default function OrgNotificationPreferencesPage() {
         </div>
       )}
 
-      {/* Push permission prompt — shown inline when a push toggle is turned ON */}
-      {pendingPushEventType && (
-        <PushPermissionPrompt
-          onSuccess={handlePushSuccess}
-          onError={handlePushError}
-          onDismiss={handlePushDismiss}
-        />
-      )}
-
       {/* Preferences table — grouped by module */}
       <div className={styles.tableWrap}>
         <table className={styles.table}>
@@ -318,9 +304,8 @@ export default function OrgNotificationPreferencesPage() {
 
                     {/* Event rows for this section */}
                     {section.eventTypes.map(et => {
-                      const pref          = prefs.get(et) ?? systemDefault(et, role);
-                      const isSaving      = saving.has(et);
-                      const isPushPending = pendingPushEventType === et;
+                      const pref     = prefs.get(et) ?? systemDefault(et, role);
+                      const isSaving = saving.has(et);
                       return (
                         <tr key={et} className={`${styles.row} ${isSaving ? styles.rowSaving : ''}`}>
                           <td className={styles.tdEvent}>
@@ -342,11 +327,9 @@ export default function OrgNotificationPreferencesPage() {
                               checked={pref.channelPush}
                               onChange={v => handleToggle(et, 'channelPush', v)}
                               label={`Push notifications for ${NOTIFICATION_EVENT_LABELS[et]}`}
-                              // Disable if: browser doesn't support push, or another event type's push is pending
-                              disabled={
-                                pushSupported === false ||
-                                (pendingPushEventType !== null && !isPushPending)
-                              }
+                              // Disable if: browser doesn't support push, or a device registration
+                              // is already in flight (avoids firing two OS prompts at once).
+                              disabled={pushSupported === false || enablingPush}
                             />
                           </td>
                           <td className={styles.tdChannel}>
@@ -367,8 +350,10 @@ export default function OrgNotificationPreferencesPage() {
       </div>
 
       <p className={styles.footNote}>
-        System defaults: Bell is on for all events. Push is off by default. Email is off except
-        for <strong>Payment failed</strong> (owners and admins only).
+        System defaults: Bell is on for all events. Push is on for the time-sensitive alerts
+        (registrations, payments, scores, no-shows, coach requests) and off for the rest — it only
+        reaches devices you&apos;ve turned notifications on for. Email is off except for{' '}
+        <strong>Payment failed</strong> (owners and admins only).
       </p>
     </div>
   );

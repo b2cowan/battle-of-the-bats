@@ -1,12 +1,15 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Bell, BellOff, AlertCircle, Smartphone, Mail } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { TOURNAMENT_EVENT_TYPES, NOTIFICATION_EVENT_LABELS, NOTIFICATION_EVENT_DESCRIPTIONS } from '@/lib/notification-labels';
+import { TOURNAMENT_EVENT_TYPES, NOTIFICATION_EVENT_LABELS, NOTIFICATION_EVENT_DESCRIPTIONS, PUSH_DEFAULT_ON_EVENTS } from '@/lib/notification-labels';
+import { hasPlanFeature } from '@/lib/plan-features';
 import type { NotificationEventType, NotificationPreference } from '@/lib/types';
 import styles from './notifications.module.css';
+
+const CHAT_EVENT: NotificationEventType = 'chat_message';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -14,6 +17,10 @@ interface TournamentPref {
   eventType: NotificationEventType;
   optedOut:  boolean;
 }
+
+// Push defaults on for the tournament channel because several tournament event
+// types are in PUSH_DEFAULT_ON_EVENTS. Derived from module constants → stable.
+const TOURNAMENT_PUSH_DEFAULT_ON = TOURNAMENT_EVENT_TYPES.some(et => PUSH_DEFAULT_ON_EVENTS.has(et));
 
 interface Channels {
   bell:  boolean;
@@ -56,6 +63,16 @@ export default function TournamentNotificationPreferencesPage() {
   const tournamentId = currentTournament?.id;
   const orgSlug      = currentOrg?.slug;
 
+  // Tournament chat is a Tournament Plus+ feature. Only surface its notification
+  // control (and fold it into the channel/mute batches) when the org has chat.
+  const chatEnabled = currentOrg ? hasPlanFeature(currentOrg.planId, 'tournament_chat') : false;
+  // The event types this page manages: tournament ops events + chat when enabled.
+  // Memoized so effect/callback deps stay stable across renders.
+  const eventTypes = useMemo<NotificationEventType[]>(
+    () => (chatEnabled ? [...TOURNAMENT_EVENT_TYPES, CHAT_EVENT] : [...TOURNAMENT_EVENT_TYPES]),
+    [chatEnabled],
+  );
+
   // ── Per-event opt-out state ───────────────────────────────────────────────
   const [prefs, setPrefs]   = useState<Map<NotificationEventType, boolean>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -64,13 +81,15 @@ export default function TournamentNotificationPreferencesPage() {
 
   // ── Global channel state (bell / push / email) ────────────────────────────
   // Derived from org-level notification preferences; treated as uniform across
-  // all tournament event types.  System defaults: bell on, push/email off.
-  const [channels, setChannels]         = useState<Channels>({ bell: true, push: false, email: false });
+  // all tournament event types.  System defaults: bell on, email off; push on
+  // (several tournament events default push-on — see PUSH_DEFAULT_ON_EVENTS).
+  const [channels, setChannels]         = useState<Channels>({ bell: true, push: TOURNAMENT_PUSH_DEFAULT_ON, email: false });
   const [channelsLoading, setChannelsLoading] = useState(true);
   const [channelsSaving, setChannelsSaving]   = useState(false);
 
   // ── Computed: are ALL event types opted out? → muted ───────────────────────
-  const isMuted = TOURNAMENT_EVENT_TYPES.every(et => prefs.get(et) === true);
+  const isMuted = eventTypes.every(et => prefs.get(et) === true);
+  const chatOptedOut = prefs.get(CHAT_EVENT) ?? false;
 
   // ── Load per-tournament opt-out prefs ───────────────────────────────────────
 
@@ -114,11 +133,11 @@ export default function TournamentNotificationPreferencesPage() {
         // Bell: on unless the user explicitly saved bell=false for all of them.
         // Push / Email: on if any tournament event type has it enabled.
         const tournamentPrefs = preferences.filter(p =>
-          TOURNAMENT_EVENT_TYPES.includes(p.eventType)
+          eventTypes.includes(p.eventType)
         );
         if (tournamentPrefs.length === 0) {
-          // No saved rows — use system defaults
-          setChannels({ bell: true, push: false, email: false });
+          // No saved rows — use system defaults (push defaults on for the key events)
+          setChannels({ bell: true, push: TOURNAMENT_PUSH_DEFAULT_ON, email: false });
         } else {
           setChannels({
             bell:  !tournamentPrefs.every(p => p.channelBell  === false),
@@ -133,7 +152,7 @@ export default function TournamentNotificationPreferencesPage() {
       }
     }
     loadChannels();
-  }, [orgSlug]);
+  }, [orgSlug, eventTypes]);
 
   // ── Save per-tournament opt-out prefs ────────────────────────────────────
 
@@ -142,7 +161,7 @@ export default function TournamentNotificationPreferencesPage() {
     setSaving(true);
     setError(null);
     try {
-      const preferences = TOURNAMENT_EVENT_TYPES.map(et => ({
+      const preferences = eventTypes.map(et => ({
         eventType: et,
         optedOut:  updated.get(et) ?? false,
       }));
@@ -157,7 +176,7 @@ export default function TournamentNotificationPreferencesPage() {
     } finally {
       setSaving(false);
     }
-  }, [tournamentId]);
+  }, [tournamentId, eventTypes]);
 
   // ── Save global channel prefs (batch-saves all tournament event types) ────
 
@@ -165,7 +184,7 @@ export default function TournamentNotificationPreferencesPage() {
     if (!orgSlug) return;
     setChannelsSaving(true);
     try {
-      const preferences = TOURNAMENT_EVENT_TYPES.map(et => ({
+      const preferences = eventTypes.map(et => ({
         eventType:    et,
         channelBell:  next.bell,
         channelPush:  next.push,
@@ -181,13 +200,13 @@ export default function TournamentNotificationPreferencesPage() {
     } finally {
       setChannelsSaving(false);
     }
-  }, [orgSlug]);
+  }, [orgSlug, eventTypes]);
 
   // ── Master mute toggle ──────────────────────────────────────────────────────
 
   function handleMuteAll(mute: boolean) {
     const next = new Map<NotificationEventType, boolean>();
-    for (const et of TOURNAMENT_EVENT_TYPES) next.set(et, mute);
+    for (const et of eventTypes) next.set(et, mute);
     setPrefs(next);
     save(next);
   }
@@ -335,6 +354,37 @@ export default function TournamentNotificationPreferencesPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Messaging — only when the org has Tournament Chat. @mentions are always
+          delivered (not user-mutable), so only the general chat-message stream has a toggle. */}
+      {chatEnabled && (
+        <>
+          <div className={styles.sectionLabel}>Messaging</div>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <tbody>
+                <tr className={`${styles.row} ${chatOptedOut ? styles.rowMuted : ''}`}>
+                  <td className={styles.tdEvent}>
+                    <span className={styles.eventLabel}>{NOTIFICATION_EVENT_LABELS[CHAT_EVENT]}</span>
+                    <span className={styles.eventDesc}>{NOTIFICATION_EVENT_DESCRIPTIONS[CHAT_EVENT]}</span>
+                  </td>
+                  <td className={styles.tdMuted}>
+                    <Toggle
+                      checked={!chatOptedOut}
+                      onChange={v => handleEventToggle(CHAT_EVENT, !v)}
+                      label={`Receive ${NOTIFICATION_EVENT_LABELS[CHAT_EVENT]} notifications for this tournament`}
+                      disabled={saving}
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className={styles.channelNote}>
+            @mentions always reach you, even with chat messages turned off.
+          </p>
+        </>
+      )}
     </div>
   );
 }

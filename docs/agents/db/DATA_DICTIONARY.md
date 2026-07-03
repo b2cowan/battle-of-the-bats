@@ -4708,7 +4708,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 **Purpose:** the **global** per-(user, org, event_type) channel matrix — the Layer-1 gate. PK `(user_id, org_id, event_type)`. Written by the org notification-settings page via [app/api/admin/org/notification-preferences/route.ts](../../../app/api/admin/org/notification-preferences/route.ts) (POST upsert); read **only** by `notify()` ([lib/notify.ts:179](../../../lib/notify.ts#L179)) to gate each of the 3 channels.
 
 **Gotchas (read first):**
-1. **Absence of a row is NOT all-off — it falls through to `systemDefaults()` which is bell-ON.** `notify()` uses the row if present, else `systemDefaults()` ([lib/notify.ts:187](../../../lib/notify.ts#L187)), which returns `{bell:true, push:false, email:(payment_failed && owner|admin)}` ([:58](../../../lib/notify.ts#L58)). A user who never touched preferences still gets every bell event.
+1. **Absence of a row is NOT all-off — it falls through to `systemDefaults()` which is bell-ON.** `notify()` uses the row if present, else `systemDefaults()` ([lib/notify.ts:187](../../../lib/notify.ts#L187)), which returns `{bell:true, push:PUSH_DEFAULT_ON_EVENTS.has(event), email:(payment_failed && owner|admin)}` ([:58](../../../lib/notify.ts#L58)). Push defaults **on** for the ~13 action-worthy events (registrations, payments, scores, no-show, coach/roster/tryout, chat — see `PUSH_DEFAULT_ON_EVENTS` in `lib/notification-labels.ts`) and off for the informational ones. A user who never touched preferences still gets every bell event — and push for those default-on events **if they have a `push_subscriptions` row**.
 2. **`channel_email` default-true is special-cased to `payment_failed` for owners/admins only** — the single channel-by-role default in the system ([:63](../../../lib/notify.ts#L63)); all other events default email-off.
 3. **The role for that email default is forced to `'member'` when an explicit `userIds` recipient list is supplied** ([:113](../../../lib/notify.ts#L113)), so explicit-recipient `payment_failed` emails are never auto-on.
 
@@ -4727,7 +4727,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 **`channel_bell`** (bool, NN, default true) — whether this event writes a bell row for the user; consumed at [lib/notify.ts:196](../../../lib/notify.ts#L196) (`if (prefs.bell)`).
 
 <!-- dict:col:notification_preferences.channel_push -->
-**`channel_push`** (bool, NN, default false) — whether this event fans a Web Push to the user's `push_subscriptions`; consumed at [lib/notify.ts:215](../../../lib/notify.ts#L215). Default-off ⇒ the member push channel is opt-in.
+**`channel_push`** (bool, NN, default false) — whether this event fans a Web Push to the user's `push_subscriptions`; consumed at [lib/notify.ts:215](../../../lib/notify.ts#L215). The **column** default is false, but the absent-row fallback `systemDefaults()` defaults push **on** for the action-worthy events (`PUSH_DEFAULT_ON_EVENTS`), so "no saved row" ≠ "no push". Delivery still requires a `push_subscriptions` row.
 
 <!-- dict:col:notification_preferences.channel_email -->
 **`channel_email`** (bool, NN, default false) — whether this event sends a transactional email via `sendEmail`; consumed at [lib/notify.ts:262](../../../lib/notify.ts#L262). (See the `payment_failed`/owner-admin system default above.)
@@ -4767,7 +4767,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 
 **Gotchas (read first):**
 1. **`endpoint` is globally UNIQUE and is the upsert conflict key** (`onConflict:'endpoint'`, [route.ts:63](../../../app/api/notifications/push/subscribe/route.ts#L63)) — re-registering the same browser updates the existing row **including `user_id`**, so the same endpoint re-subscribed by a different account **reassigns ownership**. Identity is still app-checked: subscribe sets `user_id` from the session, unsubscribe filters `.eq('user_id', user.id)`.
-2. **The member channel is gated OFF by default** — `channel_push` defaults false, so even with a subscription row present nothing sends unless the user opted in ([lib/notify.ts:215](../../../lib/notify.ts#L215)).
+2. **A subscription row alone doesn't deliver — the event's push channel must also be on.** The `channel_push` **column** default is false, but the absent-row fallback `systemDefaults()` now defaults push **on** for the action-worthy events (`PUSH_DEFAULT_ON_EVENTS`); so delivery needs both a subscription row **and** a default-on (or explicitly opted-in) event ([lib/notify.ts:215](../../../lib/notify.ts#L215)).
 3. **410-Gone cleanup deletes the row by `id`, and the member path treats ONLY 410 as dead** (not 404, [lib/notify.ts:244](../../../lib/notify.ts#L244)) — unlike the fan path (410 OR 404).
 4. **`sendWebPush` silently no-ops when VAPID keys are unset** ([lib/web-push.ts:62](../../../lib/web-push.ts#L62)) — the send loop still runs and still refreshes `last_used_at`, but nothing is delivered.
 5. **`device_label` and `last_used_at` are write-only** — captured/refreshed but never selected; the "stale subscription" comment on `last_used_at` is aspirational (no sweep reads it).

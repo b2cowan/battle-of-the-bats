@@ -7,9 +7,11 @@ import styles from './notifications.module.css';
 
 interface Props {
   orgId: string;
+  /** When provided, the panel shows a subtle "Notification settings" link in its footer. */
+  settingsHref?: string;
 }
 
-export default function NotificationBell({ orgId }: Props) {
+export default function NotificationBell({ orgId, settingsHref }: Props) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [open,        setOpen]        = useState(false);
   const [userId,      setUserId]      = useState<string | null>(null);
@@ -113,6 +115,7 @@ export default function NotificationBell({ orgId }: Props) {
           orgId={orgId}
           onClose={() => setOpen(false)}
           onUnreadChange={setUnreadCount}
+          settingsHref={settingsHref}
         />
       )}
     </div>

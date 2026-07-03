@@ -1,0 +1,100 @@
+/* EnablePushBanner — slim, dismissible "turn on notifications" prompt.
+   Matches the admin dark theme via shared design tokens. */
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 3px;
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  color: var(--white-70, rgba(255, 255, 255, 0.7));
+  margin-bottom: 1rem;
+}
+
+.bannerDone {
+  background: rgba(217, 249, 157, 0.1);
+  border-color: rgba(217, 249, 157, 0.28);
+}
+
+.icon {
+  flex-shrink: 0;
+  color: var(--logic-lime);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.text {
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.text strong {
+  color: var(--white-90, #f0f0f0);
+  font-weight: 700;
+}
+
+.error {
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: #fca5a5;
+}
+
+.cta {
+  flex-shrink: 0;
+  padding: 0.45rem 0.95rem;
+  border-radius: 2px;
+  border: none;
+  cursor: pointer;
+  background: var(--logic-lime);
+  color: #0b1220;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.cta:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.cta:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.dismiss {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border: none;
+  background: transparent;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  cursor: pointer;
+  border-radius: 2px;
+  transition: color 0.15s ease;
+}
+
+.dismiss:hover {
+  color: var(--white-90, #f0f0f0);
+}
+
+@media (max-width: 560px) {
+  .banner {
+    flex-wrap: wrap;
+  }
+  .body {
+    flex-basis: 100%;
+    order: -1;
+  }
+}
