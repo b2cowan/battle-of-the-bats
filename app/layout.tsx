@@ -57,6 +57,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               "(function(){try{var k='fl_admin_density',v=null;try{v=localStorage.getItem(k);}catch(e){}if(v!=='comfortable'&&v!=='compact'){v=(window.matchMedia&&window.matchMedia('(pointer: coarse)').matches)?'comfortable':'compact';}document.documentElement.setAttribute('data-density',v);}catch(e){}})();",
           }}
         />
+        {/* Capture the PWA install event as early as possible — before React
+            hydrates InstallAppPrompt. Chromium fires `beforeinstallprompt` on
+            load, often before the component's effect attaches; missing it means
+            the manual "Get the app" trigger can't offer one-tap install (and
+            Chrome shows its own native banner because we never suppressed it).
+            Stash the event + notify the component. No manifest is set on
+            marketing pages, so this only fires where the prompt is mounted. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__flhqInstallEvent=e;window.dispatchEvent(new Event('flhq:install-available'));});window.addEventListener('appinstalled',function(){window.__flhqInstallEvent=null;});})();",
+          }}
+        />
       </head>
       <body>
         <OrgNavProvider>

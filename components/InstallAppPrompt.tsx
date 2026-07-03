@@ -80,12 +80,26 @@ export default function InstallAppPrompt({
   // it later, even after the auto-banner was dismissed. Chromium re-fires this on
   // client-side navigations; the host layout stays mounted, so the latest event wins.
   useEffect(() => {
+    // Adopt an event the early-capture script (root layout head) may have
+    // caught before this mounted, so a "Get the app" tap can fire the one-tap
+    // install even when Chromium fired beforeinstallprompt pre-hydration.
+    const early = (window as { __flhqInstallEvent?: BeforeInstallPromptEvent }).__flhqInstallEvent;
+    if (early) setDeferred(early);
+
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);
     };
+    const onAvailable = () => {
+      const ev = (window as { __flhqInstallEvent?: BeforeInstallPromptEvent }).__flhqInstallEvent;
+      if (ev) setDeferred(ev);
+    };
     window.addEventListener('beforeinstallprompt', onBeforeInstall);
-    return () => window.removeEventListener('beforeinstallprompt', onBeforeInstall);
+    window.addEventListener('flhq:install-available', onAvailable);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstall);
+      window.removeEventListener('flhq:install-available', onAvailable);
+    };
   }, []);
 
   // Auto-show gating: decides whether the banner appears on its own this visit.
@@ -172,8 +186,15 @@ export default function InstallAppPrompt({
 
   async function install() {
     if (!deferred) return;
-    await deferred.prompt();
-    await deferred.userChoice.catch(() => undefined);
+    // A prompt can be used only once; clear the early-capture global too so a
+    // remount can't re-adopt this spent event and offer a dead Install button.
+    (window as { __flhqInstallEvent?: BeforeInstallPromptEvent | null }).__flhqInstallEvent = null;
+    try {
+      await deferred.prompt();
+      await deferred.userChoice.catch(() => undefined);
+    } catch {
+      /* event already used / unavailable — nothing to do */
+    }
     setDeferred(null);
     setMode('hidden');
   }
