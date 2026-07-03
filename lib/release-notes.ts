@@ -71,6 +71,14 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
         category: 'fixed',
         text: 'Fixed a case where a pitcher’s innings cap could accidentally leave them on the bench.',
       },
+      {
+        category: 'improved',
+        text: 'Fans following a team now see the same at-a-glance view on your public schedule and standings — next game, live score, and current standing — and can tap a game’s field to open directions.',
+      },
+      {
+        category: 'fixed',
+        text: 'The tournament a fan adds to their phone’s home screen now shows the full event name and follows the phone’s rotation lock — it could previously trim the name or rotate against the lock.',
+      },
     ],
   },
   {
