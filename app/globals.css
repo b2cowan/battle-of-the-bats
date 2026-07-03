@@ -81,8 +81,14 @@
   --glow:        0 0 32px rgba(var(--primary-rgb), 0.4);
   --glow-sm:     0 0 16px rgba(var(--primary-rgb), 0.25);
 
-  --font-sans:    system-ui, sans-serif;
-  --font-display: sans-serif;
+  /* --font-sans / --font-display are intentionally NOT defined here.
+     next/font sets them on <html> (each with a baked-in, metric-adjusted
+     fallback, e.g. "Barlow Condensed Fallback"). Redefining them in :root
+     competes at EQUAL specificity and, depending on the bundler's CSS order
+     (Turbopack in dev vs webpack in prod build), the :root value could win and
+     silently override the brand font — which swapped Barlow Condensed for a
+     system sans on local dev while prod rendered correctly. Consumers that need
+     a hard fallback use var(--font-sans, system-ui, sans-serif) inline. */
 
   --nav-height:  72px;
   --transition:  all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
