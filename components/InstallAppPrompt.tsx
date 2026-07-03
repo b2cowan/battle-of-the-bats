@@ -190,7 +190,7 @@ export default function InstallAppPrompt({
           {mode === 'android' ? (
             <>{subtitle}</>
           ) : mode === 'generic' ? (
-            <>Open your browser menu, then tap <strong>Add to Home Screen</strong> or <strong>Install app</strong></>
+            <>Tap <strong>⋮</strong> in the top-right, then <strong>Add to Home Screen</strong></>
           ) : mode === 'ios-chrome' ? (
             <>Tap <strong>⋯</strong> in the top-right, then <strong>Add to Home Screen</strong></>
           ) : (
