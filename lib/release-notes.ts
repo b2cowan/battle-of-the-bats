@@ -79,6 +79,10 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
         category: 'fixed',
         text: 'The tournament a fan adds to their phone’s home screen now shows the full event name and follows the phone’s rotation lock — it could previously trim the name or rotate against the lock.',
       },
+      {
+        category: 'new',
+        text: 'Fans on a phone can now add your tournament to their home screen right from the event page — a “Get the app” link under the host name puts live scores one tap away.',
+      },
     ],
   },
   {
