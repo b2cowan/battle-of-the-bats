@@ -14,6 +14,7 @@ import {
   normalizeRepTeamAnnouncementBody,
   sendRepTeamAnnouncement,
 } from '@/lib/rep-team-announcements';
+import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -72,7 +73,9 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, team, programYear } = resolved;
+  const { ctx, team, assignment, programYear } = resolved;
+  const denied = denyUnless(assignment.capabilities.announcementsSend, 'Only the head coach can send announcements. You can draft one for the head coach to send.');
+  if (denied) return denied;
 
   try {
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;

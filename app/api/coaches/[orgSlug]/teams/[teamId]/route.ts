@@ -5,10 +5,13 @@ import {
   getRepTeam,
   getActiveRepProgramYear,
   updateRepTeam,
+  updateRepProgramYear,
 } from '@/lib/db';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
+import { normalizeLineupSettings } from '@/lib/lineup-caps';
 import type { Organization } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { denyUnless } from '@/lib/coach-capabilities';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -63,9 +66,16 @@ export const GET = withObservability(async (_req: Request,
 
   return NextResponse.json({
     team: { id: team.id, name: team.name, division: team.division, sport: team.sport },
-    season: { id: programYear.id, name: programYear.name, year: programYear.year, status: programYear.status },
+    season: {
+      id: programYear.id, name: programYear.name, year: programYear.year, status: programYear.status,
+      lineupSettings: programYear.lineupSettings, // P3 season-default caps (any assigned coach may edit)
+    },
     nextYearDefault: programYear.year + 1,
     scope,
+    // Assistant Coaches: the caller's effective capability set + their role, so the client can
+    // hide/disable ungranted areas (defense-in-depth — the routes also enforce server-side).
+    coachRole: assignment.coachRole,
+    capabilities: assignment.capabilities,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]' });
 
@@ -75,29 +85,40 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, assignment } = resolved;
-
-  const scope = computeScope(ctx.org, assignment.coachRole);
-  if (!scope.canEditDivision) {
-    return NextResponse.json(
-      { error: 'Only the head coach of a standalone Premium team can change the division.' },
-      { status: 403 },
-    );
-  }
+  const { ctx, assignment, programYear } = resolved;
 
   const body = await req.json().catch(() => ({}));
-  if (!('division' in body)) {
-    return NextResponse.json({ error: 'division is required' }, { status: 400 });
-  }
-  const raw = body.division;
-  if (raw != null && typeof raw !== 'string') {
-    return NextResponse.json({ error: 'division must be a string or null' }, { status: 400 });
-  }
-  const division = typeof raw === 'string' ? raw.trim() : '';
-  if (division.length > 30) {
-    return NextResponse.json({ error: 'Division must be 30 characters or fewer.' }, { status: 400 });
+
+  // Lineup season-default caps (P3) — an OPERATIONAL setting, gated on the lineups capability
+  // (a head coach or an assistant granted lineups). Program-year scoped.
+  if ('lineupSettings' in body) {
+    const denied = denyUnless(assignment.capabilities.lineups, 'You do not have access to lineups.');
+    if (denied) return denied;
+    const settings = normalizeLineupSettings(body.lineupSettings);
+    const updated = await updateRepProgramYear(programYear.id, { lineupSettings: settings });
+    return NextResponse.json({ ok: true, lineupSettings: updated.lineupSettings });
   }
 
-  const team = await updateRepTeam(teamId, { division: division || null });
-  return NextResponse.json({ ok: true, division: team.division });
+  // Division — restricted to the head coach of a standalone team.
+  if ('division' in body) {
+    const scope = computeScope(ctx.org, assignment.coachRole);
+    if (!scope.canEditDivision) {
+      return NextResponse.json(
+        { error: 'Only the head coach of a standalone Premium team can change the division.' },
+        { status: 403 },
+      );
+    }
+    const raw = body.division;
+    if (raw != null && typeof raw !== 'string') {
+      return NextResponse.json({ error: 'division must be a string or null' }, { status: 400 });
+    }
+    const division = typeof raw === 'string' ? raw.trim() : '';
+    if (division.length > 30) {
+      return NextResponse.json({ error: 'Division must be 30 characters or fewer.' }, { status: 400 });
+    }
+    const team = await updateRepTeam(teamId, { division: division || null });
+    return NextResponse.json({ ok: true, division: team.division });
+  }
+
+  return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]' });

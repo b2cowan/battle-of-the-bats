@@ -47,6 +47,7 @@ interface EditForm {
   playerDateOfBirth: string; playerNumber: string;
   positions: PositionProfileValue;
   pitcher: { isPitcher: boolean; rank: number; maxInnings: string }; // maxInnings '' = no cap
+  aSquad: boolean; // P4: gold-medal starter — protected from the bench in competitive games
   guardianFirstName: string; guardianLastName: string;
   guardianEmail: string; guardianPhone: string;
   notes: string;
@@ -69,6 +70,7 @@ function playerToForm(p: RepRosterPlayer, pitcherPos: string | null): EditForm {
     playerNumber:      clean(p.playerNumber),
     positions:         (() => { const prefs = playerPositionPrefs(p, pitcherPos); return { best: prefs.preferred, okay: prefs.canPlay, never: prefs.never }; })(),
     pitcher:           (() => { const pit = p.lineupProfile?.pitcher; return { isPitcher: !!pit, rank: pit?.rank ?? 1, maxInnings: pit?.maxInnings != null ? String(pit.maxInnings) : '' }; })(),
+    aSquad:            p.lineupProfile?.aSquad ?? false,
     guardianFirstName: clean(p.guardianFirstName),
     guardianLastName:  clean(p.guardianLastName),
     guardianEmail:     clean(p.guardianEmail),
@@ -193,7 +195,7 @@ export default function PlayerDetailPage({
               pitcher: pitcherPos && form.pitcher.isPitcher
                 ? { rank: form.pitcher.rank, maxInnings: form.pitcher.maxInnings.trim() === '' ? null : Number(form.pitcher.maxInnings) }
                 : null,
-              aSquad: player.lineupProfile?.aSquad ?? false,
+              aSquad: form.aSquad,
             },
             guardianFirstName:  form.guardianFirstName.trim() || null,
             guardianLastName:   form.guardianLastName.trim() || null,
@@ -395,6 +397,23 @@ export default function PlayerDetailPage({
               </p>
             </div>
           )}
+          <div className={`${styles.field} ${styles.formGridFull}`}>
+            <label className={styles.label}>A-squad</label>
+            {/* Gold-medal star (P5) — same treatment as the Depth-chart board so the two surfaces match. */}
+            <button type="button" aria-pressed={form.aSquad}
+              onClick={() => setForm(f => f ? { ...f, aSquad: !f.aSquad } : f)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+              <span aria-hidden style={{
+                fontSize: 26, lineHeight: 1, transition: '0.12s',
+                color: form.aSquad ? 'var(--gold)' : 'rgba(255,255,255,0.45)',
+                textShadow: form.aSquad ? '0 0 12px rgba(var(--gold-rgb),0.4)' : 'none',
+              }}>★</span>
+              <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)' }}>Gold-medal starter{form.aSquad ? '' : ' — tap to mark'}</span>
+            </button>
+            <p style={{ marginTop: 6, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+              In <strong>competitive</strong> games, A-squad players get their best positions and are protected from the bench. No effect on balanced or development games.
+            </p>
+          </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="bats">Bats</label>
             <select id="bats" className={styles.select} value={form.bats}

@@ -3,6 +3,7 @@ import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -15,9 +16,10 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   }
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.find(a => a.teamId === teamId)) return { error: forbidden() };
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { error: forbidden() };
 
-  return { ctx, team };
+  return { ctx, team, assignment };
 }
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/payment-requests
@@ -26,6 +28,9 @@ export const GET = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
+  const { assignment } = resolved;
+  const denied = denyUnless(canViewMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   const url = new URL(req.url);
   const status = url.searchParams.get('status') ?? undefined;
@@ -68,7 +73,9 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, team } = resolved;
+  const { ctx, team, assignment } = resolved;
+  const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   const body = await req.json();
   const {

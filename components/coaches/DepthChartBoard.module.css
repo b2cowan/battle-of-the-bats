@@ -1,0 +1,191 @@
+/* Depth-chart board (P5 — Lineup Intelligence). Rendered as the "Depth chart" view inside the Roster
+   page. Isolated module so it never collides with the shared coaches.module.css. Design-audited
+   2026-07-02: warm/rounded coach card system (blueprint-blue tint border + --shadow-sm + --highlight-top
+   depth, rounded --radius corners), Best-cell rank numbers WHITE (not lime), save status neutral +
+   green check, A-squad = --gold token, Pitcher + A-squad pinned beside the player column, mobile
+   reflows to a per-player accordion. */
+
+.wrap {
+  /* Best/Okay/Never chip tints — identical hexes to PositionProfileEditor so the two surfaces match. */
+  --best-bg: rgba(132, 204, 22, 0.16); --best-bd: rgba(132, 204, 22, 0.55); --best-fg: #bef264;
+  --okay-bg: rgba(96, 165, 250, 0.14); --okay-bd: rgba(96, 165, 250, 0.45); --okay-fg: #93c5fd;
+  --never-bg: rgba(248, 113, 113, 0.13); --never-bd: rgba(248, 113, 113, 0.5); --never-fg: #fca5a5;
+  --ink: rgba(231, 237, 246, 0.95); --ink-70: rgba(231, 237, 246, 0.72); --ink-45: rgba(231, 237, 246, 0.45);
+  --line: rgba(var(--blueprint-blue-rgb), 0.28); /* coach card border */
+  --line-soft: rgba(255, 255, 255, 0.08);        /* divider only */
+  --panel: var(--surface-2);
+  --panel-even: rgba(255, 255, 255, 0.02);
+}
+
+/* ── caps context strip (the season "Lineup rules" that frame the board; edit lives in Settings) ── */
+.capsBar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  margin-bottom: 12px; padding: 10px 14px; font-size: 0.78rem; color: var(--ink-70);
+  background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius);
+}
+.capsBar b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.dot { color: var(--ink-45); }
+.editlink { margin-left: auto; color: var(--okay-fg); font-weight: 600; font-size: 0.75rem; text-decoration: none; white-space: nowrap; }
+.editlink:hover { text-decoration: underline; }
+.capsNone { color: var(--ink-45); font-style: italic; }
+
+/* ── card shell (warm coach card) ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm), var(--highlight-top);
+}
+.gridCard { padding: 0; overflow: hidden; }
+
+/* legend lives inside the grid card header, not a bare floating row */
+.legend {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+  padding: 11px 16px; font-size: 0.72rem; color: var(--ink-70);
+  border-bottom: 1px solid var(--line-soft);
+}
+.swatch { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 5px; border: 1px solid; }
+.swB { background: var(--best-bg); border-color: var(--best-bd); }
+.swO { background: var(--okay-bg); border-color: var(--okay-bd); }
+.swN { background: var(--never-bg); border-color: var(--never-bd); }
+.swX { background: rgba(255, 255, 255, 0.04); border-color: var(--line-soft); }
+.tip { margin-left: auto; color: var(--ink-45); }
+
+/* ── desktop grid ── */
+.gridScroll { padding: 6px 6px 8px; overflow-x: auto; isolation: isolate; } /* own stacking context so sticky headers/cluster never bleed (Safari) */
+.table { border-collapse: separate; border-spacing: 0; width: 100%; }
+.table th, .table td { text-align: center; padding: 0; }
+.table thead th {
+  position: sticky; top: 0; background: var(--panel); z-index: 3;
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; color: var(--ink-70);
+  height: 40px; border-bottom: 1px solid var(--line-soft);
+}
+.colPitch { color: var(--best-fg); }
+.colASquad { color: var(--gold); }
+
+/* pinned identity cluster: Player + Pitcher + A-squad all sticky-left (solid, no zebra) */
+.cPlayer, .table td.cPlayer { position: sticky; left: 0; z-index: 2; min-width: 150px; width: 150px; text-align: left; padding: 0 12px; }
+.cPitch, .table td.cPitch { position: sticky; z-index: 2; min-width: 86px; width: 86px; }
+.cASquad, .table td.cASquad { position: sticky; z-index: 2; min-width: 64px; width: 64px; border-right: 1px solid var(--line); }
+.table thead th.cPlayer, .table thead th.cPitch, .table thead th.cASquad { z-index: 4; }
+.table td.cPlayer, .table td.cPitch, .table td.cASquad { background: var(--panel); }
+.table td.cPlayer { border-right: 1px solid var(--line-soft); }
+.table tbody tr { height: 52px; }
+.table tbody tr:nth-child(even) td { background: var(--panel-even); }
+/* pinned cluster stays one solid block (no zebra) so the sticky overlap is always opaque */
+.table tbody tr:nth-child(even) td.cPlayer,
+.table tbody tr:nth-child(even) td.cPitch,
+.table tbody tr:nth-child(even) td.cASquad { background: var(--panel); }
+.table td { border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+.pnum { color: var(--ink-45); font-size: 0.72rem; font-weight: 600; margin-right: 8px; font-variant-numeric: tabular-nums; }
+.pname { font-weight: 600; font-size: 0.84rem; color: var(--ink); }
+
+.cellbtn {
+  width: 44px; height: 36px; margin: 0 auto; border-radius: var(--radius-sm);
+  border: 1px solid var(--line-soft); background: rgba(255, 255, 255, 0.03); color: var(--ink-45);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 0.8rem; font-variant-numeric: tabular-nums; transition: all 0.1s ease; user-select: none;
+}
+.cellbtn:hover { border-color: var(--line); }
+.cellbtn:disabled { cursor: default; opacity: 0.5; } /* view-only cue (matches .iconBtn) */
+.cellbtn.b { background: var(--best-bg); border-color: var(--best-bd); color: var(--ink); } /* rank number WHITE */
+.cellbtn.o { background: var(--okay-bg); border-color: var(--okay-bd); color: var(--okay-fg); }
+.cellbtn.n { background: var(--never-bg); border-color: var(--never-bd); color: var(--never-fg); }
+
+.pitch { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; user-select: none; padding: 4px 0; }
+.pchip {
+  min-height: 34px; display: inline-flex; align-items: center; /* dense-grid touch target */
+  padding: 4px 12px; border-radius: 999px; border: 1px solid var(--best-bd);
+  background: var(--best-bg); color: var(--best-fg); font-weight: 800; font-size: 0.72rem; cursor: pointer;
+}
+.pchip.off { border-color: var(--line-soft); background: rgba(255, 255, 255, 0.03); color: var(--ink-45); font-weight: 700; }
+.pchip:disabled { cursor: default; opacity: 0.5; }
+.capInput {
+  width: 54px; min-height: 30px; text-align: center; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm); color: var(--okay-fg); font-size: 0.66rem; font-weight: 600; padding: 3px 4px;
+  font-variant-numeric: tabular-nums;
+}
+.capInput::placeholder { color: var(--ink-45); font-weight: 400; }
+.capInput:focus { outline: none; border-color: var(--line); }
+.capInput:disabled { opacity: 0.5; }
+
+.star {
+  width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; /* ≥36 dense-grid target */
+  font-size: 1.35rem; line-height: 1; cursor: pointer; color: rgba(255, 255, 255, 0.45); /* --white-45 outline */
+  user-select: none; transition: 0.1s; background: none; border: none; padding: 0;
+}
+.star.on { color: var(--gold); text-shadow: 0 0 12px rgba(var(--gold-rgb), 0.4); }
+.star:disabled { cursor: default; opacity: 0.5; }
+
+/* ── save bar ── */
+.saveBar { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 0 2px; }
+.iconBtn {
+  width: 40px; height: 40px; border-radius: var(--radius-sm); border: 1px solid var(--line-soft);
+  background: rgba(255, 255, 255, 0.04); color: var(--ink-70); cursor: pointer; font-size: 1rem;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.iconBtn:disabled { opacity: 0.4; cursor: default; }
+.saveStat { color: var(--ink-70); font-size: 0.78rem; display: inline-flex; align-items: center; gap: 6px; }
+.saveStat .chk { color: var(--success); font-weight: 800; }
+.saveRetry { background: none; border: none; color: var(--danger); font-weight: 700; font-size: 0.78rem; cursor: pointer; text-decoration: underline; padding: 0; }
+.autofill {
+  margin-left: auto; padding: 8px 14px; border-radius: var(--radius-sm); font-weight: 700; font-size: 0.76rem;
+  border: 1px solid var(--line-soft); background: rgba(255, 255, 255, 0.04); color: var(--ink); text-decoration: none; white-space: nowrap;
+}
+.autofill:hover { border-color: var(--line); }
+
+.foot { margin-top: 12px; font-size: 0.72rem; color: var(--ink-45); padding: 0 4px; }
+
+/* ── responsive: grid on desktop/tablet, accordion on phone ── */
+.desktopGrid { display: block; }
+.mobileAcc { display: none; }
+
+@media (max-width: 640px) {
+  .desktopGrid { display: none; }
+  .mobileAcc { display: block; }
+}
+
+/* ── mobile accordion ── */
+.acc { display: flex; flex-direction: column; gap: 8px; }
+.pcardRow {
+  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+  box-shadow: var(--highlight-top); overflow: hidden; transition: box-shadow 0.12s;
+}
+.pcardRow.open { box-shadow: var(--shadow-sm), var(--highlight-top); }
+.pcardHead { display: flex; align-items: center; gap: 8px; padding: 11px 12px; cursor: pointer; min-height: 52px; width: 100%; background: none; border: none; text-align: left; }
+.miniChips { display: flex; flex-wrap: wrap; gap: 4px; margin-left: 2px; flex: 1 1 auto; }
+.miniChip {
+  font-size: 0.66rem; font-weight: 700; padding: 2px 7px; border-radius: 999px;
+  border: 1px solid var(--line-soft); background: transparent; color: var(--ink-70); font-variant-numeric: tabular-nums;
+}
+.miniPit { font-size: 0.66rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--best-bd); background: var(--best-bg); color: var(--best-fg); }
+.miniStarHead { color: var(--gold); font-size: 1rem; text-shadow: 0 0 10px rgba(var(--gold-rgb), 0.4); }
+.chev { color: var(--ink-45); font-size: 0.8rem; transition: 0.15s; flex: 0 0 auto; display: inline-flex; }
+.pcardRow.open .chev { transform: rotate(90deg); }
+.pcardBody { padding: 4px 12px 14px; border-top: 1px solid var(--line-soft); }
+.grpLbl { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-45); margin: 14px 0 8px; }
+
+.pitchRow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.checkLabel { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; color: var(--ink); min-height: 40px; }
+.rankSelect, .capNum {
+  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
+  color: var(--ink); font-size: 0.82rem; padding: 9px 10px; min-height: 40px;
+}
+.rankSelect:focus, .capNum:focus { outline: none; border-color: var(--line); }
+.fieldMini { display: flex; flex-direction: column; gap: 5px; }
+.fieldMini label { font-size: 0.68rem; color: var(--ink-45); }
+.aSquadRow { display: flex; align-items: center; gap: 10px; margin-top: 6px; min-height: 44px; }
+.aSquadRow .lab { font-size: 0.85rem; font-weight: 600; color: var(--ink); }
+.sub { font-size: 0.7rem; color: var(--ink-45); margin: 2px 0 0; }
+.miniStar {
+  margin-left: auto; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; /* ≥40 mobile target */
+  font-size: 1.6rem; color: rgba(255, 255, 255, 0.45); cursor: pointer; background: none; border: none; padding: 0;
+}
+.miniStar.on { color: var(--gold); text-shadow: 0 0 12px rgba(var(--gold-rgb), 0.4); }
+.miniStar:disabled { cursor: default; opacity: 0.5; }
+
+/* empty / read-only states */
+.empty { padding: 28px 18px; text-align: center; color: var(--ink-70); font-size: 0.85rem; }
+.empty a { color: var(--okay-fg); text-decoration: none; font-weight: 600; }
+.readOnlyNote { font-size: 0.72rem; color: var(--ink-45); margin: 10px 2px 0; }

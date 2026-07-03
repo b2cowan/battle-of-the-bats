@@ -1,6 +1,7 @@
 'use client';
-import { use, useState, useEffect, useCallback } from 'react';
+import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Users, ChevronRight, Plus, X, GripVertical, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
@@ -15,6 +16,7 @@ import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import PositionSelect from '@/components/coaches/PositionSelect';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
+import DepthChartBoard from '@/components/coaches/DepthChartBoard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { teamInitials, teamColorFromName } from '@/lib/teamBadge';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
@@ -111,6 +113,15 @@ export default function RosterPage({
   // uses) — not the OF catch-all or DH. PositionSelect keeps a "Custom…" escape for edge cases.
   const rosterPositions = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT).fieldPositions;
 
+  // Depth chart is the second VIEW of Roster (?view=depth) rather than a separate page. The URL is
+  // the single source of truth so the view is shareable + back-button friendly.
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const view = searchParams.get('view') === 'depth' ? 'depth' : 'list';
+  const setView = (v: 'list' | 'depth') =>
+    router.replace(v === 'depth' ? `${pathname}?view=depth` : pathname, { scroll: false });
+
   const [players, setPlayers] = useState<RepRosterPlayer[]>([]);
   const [programYear, setProgramYear] = useState<RepProgramYear | null>(null);
   const [fetching, setFetching] = useState(true);
@@ -153,6 +164,16 @@ export default function RosterPage({
   }, [orgSlug, teamId]);
 
   useEffect(() => { if (!assignmentsLoading) void Promise.resolve().then(load); }, [assignmentsLoading, load]);
+
+  // Depth chart is a VIEW of this page. Close the Add drawer when entering it (so a half-open drawer
+  // can't hang over the board), and refetch the list when returning FROM it so the roster's Positions
+  // column reflects any edits made in the depth chart.
+  const prevViewRef = useRef<'list' | 'depth'>(view);
+  useEffect(() => {
+    if (view === 'depth') setAddOpen(false);
+    else if (prevViewRef.current === 'depth' && !assignmentsLoading) void load();
+    prevViewRef.current = view;
+  }, [view, assignmentsLoading, load]);
 
   useEffect(() => {
     fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`)
@@ -391,6 +412,11 @@ export default function RosterPage({
   const activeCount = players.filter(p => p.status === 'active').length;
   const inactiveCount = players.length - activeCount;
   const season = seasonLabel(programYear?.name ?? assignment.programYearName, assignment.teamName);
+  // Assistant Coaches: only the head coach (or an assistant granted it) edits the roster; guardian
+  // contact + DOB are hidden from assistants without the PII grant. The API enforces both — these
+  // just keep the UI honest (no broken buttons, no blank sensitive columns).
+  const canWriteRoster = assignment.capabilities.rosterWrite;
+  const canSeePii = assignment.capabilities.rosterPii;
 
   // Jersey numbers worn by more than one player (flagged inline, not blocked).
   const dupNumbers = (() => {
@@ -435,19 +461,21 @@ export default function RosterPage({
             </p>
           </div>
         </div>
+        {view === 'list' && (
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <ExportMenu
             formats={['xlsx', 'csv', 'pdf']}
             onExportXLSX={handleExportXLSX}
             onExportCSV={handleExportCSV}
             onExportPDF={handleExportPDF}
-            hasSensitiveOption={true}
+            hasSensitiveOption={canSeePii}
             sensitiveOptionLabel="Excel with contact details"
-            onExportXLSXWithSensitive={handleExportXLSXWithSensitive}
+            onExportXLSXWithSensitive={canSeePii ? handleExportXLSXWithSensitive : undefined}
             planId={currentOrg?.planId}
             pdfFeatureKey="pdf_exports"
             disabled={players.length === 0}
           />
+          {canWriteRoster && (
           <button
             type="button"
             className={`btn btn-lime ${styles.addPlayerBtn}`}
@@ -457,11 +485,24 @@ export default function RosterPage({
           >
             <Plus size={15} /> <span className={styles.addPlayerLabel}>Add Player</span>
           </button>
+          )}
         </div>
+        )}
       </div>
 
+      {/* List ⇄ Depth chart — two views of the same roster (positions/pitching/A-squad live here) */}
+      <div className={styles.segChoice} style={{ margin: '0 0 1rem' }} aria-label="Roster view">
+        <button type="button" aria-pressed={view === 'list'}
+          className={`${styles.segBtn}${view === 'list' ? ' ' + styles.segBtnActive : ''}`}
+          onClick={() => setView('list')}>List</button>
+        <button type="button" aria-pressed={view === 'depth'}
+          className={`${styles.segBtn}${view === 'depth' ? ' ' + styles.segBtnActive : ''}`}
+          onClick={() => setView('depth')}>Depth chart</button>
+      </div>
 
-      {fetching ? (
+      {view === 'depth' ? (
+        <DepthChartBoard orgSlug={orgSlug} teamId={teamId} />
+      ) : fetching ? (
         <p className={styles.muted}>Loading…</p>
       ) : players.length === 0 ? (
         <HelpCallout
@@ -509,7 +550,8 @@ export default function RosterPage({
                         base={base}
                         togglingId={togglingId}
                         onToggle={handleToggleStatus}
-                        dragDisabled={players.length < 2}
+                        canWrite={canWriteRoster}
+                        dragDisabled={players.length < 2 || !canWriteRoster}
                         isDuplicateNumber={!!p.playerNumber && dupNumbers.has(p.playerNumber.trim())}
                         index={i}
                         count={players.length}
@@ -666,6 +708,7 @@ function SortableRow({
   base,
   togglingId,
   onToggle,
+  canWrite,
   dragDisabled,
   isDuplicateNumber,
   index,
@@ -676,6 +719,7 @@ function SortableRow({
   base: string;
   togglingId: string | null;
   onToggle: (player: RepRosterPlayer) => void;
+  canWrite: boolean;
   dragDisabled: boolean;
   isDuplicateNumber: boolean;
   index: number;
@@ -775,7 +819,9 @@ function SortableRow({
       </td>
       <td className={`${styles.td} ${styles.rowActionCell}`}>
         {/* Desktop-only status toggle. On mobile this is hidden — deactivate from the player
-            profile instead (it's a rare action), which keeps the roster card compact. */}
+            profile instead (it's a rare action), which keeps the roster card compact.
+            Hidden entirely for coaches without roster-write (the API blocks it anyway). */}
+        {canWrite && (
         <button
           type="button"
           className={`btn btn-ghost ${styles.rosterStatusBtn}`}
@@ -785,6 +831,7 @@ function SortableRow({
         >
           {togglingId === p.id ? '…' : p.status === 'active' ? 'Deactivate' : 'Activate'}
         </button>
+        )}
       </td>
     </tr>
   );

@@ -1183,6 +1183,21 @@ export function orgInviteHtml(p: {
   `);
 }
 
+export function assistantCoachInviteHtml(p: {
+  teamName: string;
+  invitedByName: string | null;
+  inviteUrl: string;
+}) {
+  const by = p.invitedByName ? `<strong>${p.invitedByName}</strong>` : 'The head coach';
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">You're invited to help coach</h2>
+    <p>${by} invited you to join <strong>${p.teamName}</strong> as an <strong>assistant coach</strong> on <strong>FieldLogicHQ</strong>.</p>
+    <p style="color:rgba(241,245,249,0.7);">Accept below to set up your account. You'll get the team's chat, schedule, attendance and lineups; the head coach chooses anything more.</p>
+    <a href="${p.inviteUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">Accept invite &rarr;</a>
+    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This link expires in 7 days. If you weren't expecting this, you can safely ignore this email.</p>
+  `);
+}
+
 export function orgMemberAddedHtml(p: {
   orgName: string;
   roleLabel: string;

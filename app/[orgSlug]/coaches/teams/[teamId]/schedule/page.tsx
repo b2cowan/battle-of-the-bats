@@ -18,6 +18,8 @@ import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { analyzeLineup } from '@/lib/lineup-analysis';
 import { generateBestLineup, type PositionPolicy, type FillMode } from '@/lib/lineup-generator';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
+import { resolveLineupCaps, normalizeRulesOverride } from '@/lib/lineup-caps';
+import type { LineupSettings, LineupRulesOverride } from '@/lib/types';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
   buildFilename, serializeRows, serializeHeaders, DEFAULT_PDF_SETTINGS,
@@ -38,6 +40,7 @@ import type {
   RepTeamLineup,
   RepTeamLineupEntry,
   RepTeamLineupTemplate,
+  RepProgramYear,
   RepEventType,
   RepEventResource,
 } from '@/lib/types';
@@ -659,6 +662,14 @@ export default function CoachesSchedulePage({
   const [lineupNotice, setLineupNotice] = useState('');
   const [autoPolicy, setAutoPolicy] = useState<PositionPolicy>('balanced');
   const [autoFillMode, setAutoFillMode] = useState<FillMode>('empty');
+  // P4 competitive-mode dials (apply only when the mode is Competitive).
+  const [aSquadEmphasis, setASquadEmphasis] = useState<'balanced_sits' | 'prioritized'>('balanced_sits');
+  const [noBackToBackSits, setNoBackToBackSits] = useState(true);
+  // P3 innings caps: season defaults (from the program year) + this game's override (persisted on
+  // the lineup). Strings for the number inputs; '' = use the season default.
+  const [lineupSeasonCaps, setLineupSeasonCaps] = useState<LineupSettings | null>(null);
+  const [gameRules, setGameRules] = useState({ maxPos: '', pitcher: '', minPlay: '' });
+  const [gameRulesOpen, setGameRulesOpen] = useState(false);
   // Lineup tab sub-view: the grid (editable) vs the playing-time summary — toggled
   // rather than stacked so the slide-over stays short.
   const [lineupView, setLineupView] = useState<'lineup' | 'summary'>('lineup');
@@ -769,9 +780,15 @@ export default function CoachesSchedulePage({
 
   // Signatures of the latest edited state — a save only clears "dirty" if the state
   // still matches what it persisted, so an edit made DURING a save isn't silently lost.
-  const lineupSig = () => JSON.stringify({ m: lineupMode, i: lineupInningCount, n: lineupNotes, r: lineupRows.map(r => [r.player.id, r.battingOrder, r.starter, r.inningPositions]) });
+  // This game's cap override, cleaned to the stored shape (null = no override → season defaults).
+  const buildGameRulesOverride = (): LineupRulesOverride | null => normalizeRulesOverride({
+    maxInningsPerPosition: gameRules.maxPos,
+    pitcherMaxInnings: gameRules.pitcher,
+    minInningsPerPlayer: gameRules.minPlay,
+  });
+  const lineupSig = () => JSON.stringify({ m: lineupMode, i: lineupInningCount, n: lineupNotes, g: gameRules, r: lineupRows.map(r => [r.player.id, r.battingOrder, r.starter, r.inningPositions]) });
   const lineupSigRef = useRef('');
-  useEffect(() => { lineupSigRef.current = lineupSig(); }, [lineupRows, lineupMode, lineupInningCount, lineupNotes]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { lineupSigRef.current = lineupSig(); }, [lineupRows, lineupMode, lineupInningCount, lineupNotes, gameRules]); // eslint-disable-line react-hooks/exhaustive-deps
   const attendanceSig = () => JSON.stringify(attendanceRows.map(r => [r.player.id, r.status, r.note]));
   const attendanceSigRef = useRef('');
   useEffect(() => { attendanceSigRef.current = attendanceSig(); }, [attendanceRows]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -802,7 +819,7 @@ export default function CoachesSchedulePage({
     const t = setTimeout(() => { void handleLineupSave(); }, 900);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lineupDirty, lineupSaving, lineupRows, lineupNotes, lineupMode, lineupInningCount]);
+  }, [lineupDirty, lineupSaving, lineupRows, lineupNotes, lineupMode, lineupInningCount, gameRules]);
 
   // Auto-save attendance ~0.7s after the last change (a status tap is meant to stick).
   useEffect(() => {
@@ -843,6 +860,7 @@ export default function CoachesSchedulePage({
           attendance?: RepTeamEventAttendance[];
           lineup?: RepTeamLineup | null;
           entries?: RepTeamLineupEntry[];
+          programYear?: RepProgramYear | null;
         } = await res.json();
         if (cancelled) return;
 
@@ -862,8 +880,21 @@ export default function CoachesSchedulePage({
           const absentIds = new Set((data.attendance ?? []).filter(a => a.status === 'absent').map(a => a.playerId));
           const playingPlayers = players.filter(p => !absentIds.has(p.id));
           setLineupMode(mode);
+          // P4: pre-pick the auto-fill mode from the game type (coach can still change it).
+          setAutoPolicy(
+            selectedEvent?.eventType === 'tournament_game' ? 'competitive'
+              : selectedEvent?.eventType === 'scrimmage' ? 'development'
+              : 'balanced',
+          );
           setLineupInningCount(data.lineup?.inningCount ?? sportPack.defaultPeriodCount);
           setLineupNotes(data.lineup?.notes ?? '');
+          setLineupSeasonCaps(data.programYear?.lineupSettings ?? null);
+          const ro = data.lineup?.rulesOverride ?? null;
+          setGameRules({
+            maxPos: ro?.maxInningsPerPosition != null ? String(ro.maxInningsPerPosition) : '',
+            pitcher: ro?.pitcherMaxInnings != null ? String(ro.pitcherMaxInnings) : '',
+            minPlay: ro?.minInningsPerPlayer != null ? String(ro.minInningsPerPlayer) : '',
+          });
           setLineupRows(renumberBattingOrder(sortLineupRows(buildLineupRows(playingPlayers, data.entries ?? [], mode)), mode));
         } else {
           setLineupRows([]);
@@ -1132,6 +1163,7 @@ export default function CoachesSchedulePage({
           canPlay: prefs.canPlay,
           never: prefs.never,
           pitcher: r.player.lineupProfile?.pitcher ?? null,
+          aSquad: r.player.lineupProfile?.aSquad ?? false,
           inningPositions: r.inningPositions,
         };
       }),
@@ -1140,6 +1172,9 @@ export default function CoachesSchedulePage({
       fillMode: autoFillMode,
       fieldPositions: sportPack.fieldPositions,
       pitcherPosition: sportPack.pitcherPosition,
+      ...resolveLineupCaps(lineupSeasonCaps, buildGameRulesOverride()),
+      aSquadEmphasis,
+      noBackToBackSits,
     });
 
     const benchAllInnings: Record<string, string> = {};
@@ -1442,6 +1477,16 @@ export default function CoachesSchedulePage({
     setLineupRows([]);
     setLineupError('');
     setLineupDirty(false);
+    // Reset per-game caps so a failed load of the next event can't leave a stale override in the
+    // fields (which would then auto-save onto the new game). The load re-hydrates on success.
+    setGameRules({ maxPos: '', pitcher: '', minPlay: '' });
+    setLineupSeasonCaps(null);
+    setGameRulesOpen(false);
+    // Reset the mode + competitive dials too, so one game's choices don't leak into the next (the
+    // load re-picks the mode from the event type on success).
+    setAutoPolicy('balanced');
+    setASquadEmphasis('balanced_sits');
+    setNoBackToBackSits(true);
     setAutoFillOpen(false);
     setLineupPdfOpen(false);
     setPdfIncludeNotes(false);
@@ -1634,6 +1679,7 @@ export default function CoachesSchedulePage({
           lineupMode,
           inningCount: lineupInningCount,
           notes: lineupNotes,
+          rulesOverride: buildGameRulesOverride(),
           entries: rows,
         }),
       });
@@ -2528,13 +2574,29 @@ export default function CoachesSchedulePage({
                       {autoFillOpen && (
                         <div className={styles.lineupAutoMenu}>
                           <label className={styles.lineupControlLabel}>
-                            <span>Positions</span>
+                            <span>Mode</span>
                             <select className={styles.select} value={autoPolicy} onChange={e => setAutoPolicy(e.target.value as PositionPolicy)}>
-                              <option value="competitive">Competitive — best positions</option>
-                              <option value="balanced">Balanced — primary + secondary</option>
-                              <option value="development">Development — rotate everywhere</option>
+                              <option value="competitive">Competitive — best on the field</option>
+                              <option value="balanced">Balanced — preferred spots, rotate</option>
+                              <option value="development">Development — rotate everyone</option>
                             </select>
                           </label>
+                          {/* P4: competitive-only dials (pre-picked from the game type). */}
+                          {autoPolicy === 'competitive' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                              <label className={styles.lineupControlLabel}>
+                                <span>A-squad</span>
+                                <select className={styles.select} value={aSquadEmphasis} onChange={e => setASquadEmphasis(e.target.value as 'balanced_sits' | 'prioritized')}>
+                                  <option value="balanced_sits">Play key spots — bench rotates evenly</option>
+                                  <option value="prioritized">Stay on field — others cover the bench</option>
+                                </select>
+                              </label>
+                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
+                                <input type="checkbox" checked={noBackToBackSits} onChange={e => setNoBackToBackSits(e.target.checked)} />
+                                <span>Nobody sits two innings in a row</span>
+                              </label>
+                            </div>
+                          )}
                           <label className={styles.lineupControlLabel}>
                             <span>Fill</span>
                             <select className={styles.select} value={autoFillMode} onChange={e => setAutoFillMode(e.target.value as FillMode)}>
@@ -2542,8 +2604,33 @@ export default function CoachesSchedulePage({
                               <option value="regenerate">Regenerate all</option>
                             </select>
                           </label>
+                          {/* P3: per-game cap override — defaults to the team's season rules. */}
+                          <div>
+                            <button type="button" onClick={() => setGameRulesOpen(v => !v)}
+                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+                              Game rules {gameRulesOpen ? '▴' : '▾'}
+                            </button>
+                            {gameRulesOpen && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+                                {([
+                                  { key: 'maxPos', label: 'Max innings / position', def: lineupSeasonCaps?.maxInningsPerPosition ?? null, min: 1 },
+                                  { key: 'pitcher', label: 'Max innings pitched', def: lineupSeasonCaps?.pitcherMaxInningsDefault ?? null, min: 1 },
+                                  { key: 'minPlay', label: 'Min innings / player', def: lineupSeasonCaps?.minInningsPerPlayer ?? null, min: 1 },
+                                ] as const).map(f => (
+                                  <label key={f.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
+                                    <span>{f.label}</span>
+                                    <input type="number" min={f.min} max={12} className={styles.input} style={{ width: 128 }}
+                                      placeholder={f.def != null ? `Season default (${f.def})` : 'Off'}
+                                      value={gameRules[f.key]}
+                                      onChange={e => { const v = e.target.value; setGameRules(g => ({ ...g, [f.key]: v })); setLineupDirty(true); }} />
+                                  </label>
+                                ))}
+                                <p className={styles.lineupAutoNote} style={{ margin: 0 }}>Overrides just this game. Blank = your season default.</p>
+                              </div>
+                            )}
+                          </div>
                           <p className={styles.lineupAutoNote}>
-                            Even bench rotation &amp; no back-to-back sits always apply. It&apos;s a starting point — tweak after.
+                            Auto-fill shares playing time fairly. It&apos;s a starting point — tweak after.
                           </p>
                           <button type="button" className={styles.btnPrimary} onClick={handleAutoFill}>Generate</button>
                         </div>

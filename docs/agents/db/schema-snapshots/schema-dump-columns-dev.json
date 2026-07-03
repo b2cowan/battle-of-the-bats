@@ -387,6 +387,132 @@
     "ordinal_position": 17
   },
   {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "program_year_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "invited_by_user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "invited_email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "token_hash",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'pending'::text",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "initial_capabilities",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "invited_by_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "team_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "expires_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "(now() + '7 days'::interval)",
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "accepted_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "assistant_invite_tokens",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 14
+  },
+  {
     "table_name": "basic_coach_team_announcements",
     "column_name": "id",
     "data_type": "uuid",
@@ -6030,6 +6156,15 @@
     "ordinal_position": 35
   },
   {
+    "table_name": "organizations",
+    "column_name": "coach_settings",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 36
+  },
+  {
     "table_name": "plan_config_overrides",
     "column_name": "id",
     "data_type": "uuid",
@@ -8964,6 +9099,15 @@
     "ordinal_position": 12
   },
   {
+    "table_name": "rep_program_years",
+    "column_name": "lineup_settings",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
     "table_name": "rep_roster_players",
     "column_name": "id",
     "data_type": "uuid",
@@ -9484,6 +9628,15 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 7
+  },
+  {
+    "table_name": "rep_team_coaches",
+    "column_name": "capabilities",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
   },
   {
     "table_name": "rep_team_event_attendance",
@@ -10375,6 +10528,15 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 11
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "rules_override",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
   },
   {
     "table_name": "rep_team_payment_requests",

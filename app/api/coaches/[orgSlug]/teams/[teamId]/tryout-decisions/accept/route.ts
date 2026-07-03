@@ -10,12 +10,13 @@ import {
 } from '@/lib/db';
 import { deriveStandardDuesSchedule, validateAcceptDues, normalizeAcceptDues } from '@/lib/tryout-fees';
 import { sendEmail, tryoutAcceptedHtml } from '@/lib/email';
+import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import type { RepProgramYear } from '@/lib/types';
 
 type Resolved =
   | { ok: false; res: Response }
-  | { ok: true; orgId: string; team: Awaited<ReturnType<typeof getRepTeam>>; programYear: RepProgramYear; contactEmail?: string };
+  | { ok: true; orgId: string; team: Awaited<ReturnType<typeof getRepTeam>>; programYear: RepProgramYear; contactEmail?: string; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
 
 // Fee-setup follows the coach's EXISTING dues access (OQ3): any assigned coach can set dues on the
 // dues page today, so an assigned coach can accept-with-fees here too. No extra gate beyond assignment
@@ -27,10 +28,11 @@ async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> 
   const team = await getRepTeam(teamId);
   if (!team || team.orgId !== ctx.org.id) return { ok: false, res: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.some(a => a.teamId === teamId)) return { ok: false, res: forbidden() };
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { ok: false, res: forbidden() };
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) return { ok: false, res: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
-  return { ok: true, orgId: ctx.org.id, team, programYear, contactEmail: ctx.org.contactEmail ?? undefined };
+  return { ok: true, orgId: ctx.org.id, team, programYear, contactEmail: ctx.org.contactEmail ?? undefined, assignment };
 }
 
 /** Prefill for the accept drawer: the candidate's identity/guardian + the team's standard fee schedule. */
@@ -39,6 +41,8 @@ export const GET = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const r = await resolveCoach(orgSlug, teamId);
   if (!r.ok) return r.res;
+  const denied = denyUnless(r.assignment.capabilities.tryouts, 'Only the head coach manages tryouts.');
+  if (denied) return denied;
 
   const registrationId = new URL(req.url).searchParams.get('registrationId') ?? '';
   const reg = await getRepTryoutRegistration(registrationId);
@@ -71,6 +75,8 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const r = await resolveCoach(orgSlug, teamId);
   if (!r.ok) return r.res;
+  const denied = denyUnless(r.assignment.capabilities.tryouts, 'Only the head coach manages tryouts.');
+  if (denied) return denied;
 
   const body = await req.json().catch(() => ({}));
   const registrationId = typeof body.registrationId === 'string' ? body.registrationId : '';

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Calendar, MessageSquare, Trophy,
-  Users, Megaphone, DollarSign, FileText, History,
+  Users, UserCog, Megaphone, DollarSign, FileText, History,
   MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
@@ -29,6 +29,7 @@ const MORE_TEAM = [
   { key: '/accounting',    icon: DollarSign, label: 'Accounting'    },
   { key: '/documents',     icon: FileText,   label: 'Documents'     },
   { key: '/history',       icon: History,    label: 'History'       },
+  { key: '/staff',         icon: UserCog,    label: 'Staff'         },
   { key: '/settings',      icon: Settings,   label: 'Settings'      },
 ];
 
@@ -51,6 +52,23 @@ export default function CoachesBottomNav() {
   const urlTeamId     = teamMatch?.[1] ?? null;
   const currentTeamId = urlTeamId ?? assignments[0]?.teamId ?? null;
   const teamBase      = currentTeamId ? `${base}/teams/${currentTeamId}` : null;
+
+  // Assistant Coaches: hide nav areas the current coach isn't cleared for (head coaches see all).
+  const caps = (currentTeamId ? assignments.find(a => a.teamId === currentTeamId) : null)?.capabilities;
+  const navVisible = (label: string): boolean => {
+    if (!caps) return true;
+    switch (label) {
+      case 'Roster':        return caps.roster !== 'off';
+      case 'Schedule':      return caps.schedule;
+      case 'Tryouts':       return caps.tryouts;
+      case 'Announcements': return caps.announcementsSend;
+      case 'Accounting':    return caps.money !== 'off';
+      case 'History':       return caps.money !== 'off';
+      case 'Documents':     return caps.documents !== 'off';
+      case 'Staff':         return caps.isHeadCoach;
+      default:              return true;
+    }
+  };
 
   const isOnTeamMore = teamBase
     ? MORE_TEAM.some(({ key }) => pathname.startsWith(`${teamBase}${key}`))
@@ -84,7 +102,7 @@ export default function CoachesBottomNav() {
   return (
     <nav className={styles.bottomNav} aria-label="Coaches mobile navigation">
       {/* Four primary team tabs */}
-      {teamBase && TEAM_TABS.map(({ key, icon: Icon, label }) => {
+      {teamBase && TEAM_TABS.filter(({ label }) => navVisible(label)).map(({ key, icon: Icon, label }) => {
         const active = tabIsActive(key);
         const isChat = key === '/chat';
         return (
@@ -162,7 +180,7 @@ export default function CoachesBottomNav() {
             {teamBase && (
               <>
                 <div className={styles.dropSectionLabel}>Team</div>
-                {MORE_TEAM.map(({ key, icon: Icon, label }) => {
+                {MORE_TEAM.filter(({ label }) => navVisible(label)).map(({ key, icon: Icon, label }) => {
                   const href   = `${teamBase}${key}`;
                   const active = pathname.startsWith(href);
                   return (

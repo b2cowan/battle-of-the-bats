@@ -7,6 +7,7 @@ import {
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { denyUnless, canViewDocuments } from '@/lib/coach-capabilities';
 
 async function resolveContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -19,9 +20,10 @@ async function resolveContext(orgSlug: string, teamId: string) {
   }
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.find(a => a.teamId === teamId)) return { error: forbidden() };
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { error: forbidden() };
 
-  return { ctx, team };
+  return { ctx, team, assignment };
 }
 
 export const GET = withObservability(async (_req: Request,
@@ -29,7 +31,9 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx } = resolved;
+  const { ctx, assignment } = resolved;
+  const denied = denyUnless(canViewDocuments(assignment.capabilities), 'You do not have access to documents.');
+  if (denied) return denied;
 
   const templates = await getRepDocumentTemplates(ctx.org.id, teamId);
   const active = templates.filter(t => t.isActive);

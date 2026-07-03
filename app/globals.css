@@ -299,6 +299,11 @@ body:has([data-chat-fullbleed]) {
   --blueprint-blue-rgb:  30, 58, 138;
   --logic-lime:          #D9F99D;
   --logic-lime-rgb:      217, 249, 157;
+  /* A-squad / "gold-medal starter" — the one sanctioned categorical hue beyond
+     lime/amber/success/danger (logged in design_decisions.md 2026-07-02). Scoped to
+     the A-squad meaning only; not a general-purpose accent. */
+  --gold:                #F5C451;
+  --gold-rgb:            245, 196, 81;
   --hud-surface:         #111827;
   --structural-slate:    #0F172A;
   --card-bg:             var(--hud-surface); /* ghost-token fix: coaches/rep-teams use this; resolves to --hud-surface */

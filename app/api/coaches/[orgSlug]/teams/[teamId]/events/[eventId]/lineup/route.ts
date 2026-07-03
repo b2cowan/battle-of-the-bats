@@ -13,7 +13,9 @@ import {
   upsertRepTeamLineup,
 } from '@/lib/db';
 import type { RepLineupMode } from '@/lib/types';
+import { normalizeRulesOverride } from '@/lib/lineup-caps';
 import { withObservability } from '@/lib/observability';
+import { denyUnless, redactRoster } from '@/lib/coach-capabilities';
 
 const VALID_LINEUP_MODES: RepLineupMode[] = ['nine_player', 'everyone_bats'];
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
@@ -85,7 +87,9 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId, eventId);
   if ('error' in resolved) return resolved.error!;
-  const { programYear } = resolved;
+  const { assignment, programYear } = resolved;
+  const denied = denyUnless(assignment.capabilities.lineups, 'You do not have access to lineups.');
+  if (denied) return denied;
 
   const [players, attendance, lineup] = await Promise.all([
     getRepRosterPlayers(programYear.id),
@@ -95,7 +99,8 @@ export const GET = withObservability(async (_req: Request,
   const entries = lineup ? await getRepTeamLineupEntries(lineup.id) : [];
 
   return NextResponse.json({
-    players: players.filter(player => player.status === 'active'),
+    // Redact guardian PII / notes for a coach without those grants (this endpoint returns the roster).
+    players: redactRoster(players.filter(player => player.status === 'active'), assignment.capabilities),
     attendance,
     lineup,
     entries,
@@ -108,13 +113,18 @@ export const PUT = withObservability(async (req: Request,
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId, eventId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, programYear, event } = resolved;
+  const { ctx, assignment, programYear, event } = resolved;
+  const denied = denyUnless(assignment.capabilities.lineups, 'You do not have access to lineups.');
+  if (denied) return denied;
 
   const body = await req.json();
   const lineupMode = body.lineupMode as RepLineupMode;
   const inningCount = Number(body.inningCount);
   const notes = typeof body.notes === 'string' ? body.notes.trim() : '';
   const entries = Array.isArray(body.entries) ? body.entries : null;
+  // Per-game cap override (P3). undefined when the client doesn't send the key → upsert preserves
+  // the stored value; a sent value (object or null) is normalized and written.
+  const rulesOverride = 'rulesOverride' in body ? normalizeRulesOverride(body.rulesOverride) : undefined;
 
   if (!VALID_LINEUP_MODES.includes(lineupMode)) {
     return NextResponse.json({ error: 'Invalid lineup mode' }, { status: 400 });
@@ -203,6 +213,7 @@ export const PUT = withObservability(async (req: Request,
       lineupMode,
       inningCount,
       notes: notes || null,
+      rulesOverride,
       updatedBy: ctx.user.id,
     });
     const savedEntries = await replaceRepTeamLineupEntries(lineup.id, rows);

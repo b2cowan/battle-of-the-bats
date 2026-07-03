@@ -112,20 +112,27 @@ export default function TeamOverviewPage({
     setSetupLoading(true);
     setSetupError('');
     try {
+      // Assistant Coaches: skip the finance fetches when this coach has no money access,
+      // otherwise the (correct) 403 would read as a broken dashboard on their landing page.
+      const a = assignments.find(x => x.teamId === teamId);
+      // Fail CLOSED if assignments haven't resolved yet (a === undefined): skip the finance
+      // fetch so a no-money assistant never flashes a 403 error; it re-runs once caps load.
+      const canMoney = !!a && a.capabilities.money !== 'off';
       const [rosterRes, eventsRes, budgetRes, duesRes] = await Promise.all([
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`),
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues`),
+        canMoney ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget`) : Promise.resolve(null),
+        canMoney ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues`) : Promise.resolve(null),
       ]);
 
-      if (!rosterRes.ok || !eventsRes.ok || !budgetRes.ok) {
+      if (!rosterRes.ok || !eventsRes.ok || (canMoney && !budgetRes!.ok)) {
         throw new Error('Setup status could not be loaded');
       }
 
       const rosterData: { players?: RepRosterPlayer[] } = await rosterRes.json();
       const eventsData: { events?: RepTeamEvent[] } = await eventsRes.json();
-      const budgetData: { budgetAmount?: number | null; totalExpenses?: number } = await budgetRes.json();
+      const budgetData: { budgetAmount?: number | null; totalExpenses?: number } =
+        canMoney && budgetRes!.ok ? await budgetRes!.json() : { budgetAmount: null, totalExpenses: 0 };
       const activePlayers = (rosterData.players ?? []).filter(player => player.status === 'active');
       const events = eventsData.events ?? [];
       const games = events.filter(event => GAME_EVENT_TYPES.includes(event.eventType));
@@ -141,7 +148,7 @@ export default function TeamOverviewPage({
         gameCount: games.length,
         budgetSet: budgetData.budgetAmount != null,
       });
-      setBudget({ amount: budgetData.budgetAmount ?? null, spent: budgetData.totalExpenses ?? 0 });
+      setBudget(canMoney ? { amount: budgetData.budgetAmount ?? null, spent: budgetData.totalExpenses ?? 0 } : null);
 
       // Next upcoming event for the snapshot
       const now = Date.now();
@@ -180,7 +187,7 @@ export default function TeamOverviewPage({
       setBirthdays(upcomingBdays);
 
       // Dues outstanding + overdue count (best-effort — dues failure never breaks the page)
-      if (duesRes.ok) {
+      if (canMoney && duesRes && duesRes.ok) {
         const duesData: { players?: Array<{ outstanding?: number; installments?: Array<{ paidAt: string | null; dueDate: string }> }> } = await duesRes.json();
         const players = duesData.players ?? [];
         const totalOutstanding = players.reduce((s, p) => s + (p.outstanding ?? 0), 0);
@@ -203,7 +210,7 @@ export default function TeamOverviewPage({
     } finally {
       setSetupLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, assignments]);
 
   useEffect(() => {
     if (!loading) void Promise.resolve().then(loadSetup);
@@ -346,6 +353,9 @@ export default function TeamOverviewPage({
   }
 
   const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
+  // Assistant Coaches: hide finance-driven dashboard pieces (budget/dues tiles + the "Set budget"
+  // setup step) from a coach with no money access — head coaches always have it.
+  const canViewMoney = assignment.capabilities.money !== 'off';
   const helpHref = `/${orgSlug}/coaches/help`;
   // The season label drops a leading copy of the team name so the subtitle doesn't repeat the
   // title — orgs often name a program year "<Team> <Year>" (e.g. "Blue Jays 2026").
@@ -430,18 +440,20 @@ export default function TeamOverviewPage({
       help: { title: 'Budget & dues', body: 'Plan your season costs, charge dues per player (one-off or installments), and track payments. Premium can email overdue reminders automatically.' },
     },
   ];
-  const coreItems = setupItems.filter(item => item.group === 'core');
-  const optionalItems = setupItems.filter(item => item.group === 'optional');
+  // Drop the money-only setup step for coaches without finance access.
+  const visibleSetupItems = canViewMoney ? setupItems : setupItems.filter(item => item.key !== 'budget');
+  const coreItems = visibleSetupItems.filter(item => item.group === 'core');
+  const optionalItems = visibleSetupItems.filter(item => item.group === 'optional');
   // A step counts toward the status bar when it's done OR (for optional steps) skipped —
   // so the bar reflects EVERY setup decision, and skipping a step "checks it off".
   const isSkipped = (item: SetupItem) => item.group === 'optional' && !item.complete && skippedSteps.has(item.key);
   const isSatisfied = (item: SetupItem) => item.complete || isSkipped(item);
-  const satisfiedCount = setupItems.filter(isSatisfied).length;
-  const totalCount = setupItems.length;
+  const satisfiedCount = visibleSetupItems.filter(isSatisfied).length;
+  const totalCount = visibleSetupItems.length;
   // Required (roster) gates "you're ready"; the panel itself retires only once EVERY
   // step is done-or-skipped, so the coach explicitly clears each optional step.
   const requiredDone = coreItems.every(item => item.complete);
-  const allSatisfied = setupItems.every(isSatisfied);
+  const allSatisfied = visibleSetupItems.every(isSatisfied);
   // Hold the panel until the setup status is actually known — otherwise a still-loading page
   // computes "incomplete" (roster/optional default to not-done) and flashes the setup panel
   // before the live dashboard. The snapshot tiles below already show their own loading state.
@@ -678,7 +690,7 @@ export default function TeamOverviewPage({
             role="img"
             aria-label={`${satisfiedCount} of ${totalCount} setup steps done or skipped`}
           >
-            {setupItems.map(item => (
+            {visibleSetupItems.map(item => (
               <span
                 key={item.key}
                 className={`${styles.setupSegment} ${item.complete ? styles.setupSegmentDone : isSkipped(item) ? styles.setupSegmentSkipped : ''}`}
@@ -744,7 +756,7 @@ export default function TeamOverviewPage({
       <section aria-labelledby="snapshot-title">
         <p className={styles.sectionKicker} id="snapshot-title">Your team at a glance</p>
         <div className={styles.snapshotGrid}>
-          {snapshotCards.map(card => {
+          {snapshotCards.filter(card => canViewMoney || (card.key !== 'dues' && card.key !== 'budget')).map(card => {
             const Icon = card.icon;
             return (
               <Link

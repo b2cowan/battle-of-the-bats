@@ -50,6 +50,26 @@
     "indexdef": "CREATE UNIQUE INDEX announcements_pkey ON public.announcements USING btree (id)"
   },
   {
+    "tablename": "assistant_invite_tokens",
+    "indexname": "assistant_invite_tokens_email_idx",
+    "indexdef": "CREATE INDEX assistant_invite_tokens_email_idx ON public.assistant_invite_tokens USING btree (lower(invited_email), status)"
+  },
+  {
+    "tablename": "assistant_invite_tokens",
+    "indexname": "assistant_invite_tokens_pkey",
+    "indexdef": "CREATE UNIQUE INDEX assistant_invite_tokens_pkey ON public.assistant_invite_tokens USING btree (id)"
+  },
+  {
+    "tablename": "assistant_invite_tokens",
+    "indexname": "assistant_invite_tokens_team_idx",
+    "indexdef": "CREATE INDEX assistant_invite_tokens_team_idx ON public.assistant_invite_tokens USING btree (team_id, status)"
+  },
+  {
+    "tablename": "assistant_invite_tokens",
+    "indexname": "assistant_invite_tokens_token_hash_uq",
+    "indexdef": "CREATE UNIQUE INDEX assistant_invite_tokens_token_hash_uq ON public.assistant_invite_tokens USING btree (token_hash)"
+  },
+  {
     "tablename": "basic_coach_team_announcements",
     "indexname": "basic_coach_team_announcements_pkey",
     "indexdef": "CREATE UNIQUE INDEX basic_coach_team_announcements_pkey ON public.basic_coach_team_announcements USING btree (id)"

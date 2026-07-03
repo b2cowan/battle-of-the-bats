@@ -119,6 +119,9 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 <!-- dict:col:organizations.internal_notes -->
 **`internal_notes`** (text, nullable) — **legacy** scalar note + the `[UAT_PROTECTED]` seed-protection sentinel (`app/api/dev/seed/*`). Superseded by the `org_internal_notes` table (gotcha 3); no live UI writer found. **Not on the `Organization` type.**
 
+<!-- dict:col:organizations.coach_settings -->
+**`coach_settings`** (jsonb, NOT NULL, default `'{}'`; mig 174) — org-level Coaches-Portal settings, mirrors `pdf_settings`. **Key catalog** (`OrgCoachSettings`, `lib/assistant-invites.ts`): `require_assistant_approval` (bool, default false/absent — when true a club admin must approve an assistant-coach invite before the email is sent). _Reads/writes:_ `app/api/admin/org/coach-settings/route.ts`. **Not on the `Organization` type** (read subsystem-directly).
+
 <!-- dict:col:organizations.pdf_settings -->
 **`pdf_settings`** (jsonb, nullable, default `'{}'`) — org-level PDF report template config. **Key catalog** (`OrgPdfSettings`, [lib/export/pdf.ts:19-46](../../../lib/export/pdf.ts#L19)): `headerLine1`/`headerLine2`, `footerText`, `showDateStamp`/`showPageNumbers`/`showBranding` (free plan forces branding on), `orientation`, `accentColor`, `logoDataUrl`, `reportDensity`, `includeGuardianContacts`/`includePlayerNotes`/`includeInternalNotes`. _Reads/writes:_ [app/api/admin/org/pdf-settings/route.ts](../../../app/api/admin/org/pdf-settings/route.ts). **Not on the `Organization` type.**
 
@@ -1766,6 +1769,9 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_program_years.auto_reminders_enabled -->
 **`auto_reminders_enabled`** (bool, NOT NULL, default true) — coach-toggled (accounting settings); the dues-reminder cron **skips teams whose active year has it false**.
 
+<!-- dict:col:rep_program_years.lineup_settings -->
+**`lineup_settings`** (jsonb, nullable; mig 172) — Lineup Intelligence P3 **season-default innings caps** for the game-day auto-fill, set on the coach team Settings page. **App-enforced shape (`lib/lineup-caps.ts`, NO DB CHECK)**: `{ maxInningsPerPosition: int|null (rotation cap — max innings any one player at a single field position), pitcherMaxInningsDefault: int|null (team default arm-care ceiling), minInningsPerPlayer: int|null (min-play floor) }`. A null column or missing key = that rule is OFF. Effective cap at generation = per-game `rep_team_lineups.rules_override` ?? this default; the per-player `lineup_profile.pitcher.maxInnings` (mig 171) still applies on top (stricter wins). See docs/projects/active/COACHES_PORTAL_LINEUP_INTELLIGENCE_PLAN.md.
+
 ### `rep_roster_players`
 <!-- dict:table:rep_roster_players -->
 
@@ -1852,8 +1858,8 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 1. **This is the coach-portal access gate.** `getCoachingAssignmentsForUser(orgId, userId)` ([lib/db.ts:4160](../../../lib/db.ts#L4160)) is the membership check inside `resolveCoachContext` for every coach route; no row → no access.
 2. **Assignments are filtered to `draft`/`active` seasons** ([lib/db.ts:4175](../../../lib/db.ts#L4175)) — a coach assigned only to a `completed`/`archived` year is effectively locked out via this helper even though the row persists.
 3. **Team-workspace plans add an entitlement filter.** For a `team_workspace`/`plan_id='team'` org, assignments are further intersected with `getActiveTeamEntitledRepTeamIds` ([lib/db.ts:4180](../../../lib/db.ts#L4180)) — an active billing entitlement is required on top of the assignment row.
-4. **Insert/delete only — NO `updated_at`, no update path.** Changing a coach's role = delete + re-add (`addRepTeamCoach`/`removeRepTeamCoach` [lib/db.ts:4034](../../../lib/db.ts#L4034)). Team-workspace provisioning seeds the owner as `head_coach`.
-5. **`coach_role` is display-only** — no capability differs head vs assistant; all coach write routes authorize on *presence* of any assignment.
+4. **Insert/delete only for role — NO `updated_at`.** Changing a coach's role = delete + re-add (`addRepTeamCoach`/`removeRepTeamCoach` [lib/db.ts:4034](../../../lib/db.ts#L4034)). Team-workspace provisioning seeds the owner as `head_coach`. (Assistant Coaches Phase 2 adds a `capabilities` UPDATE path — the head coach edits an assistant's grants in place.)
+5. **`coach_role` + `capabilities` are the ENFORCEMENT anchor (was "display-only" pre-mig-170).** A head coach gets full access; an `assistant_coach` is resolved to a least-privilege capability set (refined by `capabilities`) in `getCoachingAssignmentsForUser` and enforced app-layer in every coach route (money off/read/write, roster-PII lock, notes, documents view/manage, announcements send, tryouts head-only, roster-write head-only). The two pre-existing standalone-workspace head-coach gates (season-start, division-edit) are unchanged.
 6. **Adding a coach requires an existing active `organization_members` row** ([app/api/admin/rep-teams/.../coaches/route.ts:96](../../../app/api/admin/rep-teams/teams/%5BteamId%5D/program-years/%5ByearId%5D/coaches/route.ts#L96)) → 422 otherwise. This table references, never creates, the membership.
 7. **`UNIQUE(program_year_id, user_id)`** — dup → 23505 → 409.
 
@@ -1870,7 +1876,24 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **`user_id`** (FK → `auth.users.id` ON DELETE CASCADE, NOT NULL) — the coach account (snapshot shows `foreign_table: null` — auth-schema introspection gap). A *narrowing* of org membership: being an org member doesn't grant team access; this row does.
 
 <!-- dict:col:rep_team_coaches.coach_role -->
-**`coach_role`** (text, NOT NULL, default `'head_coach'`; CHECK `head_coach|assistant_coach`) — display-only label (gotcha 5).
+**`coach_role`** (text, NOT NULL, default `'head_coach'`; CHECK `head_coach|assistant_coach`) — the staff role and enforcement anchor (gotcha 5): head = full access; assistant = least-privilege capabilities refined by `capabilities`.
+
+<!-- dict:col:rep_team_coaches.capabilities -->
+**`capabilities`** (jsonb, nullable; mig 173) — per-assistant capability grants (`AssistantCapabilityGrants`, `lib/coach-capabilities.ts`). NULL = assistant least-privilege defaults; **ignored for head coaches**. App-shaped, no DB CHECK (loose-jsonb pattern). Set by the head coach via the coach-portal staff panel; read into the effective `CoachCapabilities` on every `CoachingAssignment`.
+
+### `assistant_invite_tokens`
+<!-- dict:table:assistant_invite_tokens -->
+
+**Purpose:** the head-coach "invite an assistant" flow (Assistant Coaches Phase 2, mig 174). A team-scoped, single-use invite. The **raw token lives only in the emailed URL**; the row stores its **SHA-256** hash (same posture as `rep_tryout_registrations.offer_token_hash`). On accept, the invitee gets a minimal `coach`-role `organization_members` row + a `rep_team_coaches` `assistant_coach` row.
+
+**Gotchas (read first):**
+1. **Service-role only** — RLS enabled, **zero policies** (the [[reference_supabase_rls_grants]] class). All access via `supabaseAdmin` in `lib/assistant-invites.ts`.
+2. **`status` lifecycle:** `pending_approval` (org requires admin approval before the email goes out) → `pending` (emailed, awaiting accept) → `accepted` (terminal); or `expired`/`revoked`. The accept path requires `status='pending'` + not past `expires_at` + single-use.
+3. **Accept SKIPS the one-org guard** — an assistant is a guest; `userBelongsToOtherRealOrg` is deliberately NOT called, so cross-club assistants work.
+4. **`token_hash` UNIQUE**; indexed also by `(team_id, status)` and `(lower(invited_email), status)`.
+5. **`initial_capabilities`** (jsonb, nullable) — optional duty grants chosen at invite time; null = least-privilege defaults, seeded into `rep_team_coaches.capabilities` on accept.
+
+**Fields:** `org_id`/`team_id`/`program_year_id` (FKs, CASCADE), `invited_by_user_id`, `invited_email`, `token_hash`, `status`, `initial_capabilities` (jsonb), `invited_by_name`/`team_name` (denormalized for the email/accept page), `expires_at` (default now()+7d), `accepted_at`, `created_at`.
 
 ### `rep_team_events`
 <!-- dict:table:rep_team_events -->
@@ -2018,6 +2041,9 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_team_lineups.updated_by -->
 **`updated_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — last writer (gotcha 3; auth-schema introspection gap).
+
+<!-- dict:col:rep_team_lineups.rules_override -->
+**`rules_override`** (jsonb, nullable; mig 172) — Lineup Intelligence P3 **per-game override** of the season-default innings caps (`rep_program_years.lineup_settings`), for a game that plays by different rules (e.g. a tournament). Set in the Auto-fill popover's "Game rules" group and persisted so it sticks to that game. **App-enforced shape (`lib/lineup-caps.ts`, NO DB CHECK)**: `{ maxInningsPerPosition, pitcherMaxInnings, minInningsPerPlayer }` — any subset; a missing/null key falls back to the season default. Null column = use season defaults for everything.
 
 ### `rep_team_lineup_entries`
 <!-- dict:table:rep_team_lineup_entries -->

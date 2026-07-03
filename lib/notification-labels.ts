@@ -24,6 +24,8 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   // Intentionally NOT in NOTIFICATION_SECTIONS — an @mention is always delivered (not user-mutable here).
   chat_mention:                      'Chat @mention',
   tryout_offer_response:             'Tryout offer response',
+  assistant_coach_joined:            'Assistant coach joined',
+  assistant_coach_approval_requested: 'Assistant coach awaiting approval',
 };
 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
@@ -42,6 +44,8 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   chat_message:                      'A new message is posted in a tournament chat you are part of.',
   chat_mention:                      'Someone @mentions you in a tournament chat (always delivered).',
   tryout_offer_response:             'A tryout family accepts or declines an offer via their link — you confirm the roster spot.',
+  assistant_coach_joined:            'An assistant coach you invited accepted and joined the team.',
+  assistant_coach_approval_requested: 'A head coach invited an assistant coach and it needs admin approval.',
 };
 
 // ── Section groups (org-level preferences page) ────────────────────────────────
@@ -87,6 +91,9 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
     module: null,
     eventTypes: ['chat_message'],
   },
+  // NOTE: 'assistant_coach_joined' + 'assistant_coach_approval_requested' are INTENTIONALLY not
+  // listed here (like 'chat_mention') — they're targeted lifecycle bells (to the head coach / org
+  // admins), not general per-user-configurable events, so they don't get a preferences-UI row.
 ];
 
 /** All event types in display order — derived from NOTIFICATION_SECTIONS. Single source of truth. */

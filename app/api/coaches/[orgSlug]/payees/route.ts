@@ -3,6 +3,7 @@ import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, searchOrgPayees, createOrgPayee } from '@/lib/db';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { withObservability } from '@/lib/observability';
+import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 
 async function resolveCoachContext(orgSlug: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -19,6 +20,8 @@ export const GET = withObservability(async (req: Request,
   const resolved = await resolveCoachContext(orgSlug);
   if ('error' in resolved) return resolved.error!;
   const { ctx, assignments } = resolved;
+  const denied = denyUnless(assignments.some(a => canViewMoney(a.capabilities)), 'You do not have access to team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   const q = new URL(req.url).searchParams.get('q') ?? '';
   const teamId = isTeamWorkspaceOrg(ctx.org) ? assignments[0]?.teamId : undefined;
@@ -32,6 +35,8 @@ export const POST = withObservability(async (req: Request,
   const resolved = await resolveCoachContext(orgSlug);
   if ('error' in resolved) return resolved.error!;
   const { ctx, assignments } = resolved;
+  const denied = denyUnless(assignments.some(a => canWriteMoney(a.capabilities)), 'You do not have access to team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   const body = await req.json();
   const name: string = typeof body.name === 'string' ? body.name.trim() : '';

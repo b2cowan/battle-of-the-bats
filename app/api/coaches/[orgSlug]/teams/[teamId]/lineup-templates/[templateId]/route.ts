@@ -6,6 +6,7 @@ import {
   deleteRepTeamLineupTemplate,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { denyUnless } from '@/lib/coach-capabilities';
 
 export const DELETE = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; templateId: string }> },) => {
@@ -21,7 +22,10 @@ export const DELETE = withObservability(async (_req: Request,
   }
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.find(a => a.teamId === teamId)) return forbidden();
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return forbidden();
+  const denied = denyUnless(assignment.capabilities.lineups, 'You do not have access to lineups.');
+  if (denied) return denied;
 
   // Delete is scoped by team_id, so a template can only be removed by a coach of its own team.
   await deleteRepTeamLineupTemplate(templateId, teamId);

@@ -3,6 +3,7 @@ import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { denyUnless } from '@/lib/coach-capabilities';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -15,14 +16,15 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   }
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.find(a => a.teamId === teamId)) return { error: forbidden() };
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { error: forbidden() };
 
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) {
     return { error: NextResponse.json({ error: 'No active program year' }, { status: 404 }) };
   }
 
-  return { ctx, team, programYear };
+  return { ctx, team, assignment, programYear };
 }
 
 const MAX_REORDER = 500; // no realistic rep roster approaches this
@@ -34,7 +36,9 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { team, programYear } = resolved;
+  const { team, assignment, programYear } = resolved;
+  const denied = denyUnless(assignment.capabilities.rosterWrite, 'Only the head coach can edit the roster.');
+  if (denied) return denied;
 
   const body = (await req.json().catch(() => ({}))) as { orderedIds?: unknown };
   if (!Array.isArray(body.orderedIds)) {

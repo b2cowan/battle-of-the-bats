@@ -10,6 +10,7 @@ import {
   getRepTeamExpenses,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { denyUnless, canViewMoney, canWriteMoney } from '@/lib/coach-capabilities';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -38,7 +39,9 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { programYear } = resolved;
+  const { assignment, programYear } = resolved;
+  const denied = denyUnless(canViewMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   // Compute summary stats
   const schedules = await getRepPlayerDuesSchedules(programYear.id);
@@ -65,7 +68,9 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { programYear } = resolved;
+  const { assignment, programYear } = resolved;
+  const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have permission to change team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   const body = await req.json();
   const { budgetAmount } = body;

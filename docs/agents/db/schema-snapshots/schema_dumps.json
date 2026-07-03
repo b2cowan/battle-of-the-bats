@@ -389,6 +389,132 @@
         "column_default": null
       },
       {
+        "table_name": "assistant_invite_tokens",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "pos": 4,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "pos": 5,
+        "column_name": "invited_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "pos": 6,
+        "column_name": "invited_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "pos": 7,
+        "column_name": "token_hash",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "pos": 8,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "pos": 9,
+        "column_name": "initial_capabilities",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "pos": 10,
+        "column_name": "invited_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "pos": 11,
+        "column_name": "team_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "pos": 12,
+        "column_name": "expires_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "(now() + '7 days'::interval)"
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "pos": 13,
+        "column_name": "accepted_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "pos": 14,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "basic_coach_team_announcements",
         "pos": 1,
         "column_name": "id",
@@ -6032,6 +6158,15 @@
         "column_default": null
       },
       {
+        "table_name": "organizations",
+        "pos": 36,
+        "column_name": "coach_settings",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
         "table_name": "plan_config_overrides",
         "pos": 1,
         "column_name": "id",
@@ -8966,6 +9101,15 @@
         "column_default": "true"
       },
       {
+        "table_name": "rep_program_years",
+        "pos": 13,
+        "column_name": "lineup_settings",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_roster_players",
         "pos": 1,
         "column_name": "id",
@@ -9486,6 +9630,15 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_coaches",
+        "pos": 8,
+        "column_name": "capabilities",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "rep_team_event_attendance",
@@ -10377,6 +10530,15 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_lineups",
+        "pos": 12,
+        "column_name": "rules_override",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "rep_team_payment_requests",
@@ -13528,6 +13690,34 @@
         "constraint_name": "announcements_tournament_id_fkey"
       },
       {
+        "table_name": "assistant_invite_tokens",
+        "column_name": "invited_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "assistant_invite_tokens_invited_by_fk"
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "assistant_invite_tokens_org_id_fkey"
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "assistant_invite_tokens_program_year_id_fkey"
+      },
+      {
+        "table_name": "assistant_invite_tokens",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "assistant_invite_tokens_team_id_fkey"
+      },
+      {
         "table_name": "basic_coach_team_announcements",
         "column_name": "basic_coach_team_id",
         "foreign_table": "basic_coach_teams",
@@ -15603,6 +15793,26 @@
         "indexdef": "CREATE UNIQUE INDEX announcements_pkey ON public.announcements USING btree (id)"
       },
       {
+        "tablename": "assistant_invite_tokens",
+        "indexname": "assistant_invite_tokens_email_idx",
+        "indexdef": "CREATE INDEX assistant_invite_tokens_email_idx ON public.assistant_invite_tokens USING btree (lower(invited_email), status)"
+      },
+      {
+        "tablename": "assistant_invite_tokens",
+        "indexname": "assistant_invite_tokens_pkey",
+        "indexdef": "CREATE UNIQUE INDEX assistant_invite_tokens_pkey ON public.assistant_invite_tokens USING btree (id)"
+      },
+      {
+        "tablename": "assistant_invite_tokens",
+        "indexname": "assistant_invite_tokens_team_idx",
+        "indexdef": "CREATE INDEX assistant_invite_tokens_team_idx ON public.assistant_invite_tokens USING btree (team_id, status)"
+      },
+      {
+        "tablename": "assistant_invite_tokens",
+        "indexname": "assistant_invite_tokens_token_hash_uq",
+        "indexdef": "CREATE UNIQUE INDEX assistant_invite_tokens_token_hash_uq ON public.assistant_invite_tokens USING btree (token_hash)"
+      },
+      {
         "tablename": "basic_coach_team_announcements",
         "indexname": "basic_coach_team_announcements_pkey",
         "indexdef": "CREATE UNIQUE INDEX basic_coach_team_announcements_pkey ON public.basic_coach_team_announcements USING btree (id)"
@@ -17563,6 +17773,18 @@
       {
         "kind": "RLS",
         "table_name": "announcements",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "assistant_invite_tokens",
+        "detail": "assistant_invite_tokens_status_check",
+        "check_clause": "(status = ANY (ARRAY['pending_approval'::text, 'pending'::text, 'accepted'::text, 'expired'::text, 'revoked'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "assistant_invite_tokens",
         "detail": "ENABLED",
         "check_clause": null
       },

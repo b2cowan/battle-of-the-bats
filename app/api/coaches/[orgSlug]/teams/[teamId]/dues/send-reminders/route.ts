@@ -11,6 +11,7 @@ import {
 } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { withObservability } from '@/lib/observability';
+import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -49,7 +50,9 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { team, programYear } = resolved;
+  const { team, assignment, programYear } = resolved;
+  const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have permission to change team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   const body = await req.json().catch(() => ({}));
   const window: 30 | 7 | undefined = body.window === 30 ? 30 : body.window === 7 ? 7 : undefined;

@@ -12,6 +12,7 @@ import {
 } from '@/lib/db';
 import { sanitizeResources } from '@/lib/rep-event-resources';
 import { withObservability } from '@/lib/observability';
+import { denyUnless } from '@/lib/coach-capabilities';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -40,7 +41,9 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { programYear } = resolved;
+  const { assignment, programYear } = resolved;
+  const denied = denyUnless(assignment.capabilities.schedule, 'You do not have access to the schedule.');
+  if (denied) return denied;
 
   const event = await getRepTeamEventById(eventId);
   if (!event || event.programYearId !== programYear.id) {
@@ -119,7 +122,9 @@ export const DELETE = withObservability(async (req: Request,
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { programYear } = resolved;
+  const { assignment, programYear } = resolved;
+  const denied = denyUnless(assignment.capabilities.schedule, 'You do not have access to the schedule.');
+  if (denied) return denied;
 
   const event = await getRepTeamEventById(eventId);
   if (!event || event.programYearId !== programYear.id) {

@@ -1,7 +1,8 @@
 'use client';
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, Users, Calendar, ClipboardList, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut } from 'lucide-react';
+import { ArrowLeft, Users, UserCog, Calendar, ClipboardList, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
@@ -12,18 +13,32 @@ import NotificationBell from '@/components/notifications/NotificationBell';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
-const TEAM_NAV = [
-  { label: 'Overview',    href: '',           icon: LayoutDashboard },
-  { label: 'Roster',      href: '/roster',    icon: Users },
-  { label: 'Schedule',    href: '/schedule',  icon: Calendar },
-  { label: 'Tryouts',     href: '/tryouts',   icon: ClipboardList },
-  { label: 'Tournaments', href: '/tournaments', icon: Trophy },
-  { label: 'Chat',        href: '/chat',      icon: MessageSquare },
-  { label: 'Announcements', href: '/announcements', icon: Megaphone },
-  { label: 'Accounting',  href: '/accounting',icon: DollarSign },
-  { label: 'Documents',   href: '/documents', icon: FileText },
-  { label: 'History',     href: '/history',   icon: History },
-  { label: 'Settings',    href: '/settings',  icon: Settings },
+// Grouped so the sidebar reads as clusters (Squad / Season / Communication / Admin) rather than a
+// flat 11-item list. Overview stays ungrouped at the top. The Depth chart lives INSIDE Roster (a
+// view toggle), so it's intentionally not a nav item.
+const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; icon: typeof Users }[] }[] = [
+  { items: [
+    { label: 'Overview',    href: '',             icon: LayoutDashboard },
+  ] },
+  { label: 'Squad', items: [
+    { label: 'Roster',      href: '/roster',      icon: Users },
+    { label: 'Tryouts',     href: '/tryouts',     icon: ClipboardList },
+  ] },
+  { label: 'Season', items: [
+    { label: 'Schedule',    href: '/schedule',    icon: Calendar },
+    { label: 'Tournaments', href: '/tournaments', icon: Trophy },
+  ] },
+  { label: 'Communication', items: [
+    { label: 'Chat',          href: '/chat',          icon: MessageSquare },
+    { label: 'Announcements', href: '/announcements', icon: Megaphone },
+  ] },
+  { label: 'Admin', items: [
+    { label: 'Accounting',  href: '/accounting',  icon: DollarSign },
+    { label: 'Documents',   href: '/documents',   icon: FileText },
+    { label: 'History',     href: '/history',     icon: History },
+    { label: 'Staff',       href: '/staff',       icon: UserCog },
+    { label: 'Settings',    href: '/settings',    icon: Settings },
+  ] },
 ];
 
 export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
@@ -44,6 +59,26 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const currentAssignment = currentTeamId
     ? assignments.find(a => a.teamId === currentTeamId)
     : null;
+
+  // Assistant Coaches: hide nav areas the current coach isn't cleared for. Head coaches have
+  // full capabilities so nothing hides. Fail-open if caps are absent (server still enforces).
+  const caps = currentAssignment?.capabilities;
+  const navVisible = (label: string): boolean => {
+    if (!caps) return true;
+    switch (label) {
+      case 'Roster':        return caps.roster !== 'off';
+      case 'Schedule':      return caps.schedule;
+      case 'Tryouts':       return caps.tryouts;
+      // Phase 1: hidden unless the coach can send (no draft UI yet). Phase 2 (draft flow):
+      // change this to always-visible or a `canDraftAnnouncements` cap so granted assistants can draft.
+      case 'Announcements': return caps.announcementsSend;
+      case 'Accounting':    return caps.money !== 'off';
+      case 'History':       return caps.money !== 'off';
+      case 'Documents':     return caps.documents !== 'off';
+      case 'Staff':         return caps.isHeadCoach;
+      default:              return true;
+    }
+  };
 
   const base = `/${orgSlug}/coaches`;
   const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
@@ -107,21 +142,33 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
             {assignments.length > 1 && (
               <p className={styles.sidebarSectionLabel}>{currentAssignment.teamName}</p>
             )}
-            {TEAM_NAV.map(({ label, href, icon: Icon }) => {
-              const fullHref = `${base}/teams/${currentTeamId}${href}`;
-              const isActive = href === ''
-                ? pathname === fullHref
-                : pathname.startsWith(fullHref);
+            {currentAssignment.coachRole === 'assistant_coach' && (
+              <p className={styles.sidebarSectionLabel}>Assistant Coach</p>
+            )}
+            {TEAM_NAV_GROUPS.map((group, gi) => {
+              const visibleItems = group.items.filter(({ label }) => navVisible(label));
+              if (!visibleItems.length) return null;
               return (
-                <Link
-                  key={label}
-                  href={fullHref}
-                  className={`${styles.sidebarItem}${isActive ? ` ${styles.sidebarItemActive}` : ''}`}
-                >
-                  <Icon size={14} />
-                  {label}
-                  {label === 'Chat' && <ChatUnreadBadge count={chatUnread} />}
-                </Link>
+                <Fragment key={gi}>
+                  {group.label && <p className={styles.sidebarGroupLabel}>{group.label}</p>}
+                  {visibleItems.map(({ label, href, icon: Icon }) => {
+                    const fullHref = `${base}/teams/${currentTeamId}${href}`;
+                    const isActive = href === ''
+                      ? pathname === fullHref
+                      : pathname.startsWith(fullHref);
+                    return (
+                      <Link
+                        key={label}
+                        href={fullHref}
+                        className={`${styles.sidebarItem}${isActive ? ` ${styles.sidebarItemActive}` : ''}`}
+                      >
+                        <Icon size={14} />
+                        {label}
+                        {label === 'Chat' && <ChatUnreadBadge count={chatUnread} />}
+                      </Link>
+                    );
+                  })}
+                </Fragment>
               );
             })}
           </div>

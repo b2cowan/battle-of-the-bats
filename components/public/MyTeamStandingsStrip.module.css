@@ -22,7 +22,7 @@
 
 .star {
   flex-shrink: 0;
-  color: var(--logic-lime);
+  color: var(--primary-light);
 }
 
 .rank {

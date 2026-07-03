@@ -11,6 +11,7 @@ import {
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { denyUnless, canViewMoney, canWriteMoney, redactRosterPlayer } from '@/lib/coach-capabilities';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -39,7 +40,9 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { programYear } = resolved;
+  const { assignment, programYear } = resolved;
+  const denied = denyUnless(canViewMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   const [rosterPlayers, schedules] = await Promise.all([
     getRepRosterPlayers(programYear.id),
@@ -85,7 +88,9 @@ export const GET = withObservability(async (_req: Request,
       const rollingBalance = Math.round((outstanding - totalCredits) * 100) / 100;
 
       return {
-        player: p,
+        // Money access and guardian-PII access are independent grants — redact PII/notes for a
+        // money-cleared coach who lacks the PII grant (the dues table shows a guardian identifier).
+        player: redactRosterPlayer(p, assignment.capabilities),
         schedule,
         installments,
         paidAmount,
@@ -105,7 +110,9 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { team, programYear } = resolved;
+  const { team, assignment, programYear } = resolved;
+  const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have permission to change team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   const body = await req.json();
   const { playerId, totalAmount, notes = null, installments } = body;

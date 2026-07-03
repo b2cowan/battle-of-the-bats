@@ -183,6 +183,18 @@
   padding: 0.25rem 1.25rem 0.5rem;
 }
 
+/* Group header within the team nav (Squad / Season / Communication / Admin) — a touch dimmer than
+   .sidebarSectionLabel, with top spacing so the clusters read as separated. */
+.sidebarGroupLabel {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.22);
+  padding: 0.5rem 1.25rem 0.35rem;
+  margin-top: 0.15rem;
+}
+
 .sidebarItem {
   display: flex;
   align-items: center;

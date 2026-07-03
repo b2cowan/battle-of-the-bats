@@ -8,6 +8,7 @@ import {
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { denyUnless, canViewDocuments, canManageDocuments } from '@/lib/coach-capabilities';
 
 async function resolveContext(orgSlug: string, teamId: string, playerId: string, docId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -15,7 +16,8 @@ async function resolveContext(orgSlug: string, teamId: string, playerId: string,
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.find(a => a.teamId === teamId)) return { error: forbidden() };
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { error: forbidden() };
 
   const player = await getRepRosterPlayer(playerId);
   if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id) {
@@ -27,7 +29,7 @@ async function resolveContext(orgSlug: string, teamId: string, playerId: string,
     return { error: NextResponse.json({ error: 'Document not found' }, { status: 404 }) };
   }
 
-  return { ctx, player, doc };
+  return { ctx, player, doc, assignment };
 }
 
 export const GET = withObservability(async (_req: Request,
@@ -35,7 +37,9 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId, playerId, docId } = await params;
   const resolved = await resolveContext(orgSlug, teamId, playerId, docId);
   if ('error' in resolved) return resolved.error!;
-  const { doc } = resolved;
+  const { doc, assignment } = resolved;
+  const denied = denyUnless(canViewDocuments(assignment.capabilities), 'You do not have access to documents.');
+  if (denied) return denied;
 
   const { data, error } = await supabaseAdmin.storage
     .from('rep-team-documents')
@@ -54,7 +58,9 @@ export const DELETE = withObservability(async (_req: Request,
   const { orgSlug, teamId, playerId, docId } = await params;
   const resolved = await resolveContext(orgSlug, teamId, playerId, docId);
   if ('error' in resolved) return resolved.error!;
-  const { doc } = resolved;
+  const { doc, assignment } = resolved;
+  const denied = denyUnless(canManageDocuments(assignment.capabilities), 'You do not have permission to manage documents.');
+  if (denied) return denied;
 
   await supabaseAdmin.storage.from('rep-team-documents').remove([doc.storagePath]);
   await deleteRepPlayerDocument(docId);

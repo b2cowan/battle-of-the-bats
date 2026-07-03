@@ -11,6 +11,7 @@ import {
 } from '@/lib/db';
 import type { RepAttendanceStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { denyUnless, redactRoster } from '@/lib/coach-capabilities';
 
 const VALID_ATTENDANCE_STATUSES: RepAttendanceStatus[] = ['unknown', 'attending', 'absent', 'late'];
 
@@ -46,7 +47,9 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId, eventId);
   if ('error' in resolved) return resolved.error!;
-  const { programYear } = resolved;
+  const { assignment, programYear } = resolved;
+  const denied = denyUnless(assignment.capabilities.attendance, 'You do not have access to attendance.');
+  if (denied) return denied;
 
   const [players, attendance] = await Promise.all([
     getRepRosterPlayers(programYear.id),
@@ -54,7 +57,8 @@ export const GET = withObservability(async (_req: Request,
   ]);
 
   return NextResponse.json({
-    players: players.filter(player => player.status === 'active'),
+    // Redact guardian PII / notes for a coach without those grants (this endpoint returns the roster).
+    players: redactRoster(players.filter(player => player.status === 'active'), assignment.capabilities),
     attendance,
     programYear,
   });
@@ -65,7 +69,9 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId, eventId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, programYear, event } = resolved;
+  const { ctx, assignment, programYear, event } = resolved;
+  const denied = denyUnless(assignment.capabilities.attendance, 'You do not have access to attendance.');
+  if (denied) return denied;
 
   const body = await req.json();
   const entries = Array.isArray(body.entries) ? body.entries : null;

@@ -1,6 +1,6 @@
 # Coaches Portal — Lineup Intelligence (enriched player profile + smart auto-fill)
 
-**Status:** PLANNED (design locked 2026-07-01; adversarially reviewed against the codebase 2026-07-01, blockers folded in). Not started.
+**Status:** P0–P5 BUILT on `dev` (uncommitted where noted). P5 team depth-chart board built + design-reviewed + adversarially reviewed 2026-07-02 (findings fixed; gate green: typecheck/lint/org-context). Remaining: P6 (analysis/PDF polish + `/docs`). Design locked 2026-07-01; codebase-reviewed 2026-07-01.
 **Owner decisions:** captured 2026-07-01 (see "Locked decisions").
 **Scope:** Premium Coaches Portal, org-scoped rep teams. Sport-neutral (softball/baseball today).
 **Related:** builds on the Lineup Builder shipped ~2026-06-29 (migs 070/159). Key files: `lib/lineup-generator.ts`, `lib/lineup-analysis.ts`, `app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx`, `lib/db.ts`, `lib/types.ts`, `lib/sports.ts`.
@@ -193,7 +193,7 @@ Surfaced by the P1 review 2026-07-02; left as-is because both offered sports are
 - **P2 — Pitching depth chart.** Pitcher flag/rank/cap on the player page; generator pitching-as-preference + arm-care cap enforcement.
 - **P3 — Caps + per-game override.** Season defaults on `rep_program_years.lineup_settings` (with a lightweight season-defaults settings UI so caps are usable now, not blocked on P5's board) + per-game `rep_team_lineups.rules_override` + the popover **Game rules** override group; position-rotation cap + pitching ceiling + min-play floor enforced via effective-cap resolution; rollover copies season settings.
 - **P4 — A-squad + competitive overhaul.** A-squad flag; competitive mode with the two dials + conflict-resolution priority; Mode auto-select + progressive-disclosure popover with human labels.
-- **P5 — Team depth-chart board.** Whole-team management surface (mobile design via `/design`).
+- **P5 — Team depth-chart board. ✅ BUILT 2026-07-02 (dev).** New `depth-chart/` coach page (nav entry under Roster, gated on `roster !== 'off'`; edits gated on `rosterWrite`). Desktop = players × field-positions grid with pinned Player+Pitcher+A-squad cluster; **mobile = per-player accordion** reusing `PositionProfileEditor` (design decision 2026-07-02 — a logged deviation from the 2-D-grid→scroll default). Auto-save (debounced per-player via the existing roster PATCH) + Undo/Redo, no Save button; caps summary line → Settings. New `--gold` token for the A-squad star, applied to **both** the board and the player-page A-squad control (checkbox → gold star). Design-reviewed + adversarially reviewed (5 lenses); fixes folded in: synchronous board ref (undo/mid-save race), redo-invalidation on cap typing, 403/404 save-loop guard, cap client/server parity, view-only gating, a11y (labels/scope/aria-pressed/touch targets/disabled dimming). Styles isolated in a co-located `depthChart.module.css`.
 - **P6 — Analysis/PDF polish + help docs.** Warnings, playing-time additions, `/docs` update for the coach-facing flow.
 
 (P1–P4 each ship a smarter lineup on their own. Batch DB-schema/shared-module changes and restart the dev server once near each handoff.)

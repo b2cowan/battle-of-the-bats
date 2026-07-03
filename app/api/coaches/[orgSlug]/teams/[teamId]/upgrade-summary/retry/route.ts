@@ -8,6 +8,7 @@ import {
   type CoachUpgradeMigrationSummary,
 } from '@/lib/coach-upgrade-migration';
 import { withObservability } from '@/lib/observability';
+import { denyUnless } from '@/lib/coach-capabilities';
 
 // Repair a PARTIAL free→Premium upgrade migration (Phase 4) by re-running the idempotent copy. The
 // banner fires this automatically (up to MAX_AUTO_MIGRATION_RETRIES) when the stored summary is
@@ -23,8 +24,9 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
     return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
   }
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.some(a => a.teamId === teamId)) return { error: forbidden() };
-  return { ctx };
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { error: forbidden() };
+  return { ctx, assignment };
 }
 
 type WorkspaceRow = { id: string; basic_coach_team_id: string | null; migration_summary: CoachUpgradeMigrationSummary | null };
@@ -34,6 +36,9 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
+  // Repairing the migration copies roster/schedule/fees — a head-coach action.
+  const denied = denyUnless(resolved.assignment.capabilities.isHeadCoach, 'Only the head coach can repair the upgrade.');
+  if (denied) return denied;
   const orgId = resolved.ctx.org.id;
 
   const { data: workspace } = await supabaseAdmin

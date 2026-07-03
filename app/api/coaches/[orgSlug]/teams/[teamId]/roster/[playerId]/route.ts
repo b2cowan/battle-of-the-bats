@@ -14,6 +14,7 @@ import { BATS_OPTIONS, THROWS_OPTIONS, JERSEY_SIZE_OPTIONS, normalizeOption } fr
 import { getSportPack } from '@/lib/sports';
 import { buildLineupProfileWrite } from '@/lib/lineup-profile';
 import { withObservability } from '@/lib/observability';
+import { denyUnless, canViewMoney, canViewRoster, redactRosterPlayer } from '@/lib/coach-capabilities';
 
 function trimmedOrNull(v: unknown): string | null {
   if (typeof v !== 'string') return null;
@@ -48,7 +49,9 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId, playerId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx } = resolved;
+  const { ctx, assignment } = resolved;
+  const denied = denyUnless(canViewRoster(assignment.capabilities), 'You do not have access to the roster.');
+  if (denied) return denied;
 
   const player = await getRepRosterPlayer(playerId);
   if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id) {
@@ -60,7 +63,11 @@ export const GET = withObservability(async (_req: Request,
     getRepPlayerDuesSummary(playerId, resolved.programYear.id),
   ]);
 
-  return NextResponse.json({ player, attendance, dues });
+  return NextResponse.json({
+    player: redactRosterPlayer(player, assignment.capabilities),
+    attendance,
+    dues: canViewMoney(assignment.capabilities) ? dues : null,
+  });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]' });
 
 export const PATCH = withObservability(async (req: Request,
@@ -68,7 +75,9 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId, playerId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, team } = resolved;
+  const { ctx, team, assignment } = resolved;
+  const denied = denyUnless(assignment.capabilities.rosterWrite, 'Only the head coach can edit the roster.');
+  if (denied) return denied;
 
   const player = await getRepRosterPlayer(playerId);
   if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id) {

@@ -3,6 +3,7 @@ import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { denyUnless } from '@/lib/coach-capabilities';
 
 // Surfaces the free→Premium upgrade migration summary (Phase 4) stored on the workspace, so the
 // Premium team overview can show a one-time "here's what we brought over + check these" banner.
@@ -16,8 +17,9 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
     return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
   }
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.some(a => a.teamId === teamId)) return { error: forbidden() };
-  return { ctx };
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { error: forbidden() };
+  return { ctx, assignment };
 }
 
 type SummaryRow = { id: string; migration_summary: Record<string, unknown> | null };
@@ -52,6 +54,9 @@ export const POST = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
+  // Dismissing hides the migration banner for the whole team — a head-coach decision.
+  const denied = denyUnless(resolved.assignment.capabilities.isHeadCoach, 'Only the head coach can dismiss this.');
+  if (denied) return denied;
 
   const row = await loadWorkspaceSummary(resolved.ctx.org.id, teamId);
   if (row?.migration_summary) {

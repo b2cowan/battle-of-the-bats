@@ -15,8 +15,9 @@
 // separate pitcher depth chart, not the Best/Okay ratings. Among on-field players (fairness/bench
 // runs FIRST, unchanged) the mound goes to an eligible pitcher — under their per-game innings cap —
 // chosen by rank (competitive leads with the ace; balanced/development spread the load). A capped
-// pitcher is never pushed past their limit; if no pitcher is available the mound falls back to a
-// non-pitcher rated for it, else it's left blank (surfaced like any other unfillable spot).
+// pitcher is never pushed past their limit; if no under-cap pitcher is available the mound is left
+// BLANK (surfaced like any unfillable spot). Teams with no pitcher depth chart set up fall back to
+// filling the mound like any other position (pre-P2 behavior, so unadopted auto-fill still works).
 //
 // The on-field positions to assign are passed in per call (GenerateOptions.fieldPositions),
 // sourced from the team's Sport Pack — the generator stays sport-neutral and never hard-codes
@@ -45,6 +46,7 @@ export interface GeneratorPlayer {
   /** Pitcher depth-chart entry (P2). null = not a pitcher. rank: 1 = ace. maxInnings: per-game
    *  arm-care cap; null = no cap. Governs the pitcherPosition slot, not the Best/Okay ratings. */
   pitcher: { rank: number; maxInnings: number | null } | null;
+  aSquad: boolean; // P4: a gold-medal starter — protected from the bench in competitive mode
   inningPositions: Record<string, string>; // existing grid (honored when fillMode = 'empty')
 }
 
@@ -83,14 +85,26 @@ export interface GenerateOptions {
   /** The single position governed by pitcher rank + arm-care caps (e.g. 'P'). null/undefined =
    *  the sport has no pitcher slot, so pitching logic is skipped entirely. */
   pitcherPosition?: string | null;
+  /** P3 innings caps (already resolved: per-game override ?? season default). null/undefined = off. */
+  maxInningsPerPosition?: number | null; // rotation cap: max innings any one player at a single non-mound position
+  pitcherInningsCap?: number | null;     // team/game pitching ceiling — min'd with each player's own arm-care cap
+  minInningsPerPlayer?: number | null;   // min-play floor: everyone gets at least this many on-field innings
+  /** P4 competitive-mode dials — only apply when policy === 'competitive'. */
+  aSquadEmphasis?: 'balanced_sits' | 'prioritized'; // 'prioritized' = A-squad barely sits; 'balanced_sits' = even bench
+  noBackToBackSits?: boolean;                        // hard: nobody sits two innings running (rotates the bench)
 }
 
 const norm = (s: string | null | undefined) => (s ?? '').toUpperCase().trim();
 
 /** Returns playerId → { inning(string) → position }. Only field positions + Bench are written. */
 export function generateLineup(opts: GenerateOptions): Map<string, Record<string, string>> {
-  const { players, inningCount, policy, fillMode, fieldPositions, pitcherPosition } = opts;
+  const {
+    players, inningCount, policy, fillMode, fieldPositions, pitcherPosition,
+    maxInningsPerPosition = null, pitcherInningsCap = null, minInningsPerPlayer = null,
+    aSquadEmphasis = 'balanced_sits', noBackToBackSits = true,
+  } = opts;
   const fieldSet = new Set(fieldPositions);
+  const competitive = policy === 'competitive';
 
   const result = new Map<string, Record<string, string>>();
   for (const p of players) {
@@ -110,18 +124,38 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
   };
   const playedCount = (id: string, pos: string) => posPlays.get(id)?.get(pos) ?? 0;
 
+  // Effective per-player pitching cap = the stricter of their own arm-care cap and the team/game
+  // ceiling (P3). null = no cap on either side.
+  const effectivePitchCap = (p: GeneratorPlayer): number | null => {
+    const a = p.pitcher?.maxInnings ?? null, b = pitcherInningsCap;
+    if (a == null) return b;
+    if (b == null) return a;
+    return Math.min(a, b);
+  };
+
+  // Is a pitcher depth chart actually in use for this game? (any present player is flagged a
+  // pitcher). When it is, an unfillable mound is left BLANK rather than handed to a non-pitcher;
+  // when it isn't (pitching not set up yet), the mound fills like any other position (pre-P2).
+  const teamHasPitchers = !!pitcherPosition && players.some(p => p.pitcher);
+
   for (let inn = 1; inn <= inningCount; inn++) {
     const key = String(inn);
 
     // In fill-empty mode, lock cells already set this inning (e.g. coach-set pitcher).
     const lockedPositions = new Set<string>();
     const lockedPlayers = new Set<string>();
+    const lockedBench = new Set<string>();
     if (fillMode === 'empty') {
       for (const p of players) {
         const cur = result.get(p.playerId)![key] ?? '';
         if (!cur) continue;
         lockedPlayers.add(p.playerId);
-        if (cur !== BENCH && fieldSet.has(cur)) {
+        if (cur === BENCH) {
+          // A coach-set bench cell counts as a sit for fairness + the min-play floor (else this
+          // player looks like they've played more on-field innings than they have).
+          lockedBench.add(p.playerId);
+          benchCount.set(p.playerId, (benchCount.get(p.playerId) ?? 0) + 1);
+        } else if (fieldSet.has(cur)) {
           lockedPositions.add(cur);
           bump(p.playerId, cur);
         }
@@ -137,14 +171,54 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
     // last inning first (avoid back-to-back). Shuffle BEFORE the stable sort so fully-tied
     // players (same sit-count, same last-inning status) are chosen randomly — this is what
     // keeps the bench from settling into the same repeating trios.
-    const benchOrder = shuffle(available).sort((a, b) => {
+    const benchSort = (a: GeneratorPlayer, b: GeneratorPlayer) => {
       const ba = benchCount.get(a.playerId) ?? 0, bb = benchCount.get(b.playerId) ?? 0;
       if (ba !== bb) return ba - bb;
       const la = lastBench.has(a.playerId) ? 1 : 0, lb = lastBench.has(b.playerId) ? 1 : 0;
       return la - lb;
-    });
-    const benched = new Set(benchOrder.slice(0, benchNeeded).map(p => p.playerId));
-    lastBench = new Set(benched);
+    };
+    // Min-play floor (P3): a player who could no longer reach the floor if they sit THIS inning
+    // (even by playing every remaining inning) must play now — protect them from the bench.
+    const mustPlay = minInningsPerPlayer
+      ? (p: GeneratorPlayer) =>
+          ((inn - 1) - (benchCount.get(p.playerId) ?? 0)) + (inningCount - inn) < minInningsPerPlayer
+      : () => false;
+
+    // Competitive A-squad emphasis (P4): who sits, in priority order:
+    //   1) min-play floor wins over everything (mustPlay, above);
+    //   2) "no back-to-back sits" wins over A-squad protection — a player who sat last inning is
+    //      protected from sitting again, even if that means an A-squad player sits;
+    //   3) A-squad protection is best-effort (prioritized = they barely sit; balanced_sits = even).
+    const hardNoBackToBack = competitive && noBackToBackSits;
+    const benchProtect = (p: GeneratorPlayer) => mustPlay(p) || (hardNoBackToBack && lastBench.has(p.playerId));
+    // Only 'prioritized' changes WHO sits: non-A-squad sit first, then the fair order. 'balanced_sits'
+    // keeps the plain even-bench sort — A-squad still get their best spots (pickForPosition) and the
+    // no-back-to-back protection above, but the bench itself rotates evenly across everyone.
+    const prioritizedSort = (a: GeneratorPlayer, b: GeneratorPlayer) => {
+      const aa = a.aSquad ? 1 : 0, ab = b.aSquad ? 1 : 0;
+      if (aa !== ab) return aa - ab; // non-A-squad (0) sit first
+      return benchSort(a, b);
+    };
+    const sortFn = (competitive && aSquadEmphasis === 'prioritized') ? prioritizedSort : benchSort;
+
+    const benched = new Set(shuffle(available.filter(p => !benchProtect(p))).sort(sortFn).slice(0, benchNeeded).map(p => p.playerId));
+    // If protections leave too few to bench, relax in reverse-priority: first drop the no-back-to-back
+    // + A-squad guards (bench from everyone except mustPlay), then, only if still short, the floor.
+    if (benched.size < benchNeeded) {
+      for (const p of shuffle(available.filter(p => !mustPlay(p))).sort(sortFn)) {
+        if (benched.size >= benchNeeded) break;
+        benched.add(p.playerId);
+      }
+    }
+    if (benched.size < benchNeeded) {
+      for (const p of shuffle(available).sort(sortFn)) {
+        if (benched.size >= benchNeeded) break;
+        benched.add(p.playerId);
+      }
+    }
+    // Track who sat this inning (generator-benched + coach-locked bench) so next inning's
+    // back-to-back avoidance sees them. lockedBench players already had benchCount incremented above.
+    lastBench = new Set([...benched, ...lockedBench]);
     for (const id of benched) {
       result.get(id)![key] = BENCH;
       benchCount.set(id, (benchCount.get(id) ?? 0) + 1);
@@ -154,23 +228,27 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
     // choice (e.g. several players who all prefer the same spot) varies between runs.
     const unassigned = new Map(available.filter(p => !benched.has(p.playerId)).map(p => [p.playerId, p]));
     for (const pos of openPositions) {
-      // Hard 'never' filter: a player is never eligible for a position they can't play.
-      const eligible = shuffle([...unassigned.values()].filter(p => !neverOf.get(p.playerId)!.has(pos)));
+      // Hard filters: 'never' positions, plus the P3 rotation cap (max innings at one non-mound
+      // position). A player already at their cap for this spot is ineligible here this inning.
+      const overRotationCap = (p: GeneratorPlayer) =>
+        pos !== pitcherPosition && maxInningsPerPosition != null && playedCount(p.playerId, pos) >= maxInningsPerPosition;
+      const eligible = shuffle([...unassigned.values()].filter(p => !neverOf.get(p.playerId)!.has(pos) && !overRotationCap(p)));
       if (eligible.length === 0) continue; // no eligible player → leave blank, keep filling the rest
       let pick: GeneratorPlayer | undefined;
-      if (pitcherPosition && pos === pitcherPosition) {
-        // Pitcher slot: prefer an eligible pitcher (still under their arm-care cap), by rank/spread.
-        const eligiblePitchers = eligible.filter(p =>
-          p.pitcher && (p.pitcher.maxInnings == null || playedCount(p.playerId, pos) < p.pitcher.maxInnings));
-        if (eligiblePitchers.length) {
-          pick = pickPitcher(eligiblePitchers, policy, pos, playedCount);
-        } else {
-          // No pitcher available (none flagged, or all at their cap) → fall back to a NON-pitcher
-          // rated for the mound; a capped pitcher is never pushed past their limit.
-          const nonPitchers = eligible.filter(p => !p.pitcher);
-          pick = nonPitchers.length ? pickForPosition(pos, nonPitchers, policy, prefRankOf, canOf, playedCount) : undefined;
-        }
+      if (teamHasPitchers && pos === pitcherPosition) {
+        // Pitcher slot: the mound goes to an eligible pitcher still under their effective innings
+        // cap, chosen by rank/spread. If none is available (all at their cap, or benched/absent
+        // this inning), leave the mound BLANK — never push a capped arm or draft a non-pitcher onto
+        // it. The coach fills that hole deliberately, like any other unfillable spot.
+        const eligiblePitchers = eligible.filter(p => {
+          if (!p.pitcher) return false;
+          const cap = effectivePitchCap(p);
+          return cap == null || playedCount(p.playerId, pos) < cap;
+        });
+        pick = eligiblePitchers.length ? pickPitcher(eligiblePitchers, policy, pos, playedCount) : undefined;
       } else {
+        // Non-pitcher position, or a team with no pitcher depth chart set up yet (pre-P2 behavior:
+        // the mound fills like any other position so auto-fill still works before pitching is used).
         pick = pickForPosition(pos, eligible, policy, prefRankOf, canOf, playedCount);
       }
       if (!pick) continue;
@@ -203,10 +281,16 @@ function pickForPosition(
   if (policy === 'competitive') {
     const prefMatches = pool.filter(p => rankAt(p) !== undefined);
     if (prefMatches.length) {
-      let best: GeneratorPlayer | undefined, bestRank = Infinity, bestPlayed = Infinity;
+      // Best spot goes to the player for whom it's the highest-priority Best; among equals, the
+      // A-squad player wins (they take their key positions), then least-played breaks the tie.
+      let best: GeneratorPlayer | undefined;
       for (const p of prefMatches) {
-        const r = rankAt(p)!, pl = playedCount(p.playerId, pos);
-        if (r < bestRank || (r === bestRank && pl < bestPlayed)) { bestRank = r; bestPlayed = pl; best = p; }
+        if (!best) { best = p; continue; }
+        const rp = rankAt(p)!, rb = rankAt(best)!;
+        if (rp !== rb) { if (rp < rb) best = p; continue; }
+        const ap = p.aSquad ? 0 : 1, ab = best.aSquad ? 0 : 1;
+        if (ap !== ab) { if (ap < ab) best = p; continue; }
+        if (playedCount(p.playerId, pos) < playedCount(best.playerId, pos)) best = p;
       }
       return best;
     }
@@ -260,7 +344,7 @@ function leastPlayed(
  *  pick the best of several randomized passes — mirrors the tournament scheduler's
  *  candidate-and-score approach. */
 function scoreLineup(assignment: Map<string, Record<string, string>>, opts: GenerateOptions): number {
-  const { players, inningCount, policy, fieldPositions, pitcherPosition } = opts;
+  const { players, inningCount, policy, fieldPositions, pitcherPosition, minInningsPerPlayer = null, aSquadEmphasis = 'balanced_sits' } = opts;
   const fieldSet = new Set(fieldPositions);
   const { prefRankOf, canOf } = buildPrefMaps(players, fieldSet);
 
@@ -270,18 +354,21 @@ function scoreLineup(assignment: Map<string, Record<string, string>>, opts: Gene
   let varietyBonus = 0;
   let pitcherRankReward = 0;               // competitive: reward low-rank (ace) pitching
   const pitchersUsed = new Set<string>();  // balanced/development: reward spreading the mound
+  let minPlayShort = 0;                    // total innings any player falls short of the min-play floor
+  let aSquadBench = 0;                     // competitive: total innings A-squad players sit
 
   for (const p of players) {
     const grid = assignment.get(p.playerId) ?? {};
     const ranks = prefRankOf.get(p.playerId)!;
     const can = canOf.get(p.playerId)!;
-    let bench = 0, prevBench = false;
+    let bench = 0, prevBench = false, onField = 0;
     const distinct = new Set<string>();
     for (let inn = 1; inn <= inningCount; inn++) {
       const pos = grid[String(inn)] ?? '';
       if (pos === BENCH) { bench++; if (prevBench) backToBack++; prevBench = true; continue; }
       prevBench = false;
       if (!pos || !fieldSet.has(pos)) continue;
+      onField++;
       distinct.add(pos);
       if (pitcherPosition && pos === pitcherPosition && p.pitcher) {
         // Pitching their designated role — scored via pitcher terms, not position preference.
@@ -297,6 +384,9 @@ function scoreLineup(assignment: Map<string, Record<string, string>>, opts: Gene
     }
     benchCounts.push(bench);
     varietyBonus += distinct.size;
+    if (minInningsPerPlayer) minPlayShort += Math.max(0, minInningsPerPlayer - onField);
+    // Only 'prioritized' rewards keeping A-squad on the field; 'balanced_sits' leaves the bench even.
+    if (policy === 'competitive' && aSquadEmphasis === 'prioritized' && p.aSquad) aSquadBench += bench;
   }
 
   // Unfilled field cells across the game (only counts as a problem when players are available)
@@ -314,11 +404,11 @@ function scoreLineup(assignment: Map<string, Record<string, string>>, opts: Gene
 
   const benchSpread = benchCounts.length ? Math.max(...benchCounts) - Math.min(...benchCounts) : 0;
 
-  // Fairness is paramount: heavy penalties for uneven bench + back-to-back + holes.
-  let score = -benchSpread * 6 - backToBack * 10 - unfilled * 4;
+  // Fairness is paramount: heavy penalties for uneven bench + back-to-back + holes + min-play misses.
+  let score = -benchSpread * 6 - backToBack * 10 - unfilled * 4 - minPlayShort * 8;
   // Policy fit shapes the positions (top Best spot rewarded most in competitive); pitching adds a
   // rank reward in competitive (ace-heavy) and a spread reward otherwise (more distinct pitchers).
-  if (policy === 'competitive') score += prefTop * 2.5 + prefOther * 1.5 + canHit * 0.5 - offPref * 1.5 + pitcherRankReward;
+  if (policy === 'competitive') score += prefTop * 2.5 + prefOther * 1.5 + canHit * 0.5 - offPref * 1.5 + pitcherRankReward - aSquadBench * 2;
   else if (policy === 'balanced') score += (prefTop + prefOther) * 1 + canHit * 0.75 - offPref * 1 + pitchersUsed.size;
   else score += varietyBonus * 1.5 + pitchersUsed.size; // development rewards position variety + spread
   return score;

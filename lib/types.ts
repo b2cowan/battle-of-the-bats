@@ -1049,6 +1049,21 @@ export interface RepTeam {
   updatedAt: string;
 }
 
+// Lineup Intelligence P3 (mig 172). Season-default innings caps for the game-day auto-fill,
+// stored on rep_program_years.lineup_settings. App-enforced (lib/lineup-caps.ts); null = OFF.
+export interface LineupSettings {
+  maxInningsPerPosition: number | null;    // rotation cap: max innings any one player at a field spot (not the mound)
+  pitcherMaxInningsDefault: number | null; // team default arm-care ceiling for pitching
+  minInningsPerPlayer: number | null;      // min-play floor — everyone gets at least this many on-field innings
+}
+// Per-game override (rep_team_lineups.rules_override) — any subset; a missing key falls back to the
+// season default. Persisted so a tournament with different rules sticks to that game.
+export interface LineupRulesOverride {
+  maxInningsPerPosition?: number | null;
+  pitcherMaxInnings?: number | null;
+  minInningsPerPlayer?: number | null;
+}
+
 export interface RepProgramYear {
   id: string;
   teamId: string;
@@ -1060,6 +1075,7 @@ export interface RepProgramYear {
   tryoutDescription: string | null;
   budgetAmount: number | null;
   autoRemindersEnabled: boolean;
+  lineupSettings: LineupSettings | null; // P3 season-default caps (mig 172)
   createdAt: string;
   updatedAt: string;
 }
@@ -1071,6 +1087,9 @@ export interface RepTeamCoach {
   orgId: string;
   userId: string;
   coachRole: 'head_coach' | 'assistant_coach';
+  /** Per-assistant capability grants (jsonb, mig 173). NULL = assistant least-privilege
+   *  defaults; ignored for head coaches. See lib/coach-capabilities.ts. */
+  capabilities: import('./coach-capabilities').AssistantCapabilityGrants | null;
   createdAt: string;
 }
 
@@ -1310,6 +1329,7 @@ export interface RepTeamLineup {
   lineupMode: RepLineupMode;
   inningCount: number;
   notes: string | null;
+  rulesOverride: LineupRulesOverride | null; // P3 per-game cap override (mig 172)
   updatedBy: string | null;
   createdAt: string;
   updatedAt: string;
@@ -1671,7 +1691,11 @@ export type NotificationEventType =
   | 'chat_mention'
   // A tryout family responded (Accept/Decline) to an offer via the no-login link (Phase 2B.5) — the
   // coach still finalizes. Bell default on; TS-union change only (no DB CHECK on event_type).
-  | 'tryout_offer_response';
+  | 'tryout_offer_response'
+  // Assistant Coaches Phase 2 — an assistant accepted an invite (→ the head coach) / a head coach
+  // requested approval (→ org admins). Bell default on; TS-union change only (no DB CHECK).
+  | 'assistant_coach_joined'
+  | 'assistant_coach_approval_requested';
 
 export interface AppNotification {
   id: string;

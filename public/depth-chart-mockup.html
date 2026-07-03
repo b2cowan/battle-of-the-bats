@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Depth chart — mockup (P5, rev 3)</title>
+<style>
+  /* Standalone mockup. Hex MIRRORS the coach-portal tokens so the real build maps 1:1:
+     card = --surface/--surface-2 + rgba(--blueprint-blue-rgb,.25) border + --shadow-sm,--highlight-top;
+     radii = --radius(12)/--radius-sm(8); text --white-90/45; Best-cell RANK NUMBER = white (--font-display),
+     lime is fills/borders only; save status uses --success glyph + neutral text; A-squad = --gold token
+     (filled star on / --white-45 outline off) applied to BOTH this board and the player-page toggle. */
+  :root{
+    --bg:#0a0e16; --panel:#0f1626; --panel2:#111a2b; --panel-even:#0e1524;
+    --line:rgba(59,130,246,0.28);        /* blueprint-blue tint border (coach card border) */
+    --line-soft:rgba(255,255,255,0.08);  /* divider only, never a card frame */
+    --highlight-top:inset 0 1px 0 rgba(255,255,255,0.06);
+    --shadow-sm:0 4px 14px rgba(0,0,0,0.28);
+    --ink:#e7edf6; --ink-90:rgba(231,237,246,0.9); --ink-70:rgba(231,237,246,0.72); --ink-45:rgba(231,237,246,0.45);
+    --best-bg:rgba(132,204,22,0.16); --best-bd:rgba(132,204,22,0.55); --best-fg:#bef264;
+    --okay-bg:rgba(96,165,250,0.14); --okay-bd:rgba(96,165,250,0.45); --okay-fg:#93c5fd;
+    --never-bg:rgba(248,113,113,0.13); --never-bd:rgba(248,113,113,0.5); --never-fg:#fca5a5;
+    --success:#4ade80; --gold:#f5c451;
+    --radius:12px; --radius-sm:8px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 20% -10%,#122036 0,var(--bg) 55%);
+    color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:22px 18px 80px}
+  .wrap{max-width:1120px;margin:0 auto}
+  .mocknote{font-size:12px;color:var(--ink-45);text-align:center;margin:0 0 6px;letter-spacing:.02em}
+  .mocknote b{color:var(--okay-fg)}
+  .seclabel{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-45);margin:30px 2px 10px}
+  .seclabel:first-of-type{margin-top:14px}
+  .card{background:linear-gradient(180deg,var(--panel) 0,var(--panel2) 100%);
+    border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm),var(--highlight-top)}
+  .head{padding:16px 20px 14px;margin-bottom:12px}
+  .kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-45);margin:0 0 3px}
+  h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+  .sub{margin:2px 0 0;font-size:13px;color:var(--ink-70)}
+
+  /* caps = one compact summary line (edit lives in Settings) — not three boxed inputs */
+  .capsline{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:14px;padding-top:12px;
+    border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--ink-70)}
+  .capsline .cap b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+  .capsline .dot{color:var(--ink-45)}
+  .capsline .editlink{margin-left:auto;color:var(--okay-fg);font-weight:600;font-size:12px;text-decoration:none;cursor:pointer}
+
+  .gridcard{padding:0;overflow:hidden}
+  /* legend lives inside the grid card header (not a bare floating row) */
+  .legend{display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:12px 16px;font-size:12px;color:var(--ink-70);
+    border-bottom:1px solid var(--line-soft)}
+  .swatch{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:15px;height:15px;border-radius:5px;border:1px solid}
+  .sw.b{background:var(--best-bg);border-color:var(--best-bd)} .sw.o{background:var(--okay-bg);border-color:var(--okay-bd)}
+  .sw.n{background:var(--never-bg);border-color:var(--never-bd)} .sw.x{background:rgba(255,255,255,0.04);border-color:var(--line-soft)}
+  .legend .tip{margin-left:auto;color:var(--ink-45)}
+
+  .gridscroll{padding:6px 6px 8px;overflow-x:auto}
+  table{border-collapse:separate;border-spacing:0;width:100%;min-width:900px}
+  th,td{text-align:center;padding:0}
+  thead th{position:sticky;top:0;background:var(--panel2);z-index:3;font-size:11px;font-weight:700;letter-spacing:.03em;
+    color:var(--ink-70);height:40px;border-bottom:1px solid var(--line-soft)}
+  thead th.pcol{color:var(--best-fg)} thead th.acol{color:var(--gold)}
+
+  /* Pinned identity cluster: Player + Pitcher + A-squad all sticky-left (solid, no zebra) so the two
+     priority attributes are reachable without scrolling past the 8 field columns. */
+  th.player,td.player{position:sticky;left:0;z-index:2;min-width:150px;width:150px;text-align:left;padding:0 12px}
+  th.pcol,td.pcol{position:sticky;left:150px;z-index:2;min-width:86px;width:86px}
+  th.acol,td.acol{position:sticky;left:236px;z-index:2;min-width:66px;width:66px;border-right:1px solid var(--line)}
+  td.player,td.pcol,td.acol{background:var(--panel)}       /* solid pinned block, opaque over scroll */
+  thead th.player,thead th.pcol,thead th.acol{background:var(--panel2);z-index:4}
+  td.player{border-right:1px solid var(--line-soft)}
+  tbody tr{height:52px}
+  tbody tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
+  tbody tr:nth-child(even) td.player,tbody tr:nth-child(even) td.pcol,tbody tr:nth-child(even) td.acol{background:var(--panel-even)}
+  td{border-bottom:1px solid rgba(255,255,255,0.05)}
+  .pname{font-weight:650;font-size:14px} .pnum{color:var(--ink-45);font-size:12px;font-weight:600;margin-right:8px;font-variant-numeric:tabular-nums}
+
+  .cellbtn{width:44px;height:36px;margin:0 auto;border-radius:var(--radius-sm);border:1px solid var(--line-soft);
+    background:rgba(255,255,255,0.03);color:var(--ink-45);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;transition:all .1s ease;user-select:none}
+  .cellbtn:hover{border-color:var(--line)}
+  .cellbtn.b{background:var(--best-bg);border-color:var(--best-bd);color:var(--ink)}   /* rank number = WHITE, not lime */
+  .cellbtn.o{background:var(--okay-bg);border-color:var(--okay-bd);color:var(--okay-fg)}
+  .cellbtn.n{background:var(--never-bg);border-color:var(--never-bd);color:var(--never-fg)}
+
+  .pitch{display:inline-flex;flex-direction:column;align-items:center;gap:3px;user-select:none}
+  .pchip{padding:4px 11px;border-radius:999px;border:1px solid var(--best-bd);background:var(--best-bg);color:var(--best-fg);
+    font-weight:800;font-size:12px;cursor:pointer}
+  .pchip.off{border-color:var(--line-soft);background:rgba(255,255,255,0.03);color:var(--ink-45);font-weight:700}
+  .pcap{font-size:10px;color:var(--ink-45)}
+  .pcap.set{color:var(--okay-fg);cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px}
+  .star{font-size:20px;line-height:1;cursor:pointer;color:rgba(255,255,255,0.45);user-select:none;transition:.1s}  /* --white-45 outline */
+  .star.on{color:var(--gold);text-shadow:0 0 12px rgba(245,196,81,0.4)}
+
+  .foot{margin-top:12px;font-size:12px;color:var(--ink-45);padding:0 4px}
+  .savebar{display:flex;align-items:center;gap:10px;margin-top:14px;padding:0 2px}
+  .iconbtn{width:40px;height:40px;border-radius:var(--radius-sm);border:1px solid var(--line-soft);background:rgba(255,255,255,0.04);
+    color:var(--ink-70);cursor:pointer;font-size:16px;display:inline-flex;align-items:center;justify-content:center}
+  .savestat{color:var(--ink-70);font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
+  .savestat .chk{color:var(--success);font-weight:800}   /* green ✓ glyph; text stays neutral */
+  .autofill{margin-left:auto;padding:9px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:13px;
+    border:1px solid var(--line-soft);background:rgba(255,255,255,0.04);color:var(--ink);cursor:pointer;text-decoration:none}
+
+  /* ---------- phone / accordion preview ---------- */
+  .phonewrap{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+  .phone{width:390px;max-width:100%;border:1px solid var(--line);border-radius:26px;background:var(--bg);
+    padding:12px 10px;box-shadow:0 20px 50px rgba(0,0,0,.45)}
+  .phoneScreen{background:linear-gradient(180deg,var(--panel) 0,var(--panel2) 100%);border-radius:var(--radius);
+    border:1px solid var(--line);overflow:hidden}
+  .phHead{padding:14px 15px 12px;border-bottom:1px solid var(--line-soft)}
+  .phHead h2{margin:0;font-size:17px;font-weight:800}
+  .phCaps{margin-top:8px;font-size:11.5px;color:var(--ink-70);display:flex;flex-wrap:wrap;gap:4px 8px}
+  .phCaps b{color:var(--ink);font-weight:700}
+  .acc{padding:8px}
+  /* each player = a real coach card: blue-tint border + depth at rest */
+  .pcardRow{border:1px solid var(--line);border-radius:var(--radius);margin-bottom:8px;background:var(--panel);
+    box-shadow:var(--highlight-top);overflow:hidden;transition:box-shadow .12s}
+  .pcardRow.open{box-shadow:var(--shadow-sm),var(--highlight-top)}
+  .pcardHead{display:flex;align-items:center;gap:8px;padding:11px 12px;cursor:pointer;min-height:52px}
+  .pcardHead .pnum{margin-right:0}
+  .pcardHead .pname{flex:0 0 auto}
+  .miniChips{display:flex;flex-wrap:wrap;gap:4px;margin-left:2px;flex:1 1 auto}
+  /* collapsed summary chips = NEUTRAL (lime activates only on the expanded editor chips) */
+  .miniChip{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;border:1px solid var(--line-soft);
+    background:transparent;color:var(--ink-70);font-variant-numeric:tabular-nums}
+  .miniPit{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;border:1px solid var(--best-bd);
+    background:var(--best-bg);color:var(--best-fg)}   /* pitcher = special role, keeps a subtle tint */
+  .chev{color:var(--ink-45);font-size:13px;transition:.15s;flex:0 0 auto}
+  .pcardRow.open .chev{transform:rotate(90deg)}
+  .pcardBody{display:none;padding:4px 12px 14px;border-top:1px solid var(--line-soft)}
+  .pcardRow.open .pcardBody{display:block}
+  .grpLbl{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-45);margin:12px 0 7px}
+  .grpLbl .undohint{text-transform:none;letter-spacing:0;color:var(--ink-45);font-weight:400}
+  .posGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+  .posChip{height:44px;border-radius:var(--radius-sm);border:1px solid var(--line-soft);background:rgba(255,255,255,0.03);
+    color:var(--ink-70);cursor:pointer;font-weight:700;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:5px;user-select:none}
+  .posChip .rk{font-size:11px;font-weight:800;font-variant-numeric:tabular-nums}
+  .posChip.b{background:var(--best-bg);border-color:var(--best-bd);color:var(--ink)}   /* rank number white */
+  .posChip.o{background:var(--okay-bg);border-color:var(--okay-bd);color:var(--okay-fg)}
+  .posChip.n{background:var(--never-bg);border-color:var(--never-bd);color:var(--never-fg)}
+  .rowline{display:flex;align-items:center;gap:10px;margin-top:6px;min-height:44px}
+  .toggle{width:52px;height:32px;border-radius:999px;background:rgba(255,255,255,0.12);position:relative;cursor:pointer;flex:0 0 auto;transition:.15s}
+  .toggle::after{content:'';position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;transition:.15s}
+  .toggle.on{background:rgba(132,204,22,0.55)} .toggle.on::after{left:23px}
+  .rowline .lab{font-size:13px;font-weight:600}
+  .rowline .sub{font-size:11px;color:var(--ink-45);margin:0}
+  .rowline .sub.cap{cursor:pointer;color:var(--okay-fg);text-decoration:underline dotted;text-underline-offset:2px}
+  .miniStar{margin-left:auto;font-size:24px;color:rgba(255,255,255,0.45);cursor:pointer}
+  .miniStar.on{color:var(--gold);text-shadow:0 0 12px rgba(245,196,81,0.4)}
+  /* rank picker = connected segmented control, ≥40px tall */
+  .rankPick{margin-left:auto;display:flex;border:1px solid var(--line-soft);border-radius:999px;overflow:hidden}
+  .rankPick.muted{opacity:.4;pointer-events:none}
+  .rankPick span{font-size:12px;font-weight:800;padding:0 14px;height:40px;display:flex;align-items:center;color:var(--ink-45);cursor:pointer;border-left:1px solid var(--line-soft)}
+  .rankPick span:first-child{border-left:none}
+  .rankPick span.on{background:var(--best-bg);color:var(--best-fg)}
+  .phFoot{padding:10px 12px;border-top:1px solid var(--line-soft);display:flex;align-items:center;gap:10px}
+  .caption{font-size:12px;color:var(--ink-70);max-width:300px}
+  .caption b{color:var(--ink)}
+
+  /* On a REAL phone, the desktop grid collapses and the accordion goes full-width (live reflow, not just an illustration) */
+  @media(max-width:640px){
+    .desktopGrid{display:none}
+    .phonewrap{flex-direction:column}
+    .phone{width:100%;border:none;border-radius:0;padding:0;box-shadow:none}
+    .phoneScreen{border-radius:var(--radius)}
+    .caption{max-width:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="mocknote">MOCKUP for review — <b>P5 depth-chart board · rev 3</b> (design-audited). Nothing saves; click cells, chips, pitcher chips &amp; stars.</p>
+  <p class="mocknote">Corrected: white rank numbers · neutral save status · blue-tint cards + depth on phone · pinned Pitcher/A-squad · visible off-star · bigger mobile controls · pick-order numbering.</p>
+
+  <!-- ================= DESKTOP / TABLET ================= -->
+  <div class="desktopGrid">
+  <p class="seclabel">On a laptop or tablet — the full board</p>
+
+  <section class="card head">
+    <p class="kicker">Coaches Portal · Premium</p>
+    <h1>Depth chart</h1>
+    <p class="sub">Toronto Blue Jays · 2026 season — set your whole team's positions, pitchers, and A-squad on one screen.</p>
+    <div class="capsline">
+      <span class="cap">Rotation <b>≤3</b> IP/pos</span><span class="dot">·</span>
+      <span class="cap">Pitching <b>≤2</b> IP</span><span class="dot">·</span>
+      <span class="cap">Min <b>2</b> IP / player</span>
+      <a class="editlink">Edit in Settings →</a>
+    </div>
+  </section>
+
+  <section class="card gridcard">
+    <div class="legend">
+      <span class="swatch"><span class="sw b"></span>Best (ranked)</span>
+      <span class="swatch"><span class="sw o"></span>Okay</span>
+      <span class="swatch"><span class="sw n"></span>Never</span>
+      <span class="swatch"><span class="sw x"></span>Not set</span>
+      <span class="tip">Tap a cell to cycle · Best cells number in the order you pick them</span>
+    </div>
+    <div class="gridscroll">
+      <table>
+        <thead><tr>
+          <th class="player">Player</th>
+          <th class="pcol">Pitcher</th><th class="acol">A-squad</th>
+          <th>C</th><th>1B</th><th>2B</th><th>3B</th><th>SS</th><th>LF</th><th>CF</th><th>RF</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="savebar">
+    <button class="iconbtn" title="Undo">↶</button>
+    <button class="iconbtn" title="Redo">↷</button>
+    <span class="savestat"><span class="chk">✓</span> All saved</span>
+    <a class="autofill">Auto-fill a game →</a>
+  </div>
+  <p class="foot">Edits here write the same profile as each player's page — a player's Positions picker, pitching, and A-squad stay in sync. Saves automatically as you go; Undo/Redo covers a mis-tap.</p>
+  </div>
+
+  <!-- ================= PHONE ================= -->
+  <p class="seclabel">On a phone — tap a player, edit everything (no sideways scrolling)</p>
+  <div class="phonewrap">
+    <div class="phone"><div class="phoneScreen">
+      <div class="phHead">
+        <h2>Depth chart</h2>
+        <div class="phCaps"><span>Rotation <b>≤3</b></span><span>·</span><span>Pitching <b>≤2</b></span><span>·</span><span>Min <b>2</b> IP</span></div>
+      </div>
+      <div class="acc" id="acc"></div>
+      <div class="phFoot">
+        <button class="iconbtn" title="Undo">↶</button>
+        <button class="iconbtn" title="Redo">↷</button>
+        <span class="savestat"><span class="chk">✓</span> Saved</span>
+      </div>
+    </div></div>
+    <p class="caption"><b>Why accordion, not the grid, on a phone:</b> 10 columns through a ~150px-wide straw strands Pitcher &amp; A-squad off the right edge. Each player is one record, so we reflow to cards and reuse the <b>same Best/Okay/Never editor</b> as the player page — first-class editing, zero horizontal scroll.</p>
+  </div>
+</div>
+
+<script>
+  const FIELDS = ['C','1B','2B','3B','SS','LF','CF','RF'];
+  const players = [
+    {n:'Isla Cowan', j:7,  cells:{'1B':'b','2B':'o','SS':'o'}, pitch:1, cap:2, a:true},
+    {n:'Maya Chen',  j:12, cells:{'SS':'b','2B':'b','3B':'o'}, pitch:2, cap:3, a:true},
+    {n:'Ava Patel',  j:3,  cells:{'C':'b','1B':'o'},           pitch:0, cap:'', a:true},
+    {n:'Zoe Kim',    j:9,  cells:{'CF':'b','LF':'b','RF':'o'}, pitch:0, cap:'', a:true},
+    {n:'Lily Brooks',j:5,  cells:{'3B':'b','SS':'o','2B':'o'}, pitch:3, cap:3, a:false},
+    {n:'Nora Diaz',  j:22, cells:{'LF':'b','RF':'b','CF':'o'}, pitch:0, cap:'', a:false},
+    {n:'Ruby Tran',  j:14, cells:{'2B':'b','1B':'o','SS':'o'}, pitch:0, cap:'', a:false},
+    {n:'Ella Moore', j:8,  cells:{'RF':'b','CF':'o','SS':'n'}, pitch:0, cap:'', a:false},
+    {n:'Sofia Reyes',j:11, cells:{'C':'o','1B':'o','3B':'o'},  pitch:0, cap:'', a:false},
+  ];
+  const NEXT = {'':'b','b':'o','o':'n','n':''};
+  const PLABEL = {0:'—',1:'Ace',2:'#2',3:'#3'};
+  const bestSeed = p => Object.keys(p.cells).filter(f=>p.cells[f]==='b'); // stored order == pick order
+
+  /* -------- desktop table -------- */
+  const tb=document.getElementById('rows');
+  players.forEach(p=>{
+    const tr=document.createElement('tr');
+    const order = bestSeed(p);            // per-row PICK ORDER, not DOM order
+    const cellByField = {};
+    function renumber(){ order.forEach((f,i)=>{ const c=cellByField[f]; if(c) c.textContent=(i+1); }); }
+    // player
+    const pc=document.createElement('td'); pc.className='player';
+    pc.innerHTML='<span class="pnum">#'+p.j+'</span><span class="pname">'+p.n+'</span>'; tr.appendChild(pc);
+    // pitcher (pinned)
+    const ptd=document.createElement('td'); ptd.className='pcol'; const pw=document.createElement('div'); pw.className='pitch';
+    let rk=p.pitch, cp=p.cap||2;
+    const chip=document.createElement('span'); const cap=document.createElement('span');
+    const paint=()=>{ chip.className='pchip'+(rk?'':' off'); chip.textContent=PLABEL[rk];
+      cap.className='pcap'+(rk?' set':''); cap.textContent= rk?('≤'+cp+' IP'):'not a pitcher'; };
+    chip.onclick=()=>{ rk=(rk+1)%4; paint(); };
+    cap.onclick=()=>{ if(rk){ cp=(cp%4)+1; paint(); } };
+    paint(); pw.appendChild(chip); pw.appendChild(cap); ptd.appendChild(pw); tr.appendChild(ptd);
+    // a-squad (pinned)
+    const atd=document.createElement('td'); atd.className='acol';
+    const st=document.createElement('span'); st.className='star'+(p.a?' on':''); st.textContent='★';
+    st.onclick=()=>st.classList.toggle('on'); atd.appendChild(st); tr.appendChild(atd);
+    // fields
+    FIELDS.forEach(f=>{
+      const td=document.createElement('td');
+      const b=document.createElement('div'); b.className='cellbtn'; b.dataset.s=p.cells[f]||''; cellByField[f]=b;
+      const face=()=>{ const s=b.dataset.s; b.className='cellbtn'+(s?(' '+s):'');
+        b.textContent = s==='o'?'✓':s==='n'?'✕':(s==='b'?'•':''); };
+      b.onclick=()=>{ const prev=b.dataset.s, s=NEXT[prev||'']; b.dataset.s=s;
+        if(s==='b'&&!order.includes(f)) order.push(f);
+        if(prev==='b'&&s!=='b'){ const i=order.indexOf(f); if(i>-1) order.splice(i,1); }
+        face(); renumber(); };
+      face(); td.appendChild(b); tr.appendChild(td);
+    });
+    tb.appendChild(tr); renumber();
+  });
+
+  /* -------- phone accordion -------- */
+  const acc=document.getElementById('acc');
+  players.forEach((p,idx)=>{
+    const row=document.createElement('div'); row.className='pcardRow'+(idx===0?' open':'');
+    const order = bestSeed(p);
+    const bests = order.slice();
+    const miniChips = bests.map((f,i)=>'<span class="miniChip">'+f+' '+(i+1)+'</span>').join('');
+    const miniPit = p.pitch?'<span class="miniPit">'+PLABEL[p.pitch]+' ≤'+(p.cap||2)+'</span>':'';
+    const headStar = p.a?'<span class="miniStar on" style="margin-left:0;font-size:17px">★</span>':'';
+    row.innerHTML =
+      '<div class="pcardHead">'
+      +'<span class="pnum">#'+p.j+'</span><span class="pname">'+p.n+'</span>'
+      +'<span class="miniChips">'+miniChips+miniPit+'</span>'
+      +headStar+'<span class="chev">▶</span></div>';
+    const body=document.createElement('div'); body.className='pcardBody';
+    // Best/Okay/Never grid
+    const gl1=document.createElement('div'); gl1.className='grpLbl';
+    gl1.innerHTML='Field positions — tap to cycle Best / Okay / Never <span class="undohint">· ↶ Undo if you overshoot</span>';
+    const grid=document.createElement('div'); grid.className='posGrid';
+    const cellByField={};
+    function renumBody(){ order.forEach((f,i)=>{ const rkEl=cellByField[f]&&cellByField[f].querySelector('.rk'); if(rkEl) rkEl.textContent=(i+1); }); }
+    FIELDS.forEach(f=>{
+      const c=document.createElement('div'); c.dataset.s=p.cells[f]||''; cellByField[f]=c;
+      const face=()=>{ const s=c.dataset.s; c.className='posChip'+(s?(' '+s):'');
+        c.innerHTML=f+(s==='b'?' <span class="rk">•</span>':s==='o'?' ✓':s==='n'?' ✕':''); };
+      c.onclick=()=>{ const prev=c.dataset.s, s=NEXT[prev||'']; c.dataset.s=s;
+        if(s==='b'&&!order.includes(f)) order.push(f);
+        if(prev==='b'&&s!=='b'){ const i=order.indexOf(f); if(i>-1) order.splice(i,1); }
+        face(); renumBody(); };
+      face(); grid.appendChild(c);
+    });
+    body.appendChild(gl1); body.appendChild(grid);
+    // Pitching (toggle + segmented rank + editable cap, cross-bound)
+    const gl2=document.createElement('div'); gl2.className='grpLbl'; gl2.textContent='Pitching';
+    const pr=document.createElement('div'); pr.className='rowline';
+    let on=!!p.pitch, cp=p.cap||2, rkVal=p.pitch||1;
+    const tg=document.createElement('div'); tg.className='toggle';
+    const labWrap=document.createElement('div');
+    const capLine=document.createElement('p');
+    const rank=document.createElement('div'); rank.className='rankPick';
+    const rspans=[1,2,3].map(r=>{ const s=document.createElement('span'); s.textContent=PLABEL[r]; rank.appendChild(s); return s; });
+    const paintPitch=()=>{ tg.className='toggle'+(on?' on':''); rank.className='rankPick'+(on?'':' muted');
+      rspans.forEach((s,i)=> s.className=(on&&rkVal===i+1)?'on':'');
+      labWrap.innerHTML='<div class="lab">This player pitches</div>';
+      capLine.className='sub'+(on?' cap':''); capLine.textContent= on?('Arm-care cap ≤ '+cp+' IP — tap to change'):'Off'; };
+    tg.onclick=()=>{ on=!on; paintPitch(); };
+    rspans.forEach((s,i)=> s.onclick=()=>{ on=true; rkVal=i+1; paintPitch(); });
+    capLine.onclick=()=>{ if(on){ cp=(cp%4)+1; paintPitch(); } };
+    paintPitch(); labWrap.appendChild(capLine);
+    pr.appendChild(tg); pr.appendChild(labWrap); pr.appendChild(rank);
+    body.appendChild(gl2); body.appendChild(pr);
+    // A-squad
+    const ar=document.createElement('div'); ar.className='rowline'; ar.style.marginTop='6px';
+    ar.innerHTML='<div><div class="lab">A-squad</div><p class="sub">Gold-medal starter — protected in competitive games</p></div>';
+    const ms=document.createElement('span'); ms.className='miniStar'+(p.a?' on':''); ms.textContent='★'; ms.onclick=()=>ms.classList.toggle('on');
+    ar.appendChild(ms); body.appendChild(ar);
+    row.appendChild(body);
+    row.querySelector('.pcardHead').onclick=()=>row.classList.toggle('open');
+    acc.appendChild(row);
+    renumBody();
+  });
+</script>
+</body>
+</html>

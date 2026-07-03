@@ -1,13 +1,14 @@
 'use client';
 import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Archive, CalendarPlus, Link2, Pencil } from 'lucide-react';
+import { Archive, CalendarPlus, Link2, Pencil, SlidersHorizontal } from 'lucide-react';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
+import type { LineupSettings } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 interface SettingsData {
   team: { id: string; name: string; division: string | null; sport: string };
-  season: { id: string; name: string; year: number; status: string };
+  season: { id: string; name: string; year: number; status: string; lineupSettings: LineupSettings | null };
   nextYearDefault: number;
   scope: {
     isStandalone: boolean;
@@ -38,6 +39,12 @@ export default function TeamSettingsPage({
   const [divisionMsg, setDivisionMsg] = useState('');
   const [divisionError, setDivisionError] = useState('');
 
+  // P3 lineup-rules caps (strings for the number inputs; '' = that rule is off).
+  const [caps, setCaps] = useState({ maxPos: '', pitcher: '', minPlay: '' });
+  const [savingCaps, setSavingCaps] = useState(false);
+  const [capsMsg, setCapsMsg] = useState('');
+  const [capsError, setCapsError] = useState('');
+
   const [modalOpen, setModalOpen] = useState(false);
 
   const load = useCallback(async () => {
@@ -49,6 +56,12 @@ export default function TeamSettingsPage({
       const json: SettingsData = await res.json();
       setData(json);
       setDivision(json.team.division ?? '');
+      const ls = json.season.lineupSettings;
+      setCaps({
+        maxPos: ls?.maxInningsPerPosition != null ? String(ls.maxInningsPerPosition) : '',
+        pitcher: ls?.pitcherMaxInningsDefault != null ? String(ls.pitcherMaxInningsDefault) : '',
+        minPlay: ls?.minInningsPerPlayer != null ? String(ls.minInningsPerPlayer) : '',
+      });
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : 'Settings could not be loaded');
     } finally {
@@ -81,6 +94,41 @@ export default function TeamSettingsPage({
       setDivisionError('Could not save the division.');
     } finally {
       setSavingDivision(false);
+    }
+  }
+
+  async function saveCaps(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingCaps(true);
+    setCapsMsg('');
+    setCapsError('');
+    const num = (s: string) => (s.trim() === '' ? null : Number(s));
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lineupSettings: {
+            maxInningsPerPosition: num(caps.maxPos),
+            pitcherMaxInningsDefault: num(caps.pitcher),
+            minInningsPerPlayer: num(caps.minPlay),
+          },
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setCapsError(json.error ?? 'Could not save.'); return; }
+      const ls: LineupSettings | null = json.lineupSettings ?? null;
+      setCaps({
+        maxPos: ls?.maxInningsPerPosition != null ? String(ls.maxInningsPerPosition) : '',
+        pitcher: ls?.pitcherMaxInningsDefault != null ? String(ls.pitcherMaxInningsDefault) : '',
+        minPlay: ls?.minInningsPerPlayer != null ? String(ls.minInningsPerPlayer) : '',
+      });
+      setData(prev => prev ? { ...prev, season: { ...prev.season, lineupSettings: ls } } : prev);
+      setCapsMsg('Saved');
+    } catch {
+      setCapsError('Could not save.');
+    } finally {
+      setSavingCaps(false);
     }
   }
 
@@ -190,6 +238,54 @@ export default function TeamSettingsPage({
             </Link>
           </div>
         )}
+      </section>
+
+      {/* ── Lineup rules (P3 season-default caps) ────────────────────────── */}
+      <section className={styles.setupPanel} aria-labelledby="lineup-rules-title">
+        <div className={styles.setupHeader}>
+          <div>
+            <p className={styles.setupKicker}>Lineups</p>
+            <h2 id="lineup-rules-title" className={styles.setupTitle}>Lineup rules</h2>
+          </div>
+          <SlidersHorizontal size={18} style={{ color: 'rgba(255,255,255,0.3)' }} />
+        </div>
+        <p style={{ margin: '0 0 0.9rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
+          Season defaults the game-day Auto-fill follows. Leave a field blank to turn that rule off.
+          You can override any of these for a single game in the Auto-fill menu.
+        </p>
+        <form onSubmit={saveCaps} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', maxWidth: 480 }}>
+          {[
+            { key: 'maxPos' as const, label: 'Max innings at one position', min: 1,
+              hint: 'Forces rotation so more players get a turn at each spot.' },
+            { key: 'pitcher' as const, label: 'Pitching innings cap', min: 1,
+              hint: 'Default arm-care limit per pitcher. A player’s own pitcher cap still applies (stricter wins).' },
+            { key: 'minPlay' as const, label: 'Minimum innings per player', min: 1,
+              hint: 'Everyone gets at least this many innings on the field.' },
+          ].map(f => (
+            <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <label className={styles.label} htmlFor={`cap-${f.key}`} style={{ marginBottom: 0 }}>{f.label}</label>
+              <input
+                id={`cap-${f.key}`}
+                className={styles.input}
+                type="number"
+                min={f.min}
+                max={12}
+                placeholder="No limit"
+                style={{ maxWidth: 140 }}
+                value={caps[f.key]}
+                onChange={e => { setCaps(c => ({ ...c, [f.key]: e.target.value })); setCapsMsg(''); }}
+              />
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--white-55)' }}>{f.hint}</p>
+            </div>
+          ))}
+          <div style={{ display: 'flex', gap: '0.7rem', alignItems: 'center' }}>
+            <button type="submit" className={styles.btnPrimary} disabled={savingCaps} style={{ whiteSpace: 'nowrap' }}>
+              {savingCaps ? 'Saving...' : 'Save rules'}
+            </button>
+            {capsMsg && <span style={{ fontSize: '0.85rem', color: 'var(--lime, #b6e34d)' }}>{capsMsg}</span>}
+            {capsError && <span className={styles.errorText}>{capsError}</span>}
+          </div>
+        </form>
       </section>
 
       {/* ── Organization ─────────────────────────────────────────────────── */}

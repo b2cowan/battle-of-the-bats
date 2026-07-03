@@ -10,6 +10,7 @@ import {
 } from '@/lib/db';
 import type { RepLineupMode, RepTeamLineupTemplateEntry } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { denyUnless } from '@/lib/coach-capabilities';
 
 const VALID_LINEUP_MODES: RepLineupMode[] = ['nine_player', 'everyone_bats'];
 const VALID_POSITIONS = new Set([
@@ -36,14 +37,15 @@ async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
   }
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.find(a => a.teamId === teamId)) return { error: forbidden() };
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { error: forbidden() };
 
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) {
     return { error: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
   }
 
-  return { ctx, team, programYear };
+  return { ctx, team, assignment, programYear };
 }
 
 function normalizeInningPositions(raw: unknown, inningCount: number): Record<string, string> {
@@ -67,7 +69,9 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveTeamCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { programYear } = resolved;
+  const { assignment, programYear } = resolved;
+  const denied = denyUnless(assignment.capabilities.lineups, 'You do not have access to lineups.');
+  if (denied) return denied;
 
   const templates = await getRepTeamLineupTemplates(teamId, programYear.id);
   return NextResponse.json({ templates });
@@ -78,7 +82,9 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveTeamCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, programYear } = resolved;
+  const { ctx, assignment, programYear } = resolved;
+  const denied = denyUnless(assignment.capabilities.lineups, 'You do not have access to lineups.');
+  if (denied) return denied;
 
   const body = await req.json();
   const name = typeof body.name === 'string' ? body.name.trim() : '';

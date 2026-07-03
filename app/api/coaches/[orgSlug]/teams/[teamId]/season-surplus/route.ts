@@ -3,6 +3,7 @@ import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, getRepRosterPlayers } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -15,14 +16,15 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   }
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.find(a => a.teamId === teamId)) return { error: forbidden() };
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { error: forbidden() };
 
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) {
     return { error: NextResponse.json({ error: 'No active program year' }, { status: 404 }) };
   }
 
-  return { ctx, team, programYear };
+  return { ctx, team, assignment, programYear };
 }
 
 async function buildRefundBreakdown(programYearId: string, totalSurplus: number) {
@@ -106,7 +108,9 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { programYear } = resolved;
+  const { assignment, programYear } = resolved;
+  const denied = denyUnless(canViewMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   const { data: surplusRow } = await supabaseAdmin
     .from('rep_season_surplus')
@@ -137,7 +141,9 @@ export const PUT = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, programYear } = resolved;
+  const { ctx, assignment, programYear } = resolved;
+  const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   const body = await req.json();
   const { totalSurplus, notes = null } = body;

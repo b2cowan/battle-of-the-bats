@@ -7,10 +7,11 @@ import {
   updateRepTryoutSession,
   deleteRepTryoutSession,
 } from '@/lib/db';
+import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import type { RepTryoutSession } from '@/lib/types';
 
-type Owned = { ok: false; res: Response } | { ok: true; session: RepTryoutSession };
+type Owned = { ok: false; res: Response } | { ok: true; session: RepTryoutSession; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
 
 /** Authorize the assigned coach and confirm the session belongs to this org + the path team. */
 async function resolveOwned(orgSlug: string, teamId: string, sessionId: string): Promise<Owned> {
@@ -23,13 +24,14 @@ async function resolveOwned(orgSlug: string, teamId: string, sessionId: string):
     return { ok: false, res: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
   }
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.some(a => a.teamId === teamId)) return { ok: false, res: forbidden() };
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { ok: false, res: forbidden() };
 
   const session = await getRepTryoutSessionById(sessionId);
   if (!session || session.orgId !== ctx.org.id || session.teamId !== teamId) {
     return { ok: false, res: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
   }
-  return { ok: true, session };
+  return { ok: true, session, assignment };
 }
 
 export const PATCH = withObservability(async (req: Request,
@@ -37,6 +39,8 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId, sessionId } = await params;
   const owned = await resolveOwned(orgSlug, teamId, sessionId);
   if (!owned.ok) return owned.res;
+  const denied = denyUnless(owned.assignment.capabilities.tryouts, 'Only the head coach manages tryouts.');
+  if (denied) return denied;
 
   const body = await req.json();
   const patch: Record<string, unknown> = {};
@@ -63,6 +67,8 @@ export const DELETE = withObservability(async (_req: Request,
   const { orgSlug, teamId, sessionId } = await params;
   const owned = await resolveOwned(orgSlug, teamId, sessionId);
   if (!owned.ok) return owned.res;
+  const denied = denyUnless(owned.assignment.capabilities.tryouts, 'Only the head coach manages tryouts.');
+  if (denied) return denied;
 
   await deleteRepTryoutSession(sessionId);
   return NextResponse.json({ ok: true });

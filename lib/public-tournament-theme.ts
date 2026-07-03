@@ -20,6 +20,7 @@ export function buildPublicLightModeCssVars(): string {
     '--bracket-card:    #FFFFFF',
     '--white:           #0F1123',
     '--white-90:        rgba(15,17,35,0.9)',
+    '--white-85:        rgba(15,17,35,0.85)',
     '--white-80:        rgba(15,17,35,0.8)',
     '--white-70:        rgba(15,17,35,0.7)',
     '--white-60:        rgba(15,17,35,0.6)',

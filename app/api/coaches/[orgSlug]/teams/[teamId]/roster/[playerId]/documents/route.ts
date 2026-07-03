@@ -9,6 +9,7 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepDocumentType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { denyUnless, canViewDocuments, canManageDocuments } from '@/lib/coach-capabilities';
 
 const ALLOWED_TYPES = [
   'application/pdf',
@@ -25,14 +26,15 @@ async function resolveContext(orgSlug: string, teamId: string, playerId: string)
   if (ctx.org.slug !== orgSlug) return { error: forbidden() };
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.find(a => a.teamId === teamId)) return { error: forbidden() };
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { error: forbidden() };
 
   const player = await getRepRosterPlayer(playerId);
   if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id) {
     return { error: NextResponse.json({ error: 'Player not found' }, { status: 404 }) };
   }
 
-  return { ctx, player };
+  return { ctx, player, assignment };
 }
 
 function stripStoragePath<T extends { storagePath: string }>(doc: T): Omit<T, 'storagePath'> {
@@ -45,6 +47,8 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId, playerId } = await params;
   const resolved = await resolveContext(orgSlug, teamId, playerId);
   if ('error' in resolved) return resolved.error!;
+  const denied = denyUnless(canViewDocuments(resolved.assignment.capabilities), 'You do not have access to documents.');
+  if (denied) return denied;
 
   const docs = await getRepPlayerDocuments(playerId);
   return NextResponse.json({ documents: docs.map(stripStoragePath) });
@@ -55,7 +59,9 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, teamId, playerId } = await params;
   const resolved = await resolveContext(orgSlug, teamId, playerId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, player } = resolved;
+  const { ctx, player, assignment } = resolved;
+  const denied = denyUnless(canManageDocuments(assignment.capabilities), 'You do not have permission to manage documents.');
+  if (denied) return denied;
 
   let formData: FormData;
   try {

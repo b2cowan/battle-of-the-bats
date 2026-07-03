@@ -12,6 +12,7 @@ import {
 } from '@/lib/db';
 import { rankTryoutCandidates } from '@/lib/tryout-scoring';
 import { applyTryoutDecisionSideEffects } from '@/lib/tryout-notifications';
+import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import type { RepProgramYear, RepTryoutRegistrationStatus } from '@/lib/types';
 
@@ -20,6 +21,7 @@ type Resolved =
   | {
       ok: true; orgId: string; teamId: string; programYear: RepProgramYear;
       teamName: string; orgName: string; orgLogoUrl?: string; contactEmail?: string;
+      assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number];
     };
 
 async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> {
@@ -29,12 +31,14 @@ async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> 
   const team = await getRepTeam(teamId);
   if (!team || team.orgId !== ctx.org.id) return { ok: false, res: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  if (!assignments.some(a => a.teamId === teamId)) return { ok: false, res: forbidden() };
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { ok: false, res: forbidden() };
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) return { ok: false, res: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
   return {
     ok: true, orgId: ctx.org.id, teamId, programYear,
     teamName: team.name, orgName: ctx.org.name, orgLogoUrl: ctx.org.logoUrl, contactEmail: ctx.org.contactEmail ?? undefined,
+    assignment,
   };
 }
 
@@ -51,6 +55,8 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const r = await resolveCoach(orgSlug, teamId);
   if (!r.ok) return r.res;
+  const denied = denyUnless(r.assignment.capabilities.tryouts, 'Only the head coach manages tryouts.');
+  if (denied) return denied;
 
   // Lazy 1:1 init of the tryout workspace (same convention as the scoreboard/rubric routes) — the row
   // is a benign empty workspace, created on first view if the coach hasn't opened setup yet.
@@ -108,6 +114,8 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const r = await resolveCoach(orgSlug, teamId);
   if (!r.ok) return r.res;
+  const denied = denyUnless(r.assignment.capabilities.tryouts, 'Only the head coach manages tryouts.');
+  if (denied) return denied;
 
   const body = await req.json().catch(() => ({}));
   const registrationId = typeof body.registrationId === 'string' ? body.registrationId : '';

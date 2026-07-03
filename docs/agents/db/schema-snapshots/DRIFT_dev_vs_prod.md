@@ -2,18 +2,19 @@
 
 **Generated:** 2026-07-02 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 181 divergence(s)** across dev/prod.
+**⚠️ 210 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 5 | 0 | — |
-| Columns | 70 | 3 | 23 |
-| Indexes | 29 | 3 | 0 |
-| Constraints | 34 | 9 | — |
-| RLS / CHECK | 4 | 1 | 0 (RLS state) |
+| Tables | 6 | 0 | — |
+| Columns | 88 | 3 | 23 |
+| Indexes | 33 | 3 | 0 |
+| Constraints | 39 | 9 | — |
+| RLS / CHECK | 5 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (5)
+### Only in DEV (6)
+- `assistant_invite_tokens`
 - `rep_tryout_evaluator_sessions`
 - `rep_tryout_rubrics`
 - `rep_tryout_scores`
@@ -24,9 +25,27 @@
 _none_
 
 ## Columns
-### Only in DEV (70)
+### Only in DEV (88)
+- `assistant_invite_tokens.accepted_at`
+- `assistant_invite_tokens.created_at`
+- `assistant_invite_tokens.expires_at`
+- `assistant_invite_tokens.id`
+- `assistant_invite_tokens.initial_capabilities`
+- `assistant_invite_tokens.invited_by_name`
+- `assistant_invite_tokens.invited_by_user_id`
+- `assistant_invite_tokens.invited_email`
+- `assistant_invite_tokens.org_id`
+- `assistant_invite_tokens.program_year_id`
+- `assistant_invite_tokens.status`
+- `assistant_invite_tokens.team_id`
+- `assistant_invite_tokens.team_name`
+- `assistant_invite_tokens.token_hash`
+- `organizations.coach_settings`
 - `organizations.privacy_policy_url`
+- `rep_program_years.lineup_settings`
 - `rep_roster_players.lineup_profile`
+- `rep_team_coaches.capabilities`
+- `rep_team_lineups.rules_override`
 - `rep_tryout_evaluator_sessions.created_at`
 - `rep_tryout_evaluator_sessions.evaluator_name`
 - `rep_tryout_evaluator_sessions.expires_at`
@@ -127,7 +146,11 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (29)
+### Only in DEV (33)
+- `assistant_invite_tokens_email_idx`
+- `assistant_invite_tokens_pkey`
+- `assistant_invite_tokens_team_idx`
+- `assistant_invite_tokens_token_hash_uq`
 - `league_practices_recurrence_idx`
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
@@ -167,8 +190,13 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (34)
+### Only in DEV (39)
 - `announcements.announcements_tournament_id_fkey`
+- `assistant_invite_tokens.assistant_invite_tokens_invited_by_fk`
+- `assistant_invite_tokens.assistant_invite_tokens_org_id_fkey`
+- `assistant_invite_tokens.assistant_invite_tokens_pkey`
+- `assistant_invite_tokens.assistant_invite_tokens_program_year_id_fkey`
+- `assistant_invite_tokens.assistant_invite_tokens_team_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
 - `games.games_age_group_id_fkey`
@@ -218,7 +246,8 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (4)
+### CHECK only in DEV (5)
+- `assistant_invite_tokens.assistant_invite_tokens_status_check`
 - `rep_tryout_registrations.rep_tryout_registrations_offer_response_check`
 - `rep_tryout_rubrics.rep_tryout_rubrics_scale_max_check`
 - `rep_tryout_scores.rep_tryout_scores_score_check`

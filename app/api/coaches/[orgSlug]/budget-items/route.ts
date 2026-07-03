@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getCoachingAssignmentsForUser } from '@/lib/db';
 import type { BudgetCategoryWithItems, BudgetItem } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 
 function mapItem(row: Record<string, unknown>): BudgetItem {
   return {
@@ -27,7 +28,7 @@ async function resolveCoachContext(orgSlug: string) {
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
   if (!assignments.length) return { error: forbidden() };
 
-  return { ctx };
+  return { ctx, assignments };
 }
 
 // GET /api/coaches/[orgSlug]/budget-items
@@ -39,7 +40,9 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug } = await params;
   const resolved = await resolveCoachContext(orgSlug);
   if ('error' in resolved) return resolved.error!;
-  const { ctx } = resolved;
+  const { ctx, assignments } = resolved;
+  const denied = denyUnless(assignments.some(a => canViewMoney(a.capabilities)), 'You do not have access to team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   const { data, error } = await supabaseAdmin
     .from('budget_categories')
@@ -77,7 +80,9 @@ export const POST = withObservability(async (req: Request,
   const { orgSlug } = await params;
   const resolved = await resolveCoachContext(orgSlug);
   if ('error' in resolved) return resolved.error!;
-  const { ctx } = resolved;
+  const { ctx, assignments } = resolved;
+  const denied = denyUnless(assignments.some(a => canWriteMoney(a.capabilities)), 'You do not have access to team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
 
   const body = await req.json();
   const catId: string = typeof body.categoryId === 'string' ? body.categoryId.trim() : '';

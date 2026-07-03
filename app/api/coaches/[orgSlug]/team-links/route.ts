@@ -14,6 +14,8 @@ import {
   requestTeamOwnershipTransfer,
   respondToTeamOwnershipTransferInvite,
 } from '@/lib/team-ownership-transfer';
+import { getCoachingAssignmentsForUser } from '@/lib/db';
+import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 
 type RouteParams = {
@@ -41,7 +43,11 @@ async function resolveTeamCoachContext(orgSlug: string) {
   });
   if (!access.allowed) return { error: forbidden() };
 
-  return { ctx, workspace };
+  // Org linking + ownership transfer are franchise-boundary actions — head-coach only.
+  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
+  const isHeadCoach = assignments.find(a => a.teamId === workspace.repTeamId)?.capabilities.isHeadCoach ?? false;
+
+  return { ctx, workspace, isHeadCoach };
 }
 
 export const GET = withObservability(async (_req: Request, { params }: RouteParams) => {
@@ -57,6 +63,8 @@ export const POST = withObservability(async (req: Request, { params }: RoutePara
   const { orgSlug } = await params;
   const resolved = await resolveTeamCoachContext(orgSlug);
   if ('error' in resolved) return resolved.error!;
+  const linkDenied = denyUnless(resolved.isHeadCoach, 'Only the head coach can manage organization links.');
+  if (linkDenied) return linkDenied;
 
   let body: { target?: unknown };
   try {
@@ -88,6 +96,8 @@ export const PATCH = withObservability(async (req: Request, { params }: RoutePar
   const { orgSlug } = await params;
   const resolved = await resolveTeamCoachContext(orgSlug);
   if ('error' in resolved) return resolved.error!;
+  const linkDenied = denyUnless(resolved.isHeadCoach, 'Only the head coach can manage organization links.');
+  if (linkDenied) return linkDenied;
 
   let body: { linkId?: unknown; action?: unknown };
   try {

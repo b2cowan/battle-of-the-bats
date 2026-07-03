@@ -9,6 +9,7 @@ import { computeTournamentStandings, type DivisionStandingRow } from './tie-brea
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
 import { generateOfferToken, hashOfferToken } from './tryout-offer-token';
+import { resolveCoachCapabilities, type CoachCapabilities, type AssistantCapabilityGrants } from './coach-capabilities';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
 export type { DivisionStandingRow } from './tie-breakers';
@@ -3757,7 +3758,7 @@ export async function getRepTeams(orgId: string, groupId?: string | null, scopeG
 
 // ── Rep Team Groups ────────────────────────────────────────────────────────────
 
-import type { RepTeamGroup, RepEventResource, LineupProfile } from './types';
+import type { RepTeamGroup, RepEventResource, LineupProfile, LineupSettings, LineupRulesOverride } from './types';
 
 function mapRepTeamGroup(r: any): RepTeamGroup {
   return {
@@ -4037,6 +4038,7 @@ function mapRepProgramYear(r: any): RepProgramYear {
     tryoutDescription: r.tryout_description,
     budgetAmount: r.budget_amount != null ? Number(r.budget_amount) : null,
     autoRemindersEnabled: r.auto_reminders_enabled ?? true,
+    lineupSettings: (r.lineup_settings ?? null) as LineupSettings | null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -4090,6 +4092,7 @@ export async function updateRepProgramYear(yearId: string, fields: {
   tryoutOpen?: boolean;
   tryoutDescription?: string | null;
   budgetAmount?: number | null;
+  lineupSettings?: LineupSettings | null;
 }): Promise<RepProgramYear> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.name !== undefined) patch.name = fields.name;
@@ -4097,6 +4100,7 @@ export async function updateRepProgramYear(yearId: string, fields: {
   if (fields.tryoutOpen !== undefined) patch.tryout_open = fields.tryoutOpen;
   if (fields.tryoutDescription !== undefined) patch.tryout_description = fields.tryoutDescription;
   if (fields.budgetAmount !== undefined) patch.budget_amount = fields.budgetAmount;
+  if (fields.lineupSettings !== undefined) patch.lineup_settings = fields.lineupSettings;
   const { data, error } = await supabaseAdmin
     .from('rep_program_years')
     .update(patch)
@@ -4117,6 +4121,7 @@ function mapRepTeamCoach(r: any): RepTeamCoach {
     orgId: r.org_id,
     userId: r.user_id,
     coachRole: r.coach_role,
+    capabilities: (r.capabilities as AssistantCapabilityGrants | null) ?? null,
     createdAt: r.created_at,
   };
 }
@@ -4152,6 +4157,99 @@ export async function removeRepTeamCoach(coachId: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function getRepTeamCoachById(coachId: string): Promise<RepTeamCoach | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_coaches')
+    .select('*')
+    .eq('id', coachId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamCoach(data) : null;
+}
+
+/** After removing an assistant, drop their capability-less `coach` org membership if they no longer
+ *  coach any team in that org — keeps guest memberships from lingering. Never touches other roles. */
+export async function cleanupOrphanedCoachMembership(orgId: string, userId: string): Promise<void> {
+  const { data: remaining } = await supabaseAdmin
+    .from('rep_team_coaches')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('user_id', userId)
+    .limit(1);
+  if (remaining && remaining.length > 0) return; // still coaches something in this org
+  await supabaseAdmin
+    .from('organization_members')
+    .delete()
+    .eq('organization_id', orgId)
+    .eq('user_id', userId)
+    .eq('role', 'coach');
+}
+
+/** Set an assistant coach's per-assistant capability grants (Assistant Coaches Phase 2). */
+export async function updateRepTeamCoachCapabilities(
+  coachId: string,
+  grants: AssistantCapabilityGrants,
+): Promise<RepTeamCoach> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_coaches')
+    .update({ capabilities: grants })
+    .eq('id', coachId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamCoach(data);
+}
+
+export interface RepTeamStaffMember {
+  coachId: string;
+  userId: string;
+  coachRole: 'head_coach' | 'assistant_coach';
+  displayName: string | null;
+  email: string | null;
+  capabilities: AssistantCapabilityGrants | null;
+  createdAt: string;
+}
+
+/** The full coaching staff for a program year, enriched with each coach's display name + email
+ *  (name from `organization_members`, email from auth). Head coach first, then assistants. */
+export async function getRepTeamStaffForYear(
+  programYearId: string,
+  orgId: string,
+): Promise<RepTeamStaffMember[]> {
+  const coaches = await getRepTeamCoaches(programYearId);
+  if (coaches.length === 0) return [];
+
+  const { data: memberRows } = await supabaseAdmin
+    .from('organization_members')
+    .select('user_id, display_name')
+    .eq('organization_id', orgId)
+    .in('user_id', coaches.map(c => c.userId));
+  const nameByUser = new Map((memberRows ?? []).map((r: any) => [r.user_id as string, (r.display_name as string | null) ?? null]));
+
+  const staff = await Promise.all(coaches.map(async c => {
+    let email: string | null = null;
+    try {
+      const { data } = await supabaseAdmin.auth.admin.getUserById(c.userId);
+      email = data.user?.email ?? null;
+    } catch { /* best-effort — email is display-only */ }
+    return {
+      coachId: c.id,
+      userId: c.userId,
+      coachRole: c.coachRole,
+      displayName: nameByUser.get(c.userId) ?? null,
+      email,
+      capabilities: c.capabilities,
+      createdAt: c.createdAt,
+    };
+  }));
+
+  // Head coach(es) first, then assistants, each oldest-first.
+  return staff.sort((a, b) => {
+    if (a.coachRole !== b.coachRole) return a.coachRole === 'head_coach' ? -1 : 1;
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+}
+
 export interface CoachingAssignment {
   coachId: string;
   teamId: string;
@@ -4163,6 +4261,8 @@ export interface CoachingAssignment {
   programYearName: string;
   programYearStatus: RepProgramYearStatus;
   coachRole: 'head_coach' | 'assistant_coach';
+  /** Effective capabilities on THIS team (head coach = full; assistant = defaults + grants). */
+  capabilities: CoachCapabilities;
   overdueInstallments: number;
   upcomingEventsCount: number;
 }
@@ -4172,6 +4272,7 @@ type CoachingAssignmentRow = {
   team_id: string;
   program_year_id: string;
   coach_role: string;
+  capabilities?: AssistantCapabilityGrants | null;
   rep_teams?: { name?: string | null; slug?: string | null; color?: string | null; sport?: string | null } | null;
   rep_program_years?: { name?: string | null; status?: RepProgramYearStatus | null } | null;
 };
@@ -4265,6 +4366,7 @@ export async function getCoachingAssignmentsForUser(
       team_id,
       program_year_id,
       coach_role,
+      capabilities,
       rep_teams!team_id ( name, slug, color, sport ),
       rep_program_years!program_year_id ( name, status )
     `)
@@ -4299,6 +4401,10 @@ export async function getCoachingAssignmentsForUser(
     programYearName: r.rep_program_years?.name ?? '',
     programYearStatus: r.rep_program_years?.status as RepProgramYearStatus,
     coachRole: r.coach_role as 'head_coach' | 'assistant_coach',
+    capabilities: resolveCoachCapabilities(
+      r.coach_role as 'head_coach' | 'assistant_coach',
+      r.capabilities ?? null,
+    ),
     overdueInstallments:  badges.get(r.program_year_id)?.overdueInstallments  ?? 0,
     upcomingEventsCount:  badges.get(r.program_year_id)?.upcomingEventsCount   ?? 0,
   }));
@@ -5737,6 +5843,7 @@ function mapRepTeamLineup(r: any): RepTeamLineup {
     lineupMode: r.lineup_mode,
     inningCount: r.inning_count,
     notes: r.notes ?? null,
+    rulesOverride: (r.rules_override ?? null) as LineupRulesOverride | null,
     updatedBy: r.updated_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -5785,24 +5892,26 @@ export async function upsertRepTeamLineup(fields: {
   lineupMode: RepLineupMode;
   inningCount: number;
   notes?: string | null;
+  rulesOverride?: LineupRulesOverride | null;
   updatedBy?: string | null;
 }): Promise<RepTeamLineup> {
+  const payload: Record<string, unknown> = {
+    event_id: fields.eventId,
+    program_year_id: fields.programYearId,
+    team_id: fields.teamId,
+    org_id: fields.orgId,
+    lineup_mode: fields.lineupMode,
+    inning_count: fields.inningCount,
+    notes: fields.notes?.trim() || null,
+    updated_by: fields.updatedBy ?? null,
+    updated_at: new Date().toISOString(),
+  };
+  // Only touch rules_override when the caller provides it, so a plain grid save preserves the
+  // per-game cap override rather than clearing it (upsert SETs only the columns in the payload).
+  if (fields.rulesOverride !== undefined) payload.rules_override = fields.rulesOverride;
   const { data, error } = await supabaseAdmin
     .from('rep_team_lineups')
-    .upsert(
-      {
-        event_id: fields.eventId,
-        program_year_id: fields.programYearId,
-        team_id: fields.teamId,
-        org_id: fields.orgId,
-        lineup_mode: fields.lineupMode,
-        inning_count: fields.inningCount,
-        notes: fields.notes?.trim() || null,
-        updated_by: fields.updatedBy ?? null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'event_id' },
-    )
+    .upsert(payload, { onConflict: 'event_id' })
     .select()
     .single();
   if (error) throw error;
