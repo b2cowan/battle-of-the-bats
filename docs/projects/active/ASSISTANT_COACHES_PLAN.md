@@ -143,3 +143,17 @@ Safety ordering holds inside each tier: **enforcement lands before assistants ar
 8. **Guardrails:** app-layer checks everywhere; a coach-route enforcement guard; DOB/PII consent acknowledgment when a head coach unlocks PII for an assistant.
 
 Migrations only where a per-assistant capability store or a free cap column is needed; the head/assistant and free `coach` role *values* already exist on dev+prod.
+
+---
+
+## 8. Post-launch follow-ups (non-blocking)
+
+From the adversarial `/review` on the dev push (2026-07-03). The one High finding — invite acceptance not verifying the accepter's email — was **fixed in the same commit** (a forwarded/leaked invite link can no longer let a different signed-in user join a team). The items below are Low severity and, per owner call 2026-07-03, **do not block promotion to production** — the Coaches Portal has no paying end users yet, so we release and fix forward. Clear before the portal opens to paying customers.
+
+1. **Atomic capability grant on accept** — capabilities are applied in a second write after the assistant row is created; a crash between the two would leave the assistant at safe defaults instead of the granted set. Cannot trigger today (the set-capabilities-at-invite-time UI isn't wired — the value is always empty), so this is latent until that UI lands; fold the grant into the single insert then.
+2. **Approval-required invites keep the original 7-day clock** — if an org enables "require admin approval" and approval is slow, the emailed link can arrive already expired. Fails safe (asks for a new one). Reset `expires_at` at approval time.
+3. **Removing an assistant doesn't revoke their still-open invite** — narrow re-entry path where a removed person holding a live link could re-accept. Revoke any open invite for that email/team on removal.
+4. **Re-inviting an already-active member** mints a fresh live link with no "already on the team" signal — harmless (accept is idempotent), UX polish.
+5. **Invite-accepted assistants show a blank name** in the staff panel until they set one — populate a display name on accept.
+6. **Stale comment** in the tryout-accept route claims no permission gate, but the code now enforces the tryouts capability — doc-only fix.
+7. **Lineup generator** uses a truthy check where a not-set check reads cleaner — benign in production (a 0 cap can't be stored), tidy for test-path correctness.
