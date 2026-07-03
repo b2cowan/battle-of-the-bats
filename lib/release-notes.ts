@@ -83,6 +83,10 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
         category: 'new',
         text: 'Fans on a phone can now add your tournament to their home screen right from the event page — a “Get the app” link under the host name puts live scores one tap away.',
       },
+      {
+        category: 'new',
+        text: 'Notifications can now reach your phone. Turn them on in one tap and you’ll get an alert even when the app is closed — the moment a registration comes in, a payment lands, a score is posted, or a team’s a no-show. Choose exactly which events notify you, and quiet a tournament’s chat if it gets busy.',
+      },
     ],
   },
   {
