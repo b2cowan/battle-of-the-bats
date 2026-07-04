@@ -1,0 +1,190 @@
+/* PushDeviceTester — "your devices" list + send-test control.
+   Matches the admin dark theme via shared design tokens. */
+
+.card {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  border-radius: 4px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.headerIcon {
+  flex-shrink: 0;
+  color: var(--logic-lime);
+  margin-top: 0.15rem;
+}
+
+.title {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--white-90, #f0f0f0);
+  letter-spacing: 0.01em;
+}
+
+.sub {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--white-60, rgba(255, 255, 255, 0.6));
+  margin-top: 0.15rem;
+}
+
+.sub strong { color: var(--white-90, #f0f0f0); font-weight: 700; }
+
+.refreshBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: var(--white-60, rgba(255, 255, 255, 0.6));
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.refreshBtn:hover:not(:disabled) { color: var(--white-90, #f0f0f0); border-color: rgba(255, 255, 255, 0.3); }
+.refreshBtn:disabled { opacity: 0.5; cursor: default; }
+
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty {
+  margin-top: 0.85rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--white-60, rgba(255, 255, 255, 0.6));
+}
+.empty strong { color: var(--white-90, #f0f0f0); }
+
+.error {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #fca5a5;
+}
+
+.list {
+  list-style: none;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.device {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 3px;
+  padding: 0.65rem 0.75rem;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.deviceTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.deviceInfo { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+
+.deviceLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--white-90, #f0f0f0);
+}
+
+.currentBadge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.4rem;
+  border-radius: 2px;
+  background: rgba(217, 249, 157, 0.16);
+  color: var(--logic-lime);
+}
+
+.deviceMeta {
+  font-size: 0.72rem;
+  color: var(--white-40, rgba(255, 255, 255, 0.42));
+}
+
+.testBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: var(--white-90, #f0f0f0);
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+.testBtn:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.4); }
+.testBtn:disabled { opacity: 0.55; cursor: default; }
+
+.testBtnPrimary {
+  background: var(--logic-lime);
+  color: #0b1220;
+  border-color: var(--logic-lime);
+}
+.testBtnPrimary:hover:not(:disabled) { opacity: 0.88; }
+
+.result {
+  margin-top: 0.55rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.77rem;
+  line-height: 1.45;
+  padding: 0.45rem 0.55rem;
+  border-radius: 2px;
+}
+.result svg { flex-shrink: 0; margin-top: 0.1rem; }
+
+.result_delivered {
+  background: rgba(217, 249, 157, 0.1);
+  color: #d9f99d;
+}
+.result_not_configured,
+.result_gone {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fcd34d;
+}
+.result_mismatch,
+.result_error {
+  background: rgba(248, 113, 113, 0.1);
+  color: #fca5a5;
+}
+
+@media (max-width: 560px) {
+  .deviceTop { flex-wrap: wrap; }
+  .testBtn { width: 100%; justify-content: center; }
+}

@@ -10,7 +10,8 @@
 
 import { supabaseAdmin } from './supabase-admin';
 import { sendEmail } from './email';
-import { sendWebPush } from './web-push';
+import { sendWebPush, isPushConfigured } from './web-push';
+import { captureError } from './observability';
 import { hasPlanFeature, type PlanFeature } from './plan-features';
 import { PUSH_DEFAULT_ON_EVENTS } from './notification-labels';
 import type { NotificationEventType, OrgPlan } from './types';
@@ -89,6 +90,9 @@ function notificationEmailHtml(title: string, body?: string, link?: string, appU
 
 export async function notify(opts: NotifyOptions): Promise<void> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+  // Report a missing-VAPID misconfiguration at most once per dispatch (not per
+  // recipient/device) so a broken deploy surfaces as a single observability issue.
+  let pushMisconfigReported = false;
 
   try {
     // ── 0. Optional plan-feature guard (defense-in-depth) ───────────────────────
@@ -221,6 +225,22 @@ export async function notify(opts: NotifyOptions): Promise<void> {
           .select('id, endpoint, keys_p256dh, keys_auth')
           .eq('user_id', recipient.userId);
 
+        // If this user has registered devices but the server can't sign pushes,
+        // every send below silently no-ops. Surface that once so it's not invisible.
+        if ((subs?.length ?? 0) > 0 && !isPushConfigured() && !pushMisconfigReported) {
+          pushMisconfigReported = true;
+          await captureError(
+            new Error('Web push not configured — VAPID keys missing at runtime; push notifications are silently no-op\'ing.'),
+            {
+              route: 'lib/notify (push dispatch)',
+              severity: 'error',
+              title: 'Web push not configured (VAPID keys missing)',
+              org: { id: opts.orgId },
+              requestContext: { eventType: opts.eventType, deviceCount: subs?.length ?? 0 },
+            },
+          );
+        }
+
         for (const sub of subs ?? []) {
           try {
             await sendWebPush(
@@ -247,15 +267,26 @@ export async function notify(opts: NotifyOptions): Promise<void> {
           } catch (pushErr: unknown) {
             // 410 = subscription expired or revoked — remove it
             const status = (pushErr as { statusCode?: number })?.statusCode;
-            if (status === 410) {
+            if (status === 410 || status === 404) {
               await supabaseAdmin
                 .from('push_subscriptions')
                 .delete()
                 .eq('id', sub.id);
               console.info('[notify] Removed expired push subscription:', sub.endpoint);
             } else {
-              // Log but never rethrow — push is best-effort
+              // Log AND record to observability — push is best-effort so we never
+              // rethrow, but a persistent failure (e.g. a 401/403 VAPID mismatch)
+              // must be visible on the error dashboard, not just in CloudWatch.
               console.error('[notify] Push send failed for', sub.endpoint, pushErr);
+              await captureError(pushErr, {
+                route: 'lib/notify (push dispatch)',
+                severity: 'warning',
+                title: 'Web push send failed',
+                org: { id: opts.orgId },
+                user: { id: recipient.userId },
+                statusCode: status,
+                requestContext: { eventType: opts.eventType },
+              });
             }
           }
         }

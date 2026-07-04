@@ -27,6 +27,16 @@ if (!publicKey || !privateKey) {
   webPush.setVapidDetails(email, publicKey, privateKey);
 }
 
+/**
+ * True when both VAPID keys are present at runtime, i.e. sendWebPush will actually
+ * attempt delivery rather than silently no-op. Lets callers (e.g. the self-serve
+ * "send test push" route) tell "server not configured" apart from a delivery
+ * failure, and lets notify() flag the misconfiguration to observability.
+ */
+export function isPushConfigured(): boolean {
+  return Boolean(publicKey && privateKey);
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface PushSubscriptionKeys {
