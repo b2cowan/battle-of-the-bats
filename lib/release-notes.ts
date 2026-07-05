@@ -45,7 +45,7 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
     date: '2026-07-04',
-    title: 'Your team home screen keeps up with the season — plus oversight for your assistant coaches',
+    title: 'Playoff day, made shareable — plus a clearer game-day dashboard and Coaches Portal improvements',
     highlights: [
       {
         category: 'new',
@@ -58,6 +58,22 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       {
         category: 'improved',
         text: 'You can now send yourself a test notification to check that alerts are reaching your phone. And if a notification doesn’t go through, we’ll let you know instead of it failing quietly.',
+      },
+      {
+        category: 'new',
+        text: 'Setting your playoff bracket is now a moment. Your public tournament page switches to a Playoffs view with a countdown to the first game, and a shareable Playoff Picture lays out the seeding, the opening matchups, and each team’s key numbers. Fans following with score alerts on (Tournament Plus and above) get a one-time heads-up that the bracket is set — and so does your staff.',
+      },
+      {
+        category: 'new',
+        text: 'Your game-day dashboard now sorts games into Now Playing, Up Next, and Needs a Score — so at a glance you can see what’s on, what’s coming next, and which finished games still need a score entered.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed turning on notifications for a tournament — switching it on now registers your device, so alerts actually reach your phone instead of quietly going nowhere.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed a Coaches Portal game-day view that could show the wrong time in some time zones.',
       },
     ],
   },
