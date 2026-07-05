@@ -4,7 +4,7 @@ const coachesHelp: HelpPageContent = {
   title: 'Coaches Portal',
   role: 'Coach',
   intro:
-    'The Coaches Portal is your free home base for the teams you coach — your roster, schedule, team fees, and parent announcements in one place, year-round and between tournaments. Turn on only the tools you need. Coaches Portal Premium adds the serious-operator extras on top.',
+    'The Coaches Portal is your free home base for the teams you coach — your roster, schedule, team fees, and parent announcements in one place, year-round and between tournaments. Turn on only the tools you need. Premium Coaches Portal adds the serious-operator extras on top.',
   searchPlaceholder: 'Search coach help — roster, schedule, fees, announcements…',
   sections: [
     {
@@ -23,7 +23,7 @@ const coachesHelp: HelpPageContent = {
             <li><strong>Tournaments</strong> — every tournament you&apos;ve registered the team for, with status and schedule.</li>
           </ul>
           <p>Four more tools — <strong>Roster</strong>, <strong>Schedule</strong>, <strong>Fees</strong>, and <strong>Announcements</strong> — are free too, but stay hidden until you turn them on from <strong>Explore</strong>. That keeps the portal simple if all you need is your tournament record.</p>
-          <p><strong>Coaches Portal Premium</strong> is the paid upgrade. It adds game-day tools (positions, attendance, lineups), recurring scheduling and calendar sync, dues automation and a season budget, and document storage. Each tool below notes what Premium adds. On Premium, <strong>every tool is already in your sidebar</strong> — there&apos;s no Explore step; the four-tools-off model just above applies to the free portal. See <strong>Getting around your Premium portal</strong> below for the tour.</p>
+          <p><strong>Premium Coaches Portal</strong> is the paid upgrade. It adds game-day tools (positions, attendance, lineups), recurring scheduling and calendar sync, dues automation and a season budget, and document storage. Each tool below notes what Premium adds. On Premium, <strong>every tool is already in your sidebar</strong> — there&apos;s no Explore step; the four-tools-off model just above applies to the free portal. See <strong>Getting around your Premium portal</strong> below for the tour.</p>
         </>
       ),
     },
@@ -64,7 +64,7 @@ const coachesHelp: HelpPageContent = {
       searchText: 'explore turn on activate enable team tools roster schedule fees announcements free progressive disclosure where is my roster tab missing section premium all tools already on no explore step sidebar',
       content: (
         <>
-          <p><em>This applies to the free portal.</em> On <strong>Coaches Portal Premium</strong> every tool is already in your sidebar, so there&apos;s nothing to turn on — you can skip this section.</p>
+          <p><em>This applies to the free portal.</em> On <strong>Premium Coaches Portal</strong> every tool is already in your sidebar, so there&apos;s nothing to turn on — you can skip this section.</p>
           <p>To keep the free portal uncluttered, the four team tools start switched off. Open <strong>Explore</strong> (always in the menu) to see them:</p>
           <ul>
             <li><strong>Roster</strong> — enter your team once and reuse it for your next tournament registration.</li>
@@ -94,7 +94,7 @@ const coachesHelp: HelpPageContent = {
             <li>Drag the handle to reorder players. Use the pencil to edit and the trash icon to remove.</li>
           </ol>
           <p>Your roster is yours — build it once and reuse it for every tournament you join.</p>
-          <p><strong>Coaches Portal Premium adds:</strong> a full player profile (positions, handedness, jersey size, allergies/medical notes and an emergency contact), attendance at every practice and game, game-day lineups and batting orders, and roster export to Excel, CSV, or PDF.</p>
+          <p><strong>Premium Coaches Portal adds:</strong> a full player profile (positions, handedness, jersey size, allergies/medical notes and an emergency contact), attendance at every practice and game, game-day lineups and batting orders, and roster export to Excel, CSV, or PDF.</p>
         </>
       ),
     },
@@ -115,7 +115,7 @@ const coachesHelp: HelpPageContent = {
             <li>Edit or remove any event with the pencil and trash icons.</li>
           </ol>
           <p>Events list in date order so your whole season reads top to bottom.</p>
-          <p><strong>Coaches Portal Premium adds:</strong> more event types (league and tournament games, scrimmages, team events, and multi-day tournaments), <strong>List / Week / Month</strong> calendar views, game-day details (arrival/call time, field/diamond #, uniform) with a tap-to-open map link, recurring events (set repeating practices once), attendance taken straight from each event, and syncing your schedule to your phone&apos;s calendar. See <strong>Tournaments, games &amp; calendar views</strong> and <strong>Game-day details</strong> below.</p>
+          <p><strong>Premium Coaches Portal adds:</strong> more event types (league and tournament games, scrimmages, team events, and multi-day tournaments), <strong>List / Week / Month</strong> calendar views, game-day details (arrival/call time, field/diamond #, uniform) with a tap-to-open map link, recurring events (set repeating practices once), attendance taken straight from each event, and syncing your schedule to your phone&apos;s calendar. See <strong>Tournaments, games &amp; calendar views</strong> and <strong>Game-day details</strong> below.</p>
         </>
       ),
     },
@@ -232,7 +232,7 @@ const coachesHelp: HelpPageContent = {
             <li>As money comes in, click <strong>Mark paid</strong> on each fee. You can mark it back to unpaid if needed.</li>
           </ol>
           <p>The summary at the top shows totals for <strong>Owed</strong>, <strong>Paid</strong>, and <strong>Unpaid</strong> so you can see at a glance where collection stands.</p>
-          <p><strong>Coaches Portal Premium adds:</strong> installment schedules with due dates per player, automatic overdue reminder emails, and a season budget that tracks fees, expenses, and fundraiser credits.</p>
+          <p><strong>Premium Coaches Portal adds:</strong> installment schedules with due dates per player, automatic overdue reminder emails, and a season budget that tracks fees, expenses, and fundraiser credits.</p>
         </>
       ),
       faqs: [
@@ -263,7 +263,7 @@ const coachesHelp: HelpPageContent = {
             <li>Click <strong>Send announcement</strong>.</li>
           </ol>
           <p>If a player has no contact email, the page warns you and won&apos;t reach them — add an email on your Roster to include them. Every send is saved to a <strong>Recent announcements</strong> log showing whether it sent fully, partly, or failed.</p>
-          <p><strong>Coaches Portal Premium adds:</strong> a quick <strong>confirm</strong> before an announcement emails families (it can&apos;t be unsent), a recipient count that <strong>updates on its own</strong> as you add contacts, the ability to reopen a past announcement to <strong>read it in full and reuse it</strong>, and automatic dues and event reminders.</p>
+          <p><strong>Premium Coaches Portal adds:</strong> a quick <strong>confirm</strong> before an announcement emails families (it can&apos;t be unsent), a recipient count that <strong>updates on its own</strong> as you add contacts, the ability to reopen a past announcement to <strong>read it in full and reuse it</strong>, and automatic dues and event reminders.</p>
         </>
       ),
       faqs: [
@@ -279,11 +279,11 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-announcement-reuse',
           question: 'Can I resend or reuse a past announcement?',
-          answerText: 'On Coaches Portal Premium, open any message in the Recent announcements list to read it in full, then choose Reuse to drop its subject and body back into the compose box — edit and send again in seconds. Premium also asks you to confirm before an announcement emails families (it cannot be unsent) and warns you before you leave a half-written message.',
+          answerText: 'On Premium Coaches Portal, open any message in the Recent announcements list to read it in full, then choose Reuse to drop its subject and body back into the compose box — edit and send again in seconds. Premium also asks you to confirm before an announcement emails families (it cannot be unsent) and warns you before you leave a half-written message.',
           keywords: ['reuse', 'resend', 'duplicate announcement', 'send again', 'confirm before sending', 'unsaved changes', 'read full message'],
           answer: (
             <>
-              <p>On <strong>Coaches Portal Premium</strong>, open any message in the <strong>Recent announcements</strong> list to read it in full, then choose <strong>Reuse</strong> to drop its subject and body back into the compose box — edit and send again in seconds.</p>
+              <p>On <strong>Premium Coaches Portal</strong>, open any message in the <strong>Recent announcements</strong> list to read it in full, then choose <strong>Reuse</strong> to drop its subject and body back into the compose box — edit and send again in seconds.</p>
               <p>Premium also asks you to <strong>confirm</strong> before an announcement emails families (it can&apos;t be unsent), and warns you before you leave a half-written message.</p>
             </>
           ),
@@ -300,7 +300,7 @@ const coachesHelp: HelpPageContent = {
       content: (
         <>
           <p>The <strong>Tournaments</strong> section lists every tournament you&apos;ve registered the team for — across any organization — with its registration status and schedule.</p>
-          <p><strong>On Coaches Portal Premium</strong>, Tournaments is its own item in your sidebar: a list of your events with live status — an event that&apos;s underway shows <strong>Live</strong> or <strong>Today</strong>, otherwise it shows where your registration stands. Open one and the <strong>full record opens right inside your Premium portal</strong> — the live schedule and scores, your status, how to pay, roster submission, and the organizer&apos;s announcements. You don&apos;t leave your portal to follow a tournament.</p>
+          <p><strong>On Premium Coaches Portal</strong>, Tournaments is its own item in your sidebar: a list of your events with live status — an event that&apos;s underway shows <strong>Live</strong> or <strong>Today</strong>, otherwise it shows where your registration stands. Open one and the <strong>full record opens right inside your Premium portal</strong> — the live schedule and scores, your status, how to pay, roster submission, and the organizer&apos;s announcements. You don&apos;t leave your portal to follow a tournament.</p>
           <p>Open a tournament record to see where your team stands and when it plays. The organizer running that tournament controls its schedule, brackets, and standings; your portal shows you the live view.</p>
           <p>Once the organizer <strong>accepts</strong> your team, the record adds a <strong>What&apos;s next</strong> checklist and a <strong>Payment</strong> section. If there&apos;s an entry fee to pay, the organizer&apos;s instructions — how and where to send it — appear right there under <strong>How to pay</strong>, so you don&apos;t have to dig back through your acceptance email. Your games appear automatically once the organizer publishes the schedule.</p>
         </>
@@ -309,11 +309,11 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-premium-tournaments-where',
           question: 'Where are my tournaments in the Premium portal?',
-          answerText: 'On Coaches Portal Premium, open the Tournaments item in your sidebar. It lists every tournament your team is entered in with live status (a live event shows Live or Today). Open one to see the full record inside your portal — live schedule and scores, your status, how to pay, roster submission, and the organizer’s announcements. You never get sent back to the free portal.',
+          answerText: 'On Premium Coaches Portal, open the Tournaments item in your sidebar. It lists every tournament your team is entered in with live status (a live event shows Live or Today). Open one to see the full record inside your portal — live schedule and scores, your status, how to pay, roster submission, and the organizer’s announcements. You never get sent back to the free portal.',
           keywords: ['premium tournaments', 'where tournaments', 'tournaments sidebar', 'live tournament', 'tournament record premium'],
           popular: true,
           answer: (
-            <p>On <strong>Coaches Portal Premium</strong>, open the <strong>Tournaments</strong> item in your sidebar. It lists every tournament your team is entered in with live status (a live event shows <strong>Live</strong> or <strong>Today</strong>). Open one to see the full record inside your portal — live schedule and scores, your status, how to pay, roster submission, and the organizer&apos;s announcements. You&apos;re never sent back to the free portal.</p>
+            <p>On <strong>Premium Coaches Portal</strong>, open the <strong>Tournaments</strong> item in your sidebar. It lists every tournament your team is entered in with live status (a live event shows <strong>Live</strong> or <strong>Today</strong>). Open one to see the full record inside your portal — live schedule and scores, your status, how to pay, roster submission, and the organizer&apos;s announcements. You&apos;re never sent back to the free portal.</p>
           ),
         },
         {
@@ -388,14 +388,14 @@ const coachesHelp: HelpPageContent = {
     },
     {
       id: 'premium',
-      group: 'Coaches Portal Premium',
-      heading: 'What Coaches Portal Premium adds',
+      group: 'Premium Coaches Portal',
+      heading: 'What Premium Coaches Portal adds',
       summary: 'The serious-operator upgrade — game-day tools, automation, budget, and documents.',
       keywords: ['coaches portal premium', 'upgrade', 'premium', 'paid coaches portal'],
       searchText: 'coaches portal premium upgrade paid lineup builder attendance dues automation team budget document storage carries over organization joins start next season new season division team settings multi season year over year player profile positions best okay never ranked positions never play position preferences pitcher pitching depth chart ace pitcher rank max innings arm care innings cap this player pitches medical allergies emergency contact handedness bats throws jersey size attendance snapshot per player dues roster export pdf excel csv',
       content: (
         <>
-          <p><strong>Coaches Portal Premium</strong> keeps everything in your free portal and adds the tools for running a full competitive season:</p>
+          <p><strong>Premium Coaches Portal</strong> keeps everything in your free portal and adds the tools for running a full competitive season:</p>
           <ul>
             <li>A full <strong>player profile</strong> for everyone on your roster — positions, handedness and jersey size, allergies/medical notes and an emergency contact, plus that player&apos;s attendance and dues at a glance.</li>
             <li>Attendance at every practice and game, and game-day lineups and batting orders.</li>
@@ -463,7 +463,7 @@ const coachesHelp: HelpPageContent = {
     },
     {
       id: 'premium-portal-tour',
-      group: 'Coaches Portal Premium',
+      group: 'Premium Coaches Portal',
       heading: 'Getting around your Premium portal',
       summary: 'Where everything lives on Premium: the sidebar sections, the setup dashboard, and the at-a-glance snapshot.',
       keywords: ['premium portal', 'sidebar', 'navigation', 'dashboard', 'overview', 'season setup', 'at a glance', 'snapshot', 'tooltips', 'help button', 'where is', 'required', 'optional', 'skip', 'skip step', 'progress bar', 'depth chart', 'squad', 'grouped menu', 'staff', 'tryouts', 'menu sections'],
@@ -494,14 +494,14 @@ const coachesHelp: HelpPageContent = {
     },
     {
       id: 'recipe-premium-schedule',
-      group: 'Coaches Portal Premium',
+      group: 'Premium Coaches Portal',
       heading: 'Tournaments, games & calendar views (Premium)',
       summary: 'On Premium your schedule handles every event type, spreads multi-day tournaments across all their days, and keeps tournament games grouped under their tournament.',
       keywords: ['premium schedule', 'tournament', 'multi-day tournament', 'tournament game', 'calendar view', 'week view', 'month view', 'game slot', 'event types'],
       searchText: 'premium schedule calendar list week month view multi day tournament spans every day date range day 1 of 3 add event types league game tournament game scrimmage practice team event tournament which tournament attach group game slot orphaned loose all day event sorts first nested add game phone mobile month view colored strips plus more N more day list tap open',
       content: (
         <>
-          <p>On <strong>Coaches Portal Premium</strong>, your <strong>Schedule</strong> grows from the free practice/game/event list into a full team calendar with <strong>List</strong>, <strong>Week</strong>, and <strong>Month</strong> views and more event types: league games, tournament games, scrimmages, practices, team events, and multi-day tournaments.</p>
+          <p>On <strong>Premium Coaches Portal</strong>, your <strong>Schedule</strong> grows from the free practice/game/event list into a full team calendar with <strong>List</strong>, <strong>Week</strong>, and <strong>Month</strong> views and more event types: league games, tournament games, scrimmages, practices, team events, and multi-day tournaments.</p>
           <p>On a phone, the <strong>Month</strong> view shows each day&apos;s events as small colored strips (up to three); if a day has more, tap <strong>&ldquo;+ N more&rdquo;</strong> to open that day&apos;s full list.</p>
           <p><strong>Multi-day tournaments span the calendar.</strong> Give a <strong>Tournament</strong> a start and end date and it shows on <em>every</em> day it runs — each day in the week view is labelled &ldquo;Day 1/3&rdquo;, &ldquo;Day 2/3&rdquo;, and the month view shows it as one connected run (later days carry a small &ldquo;&rsaquo;&rdquo; marker). In the list it reads as a date range (e.g. &ldquo;Jul 1–3&rdquo;). All-day tournaments sort to the top of each day, above your timed games and practices.</p>
           <p><strong>Tournament games stay grouped under their tournament.</strong> When you add an event, <strong>Game (Tournament)</strong> sits tucked under <strong>Tournament</strong> in the picker. Adding one asks <strong>which tournament</strong> it belongs to and files it there, so you never end up with a loose game tied to nothing. You can also open a tournament and use <strong>+ Add game</strong> to drop a game straight onto its days. If you haven&apos;t created a tournament yet, the form points you to add one first.</p>
@@ -534,7 +534,7 @@ const coachesHelp: HelpPageContent = {
     },
     {
       id: 'recipe-game-day-details',
-      group: 'Coaches Portal Premium',
+      group: 'Premium Coaches Portal',
       heading: 'Game-day details: arrival, field, uniform, links & the map (Premium)',
       summary: 'Add an arrival/call time, diamond/field number, uniform, and resource links to an event — and split the place name from a street address that powers a tap-to-open map.',
       keywords: ['arrival time', 'call time', 'be there by', 'field number', 'diamond number', 'uniform', 'jersey', 'location', 'address', 'google maps', 'map link', 'recent locations', 'links', 'attach link', 'resources'],
@@ -586,7 +586,7 @@ const coachesHelp: HelpPageContent = {
     },
     {
       id: 'recipe-attendance',
-      group: 'Coaches Portal Premium',
+      group: 'Premium Coaches Portal',
       heading: 'Taking attendance (Premium)',
       summary: 'Open an event to set each player to In, Late, Out, or No reply with an RSVP button — at-a-glance status symbols, quick filters, and an optional note. Anyone marked Out drops out of that game’s lineup.',
       keywords: ['attendance', 'who is coming', 'in out late', 'no reply', 'mark attendance', 'rsvp', 'edit rsvp', 'status symbol', 'roster check', 'attendance note', 'all in', 'not playing'],
@@ -686,7 +686,7 @@ const coachesHelp: HelpPageContent = {
     },
     {
       id: 'recipe-start-next-season',
-      group: 'Coaches Portal Premium',
+      group: 'Premium Coaches Portal',
       heading: 'How to start your next season & set your division (Premium)',
       summary: 'Roll your team into a new season yourself — your roster comes with you, the schedule starts fresh, and last year becomes read-only history.',
       keywords: ['start next season', 'new season', 'next season', 'roll over season', 'season rollover', 'team settings', 'division', 'edit division', 'past seasons', 'premium'],
@@ -729,7 +729,7 @@ const coachesHelp: HelpPageContent = {
     },
     {
       id: 'recipe-track-documents',
-      group: 'Coaches Portal Premium',
+      group: 'Premium Coaches Portal',
       heading: 'Player documents (Premium)',
       summary: 'Track waivers and forms with org-wide and team templates — available in the Premium team workspace.',
       keywords: ['documents', 'waiver', 'medical form', 'templates', 'completion', 'premium'],
@@ -748,7 +748,7 @@ const coachesHelp: HelpPageContent = {
     },
     {
       id: 'recipe-link-parent-org',
-      group: 'Coaches Portal Premium',
+      group: 'Premium Coaches Portal',
       heading: 'Linking your team to a parent organization (Premium)',
       summary: 'Connect a Premium team to a club or league for recognition, or hand it over entirely.',
       keywords: ['link organization', 'parent org', 'club', 'basic visibility', 'ownership transfer', 'premium', 'settings', 'invite'],

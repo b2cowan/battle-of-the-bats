@@ -12,7 +12,7 @@ type PageProps = {
 
 export const metadata = {
   title: 'Claim Coaches Portal - FieldLogicHQ',
-  description: 'Activate Coaches Portal Premium from a tournament team claim link.',
+  description: 'Activate Premium Coaches Portal from a tournament team claim link.',
 };
 
 function ClaimUnavailable({ title, body }: { title: string; body: string }) {
@@ -26,7 +26,7 @@ function ClaimUnavailable({ title, body }: { title: string; body: string }) {
           <div className={styles.pricePanel}>
             <div>
               <p className={styles.priceLabel}>Next step</p>
-              <p className={styles.price}>Start Coaches Portal Premium</p>
+              <p className={styles.price}>Start Premium Coaches Portal</p>
             </div>
           </div>
           <Link href={COACHES_START_PATH} className={styles.inlineAction}>Open Coaches Portal signup</Link>

@@ -324,7 +324,7 @@ async function findReactivationWorkspace(parsed: TeamCheckoutMetadata): Promise<
     throw new TeamWorkspaceProvisioningError('reactivation_workspace_not_found', 'The Coaches Portal workspace to reactivate was not found.');
   }
   if (org.account_kind !== 'team_workspace' && org.plan_id !== 'team') {
-    throw new TeamWorkspaceProvisioningError('invalid_reactivation_workspace', 'Only Coaches Portal Premium workspaces can be reactivated here.');
+    throw new TeamWorkspaceProvisioningError('invalid_reactivation_workspace', 'Only Premium Coaches Portal workspaces can be reactivated here.');
   }
 
   const { data: member, error: memberError } = await supabaseAdmin

@@ -7,7 +7,7 @@ import CoachStartInterest from '@/components/coaches/CoachStartInterest';
 
 export const metadata = {
   title: 'Coaches Portal - FieldLogicHQ',
-  description: 'Activate Coaches Portal Premium for one competitive team, with coach-scoped roster, schedule, documents, dues, budget, and lineup tools.',
+  description: 'Activate Premium Coaches Portal for one competitive team, with coach-scoped roster, schedule, documents, dues, budget, and lineup tools.',
 };
 
 export default async function CoachesPortalStartPage({

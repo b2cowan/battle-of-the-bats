@@ -1231,7 +1231,7 @@ export default function DevDashboard() {
       key:         'team-workspace',
       endpoint:    '/api/dev/seed/team-workspace',
       icon:        CreditCard,
-      title:       'Coaches Portal Premium',
+      title:       'Premium Coaches Portal',
       description: 'A self-contained standalone Team workspace with its own org, rep team, season, coach, entitlement, and billing ledger',
       creates:     'dev-standalone-team org + one Premium portal',
       kind:        'standalone' as 'additive' | 'standalone' | undefined,

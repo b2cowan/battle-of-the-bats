@@ -4250,6 +4250,71 @@ export async function getRepTeamStaffForYear(
   });
 }
 
+export interface OrgAssistantCoach {
+  coachId: string;
+  teamId: string;
+  teamName: string;
+  teamGroupId: string | null;
+  programYearId: string;
+  programYearName: string;
+  userId: string;
+  displayName: string | null;
+  email: string | null;
+  capabilities: AssistantCapabilityGrants | null;
+}
+
+/** Every ASSISTANT coach across an org's draft/active seasons — the admin oversight list.
+ *  Enriched with team + name/email + their capability grants. Head coaches are excluded. */
+export async function getOrgAssistantCoaches(orgId: string): Promise<OrgAssistantCoach[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_coaches')
+    .select(`
+      id, team_id, program_year_id, user_id, capabilities,
+      rep_teams!team_id ( name, group_id ),
+      rep_program_years!program_year_id ( name, status )
+    `)
+    .eq('org_id', orgId)
+    .eq('coach_role', 'assistant_coach');
+  if (error) throw error;
+
+  const rows = (data ?? []).filter((r: any) => {
+    const s = r.rep_program_years?.status;
+    return s === 'draft' || s === 'active';
+  });
+  if (rows.length === 0) return [];
+
+  const userIds = [...new Set(rows.map((r: any) => r.user_id as string))];
+  const { data: memberRows } = await supabaseAdmin
+    .from('organization_members')
+    .select('user_id, display_name')
+    .eq('organization_id', orgId)
+    .in('user_id', userIds);
+  const nameByUser = new Map((memberRows ?? []).map((m: any) => [m.user_id as string, (m.display_name as string | null) ?? null]));
+
+  // Resolve email per unique user (bounded — a handful of assistants per org). Avoids listUsers()
+  // pagination truncation on large platforms; email is display-only and best-effort.
+  const emailByUser = new Map<string, string | null>();
+  await Promise.all(userIds.map(async (uid) => {
+    try {
+      const { data } = await supabaseAdmin.auth.admin.getUserById(uid);
+      emailByUser.set(uid, data.user?.email ?? null);
+    } catch { emailByUser.set(uid, null); }
+  }));
+
+  return rows.map((r: any) => ({
+    coachId: r.id as string,
+    teamId: r.team_id as string,
+    teamName: (r.rep_teams?.name as string | null) ?? '',
+    teamGroupId: (r.rep_teams?.group_id as string | null) ?? null,
+    programYearId: r.program_year_id as string,
+    programYearName: (r.rep_program_years?.name as string | null) ?? '',
+    userId: r.user_id as string,
+    displayName: nameByUser.get(r.user_id) ?? null,
+    email: emailByUser.get(r.user_id) ?? null,
+    capabilities: (r.capabilities as AssistantCapabilityGrants | null) ?? null,
+  }));
+}
+
 export interface CoachingAssignment {
   coachId: string;
   teamId: string;

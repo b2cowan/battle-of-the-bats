@@ -503,6 +503,151 @@
   .snapshotCardWide { grid-column: 1 / -1; order: -1; }
 }
 
+/* ── Phase-adaptive "Right now" anchor (Overview top) ──────────────────────
+   Rendered in the elevated coach card language — NOT a hero (no hero headers
+   inside operating tools, 2026-06-29). Ports the TeamHQ phase LOGIC, not its
+   celebratory hero SKIN (design_decisions 2026-07-04). Per-phase left accent. */
+.nowCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1.1rem 1.25rem;
+  margin: 0 0 1.5rem;
+  background: var(--white-8);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm), var(--highlight-top);
+}
+.nowPreseason { border-left-color: var(--blueprint-blue); }
+.nowInSeason  { border-left-color: var(--blueprint-blue); }
+.nowGameDay   { border-left-color: var(--success); }
+.nowResult    { border-left-color: var(--gold); }
+
+.nowEyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  color: var(--white-45);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.nowEyebrow svg { color: var(--white-45); }
+.nowEyebrowCount { margin-left: auto; color: var(--white-40); font-weight: 700; }
+.nowLiveDot { color: var(--success); font-size: 0.7rem; }
+
+.nowHeadline {
+  margin: 0.1rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+  color: var(--white-90);
+  line-height: 1.15;
+}
+.nowRecord { font-size: 2rem; letter-spacing: 0.01em; }
+.nowMeta { margin: 0; color: var(--white-55); font-size: 0.9rem; }
+
+.nowScoreline {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--white-90);
+}
+.nowScoreResult { color: var(--white-55); font-size: 0.9rem; font-weight: 700; }
+
+.nowDivider { height: 1px; background: rgba(var(--blueprint-blue-rgb), 0.18); margin: 0.5rem 0 0.1rem; }
+
+.nowStatsRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--white-70);
+}
+.nowStatIn { color: var(--success); font-family: var(--font-display); }
+.nowStatMuted { color: var(--white-45); font-weight: 600; }
+.nowStatOk { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--success); }
+.nowStatWarn { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--warning); }
+
+.nowMoneyAlert {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.15rem 0 0;
+  color: var(--danger);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.nowActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+}
+.nowSecondary {
+  color: var(--blueprint-blue);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.nowSecondary:hover { text-decoration: underline; }
+
+.nowBridge {
+  margin: 0.6rem 0 0;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  color: var(--white-45);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.nowBridge a { color: var(--blueprint-blue); text-decoration: none; }
+.nowBridge a:hover { text-decoration: underline; }
+
+/* Collapsed setup strip — the receded state once the roster (required) is in. */
+.setupStripCollapsed {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.9rem;
+  margin: 0 0 1.5rem;
+  background: var(--white-5);
+  border: 1px dashed rgba(var(--blueprint-blue-rgb), 0.35);
+  border-radius: var(--radius);
+  color: var(--white-55);
+  font-size: 0.82rem;
+}
+.setupStripIcon { color: var(--success); flex-shrink: 0; }
+.setupStripCollapsed strong { color: var(--white-80); font-weight: 800; }
+.setupStripLink {
+  margin-left: auto;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--blueprint-blue);
+  font: inherit;
+  font-weight: 700;
+}
+.setupStripLink:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .nowCard { padding: 0.9rem 1rem; margin-bottom: 1.1rem; }
+  .nowHeadline { font-size: 1.2rem; }
+  .nowRecord { font-size: 1.7rem; }
+}
+
 /* ── Contextual org-invite banner ───────────────────────────────────────── */
 .orgInviteBanner {
   display: flex;

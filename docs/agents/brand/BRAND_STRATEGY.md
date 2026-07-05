@@ -130,7 +130,7 @@ Always use the full plan name. Never abbreviate or invent a shorthand. **Canonic
 
 ## 6. Four Market Segments
 
-These are parallel offerings for different types of operators — not a seniority ladder. A coach buying the Coach Portal is not a "lower tier" than an org president on Club. Each segment has a distinct persona, pain point, and product.
+These are parallel offerings for different types of operators — not a seniority ladder. A coach buying the Coaches Portal is not a "lower tier" than an org president on Club. Each segment has a distinct persona, pain point, and product.
 
 ---
 
@@ -188,7 +188,7 @@ These are parallel offerings for different types of operators — not a seniorit
 
 ---
 
-### Segment 4 — Individual Head Coaches (Coach Portal)
+### Segment 4 — Individual Head Coaches (Coaches Portal)
 
 **Who they are**: Head coaches of a single rep team, operating independently of a parent organization — or in an org that hasn't adopted FieldLogicHQ yet. Managing their own roster, schedule, team budget, lineups, and documents. Motivated by what's best for their players and their own time.
 
@@ -196,9 +196,9 @@ These are parallel offerings for different types of operators — not a seniorit
 
 **Our promise**: Manage your team with the same tools org-level admins use — lineups, budgets, scheduling, documents — whether or not your organization is on FieldLogicHQ.
 
-**Plan**: Coach Portal standalone ($29/mo)
+**Plan**: Premium Coaches Portal standalone ($29/mo)
 
-**CTA**: "Express interest — be notified when the Coach Portal opens"
+**CTA**: "Express interest — be notified when the Coaches Portal opens"
 
 **The bridge message** — this is the critical copy element for this segment:
 
@@ -218,7 +218,7 @@ On Club-facing copy:
 On Coach-facing copy:
 > "Start independently with the standalone Premium Coaches Portal at $29/month — everything you need to run your team, whether or not your organization is on FieldLogicHQ. When your org joins Club, your portal is **included** in their plan: your account carries over and you stop paying the standalone rate."
 
-**Strategic note**: The Coach Portal is a genuine product, not a consolation prize. Copy must convey completeness and autonomy first, with the org-level bridge as a secondary note — not the headline.
+**Strategic note**: The Coaches Portal is a genuine product, not a consolation prize. Copy must convey completeness and autonomy first, with the org-level bridge as a secondary note — not the headline.
 
 ---
 
@@ -248,7 +248,7 @@ On Coach-facing copy:
 
 3. **Club includes house league.** Many clubs run rep teams and a house league. They do not pay for both Club and League. Club is the complete platform.
 
-4. **The Coach Portal is a standalone product.** It is not Club Lite. It is not a trial. It is the full team management product for coaches whose org isn't on FieldLogicHQ.
+4. **The Coaches Portal is a standalone product.** It is not Club Lite. It is not a trial. It is the full team management product for coaches whose org isn't on FieldLogicHQ.
 
 5. **Most Popular: Club.** Not because it's cheapest or in the middle, but because it returns the most volunteer hours. Copy should emphasize recovered time, not feature count.
 
@@ -267,7 +267,7 @@ The homepage's job is to help visitors recognize themselves and route to the rig
 /for-tournament-organizers      → Tournament segment page (live, fully purchasable)
 /for-leagues                    → League segment page (marketed live, interest CTA)
 /for-clubs                      → Club segment page (marketed live, interest CTA)
-/for-coaches                    → Coach Portal segment page (marketed live, interest CTA)
+/for-coaches                    → Coaches Portal segment page (marketed live, interest CTA)
 /pricing                        → Full 4-tier table + Club capacity-band row (Club / Club · Association) + coach standalone row
 /platform/[module]              → Module deep-dives (existing, keep as-is)
 /auth/signup                    → Tournament plan onboarding (default entry point)
@@ -286,7 +286,7 @@ The four entry points should appear prominently, above the fold, with a one-line
 ### "Express interest" pattern for unavailable segments
 
 For segments not yet open for purchase, use a consistent pattern:
-- Label: "Express interest — be notified when [League / Club / Coach Portal] opens"
+- Label: "Express interest — be notified when [League / Club / Coaches Portal] opens"
 - No waitlist queue language
 - No commitment implied
 - Captures email for launch notification
@@ -299,7 +299,7 @@ Tournaments are the primary acquisition channel. The funnel:
 
 1. **Org signs up for Tournament (free)** → first brand impression; must feel like a bigger platform, not just a bracket tool
 2. **During tournament** → contextual, non-intrusive discovery of other modules (in-app placement, not interruption)
-3. **Coaches use scorekeeping during tournament** → natural Coach Portal discovery moment; this is where coaches first interact with the FieldLogicHQ UI
+3. **Coaches use scorekeeping during tournament** → natural Coaches Portal discovery moment; this is where coaches first interact with the FieldLogicHQ UI
 4. **Post-tournament email** → "Your tournament wrapped. Here's what else FieldLogicHQ can handle for your organization this season."
 5. **Tournament organizer who is also an org president** → sees League and Club paths during onboarding; no hard push, but the paths are visible
 
@@ -345,7 +345,7 @@ Before publishing any public-facing copy, verify:
 - [ ] Contains no forbidden words (see Section 5)
 - [ ] Persona is clear — does this read like it was written for the specific audience?
 - [ ] Tiers are not presented as a seniority ladder (unless the copy is specifically about upgrading Tournament → Tournament Plus)
-- [ ] Coach Portal is positioned as a complete product, not a fallback
+- [ ] Coaches Portal is positioned as a complete product, not a fallback
 - [ ] No competitor names used
 - [ ] No unshipped features claimed as available
 

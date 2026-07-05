@@ -328,7 +328,7 @@ const platformAdminHelp: HelpPageContent = {
             <li>Enter a reason and click <strong>Confirm Transfer</strong>.</li>
             <li>Add an internal note on the <strong>Support</strong> tab recording who requested the change and why.</li>
           </ol>
-          <p>The selected member becomes the owner and <strong>all previous owners are demoted to admin</strong>. The change is audit-logged and cannot be reversed from this screen — to undo it, run another transfer. This is different from <em>Coaches Portal Ownership Transfers</em> on the same Support tab, which moves a Coaches Portal Premium team into an organization (see <em>How to complete Coaches Portal ownership transfer</em>).</p>
+          <p>The selected member becomes the owner and <strong>all previous owners are demoted to admin</strong>. The change is audit-logged and cannot be reversed from this screen — to undo it, run another transfer. This is different from <em>Coaches Portal Ownership Transfers</em> on the same Support tab, which moves a Premium Coaches Portal team into an organization (see <em>How to complete Coaches Portal ownership transfer</em>).</p>
         </>
       ),
       faqs: [
@@ -348,7 +348,7 @@ const platformAdminHelp: HelpPageContent = {
       id: 'team-ownership-transfer',
       group: 'Support SOP',
       heading: 'How to complete Coaches Portal ownership transfer',
-      summary: 'Finish a mutually approved Coaches Portal Premium transfer from the organization detail support workflow.',
+      summary: 'Finish a mutually approved Premium Coaches Portal transfer from the organization detail support workflow.',
       keywords: ['coaches portal ownership transfer', 'premium portal', 'org owned team', 'rep teams', 'platform assisted transfer'],
       searchText: 'complete coaches portal premium ownership transfer platform assisted org owned rep team roster documents accounting ledger',
       links: [
@@ -384,7 +384,7 @@ const platformAdminHelp: HelpPageContent = {
     {
       id: 'team-launch-readiness',
       group: 'Launch SOP',
-      heading: 'How to verify Coaches Portal Premium launch readiness',
+      heading: 'How to verify Premium Coaches Portal launch readiness',
       summary: 'Confirm Stripe prices, readiness checks, manual smokes, and customer-facing help before Premium launch.',
       keywords: ['coaches portal premium launch', 'stripe prices', 'readiness', 'coach checkout', 'club capacity bands', 'club association band'],
       searchText: 'coaches portal premium launch readiness Stripe price IDs sandbox live direct checkout Club capacity bands Club Association band retired org billed extra team per-team add-on cancellation past due mobile coach portal help documentation',
@@ -395,9 +395,9 @@ const platformAdminHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p>Use this before opening Coaches Portal Premium self-serve checkout or supporting the first external Premium customers.</p>
+          <p>Use this before opening Premium Coaches Portal self-serve checkout or supporting the first external Premium customers.</p>
           <ol>
-            <li>Confirm Stripe has sandbox and live recurring prices for direct Coaches Portal Premium at <strong>$29 CAD monthly</strong> and <strong>$290 CAD annual/seasonal</strong>.</li>
+            <li>Confirm Stripe has sandbox and live recurring prices for direct Premium Coaches Portal at <strong>$29 CAD monthly</strong> and <strong>$290 CAD annual/seasonal</strong>.</li>
             <li>Confirm Stripe has sandbox and live recurring prices for the two <strong>Club capacity bands</strong> — Club and Club&nbsp;·&nbsp;Association — each monthly and annual (Club Repackaging, 2026-06-22).</li>
             <li><strong>Retired:</strong> the org-billed &quot;$19/team&quot; Coaches Portal takeover and the &quot;Club extra rep team&quot; ($19/$190) add-on are gone — do not create or reuse those price IDs. A Club subscription includes the whole coaching staff up to its band cap, with no per-team fee.</li>
             <li>Paste each <code>price_...</code> ID into the matching sandbox or live row in <strong>Stripe Prices</strong> or <strong>Plans &amp; Pricing</strong>.</li>
@@ -405,7 +405,7 @@ const platformAdminHelp: HelpPageContent = {
             <li>Complete manual sandbox smokes for direct Coaches Portal checkout, tournament-claim checkout, cancellation or past-due simulation, and Club / Club&nbsp;·&nbsp;Association band checkout.</li>
             <li>Ask the product owner to visually check the public pricing page, Coaches Portal signup page, and mobile Coaches Portal flows.</li>
           </ol>
-          <p>Customer-facing help should explain Coaches Portal Premium, season rollover, the one free-tier local tournament slot, Basic org linking, billing transfer, ownership transfer, and the difference between direct Premium, org-billed Premium, Club included teams, and Club extra teams.</p>
+          <p>Customer-facing help should explain Premium Coaches Portal, season rollover, the one free-tier local tournament slot, Basic org linking, billing transfer, ownership transfer, and the difference between direct Premium, org-billed Premium, Club included teams, and Club extra teams.</p>
         </>
       ),
       faqs: [

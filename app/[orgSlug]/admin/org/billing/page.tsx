@@ -120,7 +120,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
 
 const PLAN_META_COPY: Record<OrgPlan, string> = {
   tournament:      "You're on the free starter plan. Upgrade when you need custom registration, exports, payment reminders, waitlist promotion, branding, or repeat-event tools.",
-  team:            "You're on Coaches Portal Premium. Your team tools and one free-tier tournament slot are active.",
+  team:            "You're on Premium Coaches Portal. Your team tools and one free-tier tournament slot are active.",
   tournament_plus: "You're on Tournament Plus. Your tournament operations tools are active; League Plus and Club are coming soon while those broader workflows are refined.",
   league:          "You're on League Plus. Need accounting or rep team tools? Club is the complete platform.",
   club:            "You're on the complete Club platform. Your whole coaching staff is included, up to 15 teams.",
@@ -349,7 +349,7 @@ export default function BillingPage() {
       setSuccessTitle('Account suspended');
       setSuccessMsg(
         currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team'
-          ? 'Coaches Portal Premium is inactive. Basic tournament records remain available and premium team data is retained for 90 days.'
+          ? 'Premium Coaches Portal is inactive. Basic tournament records remain available and premium team data is retained for 90 days.'
           : 'Public pages and modules have been shut down. Data is retained for 90 days.'
       );
       setSuccessOpen(true);
@@ -401,9 +401,9 @@ export default function BillingPage() {
   const canManageBilling = userRole === 'owner';
   const subscriptionTitle = isTeamWorkspaceBilling ? 'Coaches Portal billing' : 'Subscription';
   const subscriptionSub = isTeamWorkspaceBilling
-    ? 'Manage Coaches Portal Premium billing and reactivation'
+    ? 'Manage Premium Coaches Portal billing and reactivation'
     : 'Manage your plan and payment method';
-  const cancelReviewTitle = isTeamWorkspaceBilling ? 'Cancel Coaches Portal Premium' : 'Cancel account';
+  const cancelReviewTitle = isTeamWorkspaceBilling ? 'Cancel Premium Coaches Portal' : 'Cancel account';
   const cancelWarningCopy = isTeamWorkspaceBilling
     ? `Premium tools will become inactive and premium team data is retained for ${cancelPreflight?.retentionDays ?? 90} days. Basic tournament records stay available in Coaches Portal.`
     : `Cancellation suspends the full account. Public pages and modules shut down, and data is retained for ${cancelPreflight?.retentionDays ?? 90} days.`;
@@ -479,7 +479,7 @@ export default function BillingPage() {
 
         <p className={`${styles.statusNote} ${styles.statusNoteDanger}`}>
           {isTeamWorkspaceBilling
-            ? 'Your Coaches Portal Premium subscription has been canceled. Premium tools are inactive, premium team data remains in retention, and Basic tournament records stay available.'
+            ? 'Your Premium Coaches Portal subscription has been canceled. Premium tools are inactive, premium team data remains in retention, and Basic tournament records stay available.'
             : 'Your subscription has been canceled. Public pages and modules are suspended while retained data remains restorable during the retention window.'}
         </p>
 

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Users, X, Archive, Link2, DollarSign, ArrowLeftRight, Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, UserCog, X, Archive, Link2, DollarSign, ArrowLeftRight, Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -330,6 +330,20 @@ export default function RepTeamsPage() {
         >
           <ArrowLeftRight size={15} style={{ color: '#facc15' }} />
           Payment Requests
+        </Link>
+        <Link
+          href={`${base}/rep-teams/assistant-coaches`}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+            background: 'var(--white-5)',
+            border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
+            borderRadius: '2px', padding: '0.6rem 1rem',
+            color: 'var(--white-70)', fontSize: '0.88rem', fontWeight: 600,
+            textDecoration: 'none',
+          }}
+        >
+          <UserCog size={15} style={{ color: 'var(--logic-lime)' }} />
+          Assistant Coaches
         </Link>
       </div>
 

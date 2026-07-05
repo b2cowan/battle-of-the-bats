@@ -139,6 +139,35 @@ export async function listOpenAssistantInvitesForTeam(
   }));
 }
 
+/** Outstanding invites across a whole org (admin oversight), joined to team name + group for scoping. */
+export async function listOpenAssistantInvitesForOrg(
+  orgId: string,
+): Promise<{ id: string; teamId: string; teamName: string | null; teamGroupId: string | null; invitedEmail: string; status: string; expiresAt: string; createdAt: string }[]> {
+  const { data } = await supabaseAdmin
+    .from('assistant_invite_tokens')
+    .select('id, team_id, invited_email, status, expires_at, created_at, rep_teams!team_id ( name, group_id )')
+    .eq('org_id', orgId)
+    .in('status', ['pending', 'pending_approval'])
+    .order('created_at', { ascending: false });
+  return (data ?? []).map((r: any) => ({
+    id: r.id, teamId: r.team_id, teamName: r.rep_teams?.name ?? null, teamGroupId: r.rep_teams?.group_id ?? null,
+    invitedEmail: r.invited_email, status: r.status, expiresAt: r.expires_at, createdAt: r.created_at,
+  }));
+}
+
+/** Fetch one invite by id (admin verification before approve/decline). */
+export async function getAssistantInviteById(
+  inviteId: string,
+): Promise<{ id: string; orgId: string; teamId: string; invitedEmail: string; status: string } | null> {
+  const { data } = await supabaseAdmin
+    .from('assistant_invite_tokens')
+    .select('id, org_id, team_id, invited_email, status')
+    .eq('id', inviteId)
+    .maybeSingle<{ id: string; org_id: string; team_id: string; invited_email: string; status: string }>();
+  if (!data) return null;
+  return { id: data.id, orgId: data.org_id, teamId: data.team_id, invitedEmail: data.invited_email, status: data.status };
+}
+
 /** Read the invite behind a raw token (for the accept page prefill). Returns null when missing. */
 export async function getAssistantInviteByToken(rawToken: string): Promise<{
   status: string; teamName: string | null; orgName: string | null; invitedByName: string | null;

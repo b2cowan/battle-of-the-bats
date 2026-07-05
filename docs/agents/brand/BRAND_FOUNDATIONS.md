@@ -597,7 +597,7 @@ Already partially built (see `memory/project_founding_season_email.md`). Goal: g
 **Sequence 2: Post-tournament wrap**  
 Trigger: tournament marked as complete. One email, sent 24–48 hours after the tournament ends.
 
-Core message: "Your tournament ran. Your history is here. Here's what else your org could handle from FieldLogicHQ this season." Includes module discovery (House League if applicable, Coach Portal for any coaches from the event). Includes Founding Season reminder if still active.
+Core message: "Your tournament ran. Your history is here. Here's what else your org could handle from FieldLogicHQ this season." Includes module discovery (House League if applicable, Coaches Portal for any coaches from the event). Includes Founding Season reminder if still active.
 
 **Sequence 3: Founding Season close (November–December 2026)**  
 Trigger: [specific date, likely November 1 and December 1]. Sent to everyone who signed up but hasn't yet activated Tournament Plus.

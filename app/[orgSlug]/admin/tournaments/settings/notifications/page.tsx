@@ -6,6 +6,7 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { TOURNAMENT_EVENT_TYPES, NOTIFICATION_EVENT_LABELS, NOTIFICATION_EVENT_DESCRIPTIONS, PUSH_DEFAULT_ON_EVENTS } from '@/lib/notification-labels';
 import { hasPlanFeature } from '@/lib/plan-features';
+import PushDeviceTester from '@/components/notifications/PushDeviceTester';
 import type { NotificationEventType, NotificationPreference } from '@/lib/types';
 import styles from './notifications.module.css';
 
@@ -291,6 +292,9 @@ export default function TournamentNotificationPreferencesPage() {
           Applies to all notifications on this page. Push requires your browser to grant notification permission.
         </p>
       </div>
+
+      {/* Registered devices + send-test control */}
+      <PushDeviceTester />
 
       {/* Master mute card */}
       <div className={`${styles.muteCard} ${isMuted ? styles.muteCardActive : ''}`}>

@@ -7,7 +7,7 @@ import styles from './CoachStartInterest.module.css';
 /**
  * Express-interest capture for the GATED /coaches/start (free-tier Coaches Phase 5m, J5-051).
  *
- * Coaches Portal Premium self-serve checkout isn't open yet (the `team` plan is gated). Instead of
+ * Premium Coaches Portal self-serve checkout isn't open yet (the `team` plan is gated). Instead of
  * a disabled checkout form (a dead-end), the gated state captures a real lead via the shared
  * `/api/early-access` endpoint (featuresInterested: ['coach_portal']) — the single repaired
  * destination all "express interest" labels point to (hub card, afterglow, results email). Works
@@ -69,7 +69,7 @@ export default function CoachStartInterest({ defaultName = '', defaultEmail = ''
           <div className={styles.savedIcon}><Check size={22} aria-hidden /></div>
           <h1 className={styles.title}>You&apos;re on the list</h1>
           <p className={styles.lead}>
-            Thanks — we&apos;ll reach out when self-serve Coaches Portal Premium opens. Your free Coaches
+            Thanks — we&apos;ll reach out when self-serve Premium Coaches Portal opens. Your free Coaches
             Portal (roster, schedule, and team comms) stays available in the meantime.
           </p>
         </div>
@@ -80,7 +80,7 @@ export default function CoachStartInterest({ defaultName = '', defaultEmail = ''
   return (
     <div className={styles.wrap}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Coaches Portal Premium</h1>
+        <h1 className={styles.title}>Premium Coaches Portal</h1>
         <p className={styles.lead}>
           Self-serve signup isn&apos;t open yet. Tell us you&apos;re interested and we&apos;ll be in touch — no
           commitment, and your free Coaches Portal stays free.

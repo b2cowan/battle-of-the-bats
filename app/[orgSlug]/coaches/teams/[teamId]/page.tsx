@@ -3,9 +3,10 @@ import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
-import { ArrowRight, Building2, Cake, Calendar, CheckCircle2, Circle, DollarSign, MinusCircle, Trophy, Users, Wallet } from 'lucide-react';
+import { ArrowRight, Building2, Cake, Calendar, CheckCircle2, Circle, DollarSign, MinusCircle, TriangleAlert, Trophy, Users, Wallet } from 'lucide-react';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
 import SeasonRecordWidget from '@/components/coaches/SeasonRecordWidget';
+import { deriveRepPhase } from '@/lib/coach-rep-phase';
 import HelpButton from '@/components/help/HelpButton';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
@@ -93,6 +94,10 @@ export default function TeamOverviewPage({
   const [nextLineupReady, setNextLineupReady] = useState<boolean | null>(null);
   const [duesOutstanding, setDuesOutstanding] = useState<number | null>(null);
   const [duesOverdueCount, setDuesOverdueCount] = useState(0);
+  // Players who have paid NOTHING toward their dues (zero-paid) — distinct from "overdue".
+  const [duesUnpaidCount, setDuesUnpaidCount] = useState(0);
+  // The receding setup strip can expand back to the full checklist ("Review →").
+  const [setupExpanded, setSetupExpanded] = useState(false);
   // Paid vs total dues installments → the Dues snapshot mini-gauge.
   const [duesProgress, setDuesProgress] = useState<{ paid: number; total: number } | null>(null);
   // Season budget vs actual spend → Budget tile.
@@ -193,10 +198,20 @@ export default function TeamOverviewPage({
         const totalOutstanding = players.reduce((s, p) => s + (p.outstanding ?? 0), 0);
         const today = new Date(); today.setHours(0, 0, 0, 0);
         const overdue = players.reduce((n, p) => n + (p.installments ?? []).filter(i => !i.paidAt && new Date(`${i.dueDate}T00:00:00`) < today).length, 0);
+        // "Who's paid nothing" — a player who owes dues but has zero payments recorded.
+        // Distinct from "overdue" (a specific installment past its due date): a coach wants
+        // to know who hasn't started paying at all, not just which instalments slipped.
+        const unpaid = players.reduce((n, p) => {
+          const insts = p.installments ?? [];
+          const hasDues = insts.length > 0 || (p.outstanding ?? 0) > 0;
+          const paidNothing = !insts.some(i => i.paidAt);
+          return n + (hasDues && paidNothing ? 1 : 0);
+        }, 0);
         let paidInst = 0; let totalInst = 0;
         players.forEach(p => (p.installments ?? []).forEach(i => { totalInst += 1; if (i.paidAt) paidInst += 1; }));
         setDuesOutstanding(Math.round(totalOutstanding * 100) / 100);
         setDuesOverdueCount(overdue);
+        setDuesUnpaidCount(unpaid);
         setDuesProgress(totalInst > 0 ? { paid: paidInst, total: totalInst } : null);
       } else {
         setDuesOutstanding(null);
@@ -204,6 +219,7 @@ export default function TeamOverviewPage({
         // Reset the overdue count too, else a prior success could leave the Dues card
         // tinted danger ("—" in red) after a later dues-only fetch failure.
         setDuesOverdueCount(0);
+        setDuesUnpaidCount(0);
       }
     } catch (error: unknown) {
       setSetupError(errorMessage(error, 'Setup status could not be loaded'));
@@ -420,11 +436,21 @@ export default function TeamOverviewPage({
     {
       key: 'lineups',
       label: 'Prepare game lineups',
-      detail: setupStats ? `${setupStats.gameCount} game${setupStats.gameCount === 1 ? '' : 's'} or scrimmage${setupStats.gameCount === 1 ? '' : 's'}` : 'Game status',
-      desc: 'Once a game is on the calendar, set the batting order and field positions before game day.',
-      action: 'Add a game',
+      // Honest completion: DONE only when a lineup is actually saved for the next game —
+      // not merely because a game exists on the calendar (the old `gameCount > 0` check read
+      // "Done" while no lineup was ever built, hiding the premium lineup builder). `nextLineupReady`
+      // is next-game-scoped (null when the next event isn't a game), so this can under-report if a
+      // later game has a lineup but the immediate next event is a practice — an acceptable, honest
+      // false-negative on a skippable step vs. the old false-positive.
+      detail: nextLineupReady === true
+        ? 'Lineup set for your next game'
+        : (setupStats?.gameCount ?? 0) > 0 ? 'Your next game needs a lineup' : 'No games scheduled yet',
+      desc: (setupStats?.gameCount ?? 0) > 0
+        ? 'Set the batting order and field positions for your next game before game day.'
+        : 'Add a game to your schedule, then set the batting order and field positions before game day.',
+      action: (setupStats?.gameCount ?? 0) > 0 ? 'Set lineup' : 'Add a game',
       href: `${base}/schedule`,
-      complete: (setupStats?.gameCount ?? 0) > 0,
+      complete: nextLineupReady === true,
       group: 'optional',
       help: { title: 'Game lineups', body: 'Open a game from the Schedule to set the batting order and positions per inning, then print or share the lineup card. Needs at least one game on the calendar first.' },
     },
@@ -454,10 +480,6 @@ export default function TeamOverviewPage({
   // step is done-or-skipped, so the coach explicitly clears each optional step.
   const requiredDone = coreItems.every(item => item.complete);
   const allSatisfied = visibleSetupItems.every(isSatisfied);
-  // Hold the panel until the setup status is actually known — otherwise a still-loading page
-  // computes "incomplete" (roster/optional default to not-done) and flashes the setup panel
-  // before the live dashboard. The snapshot tiles below already show their own loading state.
-  const showSetupPanel = !setupLoading && !allSatisfied;
 
   // While the roster is missing, lead with the "build your roster" guidance; after that
   // the remaining items are all optional, so the header just labels them as such.
@@ -518,7 +540,11 @@ export default function TeamOverviewPage({
           : duesOutstanding > 0 ? 'outstanding' : 'nothing owed',
       href: `${base}/accounting`,
       tone: (duesOverdueCount > 0 ? 'danger' : 'default') as 'default' | 'danger',
-      flag: null as { text: string; tone: 'ok' | 'warn' } | null,
+      // "N unpaid" = players who've paid nothing at all — the coach's real "who do I chase"
+      // question, surfaced on the tile (separate from the overdue count in the sub line).
+      flag: (!setupLoading && duesUnpaidCount > 0)
+        ? { text: `${duesUnpaidCount} unpaid`, tone: 'warn' as 'ok' | 'warn' }
+        : null,
       headcount: null as { in: number; late: number; out: number; noReply: number } | null,
       // Paid vs total installments collected this season.
       progress: (!setupLoading && duesProgress)
@@ -623,6 +649,60 @@ export default function TeamOverviewPage({
     );
   };
 
+  // ── Phase-adaptive "Right now" anchor + graceful setup recede ─────────────
+  // Finalized (result set, non-cancelled) games drive the record + the result phase.
+  const finalizedGames = seasonGames.filter(e => e.result && e.status !== 'cancelled');
+  const hasFinalizedGame = finalizedGames.length > 0;
+  const nextIsGame = !!nextEvent && GAME_EVENT_TYPES.includes(nextEvent.eventType);
+  const phase = deriveRepPhase({
+    programYearStatus: assignment.programYearStatus,
+    rosterCount: setupStats?.activeRosterCount ?? 0,
+    nextEvent: nextEvent ? { eventType: nextEvent.eventType, startsAt: nextEvent.startsAt } : null,
+    nextEventDays,
+    liveNow: Boolean(tournaments?.liveNow),
+    hasFinalizedGame,
+  });
+  // Season record for the afterglow headline — default categories (league + tournament,
+  // scrimmage excluded), matching SeasonRecordWidget's default so the two never disagree.
+  const recordGames = finalizedGames.filter(e => e.eventType !== 'scrimmage');
+  const resultRecord = {
+    w: recordGames.filter(e => e.result === 'win').length,
+    l: recordGames.filter(e => e.result === 'loss').length,
+    t: recordGames.filter(e => e.result === 'tie').length,
+  };
+  const lastFinalized = [...finalizedGames].sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime())[0] ?? null;
+  const resultLetter = (r?: string | null) => (r === 'win' ? 'W' : r === 'loss' ? 'L' : 'T');
+  const resultWord = (r?: string | null) => (r === 'win' ? 'Win' : r === 'loss' ? 'Loss' : r === 'tie' ? 'Tie' : '');
+  const formatResultLine = (e: RepTeamEvent) => {
+    const score = e.teamScore != null && e.opponentScore != null ? ` ${e.teamScore}–${e.opponentScore}` : '';
+    const opp = e.opponent ? ` ${e.homeAway === 'away' ? '@' : 'vs'} ${e.opponent}` : '';
+    return `${resultLetter(e.result)}${score}${opp}`;
+  };
+
+  // The first still-open setup step, for the pre-season anchor's single next action.
+  const nextSetupItem = [...coreItems, ...optionalItems].find(i => !i.complete && !isSkipped(i)) ?? null;
+  const optionalLeft = totalCount - satisfiedCount;
+  // Roster missing → the FULL setup panel is the top surface (no anchor). Once the roster
+  // is in → the phase anchor takes over and setup recedes to a thin, expandable strip.
+  const showFullSetupPanel = !setupLoading && !requiredDone;
+  const showAnchor = !setupLoading && requiredDone;
+  const showSetupStrip = !setupLoading && requiredDone && !allSatisfied && phase !== 'preseason';
+  const renderSetupPanel = showFullSetupPanel || (showSetupStrip && setupExpanded);
+
+  const attendanceTotal = nextAttendance ? nextAttendance.in + nextAttendance.late + nextAttendance.out + nextAttendance.noReply : 0;
+  const fieldOrLoc = nextEvent ? (nextEvent.fieldNumber || nextEvent.location || null) : null;
+  const nextTimeLabel = nextEvent ? new Date(nextEvent.startsAt).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }) : null;
+
+  // Phase-ordered tiles (most time-sensitive first for that phase).
+  const TILE_ORDER: Record<string, string[]> = {
+    preseason: ['roster', 'schedule', 'dues', 'budget', 'tournaments'],
+    in_season: ['dues', 'roster', 'budget', 'tournaments', 'schedule'],
+    game_day: ['dues', 'roster', 'budget', 'tournaments', 'schedule'],
+    result: ['tournaments', 'dues', 'roster', 'budget', 'schedule'],
+  };
+  const tileOrder = TILE_ORDER[phase] ?? TILE_ORDER.in_season;
+  const orderedCards = [...snapshotCards].sort((a, b) => tileOrder.indexOf(a.key) - tileOrder.indexOf(b.key));
+
   return (
     <div className={styles.page}>
       <UpgradeSummaryBanner orgSlug={orgSlug} teamId={teamId} />
@@ -665,7 +745,7 @@ export default function TeamOverviewPage({
         <div className={styles.identityHelp}>
           <HelpButton
             iconOnly
-            label="Coaches Portal Premium"
+            label="Premium Coaches Portal"
             help={{ module: 'coaches', sectionIds: ['premium-portal-tour', 'premium'], fullGuideHref: `${helpHref}#premium-portal-tour` }}
           />
         </div>
@@ -674,7 +754,7 @@ export default function TeamOverviewPage({
       {/* Get set up — the status bar tracks EVERY step (required + optional); a step is
           "checked off" when it's done OR skipped, so the bar reads 100% only once the coach
           has decided on each. The panel retires at 100% (page flips to run-mode). */}
-      {showSetupPanel && (
+      {renderSetupPanel && (
         <section className={styles.setupPanel} aria-labelledby="season-setup-title">
           <div className={styles.setupHeader}>
             <div>
@@ -683,7 +763,11 @@ export default function TeamOverviewPage({
                 {requiredDone ? 'Finish your setup' : guidance.headline}
               </h2>
             </div>
-            <span className={styles.setupProgress}>{Math.round((satisfiedCount / totalCount) * 100)}%</span>
+            {showSetupStrip && setupExpanded ? (
+              <button type="button" className={styles.setupStripLink} onClick={() => setSetupExpanded(false)}>Hide</button>
+            ) : (
+              <span className={styles.setupProgress}>{Math.round((satisfiedCount / totalCount) * 100)}%</span>
+            )}
           </div>
           <div
             className={styles.setupSegments}
@@ -734,35 +818,119 @@ export default function TeamOverviewPage({
         </section>
       )}
 
-      {/* Headline stat strip — a clean, scannable summary line above the tiles (run-mode only). */}
-      {!showSetupPanel && setupStats && (
-        <div className={styles.statStrip}>
-          <span className={styles.statStripItem}><strong>{setupStats.activeRosterCount}</strong> Players</span>
-          <span className={styles.statStripDot} aria-hidden>·</span>
-          <span className={styles.statStripItem}><strong>{setupStats.eventCount}</strong> Events</span>
-          {nextEventDays != null && (
+      {/* ── "Right now" anchor — the phase-adaptive "what matters now" surface.
+          Ports the TeamHQ phase LOGIC into the operating-tool card language (no hero). */}
+      {showAnchor && phase === 'game_day' && nextEvent && (
+        <div className={`${styles.nowCard} ${styles.nowGameDay}`}>
+          <p className={styles.nowEyebrow}><span className={styles.nowLiveDot} aria-hidden>●</span> Game day <span className={styles.nowEyebrowCount}>Today</span></p>
+          <p className={styles.nowHeadline}>{nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Game day')}</p>
+          {(nextTimeLabel || fieldOrLoc) && <p className={styles.nowMeta}>{[nextTimeLabel, fieldOrLoc].filter(Boolean).join(' · ')}</p>}
+          {nextEvent.teamScore != null && nextEvent.opponentScore != null && (
+            <p className={styles.nowScoreline}>{nextEvent.teamScore} – {nextEvent.opponentScore}{nextEvent.result ? <span className={styles.nowScoreResult}> · {resultWord(nextEvent.result)}</span> : null}</p>
+          )}
+          {(nextAttendance || nextLineupReady !== null) && (
             <>
-              <span className={styles.statStripDot} aria-hidden>·</span>
-              <span className={styles.statStripItem}>
-                {nextEventDays === 0 ? 'Next: Today' : nextEventDays === 1 ? 'Next: Tomorrow' : <><strong>{nextEventDays}</strong> days away</>}
-              </span>
+              <div className={styles.nowDivider} />
+              <div className={styles.nowStatsRow}>
+                {nextAttendance && <span><span className={styles.nowStatIn}>{nextAttendance.in}</span> of {attendanceTotal} in</span>}
+                {nextLineupReady === true && <span className={styles.nowStatOk}><CheckCircle2 size={14} aria-hidden /> Lineup ready</span>}
+                {nextLineupReady === false && <span className={styles.nowStatWarn}><TriangleAlert size={14} aria-hidden /> Lineup not set</span>}
+              </div>
             </>
+          )}
+          <div className={styles.nowActions}>
+            <Link href={`${base}/schedule`} className="btn btn-lime btn-sm">Open game day <ArrowRight size={14} /></Link>
+          </div>
+        </div>
+      )}
+
+      {showAnchor && phase === 'in_season' && nextEvent && (
+        <div className={`${styles.nowCard} ${styles.nowInSeason}`}>
+          <p className={styles.nowEyebrow}>Next {nextIsGame ? 'game' : 'event'}
+            {nextEventDays != null && <span className={styles.nowEyebrowCount}>{nextEventDays === 0 ? 'Today' : nextEventDays === 1 ? 'Tomorrow' : `in ${nextEventDays} days`}</span>}
+          </p>
+          <p className={styles.nowHeadline}>{formatEventDate(nextEvent.startsAt)}{nextTimeLabel ? ` · ${nextTimeLabel}` : ''}</p>
+          <p className={styles.nowMeta}>{nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Upcoming event')}{fieldOrLoc ? ` · ${fieldOrLoc}` : ''}</p>
+          {nextIsGame && (
+            <>
+              <div className={styles.nowDivider} />
+              <div className={styles.nowStatsRow}>
+                {nextAttendance
+                  ? <span><span className={styles.nowStatIn}>{nextAttendance.in}</span> of {attendanceTotal} in</span>
+                  : <span className={styles.nowStatMuted}>Attendance not taken</span>}
+                {nextLineupReady === true && <span className={styles.nowStatOk}><CheckCircle2 size={14} aria-hidden /> Lineup ready</span>}
+                {nextLineupReady === false && <span className={styles.nowStatWarn}><TriangleAlert size={14} aria-hidden /> Lineup not set</span>}
+              </div>
+            </>
+          )}
+          {canViewMoney && duesOverdueCount > 0 && (
+            <p className={styles.nowMoneyAlert}><DollarSign size={14} aria-hidden /> {duesOverdueCount} {duesOverdueCount === 1 ? 'player' : 'players'} overdue{duesOutstanding && duesOutstanding > 0 ? ` · ${formatMoney(duesOutstanding)}` : ''}</p>
+          )}
+          <div className={styles.nowActions}>
+            <Link href={`${base}/schedule`} className="btn btn-lime btn-sm">{nextIsGame ? 'Build lineup' : 'Open schedule'} <ArrowRight size={14} /></Link>
+            {nextIsGame && <Link href={`${base}/schedule`} className={styles.nowSecondary}>Take attendance <ArrowRight size={13} /></Link>}
+          </div>
+          {/* Standings-rank line reserved here — filled in Phase 2 (coach-side standings route). */}
+        </div>
+      )}
+
+      {showAnchor && phase === 'result' && (
+        <div className={`${styles.nowCard} ${styles.nowResult}`}>
+          <p className={styles.nowEyebrow}><Trophy size={13} aria-hidden /> Season complete <span className={styles.nowEyebrowCount}>{seasonLabel}</span></p>
+          {recordGames.length > 0 ? (
+            <p className={`${styles.nowHeadline} ${styles.nowRecord}`}>{resultRecord.w} – {resultRecord.l}{resultRecord.t > 0 ? ` – ${resultRecord.t}` : ''}</p>
+          ) : (
+            <p className={styles.nowHeadline}>That&apos;s a wrap</p>
+          )}
+          {lastFinalized && <p className={styles.nowMeta}>Last: {formatResultLine(lastFinalized)}</p>}
+          <div className={styles.nowActions}>
+            {isTeamWorkspace && assignment.coachRole === 'head_coach'
+              ? <Link href={`${base}/settings`} className="btn btn-lime btn-sm">Start next season <ArrowRight size={14} /></Link>
+              : <Link href={`${base}/history`} className="btn btn-lime btn-sm">Season history <ArrowRight size={14} /></Link>}
+            <Link href={`${base}/history`} className={styles.nowSecondary}>Past seasons <ArrowRight size={13} /></Link>
+          </div>
+          {isTeamWorkspace && (
+            <p className={styles.nowBridge}>Your team&apos;s records are saved for next season. Clubs on FieldLogicHQ keep every team&apos;s records in one shared place — <Link href="/for-coaches?source=coach_afterglow">see how it works →</Link></p>
           )}
         </div>
       )}
+
+      {showAnchor && phase === 'preseason' && (
+        <div className={`${styles.nowCard} ${styles.nowPreseason}`}>
+          <p className={styles.nowEyebrow}>Your roster&apos;s ready{!allSatisfied && <span className={styles.nowEyebrowCount}>{satisfiedCount} of {totalCount}</span>}</p>
+          <p className={styles.nowHeadline}>{nextSetupItem ? nextSetupItem.label : 'Add your first game'}</p>
+          <p className={styles.nowMeta}>{nextSetupItem ? nextSetupItem.desc : 'Put a game or practice on the schedule to start tracking attendance, lineups, and your season record.'}</p>
+          <div className={styles.nowActions}>
+            <Link href={nextSetupItem ? nextSetupItem.href : `${base}/schedule`} className="btn btn-lime btn-sm">{nextSetupItem ? nextSetupItem.action : 'Add an event'} <ArrowRight size={14} /></Link>
+          </div>
+        </div>
+      )}
+
+      {/* Setup receded to a thin strip once the roster is in but optional steps remain. */}
+      {showSetupStrip && !setupExpanded && (
+        <div className={styles.setupStripCollapsed}>
+          <CheckCircle2 size={15} className={styles.setupStripIcon} aria-hidden />
+          <span>Setup ready — <strong>{optionalLeft}</strong> optional {optionalLeft === 1 ? 'step' : 'steps'} left.</span>
+          <button type="button" className={styles.setupStripLink} onClick={() => setSetupExpanded(true)}>Review →</button>
+        </div>
+      )}
+
+      {/* Season record — moved UP to sit under the anchor (was stranded at page bottom).
+          Self-hides until a finalized game exists (pre-season shows nothing). */}
+      <SeasonRecordWidget events={seasonGames} teamId={teamId} />
 
       {/* Your team at a glance — run-mode snapshot of real data (replaces the old
           quick-links grid, which just duplicated the sidebar). */}
       <section aria-labelledby="snapshot-title">
         <p className={styles.sectionKicker} id="snapshot-title">Your team at a glance</p>
         <div className={styles.snapshotGrid}>
-          {snapshotCards.filter(card => canViewMoney || (card.key !== 'dues' && card.key !== 'budget')).map(card => {
+          {orderedCards.filter(card => canViewMoney || (card.key !== 'dues' && card.key !== 'budget')).map(card => {
             const Icon = card.icon;
             return (
               <Link
                 key={card.key}
                 href={card.href}
-                className={`${styles.snapshotCard}${card.key === 'schedule' ? ` ${styles.snapshotCardWide}` : ''}`}
+                className={styles.snapshotCard}
               >
                 <span className={styles.snapshotHead}>
                   <span className={styles.snapshotHeadLabel}><Icon size={14} aria-hidden /> {card.label}</span>
@@ -822,10 +990,6 @@ export default function TeamOverviewPage({
           )}
         </div>
       )}
-
-      {/* Season record — recent form, scoring, streak. Self-labeled ("Season Record"), so it
-          flows directly below the tiles without a redundant section header. */}
-      <SeasonRecordWidget events={seasonGames} teamId={teamId} />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import type { NotificationEventType, NotificationPreference } from '@/lib/types'
 import type { Capability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { enablePushOnThisDevice, PushPermissionError } from '@/lib/push-client';
+import PushDeviceTester from '@/components/notifications/PushDeviceTester';
 import styles from './notifications.module.css';
 
 // ── System defaults ────────────────────────────────────────────────────────────
@@ -256,6 +257,9 @@ export default function OrgNotificationPreferencesPage() {
           </span>
         </div>
       )}
+
+      {/* Registered devices + send-test control */}
+      <PushDeviceTester />
 
       {/* Preferences table — grouped by module */}
       <div className={styles.tableWrap}>
