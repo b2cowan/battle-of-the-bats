@@ -324,13 +324,21 @@ export const GET = withObservability(async (req: Request) => {
   const defaultDurationMin = positiveNumber(tSettings.game_duration_minutes) ?? 60;
   const nowMs = Date.now();
 
-  // Per-game window state (scheduled games only), computed once.
+  // Per-game window state (scheduled games only), computed once. A game with a real
+  // start time is classified by its play window (DST-correct via zonedWallClockToUtc).
+  // A timeless game (date but no start time) has no window to test, so fall back to its
+  // date: a past day is 'overdue' so it still surfaces in Needs a Score (the old
+  // safety-net behaviour — never lose an unscored past game); today/future stays
+  // 'future' (window unknown — never false-positive "live").
   const windowStateById = new Map<string, ScheduledWindowState>();
   for (const g of activeGames) {
     if (g.status !== 'scheduled') continue;
     const iso = zonedWallClockToUtc(g.game_date, g.game_time);
-    const startMs = iso ? new Date(iso).getTime() : NaN;
-    windowStateById.set(g.id, scheduledWindowState(startMs, g.duration_minutes ?? defaultDurationMin, nowMs));
+    if (iso) {
+      windowStateById.set(g.id, scheduledWindowState(new Date(iso).getTime(), g.duration_minutes ?? defaultDurationMin, nowMs));
+    } else {
+      windowStateById.set(g.id, g.game_date != null && g.game_date < today ? 'overdue' : 'future');
+    }
   }
 
   const toGameStat = (g: GameRow) => ({
