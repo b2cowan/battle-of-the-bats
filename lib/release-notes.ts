@@ -44,6 +44,24 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-04',
+    title: 'Your team home screen keeps up with the season — plus oversight for your assistant coaches',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Club and league admins can now see every assistant coach across all their teams in one place — including what each one is allowed to do and any invites still pending. You can also choose to approve new assistants yourself before they join a team.',
+      },
+      {
+        category: 'improved',
+        text: 'Your team’s home screen in the Premium Coaches Portal now puts what matters right now up front — a setup checklist before the season, your next game as it gets close, the live score on game day, and your record once the season wraps. Your win-loss record now sits right at the top.',
+      },
+      {
+        category: 'improved',
+        text: 'You can now send yourself a test notification to check that alerts are reaching your phone. And if a notification doesn’t go through, we’ll let you know instead of it failing quietly.',
+      },
+    ],
+  },
+  {
     date: '2026-07-03',
     title: 'Run your tryouts start to finish — and bring on assistant coaches',
     highlights: [
