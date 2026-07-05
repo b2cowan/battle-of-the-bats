@@ -699,8 +699,8 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Game Day & Scores',
       heading: 'Review and finalize scores',
       summary: 'Record results from admins or scorekeepers, confirm pending reviews, and correct mistakes.',
-      keywords: ['enter scores', 'finalize scores', 'pending review', 'scorekeeper submissions', 'results', 'review scores'],
-      searchText: 'enter scores finalize scores scorekeeper submissions pending review results scoring completed games public standings correct score revert scheduled score finalization',
+      keywords: ['enter scores', 'finalize scores', 'pending review', 'scorekeeper submissions', 'results', 'review scores', 'now playing', 'up next', 'needs a score', 'game-day dashboard'],
+      searchText: 'enter scores finalize scores scorekeeper submissions pending review results scoring completed games public standings correct score revert scheduled score finalization now playing up next needs a score game day dashboard live board overdue unscored game what is on now sections panels reorder',
       links: [
         { label: 'Results & Scoring', href: '../tournaments/results' },
         { label: 'Scorekeeper View', href: '../../scorekeeper' },
@@ -721,6 +721,24 @@ const tournamentsHelp: HelpPageContent = {
         </>
       ),
       faqs: [
+        {
+          id: 'faq-game-day-sections',
+          question: 'What do the Now Playing, Up Next, and Needs a Score sections mean?',
+          answerText: 'On game day your tournament dashboard groups games into three sections. Now Playing is games being scored right now, plus scheduled games inside their play window. Up Next is today’s scheduled games that haven’t started yet, earliest first. Needs a Score is games whose scheduled time has fully passed but still have no result — your safety net so a finished game never sits unscored. Each section hides itself when it is empty, and you can reorder or hide these panels from the dashboard.',
+          keywords: ['now playing', 'up next', 'needs a score', 'game day dashboard', 'game-day board', 'live games', 'overdue game', 'unscored', 'dashboard sections'],
+          popular: true,
+          answer: (
+            <>
+              <p>On game day your tournament <strong>dashboard</strong> groups games into three at-a-glance sections:</p>
+              <ul>
+                <li><strong>Now Playing</strong> — games being scored right now, plus scheduled games inside their play window.</li>
+                <li><strong>Up Next</strong> — today&rsquo;s scheduled games that haven&rsquo;t started yet, earliest first.</li>
+                <li><strong>Needs a Score</strong> — games whose scheduled time has fully passed but still have no result. It&rsquo;s your safety net so a finished game never sits unscored.</li>
+              </ul>
+              <p>Each section hides itself when there&rsquo;s nothing to show, and you can reorder or hide these panels from the dashboard.</p>
+            </>
+          ),
+        },
         {
           id: 'faq-pending-review',
           question: 'What does Pending Review mean?',
