@@ -7,6 +7,7 @@ import { ArrowRight, Building2, Cake, Calendar, CheckCircle2, Circle, DollarSign
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
 import SeasonRecordWidget from '@/components/coaches/SeasonRecordWidget';
 import { deriveRepPhase } from '@/lib/coach-rep-phase';
+import { calendarDaysBetween } from '@/lib/timezone';
 import HelpButton from '@/components/help/HelpButton';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
@@ -162,7 +163,9 @@ export default function TeamOverviewPage({
         .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
       const nextUp = upcoming[0] ?? null;
       setNextEvent(nextUp);
-      setNextEventDays(nextUp ? Math.max(0, Math.ceil((new Date(nextUp.startsAt).getTime() - now) / 86400000)) : null);
+      // Calendar-day gap in the org timezone (Toronto), not a rolling-24h count — so a game
+      // later *today* reads 0 ("Today"), not 1 ("Tomorrow"), and game-day can actually fire.
+      setNextEventDays(nextUp ? Math.max(0, calendarDaysBetween(new Date(), new Date(nextUp.startsAt))) : null);
 
       // Events in the next 7 days, grouped for the "This week" line.
       const weekAhead = now + 7 * 86400000;
@@ -820,7 +823,7 @@ export default function TeamOverviewPage({
 
       {/* ── "Right now" anchor — the phase-adaptive "what matters now" surface.
           Ports the TeamHQ phase LOGIC into the operating-tool card language (no hero). */}
-      {showAnchor && phase === 'game_day' && nextEvent && (
+      {showAnchor && phase === 'game_day' && (nextEvent ? (
         <div className={`${styles.nowCard} ${styles.nowGameDay}`}>
           <p className={styles.nowEyebrow}><span className={styles.nowLiveDot} aria-hidden>●</span> Game day <span className={styles.nowEyebrowCount}>Today</span></p>
           <p className={styles.nowHeadline}>{nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Game day')}</p>
@@ -842,7 +845,18 @@ export default function TeamOverviewPage({
             <Link href={`${base}/schedule`} className="btn btn-lime btn-sm">Open game day <ArrowRight size={14} /></Link>
           </div>
         </div>
-      )}
+      ) : (
+        // Game-day reached via a live tournament today, but the team has no upcoming
+        // scheduled event of its own — still show the anchor instead of a blank gap.
+        <div className={`${styles.nowCard} ${styles.nowGameDay}`}>
+          <p className={styles.nowEyebrow}><span className={styles.nowLiveDot} aria-hidden>●</span> Game day <span className={styles.nowEyebrowCount}>Today</span></p>
+          <p className={styles.nowHeadline}>You have a tournament today</p>
+          <p className={styles.nowMeta}>A tournament you’re registered for is running today.</p>
+          <div className={styles.nowActions}>
+            <Link href={`${base}/tournaments`} className="btn btn-lime btn-sm">Open tournaments <ArrowRight size={14} /></Link>
+          </div>
+        </div>
+      ))}
 
       {showAnchor && phase === 'in_season' && nextEvent && (
         <div className={`${styles.nowCard} ${styles.nowInSeason}`}>

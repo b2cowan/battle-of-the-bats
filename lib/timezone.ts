@@ -125,3 +125,45 @@ export function tournamentToday(
   const get = (t: string) => parts.find(p => p.type === t)?.value ?? '';
   return `${get('year')}-${get('month')}-${get('day')}`;
 }
+
+/**
+ * "Now" as `{ date, time }` wall-clock strings in the tournament timezone
+ * (default `America/Toronto`) — the local counterparts to the UTC
+ * `new Date().toISOString()` split. `date` is `YYYY-MM-DD`, `time` is `HH:MM:SS`.
+ * Use for "has this game's start time passed?" checks so they don't fire 4–5h
+ * early from UTC skew (the same trap {@link tournamentToday} documents).
+ */
+export function tournamentNow(
+  now: Date = new Date(),
+  timeZone: string = ORG_TIME_ZONE,
+): { date: string; time: string } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }).formatToParts(now);
+  const get = (t: string) => parts.find(p => p.type === t)?.value ?? '';
+  let hour = get('hour');
+  if (hour === '24') hour = '00';
+  return {
+    date: `${get('year')}-${get('month')}-${get('day')}`,
+    time: `${hour}:${get('minute')}:${get('second')}`,
+  };
+}
+
+/**
+ * Whole calendar days from `from` to `to` as seen in `timeZone` (default Toronto),
+ * counting DATE boundaries — NOT a raw `(to − from) / 86_400_000` rolling-24h span.
+ * So an event at 9 PM tonight is 0 ("today"), one tomorrow morning is 1 ("tomorrow"),
+ * and a past date is negative. Use for "days until X" labels so they read in the org's
+ * local calendar, not the viewer's UTC clock (the same trap {@link tournamentToday} fixes).
+ */
+export function calendarDaysBetween(
+  from: Date,
+  to: Date,
+  timeZone: string = ORG_TIME_ZONE,
+): number {
+  const [ay, am, ad] = tournamentToday(from, timeZone).split('-').map(Number);
+  const [by, bm, bd] = tournamentToday(to, timeZone).split('-').map(Number);
+  return Math.round((Date.UTC(by, bm - 1, bd) - Date.UTC(ay, am - 1, ad)) / 86_400_000);
+}

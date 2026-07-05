@@ -99,9 +99,11 @@ export const POST = withObservability(async (req: Request) => {
       );
     }
 
-    // 400/401/403 → the push service rejected the request, almost always a VAPID
-    // key mismatch between the server and the key this device subscribed with.
-    if (statusCode === 400 || statusCode === 401 || statusCode === 403) {
+    // 401/403 → the push service rejected auth: a VAPID key mismatch between the
+    // server and the key this device subscribed with. (400 is a MALFORMED request,
+    // not an auth failure — it falls through to the generic error below so we don't
+    // wrongly send the user chasing VAPID keys.)
+    if (statusCode === 401 || statusCode === 403) {
       return respond(
         'mismatch',
         `The push service rejected the request (HTTP ${statusCode}). This usually means the server’s VAPID keys don’t match the key this device registered with — re-check the VAPID keys, then remove and re-add this device.`,

@@ -86,7 +86,8 @@ export const POST = withObservability(async (req: Request): Promise<Response> =>
 
   if (action === 'approve' || action === 'decline') {
     const inviteId = typeof body.inviteId === 'string' ? body.inviteId : '';
-    const invite = inviteId ? await getAssistantInviteById(inviteId) : null;
+    if (!inviteId) return NextResponse.json({ error: 'Missing inviteId.' }, { status: 400 });
+    const invite = await getAssistantInviteById(inviteId);
     if (!invite || invite.orgId !== ctx!.org.id) return NextResponse.json({ error: 'Invite not found' }, { status: 404 });
     const scopeErr = await teamScopeError(invite.teamId);
     if (scopeErr) return scopeErr;
@@ -113,7 +114,8 @@ export const POST = withObservability(async (req: Request): Promise<Response> =>
 
   if (action === 'remove') {
     const coachId = typeof body.coachId === 'string' ? body.coachId : '';
-    const target = coachId ? await getRepTeamCoachById(coachId) : null;
+    if (!coachId) return NextResponse.json({ error: 'Missing coachId.' }, { status: 400 });
+    const target = await getRepTeamCoachById(coachId);
     if (!target || target.orgId !== ctx!.org.id) return NextResponse.json({ error: 'Assistant not found' }, { status: 404 });
     if (target.coachRole !== 'assistant_coach') return NextResponse.json({ error: 'Only assistant coaches can be removed here.' }, { status: 400 });
     const scopeErr = await teamScopeError(target.teamId);

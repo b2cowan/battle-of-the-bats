@@ -4288,6 +4288,7 @@ export async function getOrgAssistantCoaches(orgId: string): Promise<OrgAssistan
     .from('organization_members')
     .select('user_id, display_name')
     .eq('organization_id', orgId)
+    .eq('status', 'active') // only name active members — an invited-but-unaccepted row shouldn't lend a name
     .in('user_id', userIds);
   const nameByUser = new Map((memberRows ?? []).map((m: any) => [m.user_id as string, (m.display_name as string | null) ?? null]));
 
