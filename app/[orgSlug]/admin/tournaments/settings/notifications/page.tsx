@@ -6,6 +6,7 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { TOURNAMENT_EVENT_TYPES, NOTIFICATION_EVENT_LABELS, NOTIFICATION_EVENT_DESCRIPTIONS, PUSH_DEFAULT_ON_EVENTS } from '@/lib/notification-labels';
 import { hasPlanFeature } from '@/lib/plan-features';
+import { enablePushOnThisDevice, PushPermissionError } from '@/lib/push-client';
 import PushDeviceTester from '@/components/notifications/PushDeviceTester';
 import type { NotificationEventType, NotificationPreference } from '@/lib/types';
 import styles from './notifications.module.css';
@@ -87,6 +88,8 @@ export default function TournamentNotificationPreferencesPage() {
   const [channels, setChannels]         = useState<Channels>({ bell: true, push: TOURNAMENT_PUSH_DEFAULT_ON, email: false });
   const [channelsLoading, setChannelsLoading] = useState(true);
   const [channelsSaving, setChannelsSaving]   = useState(false);
+  // True while turning Push on registers THIS device (OS permission + subscribe).
+  const [enablingPush, setEnablingPush]       = useState(false);
 
   // ── Computed: are ALL event types opted out? → muted ───────────────────────
   const isMuted = eventTypes.every(et => prefs.get(et) === true);
@@ -222,8 +225,37 @@ export default function TournamentNotificationPreferencesPage() {
 
   // ── Channel toggle ─────────────────────────────────────────────────────────
 
-  function handleChannelToggle(channel: keyof Channels, value: boolean) {
+  async function handleChannelToggle(channel: keyof Channels, value: boolean) {
     const next = { ...channels, [channel]: value };
+
+    // Turning Push ON must also register THIS device — otherwise the preference
+    // saves but no device is subscribed and nothing is ever delivered (the exact
+    // "toggle green but no devices registered" trap). Mirrors the org-level page.
+    if (channel === 'push' && value === true) {
+      setChannels(next); // optimistic
+      setError(null);
+      setEnablingPush(true);
+      try {
+        await enablePushOnThisDevice();
+        saveChannels(next);
+      } catch (e) {
+        setChannels(prev => ({ ...prev, push: false })); // revert on failure
+        const reason = e instanceof PushPermissionError ? e.reason : 'failed';
+        setError(
+          reason === 'denied'
+            ? 'Notifications are blocked for this app. Turn them on in your phone or browser settings, then try again.'
+          : reason === 'unsupported'
+            ? 'This device doesn’t support push. On iPhone, add the app to your Home Screen first (iOS 16.4+).'
+          : reason === 'unconfigured'
+            ? 'Push isn’t set up on the server yet. Please try again later.'
+          : 'Couldn’t turn on notifications on this device. Please try again.',
+        );
+      } finally {
+        setEnablingPush(false);
+      }
+      return;
+    }
+
     setChannels(next);
     saveChannels(next);
   }
@@ -278,7 +310,7 @@ export default function TournamentNotificationPreferencesPage() {
                   checked={channels[key]}
                   onChange={v => handleChannelToggle(key, v)}
                   label={`${label} notifications`}
-                  disabled={channelsLoading || channelsSaving}
+                  disabled={channelsLoading || channelsSaving || (key === 'push' && enablingPush)}
                 />
                 <span className={styles.channelItemLabel}>
                   <Icon size={13} />

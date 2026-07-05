@@ -14,8 +14,13 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Smartphone, Send, CheckCircle2, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
-import { isPushSupported, getCurrentPushEndpoint } from '@/lib/push-client';
+import { Smartphone, Send, CheckCircle2, AlertTriangle, XCircle, RefreshCw, BellRing } from 'lucide-react';
+import {
+  isPushSupported,
+  getCurrentPushEndpoint,
+  enablePushOnThisDevice,
+  PushPermissionError,
+} from '@/lib/push-client';
 import styles from './PushDeviceTester.module.css';
 
 interface Device {
@@ -51,6 +56,8 @@ export default function PushDeviceTester() {
   const [currentEndpoint, setCurrentEndpoint] = useState<string | null>(null);
   const [testingId, setTestingId]   = useState<string | null>(null);
   const [results, setResults]       = useState<Map<string, TestResult>>(new Map());
+  const [enabling, setEnabling]     = useState(false);
+  const [enableError, setEnableError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -74,6 +81,34 @@ export default function PushDeviceTester() {
     getCurrentPushEndpoint().then(setCurrentEndpoint).catch(() => setCurrentEndpoint(null));
     load();
   }, [load]);
+
+  // Register THIS device (request OS permission + subscribe + save server-side).
+  // The device list is server-side; a green "Push" preference toggle does NOT
+  // register a device on its own, so this is the reliable one-tap way to do it
+  // from the same panel that reports "no devices registered".
+  async function handleEnableThisDevice() {
+    setEnabling(true);
+    setEnableError(null);
+    try {
+      await enablePushOnThisDevice();
+      const ep = await getCurrentPushEndpoint();
+      setCurrentEndpoint(ep);
+      await load();
+    } catch (e) {
+      const reason = e instanceof PushPermissionError ? e.reason : 'failed';
+      setEnableError(
+        reason === 'denied'
+          ? 'Notifications are blocked for this app. Turn them on in your phone or browser settings, then try again.'
+        : reason === 'unsupported'
+          ? 'This device doesn’t support push. On iPhone, add the app to your Home Screen first (iOS 16.4+).'
+        : reason === 'unconfigured'
+          ? 'Push isn’t set up on the server yet. Please try again later.'
+        : 'Couldn’t turn on notifications on this device. Please try again.',
+      );
+    } finally {
+      setEnabling(false);
+    }
+  }
 
   async function sendTest(device: Device) {
     setTestingId(device.id);
@@ -110,6 +145,11 @@ export default function PushDeviceTester() {
 
   if (supported === false) return null; // Push column already explains unsupported browsers.
 
+  // "This device" counts as registered only if the browser's active subscription
+  // matches a saved server row. A green Push preference toggle does not qualify.
+  const currentDeviceRegistered = !!currentEndpoint && devices.some(d => d.endpoint === currentEndpoint);
+  const showEnableCta = !loading && !currentDeviceRegistered;
+
   return (
     <div className={styles.card}>
       <div className={styles.header}>
@@ -132,12 +172,33 @@ export default function PushDeviceTester() {
         <div className={styles.error}><AlertTriangle size={14} /> {loadError}</div>
       )}
 
+      {showEnableCta && (
+        <div className={styles.enableRow}>
+          <button
+            type="button"
+            className={styles.enableBtn}
+            onClick={handleEnableThisDevice}
+            disabled={enabling}
+          >
+            <BellRing size={14} />
+            {enabling ? 'Turning on…' : 'Turn on notifications on this device'}
+          </button>
+          <span className={styles.enableHint}>
+            Turning the <strong>Push</strong> toggle green isn’t enough on its own — tap here to
+            register this phone so it can receive notifications.
+          </span>
+          {enableError && (
+            <div className={styles.enableError}><AlertTriangle size={13} /> {enableError}</div>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <div className={styles.empty}>Loading devices…</div>
       ) : devices.length === 0 ? (
         <div className={styles.empty}>
-          No devices registered yet. Turn on the <strong>Push</strong> toggle for an event below
-          (or use the “Turn on notifications” banner) to register this device, then come back to test it.
+          No devices registered yet — use <strong>Turn on notifications on this device</strong> above
+          to register this phone, then send it a test.
         </div>
       ) : (
         <ul className={styles.list}>
