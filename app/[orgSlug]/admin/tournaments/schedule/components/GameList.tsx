@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check, AlertTriangle, Lock, Unlock, Plus, Minus, Network } from 'lucide-react';
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import { checkVenueConflict, buildConflictMap, resolveGameTiming, type ConflictResult, type ConflictInfo } from '@/lib/schedule-conflict';
+import { scheduledWindowState } from '@/lib/game-live-state';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { buildPlaceholderOptions } from '@/lib/playoff-bracket';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
@@ -91,10 +92,12 @@ export default function GameList({
       if (Number.isNaN(start)) continue;
       const division = divisions.find(dv => dv.id === g.divisionId);
       const { durationMinutes } = resolveGameTiming(division, tournament, g.durationMinutes);
-      const end = start + durationMinutes * 60_000;
-      if (now < start) {
+      // Shared classifier — the SAME window math the dashboard uses, so the two
+      // surfaces never disagree about live / up-next / overdue.
+      const windowState = scheduledWindowState(start, durationMinutes, now);
+      if (windowState === 'future') {
         if (g.date === todayStr && start < nextStart) { nextStart = start; nextId = g.id; }
-      } else if (now < end) {
+      } else if (windowState === 'live') {
         map.set(g.id, 'live');
       } else {
         map.set(g.id, 'overdue');

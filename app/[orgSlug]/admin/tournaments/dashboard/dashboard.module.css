@@ -578,6 +578,9 @@
 /* LIVE = lime heartbeat, IN REVIEW = amber (paired with the badge, never colour-only). */
 .liveRow[data-live='live']   { border-left-color: var(--logic-lime); }
 .liveRow[data-live='review'] { border-left-color: var(--warning); }
+/* NEXT = blueprint blue (informational), NEEDS SCORE = amber (action needed). */
+.liveRow[data-live='next']    { border-left-color: var(--blueprint-blue); }
+.liveRow[data-live='overdue'] { border-left-color: var(--warning); }
 
 /* Badge on its own eyebrow line so a wider "IN REVIEW" never squeezes the matchup
    into a narrow wrapping column — keeps LIVE + IN REVIEW tiles aligned. */

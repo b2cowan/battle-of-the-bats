@@ -321,6 +321,11 @@ export interface Tournament {
   /** Optional province code (e.g. 'ON') for the directory's location filter;
    *  captured at opt-in time. Null = unset (migration 158). */
   directoryProvince?: string | null;
+  /** First time a playoff bracket was materialized for this tournament — the one-time
+   *  guard for the "Playoffs are set" announcement (fan push + staff bell). Null until a
+   *  bracket is created (migration 175). The home hero takeover derives from the presence
+   *  of playoff games, not this timestamp. */
+  playoffsPublishedAt?: string | null;
   requireScoreFinalization?: boolean | null;
   notifyTeamsOnComplete?: boolean;
   resultsNotifiedAt?: string | null;
@@ -1695,7 +1700,11 @@ export type NotificationEventType =
   // Assistant Coaches Phase 2 — an assistant accepted an invite (→ the head coach) / a head coach
   // requested approval (→ org admins). Bell default on; TS-union change only (no DB CHECK).
   | 'assistant_coach_joined'
-  | 'assistant_coach_approval_requested';
+  | 'assistant_coach_approval_requested'
+  // The playoff bracket was materialized for a tournament (fires once, the first time).
+  // Reaches org staff (bell + push) AND anonymous fans following a team (push). Defaults
+  // push ON — it's a headline, time-sensitive moment. TS-union change only (no DB CHECK).
+  | 'playoffs_set';
 
 export interface AppNotification {
   id: string;

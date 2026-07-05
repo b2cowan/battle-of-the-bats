@@ -8,7 +8,6 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { getRegistrationState } from '@/lib/registration-state';
 import { tournamentToday } from '@/lib/timezone';
-import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { deriveChampions } from '@/lib/champions';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import SharePageButton from '@/components/public/SharePageButton';
@@ -96,6 +95,15 @@ export default async function TournamentHomeContent({
   // collapses (binding 2026-06-01: home page is state-dependent).
   const isInProgress = Boolean(startDate && endDate && now >= startDate && now <= endDate);
   const isCompletedTournament = tournament.status === 'completed';
+
+  // Playoff "hero takeover" (auto on bracket creation): once a playoff bracket exists and
+  // the event isn't finished, the home hero flips to a Playoffs theme that counts down to
+  // the first knockout game and points at the shareable Playoff Picture.
+  const playoffsSet = allGames.some(g => g.isPlayoff) && !isCompletedTournament;
+  const firstPlayoffGame = sortedGames.find(g => g.isPlayoff && g.status === 'scheduled');
+  const firstPlayoffISO = firstPlayoffGame?.time
+    ? `${firstPlayoffGame.date}T${firstPlayoffGame.time.slice(0, 5)}:00`
+    : firstPlayoffGame?.date ? `${firstPlayoffGame.date}T09:00:00` : null;
 
   const dateDisplay = (startDate && endDate)
     ? (() => {
@@ -298,42 +306,6 @@ export default async function TournamentHomeContent({
               isCompleted={isCompletedTournament}
             />
           )}
-
-          <div className={`card ${styles.dayCard}`}>
-            <div className={styles.dayCardHeader}>
-              <div className={styles.dayCardIcon}><Calendar size={16} /></div>
-              <div>
-                <span className={styles.dayCardKicker}>Today</span>
-                <h3>Today&apos;s Games</h3>
-              </div>
-            </div>
-            {todayGames.length === 0 ? (
-              <p className={styles.dayCardSub}>No games are scheduled for today.</p>
-            ) : (
-              <div className={styles.quickGameList}>
-                {todayGames.map(game => {
-                  const live = isGameLive(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES);
-                  const hasScore = game.homeScore != null && game.awayScore != null;
-                  return (
-                    <Link key={game.id} href={getGameHref(game.id)} className={styles.quickGameRow}>
-                      {live ? (
-                        <span className={styles.myTeamLiveBadge}>
-                          <span className={styles.myTeamLiveDot} />
-                          {hasScore ? `${game.homeScore}–${game.awayScore}` : 'LIVE'}
-                        </span>
-                      ) : (
-                        <span className={styles.quickGameTime}>{formatTime(game.time)}</span>
-                      )}
-                      <span className={styles.quickGameTeams}>
-                        {game.homeTeamId ? getTeamName(game.homeTeamId) : (game.homePlaceholder ?? 'TBD')} vs {game.awayTeamId ? getTeamName(game.awayTeamId) : (game.awayPlaceholder ?? 'TBD')}
-                      </span>
-                      <span className={styles.quickGameMeta}>{resolveGameVenueLabel(game, venues) || getDivisionName(game.divisionId)}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
 
           <div className={`card ${styles.dayCard}`}>
             <div className={styles.dayCardHeader}>
@@ -599,6 +571,53 @@ export default async function TournamentHomeContent({
 
   return (
     <div className={styles.page}>
+      {playoffsSet && (
+        <section className={`${styles.hero} ${styles.heroCompact} ${styles.playoffHero}`} id="preview-home">
+          <div className={styles.heroBg}>
+            <div className={styles.heroOrb1} />
+            <div className={styles.heroOrb2} />
+            <div className={styles.heroGrid} />
+          </div>
+          <div className={`container ${styles.heroContent}`}>
+            {isPreview && (
+              <div className={styles.previewBanner}>
+                <Eye size={14} />
+                {previewLabel}
+              </div>
+            )}
+            <div className={styles.playoffHeroBadge}>
+              <Trophy size={13} fill="currentColor" /> Playoffs
+            </div>
+            <h1 className={`display-xl ${styles.heroTitle}`}>The Bracket Is Set</h1>
+            <p className={styles.heroSub}>
+              Hosted by <strong>{org.name}</strong>. The playoff bracket is locked — see the seeding and who plays who.
+            </p>
+            {firstPlayoffISO && (
+              <div className={styles.playoffCountdown}>
+                <Countdown target={firstPlayoffISO} prefix="First playoff game in " whenPast="Playoffs underway" />
+              </div>
+            )}
+            <div className={styles.playoffHeroActions}>
+              {/* The Playoff Picture inherits Standings visibility (it's a seeding view),
+                  so only offer it when Standings is public — no dead CTA. */}
+              {showStandingsPage && (
+                <Link href={`${publicBase}/playoffs`} className="btn btn-primary btn-lg">
+                  <Trophy size={16} /> Playoff Picture
+                </Link>
+              )}
+              {showStandingsPage && (
+                <Link href={`${primaryBase}/standings`} className="btn btn-outline btn-lg">
+                  See the Bracket <ChevronRight size={16} />
+                </Link>
+              )}
+            </div>
+          </div>
+          <div className={styles.heroScroll}>
+            <div className={styles.scrollLine} />
+          </div>
+        </section>
+      )}
+      {!playoffsSet && (
       <section className={`${styles.hero} ${isInProgress || isCompletedTournament ? styles.heroCompact : ''}`} id="preview-home">
         {heroBanner ? (
           <>
@@ -702,6 +721,7 @@ export default async function TournamentHomeContent({
           <div className={styles.scrollLine} />
         </div>
       </section>
+      )}
 
       {championBanner}
       {completedRecordPanel}

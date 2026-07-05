@@ -13581,6 +13581,15 @@
     "ordinal_position": 42
   },
   {
+    "table_name": "tournaments",
+    "column_name": "playoffs_published_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 43
+  },
+  {
     "table_name": "venue_facilities",
     "column_name": "id",
     "data_type": "uuid",

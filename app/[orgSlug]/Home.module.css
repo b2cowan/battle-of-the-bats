@@ -415,6 +415,59 @@
   box-shadow: var(--shadow), var(--glow-sm);
 }
 
+/* The "glass" card style applies backdrop-filter to every .card, which makes each
+   card its own stacking context — trapping an open dropdown's z-index inside the card
+   and letting the next card paint over the part that overflows. While a card owns an
+   open control (e.g. the follow-team picker), lift it above its grid siblings so the
+   dropdown stays on top. */
+.myTeamCard:has([aria-expanded="true"]),
+.dayCard:has([aria-expanded="true"]) {
+  position: relative;
+  z-index: 10;
+}
+
+/* ── Playoff hero takeover (auto on bracket creation) ─────────────────────────
+   The home hero flips to a Playoffs theme: a stronger primary wash, a "Playoffs"
+   badge, a countdown to the first knockout game, and the Playoff Picture CTA. */
+.playoffHero .heroBg {
+  background:
+    radial-gradient(900px 340px at 50% -20%, rgba(var(--primary-rgb), 0.34), transparent 70%),
+    var(--surface);
+}
+
+.playoffHeroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid rgba(var(--primary-rgb), 0.5);
+  border-radius: 999px;
+  background: rgba(var(--primary-rgb), 0.12);
+  color: var(--primary-light);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.playoffCountdown {
+  margin-top: 1.1rem;
+  font-family: var(--font-data);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.playoffHeroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
 .dayCardHeader {
   display: flex;
   align-items: center;

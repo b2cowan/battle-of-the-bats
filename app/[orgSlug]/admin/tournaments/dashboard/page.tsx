@@ -106,6 +106,10 @@ type GameDayStats = {
   byDivision: GameDayDivisionStat[];
   liveGames: LiveGameStat[];
   liveGamesTotal: number;
+  upNextGames: LiveGameStat[];
+  upNextTotal: number;
+  needsScoreGames: LiveGameStat[];
+  needsScoreTotal: number;
 };
 
 type ScheduleHealthDashboardStats = {
@@ -201,21 +205,21 @@ type StatCardId = 'teams' | 'scheduled' | 'completed' | 'days';
 type PanelId = 'registration' | 'payment' | 'communications' | 'scheduleHealth';
 // Game-day board panels — a SEPARATE customizable set from the pre-event panels
 // (they show different content; hiding one board's panel never affects the other).
-type GameDayPanelId = 'nowPlaying' | 'gamesProgress' | 'checkIn' | 'gdScheduleHealth' | 'byDivision';
+type GameDayPanelId = 'nowPlaying' | 'upNext' | 'needsScore' | 'gamesProgress' | 'checkIn' | 'gdScheduleHealth' | 'byDivision';
 
 type StatCardConfig = { id: StatCardId; label: string; icon: IconKey; visible: boolean; order: number };
 type PanelConfig    = { id: PanelId;   label: string;                  visible: boolean; order: number };
 type GameDayPanelConfig = { id: GameDayPanelId; label: string; visible: boolean; order: number };
 
 type DashboardLayout = {
-  version: 2;
+  version: 3;
   statCards: StatCardConfig[];
   panels: PanelConfig[];
   gameDayPanels: GameDayPanelConfig[];
 };
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  version: 2,
+  version: 3,
   statCards: [
     { id: 'teams',     label: 'Teams',     icon: 'Users',    visible: true, order: 0 },
     { id: 'scheduled', label: 'Scheduled', icon: 'Calendar', visible: true, order: 1 },
@@ -230,10 +234,12 @@ const DEFAULT_LAYOUT: DashboardLayout = {
   ],
   gameDayPanels: [
     { id: 'nowPlaying',       label: 'Now Playing',     visible: true, order: 0 },
-    { id: 'gamesProgress',    label: 'Games Progress',  visible: true, order: 1 },
-    { id: 'checkIn',          label: 'Team Check-in',   visible: true, order: 2 },
-    { id: 'gdScheduleHealth', label: 'Schedule Health', visible: true, order: 3 },
-    { id: 'byDivision',       label: 'By Division',     visible: true, order: 4 },
+    { id: 'upNext',           label: 'Up Next',         visible: true, order: 1 },
+    { id: 'needsScore',       label: 'Needs a Score',   visible: true, order: 2 },
+    { id: 'gamesProgress',    label: 'Games Progress',  visible: true, order: 3 },
+    { id: 'checkIn',          label: 'Team Check-in',   visible: true, order: 4 },
+    { id: 'gdScheduleHealth', label: 'Schedule Health', visible: true, order: 5 },
+    { id: 'byDivision',       label: 'By Division',     visible: true, order: 6 },
   ],
 };
 
@@ -250,19 +256,31 @@ function loadLayout(orgSlug: string): DashboardLayout {
       panels?: PanelConfig[];
       gameDayPanels?: GameDayPanelConfig[];
     };
-    // Accept v1 (no gameDayPanels) and v2 — default-merge fills any missing set,
-    // so an older saved layout gains the game-day panels without being discarded.
-    if (p.version !== 1 && p.version !== 2) return DEFAULT_LAYOUT;
+    // Accept v1 (no gameDayPanels), v2, and v3 — default-merge fills any missing set,
+    // so an older saved layout gains new cards/panels without being discarded.
+    const savedVersion = p.version;
+    if (savedVersion !== 1 && savedVersion !== 2 && savedVersion !== 3) return DEFAULT_LAYOUT;
     const mergeBy = <T extends { id: string }>(defs: T[], saved: T[] | undefined): T[] =>
       defs.map(def => {
         const hit = (saved ?? []).find(c => c.id === def.id);
         return hit ? { ...def, ...hit } : def;
       });
+    // Game-day panels gained 'upNext' + 'needsScore' in v3. For a pre-v3 saved layout,
+    // adopt the new default order (Now Playing → Up Next → Needs a Score → …) but carry
+    // over each existing panel's show/hide choice (so a customizer keeps what they hid,
+    // and the two new panels land in a sensible spot instead of colliding on order).
+    // v3+ layouts merge order + visibility as usual.
+    const gameDayPanels = savedVersion >= 3
+      ? mergeBy(DEFAULT_LAYOUT.gameDayPanels, p.gameDayPanels)
+      : DEFAULT_LAYOUT.gameDayPanels.map(def => {
+          const hit = (p.gameDayPanels ?? []).find(c => c.id === def.id);
+          return hit ? { ...def, visible: hit.visible } : def;
+        });
     return {
-      version: 2,
+      version: 3,
       statCards: mergeBy(DEFAULT_LAYOUT.statCards, p.statCards),
       panels: mergeBy(DEFAULT_LAYOUT.panels, p.panels),
-      gameDayPanels: mergeBy(DEFAULT_LAYOUT.gameDayPanels, p.gameDayPanels),
+      gameDayPanels,
     };
   } catch { return DEFAULT_LAYOUT; }
 }
@@ -280,6 +298,10 @@ const EMPTY_GAME_DAY: GameDayStats = {
   byDivision: [],
   liveGames: [],
   liveGamesTotal: 0,
+  upNextGames: [],
+  upNextTotal: 0,
+  needsScoreGames: [],
+  needsScoreTotal: 0,
 };
 
 const EMPTY_STATS: DashboardStats = {
@@ -356,6 +378,18 @@ function getSourceSortRank(status?: string | null) {
 
 function fmt(n: number) {
   return n.toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 });
+}
+
+// "HH:MM[:SS]" wall-clock → friendly "9:00 AM" (returns '' if unparseable/absent).
+function fmtClock(time: string | null | undefined): string {
+  if (!time) return '';
+  const m = /^(\d{1,2}):(\d{2})/.exec(time);
+  if (!m) return '';
+  let h = Number(m[1]);
+  const min = m[2];
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if (h === 0) h = 12;
+  return `${h}:${min} ${ampm}`;
 }
 
 function fmtDateRange(start?: string, end?: string): string | null {
@@ -911,8 +945,11 @@ export default function AdminDashboard() {
     );
   })() : null;
 
-  // Persona panel ("what everyone else sees") — draft + active stages only.
-  const personaPanel = (currentOrg?.slug && currentTournament?.id && (isDraft || isActive)) ? (
+  // Persona panel ("what everyone else sees") — DRAFT only. It's pre-launch
+  // orientation (its cards say "Once you activate…"), so it retires the moment the
+  // tournament goes live — at that point the live board IS what everyone sees, and
+  // keeping this panel just pushes the game-day metrics below the fold.
+  const personaPanel = (currentOrg?.slug && currentTournament?.id && isDraft) ? (
     <PersonaPanel
       orgSlug={currentOrg.slug}
       tournamentSlug={currentTournament.slug}
@@ -1517,6 +1554,92 @@ export default function AdminDashboard() {
     );
   }
 
+  // Up Next — the next scheduled games today that haven't started. Hidden when none.
+  function renderUpNextPanel() {
+    if (gd.upNextGames.length === 0) return null;
+    const shown = gd.upNextGames.slice(0, 6);
+    const total = Math.max(gd.upNextTotal, gd.upNextGames.length);
+    const moreCount = total - shown.length;
+    return (
+      <section className={`${styles.analyticsPanel} ${styles.liveStripPanel}`}>
+        <div className={styles.panelHeader}>
+          <Clock size={16} style={{ color: 'var(--blueprint-blue)' }} />
+          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Up Next</h2>
+          <Link href={`${base}/schedule`} className={styles.panelLink}>View schedule →</Link>
+        </div>
+        <div className={styles.liveList} data-wrap="true">
+          {shown.map(g => (
+            <Link key={g.id} href={`${base}/schedule`} className={styles.liveRow} data-live="next">
+              <div className={styles.liveStatusRow}>
+                <span className={`badge badge-neutral ${styles.liveBadge}`}>
+                  {fmtClock(g.time) || 'NEXT'}
+                </span>
+              </div>
+              <div className={styles.liveRowMain}>
+                <span className={styles.liveMatchup}>
+                  {g.awayTeamName} <span className={styles.liveAt}>@</span> {g.homeTeamName}
+                </span>
+              </div>
+              {(g.location || g.divisionName) && (
+                <div className={styles.liveMeta}>
+                  {[g.location, g.divisionName].filter(Boolean).join(' · ')}
+                </div>
+              )}
+            </Link>
+          ))}
+          {moreCount > 0 && (
+            <Link href={`${base}/schedule`} className={styles.liveMoreTile}>
+              +{moreCount} more →
+            </Link>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Needs a Score — games whose window has passed but still have no result (any day).
+  // The action bucket so a finished-but-unscored game is never hidden. Hidden when none.
+  function renderNeedsScorePanel() {
+    if (gd.needsScoreGames.length === 0) return null;
+    const shown = gd.needsScoreGames.slice(0, 6);
+    const total = Math.max(gd.needsScoreTotal, gd.needsScoreGames.length);
+    const moreCount = total - shown.length;
+    return (
+      <section className={`${styles.analyticsPanel} ${styles.liveStripPanel}`}>
+        <div className={styles.panelHeader}>
+          <AlertCircle size={16} style={{ color: 'var(--warning)' }} />
+          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Needs a Score</h2>
+          <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
+        </div>
+        <div className={styles.liveList} data-wrap="true">
+          {shown.map(g => (
+            <Link key={g.id} href={`${base}/results`} className={styles.liveRow} data-live="overdue">
+              <div className={styles.liveStatusRow}>
+                <span className={`badge badge-warning ${styles.liveBadge}`}>NEEDS SCORE</span>
+              </div>
+              <div className={styles.liveRowMain}>
+                <span className={styles.liveMatchup}>
+                  {g.awayTeamName} <span className={styles.liveAt}>@</span> {g.homeTeamName}
+                </span>
+                {fmtClock(g.time) && <span className={styles.liveMeta} style={{ padding: 0 }}>{fmtClock(g.time)}</span>}
+              </div>
+              {(g.location || g.divisionName) && (
+                <div className={styles.liveMeta}>
+                  {[g.location, g.divisionName].filter(Boolean).join(' · ')}
+                </div>
+              )}
+            </Link>
+          ))}
+          {moreCount > 0 && (
+            <Link href={`${base}/results`} className={styles.liveMoreTile}>
+              +{moreCount} more →
+            </Link>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   function renderGamesProgressPanel() {
     return (
       <section className={styles.analyticsPanel}>
@@ -1628,6 +1751,8 @@ export default function AdminDashboard() {
   function gameDayPanelNode(id: GameDayPanelId) {
     switch (id) {
       case 'nowPlaying':       return renderNowPlayingPanel();
+      case 'upNext':           return renderUpNextPanel();
+      case 'needsScore':       return renderNeedsScorePanel();
       case 'gamesProgress':    return renderGamesProgressPanel();
       case 'checkIn':          return renderCheckInPanel();
       case 'gdScheduleHealth': return renderScheduleHealthPanel();
@@ -1940,7 +2065,6 @@ export default function AdminDashboard() {
       {isActive && currentTournament?.id && (
         <>
           {guidanceRail}
-          {personaPanel}
 
           {/* Compact metric strip — absent on game day where the board gives richer context */}
           {!isGameDay && renderMetricStrip()}

@@ -26,6 +26,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   tryout_offer_response:             'Tryout offer response',
   assistant_coach_joined:            'Assistant coach joined',
   assistant_coach_approval_requested: 'Assistant coach awaiting approval',
+  playoffs_set:                      'Playoff bracket set',
 };
 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
@@ -46,6 +47,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   tryout_offer_response:             'A tryout family accepts or declines an offer via their link — you confirm the roster spot.',
   assistant_coach_joined:            'An assistant coach you invited accepted and joined the team.',
   assistant_coach_approval_requested: 'A head coach invited an assistant coach and it needs admin approval.',
+  playoffs_set:                      'The playoff bracket is set for a tournament — the seeding is locked and the knockout stage is on.',
 };
 
 // ── Section groups (org-level preferences page) ────────────────────────────────
@@ -69,6 +71,7 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
       'registration_deadline_approaching',
       'waitlist_opened',
       'team_no_show',
+      'playoffs_set',
     ],
   },
   {
@@ -128,10 +131,11 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   'assistant_coach_approval_requested',
   'chat_message',
   'chat_mention',
+  'playoffs_set',
 ]);
 
 /**
- * The 6 event types that are wired and relevant to a specific tournament.
+ * The event types that are wired and relevant to a specific tournament.
  *
  * Excluded deliberately:
  *   - roster_change_requested   — rep teams / coaches portal only
@@ -148,4 +152,5 @@ export const TOURNAMENT_EVENT_TYPES: NotificationEventType[] = [
   'payment_failed',
   'score_submitted',
   'team_no_show',
+  'playoffs_set',
 ];

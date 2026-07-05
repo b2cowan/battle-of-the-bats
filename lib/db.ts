@@ -2571,6 +2571,7 @@ function mapTournament(r: any): Tournament {
     coachNamesShowOnPublic:   r.coach_names_show_on_public === true,
     listInDirectory:          r.list_in_directory === true,
     directoryProvince:        r.directory_province ?? null,
+    playoffsPublishedAt:      r.playoffs_published_at ?? null,
     requireScoreFinalization: r.require_score_finalization ?? null,
     settings:                 (r.settings && typeof r.settings === 'object') ? r.settings : {},
   };

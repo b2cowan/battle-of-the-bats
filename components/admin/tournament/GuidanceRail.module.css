@@ -18,6 +18,68 @@
   gap: 0.7rem;
   align-items: flex-start;
 }
+
+/* Collapse control on the expanded live rail (top-right chevron). */
+.collapseBtn {
+  background: none;
+  border: 0;
+  color: var(--white-40);
+  cursor: pointer;
+  padding: 0.1rem;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+.collapseBtn:hover {
+  color: var(--warning);
+}
+
+/* ── Collapsed game-day strip ────────────────────────────────────────── */
+.railCompact {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 1rem;
+  flex-wrap: wrap;
+}
+.compactToggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+}
+.compactToggle .icon {
+  margin-top: 0;
+}
+.compactHeadline {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.compactChevron {
+  color: var(--white-40);
+  flex-shrink: 0;
+}
+.compactToggle:hover .compactChevron {
+  color: var(--warning);
+}
+.compactCta {
+  flex-shrink: 0;
+}
 .icon {
   color: var(--logic-lime);
   flex-shrink: 0;

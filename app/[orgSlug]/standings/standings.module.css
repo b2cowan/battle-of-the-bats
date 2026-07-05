@@ -330,12 +330,28 @@
   100% { background: transparent; }
 }
 
+.rdValue {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
 .rdPositive {
   color: var(--success);
 }
 
 .rdNegative {
   color: var(--danger);
+}
+
+/* Seeding-capped run differential, shown in brackets beside the true value when a
+   per-game cap is active — muted + smaller so the true number stays the headline. */
+.rdCapped {
+  color: var(--white-45);
+  font-size: 0.82em;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Column legend (key beneath each standings table) ─────────────────────── */
@@ -706,10 +722,11 @@
   border-left: 3px solid rgba(var(--primary-rgb), 0.5);
 }
 
-/* ── Mobile: keep the table, freeze Team (left) + PTS (right) ──────────────────
+/* ── Mobile: keep the table, freeze ONLY the Team column ───────────────────────
    Binding 2026-06-01: standings stays a table on mobile (cards consume too much
-   vertical space). Both numbers that matter — team and points — stay pinned while
-   the middle stat columns (W/L/T/RF/RA/RD) scroll between them. */
+   vertical space). The Team column stays pinned on the left while the full stat
+   set (W/L/T/RF/RA/RD/PTS) scrolls horizontally beside it, so every tie-breaker
+   input is viewable without hiding columns. */
 @media (max-width: 640px) {
   .standingsControls {
     margin-bottom: 0.5rem;
@@ -796,9 +813,33 @@
     line-height: 1.35;
   }
   .tieBreakerNote strong { font-size: 0.72rem; }
+
+  /* Let the table grow to its natural width so the stat columns spill past the
+     viewport and scroll (the frame's overflow-x:auto). With width:100% the table
+     was capped at the screen and nothing overflowed — collapsing the pinned Team
+     column to a per-character wrap. */
+  .standingsTable {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  /* Pinned Team column: fixed, readable width so names wrap at spaces to ~2 lines
+     instead of collapsing, and the stat columns are pushed off-screen to scroll. */
+  .stickyCol {
+    min-width: 9.5rem;
+    max-width: 9.5rem;
+  }
+
   .teamCell {
     gap: 0.4rem;
     font-size: 0.9rem;
+  }
+
+  /* Wrap the name on word boundaries in the fixed column (override the desktop
+     `overflow-wrap: anywhere`, which breaks mid-word once space is tight). */
+  .teamCell span:first-of-type {
+    overflow-wrap: normal;
+    word-break: normal;
   }
   .pendingTeamBadge {
     min-height: 20px;
@@ -833,20 +874,8 @@
     display: none;
   }
 
-  .ptsCol {
-    position: sticky;
-    right: 0;
-    z-index: 10;
-    background: var(--surface);
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.4);
-  }
-  .standingsTable th.ptsCol {
-    background: var(--bg-3);
-    z-index: 11;
-  }
-  /* Top (qualifying) row keeps its warning tint everywhere except the two frozen
-     cells, which must stay opaque so scrolled columns don't bleed through. */
-  .topRow .ptsCol { background: var(--surface); }
+  /* PTS is no longer pinned on mobile — it scrolls with the rest of the stat
+     columns so the Team name is the only frozen column. */
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

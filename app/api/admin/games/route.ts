@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
 import { notify } from '@/lib/notify';
+import { notifyFansForPlayoff } from '@/lib/fan-notify';
 import { captureError, withObservability } from '@/lib/observability';
 import {
   applyDivisionRoundRobinDeleteScope,
@@ -34,6 +35,45 @@ async function isTournamentLocked(tournamentId: string): Promise<boolean> {
     .eq('id', tournamentId)
     .single();
   return data?.status === 'completed';
+}
+
+/**
+ * Fire the one-time "Playoffs are set" announcement the FIRST time a bracket is
+ * materialized for a tournament (org staff bell/push via notify() + anonymous fan push
+ * via notifyFansForPlayoff). Atomically claims tournaments.playoffs_published_at (NULL →
+ * now()), so a later bracket edit / regenerate / concurrent save never re-blasts. Only
+ * the write that wins the flip sends. Fire-and-forget — never throws.
+ */
+async function announcePlayoffsIfFirstTime(
+  tournamentId: string,
+  org: { id: string; slug: string },
+  actorUserId: string,
+): Promise<void> {
+  try {
+    const { data: claimed } = await supabaseAdmin
+      .from('tournaments')
+      .update({ playoffs_published_at: new Date().toISOString() })
+      .eq('id', tournamentId)
+      .is('playoffs_published_at', null)
+      .select('id, slug')
+      .maybeSingle();
+    if (!claimed) return; // already announced (or lost the race) — never re-blast.
+
+    const link = `/${org.slug}/${claimed.slug}/playoffs`;
+    notify({
+      orgId: org.id,
+      tournamentId,
+      eventType: 'playoffs_set',
+      title: '🏆 Playoffs are set',
+      body: 'The playoff bracket has been published — the seeding is locked and the knockout stage is on.',
+      link,
+      excludeUserIds: [actorUserId],
+    }).catch(console.error);
+    // Anonymous fans following any team in the tournament (Tournament Plus+, gated inside).
+    notifyFansForPlayoff(tournamentId).catch(console.error);
+  } catch (err) {
+    console.error('[games] announcePlayoffsIfFirstTime error:', err);
+  }
 }
 
 function planFeatureForbidden(feature: PlanFeature) {
@@ -209,6 +249,13 @@ export const POST = withObservability(async (req: Request) => {
 
       const { error } = await supabase.from('games').insert(rows);
       if (error) throw error;
+
+      // First time a bracket is materialized → announce it once (fan push + staff bell).
+      if (hasPlayoff) {
+        for (const tid of batchTournamentIds) {
+          void announcePlayoffsIfFirstTime(tid, { id: ctx.org.id, slug: ctx.org.slug }, ctx.user.id);
+        }
+      }
     }
 
     // Manual single (or few) game add — FREE for org members. The Plus value is the
@@ -369,6 +416,8 @@ export const POST = withObservability(async (req: Request) => {
         const { error } = await supabase.from('games').delete().in('id', removableIds);
         if (error) throw error;
       }
+      // Announce once if this is the first bracket for the tournament (no-op on edits).
+      void announcePlayoffsIfFirstTime(divRow.tournament_id, { id: ctx.org.id, slug: ctx.org.slug }, ctx.user.id);
     }
 
     else if (action === 'delete-division-games' && divisionId) {

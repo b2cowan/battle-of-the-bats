@@ -357,11 +357,14 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-tie-breaker-rules',
           question: 'How do tie-breaker rules work?',
-          answerText: 'When teams finish with the same record, tie-breaker rules decide their standings ranking. The default order is head-to-head, then run differential, then runs scored, then runs allowed. You can customize the order before playoffs.',
-          keywords: ['tie-breaker', 'tiebreaker', 'ranking', 'standings', 'h2h', 'head to head', 'run differential', 'coin toss'],
+          answerText: 'When teams finish with the same record, tie-breaker rules decide their standings ranking. The default order is head-to-head, then run differential, then runs scored, then runs allowed. You can customize the order before playoffs. If you set a per-game run-differential cap, the standings RD column shows each team’s true run differential with the seeding-capped value in brackets — for example +10 (+7) — so fans see the real margin while seeding still uses the capped figure.',
+          keywords: ['tie-breaker', 'tiebreaker', 'ranking', 'standings', 'h2h', 'head to head', 'run differential', 'coin toss', 'run differential cap', 'capped', '+10 (+7)'],
           popular: true,
           answer: (
+            <>
             <p>When two or more teams finish pool play with the same record, <strong>tie-breaker rules</strong> decide who ranks higher in the standings. The default order is head-to-head result, then run differential, then runs scored, then runs allowed. Open <strong>Event Settings</strong> to change the order, set a per-game run-differential cap, or add a coin-toss step before playoffs.</p>
+            <p>If you set a <strong>per-game run-differential cap</strong>, the standings RD column shows each team&rsquo;s <strong>true</strong> run differential with the seeding-capped value in brackets — for example <strong>+10 (+7)</strong>. Fans see the real margin, while the capped figure is what actually counts toward seeding.</p>
+            </>
           ),
         },
         {
@@ -543,8 +546,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Playoffs',
       heading: 'Build a playoff bracket',
       summary: 'Manual bracket building for all plans — inline bracket editor, tiers (Gold/Silver), and the Playoff Wizard.',
-      keywords: ['schedule', 'playoffs', 'bracket', 'seeds', 'manual bracket', 'bracket builder', 'tiers', 'split into tiers', 'gold silver bracket'],
-      searchText: 'playoff bracket manual build add game bracket view playoff wizard auto generate seeds single elimination consolation double elimination placement crossover reseed tiers split into tiers gold silver tier bracket separate brackets overall standings tiered bracket public bracket fans tap click bracket card game details directions field diamond on bracket card public standings bracket',
+      keywords: ['schedule', 'playoffs', 'bracket', 'seeds', 'manual bracket', 'bracket builder', 'tiers', 'split into tiers', 'gold silver bracket', 'playoff picture', 'playoffs are set', 'seeding summary'],
+      searchText: 'playoff bracket manual build add game bracket view playoff wizard auto generate seeds single elimination consolation double elimination placement crossover reseed tiers split into tiers gold silver tier bracket separate brackets overall standings tiered bracket public bracket fans tap click bracket card game details directions field diamond on bracket card public standings bracket playoff picture seeding summary playoffs are set announcement notification alert home hero takeover countdown first playoff game shareable share seeds matchups top seed',
       links: [
         { label: 'Schedule', href: '../tournaments/schedule' },
       ],
@@ -562,6 +565,7 @@ const tournamentsHelp: HelpPageContent = {
             <li>For automated format generation (Tournament Plus), open the <strong>Playoff Wizard</strong> and configure bracket format, number of teams qualifying, seeds, and scheduling.</li>
             <li>Review the bracket preview before saving.</li>
           </ol>
+          <p><strong>When the bracket goes live.</strong> The first time you create a playoff bracket, FieldLogicHQ marks the moment for you: the public home page flips to a <strong>Playoffs</strong> look with a countdown to the first playoff game, a one-time <strong>&ldquo;Playoffs are set&rdquo;</strong> alert goes out to your staff and to fans who turned on score alerts (Tournament Plus and above), and a shareable <strong>Playoff Picture</strong> page is published with the seeding, the opening matchups, and standout-team highlights. Editing or regenerating the bracket afterward never re-sends that alert.</p>
         </>
       ),
       faqs: [
@@ -592,6 +596,35 @@ const tournamentsHelp: HelpPageContent = {
             <>
               <p>Your playoff bracket appears in two public places — the <strong>Schedule</strong> page (switch to <strong>Playoffs → Bracket</strong>) and the <strong>Standings</strong> page — and both show the same brackets, with a separate titled section for each tier.</p>
               <p>Each matchup card shows the date, time, and <strong>field</strong> for that game, and fans can <strong>tap any card</strong> to open the game&apos;s full details — the teams, the score, and the location with a <strong>Get Directions</strong> link.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-playoff-picture',
+          question: 'What is the Playoff Picture page?',
+          answerText: 'When you set the playoff bracket, FieldLogicHQ publishes a shareable Playoff Picture page for fans — a plain-language seeding summary with each seed’s record and run differential, the playoff cut line, the opening matchups with real team names, and standout-team highlights (top seed, best offense, stingiest defense, best differential). It has a Share button and the public home page links to it. The page follows your Standings page visibility, so if you hide Standings, the Playoff Picture is hidden too.',
+          keywords: ['playoff picture', 'seeding summary', 'playoffs are set', 'seeds', 'share bracket', 'matchups', 'top seed'],
+          popular: true,
+          answer: (
+            <>
+              <p>When you set the playoff bracket, FieldLogicHQ publishes a shareable <strong>Playoff Picture</strong> — a plain-language seeding summary fans can read and share. It shows each seed&rsquo;s record and run differential, marks the <strong>playoff cut</strong>, lists the opening matchups with the real team names filled in, and calls out standout teams (top seed, best offense, stingiest defense, best run differential). There&rsquo;s a <strong>Share</strong> button, and the public home page links to it from the Playoffs banner.</p>
+              <p>The Playoff Picture follows your <strong>Standings</strong> page visibility — if you hide Standings for the event, the Playoff Picture is hidden too.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-playoffs-set-alert',
+          question: 'Does anyone get notified when I set the playoffs?',
+          answerText: 'Yes. The first time you create the playoff bracket, a one-time “Playoffs are set” alert is sent automatically — a push and in-app bell to your staff, and a push to fans who turned on score alerts (Tournament Plus and above). It links to the Playoff Picture. Editing the bracket later never re-sends it. Staff can manage this under notification settings as the “Playoff bracket set” event.',
+          keywords: ['playoffs are set', 'playoff notification', 'bracket notification', 'alert', 'push', 'staff', 'fans', 'playoff bracket set'],
+          answer: (
+            <>
+              <p>Yes. The <strong>first time</strong> you create the playoff bracket, a one-time <strong>&ldquo;Playoffs are set&rdquo;</strong> alert goes out automatically:</p>
+              <ul>
+                <li>Your <strong>staff</strong> get a push and an in-app bell — manage it under notification settings as the <strong>&ldquo;Playoff bracket set&rdquo;</strong> event.</li>
+                <li>Fans who turned on <strong>score alerts</strong> (Tournament Plus and above) get a push.</li>
+              </ul>
+              <p>Both link to the <strong>Playoff Picture</strong>. Editing or regenerating the bracket later never re-sends the alert.</p>
             </>
           ),
         },
@@ -876,8 +909,8 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Communicate & Publish',
       heading: 'The public tournament site, fan following, and preview',
       summary: 'What teams and fans see online — following a team, score alerts, the home-screen app — and how to preview it.',
-      keywords: ['public site', 'preview', 'public tournament page', 'teams see', 'public schedule', 'standings', 'follow a team', 'score alerts', 'add to home screen', 'install app', 'offline'],
-      searchText: 'public tournament site preview schedule standings results teams rules news registration public page what teams see preview site before activation fans follow a team my team score alerts push notification final alert add to home screen install the app home screen icon fan app works offline last scores branded icon iphone android consistent standings rank same rank everywhere team card team profile tie-breaker head-to-head app icon background colour color app name short name initials border branding',
+      keywords: ['public site', 'preview', 'public tournament page', 'teams see', 'public schedule', 'standings', 'follow a team', 'score alerts', 'add to home screen', 'install app', 'offline', 'playoff picture', 'playoffs are set'],
+      searchText: 'public tournament site preview schedule standings results teams rules news registration public page what teams see preview site before activation fans follow a team my team score alerts push notification final alert add to home screen install the app home screen icon fan app works offline last scores branded icon iphone android consistent standings rank same rank everywhere team card team profile tie-breaker head-to-head app icon background colour color app name short name initials border branding playoff picture playoffs are set seeding summary bracket countdown home hero takeover shareable',
       links: [
         { label: 'Preview Site', href: '../tournaments/dashboard' },
       ],
@@ -889,6 +922,7 @@ const tournamentsHelp: HelpPageContent = {
           <p><strong>Consistent standings.</strong> A team&rsquo;s rank is the same everywhere it appears — the standings table, the Teams page cards, and the team&rsquo;s own page all rank by your tie-breaker rules (head-to-head, then run differential, and so on). So a team that wins a tie on head-to-head shows the same position to every fan, on every screen.</p>
           <p><strong>Following a team.</strong> Fans can follow a team on the public site — no account needed — to get a personalized &ldquo;my team&rdquo; view: next game, live score, and current standing, front and centre. Following, live public scores, and the home-screen app are included on every plan.</p>
           <p><strong>Score alerts.</strong> On Tournament Plus and above, fans who follow a team can turn on <strong>score alerts</strong> — a push notification when their team&rsquo;s game goes live and a &ldquo;Final&rdquo; when it ends. Tapping an alert opens that game, and on a branded event the notification carries your tournament logo.</p>
+          <p><strong>The playoff moment.</strong> When you set the playoff bracket, the public home page turns into a <strong>Playoffs</strong> view — a badge, a countdown to the first playoff game, and a link to a shareable <strong>Playoff Picture</strong> that lays out the seeding and the opening matchups. Fans with score alerts on also get a one-time &ldquo;Playoffs are set&rdquo; push.</p>
           <p><strong>Add to home screen (the fan app).</strong> Fans can add the tournament to their phone&rsquo;s home screen and open it like an app — straight to your event. On iPhone, alerts only work once the page has been added to the home screen (Apple&rsquo;s rule), so the alerts button there shows an &ldquo;add to home screen for alerts&rdquo; prompt first, with a one-time reminder after they install. On Tournament Plus events the home-screen icon and app name carry your tournament branding — you set the icon background colour and a short app name under <strong>Branding → App Icon</strong>; free events use the default FieldLogicHQ icon.</p>
           <p><strong>Works at the field.</strong> Once a fan has opened the tournament, the installed app keeps the last-loaded scores and schedule available on a weak or dropped signal and shows a tidy &ldquo;you&rsquo;re offline&rdquo; screen instead of a browser error.</p>
         </>

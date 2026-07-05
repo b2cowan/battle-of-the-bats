@@ -115,3 +115,70 @@ export async function notifyFansForGame(gameId: string, status: GameStatus): Pro
     console.error('[fan-notify] notifyFansForGame error:', err);
   }
 }
+
+/**
+ * Fan push fan-out for the "Playoffs are set" moment — one push to EVERY anonymous fan
+ * following ANY team in the tournament (not just the two in a game). Fired once, the
+ * first time a playoff bracket is materialized (guarded upstream by
+ * tournaments.playoffs_published_at). Gated to Tournament Plus+ via `fan_score_alerts`,
+ * same as the score path. Fire-and-forget — never throws.
+ */
+export async function notifyFansForPlayoff(tournamentId: string): Promise<void> {
+  try {
+    const { data: tournament } = await supabaseAdmin
+      .from('tournaments')
+      .select('id, slug, name, org_id, logo_url')
+      .eq('id', tournamentId)
+      .maybeSingle();
+    if (!tournament) return;
+
+    const { data: org } = await supabaseAdmin
+      .from('organizations')
+      .select('slug, plan_id, logo_url')
+      .eq('id', tournament.org_id)
+      .maybeSingle();
+    if (!org) return;
+
+    // The signature halo feature is Tournament Plus+.
+    if (!hasPlanFeature(org.plan_id as OrgPlan, 'fan_score_alerts')) return;
+
+    // Everyone following any team in this tournament.
+    const { data: subs } = await supabaseAdmin
+      .from('fan_push_subscriptions')
+      .select('id, endpoint, keys_p256dh, keys_auth')
+      .eq('tournament_id', tournament.id);
+    if (!subs || subs.length === 0) return;
+
+    const title = '🏆 The playoff bracket is set!';
+    const body = `${tournament.name} · See the seeding & who plays who`;
+    // Deep-link straight to the shareable Playoff Picture.
+    const link = `/${org.slug}/${tournament.slug}/playoffs`;
+    const rawIcon = tournament.logo_url || org.logo_url;
+    const icon = rawIcon && /^https?:\/\//i.test(rawIcon) ? rawIcon : undefined;
+
+    const seen = new Set<string>();
+    for (const sub of subs) {
+      if (seen.has(sub.endpoint)) continue;
+      seen.add(sub.endpoint);
+      try {
+        await sendWebPush(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.keys_p256dh, auth: sub.keys_auth } },
+          { title, body, link, icon },
+        );
+        await supabaseAdmin
+          .from('fan_push_subscriptions')
+          .update({ last_used_at: new Date().toISOString() })
+          .eq('id', sub.id);
+      } catch (err: unknown) {
+        const code = (err as { statusCode?: number })?.statusCode;
+        if (code === 410 || code === 404) {
+          await supabaseAdmin.from('fan_push_subscriptions').delete().eq('endpoint', sub.endpoint);
+        } else {
+          console.error('[fan-notify] playoff push send failed for', sub.endpoint, err);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[fan-notify] notifyFansForPlayoff error:', err);
+  }
+}

@@ -32,6 +32,8 @@ type StandingResult = {
   rf: number;
   ra: number;
   rd: number;
+  /** True uncapped run differential (rf - ra). Equals rd when no per-game cap is set. */
+  rdRaw?: number;
   pts: number;
   hasPendingGame?: boolean;
   /** Set by getStandings when 'coin' is the deciding breaker and no result is recorded yet. */
@@ -63,12 +65,11 @@ function formatShortDate(date: string) {
  *  table column's own responsive visibility so the legend only defines columns the
  *  current breakpoint actually shows (mobile = REC/RD/PTS; desktop = W/L/T/RF/RA/RD/PTS) — J6-031. */
 const STAT_LEGEND: { abbr: string; label: string; vis?: 'mobile' | 'desktop' }[] = [
-  { abbr: 'REC', label: 'Record (W-L-T)', vis: 'mobile' },
-  { abbr: 'W',   label: 'Wins', vis: 'desktop' },
-  { abbr: 'L',   label: 'Losses', vis: 'desktop' },
-  { abbr: 'T',   label: 'Ties', vis: 'desktop' },
-  { abbr: 'RF',  label: 'Runs For', vis: 'desktop' },
-  { abbr: 'RA',  label: 'Runs Against', vis: 'desktop' },
+  { abbr: 'W',   label: 'Wins' },
+  { abbr: 'L',   label: 'Losses' },
+  { abbr: 'T',   label: 'Ties' },
+  { abbr: 'RF',  label: 'Runs For' },
+  { abbr: 'RA',  label: 'Runs Against' },
   { abbr: 'RD',  label: 'Run Differential' },
   { abbr: 'PTS', label: 'Points' },
 ];
@@ -583,7 +584,9 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                     if (poolStandings.length === 0) return null;
 
                     const hasPendingStandings = poolStandings.some(s => s.hasPendingGame);
-                    const maxAbsRd = Math.max(1, ...poolStandings.map(s => Math.abs(s.rd)));
+                    // Bar scales off the TRUE differential (the headline number), so the
+                    // longest bar matches the biggest real margin — not the capped one.
+                    const maxAbsRd = Math.max(1, ...poolStandings.map(s => Math.abs(s.rdRaw ?? s.rd)));
                     // Mirror getStandings exactly (division override → tournament default → legacy,
                     // coin pinned last) so the displayed order matches the order actually applied.
                     const tieBreakerOrder = normalizeTieBreakers(currentGroup?.playoffConfig?.tieBreakers || selectedTournament?.settings?.tie_breakers)
@@ -617,12 +620,11 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                             <thead>
                               <tr>
                                 <th className={styles.stickyCol}>Team</th>
-                                <th className={`${styles.recordCol} ${styles.mobileOnly}`}>REC</th>
-                                <th className={`${styles.statCenter} ${styles.desktopOnly}`}>W</th>
-                                <th className={`${styles.statCenter} ${styles.desktopOnly}`}>L</th>
-                                <th className={`${styles.statCenter} ${styles.desktopOnly}`}>T</th>
-                                <th className={`${styles.statCenter} ${styles.desktopOnly}`}>RF</th>
-                                <th className={`${styles.statCenter} ${styles.desktopOnly}`}>RA</th>
+                                <th className={styles.statCenter}>W</th>
+                                <th className={styles.statCenter}>L</th>
+                                <th className={styles.statCenter}>T</th>
+                                <th className={styles.statCenter}>RF</th>
+                                <th className={styles.statCenter}>RA</th>
                                 <th className={styles.statCenter}>RD</th>
                                 <th className={`${styles.ptsCol} ${styles.statCenter}`}>PTS</th>
                               </tr>
@@ -653,26 +655,41 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                                         {team.hasPendingGame ? <span className={styles.pendingTeamBadge}>Pending</span> : null}
                                       </div>
                                     </td>
-                                    <td className={`${styles.recordCol} ${styles.mobileOnly}`}>
-                                      <span className={styles.recordPill}>{team.w}-{team.l}-{team.t}</span>
-                                    </td>
-                                    <td className={`${styles.statValue} ${styles.statCenter} ${styles.desktopOnly}`}>{team.w}</td>
-                                    <td className={`${styles.statValue} ${styles.statCenter} ${styles.desktopOnly}`}>{team.l}</td>
-                                    <td className={`${styles.statValue} ${styles.statCenter} ${styles.desktopOnly}`}>{team.t}</td>
-                                    <td className={`${styles.statCenter} ${styles.desktopOnly}`}>{team.rf}</td>
-                                    <td className={`${styles.statCenter} ${styles.desktopOnly}`}>{team.ra}</td>
+                                    <td className={`${styles.statValue} ${styles.statCenter}`}>{team.w}</td>
+                                    <td className={`${styles.statValue} ${styles.statCenter}`}>{team.l}</td>
+                                    <td className={`${styles.statValue} ${styles.statCenter}`}>{team.t}</td>
+                                    <td className={styles.statCenter}>{team.rf}</td>
+                                    <td className={styles.statCenter}>{team.ra}</td>
                                     <td className={styles.statCenter}>
-                                      <span className={team.rd > 0 ? styles.rdPositive : team.rd < 0 ? styles.rdNegative : ''}>
-                                        {team.rd > 0 ? `+${team.rd}` : team.rd}
-                                      </span>
+                                      {(() => {
+                                        // Headline = TRUE run differential; the seeding-capped value
+                                        // rides in brackets only when a cap is active AND it differs.
+                                        const trueRd = team.rdRaw ?? team.rd;
+                                        const showCapped = team.runDiffCap != null && team.runDiffCap > 0 && team.rd !== trueRd;
+                                        return (
+                                          <span className={styles.rdValue}>
+                                            <span className={trueRd > 0 ? styles.rdPositive : trueRd < 0 ? styles.rdNegative : ''}>
+                                              {trueRd > 0 ? `+${trueRd}` : trueRd}
+                                            </span>
+                                            {showCapped && (
+                                              <span
+                                                className={styles.rdCapped}
+                                                title={`Playoff-seeding differential — capped at ±${team.runDiffCap} per game`}
+                                              >
+                                                ({team.rd > 0 ? `+${team.rd}` : team.rd})
+                                              </span>
+                                            )}
+                                          </span>
+                                        );
+                                      })()}
                                       {/* The diverging bar only means something once a game's been played —
                                          hide the empty track on a not-yet-started pool. */}
                                       {gStarted && (
                                         <span className={`${styles.rdBar} ${styles.desktopOnly}`} aria-hidden="true">
                                           <span
                                             className={styles.rdBarFill}
-                                            data-dir={team.rd >= 0 ? 'pos' : 'neg'}
-                                            style={{ width: `${(Math.abs(team.rd) / maxAbsRd) * 50}%` }}
+                                            data-dir={(team.rdRaw ?? team.rd) >= 0 ? 'pos' : 'neg'}
+                                            style={{ width: `${(Math.abs(team.rdRaw ?? team.rd) / maxAbsRd) * 50}%` }}
                                           />
                                         </span>
                                       )}
@@ -705,7 +722,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                           </p>
                           {activeRunDiffCap ? (
                             <p className={styles.pendingNote}>
-                              Run differential is capped at ±{activeRunDiffCap} per game for standings. Runs For / Against show the real totals, so RF − RA may not equal RD.
+                              RD shows the true run differential, with the playoff-seeding value in brackets — capped at ±{activeRunDiffCap} per game. Seeding uses the capped figure, so a bigger RD doesn&apos;t always mean a higher seed.
                             </p>
                           ) : null}
                           {hasPendingStandings && (

@@ -16,7 +16,7 @@
  */
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Compass, X } from 'lucide-react';
+import { Compass, X, ChevronDown, ChevronUp } from 'lucide-react';
 import type { Guidance, GuidanceAction, TaskShortcut } from '@/lib/tournament-guidance';
 import styles from './GuidanceRail.module.css';
 
@@ -38,6 +38,35 @@ export default function GuidanceRail({
   const dismissKey = nudge ? `flhq-help-dismissed-${nudge.id}-${tournamentId}` : '';
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const [showTasks, setShowTasks] = useState(false);
+
+  // Game-day collapse: on a live event the board is the real "live view", so this
+  // orientation rail collapses to a one-line strip (icon + headline + the primary
+  // CTA) to keep the metrics above the fold. Non-live stages never collapse — the
+  // rail is their persistent anchor. Default = collapsed once live; the choice is
+  // remembered per tournament. Initial state matches the server render (collapsed
+  // when live) so hydration is stable; a stored "open" expands it after mount.
+  const collapseKey = `flhq-help-guiderail-${tournamentId}`;
+  const [collapsed, setCollapsed] = useState(live);
+
+  useEffect(() => {
+    if (!live) { setCollapsed(false); return; }
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem(collapseKey) : null;
+      setCollapsed(stored === 'open' ? false : true);
+    } catch {
+      setCollapsed(true);
+    }
+  }, [collapseKey, live]);
+
+  function toggleCollapsed() {
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      localStorage.setItem(collapseKey, next ? 'closed' : 'open');
+    } catch {
+      /* ignore */
+    }
+  }
 
   useEffect(() => {
     if (!nudge) return;
@@ -67,6 +96,25 @@ export default function GuidanceRail({
     );
   }
 
+  // Collapsed game-day strip: one line, primary action still reachable.
+  if (live && collapsed) {
+    return (
+      <section className={`${styles.rail} ${styles.railLive} ${styles.railCompact}`} aria-label="What's next">
+        <button
+          type="button"
+          className={styles.compactToggle}
+          aria-expanded={false}
+          onClick={toggleCollapsed}
+        >
+          <Compass size={16} className={styles.icon} aria-hidden />
+          <span className={styles.compactHeadline}>{guidance.headline}</span>
+          <ChevronDown size={15} className={styles.compactChevron} aria-hidden />
+        </button>
+        {guidance.cta && actionLink(guidance.cta, `btn btn-lime btn-data ${styles.compactCta}`)}
+      </section>
+    );
+  }
+
   return (
     <section className={`${styles.rail} ${live ? styles.railLive : ''}`} aria-label="What's next">
       <div className={styles.head}>
@@ -77,6 +125,17 @@ export default function GuidanceRail({
           {guidance.cta && actionLink(guidance.cta, `btn btn-lime btn-data ${styles.cta}`)}
           {guidance.progress && <p className={styles.progress}>{guidance.progress}</p>}
         </div>
+        {live && (
+          <button
+            type="button"
+            className={styles.collapseBtn}
+            aria-expanded={true}
+            aria-label="Collapse game-day guidance"
+            onClick={toggleCollapsed}
+          >
+            <ChevronUp size={16} aria-hidden />
+          </button>
+        )}
       </div>
 
       {nudge && !nudgeDismissed && (

@@ -14,6 +14,8 @@ import { hasCapability } from '@/lib/roles';
 import { buildScheduleMetrics, type ScheduleMetricGame } from '@/lib/schedule-metrics';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { tournamentNow, zonedWallClockToUtc } from '@/lib/timezone';
+import { scheduledWindowState, type ScheduledWindowState } from '@/lib/game-live-state';
 
 type GameRow = {
   id: string;
@@ -27,6 +29,7 @@ type GameRow = {
   away_score: number | null;
   game_date: string | null;
   game_time: string | null;
+  duration_minutes: number | null;
   location: string | null;
   diamond_id: string | null;
   venue_facility_id: string | null;
@@ -209,7 +212,7 @@ export const GET = withObservability(async (req: Request) => {
   const slotConfiguredDivisionIds = new Set((poolSlotsRes.data ?? [])
     .map(slot => slot.division_id as string | null)
     .filter((divisionId): divisionId is string => Boolean(divisionId)));
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentNow().date;
 
   const hasDates = Boolean(t.start_date && t.end_date);
   const hasDivisions = divisions.length > 0;
@@ -247,7 +250,7 @@ export const GET = withObservability(async (req: Request) => {
 
   // Game-day boundary: within event dates OR the first game has started
   // (any game submitted/completed, or its scheduled start time has passed).
-  const nowTime = new Date().toISOString().split('T')[1].slice(0, 8);
+  const nowTime = tournamentNow().time;
   const firstGameStarted = activeGames.some(g =>
     g.status === 'submitted' || g.status === 'completed' ||
     (g.game_date != null && (
@@ -311,44 +314,66 @@ export const GET = withObservability(async (req: Request) => {
   const inProgressGames = activeGames.filter(g => g.status === 'submitted').length;
   const completedPct   = totalGames > 0 ? Math.round((completedGames / totalGames) * 100) : 0;
 
-  // ── Live "what's on now" list (J1-085) ────────────────────────────
-  // A game is "live now" if it's being scored (submitted) or it was scheduled to
-  // have started by now but isn't finished — i.e. it's on a field right now. Most
-  // urgent first: in-review (submitted) before overdue-scheduled, then by start
-  // time. Capped so the board panel stays compact.
+  // ── Game-day sections: Now Playing / Up Next / Needs a Score (J1-085) ──
+  // One pass classifies each game into three honest, mutually-exclusive buckets
+  // via the SHARED window classifier (lib/game-live-state), so the dashboard and
+  // the Schedule screen never disagree. Start instants are real UTC (DST-correct,
+  // cross-midnight-safe) via zonedWallClockToUtc — never the raw UTC clock that
+  // caused the "not-yet-started shows as LIVE" bug.
   const divisionNameById = new Map(divisions.map(d => [d.id, d.name] as const));
+  const defaultDurationMin = positiveNumber(tSettings.game_duration_minutes) ?? 60;
+  const nowMs = Date.now();
+
+  // Per-game window state (scheduled games only), computed once.
+  const windowStateById = new Map<string, ScheduledWindowState>();
+  for (const g of activeGames) {
+    if (g.status !== 'scheduled') continue;
+    const iso = zonedWallClockToUtc(g.game_date, g.game_time);
+    const startMs = iso ? new Date(iso).getTime() : NaN;
+    windowStateById.set(g.id, scheduledWindowState(startMs, g.duration_minutes ?? defaultDurationMin, nowMs));
+  }
+
+  const toGameStat = (g: GameRow) => ({
+    id: g.id,
+    homeTeamName: g.home_team_id ? (teamNameById.get(g.home_team_id) ?? 'TBD') : 'TBD',
+    awayTeamName: g.away_team_id ? (teamNameById.get(g.away_team_id) ?? 'TBD') : 'TBD',
+    homeScore: g.home_score,
+    awayScore: g.away_score,
+    status: g.status,
+    time: g.game_time,
+    location: g.location,
+    divisionName: g.division_id ? (divisionNameById.get(g.division_id) ?? null) : null,
+    isPlayoff: g.is_playoff,
+  });
+  const byStartAsc = (a: GameRow, b: GameRow) =>
+    String(a.game_date ?? '').localeCompare(String(b.game_date ?? ''))
+    || String(a.game_time ?? '').localeCompare(String(b.game_time ?? ''));
+
+  // NOW PLAYING — being scored, or scheduled and inside its play window. In-review
+  // (submitted) first, then by start time. Capped so the board strip stays compact.
   const allLiveGames = activeGames
-    .filter(g => {
-      if (g.status === 'submitted') return true;
-      if (g.status !== 'scheduled') return false;
-      // Scheduled and its start time has passed (started but no score yet).
-      if (g.game_date == null) return false;
-      if (g.game_date < today) return true;
-      return g.game_date === today && g.game_time != null && g.game_time <= nowTime;
-    })
+    .filter(g => g.status === 'submitted' || (g.status === 'scheduled' && windowStateById.get(g.id) === 'live'))
     .sort((a, b) => {
-      // submitted (being scored) first, then by start date/time ascending.
       if (a.status !== b.status) return a.status === 'submitted' ? -1 : 1;
-      return String(a.game_date ?? '').localeCompare(String(b.game_date ?? ''))
-        || String(a.game_time ?? '').localeCompare(String(b.game_time ?? ''));
+      return byStartAsc(a, b);
     });
   const liveGamesTotal = allLiveGames.length;
-  // Load up to 8 so a wide screen can fill a single row; the board picks how many
-  // to actually show based on measured fit, and "+N more" covers the rest.
-  const liveGames = allLiveGames
-    .slice(0, 8)
-    .map(g => ({
-      id: g.id,
-      homeTeamName: g.home_team_id ? (teamNameById.get(g.home_team_id) ?? 'TBD') : 'TBD',
-      awayTeamName: g.away_team_id ? (teamNameById.get(g.away_team_id) ?? 'TBD') : 'TBD',
-      homeScore: g.home_score,
-      awayScore: g.away_score,
-      status: g.status,
-      time: g.game_time,
-      location: g.location,
-      divisionName: g.division_id ? (divisionNameById.get(g.division_id) ?? null) : null,
-      isPlayoff: g.is_playoff,
-    }));
+  const liveGames = allLiveGames.slice(0, 8).map(toGameStat);
+
+  // UP NEXT — scheduled, not started yet, TODAY only (tournament-local), earliest first.
+  const allUpNextGames = activeGames
+    .filter(g => g.status === 'scheduled' && g.game_date === today && windowStateById.get(g.id) === 'future')
+    .sort(byStartAsc);
+  const upNextTotal = allUpNextGames.length;
+  const upNextGames = allUpNextGames.slice(0, 8).map(toGameStat);
+
+  // NEEDS A SCORE — scheduled but its window has fully elapsed (any day). The safety
+  // net so a finished-but-unscored game is never hidden. Oldest (most overdue) first.
+  const allNeedsScoreGames = activeGames
+    .filter(g => g.status === 'scheduled' && windowStateById.get(g.id) === 'overdue')
+    .sort(byStartAsc);
+  const needsScoreTotal = allNeedsScoreGames.length;
+  const needsScoreGames = allNeedsScoreGames.slice(0, 8).map(toGameStat);
 
   const gameDay = {
     totalGames,
@@ -363,6 +388,10 @@ export const GET = withObservability(async (req: Request) => {
     byDivision: gameDayByDivision,
     liveGames,
     liveGamesTotal,
+    upNextGames,
+    upNextTotal,
+    needsScoreGames,
+    needsScoreTotal,
   };
 
   // ── Registration stats ────────────────────────────────────────────
