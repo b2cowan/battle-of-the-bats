@@ -592,7 +592,7 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Playoffs',
       heading: 'Build a playoff bracket',
       summary: 'Manual bracket building for all plans — inline bracket editor, tiers (Gold/Silver), and the Playoff Wizard.',
-      keywords: ['schedule', 'playoffs', 'bracket', 'seeds', 'manual bracket', 'bracket builder', 'tiers', 'split into tiers', 'gold silver bracket', 'playoff picture', 'playoffs are set', 'seeding summary'],
+      keywords: ['schedule', 'playoffs', 'bracket', 'seeds', 'manual bracket', 'bracket builder', 'tiers', 'split into tiers', 'gold silver bracket', 'playoff picture', 'playoffs are set', 'seeding summary', 'champions', 'champions page', 'champions crowned', 'final results'],
       searchText: 'playoff bracket manual build add game bracket view playoff wizard auto generate seeds single elimination consolation double elimination placement crossover reseed tiers split into tiers gold silver tier bracket separate brackets overall standings tiered bracket public bracket fans tap click bracket card game details directions field diamond on bracket card public standings bracket playoff picture seeding summary playoffs are set announcement notification alert home hero takeover countdown first playoff game shareable share seeds matchups top seed',
       links: [
         { label: 'Schedule', href: '../tournaments/schedule' },
@@ -671,6 +671,35 @@ const tournamentsHelp: HelpPageContent = {
                 <li>Fans who turned on <strong>score alerts</strong> (Tournament Plus and above) get a push.</li>
               </ul>
               <p>Both link to the <strong>Playoff Picture</strong>. Editing or regenerating the bracket later never re-sends the alert.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-champions-recap',
+          question: 'What is the Champions page?',
+          answerText: 'When a tournament’s whole playoffs finish and the champion is decided, FieldLogicHQ publishes a shareable Champions page — the finish-line counterpart to the Playoff Picture. It headlines the winning team (the top-tier winner in a tiered division), lists every tier’s champion with the final score, and shows the final standings. It has a Share button and the public home page links to it. The Champions page follows your Standings page visibility, so if you hide Standings it is hidden too, and it only appears once the whole tournament’s playoffs are complete.',
+          keywords: ['champions page', 'champions', 'final results', 'recap', 'winners', 'share results', 'champion'],
+          popular: true,
+          answer: (
+            <>
+              <p>When your tournament&rsquo;s whole playoffs finish and the champion is decided, FieldLogicHQ publishes a shareable <strong>Champions</strong> page &mdash; the finish-line counterpart to the Playoff Picture. It headlines the winning team, lists every tier&rsquo;s champion with the final score, and shows the final standings, with a <strong>Share</strong> button that the public home page links to.</p>
+              <p>In a tiered division (Gold/Silver or Tier 1/Tier 2), the headline champion is the <strong>top tier&rsquo;s</strong> winner. The Champions page follows your <strong>Standings</strong> page visibility &mdash; if you hide Standings, it&rsquo;s hidden too &mdash; and it appears once the <strong>whole</strong> tournament&rsquo;s playoffs are complete.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-champions-crowned-alert',
+          question: 'Does anyone get notified when the champion is crowned?',
+          answerText: 'Yes. The first time a tournament’s whole playoffs finish and the champion is decided, a one-time “Champions crowned” alert is sent automatically — a push and in-app bell to your staff, and a push to fans who turned on score alerts (Tournament Plus and above). It links to the Champions page. It fires once off the scores you already enter and never re-sends if you re-score later. Staff can manage this under notification settings as the “Champions crowned” event. Marking the tournament Completed stays a separate, optional step.',
+          keywords: ['champions crowned', 'champion notification', 'final results alert', 'alert', 'push', 'staff', 'fans', 'tournament complete', 'champions'],
+          answer: (
+            <>
+              <p>Yes. The <strong>first time</strong> your tournament&rsquo;s whole playoffs finish and the champion is decided, a one-time <strong>&ldquo;Champions crowned&rdquo;</strong> alert goes out automatically:</p>
+              <ul>
+                <li>Your <strong>staff</strong> get a push and an in-app bell &mdash; manage it under notification settings as the <strong>&ldquo;Champions crowned&rdquo;</strong> event.</li>
+                <li>Fans who turned on <strong>score alerts</strong> (Tournament Plus and above) get a push.</li>
+              </ul>
+              <p>Both link to the <strong>Champions</strong> page. It fires once off the scores you already enter and never re-sends if you re-score afterward. Formally marking the tournament <strong>Completed</strong> stays a separate, optional step.</p>
             </>
           ),
         },
@@ -973,8 +1002,8 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Communicate & Publish',
       heading: 'The public tournament site, fan following, and preview',
       summary: 'What teams and fans see online — following a team, score alerts, the home-screen app — and how to preview it.',
-      keywords: ['public site', 'preview', 'public tournament page', 'teams see', 'public schedule', 'standings', 'follow a team', 'score alerts', 'add to home screen', 'install app', 'offline', 'playoff picture', 'playoffs are set'],
-      searchText: 'public tournament site preview schedule standings results teams rules news registration public page what teams see preview site before activation fans follow a team my team score alerts push notification final alert add to home screen install the app home screen icon fan app works offline last scores branded icon iphone android consistent standings rank same rank everywhere team card team profile tie-breaker head-to-head app icon background colour color app name short name initials border branding playoff picture playoffs are set seeding summary bracket countdown home hero takeover shareable',
+      keywords: ['public site', 'preview', 'public tournament page', 'teams see', 'public schedule', 'standings', 'follow a team', 'score alerts', 'add to home screen', 'install app', 'offline', 'playoff picture', 'playoffs are set', 'champions', 'champions page', 'champions crowned', 'final results'],
+      searchText: 'public tournament site preview schedule standings results teams rules news registration public page what teams see preview site before activation fans follow a team my team score alerts push notification final alert add to home screen install the app home screen icon fan app works offline last scores branded icon iphone android consistent standings rank same rank everywhere team card team profile tie-breaker head-to-head app icon background colour color app name short name initials border branding playoff picture playoffs are set seeding summary bracket countdown home hero takeover shareable champions crowned champions page final results winners celebration recap top tier',
       links: [
         { label: 'Preview Site', href: '../tournaments/dashboard' },
       ],
@@ -987,6 +1016,7 @@ const tournamentsHelp: HelpPageContent = {
           <p><strong>Following a team.</strong> Fans can follow a team on the public site — no account needed — to get a personalized &ldquo;my team&rdquo; view: next game, live score, and current standing, front and centre. Following, live public scores, and the home-screen app are included on every plan.</p>
           <p><strong>Score alerts.</strong> On Tournament Plus and above, fans who follow a team can turn on <strong>score alerts</strong> — a push notification when their team&rsquo;s game goes live and a &ldquo;Final&rdquo; when it ends. Tapping an alert opens that game, and on a branded event the notification carries your tournament logo.</p>
           <p><strong>The playoff moment.</strong> When you set the playoff bracket, the public home page turns into a <strong>Playoffs</strong> view — a badge, a countdown to the first playoff game, and a link to a shareable <strong>Playoff Picture</strong> that lays out the seeding and the opening matchups. Fans with score alerts on also get a one-time &ldquo;Playoffs are set&rdquo; push.</p>
+          <p><strong>The champions moment.</strong> When the whole playoffs finish and the champion is decided, the public home page turns into a gold <strong>Champions</strong> celebration headlining the winning team, with a link to a shareable <strong>Champions</strong> page showing every tier&rsquo;s winner and the final standings. Fans with score alerts on also get a one-time &ldquo;Champions crowned&rdquo; push. It all happens off the scores you already enter &mdash; there&rsquo;s no extra step.</p>
           <p><strong>Add to home screen (the fan app).</strong> Fans can add the tournament to their phone&rsquo;s home screen and open it like an app — straight to your event. On iPhone, alerts only work once the page has been added to the home screen (Apple&rsquo;s rule), so the alerts button there shows an &ldquo;add to home screen for alerts&rdquo; prompt first, with a one-time reminder after they install. On Tournament Plus events the home-screen icon and app name carry your tournament branding — you set the icon background colour and a short app name under <strong>Branding → App Icon</strong>; free events use the default FieldLogicHQ icon.</p>
           <p><strong>Works at the field.</strong> Once a fan has opened the tournament, the installed app keeps the last-loaded scores and schedule available on a weak or dropped signal and shows a tidy &ldquo;you&rsquo;re offline&rdquo; screen instead of a browser error.</p>
         </>
