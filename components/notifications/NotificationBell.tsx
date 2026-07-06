@@ -9,9 +9,11 @@ interface Props {
   orgId: string;
   /** When provided, the panel shows a subtle "Notification settings" link in its footer. */
   settingsHref?: string;
+  /** When provided, the panel footer shows a "See all" link to the full notifications page. */
+  seeAllHref?: string;
 }
 
-export default function NotificationBell({ orgId, settingsHref }: Props) {
+export default function NotificationBell({ orgId, settingsHref, seeAllHref }: Props) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [open,        setOpen]        = useState(false);
   const [userId,      setUserId]      = useState<string | null>(null);
@@ -116,6 +118,7 @@ export default function NotificationBell({ orgId, settingsHref }: Props) {
           onClose={() => setOpen(false)}
           onUnreadChange={setUnreadCount}
           settingsHref={settingsHref}
+          seeAllHref={seeAllHref}
         />
       )}
     </div>

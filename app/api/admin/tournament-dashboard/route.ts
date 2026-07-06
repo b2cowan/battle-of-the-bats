@@ -16,12 +16,17 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { tournamentNow, zonedWallClockToUtc } from '@/lib/timezone';
 import { scheduledWindowState, type ScheduledWindowState } from '@/lib/game-live-state';
+import { decidedFinalFor, type ChampionGameInput } from '@/lib/champions';
+import { hasPlanFeature } from '@/lib/plan-features';
+import { coachEmailsPaused } from '@/lib/email';
 
 type GameRow = {
   id: string;
   status: string | null;
   is_playoff: boolean | null;
   bracket_code: string | null;
+  bracket_id: string | null;
+  bracket_label: string | null;
   division_id: string | null;
   home_team_id: string | null;
   away_team_id: string | null;
@@ -83,6 +88,8 @@ type TournamentFeeRow = {
   theme_primary: string | null;
   settings: Record<string, unknown> | null;
   status: string | null;
+  notify_teams_on_complete: boolean | null;
+  results_notified_at: string | null;
 };
 
 const ROUND_ORDER = ['Quarterfinals', 'Semifinals', 'Finals'];
@@ -123,7 +130,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data: tournament, error: tournamentError } = await supabaseAdmin
     .from('tournaments')
-    .select('start_date, end_date, contact_email, default_contact_member_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, settings, status')
+    .select('start_date, end_date, contact_email, default_contact_member_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, settings, status, notify_teams_on_complete, results_notified_at')
     .eq('id', tournamentId)
     .eq('org_id', ctx.org.id)
     .maybeSingle();
@@ -293,17 +300,29 @@ export const GET = withObservability(async (req: Request) => {
   });
 
   // ── Champions (resolved playoff finals) ───────────────────────────
-  // Mirrors the post-event Summary's championFromFinal: the latest completed
-  // FIN game per division decides that division's champion. No extra query —
-  // games + team names are already loaded above.
+  // TIER-AWARE via the shared lib/champions helper (single source of truth with the
+  // public surfaces): a division's champion is the winner of its TOP tier's decided
+  // final (GF2 → GF → FIN priority), never an arbitrary lower-tier/consolation final.
+  // (Was a naive `bracket_code === 'FIN'` + latest-date scan that crowned the wrong
+  // tier when a division had Tier 1 + Tier 2 brackets sharing final codes.)
   const teamNameById = new Map(teamPayments.map(tm => [tm.id, tm.name ?? 'Team'] as const));
+  const champGames: ChampionGameInput[] = playoffGames.map(g => ({
+    isPlayoff: g.is_playoff,
+    divisionId: g.division_id,
+    bracketId: g.bracket_id,
+    bracketLabel: g.bracket_label,
+    bracketCode: g.bracket_code,
+    status: g.status,
+    homeScore: g.home_score,
+    awayScore: g.away_score,
+    homeTeamId: g.home_team_id,
+    awayTeamId: g.away_team_id,
+  }));
   const champions = divisions
     .map(div => {
-      const final = playoffGames
-        .filter(g => g.division_id === div.id && (g.status === 'completed' || g.status === 'forfeit') && g.bracket_code === 'FIN')
-        .sort((a, b) => String(b.game_date ?? '').localeCompare(String(a.game_date ?? '')))[0];
-      if (!final || final.home_score == null || final.away_score == null || final.home_score === final.away_score) return null;
-      const winnerId = final.home_score > final.away_score ? final.home_team_id : final.away_team_id;
+      const final = decidedFinalFor(champGames, div.id);
+      if (!final) return null;
+      const winnerId = (final.homeScore ?? 0) > (final.awayScore ?? 0) ? final.homeTeamId : final.awayTeamId;
       if (!winnerId) return null;
       return { divisionId: div.id, divisionName: div.name, championTeamName: teamNameById.get(winnerId) ?? 'Champion' };
     })
@@ -311,6 +330,11 @@ export const GET = withObservability(async (req: Request) => {
 
   const totalGames     = activeGames.length;
   const completedGames = activeGames.filter(g => g.status === 'completed').length;
+  const forfeitGames   = activeGames.filter(g => g.status === 'forfeit').length;
+  // "Resolved" = every terminal state (a forfeit is a finished game). Drives the
+  // dashboard's "ready to finalize" prompt — a tournament that ends on a forfeit
+  // must still count as done, so this is separate from the completed-only display.
+  const resolvedGames  = completedGames + forfeitGames;
   const inProgressGames = activeGames.filter(g => g.status === 'submitted').length;
   const completedPct   = totalGames > 0 ? Math.round((completedGames / totalGames) * 100) : 0;
 
@@ -386,6 +410,7 @@ export const GET = withObservability(async (req: Request) => {
   const gameDay = {
     totalGames,
     completed:            completedGames,
+    resolved:             resolvedGames,
     inProgress:           inProgressGames,
     completedPct,
     poolGamesTotal:       poolGames.length,
@@ -393,6 +418,9 @@ export const GET = withObservability(async (req: Request) => {
     playoffStarted:       playoffGames.length > 0,
     playoffGamesTotal:    playoffGames.length,
     playoffGamesCompleted: playoffGames.filter(g => g.status === 'completed').length,
+    // Playoff games in any terminal state (completed or forfeit) — drives the
+    // "Playoffs complete" vs "Playoffs underway" By-Division footer.
+    playoffResolved:      playoffGames.filter(g => g.status === 'completed' || g.status === 'forfeit').length,
     byDivision: gameDayByDivision,
     liveGames,
     liveGamesTotal,
@@ -656,6 +684,15 @@ export const GET = withObservability(async (req: Request) => {
     isGameDay,
     gameDay,
     champions,
+    // Whether marking complete will ACTUALLY email a results summary to team contacts,
+    // mirroring every suppression the server-side sender applies (set-status → completed):
+    // the per-event toggle on, org-wide coach emails not paused, not already sent once, and
+    // the plan includes post-event summaries. Keeps the one-click complete confirm honest
+    // (e.g. a reopen→re-complete won't re-email, so it must not promise one).
+    notifyTeamsOnComplete: Boolean(t.notify_teams_on_complete)
+      && !coachEmailsPaused(t.settings)
+      && !t.results_notified_at
+      && hasPlanFeature(ctx.org.planId, 'post_tournament_summary'),
     publishChecklist: {
       hasDates,
       hasDivisions,

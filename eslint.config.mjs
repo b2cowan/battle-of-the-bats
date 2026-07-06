@@ -20,6 +20,15 @@ const eslintConfig = defineConfig([
       "react/jsx-child-element-spacing": "warn",
     },
   },
+  {
+    // Node build/tooling scripts are CommonJS (run directly via `node`, not bundled
+    // as ESM), so `require()` is correct there. Scope the exemption to scripts/ so
+    // app code keeps ESM-only enforcement.
+    files: ["scripts/**/*.js", "scripts/**/*.cjs"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

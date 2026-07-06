@@ -1,0 +1,307 @@
+/* Full "See all" notifications page (Notification Center Rework P4). Full-width
+   companion to the bell dropdown; reuses the same zones/grouping/bundling. */
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-family: var(--font-display, inherit);
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--fl-text);
+  margin: 0;
+}
+
+.sub {
+  font-size: 0.8rem;
+  color: var(--white-50, rgba(255, 255, 255, 0.5));
+  margin: 0.2rem 0 0;
+}
+
+.markAllBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.4);
+  color: var(--white-70, rgba(255, 255, 255, 0.7));
+  font-size: 0.76rem;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.markAllBtn:hover {
+  color: var(--fl-text);
+  border-color: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.7);
+}
+
+/* ── Toolbar (filter chips + unread toggle) ──────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.chips {
+  display: inline-flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.chip {
+  border: 1px solid var(--white-10, rgba(255, 255, 255, 0.1));
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.chip:hover {
+  color: var(--fl-text);
+}
+
+.chipActive,
+.chipActive:hover {
+  background: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.35);
+  border-color: transparent;
+  color: var(--fl-text);
+}
+
+/* Unread / All segmented toggle (matches the dropdown's) */
+.segToggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--white-5, rgba(255, 255, 255, 0.05));
+  border-radius: 6px;
+}
+
+.segBtn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  padding: 0.28rem 0.75rem;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.segBtn:hover {
+  color: var(--fl-text);
+}
+
+.segBtnActive,
+.segBtnActive:hover {
+  background: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.35);
+  color: var(--fl-text);
+}
+
+/* ── List + zone headers ─────────────────────────────────────────────────────── */
+
+.list {
+  border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface, #111827);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.1rem 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+}
+
+.sectionHeaderAct {
+  color: var(--warning, #f59e0b);
+}
+
+.sectionCount {
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--warning, #f59e0b);
+}
+
+.dateHeader {
+  padding: 0.6rem 1.1rem 0.3rem;
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-30, rgba(255, 255, 255, 0.3));
+}
+
+/* ── Rows ─────────────────────────────────────────────────────────────────────── */
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.85rem 1.1rem;
+  border-top: 1px solid var(--white-5, rgba(255, 255, 255, 0.05));
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.item:hover {
+  background: var(--white-5, rgba(255, 255, 255, 0.05));
+}
+
+.unread {
+  background: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.06);
+}
+
+.unread:hover {
+  background: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.12);
+}
+
+.actItem {
+  box-shadow: inset 2px 0 0 var(--warning, #f59e0b);
+}
+
+.icon {
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+  line-height: 1.2;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemTitle {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--fl-text);
+  margin: 0 0 0.2rem;
+}
+
+.read .itemTitle {
+  font-weight: 400;
+  color: var(--white-60, rgba(255, 255, 255, 0.6));
+}
+
+.itemBody {
+  font-size: 0.8rem;
+  color: var(--white-50, rgba(255, 255, 255, 0.5));
+  margin: 0 0 0.2rem;
+}
+
+.itemTime {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--white-30, rgba(255, 255, 255, 0.3));
+  margin: 0;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--blueprint-blue, #1E3A8A);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.bundleChevron {
+  color: var(--white-30, rgba(255, 255, 255, 0.3));
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+/* ── Load more + empty/loading ───────────────────────────────────────────────── */
+
+.loadMoreWrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.loadMoreBtn {
+  background: none;
+  border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.4);
+  color: var(--white-70, rgba(255, 255, 255, 0.7));
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.5rem 1.4rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.loadMoreBtn:hover:not(:disabled) {
+  color: var(--fl-text);
+  border-color: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.7);
+}
+
+.loadMoreBtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.empty {
+  padding: 3.5rem 1rem;
+  text-align: center;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.emptyIcon {
+  opacity: 0.35;
+}
+
+.loadingRow {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--white-30, rgba(255, 255, 255, 0.3));
+}

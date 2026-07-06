@@ -39,5 +39,16 @@ export default async function StartTournamentPage() {
     redirect('/home');
   }
 
+  // A pending invite means they already have somewhere to go — send them to /home's
+  // pending-invite card instead of creating a stray org (Sign-up Invite Guard, Phase 3).
+  const { count: pendingInvites } = await supabaseAdmin
+    .from('organization_members')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('status', 'invited');
+  if ((pendingInvites ?? 0) > 0) {
+    redirect('/home');
+  }
+
   return <AddOrgForm />;
 }

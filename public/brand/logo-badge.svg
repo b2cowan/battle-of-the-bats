@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <!--
+    FieldLogicHQ notification BADGE mark — Android status-bar / lock-screen small icon.
+
+    Android renders the small notification icon using the ALPHA channel ONLY: any
+    opaque pixel is painted solid white. So this MUST be a transparent, background-less,
+    single-shape silhouette — NO bg rect, NO border, NO grid/dots/HQ (all of which would
+    survive into the alpha mask and flatten to a white block, the "just a square" bug).
+
+    Just the ">" logic chevron: centered (the brand chevron sits left-of-center, which
+    looks off standalone), white, slightly heavier for ~24dp legibility, on-brand
+    square caps + miter join. See memory/design_decisions.md 2026-07-06.
+  -->
+  <polyline
+    points="34,20 66,48 34,76"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="13"
+    stroke-linecap="square"
+    stroke-linejoin="miter"/>
+</svg>

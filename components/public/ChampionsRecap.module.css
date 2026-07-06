@@ -1,7 +1,8 @@
 /* components/public/ChampionsRecap.module.css
    The shareable "Champions" recap — final results, tier winners, closing standings.
    Token-only (no literal hex) so it respects org branding + the public-token ratchet.
-   Gold accents reuse the --warning token, matching the completed-home champion banner. */
+   Gold accents use the --gold medal token, matching the completed-home champion banner
+   and the champions hero takeover (2026-07-06 — gold-medal/championship semantic). */
 
 /* ── Hero ─────────────────────────────────────────────────────────────────── */
 .hero {
@@ -15,8 +16,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(1200px 400px at 50% -10%, rgba(var(--warning-rgb), 0.26), transparent 70%),
-    linear-gradient(180deg, rgba(var(--warning-rgb), 0.10), transparent 60%);
+    radial-gradient(1200px 400px at 50% -10%, rgba(var(--gold-rgb), 0.26), transparent 70%),
+    linear-gradient(180deg, rgba(var(--gold-rgb), 0.10), transparent 60%);
   pointer-events: none;
 }
 
@@ -30,10 +31,10 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem 0.7rem;
-  border: 1px solid rgba(var(--warning-rgb), 0.45);
+  border: 1px solid rgba(var(--gold-rgb), 0.45);
   border-radius: var(--radius-xl, 999px);
-  background: rgba(var(--warning-rgb), 0.12);
-  color: var(--warning);
+  background: rgba(var(--gold-rgb), 0.12);
+  color: var(--gold-strong);
   font-family: var(--font-data);
   font-size: 0.7rem;
   font-weight: 900;
@@ -90,7 +91,7 @@
 .divisionKicker {
   display: block;
   margin-bottom: 0.2rem;
-  color: var(--warning);
+  color: var(--gold-strong);
   font-family: var(--font-data);
   font-size: 0.72rem;
   font-weight: 800;
@@ -125,8 +126,8 @@
 /* The overall (top-tier) champion — gold-forward, larger. */
 .championTop {
   padding: 1.5rem 1.5rem;
-  border-color: rgba(var(--warning-rgb), 0.4);
-  background: linear-gradient(135deg, rgba(var(--warning-rgb), 0.16) 0%, rgba(var(--warning-rgb), 0.05) 60%, var(--bg-card) 100%);
+  border-color: rgba(var(--gold-rgb), 0.4);
+  background: linear-gradient(135deg, rgba(var(--gold-rgb), 0.16) 0%, rgba(var(--gold-rgb), 0.05) 60%, var(--bg-card) 100%);
 }
 
 .crown {
@@ -137,9 +138,9 @@
   height: 46px;
   flex-shrink: 0;
   border-radius: var(--radius-md);
-  background: rgba(var(--warning-rgb), 0.16);
-  border: 1px solid rgba(var(--warning-rgb), 0.35);
-  color: var(--warning);
+  background: rgba(var(--gold-rgb), 0.16);
+  border: 1px solid rgba(var(--gold-rgb), 0.35);
+  color: var(--gold-strong);
 }
 
 .championTop .crown {
@@ -160,7 +161,7 @@
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--warning);
+  color: var(--gold-strong);
 }
 
 .championName {
@@ -236,7 +237,7 @@
 }
 
 .rankFirst .rankNum {
-  background: rgba(var(--warning-rgb), 0.9);
+  background: rgba(var(--gold-rgb), 0.9);
   color: var(--on-primary);
 }
 

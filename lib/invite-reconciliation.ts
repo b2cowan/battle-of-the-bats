@@ -133,6 +133,50 @@ export async function reconcilePendingInvitesForUser(user: {
   return reconciled;
 }
 
+export type PendingInviteForEmail = {
+  memberId: string;
+  userId: string;
+  orgSlug: string | null;
+  orgName: string | null;
+  role: string;
+};
+
+/**
+ * Find a single pending ('invited') membership addressed to `email`, keyed on the persisted
+ * `lower(invited_email)` partial index (mig 128). Read-only. Returns the OLDEST pending invite
+ * if several exist. Used by the Sign-up Invite Guard + the self-serve resend route to detect
+ * "this email was already invited" WITHOUT trusting a client-supplied identity.
+ *
+ * SECURITY: this is a raw lookup — the CALLER decides disclosure. The sign-up guard only runs it
+ * at submit time (parity with the account-only branch's existing "account exists" 409, so it adds
+ * no pre-auth enumeration oracle); the resend route always returns a neutral response. See
+ * docs/projects/active/SIGNUP_INVITE_GUARD_PLAN.md.
+ */
+export async function findPendingInviteByEmail(email: string | null | undefined): Promise<PendingInviteForEmail | null> {
+  const normalized = normalizeEmail(email);
+  if (!normalized) return null;
+
+  const { data } = await supabaseAdmin
+    .from('organization_members')
+    .select('id, user_id, role, organizations(slug, name)')
+    .eq('status', 'invited')
+    .eq('invited_email', normalized)
+    .order('invited_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) return null;
+
+  const org = orgFromRelation(data.organizations as OrgRelation);
+  return {
+    memberId: data.id as string,
+    userId: data.user_id as string,
+    orgSlug: org?.slug ?? null,
+    orgName: org?.name ?? null,
+    role: data.role as string,
+  };
+}
+
 /**
  * List pending invites for the authenticated user (post-reconciliation), keyed on
  * `user_id`. Used by the post-login pending-invite UI (Phase 2). Read-only.

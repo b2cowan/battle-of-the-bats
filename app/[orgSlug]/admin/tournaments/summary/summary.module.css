@@ -104,7 +104,10 @@
   gap: 0.4rem;
   padding: 0.25rem 0.55rem;
   border-radius: 2px;
-  color: var(--black);
+  /* Dark ink on the light lime fill (matches .btn-lime). `var(--black)` is NOT a
+     defined token — only --black-10..40 exist — so it resolved to nothing and the
+     text inherited white, rendering unreadable white-on-lime. */
+  color: #0f1123;
   background: var(--logic-lime);
 }
 
@@ -145,7 +148,7 @@
 .metricCard small {
   display: block;
   margin-top: 0.5rem;
-  color: var(--white-45);
+  color: var(--white-60);
   font-size: 0.76rem;
   line-height: 1.4;
 }
@@ -187,7 +190,7 @@
 /* Value reflection — visible, quiet, no ask */
 .valueReflection {
   margin: 0.9rem 0 0;
-  color: var(--white-45);
+  color: var(--white-55);
   font-size: 0.78rem;
   line-height: 1.5;
 }
@@ -222,7 +225,7 @@
 
 .whatsNextNote {
   margin: 0.75rem 0 0;
-  color: var(--white-45);
+  color: var(--white-55);
   font-size: 0.76rem;
   line-height: 1.45;
 }
@@ -231,7 +234,7 @@
   margin: 1rem 0 0;
   padding-top: 0.85rem;
   border-top: 1px solid var(--border-2);
-  color: var(--white-45);
+  color: var(--white-55);
   font-size: 0.78rem;
   line-height: 1.5;
 }
@@ -515,7 +518,7 @@
 
 .divisionHeader p {
   margin: 0.3rem 0 0;
-  color: var(--white-45);
+  color: var(--white-60);
   font-size: 0.82rem;
   line-height: 1.45;
 }
@@ -534,7 +537,7 @@
 }
 
 .championBadge {
-  color: var(--black);
+  color: #0f1123; /* dark ink on lime (matches .btn-lime); see .championChip note */
   background: var(--logic-lime);
 }
 
@@ -558,7 +561,7 @@
 }
 
 .divisionStats span {
-  color: var(--white-45);
+  color: var(--white-60);
   font-size: 0.76rem;
 }
 

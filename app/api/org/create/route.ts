@@ -63,6 +63,21 @@ export const POST = withObservability(async (req: Request) => {
       );
     }
 
+    // A PENDING invite (not yet accepted) means the user already has somewhere to go — don't let
+    // them spin up a stray org first (which would then block the accept via the single-org guard).
+    // Server-side mirror of the /start/tournament page redirect to /home.
+    const { count: pendingInvites } = await supabaseAdmin
+      .from('organization_members')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('status', 'invited');
+    if ((pendingInvites ?? 0) > 0) {
+      return NextResponse.json(
+        { error: 'You have a pending invitation. Accept it from your home screen before creating a new organization.' },
+        { status: 409 }
+      );
+    }
+
     const { orgName, orgSlug } = await req.json().catch(() => ({}));
     const normalizedOrgName = typeof orgName === 'string' ? orgName.trim() : '';
     if (!normalizedOrgName) {

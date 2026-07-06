@@ -27,12 +27,23 @@ export default function GuidanceRail({
   shortcuts,
   tournamentId,
   live = false,
+  ready = false,
+  onAction,
 }: {
   guidance: Guidance;
   shortcuts: TaskShortcut[];
   tournamentId: string;
   /** Game-day tone — amber accent to match the live alert language. */
   live?: boolean;
+  /**
+   * "Ready to finalize" tone — lime accent, full/expanded (never collapses). A
+   * positive end-of-event milestone, distinct from the amber live view. `live` and
+   * `ready` are mutually exclusive; when `ready` the rail never enters the collapsed
+   * game-day strip.
+   */
+  ready?: boolean;
+  /** Handler for a CTA/nudge action with an `actionId` (e.g. the one-click complete confirm). */
+  onAction?: (actionId: NonNullable<GuidanceAction['actionId']>) => void;
 }) {
   const nudge = guidance.nudge ?? null;
   const dismissKey = nudge ? `flhq-help-dismissed-${nudge.id}-${tournamentId}` : '';
@@ -89,6 +100,16 @@ export default function GuidanceRail({
   }
 
   function actionLink(action: GuidanceAction, className: string) {
+    // An action with an `actionId` fires an in-page handler (e.g. the complete
+    // confirm) rather than navigating — render a button when a handler is wired.
+    if (action.actionId && onAction) {
+      const id = action.actionId;
+      return (
+        <button type="button" className={className} onClick={() => onAction(id)}>
+          {action.label} →
+        </button>
+      );
+    }
     return (
       <Link href={action.href} className={className} {...(action.external ? NEW_TAB : {})}>
         {action.label} →
@@ -116,7 +137,7 @@ export default function GuidanceRail({
   }
 
   return (
-    <section className={`${styles.rail} ${live ? styles.railLive : ''}`} aria-label="What's next">
+    <section className={`${styles.rail} ${live ? styles.railLive : ready ? styles.railReady : ''}`} aria-label="What's next">
       <div className={styles.head}>
         <Compass size={18} className={styles.icon} aria-hidden />
         <div className={styles.body}>

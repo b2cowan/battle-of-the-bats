@@ -1,12 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { sendEmail, orgInviteHtml } from '@/lib/email';
+import { sendPendingInviteLink } from '@/lib/invite-links';
 import { withObservability } from '@/lib/observability';
-
-function getActionLink(data: unknown) {
-  return (data as { properties?: { action_link?: string | null } }).properties?.action_link ?? null;
-}
 
 type Params = { params: Promise<{ memberId: string }> };
 
@@ -36,75 +32,18 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     return NextResponse.json({ error: 'This member has already accepted their invitation' }, { status: 400 });
   }
 
-  // Look up their email from the auth user record
-  const { data: { user: authUser } } = await supabaseAdmin.auth.admin.getUserById(member.user_id);
-  if (!authUser?.email) {
-    return NextResponse.json({ error: 'Could not find email for this member' }, { status: 500 });
-  }
-
-  const email = authUser.email;
-  // Lowercased form for invited_email so it matches reconciliation's normalized lookup
-  // (mig 128); the send-to `email` above keeps the auth-user's original casing.
-  const invitedEmail = email.trim().toLowerCase();
-  const role = member.role as string;
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
-  const roleLabel = role === 'official' ? 'scorekeeper' : `team ${role}`;
-  const inviteAction = role === 'official' ? 'Accept Scorekeeper Invite' : 'Accept Invitation';
-
-  const next = encodeURIComponent(`/auth/accept-invite?org=${org.slug}`);
-  const redirectTo = `${appUrl}/auth/callback?next=${next}`;
-
-  // If the Supabase user is already confirmed, generateLink({ type: 'invite' }) fails
-  // with "already registered". Use a magic link instead — same UX, gets them to
-  // accept-invite where they can set display name and finalize their account.
-  if (authUser.email_confirmed_at) {
-    const { data: mlData, error: mlError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-      options: { redirectTo },
-    });
-    if (mlError || !mlData) {
-      return NextResponse.json({ error: mlError?.message ?? 'Failed to generate invite link' }, { status: 500 });
-    }
-    const inviteUrl = getActionLink(mlData);
-    await sendEmail(
-      email,
-      `You've been invited to ${org.name} on FieldLogicHQ`,
-      orgInviteHtml({ orgName: org.name, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: inviteAction, scorekeeperNote: role === 'official' }),
-    );
-    // Refresh invited_at; backfill invited_email so legacy/pre-128 rows become
-    // reconcilable by email (mig 128).
-    await supabaseAdmin
-      .from('organization_members')
-      .update({ invited_at: new Date().toISOString(), invited_email: invitedEmail })
-      .eq('id', memberId);
-    return NextResponse.json({ ok: true });
-  }
-
-  const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-    type: 'invite',
-    email,
-    options: { redirectTo },
+  // Magic link for a confirmed account, invite link otherwise; refreshes invited_at +
+  // invited_email. Shared with the self-serve resend route so the link logic can't drift.
+  const result = await sendPendingInviteLink({
+    memberId: member.id,
+    userId: member.user_id,
+    role: member.role as string,
+    orgName: org.name,
+    orgSlug: org.slug,
   });
-
-  if (linkError || !linkData) {
-    return NextResponse.json({ error: linkError?.message ?? 'Failed to generate invite link' }, { status: 500 });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: 500 });
   }
-
-  // Refresh invited_at so the admin can see the re-invite timestamp; backfill
-  // invited_email so legacy/pre-128 rows become reconcilable by email (mig 128).
-  await supabaseAdmin
-    .from('organization_members')
-    .update({ invited_at: new Date().toISOString(), invited_email: email })
-    .eq('id', memberId);
-
-  const inviteUrl = getActionLink(linkData);
-  await sendEmail(
-    email,
-    `You've been invited to ${org.name} on FieldLogicHQ`,
-    orgInviteHtml({ orgName: org.name, roleLabel, inviteUrl: inviteUrl ?? appUrl, ctaLabel: inviteAction, scorekeeperNote: role === 'official' }),
-  );
 
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/members/[memberId]/reinvite' });

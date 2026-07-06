@@ -15,7 +15,7 @@
 
 /* ── Cache config ──────────────────────────────────────────────────────────── */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2'; // v2: refreshed push badge (transparent chevron) + clean maskable icon
 const SHELL_CACHE = 'flhq-shell-' + CACHE_VERSION; // precache + content-hashed static
 const PAGES_CACHE = 'flhq-pages-' + CACHE_VERSION; // last-good public tournament pages
 const DATA_CACHE  = 'flhq-data-'  + CACHE_VERSION; // last-good anonymous public API JSON

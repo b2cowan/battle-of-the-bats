@@ -16,7 +16,7 @@ import { hasPlanFeature } from './plan-features';
 import { getBillingHref } from './billing-urls';
 import type { OrgPlan } from './types';
 
-export type GuidanceStage = 'draft' | 'pre' | 'live' | 'post' | 'done';
+export type GuidanceStage = 'draft' | 'pre' | 'live' | 'ready' | 'post' | 'done';
 
 export interface GuidanceContext {
   orgSlug: string;
@@ -31,6 +31,13 @@ export interface GuidanceAction {
   href: string;
   /** Opens in a new tab (guide links + the public site, so admins keep their place). */
   external?: boolean;
+  /**
+   * When set, this CTA triggers an in-page action instead of navigating. The rail
+   * renders a button that calls its `onAction(actionId)` handler (falling back to a
+   * plain link if no handler is wired). Used for the "ready to finalize" card's
+   * one-click "Mark tournament complete" confirm.
+   */
+  actionId?: 'complete';
 }
 
 export interface GuidanceNudge {
@@ -61,12 +68,20 @@ export function resolveGuidanceStage(opts: {
   status?: string | null;
   isGameDay?: boolean;
   daysUntil: number | null;
+  /**
+   * True once every non-cancelled game is resolved AND a playoff bracket exists —
+   * i.e. the event is genuinely finished and only needs finalizing. When set, an
+   * active tournament advances to 'ready' (the finalize prompt) instead of staying
+   * on 'live'. Callers without the completion counts omit it and keep 'live'.
+   */
+  readyToFinalize?: boolean;
 }): GuidanceStage | null {
-  const { status, isGameDay, daysUntil } = opts;
+  const { status, isGameDay, daysUntil, readyToFinalize } = opts;
   if (status === 'draft') return 'draft';
   if (status === 'completed') return 'done';
   if (status === 'archived') return null;
   // active
+  if (readyToFinalize) return 'ready';
   if (isGameDay) return 'live';
   if (daysUntil !== null && daysUntil <= 0) return 'post';
   return 'pre';
@@ -171,6 +186,31 @@ export function getGuidance(stage: GuidanceStage, ctx: GuidanceContext): Guidanc
       };
     }
 
+    case 'ready': {
+      // Every game is in but the tournament is still active — steer straight to the
+      // one outstanding action. The CTA fires an in-page confirm (actionId), not a
+      // navigation, so completion is one click from the dashboard.
+      return {
+        headline: 'Every game’s in — ready to finalize',
+        context:
+          'Your champions are decided and every score is final. Mark the tournament complete to lock in your results and standings.',
+        cta: { label: 'Mark tournament complete', href: '#complete', actionId: 'complete' },
+        nudge: hasSummary
+          ? {
+              id: 'ready-complete-unlocks',
+              body:
+                'Once you mark it complete, your event summary is ready — and you can reuse this whole setup to start next year in one step.',
+              action: { label: 'See what’s next', href: `${b}/summary` },
+            }
+          : {
+              id: 'ready-results-live',
+              body:
+                'Your public results and standings stay live at the same link for teams and families to revisit.',
+              action: publicHref ? { label: 'View public results', href: publicHref, external: true } : undefined,
+            },
+      };
+    }
+
     case 'post': {
       return {
         headline: 'Your event has wrapped up',
@@ -235,6 +275,15 @@ export function getStageShortcuts(
   const canClone = hasPlanFeature(planId, 'tournament_cloning');
 
   // Raw outcome → guide section; `plus` flags the genuinely gated ones.
+  // The finalize-oriented shortcuts are shared by 'ready' (all games in, still active)
+  // and 'post' (event window over) — both are steering the organizer toward closeout.
+  const CLOSEOUT_SHORTCUTS: Array<{ label: string; sectionId: string; plus?: 'import' | 'clone' }> = [
+    { label: 'Confirm all scores are final', sectionId: 'scores-and-results' },
+    { label: 'Mark the tournament complete', sectionId: 'recipe-closeout-tournament' },
+    { label: 'Export results & schedule', sectionId: 'exports' },
+    { label: 'Share the public results link', sectionId: 'public-site-preview' },
+  ];
+
   const RAW: Record<GuidanceStage, Array<{ label: string; sectionId: string; plus?: 'import' | 'clone' }>> = {
     draft: [
       { label: 'Preview what teams will see', sectionId: 'public-site-preview' },
@@ -254,12 +303,8 @@ export function getStageShortcuts(
       { label: 'Check who’s checked in', sectionId: 'scores-and-results' },
       { label: 'Send an update to teams', sectionId: 'public-communication' },
     ],
-    post: [
-      { label: 'Confirm all scores are final', sectionId: 'scores-and-results' },
-      { label: 'Mark the tournament complete', sectionId: 'recipe-closeout-tournament' },
-      { label: 'Export results & schedule', sectionId: 'exports' },
-      { label: 'Share the public results link', sectionId: 'public-site-preview' },
-    ],
+    ready: CLOSEOUT_SHORTCUTS,
+    post: CLOSEOUT_SHORTCUTS,
     done: [
       { label: 'View final results', sectionId: 'scores-and-results' },
       { label: 'Reuse this setup for next year', sectionId: 'repeat-event-setup', plus: 'clone' },

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Calendar, Trophy, ChevronRight, Megaphone, Star, Eye, Clock, MapPin, CheckCircle } from 'lucide-react';
+import { Calendar, Trophy, ChevronRight, Megaphone, Star, Eye, Clock, MapPin, CheckCircle, Crown } from 'lucide-react';
 import { getAnnouncements, getGames, getTeams, getDivisions, getVenues, getStandings, resolveTournamentContactEmail } from '@/lib/db';
 import type { Game, Organization, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
@@ -8,7 +8,7 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { getRegistrationState } from '@/lib/registration-state';
 import { tournamentToday } from '@/lib/timezone';
-import { deriveChampions, isTournamentPlayoffsComplete } from '@/lib/champions';
+import { deriveChampions, deriveTierChampions, tierBadgeLabel, isTournamentPlayoffsComplete } from '@/lib/champions';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import SharePageButton from '@/components/public/SharePageButton';
 import LocationLink from '@/components/LocationLink';
@@ -169,12 +169,19 @@ export default async function TournamentHomeContent({
 
   const sortedDivisions = [...divisions].sort((a, b) => a.order - b.order);
 
-  // Champions for the completed-home banner (J6-052) AND the auto Champions hero takeover.
+  // Champions for the auto Champions hero takeover — top-tier only (one headline winner
+  // per division; the hero is a single celebratory moment, not a full podium listing).
   // Derived once playoffs are decided (championsDecided) OR the event is manually completed.
   // allGames (raw, all statuses) so playoff finals aren't filtered out; teams is the
   // public-safe array (id+name). Tier-aware: one row per division = the TOP-tier champion.
   const champions = (isCompletedTournament || championsDecided)
     ? deriveChampions(allGames, teams, sortedDivisions)
+    : [];
+  // Champions for the completed-home banner — EVERY decided tier winner (Tier 1 headlined,
+  // lower tiers shown as crowned tier winners: they medalled in their own bracket). A
+  // single-bracket division yields one row (tierLabel null).
+  const tierChampions = isCompletedTournament
+    ? deriveTierChampions(allGames, teams, sortedDivisions)
     : [];
   // Third hero stat — adaptive. When every division name parses as an age (U13,
   // 13U, "Under 13"), show a true low-to-high age range, ordered by the actual
@@ -267,18 +274,24 @@ export default async function TournamentHomeContent({
     game.status === 'submitted' && game.homeScore != null && game.awayScore != null
   );
   const remainingScheduledGames = sortedGames.filter(game => game.status === 'scheduled');
-  const completedDivisionLeaders = sortedDivisions
-    .map(division => {
-      const divisionStandings = standingsByDivision.get(division.id) ?? [];
-      const leader = divisionStandings.find(row => row.gp > 0) ?? divisionStandings[0] ?? null;
-      if (!leader) return null;
-      return { division, leader };
-    })
-    .filter(Boolean)
-    .slice(0, 6) as Array<{
-      division: (typeof sortedDivisions)[number];
-      leader: Awaited<ReturnType<typeof getStandings>>[number];
-    }>;
+  // "Top Standings" recap. With multiple divisions, show each division's leader (a
+  // "who won each division" summary). With a SINGLE division, that would show just one
+  // team — so instead show that division's top few as a real mini-leaderboard (ranked).
+  type StandingRow = Awaited<ReturnType<typeof getStandings>>[number];
+  const topStandingsRows: Array<{ key: string; label: string; leader: StandingRow }> =
+    sortedDivisions.length === 1
+      ? (standingsByDivision.get(sortedDivisions[0].id) ?? [])
+          .filter(row => row.gp > 0)
+          .slice(0, 5)
+          .map((leader, i) => ({ key: `rank-${i}`, label: `#${i + 1}`, leader }))
+      : sortedDivisions
+          .map(division => {
+            const divisionStandings = standingsByDivision.get(division.id) ?? [];
+            const leader = divisionStandings.find(row => row.gp > 0) ?? divisionStandings[0] ?? null;
+            return leader ? { key: division.id, label: division.name, leader } : null;
+          })
+          .filter((r): r is { key: string; label: string; leader: StandingRow } => r !== null)
+          .slice(0, 6);
   const venueShortcuts = todayGames.reduce<Array<{ key: string; label: string; location: string; venue: ReturnType<typeof getVenue> }>>((acc, game) => {
     const venue = getVenue(game.venueId);
     const label = venue?.name ?? game.location;
@@ -395,40 +408,90 @@ export default async function TournamentHomeContent({
     </section>
   ) : null;
 
-  const singleChampion = champions.length === 1;
   const multiDivision = divisions.length > 1;
+  const topTierChampions = tierChampions.filter(c => c.isTopTier);
+  // Headline a single centered card ONLY when the whole tournament produced exactly one
+  // crowned team AND it's a genuine top-tier champion (one division, one bracket). Any
+  // tiers or extra divisions → the per-division podium below, so every medalling tier
+  // winner is shown. The isTopTier guard covers the early-close edge case: if the event
+  // is marked complete with a top-tier final still unresolved but a lower tier decided,
+  // that lone winner falls through to the podium (badged "Tier N Champion") instead of
+  // being mis-shown as THE champion.
+  const singleTierChampion = tierChampions.length === 1 && tierChampions[0].isTopTier;
+  // Share the top-tier winners; fall back to any decided tier winner in that same edge
+  // case so the share text is never an empty "— Champions".
+  const shareChampions = topTierChampions.length > 0 ? topTierChampions : tierChampions;
 
-  const championBanner = isCompletedTournament && champions.length > 0 ? (
+  const championBanner = isCompletedTournament && tierChampions.length > 0 ? (
     <section className={`section ${styles.championSection}`} id="champions">
       <div className="container">
         <div className="section-header">
           <span className="eyebrow"><Trophy size={12} /> Tournament Champions</span>
-          <h2 className="display-md">{singleChampion ? `${champions[0].champion} — Champion` : 'Champions'}</h2>
+          {!singleTierChampion && <h2 className="display-md">Champions</h2>}
         </div>
 
-        {singleChampion ? (
+        {singleTierChampion ? (
           <div className={`${styles.championCard} ${styles.championSingle}`}>
-            {multiDivision && <span className={styles.championDivision}>{champions[0].division}</span>}
-            <div className={styles.championName}>{champions[0].champion}</div>
-            {champions[0].runnerUp && <div className={styles.championRunnerUp}>Runner-up: {champions[0].runnerUp}</div>}
+            {multiDivision && <span className={styles.championDivision}>{tierChampions[0].division}</span>}
+            <div className={styles.championName}>{tierChampions[0].champion}</div>
+            {tierChampions[0].runnerUp && (
+              <div className={styles.championRunnerUp}>
+                <span className={styles.runnerUpLabel}>Runner-up</span>
+                {tierChampions[0].runnerUp}
+              </div>
+            )}
           </div>
         ) : (
-          <div className={styles.championGrid}>
-            {champions.map(ch => (
-              <div key={ch.division} className={styles.championCard}>
-                <span className={styles.championDivision}>{ch.division}</span>
-                <div className={styles.championName}>{ch.champion}</div>
-                {ch.runnerUp && <div className={styles.championRunnerUp}>Runner-up: {ch.runnerUp}</div>}
-              </div>
-            ))}
+          <div className={styles.championDivisions}>
+            {sortedDivisions.map(div => {
+              const champs = tierChampions.filter(c => c.division === div.name);
+              if (champs.length === 0) return null;
+              return (
+                <div key={div.id} className={styles.championDivisionBlock}>
+                  {multiDivision && <span className={styles.championDivisionName}>{div.name}</span>}
+                  <div className={styles.championTierList}>
+                    {champs.map((c, i) => (
+                      <div
+                        key={`${c.division}-${c.tierLabel ?? 'single'}-${i}`}
+                        className={`${styles.championTierCard} ${c.isTopTier ? styles.championTierTop : ''}`}
+                      >
+                        <span className={styles.championTierCrown}>
+                          <Crown size={c.isTopTier ? 22 : 17} />
+                        </span>
+                        <div className={styles.championTierBody}>
+                          <span className={styles.championTierBadge}>{tierBadgeLabel(c.tierLabel, c.isTopTier)}</span>
+                          <span className={styles.championTierName}>{c.champion}</span>
+                          {c.runnerUp && (
+                            <span className={styles.championTierMeta}>
+                              def. {c.runnerUp}
+                              {c.championScore != null && c.runnerUpScore != null && (
+                                <> <strong>{c.championScore}–{c.runnerUpScore}</strong></>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
         <div className={styles.championShareRow}>
+          {/* The Champions recap inherits Standings visibility (it shows final
+              results/standings), so only offer it when Standings is public — same
+              gate as the pre-complete hero takeover. */}
+          {showStandingsPage && (
+            <Link href={`${publicBase}/champions`} className="btn btn-primary btn-sm">
+              <Trophy size={16} /> Final Results
+            </Link>
+          )}
           <SharePageButton
-            url={publicBase}
+            url={showStandingsPage ? `${publicBase}/champions` : publicBase}
             title={tournament.name}
-            text={`${champions.map(c => `${c.champion}${multiDivision ? ` (${c.division})` : ''}`).join(', ')} — Champions`}
+            text={`${shareChampions.map(c => `${c.champion}${multiDivision ? ` (${c.division})` : ''}`).join(', ')} — Champions`}
             label="Share results"
             className="btn btn-outline btn-sm"
           />
@@ -501,13 +564,13 @@ export default async function TournamentHomeContent({
                   <h3>Top Standings</h3>
                 </div>
               </div>
-              {completedDivisionLeaders.length === 0 ? (
+              {topStandingsRows.length === 0 ? (
                 <p className={styles.dayCardSub}>Final standings will appear once scores have been posted.</p>
               ) : (
                 <div className={styles.recordList}>
-                  {completedDivisionLeaders.map(({ division, leader }) => (
-                    <div key={division.id} className={styles.recordListRow}>
-                      <span>{division.name}</span>
+                  {topStandingsRows.map(({ key, label, leader }) => (
+                    <div key={key} className={styles.recordListRow}>
+                      <span>{label}</span>
                       <strong>{leader.teamName}</strong>
                       <em>{leader.w}-{leader.l}-{leader.t} - {leader.pts} pts</em>
                     </div>
@@ -807,7 +870,9 @@ export default async function TournamentHomeContent({
       {championBanner}
       {completedRecordPanel}
       {tournamentDayPanel}
-      {isInProgress && scheduleBlock}
+      {/* A completed tournament has no upcoming games — its date window can still include
+          today (so isInProgress is true on the final day), so exclude it explicitly. */}
+      {isInProgress && !isCompletedTournament && scheduleBlock}
 
       {showNewsPage && (
       <section className={`section ${styles.announcementsSection}`} id="announcements">

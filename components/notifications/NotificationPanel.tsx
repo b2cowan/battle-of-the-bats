@@ -1,38 +1,14 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { CheckCheck, BellOff, Settings } from 'lucide-react';
+import { CheckCheck, BellOff, Settings, ChevronRight, List } from 'lucide-react';
 import type { AppNotification } from '@/lib/types';
+import { notificationCategory } from '@/lib/notification-labels';
+import {
+  iconFor, relativeTime, DAY_ORDER, dayBucket, BUNDLE_NOUN, groupActivityItems,
+} from '@/lib/notification-view';
 import styles from './notifications.module.css';
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const EVENT_ICONS: Record<string, string> = {
-  registration_new:                  '📋',
-  registration_status_changed:       '🔄',
-  payment_received:                  '💳',
-  payment_failed:                    '⚠️',
-  roster_change_requested:           '👥',
-  score_submitted:                   '🏆',
-  score_disputed:                    '🚩',
-  registration_deadline_approaching: '⏰',
-  waitlist_opened:                   '🎉',
-  coach_access_requested:            '🔑',
-  house_league_registration_new:     '📋',
-};
-
-function relativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins  = Math.floor(diff / 60_000);
-  const hours = Math.floor(diff / 3_600_000);
-  const days  = Math.floor(diff / 86_400_000);
-  if (mins  < 1)   return 'just now';
-  if (mins  < 60)  return `${mins}m ago`;
-  if (hours < 24)  return `${hours}h ago`;
-  if (days  < 7)   return `${days}d ago`;
-  return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
-}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -42,17 +18,23 @@ interface Props {
   onUnreadChange: (count: number) => void;
   /** When provided, a subtle "Notification settings" link is shown in the panel footer. */
   settingsHref?: string;
+  /** When provided, a "See all" link to the full notifications page is shown in the footer. */
+  seeAllHref?: string;
 }
 
-export default function NotificationPanel({ orgId, onClose, onUnreadChange, settingsHref }: Props) {
+export default function NotificationPanel({ orgId, onClose, onUnreadChange, settingsHref, seeAllHref }: Props) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading,       setLoading]       = useState(true);
   const [markingAll,    setMarkingAll]    = useState(false);
+  // Unread toggle (P2) — ON by default: the bell reads as an inbox you empty. OFF shows
+  // everything (read dimmed). Pure client filter over the fetched window → instant, no refetch.
+  const [unreadOnly,    setUnreadOnly]    = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res  = await fetch(`/api/notifications?orgId=${orgId}&limit=30`);
+      // Fetch a wider window (read + unread) once; the toggle + bundling work over it.
+      const res  = await fetch(`/api/notifications?orgId=${orgId}&limit=40`);
       const data = await res.json();
       setNotifications(data.notifications ?? []);
       onUnreadChange(data.unreadCount ?? 0);
@@ -104,7 +86,103 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, sett
     setMarkingAll(false);
   }
 
+  // One-tap bundle clear (P2): mark every member read at once, then open the type's list.
+  async function handleBundleClick(members: AppNotification[]) {
+    const unreadIds = members.filter(m => !m.readAt).map(m => m.id);
+    if (unreadIds.length > 0) {
+      const idSet = new Set(unreadIds);
+      setNotifications(prev =>
+        prev.map(n => idSet.has(n.id) ? { ...n, readAt: new Date().toISOString() } : n)
+      );
+      onUnreadChange(notifications.filter(n => !n.readAt && !idSet.has(n.id)).length);
+      await Promise.all(unreadIds.map(id =>
+        fetch('/api/notifications', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ action: 'mark-read', id }),
+        }).catch(console.error)
+      ));
+    }
+    // All members share the same list target — navigate to the first one that has a link.
+    const link = members.find(m => m.link)?.link;
+    if (link) { onClose(); window.location.href = link; }
+  }
+
   const unreadCount = notifications.filter(n => !n.readAt).length;
+
+  // ── Visible set — the Unread toggle filters here (P2). Marking read then drops an
+  //    item straight out of the default view; read is never destroyed, just filtered.
+  const visible = unreadOnly ? notifications.filter(n => !n.readAt) : notifications;
+
+  // ── P1 zones over the visible set — "Needs attention" (unread Act items) pinned above
+  //    a date-grouped Activity feed (everything else). Each row appears in exactly one zone.
+  const needsAttention = visible.filter(
+    n => !n.readAt && notificationCategory(n.eventType) === 'act'
+  );
+  const naIds = new Set(needsAttention.map(n => n.id));
+  const activity = visible.filter(n => !naIds.has(n.id));
+  const activityGroups = DAY_ORDER
+    .map(label => ({ label, items: activity.filter(n => dayBucket(n.createdAt) === label) }))
+    .filter(g => g.items.length > 0);
+
+  function renderItem(n: AppNotification, isAct: boolean) {
+    const isUnread = !n.readAt;
+    const icon     = iconFor(n.eventType);
+    return (
+      <div
+        key={n.id}
+        className={`${styles.notifItem} ${isUnread ? styles.unread : styles.notifRead}${isAct ? ` ${styles.actItem}` : ''}`}
+        onClick={() => handleMarkRead(n)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={e => e.key === 'Enter' && handleMarkRead(n)}
+      >
+        <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: 1 }}>{icon}</span>
+        <div className={styles.notifContent}>
+          <p className={styles.notifTitle}>{n.title}</p>
+          {n.body && <p className={styles.notifBody}>{n.body}</p>}
+          <p className={styles.notifTime}>{relativeTime(n.createdAt)}</p>
+        </div>
+        {isUnread && <span className={styles.notifDot} aria-label="Unread" />}
+      </div>
+    );
+  }
+
+  // A same-type bundle row — one tap clears all members + opens the type's list (P2).
+  function renderBundle(eventType: string, members: AppNotification[]) {
+    const icon      = iconFor(eventType);
+    const noun      = BUNDLE_NOUN[eventType] ?? 'notifications';
+    const anyUnread = members.some(m => !m.readAt);
+    const newest    = members[0]; // members preserve newest-first order
+    return (
+      <div
+        key={`bundle-${eventType}-${newest.id}`}
+        className={`${styles.notifItem} ${anyUnread ? styles.unread : styles.notifRead}`}
+        onClick={() => handleBundleClick(members)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={e => e.key === 'Enter' && handleBundleClick(members)}
+      >
+        <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: 1 }}>{icon}</span>
+        <div className={styles.notifContent}>
+          <p className={styles.notifTitle}>{members.length} {noun}</p>
+          <p className={styles.notifTime}>{relativeTime(newest.createdAt)}</p>
+        </div>
+        <ChevronRight size={14} className={styles.bundleChevron} aria-hidden />
+        {anyUnread && <span className={styles.notifDot} aria-label="Unread" />}
+      </div>
+    );
+  }
+
+  // Render a day-group's items, rolling up bundleable same-type runs into one row (P2).
+  // Grouping logic is shared with the "See all" page (lib/notification-view) so they match.
+  function renderActivityItems(items: AppNotification[]): ReactNode[] {
+    return groupActivityItems(items).map(entry =>
+      entry.kind === 'bundle'
+        ? renderBundle(entry.eventType, entry.members)
+        : renderItem(entry.notification, false),
+    );
+  }
 
   const panel = (
     <div className={styles.panel} role="dialog" aria-label="Notifications" data-notification-panel>
@@ -123,46 +201,74 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, sett
         )}
       </div>
 
+      <div className={styles.filterBar}>
+        <div className={styles.segToggle} role="group" aria-label="Filter notifications">
+          <button
+            type="button"
+            aria-pressed={unreadOnly}
+            className={`${styles.segBtn} ${unreadOnly ? styles.segBtnActive : ''}`}
+            onClick={() => setUnreadOnly(true)}
+          >
+            Unread
+          </button>
+          <button
+            type="button"
+            aria-pressed={!unreadOnly}
+            className={`${styles.segBtn} ${!unreadOnly ? styles.segBtnActive : ''}`}
+            onClick={() => setUnreadOnly(false)}
+          >
+            All
+          </button>
+        </div>
+      </div>
+
       <div className={styles.notifList}>
         {loading ? (
           <p className={styles.loadingRow}>Loading…</p>
-        ) : notifications.length === 0 ? (
+        ) : visible.length === 0 ? (
           <div className={styles.emptyState}>
             <BellOff size={28} className={styles.emptyIcon} />
-            <span>You&apos;re all caught up</span>
+            <span>
+              {unreadOnly && notifications.length > 0
+                ? 'You’re all caught up'
+                : 'No notifications yet'}
+            </span>
           </div>
         ) : (
-          notifications.map(n => {
-            const isUnread = !n.readAt;
-            const icon     = EVENT_ICONS[n.eventType] ?? '🔔';
-            return (
-              <div
-                key={n.id}
-                className={`${styles.notifItem} ${isUnread ? styles.unread : styles.notifRead}`}
-                onClick={() => handleMarkRead(n)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={e => e.key === 'Enter' && handleMarkRead(n)}
-              >
-                <span style={{ fontSize: '1rem', flexShrink: 0, marginTop: 1 }}>{icon}</span>
-                <div className={styles.notifContent}>
-                  <p className={styles.notifTitle}>{n.title}</p>
-                  {n.body && <p className={styles.notifBody}>{n.body}</p>}
-                  <p className={styles.notifTime}>{relativeTime(n.createdAt)}</p>
+          <>
+            {needsAttention.length > 0 && (
+              <>
+                <div className={`${styles.sectionHeader} ${styles.sectionHeaderAct}`}>
+                  <span>Needs attention</span>
+                  <span className={styles.sectionCount}>{needsAttention.length}</span>
                 </div>
-                {isUnread && <span className={styles.notifDot} aria-label="Unread" />}
+                {needsAttention.map(n => renderItem(n, true))}
+              </>
+            )}
+            {activityGroups.map(g => (
+              <div key={g.label}>
+                <div className={styles.dateHeader}>{g.label}</div>
+                {renderActivityItems(g.items)}
               </div>
-            );
-          })
+            ))}
+          </>
         )}
       </div>
 
-      {settingsHref && (
+      {(seeAllHref || settingsHref) && (
         <div className={styles.panelFooter}>
-          <Link href={settingsHref} className={styles.settingsLink} onClick={onClose}>
-            <Settings size={12} aria-hidden />
-            Notification settings
-          </Link>
+          {seeAllHref && (
+            <Link href={seeAllHref} className={styles.settingsLink} onClick={onClose}>
+              <List size={12} aria-hidden />
+              See all
+            </Link>
+          )}
+          {settingsHref && (
+            <Link href={settingsHref} className={styles.settingsLink} onClick={onClose}>
+              <Settings size={12} aria-hidden />
+              Notification settings
+            </Link>
+          )}
         </div>
       )}
     </div>

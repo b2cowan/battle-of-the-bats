@@ -96,6 +96,8 @@ type LiveGameStat = {
 type GameDayStats = {
   totalGames: number;
   completed: number;
+  /** Every game in a terminal state (completed OR forfeit) — drives "ready to finalize". */
+  resolved: number;
   inProgress: number;
   completedPct: number;
   poolGamesTotal: number;
@@ -103,6 +105,8 @@ type GameDayStats = {
   playoffStarted: boolean;
   playoffGamesTotal: number;
   playoffGamesCompleted: number;
+  /** Playoff games in a terminal state (completed OR forfeit) — drives the "Playoffs complete" footer. */
+  playoffResolved: number;
   byDivision: GameDayDivisionStat[];
   liveGames: LiveGameStat[];
   liveGamesTotal: number;
@@ -151,6 +155,8 @@ type DashboardStats = {
   isGameDay: boolean;
   gameDay: GameDayStats;
   champions: DivisionChampion[];
+  /** Whether marking complete will email a results summary to team contacts (mirrors the confirm copy). */
+  notifyTeamsOnComplete: boolean;
   coinTossNeeded: { divisionId: string; divisionName: string; teamNames: string[] }[];
   publishChecklist: PublishChecklist;
   registration: {
@@ -292,9 +298,9 @@ function saveLayout(orgSlug: string, layout: DashboardLayout) {
 // ── Misc helpers ─────────────────────────────────────────────────────────────
 
 const EMPTY_GAME_DAY: GameDayStats = {
-  totalGames: 0, completed: 0, inProgress: 0, completedPct: 0,
+  totalGames: 0, completed: 0, resolved: 0, inProgress: 0, completedPct: 0,
   poolGamesTotal: 0, poolGamesCompleted: 0,
-  playoffStarted: false, playoffGamesTotal: 0, playoffGamesCompleted: 0,
+  playoffStarted: false, playoffGamesTotal: 0, playoffGamesCompleted: 0, playoffResolved: 0,
   byDivision: [],
   liveGames: [],
   liveGamesTotal: 0,
@@ -335,6 +341,7 @@ const EMPTY_STATS: DashboardStats = {
   isGameDay: false,
   gameDay: EMPTY_GAME_DAY,
   champions: [],
+  notifyTeamsOnComplete: false,
   coinTossNeeded: [],
   publishChecklist: {
     hasDates: false, hasDivisions: false, hasPublicContact: false, hasOpenDivision: false,
@@ -605,6 +612,11 @@ export default function AdminDashboard() {
   const [archiveError, setArchiveError] = useState('');
   const [showOptionalItems, setShowOptionalItems] = useState(false);
 
+  // ── Mark complete (one-click finalize from the "ready" guidance card) ──────
+  const [completing, setCompleting] = useState(false);
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
+  const [completeError, setCompleteError] = useState('');
+
   // ── Now Playing one-row fit ───────────────────────────────────────────────
   // Measure the live-games strip and show exactly as many tiles as fit in ONE row
   // (floor of width / tile-width, min 4), with the remainder collapsing into a
@@ -747,6 +759,7 @@ export default function AdminDashboard() {
           isGameDay:       data?.isGameDay       ?? false,
           gameDay:         data?.gameDay         ?? EMPTY_GAME_DAY,
           champions:       data?.champions       ?? [],
+          notifyTeamsOnComplete: data?.notifyTeamsOnComplete ?? false,
           coinTossNeeded:  data?.coinTossNeeded  ?? [],
           publishChecklist: {
             hasDates:         data?.publishChecklist?.hasDates         ?? false,
@@ -857,6 +870,27 @@ export default function AdminDashboard() {
     } finally { setArchiving(false); }
   }
 
+  // Marks the tournament complete via the SAME server action as Settings, so the
+  // results-summary email + read-only lock fire identically no matter where it's
+  // triggered (the notify email is sent server-side on the transition to completed).
+  async function handleComplete() {
+    if (!currentTournament?.id || completing) return;
+    setCompleting(true); setCompleteError(''); setShowCompleteConfirm(false);
+    try {
+      const res = await fetch(`/api/admin/tournaments${orgQuery}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'set-status', id: currentTournament.id, data: { status: 'completed' } }),
+      });
+      const json = await res.json().catch(() => null) as { error?: string } | null;
+      if (!res.ok) throw new Error(json?.error ?? 'Failed to mark tournament complete.');
+      await refreshTournaments();
+      router.refresh();
+    } catch (err) {
+      setCompleteError(err instanceof Error ? err.message : 'Failed to mark tournament complete.');
+    } finally { setCompleting(false); }
+  }
+
   async function handlePopulateConfirm() {
     if (!populateSelected || !currentTournament?.id) return;
     setPopulateWorking(true); setPopulateError('');
@@ -914,18 +948,29 @@ export default function AdminDashboard() {
 
   const daysUntil = computeDaysUntil(currentTournament?.startDate);
 
+  // "Ready to finalize" — every non-cancelled game is in a terminal state AND a
+  // playoff bracket exists (so a round robin whose bracket isn't built yet never
+  // trips it early — see DASHBOARD_COMPLETION_GUIDANCE_PLAN, decision #2). This is
+  // what the guidance rail keys off to stop showing the live "game day" card once
+  // the event is genuinely finished but still active (awaiting a manual complete).
+  const allGamesResolved = gd.totalGames > 0 && gd.resolved >= gd.totalGames;
+  const readyToFinalize  = isActive && allGamesResolved && gd.playoffGamesTotal > 0;
+  // Playoffs done (every playoff game terminal) — completion-aware By-Division footer.
+  const playoffsAllDone  = gd.playoffGamesTotal > 0 && gd.playoffResolved >= gd.playoffGamesTotal;
+
   // Active sub-states
   const isPreEvent      = isActive && daysUntil !== null && daysUntil > 0;
   const isPostEventActive = isActive && !isTournamentDay && (daysUntil === null || daysUntil <= 0);
 
-  const statusLabel = (isActive && isGameDay) ? 'Live' : isPreEvent ? 'Pre-Event' : isPostEventActive ? 'Event Ended' : isCompleted ? 'Completed' : status.charAt(0).toUpperCase() + status.slice(1);
+  const statusLabel = readyToFinalize ? 'Ready to finalize' : (isActive && isGameDay) ? 'Live' : isPreEvent ? 'Pre-Event' : isPostEventActive ? 'Event Ended' : isCompleted ? 'Completed' : status.charAt(0).toUpperCase() + status.slice(1);
 
   // ── Discovery & Orientation rail (help Layer 3) ─────────────────────────────
   // One stage-aware "what's next" card pinned at the top of each dashboard stage.
+  // 'ready' wins over 'live' so a finished-but-active tournament is steered to finalize.
   const guidanceStage: GuidanceStage | null =
     isDraft ? 'draft'
     : isCompleted ? 'done'
-    : isActive ? (isGameDay ? 'live' : isPreEvent ? 'pre' : 'post')
+    : isActive ? (readyToFinalize ? 'ready' : isGameDay ? 'live' : isPreEvent ? 'pre' : 'post')
     : null; // archived → no rail
   const guidanceRail = (guidanceStage && currentOrg?.slug && currentTournament?.id) ? (() => {
     const ctx = {
@@ -941,6 +986,8 @@ export default function AdminDashboard() {
         shortcuts={getStageShortcuts(guidanceStage, ctx)}
         tournamentId={currentTournament.id}
         live={guidanceStage === 'live'}
+        ready={guidanceStage === 'ready'}
+        onAction={(actionId) => { if (actionId === 'complete') { setCompleteError(''); setShowCompleteConfirm(true); } }}
       />
     );
   })() : null;
@@ -1741,7 +1788,11 @@ export default function AdminDashboard() {
         </div>
         {gd.playoffStarted && (
           <div className={styles.subStats} style={{ marginTop: '0.5rem' }}>
-            <span className={styles.subStat} style={{ color: 'var(--warning)' }}><Trophy size={12} /> Playoffs underway</span>
+            {playoffsAllDone ? (
+              <span className={styles.subStat} style={{ color: 'var(--success)' }}><Trophy size={12} /> Playoffs complete</span>
+            ) : (
+              <span className={styles.subStat} style={{ color: 'var(--warning)' }}><Trophy size={12} /> Playoffs underway</span>
+            )}
           </div>
         )}
       </section>
@@ -2072,8 +2123,10 @@ export default function AdminDashboard() {
           {/* ── GAME DAY board (customizable) vs PRE/POST event panels ── */}
           {isGameDay ? renderGameDayZone() : renderPanelZone()}
 
-          {/* Post-event nudge: suggest marking complete */}
-          {isPostEventActive && (
+          {/* Post-event nudge: the dates have passed but scores are still outstanding.
+              Suppressed once every game is resolved — then the "ready to finalize"
+              guidance rail owns the mark-complete prompt, so the two never contradict. */}
+          {isPostEventActive && !readyToFinalize && (
             <div className={styles.postEventBanner}>
               <Trophy size={15} style={{ color: 'var(--warning)', flexShrink: 0 }} />
               <span>The tournament dates have passed. Once all scores and payments are finalized, you can mark this tournament as complete.</span>
@@ -2359,6 +2412,30 @@ export default function AdminDashboard() {
             <div className="modal-footer">
               <button className="btn btn-ghost btn-data" onClick={() => { setShowActivateConfirm(false); setActivateError(''); }} disabled={activating}>Cancel</button>
               <button className="btn btn-lime btn-data" onClick={handleActivate} disabled={activating}>{activating ? 'Activating…' : 'Yes, activate'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MARK COMPLETE CONFIRM (one-click finalize) ────────
+          Mirrors the Settings "Mark as Completed?" warning; the confirm is lime
+          (positive, reopenable milestone) — Archive stays the only danger action. */}
+      {showCompleteConfirm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)' }}>
+          <div className="modal" style={{ maxWidth: 420, width: '100%' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 style={{ margin: 0 }}>Mark this tournament complete?</h3>
+              <button className="btn btn-ghost btn-data" onClick={() => { setShowCompleteConfirm(false); setCompleteError(''); }}>✕</button>
+            </div>
+            <p style={{ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.75rem' }}>
+              This locks the tournament. Registrations close and all event data — scores, standings, schedules, divisions, and registrations — becomes read-only and final.
+              {visibleStats.notifyTeamsOnComplete ? ' Team contacts will receive a results summary email.' : ''}
+              {' '}You can reopen it anytime by setting the status back to Active.
+            </p>
+            {completeError && <p style={{ fontSize: '0.8rem', color: 'var(--danger)', margin: '0 0 0.5rem' }}>{completeError}</p>}
+            <div className="modal-footer">
+              <button className="btn btn-ghost btn-data" onClick={() => { setShowCompleteConfirm(false); setCompleteError(''); }} disabled={completing}>Cancel</button>
+              <button className="btn btn-lime btn-data" onClick={handleComplete} disabled={completing}>{completing ? 'Marking…' : 'Mark Complete'}</button>
             </div>
           </div>
         </div>

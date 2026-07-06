@@ -305,11 +305,18 @@ body:has([data-chat-fullbleed]) {
   --blueprint-blue-rgb:  30, 58, 138;
   --logic-lime:          #D9F99D;
   --logic-lime-rgb:      217, 249, 157;
-  /* A-squad / "gold-medal starter" — the one sanctioned categorical hue beyond
-     lime/amber/success/danger (logged in design_decisions.md 2026-07-02). Scoped to
-     the A-squad meaning only; not a general-purpose accent. */
+  /* Gold-medal / championship-achievement hue — the one sanctioned categorical hue
+     beyond lime/amber/success/danger (logged 2026-07-02, scope broadened to tournament
+     champions 2026-07-06). Not a general-purpose accent.
+       --gold        pastel fill/border/glyph value — great on DARK surfaces
+       --gold-rgb    for tints (rgba backgrounds/borders)
+       --gold-strong the legible TEXT/GLYPH value: same bright gold on dark, a deep
+                     goldenrod on light so small gold labels stay readable on white
+                     (see the light-mode override below). Use for gold text/icons;
+                     use --gold / --gold-rgb for fills. */
   --gold:                #F5C451;
   --gold-rgb:            245, 196, 81;
+  --gold-strong:         var(--gold);
   --hud-surface:         #111827;
   --structural-slate:    #0F172A;
   --card-bg:             var(--hud-surface); /* ghost-token fix: coaches/rep-teams use this; resolves to --hud-surface */
@@ -322,6 +329,14 @@ body:has([data-chat-fullbleed]) {
 
   /* Data font — new, doesn't conflict with --font-sans / --font-display */
   --font-data: var(--font-mono, 'IBM Plex Mono'), monospace;
+}
+
+/* Light surfaces: the pastel --gold (#F5C451) washes out as small text/glyphs, so gold
+   labels + icons switch to a deep goldenrod that stays legible (~5:1 on white) while still
+   reading as gold. Must come AFTER the :root above to win (equal specificity, later source).
+   --gold / --gold-rgb (fills, borders, tints) are unchanged — only the TEXT/GLYPH value. */
+[data-color-mode="light"] {
+  --gold-strong: #856611;
 }
 
 /* ─── FieldLogic HUD Utilities ──────────────────────────────────────────────── */

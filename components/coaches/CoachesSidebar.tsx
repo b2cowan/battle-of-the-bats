@@ -90,7 +90,10 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           <p className={styles.sidebarPortalLabel}>Coaches Portal</p>
           {currentOrg?.id && (
             <div className="flex items-center gap-1 ml-auto">
-              <NotificationBell orgId={currentOrg.id} />
+              <NotificationBell
+                orgId={currentOrg.id}
+                seeAllHref={`/${currentOrg.slug}/coaches/notifications`}
+              />
             </div>
           )}
         </div>

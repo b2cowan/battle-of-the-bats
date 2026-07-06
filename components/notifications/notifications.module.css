@@ -124,12 +124,63 @@
   color: var(--fl-text);
 }
 
+/* ── Unread / All filter bar (P2) ──────────────────────────────────────────── */
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  padding: 0.45rem 1rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.15);
+  flex-shrink: 0;
+}
+
+.segToggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--white-5, rgba(255, 255, 255, 0.05));
+  border-radius: 6px;
+}
+
+.segBtn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  padding: 0.26rem 0.7rem;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.segBtn:hover {
+  color: var(--fl-text);
+}
+
+.segBtnActive,
+.segBtnActive:hover {
+  background: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.35);
+  color: var(--fl-text);
+}
+
+/* Chevron hint on a bundle row ("6 new registrations →"). */
+.bundleChevron {
+  color: var(--white-30, rgba(255, 255, 255, 0.3));
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 /* ── Panel footer — subtle settings link ───────────────────────────────────── */
 
 .panelFooter {
   flex-shrink: 0;
   display: flex;
   justify-content: center;
+  gap: 1.25rem;
   padding: 0.5rem 1rem;
   border-top: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.2);
 }
@@ -153,6 +204,50 @@
 .notifList {
   flex: 1;
   overflow-y: auto;
+}
+
+/* ── Section + date headers (P1 zones) ─────────────────────────────────────── */
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem 0.4rem;
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+}
+
+/* "Needs attention" — amber, the platform's attention/action cue (--warning). */
+.sectionHeaderAct {
+  color: var(--warning, #f59e0b);
+}
+
+.sectionCount {
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--warning, #f59e0b);
+}
+
+/* Today / Yesterday / Earlier — quieter than a section header. */
+.dateHeader {
+  padding: 0.5rem 1rem 0.25rem;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-30, rgba(255, 255, 255, 0.3));
+}
+
+/* Act rows in "Needs attention" carry a subtle amber left edge (inset shadow =
+   no layout shift vs. non-act rows). */
+.actItem {
+  box-shadow: inset 2px 0 0 var(--warning, #f59e0b);
 }
 
 .notifItem {

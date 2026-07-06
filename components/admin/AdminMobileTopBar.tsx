@@ -60,6 +60,7 @@ export default function AdminMobileTopBar() {
           <NotificationBell
             orgId={currentOrg.id}
             settingsHref={getNotificationSettingsHref(currentOrg.slug, currentOrg.planId)}
+            seeAllHref={`/${currentOrg.slug}/admin/notifications`}
           />
         </div>
       )}

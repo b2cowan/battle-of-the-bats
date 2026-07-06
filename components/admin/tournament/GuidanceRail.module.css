@@ -12,6 +12,12 @@
 .railLive {
   border-color: var(--warning);
 }
+/* "Ready to finalize" — positive end-of-event milestone (lime frame), distinct
+   from the amber live tone. The base .icon is already --logic-lime, so only the
+   border swaps (mirrors .railLive's single-property pattern). Design 2026-07-06. */
+.railReady {
+  border-color: var(--logic-lime);
+}
 
 .head {
   display: flex;

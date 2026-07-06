@@ -159,3 +159,47 @@ export const TOURNAMENT_EVENT_TYPES: NotificationEventType[] = [
   'playoffs_set',
   'champions_crowned',
 ];
+
+// ── Bell zone categories (Notification Center Rework P1) ───────────────────────
+
+export type NotificationCategory = 'act' | 'know' | 'talk';
+
+/**
+ * Which zone each event belongs to in the notification bell.
+ *   act  — needs a decision from the recipient → pinned "Needs attention" section
+ *   know — informational activity → the date-grouped activity feed
+ *   talk — a conversation (chat) → P3 relocates these off the bell to the Chat tab
+ *
+ * Single source of truth — the bell panel groups by this. Typed as a total
+ * `Record<NotificationEventType, …>` so adding a new event type fails typecheck
+ * until it is deliberately categorized here (drift guard).
+ */
+export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCategory> = {
+  // Act — needs a decision
+  payment_failed:                     'act',
+  score_disputed:                     'act',
+  coach_access_requested:             'act',
+  roster_change_requested:            'act',
+  assistant_coach_approval_requested: 'act',
+  tryout_offer_response:              'act',
+  team_no_show:                       'act',
+  // Know — informational activity
+  registration_new:                   'know',
+  registration_status_changed:        'know',
+  payment_received:                   'know',
+  score_submitted:                    'know',
+  playoffs_set:                       'know',
+  champions_crowned:                  'know',
+  waitlist_opened:                    'know',
+  registration_deadline_approaching:  'know',
+  assistant_coach_joined:             'know',
+  house_league_registration_new:      'know',
+  // Talk — conversation (moves to the Chat tab in P3)
+  chat_message:                       'talk',
+  chat_mention:                       'talk',
+};
+
+/** Zone for an event type; unknown/legacy types fall back to the activity feed. */
+export function notificationCategory(eventType: string): NotificationCategory {
+  return (NOTIFICATION_CATEGORY as Record<string, NotificationCategory>)[eventType] ?? 'know';
+}

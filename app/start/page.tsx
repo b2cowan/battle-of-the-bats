@@ -41,6 +41,17 @@ const OPTIONS: StartOption[] = [
     tag: { text: 'Free', tone: 'free' },
   },
   {
+    // Invited / joining branch (signup-org decoupling): create an ACCOUNT only — no org.
+    // After verifying, they land on /home where the pending-invite card lets them accept.
+    // Kept near the top so an invitee self-selects here instead of the org-creation path
+    // (Sign-up Invite Guard, Phase 3).
+    href: '/auth/signup?account=1',
+    icon: UserPlus,
+    label: 'Joining a team',
+    title: 'I was invited',
+    body: 'Someone invited you to their organization? Create an account to accept your invitation — no organization needed.',
+  },
+  {
     // Coaches Portal is still in development (not customer-ready) — route to the express-interest
     // page, not the live /start/team create flow. Flip back to '/start/team' + Free when it launches.
     href: '/for-coaches',
@@ -66,16 +77,6 @@ const OPTIONS: StartOption[] = [
     title: 'Explore Club',
     body: 'Everything in one place for multi-team clubs. Talk to us about a guided setup for your organization.',
     tag: { text: 'Talk to us', tone: 'soon' },
-  },
-  {
-    // Invited / joining branch (signup-org decoupling): create an ACCOUNT only — no org.
-    // After verifying, they land on /home where the pending-invite card lets them accept.
-    // This is the account-first path; the options above create an organization.
-    href: '/auth/signup?account=1',
-    icon: UserPlus,
-    label: 'Joining a team',
-    title: 'I was invited',
-    body: 'Someone invited you to their organization? Create an account to accept your invitation — no organization needed.',
   },
 ];
 

@@ -298,8 +298,8 @@ export default function MembersPage() {
       setInviteRole('staff');
       setInvitePurpose('both');
       showSuccess(data.added
-        ? `${inviteEmail} has been added to the organization.`
-        : `Invite sent to ${inviteEmail}.`
+        ? `${inviteEmail} has been added to the organization. They'll get an email to sign in — if it's not in their inbox, ask them to check their spam or junk folder.`
+        : `Invite sent to ${inviteEmail}. The setup link expires in 24 hours, so ask them to accept it today — and to check their spam or junk folder if it's not in their inbox.`
       );
       loadMembers();
     } catch (err: any) {
@@ -492,7 +492,7 @@ export default function MembersPage() {
     if (!res.ok) {
       showError(data.error ?? 'Resend failed');
     } else {
-      showSuccess(`Invite resent to ${member.email}.`);
+      showSuccess(`Invite resent to ${member.email}. The setup link expires in 24 hours, so ask them to accept it today — and to check their spam or junk folder if it's not in their inbox.`);
     }
     setReinvitingId(null);
   }

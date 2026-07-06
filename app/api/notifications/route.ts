@@ -3,8 +3,20 @@ import { getAuthenticatedUser } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { AppNotification } from '@/lib/types';
+import { NOTIFICATION_CATEGORY } from '@/lib/notification-labels';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+// Chat ("talk") events don't belong in the bell (Notification Center Rework P3) — they
+// have the Chat-tab unread badge. Excluded from BOTH the list and the unread count, driven
+// from the same source so the badge can never diverge from the panel. Derived from the
+// category map so any future 'talk' type is auto-excluded (drift guard).
+const BELL_EXCLUDED_EVENTS = Object.entries(NOTIFICATION_CATEGORY)
+  .filter(([, cat]) => cat === 'talk')
+  .map(([evt]) => evt);
+const BELL_EXCLUDE_IN = BELL_EXCLUDED_EVENTS.length > 0
+  ? `(${BELL_EXCLUDED_EVENTS.map(e => `"${e}"`).join(',')})`
+  : null;
 
 function unauthorized() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -34,18 +46,22 @@ export const GET = withObservability(async (req: Request) => {
   const orgId      = url.searchParams.get('orgId');
   const unreadOnly = url.searchParams.get('unreadOnly') === 'true';
   const limit      = Math.min(parseInt(url.searchParams.get('limit') ?? '20', 10), 50);
+  // Cursor for the "See all" page's Load more — return rows OLDER than this created_at.
+  const before     = url.searchParams.get('before');
 
-  if (!orgId) return NextResponse.json({ notifications: [], unreadCount: 0 });
+  if (!orgId) return NextResponse.json({ notifications: [], unreadCount: 0, hasMore: false });
 
-  // Unread count (always returned regardless of unreadOnly flag)
-  const { count } = await supabaseAdmin
+  // Unread count (always returned regardless of unreadOnly flag). Excludes chat (P3).
+  let countQuery = supabaseAdmin
     .from('notifications')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', user.id)
     .eq('org_id', orgId)
     .is('read_at', null);
+  if (BELL_EXCLUDE_IN) countQuery = countQuery.not('event_type', 'in', BELL_EXCLUDE_IN);
+  const { count } = await countQuery;
 
-  // Notification list
+  // Notification list — same chat exclusion as the count (single source → no divergence).
   let query = supabaseAdmin
     .from('notifications')
     .select('*')
@@ -53,10 +69,11 @@ export const GET = withObservability(async (req: Request) => {
     .eq('org_id', orgId)
     .order('created_at', { ascending: false })
     .limit(limit);
-
+  if (BELL_EXCLUDE_IN) query = query.not('event_type', 'in', BELL_EXCLUDE_IN);
   if (unreadOnly) {
     query = query.is('read_at', null);
   }
+  if (before) query = query.lt('created_at', before);
 
   const { data, error } = await query;
 
@@ -65,9 +82,12 @@ export const GET = withObservability(async (req: Request) => {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  const rows = data ?? [];
   return NextResponse.json({
-    notifications: (data ?? []).map(mapRow),
+    notifications: rows.map(mapRow),
     unreadCount:   count ?? 0,
+    // A full page back suggests there may be older rows to fetch next.
+    hasMore:       rows.length === limit,
   });
 }, { route: '/api/notifications' });
 

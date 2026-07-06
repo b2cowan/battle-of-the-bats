@@ -250,6 +250,7 @@ export default function AdminSidebar() {
     : 'Preview the private draft tournament site. It is not public until activated.';
 
   return (
+    <>
     <aside className={styles.sidebar}>
       {/* Logo */}
       <div className={styles.logo}>
@@ -268,6 +269,7 @@ export default function AdminSidebar() {
               <NotificationBell
                 orgId={currentOrg.id}
                 settingsHref={getNotificationSettingsHref(currentOrg.slug, currentOrg.planId)}
+                seeAllHref={`/${currentOrg.slug}/admin/notifications`}
               />
             </div>
           )}
@@ -641,28 +643,31 @@ export default function AdminSidebar() {
           </button>
         </div>
       </div>{/* end sidebarScroll */}
-      {showCreateModal && currentOrg && (
-        <TournamentSetupWizard
-          isOpen={showCreateModal}
-          orgSlug={currentOrg.slug}
-          orgContactEmail={currentOrg.contactEmail ?? null}
-          existingTournaments={tournaments.map(t => ({
-            id: t.id,
-            name: t.name,
-            year: t.year ?? null,
-            status: t.status ?? null,
-          }))}
-          sourceSurface="sidebar_create"
-          canClone={canClone}
-          upgradeCopy={cloneUpgradeCopy}
-          onClose={() => setShowCreateModal(false)}
-          onCreated={async () => {
-            setShowCreateModal(false);
-            await refreshTournaments();
-            router.push(`${base}/tournaments/dashboard`);
-          }}
-        />
-      )}
     </aside>
+    {/* Rendered outside <aside> so the modal overlay escapes the sidebar's
+        position:sticky stacking context and covers the main content column. */}
+    {showCreateModal && currentOrg && (
+      <TournamentSetupWizard
+        isOpen={showCreateModal}
+        orgSlug={currentOrg.slug}
+        orgContactEmail={currentOrg.contactEmail ?? null}
+        existingTournaments={tournaments.map(t => ({
+          id: t.id,
+          name: t.name,
+          year: t.year ?? null,
+          status: t.status ?? null,
+        }))}
+        sourceSurface="sidebar_create"
+        canClone={canClone}
+        upgradeCopy={cloneUpgradeCopy}
+        onClose={() => setShowCreateModal(false)}
+        onCreated={async () => {
+          setShowCreateModal(false);
+          await refreshTournaments();
+          router.push(`${base}/tournaments/dashboard`);
+        }}
+      />
+    )}
+    </>
   );
 }

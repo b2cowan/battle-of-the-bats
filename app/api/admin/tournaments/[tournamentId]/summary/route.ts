@@ -5,6 +5,7 @@ import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features'
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { decidedFinalFor, type ChampionGameInput } from '@/lib/champions';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -57,6 +58,8 @@ type GameRow = {
   status: string | null;
   is_playoff: boolean | null;
   bracket_code: string | null;
+  bracket_id: string | null;
+  bracket_label: string | null;
   game_date: string | null;
 };
 
@@ -145,21 +148,38 @@ function calculateStandings(teams: TeamRow[], games: GameRow[]): StandingRow[] {
     .sort((a, b) => b.pts - a.pts || b.rd - a.rd || b.rf - a.rf || a.ra - b.ra || a.teamName.localeCompare(b.teamName));
 }
 
-function championFromFinal(games: GameRow[], teamNames: Map<string, string>) {
-  // A final decided by forfeit is a real champion — include 'forfeit' (FP-5).
-  const final = games
-    .filter(game => (game.status === 'completed' || game.status === 'forfeit') && game.is_playoff && game.bracket_code === 'FIN')
-    .sort((a, b) => String(b.game_date ?? '').localeCompare(String(a.game_date ?? '')))[0];
-  if (!final || final.home_score == null || final.away_score == null || final.home_score === final.away_score) return null;
-
-  const winnerId = final.home_score > final.away_score ? final.home_team_id : final.away_team_id;
-  const runnerUpId = final.home_score > final.away_score ? final.away_team_id : final.home_team_id;
+// TIER-AWARE via the shared lib/champions helper (single source of truth with the
+// dashboard + public surfaces): the champion is the winner of the division's TOP tier's
+// decided final (GF2 → GF → FIN priority), never an arbitrary lower-tier consolation
+// final. Forfeited finals still count (a forfeit is terminal with a recorded winner).
+function championFromFinal(champGames: ChampionGameInput[], divisionId: string, teamNames: Map<string, string>) {
+  const final = decidedFinalFor(champGames, divisionId);
+  if (!final) return null;
+  const homeWon = (final.homeScore ?? 0) > (final.awayScore ?? 0);
+  const winnerId = homeWon ? final.homeTeamId : final.awayTeamId;
+  const runnerUpId = homeWon ? final.awayTeamId : final.homeTeamId;
   return {
-    championTeamId: winnerId,
+    championTeamId: winnerId ?? null,
     championTeamName: winnerId ? teamNames.get(winnerId) ?? 'Champion' : 'Champion',
-    runnerUpTeamId: runnerUpId,
+    runnerUpTeamId: runnerUpId ?? null,
     runnerUpTeamName: runnerUpId ? teamNames.get(runnerUpId) ?? 'Runner-up' : 'Runner-up',
   };
+}
+
+/** Map snake-case summary game rows to the champion helper's input shape. */
+function toChampionGames(games: GameRow[]): ChampionGameInput[] {
+  return games.map(g => ({
+    isPlayoff: g.is_playoff,
+    divisionId: g.division_id,
+    bracketId: g.bracket_id,
+    bracketLabel: g.bracket_label,
+    bracketCode: g.bracket_code,
+    status: g.status,
+    homeScore: g.home_score,
+    awayScore: g.away_score,
+    homeTeamId: g.home_team_id,
+    awayTeamId: g.away_team_id,
+  }));
 }
 
 async function trackSummaryEvent(input: {
@@ -242,7 +262,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('games')
-      .select('id, division_id, home_team_id, away_team_id, home_score, away_score, status, is_playoff, bracket_code, game_date')
+      .select('id, division_id, home_team_id, away_team_id, home_score, away_score, status, is_playoff, bracket_code, bracket_id, bracket_label, game_date')
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('tournament_archives')
@@ -296,11 +316,12 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
     playoffGames: typedGames.filter(game => game.is_playoff).length,
   };
 
+  const champGames = toChampionGames(typedGames);
   const divisionSummaries = typedDivisions.map(group => {
     const groupTeams = typedTeams.filter(team => team.division_id === group.id);
     const groupGames = typedGames.filter(game => game.division_id === group.id);
     const standings = calculateStandings(groupTeams, groupGames);
-    const champion = championFromFinal(groupGames, teamNames);
+    const champion = championFromFinal(champGames, group.id, teamNames);
     return {
       id: group.id,
       name: group.name,

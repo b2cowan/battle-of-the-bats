@@ -343,7 +343,7 @@ const coachesHelp: HelpPageContent = {
           </ol>
           <p>You&rsquo;re placed into the right rooms automatically based on your team&rsquo;s division — there&rsquo;s nothing to join or manage.</p>
           <p><strong>It works like any chat app.</strong> Add an <strong>emoji</strong> from the smiley in the box, <strong>reply</strong> to a specific message (your reply shows the quote — tap it to jump to the original), and type <strong>@</strong> to <strong>mention</strong> a coach or the organizer by name. You can <strong>delete a message you sent</strong> — it then reads &ldquo;Message removed&rdquo; for everyone. The <strong>magnifier</strong> at the top <strong>searches</strong> the recent messages. Under your latest message, a small note shows when it&rsquo;s been read (<strong>Sent</strong> &rarr; <strong>Read by everyone</strong>). If the organizer has <strong>pinned</strong> anything — the schedule, a field map, the rules — it sits in a banner at the top; tap it to jump there. Only the organizer can pin.</p>
-          <p>You get a <strong>phone notification</strong> for new messages (and the in-app bell) — no email. An <strong>@mention</strong> always reaches you directly, even if you&rsquo;ve turned general chat notifications off. The chat shows a &ldquo;last seen&rdquo; marker per person rather than a tick on every message. If the organizer <strong>mutes</strong> you, you can still read but can&rsquo;t post for a while; if they <strong>close</strong> the room, it becomes read-only. There&rsquo;s nothing to set up — you join automatically once you&rsquo;ve signed in with your team&rsquo;s email.</p>
+          <p>You get a <strong>phone notification</strong> for new messages, and the <strong>Chat</strong> tab shows an <strong>unread badge</strong> — no email. (Chat lives on the Chat tab, not in the notification bell.) An <strong>@mention</strong> always reaches you directly, even if you&rsquo;ve turned general chat notifications off. The chat shows a &ldquo;last seen&rdquo; marker per person rather than a tick on every message. If the organizer <strong>mutes</strong> you, you can still read but can&rsquo;t post for a while; if they <strong>close</strong> the room, it becomes read-only. There&rsquo;s nothing to set up — you join automatically once you&rsquo;ve signed in with your team&rsquo;s email.</p>
         </>
       ),
       faqs: [
@@ -363,11 +363,11 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-tournament-chat-notify',
           question: 'Will I be notified of new chat messages?',
-          answerText: 'Yes — new chat messages send a phone push notification and light up the in-app bell. Chat does not email you. If someone @mentions you, that reaches you directly even if you have turned general chat notifications off. The chat shows a last seen marker per person, not a read tick on each message.',
-          keywords: ['chat notification', 'push notification', 'new message alert', 'no email', 'unread', 'mention', '@mention', 'mentioned'],
+          answerText: 'Yes — new chat messages send a phone push notification and show an unread badge on the Chat tab. Chat lives on the Chat tab, not in the notification bell. Chat does not email you. If someone @mentions you, that reaches you directly even if you have turned general chat notifications off. The chat shows a last seen marker per person, not a read tick on each message.',
+          keywords: ['chat notification', 'push notification', 'new message alert', 'no email', 'unread', 'unread badge', 'chat tab', 'not in bell', 'mention', '@mention', 'mentioned'],
           answer: (
             <>
-              <p>Yes — a new chat message sends a <strong>phone push notification</strong> and lights up the in-app bell. Chat doesn&rsquo;t email you.</p>
+              <p>Yes — a new chat message sends a <strong>phone push notification</strong> and shows an <strong>unread badge on the Chat tab</strong>. Chat lives on the Chat tab, not in the notification bell. Chat doesn&rsquo;t email you.</p>
               <p>If another coach or the organizer <strong>@mentions</strong> you, that reaches you directly — even if you&rsquo;ve turned general chat notifications off. The conversation shows a &ldquo;last seen&rdquo; marker per person rather than a read tick on every message.</p>
             </>
           ),

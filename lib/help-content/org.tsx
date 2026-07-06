@@ -105,8 +105,8 @@ const orgHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to invite a member and choose the right role',
       summary: 'Add a new admin, staff member, treasurer, registrar, coach, or scorekeeper without over-granting access.',
-      keywords: ['invite member', 'role', 'permissions', 'staff', 'admin', 'treasurer', 'registrar', 'coach', 'scorekeeper'],
-      searchText: 'invite member choose role permissions owner admin staff treasurer league admin league registrar coach scorekeeper resend pending invite seats',
+      keywords: ['invite member', 'role', 'permissions', 'staff', 'admin', 'treasurer', 'registrar', 'coach', 'scorekeeper', 'accept invitation', 'email link'],
+      searchText: 'invite member choose role permissions owner admin staff treasurer league admin league registrar coach scorekeeper resend pending invite seats invited person signed up created their own organization by mistake wrong organization sign-up recognizes email me my invitation link accept invitation setup link',
       links: [
         { label: 'Members', href: '../org/members' },
       ],
@@ -124,6 +124,7 @@ const orgHelp: HelpPageContent = {
             <li>Send the invite, then confirm the person appears as <strong>Pending</strong> until they accept.</li>
           </ol>
           <p><strong>Invited members don't get a password</strong> — the invite email contains a setup link they must click to finish creating their account. If they try to "log in" before clicking it, they'll see an incorrect-email-or-password error. If they didn't receive the email, ask them to check spam, then use the resend option on their pending invite row.</p>
+          <p>If an invited person creates an account on their own instead of using the email link, the sign-up screen now recognizes their email and offers to <strong>email them their invitation link</strong> — so they end up in your organization instead of accidentally starting a new one. Tell them to click that button (or the link in the original email); they never need to "create an organization" to accept.</p>
           <p><strong>Access rule of thumb:</strong> owners manage billing and organization settings, admins run operations, staff handle day-of tasks, and scorekeepers use <code>/{'{orgSlug}'}/scorekeeper</code> rather than the main admin panel.</p>
         </>
       ),
@@ -236,8 +237,8 @@ const orgHelp: HelpPageContent = {
       id: 'notifications-audit',
       heading: 'Notifications and the member audit log',
       summary: 'Set your own notification preferences, and (as owner) review the history of member changes.',
-      keywords: ['notifications', 'email alerts', 'push', 'bell', 'audit log', 'member history'],
-      searchText: 'notifications notification preferences in-app bell email push per event type member audit log history who changed role owner only export members',
+      keywords: ['notifications', 'email alerts', 'push', 'bell', 'needs attention', 'activity feed', 'unread', 'see all', 'bundled', 'chat tab', 'audit log', 'member history'],
+      searchText: 'notifications notification preferences in-app bell email push per event type needs attention activity feed grouped today yesterday earlier pinned unread all toggle inbox you empty see all full notifications page filter chips bundled repeated 6 new registrations one tap chat tab unread badge chat not in bell member audit log history who changed role owner only export members',
       content: (
         <>
           <p>Two record-keeping areas sit under Org Admin:</p>
@@ -245,6 +246,8 @@ const orgHelp: HelpPageContent = {
             <li><strong>Notifications</strong> — your personal notification preferences. Choose how you want to hear about each kind of event (in-app bell, email, and push where available). These settings are per person, not org-wide.</li>
             <li><strong>Member audit log</strong> — an owner-only history of member changes (roles granted, suspensions, and similar), reachable from the Members area, so you can see who changed what and when.</li>
           </ul>
+          <p>Inside the <strong>bell</strong> itself, anything that needs a decision from you — a failed payment, a coach requesting access, a disputed score — is pinned at the top under <strong>Needs attention</strong> and clears from there as you handle each one. Everything else sits below as an <strong>Activity</strong> feed, grouped by <strong>Today</strong>, <strong>Yesterday</strong>, and <strong>Earlier</strong>, with repeats <strong>bundled</strong> into one line (&ldquo;6 new registrations&rdquo;) you can open in a tap.</p>
+          <p>The bell opens on <strong>Unread</strong>, so reading something clears it from view — an inbox you empty; flip to <strong>All</strong> to see everything with read items dimmed, and use the <strong>See all</strong> link at the bottom for the full, filterable history. Chat messages live on the <strong>Chat</strong> tab with its own unread badge, not in the bell.</p>
         </>
       ),
     },

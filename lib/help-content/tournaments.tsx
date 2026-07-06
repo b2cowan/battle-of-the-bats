@@ -1057,8 +1057,8 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Close Out',
       heading: 'Complete the tournament',
       summary: 'Wrap up once all games are done, share final results, and understand tournament lifecycle states.',
-      keywords: ['closeout', 'complete tournament', 'archive', 'seal', 'final results', 'completed', 'archived', 'sealed'],
-      searchText: 'closeout tournament complete archive seal final results post-event summary free tournament slot immutable snapshot board report results email lifecycle draft active completed archived sealed',
+      keywords: ['closeout', 'complete tournament', 'mark complete', 'ready to finalize', 'finalize tournament', 'archive', 'seal', 'final results', 'completed', 'archived', 'sealed'],
+      searchText: 'closeout tournament complete mark complete mark tournament complete ready to finalize finalize dashboard prompt lock results read-only reopen archive seal final results post-event summary free tournament slot immutable snapshot board report results email lifecycle draft active completed archived sealed',
       links: [
         { label: 'Manage Tournaments', href: '../tournaments/manage' },
         { label: 'Past Tournaments', href: '../tournaments/archives' },
@@ -1074,10 +1074,12 @@ const tournamentsHelp: HelpPageContent = {
             <li><strong>Archived</strong> — retired from active views; no longer counts against the active tournament slot limit.</li>
             <li><strong>Sealed</strong> — a permanent immutable snapshot of final results has been created.</li>
           </ul>
+          <p>Once every game is in, your tournament <strong>dashboard</strong> shows a <strong>You&rsquo;re ready to finalize</strong> prompt with a one-click <strong>Mark tournament complete</strong> — so you can close out right from the dashboard. You can also change the status from <strong>Event Settings</strong> or <strong>Manage Tournaments</strong>.</p>
+          <p>Marking a tournament complete locks it: registrations close and all event data — scores, standings, schedules, divisions, and registrations — becomes read-only and final. You can reopen it any time by setting the status back to <strong>Active</strong>.</p>
           <p>Close-out steps:</p>
           <ol>
             <li>Confirm all scores, standings, and playoff results are complete.</li>
-            <li>Mark the tournament <strong>Completed</strong> from Manage Tournaments.</li>
+            <li>Mark the tournament <strong>Completed</strong> — from the dashboard&rsquo;s finalize prompt, <strong>Event Settings</strong>, or <strong>Manage Tournaments</strong>.</li>
             <li>Send or share public final results if your plan and workflow include post-event communication.</li>
             <li>Export any registration, schedule, accounting, or results reports needed by your board.</li>
             <li>Archive the tournament when it should leave active views and free its tournament slot.</li>
@@ -1087,6 +1089,16 @@ const tournamentsHelp: HelpPageContent = {
         </>
       ),
       faqs: [
+        {
+          id: 'faq-where-mark-complete',
+          question: 'Where do I mark a tournament complete?',
+          answerText: 'When every game is scored, the tournament dashboard shows a "You\'re ready to finalize" prompt with a one-click Mark tournament complete button. You can also change the status from Event Settings or Manage Tournaments. Completing locks the results; reopen any time by setting the status back to Active.',
+          keywords: ['mark complete', 'ready to finalize', 'finalize tournament', 'close out', 'dashboard prompt', 'lock results'],
+          popular: true,
+          answer: (
+            <p>When every game is scored, your tournament <strong>dashboard</strong> shows a <strong>You&rsquo;re ready to finalize</strong> prompt with a one-click <strong>Mark tournament complete</strong>. You can also change the status from <strong>Event Settings</strong> or <strong>Manage Tournaments</strong>. Completing locks the results and standings as final; reopen any time by setting the status back to <strong>Active</strong>.</p>
+          ),
+        },
         {
           id: 'faq-completed-archived-sealed',
           question: 'What is the difference between completed, archived, and sealed?',

@@ -34,10 +34,30 @@ export interface TierChampion {
   runnerUpScore: number | null;
 }
 
+/**
+ * The minimal game shape champion derivation reads. `Game` is a structural superset,
+ * so camelCase callers pass `Game[]` unchanged — and snake-case admin API rows can be
+ * mapped to this WITHOUT constructing a full `Game`, so the tournament dashboard and
+ * post-event summary share this one tier-aware source of truth instead of drifting
+ * naive `bracket_code === 'FIN'` copies (which crown a lower tier's consolation final).
+ */
+export interface ChampionGameInput {
+  isPlayoff?: boolean | null;
+  divisionId?: string | null;
+  bracketId?: string | null;
+  bracketLabel?: string | null;
+  bracketCode?: string | null;
+  status?: string | null;
+  homeScore?: number | null;
+  awayScore?: number | null;
+  homeTeamId?: string | null;
+  awayTeamId?: string | null;
+}
+
 /** A bracket final is "decided" once it's scored with a clear winner and both sides
  *  filled. Includes 'forfeit' — a forfeited final records scores (winner FORFEIT_SCORE,
  *  loser 0) and is terminal, so finalizing a forfeit must not drop the champion. */
-export function isDecided(g?: Game): boolean {
+export function isDecided(g?: ChampionGameInput): boolean {
   return !!g
     && (g.status === 'completed' || g.status === 'submitted' || g.status === 'forfeit')
     && g.homeScore != null && g.awayScore != null && g.homeScore !== g.awayScore
@@ -45,7 +65,7 @@ export function isDecided(g?: Game): boolean {
 }
 
 /** The decided final within a single bracket group (GF2 → GF → FIN priority), or undefined. */
-function decidedFinalOfGroup(groupGames: Game[]): Game | undefined {
+function decidedFinalOfGroup<T extends ChampionGameInput>(groupGames: T[]): T | undefined {
   const byCode = (code: string) => groupGames.find(g => (g.bracketCode ?? '').toUpperCase() === code);
   return [byCode('GF2'), byCode('GF'), byCode('FIN')].find(isDecided);
 }
@@ -53,7 +73,7 @@ function decidedFinalOfGroup(groupGames: Game[]): Game | undefined {
 /** The decided championship final for a division — the TOP tier's final (tier-aware).
  *  Tiered/per-pool brackets share final codes, so we group by bracket and read the
  *  first (top) group; returns undefined if the top tier's final isn't decided yet. */
-export function decidedFinalFor(games: Game[], divisionId: string): Game | undefined {
+export function decidedFinalFor<T extends ChampionGameInput>(games: T[], divisionId: string): T | undefined {
   const pg = games.filter(g => g.isPlayoff && g.divisionId === divisionId);
   if (pg.length === 0) return undefined;
   const groups = groupGamesByBracketId(pg);
@@ -116,6 +136,15 @@ export function deriveTierChampions(
     });
   }
   return out;
+}
+
+/** Fan-facing badge label for a tier-champion row. Shared by the /champions recap page
+ *  and the completed-home champion banner so tier wording can never drift between the two.
+ *  Top tier reads "{Tier} · Champion" (or just "Champion" when the division has one bracket);
+ *  a lower tier reads "{Tier} Champion" (it medalled — its own bracket winner). */
+export function tierBadgeLabel(tierLabel: string | null, isTopTier: boolean): string {
+  if (isTopTier) return tierLabel ? `${tierLabel} · Champion` : 'Champion';
+  return tierLabel ? `${tierLabel} Champion` : 'Champion';
 }
 
 /**

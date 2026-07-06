@@ -13,7 +13,7 @@ import { sendEmail } from './email';
 import { sendWebPush, isPushConfigured } from './web-push';
 import { captureError } from './observability';
 import { hasPlanFeature, type PlanFeature } from './plan-features';
-import { PUSH_DEFAULT_ON_EVENTS } from './notification-labels';
+import { PUSH_DEFAULT_ON_EVENTS, NOTIFICATION_CATEGORY } from './notification-labels';
 import type { NotificationEventType, OrgPlan } from './types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -55,6 +55,23 @@ interface ChannelPrefs {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+/**
+ * Events that never write an in-app bell row (Notification Center Rework P3).
+ * Chat ("talk") has its own surface — the Chat-tab unread badge (`useChatUnread`,
+ * counted directly off `chat_messages`, independent of the notifications table) — so a
+ * bell row would double-count it. Push and email are unaffected: a mention still reaches
+ * a user who muted general chat, via push.
+ *
+ * Derived from `NOTIFICATION_CATEGORY === 'talk'` — the SAME source the bell API uses to
+ * exclude these from the list + unread count — so the write side and read side can never
+ * drift (a future 'talk' type is auto-suppressed here too, not just hidden by the API).
+ */
+const BELL_SUPPRESSED_EVENTS: ReadonlySet<NotificationEventType> = new Set(
+  (Object.entries(NOTIFICATION_CATEGORY) as [NotificationEventType, string][])
+    .filter(([, cat]) => cat === 'talk')
+    .map(([evt]) => evt),
+);
 
 /** System defaults applied when no preference row exists for a user+org+event. */
 function systemDefaults(eventType: NotificationEventType, role: string): ChannelPrefs {
@@ -199,8 +216,9 @@ export async function notify(opts: NotifyOptions): Promise<void> {
           }
         : systemDefaults(opts.eventType, recipient.role);
 
-      // 2c. Bell — write to notifications table
-      if (prefs.bell) {
+      // 2c. Bell — write to notifications table. Chat events are suppressed here (P3):
+      // the Chat-tab unread badge is their surface; a bell row would double-count them.
+      if (prefs.bell && !BELL_SUPPRESSED_EVENTS.has(opts.eventType)) {
         const { error: insertErr } = await supabaseAdmin
           .from('notifications')
           .insert({

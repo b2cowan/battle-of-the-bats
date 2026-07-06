@@ -182,6 +182,136 @@
   color: #f87171;
 }
 
+/* ── Sign-up Invite Guard — "You've been invited" branch ─────────────────────
+   Positive recognition moment (not an error): blueprint-framed panel + a single
+   lime CTA, grey secondaries. See design_decisions.md 2026-07-06. No new tokens. */
+.invitePanel {
+  background: rgba(30,58,138,0.06);
+  border: 1px solid rgba(30,58,138,0.4);
+  border-radius: 0;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.inviteOrg {
+  font-family: var(--font-data);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--fl-text);
+}
+
+/* Outlined role pill (NOT a lime fill — keeps the panel calm + sidesteps the
+   dark-ink-on-lime rule). */
+.inviteRole {
+  align-self: flex-start;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  border: 1px solid rgba(30,58,138,0.5);
+  padding: 0.2rem 0.5rem;
+}
+
+.inviteBody {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--data-gray);
+}
+
+/* Reuses the existing verification-success visual (lime-tinted confirmation). */
+.inviteSent {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  background: rgba(163,230,53,0.08);
+  border: 1px solid rgba(163,230,53,0.28);
+  border-radius: 0;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--logic-lime);
+}
+
+/* Field-level, corrective-not-error notice (existing-account case). */
+.inlineNotice {
+  margin-top: 0.5rem;
+  background: rgba(30,58,138,0.06);
+  border: 1px solid rgba(30,58,138,0.35);
+  border-radius: 0;
+  padding: 0.55rem 0.8rem;
+  font-family: var(--font-data);
+  font-size: 0.73rem;
+  line-height: 1.45;
+  color: var(--data-gray);
+}
+
+/* De-emphasized secondary action — deliberately NOT the lime footerLink, so it
+   never competes with the lime primary CTA. */
+.linkMuted {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--data-gray);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+
+.linkMuted:hover { color: var(--fl-text); }
+
+.confirmBox {
+  margin-top: 0.75rem;
+  background: rgba(30,58,138,0.06);
+  border: 1px solid rgba(30,58,138,0.4);
+  border-radius: 0;
+  padding: 0.9rem 1rem;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--data-gray);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* Ghost/outlined secondary button (reserves the lime submitBtn for the recommended path). */
+.btnGhost {
+  flex: 1;
+  padding: 0.7rem;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--data-gray);
+  border: 1px solid rgba(30,58,138,0.5);
+  border-radius: 0;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.btnGhost:hover {
+  color: var(--fl-text);
+  border-color: var(--blueprint-blue);
+}
+
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .footer {
   margin-top: 1.5rem;

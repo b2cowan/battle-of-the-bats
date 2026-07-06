@@ -4,6 +4,7 @@ import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } f
 import { sendEmail, signupVerificationHtml } from '@/lib/email';
 import { captureError, withObservability } from '@/lib/observability';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
+import { findPendingInviteByEmail } from '@/lib/invite-reconciliation';
 
 // Abuse controls: signup is unauthenticated and fires Supabase admin calls + a Resend
 // email per attempt; Supabase's built-in auth limits DON'T cover admin-API calls, so this
@@ -199,6 +200,30 @@ export const POST = withObservability(async (req: Request) => {
 
       userId = authData.user.id;
       return NextResponse.json({ success: true, requiresEmailVerification: false, accountOnly: true });
+    }
+
+    // ── Sign-up Invite Guard (owner branch) ───────────────────────────────────────
+    // Catch an already-invited / already-registered email BEFORE creating anything, so an
+    // invitee who reached the owner sign-up by the wrong door is NOT walked into a stray org
+    // (and the invited stub's credentials are never clobbered by generateLink({type:'signup'})).
+    // Authoritative server guard — the UI branch is convenience; this holds even if bypassed.
+    // Detection is submit-time only: parity with the account-only branch's neutral "account
+    // exists" check, so it adds no pre-auth enumeration oracle. See SIGNUP_INVITE_GUARD_PLAN.md.
+    const pendingInvite = await findPendingInviteByEmail(normalizedEmail);
+    if (pendingInvite) {
+      // Client renders the "You've been invited to {org}" branch + "Email me my link".
+      // Deliberately return ONLY orgName (commonly public — it names the invite copy) and NOT
+      // the role: to an unauthenticated caller the role is the escalation-useful disclosure
+      // (admin vs staff) and the UX doesn't need it. Minimal-disclosure per /review 2026-07-06.
+      return NextResponse.json({
+        inviteBranch: 'invited',
+        orgName: pendingInvite.orgName,
+      });
+    }
+    // Existing account (no pending invite): never proceed — generateLink({type:'signup'}) on an
+    // existing auth user rotates its credentials. Mirror the account-only branch's neutral guard.
+    if (await authUserExistsForEmail(normalizedEmail)) {
+      return NextResponse.json({ inviteBranch: 'account_exists' });
     }
 
     // ── Owner branch (org created with the account, unchanged) ────────────────────

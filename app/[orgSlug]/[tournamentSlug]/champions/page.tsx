@@ -10,7 +10,7 @@ import {
   getStandings,
 } from '@/lib/db';
 import { toPublicTeam } from '@/lib/public-tournament-data';
-import { deriveTierChampions, isTournamentPlayoffsComplete } from '@/lib/champions';
+import { deriveTierChampions, isTournamentPlayoffsComplete, tierBadgeLabel } from '@/lib/champions';
 import type { DivisionStandingRow } from '@/lib/tie-breakers';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { formatPoolName } from '@/lib/utils';
@@ -110,11 +110,6 @@ export default async function ChampionsPage({
     .map(c => `${c.champion}${multiDivision ? ` (${c.division})` : ''}`)
     .join(', ')} — ${topChampions.length > 1 ? 'Champions' : 'Champion'}`;
 
-  const tierBadge = (tierLabel: string | null, isTopTier: boolean) => {
-    if (isTopTier) return tierLabel ? `${tierLabel} · Champion` : 'Champion';
-    return tierLabel ? `${tierLabel} Champion` : 'Champion';
-  };
-
   return (
     <div className="page-content">
       {/* Hero */}
@@ -167,7 +162,7 @@ export default async function ChampionsPage({
                       >
                         <span className={styles.crown}><Crown size={c.isTopTier ? 26 : 20} /></span>
                         <div className={styles.championBody}>
-                          <span className={styles.tierBadge}>{tierBadge(c.tierLabel, c.isTopTier)}</span>
+                          <span className={styles.tierBadge}>{tierBadgeLabel(c.tierLabel, c.isTopTier)}</span>
                           <span className={styles.championName}>{c.champion}</span>
                           {c.runnerUp && (
                             <span className={styles.championMeta}>
