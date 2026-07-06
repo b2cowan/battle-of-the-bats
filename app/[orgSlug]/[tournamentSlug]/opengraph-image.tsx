@@ -1,9 +1,9 @@
 import { ImageResponse } from 'next/og';
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { resolveTheme } from '@/lib/themes';
-import type { Game } from '@/lib/types';
 import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
+import { deriveChampions, type ChampionInfo } from '@/lib/champions';
 
 export const alt = 'Tournament';
 export const size = { width: 1200, height: 630 };
@@ -11,7 +11,6 @@ export const contentType = 'image/png';
 
 const GOLD = '#EFC44D';
 
-interface ChampionInfo { division: string; champion: string; runnerUp: string | null; }
 interface LiveInfo {
   /** Number of games scheduled today. */
   gamesToday: number;
@@ -48,14 +47,6 @@ function fmtRange(start?: string, end?: string): string {
   return `${s.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} – ${e.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 }
 
-// A bracket final is "decided" once it's scored with a winner and both sides resolved.
-function isDecided(g?: Game): boolean {
-  return !!g
-    && (g.status === 'completed' || g.status === 'submitted')
-    && g.homeScore != null && g.awayScore != null && g.homeScore !== g.awayScore
-    && !!g.homeTeamId && !!g.awayTeamId;
-}
-
 async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: string }>): Promise<CardData | null> {
   try {
     const { orgSlug, tournamentSlug } = await params;
@@ -69,19 +60,9 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     const divisions = data.divisions ?? [];
     const teamName = (id?: string | null) => (id ? teams.find(x => x.id === id)?.name ?? null : null);
 
-    // Champion per division = the winner of the decided final (grand-final reset,
-    // grand final, or single-elim/placement final, in that priority).
-    const champions: ChampionInfo[] = [];
-    for (const div of divisions) {
-      const pg = games.filter(g => g.isPlayoff && g.divisionId === div.id);
-      const byCode = (code: string) => pg.find(g => (g.bracketCode || '').toUpperCase() === code);
-      const finalG = [byCode('GF2'), byCode('GF'), byCode('FIN')].find(isDecided);
-      if (!finalG) continue;
-      const champId = (finalG.homeScore ?? 0) > (finalG.awayScore ?? 0) ? finalG.homeTeamId : finalG.awayTeamId;
-      const loserId = champId === finalG.homeTeamId ? finalG.awayTeamId : finalG.homeTeamId;
-      const champion = teamName(champId);
-      if (champion) champions.push({ division: div.name, champion, runnerUp: teamName(loserId) });
-    }
+    // Champion per division = the winner of the decided TOP-tier final (tier-aware —
+    // shared with the home banner / recap page / team-profile OG via lib/champions).
+    const champions: ChampionInfo[] = deriveChampions(games, teams, divisions);
 
     // ── Game-day / live detection (J6-008) ───────────────────────────────────
     const now = new Date();

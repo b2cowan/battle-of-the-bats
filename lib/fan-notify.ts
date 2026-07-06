@@ -182,3 +182,72 @@ export async function notifyFansForPlayoff(tournamentId: string): Promise<void> 
     console.error('[fan-notify] notifyFansForPlayoff error:', err);
   }
 }
+
+/**
+ * Fan push fan-out for the "Champions crowned" moment — one push to EVERY anonymous fan
+ * following ANY team in the tournament (not just a game's two teams). Fired once, the first
+ * time the whole tournament's playoffs become complete (guarded upstream by
+ * tournaments.champions_crowned_at). Gated to Tournament Plus+ via `fan_score_alerts`,
+ * same as the playoff/score paths. Deep-links to the shareable /champions recap page.
+ * `headline` is the pre-computed champion line (e.g. "Brampton Blazers Gold"). Fire-and-forget.
+ */
+export async function notifyFansForChampions(tournamentId: string, headline?: string): Promise<void> {
+  try {
+    const { data: tournament } = await supabaseAdmin
+      .from('tournaments')
+      .select('id, slug, name, org_id, logo_url')
+      .eq('id', tournamentId)
+      .maybeSingle();
+    if (!tournament) return;
+
+    const { data: org } = await supabaseAdmin
+      .from('organizations')
+      .select('slug, plan_id, logo_url')
+      .eq('id', tournament.org_id)
+      .maybeSingle();
+    if (!org) return;
+
+    // The signature halo feature is Tournament Plus+.
+    if (!hasPlanFeature(org.plan_id as OrgPlan, 'fan_score_alerts')) return;
+
+    const { data: subs } = await supabaseAdmin
+      .from('fan_push_subscriptions')
+      .select('id, endpoint, keys_p256dh, keys_auth')
+      .eq('tournament_id', tournament.id);
+    if (!subs || subs.length === 0) return;
+
+    const title = '🏆 Champions crowned!';
+    const body = headline
+      ? `${tournament.name} · ${headline} — see the final results`
+      : `${tournament.name} · See the final results`;
+    // Deep-link straight to the shareable Champions recap.
+    const link = `/${org.slug}/${tournament.slug}/champions`;
+    const rawIcon = tournament.logo_url || org.logo_url;
+    const icon = rawIcon && /^https?:\/\//i.test(rawIcon) ? rawIcon : undefined;
+
+    const seen = new Set<string>();
+    for (const sub of subs) {
+      if (seen.has(sub.endpoint)) continue;
+      seen.add(sub.endpoint);
+      try {
+        await sendWebPush(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.keys_p256dh, auth: sub.keys_auth } },
+          { title, body, link, icon },
+        );
+        await supabaseAdmin
+          .from('fan_push_subscriptions')
+          .update({ last_used_at: new Date().toISOString() })
+          .eq('id', sub.id);
+      } catch (err: unknown) {
+        const code = (err as { statusCode?: number })?.statusCode;
+        if (code === 410 || code === 404) {
+          await supabaseAdmin.from('fan_push_subscriptions').delete().eq('endpoint', sub.endpoint);
+        } else {
+          console.error('[fan-notify] champions push send failed for', sub.endpoint, err);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[fan-notify] notifyFansForChampions error:', err);
+  }
+}

@@ -468,6 +468,41 @@
   margin-top: 1.5rem;
 }
 
+/* ── Champions hero takeover (auto once the whole bracket is decided) ──────────
+   The finish-line counterpart to the playoff takeover: a gold wash, a "Champion(s)"
+   badge, the winner headlined, and the Final Results (recap) CTA. */
+.championsHero .heroBg {
+  background:
+    radial-gradient(900px 340px at 50% -20%, rgba(var(--warning-rgb), 0.30), transparent 70%),
+    var(--surface);
+}
+
+.championsHeroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid rgba(var(--warning-rgb), 0.55);
+  border-radius: 999px;
+  background: rgba(var(--warning-rgb), 0.14);
+  color: var(--warning);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Secondary host attribution — sits under the result, de-emphasised so the
+   champion + final lead the hero. */
+.championsHeroHost {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--white-45);
+}
+
 .dayCardHeader {
   display: flex;
   align-items: center;

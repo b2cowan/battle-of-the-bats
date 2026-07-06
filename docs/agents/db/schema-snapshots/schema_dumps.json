@@ -13565,6 +13565,15 @@
         "column_default": null
       },
       {
+        "table_name": "tournaments",
+        "pos": 45,
+        "column_name": "champions_crowned_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "venue_facilities",
         "pos": 1,
         "column_name": "id",

@@ -1,6 +1,7 @@
 import { updateGame as updateGameRecord } from './db';
 import { getEffectiveScoreFinalization } from './tournament-score-policy';
 import { notifyFansForGame } from './fan-notify';
+import { announceChampionsIfComplete } from './champions-notify';
 import type { Game, GameStatus, OrgRole, ScoreSubmissionSource } from './types';
 import { supabaseAdmin } from './supabase-admin';
 
@@ -237,7 +238,12 @@ const tournamentScoringService = createTournamentScoringService({
   loadGame: loadTournamentScoreGameFromDb,
   updateGame: updateGameRecord,
   getEffectiveScoreFinalization,
-  onScored: (gameId, status) => { void notifyFansForGame(gameId, status); },
+  onScored: (gameId, status) => {
+    void notifyFansForGame(gameId, status);
+    // If this terminal score completed the whole tournament's playoffs, fire the
+    // one-time "Champions crowned" moment (guarded + fire-and-forget inside).
+    void announceChampionsIfComplete(gameId);
+  },
 });
 
 export const loadTournamentScoreGame = tournamentScoringService.loadTournamentScoreGame;

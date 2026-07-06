@@ -326,6 +326,12 @@ export interface Tournament {
    *  bracket is created (migration 175). The home hero takeover derives from the presence
    *  of playoff games, not this timestamp. */
   playoffsPublishedAt?: string | null;
+  /** First time this tournament's playoffs became complete (all playoff games terminal +
+   *  a decided championship final) — the one-time guard for the "Champions crowned"
+   *  announcement (fan push + staff bell). Null until playoffs finish (migration 176). The
+   *  home Champions hero takeover + /champions recap page derive from live game state, not
+   *  this timestamp. */
+  championsCrownedAt?: string | null;
   requireScoreFinalization?: boolean | null;
   notifyTeamsOnComplete?: boolean;
   resultsNotifiedAt?: string | null;
@@ -1704,7 +1710,11 @@ export type NotificationEventType =
   // The playoff bracket was materialized for a tournament (fires once, the first time).
   // Reaches org staff (bell + push) AND anonymous fans following a team (push). Defaults
   // push ON — it's a headline, time-sensitive moment. TS-union change only (no DB CHECK).
-  | 'playoffs_set';
+  | 'playoffs_set'
+  // The tournament's playoffs became complete — champion(s) crowned (fires once, the first
+  // time the whole bracket resolves). Reaches org staff (bell + push) AND anonymous fans
+  // following a team (push). Defaults push ON — the payoff moment. TS-union change only.
+  | 'champions_crowned';
 
 export interface AppNotification {
   id: string;

@@ -8,7 +8,7 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { getRegistrationState } from '@/lib/registration-state';
 import { tournamentToday } from '@/lib/timezone';
-import { deriveChampions } from '@/lib/champions';
+import { deriveChampions, isTournamentPlayoffsComplete } from '@/lib/champions';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import SharePageButton from '@/components/public/SharePageButton';
 import LocationLink from '@/components/LocationLink';
@@ -96,10 +96,30 @@ export default async function TournamentHomeContent({
   const isInProgress = Boolean(startDate && endDate && now >= startDate && now <= endDate);
   const isCompletedTournament = tournament.status === 'completed';
 
-  // Playoff "hero takeover" (auto on bracket creation): once a playoff bracket exists and
-  // the event isn't finished, the home hero flips to a Playoffs theme that counts down to
-  // the first knockout game and points at the shareable Playoff Picture.
-  const playoffsSet = allGames.some(g => g.isPlayoff) && !isCompletedTournament;
+  // Playoff "hero takeover": the bracket is only truly "set" once pool play is done.
+  // Organizers routinely pre-build the playoff bracket (placeholder seeds) before the
+  // event even starts, so the mere existence of is_playoff games is NOT "playoffs are here."
+  // Gate on: playoff games exist, the event has started, pool play is complete (no
+  // round-robin game still waiting to be played), and the tournament isn't finished.
+  const poolPlayGames = allGames.filter(g => !g.isPlayoff);
+  const poolPlayComplete =
+    poolPlayGames.length === 0 ||
+    poolPlayGames.every(g => g.status === 'completed' || g.status === 'cancelled');
+  const eventHasStarted = !startDate || now >= startDate;
+
+  // Champions "hero takeover": the whole tournament's playoffs are complete (every playoff
+  // game terminal + a decided championship final) — a LIVE signal, independent of the manual
+  // 'completed' status. This is the finish-line counterpart to the playoff takeover: it wins
+  // priority over "The Bracket Is Set" (the bracket isn't just set, it's decided) and points
+  // at the shareable /champions recap. Manual close-out (status='completed') stays separate.
+  const championsDecided = !isCompletedTournament && isTournamentPlayoffsComplete(allGames, divisions);
+
+  const playoffsSet =
+    allGames.some(g => g.isPlayoff) &&
+    !isCompletedTournament &&
+    !championsDecided &&
+    eventHasStarted &&
+    poolPlayComplete;
   const firstPlayoffGame = sortedGames.find(g => g.isPlayoff && g.status === 'scheduled');
   const firstPlayoffISO = firstPlayoffGame?.time
     ? `${firstPlayoffGame.date}T${firstPlayoffGame.time.slice(0, 5)}:00`
@@ -149,9 +169,13 @@ export default async function TournamentHomeContent({
 
   const sortedDivisions = [...divisions].sort((a, b) => a.order - b.order);
 
-  // Champions for the completed-home banner (J6-052). allGames (raw, all statuses)
-  // so playoff finals aren't filtered out; teams here is the public-safe array (id+name).
-  const champions = isCompletedTournament ? deriveChampions(allGames, teams, sortedDivisions) : [];
+  // Champions for the completed-home banner (J6-052) AND the auto Champions hero takeover.
+  // Derived once playoffs are decided (championsDecided) OR the event is manually completed.
+  // allGames (raw, all statuses) so playoff finals aren't filtered out; teams is the
+  // public-safe array (id+name). Tier-aware: one row per division = the TOP-tier champion.
+  const champions = (isCompletedTournament || championsDecided)
+    ? deriveChampions(allGames, teams, sortedDivisions)
+    : [];
   // Third hero stat — adaptive. When every division name parses as an age (U13,
   // 13U, "Under 13"), show a true low-to-high age range, ordered by the actual
   // number rather than the organizer's list order. When any division isn't
@@ -617,7 +641,64 @@ export default async function TournamentHomeContent({
           </div>
         </section>
       )}
-      {!playoffsSet && (
+      {championsDecided && (
+        <section className={`${styles.hero} ${styles.heroCompact} ${styles.championsHero}`} id="preview-home">
+          <div className={styles.heroBg}>
+            <div className={styles.heroOrb1} />
+            <div className={styles.heroOrb2} />
+            <div className={styles.heroGrid} />
+          </div>
+          <div className={`container ${styles.heroContent}`}>
+            {isPreview && (
+              <div className={styles.previewBanner}>
+                <Eye size={14} />
+                {previewLabel}
+              </div>
+            )}
+            <div className={styles.championsHeroBadge}>
+              <Trophy size={13} fill="currentColor" /> {champions.length > 1 ? 'Champions' : 'Champion'}
+            </div>
+            {champions.length === 1 ? (
+              <>
+                <h1 className={`display-xl ${styles.heroTitle}`}>{champions[0].champion}</h1>
+                <p className={styles.heroSub}>
+                  {multiDivision ? `${champions[0].division} Champion` : 'Tournament Champion'}
+                  {champions[0].runnerUp ? ` — defeated ${champions[0].runnerUp} in the final.` : '.'}
+                  <span className={styles.championsHeroHost}>Hosted by {org.name}</span>
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className={`display-xl ${styles.heroTitle}`}>Champions Crowned</h1>
+                <p className={styles.heroSub}>
+                  {champions.map(c => `${c.champion} (${c.division})`).join(' · ')}
+                  <span className={styles.championsHeroHost}>Hosted by {org.name}</span>
+                </p>
+              </>
+            )}
+            <div className={styles.playoffHeroActions}>
+              {/* The Champions recap inherits Standings visibility (it shows final
+                  results/standings), so only offer it when Standings is public. */}
+              {showStandingsPage && (
+                <Link href={`${publicBase}/champions`} className="btn btn-primary btn-lg">
+                  <Trophy size={16} /> Final Results
+                </Link>
+              )}
+              <SharePageButton
+                url={showStandingsPage ? `${publicBase}/champions` : publicBase}
+                title={`${tournament.name} — ${champions.length > 1 ? 'Champions' : 'Champion'}`}
+                text={`${champions.map(c => `${c.champion}${multiDivision ? ` (${c.division})` : ''}`).join(', ')} — ${champions.length > 1 ? 'Champions' : 'Champion'}`}
+                label="Share results"
+                className="btn btn-outline btn-lg"
+              />
+            </div>
+          </div>
+          <div className={styles.heroScroll}>
+            <div className={styles.scrollLine} />
+          </div>
+        </section>
+      )}
+      {!playoffsSet && !championsDecided && (
       <section className={`${styles.hero} ${isInProgress || isCompletedTournament ? styles.heroCompact : ''}`} id="preview-home">
         {heroBanner ? (
           <>

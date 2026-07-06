@@ -155,6 +155,22 @@ export function computeTournamentStandings(
     !g.isPlayoff
   );
 
+  // Teams that still have a round-robin game left to play (anything not final and
+  // not cancelled). A coin toss only becomes "required" once a tie can no longer
+  // be broken on the field, so any tied group containing one of these teams is
+  // NOT flagged yet. This is what stops a pre-event division — where every team is
+  // identically 0–0 and therefore "tied" — from false-flagging a coin toss.
+  const teamsWithUnplayedGame = new Set<string>();
+  for (const g of games) {
+    if (g.divisionId !== divisionId || g.isPlayoff) continue;
+    if (g.status === 'completed' || g.status === 'submitted' || g.status === 'forfeit' || g.status === 'cancelled') continue;
+    if (g.homeTeamId) teamsWithUnplayedGame.add(g.homeTeamId);
+    if (g.awayTeamId) teamsWithUnplayedGame.add(g.awayTeamId);
+  }
+  // Guard against a division with no results at all (nothing scheduled yet): a
+  // vacuous all-zero tie shouldn't nag for a coin toss either.
+  const divisionHasResults = groupGames.length > 0;
+
   // Max run-differential-per-game cap: division override → tournament default → none.
   // Caps the RD column ONLY (rf/ra stay raw totals), per product decision 2026-06-10.
   const runDiffCap = clampRunDiffCap(config?.maxRunDiffPerGame ?? tournamentSettings?.max_run_diff_per_game ?? null);
@@ -231,7 +247,16 @@ export function computeTournamentStandings(
           (rank.has(b.teamId) ? rank.get(b.teamId)! : Number.MAX_SAFE_INTEGER)
         );
       }
-      tiedTeams.forEach(t => { t.needsCoinToss = true; t.coinTossGroupKey = key; });
+      // Only surface the coin toss once the tie is REAL: every tied team has
+      // finished its round-robin games (nothing left that could still break the
+      // tie) and the division actually has results. Otherwise (e.g. pre-event,
+      // when the whole division is an identical 0–0 tie) hold the flag — the
+      // group keeps its display order but isn't nagged for a coin toss it doesn't
+      // need yet.
+      const tieSettled = divisionHasResults && tiedTeams.every(t => !teamsWithUnplayedGame.has(t.teamId));
+      if (tieSettled) {
+        tiedTeams.forEach(t => { t.needsCoinToss = true; t.coinTossGroupKey = key; });
+      }
       return tiedTeams;
     }
 

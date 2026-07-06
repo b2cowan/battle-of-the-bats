@@ -144,10 +144,9 @@ function TrophyIcon({ x, y, size = 12, color = 'var(--primary-light)' }: {
 // ── SVG sub-components — use org CSS variables, not FieldLogic tokens ────────
 
 function MatchNode({
-  node, x, y, isHighlighted = true, showHighlightRing = false, requireFinalization = true,
+  node, x, y, showHighlightRing = false, requireFinalization = true,
 }: {
   node: BracketNode; x: number; y: number;
-  isHighlighted?: boolean;
   showHighlightRing?: boolean;
   requireFinalization?: boolean;
 }) {
@@ -192,15 +191,12 @@ function MatchNode({
   const awayName = (node.awayTeam?.name ?? 'TBD').slice(0, isAwayWin ? 17 : 20);
   const TROPHY_W = 14; // horizontal space reserved for the trophy icon
 
+  // Followed-team spotlight is PURELY additive: every game renders at full
+  // strength, and the followed team's cards get a highlight ring + primary glow
+  // ON TOP (see showHighlightRing). Nothing is dimmed — the whole bracket stays
+  // fully readable.
   return (
-    <g
-      transform={`translate(${x},${y})`}
-      style={{
-        opacity: isHighlighted ? 1 : 0.25,
-        filter:  isHighlighted ? undefined : 'saturate(0)',
-        transition: 'opacity 0.2s, filter 0.2s',
-      }}
-    >
+    <g transform={`translate(${x},${y})`}>
       {/* card background */}
       <rect
         width={NODE_WIDTH} height={NODE_HEIGHT} rx={8}
@@ -208,7 +204,10 @@ function MatchNode({
           fill:        'var(--bracket-card, var(--surface))',
           stroke:      node.isLive ? 'var(--primary)' : 'rgba(var(--primary-rgb), 0.85)',
           strokeWidth: node.isLive ? '1' : '1.25',
-          filter:      node.isLive ? 'url(#glow-primary)' : undefined,
+          // Soft primary halo lifts a live game OR the followed team's cards
+          // forward — the emphasis half of the spotlight (context recedes via
+          // the group opacity above; the target lifts here).
+          filter:      node.isLive || showHighlightRing ? 'url(#glow-primary)' : undefined,
         }}
       />
       {/* hover / focus affordance — transparent until a .clickableNode ancestor is
@@ -652,16 +651,6 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
   // Cards link to the public game-detail page only when both slugs are supplied.
   const canLink = !!orgSlug && !!tournamentSlug;
 
-  // Team spotlight — only dim non-matching nodes when the followed team is ACTUALLY
-  // placed in this bracket. A pre-seeded bracket is all placeholders (Seed #1,
-  // Winner QF1…) whose ids never equal a real followed-team id, so without this
-  // guard every node greys to 25% and the whole bracket becomes unreadable. When
-  // the team isn't present (placeholders / eliminated / other tier) show the full
-  // bracket at full opacity instead.
-  const highlightPresent = !!highlightTeamId && nodes.some(n =>
-    n.homeTeam?.id === highlightTeamId || n.awayTeam?.id === highlightTeamId
-  );
-
   // Champion — the decided final's winner drives the spotlight banner. For double
   // elimination that is the grand-final reset (if played) or the grand final.
   const hasMultiBracket = nodes.some(n => /^(WB|LB|GF|CON|PL)/i.test(n.bracketCode));
@@ -962,7 +951,6 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
                 node={node}
                 x={pos.x}
                 y={pos.y}
-                isHighlighted={!highlightPresent || nodeMatchesTeam}
                 showHighlightRing={nodeMatchesTeam}
                 requireFinalization={requireFinalization}
               />

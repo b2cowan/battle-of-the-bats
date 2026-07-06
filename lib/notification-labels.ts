@@ -27,6 +27,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   assistant_coach_joined:            'Assistant coach joined',
   assistant_coach_approval_requested: 'Assistant coach awaiting approval',
   playoffs_set:                      'Playoff bracket set',
+  champions_crowned:                 'Champions crowned',
 };
 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
@@ -48,6 +49,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   assistant_coach_joined:            'An assistant coach you invited accepted and joined the team.',
   assistant_coach_approval_requested: 'A head coach invited an assistant coach and it needs admin approval.',
   playoffs_set:                      'The playoff bracket is set for a tournament — the seeding is locked and the knockout stage is on.',
+  champions_crowned:                 'A tournament’s playoffs are complete — the champion(s) are crowned and the final results are in.',
 };
 
 // ── Section groups (org-level preferences page) ────────────────────────────────
@@ -72,6 +74,7 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
       'waitlist_opened',
       'team_no_show',
       'playoffs_set',
+      'champions_crowned',
     ],
   },
   {
@@ -132,6 +135,7 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   'chat_message',
   'chat_mention',
   'playoffs_set',
+  'champions_crowned',
 ]);
 
 /**
@@ -153,4 +157,5 @@ export const TOURNAMENT_EVENT_TYPES: NotificationEventType[] = [
   'score_submitted',
   'team_no_show',
   'playoffs_set',
+  'champions_crowned',
 ];

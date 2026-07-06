@@ -259,6 +259,35 @@ describe('computeTournamentStandings — coin toss', () => {
     const rows = computeTournamentStandings('D1', tiedTeams(), games, config);
     assert.ok(rows.every(r => r.needsCoinToss));
   });
+
+  it('does NOT flag a coin toss while the deciding game is still scheduled (pre-event)', () => {
+    // Same symmetric pair, but their game hasn't been played → every team is 0–0
+    // "tied", which must NOT surface a coin toss before the round-robin runs.
+    const scheduled = [game('Alpha', 'Bravo', 0, 0, { status: 'scheduled' })];
+    const config = { tieBreakers: ['h2h', 'coin'] } as any;
+    const rows = computeTournamentStandings('D1', tiedTeams(), scheduled, config);
+    assert.ok(rows.every(r => !r.needsCoinToss), 'no coin toss until games are played');
+    assert.ok(rows.every(r => r.coinTossGroupKey === null));
+  });
+
+  it('does NOT flag a coin toss when the division has no games at all', () => {
+    const config = { tieBreakers: ['h2h', 'coin'] } as any;
+    const rows = computeTournamentStandings('D1', tiedTeams(), [], config);
+    assert.ok(rows.every(r => !r.needsCoinToss));
+  });
+
+  it('holds the coin toss if a tied team still has another game scheduled', () => {
+    // Alpha & Bravo tie 5-5 (played) → level at the top, but Bravo still has an
+    // unplayed game, so the tie could still break on the field → not flagged yet.
+    const three = [team('Alpha'), team('Bravo'), team('Charlie')];
+    const gs = [
+      game('Alpha', 'Bravo', 5, 5),                              // played, ties the pair
+      game('Bravo', 'Charlie', 0, 0, { status: 'scheduled' }),   // Bravo isn't done
+    ];
+    const config = { tieBreakers: ['h2h', 'coin'] } as any;
+    const rows = computeTournamentStandings('D1', three, gs, config);
+    assert.ok(rows.every(r => !r.needsCoinToss), 'unsettled tie is not flagged');
+  });
 });
 
 describe('computeTournamentStandings — coin toss, 3+ teams', () => {
