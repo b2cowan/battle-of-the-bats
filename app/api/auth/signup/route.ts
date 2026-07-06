@@ -49,15 +49,29 @@ async function rollbackAuthUser(id: string) {
   if (error) console.error('Signup rollback auth user error:', error);
 }
 
-// Does a Supabase auth user already exist for this email? Used by the account-only branch
+// Does a Supabase auth user already exist for this email? Used by BOTH signup branches
 // to reject signup for an existing (esp. invited/unconfirmed) email — otherwise
 // generateLink({type:'signup'}) would overwrite that pending account's password + rotate
-// its confirmation token (account-state tampering / DoS on an invited member). The owner
-// path relies on createOrganization/createUser erroring on collision; account-only has no
-// such downstream guard, so it checks up front. (listUsers cap mirrors invite/route.ts.)
+// its confirmation token (account-state tampering / DoS on an invited member).
+//
+// Because this guard protects existing credentials, it PAGINATES rather than trusting a
+// single 1000-row page (a false negative past row 1000 would silently reopen the clobber
+// hole) and fails CLOSED — a listUsers error throws to the route's 500 handler rather than
+// being read as "no such user". (supabase-js v2.x has no admin.getUserByEmail; the exhaustive
+// scan is the correct-at-any-scale form of the platform's listUsers pattern.)
 async function authUserExistsForEmail(email: string): Promise<boolean> {
-  const { data } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-  return Boolean(data?.users.some(u => u.email?.toLowerCase() === email));
+  const target = email.trim().toLowerCase();
+  const perPage = 1000;
+  // Hard page ceiling so a pathological account count can't spin forever: 50 × 1000 = 50k
+  // auth users, far beyond current scale, and the loop exits on the first partial page anyway.
+  for (let page = 1; page <= 50; page++) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    const users = data?.users ?? [];
+    if (users.some(u => u.email?.toLowerCase() === target)) return true;
+    if (users.length < perPage) return false; // last page reached — no match
+  }
+  return false;
 }
 
 export const POST = withObservability(async (req: Request) => {

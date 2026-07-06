@@ -1697,15 +1697,19 @@ export default function AdminDashboard() {
         </div>
         {gd.totalGames > 0 ? (
           <>
+            {/* Count RESOLVED games (scored + forfeit) so the gauge reaches 100% exactly when
+                every game is in — matching the "ready to finalize" rail. A forfeit is a
+                finished game; the sub-stat below breaks it out so the number stays honest. */}
             <div className={styles.mainGauge}>
               <div className={styles.gaugeFigures}>
-                <span className={styles.gaugeMain}><CountUp value={gd.completed} /></span>
+                <span className={styles.gaugeMain}><CountUp value={gd.resolved} /></span>
                 <span className={styles.gaugeOf}>/ {gd.totalGames}</span>
-                <span className={styles.gaugeLabel}>games complete</span>
+                <span className={styles.gaugeLabel}>games final</span>
               </div>
-              <GaugeBar value={gd.completed} max={gd.totalGames} />
+              <GaugeBar value={gd.resolved} max={gd.totalGames} />
             </div>
             <div className={styles.subStats}>
+              {gd.resolved - gd.completed > 0 && <span className={styles.subStat}><span className="badge badge-neutral">{gd.resolved - gd.completed}</span> By forfeit</span>}
               {gd.inProgress > 0 && <span className={styles.subStat}><span className="badge badge-warning">{gd.inProgress}</span> In review</span>}
               {gd.poolGamesTotal > 0 && <span className={styles.subStat}><span className="badge badge-neutral">{gd.poolGamesCompleted}/{gd.poolGamesTotal}</span> Pool games</span>}
               {gd.playoffStarted && <span className={styles.subStat}><span className="badge badge-primary">{gd.playoffGamesCompleted}/{gd.playoffGamesTotal}</span> Playoff games</span>}

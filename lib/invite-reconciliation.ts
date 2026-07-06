@@ -143,8 +143,10 @@ export type PendingInviteForEmail = {
 
 /**
  * Find a single pending ('invited') membership addressed to `email`, keyed on the persisted
- * `lower(invited_email)` partial index (mig 128). Read-only. Returns the OLDEST pending invite
- * if several exist. Used by the Sign-up Invite Guard + the self-serve resend route to detect
+ * `lower(invited_email)` partial index (mig 128). Read-only. Returns the MOST RECENT pending
+ * invite if several exist (the one the user most likely just received — so the guard names the
+ * right org and the resend link points at it). Used by the Sign-up Invite Guard + the self-serve
+ * resend route to detect
  * "this email was already invited" WITHOUT trusting a client-supplied identity.
  *
  * SECURITY: this is a raw lookup — the CALLER decides disclosure. The sign-up guard only runs it
@@ -161,7 +163,7 @@ export async function findPendingInviteByEmail(email: string | null | undefined)
     .select('id, user_id, role, organizations(slug, name)')
     .eq('status', 'invited')
     .eq('invited_email', normalized)
-    .order('invited_at', { ascending: true })
+    .order('invited_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 

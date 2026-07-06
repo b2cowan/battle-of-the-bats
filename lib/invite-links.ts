@@ -61,11 +61,16 @@ export async function sendPendingInviteLink(params: {
   );
 
   // Refresh invited_at (admin sees the re-invite time) + backfill invited_email so the row
-  // stays reconcilable by email (mig 128).
-  await supabaseAdmin
+  // stays reconcilable by email (mig 128). The email already sent, so a failed metadata
+  // refresh doesn't fail the operation — but log it rather than swallow, else the admin sees
+  // a stale "re-invited X ago" with no signal (e.g. the row was accepted mid-flight).
+  const { error: refreshError } = await supabaseAdmin
     .from('organization_members')
     .update({ invited_at: new Date().toISOString(), invited_email: invitedEmail })
     .eq('id', memberId);
+  if (refreshError) {
+    console.error('[sendPendingInviteLink] invite metadata refresh failed:', refreshError);
+  }
 
   return { ok: true };
 }
