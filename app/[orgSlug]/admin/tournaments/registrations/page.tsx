@@ -703,6 +703,30 @@ export default function UnifiedTeamsPage() {
     });
   }
 
+  // Bulk-assign every selected team to one pool (or clear it). Reuses the teams
+  // endpoint's shared `{ ids, updates }` form — poolId '' clears to null server-side.
+  async function moveSelectedToPool(poolId: string) {
+    if (selectedRegistrationIds.size === 0) return;
+    const ids = [...selectedRegistrationIds];
+    setWorking('bulk');
+    try {
+      const res = await fetch(`/api/admin/teams${orgQuery}`, {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, updates: { poolId } }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Move failed');
+      setRegs(prev => prev.map(r => selectedRegistrationIds.has(r.id) ? { ...r, poolId: poolId || undefined } : r));
+      clearRegistrationSelection();
+    } catch (e: any) {
+      setFeedback({ isOpen: true, title: 'Move Error', message: e.message, type: 'danger' });
+    } finally {
+      setWorking(null);
+    }
+  }
+
   async function handleAddTeam(e: React.FormEvent) {
     e.preventDefault();
     if (!currentTournament) return;
@@ -997,6 +1021,10 @@ export default function UnifiedTeamsPage() {
   const today = new Date().toISOString().split('T')[0];
   const selectedGroup = divisions.find(g => g.id === selectedDivisionId);
   const slotConfigured = poolSlots.length > 0;
+  // Manual pool assignment applies to pool-enabled divisions that are NOT running the
+  // fixed slot board (those keep their own place/swap flow).
+  const poolsForDivision = (selectedGroup?.pools ?? []) as Array<{ id: string; name: string }>;
+  const poolAssignable = !slotConfigured && poolsForDivision.length > 0;
 
   const [closingDivision, setClosingDivision] = useState(false);
 
@@ -1526,7 +1554,25 @@ export default function UnifiedTeamsPage() {
           )}
           <div className={`${s.primaryCell} ${styles.registrationNameCell}`}>
             <TeamAvatar name={r.name} size={26} />
-            <strong>{r.name}</strong>
+            <div className={styles.registrationNameStack}>
+              <strong>{r.name}</strong>
+              {poolAssignable && viewMode === 'pools' && (
+                <select
+                  className={styles.rowPoolSelect}
+                  value={r.poolId ?? ''}
+                  disabled={working === r.id || working === 'bulk'}
+                  onClick={e => e.stopPropagation()}
+                  onChange={e => patch(r.id, { poolId: e.target.value })}
+                  aria-label={`Pool for ${r.name}`}
+                  data-unassigned={!r.poolId || undefined}
+                >
+                  <option value="">Unassigned</option>
+                  {poolsForDivision.map(p => (
+                    <option key={p.id} value={p.id}>{formatPoolName(p.name)}</option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
           <div className={`${s.secondaryCell} ${styles.registrationCoachCell}`}>{r.coach}</div>
           <div className={styles.registrationStatusCell}>
@@ -1597,7 +1643,7 @@ export default function UnifiedTeamsPage() {
         locked={isLocked}
         help={{
           module: 'tournaments',
-          sectionIds: ['registrations-and-teams'],
+          sectionIds: ['registrations-and-teams', 'assign-teams-to-pools'],
           fullGuideHref: currentOrg ? `/${currentOrg.slug}/admin/help/tournaments#registrations-and-teams` : undefined,
         }}
         actions={(
@@ -2112,6 +2158,25 @@ export default function UnifiedTeamsPage() {
               <Mail size={12} /> Reminder
             </button>
           )}
+          {poolAssignable && (
+            <select
+              className={`btn btn-outline btn-data ${styles.bulkPoolSelect}`}
+              value=""
+              disabled={working === 'bulk'}
+              onChange={e => {
+                const v = e.target.value;
+                if (!v) return;
+                moveSelectedToPool(v === '__unassigned__' ? '' : v);
+              }}
+              aria-label="Move selected teams to a pool"
+            >
+              <option value="">Move to pool…</option>
+              {poolsForDivision.map(p => (
+                <option key={p.id} value={p.id}>{formatPoolName(p.name)}</option>
+              ))}
+              <option value="__unassigned__">Unassigned</option>
+            </select>
+          )}
           <button type="button" className="btn btn-outline btn-data" aria-describedby="bulk-action-hint" style={{ color: 'var(--danger)' }} onClick={() => runBulkAction('reject')} disabled={working === 'bulk'}>
             Reject
           </button>
@@ -2356,7 +2421,7 @@ export default function UnifiedTeamsPage() {
                   flatDisplay.map(r => renderFlatRow(r))
                 ) : (
                   (() => {
-                    const pools = selectedGroup?.pools || [];
+                    const pools = poolsForDivision;
                     const byPool = flatDisplay.reduce((acc, r) => {
                       const pid = r.poolId || 'unassigned';
                       if (!acc[pid]) acc[pid] = [];
@@ -2364,22 +2429,44 @@ export default function UnifiedTeamsPage() {
                       return acc;
                     }, {} as Record<string, TeamRecord[]>);
 
-                    return [{ id: 'unassigned', name: 'Unassigned' }, ...pools].map(p => {
-                      const teamsInPool = byPool[p.id] || [];
-                      if (teamsInPool.length === 0) return null;
-                      return (
-                        <div key={p.id} className={s.poolSubSection} style={{ marginTop: 0 }}>
-                          <div className={s.poolSubHeader}>
-                            <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger-light)' : 'var(--logic-lime)' }} />
-                            <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger-light)' : undefined }}>
-                              {p.id === 'unassigned' ? 'Unassigned' : formatPoolName(p.name)}
-                            </span>
-                            <span className={s.poolSubCount}>({teamsInPool.length})</span>
+                    // Unassigned first (only when it has teams), then every pool —
+                    // empty pools stay visible so assignment targets are obvious.
+                    const unassigned = byPool['unassigned'] || [];
+                    const sections: Array<{ id: string; name: string; teams: TeamRecord[]; isUnassigned?: boolean }> = [
+                      ...(unassigned.length > 0 ? [{ id: 'unassigned', name: 'Unassigned', teams: unassigned, isUnassigned: true }] : []),
+                      ...pools.map(p => ({ id: p.id, name: p.name, teams: byPool[p.id] || [] })),
+                    ];
+
+                    return (
+                      <>
+                        {/* No pools yet — nudge to Divisions, but STILL list the teams below
+                            (they all sit under Unassigned) so they're never hidden. */}
+                        {pools.length === 0 && (
+                          <div className={styles.poolEmptyState}>
+                            <strong>No pools yet.</strong>{' '}
+                            Turn on pools for this division in{' '}
+                            {currentOrg
+                              ? <Link href={`/${currentOrg.slug}/admin/tournaments/divisions`}>Divisions</Link>
+                              : 'Divisions'}
+                            , then assign teams here.
                           </div>
-                          {teamsInPool.map(r => renderFlatRow(r))}
-                        </div>
-                      );
-                    });
+                        )}
+                        {sections.map(sec => (
+                          <div key={sec.id} className={s.poolSubSection} style={{ marginTop: 0 }}>
+                            <div className={s.poolSubHeader}>
+                              <div className={s.poolDot} style={{ background: sec.isUnassigned ? 'var(--danger-light, #f87171)' : 'var(--logic-lime)' }} />
+                              <span className={s.poolSubLabel} style={{ color: sec.isUnassigned ? 'var(--danger-light, #f87171)' : undefined }}>
+                                {sec.isUnassigned ? 'Unassigned' : formatPoolName(sec.name)}
+                              </span>
+                              <span className={s.poolSubCount}>({sec.teams.length})</span>
+                            </div>
+                            {sec.teams.length > 0
+                              ? sec.teams.map(r => renderFlatRow(r))
+                              : <div className={styles.poolSectionEmpty}>No teams yet — set a team&apos;s pool from its row, or select teams and use &ldquo;Move to pool.&rdquo;</div>}
+                          </div>
+                        ))}
+                      </>
+                    );
                   })()
                 )}
               </div>

@@ -695,6 +695,82 @@
   overflow-wrap: anywhere;
 }
 
+/* Name + inline pool picker stacked so the picker sits under the team name */
+.registrationNameStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+  align-items: flex-start;
+}
+
+/* Compact per-row pool assignment control (Pools view, pool-enabled divisions) */
+.rowPoolSelect {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb, 217, 249, 157), 0.08);
+  border: 1px solid rgba(var(--logic-lime-rgb, 217, 249, 157), 0.35);
+  border-radius: 6px;
+  padding: 0.15rem 1.3rem 0.15rem 0.45rem;
+  max-width: 100%;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23d9f99d' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.4rem center;
+}
+
+.rowPoolSelect:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Unassigned teams get a warning-tinted picker so they stand out as needing action */
+.rowPoolSelect[data-unassigned] {
+  /* --danger-light is not defined app-wide (latent gap, 16 usages) — fall back to a light red. */
+  color: var(--danger-light, #f87171);
+  background-color: rgba(var(--danger-rgb), 0.08);
+  border-color: rgba(var(--danger-rgb), 0.35);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23ff6b6b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}
+
+.rowPoolSelect option {
+  color: var(--white-90, #f5f5f5);
+  background: var(--surface-2, #1a1f2b);
+}
+
+/* Empty-pool hint under a pool header with no teams yet */
+.poolSectionEmpty {
+  padding: 0.5rem 0.75rem 0.75rem;
+  font-size: 0.78rem;
+  color: var(--white-40);
+  font-style: italic;
+}
+
+/* No-pools-at-all nudge (Pools view on a division with pools off) */
+.poolEmptyState {
+  padding: 1.25rem 1rem;
+  font-size: 0.85rem;
+  color: var(--white-60, rgba(255, 255, 255, 0.6));
+  text-align: center;
+  line-height: 1.5;
+}
+
+.poolEmptyState a {
+  color: var(--logic-lime);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Bulk "Move to pool" select in the selection action bar */
+.bulkPoolSelect {
+  cursor: pointer;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+}
+
 .registrationCoachCell {
   flex: 1.5;
   min-width: 0;

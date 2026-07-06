@@ -173,8 +173,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Define the structure',
       heading: 'Divisions, capacities, pools, and fees',
       summary: 'Control who can register and how teams are organized.',
-      keywords: ['division', 'capacity', 'pool', 'fees', 'payment', 'payment instructions', 'how to pay'],
-      searchText: 'divisions capacity waitlist pools user selects pool fee schedule deposit total fee registration open closed per division tournament level payment instructions how to pay e-transfer acceptance email coaches portal registration form manual payment',
+      keywords: ['division', 'capacity', 'pool', 'assign teams to pools', 'add teams to pools', 'move to pool', 'fees', 'payment', 'payment instructions', 'how to pay'],
+      searchText: 'divisions capacity waitlist pools user selects pool self-select assign teams to pools add teams to pools put teams in pools move to pool randomize unassigned pool view place teams fee schedule deposit total fee registration open closed per division tournament level payment instructions how to pay e-transfer acceptance email coaches portal registration form manual payment',
       links: [
         { label: 'Divisions', href: '../tournaments/divisions' },
         { label: 'Event Settings', href: '../tournaments/settings/event' },
@@ -183,7 +183,7 @@ const tournamentsHelp: HelpPageContent = {
         <>
           <p>Divisions are the registration and competition groups inside a tournament. They can represent age groups, skill levels, adult brackets, or custom groupings.</p>
           <p>Use <strong>capacity</strong> to set the number of teams a division can accept. If a division reaches capacity, admins can use waitlist status to hold additional teams.</p>
-          <p>Use <strong>pools</strong> when a division needs smaller groups for round-robin play. If teams should choose a pool during registration, enable user-selectable pool registration for that division.</p>
+          <p>Use <strong>pools</strong> when a division needs smaller groups for round-robin play. Turn on <strong>Enable pools</strong> for the division and name them (Pool A, Pool B, and so on). Then decide how teams land in a pool: turn on <strong>self-select pool</strong> so teams pick their own during registration, or leave it off and assign teams yourself from the <strong>Teams</strong> page after they&rsquo;re accepted.</p>
           <p>Fee schedules can be set at the tournament level or per division from <strong>Event Settings</strong>. Payment status then appears beside accepted teams in the registrations view.</p>
         </>
       ),
@@ -195,7 +195,7 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['pools', 'pool play', 'round robin', 'division'],
           popular: true,
           answer: (
-            <p>Pools split one division into smaller groups, such as Pool A and Pool B. They help organize round-robin games and playoff paths when a division has more teams than one simple bracket should handle.</p>
+            <p>Pools split one division into smaller groups, such as Pool A and Pool B. They help organize round-robin games and playoff paths when a division has more teams than one simple bracket should handle. After you enable pools here, you place teams into them from the <strong>Teams</strong> page &mdash; unless self-select pool is on, in which case teams choose their own as they register.</p>
           ),
         },
         {
@@ -485,6 +485,52 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['waitlist', 'queue', 'promotion', 'position'],
           answer: (
             <p>When a team joins or is moved to the waitlist, FieldLogicHQ assigns the next queue position for that division. Tournament Plus adds promotion and queue-management tools; when a waitlisted team is promoted, the remaining waitlist closes the gap so the queue stays in order.</p>
+          ),
+        },
+      ],
+    },
+
+    {
+      id: 'assign-teams-to-pools',
+      group: 'Teams & Registration',
+      heading: 'Put teams into pools',
+      summary: 'Place accepted teams into a division’s pools by hand, in batches, or all at once.',
+      keywords: ['assign pools', 'add teams to pools', 'put teams in pools', 'move to pool', 'randomize pools', 'unassigned', 'pool assignment'],
+      searchText: 'assign teams to pools add teams to pools put teams in pools where do i add teams to pools move to pool randomize spread teams unassigned pool view flat view self-select pool place teams division pools pool a pool b',
+      links: [
+        { label: 'Teams', href: '../tournaments/registrations' },
+        { label: 'Divisions', href: '../tournaments/divisions' },
+      ],
+      content: (
+        <>
+          <p>Pools are created on the <strong>Divisions</strong> page &mdash; turn on <strong>Enable pools</strong> for the division and name them first. Until a division has pools, every team sits under <strong>Unassigned</strong> on the Teams page, and that view links you back to Divisions to turn pools on.</p>
+          <p>Once pools exist, open the <strong>Teams</strong> page, choose the division, and switch to <strong>Pools</strong> view. Every pool appears, even before it has any teams, so you always know where teams can go. There are three ways to place accepted teams:</p>
+          <ul>
+            <li><strong>One at a time</strong> &mdash; pick a pool from the dropdown on each team&rsquo;s row.</li>
+            <li><strong>In batches</strong> &mdash; use <strong>Select Many</strong>, tick the teams you want together, then choose <strong>Move to pool</strong>.</li>
+            <li><strong>All at once</strong> &mdash; use <strong>Randomize</strong> to spread every accepted team evenly across the pools, then adjust by hand.</li>
+          </ul>
+          <p>This is how you assign pools when <strong>self-select pool</strong> is off for the division. With self-select on, teams choose their own pool as they register, and you only step in to make changes.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-where-add-teams-to-pools',
+          question: 'Where do I add teams to pools?',
+          answerText: 'On the Teams page, choose the division and switch to Pools view. Set a team’s pool from the dropdown on its row, select several teams and use Move to pool, or use Randomize to spread all accepted teams across the pools. Pools must first be enabled and named on the Divisions page; the Pools toggle on the Teams page only changes how teams are grouped, it does not create pools.',
+          keywords: ['where add teams to pools', 'assign pool', 'move to pool', 'randomize', 'pools view', 'unassigned'],
+          popular: true,
+          answer: (
+            <p>On the <strong>Teams</strong> page, pick the division and switch to <strong>Pools</strong> view, then use the pool dropdown on a team&rsquo;s row, <strong>Move to pool</strong> after selecting several teams, or <strong>Randomize</strong> to spread them all at once. Note the <strong>Flat / Pools</strong> toggle only changes how teams are grouped &mdash; pools themselves are created on the <strong>Divisions</strong> page.</p>
+          ),
+        },
+        {
+          id: 'faq-only-unassigned-showing',
+          question: 'Why do all my teams show as Unassigned?',
+          answerText: 'Teams show under Unassigned until you place them in a pool, or because the division has no pools enabled yet. Empty pools still appear in Pools view so you can assign into them. If there are no pools at all, enable pools for the division on the Divisions page first, then assign teams on the Teams page.',
+          keywords: ['unassigned', 'no pools', 'pools missing', 'teams not in pools'],
+          answer: (
+            <p>Teams stay under <strong>Unassigned</strong> until you place them, or because the division has no pools yet. If you see no pools at all, open the <strong>Divisions</strong> page, enable pools for that division, and name them &mdash; then come back to the Teams page and assign teams.</p>
           ),
         },
       ],
