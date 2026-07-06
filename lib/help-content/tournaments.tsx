@@ -1058,7 +1058,7 @@ const tournamentsHelp: HelpPageContent = {
       heading: 'Complete the tournament',
       summary: 'Wrap up once all games are done, share final results, and understand tournament lifecycle states.',
       keywords: ['closeout', 'complete tournament', 'mark complete', 'ready to finalize', 'finalize tournament', 'archive', 'seal', 'final results', 'completed', 'archived', 'sealed'],
-      searchText: 'closeout tournament complete mark complete mark tournament complete ready to finalize finalize dashboard prompt lock results read-only reopen archive seal final results post-event summary free tournament slot immutable snapshot board report results email lifecycle draft active completed archived sealed',
+      searchText: 'closeout tournament complete mark complete mark tournament complete ready to finalize finalize dashboard prompt lock results read-only reopen archive seal final results post-event summary free tournament slot immutable snapshot board report results email lifecycle draft active completed archived sealed public page shows final results automatically without marking complete fans champions final standings wrap up next on the schedule do i need to mark complete round robin',
       links: [
         { label: 'Manage Tournaments', href: '../tournaments/manage' },
         { label: 'Past Tournaments', href: '../tournaments/archives' },
@@ -1076,6 +1076,7 @@ const tournamentsHelp: HelpPageContent = {
           </ul>
           <p>Once every game is in, your tournament <strong>dashboard</strong> shows a <strong>You&rsquo;re ready to finalize</strong> prompt with a one-click <strong>Mark tournament complete</strong> — so you can close out right from the dashboard. You can also change the status from <strong>Event Settings</strong> or <strong>Manage Tournaments</strong>.</p>
           <p>Marking a tournament complete locks it: registrations close and all event data — scores, standings, schedules, divisions, and registrations — becomes read-only and final. You can reopen it any time by setting the status back to <strong>Active</strong>.</p>
+          <p>Your public tournament page shows its <strong>finished wrap-up</strong> — the champions and final standings — on its own once the games are done, so completing is about locking your records, not about what fans see.</p>
           <p>Close-out steps:</p>
           <ol>
             <li>Confirm all scores, standings, and playoff results are complete.</li>
@@ -1089,6 +1090,19 @@ const tournamentsHelp: HelpPageContent = {
         </>
       ),
       faqs: [
+        {
+          id: 'faq-public-final-results-automatic',
+          question: 'Do I have to mark the tournament complete for fans to see the final results?',
+          answerText: 'No. Your public tournament page switches to its finished wrap-up on its own once the games are done — the champion has been decided, or every game in a round-robin event has been played. It brings up the champions (every tier, including Gold and Silver), the final standings recap, and drops the "next on the schedule" section. Marking the tournament Completed is an optional admin step that locks the scores and standings and keeps the event for your records — it is not required for fans to see the final results. If you use the optional post-event results email, that still sends when you mark the tournament Completed.',
+          keywords: ['public page', 'final results', 'mark complete', 'do i need to mark complete', 'fans', 'champions', 'final standings', 'wrap up', 'automatic', 'next on the schedule'],
+          popular: true,
+          answer: (
+            <>
+              <p><strong>No.</strong> Your public tournament page switches to its <strong>finished wrap-up</strong> on its own once the games are done — when the champion has been decided, or every game in a round-robin event has been played. It brings up the <strong>champions</strong> (every tier, including Gold and Silver), the <strong>final standings</strong> recap, and drops the &ldquo;next on the schedule&rdquo; section, so fans always see an accurate finish.</p>
+              <p>Marking the tournament <strong>Completed</strong> is an optional admin step &mdash; it locks the scores and standings and keeps the event for your records. It is <strong>not</strong> required for fans to see the final results. If you use the optional post-event results email, that still sends when you mark the tournament <strong>Completed</strong>.</p>
+            </>
+          ),
+        },
         {
           id: 'faq-where-mark-complete',
           question: 'Where do I mark a tournament complete?',

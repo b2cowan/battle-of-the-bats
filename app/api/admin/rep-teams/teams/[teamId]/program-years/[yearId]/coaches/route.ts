@@ -3,7 +3,8 @@ import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } f
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getRepTeam, getRepProgramYear, getRepTeamCoaches, addRepTeamCoach, removeRepTeamCoach } from '@/lib/db';
+import { getRepTeam, getRepProgramYear, getRepTeamCoaches, addRepTeamCoach, removeRepTeamCoach, cleanupOrphanedCoachMembership } from '@/lib/db';
+import { revokeStaleChatMembershipsForCoach } from '@/lib/chat-service';
 import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -142,7 +143,7 @@ export const DELETE = withObservability(async (req: Request,
   // Verify the coach row belongs to this program year
   const { data: row } = await supabaseAdmin
     .from('rep_team_coaches')
-    .select('id')
+    .select('id, user_id')
     .eq('id', coachId)
     .eq('program_year_id', yearId)
     .single();
@@ -152,5 +153,9 @@ export const DELETE = withObservability(async (req: Request,
   }
 
   await removeRepTeamCoach(coachId);
+  // Clean up an orphaned capability-less guest membership + revoke stale tournament chat access
+  // (consistent with the coach-side + oversight removal paths).
+  await cleanupOrphanedCoachMembership(ctx!.org.id, row.user_id as string).catch(() => {});
+  await revokeStaleChatMembershipsForCoach(row.user_id as string).catch(() => {});
   return NextResponse.json({ ok: true });
 }, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/coaches' });

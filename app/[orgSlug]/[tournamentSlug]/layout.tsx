@@ -122,6 +122,19 @@ export default async function TournamentLayout({
   // without importing the client module into this server component). Tournament-local
   // date so the dock survives the UTC day boundary on the final evening (J6-056).
   const todayISO = tournamentToday();
+  // "Effectively finished" for the shell (top-bar pill, install/alert nudges, game-day
+  // dock): marked complete, the bracket's champion already stamped (champions_crowned_at
+  // is on the loaded record — no extra query), or the event has run past its end date.
+  // Mirrors the games-derived finished signal the overview body uses, kept cheap for every
+  // tournament sub-page so the whole shell agrees the event is over.
+  const effectivelyFinished =
+    tournament.status === 'completed' ||
+    !!tournament.championsCrownedAt ||
+    (!!tournament.endDate && todayISO > tournament.endDate);
+  // NB: kept in step with lib/follow.isTournamentInProgress (date-window + active) — the
+  // game-day dock self-gates to a followed team's live games, so it must NOT go dark the
+  // moment a champion is stamped while other games may still be on today. Shell "finished"
+  // signals (pill, install/alert nudges) use effectivelyFinished; live game-day surfaces do not.
   const tournamentInProgress =
     tournament.status === 'active' &&
     !!tournament.startDate && !!tournament.endDate &&
@@ -169,6 +182,7 @@ export default async function TournamentLayout({
         startDate={tournament.startDate ?? null}
         endDate={tournament.endDate ?? null}
         status={tournament.status ?? null}
+        finished={effectivelyFinished}
       />
       {isFreeTournamentPlan && (
         <PoweredByBadge
@@ -209,8 +223,8 @@ export default async function TournamentLayout({
       {/* Self-onboarding shared links: ?follow=teamId → one-tap "Follow [team]?" (J6-012). */}
       <FollowDeepLinkPrompt orgSlug={orgSlug} tournamentSlug={tournament.slug} />
       {/* Post-install one-time nudge → turn on score alerts (J6-048). Self-gates to
-          the installed app + a followed team; suppressed on completed events. */}
-      {tournament.status !== 'completed' && (
+          the installed app + a followed team; suppressed once the event is finished. */}
+      {!effectivelyFinished && (
         <AlertsNudge
           orgSlug={orgSlug}
           tournamentSlug={tournament.slug}
@@ -218,9 +232,9 @@ export default async function TournamentLayout({
           enabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
         />
       )}
-      {/* Fan app install — active/upcoming events only; suppressed on completed events
+      {/* Fan app install — active/upcoming events only; suppressed once finished
           (no live scores/alerts left to follow — J6-054). */}
-      {tournament.status !== 'completed' && (
+      {!effectivelyFinished && (
         <InstallAppPrompt
           appName={tournament.name}
           subtitle={

@@ -15,9 +15,13 @@ interface OrgNavValue {
   tournamentStartDate: string | null;
   tournamentEndDate: string | null;
   tournamentStatus: string | null;
+  /** True once the event is effectively over (marked complete, bracket decided, or a
+   *  no-bracket event played out past its end date) — keeps the top-bar phase pill in
+   *  step with the finished overview body. */
+  tournamentFinished: boolean;
   setOrgNav: (logoUrl: string | null, orgName: string) => void;
   setTournamentNav: (slug: string | null, name: string | null, colorMode?: 'dark' | 'light' | null, hiddenPages?: PublicPageKey[], registerCta?: RegisterCta) => void;
-  setTournamentStatus: (startDate: string | null, endDate: string | null, status: string | null) => void;
+  setTournamentStatus: (startDate: string | null, endDate: string | null, status: string | null, finished?: boolean) => void;
 }
 
 const OrgNavContext = createContext<OrgNavValue>({
@@ -31,6 +35,7 @@ const OrgNavContext = createContext<OrgNavValue>({
   tournamentStartDate: null,
   tournamentEndDate: null,
   tournamentStatus: null,
+  tournamentFinished: false,
   setOrgNav: () => {},
   setTournamentNav: () => {},
   setTournamentStatus: () => {},
@@ -47,6 +52,7 @@ export function OrgNavProvider({ children }: { children: React.ReactNode }) {
   const [tournamentStartDate, setTournamentStartDate] = useState<string | null>(null);
   const [tournamentEndDate, setTournamentEndDate] = useState<string | null>(null);
   const [tournamentStatus, setTournamentStatusState] = useState<string | null>(null);
+  const [tournamentFinished, setTournamentFinished] = useState(false);
 
   const setOrgNav = useCallback((url: string | null, name: string) => {
     setLogoUrl(url);
@@ -61,14 +67,15 @@ export function OrgNavProvider({ children }: { children: React.ReactNode }) {
     setTournamentRegisterCta(registerCta);
   }, []);
 
-  const setTournamentStatus = useCallback((startDate: string | null, endDate: string | null, status: string | null) => {
+  const setTournamentStatus = useCallback((startDate: string | null, endDate: string | null, status: string | null, finished = false) => {
     setTournamentStartDate(startDate);
     setTournamentEndDate(endDate);
     setTournamentStatusState(status);
+    setTournamentFinished(finished);
   }, []);
 
   return (
-    <OrgNavContext.Provider value={{ logoUrl, orgName, tournamentSlug, tournamentName, tournamentColorMode, tournamentHiddenPages, tournamentRegisterCta, tournamentStartDate, tournamentEndDate, tournamentStatus, setOrgNav, setTournamentNav, setTournamentStatus }}>
+    <OrgNavContext.Provider value={{ logoUrl, orgName, tournamentSlug, tournamentName, tournamentColorMode, tournamentHiddenPages, tournamentRegisterCta, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentFinished, setOrgNav, setTournamentNav, setTournamentStatus }}>
       {children}
     </OrgNavContext.Provider>
   );

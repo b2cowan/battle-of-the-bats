@@ -10,6 +10,7 @@ import {
   orgRequiresAssistantApproval,
 } from '@/lib/assistant-invites';
 import { resolveCoachCapabilities } from '@/lib/coach-capabilities';
+import { revokeStaleChatMembershipsForCoach } from '@/lib/chat-service';
 import { sendEmail, assistantCoachInviteHtml } from '@/lib/email';
 import { withObservability } from '@/lib/observability';
 
@@ -123,6 +124,8 @@ export const POST = withObservability(async (req: Request): Promise<Response> =>
 
     await removeRepTeamCoach(coachId);
     await cleanupOrphanedCoachMembership(ctx!.org.id, target.userId);
+    // Phase 4: revoke the removed assistant's stale tournament chat access.
+    await revokeStaleChatMembershipsForCoach(target.userId).catch(() => {});
     return NextResponse.json({ ok: true });
   }
 

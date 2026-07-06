@@ -10,6 +10,7 @@ import {
   cleanupOrphanedCoachMembership,
 } from '@/lib/db';
 import { sanitizeAssistantGrants, resolveCoachCapabilities, denyUnless } from '@/lib/coach-capabilities';
+import { revokeStaleChatMembershipsForCoach } from '@/lib/chat-service';
 import { withObservability } from '@/lib/observability';
 
 async function resolveHeadCoachTargetContext(orgSlug: string, teamId: string, coachId: string) {
@@ -77,5 +78,7 @@ export const DELETE = withObservability(async (_req: Request,
 
   await removeRepTeamCoach(coachId);
   await cleanupOrphanedCoachMembership(ctx.org.id, target.userId);
+  // Phase 4: drop the removed assistant from any tournament chat room they no longer belong to.
+  await revokeStaleChatMembershipsForCoach(target.userId).catch(() => {});
   return NextResponse.json({ ok: true });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/staff/[coachId]' });

@@ -2,7 +2,7 @@
 
 **Status:** PLANNED (not started). Second project in the Coach Chat program. Reuses the shared engine built in Project 1 (Tournament Chat). **Introduces the assistant-coach concept.** No Coaches Portal dependency.
 **Engine spec (canonical):** `docs/projects/active/COACH_CHAT_PLATFORM_PLAN.md` (umbrella) §2.
-**Building block:** `docs/projects/active/ASSISTANT_COACHES_BUILDING_BLOCK.md`.
+**Building block:** `docs/projects/archive/ASSISTANT_COACHES_BUILDING_BLOCK.md`.
 **PM brief:** `docs/projects/active/IN_ORG_COACH_CHAT_PM_BRIEF.md`
 
 ---

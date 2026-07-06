@@ -108,14 +108,14 @@ Today an organizer can *post* a rain-delay message on the public tournament app,
 - **Decision:** Notifications are prompted, not automatic, on a bulk shift (subject to Open Question 4). **Rationale:** not every micro-adjustment warrants buzzing every fan; the organizer decides per action, with a sensible default.
 - **Decision:** Features A and B ship independently; B3 is the only coupling. **Rationale:** A delivers value alone (announcements finally notify) and de-risks B; B is usable without A (silent shift) but far better with it.
 
-## Open Questions (owner decisions — recommendations attached)
+## Owner Decisions (locked 2026-07-06 unless noted)
 
-1. **Fan opt-in model** — Keep team-follow required, or allow a **tournament-wide** opt-in with no team? *Recommend: allow tournament-level opt-in* so fans can get rain-delay messages without following a team.
-2. **Category granularity** — One "get all alerts" toggle, or separate **Score alerts / Schedule changes / Tournament messages** toggles? *Recommend: a small set of categories, default all ON.*
-3. **Plan-gating** — Is fan tournament-message push a **Tournament Plus** feature (like score alerts today) or included in base **Tournament**? *Recommend: route the final call to `/billing` + `/strategy`; interim assumption reuses `fan_score_alerts` tier.*
-4. **Notify-on-shift behaviour** — Should a bulk reschedule **always notify**, **prompt** (prefilled, opt-out), or be **silent by default**? *Recommend: prompt with a prefilled message and the notify toggle pre-checked.*
-5. **Cancel-a-playoff-game in the bulk tool** — **Block** it, or **allow with a clear warning** about the dangling downstream bracket slot? *Recommend: allow with an explicit warning + a pointer to resolve the affected downstream game.*
-6. **CASL / anti-spam** — Pushing tournament messages to anonymous fans is **push, not email**, so email consent rules don't directly apply, but note: keep it opt-in, per-tournament, easily revocable, and rate-limited. *Recommend: confirm posture with `/strategy` before enabling broad tournament-message push; no action needed for score alerts (already live).*
+1. **Fan opt-in model** — ✅ **LOCKED: allow a tournament-wide opt-in** (follow the tournament, no team required) so fans can get rain-delay messages without following a team.
+2. **Category granularity** — ✅ **LOCKED: a small set of categories** — Score alerts / Schedule changes / Tournament messages — **default all ON.**
+3. **Plan-gating** — 🟡 **`/strategy` RECOMMENDS gate at Tournament Plus** (same tier as `fan_score_alerts`), logged **Proposed** in `BUSINESS_DECISIONS.md` (2026-07-06) — awaiting owner ratification. Rationale: keep all anonymous-fan push (scores + schedule + messages) as one bundled Plus capability (consistency + protects the "signature halo" upgrade); base Tournament still posts the public rain-delay banner and emails coaches free, so day-of *safety* comms aren't gated away — only the push-to-fans convenience layer is. Interim build assumption (reuse the `fan_score_alerts` tier) is **consistent** with this — no rework if ratified. Do not reconcile `lib/plan-config.ts` / `PLAN_PRICING_FACTS.md` until ratified + built (then via `/billing`).
+4. **Notify-on-shift behaviour** — ✅ **LOCKED: prompt with a prefilled message** and the notify toggle pre-checked (organizer can opt out per action).
+5. **Cancel-a-playoff-game in the bulk tool** — ✅ **LOCKED: allow with an explicit warning** + a pointer to resolve the affected downstream game (do not block).
+6. **CASL / anti-spam** — Pushing tournament messages to anonymous fans is **push, not email**, so email consent rules don't directly apply; keep it opt-in, per-tournament, easily revocable, and rate-limited. Folded into the `/strategy` routing of #3 for a posture confirmation; no action needed for score alerts (already live).
 
 ## Testing / QA
 

@@ -17,7 +17,7 @@ The organizing question is: **what does a volunteer coach experience, feel, and 
 - `docs/projects/active/COACHES_EXPERIENCE_EVAL_PLAN.md` — the primary audit of the **Basic** (free / org-less / tournament-participant) portal; findings for the J2/J4/J5/J9 tournament-coach personas; three-lens framework (gap/wow/growth); TL;DR, Stage-by-stage, and synthesis sections. **Note: this doc covers the Basic portal (`/coaches/*`). The Premium portal's accreted IA pain is documented in the "Current State" section of this kickoff prompt itself — do not expect to find it in this file.**
 - `docs/projects/active/COACH_NAV_REBUILD_PLAN.md` — progressive-disclosure nav model, tier 1/2 decisions, team-scoped rail, rediscovery system.
 - `docs/projects/active/COACH_PREMIUM_UPGRADE_FLOW_PLAN.md` — Premium ≥ Free principle, data-migration contract, upgrade-continuity rules.
-- `docs/projects/active/ASSISTANT_COACHES_PLAN.md` and `ASSISTANT_COACHES_PM_BRIEF.md` — per-assistant capability model, per-area nav gating, PIPEDA constraints.
+- `docs/projects/archive/ASSISTANT_COACHES_PLAN.md` and `ASSISTANT_COACHES_PM_BRIEF.md` — per-assistant capability model, per-area nav gating, PIPEDA constraints.
 - `docs/projects/active/COACHES_PORTAL_LINEUP_INTELLIGENCE_PLAN.md` — lineup-intelligence "wow" features.
 - `docs/projects/active/COACH_PORTAL_GROWTH_PLAN.md` — upsell voice rules, cannibalization guardrail, pressure-ladder, two-dialects contract.
 - `docs/agents/strategy/PLAN_PRICING_FACTS.md` — canonical plan names, prices, gating. Single source of truth; never restate a price from memory.

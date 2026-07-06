@@ -20,9 +20,12 @@ import styles from './TournamentNavStatus.module.css';
 
 type Phase = 'pre' | 'live' | 'done' | 'none';
 
-function phaseOf(start: string | null, end: string | null, status: string | null, today: string): Phase {
-  if (status === 'completed') return 'done';
+function phaseOf(start: string | null, end: string | null, status: string | null, today: string, finished: boolean): Phase {
   if (status === 'cancelled') return 'none';
+  // "Effectively finished" (bracket decided / marked complete / played out past the end
+  // date) shows Completed even mid-window, so the pill never reads "In progress" over a
+  // finished overview.
+  if (status === 'completed' || finished) return 'done';
   if (!start || !end) return 'none';
   if (today < start) return 'pre';
   if (today > end) return 'done';
@@ -54,10 +57,10 @@ export default function TournamentNavStatus() {
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';
-  const { tournamentStartDate, tournamentEndDate, tournamentStatus } = useOrgNav();
+  const { tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentFinished } = useOrgNav();
 
   const today = tournamentToday();
-  const phase = phaseOf(tournamentStartDate, tournamentEndDate, tournamentStatus, today);
+  const phase = phaseOf(tournamentStartDate, tournamentEndDate, tournamentStatus, today, tournamentFinished);
   const isGameDay = phase === 'live' && !!orgSlug && !!tournamentSlug;
 
   const [teams, setTeams] = useState<PublicTeam[]>([]);

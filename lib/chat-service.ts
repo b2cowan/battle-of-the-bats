@@ -573,6 +573,52 @@ export async function ensureCoachMembership(userId: string, tournamentId: string
   return membership && membership.status !== 'removed' ? allRoom : null;
 }
 
+/**
+ * Assistant Coaches Phase 4 — the INVERSE of healCoachTournamentMemberships. After a coach loses a
+ * team assignment (removed from a team's staff), drop them from any TOURNAMENT chat room they no longer
+ * belong to — `syncTournamentChatRoom` only ADDS coaches, it never removes a stale one, so without this
+ * a removed coach lingers and can still read the room until the next sync.
+ *
+ * Safe by construction:
+ *  - only the coach's own `member` seats (org-admin `moderator` seats are role-based → left alone);
+ *  - any non-`removed` status (a `muted`/`pending` seat still yields a room-list entry → clean it too);
+ *  - revoke a seat ONLY when the coach no longer participates in that TOURNAMENT, resolved once against
+ *    ALL their remaining teams/claims — so a coach still on ANOTHER team in the same tournament keeps
+ *    their access. Tournament-level (not per-division) so it never over-revokes a division seat while
+ *    tournament participation persists.
+ *
+ * Limitation (accepted): `resolveTournamentsForCoach` is fail-open — a transient sub-query error
+ * silently under-reports participation, so during a DB-degraded window this could revoke a coach who is
+ * in fact still a participant via the failed source. Rare + recoverable (re-invite / admin re-add); the
+ * whole call is best-effort. Call AFTER the coach row is deleted. Returns how many seats were revoked.
+ */
+export async function revokeStaleChatMembershipsForCoach(userId: string): Promise<number> {
+  const { data: seats, error } = await supabaseAdmin
+    .from('chat_room_members')
+    .select('room_id')
+    .eq('user_id', userId)
+    .eq('member_role', 'member')
+    .neq('status', 'removed');
+  if (error) throw error;
+  if (!seats || seats.length === 0) return 0;
+
+  const stillIn = new Set(await resolveTournamentsForCoach(userId));
+
+  let revoked = 0;
+  for (const seat of seats) {
+    const room = await getRoomById(seat.room_id as string);
+    if (!room || room.surface !== CHAT_SURFACE_TOURNAMENT) continue;
+    if (stillIn.has(room.refId)) continue; // still a participant of this tournament → keep the seat
+    await supabaseAdmin
+      .from('chat_room_members')
+      .update({ status: 'removed' })
+      .eq('room_id', room.id)
+      .eq('user_id', userId);
+    revoked++;
+  }
+  return revoked;
+}
+
 // ── Room list (coach-facing) ────────────────────────────────────────────────
 
 async function unreadCountForMember(

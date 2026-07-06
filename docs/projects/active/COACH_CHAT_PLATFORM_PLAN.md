@@ -17,7 +17,7 @@ The surfaces were split into **separate, independently-shippable projects**, eac
 | 3 | **Cross-Org Coach Messaging** (scrimmages) | paid coaches both sides | **Yes** (launch first) | `CROSS_ORG_COACH_MESSAGING_PLAN.md` + `_PM_BRIEF.md` |
 | — | **Coach↔Parent Chat** (separate later track) | League / Club + new parent login | n/a | §3.C + §4 below (own project + legal review) |
 
-Cross-cutting building block: **assistant coaches** — `ASSISTANT_COACHES_BUILDING_BLOCK.md` (introduced in Project 2, also feeds Project 1). The §3/§5/§6 phasing below is retained as the original design record; the table above is the current sequencing of record.
+Cross-cutting building block: **assistant coaches** — `../archive/ASSISTANT_COACHES_BUILDING_BLOCK.md` (built + shipped; archived. Introduced in Project 2, also feeds Project 1). The §3/§5/§6 phasing below is retained as the original design record; the table above is the current sequencing of record.
 
 ---
 

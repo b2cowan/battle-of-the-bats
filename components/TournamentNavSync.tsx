@@ -12,6 +12,7 @@ export default function TournamentNavSync({
   startDate = null,
   endDate = null,
   status = null,
+  finished = false,
 }: {
   slug: string;
   tournamentName: string;
@@ -21,17 +22,18 @@ export default function TournamentNavSync({
   startDate?: string | null;
   endDate?: string | null;
   status?: string | null;
+  finished?: boolean;
 }) {
   const { setTournamentNav, setTournamentStatus } = useOrgNav();
 
   useEffect(() => {
     setTournamentNav(slug, tournamentName, colorMode ?? 'dark', hiddenPages, registerCta);
-    setTournamentStatus(startDate, endDate, status);
+    setTournamentStatus(startDate, endDate, status, finished);
     return () => {
       setTournamentNav(null, null);
       setTournamentStatus(null, null, null);
     };
-  }, [slug, tournamentName, colorMode, hiddenPages, registerCta, startDate, endDate, status, setTournamentNav, setTournamentStatus]);
+  }, [slug, tournamentName, colorMode, hiddenPages, registerCta, startDate, endDate, status, finished, setTournamentNav, setTournamentStatus]);
 
   return null;
 }
