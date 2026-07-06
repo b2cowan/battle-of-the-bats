@@ -44,6 +44,28 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-06',
+    title: 'Calmer notifications, a smarter sign-up, and a one-click finish',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Your notifications are calmer now. The bell pins anything that needs a decision from you — a failed payment, an access request, a disputed score — at the top under “Needs attention,” and everything else drops into a tidy feed grouped by Today, Yesterday, and Earlier, with repeats rolled into a single line you can open in a tap. It opens on unread, so reading something clears it — an inbox you can actually empty — and a new “See all” page holds your full history. Admins and coaches both get it.',
+      },
+      {
+        category: 'new',
+        text: 'Invited someone who accidentally started their own organization instead of accepting the invite? The sign-up screen now spots their email and offers to send their invitation link again — so they end up in your organization, not a new one of their own.',
+      },
+      {
+        category: 'new',
+        text: 'Your tournament dashboard now walks you to the finish. When every game’s in, it shows a “Ready to finalize” prompt with a one-click Mark tournament complete — so you can close out right from the dashboard.',
+      },
+      {
+        category: 'improved',
+        text: 'Your game-day progress meter now reaches 100% the moment every game is decided — including games settled by forfeit — so it lines up with the “Ready to finalize” prompt.',
+      },
+    ],
+  },
+  {
     date: '2026-07-05',
     title: 'Crown your champions — and set your pools by hand',
     highlights: [
