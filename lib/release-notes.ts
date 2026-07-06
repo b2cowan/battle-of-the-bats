@@ -44,6 +44,20 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-05',
+    title: 'Crown your champions — and set your pools by hand',
+    highlights: [
+      {
+        category: 'new',
+        text: 'The end of your tournament is now a moment too. The instant your playoffs finish and a champion is decided, your public home page turns into a Champions celebration, and a shareable Champions recap page goes live with the winners, runners-up, and final standings. A one-time “Champions crowned” alert goes out to your staff and to fans following with score alerts on (Tournament Plus and above). It all runs off the scores you already enter — there’s no extra step. And if your tournament uses tiered brackets, the winner shown is now always the team that took the top bracket.',
+      },
+      {
+        category: 'new',
+        text: 'You can now set your pools by hand right on the Teams page — assign any team to a pool from its row, or move a whole batch at once with Select Many. Every pool now stays visible even when it’s empty, so it’s always clear where teams go. The one-click Randomize option is still there for when you’d rather it be done for you.',
+      },
+    ],
+  },
+  {
     date: '2026-07-04',
     title: 'Playoff day, made shareable — plus a clearer game-day dashboard and Coaches Portal improvements',
     highlights: [
