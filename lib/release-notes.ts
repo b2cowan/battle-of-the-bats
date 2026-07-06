@@ -63,6 +63,10 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
         category: 'improved',
         text: 'Your game-day progress meter now reaches 100% the moment every game is decided — including games settled by forfeit — so it lines up with the “Ready to finalize” prompt.',
       },
+      {
+        category: 'improved',
+        text: 'Your public tournament page now wraps up on its own once the games are done. The moment the champion’s decided — or every game in a round-robin has been played — it switches to a finished view with the champions and the closing standings, and tucks away the live game-day sections. There’s no need to mark the tournament complete first — that stays an optional step for locking in your records.',
+      },
     ],
   },
   {
