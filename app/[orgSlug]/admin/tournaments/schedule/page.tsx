@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link';
 import { Calendar, ChevronRight, ChevronDown, Plus, Pencil, Trash2, X, Check, Sparkles, SlidersHorizontal, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw, AlertTriangle, AlertCircle, Lock, Wrench } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
-import { buildPlaceholderOptions, findBracketSchedulingViolations, nextManualBracketCode, groupGamesByBracketId } from '@/lib/playoff-bracket';
+import { buildPlaceholderOptions, descendantBracketCodes, findBracketSchedulingViolations, nextManualBracketCode, groupGamesByBracketId } from '@/lib/playoff-bracket';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
@@ -1945,8 +1945,25 @@ export default function AdminSchedulePage() {
                 if (isPlayoffContext) {
                   const pDiv = divisions.find(g => g.id === form.divisionId);
                   const seedCount = pDiv?.playoffConfig?.teamsQualifying || groupTeams(form.divisionId).length || 8;
-                  const codes = games
-                    .filter(g => g.isPlayoff && g.divisionId === form.divisionId && g.bracketCode && g.id !== editing?.id)
+                  // Scope Winner/Loser codes + the single-use "already assigned" set
+                  // to the SAME bracket group (tier) as the game being edited. Tiers
+                  // reuse identical codes (QF1, SF1…) and are separated only by
+                  // bracketId, so a division-wide scope would let one tier's
+                  // "Winner QF1" hide the other tier's from its dropdown. Only scope
+                  // when editing a game that already has a bracketId; a brand-new
+                  // game (no tier yet) keeps the division-wide list.
+                  const groupId = editing?.bracketId ?? null;
+                  const sameGroup = (g: Game) => !groupId || g.bracketId === groupId;
+                  const groupGames = games.filter(g => g.isPlayoff && g.divisionId === form.divisionId && sameGroup(g));
+                  // Codes at or after the game being edited — its feed-graph
+                  // descendants — can't feed it: don't offer e.g. "Winner FIN"
+                  // for a semifinal (the final is fed by that semifinal, so it
+                  // would be an impossible cycle). New games (no code yet) skip this.
+                  const blockedCodes = editing?.bracketCode
+                    ? descendantBracketCodes(editing.bracketCode, groupGames.map(g => ({ code: g.bracketCode || '', refs: [g.homePlaceholder, g.awayPlaceholder] })))
+                    : new Set<string>();
+                  const codes = groupGames
+                    .filter(g => g.bracketCode && g.id !== editing?.id && !blockedCodes.has(g.bracketCode))
                     .map(g => g.bracketCode as string);
                   const opts = buildPlaceholderOptions(seedCount, codes);
                   const dteams = groupTeams(form.divisionId);
@@ -1954,8 +1971,8 @@ export default function AdminSchedulePage() {
                   // already wired into another game (and this game's other side).
                   // The side's own current value stays selectable for editing.
                   const assignedElsewhere = new Set(
-                    games
-                      .filter(g => g.isPlayoff && g.divisionId === form.divisionId && g.id !== editing?.id)
+                    groupGames
+                      .filter(g => g.id !== editing?.id)
                       .flatMap(g => [g.homePlaceholder, g.awayPlaceholder])
                       .filter((x): x is string => !!x),
                   );

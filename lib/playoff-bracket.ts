@@ -597,6 +597,48 @@ export function buildPlaceholderOptions(
 }
 
 /**
+ * The set of bracket codes that transitively DEPEND ON `code` — i.e. the
+ * Winner/Loser feed-graph descendants of the game with that code, INCLUDING
+ * `code` itself. A game must never be fed by the winner/loser of one of these:
+ * they come after it in the bracket, so wiring one in would create an impossible
+ * cycle (e.g. seeding a semifinal from "Winner FIN", where the final is fed by
+ * that very semifinal). Use it to filter which `Winner <code>`/`Loser <code>`
+ * options a given game may offer.
+ *
+ * @param code  the code of the game whose feeders are being chosen
+ * @param games every candidate game with the placeholder refs it currently
+ *              consumes (home + away). Refs that aren't Winner/Loser strings are
+ *              ignored, so seeds/team names pass through harmlessly.
+ */
+export function descendantBracketCodes(
+  code: string,
+  games: { code: string; refs: (string | null | undefined)[] }[],
+): Set<string> {
+  // code → codes of games that directly consume its Winner/Loser.
+  const dependents = new Map<string, string[]>();
+  for (const g of games) {
+    if (!g.code) continue;
+    for (const ref of g.refs) {
+      const m = /^(?:winner|loser)\s+(.+)$/i.exec((ref || '').trim());
+      if (!m) continue;
+      const src = m[1].trim();
+      const list = dependents.get(src);
+      if (list) list.push(g.code);
+      else dependents.set(src, [g.code]);
+    }
+  }
+  const out = new Set<string>([code]);
+  const stack = [code];
+  while (stack.length) {
+    const c = stack.pop() as string;
+    for (const dep of dependents.get(c) ?? []) {
+      if (!out.has(dep)) { out.add(dep); stack.push(dep); }
+    }
+  }
+  return out;
+}
+
+/**
  * Resolve the outcome of an elimination game (pure; J1-083).
  *
  * An elimination game CANNOT end in a tie — a tied score has no winner, so the

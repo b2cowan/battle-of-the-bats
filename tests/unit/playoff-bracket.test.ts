@@ -12,6 +12,7 @@ import {
   suggestDefaultTiers,
   validateTierRanges,
   buildPlaceholderOptions,
+  descendantBracketCodes,
   findBracketSchedulingViolations,
   nextManualBracketCode,
   computeBracketColumns,
@@ -584,6 +585,49 @@ describe('buildPlaceholderOptions (manual bracket wiring)', () => {
   it('does not silently cap large seed counts (supports >64-team fields)', () => {
     assert.equal(buildPlaceholderOptions(100, []).seeds.length, 100);
     assert.equal(buildPlaceholderOptions(100, []).seeds[99], 'Seed #100');
+  });
+});
+
+describe('descendantBracketCodes (no feeding from a future game)', () => {
+  // 4-team single-elim: QF1,QF2 → SF1(W QF1) & SF2(W QF2)? Here a simple
+  // semis → final shape: SF1/SF2 feed FIN.
+  const games = [
+    { code: 'QF1', refs: ['Seed #1', 'Seed #4'] },
+    { code: 'QF2', refs: ['Seed #2', 'Seed #3'] },
+    { code: 'SF1', refs: ['Winner QF1', 'Seed #1'] },
+    { code: 'SF2', refs: ['Winner QF2', 'Seed #2'] },
+    { code: 'FIN', refs: ['Winner SF1', 'Winner SF2'] },
+  ];
+
+  it('includes the game itself plus every game downstream of it', () => {
+    // SF1 feeds FIN → both SF1 and FIN are blocked for SF1's own feeders.
+    assert.deepEqual([...descendantBracketCodes('SF1', games)].sort(), ['FIN', 'SF1']);
+  });
+  it('leaves upstream (ancestor) games available', () => {
+    // QF1 is an ancestor of SF1, so it is NOT a descendant — SF1 may draw from it.
+    assert.ok(!descendantBracketCodes('SF1', games).has('QF1'));
+    assert.ok(!descendantBracketCodes('SF1', games).has('QF2'));
+  });
+  it('blocks the whole downstream chain from a first-round game', () => {
+    assert.deepEqual([...descendantBracketCodes('QF1', games)].sort(), ['FIN', 'QF1', 'SF1']);
+  });
+  it('a leaf game (the final) blocks only itself', () => {
+    assert.deepEqual([...descendantBracketCodes('FIN', games)], ['FIN']);
+  });
+  it('is case-insensitive on the Winner/Loser prefix and ignores non-refs', () => {
+    const g = [
+      { code: 'A', refs: ['Seed #1', null, undefined] },
+      { code: 'B', refs: ['winner A', 'LOSER A'] },
+    ];
+    assert.deepEqual([...descendantBracketCodes('A', g)].sort(), ['A', 'B']);
+  });
+  it('terminates on a cyclic wiring instead of looping forever', () => {
+    // Malformed data: X feeds Y and Y feeds X. Should still return a finite set.
+    const g = [
+      { code: 'X', refs: ['Winner Y'] },
+      { code: 'Y', refs: ['Winner X'] },
+    ];
+    assert.deepEqual([...descendantBracketCodes('X', g)].sort(), ['X', 'Y']);
   });
 });
 

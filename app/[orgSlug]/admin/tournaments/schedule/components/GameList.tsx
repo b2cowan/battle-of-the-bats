@@ -5,7 +5,7 @@ import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import { checkVenueConflict, buildConflictMap, resolveGameTiming, type ConflictResult, type ConflictInfo } from '@/lib/schedule-conflict';
 import { scheduledWindowState } from '@/lib/game-live-state';
 import { formatTime, formatPoolName } from '@/lib/utils';
-import { buildPlaceholderOptions } from '@/lib/playoff-bracket';
+import { buildPlaceholderOptions, descendantBracketCodes } from '@/lib/playoff-bracket';
 import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import { Pool } from '@/lib/types';
 import s from '../../../admin-common.module.css';
@@ -869,16 +869,30 @@ export default function GameList({
                 const divPo = divisions.find(d => d.id === g.divisionId);
                 const seedCount = (divPo?.playoffConfig?.teamsQualifying as number | undefined)
                   || teams.filter(t => t.divisionId === g.divisionId).length || 8;
-                const codes = games
-                  .filter(x => x.isPlayoff && x.divisionId === g.divisionId && x.bracketCode && x.id !== g.id)
+                // Scope Winner/Loser codes + the single-use "already assigned" set
+                // to the SAME bracket group (tier) as this game. Tiers reuse
+                // identical codes (QF1, SF1…) separated only by bracketId, so a
+                // division-wide scope would let one tier's "Winner QF1" hide the
+                // other tier's from its dropdown. Games without a bracketId fall
+                // back to the division-wide list.
+                const sameGroup = (x: Game) => !g.bracketId || x.bracketId === g.bracketId;
+                const groupGames = games.filter(x => x.isPlayoff && x.divisionId === g.divisionId && sameGroup(x));
+                // Codes at or after this game (its feed-graph descendants) can't
+                // feed it — don't offer e.g. "Winner FIN" for a semifinal (that
+                // would be an impossible cycle).
+                const blockedCodes = g.bracketCode
+                  ? descendantBracketCodes(g.bracketCode, groupGames.map(x => ({ code: x.bracketCode || '', refs: [x.homePlaceholder, x.awayPlaceholder] })))
+                  : new Set<string>();
+                const codes = groupGames
+                  .filter(x => x.bracketCode && x.id !== g.id && !blockedCodes.has(x.bracketCode))
                   .map(x => x.bracketCode as string);
                 const opts = buildPlaceholderOptions(seedCount, codes);
                 const dteams = teams.filter(t => t.divisionId === g.divisionId);
                 // Each Seed / Winner / Loser feeds exactly one slot: hide refs
                 // already wired into another game (and this game's other side).
                 const assignedElsewhere = new Set(
-                  games
-                    .filter(x => x.isPlayoff && x.divisionId === g.divisionId && x.id !== g.id)
+                  groupGames
+                    .filter(x => x.id !== g.id)
                     .flatMap(x => [x.homePlaceholder, x.awayPlaceholder])
                     .filter((x): x is string => !!x),
                 );

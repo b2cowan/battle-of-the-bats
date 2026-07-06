@@ -7,6 +7,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Plus, Trash2, GripVertical, Trophy } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
+import { descendantBracketCodes } from '@/lib/playoff-bracket';
 import { teamColor } from '@/lib/team-color';
 import BracketConnectors from './BracketConnectors';
 import BracketZoomFrame from './BracketZoomFrame';
@@ -499,7 +500,19 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
     }
   };
 
-  const allUsedOptions = new Set(rounds.flatMap(r => r.matchups.flatMap(m => [m.home.label, m.away.label].filter(l => l))));
+  // Which participant refs are already consumed — scoped to a single bracket
+  // GROUP (pool in No-Crossover mode, tier in Tiered mode). Tiers deliberately
+  // reuse the same Winner/Loser codes across groups, so a division-wide used-set
+  // would let one tier's "Winner QF1" hide the OTHER tier's identically-named
+  // (but structurally distinct) ref from its dropdown. Scoping by pool keeps each
+  // group's single-use filter independent. `poolName` undefined (single flat
+  // bracket) spans all matchups, matching the prior behavior.
+  const usedOptionsForPool = (poolName?: string) => new Set(
+    rounds
+      .flatMap(r => r.matchups)
+      .filter(m => !poolName || m.pool === poolName)
+      .flatMap(m => [m.home.label, m.away.label].filter(l => l)),
+  );
 
   // Group keys come from the preview's `pool` field — the pool name in
   // No-Crossover mode or the tier name in Tiered mode — so tiered brackets (which
@@ -520,7 +533,7 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
   };
   const isForkRounds = (rs: Round[]) => rs.some(r => /^(WB|LB|GF)/i.test(r.matchups[0]?.code || ''));
 
-  const optionsForRound = (round: Round, poolName?: string) => {
+  const optionsForMatchup = (matchup: Matchup, round: Round, poolName?: string) => {
     // Per-group seed options: prefer an explicit groupOptions map (Tiered mode →
     // each tier's global Seed #N range); otherwise fall back to filtering
     // baseOptions by the "Pool X" label convention (No-Crossover pools).
@@ -528,14 +541,34 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
       ? baseOptions
       : groupOptions?.[poolName]
         ?? baseOptions.filter(o => o.includes(`Pool ${poolName.replace(/^Pool\s+/i, '').trim()}`));
-    const refs = rounds
+
+    // Candidate feeder games in this bracket group (pool/tier).
+    const groupMatchups = rounds
       .flatMap(r => r.matchups)
-      .filter(m => m.code && !round.matchups.some(rm => rm.id === m.id) && (!poolName || m.pool === poolName))
+      .filter(m => m.code && (!poolName || m.pool === poolName));
+
+    // Never offer a feeder that sits at or after this game: its same-round peers
+    // (incl. itself) and everything downstream of it in the Winner/Loser feed
+    // graph. Feeding from any of those is structurally impossible — e.g. a
+    // semifinal can't be seeded from "Winner FIN" (the final is fed by that
+    // semifinal, so it would be a cycle).
+    const blocked = new Set(round.matchups.map(rm => rm.code));
+    for (const c of descendantBracketCodes(
+      matchup.code,
+      groupMatchups.map(m => ({ code: m.code, refs: [m.home.label, m.away.label] })),
+    )) blocked.add(c);
+
+    const refs = groupMatchups
+      .filter(m => !blocked.has(m.code))
       .flatMap(m => [`Winner ${m.code}`, `Loser ${m.code}`]);
-    return Array.from(new Set([...base, ...refs]));
+
+    // Keep this matchup's own current values selectable even if now blocked, so
+    // an existing (or legacy) wiring still renders in the dropdown.
+    const current = [matchup.home.label, matchup.away.label].filter((l): l is string => !!l);
+    return Array.from(new Set([...base, ...refs, ...current]));
   };
 
-  const renderColumn = (round: Round, roundOptions: string[], isFinal: boolean, onAdd: () => void, onDel: () => void) => (
+  const renderColumn = (round: Round, poolName: string | undefined, usedOptions: Set<string>, isFinal: boolean, onAdd: () => void, onDel: () => void) => (
     <div key={round.id} className={styles.roundColumn}>
       <div className={styles.roundHeader}>
         <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '0.5rem' }}>
@@ -559,8 +592,8 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
               <SortableMatchup
                 key={m.id}
                 matchup={m}
-                options={roundOptions}
-                usedOptions={allUsedOptions}
+                options={optionsForMatchup(m, round, poolName)}
+                usedOptions={usedOptions}
                 venues={venues}
                 labelFor={labelFor}
                 isFinal={isFinal}
@@ -581,7 +614,8 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
 
   const colFor = (round: Round, poolName: string | undefined, isFinal: boolean) => renderColumn(
     round,
-    optionsForRound(round, poolName),
+    poolName,
+    usedOptionsForPool(poolName),
     isFinal,
     () => (poolName ? addMatchupForPool(round.id, poolName) : addMatchup(round.id)),
     () => (poolName ? deleteRoundForPool(round.id, poolName) : deleteRound(round.id)),

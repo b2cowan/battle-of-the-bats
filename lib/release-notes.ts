@@ -55,6 +55,10 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
         category: 'new',
         text: 'You can now set your pools by hand right on the Teams page — assign any team to a pool from its row, or move a whole batch at once with Select Many. Every pool now stays visible even when it’s empty, so it’s always clear where teams go. The one-click Randomize option is still there for when you’d rather it be done for you.',
       },
+      {
+        category: 'fixed',
+        text: 'Building playoff brackets by hand is more reliable — when you feed a game from another game’s winner or loser, the picker now offers only matchups that can actually happen, and keeps each tier separate in tiered brackets.',
+      },
     ],
   },
   {
