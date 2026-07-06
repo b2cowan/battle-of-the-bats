@@ -10,7 +10,7 @@ import {
   getStandings,
 } from '@/lib/db';
 import { toPublicTeam } from '@/lib/public-tournament-data';
-import { deriveTierChampions } from '@/lib/champions';
+import { deriveTierChampions, isTournamentPlayoffsComplete } from '@/lib/champions';
 import type { DivisionStandingRow } from '@/lib/tie-breakers';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { formatPoolName } from '@/lib/utils';
@@ -68,7 +68,12 @@ export default async function ChampionsPage({
   const tierChampions = deriveTierChampions(allGames, teams, sortedDivisions);
   const showSchedule = isPublicPageEnabled(tournament, 'schedule');
 
-  if (tierChampions.length === 0) {
+  // Only crown once the WHOLE tournament's playoffs are complete — same gate as the
+  // home hero and the one-time announcement. This stops the recap from surfacing a
+  // winner from a final that's been score-entered but not yet finalized ('submitted').
+  const playoffsComplete = isTournamentPlayoffsComplete(allGames, sortedDivisions);
+
+  if (!playoffsComplete || tierChampions.length === 0) {
     return (
       <div className="page-content">
         <div className="section">

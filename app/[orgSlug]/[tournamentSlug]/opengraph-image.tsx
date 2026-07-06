@@ -57,7 +57,9 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
 
     const teams = data.teams ?? [];
     const games = data.games ?? [];
-    const divisions = data.divisions ?? [];
+    // Sort by display order so the champion card lists divisions in the same order
+    // as the home hero and the /champions recap page (deriveChampions preserves input order).
+    const divisions = (data.divisions ?? []).slice().sort((a, b) => a.order - b.order);
     const teamName = (id?: string | null) => (id ? teams.find(x => x.id === id)?.name ?? null : null);
 
     // Champion per division = the winner of the decided TOP-tier final (tier-aware —

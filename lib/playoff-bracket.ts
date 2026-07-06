@@ -725,9 +725,27 @@ export interface BracketGroup<T> {
  * — each tier / per-pool bracket is its own id and reuses codes, so they must be
  * rendered as SEPARATE diagrams (one column computation each) to avoid cross-wiring.
  * An ordinary single bracket returns one group. Named groups (a tier name lives on
- * `bracketLabel`) are ordered by label (Tier 1 < Tier 2, Gold < Silver); unnamed
- * groups keep first-seen order. `groups.length > 1` ⇒ render tiers separately.
+ * `bracketLabel`) are ordered by tier RANK — top tier first — via `tierRank`
+ * (Platinum→Gold→Silver→Bronze, and any "<word> N" scheme numerically, so Tier 1 <
+ * Tier 2 < Tier 10 and Gold < Silver < Bronze); unnamed groups keep first-seen order.
+ * This ordering is authoritative: `decidedFinalFor` reads group[0] as the division's
+ * TOP-tier championship final, so a wrong order would crown a lower tier. `groups.length
+ * > 1` ⇒ render tiers separately.
  */
+function tierRank(label: string): number {
+  const l = label.trim().toLowerCase();
+  // Medal tiers rank by precious-metal order, not alphabetical (else Bronze < Gold).
+  const medals: Record<string, number> = { platinum: 0, gold: 1, silver: 2, bronze: 3 };
+  for (const [word, rank] of Object.entries(medals)) {
+    if (l === word || l.startsWith(`${word} `) || l.endsWith(` ${word}`)) return rank;
+  }
+  // Any "<word> N" scheme (Tier 1, Division 2, Flight 3) ranks by its number.
+  const n = l.match(/\b(\d+)\b/);
+  if (n) return 100 + parseInt(n[1], 10);
+  // Unknown labels sort last, then alphabetically (numeric-aware) via the comparator.
+  return Number.MAX_SAFE_INTEGER;
+}
+
 export function groupGamesByBracketId<T extends { bracketId?: string | null; bracketLabel?: string | null }>(
   games: T[],
 ): BracketGroup<T>[] {
@@ -746,7 +764,12 @@ export function groupGamesByBracketId<T extends { bracketId?: string | null; bra
     seen: i,
   }));
   enriched.sort((a, b) => {
-    if (a.label && b.label) return a.label.localeCompare(b.label);
+    if (a.label && b.label) {
+      const ra = tierRank(a.label);
+      const rb = tierRank(b.label);
+      if (ra !== rb) return ra - rb;
+      return a.label.localeCompare(b.label, undefined, { numeric: true });
+    }
     if (a.label) return -1;
     if (b.label) return 1;
     return a.seen - b.seen;
