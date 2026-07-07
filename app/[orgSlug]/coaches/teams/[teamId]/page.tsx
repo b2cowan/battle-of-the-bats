@@ -12,6 +12,7 @@ import HelpButton from '@/components/help/HelpButton';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { getCoachGuidance } from '@/lib/coach-guidance';
+import { isNeverPaidPlayer } from '@/lib/dues-status';
 import styles from '../../coaches.module.css';
 import type { RepRosterPlayer, RepTeamEvent } from '@/lib/types';
 
@@ -126,6 +127,10 @@ export default function TeamOverviewPage({
       // Fail CLOSED if assignments haven't resolved yet (a === undefined): skip the finance
       // fetch so a no-money assistant never flashes a 403 error; it re-runs once caps load.
       const canMoney = !!a && a.capabilities.money !== 'off';
+      // Guardian contacts + player DOB are PII-redacted server-side unless this coach has the
+      // rosterPii grant. Without it, guardianEmail/DOB come back null — so a "missing email" count
+      // or birthday list computed from them would be false. Gate both on canPii (head coaches: on).
+      const canPii = !!a && a.capabilities.rosterPii;
       const [rosterRes, eventsRes, budgetRes, duesRes] = await Promise.all([
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`),
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`),
@@ -145,7 +150,7 @@ export default function TeamOverviewPage({
       const events = eventsData.events ?? [];
       const games = events.filter(event => GAME_EVENT_TYPES.includes(event.eventType));
       setSeasonGames(games);
-      setMissingEmailCount(activePlayers.filter(p => !p.guardianEmail?.trim()).length);
+      setMissingEmailCount(canPii ? activePlayers.filter(p => !p.guardianEmail?.trim()).length : 0);
 
       setSetupStats({
         activeRosterCount: activePlayers.length,
@@ -194,7 +199,7 @@ export default function TeamOverviewPage({
         })
         .filter((b): b is { name: string; inDays: number } => b !== null)
         .sort((a, b) => a.inDays - b.inDays);
-      setBirthdays(upcomingBdays);
+      setBirthdays(canPii ? upcomingBdays : []);
 
       // Dues outstanding + overdue count (best-effort — dues failure never breaks the page)
       if (canMoney && duesRes && duesRes.ok) {
@@ -206,12 +211,9 @@ export default function TeamOverviewPage({
         // "Who's paid nothing" — a player who owes dues but has zero payments recorded.
         // Distinct from "overdue" (a specific installment past its due date): a coach wants
         // to know who hasn't started paying at all, not just which instalments slipped.
-        const unpaid = players.reduce((n, p) => {
-          const insts = p.installments ?? [];
-          const hasDues = insts.length > 0 || (p.outstanding ?? 0) > 0;
-          const paidNothing = !insts.some(i => i.paidAt);
-          return n + (hasDues && paidNothing ? 1 : 0);
-        }, 0);
+        // Shared predicate with the Money → Player Dues "Haven't paid anything yet" panel,
+        // so this badge count and that named list can never drift apart.
+        const unpaid = players.filter(isNeverPaidPlayer).length;
         let paidInst = 0; let totalInst = 0;
         players.forEach(p => (p.installments ?? []).forEach(i => { totalInst += 1; if (i.paidAt) paidInst += 1; }));
         setDuesOutstanding(Math.round(totalOutstanding * 100) / 100);
@@ -630,7 +632,9 @@ export default function TeamOverviewPage({
         : 'Register for a tournament',
       href: `${base}/tournaments`,
       tone: 'default' as const,
-      flag: (tournaments && tournaments.owingCount > 0)
+      // Tournament fees owed are a money figure — gate on money view (the tournaments tile itself
+      // isn't in the dues/budget money filter, so this flag needs its own guard).
+      flag: (canViewMoney && tournaments && tournaments.owingCount > 0)
         ? { text: `${formatMoney(tournaments.owed)} in fees due · ${tournaments.owingCount} to pay`, tone: 'warn' as 'ok' | 'warn' }
         : null,
       headcount: null as { in: number; late: number; out: number; noReply: number } | null,
