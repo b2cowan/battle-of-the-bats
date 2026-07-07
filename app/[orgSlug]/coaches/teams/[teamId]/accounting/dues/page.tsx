@@ -11,6 +11,7 @@ import {
   downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import { hasPlanFeature } from '@/lib/plan-features';
+import { isNeverPaidPlayer } from '@/lib/dues-status';
 import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../../coaches.module.css';
 import type {
@@ -142,10 +143,16 @@ export default function CoachesDuesPage({
   const [applyAllSaving, setApplyAllSaving] = useState(false);
   const [applyAllError, setApplyAllError] = useState('');
 
-  // Reminders
+  // Reminders (proximity — installments due soon)
   const [sendingReminders, setSendingReminders] = useState(false);
   const [reminderResult, setReminderResult] = useState<{ emailsSent: number; installmentsTagged: number } | null>(null);
   const [reminderError, setReminderError] = useState('');
+
+  // "Haven't paid anything yet" nudges (never-paid players)
+  const [remindingAll, setRemindingAll] = useState(false);
+  const [remindingId, setRemindingId] = useState<string | null>(null);
+  const [unpaidResult, setUnpaidResult] = useState<{ emailsSent: number; playersReminded: number; playersMissingEmail: number } | null>(null);
+  const [unpaidError, setUnpaidError] = useState('');
 
   // Season refund
   const [refundOpen, setRefundOpen] = useState(false);
@@ -460,6 +467,27 @@ export default function CoachesDuesPage({
     }
   }
 
+  async function remindUnpaid(playerId?: string) {
+    if (playerId) setRemindingId(playerId); else setRemindingAll(true);
+    setUnpaidError('');
+    setUnpaidResult(null);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues/remind-unpaid`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(playerId ? { playerId } : {}),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to send reminder');
+      setUnpaidResult(data);
+    } catch (e: unknown) {
+      setUnpaidError(e instanceof Error ? e.message : 'Failed to send reminder.');
+    } finally {
+      setRemindingId(null);
+      setRemindingAll(false);
+    }
+  }
+
   function addInstallmentRow(rows: InstallmentRow[], setRows: (r: InstallmentRow[]) => void) {
     setRows([...rows, { installmentNumber: rows.length + 1, amount: '', dueDate: '' }]);
   }
@@ -477,6 +505,12 @@ export default function CoachesDuesPage({
       </div>
     );
   }
+
+  // Reminders (both proximity + never-paid) require money = write. Read-only money coaches
+  // see the list but no send buttons.
+  const moneyCanWrite = assignment.capabilities.money === 'write';
+  // Never-paid = same predicate as the Overview "N unpaid" badge, so the two always agree.
+  const neverPaid = players.filter(isNeverPaidPlayer);
 
   return (
     <div className={styles.page}>
@@ -509,17 +543,21 @@ export default function CoachesDuesPage({
               pdfFeatureKey="pdf_exports"
               disabled={players.length === 0}
             />
-            <button className={styles.btnSecondary} onClick={() => { setApplyAllOpen(true); setApplyAllError(''); }}>
-              Set dues for all players
-            </button>
-            <button
-              className={styles.btnSecondary}
-              onClick={sendReminders}
-              disabled={sendingReminders}
-              style={{ opacity: sendingReminders ? 0.6 : 1 }}
-            >
-              {sendingReminders ? 'Sending…' : 'Send Due Reminders'}
-            </button>
+            {moneyCanWrite && (
+              <>
+                <button className={styles.btnSecondary} onClick={() => { setApplyAllOpen(true); setApplyAllError(''); }}>
+                  Set dues for all players
+                </button>
+                <button
+                  className={styles.btnSecondary}
+                  onClick={sendReminders}
+                  disabled={sendingReminders}
+                  style={{ opacity: sendingReminders ? 0.6 : 1 }}
+                >
+                  {sendingReminders ? 'Sending…' : 'Send Due Reminders'}
+                </button>
+              </>
+            )}
           </div>
           {reminderResult && reminderResult.emailsSent > 0 && (
             <span style={{ fontSize: '0.8rem', color: '#4ade80' }}>
@@ -543,6 +581,89 @@ export default function CoachesDuesPage({
         <div className={styles.emptyState}>No active roster players found.</div>
       ) : (
         <>
+          {/* "Haven't paid anything yet" — the coach's who-do-I-chase list, with one-tap nudges.
+              Count mirrors the Overview "N unpaid" badge (shared isNeverPaidPlayer predicate). */}
+          {neverPaid.length > 0 && (
+            <div style={{
+              marginBottom: '1.5rem', borderRadius: 10, overflow: 'hidden',
+              border: '1px solid rgba(245,158,11,0.25)', background: 'rgba(245,158,11,0.06)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', padding: '0.85rem 1.1rem' }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#f0f0f0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
+                    Haven&apos;t paid anything yet
+                  </div>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+                    {neverPaid.length} player{neverPaid.length !== 1 ? 's' : ''} {neverPaid.length !== 1 ? 'owe' : 'owes'} dues with no payment recorded.
+                  </p>
+                </div>
+                {moneyCanWrite && (
+                  <button
+                    className={styles.btnPrimary}
+                    onClick={() => remindUnpaid()}
+                    disabled={remindingAll || !!remindingId}
+                    style={{ opacity: (remindingAll || remindingId) ? 0.6 : 1, whiteSpace: 'nowrap' }}
+                  >
+                    {remindingAll ? 'Sending…' : `Remind all ${neverPaid.length}`}
+                  </button>
+                )}
+              </div>
+
+              <div>
+                {neverPaid.map(p => {
+                  // Show the unpaid DUES amount (credits-blind) so the figure matches the reminder
+                  // email and the "haven't paid" framing — never a post-credit $0 that reads green.
+                  const owed = p.outstanding ?? 0;
+                  return (
+                    <div
+                      key={p.player.id}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', padding: '0.55rem 1.1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}
+                    >
+                      <button
+                        className={styles.btnGhost}
+                        style={{ padding: 0, color: 'rgba(255,255,255,0.85)', fontSize: '0.86rem', fontWeight: 500 }}
+                        onClick={() => { setSelected(p); setEditingSchedule(false); setAddingCredit(false); setSaveError(''); }}
+                      >
+                        {[p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' ')}
+                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexShrink: 0 }}>
+                        <span style={{ fontVariantNumeric: 'tabular-nums', color: '#f59e0b', fontWeight: 600, fontSize: '0.84rem' }}>
+                          {fmt(owed)}
+                        </span>
+                        {moneyCanWrite && (
+                          <button
+                            className={styles.btnSecondary}
+                            style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem', minHeight: '40px' }}
+                            disabled={remindingAll || !!remindingId}
+                            onClick={() => remindUnpaid(p.player.id)}
+                          >
+                            {remindingId === p.player.id ? 'Sending…' : 'Remind'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {(unpaidResult || unpaidError) && (
+                <div style={{ padding: '0.55rem 1.1rem', borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: '0.8rem' }}>
+                  {unpaidError && <span style={{ color: '#f87171' }}>{unpaidError}</span>}
+                  {unpaidResult && (
+                    <span style={{ color: unpaidResult.emailsSent > 0 ? '#4ade80' : 'rgba(255,255,255,0.5)' }}>
+                      {unpaidResult.emailsSent > 0
+                        ? `Sent ${unpaidResult.emailsSent} reminder${unpaidResult.emailsSent !== 1 ? 's' : ''} covering ${unpaidResult.playersReminded} player${unpaidResult.playersReminded !== 1 ? 's' : ''}.`
+                        : 'No reminders sent.'}
+                      {unpaidResult.playersMissingEmail > 0 &&
+                        ` ${unpaidResult.playersMissingEmail} ${unpaidResult.playersMissingEmail !== 1 ? 'players have' : 'player has'} no guardian email on file.`}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
             <table className={styles.table}>
               <thead>

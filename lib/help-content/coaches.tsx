@@ -222,7 +222,7 @@ const coachesHelp: HelpPageContent = {
       heading: 'How to track team fees',
       summary: 'Charge everyone or one player, then mark each fee paid as money comes in.',
       keywords: ['fees', 'team fees', 'dues', 'charge everyone', 'one player', 'mark paid', 'payment tracking'],
-      searchText: 'fees team fees dues charge everyone all players one player bulk mark paid unpaid owed payment tracking ledger no online payment collection installments reminders budget premium',
+      searchText: 'fees team fees dues charge everyone all players one player bulk mark paid unpaid owed payment tracking ledger no online payment collection installments reminders budget premium haven\'t paid anything yet who hasn\'t paid never paid chase unpaid list remind remind all send reminder nudge families first payment',
       content: (
         <>
           <p>Turn on <strong>Fees</strong> from Explore. Fees is a simple way to track who has paid — it records what each player owes and what they&apos;ve paid; it does not collect money online.</p>
@@ -232,7 +232,7 @@ const coachesHelp: HelpPageContent = {
             <li>As money comes in, click <strong>Mark paid</strong> on each fee. You can mark it back to unpaid if needed.</li>
           </ol>
           <p>The summary at the top shows totals for <strong>Owed</strong>, <strong>Paid</strong>, and <strong>Unpaid</strong> so you can see at a glance where collection stands.</p>
-          <p><strong>Premium Coaches Portal adds:</strong> installment schedules with due dates per player, automatic overdue reminder emails, and a season budget that tracks fees, expenses, and fundraiser credits.</p>
+          <p><strong>Premium Coaches Portal adds:</strong> installment schedules with due dates per player, automatic overdue reminder emails, a <strong>&ldquo;Haven&rsquo;t paid anything yet&rdquo;</strong> list at the top of Player Dues that names everyone who owes but has paid nothing — with a one-tap reminder for each family, or <strong>Remind all</strong> at once — and a season budget that tracks fees, expenses, and fundraiser credits.</p>
         </>
       ),
       faqs: [
@@ -243,6 +243,15 @@ const coachesHelp: HelpPageContent = {
           keywords: ['online payment', 'collect fees', 'pay online', 'e-transfer'],
           answer: (
             <p>Not in the free Fees tool. It tracks who owes and who has paid — you collect payment your usual way (e-transfer, cash, cheque) and click <strong>Mark paid</strong>. You can charge everyone at once or one player at a time.</p>
+          ),
+        },
+        {
+          id: 'faq-who-hasnt-paid',
+          question: "How do I see who hasn't paid anything and remind them?",
+          answerText: "In the Premium Coaches Portal, open Money then Player Dues. If anyone owes dues and has paid nothing yet, a 'Haven't paid anything yet' list appears at the top with each player and the amount they owe. Send one family a reminder with Remind, or nudge them all with Remind all. The count always matches the unpaid number on your Overview. Sending reminders needs money-write access.",
+          keywords: ["who hasn't paid", 'unpaid list', 'remind', 'remind all', 'chase dues', 'never paid', "haven't paid anything", 'nudge'],
+          answer: (
+            <p>In the Premium Coaches Portal, open <strong>Money → Player Dues</strong>. If anyone owes dues and has paid nothing yet, a <strong>&ldquo;Haven&rsquo;t paid anything yet&rdquo;</strong> list appears at the top with each player and the amount they owe. Send one family a reminder with <strong>Remind</strong>, or nudge them all with <strong>Remind all</strong>. The count always matches the <strong>unpaid</strong> number on your Overview. Sending reminders needs money-write access.</p>
           ),
         },
       ],

@@ -105,15 +105,18 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   const updated = await updateRepRosterPlayer(playerId, {
-    playerFirstName:  body.playerFirstName  !== undefined ? String(body.playerFirstName).trim()  : undefined,
-    playerLastName:   body.playerLastName   !== undefined ? String(body.playerLastName).trim()   : undefined,
+    // First name is required — skip the write when it's null/undefined rather than coercing
+    // `String(null)` into the literal text "null". (`!= null` covers both null and undefined.)
+    playerFirstName:  body.playerFirstName  != null ? String(body.playerFirstName).trim()  : undefined,
+    // Optional fields: an emptied field must store real null, never the string "null".
+    playerLastName:   body.playerLastName   !== undefined ? trimmedOrNull(body.playerLastName)   : undefined,
     playerDateOfBirth:body.playerDateOfBirth !== undefined ? (body.playerDateOfBirth || null)     : undefined,
     playerNumber:     body.playerNumber     !== undefined ? (body.playerNumber?.trim() || null)   : undefined,
     ...positionWrite,
     status:           body.status           !== undefined ? body.status as RepRosterStatus        : undefined,
-    guardianFirstName:body.guardianFirstName !== undefined ? String(body.guardianFirstName).trim(): undefined,
-    guardianLastName: body.guardianLastName  !== undefined ? String(body.guardianLastName).trim() : undefined,
-    guardianEmail:    body.guardianEmail     !== undefined ? String(body.guardianEmail).trim()    : undefined,
+    guardianFirstName:body.guardianFirstName !== undefined ? trimmedOrNull(body.guardianFirstName): undefined,
+    guardianLastName: body.guardianLastName  !== undefined ? trimmedOrNull(body.guardianLastName) : undefined,
+    guardianEmail:    body.guardianEmail     !== undefined ? trimmedOrNull(body.guardianEmail)    : undefined,
     guardianPhone:    body.guardianPhone     !== undefined ? (body.guardianPhone?.trim() || null) : undefined,
     notes:            body.notes            !== undefined ? (body.notes?.trim() || null)          : undefined,
     adminNotes:       body.adminNotes       !== undefined ? (body.adminNotes?.trim() || null)     : undefined,

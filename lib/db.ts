@@ -7120,6 +7120,81 @@ export async function getDueReminderCandidates(
   });
 }
 
+/** One never-paid player to nudge — used by the "Haven't paid anything yet" reminder. */
+export interface UnpaidDuesReminderTarget {
+  playerId: string;
+  playerFirstName: string;
+  playerLastName: string;
+  guardianFirstName: string | null;
+  guardianEmail: string | null;
+  teamName: string;
+  outstanding: number;
+}
+
+/**
+ * Players on the team's active program year who OWE dues but have recorded ZERO payments
+ * (a schedule exists / balance is owed, and no installment is marked paid). Mirrors the
+ * `isNeverPaidPlayer` predicate the portal shows so "Remind all" targets exactly the list.
+ * Since nothing is paid, each target's `outstanding` equals the full schedule amount.
+ */
+export async function getUnpaidDuesReminderTargets(teamId: string): Promise<UnpaidDuesReminderTarget[]> {
+  const programYear = await getActiveRepProgramYear(teamId);
+  if (!programYear) return [];
+
+  const { data: schedules, error: sErr } = await supabaseAdmin
+    .from('rep_player_dues_schedules')
+    .select('id, player_id, total_amount')
+    .eq('program_year_id', programYear.id);
+  if (sErr) throw sErr;
+  if (!schedules?.length) return [];
+
+  const scheduleIds = schedules.map((s: any) => s.id);
+  const { data: allInst, error: iErr } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .select('schedule_id, paid_at')
+    .in('schedule_id', scheduleIds);
+  if (iErr) throw iErr;
+
+  const countBySchedule: Record<string, number> = {};
+  const anyPaidBySchedule: Record<string, boolean> = {};
+  for (const i of (allInst ?? []) as any[]) {
+    countBySchedule[i.schedule_id] = (countBySchedule[i.schedule_id] ?? 0) + 1;
+    if (i.paid_at) anyPaidBySchedule[i.schedule_id] = true;
+  }
+
+  const neverPaid = schedules.filter((s: any) => {
+    const hasDues = (countBySchedule[s.id] ?? 0) > 0 || Number(s.total_amount) > 0;
+    return hasDues && !anyPaidBySchedule[s.id];
+  });
+  if (!neverPaid.length) return [];
+
+  const playerIds = [...new Set(neverPaid.map((s: any) => s.player_id))];
+  const { data: players, error: pErr } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('id, player_first_name, player_last_name, guardian_first_name, guardian_email')
+    .in('id', playerIds);
+  if (pErr) throw pErr;
+  const playerMap = new Map((players ?? []).map((p: any) => [p.id, p]));
+
+  const team = await getRepTeam(teamId);
+
+  return neverPaid
+    .map((s: any) => {
+      const p = playerMap.get(s.player_id);
+      if (!p) return null;
+      return {
+        playerId: s.player_id,
+        playerFirstName: p.player_first_name ?? '',
+        playerLastName: p.player_last_name ?? '',
+        guardianFirstName: p.guardian_first_name ?? null,
+        guardianEmail: p.guardian_email ?? null,
+        teamName: team?.name ?? '',
+        outstanding: Math.round(Number(s.total_amount) * 100) / 100,
+      };
+    })
+    .filter((t): t is UnpaidDuesReminderTarget => t !== null);
+}
+
 export async function markInstallmentsReminderSent(installmentIds: string[]): Promise<void> {
   if (!installmentIds.length) return;
   const { error } = await supabaseAdmin
