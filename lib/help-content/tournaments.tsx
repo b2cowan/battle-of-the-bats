@@ -544,8 +544,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Build the schedule',
       heading: 'Build and adjust the tournament schedule',
       summary: 'Create games manually or generate round-robin schedules, then edit exceptions before game day.',
-      keywords: ['build schedule', 'generate schedule', 'round robin', 'edit games', 'venues', 'auto-generate'],
-      searchText: 'build tournament schedule generate round robin auto-generate accepted teams venues time slots edit games cancel restore public schedule pools flat list timeline',
+      keywords: ['build schedule', 'generate schedule', 'round robin', 'edit games', 'venues', 'auto-generate', 'adjust today', 'shift the day', 'rain delay', 'tools menu', 'move all games', 'bulk reschedule', 'delay games', 'cancel games', 'division filter', 'venue filter'],
+      searchText: 'build tournament schedule generate round robin auto-generate accepted teams venues time slots edit games cancel restore public schedule pools flat list timeline adjust today shift the day rain delay tools menu tournament plus running behind move push all remaining games back bulk reschedule delay cancel today games one step before after preview atomic filter by division venue field diamond',
       links: [
         { label: 'Schedule', href: '../tournaments/schedule' },
       ],
@@ -561,6 +561,7 @@ const tournamentsHelp: HelpPageContent = {
             <li>Use the public preview to confirm the schedule is readable for teams.</li>
           </ol>
           <p>There is no separate schedule publish step — saved schedule changes flow to the public tournament pages. Use <strong>pool view</strong> when a division is split into pools. Use <strong>flat view</strong> when you want one combined list.</p>
+          <p><strong>Rained out or running behind?</strong> Whenever the event has upcoming games, open <strong>Tools ▾ → Rain delay</strong> on the Schedule page. Pick a day (today or any upcoming day), optionally narrow to one division or venue, and it moves or cancels those games in one step — push them back 30 minutes, an hour, two hours, or a custom amount, and/or cancel a few — with a live before-and-after preview, then a ready-to-send notice so you update the schedule and tell everyone in one action. It applies all-or-nothing, leaves games that already have a result alone, and won&rsquo;t let a playoff game land before the games that feed it. <strong>Rain delay is a Tournament Plus tool</strong>; on the free plan you can still reschedule games one at a time and post a rain-delay banner (see the day-of question below).</p>
         </>
       ),
       faqs: [
@@ -581,6 +582,26 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['edit schedule', 'generated games', 'cancel game'],
           answer: (
             <p>Yes. Generated games are normal schedule records after they are saved. You can edit time, location, teams, notes, status, or remove a game if needed.</p>
+          ),
+        },
+        {
+          id: 'faq-shift-the-day',
+          question: 'How do I move or cancel a whole day of games at once (rain delay)?',
+          answerText: "On the Schedule page, open Tools then Rain delay (it appears whenever the event has upcoming games). Rain delay is a Tournament Plus tool — free Tournament orgs see it locked but can still reschedule games one at a time, post the free pinned rain-delay banner, and email coaches. In the panel: choose the day to adjust (today or any upcoming day), optionally filter by Division and/or Venue to act on just part of a day (only U11, or only the wetter diamond — Select all, the counts, and Apply act only on the shown games and leave the rest untouched), then pick how far to push the games (+30 minutes, +1 hour, +2 hours, or a custom amount) and/or mark some to cancel. You see each game's old and new time before you confirm. It applies as one action (all or nothing), never touches games that already have a result, and blocks a shift that would put a playoff game before the games that feed it (cancelling a playoff game is allowed with a warning). After it applies, it offers a prefilled announcement with the notify option on, so one more confirm posts the update to the public schedule and notifies opted-in fans plus your staff and coaches. Because you can pick an upcoming day, you can set a delay the evening before on the forecast; run it again for another division or field with a different amount.",
+          keywords: ['rain delay', 'shift the day', 'tools menu', 'adjust today', 'move all games', 'bulk reschedule', 'delay games', 'push games back', 'cancel games', 'weather', 'running behind', 'forecast', 'tomorrow', 'tournament plus', 'division filter', 'venue filter'],
+          popular: true,
+          answer: (
+            <>
+              <p>On the Schedule page, open <strong>Tools ▾ → Rain delay</strong> — it appears whenever the event has upcoming games. Rain delay is a <strong>Tournament Plus</strong> tool; on the free plan you can still reschedule games one at a time and post a rain-delay banner (see the guardrail below). Then:</p>
+              <ol>
+                <li>Pick the <strong>day to adjust</strong> — today or any upcoming day, so you can act the evening before on a forecast.</li>
+                <li><strong>Optional:</strong> filter by <strong>Division</strong> and/or <strong>Venue</strong> to act on only part of the day — say, only U11 games, or only the games on the wetter diamond. Select all, the count, and Apply act only on the games shown; the rest stay put.</li>
+                <li>Choose how far to push those games: <strong>+30 minutes</strong>, <strong>+1 hour</strong>, <strong>+2 hours</strong>, or a custom number of minutes — and/or mark individual games to <strong>cancel</strong>.</li>
+                <li>Check the <strong>before → after</strong> times, then <strong>Apply</strong>. Everything happens together — all of it or none of it.</li>
+              </ol>
+              <p>Games that already have a result are left alone. If a change would schedule a playoff game <em>before</em> the games that feed it, the tool blocks it until you fix the times. Cancelling a playoff game is allowed, with a reminder that its spot in the bracket will need to be sorted out by hand. Need a different amount for another division or field? Filter to that set and run it again.</p>
+              <p>Right after it applies, you get a <strong>prefilled announcement</strong> with the notify option already on. One more confirm pins the update to the public <strong>Schedule</strong> and notifies opted-in <strong>fans</strong> plus your <strong>staff and coaches</strong> in the same step. Staff and coaches can turn the &ldquo;Tournament announcement&rdquo; alert off in their notification settings.</p>
+            </>
           ),
         },
       ],
@@ -896,11 +917,12 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-rain-delay-banner',
           question: 'How do I get a rain delay or urgent update in front of fans on game day?',
-          answerText: 'Post a message to the site and pin it. A pinned site post stays at the top of the News page and, while the tournament is live, also shows as a banner at the top of the public Schedule page. On Tournament Plus you can also turn on Push to fans to send a phone notification at the same time. Unpin it once the situation clears.',
-          keywords: ['rain delay', 'urgent update', 'game day', 'schedule banner', 'pin announcement', 'day-of', 'push to fans', 'notify fans'],
+          answerText: 'If games are actually moving or being cancelled, use Tools then Rain delay on the Schedule page (a Tournament Plus tool) — pick the day, and it re-times that day and hands you a ready-to-send notice in one flow. If you are on the free plan, or you just need to get the word out without changing game times, post a message and pin it: a pinned site post stays at the top of the News page and, while the tournament is live, also shows as a banner at the top of the public Schedule page. On Tournament Plus you can also turn on Push to fans to send a phone notification at the same time. Unpin it once the situation clears.',
+          keywords: ['rain delay', 'urgent update', 'game day', 'schedule banner', 'pin announcement', 'day-of', 'push to fans', 'notify fans', 'shift the day', 'move games', 'tools menu', 'tournament plus'],
           popular: true,
           answer: (
             <>
+              <p><strong>If games are actually moving or being cancelled,</strong> start with <strong>Tools ▾ → Rain delay</strong> on the <strong>Schedule</strong> page — pick the day and it re-times that day, then hands you a ready-to-send notice in one flow (see &ldquo;How do I move or cancel a whole day of games at once&rdquo;). Rain delay is a <strong>Tournament Plus</strong> tool; on the free plan — or when you just need to get the word out <em>without</em> changing game times — use the steps below instead.</p>
               <p>Open <strong>Communication</strong>, write the update, keep <strong>Post to site</strong> on, and turn on <strong>Pin</strong>. While the tournament is live, a pinned site post appears as a banner at the top of the public <strong>Schedule</strong> (and stays pinned at the top of <strong>News</strong>). It&rsquo;s the fastest way to reach fans already watching the schedule for a rain delay, a diamond change, or a start-time push.</p>
               <p>On <strong>Tournament Plus</strong>, also turn on <strong>Push to fans</strong> to buzz the phones of fans who&rsquo;ve enabled alerts — the fastest way to reach people who aren&rsquo;t looking at the schedule right then.</p>
               <p><strong>Unpin</strong> it once the situation clears so the banner stays reserved for things that matter in the moment.</p>

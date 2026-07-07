@@ -8,6 +8,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { Communication } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { notifyFansForAnnouncement } from '@/lib/fan-notify';
+import { notify } from '@/lib/notify';
 
 // Free-tier email volume guard (ratified 2026-06-22). Basic all-team announcements are
 // free, but lightly capped so the free floor can't be used as a bulk mailer. Tournament
@@ -267,6 +268,29 @@ export const POST = withObservability(async (req: Request) => {
             pushedCount: pushResult.sent,
             failedCount: pushResult.failed,
           },
+        });
+      }
+
+      // Staff + Coaches-Portal push (org members): fire when the organizer is actively notifying —
+      // the fan-push channel is on, OR the day-of "shift the day" hand-off explicitly asks
+      // (notifyStaff) so a rain-delay reaches coaches even on a free Tournament (day-of safety comms
+      // aren't plan-gated). Uses the existing free staff notify() system with per-user opt-out;
+      // external team-contact coaches keep the email channel. Awaited so serverless can't drop it.
+      const notifyStaff = Boolean(data.notifyStaff);
+      if (channelPush || notifyStaff) {
+        const { data: pushTournament } = await supabaseAdmin
+          .from('tournaments')
+          .select('slug')
+          .eq('id', data.tournamentId)
+          .maybeSingle();
+        await notify({
+          orgId: ctx.org.id,
+          tournamentId: data.tournamentId,
+          eventType: 'tournament_announcement',
+          title: data.title.trim(),
+          body: data.body.trim(),
+          link: pushTournament?.slug ? `/${ctx.org.slug}/${pushTournament.slug}` : undefined,
+          excludeUserIds: [ctx.user.id],
         });
       }
 

@@ -5,6 +5,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasPlanFeature, requiresTournamentPlusCopy, type PlanFeature } from '@/lib/plan-features';
 import { notify } from '@/lib/notify';
 import { notifyFansForPlayoff } from '@/lib/fan-notify';
+import { planBulkReschedule } from '@/lib/schedule-shift';
+import { syncGameDayRemindersAfterReschedule } from '@/lib/game-day-reminders';
 import { captureError, withObservability } from '@/lib/observability';
 import {
   applyDivisionRoundRobinDeleteScope,
@@ -624,6 +626,129 @@ export const PATCH = withObservability(async (req: Request) => {
     const supabase = createClient(url, key);
     const body = await req.json();
     const { action, id } = body;
+
+    // ── bulk-reschedule ──────────────────────────────────────────────────────
+    // "Shift the day" (Rain-Delay Day-of Ops, Feature B): move and/or cancel a set of
+    // still-scheduled games in ONE atomic operation. No single `id` — scoped by tournament,
+    // so it runs BEFORE the per-game `id` guard below.
+    if (action === 'bulk-reschedule') {
+      if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
+      // Plan gate: the bulk day-shift is a Tournament Plus automation (2026-07-07 decision), same tier
+      // as the generators. Free orgs keep manual single-game edits + the free pinned rain-delay banner.
+      if (!hasPlanFeature(ctx.org.planId, 'bulk_reschedule')) return planFeatureForbidden('bulk_reschedule');
+
+      const bulkTournamentId: string | undefined = body.tournamentId;
+      if (!bulkTournamentId) {
+        return new Response(JSON.stringify({ error: 'tournamentId required' }), {
+          status: 400, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      const bulkDenied = scopeGuard(ctx, bulkTournamentId);
+      if (bulkDenied) return bulkDenied;
+      const bulkWrongOrg = await requireTournamentInOrg(ctx, bulkTournamentId);
+      if (bulkWrongOrg) return bulkWrongOrg;
+      if (await isTournamentLocked(bulkTournamentId)) return tournamentLockedResponse();
+
+      const shiftMinutes = Number.isFinite(Number(body.shiftMinutes)) ? Math.trunc(Number(body.shiftMinutes)) : 0;
+      const shiftIds: string[] = Array.isArray(body.shiftIds)
+        ? body.shiftIds.filter((x: unknown): x is string => typeof x === 'string') : [];
+      const cancelIds: string[] = Array.isArray(body.cancelIds)
+        ? body.cancelIds.filter((x: unknown): x is string => typeof x === 'string') : [];
+
+      if (shiftIds.length === 0 && cancelIds.length === 0) {
+        return new Response(JSON.stringify({ error: 'Select at least one game to shift or cancel.' }), {
+          status: 400, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      // v1 is forward-only (rain delay). Reject non-positive or absurd offsets when shifting.
+      if (shiftIds.length > 0) {
+        if (shiftMinutes <= 0) {
+          return new Response(JSON.stringify({ error: 'Choose how far to push the games (a positive number of minutes).' }), {
+            status: 400, headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        if (shiftMinutes > 1440) {
+          return new Response(JSON.stringify({ error: 'A bulk shift can move games at most 24 hours. For a bigger change, reschedule the games directly.' }), {
+            status: 400, headers: { 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
+      const { data: gameRows, error: loadErr } = await supabaseAdmin
+        .from('games')
+        .select('id, status, game_date, game_time, is_playoff, bracket_code, home_placeholder, away_placeholder, home_team_id, away_team_id')
+        .eq('tournament_id', bulkTournamentId);
+      if (loadErr) throw loadErr;
+
+      const allGames = (gameRows ?? []).map((g: any) => ({
+        id: g.id,
+        status: g.status,
+        date: g.game_date,
+        time: g.game_time,
+        isPlayoff: g.is_playoff,
+        bracketCode: g.bracket_code,
+        homePlaceholder: g.home_placeholder,
+        awayPlaceholder: g.away_placeholder,
+        homeTeamId: g.home_team_id,
+        awayTeamId: g.away_team_id,
+      }));
+
+      const plan = planBulkReschedule(allGames, { shiftMinutes, shiftIds, cancelIds });
+
+      // Hard-block (locked owner decision): a shift that would NEWLY place a playoff game
+      // before the games that feed it would silently corrupt bracket advancement.
+      if (plan.newViolations.length > 0) {
+        return new Response(JSON.stringify({
+          error: 'This change would schedule a playoff game before the games that feed it. Adjust the times so every playoff game stays after its feeders.',
+          code: 'bracket-order',
+          violations: plan.newViolations,
+        }), { status: 409, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      if (plan.shifts.length === 0 && plan.cancelIds.length === 0) {
+        return new Response(JSON.stringify({
+          error: 'None of the selected games could be changed — they may have already been played.',
+          skipped: plan.skipped,
+        }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const { data: result, error: rpcErr } = await supabaseAdmin.rpc('bulk_reschedule_games', {
+        p_tournament_id: bulkTournamentId,
+        p_shifts: plan.shifts.map((s) => ({ id: s.id, game_date: s.to.date, game_time: s.to.time })),
+        p_cancel_ids: plan.cancelIds,
+      });
+      if (rpcErr) throw rpcErr;
+
+      const rpcResult = (result ?? null) as { shifted?: number; cancelled?: number } | null;
+      const shifted = typeof rpcResult?.shifted === 'number' ? rpcResult.shifted : plan.shifts.length;
+      const cancelled = typeof rpcResult?.cancelled === 'number' ? rpcResult.cancelled : plan.cancelIds.length;
+
+      // Bring game-day reminder emails in line with the new times (owner decision: recompute &
+      // reschedule, not just warn). Fire-and-forget + isolated — a reminder hiccup must never
+      // affect the shift that already succeeded. Scoped to the teams whose games moved/cancelled.
+      const changedGameIds = new Set<string>([...plan.shifts.map((s) => s.id), ...plan.cancelIds]);
+      const affectedTeamIds = Array.from(new Set(
+        allGames
+          .filter((g) => changedGameIds.has(g.id))
+          .flatMap((g) => [g.homeTeamId, g.awayTeamId])
+          .filter((tid): tid is string => typeof tid === 'string' && tid.length > 0),
+      ));
+      void syncGameDayRemindersAfterReschedule({
+        orgId: ctx.org.id,
+        orgContactEmail: ctx.org.contactEmail ?? null,
+        tournamentId: bulkTournamentId,
+        affectedTeamIds,
+      }).catch((e) => console.error('[games] game-day reminder re-sync failed (non-fatal):', e));
+
+      return new Response(JSON.stringify({
+        ok: true,
+        shifted,
+        cancelled,
+        shiftMinutes,
+        shifts: plan.shifts,
+        skipped: plan.skipped,
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
 
     if (!id) {
       return new Response(JSON.stringify({ error: 'Game id required' }), {

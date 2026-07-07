@@ -17,8 +17,10 @@ import { withObservability } from '@/lib/observability';
 import { tournamentNow, zonedWallClockToUtc } from '@/lib/timezone';
 import { scheduledWindowState, type ScheduledWindowState } from '@/lib/game-live-state';
 import { decidedFinalFor, type ChampionGameInput } from '@/lib/champions';
-import { hasPlanFeature } from '@/lib/plan-features';
+import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
 import { coachEmailsPaused } from '@/lib/email';
+import { resolveTournamentChatParticipants } from '@/lib/chat-resolvers';
+import { getTournamentChatRoom, getActiveMemberUserIds } from '@/lib/chat-service';
 
 type GameRow = {
   id: string;
@@ -60,6 +62,7 @@ type DivisionRow = {
 type TeamPaymentRow = {
   id: string;
   name: string | null;
+  email: string | null;
   division_id: string;
   status: string | null;
   deposit_paid: number | null;
@@ -165,7 +168,7 @@ export const GET = withObservability(async (req: Request) => {
       .is('deleted_at', null),
     supabaseAdmin
       .from('teams')
-      .select('id, name, division_id, status, deposit_paid, total_paid, slot_id, waitlist_position, registered_at, check_in_status')
+      .select('id, name, email, division_id, status, deposit_paid, total_paid, slot_id, waitlist_position, registered_at, check_in_status')
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('pool_slots')
@@ -671,8 +674,89 @@ export const GET = withObservability(async (req: Request) => {
     }
   }
 
+  // ── Tournament Chat adoption funnel ───────────────────────────────
+  // Turns "teams registered" into the next goal: how many teams have a coach who signed up
+  // for their portal (the prerequisite for Tournament Chat), and how many are in the room.
+  // Reuses the CANONICAL resolver (lib/chat-resolvers) so the numbers never drift from chat
+  // itself. Only computed for plan tiers that include the feature — a free org gets the
+  // locked-upsell shape instead. Chat-table reads (room + members, tournament_plus feature)
+  // are wrapped so a missing/degraded chat surface degrades to roomOpen=false without failing
+  // the funnel (the funnel's own tables are all always-live).
+  type ChatAdoption = {
+    eligible: boolean;
+    roomOpen: boolean;
+    teamsTotal: number;
+    teamsWithEmail: number;
+    coachesSignedUp: number;
+    notJoined: number;
+    notJoinedRemindable: number;
+    inChat: number;
+    upsellCopy: string | null;
+  };
+  let chatAdoption: ChatAdoption | null = null;
+  if (hasPlanFeature(ctx.org.planId, 'tournament_chat')) {
+    try {
+      const { userIds, pending } = await resolveTournamentChatParticipants(tournamentId);
+      // Match the resolver's team universe EXACTLY: its Supabase `.neq('status','rejected')` excludes
+      // rejected AND null-status rows (SQL `<> 'rejected'` is null on NULL). teams.status is nullable
+      // on prod (NOT NULL only on dev — a documented drift), so filtering out null here too keeps
+      // teamsTotal and `notJoined` (pending) counted over the same set — otherwise a null-status team
+      // would inflate coachesSignedUp.
+      const nonRejected = teamPayments.filter(tm => tm.status != null && tm.status !== 'rejected');
+      const teamsTotal = nonRejected.length;
+      const teamsWithEmail = nonRejected.filter(tm => (tm.email ?? '').trim() !== '').length;
+      const notJoined = pending.length;
+      const notJoinedRemindable = pending.filter(p => (p.email ?? '').trim() !== '').length;
+      const coachesSignedUp = Math.max(0, teamsTotal - notJoined);
+
+      let roomOpen = false;
+      let inChat = 0;
+      try {
+        const room = await getTournamentChatRoom(tournamentId);
+        if (room) {
+          roomOpen = true;
+          const activeIds = await getActiveMemberUserIds(room.id);
+          const coachSet = new Set(userIds); // coaches only — never count org moderators as "in chat"
+          inChat = activeIds.filter(id => coachSet.has(id)).length;
+        }
+      } catch (e) {
+        console.error('[tournament-dashboard] chat room read failed (non-fatal)', e);
+      }
+
+      chatAdoption = {
+        eligible: true,
+        roomOpen,
+        teamsTotal,
+        teamsWithEmail,
+        coachesSignedUp,
+        notJoined,
+        notJoinedRemindable,
+        inChat,
+        upsellCopy: null,
+      };
+    } catch (e) {
+      // Funnel compute failed entirely — leave chatAdoption null so the panel simply omits itself
+      // rather than showing zeros that read as "nobody signed up".
+      console.error('[tournament-dashboard] chat adoption compute failed (non-fatal)', e);
+      chatAdoption = null;
+    }
+  } else {
+    chatAdoption = {
+      eligible: false,
+      roomOpen: false,
+      teamsTotal: 0,
+      teamsWithEmail: 0,
+      coachesSignedUp: 0,
+      notJoined: 0,
+      notJoinedRemindable: 0,
+      inChat: 0,
+      upsellCopy: requiresPlanCopy('tournament_chat'),
+    };
+  }
+
   return Response.json({
     coinTossNeeded,
+    chatAdoption,
     divisions:      divisionsRes.count ?? divisions.length,
     teams:          teamsRes.count ?? 0,
     scheduled:      games.filter(game => game.status === 'scheduled').length,

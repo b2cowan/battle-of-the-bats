@@ -136,8 +136,8 @@
   .chevronBtn {
     width: 32px !important;
     min-width: 32px !important;
-    height: 28px !important;
-    min-height: 28px !important;
+    height: 32px !important; /* match the 32px mobile icon-button touch target used across admin headers */
+    min-height: 32px !important;
     padding: 0 !important;
     justify-content: center;
     gap: 0 !important;

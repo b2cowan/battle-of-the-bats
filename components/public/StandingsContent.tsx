@@ -722,7 +722,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                           </p>
                           {activeRunDiffCap ? (
                             <p className={styles.pendingNote}>
-                              RD shows the true run differential, with the playoff-seeding value in brackets — capped at ±{activeRunDiffCap} per game. Seeding uses the capped figure, so a bigger RD doesn&apos;t always mean a higher seed.
+                              RD shows the true run differential, with the playoff-seeding value in brackets — capped at ±{activeRunDiffCap}{' '}per game. Seeding uses the capped figure, so a bigger RD doesn&apos;t always mean a higher seed.
                             </p>
                           ) : null}
                           {hasPendingStandings && (

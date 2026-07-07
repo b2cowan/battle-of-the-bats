@@ -1,12 +1,13 @@
 ﻿'use client';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { Calendar, ChevronRight, ChevronDown, Plus, Pencil, Trash2, X, Check, Sparkles, SlidersHorizontal, Trophy, MapPin, Clock, Send, Globe, EyeOff, RefreshCw, AlertTriangle, AlertCircle, Lock, Wrench } from 'lucide-react';
+import { Calendar, ChevronRight, ChevronDown, Plus, Pencil, X, Check, Sparkles, SlidersHorizontal, Trophy, MapPin, CloudRain, Send, Globe, EyeOff, RefreshCw, AlertTriangle, AlertCircle, Lock, Wrench } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { buildPlaceholderOptions, descendantBracketCodes, findBracketSchedulingViolations, nextManualBracketCode, groupGamesByBracketId } from '@/lib/playoff-bracket';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
+import { tournamentToday } from '@/lib/timezone';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
@@ -21,6 +22,7 @@ import ScheduleGenerator from './Generator';
 import PlayoffWizard from './PlayoffWizard';
 import BracketEditor from './components/BracketEditor';
 import GameList from './components/GameList';
+import ShiftDayModal from './components/ShiftDayModal';
 import ScheduleHealthPanel, { type ScheduleHealthRulesDraft } from './components/ScheduleHealthPanel';
 import BracketColumns, { buildBracketColumns } from './components/BracketColumns';
 import ScheduleTimeline from './components/ScheduleTimeline';
@@ -109,6 +111,7 @@ export default function AdminSchedulePage() {
   const [resolveFacilitiesError, setResolveFacilitiesError] = useState<string | null>(null);
   const [showGenerator, setShowGenerator] = useState(false);
   const [showPlayoffWizard, setShowPlayoffWizard] = useState(false);
+  const [showShiftDay, setShowShiftDay] = useState(false);
   const [editingBracket, setEditingBracket] = useState(false);
   // When the editor is entered from a List-view playoff row, the game to open + scroll to.
   const [bracketFocusGameId, setBracketFocusGameId] = useState<string | undefined>(undefined);
@@ -182,8 +185,13 @@ export default function AdminSchedulePage() {
   // (gated by `auto_schedule`/`playoff_generator` via canAutoGenerateSchedule).
   const canBuildPlayoffsManually = currentOrg ? hasPlanFeature(currentOrg.planId, 'playoff_manual') : false;
   const canNotify = currentOrg ? hasPlanFeature(currentOrg.planId, 'schedule_notification') : false;
+  // Bulk "shift the day" (Rain delay) is a Tournament Plus automation (2026-07-07 decision).
+  const canRainDelay = currentOrg ? hasPlanFeature(currentOrg.planId, 'bulk_reschedule') : false;
+  const scheduleToday = tournamentToday();
+  // Rain delay lives in the Tools menu whenever the event has upcoming (still-scheduled) games.
+  const hasUpcomingGames = games.some(g => g.status === 'scheduled' && !!g.date && g.date >= scheduleToday);
 
-  function showScheduleUpgrade(title: string, feature: 'auto_schedule' | 'playoff_generator') {
+  function showScheduleUpgrade(title: string, feature: 'auto_schedule' | 'playoff_generator' | 'bulk_reschedule') {
     setFeedback({
       isOpen: true,
       title,
@@ -225,6 +233,16 @@ export default function AdminSchedulePage() {
     }
     setPlayoffWizardConfig(undefined);
     setShowPlayoffWizard(true);
+  }
+
+  // Bulk "shift the day" tool — Tournament Plus (bulk automation). Free orgs get the upgrade
+  // prompt (they keep manual single-game edits + the free rain-delay banner).
+  function openRainDelay() {
+    if (!canRainDelay) {
+      showScheduleUpgrade('Rain Delay Requires Tournament Plus', 'bulk_reschedule');
+      return;
+    }
+    setShowShiftDay(true);
   }
 
   const refresh = useCallback(async () => {
@@ -811,6 +829,9 @@ export default function AdminSchedulePage() {
       onConfirm: async () => {
         try {
           await gamesApi('POST', { action: 'delete-division-playoff-games', divisionId: divId });
+          // Clear now lives inside the bracket editor — exit it once the bracket is emptied.
+          setEditingBracket(false);
+          setBracketFocusGameId(undefined);
           refresh();
         } catch (e) {
           setFeedback({
@@ -1221,9 +1242,10 @@ export default function AdminSchedulePage() {
         locked={isLocked}
         actions={(
           <>
-            {/* Publish/Unpublish ACTION lives in the toolbar Row 1 right group
-                (with Auto); the read-only status lives in `meta` (under the
-                subtitle). The header actions row carries only Export + Add Game. */}
+            {/* Publish/Unpublish + Tools live in the toolbar Row 1 right group; the
+                read-only status lives in `meta` (under the subtitle). The header actions
+                row carries Export + the stage-aware primary (Add Game in Round Robin,
+                Build/Edit Bracket in Playoffs). */}
             <ExportMenu
               className={styles.scheduleExportButton}
               formats={['xlsx', 'csv', 'pdf']}
@@ -1238,8 +1260,8 @@ export default function AdminSchedulePage() {
               planId={currentOrg?.planId}
               disabled={filtered.length === 0}
             />
-            {/* Hidden in playoffs — playoff games are added in the bracket editor
-                (the top single-add path is buggy for bracket placeholders). */}
+            {/* Stage-aware primary. Round Robin → Add Game (single-game add is hidden in
+                Playoffs, where games are managed in the bracket editor). */}
             {!isLocked && viewMode !== 'playoff' && (
               <button
                 className={`btn btn-lime btn-data ${styles.addGameButton}`}
@@ -1251,6 +1273,22 @@ export default function AdminSchedulePage() {
                 <Plus size={14} /> <span className={styles.addGameLabel}>Add Game</span>
               </button>
             )}
+            {/* Playoffs → Build/Edit Bracket takes the same header slot Add Game holds. */}
+            {viewMode === 'playoff' && canBuildPlayoffsManually && !isLocked && !editingBracket && (() => {
+              const built = games.some(g => g.isPlayoff && g.divisionId === playoffBuilderDivisionId);
+              return (
+                <button
+                  className={`btn btn-lime btn-data ${styles.addGameButton}`}
+                  onClick={() => enterBracketEditor()}
+                  disabled={!currentTournament}
+                  aria-label={built ? 'Edit bracket' : 'Build bracket'}
+                  title={built ? 'Edit the playoff bracket' : 'Build the playoff bracket manually'}
+                >
+                  {built ? <Pencil size={14} /> : <Trophy size={14} />}{' '}
+                  <span className={styles.addGameLabel}>{built ? 'Edit Bracket' : 'Build Bracket'}</span>
+                </button>
+              );
+            })()}
           </>
         )}
       />
@@ -1320,49 +1358,8 @@ export default function AdminSchedulePage() {
             which the owner approved); bracket Build/Edit/Clear lead it in Playoffs.
             Single nowrap group → no mid-row gap, no wrapping to a second line. */}
         <ToolbarGroup align="end" className={`${styles.scheduleActionsGroup} ${styles.scheduleEndGroup}`}>
-          {/* Bracket actions — Playoffs view only. "Build Bracket" when empty;
-              "Edit Bracket" + "Clear" when one exists. Desktop-only (mobile reaches
-              these via the Tools menu's Playoffs section). Hidden while editing /
-              on a locked tournament. */}
-          {viewMode === 'playoff' && canBuildPlayoffsManually && !isLocked && !editingBracket && (
-            <div className={styles.bracketActions}>
-              {!games.some(g => g.isPlayoff && g.divisionId === playoffBuilderDivisionId) ? (
-                <button
-                  type="button"
-                  className="btn btn-lime btn-data"
-                  disabled={!currentTournament}
-                  onClick={() => enterBracketEditor()}
-                  title="Build the playoff bracket manually"
-                >
-                  <Trophy size={12} />
-                  <span>Build Bracket</span>
-                </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="btn btn-lime btn-data"
-                    disabled={!currentTournament}
-                    onClick={() => enterBracketEditor()}
-                    title="Edit the playoff bracket"
-                  >
-                    <Pencil size={12} />
-                    <span>Edit Bracket</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn btn-data ${styles.clearBracketBtn}`}
-                    disabled={!currentTournament}
-                    onClick={handleClearBracket}
-                    title="Delete the whole playoff bracket for this division"
-                  >
-                    <Trash2 size={12} />
-                    <span>Clear Bracket</span>
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+          {/* Bracket Build/Edit is the stage-aware PRIMARY in the header now (mirrors
+              Add Game), so it's no longer duplicated here in the toolbar. */}
           {/* Publish/Unpublish ACTION — division-scoped (covers both stages). The
               read-only status lives in the header meta row (under the subtitle). */}
           {(() => {
@@ -1400,6 +1397,9 @@ export default function AdminSchedulePage() {
             onAutoGenerate={openGenerator}
             canAutoBracket={canAutoGenerateSchedule}
             onAutoBracket={openAutoGenerator}
+            canRainDelay={canRainDelay}
+            onRainDelay={openRainDelay}
+            rainDelayAvailable={hasUpcomingGames && !isLocked}
           />
         </ToolbarGroup>
 
@@ -1442,11 +1442,12 @@ export default function AdminSchedulePage() {
           <MobileToolsMenu
             className={styles.scheduleMobileTools}
             canAutoGenerate={canAutoGenerateSchedule && !isPlayoffOnly}
-            canPlayoffWizard={canBuildPlayoffsManually && !isLocked && !editingBracket}
             onAutoGenerate={openGenerator}
-            onPlayoffWizard={enterBracketEditor}
             canAutoBracket={canAutoGenerateSchedule}
             onAutoBracket={openAutoGenerator}
+            canRainDelay={canRainDelay}
+            onRainDelay={openRainDelay}
+            rainDelayAvailable={hasUpcomingGames && !isLocked}
           />
           <div className={styles.scheduleVenueDesktop}>
             <VenueFilterMenu
@@ -1489,19 +1490,6 @@ export default function AdminSchedulePage() {
               );
             })}
           </div>
-          {hasConflicts && (
-            <button
-              type="button"
-              className={`${s.filterChip} ${styles.conflictFilterChip}`}
-              data-active={conflictsOnly || undefined}
-              onClick={() => setConflictsOnly(v => !v)}
-              title="Show only games with a venue conflict"
-            >
-              <AlertTriangle size={11} />
-              CONFLICTS
-              <span className={s.chipCount}>{conflictCount}</span>
-            </button>
-          )}
         </ToolbarGroup>
         )}
       </TournamentAdminToolbar>
@@ -1706,6 +1694,7 @@ export default function AdminSchedulePage() {
           minRestMinutes={healthRules.minRestMinutes}
           onUseAutoGenerator={() => { setEditingBracket(false); setBracketFocusGameId(undefined); openAutoGenerator(); }}
           onDone={(saved) => { setEditingBracket(false); setBracketFocusGameId(undefined); if (saved) refresh(); }}
+          onClear={handleClearBracket}
         />
       ) : layout === 'timeline' ? (
         <ScheduleTimeline
@@ -2312,6 +2301,21 @@ export default function AdminSchedulePage() {
         />
       )}
 
+      {showShiftDay && tournamentId && (
+        <ShiftDayModal
+          tournamentId={tournamentId}
+          orgSlug={currentOrg?.slug ?? ''}
+          games={games}
+          teams={teams}
+          divisions={divisions}
+          getVenueKey={getGameVenueKey}
+          getVenueLabel={getGameVenueDisplay}
+          canPushFans={currentOrg?.planId ? hasPlanFeature(currentOrg.planId, 'fan_score_alerts') : false}
+          onClose={() => setShowShiftDay(false)}
+          onApplied={() => { void refresh(); }}
+        />
+      )}
+
       <FeedbackModal
         {...feedback}
         onClose={() => setFeedback(f => ({ ...f, isOpen: false, onConfirm: undefined }))}
@@ -2843,19 +2847,21 @@ function UnpublishControl({
 function MobileToolsMenu({
   className,
   canAutoGenerate,
-  canPlayoffWizard,
   onAutoGenerate,
-  onPlayoffWizard,
   canAutoBracket,
   onAutoBracket,
+  canRainDelay,
+  onRainDelay,
+  rainDelayAvailable,
 }: {
   className?: string;
   canAutoGenerate: boolean;
-  canPlayoffWizard: boolean;
   onAutoGenerate: () => void;
-  onPlayoffWizard: () => void;
   canAutoBracket: boolean;
   onAutoBracket: () => void;
+  canRainDelay: boolean;
+  onRainDelay: () => void;
+  rainDelayAvailable: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
@@ -2955,18 +2961,6 @@ function MobileToolsMenu({
         >
           {/* Publish/Unpublish is a sibling button beside this menu (not inside) —
               see .scheduleMobilePublish in the toolbar. */}
-          {canPlayoffWizard && (
-            <>
-              <div style={sectionLabel}>Playoffs</div>
-              {row({
-                icon: <Trophy size={13} style={{ color: 'var(--logic-lime)' }} />,
-                label: 'Build playoff bracket',
-                sub: 'Seed a round, then add games by hand — free',
-                onClick: () => act(onPlayoffWizard),
-              })}
-              {divider}
-            </>
-          )}
 
           <div style={sectionLabel}>Generate</div>
           {row({
@@ -2985,6 +2979,21 @@ function MobileToolsMenu({
             lockTitle: 'Included with Tournament Plus and up',
             onClick: () => act(onAutoBracket),
           })}
+
+          {rainDelayAvailable && (
+            <>
+              {divider}
+              <div style={sectionLabel}>Adjust</div>
+              {row({
+                icon: <CloudRain size={13} style={{ color: canRainDelay ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
+                label: 'Rain delay',
+                sub: "Move or cancel a day's games at once",
+                locked: !canRainDelay,
+                lockTitle: 'Included with Tournament Plus and up',
+                onClick: () => act(onRainDelay),
+              })}
+            </>
+          )}
         </div>
       )}
     </div>
@@ -2997,6 +3006,9 @@ function ScheduleToolsMenu({
   onAutoGenerate,
   canAutoBracket,
   onAutoBracket,
+  canRainDelay,
+  onRainDelay,
+  rainDelayAvailable,
   className,
 }: {
   disabled: boolean;
@@ -3004,6 +3016,9 @@ function ScheduleToolsMenu({
   onAutoGenerate: () => void;
   canAutoBracket: boolean;
   onAutoBracket: () => void;
+  canRainDelay: boolean;
+  onRainDelay: () => void;
+  rainDelayAvailable: boolean;
   className?: string;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -3031,6 +3046,36 @@ function ScheduleToolsMenu({
     cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-data)',
     color: 'var(--fl-text)',
   };
+  const sectionLabel: React.CSSProperties = {
+    padding: '0.5rem 0.85rem 0.2rem', fontSize: '0.6rem', fontWeight: 700,
+    letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--data-gray)',
+    fontFamily: 'var(--font-data)',
+  };
+  const divider = <div style={{ height: '1px', background: 'rgba(var(--blueprint-blue-rgb),0.15)', margin: '0.35rem 0.75rem' }} />;
+
+  function row(opts: {
+    icon: React.ReactNode; label: string; sub: string;
+    onClick: () => void; locked?: boolean; lockTitle?: string;
+  }) {
+    const { icon, label, sub, onClick, locked, lockTitle } = opts;
+    return (
+      <button
+        role="menuitem"
+        style={menuItem}
+        title={locked ? lockTitle : undefined}
+        onClick={() => { setOpen(false); onClick(); }}
+        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(var(--blueprint-blue-rgb),0.08)')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+      >
+        <span style={{ flexShrink: 0, display: 'inline-flex' }}>{icon}</span>
+        <span style={{ flex: 1 }}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em' }}>{label}</div>
+          <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>{sub}</div>
+        </span>
+        {locked && <Lock size={11} style={{ flexShrink: 0, color: 'var(--blueprint-blue)' }} />}
+      </button>
+    );
+  }
 
   return (
     <div ref={rootRef} style={{ position: 'relative', flexShrink: 0 }} className={className}>
@@ -3043,8 +3088,8 @@ function ScheduleToolsMenu({
         aria-expanded={open}
         title="Schedule tools"
       >
-        <Sparkles size={12} />
-        <span>Auto</span>
+        <Wrench size={12} />
+        <span>Tools</span>
         <ChevronDown size={10} style={{ opacity: 0.6 }} />
       </button>
       {open && (
@@ -3053,38 +3098,40 @@ function ScheduleToolsMenu({
           style={{
             position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 100,
             background: 'var(--surface)', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.3)',
-            borderRadius: '2px', minWidth: '250px', whiteSpace: 'nowrap', boxShadow: 'var(--shadow)',
+            borderRadius: '2px', minWidth: '270px', boxShadow: 'var(--shadow)', paddingBottom: '0.35rem',
           }}
         >
-          <button
-            role="menuitem"
-            style={menuItem}
-            onClick={() => { setOpen(false); onAutoGenerate(); }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(var(--blueprint-blue-rgb),0.08)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-          >
-            <Sparkles size={13} style={{ flexShrink: 0, color: canAutoGenerate ? 'var(--logic-lime)' : 'var(--data-gray)' }} />
-            <span style={{ flex: 1 }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em' }}>Round-Robin Generator</div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>Auto-build games from your teams</div>
-            </span>
-            {!canAutoGenerate && <Lock size={11} style={{ flexShrink: 0, color: 'var(--blueprint-blue)' }} />}
-          </button>
-          <div style={{ height: '1px', background: 'rgba(var(--blueprint-blue-rgb),0.15)', margin: '0 0.75rem' }} />
-          <button
-            role="menuitem"
-            style={menuItem}
-            onClick={() => { setOpen(false); onAutoBracket(); }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(var(--blueprint-blue-rgb),0.08)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-          >
-            <Trophy size={13} style={{ flexShrink: 0, color: canAutoBracket ? 'var(--logic-lime)' : 'var(--data-gray)' }} />
-            <span style={{ flex: 1 }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em' }}>Auto-Generate Bracket</div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>Build a full bracket from a format</div>
-            </span>
-            {!canAutoBracket && <Lock size={11} style={{ flexShrink: 0, color: 'var(--blueprint-blue)' }} />}
-          </button>
+          <div style={sectionLabel}>Build</div>
+          {row({
+            icon: <Sparkles size={13} style={{ color: canAutoGenerate ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
+            label: 'Round-Robin Generator',
+            sub: 'Auto-build games from your teams',
+            locked: !canAutoGenerate,
+            lockTitle: 'Included with Tournament Plus and up',
+            onClick: onAutoGenerate,
+          })}
+          {row({
+            icon: <Trophy size={13} style={{ color: canAutoBracket ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
+            label: 'Auto-Generate Bracket',
+            sub: 'Build a full bracket from a format',
+            locked: !canAutoBracket,
+            lockTitle: 'Included with Tournament Plus and up',
+            onClick: onAutoBracket,
+          })}
+          {rainDelayAvailable && (
+            <>
+              {divider}
+              <div style={sectionLabel}>Adjust</div>
+              {row({
+                icon: <CloudRain size={13} style={{ color: canRainDelay ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
+                label: 'Rain delay',
+                sub: "Move or cancel a day's games at once",
+                locked: !canRainDelay,
+                lockTitle: 'Included with Tournament Plus and up',
+                onClick: onRainDelay,
+              })}
+            </>
+          )}
         </div>
       )}
     </div>

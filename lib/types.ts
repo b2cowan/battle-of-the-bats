@@ -1714,7 +1714,12 @@ export type NotificationEventType =
   // The tournament's playoffs became complete — champion(s) crowned (fires once, the first
   // time the whole bracket resolves). Reaches org staff (bell + push) AND anonymous fans
   // following a team (push). Defaults push ON — the payoff moment. TS-union change only.
-  | 'champions_crowned';
+  | 'champions_crowned'
+  // A day-of / operational tournament announcement (e.g. a rain-delay "shift the day" notice) was
+  // posted with the notify intent. Reaches org staff + Coaches-Portal coach members (bell + push);
+  // anonymous fans get it via the separate fan-push channel, external team coaches via email.
+  // Defaults push ON — day-of, action-worthy. TS-union change only (no DB CHECK on event_type).
+  | 'tournament_announcement';
 
 export interface AppNotification {
   id: string;

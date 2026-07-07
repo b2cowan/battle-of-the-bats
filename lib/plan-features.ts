@@ -6,6 +6,10 @@ export type PlanFeature =
   | 'playoff_generator'
   /** Manual playoff bracket building (structure + by-seed placement + manual scheduling) — free on all tournament plans. The auto-schedule optimizer + tiered auto-split remain `playoff_generator`. */
   | 'playoff_manual'
+  /** Bulk "shift the day" reschedule/cancel — the one-tap Rain-Delay / Day-of Ops tool. tournament_plus
+   *  and above (same automation family as the generators). Free orgs keep manual single-game edits +
+   *  the free pinned rain-delay banner; only the bulk convenience is gated (2026-07-07 decision). */
+  | 'bulk_reschedule'
   | 'sealed_archives'
   | 'advanced_tournament_branding'
   | 'schedule_notification'
@@ -65,6 +69,7 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
   auto_schedule:                     'tournament_plus',
   playoff_generator:                 'tournament_plus',
   playoff_manual:                    'tournament',
+  bulk_reschedule:                   'tournament_plus',
   sealed_archives:                   'tournament_plus',
   advanced_tournament_branding:      'tournament_plus',
   schedule_notification:             'tournament_plus',
@@ -152,6 +157,8 @@ export function requiresPlanCopy(feature: PlanFeature): string {
     case 'playoff_manual':
       // Free on all tournament plans — safe fallback if called unexpectedly.
       return 'Building playoff brackets by seed is available on all tournament plans. Auto-scheduling and tiered brackets are included with Tournament Plus, League Plus, and Club.';
+    case 'bulk_reschedule':
+      return 'One-tap rain delay — moving or cancelling a whole day’s games at once, then telling everyone — is included with Tournament Plus, League Plus, and Club. On the free plan you can still reschedule games one at a time and post a rain-delay banner.';
     // ── Existing features — delegate ──────────────────────────────────────
     default:
       return requiresTournamentPlusCopy(feature);

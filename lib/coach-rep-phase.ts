@@ -20,28 +20,45 @@ export interface RepPhaseInput {
   nextEvent: { eventType: string; startsAt: string } | null;
   /** whole days until the next event (0 = today), null when nothing upcoming */
   nextEventDays: number | null;
-  /** a registered tournament is live today */
-  liveNow: boolean;
   /** at least one finalized (result set, non-cancelled) game exists this season */
   hasFinalizedGame: boolean;
+  /** the team has an upcoming (or currently-live) registered tournament */
+  hasUpcomingTournament: boolean;
 }
 
 /**
- * Priority order is deliberate: a closed season is always the wrap view; a missing
- * roster always leads with setup; then game-day (today/live) beats a generic upcoming
- * event; then anything upcoming is in-season; then a played-out season with nothing
- * ahead is the afterglow; otherwise (roster set, nothing scheduled or played) we're
- * still in pre-season.
+ * Priority order is deliberate:
+ *  - The afterglow/result view is ONLY shown for a season the coach has actually closed
+ *    (status completed/archived). It is never INFERRED from "a game was played and nothing
+ *    is on the schedule" — plenty of active teams have no future games queued yet, or track
+ *    their next event as a tournament, so inferring "season over" there is wrong.
+ *  - A missing roster always leads with setup.
+ *  - Game day is a SCHEDULED game happening today (which always has an event to show). A
+ *    live tournament with no scheduled game is handled as in-season ("your tournament is on"),
+ *    not game-day — the game-day card is built around a scheduled game's opponent/lineup.
+ *  - Anything scheduled ahead is in-season.
+ *  - Nothing scheduled but the season is still open, with a played game or an upcoming
+ *    tournament, is an in-season lull (still in_season) — the anchor shows a "nothing
+ *    scheduled" state, not the afterglow.
+ *  - Only a brand-new team (roster set, nothing scheduled, no history, no tournament) is
+ *    pre-season.
  */
 export function deriveRepPhase(input: RepPhaseInput): CoachRepPhase {
-  const { programYearStatus, rosterCount, nextEvent, nextEventDays, liveNow, hasFinalizedGame } = input;
+  const {
+    programYearStatus,
+    rosterCount,
+    nextEvent,
+    nextEventDays,
+    hasFinalizedGame,
+    hasUpcomingTournament,
+  } = input;
 
   if (programYearStatus === 'completed' || programYearStatus === 'archived') return 'result';
   if (rosterCount === 0) return 'preseason';
 
   const nextIsGame = !!nextEvent && GAME_EVENT_TYPES.includes(nextEvent.eventType);
-  if (liveNow || (nextIsGame && nextEventDays === 0)) return 'game_day';
+  if (nextIsGame && nextEventDays === 0) return 'game_day';
   if (nextEvent) return 'in_season';
-  if (hasFinalizedGame) return 'result';
+  if (hasFinalizedGame || hasUpcomingTournament) return 'in_season';
   return 'preseason';
 }

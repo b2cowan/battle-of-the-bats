@@ -27,6 +27,8 @@ interface Props {
   minRestMinutes?: number;
   /** Exit edit mode. `saved` true → the page should refresh. */
   onDone: (saved: boolean) => void;
+  /** Empty this bracket entirely (edit mode only) — confirms + deletes all its games, then exits. */
+  onClear?: () => void;
 }
 
 interface PreviewRow {
@@ -55,7 +57,7 @@ function serializeRows(rows: PreviewRow[]): string {
  * starter; edit mode loads the saved bracket into the canvas. Save persists a
  * DIFF via the service-role `save-bracket` action (preserves played-game scores).
  */
-export default function BracketEditor({ division, tournamentId, tournament = null, orgSlug, existingGames, canAutoGenerate, onUseAutoGenerator, focusGameId, minRestMinutes = 60, onDone }: Props) {
+export default function BracketEditor({ division, tournamentId, tournament = null, orgSlug, existingGames, canAutoGenerate, onUseAutoGenerator, focusGameId, minRestMinutes = 60, onDone, onClear }: Props) {
   // Freeze the division + mode on mount so a mid-edit shift in the page's derived
   // `playoffBuilderDivision` can't retarget the save or flip build/edit mode.
   const [editDivision] = useState(() => division);
@@ -394,6 +396,17 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button type="button" className="btn btn-ghost btn-data" onClick={cancel} disabled={loading}>Cancel</button>
+          {isEditMode && onClear && (
+            <button
+              type="button"
+              className="btn btn-danger btn-data"
+              onClick={onClear}
+              disabled={loading}
+              title="Empty this bracket — permanently removes all its playoff games"
+            >
+              <Trash2 size={14} /> Clear bracket
+            </button>
+          )}
           <button
             type="button"
             className="btn btn-lime btn-data"

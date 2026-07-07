@@ -7,6 +7,7 @@ import {
   Users, Calendar, Trophy, DollarSign, TrendingUp, Zap, Flag,
   Clock, Activity, Star, Shield, BarChart2, Target, Bell,
   Settings, RotateCcw, Megaphone, GripVertical, X, Plus, Pencil, UserCheck,
+  MessageCircle,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor, KeyboardSensor,
@@ -143,6 +144,25 @@ type DivisionChampion = {
   championTeamName: string;
 };
 
+type ChatAdoptionStats = {
+  /** whether the host org's plan includes Tournament Chat (Tournament Plus+) */
+  eligible: boolean;
+  /** whether the organizer has opened chat (the "All coaches" room exists) */
+  roomOpen: boolean;
+  teamsTotal: number;
+  teamsWithEmail: number;
+  /** teams whose coach has a completed portal login (chat prerequisite) */
+  coachesSignedUp: number;
+  /** teams with no signed-up coach yet */
+  notJoined: number;
+  /** of notJoined, how many have a contact email we can remind */
+  notJoinedRemindable: number;
+  /** coaches (not org moderators) currently in the All-coaches room */
+  inChat: number;
+  /** upgrade copy when !eligible, else null */
+  upsellCopy: string | null;
+};
+
 type DashboardStats = {
   divisions: number;
   teams: number;
@@ -150,6 +170,7 @@ type DashboardStats = {
   totalGames: number;
   completed: number;
   communications: CommunicationsStats;
+  chatAdoption: ChatAdoptionStats | null;
   scheduleHealth: ScheduleHealthDashboardStats;
   isTournamentDay: boolean;
   isGameDay: boolean;
@@ -208,7 +229,7 @@ type IconKey = keyof typeof ICON_MAP;
 const AVAILABLE_ICONS = Object.keys(ICON_MAP) as IconKey[];
 
 type StatCardId = 'teams' | 'scheduled' | 'completed' | 'days';
-type PanelId = 'registration' | 'payment' | 'communications' | 'scheduleHealth';
+type PanelId = 'registration' | 'payment' | 'communications' | 'tournamentChat' | 'scheduleHealth';
 // Game-day board panels — a SEPARATE customizable set from the pre-event panels
 // (they show different content; hiding one board's panel never affects the other).
 type GameDayPanelId = 'nowPlaying' | 'upNext' | 'needsScore' | 'gamesProgress' | 'checkIn' | 'gdScheduleHealth' | 'byDivision';
@@ -233,10 +254,11 @@ const DEFAULT_LAYOUT: DashboardLayout = {
     { id: 'days',      label: 'Days Away', icon: 'Clock',    visible: true, order: 3 },
   ],
   panels: [
-    { id: 'registration',   label: 'Registration',   visible: true, order: 0 },
-    { id: 'payment',        label: 'Payments',       visible: true, order: 1 },
-    { id: 'communications', label: 'Communications', visible: true, order: 2 },
-    { id: 'scheduleHealth', label: 'Schedule Health', visible: true, order: 3 },
+    { id: 'tournamentChat', label: 'Coach Sign-ups & Chat', visible: true, order: 0 },
+    { id: 'registration',   label: 'Registration',   visible: true, order: 1 },
+    { id: 'payment',        label: 'Payments',       visible: true, order: 2 },
+    { id: 'communications', label: 'Communications', visible: true, order: 3 },
+    { id: 'scheduleHealth', label: 'Schedule Health', visible: true, order: 4 },
   ],
   gameDayPanels: [
     { id: 'nowPlaying',       label: 'Now Playing',     visible: true, order: 0 },
@@ -317,6 +339,7 @@ const EMPTY_STATS: DashboardStats = {
   totalGames: 0,
   completed: 0,
   communications: { total: 0, emailsSent: 0, totalRecipients: 0, latestTitle: null, latestDate: null },
+  chatAdoption: null,
   scheduleHealth: {
     score: 0,
     tone: 'good',
@@ -617,6 +640,10 @@ export default function AdminDashboard() {
   const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
   const [completeError, setCompleteError] = useState('');
 
+  // ── Chat adoption: one-click "remind not-yet-joined teams" ────────────────
+  const [remindingChat, setRemindingChat] = useState(false);
+  const [chatRemindResult, setChatRemindResult] = useState<string | null>(null);
+
   // ── Now Playing one-row fit ───────────────────────────────────────────────
   // Measure the live-games strip and show exactly as many tiles as fit in ONE row
   // (floor of width / tile-width, min 4), with the remainder collapsing into a
@@ -754,6 +781,7 @@ export default function AdminDashboard() {
           totalGames:      data?.totalGames      ?? 0,
           completed:       data?.completed       ?? 0,
           communications:  data?.communications  ?? EMPTY_STATS.communications,
+          chatAdoption:    data?.chatAdoption    ?? null,
           scheduleHealth:  data?.scheduleHealth  ?? EMPTY_STATS.scheduleHealth,
           isTournamentDay: data?.isTournamentDay ?? false,
           isGameDay:       data?.isGameDay       ?? false,
@@ -1177,6 +1205,134 @@ export default function AdminDashboard() {
   function fmtShortDate(iso: string): string {
     const [y, m, d] = iso.split('T')[0].split('-').map(Number);
     return new Date(y, m - 1, d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  async function sendChatSignupReminders() {
+    if (!currentTournament?.id || remindingChat) return;
+    setRemindingChat(true);
+    setChatRemindResult(null);
+    try {
+      const res = await fetch(`/api/admin/tournaments/${currentTournament.id}/chat/remind-signups${orgQuery}`, { method: 'POST' });
+      const data = await res.json().catch(() => null) as { sent?: number; failed?: number; error?: string } | null;
+      if (!res.ok) {
+        setChatRemindResult(data?.error ?? 'Could not send reminders. Please try again.');
+        return;
+      }
+      const sent = data?.sent ?? 0;
+      const failed = data?.failed ?? 0;
+      if (sent === 0 && failed === 0) {
+        setChatRemindResult('No teams to remind right now.');
+      } else {
+        setChatRemindResult(`Reminder sent to ${sent} team${sent !== 1 ? 's' : ''}${failed ? ` · ${failed} couldn't be sent` : ''}.`);
+      }
+    } catch {
+      setChatRemindResult('Could not send reminders. Please try again.');
+    } finally {
+      setRemindingChat(false);
+    }
+  }
+
+  function renderTournamentChatPanel() {
+    const ca = visibleStats.chatAdoption;
+
+    // Data unavailable (loading / compute failure) — keep a labelled shell so customize mode
+    // still shows a draggable box, but say nothing misleading.
+    if (!ca) {
+      return (
+        <section className={styles.analyticsPanel}>
+          <div className={styles.panelHeader}>
+            <MessageCircle size={16} style={{ color: 'var(--logic-lime)' }} />
+            <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Coach Sign-ups &amp; Chat</h2>
+          </div>
+          <div className={styles.emptyPanel}><span>Chat insights are unavailable right now.</span></div>
+        </section>
+      );
+    }
+
+    // LOCKED — the host org's plan doesn't include Tournament Chat. Doubles as discovery: the
+    // link lands on the chat page's UpgradeGate, which carries the real upgrade CTA.
+    if (!ca.eligible) {
+      return (
+        <section className={styles.analyticsPanel}>
+          <div className={styles.panelHeader}>
+            <MessageCircle size={16} style={{ color: 'var(--data-gray)' }} />
+            <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Coach Sign-ups &amp; Chat</h2>
+          </div>
+          <div className={styles.emptyPanel}>
+            <span>{ca.upsellCopy ?? 'Tournament Chat is included with Tournament Plus, League Plus, and Club.'}</span>
+            <Link href={`${base}/chat`} className={styles.panelLink}>See Tournament Chat →</Link>
+          </div>
+        </section>
+      );
+    }
+
+    const denom = ca.teamsTotal;
+    const teamsNoEmail = Math.max(0, ca.teamsTotal - ca.teamsWithEmail);
+    return (
+      <section className={styles.analyticsPanel}>
+        <div className={styles.panelHeader}>
+          <MessageCircle size={16} style={{ color: 'var(--logic-lime)' }} />
+          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Coach Sign-ups &amp; Chat</h2>
+          <Link href={`${base}/chat`} className={styles.panelLink}>Open Chat →</Link>
+        </div>
+        {denom === 0 ? (
+          <div className={styles.emptyPanel}>
+            <span>No teams registered yet. Coaches get a live group chat once they claim their team portal.</span>
+          </div>
+        ) : (
+          <>
+            <div className={styles.chatFunnelRow}>
+              <span className={styles.commsStatNum}>{ca.coachesSignedUp}</span>
+              <span className={styles.chatFunnelOf}>of {denom} coach{denom !== 1 ? 'es' : ''} signed up</span>
+            </div>
+            <GaugeBar value={ca.coachesSignedUp} max={denom} />
+
+            <div className={styles.commsStats}>
+              {ca.roomOpen && (
+                <>
+                  <span className={styles.commsStat}>
+                    <span className={styles.commsStatNum}>{ca.inChat}</span>
+                    <span className={styles.commsStatLabel}>in the chat</span>
+                  </span>
+                  <span className={styles.commsDot} />
+                </>
+              )}
+              <span className={styles.commsStat}>
+                <span className={styles.commsStatNum}>{ca.notJoined}</span>
+                <span className={styles.commsStatLabel}>not yet joined</span>
+              </span>
+            </div>
+
+            {teamsNoEmail > 0 && (
+              <p className={styles.chatWarn}>
+                {teamsNoEmail} team{teamsNoEmail !== 1 ? 's have' : ' has'} no coach email on file — add one so they can be invited.
+              </p>
+            )}
+
+            {!ca.roomOpen ? (
+              <>
+                <p className={styles.chatExplain}>Open chat to give every signed-up coach a group room — they join automatically.</p>
+                <Link href={`${base}/chat`} className={styles.commsAction}>Open Tournament Chat →</Link>
+              </>
+            ) : (
+              <>
+                <p className={styles.chatExplain}>Signed-up coaches get a live group chat with you, plus their schedule, scores, and your announcements.</p>
+                {ca.notJoinedRemindable > 0 ? (
+                  <button type="button" className={styles.chatRemindBtn} onClick={sendChatSignupReminders} disabled={remindingChat}>
+                    {remindingChat ? 'Sending…' : `Remind ${ca.notJoinedRemindable} team${ca.notJoinedRemindable !== 1 ? 's' : ''} to sign up →`}
+                  </button>
+                ) : ca.notJoined === 0 ? (
+                  <span className={styles.chatAllIn}>Every team&rsquo;s coach is signed up 🎉</span>
+                ) : (
+                  <span className={styles.chatExplain}>The teams not yet joined have no email on file to remind.</span>
+                )}
+                {chatRemindResult && <p className={styles.chatRemindResult}>{chatRemindResult}</p>}
+              </>
+            )}
+          </>
+        )}
+      </section>
+    );
   }
 
   function renderCommunicationsPanel() {
@@ -1875,6 +2031,7 @@ export default function AdminDashboard() {
       case 'registration':   return renderRegistrationPanel();
       case 'payment':        return renderPaymentPanel();
       case 'communications': return renderCommunicationsPanel();
+      case 'tournamentChat': return renderTournamentChatPanel();
       case 'scheduleHealth': return renderScheduleHealthPanel();
     }
   }

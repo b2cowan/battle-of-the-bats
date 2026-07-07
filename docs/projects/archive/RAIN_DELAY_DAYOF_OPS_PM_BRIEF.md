@@ -18,6 +18,8 @@
 
 ---
 
+> **Status: Built on dev 2026-07-07 (B1–B3).** Not yet browser-tested by the owner, not yet through /review or /docs. Ships after: owner test → /review → /docs → apply migrations 177 + 178 to production → promote.
+
 ## PM Brief — Feature B: One-tap "shift the day" schedule tool
 
 **What it does:** Lets an organizer select today's remaining games and move them all by a chosen amount (e.g. +1 hour for rain), or cancel some and push the rest — in a single action with a clear before/after preview — then optionally announce and notify in the same step.

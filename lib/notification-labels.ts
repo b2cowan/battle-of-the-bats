@@ -28,6 +28,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   assistant_coach_approval_requested: 'Assistant coach awaiting approval',
   playoffs_set:                      'Playoff bracket set',
   champions_crowned:                 'Champions crowned',
+  tournament_announcement:           'Tournament announcement',
 };
 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
@@ -50,6 +51,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   assistant_coach_approval_requested: 'A head coach invited an assistant coach and it needs admin approval.',
   playoffs_set:                      'The playoff bracket is set for a tournament — the seeding is locked and the knockout stage is on.',
   champions_crowned:                 'A tournament’s playoffs are complete — the champion(s) are crowned and the final results are in.',
+  tournament_announcement:           'An organizer posts a day-of announcement (like a rain delay or schedule shift) with the notify option on.',
 };
 
 // ── Section groups (org-level preferences page) ────────────────────────────────
@@ -75,6 +77,7 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
       'team_no_show',
       'playoffs_set',
       'champions_crowned',
+      'tournament_announcement',
     ],
   },
   {
@@ -136,6 +139,7 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   'chat_mention',
   'playoffs_set',
   'champions_crowned',
+  'tournament_announcement',
 ]);
 
 /**
@@ -158,6 +162,7 @@ export const TOURNAMENT_EVENT_TYPES: NotificationEventType[] = [
   'team_no_show',
   'playoffs_set',
   'champions_crowned',
+  'tournament_announcement',
 ];
 
 // ── Bell zone categories (Notification Center Rework P1) ───────────────────────
@@ -190,6 +195,7 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCa
   score_submitted:                    'know',
   playoffs_set:                       'know',
   champions_crowned:                  'know',
+  tournament_announcement:            'know',
   waitlist_opened:                    'know',
   registration_deadline_approaching:  'know',
   assistant_coach_joined:             'know',

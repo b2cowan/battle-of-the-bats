@@ -134,7 +134,7 @@ export default function StartNextSeasonModal({
           <form onSubmit={handleSubmit}>
             <p style={{ margin: '0 0 1rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
               Roll <strong>{currentSeasonName}</strong> into a new season. Your active roster comes with you
-              (you can prune or add after). The schedule starts fresh, and last season becomes read-only history.
+              (you can prune or add after), and the schedule starts fresh.
             </p>
 
             <div className={styles.formGrid}>
@@ -159,6 +159,19 @@ export default function StartNextSeasonModal({
                 <input type="checkbox" checked={carryFees} onChange={e => setCarryFees(e.target.checked)} style={{ marginTop: 3 }} />
                 <span>Carry over the <strong>fee plan</strong> (amounts &amp; installments; due dates shift forward a year — paid history does not carry).</span>
               </label>
+            </div>
+
+            {/* Clear, unmissable caution — starting a season is a one-way lock (no reopen). */}
+            <div style={{
+              display: 'flex', gap: '0.55rem', alignItems: 'flex-start', marginTop: '1rem',
+              background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)',
+              borderRadius: 8, padding: '0.7rem 0.85rem',
+            }}>
+              <AlertTriangle size={16} style={{ color: 'var(--warning, #f59e0b)', flexShrink: 0, marginTop: 2 }} aria-hidden />
+              <span style={{ fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>
+                Once you start, <strong>{currentSeasonName}</strong> is locked as read-only. You can always look
+                back at its roster, schedule, and finances — but you won&apos;t be able to change them.
+              </span>
             </div>
 
             {error && <p className={styles.errorText} style={{ marginTop: '0.9rem' }}>{error}</p>}

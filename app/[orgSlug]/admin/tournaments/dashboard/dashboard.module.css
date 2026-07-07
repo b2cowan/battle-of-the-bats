@@ -1939,6 +1939,73 @@
   color: var(--logic-lime);
 }
 
+/* ── Coach Sign-ups & Chat panel ─────────────────────────────────────── */
+.chatFunnelRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.chatFunnelOf {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--data-gray);
+}
+
+.chatExplain {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--white-60);
+  margin: 0;
+}
+
+.chatWarn {
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  line-height: 1.45;
+  color: var(--warning);
+  margin: 0;
+}
+
+.chatRemindBtn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #0b0f14;
+  background: var(--logic-lime);
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.chatRemindBtn:hover:not(:disabled) { opacity: 0.85; }
+.chatRemindBtn:disabled { opacity: 0.55; cursor: default; }
+
+.chatAllIn {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.chatRemindResult {
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  line-height: 1.4;
+  color: var(--white-60);
+  margin: 0;
+}
+
 /* Post-event banner */
 .postEventBanner {
   display: flex;

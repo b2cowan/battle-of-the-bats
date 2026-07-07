@@ -1,8 +1,10 @@
 # Rain Delay / Day-of Operations — Implementation Plan
 
-> **Status:** In Progress (Feature A / Phase A1 built dev 2026-07-06)
+> **Status:** In Progress (Feature A built dev 2026-07-06; Feature B B1–B3 built dev 2026-07-07)
 > **Created:** 2026-07-04
 > **Branch:** dev
+>
+> **Scope change 2026-07-07 (post-build):** owner reversed the "today's remaining only" bound (Owner Decision "Shift scope"). The bulk tool now works for **any upcoming day** via a **day picker** (today or a future day — the engine already supported any date; this was a UI change only). The entry point was **renamed "Rain delay"** (owner's choice for discoverability) with a weather icon and now shows **whenever the event has upcoming games**, not just on game day. Multi-day / whole-event shift (tiers B & C in the comparison) was **explicitly declined** — not planned.
 
 ## Goal
 
@@ -89,24 +91,34 @@ Today an organizer can *post* a rain-delay message on the public tournament app,
 
 ### Feature B — Bulk "shift the day" schedule tool
 
-#### Phase B1 — Server-side bulk reschedule endpoint (foundation)
-- [ ] New action on `app/api/admin/games` (e.g. `bulk-reschedule`) accepting a set of game IDs + an operation: **shift by N minutes** and/or **cancel these IDs**. Capability `update_schedule`.
-- [ ] Time math via `lib/timezone.ts`: apply the offset to each game's wall-clock `game_time`, roll `game_date` on midnight crossing, DST-safe.
-- [ ] **Server-side bracket-ordering validation** (promote `findBracketSchedulingViolations`): reject (or flag) any shift that would move a playoff game before its feeders. This closes the current client-only gap.
-- [ ] Transactional: all-or-nothing so a partial failure can't leave a half-shifted day. Block/skip `submitted`/`completed`/scored games (already-played games shouldn't move); surface which were skipped.
+#### Phase B1 — Server-side bulk reschedule endpoint (foundation) — ✅ BUILT dev 2026-07-07 (mig 178)
+> **Built:** `bulk-reschedule` action on the games PATCH handler (capability `update_schedule`, scoped by tournament). New pure `lib/schedule-shift.ts` (`shiftWallClock` + `planBulkReschedule`) does the wall-clock time math (DST-independent by design — it operates on the stored America/Toronto wall-clock, not an absolute instant; crossing midnight rolls `game_date`) and promotes the bracket-ordering guard **server-side** by reusing `findBracketSchedulingViolations`. Only NEWLY-introduced ordering violations **hard-block** (409) so a pre-existing quirk can't block an unrelated shift (owner: block, not warn). Already-played (`submitted`/`completed`/`forfeit`) and already-cancelled games are skipped + surfaced. Atomicity is delivered by **migration 178** `bulk_reschedule_games(uuid, jsonb, uuid[])` — a `SECURITY DEFINER` RPC locked to `service_role` that applies all shifts + cancels in one transaction (guarded to `status='scheduled'`). **Mig 178 applied to DEV + snapshots refreshed (watermark #178). ⚠ PROD-PENDING: apply 178 before promoting.** 15 unit tests (`tests/unit/schedule-shift.test.ts`) green; typecheck clean.
 
-#### Phase B2 — Admin "Shift the day" UI
-- [ ] Entry point on the Schedule admin page (`app/[orgSlug]/admin/tournaments/schedule`): "Adjust today's games" opening a focused tool.
-- [ ] **Selectable list** of today's remaining (not-yet-played) games with select-all / range select. Presets: "Shift all remaining by +30m / +1h / +2h," plus custom minutes, plus per-selection cancel.
-- [ ] Live preview: show old → new time for each affected game before confirm; badge any bracket-ordering warnings inline.
-- [ ] **Cancel-a-playoff-game handling** per Open Question 5 (default: allow with an explicit warning that the downstream bracket slot will need manual resolution; or block — owner's call).
-- [ ] After apply: fix/refresh the game-day reminder implications where feasible (at minimum, warn that reminders were set at publish and won't auto-move; ideally recompute).
+- [x] New action on `app/api/admin/games` (`bulk-reschedule`) accepting a set of game IDs + an operation: **shift by N minutes** and/or **cancel these IDs**. Capability `update_schedule`. (v1 is forward-only; ≤24h.)
+- [x] Time math via `lib/schedule-shift.ts`: apply the offset to each game's wall-clock `game_time`, roll `game_date` on midnight crossing, DST-safe (wall-clock arithmetic).
+- [x] **Server-side bracket-ordering validation** (promoted `findBracketSchedulingViolations`): **hard-block** any shift that would newly move a playoff game before its feeders. Closes the client-only gap.
+- [x] Transactional: all-or-nothing via the mig-178 RPC. Block/skip `submitted`/`completed`/scored games; surface which were skipped.
 
-#### Phase B3 — Hand-off to Feature A (the end-to-end rain-delay flow)
-- [ ] On confirming a bulk shift/cancel, offer a **prefilled announcement** ("Weather delay — all remaining games moved by 1 hour. Updated times are live on the schedule.") with the notify toggle from A1 pre-checked (per Open Question 4).
-- [ ] One confirm → shifts the games, posts the pinned banner, and pushes fans + coaches.
-- [ ] Sport-neutral copy via the Sport Pack.
-- [ ] `/docs` sync: the organizer day-of workflow (user-facing).
+#### Phase B2 — Admin "Shift the day" UI — ✅ BUILT dev 2026-07-07
+> **Built:** `ShiftDayModal.tsx` opened from a conditional **"Adjust Today"** header button on the Schedule admin page (shown only when there are still-scheduled games dated today, America/Toronto). Lists today's not-yet-played games (select-all + per-row include), shift presets **+30m / +1h / +2h** + custom minutes, per-row **Cancel** toggle, live **old → new** time preview (with a "next day" tag when a game rolls past midnight), inline **bracket-order** flags (Apply disabled while any new violation exists), and an explicit **playoff-cancel warning** (allow, per locked #5). Reuses the same `planBulkReschedule` as the server, so preview and enforcement never diverge.
+> **Reminder recompute (owner decision: recompute & reschedule):** built as an isolated, fire-and-forget `lib/game-day-reminders.ts` that mirrors the publish route's idempotent cancel-then-reschedule for the day's affected teams, self-guarding past send-times. ⚠ **Nuance discovered at build:** game-day reminders fire the *evening before* game day, so a same-day rain-delay's reminders have already been sent — the recompute is a correct no-op there and meaningfully re-nudges only a game pushed across midnight into a new day.
+
+- [x] Entry point on the Schedule admin page: "Adjust Today" opening a focused modal (conditional on today's remaining games).
+- [x] **Selectable list** of today's remaining games with select-all. Presets +30m / +1h / +2h + custom minutes + per-row cancel.
+- [x] Live preview: old → new time per game; inline bracket-ordering flags; Apply blocked on a new violation.
+- [x] **Cancel-a-playoff-game**: allow with an explicit warning (locked #5).
+- [x] After apply: game-day reminders recomputed & rescheduled for affected teams (owner decision).
+
+#### Phase B3 — Hand-off to Feature A (the end-to-end rain-delay flow) — ✅ BUILT dev 2026-07-07
+> **Built:** after the shift lands, the modal advances to an **announce step** — an editable, prefilled message (sport-neutral, built from what actually changed) with a **pre-checked notify toggle** (locked #4). One confirm posts a **pinned** site announcement and fires the notify path: fan push (Plus, `channelPush`) + **new staff/coach push**. "Skip" posts nothing (the shift already applied).
+> **Coach push (owner upgraded decision 3 → "also build coach push now"):** added a new `tournament_announcement` notification event type (label/description/category/section/per-tournament list, **default-on push, opt-out-able**; no migration — no DB CHECK on event_type). The communications `save` action now fires `notify()` to org staff + Coaches-Portal coach members whenever the notify intent is on — either `channelPush` (any pushed announcement reaches coaches) or a new `notifyStaff` flag (set by the hand-off so a rain delay reaches coaches on a **free** Tournament too, since day-of safety comms aren't plan-gated). **Scope note:** push reaches org-member staff/coaches; *external* team-contact coaches (Tournament tier) are reached via the pinned public banner (and the email channel in the full composer), not this push.
+
+- [x] On confirming a bulk shift/cancel, offer a **prefilled announcement** with the notify toggle pre-checked (locked #4).
+- [x] One confirm → shifts the games (already applied), posts the pinned banner, pushes fans + staff/coaches.
+- [x] Sport-neutral copy (message deliberately avoids sport-specific vocabulary).
+- [x] `/docs` sync (2026-07-07): Tournaments guide — "Adjust Today" added to the schedule recipe, new `faq-shift-the-day`, and `faq-rain-delay-banner` now routes to the one-step tool. Lint clean.
+
+> **`/review` (high-risk funnel) passed 2026-07-07** — 4 lenses (correctness · security/multi-tenant · data/migration · regression). 0 Critical/0 High. Confirmed correct: atomicity + service_role-only RPC lockdown, tenant scoping, wall-clock/DST/midnight math, plan-gating separation (no fan-push leak; free staff/coach push is the operational notify() system), reminder cancel-then-reschedule idempotency (scheduled sends are stored `status='sent'` so the cancel matches), no DB CHECK rejects the new event type. One cosmetic fix applied: added the `tournament_announcement` bell icon. Advisory (not blocking): DATA_DICTIONARY `notifications.event_type` emitter prose is stale (predates this work) — minor /db cleanup.
 
 ---
 
