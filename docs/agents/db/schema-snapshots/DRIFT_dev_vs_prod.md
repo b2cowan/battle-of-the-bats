@@ -2,12 +2,12 @@
 
 **Generated:** 2026-07-07 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 53 divergence(s)** across dev/prod.
+**⚠️ 50 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
-| Columns | 2 | 3 | 24 |
+| Columns | 0 | 3 | 23 |
 | Indexes | 4 | 3 | 0 |
 | Constraints | 7 | 9 | — |
 | RLS / CHECK | 0 | 1 | 0 (RLS state) |
@@ -20,16 +20,15 @@ _none_
 _none_
 
 ## Columns
-### Only in DEV (2)
-- `fan_push_subscriptions.notify_messages`
-- `fan_push_subscriptions.notify_scores`
+### Only in DEV (0)
+_none_
 
 ### Only in PROD (3)
 - `resources.created_at`
 - `rule_items.created_at`
 - `rules.created_at`
 
-### Type/nullability/default changed (24)
+### Type/nullability/default changed (23)
 - `announcements.body` — dev: `text|text|YES|` | prod: `text|text|NO|`
 - `announcements.published_at` — dev: `timestamp with time zone|timestamptz|NO|now()` | prod: `timestamp with time zone|timestamptz|NO|`
 - `diamonds.address` — dev: `text|text|YES|` | prod: `text|text|NO|`
@@ -37,7 +36,6 @@ _none_
 - `divisions.playoff_config` — dev: `jsonb|jsonb|YES|` | prod: `jsonb|jsonb|YES|'{"type": "single", "crossover": "standard", "hasThirdPlace": false}'::jsonb`
 - `divisions.pool_count` — dev: `integer|int4|YES|` | prod: `integer|int4|YES|1`
 - `divisions.requires_pool_selection` — dev: `boolean|bool|NO|false` | prod: `boolean|bool|YES|false`
-- `fan_push_subscriptions.team_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 - `games.is_playoff` — dev: `boolean|bool|NO|false` | prod: `boolean|bool|YES|false`
 - `games.location` — dev: `text|text|YES|` | prod: `text|text|NO|`
 - `resources.display_order` — dev: `integer|int4|NO|0` | prod: `integer|int4|YES|0`

@@ -44,6 +44,44 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-07',
+    title: 'Move a rained-out day in one tap — and a sharper Coaches Portal',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Rained out? You can now move or cancel a whole day’s games at once. Pick the games, push them back or call them off in one step, and the schedule — plus every affected coach’s game-day reminder — updates on its own. (Tournament Plus and up.)',
+      },
+      {
+        category: 'new',
+        text: 'Fans can now follow a tournament for day-of updates: a notification bell, plus optional push notifications, for announcements like rain delays and schedule changes.',
+      },
+      {
+        category: 'new',
+        text: 'See who’s joined your tournament chat, and nudge the rest — a new view shows how many coaches are in, with a one-tap reminder to those who haven’t signed in yet. (Tournament Plus and up.)',
+      },
+      {
+        category: 'new',
+        text: 'Coaches get a “haven’t paid yet” list — see who still owes and send a payment reminder in one tap.',
+      },
+      {
+        category: 'new',
+        text: 'The coach Season Review now compares this season to last.',
+      },
+      {
+        category: 'improved',
+        text: 'A rebuilt Coaches Portal menu that groups everything where you’d look for it.',
+      },
+      {
+        category: 'improved',
+        text: 'More reliable season attendance tracking.',
+      },
+      {
+        category: 'fixed',
+        text: 'Assistant coaches now see only what they should — tightened Coaches Portal permissions around team finances and personal details.',
+      },
+    ],
+  },
+  {
     date: '2026-07-06',
     title: 'Calmer notifications, a smarter sign-up, and a one-click finish',
     highlights: [
