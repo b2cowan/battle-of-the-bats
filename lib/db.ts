@@ -5570,6 +5570,64 @@ export async function getRepPlayerAttendanceSummary(
   return summary;
 }
 
+// ── Team-wide attendance reliability (Phase 4 F3) ─────────────────────────────
+
+/** Games = competitive events; practices = practice. team_event is neither. */
+const ATTENDANCE_GAME_TYPES = ['league_game', 'tournament_game', 'scrimmage', 'external_tournament'];
+
+export interface RepAttendanceCategoryStat {
+  attended: number; // showed up (attending OR late)
+  known: number;    // events with a definite yes/no (attending, late, or absent) — the fair denominator
+  recorded: number; // all recorded events incl. no-reply/unknown
+}
+
+export interface RepPlayerAttendanceReliability {
+  playerId: string;
+  games: RepAttendanceCategoryStat;
+  practices: RepAttendanceCategoryStat;
+}
+
+const blankAttendanceStat = (): RepAttendanceCategoryStat => ({ attended: 0, known: 0, recorded: 0 });
+
+/**
+ * Season attendance reliability for EVERY player on a program year, in ONE query — the team-wide
+ * roll-up behind the Roster → Attendance view. Counts only non-cancelled (scheduled) events the
+ * coach actually marked. "attended" = attending or late; "known" excludes no-reply so an untracked
+ * RSVP never counts against a player. Returns a map keyed by player_id (players with no recorded
+ * attendance simply won't appear — the caller shows them as "not tracked yet").
+ */
+export async function getRepTeamAttendanceReliability(
+  programYearId: string,
+): Promise<Map<string, RepPlayerAttendanceReliability>> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_event_attendance')
+    .select('player_id, status, rep_team_events!inner(event_type, status)')
+    .eq('program_year_id', programYearId)
+    .eq('rep_team_events.status', 'scheduled');
+  if (error) throw error;
+
+  const byPlayer = new Map<string, RepPlayerAttendanceReliability>();
+  for (const r of (data ?? []) as any[]) {
+    const ev = r.rep_team_events;
+    if (!ev) continue;
+    const isGame = ATTENDANCE_GAME_TYPES.includes(ev.event_type);
+    const isPractice = ev.event_type === 'practice';
+    if (!isGame && !isPractice) continue; // team_event etc. — neither a game nor a practice
+
+    let entry = byPlayer.get(r.player_id);
+    if (!entry) {
+      entry = { playerId: r.player_id, games: blankAttendanceStat(), practices: blankAttendanceStat() };
+      byPlayer.set(r.player_id, entry);
+    }
+    const bucket = isGame ? entry.games : entry.practices;
+    bucket.recorded++;
+    if (r.status === 'attending' || r.status === 'late') { bucket.attended++; bucket.known++; }
+    else if (r.status === 'absent') { bucket.known++; }
+    // 'unknown' (no reply) counts toward recorded only — never against the player.
+  }
+  return byPlayer;
+}
+
 export interface RepPlayerDuesSummary {
   hasSchedule: boolean;
   totalAssessed: number;

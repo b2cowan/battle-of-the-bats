@@ -610,13 +610,14 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Taking attendance (Premium)',
       summary: 'Open an event to set each player to In, Late, Out, or No reply with an RSVP button — at-a-glance status symbols, quick filters, and an optional note. Anyone marked Out drops out of that game’s lineup.',
-      keywords: ['attendance', 'who is coming', 'in out late', 'no reply', 'mark attendance', 'rsvp', 'edit rsvp', 'status symbol', 'roster check', 'attendance note', 'all in', 'not playing'],
-      searchText: 'attendance mark who is coming going not going in out late no reply unknown counts filter chips status symbol rsvp button edit rsvp open choices set status note per player note icon all in reset bulk premium event attendance roster headcount available not playing drops out of lineup remove from lineup add back single source auto save auto-fill auto fill generate lineup who plays where best okay never position preferences ranked positions cant fill position lineup warning fair playing time',
+      keywords: ['attendance', 'who is coming', 'in out late', 'no reply', 'mark attendance', 'rsvp', 'edit rsvp', 'status symbol', 'roster check', 'attendance note', 'all in', 'not playing', 'season attendance', 'who shows up', 'attendance reliability'],
+      searchText: 'attendance mark who is coming going not going in out late no reply unknown counts filter chips status symbol rsvp button edit rsvp open choices set status note per player note icon all in reset bulk premium event attendance roster headcount available not playing drops out of lineup remove from lineup add back single source auto save auto-fill auto fill generate lineup who plays where best okay never position preferences ranked positions cant fill position lineup warning fair playing time season attendance reliability roster attendance view who shows up over the season games practices attended totals drifting away not a ranking any coach roster access not tracked yet',
       content: (
         <>
           <p>On <strong>Premium</strong>, open any event and pick the <strong>Attendance</strong> tab to track who&apos;s coming. Each player is one of four states: <strong>In</strong>, <strong>Late</strong>, <strong>Out</strong>, or <strong>No reply</strong> (not marked yet).</p>
           <p>At the top, a <strong>color-coded count bar</strong> shows the totals at a glance — All, In, Late, Out, and No reply. <strong>Tap any count to filter</strong> the list to just those players (tap it again to show everyone); great for working through the &ldquo;No reply&rdquo; pile until it&apos;s empty.</p>
           <p>Each player shows their <strong>current status as a small colored symbol</strong> — the same icons as the count bar — next to an <strong>RSVP</strong> button. Tap <strong>RSVP</strong> (or <strong>Edit RSVP</strong> once a status is set) to open the four choices and an optional <strong>note</strong> (&ldquo;leaving early&rdquo;, &ldquo;ride needed&rdquo;); pick one and the status symbol updates right away. Only one player&apos;s chooser is open at a time, so a long roster stays tidy. Use <strong>All in</strong> to mark everyone present at once, or <strong>Reset</strong> to clear back to No reply. Your changes <strong>save automatically</strong>.</p>
+          <p><strong>See the season picture.</strong> Over time, open <strong>Roster → Attendance</strong> for a season-long read of who&apos;s been making it out — each player&apos;s <strong>games</strong> and <strong>practices</strong> attended (for example, &ldquo;Games 9/10 · Practices 12/15&rdquo;). It&apos;s meant to support fair playing-time and to spot when someone&apos;s drifting — not a ranking — and events with <strong>no reply aren&apos;t counted against anyone</strong>. Any coach with roster access can see it.</p>
         </>
       ),
       faqs: [
@@ -627,6 +628,15 @@ const coachesHelp: HelpPageContent = {
           keywords: ['filter attendance', 'no reply', 'who is out', 'attendance counts', 'going not going'],
           answer: (
             <p>On the Attendance tab, tap a count in the top bar — <strong>All</strong>, <strong>In</strong>, <strong>Late</strong>, <strong>Out</strong>, or <strong>No reply</strong> — to filter to that group; tap it again to show everyone. Each player keeps a one-tap status control, so you can clear the <strong>No reply</strong> pile fast.</p>
+          ),
+        },
+        {
+          id: 'faq-attendance-season',
+          question: 'How do I see who shows up over the whole season?',
+          answerText: "Open Roster, then Attendance, for a season-long view. Each player shows games and practices attended (for example, 'Games 9/10 · Practices 12/15'). 'Present' means marked In or Late; events with no reply aren't counted against anyone, and a player with nothing recorded shows 'not tracked yet'. It's a supportive read for fair playing-time and spotting a kid drifting away — not a ranking. Any coach with roster access can see it.",
+          keywords: ['who shows up', 'season attendance', 'attendance reliability', 'games practices attended', 'playing time', 'drifting', 'over the season'],
+          answer: (
+            <p>Open <strong>Roster → Attendance</strong> for a season-long view. Each player shows <strong>games</strong> and <strong>practices</strong> attended (for example, &ldquo;Games 9/10 · Practices 12/15&rdquo;). &ldquo;Present&rdquo; means marked <strong>In</strong> or <strong>Late</strong>; events with <strong>no reply aren&apos;t counted against anyone</strong>, and a player with nothing recorded shows &ldquo;not tracked yet.&rdquo; It&apos;s a supportive read for fair playing-time and spotting a kid drifting away — not a ranking. Any coach with roster access can see it.</p>
           ),
         },
         {

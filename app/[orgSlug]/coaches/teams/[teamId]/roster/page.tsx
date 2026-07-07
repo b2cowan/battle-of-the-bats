@@ -2,7 +2,7 @@
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Users, ChevronRight, Plus, X, GripVertical, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
+import { Users, ChevronRight, Plus, X, GripVertical, AlertTriangle, ChevronUp, ChevronDown, CalendarCheck } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -463,6 +463,13 @@ export default function RosterPage({
         </div>
         {view === 'list' && (
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <Link
+            href={`${base}/attendance`}
+            className={styles.btnSecondary}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem', textDecoration: 'none' }}
+          >
+            <CalendarCheck size={14} /> Attendance
+          </Link>
           <ExportMenu
             formats={['xlsx', 'csv', 'pdf']}
             onExportXLSX={handleExportXLSX}
