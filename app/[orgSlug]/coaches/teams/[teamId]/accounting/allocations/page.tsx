@@ -119,7 +119,7 @@ export default function CoachesAllocationsPage({
               <span>/</span>
               <Link href={base}>{assignment.teamName}</Link>
               <span>/</span>
-              <Link href={`${base}/accounting`}>Accounting</Link>
+              <Link href={`${base}/accounting`}>Money</Link>
               <span>/</span>
               <span>Org Allocations</span>
             </nav>

@@ -614,6 +614,9 @@ export default function CoachesSchedulePage({
   const sportPack = getSportPack(assignments.find(a => a.teamId === teamId)?.teamSport ?? DEFAULT_SPORT);
 
   const [events, setEvents] = useState<RepTeamEvent[]>([]);
+  // Deep-link: /schedule?event=<id>&tab=lineup opens that game straight into its builder (the
+  // Lineups front door and the Overview "Build lineup" button link here). One-shot per mount.
+  const deepLinkHandledRef = useRef(false);
   const [tryoutSessions, setTryoutSessions] = useState<RepTryoutSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -745,6 +748,23 @@ export default function CoachesSchedulePage({
   useEffect(() => {
     void Promise.resolve().then(fetchEvents);
   }, [fetchEvents]);
+
+  // Open a deep-linked event once events have loaded (client-only param read — no Suspense needed).
+  // Runs once; the coach can freely close or switch events afterwards.
+  useEffect(() => {
+    if (deepLinkHandledRef.current) return;
+    if (loading || events.length === 0) return;
+    deepLinkHandledRef.current = true;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const eventId = sp.get('event');
+      if (!eventId) return;
+      const ev = events.find(e => e.id === eventId);
+      if (!ev) return;
+      openEvent(ev);
+      if (sp.get('tab') === 'lineup') setSlideTab('lineup');
+    } catch { /* ignore malformed params */ }
+  }, [loading, events]);
 
   useEffect(() => {
     fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`)

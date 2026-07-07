@@ -2,9 +2,10 @@
 import { Fragment } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, Users, UserCog, Calendar, ClipboardList, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut } from 'lucide-react';
+import { ArrowLeft, Users, UserCog, Calendar, ClipboardList, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useCoaches } from '@/lib/coaches-context';
+import { isCoachNavItemVisible } from '@/lib/coach-nav-visibility';
 import { useOrg } from '@/lib/org-context';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { teamWorkspaceDisplayName } from '@/lib/coaches-portal-routes';
@@ -13,31 +14,37 @@ import NotificationBell from '@/components/notifications/NotificationBell';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
-// Grouped so the sidebar reads as clusters (Squad / Season / Communication / Admin) rather than a
-// flat 11-item list. Overview stays ungrouped at the top. The Depth chart lives INSIDE Roster (a
-// view toggle), so it's intentionally not a nav item.
-const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; icon: typeof Users }[] }[] = [
+// Grouped so the sidebar reads as plain-language clusters (Squad / Season / Money / Communication /
+// Team admin) rather than a flat build-order list. Overview stays ungrouped at the top. Lineups is a
+// front door for the game-day builder (was menu-invisible). Tryouts / Tournaments are `conditional`:
+// they sit in their group only once the team uses them, otherwise they drop to an "Explore" group.
+// The Depth chart lives INSIDE Roster (a view toggle), so it's intentionally not a nav item. Hrefs
+// keep their existing routes (/accounting, /history) — only the labels change.
+const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; icon: typeof Users; conditional?: 'tryouts' | 'tournaments' }[] }[] = [
   { items: [
     { label: 'Overview',    href: '',             icon: LayoutDashboard },
   ] },
   { label: 'Squad', items: [
     { label: 'Roster',      href: '/roster',      icon: Users },
-    { label: 'Tryouts',     href: '/tryouts',     icon: ClipboardList },
+    { label: 'Lineups',     href: '/lineups',     icon: ListOrdered },
+    { label: 'Tryouts',     href: '/tryouts',     icon: ClipboardList, conditional: 'tryouts' },
   ] },
   { label: 'Season', items: [
     { label: 'Schedule',    href: '/schedule',    icon: Calendar },
-    { label: 'Tournaments', href: '/tournaments', icon: Trophy },
+    { label: 'Tournaments', href: '/tournaments', icon: Trophy, conditional: 'tournaments' },
+  ] },
+  { label: 'Money', items: [
+    { label: 'Money',       href: '/accounting',  icon: DollarSign },
   ] },
   { label: 'Communication', items: [
     { label: 'Chat',          href: '/chat',          icon: MessageSquare },
     { label: 'Announcements', href: '/announcements', icon: Megaphone },
   ] },
-  { label: 'Admin', items: [
-    { label: 'Accounting',  href: '/accounting',  icon: DollarSign },
-    { label: 'Documents',   href: '/documents',   icon: FileText },
-    { label: 'History',     href: '/history',     icon: History },
-    { label: 'Staff',       href: '/staff',       icon: UserCog },
-    { label: 'Settings',    href: '/settings',    icon: Settings },
+  { label: 'Team admin', items: [
+    { label: 'Staff',         href: '/staff',       icon: UserCog },
+    { label: 'Documents',     href: '/documents',   icon: FileText },
+    { label: 'Season Review', href: '/history',     icon: History },
+    { label: 'Settings',      href: '/settings',    icon: Settings },
   ] },
 ];
 
@@ -60,28 +67,41 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
     ? assignments.find(a => a.teamId === currentTeamId)
     : null;
 
-  // Assistant Coaches: hide nav areas the current coach isn't cleared for. Head coaches have
-  // full capabilities so nothing hides. Fail-open if caps are absent (server still enforces).
+  // Assistant Coaches: hide nav areas the current coach isn't cleared for. The gate is shared with
+  // the mobile bottom nav (lib/coach-nav-visibility.ts) so it's one source of truth. Head coaches
+  // have full capabilities so nothing hides; fail-open if caps are absent (server still enforces).
   const caps = currentAssignment?.capabilities;
-  const navVisible = (label: string): boolean => {
-    if (!caps) return true;
-    switch (label) {
-      case 'Roster':        return caps.roster !== 'off';
-      case 'Schedule':      return caps.schedule;
-      case 'Tryouts':       return caps.tryouts;
-      // Phase 1: hidden unless the coach can send (no draft UI yet). Phase 2 (draft flow):
-      // change this to always-visible or a `canDraftAnnouncements` cap so granted assistants can draft.
-      case 'Announcements': return caps.announcementsSend;
-      case 'Accounting':    return caps.money !== 'off';
-      case 'History':       return caps.money !== 'off';
-      case 'Documents':     return caps.documents !== 'off';
-      case 'Staff':         return caps.isHeadCoach;
-      default:              return true;
-    }
-  };
+  const navVisible = (label: string): boolean => isCoachNavItemVisible(caps, label);
 
   const base = `/${orgSlug}/coaches`;
   const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
+
+  // "In use yet?" signals decide whether a conditional item sits in its group or drops to Explore.
+  const navSignals = {
+    tryouts: !!currentAssignment?.hasTryoutSignal,
+    tournaments: !!currentAssignment?.hasTournamentHistory,
+  };
+  type NavItem = { label: string; href: string; icon: typeof Users; conditional?: 'tryouts' | 'tournaments' };
+  const itemState = (item: NavItem): 'primary' | 'explore' | 'hidden' => {
+    if (!navVisible(item.label)) return 'hidden';                       // capability gate wins
+    if (item.conditional && !navSignals[item.conditional]) return 'explore';
+    return 'primary';
+  };
+  const renderNavItem = ({ label, href, icon: Icon }: NavItem) => {
+    const fullHref = `${base}/teams/${currentTeamId}${href}`;
+    const isActive = href === '' ? pathname === fullHref : pathname.startsWith(fullHref);
+    return (
+      <Link
+        key={label}
+        href={fullHref}
+        className={`${styles.sidebarItem}${isActive ? ` ${styles.sidebarItemActive}` : ''}`}
+      >
+        <Icon size={14} />
+        {label}
+        {label === 'Chat' && <ChatUnreadBadge count={chatUnread} />}
+      </Link>
+    );
+  };
 
   return (
     <nav className={styles.sidebar}>
@@ -149,31 +169,27 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
               <p className={styles.sidebarSectionLabel}>Assistant Coach</p>
             )}
             {TEAM_NAV_GROUPS.map((group, gi) => {
-              const visibleItems = group.items.filter(({ label }) => navVisible(label));
-              if (!visibleItems.length) return null;
+              const primaryItems = group.items.filter(item => itemState(item) === 'primary');
+              if (!primaryItems.length) return null;
               return (
                 <Fragment key={gi}>
                   {group.label && <p className={styles.sidebarGroupLabel}>{group.label}</p>}
-                  {visibleItems.map(({ label, href, icon: Icon }) => {
-                    const fullHref = `${base}/teams/${currentTeamId}${href}`;
-                    const isActive = href === ''
-                      ? pathname === fullHref
-                      : pathname.startsWith(fullHref);
-                    return (
-                      <Link
-                        key={label}
-                        href={fullHref}
-                        className={`${styles.sidebarItem}${isActive ? ` ${styles.sidebarItemActive}` : ''}`}
-                      >
-                        <Icon size={14} />
-                        {label}
-                        {label === 'Chat' && <ChatUnreadBadge count={chatUnread} />}
-                      </Link>
-                    );
-                  })}
+                  {primaryItems.map(renderNavItem)}
                 </Fragment>
               );
             })}
+            {/* Explore — optional areas not in use yet, kept rediscoverable. Tryouts / Tournaments
+                surface here until the team uses them, then graduate into their group above. */}
+            {(() => {
+              const exploreItems = TEAM_NAV_GROUPS.flatMap(g => g.items).filter(item => itemState(item) === 'explore');
+              if (!exploreItems.length) return null;
+              return (
+                <Fragment>
+                  <p className={styles.sidebarGroupLabel}>Explore</p>
+                  {exploreItems.map(renderNavItem)}
+                </Fragment>
+              );
+            })()}
           </div>
         </>
       )}

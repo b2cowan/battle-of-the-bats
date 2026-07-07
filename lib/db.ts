@@ -4333,6 +4333,10 @@ export interface CoachingAssignment {
   capabilities: CoachCapabilities;
   overdueInstallments: number;
   upcomingEventsCount: number;
+  /** "In use yet?" nav signals — keep optional areas (Tryouts, Tournaments) out of the primary
+   *  nav groups until a team actually uses them (still surfaced under "Explore"). */
+  hasTryoutSignal: boolean;
+  hasTournamentHistory: boolean;
 }
 
 type CoachingAssignmentRow = {
@@ -4412,6 +4416,66 @@ async function getCoachingBadges(
   return result;
 }
 
+/**
+ * Cheap, read-only "is this area in use yet?" signals for the coach nav. Lets the sidebar and
+ * bottom-nav keep optional areas (Tryouts, Tournaments) out of the primary groups until a team
+ * actually uses them — while still surfacing them under "Explore". All batched; never writes.
+ */
+async function getCoachingNavSignals(
+  keys: { teamId: string; programYearId: string }[],
+): Promise<Map<string, { hasTryoutSignal: boolean; hasTournamentHistory: boolean }>> {
+  const result = new Map<string, { hasTryoutSignal: boolean; hasTournamentHistory: boolean }>();
+  for (const k of keys) result.set(k.teamId, { hasTryoutSignal: false, hasTournamentHistory: false });
+  if (keys.length === 0) return result;
+
+  const programYearIds = [...new Set(keys.map(k => k.programYearId))];
+  const teamIds = [...new Set(keys.map(k => k.teamId))];
+
+  // Tryouts: a tryout workspace exists for this season (rep_tryouts is 1:1 with a program year;
+  // the row is created the first time a coach opens the tryouts area — so the item graduates from
+  // Explore into Squad once they've used it once).
+  const { data: tryoutRows, error: tryoutErr } = await supabaseAdmin
+    .from('rep_tryouts')
+    .select('program_year_id')
+    .in('program_year_id', programYearIds);
+  if (tryoutErr) console.error('[getCoachingNavSignals] tryout signal query failed (defaulting Tryouts to Explore):', tryoutErr.message);
+  const tryoutYears = new Set((tryoutRows ?? []).map((r: any) => r.program_year_id as string));
+
+  // Tournaments: rep team → team workspace → basic-coach team → any tournament registration.
+  // We read the already-linked basic_coach_team_id only (no lazy source_tournament_team_id repair
+  // here — this stays a read-only nav-load path). If a workspace's link hasn't been backfilled yet,
+  // the signal is false and Tournaments stays under "Explore" (still reachable, not a dead end); it
+  // self-heals on the coach's next load after the Tournaments page visit writes the link back.
+  const { data: wsRows, error: wsErr } = await supabaseAdmin
+    .from('team_workspaces')
+    .select('rep_team_id, basic_coach_team_id')
+    .in('rep_team_id', teamIds);
+  if (wsErr) console.error('[getCoachingNavSignals] workspace lookup failed (defaulting Tournaments to Explore):', wsErr.message);
+  const basicIdByTeam = new Map<string, string>();
+  for (const w of (wsRows ?? []) as { rep_team_id: string | null; basic_coach_team_id: string | null }[]) {
+    if (w.rep_team_id && w.basic_coach_team_id) basicIdByTeam.set(w.rep_team_id, w.basic_coach_team_id);
+  }
+  const basicIds = [...new Set([...basicIdByTeam.values()])];
+  let registeredBasicIds = new Set<string>();
+  if (basicIds.length > 0) {
+    const { data: regRows, error: regErr } = await supabaseAdmin
+      .from('basic_coach_team_registrations')
+      .select('basic_coach_team_id')
+      .in('basic_coach_team_id', basicIds);
+    if (regErr) console.error('[getCoachingNavSignals] tournament-registration lookup failed (defaulting Tournaments to Explore):', regErr.message);
+    registeredBasicIds = new Set((regRows ?? []).map((r: any) => r.basic_coach_team_id as string));
+  }
+
+  for (const k of keys) {
+    const basicId = basicIdByTeam.get(k.teamId);
+    result.set(k.teamId, {
+      hasTryoutSignal: tryoutYears.has(k.programYearId),
+      hasTournamentHistory: !!basicId && registeredBasicIds.has(basicId),
+    });
+  }
+  return result;
+}
+
 export async function getCoachingAssignmentsForUser(
   orgId: string,
   userId: string,
@@ -4457,6 +4521,9 @@ export async function getCoachingAssignmentsForUser(
 
   const programYearIds = accessible.map(r => r.program_year_id);
   const badges = await getCoachingBadges(programYearIds);
+  const navSignals = await getCoachingNavSignals(
+    accessible.map(r => ({ teamId: r.team_id, programYearId: r.program_year_id })),
+  );
 
   return accessible.map(r => ({
     coachId: r.id,
@@ -4475,6 +4542,8 @@ export async function getCoachingAssignmentsForUser(
     ),
     overdueInstallments:  badges.get(r.program_year_id)?.overdueInstallments  ?? 0,
     upcomingEventsCount:  badges.get(r.program_year_id)?.upcomingEventsCount   ?? 0,
+    hasTryoutSignal:       navSignals.get(r.team_id)?.hasTryoutSignal       ?? false,
+    hasTournamentHistory:  navSignals.get(r.team_id)?.hasTournamentHistory  ?? false,
   }));
 }
 

@@ -3,7 +3,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
-import { ArrowRight, Building2, Cake, Calendar, CheckCircle2, Circle, DollarSign, MinusCircle, TriangleAlert, Trophy, Users, Wallet } from 'lucide-react';
+import { Archive, ArrowRight, Building2, Cake, Calendar, CheckCircle2, Circle, DollarSign, MinusCircle, TriangleAlert, Trophy, Users, Wallet } from 'lucide-react';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
 import SeasonRecordWidget from '@/components/coaches/SeasonRecordWidget';
 import { deriveRepPhase } from '@/lib/coach-rep-phase';
@@ -113,6 +113,8 @@ export default function TeamOverviewPage({
   const [skippedSteps, setSkippedSteps] = useState<Set<string>>(new Set());
   // Contextual org-invite banner (only when an org has actually invited this team)
   const [orgInvite, setOrgInvite] = useState<{ orgName: string } | null>(null);
+  // Last-season preview tile (record + dues + expenses) — money-gated, links into Past Seasons.
+  const [lastSeason, setLastSeason] = useState<{ name: string; record: string | null; duesCollected: number; totalExpenses: number } | null>(null);
 
   const loadSetup = useCallback(async () => {
     setSetupLoading(true);
@@ -341,6 +343,31 @@ export default function TeamOverviewPage({
     return () => { cancelled = true; };
   }, [loading, orgSlug, teamId]);
 
+  // Last season at a glance — newest completed/archived season (record + dues + expenses). Money-
+  // gated (mirrors the History/Season Review nav gate) so a no-money assistant never sees dues.
+  useEffect(() => {
+    if (loading) return;
+    const a = assignments.find(x => x.teamId === teamId);
+    if (!a || a.capabilities.money === 'off') { setLastSeason(null); return; }
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/history`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(json => {
+        if (cancelled || !json?.history?.length) return;
+        const years = [...json.history].sort((x: { year?: number }, y: { year?: number }) => (y.year ?? 0) - (x.year ?? 0));
+        const y = years[0];
+        const record = (y.wins || y.losses || y.ties) ? `${y.wins}–${y.losses}–${y.ties}` : null;
+        setLastSeason({
+          name: (y.name ?? String(y.year ?? '')).trim() || 'Last season',
+          record,
+          duesCollected: y.accounting?.duesCollected ?? 0,
+          totalExpenses: y.accounting?.totalExpenses ?? 0,
+        });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [loading, orgSlug, teamId, assignments]);
+
   // Org-invite banner — show only when an organization has actually invited this team
   // to connect (org-initiated). Self-serve linking lives quietly in Settings otherwise.
   const isWorkspaceOrg = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
@@ -375,6 +402,10 @@ export default function TeamOverviewPage({
   // Assistant Coaches: hide finance-driven dashboard pieces (budget/dues tiles + the "Set budget"
   // setup step) from a coach with no money access — head coaches always have it.
   const canViewMoney = assignment.capabilities.money !== 'off';
+  // Gate the deep-link CTAs so a restricted assistant is never dropped straight onto the lineup
+  // builder / schedule tab they can't use (mirrors the nav hiding those items). Both default ON.
+  const canViewLineup = assignment.capabilities.lineups;
+  const canSchedule = assignment.capabilities.schedule;
   const helpHref = `/${orgSlug}/coaches/help`;
   // The season label drops a leading copy of the team name so the subtitle doesn't repeat the
   // title — orgs often name a program year "<Team> <Year>" (e.g. "Blue Jays 2026").
@@ -657,13 +688,16 @@ export default function TeamOverviewPage({
   const finalizedGames = seasonGames.filter(e => e.result && e.status !== 'cancelled');
   const hasFinalizedGame = finalizedGames.length > 0;
   const nextIsGame = !!nextEvent && GAME_EVENT_TYPES.includes(nextEvent.eventType);
+  // A registered tournament that's upcoming or live today keeps the team "in season" even
+  // when nothing is on the game schedule (tournaments are tracked separately from events).
+  const hasUpcomingTournament = Boolean(tournaments?.nextDate || tournaments?.liveNow);
   const phase = deriveRepPhase({
     programYearStatus: assignment.programYearStatus,
     rosterCount: setupStats?.activeRosterCount ?? 0,
     nextEvent: nextEvent ? { eventType: nextEvent.eventType, startsAt: nextEvent.startsAt } : null,
     nextEventDays,
-    liveNow: Boolean(tournaments?.liveNow),
     hasFinalizedGame,
+    hasUpcomingTournament,
   });
   // Season record for the afterglow headline — default categories (league + tournament,
   // scrimmage excluded), matching SeasonRecordWidget's default so the two never disagree.
@@ -718,7 +752,9 @@ export default function TeamOverviewPage({
             <p className={styles.orgInviteTitle}>{orgInvite.orgName} invited your team to connect</p>
             <p className={styles.orgInviteBody}>Review the invitation to join their organization, or keep running independently.</p>
           </div>
-          <Link href={`/${orgSlug}/coaches/link-org`} className="btn btn-lime btn-sm">Review invite</Link>
+          {/* Outlined (not lime) so the phase anchor keeps the single lime action per CP-1 — the
+              invite is a notification, not the page's primary task. */}
+          <Link href={`/${orgSlug}/coaches/link-org`} className="btn btn-outline btn-sm">Review invite</Link>
         </div>
       )}
 
@@ -823,7 +859,7 @@ export default function TeamOverviewPage({
 
       {/* ── "Right now" anchor — the phase-adaptive "what matters now" surface.
           Ports the TeamHQ phase LOGIC into the operating-tool card language (no hero). */}
-      {showAnchor && phase === 'game_day' && (nextEvent ? (
+      {showAnchor && phase === 'game_day' && nextEvent && (
         <div className={`${styles.nowCard} ${styles.nowGameDay}`}>
           <p className={styles.nowEyebrow}><span className={styles.nowLiveDot} aria-hidden>●</span> Game day <span className={styles.nowEyebrowCount}>Today</span></p>
           <p className={styles.nowHeadline}>{nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Game day')}</p>
@@ -845,18 +881,7 @@ export default function TeamOverviewPage({
             <Link href={`${base}/schedule`} className="btn btn-lime btn-sm">Open game day <ArrowRight size={14} /></Link>
           </div>
         </div>
-      ) : (
-        // Game-day reached via a live tournament today, but the team has no upcoming
-        // scheduled event of its own — still show the anchor instead of a blank gap.
-        <div className={`${styles.nowCard} ${styles.nowGameDay}`}>
-          <p className={styles.nowEyebrow}><span className={styles.nowLiveDot} aria-hidden>●</span> Game day <span className={styles.nowEyebrowCount}>Today</span></p>
-          <p className={styles.nowHeadline}>You have a tournament today</p>
-          <p className={styles.nowMeta}>A tournament you’re registered for is running today.</p>
-          <div className={styles.nowActions}>
-            <Link href={`${base}/tournaments`} className="btn btn-lime btn-sm">Open tournaments <ArrowRight size={14} /></Link>
-          </div>
-        </div>
-      ))}
+      )}
 
       {showAnchor && phase === 'in_season' && nextEvent && (
         <div className={`${styles.nowCard} ${styles.nowInSeason}`}>
@@ -881,10 +906,38 @@ export default function TeamOverviewPage({
             <p className={styles.nowMoneyAlert}><DollarSign size={14} aria-hidden /> {duesOverdueCount} {duesOverdueCount === 1 ? 'player' : 'players'} overdue{duesOutstanding && duesOutstanding > 0 ? ` · ${formatMoney(duesOutstanding)}` : ''}</p>
           )}
           <div className={styles.nowActions}>
-            <Link href={`${base}/schedule`} className="btn btn-lime btn-sm">{nextIsGame ? 'Build lineup' : 'Open schedule'} <ArrowRight size={14} /></Link>
-            {nextIsGame && <Link href={`${base}/schedule`} className={styles.nowSecondary}>Take attendance <ArrowRight size={13} /></Link>}
+            <Link href={nextIsGame && canViewLineup ? `${base}/schedule?event=${nextEvent.id}&tab=lineup` : `${base}/schedule`} className="btn btn-lime btn-sm">{nextIsGame ? 'Build lineup' : 'Open schedule'} <ArrowRight size={14} /></Link>
+            {nextIsGame && <Link href={canSchedule ? `${base}/schedule?event=${nextEvent.id}&tab=attendance` : `${base}/schedule`} className={styles.nowSecondary}>Take attendance <ArrowRight size={13} /></Link>}
           </div>
-          {/* Standings-rank line reserved here — filled in Phase 2 (coach-side standings route). */}
+        </div>
+      )}
+
+      {/* In season, but nothing on the game schedule — a lull or a tournament-only stretch.
+          NOT the afterglow (which needs an explicitly-closed season). */}
+      {showAnchor && phase === 'in_season' && !nextEvent && (
+        <div className={`${styles.nowCard} ${styles.nowInSeason}`}>
+          {hasUpcomingTournament && tournaments?.nextDate ? (
+            <>
+              <p className={styles.nowEyebrow}><Trophy size={13} aria-hidden /> Next up
+                <span className={styles.nowEyebrowCount}>{tournaments.liveNow ? 'Live now' : formatEventDate(`${tournaments.nextDate}T00:00:00`)}</span>
+              </p>
+              <p className={styles.nowHeadline}>{tournaments.liveNow ? 'Your tournament is on' : 'Tournament coming up'}</p>
+              <p className={styles.nowMeta}>Add your games and practices to your schedule to plan around it.</p>
+            </>
+          ) : (
+            <>
+              <p className={styles.nowEyebrow}>In season</p>
+              <p className={styles.nowHeadline}>Nothing on your schedule</p>
+              <p className={styles.nowMeta}>Add your next game or practice to track attendance, lineups, and your record.</p>
+            </>
+          )}
+          {canViewMoney && duesOverdueCount > 0 && (
+            <p className={styles.nowMoneyAlert}><DollarSign size={14} aria-hidden /> {duesOverdueCount} {duesOverdueCount === 1 ? 'player' : 'players'} overdue{duesOutstanding && duesOutstanding > 0 ? ` · ${formatMoney(duesOutstanding)}` : ''}</p>
+          )}
+          <div className={styles.nowActions}>
+            <Link href={`${base}/schedule`} className="btn btn-lime btn-sm">Add an event <ArrowRight size={14} /></Link>
+            {hasUpcomingTournament && <Link href={`${base}/tournaments`} className={styles.nowSecondary}>View tournaments <ArrowRight size={13} /></Link>}
+          </div>
         </div>
       )}
 
@@ -901,7 +954,7 @@ export default function TeamOverviewPage({
             {isTeamWorkspace && assignment.coachRole === 'head_coach'
               ? <Link href={`${base}/settings`} className="btn btn-lime btn-sm">Start next season <ArrowRight size={14} /></Link>
               : <Link href={`${base}/history`} className="btn btn-lime btn-sm">Season history <ArrowRight size={14} /></Link>}
-            <Link href={`${base}/history`} className={styles.nowSecondary}>Past seasons <ArrowRight size={13} /></Link>
+            <Link href={`${base}/history`} className={styles.nowSecondary}>Season Review <ArrowRight size={13} /></Link>
           </div>
           {isTeamWorkspace && (
             <p className={styles.nowBridge}>Your team&apos;s records are saved for next season. Clubs on FieldLogicHQ keep every team&apos;s records in one shared place — <Link href="/for-coaches?source=coach_afterglow">see how it works →</Link></p>
@@ -980,6 +1033,24 @@ export default function TeamOverviewPage({
           })}
         </div>
       </section>
+
+      {/* Last season — a small proactive handle on resonant history (money-gated), links into
+          Past Seasons. Only renders once a completed/archived season exists. */}
+      {lastSeason && (
+        <Link href={`${base}/history`} className={styles.lastSeasonCard}>
+          <Archive size={20} className={styles.lastSeasonIcon} aria-hidden />
+          <span className={styles.lastSeasonBody}>
+            <span className={styles.lastSeasonLabel}>Last season</span>
+            <span className={styles.lastSeasonName}>{lastSeason.name}</span>
+            <span className={styles.lastSeasonStats}>
+              {lastSeason.record && <span><strong>{lastSeason.record}</strong> record</span>}
+              <span><strong>{formatMoney(lastSeason.duesCollected)}</strong> collected</span>
+              <span><strong>{formatMoney(lastSeason.totalExpenses)}</strong> spent</span>
+            </span>
+          </span>
+          <ArrowRight size={16} className={styles.lastSeasonArrow} aria-hidden />
+        </Link>
+      )}
 
       {/* This week — events in the next 7 days + any player birthdays. */}
       {((weekSummary && weekSummary.total > 0) || birthdays.length > 0) && (

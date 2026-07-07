@@ -2,7 +2,7 @@
 
 > **For:** a stakeholder who hasn't read the full plan.
 > **Companion plan:** [COACH_PORTAL_IA_UX_REVIEW_PLAN.md](COACH_PORTAL_IA_UX_REVIEW_PLAN.md)
-> **Status:** Planning complete; awaiting owner decisions. Planning-only — no code, no migrations, no user-visible change yet.
+> **Status:** Phase 0 + Phase 1 (phase-aware home screen) + **Phase 3 (navigation rebuild) BUILT + adversarially reviewed on `dev`** (no migrations, unpushed, pending owner browser test). Standings (was Phase 2) **cut** — only truthful for FieldLogicHQ-hosted tournaments, and most are off-platform. Remaining: Phase 4 (review depth), Phase 5 (assistant-aware verification).
 
 ## What this is
 
@@ -10,14 +10,14 @@ A journey-first reorganization of the **Premium Coaches Portal** — the paid, y
 
 ## The core problem, in one sentence
 
-The portal holds a genuinely impressive amount of intelligence — auto-filled fair lineups with arm-care limits, a depth chart, a season record, dues tracking — but it's organized so that a coach can't easily *find* it, can't see *what matters right now*, and can't answer the one question they ask first: **"where do we stand?"**
+The portal holds a genuinely impressive amount of intelligence — auto-filled fair lineups with arm-care limits, a depth chart, a season record, dues tracking — but it's organized so that a coach can't easily *find* it, can't see *what matters right now*, and can't even reach the portal's smartest feature: the **lineup builder has no menu item at all** — it's buried inside a single game's detail panel.
 
 ## What a coach experiences differently after this ships
 
 - **A home screen that changes with the season.** Instead of one long scroll that's half setup-checklist and half dashboard, the top of the Overview becomes a "here's what matters right now" panel: pre-season it says "finish your roster"; between games it shows the next game, who's coming, and whether the lineup is set; on game day it shows the live score; after the game it shows the result and a share card. Their **season record** — the most emotional number — moves from the very bottom of the page up to where they'll actually see it.
 - **They can finally find the lineup builder.** Today the portal's smartest feature is buried inside a specific game's detail panel with no menu item — a coach who's never opened it can't discover it. It gets its own front door.
-- **They learn where they stand.** The portal has never been able to show a coach their standing in their pool or division. This adds it — the single highest-value addition and the one thing on this list that isn't already built (though it reuses the existing standings engine).
-- **Money stops hiding.** "3 players haven't paid, $420 outstanding" appears on the home screen instead of four taps deep.
+- **The menu matches how they think.** The navigation is regrouped into plain-language sections (Squad · Season · Money · Communication · Team admin), rarely-used items (Tryouts, Tournaments) tuck under an "Explore" heading until the team actually uses them, and "Accounting" becomes "Money." *(Note: coach-side standings — originally the headline addition — was **cut**; it's only truthful inside FieldLogicHQ-hosted tournaments, and most tournaments run off-platform, so it would be built on a misleadingly thin slice of a season.)*
+- **Money stops hiding.** "3 players haven't paid, $420 outstanding" appears on the home screen instead of four taps deep, and the menu item that opens it is now plainly labelled **"Money."**
 - **The menu matches their brain.** Navigation regroups into plain-language sections — *my squad · our season · money · talk to my team · the back office* — instead of an "Admin" junk drawer. Sections a coach doesn't use (tryouts, external tournaments) hide until relevant.
 
 ## Why it matters

@@ -220,7 +220,7 @@ export default function FundraiserDetailPage({
               <span>/</span>
               <Link href={base}>{assignment.teamName}</Link>
               <span>/</span>
-              <Link href={`${base}/accounting`}>Accounting</Link>
+              <Link href={`${base}/accounting`}>Money</Link>
               <span>/</span>
               <Link href={`${base}/accounting/fundraisers`}>Fundraisers</Link>
               <span>/</span>

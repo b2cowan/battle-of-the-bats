@@ -222,7 +222,7 @@ export default function TeamSettingsPage({
                 Start next season
               </button>
               <Link href={`${base}/history`} className={styles.btnSecondary} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Archive size={15} /> Past Seasons
+                <Archive size={15} /> Season Review
               </Link>
             </div>
           </div>
@@ -234,7 +234,7 @@ export default function TeamSettingsPage({
                 : 'Your club admin manages seasons for this team.'}
             </p>
             <Link href={`${base}/history`} className={styles.btnSecondary} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Archive size={15} /> Past Seasons
+              <Archive size={15} /> Season Review
             </Link>
           </div>
         )}

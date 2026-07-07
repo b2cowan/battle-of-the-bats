@@ -76,10 +76,10 @@ export default function CoachesHistoryPage({
               <span>/</span>
               <Link href={base}>{assignment.teamName}</Link>
               <span>/</span>
-              <span>Past Seasons</span>
+              <span>Season Review</span>
             </nav>
-            <h1 className={styles.pageTitle}>Past Seasons</h1>
-            <p className={styles.pageSub}>{assignment.teamName} — read-only history</p>
+            <h1 className={styles.pageTitle}>Season Review</h1>
+            <p className={styles.pageSub}>{assignment.teamName} — past seasons, read-only</p>
           </div>
         </div>
       </div>

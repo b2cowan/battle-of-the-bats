@@ -1,15 +1,16 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Fragment } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Calendar, MessageSquare, Trophy,
   Users, UserCog, Megaphone, DollarSign, FileText, History,
-  MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList,
+  MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, ListOrdered,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useCoaches } from '@/lib/coaches-context';
+import { isCoachNavItemVisible } from '@/lib/coach-nav-visibility';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import styles from './CoachesBottomNav.module.css';
 
@@ -21,17 +22,33 @@ const TEAM_TABS = [
   { key: '/roster',   icon: Users,           label: 'Roster'   },
 ];
 
-// Remaining team sections — surfaced under More.
-const MORE_TEAM = [
-  { key: '/tryouts',       icon: ClipboardList, label: 'Tryouts'    },
-  { key: '/tournaments',   icon: Trophy,     label: 'Tournaments'   },
-  { key: '/announcements', icon: Megaphone,  label: 'Announcements' },
-  { key: '/accounting',    icon: DollarSign, label: 'Accounting'    },
-  { key: '/documents',     icon: FileText,   label: 'Documents'     },
-  { key: '/history',       icon: History,    label: 'History'       },
-  { key: '/staff',         icon: UserCog,    label: 'Staff'         },
-  { key: '/settings',      icon: Settings,   label: 'Settings'      },
+// Remaining team sections — surfaced under More, each beneath a plain-language section header that
+// mirrors the desktop sidebar groups (design rule: every More item sits under a section header).
+// `conditional` items (Tryouts / Tournaments) drop to an "Explore" section until the team uses them.
+// Hrefs keep their existing routes (/accounting, /history); only the labels change.
+type MoreItem = { key: string; icon: typeof Users; label: string; conditional?: 'tryouts' | 'tournaments' };
+const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
+  { header: 'Squad', items: [
+    { key: '/lineups',       icon: ListOrdered,   label: 'Lineups' },
+    { key: '/tryouts',       icon: ClipboardList, label: 'Tryouts', conditional: 'tryouts' },
+  ] },
+  { header: 'Season', items: [
+    { key: '/tournaments',   icon: Trophy,        label: 'Tournaments', conditional: 'tournaments' },
+  ] },
+  { header: 'Money', items: [
+    { key: '/accounting',    icon: DollarSign,    label: 'Money' },
+  ] },
+  { header: 'Communication', items: [
+    { key: '/announcements', icon: Megaphone,     label: 'Announcements' },
+  ] },
+  { header: 'Team admin', items: [
+    { key: '/staff',         icon: UserCog,       label: 'Staff' },
+    { key: '/documents',     icon: FileText,      label: 'Documents' },
+    { key: '/history',       icon: History,       label: 'Season Review' },
+    { key: '/settings',      icon: Settings,      label: 'Settings' },
+  ] },
 ];
+const ALL_MORE_KEYS = MORE_SECTIONS.flatMap(s => s.items.map(i => i.key));
 
 export default function CoachesBottomNav() {
   const pathname = usePathname();
@@ -54,24 +71,23 @@ export default function CoachesBottomNav() {
   const teamBase      = currentTeamId ? `${base}/teams/${currentTeamId}` : null;
 
   // Assistant Coaches: hide nav areas the current coach isn't cleared for (head coaches see all).
-  const caps = (currentTeamId ? assignments.find(a => a.teamId === currentTeamId) : null)?.capabilities;
-  const navVisible = (label: string): boolean => {
-    if (!caps) return true;
-    switch (label) {
-      case 'Roster':        return caps.roster !== 'off';
-      case 'Schedule':      return caps.schedule;
-      case 'Tryouts':       return caps.tryouts;
-      case 'Announcements': return caps.announcementsSend;
-      case 'Accounting':    return caps.money !== 'off';
-      case 'History':       return caps.money !== 'off';
-      case 'Documents':     return caps.documents !== 'off';
-      case 'Staff':         return caps.isHeadCoach;
-      default:              return true;
-    }
+  const currentAssignment = currentTeamId ? assignments.find(a => a.teamId === currentTeamId) : null;
+  const caps = currentAssignment?.capabilities;
+  // Shared with the desktop sidebar (lib/coach-nav-visibility.ts) — one source of truth for gating.
+  const navVisible = (label: string): boolean => isCoachNavItemVisible(caps, label);
+  // "In use yet?" signals decide whether a conditional item sits in its section or drops to Explore.
+  const navSignals = {
+    tryouts: !!currentAssignment?.hasTryoutSignal,
+    tournaments: !!currentAssignment?.hasTournamentHistory,
+  };
+  const moreItemState = (item: MoreItem): 'primary' | 'explore' | 'hidden' => {
+    if (!navVisible(item.label)) return 'hidden';
+    if (item.conditional && !navSignals[item.conditional]) return 'explore';
+    return 'primary';
   };
 
   const isOnTeamMore = teamBase
-    ? MORE_TEAM.some(({ key }) => pathname.startsWith(`${teamBase}${key}`))
+    ? ALL_MORE_KEYS.some(key => pathname.startsWith(`${teamBase}${key}`))
     : false;
 
   function tabIsActive(key: string): boolean {
@@ -176,29 +192,47 @@ export default function CoachesBottomNav() {
               </>
             )}
 
-            {/* Remaining team sections */}
-            {teamBase && (
-              <>
-                <div className={styles.dropSectionLabel}>Team</div>
-                {MORE_TEAM.filter(({ label }) => navVisible(label)).map(({ key, icon: Icon, label }) => {
-                  const href   = `${teamBase}${key}`;
-                  const active = pathname.startsWith(href);
-                  return (
-                    <Link
-                      key={key}
-                      href={href}
-                      className={`${styles.dropItem} ${active ? styles.dropActive : ''}`}
-                      role="menuitem"
-                    >
-                      <Icon size={17} />
-                      <span>{label}</span>
-                      <ChevronRight size={14} className={styles.dropChevron} />
-                    </Link>
-                  );
-                })}
-                <div className={styles.dropDivider} />
-              </>
-            )}
+            {/* Remaining team sections — each under a plain-language header mirroring the sidebar. */}
+            {teamBase && (() => {
+              const renderMoreItem = ({ key, icon: Icon, label }: MoreItem) => {
+                const href   = `${teamBase}${key}`;
+                const active = pathname.startsWith(href);
+                return (
+                  <Link
+                    key={key}
+                    href={href}
+                    className={`${styles.dropItem} ${active ? styles.dropActive : ''}`}
+                    role="menuitem"
+                  >
+                    <Icon size={17} />
+                    <span>{label}</span>
+                    <ChevronRight size={14} className={styles.dropChevron} />
+                  </Link>
+                );
+              };
+              const exploreItems = MORE_SECTIONS.flatMap(s => s.items).filter(i => moreItemState(i) === 'explore');
+              return (
+                <>
+                  {MORE_SECTIONS.map(section => {
+                    const items = section.items.filter(i => moreItemState(i) === 'primary');
+                    if (!items.length) return null;
+                    return (
+                      <Fragment key={section.header}>
+                        <div className={styles.dropSectionLabel}>{section.header}</div>
+                        {items.map(renderMoreItem)}
+                      </Fragment>
+                    );
+                  })}
+                  {exploreItems.length > 0 && (
+                    <Fragment>
+                      <div className={styles.dropSectionLabel}>Explore</div>
+                      {exploreItems.map(renderMoreItem)}
+                    </Fragment>
+                  )}
+                  <div className={styles.dropDivider} />
+                </>
+              );
+            })()}
 
             <Link
               href={`${base}/help`}

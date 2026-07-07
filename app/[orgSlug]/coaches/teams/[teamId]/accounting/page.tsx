@@ -124,9 +124,9 @@ export default function CoachesAccountingPage({
               <span>/</span>
               <Link href={base}>{assignment.teamName}</Link>
               <span>/</span>
-              <span>Accounting</span>
+              <span>Money</span>
             </nav>
-            <h1 className={styles.pageTitle}>Team Accounting</h1>
+            <h1 className={styles.pageTitle}>Money</h1>
             <p className={styles.pageSub}>{assignment.programYearName}</p>
           </div>
         </div>

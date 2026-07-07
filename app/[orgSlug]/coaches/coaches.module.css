@@ -503,6 +503,78 @@
   .snapshotCardWide { grid-column: 1 / -1; order: -1; }
 }
 
+/* ── Lineups front door (game list) ─────────────────────────────────────── */
+.lineupFrontList { display: flex; flex-direction: column; gap: 0.55rem; margin-bottom: 0.5rem; }
+.lineupFrontRow {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  background: var(--white-8);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm), var(--highlight-top);
+  text-decoration: none;
+  color: var(--white-90);
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+.lineupFrontRow:hover {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
+  background: var(--white-10);
+  box-shadow: var(--glow-sm), var(--shadow-sm), var(--highlight-top);
+  transform: translateY(-1px);
+}
+.lineupFrontDate {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 44px; flex-shrink: 0; line-height: 1;
+}
+.lineupFrontDay { font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; color: var(--white-90); }
+.lineupFrontMonth { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--white-45); margin-top: 2px; }
+.lineupFrontMain { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; flex: 1; }
+.lineupFrontTitle { font-size: 0.95rem; font-weight: 700; color: var(--white-90); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lineupFrontMeta { font-size: 0.78rem; color: var(--white-45); }
+.lineupFrontChip {
+  display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
+  font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 999px;
+}
+.lineupFrontChip[data-tone="ok"]   { color: var(--success); background: rgba(74, 222, 128, 0.12); }
+.lineupFrontChip[data-tone="warn"] { color: var(--warning); background: rgba(var(--warning-rgb), 0.12); }
+.lineupFrontAction {
+  display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
+  font-size: 0.82rem; font-weight: 700; color: var(--blueprint-blue);
+}
+
+/* ── "Last season" preview tile on the Overview ─────────────────────────── */
+.lastSeasonCard {
+  display: flex; align-items: center; gap: 0.9rem;
+  margin: 1.25rem 0 0; padding: 0.85rem 1rem;
+  background: var(--white-8);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm), var(--highlight-top);
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+.lastSeasonCard:hover {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
+  background: var(--white-10);
+  box-shadow: var(--glow-sm), var(--shadow-sm), var(--highlight-top);
+  transform: translateY(-1px);
+}
+.lastSeasonIcon { color: var(--white-40); flex-shrink: 0; }
+.lastSeasonBody { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; flex: 1; }
+.lastSeasonLabel { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--white-40); }
+.lastSeasonName { font-size: 0.92rem; font-weight: 700; color: var(--white-90); }
+.lastSeasonStats { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; font-size: 0.8rem; color: var(--white-55); }
+.lastSeasonStats strong { color: var(--white-80); font-weight: 800; }
+.lastSeasonArrow { color: var(--blueprint-blue); opacity: 0.55; flex-shrink: 0; }
+.lastSeasonCard:hover .lastSeasonArrow { opacity: 1; }
+
+@media (max-width: 640px) {
+  .lineupFrontActionLabel { display: none; }
+  .lastSeasonStats { font-size: 0.75rem; }
+}
+
 /* ── Phase-adaptive "Right now" anchor (Overview top) ──────────────────────
    Rendered in the elevated coach card language — NOT a hero (no hero headers
    inside operating tools, 2026-06-29). Ports the TeamHQ phase LOGIC, not its
