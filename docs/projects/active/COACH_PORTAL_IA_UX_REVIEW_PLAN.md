@@ -268,9 +268,12 @@ Every phase is shippable and demonstrably better for a coach. **No phase require
 - History **Overview preview tile**; **season-over-season comparison**; **per-player attendance reliability**; **"who's paid nothing"** segment; **tournament placement card** (wire the existing placement function to a coach route).
 - **Coach gains:** the robust-metrics half of the promise — rich, resonant data at their fingertips.
 
-### Phase 5 — Assistant-aware verification pass (enforcement is already LIVE on prod — this verifies against shipped code, not pending work)
-- Confirm every new nav item, tile, and connective flow from Phases 1–4 respects the **already-shipped** capability gating (money tri-state, PII redaction via the `rosterPii` grant, announcements draft-only) at the app layer — including the duplicated `navVisible` filter in both nav components and the new Lineups `lineups`-capability rule.
-- Note the existing gating is **fail-open** when capabilities are absent; the verification pass should decide whether new sensitive tiles (money "who's paid nothing", guardian contacts) should fail *closed* instead.
+### Phase 5 — Assistant-aware verification pass ✅ COMPLETE (2026-07-07)
+- **Done:** 3-agent parallel audit (Overview tiles · nav gating · server routes) over every Phase 1–4 addition.
+- **Result:** server-side enforcement PASS on all 10 coach handlers (membership + capability + PII redaction, zero gaps); both nav components confirmed on the single shared `isCoachNavItemVisible` gate; Explore bucket respects caps.
+- **One real gap fixed** (`02aed650`): the Overview **Tournaments tile "fees due" flag** showed a money figure to a `money='off'` assistant (the tile isn't in the dues/budget money filter) — now gated on `canViewMoney`. All other Overview money/PII tiles already fail *closed* while caps load.
+- **Fail-open decision:** the nav's `if (!caps) return true` is **kept** — it's a sub-second cosmetic flash, every route enforces server-side, and forcing it closed just inverts the flicker for head coaches. Data-rendering surfaces already fail closed.
+- **Advisories (accepted, not fixed — low sensitivity):** Season Review shows a tryout *acceptance rate* (aggregate, not candidate names) to any assigned coach; Chat/Settings rely on `default: return true`.
 - **Coach gains:** safe delegation — assistants see exactly what the head coach granted, nothing more.
 
 **Migration ledger:** Phases 0–5 are **migration-free**. Phase 2 (standings), Phase 4 (attendance-reliability, season-over-season, placement) each need **new API routes only**. This is a deliberate design choice and a phasing selling point.
