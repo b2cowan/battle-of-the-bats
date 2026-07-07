@@ -183,6 +183,8 @@ export default async function TournamentLayout({
         endDate={tournament.endDate ?? null}
         status={tournament.status ?? null}
         finished={effectivelyFinished}
+        tournamentId={tournament.id}
+        fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
       />
       {isFreeTournamentPlan && (
         <PoweredByBadge

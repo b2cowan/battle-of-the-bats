@@ -14,14 +14,16 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { Bell, BellRing, BellOff, BellPlus, Loader2 } from 'lucide-react';
-import { getCurrentPushEndpoint, isPushSupported, PushPermissionError } from '@/lib/push-client';
+import { isPushSupported, PushPermissionError } from '@/lib/push-client';
 import { isIOSLike, isStandalonePWA } from '@/lib/device';
 import {
   clearFanAlertsOptIn,
+  disableFanAlerts,
   enableFanAlerts,
   fanAlertsKey,
   notifyFanAlertsChange,
-  readFanAlertsOptIn,
+  readFanAlertsState,
+  subscribeFanAlerts,
   verifyFanAlertsLive,
 } from '@/lib/fan-alerts';
 import styles from './FollowAlertsToggle.module.css';
@@ -87,8 +89,10 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournament
       // own success path dispatches fl-fan-alerts-change, and acting here would
       // prematurely clear the pending spinner / launch a spurious verify.
       if (stateRef.current === 'pending') return;
-      const stored = readFanAlertsOptIn(orgSlug, tournamentSlug);
-      if (!stored) {
+      const stored = readFanAlertsState(orgSlug, tournamentSlug);
+      // This toggle represents SCORE alerts specifically — treat it as OFF unless the shared
+      // state has the scores category on (the fan may have messages-only via the bell).
+      if (!stored || !stored.notifyScores) {
         setState(prev => (prev === 'on' ? 'off' : prev));
         return;
       }
@@ -151,17 +155,14 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournament
   async function disable() {
     setState('pending');
     try {
-      let endpoint = readFanAlertsOptIn(orgSlug, tournamentSlug)?.endpoint ?? null;
-      endpoint = endpoint ?? (await getCurrentPushEndpoint());
-      if (endpoint) {
-        await fetch('/api/public/fan-push/unsubscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint, tournamentId }),
-        });
+      const existing = readFanAlertsState(orgSlug, tournamentSlug);
+      if (existing?.notifyMessages) {
+        // The fan still wants tournament messages — keep the subscription, just turn OFF scores.
+        await subscribeFanAlerts({ orgSlug, tournamentSlug, tournamentId, team, notifyMessages: true, notifyScores: false });
+      } else {
+        // Scores were the only thing on — fully unsubscribe.
+        await disableFanAlerts({ orgSlug, tournamentSlug, tournamentId });
       }
-      clearFanAlertsOptIn(orgSlug, tournamentSlug);
-      notifyFanAlertsChange();
       setState('off');
     } catch {
       // Even if the network call fails, treat it as off locally.

@@ -7,6 +7,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { Communication } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { notifyFansForAnnouncement } from '@/lib/fan-notify';
 
 // Free-tier email volume guard (ratified 2026-06-22). Basic all-team announcements are
 // free, but lightly capped so the free floor can't be used as a bulk mailer. Tournament
@@ -160,9 +161,24 @@ export const POST = withObservability(async (req: Request) => {
 
       const channelSite  = Boolean(data.channelSite);
       const channelEmail = Boolean(data.channelEmail);
+      const channelPush  = Boolean(data.channelPush);
 
-      if (!channelSite && !channelEmail) {
-        return NextResponse.json({ error: 'Select at least one channel (post to site or email).' }, { status: 400 });
+      if (!channelSite && !channelEmail && !channelPush) {
+        return NextResponse.json({ error: 'Select at least one channel (post to site, email, or push to fans).' }, { status: 400 });
+      }
+
+      // Fan push (anonymous device push to opted-in fans) is the signature Plus fan feature —
+      // same gate as fan_score_alerts. Hard-gate here so a free org gets a clear 403 instead of a
+      // silent no-op (the fan-out self-gates too, as defense-in-depth).
+      if (channelPush && !hasPlanFeature(ctx.org.planId, 'fan_score_alerts')) {
+        return NextResponse.json({ error: requiresTournamentPlusCopy('fan_score_alerts') }, { status: 403 });
+      }
+
+      // A fan push deep-links to the public News page, so the message must also be posted to the
+      // site — otherwise the notification taps through to a page that doesn't show it (email-only
+      // posts are hidden publicly). Require the site channel whenever pushing to fans.
+      if (channelPush && !channelSite) {
+        return NextResponse.json({ error: 'Push to fans also needs “Post to site” on, so the notification has a public page to open.' }, { status: 400 });
       }
 
       // Division-targeted site posts require T+
@@ -226,6 +242,33 @@ export const POST = withObservability(async (req: Request) => {
         .single();
 
       if (insertError || !inserted) throw insertError ?? new Error('Insert failed');
+
+      // Fan push (new channel) — buzz every opted-in fan of the tournament. Independent of the
+      // email channel; runs whether or not the post is also emailed. Self-gates to Tournament Plus+
+      // and never throws, so it can't break the post. Returns a count for the organizer's toast.
+      let pushResult: { sent: number; failed: number } | null = null;
+      if (channelPush) {
+        pushResult = await notifyFansForAnnouncement(data.tournamentId, {
+          title: data.title.trim(),
+          body: data.body.trim(),
+        });
+        await writePlatformEvent({
+          eventType: 'tournament_plus_feature_used',
+          source: 'app',
+          orgId: ctx.org.id,
+          actorUserId: ctx.user.id,
+          actorEmail: ctx.user.email,
+          planId: ctx.org.planId,
+          metadata: {
+            feature: 'fan_score_alerts',
+            action: 'announcement_push',
+            tournamentId: data.tournamentId,
+            status: pushResult.failed > 0 ? 'partial' : 'completed',
+            pushedCount: pushResult.sent,
+            failedCount: pushResult.failed,
+          },
+        });
+      }
 
       // Send emails if the email channel is selected
       if (channelEmail) {
@@ -319,10 +362,11 @@ export const POST = withObservability(async (req: Request) => {
         return NextResponse.json({
           communication: mapRow(updated ?? inserted),
           emailResults: { sent: results.success, failed: results.failed },
+          pushResults: pushResult ?? undefined,
         });
       }
 
-      return NextResponse.json({ communication: mapRow(inserted) });
+      return NextResponse.json({ communication: mapRow(inserted), pushResults: pushResult ?? undefined });
     }
 
     // ── update (edit title/body/pinned of a site post) ──────────────────────

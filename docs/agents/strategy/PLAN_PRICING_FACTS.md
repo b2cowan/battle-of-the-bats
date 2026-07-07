@@ -60,6 +60,7 @@ Framing: **"announcements free, communications workflow paid."** *(Decided — r
 - [x] **Officials seat exemption** — BUILT dev 2026-06-22 (free-tier `officialsFreeSeats` on; both seat-count + invite paths already honor it; the score-entry "official" role *is* the scorekeeper role). Local/unpushed.
 - [x] **Free email split + guard** — BUILT dev 2026-06-22. The basic-free / advanced-gated split was already enforced in the product (copy was the only gap — fixed by `/marketing`); added a free-tier volume guard (100 recipients/send, 10 sends/24h). *Note: "templates / send-scheduling" Plus features don't exist yet — nothing to gate until built.* Local/unpushed.
 - [ ] **Founding $179 lock** — dormant (no founding $179 clubs exist); no grandfather to build.
+- [ ] **Fan tournament-message push = Tournament Plus** — Decided 2026-07-06 (`BUSINESS_DECISIONS.md`), not yet built. New anonymous-fan push for organizer day-of messages + schedule changes gates at **`tournament_plus`**, same tier as `fan_score_alerts` (one bundled fan-push capability). Base Tournament still posts the public rain-delay banner + free coach email. On build (`/billing`): broaden `fan_score_alerts` or add a sibling gate at `tournament_plus` in `lib/plan-features.ts`, keep opt-in/revocable/rate-limited/operational-only, run drift check. (`RAIN_DELAY_DAYOF_OPS_PLAN.md` Feature A.)
 
 ---
 

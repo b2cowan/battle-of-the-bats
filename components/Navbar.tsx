@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import type { PublicPageKey } from '@/lib/public-pages';
 import TournamentNavStatus from '@/components/public/TournamentNavStatus';
 import SharePageButton from '@/components/public/SharePageButton';
+import FanNotificationBell from '@/components/public/FanNotificationBell';
 import styles from './Navbar.module.css';
 
 const MARKETING_NAV_LINKS = [
@@ -45,7 +46,7 @@ export default function Navbar() {
   const params   = useParams();
   const orgSlug           = (params?.orgSlug as string) || '';
   const urlTournamentSlug = params?.tournamentSlug as string | undefined;
-  const { logoUrl, orgName, tournamentSlug, tournamentName, tournamentColorMode, tournamentHiddenPages } = useOrgNav();
+  const { logoUrl, orgName, tournamentSlug, tournamentName, tournamentId, fanAlertsEnabled, tournamentFinished, tournamentColorMode, tournamentHiddenPages } = useOrgNav();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -191,6 +192,15 @@ export default function Navbar() {
         </div>
 
         <div className={styles.actions}>
+          {/* Team-independent notification opt-in — every public tab, Plus tournaments only,
+              hidden once the event is over. Sits left of Share as a matched icon pair. */}
+          {tournamentSlug && tournamentId && fanAlertsEnabled && !tournamentFinished && (
+            <FanNotificationBell
+              orgSlug={orgSlug}
+              tournamentSlug={tournamentSlug}
+              tournamentId={tournamentId}
+            />
+          )}
           {/* Persistent, consistent share — the SAME icon in the SAME spot on every
               page; it shares the page you're on (each public route has its own OG
               preview). Register lives on the home hero, not here. */}

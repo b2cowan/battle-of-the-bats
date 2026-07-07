@@ -860,15 +860,16 @@ const tournamentsHelp: HelpPageContent = {
       id: 'public-communication',
       group: 'Communicate & Publish',
       heading: 'Announcements and email',
-      summary: 'Publish news to the public site, pin urgent day-of updates, and send email updates to registered teams.',
-      keywords: ['communication', 'announcements', 'email', 'news posts', 'targeted email', 'pin', 'pinned', 'rain delay', 'schedule banner', 'email limit', 'recipient limit', 'free email cap'],
-      searchText: 'communication audiences send email announcements news posts public tournament page teams division payment status selected teams contact role targeted communication all teams pin pinned post top of news rain delay urgent day-of update game day schedule banner live event free plan email limit 100 recipients per send 10 announcements per day daily email cap volume limit basic email cap too many emails send limit',
+      summary: 'Publish news to the public site, pin urgent day-of updates, email registered teams, and push notifications to fans.',
+      keywords: ['communication', 'announcements', 'email', 'news posts', 'targeted email', 'pin', 'pinned', 'rain delay', 'schedule banner', 'email limit', 'recipient limit', 'free email cap', 'push', 'push notification', 'push to fans', 'notify fans', 'fan alerts', 'phone alert'],
+      searchText: 'communication audiences send email announcements news posts public tournament page teams division payment status selected teams contact role targeted communication all teams pin pinned post top of news rain delay urgent day-of update game day schedule banner live event free plan email limit 100 recipients per send 10 announcements per day daily email cap volume limit basic email cap too many emails send limit push to fans push notification phone notification notify fans buzz fans phones fan alerts followed team alerts opt in tournament plus channels post to site email recipients three channels',
       links: [
         { label: 'Communication', href: '../tournaments/communication' },
       ],
       content: (
         <>
-          <p>Use <strong>Communication</strong> for tournament messages. Free Tournament supports basic all-team email — up to 100 recipients per message and 10 email announcements per day. Tournament Plus removes those limits and can target by division, registration status, payment status, selected teams, and contact role.</p>
+          <p>Use <strong>Communication</strong> for tournament messages. A single message can go out on up to three channels at once: <strong>Post to site</strong> (adds it to the public News page), <strong>Email recipients</strong> (sends to registered teams), and <strong>Push to fans</strong> (a phone notification to fans who&rsquo;ve turned on alerts). Free Tournament supports basic all-team email — up to 100 recipients per message and 10 email announcements per day. Tournament Plus removes those limits and can target by division, registration status, payment status, selected teams, and contact role.</p>
+          <p><strong>Push to fans (Tournament Plus).</strong> Turn on <strong>Push to fans</strong> to send a phone notification to everyone following a team in this tournament who has turned on alerts. Because tapping the notification opens the tournament&rsquo;s public <strong>News</strong> page, <strong>Post to site</strong> stays on automatically whenever you push. It&rsquo;s built for rain delays and urgent day-of updates — <strong>pin</strong> the post too and it also shows as the banner on the public Schedule. After sending, you&rsquo;ll see how many fans were reached (or &ldquo;no fans have alerts on yet&rdquo; if nobody has opted in). On the free plan this option is locked.</p>
           <p><strong>Pinning a site post.</strong> When you post a message to the site and <strong>pin</strong> it, it stays at the top of the public <strong>News</strong> page — and, while the tournament is live (today falls within the event dates), it also appears as a <strong>banner at the top of the public Schedule</strong>. That puts urgent day-of updates — a rain delay, a diamond change, a start-time push — right where fans are already looking. Pin sparingly so the banner stays meaningful; unpin it once the situation clears.</p>
           <p>Review recipients and message content carefully before sending. Targeted sends should be operational and useful for teams, not broad marketing blasts.</p>
         </>
@@ -895,13 +896,27 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-rain-delay-banner',
           question: 'How do I get a rain delay or urgent update in front of fans on game day?',
-          answerText: 'Post a message to the site and pin it. A pinned site post stays at the top of the News page and, while the tournament is live, also shows as a banner at the top of the public Schedule page. Unpin it once the situation clears. This is the same pin control used for News.',
-          keywords: ['rain delay', 'urgent update', 'game day', 'schedule banner', 'pin announcement', 'day-of'],
+          answerText: 'Post a message to the site and pin it. A pinned site post stays at the top of the News page and, while the tournament is live, also shows as a banner at the top of the public Schedule page. On Tournament Plus you can also turn on Push to fans to send a phone notification at the same time. Unpin it once the situation clears.',
+          keywords: ['rain delay', 'urgent update', 'game day', 'schedule banner', 'pin announcement', 'day-of', 'push to fans', 'notify fans'],
           popular: true,
           answer: (
             <>
               <p>Open <strong>Communication</strong>, write the update, keep <strong>Post to site</strong> on, and turn on <strong>Pin</strong>. While the tournament is live, a pinned site post appears as a banner at the top of the public <strong>Schedule</strong> (and stays pinned at the top of <strong>News</strong>). It&rsquo;s the fastest way to reach fans already watching the schedule for a rain delay, a diamond change, or a start-time push.</p>
+              <p>On <strong>Tournament Plus</strong>, also turn on <strong>Push to fans</strong> to buzz the phones of fans who&rsquo;ve enabled alerts — the fastest way to reach people who aren&rsquo;t looking at the schedule right then.</p>
               <p><strong>Unpin</strong> it once the situation clears so the banner stays reserved for things that matter in the moment.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-push-to-fans',
+          question: 'Can I send a push notification to fans?',
+          answerText: 'Yes, on Tournament Plus and higher. Turn on "Push to fans" when posting a message to send a phone notification to everyone following a team in this tournament who has turned on alerts. It requires "Post to site" because the notification opens the public News page, and it is ideal for rain delays and day-of updates. Fans opt in themselves by following a team and enabling alerts on their device, so early on you may see "no fans have alerts on yet." On the free plan the option is locked.',
+          keywords: ['push', 'push notification', 'push to fans', 'notify fans', 'phone alert', 'fan alerts', 'buzz phone', 'opt in'],
+          popular: true,
+          answer: (
+            <>
+              <p><strong>Yes — on Tournament Plus and higher.</strong> When you write a message, turn on <strong>Push to fans</strong> to send a phone notification to everyone following a team in this tournament who has turned on alerts. Because the notification opens the tournament&rsquo;s public <strong>News</strong> page, <strong>Post to site</strong> stays on whenever you push.</p>
+              <p>It&rsquo;s ideal for rain delays and urgent day-of updates — pin the post and it also appears as the banner on the public <strong>Schedule</strong>. Fans opt in themselves by following a team and turning on alerts on their device, so early in an event you may see &ldquo;no fans have alerts on yet.&rdquo; On the free plan this option is locked.</p>
             </>
           ),
         },
@@ -913,8 +928,8 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Communicate & Publish',
       heading: 'Chat with your coaches',
       summary: 'A live group chat with every coach in your tournament — plus optional division "rooms" (channels) for big events — instead of one-way email blasts.',
-      keywords: ['chat', 'tournament chat', 'coach chat', 'group chat', 'message coaches', 'live chat', 'rooms', 'division rooms', 'channels', 'all coaches room', 'new room', 'create room', 'switch rooms', 'manage room', 'rename room', 'delete room', 'close room', 'members', 'manage chat', 'manage panel', 'mute', 'remove message', 'delete message', 'delete own message', 'message removed', 'not yet joined', 'moderation', 'unread', 'reply', 'quote', 'mention', '@mention', 'emoji', 'react', 'search messages', 'pinned messages', 'pin message', 'unpin', 'read by', 'read receipt', 'last seen'],
-      searchText: 'tournament chat group chat live chat with coaches message all coaches conversation real time chat tab division rooms channels create a room new room name the room pick divisions room covers a division coaches join automatically all coaches room undeletable switch rooms rooms button manage room button rename room close room reopen read only delete room empty room only protect history open members manage panel manage chat roster not yet joined invite coach mute coach remove message delete message delete your own message message removed moderate moderation unread count in-app bell phone push notification Tournament Plus every participating coach free and paid stays readable after tournament reply quote a message jump to original mention @mention tag a coach mention reaches them even if muted emoji smiley react with emoji search recent messages magnifier read receipt sent read by 3 of 8 read by everyone last seen pinned message pin unpin schedule field map rules banner at top of room collapsible',
+      keywords: ['chat', 'tournament chat', 'coach chat', 'group chat', 'message coaches', 'live chat', 'rooms', 'division rooms', 'channels', 'all coaches room', 'new room', 'create room', 'switch rooms', 'manage room', 'rename room', 'delete room', 'close room', 'members', 'manage chat', 'manage panel', 'mute', 'remove message', 'delete message', 'delete own message', 'message removed', 'not yet joined', 'moderation', 'unread', 'reply', 'quote', 'mention', '@mention', 'emoji', 'react', 'search messages', 'pinned messages', 'pin message', 'unpin', 'read by', 'read receipt', 'last seen', 'coach sign-ups', 'coaches signed up', 'remind teams to sign up', 'chat adoption', 'sign-up tracker'],
+      searchText: 'tournament chat group chat live chat with coaches message all coaches conversation real time chat tab division rooms channels create a room new room name the room pick divisions room covers a division coaches join automatically all coaches room undeletable switch rooms rooms button manage room button rename room close room reopen read only delete room empty room only protect history open members manage panel manage chat roster not yet joined invite coach mute coach remove message delete message delete your own message message removed moderate moderation unread count in-app bell phone push notification Tournament Plus every participating coach free and paid stays readable after tournament reply quote a message jump to original mention @mention tag a coach mention reaches them even if muted emoji smiley react with emoji search recent messages magnifier read receipt sent read by 3 of 8 read by everyone last seen pinned message pin unpin schedule field map rules banner at top of room collapsible coach sign-ups coaches signed up how many coaches signed up dashboard coach sign-ups and chat panel remind teams to sign up remind coaches one click bulk reminder who has signed up in the chat not yet joined no coach email on file flagged fill the room chat adoption tracker',
       links: [
         { label: 'Chat', href: '../tournaments/chat' },
       ],
@@ -947,12 +962,27 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-tournament-chat-not-joined',
           question: 'A coach is missing from the chat — how do I add them?',
-          answerText: 'Open Manage room at the top of the Chat tab to find the Not yet joined list — coaches who have not finished signing in. Use Copy link or Email beside their name to send the coach sign-in link. They join automatically once they sign in with the email on their team registration — there is no manual step to add them. Coaches are placed into the All coaches room and any division room covering their team automatically.',
-          keywords: ['not yet joined', 'coach missing from chat', 'invite coach to chat', 'add coach', 'coach sign in', 'manage room', 'members'],
+          answerText: 'A coach joins the chat automatically once they sign in with the email on their team registration — there is no manual step to add them. To nudge them, you have two ways. One at a time: open Manage room at the top of the Chat tab, find the Not yet joined list, and use Copy link or Email beside a name to send that coach their sign-in link. All at once: your tournament dashboard has a Coach Sign-ups & Chat panel with a Remind teams to sign up button that emails every not-yet-joined team their sign-in link in one click. Coaches are placed into the All coaches room and any division room covering their team automatically.',
+          keywords: ['not yet joined', 'coach missing from chat', 'invite coach to chat', 'add coach', 'coach sign in', 'manage room', 'members', 'remind teams to sign up', 'remind all coaches'],
           answer: (
             <>
-              <p>Tap <strong>Manage room</strong> at the top of the Chat tab and look under <strong>Not yet joined</strong> — that&rsquo;s any coach who hasn&rsquo;t finished signing in yet. Use <strong>Copy link</strong> or <strong>Email</strong> beside their name to send the coach sign-in link.</p>
-              <p>They join automatically the moment they sign in with their team&rsquo;s email — there&rsquo;s no manual step to add them. They&rsquo;re placed into the <strong>All coaches</strong> room and into any division room that covers their team.</p>
+              <p>A coach joins automatically the moment they sign in with their team&rsquo;s email — there&rsquo;s no manual step to add them. They&rsquo;re placed into the <strong>All coaches</strong> room and into any division room that covers their team. If someone&rsquo;s missing, they just haven&rsquo;t signed in yet — and you can nudge them two ways.</p>
+              <p><strong>One at a time:</strong> tap <strong>Manage room</strong> at the top of the Chat tab, look under <strong>Not yet joined</strong>, and use <strong>Copy link</strong> or <strong>Email</strong> beside a name to send that coach their sign-in link.</p>
+              <p><strong>All at once:</strong> on your tournament <strong>dashboard</strong>, the <strong>Coach Sign-ups &amp; Chat</strong> panel has a <strong>Remind teams to sign up</strong> button that emails every not-yet-joined team their sign-in link in a single click.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-tournament-chat-signups',
+          question: 'How do I see how many coaches have signed up — and remind the rest?',
+          answerText: 'Your tournament dashboard has a Coach Sign-ups & Chat panel that tracks it for you: how many of your teams have a coach signed up for their portal, how many are in the chat, and how many have not yet joined. When teams are still missing, use Remind teams to sign up to email everyone who has not joined a link to set up their portal — in one click, instead of chasing them one at a time. Any teams with no coach email on file are flagged so you can add one. Signing up is what puts a coach in the chat, so this is also the fastest way to fill the room. On the free Tournament plan the panel shows the Tournament Plus upgrade instead.',
+          keywords: ['coach sign-ups', 'coaches signed up', 'how many coaches signed up', 'remind teams to sign up', 'remind coaches to sign up', 'chat adoption', 'dashboard chat panel', 'coach sign-up tracker', 'who has signed up', 'no coach email', 'not yet joined'],
+          popular: true,
+          answer: (
+            <>
+              <p>Your tournament <strong>dashboard</strong> has a <strong>Coach Sign-ups &amp; Chat</strong> panel that tracks it for you: how many of your teams have a coach <strong>signed up</strong> for their portal, how many are <strong>in the chat</strong>, and how many have <strong>not yet joined</strong>.</p>
+              <p>When teams are still missing, use <strong>Remind teams to sign up</strong> to email everyone who hasn&rsquo;t joined a link to set up their portal — in one click, instead of chasing them one at a time. Any teams with <strong>no coach email on file</strong> are flagged so you can add one first. Because signing up is what puts a coach in the chat, this is also the fastest way to fill the room.</p>
+              <p>On the free Tournament plan the panel shows the Tournament Plus upgrade option instead.</p>
             </>
           ),
         },

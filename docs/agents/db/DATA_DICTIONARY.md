@@ -4825,7 +4825,13 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 **`tournament_id`** (uuid, NN; FK→`tournaments(id)` ON DELETE CASCADE) — the tournament being followed; half of the unique key and the fan-out query filter ([lib/fan-notify.ts:58](../../../lib/fan-notify.ts#L58)). Validated against `team_id` at subscribe.
 
 <!-- dict:col:fan_push_subscriptions.team_id -->
-**`team_id`** (uuid, NN; FK→`teams(id)` ON DELETE CASCADE) — the single team this device follows in this tournament; drives the "who follows either team in this game" fan-out (`.in('team_id', [home, away])`). **Overwritten** on re-follow (conflict key excludes it).
+**`team_id`** (uuid, **nullable** as of mig 177; FK→`teams(id)` ON DELETE CASCADE) — the single team this device follows in this tournament; drives the "who follows either team in this game" score fan-out (`.in('team_id', [home, away])`). **Overwritten** on re-follow (conflict key excludes it). **NULL = a tournament-wide, messages-only subscription** (the notification bell's no-team opt-in) — such rows are invisible to the score fan-out (NULL is excluded by `.in(team_id, …)`) but still receive `notify_messages` announcements.
+
+<!-- dict:col:fan_push_subscriptions.notify_messages -->
+**`notify_messages`** (boolean, NN, DEFAULT true; mig 177) — category flag: this device wants tournament-wide **organizer announcements / day-of messages** (rain delays). Filters `notifyFansForAnnouncement` ([lib/fan-notify.ts](../../../lib/fan-notify.ts)). Set by the public notification bell + implicitly true for the team `FollowAlertsToggle`. Independent of `team_id` (a NULL-team row can have this true).
+
+<!-- dict:col:fan_push_subscriptions.notify_scores -->
+**`notify_scores`** (boolean, NN, DEFAULT true; mig 177) — category flag: this device wants **game score alerts** (+ the playoff-set / champions moments) for its followed `team_id`. Filters `notifyFansForGame`/`notifyFansForPlayoff`/`notifyFansForChampions`. A NULL-team (messages-only) row leaves this effectively inert (no team to score for).
 
 <!-- dict:col:fan_push_subscriptions.device_label -->
 **`device_label`** (text, nullable) — client-derived UA label (from [FollowAlertsToggle.tsx:89](../../../components/public/FollowAlertsToggle.tsx#L89)). **Write-only.**

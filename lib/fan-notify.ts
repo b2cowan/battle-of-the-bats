@@ -61,6 +61,7 @@ export async function notifyFansForGame(gameId: string, status: GameStatus): Pro
       .from('fan_push_subscriptions')
       .select('id, endpoint, keys_p256dh, keys_auth')
       .eq('tournament_id', tournament.id)
+      .eq('notify_scores', true)
       .in('team_id', teamIds);
     if (!subs || subs.length === 0) return;
 
@@ -143,10 +144,15 @@ export async function notifyFansForPlayoff(tournamentId: string): Promise<void> 
     if (!hasPlanFeature(org.plan_id as OrgPlan, 'fan_score_alerts')) return;
 
     // Everyone following any team in this tournament.
+    // Playoffs/champions are tournament-wide result moments — gate on the score-alerts category
+    // (a fan who turned scores off won't get them). No team filter: any scores-on subscriber is
+    // included, including a no-team fan who left scores on. A messages-only sub (scores off) is
+    // excluded.
     const { data: subs } = await supabaseAdmin
       .from('fan_push_subscriptions')
       .select('id, endpoint, keys_p256dh, keys_auth')
-      .eq('tournament_id', tournament.id);
+      .eq('tournament_id', tournament.id)
+      .eq('notify_scores', true);
     if (!subs || subs.length === 0) return;
 
     const title = '🏆 The playoff bracket is set!';
@@ -210,10 +216,12 @@ export async function notifyFansForChampions(tournamentId: string, headline?: st
     // The signature halo feature is Tournament Plus+.
     if (!hasPlanFeature(org.plan_id as OrgPlan, 'fan_score_alerts')) return;
 
+    // Champions is a result moment — gate on the score-alerts category (see notifyFansForPlayoff).
     const { data: subs } = await supabaseAdmin
       .from('fan_push_subscriptions')
       .select('id, endpoint, keys_p256dh, keys_auth')
-      .eq('tournament_id', tournament.id);
+      .eq('tournament_id', tournament.id)
+      .eq('notify_scores', true);
     if (!subs || subs.length === 0) return;
 
     const title = '🏆 Champions crowned!';
@@ -250,4 +258,90 @@ export async function notifyFansForChampions(tournamentId: string, headline?: st
   } catch (err) {
     console.error('[fan-notify] notifyFansForChampions error:', err);
   }
+}
+
+/**
+ * Fan push fan-out for an organizer ANNOUNCEMENT (e.g. a rain-delay / day-of notice) — one push to
+ * EVERY anonymous fan following ANY team in the tournament (not just a game's two teams). Fired when
+ * an organizer posts an announcement with the "push to fans" channel selected
+ * (app/api/admin/communications). Gated to Tournament Plus+ via `fan_score_alerts`, same as the
+ * score/playoff/champions paths. Deep-links to the public News page where the full message lives.
+ *
+ * Returns `{ sent, failed }`: `sent` = devices actually pushed, `failed` = unexpected send errors
+ * (NOT expired 410/404 subscriptions, which are silently cleaned up — those aren't real failures).
+ * `sent = 0, failed = 0` means "no one has alerts on yet"; `failed > 0` signals a real push problem
+ * (e.g. misconfigured keys). Both 0 on any gate miss / missing tournament. Fire-and-forget — never throws.
+ */
+export async function notifyFansForAnnouncement(
+  tournamentId: string,
+  message: { title: string; body: string },
+): Promise<{ sent: number; failed: number }> {
+  let sent = 0;
+  let failed = 0;
+  try {
+    const { data: tournament } = await supabaseAdmin
+      .from('tournaments')
+      .select('id, slug, name, org_id, logo_url')
+      .eq('id', tournamentId)
+      .maybeSingle();
+    if (!tournament) return { sent, failed };
+
+    const { data: org } = await supabaseAdmin
+      .from('organizations')
+      .select('slug, plan_id, logo_url')
+      .eq('id', tournament.org_id)
+      .maybeSingle();
+    if (!org) return { sent, failed };
+
+    // The signature halo feature is Tournament Plus+.
+    if (!hasPlanFeature(org.plan_id as OrgPlan, 'fan_score_alerts')) return { sent, failed };
+
+    // Every subscriber of this tournament who wants messages — team-followers AND no-team
+    // (messages-only) subscribers. Gate on the messages category.
+    const { data: subs } = await supabaseAdmin
+      .from('fan_push_subscriptions')
+      .select('id, endpoint, keys_p256dh, keys_auth')
+      .eq('tournament_id', tournament.id)
+      .eq('notify_messages', true);
+    if (!subs || subs.length === 0) return { sent, failed };
+
+    // The organizer's own words carry the notification. Collapse whitespace and cap the body so a
+    // long, multi-line message reads cleanly in an OS notification (which truncates anyway).
+    const title = message.title.trim() || tournament.name;
+    const flatBody = message.body.trim().replace(/\s+/g, ' ');
+    const body = flatBody ? (flatBody.length > 160 ? `${flatBody.slice(0, 159)}…` : flatBody) : tournament.name;
+    const link = `/${org.slug}/${tournament.slug}/news`;
+    const rawIcon = tournament.logo_url || org.logo_url;
+    const icon = rawIcon && /^https?:\/\//i.test(rawIcon) ? rawIcon : undefined;
+
+    const seen = new Set<string>();
+    for (const sub of subs) {
+      if (seen.has(sub.endpoint)) continue;
+      seen.add(sub.endpoint);
+      try {
+        await sendWebPush(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.keys_p256dh, auth: sub.keys_auth } },
+          { title, body, link, icon },
+        );
+        sent++;
+        await supabaseAdmin
+          .from('fan_push_subscriptions')
+          .update({ last_used_at: new Date().toISOString() })
+          .eq('id', sub.id);
+      } catch (err: unknown) {
+        const code = (err as { statusCode?: number })?.statusCode;
+        if (code === 410 || code === 404) {
+          // Expired/revoked subscription — a 410/404 endpoint is dead for every message, so remove
+          // it. Not counted as a failure (it's routine cleanup, not a broken push).
+          await supabaseAdmin.from('fan_push_subscriptions').delete().eq('endpoint', sub.endpoint);
+        } else {
+          failed++;
+          console.error('[fan-notify] announcement push send failed for', sub.endpoint, err);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[fan-notify] notifyFansForAnnouncement error:', err);
+  }
+  return { sent, failed };
 }

@@ -3130,7 +3130,7 @@
         "column_name": "team_id",
         "data_type": "uuid",
         "udt_name": "uuid",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -3159,6 +3159,24 @@
         "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "fan_push_subscriptions",
+        "pos": 10,
+        "column_name": "notify_messages",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "table_name": "fan_push_subscriptions",
+        "pos": 11,
+        "column_name": "notify_scores",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
       },
       {
         "table_name": "feedback_submissions",

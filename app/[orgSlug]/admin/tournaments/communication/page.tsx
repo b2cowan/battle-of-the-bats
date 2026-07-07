@@ -1,13 +1,14 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  AlertCircle, CheckCircle2, Copy, Globe, Lock,
+  AlertCircle, BellRing, CheckCircle2, Copy, Globe, Lock,
   Mail, Plus, RefreshCw, RotateCcw, Send,
   Star, Trash2, Users, X,
 } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { hasPlanFeature } from '@/lib/plan-features';
 import { Division, Communication, Team } from '@/lib/types';
 import s from '../../admin-common.module.css';
 import styles from './communication.module.css';
@@ -93,6 +94,7 @@ export default function AdminCommunicationPage() {
   const [body,        setBody]        = useState('');
   const [channelSite, setChannelSite] = useState(true);
   const [channelEmail,setChannelEmail]= useState(false);
+  const [channelPush, setChannelPush] = useState(false);
   const [pinned,      setPinned]      = useState(false);
   const [siteDivisionIds, setSiteDivisionIds] = useState<Set<string>>(() => new Set());
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
@@ -122,13 +124,15 @@ export default function AdminCommunicationPage() {
   // ── Derived data ─────────────────────────────────────────────────────────────
   const divisionNameById = useMemo(() => new Map(divisions.map(g => [g.id, g.name])), [divisions]);
   const acceptedTeamCount = useMemo(() => teams.filter(t => t.status === 'accepted').length, [teams]);
+  // Fan push (buzz opted-in fans' phones) is the Plus fan-alerts feature — same gate as score alerts.
+  const fanPushAvailable = currentOrg ? hasPlanFeature(currentOrg.planId, 'fan_score_alerts') : false;
 
   // ── Compose helpers ──────────────────────────────────────────────────────────
   function openNewMessage() {
     setEditingId(null);
     setTitle(''); setBody(''); setPinned(false);
     setSiteDivisionIds(new Set());
-    setChannelSite(true); setChannelEmail(false);
+    setChannelSite(true); setChannelEmail(false); setChannelPush(false);
     setActiveTemplate(null);
     setIsComposing(true);
     setSendResult(null);
@@ -141,6 +145,7 @@ export default function AdminCommunicationPage() {
     setSiteDivisionIds(new Set(item.divisionIds ?? []));
     setChannelSite(item.channelSite);
     setChannelEmail(false);
+    setChannelPush(false);
     setEditingId(item.id);
     // isComposing stays false — edit uses a modal, not the inline panel
     setSendResult(null);
@@ -151,7 +156,7 @@ export default function AdminCommunicationPage() {
     setEditingId(null);
     setTitle(''); setBody(''); setPinned(false);
     setSiteDivisionIds(new Set());
-    setChannelSite(true); setChannelEmail(false);
+    setChannelSite(true); setChannelEmail(false); setChannelPush(false);
     setActiveTemplate(null);
   }
 
@@ -195,6 +200,7 @@ export default function AdminCommunicationPage() {
               body: body.trim(),
               channelSite,
               channelEmail,
+              channelPush,
               pinned,
               divisionIds: Array.from(siteDivisionIds),
               targeting: null, // always send to all accepted teams
@@ -204,21 +210,21 @@ export default function AdminCommunicationPage() {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Failed to send.');
 
-        const r = json.emailResults;
-        if (channelEmail && r) {
-          const warn = r.failed > 0;
-          setSendResult({
-            type: warn ? 'error' : 'success',
-            msg: warn
-              ? `Sent to ${r.sent} · ${r.failed} failed to deliver`
-              : `Sent to ${r.sent} recipient${r.sent === 1 ? '' : 's'}`,
-          });
-        } else {
-          setSendResult({
-            type: 'success',
-            msg: channelSite && channelEmail ? 'Posted to site and sent by email.' : channelSite ? 'Posted to site.' : 'Email sent.',
-          });
+        // Build a single result line covering every channel that ran.
+        const email = json.emailResults;
+        const push  = json.pushResults;
+        const parts: string[] = [];
+        if (channelSite) parts.push('posted to site');
+        if (channelEmail && email) parts.push(`emailed ${email.sent}${email.failed ? ` (${email.failed} failed)` : ''}`);
+        if (channelPush && push) {
+          if (push.sent > 0)        parts.push(`pushed to ${push.sent} fan${push.sent === 1 ? '' : 's'}${push.failed ? ` (${push.failed} failed)` : ''}`);
+          else if (push.failed > 0) parts.push(`push failed for ${push.failed} device${push.failed === 1 ? '' : 's'}`);
+          else                      parts.push('no fans have alerts on yet');
         }
+        const joined = parts.join(' · ');
+        const msg = joined ? joined.charAt(0).toUpperCase() + joined.slice(1) + '.' : 'Done.';
+        const pushHadError = channelPush && push && push.failed > 0;
+        setSendResult({ type: (channelEmail && email?.failed > 0) || pushHadError ? 'error' : 'success', msg });
       }
 
       await loadData();
@@ -279,10 +285,18 @@ export default function AdminCommunicationPage() {
 
   const sendButtonLabel = useMemo(() => {
     if (editingId) return 'Save Changes';
-    if (channelSite && channelEmail) return `Post & Send${acceptedTeamCount > 0 ? ` to ${acceptedTeamCount}` : ''}`;
-    if (channelEmail)  return `Send${acceptedTeamCount > 0 ? ` to ${acceptedTeamCount}` : ''}`;
-    return 'Post to Site';
-  }, [editingId, channelSite, channelEmail, acceptedTeamCount]);
+    const verbs: string[] = [];
+    if (channelSite)  verbs.push('Post');
+    if (channelEmail) verbs.push('Send');
+    if (channelPush)  verbs.push('Push');
+    if (verbs.length === 0) return 'Post to Site';
+    if (verbs.length === 1) {
+      if (channelSite)  return 'Post to Site';
+      if (channelEmail) return `Send${acceptedTeamCount > 0 ? ` to ${acceptedTeamCount}` : ''}`;
+      return 'Push to Fans';
+    }
+    return verbs.join(' & ');
+  }, [editingId, channelSite, channelEmail, channelPush, acceptedTeamCount]);
 
   // ─────────────────────────────────────────────────────────────────────────────
 
@@ -380,7 +394,7 @@ export default function AdminCommunicationPage() {
                   {/* Site post */}
                   <div className={`${styles.channelRow} ${channelSite ? styles.channelActive : ''}`}>
                     <label className={styles.channelToggle}>
-                      <input type="checkbox" checked={channelSite} onChange={e => setChannelSite(e.target.checked)} disabled={!!editingId} />
+                      <input type="checkbox" checked={channelSite} onChange={e => { const on = e.target.checked; setChannelSite(on); if (!on) setChannelPush(false); }} disabled={!!editingId} />
                       <Globe size={15} />
                       <span className={styles.channelName}>Post to site</span>
                       <span className={styles.channelDesc}>Appears on the public tournament News page</span>
@@ -449,6 +463,42 @@ export default function AdminCommunicationPage() {
                       )}
                     </div>
                   )}
+
+                  {/* Push-to-fans channel (Tournament Plus fan alerts) */}
+                  {!editingId && (
+                    fanPushAvailable ? (
+                      <div className={`${styles.channelRow} ${channelPush ? styles.channelActive : ''}`}>
+                        <label className={styles.channelToggle}>
+                          <input type="checkbox" checked={channelPush} onChange={e => { const on = e.target.checked; setChannelPush(on); if (on) setChannelSite(true); }} />
+                          <BellRing size={15} />
+                          <span className={styles.channelName}>Push to fans</span>
+                          <span className={styles.channelDesc}>Buzzes fans who turned on alerts for this tournament</span>
+                        </label>
+
+                        {channelPush && (
+                          <div className={styles.channelOptions}>
+                            <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--white-50)', lineHeight: 1.4 }}>
+                              Sends a phone notification to every fan following a team in this tournament who opted in. Great for rain delays and urgent day-of updates. Also posts to the site (so the notification opens the full message) — pin it to show it on the schedule too.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className={styles.channelRow}>
+                        <label className={styles.channelToggle} style={{ opacity: 0.6 }}>
+                          <input type="checkbox" checked={false} disabled />
+                          <BellRing size={15} />
+                          <span className={styles.channelName}>Push to fans</span>
+                          <span className={styles.channelDesc}>Buzz fans’ phones with day-of updates</span>
+                        </label>
+                        <div className={styles.channelOptions}>
+                          <a href={billingHref} className={styles.targetingHint}>
+                            <Lock size={10} /> Tournament Plus unlocks push notifications to fans
+                          </a>
+                        </div>
+                      </div>
+                    )
+                  )}
                 </div>
 
                 {/* Inline result (errors during compose) */}
@@ -468,7 +518,7 @@ export default function AdminCommunicationPage() {
                 <button
                   type="submit"
                   className="btn btn-lime btn-data"
-                  disabled={sending || (!channelSite && !channelEmail)}
+                  disabled={sending || (!channelSite && !channelEmail && !channelPush)}
                 >
                   {sending
                     ? <><RefreshCw className="spin" size={16} /> Sending…</>

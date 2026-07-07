@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-07-06 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-07-07 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-07-06
+# DB Schema Reference — 2026-07-07
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -487,7 +487,7 @@ id (uuid), fingerprint NOT NULL, title, error_name, route, http_method, severity
 - Indexes: error_groups_fingerprint_key, idx_error_groups_env_last_seen, idx_error_groups_status_severity
 
 ### fan_push_subscriptions
-id (uuid), endpoint NOT NULL, keys_p256dh NOT NULL, keys_auth NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, team_id (uuid) → teams.id NOT NULL, device_label, created_at, last_used_at
+id (uuid), endpoint NOT NULL, keys_p256dh NOT NULL, keys_auth NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, team_id (uuid) → teams.id, device_label, created_at, last_used_at, notify_messages (boolean), notify_scores (boolean)
 - Indexes: fan_push_subscriptions_endpoint_idx, fan_push_subscriptions_endpoint_tournament_id_key, fan_push_subscriptions_tournament_team_idx
 
 ### feedback_submissions
