@@ -711,7 +711,7 @@ const coachesHelp: HelpPageContent = {
       heading: 'How to start your next season & set your division (Premium)',
       summary: 'Roll your team into a new season yourself — your roster comes with you, the schedule starts fresh, and last year becomes read-only history.',
       keywords: ['start next season', 'new season', 'next season', 'roll over season', 'season rollover', 'team settings', 'division', 'edit division', 'past seasons', 'premium'],
-      searchText: 'start next season new season next year roll over rollover carry roster forward fee plan fee template planned budget schedule starts fresh previous season read only past seasons history season review team settings edit change division head coach year end premium club owned admin manages seasons lineup rules innings cap rotation pitching cap minimum innings min play playing time auto-fill caps',
+      searchText: 'start next season new season next year roll over rollover carry roster forward fee plan fee template planned budget schedule starts fresh previous season read only past seasons history season review team settings edit change division head coach year end premium club owned admin manages seasons lineup rules innings cap rotation pitching cap minimum innings min play playing time auto-fill caps this season vs last comparison winning percentage record roster size trend up down improving better than last year are we improving dues collected expenses assistant coaches can see',
       content: (
         <>
           <p>In the <strong>Premium</strong> portal, a new <strong>Settings</strong> area lets you run your team from one year to the next yourself — without waiting on an organization admin.</p>
@@ -721,7 +721,7 @@ const coachesHelp: HelpPageContent = {
             <li>Optionally bring over your <strong>fee plan</strong> (amounts and installments; due dates shift forward a year) and your <strong>planned budget</strong> (your projected buckets).</li>
             <li>The <strong>schedule starts fresh</strong>, and last season&apos;s money — payments, spending, and paid history — stays behind with that season.</li>
           </ul>
-          <p>The previous season then becomes <strong>read-only history</strong> under <strong>Season Review</strong>, and you land in the new season with a short summary of what carried over and anything worth a second look — for example, confirming the carried-over fee due dates or re-collecting waivers for the new season.</p>
+          <p>The previous season then becomes <strong>read-only history</strong> under <strong>Season Review</strong>. That page now opens with a <strong>&ldquo;This season vs last&rdquo;</strong> comparison — winning %, roster size, and (with money access) dues collected and expenses, each with an up/down trend so you can see at a glance whether you&apos;re improving — followed by the read-only list of past seasons. You also land in the new season with a short summary of what carried over and anything worth a second look — for example, confirming the carried-over fee due dates or re-collecting waivers for the new season.</p>
           <p><strong>Set your division.</strong> Settings is also where you set your team&apos;s <strong>division</strong> (for example, &quot;U13 Tier 1&quot;); it shows on your team overview.</p>
           <p>If your team is <strong>owned by a club or league</strong> (an organization adopted it), your club admin manages seasons and division for you — you&apos;ll see those as read-only.</p>
         </>
@@ -735,6 +735,15 @@ const coachesHelp: HelpPageContent = {
           popular: true,
           answer: (
             <p>On a standalone Premium team, the <strong>head coach</strong> can do it directly: open <strong>Settings</strong> and choose <strong>Start next season</strong>. Your active roster carries forward, you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season moves to read-only history under <strong>Season Review</strong>. If your team is owned by a club or league, the club admin starts seasons for you.</p>
+          ),
+        },
+        {
+          id: 'faq-season-review-comparison',
+          question: 'How do I see if my team is improving year over year?',
+          answerText: "Open Season Review. It starts with a 'This season vs last' comparison — winning % and roster size, plus dues collected and expenses if you have money access — each with an up or down trend against your most recent past season. The current season is marked 'in progress,' and it compares on rates (winning %, not raw win totals) so a half-played season isn't shown as a decline. Any assigned coach can see the record and roster trend; the dues and expenses rows need money access.",
+          keywords: ['improving', 'better than last year', 'this season vs last', 'season comparison', 'winning percentage', 'trend', 'year over year', 'season review'],
+          answer: (
+            <p>Open <strong>Season Review</strong>. It starts with a <strong>&ldquo;This season vs last&rdquo;</strong> comparison — winning % and roster size, plus dues collected and expenses if you have money access — each with an up or down trend against your most recent past season. The current season is marked <strong>&ldquo;in progress,&rdquo;</strong> and it compares on <strong>rates</strong> (winning %, not raw win totals) so a half-played season isn&apos;t shown as a decline. Any assigned coach can see the record and roster trend; the dues and expenses rows need money access.</p>
           ),
         },
         {

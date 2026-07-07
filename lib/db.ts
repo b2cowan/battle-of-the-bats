@@ -7386,7 +7386,10 @@ export async function getRepTeamHistory(teamId: string): Promise<RepTeamHistoryY
     .select('*')
     .eq('team_id', teamId)
     .in('status', ['completed', 'archived'])
-    .order('year', { ascending: false });
+    // Newest first; created_at breaks ties so two seasons sharing a `year` order deterministically
+    // (the "this season vs last" comparison + the Overview "Last season" tile take history[0]).
+    .order('year', { ascending: false })
+    .order('created_at', { ascending: false });
   if (yErr) throw yErr;
   if (!years?.length) return [];
 
@@ -7451,6 +7454,66 @@ export async function getRepTeamHistory(teamId: string): Promise<RepTeamHistoryY
     createdAt: y.created_at,
     updatedAt: y.updated_at,
   }));
+}
+
+/** The current (active/draft) season's record + counts, shaped like a history year for
+ *  side-by-side "this season vs last" comparison. Accounting is layered on by the route
+ *  (money-gated), not here. Null when the team has no active program year. */
+export interface RepCurrentSeasonSummary {
+  id: string;
+  teamId: string;
+  name: string;
+  year: number;
+  status: string;
+  rosterCount: number;
+  wins: number;
+  losses: number;
+  ties: number;
+  tryoutTotal: number;
+  tryoutAccepted: number;
+}
+
+export async function getRepCurrentSeasonSummary(teamId: string): Promise<RepCurrentSeasonSummary | null> {
+  const py = await getActiveRepProgramYear(teamId);
+  if (!py) return null;
+
+  const [rosterRes, eventRes, tryoutRes] = await Promise.all([
+    supabaseAdmin.from('rep_roster_players').select('id').eq('program_year_id', py.id),
+    supabaseAdmin
+      .from('rep_team_events')
+      .select('result')
+      .eq('program_year_id', py.id)
+      .in('event_type', ['league_game', 'scrimmage', 'external_tournament'])
+      .not('result', 'is', null),
+    supabaseAdmin.from('rep_tryout_registrations').select('status').eq('program_year_id', py.id),
+  ]);
+  if (rosterRes.error) throw rosterRes.error;
+  if (eventRes.error) throw eventRes.error;
+  if (tryoutRes.error) throw tryoutRes.error;
+
+  let wins = 0, losses = 0, ties = 0;
+  for (const e of eventRes.data ?? []) {
+    if (e.result === 'win') wins++;
+    else if (e.result === 'loss') losses++;
+    else if (e.result === 'tie') ties++;
+  }
+
+  const tryoutRows = tryoutRes.data ?? [];
+  const tryoutAccepted = tryoutRows.filter((t: any) => t.status === 'accepted').length;
+
+  return {
+    id: py.id,
+    teamId,
+    name: py.name,
+    year: py.year,
+    status: py.status,
+    rosterCount: (rosterRes.data ?? []).length,
+    wins,
+    losses,
+    ties,
+    tryoutTotal: tryoutRows.length,
+    tryoutAccepted,
+  };
 }
 
 // ── Platform users ────────────────────────────────────────────────────────────

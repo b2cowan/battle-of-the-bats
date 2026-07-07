@@ -22,7 +22,9 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
     // always-visible or a dedicated `canDraftAnnouncements` cap so granted assistants can draft.
     case 'Announcements': return caps.announcementsSend;
     case 'Money':         return caps.money !== 'off';
-    case 'Season Review': return caps.money !== 'off';
+    // Open to any assigned coach: the page shows record / roster size / tryout trend to everyone;
+    // the dues & expenses rows inside are money-gated server-side (Phase 4 F2 split).
+    case 'Season Review': return true;
     case 'Documents':     return caps.documents !== 'off';
     case 'Staff':         return caps.isHeadCoach;
     default:              return true;

@@ -4,12 +4,36 @@ import {
   getRepTeam,
   getCoachingAssignmentsForUser,
   getRepTeamHistory,
+  getRepCurrentSeasonSummary,
   getRepPlayerDuesSchedules,
   getRepPlayerDuesInstallments,
   getRepTeamExpenses,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { canViewMoney, denyUnless } from '@/lib/coach-capabilities';
+import { canViewMoney } from '@/lib/coach-capabilities';
+
+interface SeasonAccounting {
+  duesCollected: number;
+  duesOutstanding: number;
+  totalExpenses: number;
+}
+
+/** Dues collected/outstanding + total expenses for one program year. */
+async function accountingForYear(yearId: string): Promise<SeasonAccounting> {
+  const schedules = await getRepPlayerDuesSchedules(yearId);
+  let duesCollected = 0;
+  let duesOutstanding = 0;
+  for (const s of schedules) {
+    const installments = await getRepPlayerDuesInstallments(s.id);
+    for (const i of installments) {
+      if (i.paidAt) duesCollected += i.amount;
+      else duesOutstanding += i.amount;
+    }
+  }
+  const expenses = await getRepTeamExpenses(yearId);
+  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  return { duesCollected, duesOutstanding, totalExpenses };
+}
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -34,36 +58,34 @@ export const GET = withObservability(async (_req: Request,
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
   const { assignment } = resolved;
-  const denied = denyUnless(canViewMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
-  if (denied) return denied;
 
-  const history = await getRepTeamHistory(teamId);
+  // Record / roster / tryout data is open to any assigned coach; the money rows (dues + expenses)
+  // are layered on only when the caller can view finances (tri-state money capability).
+  const canMoney = canViewMoney(assignment.capabilities);
 
-  // Build an accounting summary per year
-  const summaries = await Promise.all(
-    history.map(async y => {
-      const schedules = await getRepPlayerDuesSchedules(y.id);
-      let duesCollected = 0;
-      let duesOutstanding = 0;
-      for (const s of schedules) {
-        const installments = await getRepPlayerDuesInstallments(s.id);
-        for (const i of installments) {
-          if (i.paidAt) duesCollected += i.amount;
-          else duesOutstanding += i.amount;
-        }
-      }
-      const expenses = await getRepTeamExpenses(y.id);
-      const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-      return { yearId: y.id, duesCollected, duesOutstanding, totalExpenses };
-    }),
-  );
+  const [history, current] = await Promise.all([
+    getRepTeamHistory(teamId),
+    getRepCurrentSeasonSummary(teamId),
+  ]);
 
-  const summaryMap = new Map(summaries.map(s => [s.yearId, s]));
+  // Accounting per year, only when money-cleared. Fetch current + all past years in parallel.
+  let accountingByYear = new Map<string, SeasonAccounting>();
+  if (canMoney) {
+    const yearIds = [...history.map(y => y.id), ...(current ? [current.id] : [])];
+    const entries = await Promise.all(
+      yearIds.map(async id => [id, await accountingForYear(id)] as const),
+    );
+    accountingByYear = new Map(entries);
+  }
 
   return NextResponse.json({
+    canViewMoney: canMoney,
+    current: current
+      ? { ...current, accounting: canMoney ? accountingByYear.get(current.id) ?? null : null }
+      : null,
     history: history.map(y => ({
       ...y,
-      accounting: summaryMap.get(y.id) ?? { duesCollected: 0, duesOutstanding: 0, totalExpenses: 0 },
+      accounting: canMoney ? accountingByYear.get(y.id) ?? null : null,
     })),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/history' });
