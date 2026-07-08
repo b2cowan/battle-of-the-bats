@@ -6079,6 +6079,57 @@ export async function getRepTeamLineupEntries(lineupId: string): Promise<RepTeam
   return (data ?? []).map(mapRepTeamLineupEntry);
 }
 
+// Game event ids in a program year whose SAVED lineup disagrees with attendance — used to badge the
+// schedule list without probing each game. "Mismatch" = the event has a lineup AND either a player
+// marked coming (attending/late) is missing from the lineup, or a player in the lineup is marked
+// absent. Three bulk reads (lineups → entries → attendance), reconciled in JS.
+export async function getRepTeamLineupAttendanceMismatchEventIds(programYearId: string): Promise<string[]> {
+  const { data: lineups, error: lErr } = await supabaseAdmin
+    .from('rep_team_lineups')
+    .select('id, event_id')
+    .eq('program_year_id', programYearId);
+  if (lErr) throw lErr;
+  if (!lineups || lineups.length === 0) return [];
+  const eventByLineup = new Map<string, string>(lineups.map(l => [l.id as string, l.event_id as string]));
+
+  const { data: entries, error: eErr } = await supabaseAdmin
+    .from('rep_team_lineup_entries')
+    .select('lineup_id, player_id')
+    .in('lineup_id', lineups.map(l => l.id));
+  if (eErr) throw eErr;
+  const entryPlayersByEvent = new Map<string, Set<string>>();
+  for (const row of entries ?? []) {
+    const eventId = eventByLineup.get(row.lineup_id as string);
+    if (!eventId) continue;
+    let set = entryPlayersByEvent.get(eventId);
+    if (!set) { set = new Set<string>(); entryPlayersByEvent.set(eventId, set); }
+    set.add(row.player_id as string);
+  }
+
+  const { data: attendance, error: aErr } = await supabaseAdmin
+    .from('rep_team_event_attendance')
+    .select('event_id, player_id, status')
+    .eq('program_year_id', programYearId);
+  if (aErr) throw aErr;
+  const attByEvent = new Map<string, { playerId: string; status: string }[]>();
+  for (const a of attendance ?? []) {
+    let arr = attByEvent.get(a.event_id as string);
+    if (!arr) { arr = []; attByEvent.set(a.event_id as string, arr); }
+    arr.push({ playerId: a.player_id as string, status: a.status as string });
+  }
+
+  const mismatch: string[] = [];
+  for (const [eventId, entrySet] of entryPlayersByEvent) {
+    const att = attByEvent.get(eventId) ?? [];
+    const bad = att.some(({ playerId, status }) =>
+      ((status === 'attending' || status === 'late') && !entrySet.has(playerId)) ||
+      (status === 'absent' && entrySet.has(playerId)),
+    );
+    if (bad) mismatch.push(eventId);
+  }
+  return mismatch;
+}
+
 export async function upsertRepTeamLineup(fields: {
   eventId: string;
   programYearId: string;
@@ -6239,6 +6290,31 @@ export async function deleteRepTeamLineupTemplate(id: string, teamId: string): P
     .eq('id', id)
     .eq('team_id', teamId);
   if (error) throw error;
+}
+
+/** Scoped partial update (team_id guards cross-team edits). Only provided fields are written;
+ *  returns null if the row doesn't exist / isn't this team's, or if nothing was provided. */
+export async function updateRepTeamLineupTemplate(id: string, teamId: string, fields: {
+  name?: string;
+  lineupMode?: RepLineupMode;
+  inningCount?: number;
+  entries?: RepTeamLineupTemplateEntry[];
+}): Promise<RepTeamLineupTemplate | null> {
+  const patch: Record<string, unknown> = {};
+  if (fields.name !== undefined) patch.name = fields.name.trim();
+  if (fields.lineupMode !== undefined) patch.lineup_mode = fields.lineupMode;
+  if (fields.inningCount !== undefined) patch.inning_count = fields.inningCount;
+  if (fields.entries !== undefined) patch.entries = normalizeTemplateEntries(fields.entries);
+  if (Object.keys(patch).length === 0) return null;
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_lineup_templates')
+    .update(patch)
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamLineupTemplate(data) : null;
 }
 
 // Document Templates

@@ -87,7 +87,7 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId, eventId);
   if ('error' in resolved) return resolved.error!;
-  const { assignment, programYear } = resolved;
+  const { assignment, programYear, event } = resolved;
   const denied = denyUnless(assignment.capabilities.lineups, 'You do not have access to lineups.');
   if (denied) return denied;
 
@@ -99,6 +99,9 @@ export const GET = withObservability(async (_req: Request,
   const entries = lineup ? await getRepTeamLineupEntries(lineup.id) : [];
 
   return NextResponse.json({
+    // The game itself — matchup/date/name — so the standalone Lineups builder page can render its
+    // header + poster without a second events fetch. (The schedule modal ignores this extra key.)
+    event,
     // Redact guardian PII / notes for a coach without those grants (this endpoint returns the roster).
     players: redactRoster(players.filter(player => player.status === 'active'), assignment.capabilities),
     attendance,

@@ -485,10 +485,10 @@ export default function TeamOverviewPage({
         ? 'Set the batting order and field positions for your next game before game day.'
         : 'Add a game to your schedule, then set the batting order and field positions before game day.',
       action: (setupStats?.gameCount ?? 0) > 0 ? 'Set lineup' : 'Add a game',
-      href: `${base}/schedule`,
+      href: (setupStats?.gameCount ?? 0) > 0 ? `${base}/lineups` : `${base}/schedule`,
       complete: nextLineupReady === true,
       group: 'optional',
-      help: { title: 'Game lineups', body: 'Open a game from the Schedule to set the batting order and positions per inning, then print or share the lineup card. Needs at least one game on the calendar first.' },
+      help: { title: 'Game lineups', body: 'Open a game from your Lineups page to set the batting order and positions per inning, then print or share the lineup card. Needs at least one game on the calendar first.' },
     },
     {
       key: 'budget',
@@ -910,7 +910,7 @@ export default function TeamOverviewPage({
             <p className={styles.nowMoneyAlert}><DollarSign size={14} aria-hidden /> {duesOverdueCount} {duesOverdueCount === 1 ? 'player' : 'players'} overdue{duesOutstanding && duesOutstanding > 0 ? ` · ${formatMoney(duesOutstanding)}` : ''}</p>
           )}
           <div className={styles.nowActions}>
-            <Link href={nextIsGame && canViewLineup ? `${base}/schedule?event=${nextEvent.id}&tab=lineup` : `${base}/schedule`} className="btn btn-lime btn-sm">{nextIsGame ? 'Build lineup' : 'Open schedule'} <ArrowRight size={14} /></Link>
+            <Link href={nextIsGame && canViewLineup ? `${base}/lineups/${nextEvent.id}` : `${base}/schedule`} className="btn btn-lime btn-sm">{nextIsGame ? 'Build lineup' : 'Open schedule'} <ArrowRight size={14} /></Link>
             {nextIsGame && <Link href={canSchedule ? `${base}/schedule?event=${nextEvent.id}&tab=attendance` : `${base}/schedule`} className={styles.nowSecondary}>Take attendance <ArrowRight size={13} /></Link>}
           </div>
         </div>

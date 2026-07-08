@@ -92,6 +92,12 @@ export interface GenerateOptions {
   /** P4 competitive-mode dials — only apply when policy === 'competitive'. */
   aSquadEmphasis?: 'balanced_sits' | 'prioritized'; // 'prioritized' = A-squad barely sits; 'balanced_sits' = even bench
   noBackToBackSits?: boolean;                        // hard: nobody sits two innings running (rotates the bench)
+  /** Only WRITE positions for innings in [fillFrom, fillTo] (1-based inclusive; default = all
+   *  innings). Innings outside the range keep their existing cells and are still COUNTED toward
+   *  the caps / bench-balance / back-to-back rules, so filling a sub-range respects what's already
+   *  set elsewhere. */
+  fillFrom?: number;
+  fillTo?: number;
 }
 
 const norm = (s: string | null | undefined) => (s ?? '').toUpperCase().trim();
@@ -105,10 +111,16 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
   } = opts;
   const fieldSet = new Set(fieldPositions);
   const competitive = policy === 'competitive';
+  // Inning range to WRITE (default = every inning). Out-of-range innings are preserved + counted.
+  const fillFrom = Math.max(1, opts.fillFrom ?? 1);
+  const fillTo = Math.min(inningCount, opts.fillTo ?? inningCount);
 
   const result = new Map<string, Record<string, string>>();
   for (const p of players) {
-    result.set(p.playerId, fillMode === 'empty' ? { ...p.inningPositions } : {});
+    // Keep everything the coach already set; regenerate only clears the cells IN the fill range.
+    const copy = { ...p.inningPositions };
+    if (fillMode === 'regenerate') for (let inn = fillFrom; inn <= fillTo; inn++) delete copy[String(inn)];
+    result.set(p.playerId, copy);
   }
 
   // Cross-inning fairness + rotation trackers
@@ -140,12 +152,15 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
 
   for (let inn = 1; inn <= inningCount; inn++) {
     const key = String(inn);
+    const inRange = inn >= fillFrom && inn <= fillTo;
 
-    // In fill-empty mode, lock cells already set this inning (e.g. coach-set pitcher).
+    // Lock cells already set this inning so they count toward fairness/caps and aren't overwritten.
+    // Always lock outside the fill range (those innings are read-only this run); inside the range,
+    // only in fill-empty mode (regenerate starts them blank).
     const lockedPositions = new Set<string>();
     const lockedPlayers = new Set<string>();
     const lockedBench = new Set<string>();
-    if (fillMode === 'empty') {
+    if (fillMode === 'empty' || !inRange) {
       for (const p of players) {
         const cur = result.get(p.playerId)![key] ?? '';
         if (!cur) continue;
@@ -161,6 +176,10 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
         }
       }
     }
+
+    // Out-of-range inning: we've counted what's there; write nothing. Carry the sit set forward so
+    // the next in-range inning's no-back-to-back logic sees who sat here.
+    if (!inRange) { lastBench = new Set(lockedBench); continue; }
 
     const available = players.filter(p => !lockedPlayers.has(p.playerId));
     const openPositions = fieldPositions.filter(pos => !lockedPositions.has(pos));
@@ -178,10 +197,13 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
       return la - lb;
     };
     // Min-play floor (P3): a player who could no longer reach the floor if they sit THIS inning
-    // (even by playing every remaining inning) must play now — protect them from the bench.
+    // (even by playing every remaining FILLABLE inning) must play now — protect them from the bench.
+    // Remaining slack counts only innings we'll actually write (through fillTo); innings past the
+    // fill range are locked this run and can't help a player catch up. (fillTo === inningCount for a
+    // full-range fill, so this is identical to the original behaviour there.)
     const mustPlay = minInningsPerPlayer
       ? (p: GeneratorPlayer) =>
-          ((inn - 1) - (benchCount.get(p.playerId) ?? 0)) + (inningCount - inn) < minInningsPerPlayer
+          ((inn - 1) - (benchCount.get(p.playerId) ?? 0)) + (fillTo - inn) < minInningsPerPlayer
       : () => false;
 
     // Competitive A-squad emphasis (P4): who sits, in priority order:

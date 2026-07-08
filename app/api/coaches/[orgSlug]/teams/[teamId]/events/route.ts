@@ -6,6 +6,7 @@ import {
   getRepTeam,
   getActiveRepProgramYear,
   getRepTeamEvents,
+  getRepTeamLineupAttendanceMismatchEventIds,
   createRepTeamEvent,
   createRepTeamEvents,
 } from '@/lib/db';
@@ -77,7 +78,12 @@ export const GET = withObservability(async (req: Request,
   const type = url.searchParams.get('type') as RepEventType | undefined ?? undefined;
 
   const events = await getRepTeamEvents(programYear.id, { from, to, type });
-  return NextResponse.json({ events, programYear });
+  // Game events whose saved lineup disagrees with attendance — only surfaced to coaches who can
+  // see lineups (the ⚠ is only actionable for them).
+  const lineupMismatchEventIds = assignment.capabilities.lineups
+    ? await getRepTeamLineupAttendanceMismatchEventIds(programYear.id)
+    : [];
+  return NextResponse.json({ events, programYear, lineupMismatchEventIds });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events' });
 
 export const POST = withObservability(async (req: Request,

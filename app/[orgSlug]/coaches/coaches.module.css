@@ -504,6 +504,35 @@
 }
 
 /* ── Lineups front door (game list) ─────────────────────────────────────── */
+.lineupClearBtn {
+  background: none; border: none; padding: 0.3rem 0; cursor: pointer;
+  color: var(--white-45); font-size: 0.8rem;
+}
+.lineupClearBtn:hover { color: var(--white-70); text-decoration: underline; }
+
+/* ── Templates manager (Lineups landing page) ── */
+.lineupTplList { display: flex; flex-direction: column; gap: 0.55rem; }
+.lineupTplRow {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.65rem 0.85rem; border-radius: var(--radius);
+  background: var(--white-8); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  box-shadow: var(--shadow-sm), var(--highlight-top);
+}
+.lineupTplInfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.12rem; text-decoration: none; }
+.lineupTplName { color: var(--white-90); font-weight: 650; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lineupTplInfo:hover .lineupTplName { color: var(--blueprint-blue); }
+.lineupTplMeta { color: var(--white-45); font-size: 0.78rem; }
+.lineupTplActions { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+.lineupTplIconBtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 8px;
+  border: 1px solid var(--white-10); background: none; color: var(--white-55); cursor: pointer;
+}
+.lineupTplIconBtn:hover { color: var(--white-90); background: var(--white-5); }
+.lineupTplIconBtn:disabled { opacity: 0.4; cursor: default; }
+.lineupTplRename { display: flex; align-items: center; gap: 0.4rem; flex: 1; min-width: 0; }
+.lineupTplRename input { flex: 1; min-width: 0; }
+
 .lineupFrontList { display: flex; flex-direction: column; gap: 0.55rem; margin-bottom: 0.5rem; }
 .lineupFrontRow {
   display: flex;
@@ -2663,17 +2692,22 @@
 }
 .lineupAutoMenu .lineupControlLabel { min-width: 0; }
 
-/* Mobile: a 270px menu anchored to a half-width grid cell overflows the screen edge,
-   so it rises as an on-screen panel spanning the modal width (like the Print menu). */
-@media (max-width: 640px) {
+/* Below 900px the coach BOTTOM NAV is present, and a downward-opening 270px dropdown collides with
+   it (its Generate button hides behind the nav). So wherever the bottom nav shows, the menu rises as
+   a bottom-anchored panel above the nav with its own scroll. (Was 640px — but the nav appears ≤900px.) */
+@media (max-width: 900px) {
   .lineupAutoMenu {
     position: fixed;
     left: 0.9rem;
     right: 0.9rem;
     top: auto;
-    bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+    /* Sit clearly ABOVE the ~4.5rem bottom nav (with a gap), and cap the height to the space that
+       remains so the Generate button at the bottom is always visible even when Competitive expands
+       the menu — the menu scrolls internally rather than growing behind the nav. */
+    bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
     width: auto;
-    max-height: 62vh;
+    max-height: calc(100vh - 9rem);
+    max-height: calc(100dvh - 9rem - env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
   }
 }
@@ -2739,15 +2773,19 @@
   box-shadow: 0 12px 32px rgba(0,0,0,0.5);
 }
 
-/* Mobile: the fixed-width menu would overflow off the print button's left anchor,
-   so span the modal width (gutter to gutter) just above the footer. */
-@media (max-width: 640px) {
+/* Below 900px (bottom-nav present): span the modal width just above the nav rather than anchoring
+   to the print button, so it never overflows the gutter or tucks behind the nav. */
+@media (max-width: 900px) {
   .lineupPdfMenu {
     position: fixed;
     left: 0.9rem;
     right: 0.9rem;
-    bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+    top: auto;
+    bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
     width: auto;
+    max-height: calc(100vh - 9rem);
+    max-height: calc(100dvh - 9rem - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
   }
 }
 .lineupPdfItem {
@@ -3122,6 +3160,68 @@
     box-shadow: 6px 0 8px -6px rgba(0,0,0,0.55);   /* edge cue where the scroll begins */
   }
 }
+
+/* ── Read-only lineup peek (schedule slide-over). The editable builder lives on the Lineups page. */
+.lineupPeekHeader {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+.lineupPeekEmpty {
+  text-align: center; padding: 1.4rem 1rem;
+  border: 1px dashed var(--white-10); border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+}
+.lineupPeekEmpty p { margin: 0 0 0.9rem; color: var(--white-60); font-size: 0.88rem; }
+.lineupPeekStats {
+  display: flex; gap: 1.4rem; flex-wrap: wrap;
+  padding: 0.7rem 0.9rem; border-radius: 10px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--white-8);
+}
+.lineupPeekStats > div { display: flex; flex-direction: column; gap: 0.1rem; }
+.lineupPeekStats b { font-size: 1.05rem; font-weight: 700; color: var(--white-90); line-height: 1.1; }
+.lineupPeekStats span { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--white-45); }
+.lineupPeekOrder { list-style: none; margin: 0.4rem 0 0; padding: 0; }
+.lineupPeekOrder li {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.35rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.lineupPeekOrder li:last-child { border-bottom: none; }
+.lineupPeekBat {
+  min-width: 1.5rem; text-align: center; font-variant-numeric: tabular-nums;
+  font-size: 0.82rem; color: var(--white-45);
+}
+.lineupPeekName {
+  flex: 1; min-width: 0; color: var(--white-90); font-weight: 600; font-size: 0.9rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lineupPeekPos {
+  flex-shrink: 0; font-size: 0.72rem; font-variant-numeric: tabular-nums;
+  color: var(--white-60); background: var(--bg-inset, rgba(0,0,0,0.2));
+  padding: 0.12rem 0.42rem; border-radius: 6px;
+}
+.lineupPeekWarn {
+  margin-top: 0.9rem; padding: 0.6rem 0.75rem; border-radius: 9px;
+  background: rgba(var(--warning-rgb), 0.1); border: 1px solid rgba(var(--warning-rgb), 0.28);
+}
+.lineupPeekWarn p { margin: 0 0 0.25rem; font-size: 0.82rem; color: var(--warning); font-weight: 600; }
+.lineupPeekWarn span { font-size: 0.74rem; color: var(--white-55); }
+/* Visible one-level "up" back-link for the Lineups builder (the shared breadcrumb is hidden
+   portal-wide). Padding + negative margin give a ≥40px tap target without shifting the layout. */
+.lineupBackLink {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  color: var(--blueprint-blue); text-decoration: none; font-size: 0.82rem;
+  padding: 0.4rem 0.5rem; margin: 0 -0.5rem 0.5rem; /* neg-x extends the tap target, keeps text aligned to the content edge */
+}
+.lineupBackLink:hover { text-decoration: underline; }
+/* Builder meta line: date/time + a quiet "View on schedule" link. Flex-wrap (not a literal "·"
+   separator) so it wraps to two clean lines on mobile with no orphaned dot. */
+.lineupMetaRow { display: flex; flex-wrap: wrap; align-items: center; column-gap: 0.6rem; row-gap: 0.15rem; margin-top: 0.25rem; }
+.lineupMetaText { color: var(--white-40); font-size: 0.9rem; }
+.lineupOnScheduleLink { color: var(--blueprint-blue); text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; font-size: 0.9rem; }
+.lineupOnScheduleLink:hover { text-decoration: underline; }
+.lineupReconcileActions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0 0.4rem; }
+.lineupNotPlayingTag { font-style: normal; font-size: 0.72rem; color: var(--warning); }
+.lineupPeekFooter { margin-top: 1.1rem; display: flex; justify-content: flex-end; }
 
 .deleteConfirm { display: flex; flex-direction: column; gap: 0.5rem; }
 .deleteConfirmMsg { font-size: 0.88rem; color: rgba(255,255,255,0.7); margin: 0; }

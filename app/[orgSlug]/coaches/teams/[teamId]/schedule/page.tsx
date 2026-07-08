@@ -1,13 +1,6 @@
 'use client';
-import { use, useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
-import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, CircleHelp, CircleSlash, Clock3, Plus, X, Trophy, Swords, Shield, Dumbbell, Users, GripVertical } from 'lucide-react';
-import {
-  DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { use, useState, useEffect, useCallback, useRef } from 'react';
+import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Clock3, Plus, X, Trophy, Swords, Shield, Dumbbell, Users, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
@@ -15,20 +8,15 @@ import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
-import { analyzeLineup } from '@/lib/lineup-analysis';
-import { generateBestLineup, type PositionPolicy, type FillMode } from '@/lib/lineup-generator';
-import { playerPositionPrefs } from '@/lib/lineup-profile';
-import { resolveLineupCaps, normalizeRulesOverride } from '@/lib/lineup-caps';
-import type { LineupSettings, LineupRulesOverride } from '@/lib/types';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
-  buildFilename, serializeRows, serializeHeaders, DEFAULT_PDF_SETTINGS,
-  downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend,
-  type ExportColumnDef, type ICSEventInput, type OrgPdfSettings, type LineupPosterPlayer,
+  buildFilename, serializeRows, serializeHeaders,
+  type ExportColumnDef, type ICSEventInput,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
-import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, Undo2, Redo2, Eraser, Printer, ClipboardList } from 'lucide-react';
+import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
+import { playerDisplayName } from '@/lib/coach-roster-name';
 import styles from '../../../coaches.module.css';
 import type {
   RepAttendanceStatus,
@@ -39,7 +27,6 @@ import type {
   RepTryoutSession,
   RepTeamLineup,
   RepTeamLineupEntry,
-  RepTeamLineupTemplate,
   RepProgramYear,
   RepEventType,
   RepEventResource,
@@ -120,16 +107,7 @@ const ADD_MENU: { type: RepEventType; nested?: boolean }[] = [
 ];
 
 const GAME_EVENT_TYPES: RepEventType[] = ['league_game', 'tournament_game', 'scrimmage'];
-const LINEUP_POSITIONS = ['', 'P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'DH', 'EH', 'Bench'];
-// Canonical order for the playing-time summary columns
-const POSITION_ORDER = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'DH', 'EH'];
 
-// Lime "heat" intensity for a usage count (more innings → stronger tint). Token-safe via
-// the logic-lime rgb channel; capped so white text stays legible.
-function heatStyle(count: number) {
-  if (!count) return undefined;
-  return { background: `rgba(var(--logic-lime-rgb), ${Math.min(0.55, 0.1 + count * 0.09)})` };
-}
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 // Which event types capture an opponent + home/away, and which can recur. Pure functions of
@@ -375,21 +353,6 @@ function sortDayEvents(list: RepTeamEvent[]): RepTeamEvent[] {
 
 // ── Components ────────────────────────────────────────────────────────────────
 
-// Defensive: a bad import / seed can leave a name part as the literal string
-// "null"/"undefined" (truthy, so a plain filter(Boolean) keeps it) — treat those as blank.
-function cleanNamePart(part: string | null | undefined): string {
-  const s = (part ?? '').trim();
-  return s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined' ? '' : s;
-}
-
-function playerName(player: RepRosterPlayer): string {
-  return [cleanNamePart(player.playerFirstName), cleanNamePart(player.playerLastName)].filter(Boolean).join(' ');
-}
-
-function playerDisplayName(player: RepRosterPlayer) {
-  return [player.playerNumber ? `#${player.playerNumber}` : '', playerName(player)].filter(Boolean).join(' ');
-}
-
 function isLineupEvent(event: RepTeamEvent | null) {
   return event ? GAME_EVENT_TYPES.includes(event.eventType) : false;
 }
@@ -438,94 +401,6 @@ function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-// One drag-sortable lineup row. Batting order = drag position (auto-numbered), so duplicate
-// slot numbers are impossible. Lives in this module so it shares styles + helpers.
-function SortableLineupRow({
-  row, battingNumber, mode, inningCount, onStarterToggle, onPositionChange, index, count, onMove, onRemove,
-}: {
-  row: LineupPlayerRow;
-  battingNumber: string;
-  mode: RepLineupMode;
-  inningCount: number;
-  onStarterToggle: (playerId: string, checked: boolean) => void;
-  onPositionChange: (playerId: string, inning: number, value: string) => void;
-  index: number;
-  count: number;
-  onMove: (index: number, dir: -1 | 1) => void;
-  onRemove: (playerId: string) => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.player.id });
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
-  return (
-    <tr ref={setNodeRef} style={style}>
-      <td>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          {/* Desktop: drag grip. Mobile: up/down arrows (grip is hidden on touch). */}
-          <button
-            type="button"
-            aria-label={`Drag to reorder ${playerDisplayName(row.player)} in the batting order`}
-            className={styles.lineupGrip}
-            {...attributes}
-            {...listeners}
-            style={{ background: 'none', border: 'none', padding: 2, lineHeight: 0, cursor: 'grab', color: 'rgba(255,255,255,0.35)', touchAction: 'none' }}
-          >
-            <GripVertical size={14} />
-          </button>
-          <span className={styles.lineupMoveControls}>
-            <button type="button" className={styles.lineupMoveBtn} aria-label={`Move ${playerDisplayName(row.player)} up`} disabled={index === 0} onClick={() => onMove(index, -1)}>
-              <ChevronUp size={14} />
-            </button>
-            <button type="button" className={styles.lineupMoveBtn} aria-label={`Move ${playerDisplayName(row.player)} down`} disabled={index === count - 1} onClick={() => onMove(index, 1)}>
-              <ChevronDown size={14} />
-            </button>
-          </span>
-          <span style={{ minWidth: '1.2ch', textAlign: 'center', fontVariantNumeric: 'tabular-nums', color: battingNumber ? 'var(--white-90)' : 'rgba(255,255,255,0.3)' }}>
-            {battingNumber || '–'}
-          </span>
-        </div>
-      </td>
-      {mode === 'nine_player' && (
-        <td className={styles.lineupColStart}>
-          <input
-            type="checkbox"
-            checked={row.starter}
-            onChange={e => onStarterToggle(row.player.id, e.target.checked)}
-            aria-label={`Starter for ${playerDisplayName(row.player)}`}
-          />
-        </td>
-      )}
-      <td className={styles.lineupPlayerCell}>
-        <span className={styles.lineupPlayerName}>{playerDisplayName(row.player)}</span>
-        <button
-          type="button"
-          className={styles.lineupRemoveBtn}
-          aria-label={`Remove ${playerDisplayName(row.player)} from the lineup`}
-          title="Not coming — remove from lineup"
-          onClick={() => onRemove(row.player.id)}
-        >
-          <X size={13} />
-        </button>
-      </td>
-      {Array.from({ length: inningCount }, (_, index) => {
-        const inning = index + 1;
-        return (
-          <td key={inning}>
-            <select
-              className={styles.lineupPositionSelect}
-              value={row.inningPositions[String(inning)] ?? ''}
-              onChange={e => onPositionChange(row.player.id, inning, e.target.value)}
-              aria-label={`Inning ${inning} position for ${playerDisplayName(row.player)}`}
-            >
-              {LINEUP_POSITIONS.map(position => (
-                <option key={position || 'blank'} value={position}>{position || '-'}</option>
-              ))}
-            </select>
-          </td>
-        );
-      })}
-    </tr>
-  );
-}
 
 // A tryout session projected onto the calendar — read-only, visually distinct from a game (dashed,
 // clipboard, "Tryout" label), links to the Tryouts tab rather than opening the event editor.
@@ -544,7 +419,7 @@ function TryoutChip({ session, href }: { session: RepTryoutSession; href: string
   );
 }
 
-function EventChip({ event, onClick, dayKey }: { event: RepTeamEvent; onClick: () => void; dayKey?: string }) {
+function EventChip({ event, onClick, dayKey, mismatch }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
   const cancelled = event.status === 'cancelled';
@@ -579,6 +454,9 @@ function EventChip({ event, onClick, dayKey }: { event: RepTeamEvent; onClick: (
         {event.name}{oppSuffix && <span className={styles.eventChipOpp}>{oppSuffix}</span>}
       </span>
       <span className={styles.eventChipTrail}>
+        {mismatch && !cancelled && (
+          <TriangleAlert size={12} style={{ color: '#f59e0b', flexShrink: 0 }} aria-label="Lineup and attendance don't match" />
+        )}
         {cancelled ? (
           <span className={styles.eventChipResult} style={{ color: '#f59e0b' }}>CANCELLED</span>
         ) : (
@@ -650,75 +528,17 @@ export default function CoachesSchedulePage({
   const [attendanceFilter, setAttendanceFilter] = useState<RepAttendanceStatus | 'all'>('all');
   // Which player's RSVP editor is open (one at a time). null = all collapsed.
   const [rsvpEditId, setRsvpEditId] = useState<string | null>(null);
+  // The schedule shows a READ-ONLY lineup peek (the editable builder lives on the Lineups page).
+  // These hold the loaded lineup just for that preview.
   const [lineupMode, setLineupMode] = useState<RepLineupMode>('everyone_bats');
   const [lineupInningCount, setLineupInningCount] = useState(sportPack.defaultPeriodCount);
-  const [lineupNotes, setLineupNotes] = useState('');
   const [lineupRows, setLineupRows] = useState<LineupPlayerRow[]>([]);
-  const [autoFillOpen, setAutoFillOpen] = useState(false);
-  const [lineupPdfOpen, setLineupPdfOpen] = useState(false);
-  const [pdfIncludeNotes, setPdfIncludeNotes] = useState(false);
-  const [templatesOpen, setTemplatesOpen] = useState(false);
-  const [templates, setTemplates] = useState<RepTeamLineupTemplate[]>([]);
-  const [newTemplateName, setNewTemplateName] = useState('');
-  const [templateSaving, setTemplateSaving] = useState(false);
-  const [templateError, setTemplateError] = useState('');
-  const [lineupNotice, setLineupNotice] = useState('');
-  const [autoPolicy, setAutoPolicy] = useState<PositionPolicy>('balanced');
-  const [autoFillMode, setAutoFillMode] = useState<FillMode>('empty');
-  // P4 competitive-mode dials (apply only when the mode is Competitive).
-  const [aSquadEmphasis, setASquadEmphasis] = useState<'balanced_sits' | 'prioritized'>('balanced_sits');
-  const [noBackToBackSits, setNoBackToBackSits] = useState(true);
-  // P3 innings caps: season defaults (from the program year) + this game's override (persisted on
-  // the lineup). Strings for the number inputs; '' = use the season default.
-  const [lineupSeasonCaps, setLineupSeasonCaps] = useState<LineupSettings | null>(null);
-  const [gameRules, setGameRules] = useState({ maxPos: '', pitcher: '', minPlay: '' });
-  const [gameRulesOpen, setGameRulesOpen] = useState(false);
-  // Lineup tab sub-view: the grid (editable) vs the playing-time summary — toggled
-  // rather than stacked so the slide-over stays short.
-  const [lineupView, setLineupView] = useState<'lineup' | 'summary'>('lineup');
-  const confirm = useConfirm();
-  const lineupSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
+  // Player ids that are actually in the SAVED lineup — used to flag attendance ↔ lineup drift.
+  const [lineupEntryIds, setLineupEntryIds] = useState<Set<string>>(new Set());
+  // Game event ids whose saved lineup disagrees with attendance (server-computed) — badges the list.
+  const [mismatchIds, setMismatchIds] = useState<Set<string>>(new Set());
   const [lineupLoading, setLineupLoading] = useState(false);
-  const [lineupSaving, setLineupSaving] = useState(false);
-  const [lineupDirty, setLineupDirty] = useState(false);
-  const [lineupError, setLineupError] = useState('');
-  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
-
-  // ── Lineup undo/redo — snapshots of the editable lineup state. pushLineupUndo() is
-  // called at the start of each user mutation (capturing the PRE-change state); auto-save
-  // persists the result, so undo is the safety net for the "auto-saved a mis-tap" case. ──
-  // Notes are intentionally NOT part of the snapshot — they change per-keystroke and aren't
-  // pushed to history, so excluding them keeps undo from collaterally rolling back a typed note.
-  type LineupSnap = { rows: LineupPlayerRow[]; mode: RepLineupMode; innings: number };
-  const [lineupHistory, setLineupHistory] = useState<{ undo: LineupSnap[]; redo: LineupSnap[] }>({ undo: [], redo: [] });
-  const lineupSnap = (): LineupSnap => ({ rows: lineupRows, mode: lineupMode, innings: lineupInningCount });
-  function pushLineupUndo() {
-    const snap = lineupSnap();
-    setLineupHistory(h => ({ undo: [...h.undo, snap].slice(-60), redo: [] }));
-  }
-  function applyLineupSnap(s: LineupSnap) {
-    setLineupRows(s.rows);
-    setLineupMode(s.mode);
-    setLineupInningCount(s.innings);
-    setLineupDirty(true);
-  }
-  function undoLineup() {
-    if (lineupHistory.undo.length === 0) return;
-    const prev = lineupHistory.undo[lineupHistory.undo.length - 1];
-    const cur = lineupSnap();
-    applyLineupSnap(prev);
-    setLineupHistory(h => ({ undo: h.undo.slice(0, -1), redo: [...h.redo, cur] }));
-  }
-  function redoLineup() {
-    if (lineupHistory.redo.length === 0) return;
-    const next = lineupHistory.redo[lineupHistory.redo.length - 1];
-    const cur = lineupSnap();
-    applyLineupSnap(next);
-    setLineupHistory(h => ({ undo: [...h.undo, cur], redo: h.redo.slice(0, -1) }));
-  }
+  const confirm = useConfirm();
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
@@ -732,6 +552,7 @@ export default function CoachesSchedulePage({
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setEvents(data.events ?? []);
+      setMismatchIds(new Set<string>(data.lineupMismatchEventIds ?? []));
       // Tryout sessions are projected onto the calendar as read-only markers. Non-fatal: if this
       // fails the schedule still works, tryout dates just won't show.
       try {
@@ -766,25 +587,6 @@ export default function CoachesSchedulePage({
     } catch { /* ignore malformed params */ }
   }, [loading, events]);
 
-  useEffect(() => {
-    fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`)
-      .then(r => r.ok ? r.json() : {})
-      .then(d => setPdfSettings(d as OrgPdfSettings))
-      .catch(() => setPdfSettings(null));
-  }, [orgSlug]);
-
-  // Saved lineup templates are team + active-program-year scoped (not per event) — load once.
-  const reloadTemplates = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates`);
-      if (!res.ok) return;
-      const data = await res.json();
-      setTemplates(data.templates ?? []);
-    } catch { /* non-blocking — templates are optional */ }
-  }, [orgSlug, teamId]);
-
-  useEffect(() => { void Promise.resolve().then(reloadTemplates); }, [reloadTemplates]);
-
   // Lock background scroll while a full-screen modal (detail or add/edit) is open on
   // mobile, so only the modal scrolls.
   const anyModalOpen = !!selectedEvent || showAddForm || !!daySheet;
@@ -795,51 +597,9 @@ export default function CoachesSchedulePage({
     return () => { document.body.style.overflow = prev; };
   }, [anyModalOpen]);
 
-  // Reset lineup undo/redo when the open event changes (history is per-event).
-  useEffect(() => { setLineupHistory({ undo: [], redo: [] }); }, [selectedEvent?.id]);
-
-  // Signatures of the latest edited state — a save only clears "dirty" if the state
-  // still matches what it persisted, so an edit made DURING a save isn't silently lost.
-  // This game's cap override, cleaned to the stored shape (null = no override → season defaults).
-  const buildGameRulesOverride = (): LineupRulesOverride | null => normalizeRulesOverride({
-    maxInningsPerPosition: gameRules.maxPos,
-    pitcherMaxInnings: gameRules.pitcher,
-    minInningsPerPlayer: gameRules.minPlay,
-  });
-  const lineupSig = () => JSON.stringify({ m: lineupMode, i: lineupInningCount, n: lineupNotes, g: gameRules, r: lineupRows.map(r => [r.player.id, r.battingOrder, r.starter, r.inningPositions]) });
-  const lineupSigRef = useRef('');
-  useEffect(() => { lineupSigRef.current = lineupSig(); }, [lineupRows, lineupMode, lineupInningCount, lineupNotes, gameRules]); // eslint-disable-line react-hooks/exhaustive-deps
   const attendanceSig = () => JSON.stringify(attendanceRows.map(r => [r.player.id, r.status, r.note]));
   const attendanceSigRef = useRef('');
   useEffect(() => { attendanceSigRef.current = attendanceSig(); }, [attendanceRows]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Close the lineup popovers (Auto-fill / Templates / Print) on an outside tap or Escape.
-  const autoFillRef = useRef<HTMLDivElement>(null);
-  const templatesRef = useRef<HTMLDivElement>(null);
-  const pdfRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!autoFillOpen && !templatesOpen && !lineupPdfOpen) return;
-    function closeMenus() { setAutoFillOpen(false); setTemplatesOpen(false); setLineupPdfOpen(false); }
-    function onDown(e: PointerEvent) {
-      const t = e.target as Node;
-      if (autoFillRef.current?.contains(t) || templatesRef.current?.contains(t) || pdfRef.current?.contains(t)) return;
-      closeMenus();
-    }
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') closeMenus(); }
-    document.addEventListener('pointerdown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey); };
-  }, [autoFillOpen, templatesOpen, lineupPdfOpen]);
-
-  // Auto-save the lineup ~0.9s after the last change (debounced) — no Save button.
-  // Skips while a save is in flight (lineupSaving) so rapid edits don't fire concurrent
-  // PUTs; the effect re-runs when the save finishes (lineupSaving drops) to flush the rest.
-  useEffect(() => {
-    if (!lineupDirty || lineupSaving || !selectedEvent || lineupLoading || lineupRows.length === 0) return;
-    const t = setTimeout(() => { void handleLineupSave(); }, 900);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lineupDirty, lineupSaving, lineupRows, lineupNotes, lineupMode, lineupInningCount, gameRules]);
 
   // Auto-save attendance ~0.7s after the last change (a status tap is meant to stick).
   useEffect(() => {
@@ -861,9 +621,7 @@ export default function CoachesSchedulePage({
       setAttendanceLoading(true);
       setLineupLoading(isLineupEvent(selectedEvent));
       setAttendanceError('');
-      setLineupError('');
       setAttendanceDirty(false);
-      setLineupDirty(false);
       try {
         const lineupCapable = isLineupEvent(selectedEvent);
         const res = await fetch(
@@ -900,24 +658,12 @@ export default function CoachesSchedulePage({
           const absentIds = new Set((data.attendance ?? []).filter(a => a.status === 'absent').map(a => a.playerId));
           const playingPlayers = players.filter(p => !absentIds.has(p.id));
           setLineupMode(mode);
-          // P4: pre-pick the auto-fill mode from the game type (coach can still change it).
-          setAutoPolicy(
-            selectedEvent?.eventType === 'tournament_game' ? 'competitive'
-              : selectedEvent?.eventType === 'scrimmage' ? 'development'
-              : 'balanced',
-          );
           setLineupInningCount(data.lineup?.inningCount ?? sportPack.defaultPeriodCount);
-          setLineupNotes(data.lineup?.notes ?? '');
-          setLineupSeasonCaps(data.programYear?.lineupSettings ?? null);
-          const ro = data.lineup?.rulesOverride ?? null;
-          setGameRules({
-            maxPos: ro?.maxInningsPerPosition != null ? String(ro.maxInningsPerPosition) : '',
-            pitcher: ro?.pitcherMaxInnings != null ? String(ro.pitcherMaxInnings) : '',
-            minPlay: ro?.minInningsPerPlayer != null ? String(ro.minInningsPerPlayer) : '',
-          });
           setLineupRows(renumberBattingOrder(sortLineupRows(buildLineupRows(playingPlayers, data.entries ?? [], mode)), mode));
+          setLineupEntryIds(new Set((data.entries ?? []).map(e => e.playerId)));
         } else {
           setLineupRows([]);
+          setLineupEntryIds(new Set());
         }
       } catch (e: unknown) {
         if (!cancelled) setAttendanceError(errorMessage(e, 'Failed to load attendance'));
@@ -930,25 +676,6 @@ export default function CoachesSchedulePage({
     fetchAttendance();
     return () => { cancelled = true; };
   }, [orgSlug, selectedEvent, teamId, sportPack.defaultPeriodCount]);
-
-  // Attendance is the single source of truth for who's playing: the lineup always reflects the
-  // non-absent active players. A player marked Out drops out of the batting order/positions; one
-  // no longer Out is added back with a fresh slot. Runs whenever attendance changes (either tab).
-  useEffect(() => {
-    if (!selectedEvent || !isLineupEvent(selectedEvent)) return;
-    const playing = attendanceRows.filter(r => r.status !== 'absent');
-    const playingIds = new Set(playing.map(r => r.player.id));
-    setLineupRows(prev => {
-      const present = new Set(prev.map(r => r.player.id));
-      const kept = prev.filter(r => playingIds.has(r.player.id));
-      const toAdd = playing.filter(r => !present.has(r.player.id));
-      if (toAdd.length === 0 && kept.length === prev.length) return prev;
-      const added: LineupPlayerRow[] = toAdd.map(r => ({
-        player: r.player, battingOrder: '', starter: lineupMode === 'everyone_bats', inningPositions: {}, notes: '',
-      }));
-      return renumberBattingOrder([...kept, ...added], lineupMode);
-    });
-  }, [attendanceRows, selectedEvent, lineupMode]);
 
   // ── Add event ───────────────────────────────────────────────────────────────
 
@@ -1117,246 +844,34 @@ export default function CoachesSchedulePage({
     ? [selectedEvent.location, selectedEvent.fieldNumber].filter(Boolean).join(' · ')
     : '';
 
-  // Lineup checks + fair-play tally (pure; recomputed as the grid changes)
-  const lineupAnalysis = analyzeLineup(
-    lineupRows.map(r => ({ playerId: r.player.id, inningPositions: r.inningPositions })),
-    lineupInningCount,
-    sportPack.fieldPositions,
-  );
-  const fairPlayByPlayer = new Map(lineupAnalysis.fairPlay.map(f => [f.playerId, f]));
-  const summaryPositions = POSITION_ORDER.filter(pos => lineupAnalysis.fairPlay.some(f => (f.positionCounts[pos] ?? 0) > 0));
-  const benchVals = lineupAnalysis.fairPlay.map(f => f.benched);
-  const benchMin = benchVals.length ? Math.min(...benchVals) : 0;
-  const benchMax = benchVals.length ? Math.max(...benchVals) : 0;
+  // Attendance ↔ lineup mismatch for the open game (top-section warning). Only when a lineup exists.
+  const lineupMismatch = (() => {
+    if (!selectedEvent || !isLineupEvent(selectedEvent) || lineupEntryIds.size === 0) return null;
+    const coming = attendanceRows
+      .filter(r => (r.status === 'attending' || r.status === 'late') && !lineupEntryIds.has(r.player.id))
+      .map(r => playerDisplayName(r.player));
+    const out = attendanceRows
+      .filter(r => r.status === 'absent' && lineupEntryIds.has(r.player.id))
+      .map(r => playerDisplayName(r.player));
+    return coming.length > 0 || out.length > 0 ? { coming, out } : null;
+  })();
 
-  // Shared per-player "on field" gauge (used by both the desktop grid and mobile chips)
-  function onFieldGauge(fp?: { onField: number; benched: number; consecutiveBench: boolean }) {
-    const onF = fp?.onField ?? 0;
-    const pct = lineupInningCount ? Math.round((onF / lineupInningCount) * 100) : 0;
-    return (
-      <span className={styles.lineupGauge}>
-        <span className={styles.lineupGaugeTrack}>
-          <span className={styles.lineupGaugeFill} data-warn={fp?.consecutiveBench ? 'true' : undefined} style={{ width: `${pct}%` }} />
-        </span>
-        <span className={styles.lineupGaugeCap}>{onF}/{lineupInningCount} · sits {fp?.benched ?? 0}</span>
-      </span>
-    );
-  }
 
-  async function clearLineup() {
-    const hasAny = lineupRows.some(r => Object.values(r.inningPositions).some(Boolean));
-    if (hasAny && !(await confirm({
-      title: 'Clear all positions?',
-      message: 'This empties every inning for every player. You can undo it right after.',
-      confirmText: 'Clear',
-      cancelText: 'Keep',
-      tone: 'warning',
-    }))) return;
-    pushLineupUndo();
-    setLineupRows(rows => rows.map(r => ({ ...r, inningPositions: {} })));
-    setLineupDirty(true);
-    setLineupNotice('');
-  }
 
-  async function handleAutoFill() {
-    // No silent overwrite: regenerating a grid with assignments asks first.
-    if (autoFillMode === 'regenerate') {
-      const hasAny = lineupRows.some(r => Object.values(r.inningPositions).some(Boolean));
-      if (hasAny && !(await confirm({
-        title: 'Regenerate lineup?',
-        message: 'This replaces the positions currently in the grid. Continue?',
-        confirmText: 'Regenerate',
-        cancelText: 'Keep current',
-        tone: 'warning',
-      }))) return;
-    }
-    // In 9-player mode only the starters take the field; bench players sit every inning.
-    const fielders = lineupMode === 'nine_player' ? lineupRows.filter(r => r.starter) : lineupRows;
-    const benchOnly = lineupMode === 'nine_player' ? lineupRows.filter(r => !r.starter) : [];
 
-    const generated = generateBestLineup({
-      players: fielders.map(r => {
-        const prefs = playerPositionPrefs(r.player, sportPack.pitcherPosition);
-        return {
-          playerId: r.player.id,
-          preferred: prefs.preferred,
-          canPlay: prefs.canPlay,
-          never: prefs.never,
-          pitcher: r.player.lineupProfile?.pitcher ?? null,
-          aSquad: r.player.lineupProfile?.aSquad ?? false,
-          inningPositions: r.inningPositions,
-        };
-      }),
-      inningCount: lineupInningCount,
-      policy: autoPolicy,
-      fillMode: autoFillMode,
-      fieldPositions: sportPack.fieldPositions,
-      pitcherPosition: sportPack.pitcherPosition,
-      ...resolveLineupCaps(lineupSeasonCaps, buildGameRulesOverride()),
-      aSquadEmphasis,
-      noBackToBackSits,
-    });
 
-    const benchAllInnings: Record<string, string> = {};
-    for (let inn = 1; inn <= lineupInningCount; inn++) benchAllInnings[String(inn)] = 'Bench';
 
-    pushLineupUndo();
-    setLineupRows(rows => rows.map(r => {
-      if (lineupMode === 'nine_player' && benchOnly.some(b => b.player.id === r.player.id)) {
-        return { ...r, inningPositions: autoFillMode === 'empty' ? { ...benchAllInnings, ...r.inningPositions } : benchAllInnings };
-      }
-      return { ...r, inningPositions: generated.get(r.player.id) ?? r.inningPositions };
-    }));
-    setLineupDirty(true);
-    setLineupNotice('');
-    setAutoFillOpen(false);
-  }
 
-  // The current grid as a reusable template payload (mirrors the lineup save shape, minus notes).
-  function lineupTemplatePayload() {
-    return lineupRows.map(row => ({
-      playerId: row.player.id,
-      battingOrder: lineupMode === 'nine_player' && !row.starter ? null : (Number(row.battingOrder) || null),
-      starter: lineupMode === 'nine_player' ? row.starter : true,
-      inningPositions: row.inningPositions,
-    }));
-  }
 
-  async function handleSaveTemplate() {
-    const name = newTemplateName.trim();
-    if (!name || lineupRows.length === 0) return;
-    setTemplateSaving(true);
-    setTemplateError('');
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, lineupMode, inningCount: lineupInningCount, entries: lineupTemplatePayload() }),
-      });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(d.error ?? 'Could not save template');
-      }
-      setNewTemplateName('');
-      await reloadTemplates();
-      setLineupNotice(`Saved “${name}” as a template.`);
-      setTemplatesOpen(false);
-    } catch (e: unknown) {
-      setTemplateError(errorMessage(e, 'Could not save template'));
-    } finally {
-      setTemplateSaving(false);
-    }
-  }
 
-  // Load a template into the editable grid (unsaved). Maps by current roster player_id and
-  // silently skips players no longer rostered; players not in the template reset to blank.
-  async function applyTemplate(t: RepTeamLineupTemplate) {
-    const hasAny = lineupRows.some(r => Object.values(r.inningPositions).some(Boolean));
-    if (hasAny && !(await confirm({
-      title: 'Start from template?',
-      message: `Replace the current lineup with “${t.name}”? Unsaved changes will be lost.`,
-      confirmText: 'Load template',
-      cancelText: 'Keep current',
-      tone: 'warning',
-    }))) return;
 
-    const byId = new Map(t.entries.map(e => [e.playerId, e]));
-    const rosterIds = new Set(lineupRows.map(r => r.player.id));
-    const skipped = t.entries.filter(e => !rosterIds.has(e.playerId)).length;
 
-    pushLineupUndo();
-    setLineupMode(t.lineupMode);
-    setLineupInningCount(t.inningCount);
-    setLineupRows(rows => renumberBattingOrder(sortLineupRows(rows.map(row => {
-      const e = byId.get(row.player.id);
-      if (e) {
-        return {
-          ...row,
-          starter: e.starter,
-          battingOrder: e.battingOrder != null ? String(e.battingOrder) : '',
-          inningPositions: { ...e.inningPositions },
-        };
-      }
-      // Current-roster player who wasn't in the template → blank slot.
-      return { ...row, starter: t.lineupMode === 'everyone_bats', battingOrder: '', inningPositions: {} };
-    })), t.lineupMode));
-    setLineupDirty(true);
-    setTemplatesOpen(false);
-    setLineupNotice(skipped > 0
-      ? `Loaded “${t.name}” — skipped ${skipped} player${skipped === 1 ? '' : 's'} no longer on the roster.`
-      : `Loaded “${t.name}” — review and save when ready.`);
-  }
 
-  async function handleDeleteTemplate(t: RepTeamLineupTemplate) {
-    if (!(await confirm({
-      title: 'Delete template?',
-      message: `Delete the saved template “${t.name}”? This can't be undone.`,
-      confirmText: 'Delete',
-      cancelText: 'Keep',
-      tone: 'warning',
-    }))) return;
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates/${t.id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(d.error ?? 'Could not delete template');
-      }
-      await reloadTemplates();
-    } catch (e: unknown) {
-      setTemplateError(errorMessage(e, 'Could not delete template'));
-    }
-  }
-
-  function handleLineupDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    pushLineupUndo();
-    setLineupRows(rows => {
-      const oldIndex = rows.findIndex(r => r.player.id === active.id);
-      const newIndex = rows.findIndex(r => r.player.id === over.id);
-      if (oldIndex < 0 || newIndex < 0) return rows;
-      return renumberBattingOrder(arrayMove(rows, oldIndex, newIndex), lineupMode);
-    });
-    setLineupDirty(true);
-  }
-
-  // Mobile reorder (the drag grip is hidden on touch): move a player up/down in the
-  // batting order. Mirrors the drag path — same renumber + dirty marking.
-  function moveLineupRow(index: number, dir: -1 | 1) {
-    const target = index + dir;
-    if (target < 0 || target >= lineupRows.length) return;
-    pushLineupUndo();
-    setLineupRows(rows => renumberBattingOrder(arrayMove(rows, index, target), lineupMode));
-    setLineupDirty(true);
-  }
-
-  // Remove a player from this game's lineup = mark them Out in attendance; the sync above drops
-  // them from the batting order/positions. Reversible via "Add to lineup".
-  function removeFromLineup(playerId: string) {
-    setPlayerAttendance(playerId, { status: 'absent' });
-    setLineupDirty(true);
-  }
-
-  // Add a player back: clears their Out status; the sync gives them a fresh lineup slot.
-  function addToLineup(playerId: string) {
-    setPlayerAttendance(playerId, { status: 'attending' });
-    setLineupDirty(true);
-  }
-
-  function handleLineupStarterToggle(playerId: string, checked: boolean) {
-    pushLineupUndo();
-    setLineupRows(rows => renumberBattingOrder(
-      rows.map(r => r.player.id === playerId ? { ...r, starter: checked } : r),
-      lineupMode,
-    ));
-    setLineupDirty(true);
-  }
 
   function openEvent(event: RepTeamEvent) {
     setSlideTab('attendance');
     setAttendanceFilter('all');
     setRsvpEditId(null);
-    setLineupView('lineup');
     setDaySheet(null);
     setSelectedEvent(event);
   }
@@ -1495,32 +1010,13 @@ export default function CoachesSchedulePage({
     setScoreForm(null);
     setSaveError('');
     setLineupRows([]);
-    setLineupError('');
-    setLineupDirty(false);
-    // Reset per-game caps so a failed load of the next event can't leave a stale override in the
-    // fields (which would then auto-save onto the new game). The load re-hydrates on success.
-    setGameRules({ maxPos: '', pitcher: '', minPlay: '' });
-    setLineupSeasonCaps(null);
-    setGameRulesOpen(false);
-    // Reset the mode + competitive dials too, so one game's choices don't leak into the next (the
-    // load re-picks the mode from the event type on success).
-    setAutoPolicy('balanced');
-    setASquadEmphasis('balanced_sits');
-    setNoBackToBackSits(true);
-    setAutoFillOpen(false);
-    setLineupPdfOpen(false);
-    setPdfIncludeNotes(false);
-    setTemplatesOpen(false);
-    setTemplateError('');
-    setNewTemplateName('');
-    setLineupNotice('');
+    setLineupEntryIds(new Set());
   }
 
   // Auto-save means closing should FLUSH any pending edits, not prompt to discard. Only if a
   // flush genuinely fails do we ask before closing (so the coach doesn't lose work silently).
   async function requestCloseSlideOver() {
     let ok = true;
-    if (lineupDirty) ok = (await handleLineupSave()) && ok;
     if (attendanceDirty) ok = (await handleAttendanceSave()) && ok;
     if (!ok && !(await confirm({
       title: 'Changes not saved',
@@ -1653,131 +1149,11 @@ export default function CoachesSchedulePage({
     }
   }
 
-  function updateLineupPosition(playerId: string, inning: number, position: string) {
-    pushLineupUndo();
-    setLineupRows(rows => rows.map(row => (
-      row.player.id === playerId
-        ? {
-          ...row,
-          inningPositions: {
-            ...row.inningPositions,
-            [String(inning)]: position,
-          },
-        }
-        : row
-    )));
-    setLineupDirty(true);
-  }
 
-  function handleLineupModeChange(mode: RepLineupMode) {
-    pushLineupUndo();
-    setLineupMode(mode);
-    setLineupRows(rows => renumberBattingOrder(
-      rows.map((row, index) => mode === 'everyone_bats' ? { ...row, starter: true } : { ...row, starter: index < 9 }),
-      mode,
-    ));
-    setLineupDirty(true);
-  }
 
-  async function handleLineupSave(): Promise<boolean> {
-    if (!selectedEvent) return true;
-    const sigAtSave = lineupSig();
-    setLineupSaving(true);
-    setLineupError('');
-    try {
-      const rows = lineupRows.map(row => ({
-        playerId: row.player.id,
-        battingOrder: lineupMode === 'nine_player' && !row.starter ? null : row.battingOrder,
-        starter: lineupMode === 'nine_player' ? row.starter : true,
-        inningPositions: row.inningPositions,
-        notes: row.notes,
-      }));
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${selectedEvent.id}/lineup`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lineupMode,
-          inningCount: lineupInningCount,
-          notes: lineupNotes,
-          rulesOverride: buildGameRulesOverride(),
-          entries: rows,
-        }),
-      });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(d.error ?? 'Lineup save failed');
-      }
-      await res.json().catch(() => ({}));
-      // Only mark clean if nothing changed during the round-trip; otherwise leave it
-      // dirty so the pending debounce saves the newer state (no silent loss / stomp).
-      if (lineupSigRef.current === sigAtSave) setLineupDirty(false);
-      setLineupNotice('');
-      return true;
-    } catch (e: unknown) {
-      setLineupError(errorMessage(e, 'Lineup save failed'));
-      return false;
-    } finally {
-      setLineupSaving(false);
-    }
-  }
 
-  // Shared poster/card content — the live grid as a printable lineup payload. Sorted so
-  // batters lead (blank batting order sorts last → 9-player subs trail). Blank cells stay
-  // blank (empty boxes on the poster); Bench prints "BN".
-  function buildPosterOptions() {
-    if (!selectedEvent || lineupRows.length === 0) return null;
-    const settings: OrgPdfSettings = {
-      ...DEFAULT_PDF_SETTINGS,
-      ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
-    };
-    const players: LineupPosterPlayer[] = sortLineupRows(lineupRows).map(row => {
-      const isSub = lineupMode === 'nine_player' && !row.starter;
-      return {
-        battingOrder: isSub ? '' : row.battingOrder,
-        name: playerDisplayName(row.player),
-        isSub,
-        inningPositions: row.inningPositions,
-      };
-    });
-    return {
-      teamName: assignment?.teamName ?? teamId,
-      opponent: selectedEvent.opponent,
-      homeAway: selectedEvent.homeAway,        // 'away' → "@", else "vs"
-      dateLabel: selectedEvent.startsAt ? `${fmtDate(selectedEvent.startsAt)} · ${fmtTime(selectedEvent.startsAt)}` : '',
-      eventName: selectedEvent.name,
-      inningCount: lineupInningCount,
-      players,
-      // Legend mirrors the actual lineup-cell vocabulary (incl. EH); Bench is added by the
-      // builder. LINEUP_POSITIONS is the source of what a coach can put in a cell.
-      legend: buildPositionLegend(LINEUP_POSITIONS.filter(p => p && p !== 'Bench')),
-      includeNotes: pdfIncludeNotes,           // print the lineup notes at the foot of the poster
-      notes: lineupNotes,
-      accentColor: settings.accentColor,
-      showBranding: settings.showBranding,
-    };
-  }
 
-  async function handleLineupPoster() {
-    if (!selectedEvent) return;
-    const opts = buildPosterOptions();
-    if (!opts) return;
-    setLineupPdfOpen(false);
-    await downloadLineupPoster(
-      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'lineup', scope: selectedEvent.name || opts.teamName }, 'pdf'),
-      opts,
-    );
-  }
 
-  async function handleBattingCard() {
-    if (!selectedEvent) return;
-    const opts = buildPosterOptions();
-    if (!opts) return;
-    setLineupPdfOpen(false);
-    await downloadBattingOrderCard(
-      buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'batting-order', scope: selectedEvent.name || opts.teamName }, 'pdf'),
-      opts,
-    );
-  }
 
   function buildExportRows() {
     return events.map(e => ({
@@ -1919,7 +1295,7 @@ export default function CoachesSchedulePage({
           <div className={styles.calMonthLabel}>{label}</div>
           <div className={styles.calEventList}>
             {(grouped[mk] ?? []).map(e => (
-              <EventChip key={e.id} event={e} onClick={() => openEvent(e)} />
+              <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} />
             ))}
             {trys.map(s => (
               <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} />
@@ -1954,7 +1330,7 @@ export default function CoachesSchedulePage({
                   : (
                     <>
                       {dayEvents.map(e => (
-                        <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} />
+                        <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} mismatch={mismatchIds.has(e.id)} />
                       ))}
                       {dayTryouts.map(s => (
                         <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} />
@@ -2160,7 +1536,7 @@ export default function CoachesSchedulePage({
             </div>
             <div className={styles.calEventList}>
               {sortDayEvents(daySheet.events).map(e => (
-                <EventChip key={e.id} event={e} dayKey={daySheet.dateKey} onClick={() => openEvent(e)} />
+                <EventChip key={e.id} event={e} dayKey={daySheet.dateKey} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} />
               ))}
             </div>
           </div>
@@ -2358,6 +1734,21 @@ export default function CoachesSchedulePage({
               )}
             </div>
 
+            {lineupMismatch && (
+              <div className={styles.lineupPeekWarn} role="status">
+                {lineupMismatch.coming.length > 0 && (
+                  <p>⚠ Marked in but not in the lineup: {lineupMismatch.coming.join(', ')}.</p>
+                )}
+                {lineupMismatch.out.length > 0 && (
+                  <p>⚠ In the lineup but marked Out: {lineupMismatch.out.join(', ')}.</p>
+                )}
+                <span>
+                  Fix the attendance below, or{' '}
+                  <Link href={`${base}/lineups/${selectedEvent!.id}`} style={{ textDecoration: 'underline', color: 'var(--white-80)' }}>edit the lineup →</Link>
+                </span>
+              </div>
+            )}
+
             {slideTabs.length > 1 && (
               <div className={styles.slideTabs} role="tablist">
                 {slideTabs.map(t => (
@@ -2523,443 +1914,59 @@ export default function CoachesSchedulePage({
 
             {activeSlideTab === 'lineup' && isLineupEvent(selectedEvent) && (
               <div className={styles.lineupSection}>
-                {/* Toggle the editable grid vs the playing-time summary (not stacked). */}
-                <div className={styles.lineupViewToggle} role="tablist" aria-label="Lineup view">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={lineupView === 'lineup'}
-                    className={`${styles.lineupViewBtn} ${lineupView === 'lineup' ? styles.lineupViewBtnActive : ''}`}
-                    onClick={() => setLineupView('lineup')}
-                  >
-                    Lineup
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={lineupView === 'summary'}
-                    className={`${styles.lineupViewBtn} ${lineupView === 'summary' ? styles.lineupViewBtnActive : ''}`}
-                    disabled={lineupRows.length === 0}
-                    onClick={() => setLineupView('summary')}
-                  >
-                    Playing time
-                  </button>
-                </div>
-
-                {lineupView === 'lineup' && (<>
-                <div className={styles.lineupHeader}>
-                  <div>
-                    <h3 className={styles.attendanceTitle}>Lineup</h3>
-                    <p className={styles.attendanceSummary}>
-                      {lineupMode === 'nine_player'
-                        ? `${lineupRows.filter(row => row.starter).length} starters, ${lineupRows.filter(row => !row.starter).length} bench`
-                        : `${lineupRows.length} hitters`}
-                    </p>
-                  </div>
-                  <div className={styles.lineupControls}>
-                    <label className={styles.lineupControlLabel}>
-                      <span>Format</span>
-                      <select
-                        className={styles.select}
-                        aria-label="Lineup format"
-                        value={lineupMode}
-                        onChange={e => handleLineupModeChange(e.target.value as RepLineupMode)}
-                      >
-                        <option value="everyone_bats">Everyone bats</option>
-                        <option value="nine_player">9 player ball</option>
-                      </select>
-                    </label>
-                    <label className={styles.lineupControlLabel}>
-                      <span>Innings</span>
-                      <select
-                        className={styles.select}
-                        aria-label="Lineup innings"
-                        value={lineupInningCount}
-                        onChange={e => { pushLineupUndo(); setLineupInningCount(Number(e.target.value)); setLineupDirty(true); }}
-                      >
-                        {Array.from({ length: 12 }, (_, index) => index + 1).map(count => (
-                          <option key={count} value={count}>{count}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <div className={styles.lineupAutoWrap} ref={autoFillRef}>
-                      <button
-                        type="button"
-                        className={styles.btnSecondary}
-                        disabled={lineupRows.length === 0}
-                        onClick={() => { setAutoFillOpen(v => !v); setTemplatesOpen(false); setLineupPdfOpen(false); }}
-                      >
-                        Auto-fill ▾
-                      </button>
-                      {autoFillOpen && (
-                        <div className={styles.lineupAutoMenu}>
-                          <label className={styles.lineupControlLabel}>
-                            <span>Mode</span>
-                            <select className={styles.select} value={autoPolicy} onChange={e => setAutoPolicy(e.target.value as PositionPolicy)}>
-                              <option value="competitive">Competitive — best on the field</option>
-                              <option value="balanced">Balanced — preferred spots, rotate</option>
-                              <option value="development">Development — rotate everyone</option>
-                            </select>
-                          </label>
-                          {/* P4: competitive-only dials (pre-picked from the game type). */}
-                          {autoPolicy === 'competitive' && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                              <label className={styles.lineupControlLabel}>
-                                <span>A-squad</span>
-                                <select className={styles.select} value={aSquadEmphasis} onChange={e => setASquadEmphasis(e.target.value as 'balanced_sits' | 'prioritized')}>
-                                  <option value="balanced_sits">Play key spots — bench rotates evenly</option>
-                                  <option value="prioritized">Stay on field — others cover the bench</option>
-                                </select>
-                              </label>
-                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
-                                <input type="checkbox" checked={noBackToBackSits} onChange={e => setNoBackToBackSits(e.target.checked)} />
-                                <span>Nobody sits two innings in a row</span>
-                              </label>
-                            </div>
-                          )}
-                          <label className={styles.lineupControlLabel}>
-                            <span>Fill</span>
-                            <select className={styles.select} value={autoFillMode} onChange={e => setAutoFillMode(e.target.value as FillMode)}>
-                              <option value="empty">Fill empty spots only</option>
-                              <option value="regenerate">Regenerate all</option>
-                            </select>
-                          </label>
-                          {/* P3: per-game cap override — defaults to the team's season rules. */}
-                          <div>
-                            <button type="button" onClick={() => setGameRulesOpen(v => !v)}
-                              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
-                              Game rules {gameRulesOpen ? '▴' : '▾'}
-                            </button>
-                            {gameRulesOpen && (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
-                                {([
-                                  { key: 'maxPos', label: 'Max innings / position', def: lineupSeasonCaps?.maxInningsPerPosition ?? null, min: 1 },
-                                  { key: 'pitcher', label: 'Max innings pitched', def: lineupSeasonCaps?.pitcherMaxInningsDefault ?? null, min: 1 },
-                                  { key: 'minPlay', label: 'Min innings / player', def: lineupSeasonCaps?.minInningsPerPlayer ?? null, min: 1 },
-                                ] as const).map(f => (
-                                  <label key={f.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
-                                    <span>{f.label}</span>
-                                    <input type="number" min={f.min} max={12} className={styles.input} style={{ width: 128 }}
-                                      placeholder={f.def != null ? `Season default (${f.def})` : 'Off'}
-                                      value={gameRules[f.key]}
-                                      onChange={e => { const v = e.target.value; setGameRules(g => ({ ...g, [f.key]: v })); setLineupDirty(true); }} />
-                                  </label>
-                                ))}
-                                <p className={styles.lineupAutoNote} style={{ margin: 0 }}>Overrides just this game. Blank = your season default.</p>
-                              </div>
-                            )}
-                          </div>
-                          <p className={styles.lineupAutoNote}>
-                            Auto-fill shares playing time fairly. It&apos;s a starting point — tweak after.
-                          </p>
-                          <button type="button" className={styles.btnPrimary} onClick={handleAutoFill}>Generate</button>
-                        </div>
-                      )}
-                    </div>
-                    <div className={styles.lineupAutoWrap} ref={templatesRef}>
-                      <button
-                        type="button"
-                        className={styles.btnSecondary}
-                        disabled={lineupRows.length === 0}
-                        onClick={() => { setTemplatesOpen(v => !v); setTemplateError(''); setAutoFillOpen(false); setLineupPdfOpen(false); }}
-                        aria-expanded={templatesOpen}
-                      >
-                        Templates ▾
-                      </button>
-                      {templatesOpen && (
-                        <div className={styles.lineupAutoMenu}>
-                          <div className={styles.lineupTemplateSection}>
-                            <span className={styles.lineupTemplateHead}>Start from a saved template</span>
-                            {templates.length === 0 ? (
-                              <p className={styles.lineupAutoNote}>No saved templates yet — build a lineup, then save it below.</p>
-                            ) : (
-                              <ul className={styles.lineupTemplateList}>
-                                {templates.map(t => (
-                                  <li key={t.id} className={styles.lineupTemplateRow}>
-                                    <button type="button" className={styles.lineupTemplateLoad} onClick={() => applyTemplate(t)}>
-                                      <strong>{t.name}</strong>
-                                      <span>{t.lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · {t.inningCount} {sportPack.periodLabelPlural.toLowerCase()}</span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className={styles.lineupTemplateDelete}
-                                      aria-label={`Delete template ${t.name}`}
-                                      title="Delete template"
-                                      onClick={() => handleDeleteTemplate(t)}
-                                    >
-                                      <X size={14} />
-                                    </button>
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                          <div className={styles.lineupTemplateSection}>
-                            <span className={styles.lineupTemplateHead}>Save current lineup as a template</span>
-                            <input
-                              className={styles.input}
-                              value={newTemplateName}
-                              onChange={e => setNewTemplateName(e.target.value)}
-                              placeholder="e.g. Gold medal game"
-                              maxLength={80}
-                              aria-label="New template name"
-                            />
-                            <button
-                              type="button"
-                              className={styles.btnPrimary}
-                              disabled={!newTemplateName.trim() || templateSaving || lineupRows.length === 0}
-                              onClick={handleSaveTemplate}
-                            >
-                              {templateSaving ? 'Saving…' : 'Save as template'}
-                            </button>
-                            {templateError && <p className={styles.errorText}>{templateError}</p>}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {lineupRows.length > 0 && (
-                  <div className={styles.lineupInsights}>
-                    {lineupNotice && <p className={styles.lineupNotice}>{lineupNotice}</p>}
-                    <p className={styles.lineupHint}>
-                      Starts from your{' '}
-                      <Link href={`/${orgSlug}/coaches/teams/${teamId}/roster`}>roster order</Link>
-                      {' '}— drag (or use ↑↓ on mobile) to set this game&apos;s batting order.
-                    </p>
-                    {lineupAnalysis.hasConflicts && (
-                      <p className={styles.lineupWarn}>
-                        ⚠ Position clash: {lineupAnalysis.conflicts.map(c => `two at ${c.position} in inning ${c.inning}`).join(' · ')}
-                      </p>
-                    )}
-                    {lineupAnalysis.unfilledFieldPositions.length > 0 && (
-                      <p className={styles.lineupWarn}>
-                        ⚠ Couldn&apos;t fill {lineupAnalysis.unfilledFieldPositions.map(u => `${u.positions.join(', ')} in ${sportPack.periodLabel.toLowerCase()} ${u.inning}`).join(' · ')} — a player may have this spot set to &ldquo;Never,&rdquo; leaving no one eligible.
-                      </p>
-                    )}
-                    {lineupAnalysis.benchSpread && (lineupAnalysis.benchSpread.max - lineupAnalysis.benchSpread.min) > 1 && (
-                      <p className={styles.lineupWarn}>
-                        ⚠ Uneven bench time — players sit between {lineupAnalysis.benchSpread.min} and {lineupAnalysis.benchSpread.max} innings.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {lineupLoading ? (
-                  <div className={styles.attendanceEmpty}>Loading lineup...</div>
-                ) : lineupRows.length === 0 ? (
-                  <div className={styles.attendanceEmpty}>
-                    {attendanceRows.length === 0
-                      ? 'Add active players to the roster before creating a lineup.'
-                      : 'Everyone is marked Out — add players back below to build a lineup.'}
-                  </div>
-                ) : (
-                  <DndContext sensors={lineupSensors} collisionDetection={closestCenter} onDragEnd={handleLineupDragEnd}>
-                    <p className={styles.lineupScrollHint}>Swipe across innings →</p>
-                    <div className={styles.lineupTableWrap}>
-                      <table
-                        className={styles.lineupTable}
-                        style={{ '--lineup-lead': lineupMode === 'nine_player' ? '5.8rem' : '3.4rem' } as CSSProperties}
-                      >
-                        <thead>
-                          <tr>
-                            <th>Bat</th>
-                            {lineupMode === 'nine_player' && <th className={styles.lineupColStart}>Start</th>}
-                            <th className={styles.lineupColPlayer}>Player</th>
-                            {Array.from({ length: lineupInningCount }, (_, index) => {
-                              const inning = index + 1;
-                              const clash = lineupAnalysis.conflictInnings.has(inning);
-                              return (
-                                <th key={inning} className={styles.lineupColInning} style={clash ? { color: 'var(--danger)' } : undefined} title={clash ? 'Two players share a position this inning' : undefined}>
-                                  {inning}{clash ? ' ⚠' : ''}
-                                </th>
-                              );
-                            })}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <SortableContext items={lineupRows.map(r => r.player.id)} strategy={verticalListSortingStrategy}>
-                            {lineupRows.map((row, i) => (
-                              <SortableLineupRow
-                                key={row.player.id}
-                                row={row}
-                                battingNumber={row.battingOrder}
-                                mode={lineupMode}
-                                inningCount={lineupInningCount}
-                                onStarterToggle={handleLineupStarterToggle}
-                                onPositionChange={updateLineupPosition}
-                                index={i}
-                                count={lineupRows.length}
-                                onMove={moveLineupRow}
-                                onRemove={removeFromLineup}
-                              />
-                            ))}
-                          </SortableContext>
-                        </tbody>
-                      </table>
-                    </div>
-                  </DndContext>
-                )}
-
-                {/* Not playing — players marked Out; tap to add any back into the lineup. */}
                 {(() => {
-                  const notPlaying = attendanceRows.filter(r => r.status === 'absent');
-                  if (notPlaying.length === 0) return null;
+                  const editHref = `${base}/lineups/${selectedEvent!.id}`;
+                  const hasLineup = lineupRows.some(r => Object.values(r.inningPositions).some(Boolean));
+                  const battingRows = sortLineupRows(lineupRows).filter(r => lineupMode === 'nine_player' ? r.starter : true);
+                  const modeLabel = lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats';
                   return (
-                    <div className={styles.lineupNotPlaying}>
-                      <p className={styles.lineupNotPlayingHead}>Not playing · {notPlaying.length}</p>
-                      <div className={styles.lineupNotPlayingList}>
-                        {notPlaying.map(r => (
-                          <div key={r.player.id} className={styles.lineupNotPlayingRow}>
-                            <span className={styles.lineupNotPlayingName}>
-                              <CircleSlash size={13} aria-hidden /> {playerDisplayName(r.player)}
-                            </span>
-                            <button
-                              type="button"
-                              className={styles.lineupAddBackBtn}
-                              onClick={() => addToLineup(r.player.id)}
-                            >
-                              Add to lineup
-                            </button>
-                          </div>
-                        ))}
+                    <>
+                      <div className={styles.lineupPeekHeader}>
+                        <div>
+                          <h3 className={styles.attendanceTitle}>Lineup</h3>
+                          <p className={styles.attendanceSummary}>
+                            {hasLineup ? 'A quick look — build and edit on the Lineups page.' : 'No lineup set for this game yet.'}
+                          </p>
+                        </div>
+                        <span className={styles.lineupFrontChip} data-tone={hasLineup ? 'ok' : 'warn'}>
+                          {hasLineup ? <><CheckCircle2 size={13} aria-hidden /> Lineup set</> : <><CircleSlash size={13} aria-hidden /> Not set</>}
+                        </span>
                       </div>
-                    </div>
+
+                      {lineupLoading ? (
+                        <div className={styles.attendanceEmpty}>Loading lineup…</div>
+                      ) : !hasLineup ? (
+                        <div className={styles.lineupPeekEmpty}>
+                          <p>Build the batting order and field positions on the full Lineups page.</p>
+                          <Link href={editHref} className="btn btn-lime btn-sm">Build lineup →</Link>
+                        </div>
+                      ) : (
+                        <>
+                          <div className={styles.lineupPeekStats}>
+                            <div><b>{battingRows.length}</b><span>{lineupMode === 'nine_player' ? 'Starters' : 'Batting'}</span></div>
+                            <div><b>{lineupInningCount}</b><span>{sportPack.periodLabelPlural}</span></div>
+                            <div><b>{modeLabel}</b><span>Format</span></div>
+                          </div>
+
+                          <p className={styles.sectionKicker} style={{ marginTop: '1rem' }}>Batting order</p>
+                          <ol className={styles.lineupPeekOrder}>
+                            {battingRows.map(r => (
+                              <li key={r.player.id}>
+                                <span className={styles.lineupPeekBat}>{r.battingOrder || '–'}</span>
+                                <span className={styles.lineupPeekName}>{playerDisplayName(r.player)}</span>
+                                {r.inningPositions['1'] && <span className={styles.lineupPeekPos}>{r.inningPositions['1']}</span>}
+                              </li>
+                            ))}
+                          </ol>
+
+                          <div className={styles.lineupPeekFooter}>
+                            <Link href={editHref} className="btn btn-lime btn-sm">Edit in Lineups →</Link>
+                          </div>
+                        </>
+                      )}
+                    </>
                   );
                 })()}
-
-                <textarea
-                  className={styles.textarea}
-                  rows={2}
-                  value={lineupNotes}
-                  onChange={e => { setLineupNotes(e.target.value); setLineupDirty(true); }}
-                  placeholder="Lineup notes (opponent scouting, reminders) — can be printed on the dugout poster"
-                  maxLength={1000}
-                />
-                </>)}
-
-                {lineupView === 'summary' && lineupRows.length > 0 && (
-                  <div className={styles.lineupSummary}>
-                      <div className={styles.lineupSummaryBody}>
-                        {/* Shared team fairness verdict */}
-                        <div className={styles.lineupFairness}>
-                          Bench: {benchMin === benchMax ? `${benchMin}` : `${benchMin}–${benchMax}`} {benchMax === 1 ? 'inning' : 'innings'} each
-                          <span className={`${styles.lineupFairPill} ${benchMax - benchMin > 1 ? styles.lineupFairPillWarn : ''}`}>
-                            {benchMax - benchMin > 1 ? 'Uneven' : 'Balanced'}
-                          </span>
-                        </div>
-
-                        {/* Desktop: heat grid */}
-                        <div className={styles.lineupSummaryDesktop}>
-                          <div className={styles.lineupSummaryWrap}>
-                            <table className={styles.lineupSummaryTable}>
-                              <thead>
-                                <tr>
-                                  <th>Player</th>
-                                  <th title="Innings on the field vs benched">On field</th>
-                                  {summaryPositions.map(pos => <th key={pos}>{pos}</th>)}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {lineupRows.map(row => {
-                                  const fp = fairPlayByPlayer.get(row.player.id);
-                                  return (
-                                    <tr key={row.player.id}>
-                                      <td className={styles.lineupSummaryName}>{playerDisplayName(row.player)}</td>
-                                      <td>{onFieldGauge(fp)}</td>
-                                      {summaryPositions.map(pos => {
-                                        const n = fp?.positionCounts[pos] ?? 0;
-                                        return <td key={pos} className={styles.lineupHeatCell} style={heatStyle(n)}>{n || <span className={styles.lineupZero}>·</span>}</td>;
-                                      })}
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-
-                        {/* Mobile: per-player chips */}
-                        <div className={styles.lineupSummaryMobile}>
-                          {lineupRows.map(row => {
-                            const fp = fairPlayByPlayer.get(row.player.id);
-                            const played = summaryPositions.filter(pos => (fp?.positionCounts[pos] ?? 0) > 0);
-                            return (
-                              <div key={row.player.id} className={styles.lineupChipRow}>
-                                <span className={styles.lineupChipName}>{playerDisplayName(row.player)}</span>
-                                {onFieldGauge(fp)}
-                                <span className={styles.lineupChips}>
-                                  {played.map(pos => (
-                                    <span key={pos} className={styles.lineupChip} style={heatStyle(fp!.positionCounts[pos])}>{pos}×{fp!.positionCounts[pos]}</span>
-                                  ))}
-                                  {played.length === 0 && <span className={styles.lineupZero}>—</span>}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                  </div>
-                )}
-
-                {lineupRows.length > 0 && (
-                <div className={styles.attendanceFooter}>
-                  <div className={styles.lineupFooterTools}>
-                    <button type="button" className={styles.footerIconBtn} aria-label="Undo" title="Undo" disabled={lineupHistory.undo.length === 0} onClick={undoLineup}>
-                      <Undo2 size={18} />
-                    </button>
-                    <button type="button" className={styles.footerIconBtn} aria-label="Redo" title="Redo" disabled={lineupHistory.redo.length === 0} onClick={redoLineup}>
-                      <Redo2 size={18} />
-                    </button>
-                    <button type="button" className={styles.footerIconBtn} aria-label="Clear positions" title="Clear positions" disabled={lineupRows.length === 0} onClick={clearLineup}>
-                      <Eraser size={18} />
-                    </button>
-                    <div className={styles.lineupPdfWrap} ref={pdfRef}>
-                    <button
-                      type="button"
-                      className={styles.footerIconBtn}
-                      aria-label="Print"
-                      title="Print"
-                      disabled={lineupRows.length === 0}
-                      onClick={() => { setLineupPdfOpen(v => !v); setAutoFillOpen(false); setTemplatesOpen(false); }}
-                      aria-expanded={lineupPdfOpen}
-                    >
-                      <Printer size={18} />
-                    </button>
-                    {lineupPdfOpen && (
-                      <div className={styles.lineupPdfMenu}>
-                        <button type="button" className={styles.lineupPdfItem} onClick={handleLineupPoster}>
-                          <strong>Dugout poster</strong>
-                          <span>Positions by {sportPack.periodLabel.toLowerCase()} — blank boxes to pen in at the field</span>
-                        </button>
-                        <button type="button" className={styles.lineupPdfItem} onClick={handleBattingCard}>
-                          <strong>Batting order card</strong>
-                          <span>Large-type order for the scorekeeper or dugout</span>
-                        </button>
-                        {lineupNotes.trim() && (
-                          <label className={styles.lineupPdfNotesToggle}>
-                            <input
-                              type="checkbox"
-                              checked={pdfIncludeNotes}
-                              onChange={e => setPdfIncludeNotes(e.target.checked)}
-                            />
-                            <span>Print lineup notes on the poster</span>
-                          </label>
-                        )}
-                      </div>
-                    )}
-                    </div>
-                  </div>
-                  <span className={styles.saveStatus} aria-live="polite">
-                    {lineupError
-                      ? <button type="button" className={styles.saveRetry} onClick={handleLineupSave}>Couldn’t save · Retry</button>
-                      : (lineupSaving || lineupDirty)
-                        ? 'Saving…'
-                        : <><Check size={13} /> Saved</>}
-                  </span>
-                </div>
-                )}
               </div>
             )}
 
@@ -2968,7 +1975,7 @@ export default function CoachesSchedulePage({
       )}
 
       {/* Warn before leaving with unsaved event / attendance / lineup edits */}
-      <UnsavedChangesGuard active={formDirty || attendanceDirty || lineupDirty} />
+      <UnsavedChangesGuard active={formDirty || attendanceDirty} />
 
       {/* ── Add / edit event modal ─────────────────────────────────────────── */}
       {showAddForm && (

@@ -10,20 +10,11 @@ import {
 } from '@/lib/db';
 import type { RepLineupMode, RepTeamLineupTemplateEntry } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
-import { denyUnless } from '@/lib/coach-capabilities';
+import { denyUnless, redactRoster } from '@/lib/coach-capabilities';
+import { cleanTemplateEntries } from '@/lib/lineup-template-entries';
 
 const VALID_LINEUP_MODES: RepLineupMode[] = ['nine_player', 'everyone_bats'];
-const VALID_POSITIONS = new Set([
-  'P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'DH', 'EH', 'Bench',
-]);
 const MAX_TEMPLATES_PER_SEASON = 50;
-
-type RawTemplateEntry = {
-  playerId?: unknown;
-  battingOrder?: unknown;
-  starter?: unknown;
-  inningPositions?: unknown;
-};
 
 // Team-scoped coach guard (no event) — mirrors the lineup route's resolveCoachContext.
 async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
@@ -48,22 +39,6 @@ async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-function normalizeInningPositions(raw: unknown, inningCount: number): Record<string, string> {
-  const source = raw && typeof raw === 'object' && !Array.isArray(raw)
-    ? raw as Record<string, unknown>
-    : {};
-  const next: Record<string, string> = {};
-  for (let inning = 1; inning <= inningCount; inning += 1) {
-    const value = source[String(inning)];
-    if (typeof value !== 'string') continue;
-    const position = value.trim();
-    if (!position) continue;
-    if (!VALID_POSITIONS.has(position)) throw new Error(`Invalid position for inning ${inning}`);
-    next[String(inning)] = position;
-  }
-  return next;
-}
-
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
@@ -73,8 +48,17 @@ export const GET = withObservability(async (_req: Request,
   const denied = denyUnless(assignment.capabilities.lineups, 'You do not have access to lineups.');
   if (denied) return denied;
 
-  const templates = await getRepTeamLineupTemplates(teamId, programYear.id);
-  return NextResponse.json({ templates });
+  const [templates, players] = await Promise.all([
+    getRepTeamLineupTemplates(teamId, programYear.id),
+    getRepRosterPlayers(programYear.id),
+  ]);
+  // Active roster (PII-redacted per the coach's grants) so the standalone template builder can seed
+  // its player grid without a game context — same source/gating as the game lineup GET.
+  return NextResponse.json({
+    templates,
+    players: redactRoster(players.filter(p => p.status === 'active'), assignment.capabilities),
+    programYear,
+  });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/lineup-templates' });
 
 export const POST = withObservability(async (req: Request,
@@ -116,29 +100,10 @@ export const POST = withObservability(async (req: Request,
 
   const players = (await getRepRosterPlayers(programYear.id)).filter(p => p.status === 'active');
   const activePlayerIds = new Set(players.map(p => p.id));
-  const seen = new Set<string>();
 
   let cleanEntries: RepTeamLineupTemplateEntry[];
   try {
-    cleanEntries = (entries as RawTemplateEntry[]).map(entry => {
-      const playerId = typeof entry?.playerId === 'string' ? entry.playerId : '';
-      if (!activePlayerIds.has(playerId)) throw new Error('Templates can only include active roster players');
-      if (seen.has(playerId)) throw new Error('Each player can only appear once in a template');
-      seen.add(playerId);
-
-      const rawOrder = entry?.battingOrder;
-      const battingOrder = rawOrder === null || rawOrder === undefined || rawOrder === ''
-        ? null : Number(rawOrder);
-      if (battingOrder !== null && (!Number.isInteger(battingOrder) || battingOrder < 1 || battingOrder > 99)) {
-        throw new Error('Batting order must be a positive whole number');
-      }
-      return {
-        playerId,
-        battingOrder,
-        starter: lineupMode === 'nine_player' ? Boolean(entry?.starter) : true,
-        inningPositions: normalizeInningPositions(entry?.inningPositions, inningCount),
-      };
-    });
+    cleanEntries = cleanTemplateEntries(entries, { activePlayerIds, lineupMode, inningCount });
   } catch (error: unknown) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Invalid template entries' },

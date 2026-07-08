@@ -1,10 +1,15 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { ListOrdered, ArrowRight, CheckCircle2, TriangleAlert, CalendarPlus } from 'lucide-react';
+import {
+  ListOrdered, ArrowRight, CheckCircle2, TriangleAlert, CalendarPlus,
+  Plus, Pencil, Trash2, Check, X, ClipboardCheck,
+} from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import styles from '../../../coaches.module.css';
-import type { RepTeamEvent } from '@/lib/types';
+import type { RepTeamEvent, RepTeamLineupTemplate, RepRosterPlayer, RepTeamLineupEntry } from '@/lib/types';
 
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
 // Cap how many games we probe for lineup-readiness so a busy season doesn't fan out dozens of
@@ -29,8 +34,10 @@ export default function CoachesLineupsPage({
 }) {
   const { orgSlug, teamId } = use(paramsPromise);
   const { assignments, loading: ctxLoading } = useCoaches();
+  const confirm = useConfirm();
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+  const sportPack = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT);
   // Fail-open like the nav — the server still enforces on every lineup route.
   const canLineups = assignment ? assignment.capabilities.lineups : true;
 
@@ -40,6 +47,17 @@ export default function CoachesLineupsPage({
   const [error, setError] = useState('');
   // Per-game lineup readiness: true = a lineup is saved, false = not yet, undefined = not checked.
   const [ready, setReady] = useState<Record<string, boolean>>({});
+
+  // ── Templates manager ──
+  const [templates, setTemplates] = useState<RepTeamLineupTemplate[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(true);
+  const [notice, setNotice] = useState('');
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [renameBusy, setRenameBusy] = useState(false);
+  // The template whose "apply to a game" picker is open (null = closed).
+  const [applyTemplate, setApplyTemplate] = useState<RepTeamLineupTemplate | null>(null);
+  const [applyBusyGameId, setApplyBusyGameId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,10 +79,25 @@ export default function CoachesLineupsPage({
     }
   }, [orgSlug, teamId]);
 
+  const loadTemplates = useCallback(async () => {
+    setTemplatesLoading(true);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setTemplates(data.templates ?? []);
+    } catch { /* non-blocking */ } finally {
+      setTemplatesLoading(false);
+    }
+  }, [orgSlug, teamId]);
+
   // Wait for the assignments context to resolve before deciding whether to fetch — otherwise the
   // fail-open `canLineups` default would fire the fetch for an assistant whose access is revoked.
-  // When lineups aren't permitted the page returns the "not enabled" state below instead.
-  useEffect(() => { if (!ctxLoading && canLineups) void Promise.resolve().then(load); }, [ctxLoading, canLineups, load]);
+  useEffect(() => {
+    if (ctxLoading || !canLineups) return;
+    void Promise.resolve().then(load);
+    void Promise.resolve().then(loadTemplates);
+  }, [ctxLoading, canLineups, load, loadTemplates]);
 
   // Probe lineup readiness for the nearest upcoming games (bounded).
   useEffect(() => {
@@ -85,12 +118,126 @@ export default function CoachesLineupsPage({
       }),
     ).then(pairs => {
       if (cancelled) return;
-      const next: Record<string, boolean> = {};
-      for (const [id, val] of pairs) if (typeof val === 'boolean') next[id] = val;
-      setReady(next);
+      setReady(prev => {
+        const next = { ...prev };
+        for (const [id, val] of pairs) if (typeof val === 'boolean') next[id] = val;
+        return next;
+      });
     });
     return () => { cancelled = true; };
   }, [canLineups, orgSlug, teamId, upcoming]);
+
+  // ── Template actions ──
+  function startRename(t: RepTeamLineupTemplate) {
+    setRenamingId(t.id);
+    setRenameValue(t.name);
+    setNotice('');
+  }
+  async function saveRename(id: string) {
+    const name = renameValue.trim();
+    if (!name) return;
+    setRenameBusy(true);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(d.error ?? 'Could not rename');
+      }
+      setTemplates(list => list.map(t => t.id === id ? { ...t, name } : t).sort((a, b) => a.name.localeCompare(b.name)));
+      setRenamingId(null);
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : 'Could not rename the template');
+    } finally {
+      setRenameBusy(false);
+    }
+  }
+
+  async function deleteTemplate(t: RepTeamLineupTemplate) {
+    if (!(await confirm({
+      title: 'Delete template?',
+      message: `Delete the saved template “${t.name}”? This can't be undone.`,
+      confirmText: 'Delete', cancelText: 'Keep', tone: 'warning',
+    }))) return;
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates/${t.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Could not delete');
+      setTemplates(list => list.filter(x => x.id !== t.id));
+      setNotice(`Deleted “${t.name}”.`);
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : 'Could not delete the template');
+    }
+  }
+
+  // Apply the open template onto a chosen game. Loads the game's lineup to (a) know if one already
+  // exists (overwrite-aware confirm) and (b) map the template onto the game's current roster. The
+  // lineup and template are the only things written — attendance is untouched.
+  async function applyToGame(game: RepTeamEvent) {
+    const t = applyTemplate;
+    if (!t) return;
+    setApplyBusyGameId(game.id);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${game.id}/lineup`);
+      if (!res.ok) throw new Error('Could not open that game');
+      const data: {
+        players?: RepRosterPlayer[];
+        lineup?: { notes?: string | null; rulesOverride?: unknown } | null;
+        entries?: RepTeamLineupEntry[];
+      } = await res.json();
+      const rosterIds = new Set((data.players ?? []).map(p => p.id));
+      const hasLineup = (data.entries ?? []).some(en => Object.values(en.inningPositions ?? {}).some(Boolean));
+
+      const ok = await confirm(hasLineup ? {
+        title: 'Overwrite this lineup?',
+        message: `${gameTitle(game)} already has a lineup. Replace it with “${t.name}”?`,
+        confirmText: 'Overwrite', cancelText: 'Keep current', tone: 'warning',
+      } : {
+        title: 'Apply template?',
+        message: `Apply “${t.name}” to ${gameTitle(game)}?`,
+        confirmText: 'Apply', cancelText: 'Cancel',
+      });
+      if (!ok) { setApplyBusyGameId(null); return; }
+
+      // Map the template onto the game's CURRENT roster — silently skip players no longer rostered.
+      const mapped = t.entries
+        .filter(e => rosterIds.has(e.playerId))
+        .map(e => ({ playerId: e.playerId, battingOrder: e.battingOrder, starter: e.starter, inningPositions: e.inningPositions }));
+      const skipped = t.entries.length - mapped.length;
+      if (mapped.length === 0) {
+        setNotice(`None of “${t.name}”'s players are on ${gameTitle(game)}'s roster — nothing applied.`);
+        setApplyBusyGameId(null);
+        setApplyTemplate(null);
+        return;
+      }
+      const put = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${game.id}/lineup`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lineupMode: t.lineupMode,
+          inningCount: t.inningCount,
+          notes: data.lineup?.notes ?? '',
+          rulesOverride: data.lineup?.rulesOverride ?? null,
+          entries: mapped,
+        }),
+      });
+      if (!put.ok) {
+        const d = await put.json().catch(() => ({ error: put.statusText }));
+        throw new Error(d.error ?? 'Could not apply the template');
+      }
+      setReady(prev => ({ ...prev, [game.id]: true }));
+      setNotice(skipped > 0
+        ? `Applied “${t.name}” to ${gameTitle(game)} — skipped ${skipped} player${skipped === 1 ? '' : 's'} no longer on the roster.`
+        : `Applied “${t.name}” to ${gameTitle(game)}.`);
+      setApplyTemplate(null);
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : 'Could not apply the template');
+    } finally {
+      setApplyBusyGameId(null);
+    }
+  }
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
   if (!assignment) {
@@ -107,17 +254,15 @@ export default function CoachesLineupsPage({
       <div className={styles.pageHeaderLeft}>
         <div className={styles.headerIcon}><ListOrdered size={22} /></div>
         <div>
-          <nav className={styles.breadcrumb}>
-            <Link href={`/${orgSlug}/coaches`}>Portal</Link>
-            <span>/</span>
-            <Link href={base}>{assignment.teamName}</Link>
-            <span>/</span>
-            <span>Lineups</span>
-          </nav>
           <h1 className={styles.pageTitle}>Lineups</h1>
-          <p className={styles.pageSub}>Set the batting order and field positions for each game.</p>
+          <p className={styles.pageSub}>Build game lineups and reusable templates for your team.</p>
         </div>
       </div>
+      {canLineups && (
+        <Link href={`${base}/lineups/templates/new`} className="btn btn-lime btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+          <Plus size={15} /> New template
+        </Link>
+      )}
     </div>
   );
 
@@ -137,7 +282,7 @@ export default function CoachesLineupsPage({
   const renderRow = (e: RepTeamEvent, action: string) => {
     const r = ready[e.id];
     return (
-      <Link key={e.id} href={`${base}/schedule?event=${e.id}&tab=lineup`} className={styles.lineupFrontRow}>
+      <Link key={e.id} href={`${base}/lineups/${e.id}`} className={styles.lineupFrontRow}>
         <span className={styles.lineupFrontDate}>
           <span className={styles.lineupFrontDay}>{new Date(e.startsAt).getDate()}</span>
           <span className={styles.lineupFrontMonth}>{new Date(e.startsAt).toLocaleDateString('en-CA', { month: 'short' })}</span>
@@ -157,11 +302,15 @@ export default function CoachesLineupsPage({
   };
 
   const noGames = !loading && !error && upcoming.length === 0 && recent.length === 0;
+  const pickerGames = [...upcoming, ...recent];
 
   return (
     <div className={styles.page}>
       {header}
 
+      {notice && <p className={styles.lineupNotice} style={{ marginBottom: '1rem' }}>{notice}</p>}
+
+      {/* ── Games ── */}
       {loading ? (
         <div className={styles.loadingState}>Loading games…</div>
       ) : error ? (
@@ -171,7 +320,7 @@ export default function CoachesLineupsPage({
           <CalendarPlus size={28} style={{ opacity: 0.3, margin: '0 auto 0.75rem', display: 'block' }} />
           <p className={styles.emptyStateTitle}>No games yet</p>
           <p className={styles.emptyStateSub}>Add a game to your schedule, then build its lineup here.</p>
-          <Link href={`${base}/schedule`} className="btn btn-lime btn-sm" style={{ marginTop: '0.9rem' }}>
+          <Link href={`${base}/schedule`} className="btn btn-outline btn-sm" style={{ marginTop: '0.9rem' }}>
             Add a game <ArrowRight size={14} />
           </Link>
         </div>
@@ -185,7 +334,6 @@ export default function CoachesLineupsPage({
               </div>
             </section>
           )}
-
           {recent.length > 0 && (
             <section aria-labelledby="lineups-recent">
               <p className={styles.sectionKicker} id="lineups-recent">Recent games</p>
@@ -194,11 +342,102 @@ export default function CoachesLineupsPage({
               </div>
             </section>
           )}
-
-          <p className={styles.setupGuideFooter}>
-            Saved lineup templates live on the <Link href={`${base}/schedule`}>Schedule</Link>, inside a game&apos;s lineup tab.
-          </p>
         </>
+      )}
+
+      {/* ── Templates ── */}
+      <section aria-labelledby="lineups-templates" style={{ marginTop: '1.75rem' }}>
+        <p className={styles.sectionKicker} id="lineups-templates">Templates</p>
+        {templatesLoading ? (
+          <div className={styles.loadingState}>Loading templates…</div>
+        ) : templates.length === 0 ? (
+          <div className={styles.emptyState}>
+            <ClipboardCheck size={26} style={{ opacity: 0.3, margin: '0 auto 0.6rem', display: 'block' }} />
+            <p className={styles.emptyStateTitle}>No templates yet</p>
+            <p className={styles.emptyStateSub}>Build a reusable “base” lineup — like a gold-medal order or a rain-day rotation — then apply it to any game in one tap.</p>
+            <Link href={`${base}/lineups/templates/new`} className="btn btn-outline btn-sm" style={{ marginTop: '0.9rem' }}>
+              <Plus size={14} /> New template
+            </Link>
+          </div>
+        ) : (
+          <div className={styles.lineupTplList}>
+            {templates.map(t => (
+              <div key={t.id} className={styles.lineupTplRow}>
+                {renamingId === t.id ? (
+                  <div className={styles.lineupTplRename}>
+                    <input
+                      className={styles.input}
+                      value={renameValue}
+                      onChange={e => setRenameValue(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') saveRename(t.id); if (e.key === 'Escape') setRenamingId(null); }}
+                      maxLength={80}
+                      autoFocus
+                      aria-label="Template name"
+                    />
+                    <button type="button" className={styles.lineupTplIconBtn} aria-label="Save name" disabled={!renameValue.trim() || renameBusy} onClick={() => saveRename(t.id)}>
+                      <Check size={16} />
+                    </button>
+                    <button type="button" className={styles.lineupTplIconBtn} aria-label="Cancel rename" onClick={() => setRenamingId(null)}>
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Link href={`${base}/lineups/templates/${t.id}`} className={styles.lineupTplInfo}>
+                      <span className={styles.lineupTplName}>{t.name}</span>
+                      <span className={styles.lineupTplMeta}>
+                        {t.lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · {t.inningCount} {sportPack.periodLabelPlural.toLowerCase()} · {t.entries.length} player{t.entries.length === 1 ? '' : 's'}
+                      </span>
+                    </Link>
+                    <div className={styles.lineupTplActions}>
+                      <button type="button" className={styles.btnSecondary} disabled={pickerGames.length === 0} title={pickerGames.length === 0 ? 'Add a game first' : undefined} onClick={() => { setNotice(''); setApplyTemplate(t); }}>
+                        Apply
+                      </button>
+                      <button type="button" className={styles.lineupTplIconBtn} aria-label={`Rename ${t.name}`} title="Rename" onClick={() => startRename(t)}>
+                        <Pencil size={15} />
+                      </button>
+                      <button type="button" className={styles.lineupTplIconBtn} aria-label={`Delete ${t.name}`} title="Delete" onClick={() => deleteTemplate(t)}>
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ── Apply-to-game picker ── */}
+      {applyTemplate && (
+        <div className={styles.modalOverlay} onClick={() => applyBusyGameId ? null : setApplyTemplate(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Apply “{applyTemplate.name}” to…</h3>
+              <button className={styles.modalCloseBtn} aria-label="Close" onClick={() => setApplyTemplate(null)}><X size={18} /></button>
+            </div>
+            <p className={styles.pageSub} style={{ margin: '0 0 0.75rem' }}>Pick a game. You&apos;ll confirm before anything is overwritten.</p>
+            <div className={styles.lineupFrontList}>
+              {pickerGames.map(g => (
+                <button key={g.id} type="button" className={styles.lineupFrontRow} disabled={!!applyBusyGameId} onClick={() => applyToGame(g)} style={{ textAlign: 'left', cursor: applyBusyGameId ? 'wait' : 'pointer' }}>
+                  <span className={styles.lineupFrontDate}>
+                    <span className={styles.lineupFrontDay}>{new Date(g.startsAt).getDate()}</span>
+                    <span className={styles.lineupFrontMonth}>{new Date(g.startsAt).toLocaleDateString('en-CA', { month: 'short' })}</span>
+                  </span>
+                  <span className={styles.lineupFrontMain}>
+                    <span className={styles.lineupFrontTitle}>{gameTitle(g)}</span>
+                    <span className={styles.lineupFrontMeta}>{formatDay(g.startsAt)} · {formatTime(g.startsAt)}</span>
+                  </span>
+                  {ready[g.id] === true && <span className={styles.lineupFrontChip} data-tone="ok"><CheckCircle2 size={13} aria-hidden /> Has lineup</span>}
+                  <span className={styles.lineupFrontAction}>
+                    <span className={styles.lineupFrontActionLabel}>{applyBusyGameId === g.id ? 'Applying…' : 'Apply'}</span>
+                    <ArrowRight size={14} aria-hidden />
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
