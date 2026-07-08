@@ -495,10 +495,13 @@ const coachesHelp: HelpPageContent = {
           id: 'faq-find-lineups',
           question: 'Where do I build game lineups on Premium?',
           answer: (
-            <p>Open <strong>Lineups</strong> in the left sidebar (under <strong>Squad</strong>) — it lists your upcoming and recent games, and each one has a <strong>Build&nbsp;lineup</strong> button that opens that game&apos;s batting order and field positions. You can also open a game straight from the <strong>Schedule</strong> and switch to its <strong>Lineup</strong> tab — both reach the same builder.</p>
+            <>
+              <p>Open <strong>Lineups</strong> in the left sidebar (under <strong>Squad</strong>) — it&apos;s the home for everything lineup-related: your upcoming and recent <strong>games</strong> (each with a <strong>Build&nbsp;lineup</strong> button that opens that game&apos;s own full-page builder), your reusable <strong>templates</strong>, and <strong>season analytics</strong> drawn from the lineups you&apos;ve saved.</p>
+              <p>You can still open a game from the <strong>Schedule</strong> — its <strong>Lineup</strong> tab now shows a quick <strong>read-only preview</strong> (batting order and inning-1 field) with an <strong>Edit in Lineups&nbsp;→</strong> link that jumps straight to the builder.</p>
+            </>
           ),
-          answerText: 'Open Lineups in the left sidebar (under Squad) — it lists your upcoming and recent games, each with a Build lineup button that opens that game\'s batting order and field positions. You can also open a game from the Schedule and switch to its Lineup tab; both reach the same builder.',
-          keywords: ['where are lineups', 'find lineups', 'build lineup', 'game lineup', 'batting order', 'lineup menu', 'lineups tab', 'where do i set the lineup', 'lineup front door'],
+          answerText: 'Open Lineups in the left sidebar (under Squad) — it is the home for everything lineup-related: your upcoming and recent games (each with a Build lineup button that opens that game\'s own full-page builder), your reusable templates, and season analytics from the lineups you have saved. You can still open a game on the Schedule; its Lineup tab now shows a quick read-only preview with an "Edit in Lineups" link that jumps to the builder.',
+          keywords: ['where are lineups', 'find lineups', 'build lineup', 'game lineup', 'batting order', 'lineup menu', 'lineups tab', 'where do i set the lineup', 'lineup front door', 'edit in lineups', 'read-only lineup', 'lineup preview', 'lineup templates', 'season analytics'],
           popular: true,
         },
         {
@@ -650,25 +653,27 @@ const coachesHelp: HelpPageContent = {
         },
         {
           id: 'faq-attendance-lineup',
-          question: 'If I mark a player Out, do they come off the game lineup?',
-          answerText: 'Yes. Attendance is the single source of who is playing, so anyone marked Out drops out of that game lineup — they leave the batting order and field positions and move to a Not playing list under the lineup. Tap Add to lineup there, or change their attendance back, to bring them in again. You can also remove a player straight from the Lineup tab with the x on their row, which marks them Out.',
-          keywords: ['remove from lineup', 'not playing', 'out of lineup', 'mark out', 'add to lineup', 'absent lineup', 'who is playing'],
+          question: 'What happens to my lineup when a player&apos;s attendance changes?',
+          answerText: 'Attendance and the lineup are kept separate on purpose — neither one silently rewrites the other, because sometimes it is the attendance that is wrong, not the lineup, and you should decide. When they disagree (a player marked coming who is not in the lineup, or a player in the lineup marked Out), you get a warning: a small warning symbol on that game in the Schedule list, a note in the game detail, and — on the builder — an "Add coming players" / "Remove Out players" button so you can reconcile the lineup in one tap. Nothing changes until you tap it, or until you fix the attendance on the Schedule if that is what is off. On the builder you add or remove players yourself: use the x on a row to take someone out of the lineup, or the "Not in the lineup" list below to add anyone in — this only changes the lineup, not their attendance.',
+          keywords: ['remove from lineup', 'not in the lineup', 'out of lineup', 'mark out', 'add to lineup', 'attendance lineup mismatch', 'lineup warning', 'marked in but not in lineup', 'reconcile lineup', 'attendance and lineup', 'who is playing'],
           answer: (
             <>
-              <p>Yes. Attendance is the <strong>single source of who&apos;s playing</strong>, so anyone marked <strong>Out</strong> drops out of that game&apos;s lineup — they leave the batting order and field positions and move to a <strong>Not playing</strong> list under the lineup.</p>
-              <p>Tap <strong>Add to lineup</strong> there (or change their attendance back) to bring them in again. You can also remove a player straight from the <strong>Lineup</strong> tab with the <strong>&times;</strong> on their row, which marks them Out.</p>
+              <p><strong>Attendance and the lineup are kept separate on purpose</strong> — neither one silently rewrites the other. Sometimes it&apos;s the attendance that&apos;s wrong, not the lineup, so you get to decide.</p>
+              <p>When they disagree — a player marked <strong>coming</strong> who isn&apos;t in the lineup, or a player <strong>in the lineup</strong> marked <strong>Out</strong> — you&apos;re warned: a small <strong>⚠</strong> on that game in the Schedule list, a note in the game detail, and, on the builder, an <strong>&ldquo;Add coming players&rdquo; / &ldquo;Remove Out players&rdquo;</strong> button. Nothing changes until you tap it (or fix the attendance on the Schedule if <em>that&apos;s</em> what&apos;s off).</p>
+              <p>On the builder you set the lineup yourself: the <strong>&times;</strong> on a row takes a player out of the lineup, and the <strong>&ldquo;Not in the lineup&rdquo;</strong> list below adds anyone in. This changes only the lineup — not their attendance.</p>
             </>
           ),
         },
         {
           id: 'faq-lineup-autofill-positions',
           question: 'How does Auto-fill decide who plays where?',
-          answerText: 'Auto-fill uses the positions you set on each player’s profile and a game Mode you pick in the Auto-fill menu (Competitive, Balanced, or Development — pre-picked from the game type). It never puts a player at a position you marked Never, and it favors each player’s Best positions in the order you ranked them (Okay spots are used as fill-ins). For the mound, it uses your pitchers: competitive games lead with your ace, balanced and development games spread innings down the pitcher order, and it never works a pitcher past their max-innings cap. In Competitive mode your A-squad (gold-medal starters) get their best positions and can be protected from the bench. It also follows your team Lineup rules — caps on innings at one position, a pitching innings ceiling, and a minimum innings per player. It still shares playing time fairly. If a spot genuinely can’t be filled — for example everyone available has it set to Never, or a cap leaves no one eligible — Auto-fill leaves that cell blank and shows a warning instead of forcing a bad fit, so you can adjust it by hand. Auto-fill always gives you a starting point you can edit before the game.',
-          keywords: ['auto-fill', 'auto fill', 'generate lineup', 'fill lineup', 'mode', 'competitive', 'balanced', 'development', 'a-squad', 'never position', 'best position', 'ranked positions', 'position preferences', 'pitcher', 'ace', 'max innings', 'arm care', 'lineup rules', 'innings cap', 'minimum innings', 'cant fill position', 'blank position', 'lineup warning', 'who plays where'],
+          answerText: 'Auto-fill uses the positions you set on each player’s profile and a game Mode you pick in the Auto-fill menu (Competitive, Balanced, or Development — pre-picked from the game type). It never puts a player at a position you marked Never, and it favors each player’s Best positions in the order you ranked them (Okay spots are used as fill-ins). For the mound, it uses your pitchers: competitive games lead with your ace, balanced and development games spread innings down the pitcher order, and it never works a pitcher past their max-innings cap. In Competitive mode your A-squad (gold-medal starters) get their best positions and can be protected from the bench. It also follows your team Lineup rules — caps on innings at one position, a pitching innings ceiling, and a minimum innings per player. It still shares playing time fairly. If a spot genuinely can’t be filled — for example everyone available has it set to Never, or a cap leaves no one eligible — Auto-fill leaves that cell blank and shows a warning instead of forcing a bad fit, so you can adjust it by hand. Auto-fill always gives you a starting point you can edit before the game. You can re-run it any time: the Reshuffle button gives a fresh fair arrangement with your current settings, and the "Innings to fill" range lets you auto-fill only some innings (say 1–3) and leave the rest as you set them — it still counts what you have already done toward the caps and bench balance.',
+          keywords: ['auto-fill', 'auto fill', 'generate lineup', 'fill lineup', 'mode', 'competitive', 'balanced', 'development', 'a-squad', 'never position', 'best position', 'ranked positions', 'position preferences', 'pitcher', 'ace', 'max innings', 'arm care', 'lineup rules', 'innings cap', 'minimum innings', 'cant fill position', 'blank position', 'lineup warning', 'who plays where', 'reshuffle', 'shuffle lineup', 'innings to fill', 'inning range', 'fill some innings', 'regenerate'],
           answer: (
             <>
               <p><strong>Auto-fill</strong> uses the positions you set on each player&apos;s profile plus a game <strong>Mode</strong> you pick in the Auto-fill menu (see below). It <strong>never</strong> puts a player at a position you marked <strong>Never</strong>, and it favors each player&apos;s <strong>Best</strong> positions in the order you ranked them (<strong>Okay</strong> spots are used as fill-ins). For the <strong>mound</strong>, it uses your pitchers: competitive games lead with your <strong>ace</strong>, balanced and development games spread innings down the pitcher order, and it never works a pitcher past their <strong>max-innings cap</strong>. It also follows your team <strong>Lineup rules</strong> (below). It still shares playing time fairly.</p>
               <p>If a spot genuinely can&apos;t be filled — for example everyone available has it set to <strong>Never</strong>, or a cap leaves no one eligible — Auto-fill leaves that cell blank and shows a <strong>warning</strong> instead of forcing a bad fit, so you can set it by hand. Auto-fill always gives you a starting point you can edit before the game.</p>
+              <p><strong>Re-run it any time.</strong> The <strong>Reshuffle</strong> button hands you a fresh fair arrangement with your current settings (tap again for another). And <strong>&ldquo;Innings to fill&rdquo;</strong> lets you auto-fill just a range of innings — say <strong>1–3</strong> — and leave the rest exactly as you set them; it still counts what&apos;s already in the other innings toward your caps and bench balance.</p>
             </>
           ),
         },
@@ -710,6 +715,38 @@ const coachesHelp: HelpPageContent = {
                 <li><strong>Nobody sits two innings in a row</strong> — so the bottom of the roster keeps rotating even when you prioritize your best.</li>
               </ul>
               <p>Your <strong>minimum-innings</strong> rule always comes first (everyone still gets their floor), then no back-to-back sits, then A-squad protection. These mode dials apply to that one game and aren&apos;t saved.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-lineup-templates',
+          question: 'Can I save and reuse lineups (templates)?',
+          answerText: 'Yes. On your Lineups page, the Templates section holds reusable "base" lineups — a gold-medal batting order, a rain-day rotation, whatever you run often. Build one two ways: on a game builder, open Templates and Save current lineup as a template; or on the Lineups page tap New template to build one from scratch with no game attached. Each template remembers your batting order and field positions for this season\'s players. From the Templates list you can rename it, delete it, open it to edit, or Apply it to a game: pick the game, and if that game already has a lineup you are asked before overwriting. Applying maps the template onto that game\'s current roster and quietly skips anyone no longer on the team. Templates use your current-season roster.',
+          keywords: ['template', 'templates', 'save lineup', 'reuse lineup', 'new template', 'apply template', 'base lineup', 'gold medal lineup', 'rain day lineup', 'lineup template', 'rename template', 'edit template', 'saved lineup'],
+          answer: (
+            <>
+              <p>Yes. On your <strong>Lineups</strong> page, the <strong>Templates</strong> section holds reusable &ldquo;base&rdquo; lineups — a gold-medal batting order, a rain-day rotation, whatever you run often.</p>
+              <p><strong>Build one two ways:</strong> on a game&apos;s builder, open <strong>Templates</strong> and <strong>Save current lineup as a template</strong>; or on the Lineups page tap <strong>New template</strong> to build one from scratch with no game attached.</p>
+              <p>From the Templates list you can <strong>rename</strong> it, <strong>delete</strong> it, open it to <strong>edit</strong>, or <strong>Apply</strong> it to a game. When you apply, pick the game — if that game <strong>already has a lineup, you&apos;re asked before overwriting</strong> — and the template maps onto that game&apos;s current roster, quietly skipping anyone no longer on the team. Templates use your current-season roster.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-lineup-season-analytics',
+          question: 'What do the Season analytics on the Lineups page show?',
+          answerText: 'The Lineups page has a Season analytics section that rolls up the lineups you have actually saved into five read-outs: Fair playing time (field vs bench innings per player), Bench balance (who has sat most, and back-to-back sits), Position variety (how many different spots each player has played), Arm-care / pitching load (innings pitched per pitcher against their cap, flagging any game over it), and Records by reused lineup (your win-loss for each batting order you have run more than once, counting only games with a score entered). Every number comes only from saved lineups — if you have not saved any, or a game has no score, nothing is invented and you see honest empty states instead. Tap a section to expand it.',
+          keywords: ['season analytics', 'analytics', 'fair playing time', 'bench balance', 'position variety', 'arm care', 'pitching load', 'records by lineup', 'lineup record', 'win loss lineup', 'playing time report', 'who sits most', 'reused lineup', 'lineup trends'],
+          answer: (
+            <>
+              <p>The <strong>Lineups</strong> page has a <strong>Season analytics</strong> section that rolls up the lineups you&apos;ve saved into five tap-to-open read-outs:</p>
+              <ul>
+                <li><strong>Fair playing time</strong> — field vs. bench innings per player.</li>
+                <li><strong>Bench balance</strong> — who&apos;s sat the most, and back-to-back sits.</li>
+                <li><strong>Position variety</strong> — how many different spots each player has played.</li>
+                <li><strong>Arm-care / pitching load</strong> — innings pitched per pitcher vs. their cap, flagging any game over it.</li>
+                <li><strong>Records by reused lineup</strong> — your win-loss for each batting order you&apos;ve run more than once.</li>
+              </ul>
+              <p><strong>Every figure comes only from saved lineups</strong> — records count only games with a score entered, and nothing is invented. Haven&apos;t saved lineups yet? You&apos;ll see an honest empty state rather than made-up numbers.</p>
             </>
           ),
         },

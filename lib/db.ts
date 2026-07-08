@@ -6079,6 +6079,43 @@ export async function getRepTeamLineupEntries(lineupId: string): Promise<RepTeam
   return (data ?? []).map(mapRepTeamLineupEntry);
 }
 
+// All SAVED lineups (header + entries) for a program year — the season-analytics roll-up source.
+// Two bulk reads (lineups → their entries), grouped in JS.
+export async function getRepTeamSeasonLineups(programYearId: string): Promise<{
+  eventId: string; lineupMode: string; inningCount: number;
+  entries: { playerId: string; battingOrder: number | null; inningPositions: Record<string, string> }[];
+}[]> {
+  const { data: lineups, error: lErr } = await supabaseAdmin
+    .from('rep_team_lineups')
+    .select('id, event_id, lineup_mode, inning_count')
+    .eq('program_year_id', programYearId);
+  if (lErr) throw lErr;
+  if (!lineups || lineups.length === 0) return [];
+
+  const { data: entries, error: eErr } = await supabaseAdmin
+    .from('rep_team_lineup_entries')
+    .select('lineup_id, player_id, batting_order, inning_positions')
+    .in('lineup_id', lineups.map(l => l.id));
+  if (eErr) throw eErr;
+
+  const byLineup = new Map<string, { playerId: string; battingOrder: number | null; inningPositions: Record<string, string> }[]>();
+  for (const e of entries ?? []) {
+    const arr = byLineup.get(e.lineup_id as string) ?? [];
+    arr.push({
+      playerId: e.player_id as string,
+      battingOrder: (e.batting_order ?? null) as number | null,
+      inningPositions: (e.inning_positions ?? {}) as Record<string, string>,
+    });
+    byLineup.set(e.lineup_id as string, arr);
+  }
+  return lineups.map(l => ({
+    eventId: l.event_id as string,
+    lineupMode: l.lineup_mode as string,
+    inningCount: l.inning_count as number,
+    entries: byLineup.get(l.id as string) ?? [],
+  }));
+}
+
 // Game event ids in a program year whose SAVED lineup disagrees with attendance — used to badge the
 // schedule list without probing each game. "Mismatch" = the event has a lineup AND either a player
 // marked coming (attending/late) is missing from the lineup, or a player in the lineup is marked

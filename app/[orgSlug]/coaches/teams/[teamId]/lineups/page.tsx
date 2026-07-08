@@ -3,13 +3,14 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import {
   ListOrdered, ArrowRight, CheckCircle2, TriangleAlert, CalendarPlus,
-  Plus, Pencil, Trash2, Check, X, ClipboardCheck,
+  Plus, Pencil, Trash2, Check, X, ClipboardCheck, BarChart3, ChevronDown,
 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvent, RepTeamLineupTemplate, RepRosterPlayer, RepTeamLineupEntry } from '@/lib/types';
+import type { SeasonLineupAnalytics } from '@/lib/lineup-season-analytics';
 
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
 // Cap how many games we probe for lineup-readiness so a busy season doesn't fan out dozens of
@@ -51,6 +52,8 @@ export default function CoachesLineupsPage({
   // ── Templates manager ──
   const [templates, setTemplates] = useState<RepTeamLineupTemplate[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(true);
+  const [analytics, setAnalytics] = useState<SeasonLineupAnalytics | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [notice, setNotice] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -91,13 +94,26 @@ export default function CoachesLineupsPage({
     }
   }, [orgSlug, teamId]);
 
+  const loadAnalytics = useCallback(async () => {
+    setAnalyticsLoading(true);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-analytics`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setAnalytics(data.analytics ?? null);
+    } catch { /* non-blocking — analytics are optional */ } finally {
+      setAnalyticsLoading(false);
+    }
+  }, [orgSlug, teamId]);
+
   // Wait for the assignments context to resolve before deciding whether to fetch — otherwise the
   // fail-open `canLineups` default would fire the fetch for an assistant whose access is revoked.
   useEffect(() => {
     if (ctxLoading || !canLineups) return;
     void Promise.resolve().then(load);
     void Promise.resolve().then(loadTemplates);
-  }, [ctxLoading, canLineups, load, loadTemplates]);
+    void Promise.resolve().then(loadAnalytics);
+  }, [ctxLoading, canLineups, load, loadTemplates, loadAnalytics]);
 
   // Probe lineup readiness for the nearest upcoming games (bounded).
   useEffect(() => {
@@ -405,6 +421,106 @@ export default function CoachesLineupsPage({
               </div>
             ))}
           </div>
+        )}
+      </section>
+
+      {/* ── Season analytics ── */}
+      <section aria-labelledby="lineups-analytics" style={{ marginTop: '1.75rem' }}>
+        <p className={styles.sectionKicker} id="lineups-analytics">Season analytics</p>
+        {analyticsLoading ? (
+          <div className={styles.loadingState}>Loading analytics…</div>
+        ) : !analytics || analytics.gamesWithLineup === 0 ? (
+          <div className={styles.emptyState}>
+            <BarChart3 size={26} style={{ opacity: 0.3, margin: '0 auto 0.6rem', display: 'block' }} />
+            <p className={styles.emptyStateTitle}>No season trends yet</p>
+            <p className={styles.emptyStateSub}>Save a lineup for a few games and your fair-play, position, arm-care and lineup-record trends will show up here.</p>
+          </div>
+        ) : (
+          <>
+            <p className={styles.lineupAnalyticsBasis}>Based on the {analytics.gamesWithLineup} game{analytics.gamesWithLineup === 1 ? '' : 's'} you&apos;ve saved a lineup for.</p>
+
+            <details className={styles.lineupAnalyticsCard}>
+              <summary className={styles.lineupAnalyticsSummary}>Fair playing time <ChevronDown size={16} className={styles.lineupAnalyticsCaret} aria-hidden /></summary>
+              <div className={styles.lineupAnalyticsBody}>
+                {analytics.fairPlay.map(r => {
+                  const total = r.fieldInnings + r.benchInnings;
+                  const pct = total > 0 ? Math.round((r.fieldInnings / total) * 100) : 0;
+                  return (
+                    <div key={r.playerId} className={styles.lineupAnalyticsRow}>
+                      <span className={styles.lineupAnalyticsName}>{r.name}</span>
+                      <span className={styles.lineupAnalyticsBar}><i style={{ width: `${pct}%` }} /></span>
+                      <span className={styles.lineupAnalyticsVal}>{r.fieldInnings} on · {r.benchInnings} bench</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </details>
+
+            <details className={styles.lineupAnalyticsCard}>
+              <summary className={styles.lineupAnalyticsSummary}>Bench balance <ChevronDown size={16} className={styles.lineupAnalyticsCaret} aria-hidden /></summary>
+              <div className={styles.lineupAnalyticsBody}>
+                {analytics.benchBalance.map(r => (
+                  <div key={r.playerId} className={styles.lineupAnalyticsRow}>
+                    <span className={styles.lineupAnalyticsName}>{r.name}</span>
+                    <span className={styles.lineupAnalyticsVal}>
+                      {r.benchInnings} bench inning{r.benchInnings === 1 ? '' : 's'}
+                      {r.backToBackGames > 0 && <em className={styles.lineupAnalyticsFlag}> · {r.backToBackGames} back-to-back</em>}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </details>
+
+            <details className={styles.lineupAnalyticsCard}>
+              <summary className={styles.lineupAnalyticsSummary}>Position variety <ChevronDown size={16} className={styles.lineupAnalyticsCaret} aria-hidden /></summary>
+              <div className={styles.lineupAnalyticsBody}>
+                {analytics.positionVariety.map(r => (
+                  <div key={r.playerId} className={styles.lineupAnalyticsRow}>
+                    <span className={styles.lineupAnalyticsName}>{r.name}</span>
+                    <span className={styles.lineupAnalyticsVal}>
+                      <strong>{r.count}</strong> · {r.positions.length ? r.positions.join(', ') : '—'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </details>
+
+            {analytics.armCare.length > 0 && (
+              <details className={styles.lineupAnalyticsCard}>
+                <summary className={styles.lineupAnalyticsSummary}>Arm-care / pitching load <ChevronDown size={16} className={styles.lineupAnalyticsCaret} aria-hidden /></summary>
+                <div className={styles.lineupAnalyticsBody}>
+                  {analytics.armCare.map(r => (
+                    <div key={r.playerId} className={styles.lineupAnalyticsRow}>
+                      <span className={styles.lineupAnalyticsName}>{r.name}</span>
+                      <span className={styles.lineupAnalyticsVal}>
+                        {r.inningsPitched} IP · {r.gamesPitched} game{r.gamesPitched === 1 ? '' : 's'}
+                        {r.perGameCap != null && <> · cap {r.perGameCap}/g</>}
+                        {r.overCapGames > 0 && <em className={styles.lineupAnalyticsFlag}> · ⚠ {r.overCapGames} over cap</em>}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+
+            <details className={styles.lineupAnalyticsCard}>
+              <summary className={styles.lineupAnalyticsSummary}>Records by reused lineup <ChevronDown size={16} className={styles.lineupAnalyticsCaret} aria-hidden /></summary>
+              <div className={styles.lineupAnalyticsBody}>
+                {analytics.reusedLineups.length === 0 ? (
+                  <p className={styles.lineupAnalyticsEmpty}>No batting order has been reused across multiple games yet.</p>
+                ) : analytics.reusedLineups.map((r, i) => (
+                  <div key={i} className={styles.lineupAnalyticsRow}>
+                    <span className={styles.lineupAnalyticsName}>{r.label}</span>
+                    <span className={styles.lineupAnalyticsVal}>
+                      {r.scoredGames > 0
+                        ? <><b className={styles.lineupAnalyticsRec}>{r.wins}-{r.losses}{r.ties ? `-${r.ties}` : ''}</b> · {r.games} game{r.games === 1 ? '' : 's'}{r.scoredGames < r.games ? ` (${r.scoredGames} scored)` : ''}</>
+                        : <>{r.games} games · no scores yet</>}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </details>
+          </>
         )}
       </section>
 
