@@ -17,11 +17,12 @@ import {
 } from 'lucide-react';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { getPlatformAdminContext, hasPlatformPermission } from '@/lib/platform-auth';
-import { canViewPlatformArea, canWritePlatformArea } from '@/lib/platform-areas';
+import { canViewPlatformArea, canWritePlatformArea, type PlatformArea } from '@/lib/platform-areas';
 import HelpCallout from '@/components/help/HelpCallout';
 import { getPreviousPlatformAdminVisit } from '@/lib/platform-admin-visits';
 import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { classifyCampaignSend } from '@/lib/marketing-schedule';
 import {
   getCommandCenterStats,
   getLatestPlatformMetricSnapshot,
@@ -83,7 +84,7 @@ function AlertItem({
   // non-clickable tile (with a "requires X access" tooltip) instead of a dead link.
   if (href) {
     return (
-      <Link className={`${styles.alertItem} ${tone === 'warn' ? styles.alertWarn : ''}`} href={href}>
+      <Link className={`${styles.alertItem} ${tone === 'warn' ? styles.alertWarn : ''}`} href={href} title={title}>
         {content}
       </Link>
     );
@@ -127,14 +128,45 @@ const ORIENTATION_BY_ROLE: Record<string, { body: string; cta: { label: string; 
 
 const fmtDateTime = (iso: string) => fmtAbsoluteDateTime(iso);
 
+/**
+ * Marketing-campaign send alerts for the Action Queue: how many campaigns are past due
+ * (planned date arrived/passed, not yet sent) and how many are due within the window.
+ * Uses the SAME classification as the Email Dashboard so the two never disagree.
+ */
+async function getMarketingCampaignAlerts(): Promise<{ pastDue: number; dueSoon: number }> {
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const [tmplRes, batchRes] = await Promise.all([
+    supabaseAdmin
+      .from('platform_email_templates')
+      .select('key, planned_send_date')
+      .eq('category', 'marketing'),
+    supabaseAdmin
+      .from('email_batches')
+      .select('email_key')
+      .eq('status', 'complete'),
+  ]);
+  const sentKeys = new Set((batchRes.data ?? []).map(b => b.email_key as string));
+  let pastDue = 0;
+  let dueSoon = 0;
+  for (const row of tmplRes.data ?? []) {
+    const status = classifyCampaignSend({
+      plannedDate: (row.planned_send_date as string | null) ?? null,
+      sent: sentKeys.has(row.key as string),
+      todayISO,
+    });
+    if (status === 'past_due') pastDue++;
+    else if (status === 'due_soon') dueSoon++;
+  }
+  return { pastDue, dueSoon };
+}
+
 export default async function PlatformOverviewPage() {
   const auth = await getPlatformAdminContext();
   const platformUser = auth?.user ?? null;
   const role = auth?.role ?? 'read_only';
-  // Role-aware Action Queue: strip the link (and tooltip-explain) for areas this role can't reach.
-  const canEarlyAccess = canViewPlatformArea(role, 'early_access');
-  const canRetention = canViewPlatformArea(role, 'retention');
-  const canChangeRequests = canViewPlatformArea(role, 'change_requests');
+  // The Action Queue is grouped by domain; each tile carries its own area so the render
+  // can (a) strip the link for areas this role can't reach and (b) hide whole groups the
+  // role can't act on. See `alertGroups` below.
   // Trial-ending and expired-override alerts are billing-team work; retention writers
   // (super_admin + billing) are the roles that can actually action them.
   const canActionBillingAlerts = canWritePlatformArea(role, 'retention');
@@ -143,13 +175,14 @@ export default async function PlatformOverviewPage() {
   const previousVisit = platformUser?.email ? await getPreviousPlatformAdminVisit(platformUser.email) : null;
   // First-login orientation: shows once, then a localStorage flag keeps it dismissed.
   const orientation = previousVisit === null ? ORIENTATION_BY_ROLE[role] : null;
-  const [stats, latestSnapshot, pricingRequestResult] = await Promise.all([
+  const [stats, latestSnapshot, pricingRequestResult, campaignAlerts] = await Promise.all([
     getCommandCenterStats({ since: previousVisit?.visited_at ?? null }),
     getLatestPlatformMetricSnapshot(),
     supabaseAdmin
       .from('platform_catalog_change_requests')
       .select('id', { count: 'exact', head: true })
       .in('status', ['needs_review', 'approved']),
+    getMarketingCampaignAlerts(),
   ]);
   const orgTotal = stats.totals.organizations;
   // Any catalog change request still awaiting action (review or implementation), across ALL request
@@ -160,6 +193,44 @@ export default async function PlatformOverviewPage() {
   const earlyAccessStatusRows = ['new', 'qualified', 'contacted', 'pilot_candidate', 'converted']
     .map(status => ({ status, count: stats.growth.earlyAccessByStatus[status] ?? 0 }))
     .filter(row => row.count > 0 || row.status === 'new');
+
+  // ── Action Queue, grouped by operational domain ────────────────────────────
+  // Each tile carries a plain-language tooltip + the `area` that gates its link and its
+  // group's visibility. `warn` marks tiles where a non-zero count means "act now".
+  type AlertTile = { label: string; value: number; area: PlatformArea; href: string; warn: boolean; title: string };
+  const alertGroups: { label: string; tiles: AlertTile[] }[] = [
+    {
+      label: 'Billing',
+      tiles: [
+        { label: 'Past due orgs', value: stats.alerts.pastDue, area: 'organizations', href: '/platform-admin/orgs?status=past_due', warn: true, title: 'Organizations with an overdue subscription payment. Opens the past-due org list.' },
+        { label: 'Past due since visit', value: stats.alerts.newPastDueSinceLastVisit, area: 'organizations', href: '/platform-admin/orgs?status=past_due', warn: true, title: 'Orgs that became past-due since your last login — new since you were last here.' },
+        { label: 'Trials ending soon', value: stats.alerts.trialEndingSoon, area: 'organizations', href: '/platform-admin/orgs?filter=trial_ending', warn: true, title: 'Paid-plan trials expiring soon; the card on file will be charged when they end.' },
+        { label: 'Overrides expiring soon', value: stats.alerts.overridesExpiringSoon, area: 'organizations', href: '/platform-admin/orgs?filter=expiring_overrides', warn: true, title: 'Comp / discount period overrides about to expire — the org reverts to standard billing.' },
+        { label: 'Retention records', value: stats.alerts.retentionAlertCount, area: 'retention', href: '/platform-admin/retention', warn: true, title: 'Cancelled orgs still inside the data-retention window — restorable if they resubscribe.' },
+      ],
+    },
+    {
+      label: 'Accounts',
+      tiles: [
+        { label: 'Missing owners', value: stats.alerts.orgsWithoutOwner, area: 'organizations', href: '/platform-admin/orgs?filter=no_owner', warn: true, title: 'Organizations with no owner account assigned — nobody can manage billing or settings.' },
+        { label: 'Owner inactive', value: stats.alerts.orgsWithInactiveOwner, area: 'organizations', href: '/platform-admin/orgs?filter=owner_inactive', warn: true, title: 'Orgs whose owner hasn’t signed in recently — may need outreach.' },
+      ],
+    },
+    {
+      label: 'Growth & Marketing',
+      tiles: [
+        { label: 'New leads', value: stats.alerts.newEarlyAccessLeads, area: 'early_access', href: '/platform-admin/early-access', warn: true, title: 'New early-access signups awaiting triage in the lead pipeline.' },
+        { label: 'Campaigns past due', value: campaignAlerts.pastDue, area: 'email', href: '/platform-admin/email', warn: true, title: 'Marketing campaigns whose planned send date has arrived or passed and haven’t been sent.' },
+        { label: 'Campaigns due soon', value: campaignAlerts.dueSoon, area: 'email', href: '/platform-admin/email', warn: false, title: 'Marketing campaigns due to send within the next 30 days — plan ahead.' },
+      ],
+    },
+    {
+      label: 'Approvals',
+      tiles: [
+        { label: 'Approval queue', value: pendingApprovalRequests, area: 'change_requests', href: '/platform-admin/change-requests', warn: true, title: 'Plan-availability, plan-config, and Stripe-price change requests awaiting review or implementation.' },
+      ],
+    },
+  ];
 
   return (
     <div className={styles.page}>
@@ -198,17 +269,40 @@ export default async function PlatformOverviewPage() {
           <div className={styles.sectionKicker}>Needs Attention</div>
           <h2 className={styles.sectionTitle}>Action Queue</h2>
         </div>
-        <div className={styles.alertGrid}>
-          <AlertItem label="Past due orgs" value={stats.alerts.pastDue} href="/platform-admin/orgs?status=past_due" tone={stats.alerts.pastDue > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Past due since visit" value={stats.alerts.newPastDueSinceLastVisit} href="/platform-admin/orgs?status=past_due" tone={stats.alerts.newPastDueSinceLastVisit > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Trials ending soon" value={stats.alerts.trialEndingSoon} href="/platform-admin/orgs?filter=trial_ending" tone={stats.alerts.trialEndingSoon > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="New leads" value={stats.alerts.newEarlyAccessLeads} href={canEarlyAccess ? '/platform-admin/early-access' : undefined} title={canEarlyAccess ? undefined : 'Requires growth or product access'} tone={stats.alerts.newEarlyAccessLeads > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Retention records" value={stats.alerts.retentionAlertCount} href={canRetention ? '/platform-admin/retention' : undefined} title={canRetention ? undefined : 'Requires billing or support access'} tone={stats.alerts.retentionAlertCount > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Approval queue" value={pendingApprovalRequests} href={canChangeRequests ? '/platform-admin/change-requests' : undefined} title={canChangeRequests ? undefined : 'Requires product or billing access'} tone={pendingApprovalRequests > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Overrides expiring soon" value={stats.alerts.overridesExpiringSoon} href="/platform-admin/orgs?filter=expiring_overrides" tone={stats.alerts.overridesExpiringSoon > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Missing owners" value={stats.alerts.orgsWithoutOwner} href="/platform-admin/orgs?filter=no_owner" tone={stats.alerts.orgsWithoutOwner > 0 ? 'warn' : 'neutral'} />
-          <AlertItem label="Owner inactive" value={stats.alerts.orgsWithInactiveOwner} href="/platform-admin/orgs?filter=owner_inactive" tone={stats.alerts.orgsWithInactiveOwner > 0 ? 'warn' : 'neutral'} />
-        </div>
+        {alertGroups
+          // Hide any group the signed-in role can't act on (no viewable tiles in it).
+          .filter(group => group.tiles.some(t => canViewPlatformArea(role, t.area)))
+          .map(group => {
+            const total = group.tiles.reduce((sum, t) => sum + t.value, 0);
+            const urgent = group.tiles.some(t => t.warn && t.value > 0);
+            return (
+              <div key={group.label} className={styles.alertGroup}>
+                <div className={styles.alertGroupHead}>
+                  <span className={styles.alertGroupLabel}>{group.label}</span>
+                  {total > 0 && (
+                    <span className={`${styles.alertGroupCount} ${urgent ? styles.alertGroupCountUrgent : ''}`}>
+                      {total} {total === 1 ? 'item needs' : 'items need'} attention
+                    </span>
+                  )}
+                </div>
+                <div className={styles.alertGrid}>
+                  {group.tiles.map(t => {
+                    const clickable = canViewPlatformArea(role, t.area);
+                    return (
+                      <AlertItem
+                        key={t.label}
+                        label={t.label}
+                        value={t.value}
+                        href={clickable ? t.href : undefined}
+                        title={clickable ? t.title : `${t.title} (requires additional access for your role)`}
+                        tone={t.warn && t.value > 0 ? 'warn' : 'neutral'}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         {!canActionBillingAlerts && (stats.alerts.trialEndingSoon > 0 || stats.alerts.overridesExpiringSoon > 0) && (
           <p className={styles.alertRoleNote}>
             Trials ending soon and overrides expiring soon require billing access — contact the billing team to action them.

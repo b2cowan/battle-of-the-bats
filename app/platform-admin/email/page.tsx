@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 const FOUNDING_SEASON_EXPIRES = '2027-01-01T00:00:00.000Z';
 
 async function getInitialData() {
-  const [batchesResult, optOutsResult, overridesResult] = await Promise.all([
+  const [batchesResult, optOutsResult, overridesResult, scheduleResult] = await Promise.all([
     supabaseAdmin
       .from('email_batches')
       .select('*')
@@ -30,6 +30,12 @@ async function getInitialData() {
       .select('org_id')
       .eq('type', 'comp_period')
       .eq('expires_at', FOUNDING_SEASON_EXPIRES),
+
+    // Editable planned dates + current subject/custom status for each marketing campaign.
+    supabaseAdmin
+      .from('platform_email_templates')
+      .select('key, subject, planned_send_date, is_customised')
+      .eq('category', 'marketing'),
   ]);
 
   const foundingOrgIdSet = new Set((overridesResult.data ?? []).map(o => o.org_id as string));
@@ -77,14 +83,30 @@ async function getInitialData() {
     recipientCounts[emailKey] = audienceCounts[audience];
   }
 
+  // Build a per-campaign schedule map: editable planned date + current subject/custom flag.
+  const schedule: MarketingSchedule = {};
+  for (const row of scheduleResult.data ?? []) {
+    schedule[row.key as string] = {
+      plannedDate: (row.planned_send_date as string | null) ?? null,
+      subject: (row.subject as string) ?? '',
+      isCustomised: !!row.is_customised,
+    };
+  }
+
   return {
     batches: (batchesResult.data ?? []) as EmailBatch[],
     optOuts: enrichedOptOuts,
     recipientCount,
     optOutCount,
     recipientCounts,
+    schedule,
+    // Today as a wall-clock date (server-stable) for upcoming/past-due classification.
+    todayISO: new Date().toISOString().slice(0, 10),
   };
 }
+
+export type ScheduleInfo = { plannedDate: string | null; subject: string; isCustomised: boolean };
+export type MarketingSchedule = Record<string, ScheduleInfo>;
 
 // Types used by both server and client
 export type EmailBatch = {
@@ -112,7 +134,7 @@ export type OptOutOrg = {
 export default async function EmailDashboardPage() {
   await requirePlatformAreaView('email');
   const auth = await getPlatformAdminContext();
-  const { batches, optOuts, recipientCount, optOutCount, recipientCounts } = await getInitialData();
+  const { batches, optOuts, recipientCount, optOutCount, recipientCounts, schedule, todayISO } = await getInitialData();
 
   return (
     <EmailDashboardClient
@@ -122,6 +144,8 @@ export default async function EmailDashboardPage() {
       optOutCount={optOutCount}
       recipientCounts={recipientCounts}
       adminEmail={auth?.user.email ?? ''}
+      schedule={schedule}
+      todayISO={todayISO}
     />
   );
 }

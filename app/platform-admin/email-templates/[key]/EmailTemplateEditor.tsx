@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Loader, ArrowLeft, Send, RotateCcw, Check } from 'lucide-react';
+import { Loader, ArrowLeft, Send, RotateCcw, Check, Undo2, X } from 'lucide-react';
+import { renderHeadingAndBody } from '@/lib/email-markup';
 import styles from '../email-templates.module.css';
 
 type Template = {
@@ -21,47 +22,27 @@ type Template = {
   updated_by: string | null;
 };
 
-// Build a live preview HTML string from the current form fields, mirroring
-// the FieldLogicHQ email brand envelope in lib/email.ts.
+// Build a live preview HTML string from the current form fields using the SAME shared
+// markup renderer the send path uses (chip mode shows {{tokens}} as monospace chips).
+// This understands the full markup — paragraphs, **bold**, - bullets, ::callout,
+// ::button, ::link, ::if — so a rich campaign previews exactly as it will send. A
+// dedicated cta_label (used by the transactional templates) is appended as a ::button.
 function buildPreviewHtml(fields: {
   heading: string;
   body: string;
   cta_label: string | null;
 }): string {
-  // Replace {{variable}} placeholders with styled tokens
-  function fill(text: string) {
-    return text.replace(
-      /\{\{(\w+)\}\}/g,
-      (_, k) =>
-        `<span style="background:rgba(30,58,138,0.35);border:1px solid rgba(30,58,138,0.6);padding:0 3px;font-family:monospace;font-size:0.9em;color:#93c5fd;">{{${k}}}</span>`,
-    );
-  }
-
-  // Convert **bold** markdown to <strong>
-  function md(text: string) {
-    return fill(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  }
-
-  const bodyLines = fields.body
-    .split('\n')
-    .map(l => {
-      if (!l.trim()) return '<br>';
-      return `<p style="margin:0 0 0.85rem;line-height:1.65;color:rgba(241,245,249,0.85);">${md(l)}</p>`;
-    })
-    .join('');
-
-  const ctaHtml = fields.cta_label
-    ? `<a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin-top:0.75rem;">${md(fields.cta_label)}</a>`
-    : '';
+  const body = fields.cta_label
+    ? `${fields.body}\n\n::button ${fields.cta_label} | #`
+    : fields.body;
+  const inner = renderHeadingAndBody({ heading: fields.heading, body, mode: 'chip' });
 
   return `
 <div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
   <div style="margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);">
     <span style="font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;">FIELDLOGICHQ</span>
   </div>
-  <h2 style="color:#fff;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">${md(fields.heading)}</h2>
-  ${bodyLines}
-  ${ctaHtml}
+  ${inner}
 </div>`;
 }
 
@@ -81,6 +62,7 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
   const [resetting, setResetting] = useState(false);
   const [testing,  setTesting]  = useState(false);
   const [status,   setStatus]   = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
@@ -143,32 +125,38 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
     }
   }
 
-  // ── Reset to default ──────────────────────────────────────────────────────────
-  async function handleReset() {
-    if (!confirm('Reset this template to the built-in default? Your customised copy will be discarded.')) return;
+  // ── Reset to default (restores the original built-in copy) ─────────────────────
+  async function doReset() {
+    setShowResetConfirm(false);
     setResetting(true);
     try {
       const res = await fetch(`/api/platform-admin/email-templates/${templateKey}`, { method: 'DELETE' });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error ?? 'Reset failed');
-      setTmpl(d.template);
-      // Restore seeded values — these don't change so just refetch to get clean state
-      const r2 = await fetch(`/api/platform-admin/email-templates/${templateKey}`);
-      const d2 = await r2.json();
-      if (d2.template) {
-        const t: Template = d2.template;
-        setSubject(t.subject);
-        setHeading(t.heading);
-        setBody(t.body);
-        setCtaLabel(t.cta_label ?? '');
-        setTmpl(t);
-      }
-      showStatus('ok', 'Reset to default.');
+      // The DELETE route restores the original copy for marketing campaigns; refetch the
+      // clean state and re-seed the form from it.
+      const t: Template = d.template;
+      setTmpl(t);
+      setSubject(t.subject);
+      setHeading(t.heading);
+      setBody(t.body);
+      setCtaLabel(t.cta_label ?? '');
+      showStatus('ok', 'Reset to the built-in default.');
     } catch (e) {
       showStatus('err', (e as Error).message);
     } finally {
       setResetting(false);
     }
+  }
+
+  // ── Discard unsaved edits (revert the form to the last SAVED version) ───────────
+  function handleDiscard() {
+    if (!tmpl) return;
+    setSubject(tmpl.subject);
+    setHeading(tmpl.heading);
+    setBody(tmpl.body);
+    setCtaLabel(tmpl.cta_label ?? '');
+    showStatus('ok', 'Reverted to the last saved version.');
   }
 
   // ── Test send ─────────────────────────────────────────────────────────────────
@@ -198,6 +186,11 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
 
   const isBusy = saving || resetting || testing;
   const preview = buildPreviewHtml({ heading, body, cta_label: ctaLabel || null });
+  const dirty =
+    subject !== tmpl.subject ||
+    heading !== tmpl.heading ||
+    body !== tmpl.body ||
+    (ctaLabel || '') !== (tmpl.cta_label ?? '');
 
   return (
     <div className={styles.editorPage}>
@@ -223,10 +216,15 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
         </div>
       </div>
 
-      {tmpl.is_customised && (
+      {tmpl.is_customised ? (
         <div className={styles.customisedNote}>
-          This template has been customised. The content below overrides the built-in default.
-          Use &ldquo;Reset to default&rdquo; to restore the original copy.
+          <strong>Customised</strong> — the copy below is your saved edit and overrides the original.
+          &ldquo;Reset to default&rdquo; puts the original copy back.
+        </div>
+      ) : (
+        <div className={styles.defaultNote}>
+          <strong>Default</strong> — this is the original built-in copy. Edit and <strong>Save</strong> to
+          override it (it becomes &ldquo;Customised&rdquo;); you can reset to this original at any time.
         </div>
       )}
 
@@ -257,7 +255,8 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
           <div className={styles.fieldGroup}>
             <label className={styles.fieldLabel}>Body</label>
             <span className={styles.fieldHint}>
-              Use **bold** for emphasis. Each line becomes a paragraph. Use the chips below to insert variable tokens.
+              Blank line = new paragraph · **bold** · <code>- </code>bullet · <code>::callout Label</code> … <code>::end</code> box
+              · <code>::button Label | {'{{url}}'}</code> · <code>::link Label | {'{{url}}'}</code>. Use the chips to insert variables.
             </span>
             <textarea
               ref={bodyRef}
@@ -301,7 +300,8 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
             <button
               className={styles.saveBtn}
               onClick={handleSave}
-              disabled={isBusy}
+              disabled={isBusy || !dirty}
+              title={dirty ? 'Save your changes' : 'No unsaved changes'}
             >
               {saving ? <Loader size={12} className={styles.spin} /> : <Check size={12} />}
               Save
@@ -318,8 +318,18 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
             </button>
 
             <button
+              className={styles.discardBtn}
+              onClick={handleDiscard}
+              disabled={isBusy || !dirty}
+              title={dirty ? 'Undo unsaved edits and go back to the last saved version' : 'No unsaved changes'}
+            >
+              <Undo2 size={12} />
+              Discard changes
+            </button>
+
+            <button
               className={styles.resetBtn}
-              onClick={handleReset}
+              onClick={() => setShowResetConfirm(true)}
               disabled={isBusy || !tmpl.is_customised}
               title={!tmpl.is_customised ? 'Already using the default' : 'Reset to built-in default'}
             >
@@ -354,6 +364,32 @@ export default function EmailTemplateEditor({ templateKey }: { templateKey: stri
           </p>
         </div>
       </div>
+
+      {showResetConfirm && (
+        <div className={styles.modalOverlay} onClick={() => setShowResetConfirm(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <span className={styles.modalTitle}>Reset to default?</span>
+              <button className={styles.modalClose} onClick={() => setShowResetConfirm(false)} aria-label="Close">
+                <X size={14} />
+              </button>
+            </div>
+            <p className={styles.modalBody}>
+              This restores the original built-in copy for <strong>{tmpl.label}</strong> and discards
+              your saved customisation. This can&rsquo;t be undone.
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.resetBtn} onClick={doReset} disabled={resetting}>
+                {resetting ? <Loader size={12} className={styles.spin} /> : <RotateCcw size={12} />}
+                Reset to default
+              </button>
+              <button className={styles.testBtn} onClick={() => setShowResetConfirm(false)} disabled={resetting}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

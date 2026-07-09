@@ -104,6 +104,15 @@
 }
 
 /* ── Table ───────────────────────────────────────────────────────────────── */
+/* Wide multi-column tables scroll within their panel instead of pushing the page wide. */
+.tableScroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.tableScroll .table {
+  min-width: 760px;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -147,15 +156,21 @@
 
 .subject {
   color: var(--fl-text);
+  /* inline-block so max-width + text-overflow actually apply (they are ignored on an inline span,
+     which let the full subject blow the table width past the viewport). */
+  display: inline-block;
+  vertical-align: middle;
   max-width: 280px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 0.65rem;
 }
 
 .sendDate {
   white-space: nowrap;
   color: var(--data-gray);
+  font-size: 0.65rem;
 }
 
 .audience {
@@ -211,6 +226,30 @@
   color: rgba(241, 245, 249, 0.3);
   border-color: rgba(255, 255, 255, 0.08);
   background: transparent;
+}
+
+.badgePastDue {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.badgeDueSoon {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.badgePlanned {
+  color: rgba(148, 163, 184, 0.9);
+  border-color: rgba(148, 163, 184, 0.3);
+  background: rgba(148, 163, 184, 0.06);
+}
+
+.badgeAuto {
+  color: #93c5fd;
+  border-color: rgba(147, 197, 253, 0.3);
+  background: rgba(30, 58, 138, 0.12);
 }
 
 /* ── Action buttons ──────────────────────────────────────────────────────── */
@@ -503,4 +542,164 @@
   color: #f87171;
   border-color: rgba(248, 113, 113, 0.3);
   background: rgba(248, 113, 113, 0.06);
+}
+
+/* ── Needs sending (P2: past due + upcoming) ───────────────────────────────── */
+.needsSending {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0.25rem 0 1.5rem;
+}
+
+.needsGroup {
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 0.75rem 0.9rem;
+}
+
+.needsPastDue {
+  border-color: rgba(248, 113, 113, 0.4);
+  background: rgba(248, 113, 113, 0.05);
+}
+
+.needsUpcoming {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.04);
+}
+
+.needsTitle {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.needsPastDue .needsTitle { color: #f87171; }
+.needsUpcoming .needsTitle { color: #f59e0b; }
+
+.needsItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.needsItem:first-of-type { border-top: none; }
+
+.needsItemMain {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.needsDate {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  white-space: nowrap;
+}
+
+.needsSubject {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: rgba(241, 245, 249, 0.7);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 46ch;
+}
+
+.needsDays {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  color: rgba(241, 245, 249, 0.4);
+  white-space: nowrap;
+}
+
+.needsSendBtn,
+.needsSendBtnGhost {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  border-radius: 2px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.needsSendBtn {
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  color: #f87171;
+}
+
+.needsSendBtn:hover {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: #f87171;
+}
+
+.needsSendBtnGhost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--data-gray);
+}
+
+.needsSendBtnGhost:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--fl-text);
+}
+
+/* ── Editable planned date (in Scheduled Sends) ────────────────────────────── */
+.dateEditBtn {
+  font-family: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.15rem 0.3rem;
+  margin: -0.15rem -0.3rem;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dateEditBtn:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+}
+
+.dateInput {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--fl-text);
+  padding: 0.5rem 0.6rem;
+  border-radius: 2px;
+  width: 100%;
+  box-sizing: border-box;
+  color-scheme: dark;
+}
+
+.dateInput:focus {
+  outline: none;
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
 }

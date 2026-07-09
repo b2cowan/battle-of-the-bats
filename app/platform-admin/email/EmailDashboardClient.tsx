@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useCallback, useEffect, Fragment } from 'react';
-import { Send, Eye, ChevronDown, ChevronRight, X, RotateCcw } from 'lucide-react';
-import type { EmailBatch, OptOutOrg } from './page';
+import Link from 'next/link';
+import { Send, Eye, ChevronDown, ChevronRight, X, RotateCcw, Pencil, Lock, Calendar, AlertTriangle, Clock } from 'lucide-react';
+import type { EmailBatch, OptOutOrg, MarketingSchedule } from './page';
 import { fmtAbsoluteDateTime } from '@/lib/format-date';
+import { UPCOMING_WINDOW_DAYS, classifyCampaignSend, daysUntil, formatPlannedDate } from '@/lib/marketing-schedule';
 import styles from './email.module.css';
 
 // ── Founding season email schedule ────────────────────────────────────────────
@@ -17,6 +19,10 @@ type ScheduledEmail = {
   audience: string;
   isTransactional: boolean;
   templateBuilt: boolean;
+  // How the send fires — a fixed calendar date (default), or a system event ("at
+  // signup", "~day 60"). Content is editable regardless; timing/audience are
+  // system-defined.
+  timingKind?: 'date' | 'trigger';
 };
 
 const SCHEDULED_EMAILS: ScheduledEmail[] = [
@@ -27,6 +33,7 @@ const SCHEDULED_EMAILS: ScheduledEmail[] = [
     audience: 'Each new founding org owner (transactional)',
     isTransactional: true,
     templateBuilt: true,
+    timingKind: 'trigger',
   },
   {
     emailKey: 'founding_checkin',
@@ -35,6 +42,7 @@ const SCHEDULED_EMAILS: ScheduledEmail[] = [
     audience: 'Founding orgs, signed up ≥ 60 days ago',
     isTransactional: false,
     templateBuilt: true,
+    timingKind: 'trigger',
   },
   {
     emailKey: 'founding_renewal',
@@ -109,16 +117,26 @@ const SCHEDULED_EMAILS: ScheduledEmail[] = [
 const formatDate = (iso: string | null): string => fmtAbsoluteDateTime(iso);
 
 function StatusBadge({ status }: { status: string }) {
-  const cls = {
+  const cls: Record<string, string> = {
     scheduled: styles.badgeScheduled,
     pending: styles.badgePending,
     running: styles.badgeRunning,
     complete: styles.badgeComplete,
     sent: styles.badgeSent,
     failed: styles.badgeFailed,
-  }[status] ?? styles.badgeNotBuilt;
-
-  return <span className={`${styles.badge} ${cls}`}>{status}</span>;
+    past_due: styles.badgePastDue,
+    due_soon: styles.badgeDueSoon,
+    planned: styles.badgePlanned,
+    auto: styles.badgeAuto,
+  };
+  const label: Record<string, string> = {
+    sent: 'Sent',
+    past_due: 'Past due',
+    due_soon: 'Due soon',
+    planned: 'Planned',
+    auto: 'Auto',
+  };
+  return <span className={`${styles.badge} ${cls[status] ?? styles.badgeNotBuilt}`}>{label[status] ?? status}</span>;
 }
 
 // ── Sub-component: individual sends for an expanded batch ─────────────────────
@@ -209,11 +227,27 @@ function PreviewModal({
   email: ScheduledEmail;
   onClose: () => void;
 }) {
-  // For founding_welcome we render the actual HTML server-side by fetching from a
-  // preview endpoint. For unbuilt templates we show a placeholder.
-  // In this phase we just show the template structure since we'd need a server
-  // roundtrip to render the full HTML. A full preview endpoint can be added in
-  // a follow-up session.
+  // Render the SAME HTML the send path produces, server-side, via the shared template
+  // resolver — so "what you preview" always equals "what is sent". (Replaces the old
+  // hardcoded client-side preview mirror that could drift from the real email.)
+  const [html, setHtml] = useState<string | null>(null);
+  const [subject, setSubject] = useState<string>(email.subject);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // The modal is remounted per email (key on the render site), so state starts fresh —
+    // no synchronous reset needed here.
+    let active = true;
+    fetch(`/api/admin/email/preview?emailKey=${encodeURIComponent(email.emailKey)}`)
+      .then(async r => {
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error ?? 'Failed to load preview');
+        return d;
+      })
+      .then(d => { if (!active) return; setHtml(d.html); if (d.subject) setSubject(d.subject); })
+      .catch(e => { if (active) setError(e instanceof Error ? e.message : 'Unknown error'); });
+    return () => { active = false; };
+  }, [email.emailKey]);
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -221,26 +255,32 @@ function PreviewModal({
         <div className={styles.modalHeader}>
           <div>
             <div className={styles.modalTitle}>Email Preview — {email.emailKey}</div>
-            <div className={styles.modalSubject}>{email.subject}</div>
+            <div className={styles.modalSubject}>{subject}</div>
           </div>
           <button className={styles.modalClose} onClick={onClose} aria-label="Close">
             <X size={14} />
           </button>
         </div>
         <div className={styles.modalBody}>
-          {email.templateBuilt ? (
-            <div className={styles.previewFrame}>
-              <div dangerouslySetInnerHTML={{ __html: PREVIEW_MAP[email.emailKey] ?? FOUNDING_WELCOME_PREVIEW }} />
+          {error ? (
+            <div className={styles.notBuiltNotice}>
+              <p style={{ margin: '0 0 0.5rem', color: '#f87171' }}>Couldn&apos;t load preview.</p>
+              <p style={{ margin: 0, opacity: 0.7 }}>{error}</p>
+            </div>
+          ) : html === null ? (
+            <div className={styles.notBuiltNotice}>
+              <p style={{ margin: 0, opacity: 0.6 }}>Loading preview…</p>
             </div>
           ) : (
-            <div className={styles.notBuiltNotice}>
-              <p style={{ margin: '0 0 0.5rem' }}>Template not yet built.</p>
-              <p style={{ margin: 0, opacity: 0.6 }}>
-                Build it in a follow-up session, then update TEMPLATE_REGISTRY in<br />
-                <code>app/api/admin/email/send/route.ts</code>.
-              </p>
+            <div className={styles.previewFrame}>
+              <div dangerouslySetInnerHTML={{ __html: html }} />
             </div>
           )}
+        </div>
+        <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid rgba(30,58,138,0.2)', textAlign: 'right' }}>
+          <Link href={`/platform-admin/email-templates/${email.emailKey}`} className={styles.btnAction} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <Pencil size={11} /> Edit content
+          </Link>
         </div>
       </div>
     </div>
@@ -316,6 +356,8 @@ export default function EmailDashboardClient({
   optOutCount,
   recipientCounts,
   adminEmail,
+  schedule: initialSchedule,
+  todayISO,
 }: {
   initialBatches: EmailBatch[];
   initialOptOuts: OptOutOrg[];
@@ -323,6 +365,8 @@ export default function EmailDashboardClient({
   optOutCount: number;
   recipientCounts: Record<string, number>;
   adminEmail: string;
+  schedule: MarketingSchedule;
+  todayISO: string;
 }) {
   const [batches, setBatches] = useState<EmailBatch[]>(initialBatches);
   const [optOuts, setOptOuts] = useState<OptOutOrg[]>(initialOptOuts);
@@ -332,6 +376,45 @@ export default function EmailDashboardClient({
   const [sending, setSending] = useState(false);
   const [lastResult, setLastResult] = useState<SendResult>(null);
   const [resubscribing, setResubscribing] = useState<string | null>(null);
+  const [schedule, setSchedule] = useState<MarketingSchedule>(initialSchedule);
+
+  // Date-edit modal state.
+  const [dateEditKey, setDateEditKey] = useState<string | null>(null);
+  const [dateDraft, setDateDraft] = useState('');
+  const [savingDate, setSavingDate] = useState(false);
+  const [dateError, setDateError] = useState<string | null>(null);
+
+  // ── Planned-date save handler ──────────────────────────────────────────────
+  async function handleSaveDate() {
+    if (!dateEditKey || !dateDraft) return;
+    setSavingDate(true);
+    setDateError(null);
+    try {
+      const res = await fetch('/api/admin/email/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emailKey: dateEditKey, plannedDate: dateDraft }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to save date');
+      setSchedule(prev => ({
+        ...prev,
+        [dateEditKey]: { ...prev[dateEditKey], plannedDate: data.plannedDate ?? dateDraft },
+      }));
+      setDateEditKey(null);
+    } catch (e) {
+      setDateError(e instanceof Error ? e.message : 'Unknown error');
+    } finally {
+      setSavingDate(false);
+    }
+  }
+
+  function openDateEditor(email: ScheduledEmail) {
+    const planned = schedule[email.emailKey]?.plannedDate ?? '';
+    setDateDraft(planned);
+    setDateError(null);
+    setDateEditKey(email.emailKey);
+  }
 
   // ── Send handler ──────────────────────────────────────────────────────────
 
@@ -391,6 +474,21 @@ export default function EmailDashboardClient({
     return batches.find(b => b.email_key === emailKey && b.status === 'complete') ?? null;
   }
 
+  // ── Merge each campaign with its schedule + computed send status ────────────
+  const rows = SCHEDULED_EMAILS.map(email => {
+    const info = schedule[email.emailKey];
+    const plannedDate = info?.plannedDate ?? null;
+    const sent = !!getBatchForKey(email.emailKey);
+    const status = classifyCampaignSend({ plannedDate, sent, isTrigger: email.timingKind === 'trigger', todayISO });
+    const subject = info?.subject || email.subject; // prefer the (editable) DB subject
+    const editableDate = email.timingKind !== 'trigger';
+    return { email, plannedDate, sent, status, subject, editableDate };
+  });
+  const pastDue = rows.filter(r => r.status === 'past_due');
+  const upcoming = rows
+    .filter(r => r.status === 'due_soon')
+    .sort((a, b) => (a.plannedDate ?? '').localeCompare(b.plannedDate ?? ''));
+
   return (
     <div className={styles.page}>
       {/* Header */}
@@ -408,6 +506,51 @@ export default function EmailDashboardClient({
             ? `Error: ${lastResult.message}`
             : `Sent: ${lastResult.sent} · Suppressed: ${lastResult.suppressed} · Failed: ${lastResult.failed} · Batch: ${lastResult.batchId ?? 'n/a'}`
           }
+        </div>
+      )}
+
+      {/* ── Needs sending (past due + upcoming) ── */}
+      {(pastDue.length > 0 || upcoming.length > 0) && (
+        <div className={styles.needsSending}>
+          {pastDue.length > 0 && (
+            <div className={`${styles.needsGroup} ${styles.needsPastDue}`}>
+              <div className={styles.needsTitle}>
+                <AlertTriangle size={13} /> Past due — send now ({pastDue.length})
+              </div>
+              {pastDue.map(r => (
+                <div key={r.email.emailKey} className={styles.needsItem}>
+                  <div className={styles.needsItemMain}>
+                    <span className={styles.needsDate}>{r.plannedDate ? formatPlannedDate(r.plannedDate) : '—'}</span>
+                    <span className={styles.needsSubject} title={r.subject}>{r.subject}</span>
+                  </div>
+                  <button className={styles.needsSendBtn} onClick={() => setSendTarget(r.email)}>
+                    <Send size={11} /> Send now
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {upcoming.length > 0 && (
+            <div className={`${styles.needsGroup} ${styles.needsUpcoming}`}>
+              <div className={styles.needsTitle}>
+                <Clock size={13} /> Upcoming — next {UPCOMING_WINDOW_DAYS} days ({upcoming.length})
+              </div>
+              {upcoming.map(r => (
+                <div key={r.email.emailKey} className={styles.needsItem}>
+                  <div className={styles.needsItemMain}>
+                    <span className={styles.needsDate}>{r.plannedDate ? formatPlannedDate(r.plannedDate) : '—'}</span>
+                    <span className={styles.needsSubject} title={r.subject}>{r.subject}</span>
+                    <span className={styles.needsDays}>
+                      in {daysUntil(r.plannedDate!, todayISO)} day{daysUntil(r.plannedDate!, todayISO) !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <button className={styles.needsSendBtnGhost} onClick={() => setSendTarget(r.email)}>
+                    <Send size={11} /> Send early
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -434,8 +577,13 @@ export default function EmailDashboardClient({
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionTitle}>Scheduled Sends</span>
-          <span className={styles.sectionNote}>All 10 founding season emails — trigger manually from here</span>
+          <span className={styles.sectionNote}>
+            All 10 founding season emails. <strong>Subject, content &amp; calendar send dates are editable</strong>;
+            <Lock size={10} style={{ verticalAlign: '-1px', margin: '0 0.15rem 0 0.3rem', opacity: 0.6 }} />
+            trigger-based timing &amp; audience are set by the system. Sends are manual — this board tells you when.
+          </span>
         </div>
+        <div className={styles.tableScroll}>
         <table className={styles.table}>
           <thead>
             <tr>
@@ -449,17 +597,35 @@ export default function EmailDashboardClient({
             </tr>
           </thead>
           <tbody>
-            {SCHEDULED_EMAILS.map(email => {
-              const sentBatch = getBatchForKey(email.emailKey);
-              const status = sentBatch ? 'sent' : email.templateBuilt ? 'scheduled' : 'not built';
+            {rows.map(({ email, plannedDate, sent, status, subject, editableDate }) => {
               const count = email.isTransactional ? null : (recipientCounts[email.emailKey] ?? recipientCount);
 
               return (
                 <tr key={email.emailKey}>
                   <td><span className={styles.emailKey}>{email.emailKey}</span></td>
-                  <td><span className={styles.subject} title={email.subject}>{email.subject}</span></td>
-                  <td><span className={styles.sendDate}>{email.sendDate}</span></td>
-                  <td><span className={styles.audience}>{email.audience}</span></td>
+                  <td><span className={styles.subject} title={subject}>{subject}</span></td>
+                  <td>
+                    {editableDate ? (
+                      <button
+                        className={styles.dateEditBtn}
+                        onClick={() => openDateEditor(email)}
+                        title="Edit planned send date"
+                      >
+                        <Calendar size={10} style={{ verticalAlign: '-1px', marginRight: '0.3rem', opacity: 0.75 }} />
+                        <span className={styles.sendDate}>{plannedDate ? formatPlannedDate(plannedDate) : 'Set date'}</span>
+                        <Pencil size={9} style={{ marginLeft: '0.35rem', opacity: 0.5 }} />
+                      </button>
+                    ) : (
+                      <span title="System-defined: this email fires on an event, not a fixed date.">
+                        <Lock size={9} style={{ verticalAlign: '-1px', marginRight: '0.3rem', opacity: 0.45 }} />
+                        <span className={styles.sendDate}>{email.sendDate}</span>
+                      </span>
+                    )}
+                  </td>
+                  <td title="System-defined audience (backed by real queries + consent rules).">
+                    <Lock size={9} style={{ verticalAlign: '-1px', marginRight: '0.3rem', opacity: 0.45 }} />
+                    <span className={styles.audience}>{email.audience}</span>
+                  </td>
                   <td>
                     <span className={styles.recipientCount}>
                       {email.isTransactional ? '—' : count ?? '…'}
@@ -470,6 +636,13 @@ export default function EmailDashboardClient({
                   </td>
                   <td>
                     <div className={styles.actions}>
+                      <Link
+                        href={`/platform-admin/email-templates/${email.emailKey}`}
+                        className={`${styles.btnAction} ${styles.btnPreview}`}
+                        title="Edit content (subject & body)"
+                      >
+                        <Pencil size={11} />
+                      </Link>
                       <button
                         className={`${styles.btnAction} ${styles.btnPreview}`}
                         onClick={() => setPreviewEmail(email)}
@@ -481,12 +654,8 @@ export default function EmailDashboardClient({
                         <button
                           className={`${styles.btnAction} ${styles.btnSend}`}
                           onClick={() => setSendTarget(email)}
-                          disabled={!email.templateBuilt || !!sentBatch}
-                          title={
-                            !email.templateBuilt ? 'Template not yet built' :
-                            sentBatch ? 'Already sent' :
-                            'Send now'
-                          }
+                          disabled={sent}
+                          title={sent ? 'Already sent' : 'Send now'}
                         >
                           <Send size={11} />
                         </button>
@@ -498,6 +667,7 @@ export default function EmailDashboardClient({
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* ── Sent History ── */}
@@ -509,6 +679,7 @@ export default function EmailDashboardClient({
         {batches.length === 0 ? (
           <div className={styles.emptyState}>No email batches sent yet.</div>
         ) : (
+          <div className={styles.tableScroll}>
           <table className={styles.table}>
             <thead>
               <tr>
@@ -558,6 +729,7 @@ export default function EmailDashboardClient({
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
@@ -605,7 +777,7 @@ export default function EmailDashboardClient({
 
       {/* ── Modals ── */}
       {previewEmail && (
-        <PreviewModal email={previewEmail} onClose={() => setPreviewEmail(null)} />
+        <PreviewModal key={previewEmail.emailKey} email={previewEmail} onClose={() => setPreviewEmail(null)} />
       )}
 
       {sendTarget && (
@@ -617,220 +789,42 @@ export default function EmailDashboardClient({
           sending={sending}
         />
       )}
+
+      {dateEditKey && (
+        <div className={styles.modalOverlay} onClick={() => !savingDate && setDateEditKey(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>Planned send date</div>
+              <button className={styles.modalClose} onClick={() => setDateEditKey(null)} aria-label="Close" disabled={savingDate}>
+                <X size={14} />
+              </button>
+            </div>
+            <div className={styles.confirmDialog}>
+              <p className={styles.confirmBody} style={{ marginBottom: '0.75rem' }}>
+                Set the planned send date for <strong>{dateEditKey}</strong>. This is a reminder of when to
+                send — it appears in the &ldquo;upcoming&rdquo; and &ldquo;past due&rdquo; lists. It does{' '}
+                <strong>not</strong> send automatically.
+              </p>
+              <input
+                type="date"
+                className={styles.dateInput}
+                value={dateDraft}
+                onChange={e => setDateDraft(e.target.value)}
+                disabled={savingDate}
+              />
+              {dateError && <p className={styles.sendingNote} style={{ color: '#f87171' }}>{dateError}</p>}
+              <div className={styles.confirmActions}>
+                <button className={styles.btnConfirmSend} onClick={handleSaveDate} disabled={savingDate || !dateDraft}>
+                  {savingDate ? 'Saving…' : 'Save date'}
+                </button>
+                <button className={styles.btnCancel} onClick={() => setDateEditKey(null)} disabled={savingDate}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-// ── Inline preview HTML for founding_welcome ──────────────────────────────────
-// This is a static preview — the real send generates HTML dynamically per org.
-
-// ── Shared outer wrapper used by all preview constants ───────────────────────
-const W = (content: string) => `
-<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
-  <div style="margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);">
-    <span style="font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;">FIELDLOGICHQ</span>
-  </div>
-  ${content}
-</div>`;
-
-const FOUNDING_CHECKIN_PREVIEW = W(`
-  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">How's your season going?</h2>
-  <p style="margin:0 0 1rem;">Hi Demo User,</p>
-  <p style="margin:0 0 1.25rem;line-height:1.7;">It's been <strong>8 weeks</strong> since <strong>Demo Org</strong> joined FieldLogicHQ.</p>
-  <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-    <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Season so far</p>
-    <p style="margin:0;line-height:1.9;color:rgba(241,245,249,0.8);">You've run <strong>2 tournaments</strong> — <strong>47 games played</strong>.<br>That's 47 schedule exports and score entries you didn't have to do in a spreadsheet.</p>
-  </div>
-  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Set up another tournament →</a>
-  <p style="margin:1.5rem 0 0;line-height:1.7;color:rgba(241,245,249,0.8);">We're also curious: what's working, and what isn't? Reply and tell us.</p>
-  <p style="margin:0.75rem 0 0;line-height:1.7;color:rgba(241,245,249,0.65);">Your founding season runs through December 31, 2026. Starting January 1, Tournament Plus is $39/month — or you can continue free on the Tournament plan.</p>
-  <p style="margin:1.25rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
-`);
-
-const FOUNDING_RENEWAL_PREVIEW = W(`
-  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">Your founding season ends December 31 — here's what happens next.</h2>
-  <p style="margin:0 0 1rem;">Hi Demo User,</p>
-  <p style="margin:0 0 1.25rem;line-height:1.7;">Your FieldLogicHQ founding season ends December 31, 2026.</p>
-  <p style="margin:0 0 1.25rem;line-height:1.7;color:rgba(241,245,249,0.8);">Starting January 1, Tournament Plus is $39/month. Here's what that means for <strong>Demo Org</strong>:</p>
-  <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
-    <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What happens to Demo Org</p>
-    <p style="margin:0 0 0.75rem;line-height:1.7;color:rgba(241,245,249,0.8);">Your <strong>1 active tournament</strong>, all registered teams, scores, and archives carry over automatically — nothing changes except the billing.</p>
-    <p style="margin:0;line-height:1.7;color:rgba(241,245,249,0.8);">Your <strong>3 past tournaments</strong> stay in your archives regardless of which plan you're on.</p>
-  </div>
-  <p style="margin:0 0 1rem;line-height:1.7;">To continue on Tournament Plus starting January 1:</p>
-  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Add a payment method — takes 2 minutes →</a>
-  <p style="margin:1.5rem 0 0.5rem;line-height:1.7;color:rgba(241,245,249,0.8);">If $39/month isn't right, you can continue free on the Tournament plan: 1 active tournament, manual scheduling, no cost.</p>
-  <a href="#" style="display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;">See plan comparison →</a>
-  <p style="margin:1.5rem 0 0;color:rgba(241,245,249,0.65);">Questions? Reply to this email.</p>
-  <p style="margin:0.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
-`);
-
-const FOUNDING_FINAL_PREVIEW = W(`
-  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">2 weeks left in your founding season.</h2>
-  <p style="margin:0 0 1rem;">Hi Demo User,</p>
-  <p style="margin:0 0 1.25rem;line-height:1.7;">Quick reminder: your founding season ends in 16 days, on December 31.</p>
-  <p style="margin:0 0 1rem;line-height:1.7;color:rgba(241,245,249,0.8);">If you'd like to continue with Tournament Plus starting January 1 ($39/month), add a payment method now:</p>
-  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Add payment method →</a>
-  <p style="margin:1.5rem 0 0;line-height:1.7;color:rgba(241,245,249,0.8);">Either way, everything you've built on FieldLogicHQ stays with you.</p>
-  <p style="margin:1.25rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
-`);
-
-const SPOTLIGHT_CLUB_PREVIEW = W(`
-  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">Before your September season starts — Club is free through December 31.</h2>
-  <p style="margin:0 0 1rem;">Hi Demo User,</p>
-  <p style="margin:0 0 1.25rem;line-height:1.7;">Most clubs are planning their September season right now.<br>Tryouts. Rep team rosters. League registrations. Budget prep.</p>
-  <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-    <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Club on FieldLogicHQ puts your entire organization in one place</p>
-    <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
-      <li>Tournaments: same tools you're already using on your founding season</li>
-      <li>House League: registration, draft, schedule, standings, parent notifications — no manual emails</li>
-      <li>Rep Teams: tryouts, roster, lineups, and team budget</li>
-      <li>Accounting: org ledger, team invoicing, budget vs. actual</li>
-    </ul>
-  </div>
-  <p style="margin:0 0 1.5rem;line-height:1.7;">Club is normally <strong>from $219/month</strong>. As a founding organization, <strong>Club is free through December 31, 2026</strong>.</p>
-  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Start on Club — free through December 31 →</a>
-  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
-`);
-
-const SPOTLIGHT_LEAGUE_PREVIEW = W(`
-  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">What running a house league actually looks like on FieldLogicHQ.</h2>
-  <p style="margin:0 0 1rem;">Hi Demo User,</p>
-  <p style="margin:0 0 1.25rem;line-height:1.7;">You're running tournaments. But if <strong>Demo Org</strong> also runs a house league season — or if that's where you're headed — here's what that looks like.</p>
-  <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-    <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">From opening registration to final standings</p>
-    <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
-      <li>Parents register players online. You set division limits; waitlists fill automatically.</li>
-      <li>Draft day uses a live board — pick order, team builds, no spreadsheet.</li>
-      <li>The schedule generates itself. Parents get automated game notifications without you sending a single email.</li>
-      <li>Standings update the moment scores are entered.</li>
-    </ul>
-  </div>
-  <p style="margin:0 0 1.5rem;line-height:1.7;">Available on League Plus (<strong>$89/month</strong>) and Club (<strong>from $219/month</strong>). Both are <strong>free through December 31, 2026</strong>.</p>
-  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Get set up on League Plus — free through December 31 →</a>
-  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
-`);
-
-const SPOTLIGHT_COACHES_ORG_PREVIEW = W(`
-  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">For the coaches on your teams — a workspace that's actually theirs.</h2>
-  <p style="margin:0 0 1rem;">Hi Demo User,</p>
-  <p style="margin:0 0 1.25rem;line-height:1.7;color:rgba(241,245,249,0.8);">The coaches managing teams in your tournaments are tracking rosters in group texts, lineups in notes apps, and team fees in someone's head.</p>
-  <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-    <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">The Coaches Portal gives them one place for all of it</p>
-    <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
-      <li>Full roster management with season history</li>
-      <li>Lineup builder — plan your starting lineup, export to PDF</li>
-      <li>Team budget and player dues tracking</li>
-      <li>Document management: consent forms, medical notes, eligibility files</li>
-    </ul>
-  </div>
-  <p style="margin:0 0 1.5rem;line-height:1.7;">Standalone at <strong>$29/month</strong>, or included in League Plus and Club plans.</p>
-  <p style="margin:0 0 0.75rem;line-height:1.7;">Know a coach who needs this?</p>
-  <a href="#" style="display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;">Send them this link →</a>
-  <p style="margin:1.25rem 0 0.75rem;line-height:1.7;">Or express your own interest:</p>
-  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">I'm interested in the Coaches Portal →</a>
-  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
-`);
-
-const SPOTLIGHT_COACHES_COACH_PREVIEW = W(`
-  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">For the coaches on your teams — a workspace that's actually theirs.</h2>
-  <p style="margin:0 0 1rem;">Hi Demo Coach,</p>
-  <p style="margin:0 0 1.25rem;line-height:1.7;color:rgba(241,245,249,0.8);">You've been through a tournament on FieldLogicHQ. But managing your team between tournaments is still probably spread across your phone, email, and memory.</p>
-  <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-    <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">The Coaches Portal is built for exactly that</p>
-    <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
-      <li>Your full roster, season over season</li>
-      <li>Lineups you can plan, save, and export to PDF</li>
-      <li>Team budget: dues in, expenses out, who owes what</li>
-      <li>Documents in one place — consent, medical, eligibility</li>
-    </ul>
-  </div>
-  <p style="margin:0 0 1.5rem;line-height:1.7;">No organization account required. Standalone at <strong>$29/month</strong>.</p>
-  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">I want the Coaches Portal →</a>
-  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
-`);
-
-const SPOTLIGHT_CLUB_LAST_PREVIEW = W(`
-  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">Last reminder — Club is still free through December 31.</h2>
-  <p style="margin:0 0 1rem;">Hi Demo User,</p>
-  <p style="margin:0 0 1.25rem;line-height:1.7;">A quick follow-up to our August note about Club.</p>
-  <p style="margin:0 0 1.25rem;line-height:1.7;color:rgba(241,245,249,0.8);">If <strong>Demo Org</strong> is running a house league, rep teams, or both alongside your tournaments — Club is free through December 31, 2026 as part of your founding season.</p>
-  <p style="margin:0 0 1.5rem;line-height:1.7;">After the new year, it's <strong>from $219/month</strong>. Starting now, it costs nothing.</p>
-  <p style="margin:0 0 1.5rem;line-height:1.7;color:rgba(241,245,249,0.8);">The longer you wait to set it up, the deeper into the season you go on separate systems.</p>
-  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Start on Club — free through December 31 →</a>
-  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
-`);
-
-const SPOTLIGHT_FULL_PICTURE_PREVIEW = W(`
-  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;">Where FieldLogicHQ is headed — a note from the founding season.</h2>
-  <p style="margin:0 0 1rem;">Hi Demo User,</p>
-  <p style="margin:0 0 1.25rem;line-height:1.7;">You're one of the first organizations running on FieldLogicHQ. Here's a brief update on where things are headed.</p>
-  <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-    <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What's live today</p>
-    <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
-      <li>Tournament and Tournament Plus: free for your founding season through December 31</li>
-      <li>House League, Rep Teams, and Accounting: available on League and Club (also free through December 31)</li>
-      <li>Coaches Portal for coaches tracking their teams</li>
-    </ul>
-  </div>
-  <div style="background:#0F172A;border:1px solid rgba(30,58,138,0.25);border-left:3px solid rgba(30,58,138,0.5);padding:1.25rem;margin:1.5rem 0;">
-    <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">What's coming in 2027</p>
-    <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
-      <li>Coaches Portal standalone — a full season workspace for one team ($29/month)</li>
-      <li>Expanded public org site tools</li>
-    </ul>
-  </div>
-  <p style="margin:0 0 0.75rem;line-height:1.7;">If you know another organizer, league admin, or coach who should be here:</p>
-  <a href="#" style="display:inline-block;color:#D9F99D;text-decoration:none;font-weight:700;font-size:0.85rem;padding:0.4rem 0;">Share FieldLogicHQ →</a>
-  <p style="margin:1.25rem 0 0.75rem;line-height:1.7;">And if you haven't added a payment method yet:</p>
-  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Continue after December 31 — takes 2 minutes →</a>
-  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.65);">See you in 2027.</p>
-  <p style="margin:0.5rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
-`);
-
-// Map emailKey → preview HTML
-const PREVIEW_MAP: Record<string, string> = {
-  founding_checkin: FOUNDING_CHECKIN_PREVIEW,
-  founding_renewal: FOUNDING_RENEWAL_PREVIEW,
-  founding_final: FOUNDING_FINAL_PREVIEW,
-  spotlight_club: SPOTLIGHT_CLUB_PREVIEW,
-  spotlight_league: SPOTLIGHT_LEAGUE_PREVIEW,
-  spotlight_coaches_org: SPOTLIGHT_COACHES_ORG_PREVIEW,
-  spotlight_coaches_coach: SPOTLIGHT_COACHES_COACH_PREVIEW,
-  spotlight_club_last: SPOTLIGHT_CLUB_LAST_PREVIEW,
-  spotlight_full_picture: SPOTLIGHT_FULL_PICTURE_PREVIEW,
-};
-
-// ── Inline preview HTML for founding_welcome ──────────────────────────────────
-// This is a static preview — the real send generates HTML dynamically per org.
-
-const FOUNDING_WELCOME_PREVIEW = `
-<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2.5rem 2rem;border:1px solid rgba(30,58,138,0.25);">
-  <div style="margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid rgba(30,58,138,0.2);">
-    <span style="font-size:0.75rem;font-weight:900;color:#D9F99D;letter-spacing:0.16em;text-transform:uppercase;">FIELDLOGICHQ</span>
-  </div>
-  <h2 style="color:#D9F99D;font-size:1.35rem;font-weight:800;margin:0 0 1.25rem;letter-spacing:-0.01em;">Your founding season starts now.</h2>
-  <p style="margin:0 0 1rem;">Hi Demo User,</p>
-  <p style="margin:0 0 1.25rem;line-height:1.7;">You're in. <strong>Demo Org</strong> is set up on FieldLogicHQ and running <strong>Tournament Plus free through December 31, 2026</strong> as a founding organization.</p>
-  <div style="background:#0F172A;border:1px solid rgba(217,249,157,0.2);border-left:3px solid rgba(217,249,157,0.5);padding:1.25rem;margin:1.5rem 0;">
-    <p style="margin:0 0 0.75rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#D9F99D;">Tournament Plus ($39/month) gives you</p>
-    <ul style="margin:0;padding-left:1.25rem;line-height:1.9;color:rgba(241,245,249,0.8);">
-      <li>Auto-scheduling across any number of fields and time slots</li>
-      <li>Single and double-elimination brackets</li>
-      <li>Team communications and announcements</li>
-      <li>Tournament archives — every past event preserved</li>
-      <li>Up to 3 active tournaments at once</li>
-    </ul>
-  </div>
-  <p style="margin:0 0 1.5rem;line-height:1.7;color:rgba(241,245,249,0.8);">All of it, <strong>free until January 1, 2027</strong>. No credit card required.</p>
-  <a href="#" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.8rem 1.5rem;font-size:0.82rem;letter-spacing:0.06em;">Set up your first tournament →</a>
-  <p style="margin:1.75rem 0 0;line-height:1.7;color:rgba(241,245,249,0.65);">If anything doesn't work the way you'd expect, reply to this email. We read everything.</p>
-  <p style="margin:0.75rem 0 0;color:rgba(241,245,249,0.65);">— The FieldLogicHQ team</p>
-  <div style="margin-top:2rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);">
-    <p style="margin:0;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;">
-      You're receiving this because you signed up for FieldLogicHQ.&nbsp;
-      <a href="#" style="color:rgba(217,249,157,0.5);text-decoration:underline;">Unsubscribe</a>
-      &nbsp;·&nbsp; FieldLogicHQ · Canada
-    </p>
-  </div>
-</div>`;

@@ -39,6 +39,69 @@
 
 /* ── List page ───────────────────────────────────────────────────────────────── */
 
+.tabBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.15);
+  padding-bottom: 0.75rem;
+}
+
+.tab {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.7rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--data-gray);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 2px;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.tab:hover {
+  color: var(--fl-text);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.tabActive {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+}
+
+.tabCount {
+  font-size: 0.58rem;
+  color: rgba(241, 245, 249, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.05rem 0.3rem;
+  border-radius: 2px;
+}
+
+.tabActive .tabCount { color: var(--logic-lime); background: rgba(var(--logic-lime-rgb), 0.12); }
+
+.tabDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--logic-lime);
+}
+
+.legend {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  color: rgba(241, 245, 249, 0.5);
+  line-height: 1.9;
+  margin-bottom: 1rem;
+}
+
 .categoryGroup { margin-bottom: 2rem; }
 
 .categoryHeading {
@@ -137,6 +200,7 @@
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
+  white-space: nowrap;
   transition: color 0.15s, border-color 0.15s;
 }
 
@@ -446,6 +510,105 @@
   font-size: 0.75rem;
   color: var(--danger);
   padding: 1rem 0;
+}
+
+.discardBtn {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--data-gray);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: border-color 0.15s, color 0.15s;
+  border-radius: 2px;
+}
+
+.discardBtn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--fl-text);
+}
+
+.discardBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.defaultNote {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  color: rgba(241, 245, 249, 0.5);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.45rem 0.65rem;
+  margin-bottom: 1rem;
+  line-height: 1.45;
+}
+
+/* ── Reset-confirm modal ─────────────────────────────────────────────────────── */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.modal {
+  background: var(--hud-surface, #0f172a);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  max-width: 420px;
+  width: 100%;
+  padding: 1.25rem;
+  border-radius: 3px;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.modalTitle {
+  font-family: var(--font-data);
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fl-text);
+}
+
+.modalClose {
+  background: transparent;
+  border: none;
+  color: var(--data-gray);
+  cursor: pointer;
+  padding: 0.15rem;
+  display: inline-flex;
+}
+
+.modalClose:hover { color: var(--fl-text); }
+
+.modalBody {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: rgba(241, 245, 249, 0.7);
+  line-height: 1.55;
+  margin-bottom: 1.25rem;
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }

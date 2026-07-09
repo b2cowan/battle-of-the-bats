@@ -1,48 +1,17 @@
-import Link from 'next/link';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requirePlatformAreaView } from '@/lib/platform-auth';
+import EmailTemplatesList, { type TemplateRow } from './EmailTemplatesList';
 import styles from './email-templates.module.css';
-
-const CATEGORY_LABELS: Record<string, string> = {
-  auth:        'Authentication',
-  billing:     'Billing',
-  tournament:  'Tournament',
-  rep_teams:   'Rep Teams',
-  house_league: 'House League',
-  system:      'System',
-};
-
-const CATEGORY_ORDER = ['auth', 'billing', 'tournament', 'rep_teams', 'house_league', 'system'];
-
-type Template = {
-  key: string;
-  label: string;
-  description: string;
-  category: string;
-  is_customised: boolean;
-  updated_at: string;
-  updated_by: string | null;
-};
 
 export default async function EmailTemplatesPage() {
   await requirePlatformAreaView('email_templates');
   const { data, error } = await supabaseAdmin
     .from('platform_email_templates')
-    .select('key, label, description, category, is_customised, updated_at, updated_by')
+    .select('key, label, description, category, is_customised')
     .order('category')
     .order('label');
 
-  const templates: Template[] = data ?? [];
-
-  // Group by category
-  const grouped: Record<string, Template[]> = {};
-  for (const t of templates) {
-    if (!grouped[t.category]) grouped[t.category] = [];
-    grouped[t.category].push(t);
-  }
-
-  const categories = CATEGORY_ORDER.filter(c => grouped[c]);
-
+  const templates: TemplateRow[] = data ?? [];
   const customisedCount = templates.filter(t => t.is_customised).length;
 
   return (
@@ -53,9 +22,10 @@ export default async function EmailTemplatesPage() {
       </header>
 
       <p className={styles.desc}>
-        View and customise the content of all platform-level transactional emails. Editing a template
-        overrides the hardcoded default — the FieldLogicHQ brand envelope (header, footer) is always
-        applied automatically. Use &ldquo;Reset to default&rdquo; to go back to the built-in copy.
+        View and customise the content of platform emails — the transactional/system emails and the
+        founding-season <strong>Marketing / Campaign</strong> emails. Editing a template overrides the
+        default; the FieldLogicHQ brand envelope (header, footer) is always applied automatically. Use
+        &ldquo;Reset to default&rdquo; to go back to the built-in copy.
         {customisedCount > 0 && (
           <> &nbsp;<strong style={{ color: '#D9F99D' }}>{customisedCount} customised</strong> of {templates.length} templates.</>
         )}
@@ -67,46 +37,7 @@ export default async function EmailTemplatesPage() {
         </p>
       )}
 
-      {categories.map(cat => (
-        <div key={cat} className={styles.categoryGroup}>
-          <div className={styles.categoryHeading}>{CATEGORY_LABELS[cat] ?? cat}</div>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Template</th>
-                <th>Key</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {(grouped[cat] ?? []).map(t => (
-                <tr key={t.key}>
-                  <td>
-                    <div className={styles.templateLabel}>{t.label}</div>
-                    <div className={styles.templateDesc}>{t.description}</div>
-                  </td>
-                  <td>
-                    <span className={styles.keyChip}>{t.key}</span>
-                  </td>
-                  <td>
-                    {t.is_customised ? (
-                      <span className={styles.badgeCustomised}>Customised</span>
-                    ) : (
-                      <span className={styles.badgeDefault}>Default</span>
-                    )}
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <Link href={`/platform-admin/email-templates/${t.key}`} className={styles.editBtn}>
-                      Edit →
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ))}
+      <EmailTemplatesList templates={templates} />
     </div>
   );
 }
