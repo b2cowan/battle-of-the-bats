@@ -76,15 +76,49 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Groups the CTA + expand chevron so the chevron reads as the row's own
+   trailing disclosure control, not an arrow attached to the CTA button. */
+.compactActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.compactChevronBtn {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0.15rem;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
 .compactChevron {
   color: var(--white-40);
   flex-shrink: 0;
 }
-.compactToggle:hover .compactChevron {
+.compactChevronBtn:hover .compactChevron {
   color: var(--warning);
 }
 .compactCta {
   flex-shrink: 0;
+}
+
+/* On narrow admin viewports the headline + CTA + chevron no longer fit one
+   line — rather than truncate the headline unreadably, give the toggle its
+   own full-width row and drop the CTA/chevron to a right-aligned row below. */
+@media (max-width: 640px) {
+  .compactToggle {
+    flex-basis: 100%;
+  }
+  .compactHeadline {
+    white-space: normal;
+  }
+  .compactActions {
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
 }
 .icon {
   color: var(--logic-lime);

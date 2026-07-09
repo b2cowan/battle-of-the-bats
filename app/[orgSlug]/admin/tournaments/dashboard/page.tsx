@@ -1015,6 +1015,7 @@ export default function AdminDashboard() {
         tournamentId={currentTournament.id}
         live={guidanceStage === 'live'}
         ready={guidanceStage === 'ready'}
+        collapsible={guidanceStage === 'live' || guidanceStage === 'pre'}
         onAction={(actionId) => { if (actionId === 'complete') { setCompleteError(''); setShowCompleteConfirm(true); } }}
       />
     );
@@ -1305,15 +1306,13 @@ export default function AdminDashboard() {
 
             {teamsNoEmail > 0 && (
               <p className={styles.chatWarn}>
-                {teamsNoEmail} team{teamsNoEmail !== 1 ? 's have' : ' has'} no coach email on file — add one so they can be invited.
+                {teamsNoEmail} team{teamsNoEmail !== 1 ? 's have' : ' has'} no coach email on file —{' '}
+                <Link href={`${base}/registrations?attention=missing_email`} className={styles.chatWarnLink}>add one so they can be invited →</Link>
               </p>
             )}
 
             {!ca.roomOpen ? (
-              <>
-                <p className={styles.chatExplain}>Open chat to give every signed-up coach a group room — they join automatically.</p>
-                <Link href={`${base}/chat`} className={styles.commsAction}>Open Tournament Chat →</Link>
-              </>
+              <p className={styles.chatExplain}>Open chat to give every signed-up coach a group room — they join automatically.</p>
             ) : (
               <>
                 <p className={styles.chatExplain}>Signed-up coaches get a live group chat with you, plus their schedule, scores, and your announcements.</p>
@@ -1324,7 +1323,10 @@ export default function AdminDashboard() {
                 ) : ca.notJoined === 0 ? (
                   <span className={styles.chatAllIn}>Every team&rsquo;s coach is signed up 🎉</span>
                 ) : (
-                  <span className={styles.chatExplain}>The teams not yet joined have no email on file to remind.</span>
+                  <span className={styles.chatExplain}>
+                    The teams not yet joined have no email on file to remind —{' '}
+                    <Link href={`${base}/registrations?attention=missing_email`} className={styles.chatExplainLink}>add one →</Link>
+                  </span>
                 )}
                 {chatRemindResult && <p className={styles.chatRemindResult}>{chatRemindResult}</p>}
               </>

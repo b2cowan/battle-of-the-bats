@@ -7,12 +7,18 @@
  * context line, one primary action, plus an optional dismissible "Did you know?"
  * nudge and a collapsed "See common tasks" shortcut list. Stage-aware content
  * comes from lib/tournament-guidance — this component is presentational and owns
- * only the (per-tournament) nudge-dismissal + tasks-expanded UI state.
+ * only the (per-tournament) nudge-dismissal + collapsed + tasks-expanded UI state.
  *
  * The card itself is never dismissible (it's the persistent orientation anchor);
  * only the nudge is. Dismissal reuses the established HelpCallout localStorage
  * convention (flhq-help-dismissed-{slug}), scoped per tournament. SSR-safe: the
  * dismissed flag is read after mount so it never mismatches hydration.
+ *
+ * `collapsible` stages (live, pre) can shrink to the one-line strip so a returning
+ * admin isn't shown the full card on every visit; `ready` stays full/expanded per
+ * the 2026-07-06 design decision (a call to act must not hide). The collapsed
+ * choice is remembered per tournament; each stage falls back to its own default
+ * (live starts collapsed, pre starts expanded) until the admin toggles it.
  */
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -28,6 +34,7 @@ export default function GuidanceRail({
   tournamentId,
   live = false,
   ready = false,
+  collapsible,
   onAction,
 }: {
   guidance: Guidance;
@@ -39,9 +46,15 @@ export default function GuidanceRail({
    * "Ready to finalize" tone — lime accent, full/expanded (never collapses). A
    * positive end-of-event milestone, distinct from the amber live view. `live` and
    * `ready` are mutually exclusive; when `ready` the rail never enters the collapsed
-   * game-day strip.
+   * strip (a call to act must not hide).
    */
   ready?: boolean;
+  /**
+   * Allows the admin to collapse this card to a one-line strip (icon + headline +
+   * CTA), same as the game-day treatment. Defaults to `live` for backward compat;
+   * pass `true` explicitly for other collapsible stages (e.g. pre-event).
+   */
+  collapsible?: boolean;
   /** Handler for a CTA/nudge action with an `actionId` (e.g. the one-click complete confirm). */
   onAction?: (actionId: NonNullable<GuidanceAction['actionId']>) => void;
 }) {
@@ -50,24 +63,28 @@ export default function GuidanceRail({
   const [nudgeDismissed, setNudgeDismissed] = useState(false);
   const [showTasks, setShowTasks] = useState(false);
 
-  // Game-day collapse: on a live event the board is the real "live view", so this
-  // orientation rail collapses to a one-line strip (icon + headline + the primary
-  // CTA) to keep the metrics above the fold. Non-live stages never collapse — the
-  // rail is their persistent anchor. Default = collapsed once live; the choice is
-  // remembered per tournament. Initial state matches the server render (collapsed
-  // when live) so hydration is stable; a stored "open" expands it after mount.
+  // Collapse: on a live event the board is the real "live view", so this
+  // orientation rail can shrink to a one-line strip (icon + headline + the primary
+  // CTA) to keep the metrics above the fold. The same strip is available on the
+  // pre-event stage so a returning admin isn't shown the full card on every visit.
+  // `ready` (and other non-collapsible stages) never collapse — the rail is their
+  // persistent anchor. Default = collapsed once live, expanded otherwise; the
+  // choice is then remembered per tournament. Initial state matches the server
+  // render (collapsed only when live) so hydration is stable; a stored preference
+  // overrides the default after mount.
+  const canCollapse = collapsible ?? live;
   const collapseKey = `flhq-help-guiderail-${tournamentId}`;
   const [collapsed, setCollapsed] = useState(live);
 
   useEffect(() => {
-    if (!live) { setCollapsed(false); return; }
+    if (!canCollapse) { setCollapsed(false); return; }
     try {
       const stored = typeof window !== 'undefined' ? localStorage.getItem(collapseKey) : null;
-      setCollapsed(stored === 'open' ? false : true);
+      setCollapsed(stored === 'open' ? false : stored === 'closed' ? true : live);
     } catch {
-      setCollapsed(true);
+      setCollapsed(live);
     }
-  }, [collapseKey, live]);
+  }, [collapseKey, canCollapse, live]);
 
   function toggleCollapsed() {
     const next = !collapsed;
@@ -117,10 +134,13 @@ export default function GuidanceRail({
     );
   }
 
-  // Collapsed game-day strip: one line, primary action still reachable.
-  if (live && collapsed) {
+  // Collapsed strip: one line, primary action still reachable. The expand
+  // chevron sits at the row's true trailing edge (after the CTA, its own small
+  // button) so it reads as the row's disclosure control rather than an arrow
+  // glued onto the action button.
+  if (canCollapse && collapsed) {
     return (
-      <section className={`${styles.rail} ${styles.railLive} ${styles.railCompact}`} aria-label="What's next">
+      <section className={`${styles.rail} ${live ? styles.railLive : ''} ${styles.railCompact}`} aria-label="What's next">
         <button
           type="button"
           className={styles.compactToggle}
@@ -129,9 +149,19 @@ export default function GuidanceRail({
         >
           <Compass size={16} className={styles.icon} aria-hidden />
           <span className={styles.compactHeadline}>{guidance.headline}</span>
-          <ChevronDown size={15} className={styles.compactChevron} aria-hidden />
         </button>
-        {guidance.cta && actionLink(guidance.cta, `btn btn-lime btn-data ${styles.compactCta}`)}
+        <div className={styles.compactActions}>
+          {guidance.cta && actionLink(guidance.cta, `btn btn-lime btn-data ${styles.compactCta}`)}
+          <button
+            type="button"
+            className={styles.compactChevronBtn}
+            aria-expanded={false}
+            aria-label={live ? 'Expand game-day guidance' : 'Expand guidance'}
+            onClick={toggleCollapsed}
+          >
+            <ChevronDown size={15} className={styles.compactChevron} aria-hidden />
+          </button>
+        </div>
       </section>
     );
   }
@@ -146,12 +176,12 @@ export default function GuidanceRail({
           {guidance.cta && actionLink(guidance.cta, `btn btn-lime btn-data ${styles.cta}`)}
           {guidance.progress && <p className={styles.progress}>{guidance.progress}</p>}
         </div>
-        {live && (
+        {canCollapse && (
           <button
             type="button"
             className={styles.collapseBtn}
             aria-expanded={true}
-            aria-label="Collapse game-day guidance"
+            aria-label={live ? 'Collapse game-day guidance' : 'Collapse guidance'}
             onClick={toggleCollapsed}
           >
             <ChevronUp size={16} aria-hidden />
