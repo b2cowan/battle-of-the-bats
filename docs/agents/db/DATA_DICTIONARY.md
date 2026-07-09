@@ -4661,7 +4661,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 - **`notifications.event_type` name-collides with `platform_events.event_type` but is a DISJOINT union.** `NotificationEventType` ([lib/types.ts](../../../lib/types.ts), 14 values incl. `chat_message` + `chat_mention`, both emitters, both default push-ON) shares zero values with `PlatformEventType` ([lib/platform-events.ts:3](../../../lib/platform-events.ts#L3)) — e.g. `payment_failed` exists only in the notification union. Never conflate the two. **5 values still have NO emitter** (dead enum values — see the table). `chat_mention` is intentionally NOT in the settings-UI sections (`NOTIFICATION_SECTIONS`), so it has no user toggle and always delivers — that's how an @mention reaches a coach who muted general `chat_message`.
 - **No DB triggers or CHECKs anywhere in this domain** — every `updated_at` is code-maintained, and every "enum" (`event_type`, `email_batches.status`, `email_sends.status`/`suppression_reason`, the template `category`) is a TS union/string convention.
 - **Two push tables, by design — different identity models.** `push_subscriptions` = authenticated member (`user_id`, **globally-unique endpoint** → one row per browser, follows the logged-in member across orgs); `fan_push_subscriptions` = anonymous public fan (**no `user_id`**, scoped to `(tournament_id, team_id)`, **`UNIQUE(endpoint, tournament_id)`** → the same browser can follow many tournaments, one row each). Both are **EMPTY in dev AND prod** (built, zero live subscriptions). `sendWebPush` is shared and **no-ops when VAPID keys are unset**.
-- **The DB email-template registry is a MIRROR, not the source of sends.** `platform_email_templates` is admin **edit/preview/test-send only**; the planned `resolveEmailTemplate()`/`resolveEmail()` DB loader **was never built** (grep = no matches), so the hardcoded `lib/email.ts` templates always send. The "looks authoritative but isn't" trap — editing a template here changes nothing that ships.
+- **The DB email-template registry is now PARTLY the source of sends (mig 179).** `platform_email_templates` `marketing` rows drive the real send + preview via the resolver in `lib/platform-email-templates.ts` (`renderResolvedEmail`/`renderTemplateEmail` — the loader the migration-083 comment referenced, now built). Transactional/system rows are **still** hardcoded `lib/email.ts` at send time until each send site is wired; editing them changes preview/test-send only, for now.
 - **Dev/prod:** all 8 column/constraint-identical (zero structural drift). Divergence is **content** (row counts above) + **grants** (prod anon full DML; dev `REFERENCES/TRIGGER/TRUNCATE`) only; the 2 `notifications` policies are identical across envs.
 
 ---
@@ -4846,13 +4846,14 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 ### `platform_email_templates`
 <!-- dict:table:platform_email_templates -->
 
-**Purpose:** a platform-admin **editable mirror** of the hardcoded `lib/email.ts` templates (24 seeded rows; categories auth/billing/tournament/rep_teams/house_league/system) powering an **edit + preview + test-send** UI at `/platform-admin/email-templates`. **Despite the authoritative-looking schema it is NOT read by any send path** — the actual send uses the hardcoded `lib/email.ts` template functions.
+**Purpose:** a platform-admin **edit + preview + test-send** registry (categories marketing/auth/billing/tournament/rep_teams/house_league/system) at `/platform-admin/email-templates`. **Partly runtime-consumed as of the Editable Email Campaigns work (mig 179):** the 10 **`marketing`** campaigns are rendered FROM this table for both the real send AND the preview (via the new resolver in [lib/platform-email-templates.ts](../../../lib/platform-email-templates.ts) + markup renderer [lib/email-markup.ts](../../../lib/email-markup.ts)). The transactional/system rows are **not yet** consumed at send time (that wiring is the remaining phase of the same effort); until wired they still send the hardcoded `lib/email.ts` builders.
 
 **Gotchas (read first):**
-1. **MIRROR, not runtime-consumed — the "looks authoritative but isn't" trap.** The planned `resolveEmailTemplate()`/`resolveEmail()` DB loader **does not exist** (grep across `lib/` = no matches; referenced only as comments in migration 083 and the DELETE route). The only readers are the 4 platform-admin routes + the editor page; the send path ([lib/email-sender.ts](../../../lib/email-sender.ts), [app/api/admin/email/send/route.ts](../../../app/api/admin/email/send/route.ts)) calls hardcoded HTML builders. Editing a row here changes the preview/test-send, **not what ships**.
-2. **`is_customised` is decorative** — set `true` by PUT, `false` by DELETE, shown as an admin badge + reset-button enable, but **no send-path branches on it**; its documented "false ⇒ use hardcoded" meaning is vacuously true (hardcoded is always used).
-3. **The template `key` namespace is DISJOINT from `email_sends`/`email_batches.email_key`.** These keys mirror `lib/email.ts` (`signup_verification`, `tournament_registration_*`, …); the send-log keys are `founding_*` / `spotlight_*` / `tournament_plus_*`. The two key spaces do not join.
-4. **Count is live truth, not the migration** — **24 rows live** in both envs (seed-only; no app INSERT path writes a new template, so a new key needs a migration). `updated_at`/`updated_by` are code-maintained (no trigger).
+1. **Two consumption modes — check the category.** `marketing` rows are the **single source** for send + preview (the hand-built `founding*Html`/`spotlight*Html` builders in `lib/email.ts` were DELETED). Non-marketing rows are still hardcoded-default at send time; an operator customisation only affects them once each send site is wired through `renderResolvedEmail()`. The planned `resolveEmailTemplate()` DB loader now **exists** as `renderResolvedEmail()` / `renderTemplateEmail()` in `lib/platform-email-templates.ts`.
+2. **`is_customised` is FUNCTIONAL for marketing** (both default seed and customisation render through the resolver, so send == preview == default). For transactional it is still effectively decorative **until** that key's send site is wired — then `true` ⇒ apply the stored override, `false` ⇒ hardcoded default.
+3. **`marketing` bodies are block-MARKUP, not plain text/HTML** — paragraphs, `**bold**`, `- bullets`, `::callout … ::end`, `::button/::link Label | {{url}}`, `::if token … ::else … ::end`. Rendered by `lib/email-markup.ts` (unit-tested). CTAs live inline in the body (cta_label/cta_url_pattern NULL); per-org values (orgName, counts, phrases) arrive as `{{tokens}}` filled by the send route.
+4. **The template `key` namespace overlaps `email_sends`/`email_batches.email_key` for marketing keys** (`founding_*` / `spotlight_*` now match a template row) but remains DISJOINT for the transactional keys (`signup_verification`, `tournament_registration_*`, …), which have no send-log rows.
+5. **Count is live truth, not the migration** — **34 rows live** after mig 179 (24 transactional/system + 10 marketing; seed-only, a new key needs a migration). `updated_at`/`updated_by` are code-maintained (no trigger).
 
 **Fields** (boilerplate `updated_at` omitted — code-maintained; no `id` [`key` is PK] / no `created_at`):
 
@@ -4875,22 +4876,25 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 **`body`** (text, NN) — editable body with `**bold**` + `{{var}}` tokens (preview/test only).
 
 <!-- dict:col:platform_email_templates.cta_label -->
-**`cta_label`** (text, nullable) — optional CTA button label (preview/test only; `''` coerced to null on PUT).
+**`cta_label`** (text, nullable) — optional CTA button label (`''` coerced to null on PUT). When set, the resolver appends it to the body as a `::button` at render time (`bodyWithCta`). NULL for `marketing` rows (their CTAs are inline `::button`/`::link` in the body).
 
 <!-- dict:col:platform_email_templates.cta_url_pattern -->
-**`cta_url_pattern`** (text, nullable) — seeded `{{var}}` URL pattern for the CTA (e.g. `{{scheduleUrl}}`). **Dead post-seed** — no PUT path updates it, no editor input renders it, not used at send time.
+**`cta_url_pattern`** (text, nullable) — seeded `{{var}}` URL pattern for the CTA (e.g. `{{scheduleUrl}}`). Consumed by the resolver's `bodyWithCta` (paired with `cta_label`); still not editable via the PUT path. NULL for `marketing` rows.
 
 <!-- dict:col:platform_email_templates.variables -->
-**`variables`** (jsonb, NN, default `[]`) — JSON array of `{{}}` token **names**; consumed only by the editor's var chips + the test-send placeholder fill ([test-send/route.ts:41](../../../app/api/platform-admin/email-templates/[key]/test-send/route.ts#L41)). Real sends interpolate via the hardcoded function params.
+**`variables`** (jsonb, NN, default `[]`) — JSON array of `{{}}` token **names**; drives the editor's var chips + the test-send placeholder fill. For `marketing` rows these tokens are also filled at **send** time with real per-org values (the send route's `buildVars`).
 
 <!-- dict:col:platform_email_templates.category -->
-**`category`** (text, NN, default `'system'`, **no CHECK**) — admin grouping bucket; observed domain `auth | billing | tournament | rep_teams | house_league | system`; unknown values fall through to raw display.
+**`category`** (text, NN, default `'system'`, **no CHECK**) — admin grouping bucket; observed domain `marketing | auth | billing | tournament | rep_teams | house_league | system`; `marketing` selects the markup-native send/preview path; unknown values fall through to raw display.
 
 <!-- dict:col:platform_email_templates.is_customised -->
-**`is_customised`** (bool, NN, default false) — `true` if an admin saved an override; PUT→true, DELETE→false. **Decorative** — drives only the admin badge + reset button; no send-path consumer.
+**`is_customised`** (bool, NN, default false) — `true` if an admin saved an override; PUT→true, DELETE→false. **Functional for `marketing`** (send + preview always render from the row, so this only toggles the badge/reset there). For transactional rows it gates the override **once that send site is wired** through `renderResolvedEmail()` (`true` ⇒ apply stored copy, `false` ⇒ hardcoded default); still decorative for keys not yet wired.
+
+<!-- dict:col:platform_email_templates.planned_send_date -->
+**`planned_send_date`** (date, nullable — **mig 180**, P2 of Editable Email Campaigns) — the operator-editable **planned send date** for a `marketing` campaign. A **planning reminder only** — it drives the Email Dashboard's "upcoming" / "past due" lists; **nothing auto-sends on it** (sends are still manual). NULL for the two event-triggered campaigns (`founding_welcome` = at signup, `founding_checkin` = ~day 60), whose timing is system-defined; also NULL for all non-marketing rows. Edited via `POST /api/admin/email/schedule` (which rejects the trigger keys). Seeded with the founding-season dates.
 
 <!-- dict:col:platform_email_templates.updated_by -->
-**`updated_by`** (text, nullable, no FK) — who last edited (`user.email ?? user.id`); free-text, not a FK.
+**`updated_by`** (text, nullable, no FK) — who last edited (`user.email ?? user.id`); free-text, not a FK. Also stamped by a planned-date edit.
 
 ### `email_batches`
 <!-- dict:table:email_batches -->
@@ -4983,7 +4987,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 - **`sendWebPush`** ([lib/web-push.ts:58](../../../lib/web-push.ts#L58)) — the shared single-subscription sender for **both** push tables; VAPID configured once at module load; 24h TTL; **no-ops when VAPID env is unset**; throws `WebPushError` statusCode 410 on expired endpoints (the cleanup signal).
 - **`notifyFansForGame(gameId, status)`** ([lib/fan-notify.ts:20](../../../lib/fan-notify.ts#L20)) — the sole reader/writer of `fan_push_subscriptions` for sending: early-returns unless `submitted`/`completed`, re-checks the `fan_score_alerts` plan gate, selects by `(tournament_id, team_id ∈ [home, away])`, dedupes by endpoint, refreshes `last_used_at`, deletes by endpoint on 410/404. Sole production caller = the scoring-service `onScored` hook ([lib/tournament-scoring-service.ts:167](../../../lib/tournament-scoring-service.ts#L167)).
 - **Email send pipeline** ([lib/email-sender.ts](../../../lib/email-sender.ts)) — `createEmailBatch` (header, status `'running'`, `started_at=now`) → per recipient `logSend` (INSERT, returns id) → Resend POST (with optional native `scheduled_at`) → `updateSend` (`sent`/`failed` + `resend_message_id`/`sent_at`) → `incrementBatchCounter` (non-atomic) → `finalizeBatch` (`complete`/`failed` + `completed_at`). `cancelScheduledEmail` cancels still-scheduled Resend messages on upgrade. The actual HTML/subjects come from the hardcoded `lib/email.ts` builders + the route `TEMPLATE_REGISTRY` — **not** from `platform_email_templates`.
-- **`resolveEmailTemplate()` / `resolveEmail()`** — referenced by migration 083 + a route comment as the planned DB-template loader, but **never built** (no code reads `platform_email_templates` at send time). Documented so a reader doesn't mistake the registry for the send-time source.
+- **`renderResolvedEmail()` / `renderTemplateEmail()`** ([lib/platform-email-templates.ts](../../../lib/platform-email-templates.ts)) — the DB-template loader the migration-083 comment referenced, now built. Reads `platform_email_templates` and renders via the `lib/email-markup.ts` block-markup renderer. Consumed at send time by the `marketing` campaigns today; the transactional send sites are wired incrementally.
 
 ---
 
