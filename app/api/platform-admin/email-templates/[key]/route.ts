@@ -1,5 +1,6 @@
 import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getMarketingEmailDefault } from '@/lib/marketing-email-defaults';
 import { withObservability } from '@/lib/observability';
 
 type Params = { params: Promise<{ key: string }> };
@@ -37,6 +38,18 @@ export const PUT = withObservability(async (req: Request, { params }: Params) =>
     return Response.json({ error: 'subject, heading, and body are required.' }, { status: 400 });
   }
 
+  // "Customised" means the saved copy actually DIFFERS from the built-in original. For a
+  // marketing campaign we can compare against its canonical default, so saving content
+  // identical to the default (e.g. right after a reset) correctly stays "Default" rather
+  // than flipping back to "Customised". Transactional templates have no markup default to
+  // compare here, so any save marks them customised (unchanged behavior).
+  const def = getMarketingEmailDefault(key);
+  const matchesDefault = !!def
+    && subject === def.subject.trim()
+    && heading === def.heading.trim()
+    && bodyText === def.body.trim()
+    && ctaLabel === null;
+
   const { data, error } = await supabaseAdmin
     .from('platform_email_templates')
     .update({
@@ -44,7 +57,7 @@ export const PUT = withObservability(async (req: Request, { params }: Params) =>
       heading,
       body: bodyText,
       cta_label: ctaLabel,
-      is_customised: true,
+      is_customised: !matchesDefault,
       updated_at: new Date().toISOString(),
       updated_by: user.email ?? user.id,
     })
@@ -63,16 +76,34 @@ export const DELETE = withObservability(async (_req: Request, { params }: Params
 
   const { key } = await params;
 
-  // Fetch the seeded defaults by temporarily clearing the customised flag and
-  // noting updated_by. We simply set is_customised=false; the app will then
-  // use the hardcoded lib/email.ts template at render time.
+  // Reset semantics:
+  //  • MARKETING campaigns render FROM this row, so "reset" must genuinely restore the
+  //    original copy — otherwise the operator's edited text would keep sending under a
+  //    "Default" badge. Restore subject/heading/body/variables from the canonical default.
+  //  • TRANSACTIONAL/system templates still send from the hardcoded lib/email.ts builders
+  //    (until each is wired), so clearing the customised flag is enough for them.
+  const marketingDefault = getMarketingEmailDefault(key);
+  const resetPatch = marketingDefault
+    ? {
+        subject: marketingDefault.subject,
+        heading: marketingDefault.heading,
+        body: marketingDefault.body,
+        cta_label: null,
+        cta_url_pattern: null,
+        variables: marketingDefault.variables,
+        is_customised: false,
+        updated_at: new Date().toISOString(),
+        updated_by: user.email ?? user.id,
+      }
+    : {
+        is_customised: false,
+        updated_at: new Date().toISOString(),
+        updated_by: user.email ?? user.id,
+      };
+
   const { data, error } = await supabaseAdmin
     .from('platform_email_templates')
-    .update({
-      is_customised: false,
-      updated_at: new Date().toISOString(),
-      updated_by: user.email ?? user.id,
-    })
+    .update(resetPatch)
     .eq('key', key)
     .select('*')
     .single();

@@ -7,46 +7,33 @@
  *
  * Body: { emailKey: string }
  *
- * Currently only founding_welcome has a compiled template.
- * Other email keys return 501 Not Implemented until their templates are built.
+ * Each campaign's content lives in platform_email_templates (category 'marketing',
+ * seeded by migration 179) and is rendered per recipient through the shared resolver —
+ * the same render used by the dashboard preview. A missing template row (migration not
+ * applied) returns 500 with a clear message.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendMarketingEmail, createEmailBatch, finalizeBatch } from '@/lib/email-sender';
-import {
-  foundingWelcomeHtml,
-  foundingCheckinHtml,
-  foundingRenewalHtml,
-  foundingFinalHtml,
-  spotlightClubHtml,
-  spotlightLeagueHtml,
-  spotlightCoachesOrgHtml,
-  spotlightCoachesCoachHtml,
-  spotlightClubLastHtml,
-  spotlightFullPictureHtml,
-} from '@/lib/email';
-import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
+import { resolvePlatformTemplate, renderTemplateEmail } from '@/lib/platform-email-templates';
+import type { EmailVars } from '@/lib/email-markup';
 import { withObservability } from '@/lib/observability';
 
 const FOUNDING_SEASON_EXPIRES = '2027-01-01T00:00:00.000Z';
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 
-// ── Email key → template config ───────────────────────────────────────────────
-// Add new entries here as templates are built in follow-up sessions.
-const TEMPLATE_REGISTRY: Record<string, { subject: string; built: boolean }> = {
-  founding_welcome: { subject: 'Your founding season starts now — Tournament Plus is free through Dec 31', built: true },
-  founding_checkin: { subject: 'How\'s your season going? Update from FieldLogicHQ', built: true },
-  founding_renewal: { subject: 'Your founding season ends December 31 — here\'s what happens next', built: true },
-  founding_final: { subject: '2 weeks left in your founding season', built: true },
-  spotlight_club: { subject: 'Before your September season starts — Club is free through December 31', built: true },
-  spotlight_league: { subject: 'What running a house league actually looks like on FieldLogicHQ', built: true },
-  spotlight_coaches_org: { subject: 'For the coaches on your teams — a workspace that\'s actually theirs', built: true },
-  spotlight_coaches_coach: { subject: 'For the coaches on your teams — a workspace that\'s actually theirs', built: true },
-  spotlight_club_last: { subject: 'Last reminder — Club is still free through December 31', built: true },
-  spotlight_full_picture: { subject: 'Where FieldLogicHQ is headed — a note from the founding season', built: true },
-};
+// ── Valid marketing campaign keys ─────────────────────────────────────────────
+// Content + subject for each of these now lives in the operator-editable
+// platform_email_templates registry (migration 179, category 'marketing') and is
+// rendered — for both send AND preview — through the shared markup resolver. Audience
+// routing for each key is handled in the POST handler below.
+const CAMPAIGN_KEYS = new Set<string>([
+  'founding_welcome', 'founding_checkin', 'founding_renewal', 'founding_final',
+  'spotlight_club', 'spotlight_league', 'spotlight_coaches_org', 'spotlight_coaches_coach',
+  'spotlight_club_last', 'spotlight_full_picture',
+]);
 
 // ── Audience fetchers ─────────────────────────────────────────────────────────
 
@@ -215,6 +202,91 @@ async function getCoachRecipients(): Promise<
   }>;
 }
 
+// ── Per-org template variables ────────────────────────────────────────────────
+// Build the values filled into a campaign's markup tokens for one recipient. This
+// preserves the per-org enrichment the hand-built emails used (weeks active,
+// tournament/game counts) so the rendered content matches what shipped before —
+// only now the words around these values are edited from the console.
+async function buildVars(
+  emailKey: string,
+  r: { orgId: string; orgName: string; ownerName: string | null },
+): Promise<EmailVars> {
+  const firstName = r.ownerName ?? 'there';
+  const setupUrl = `${SITE_URL}/${r.orgId}/admin/tournaments`;
+  const billingUrl = `${SITE_URL}/${r.orgId}/admin/org/billing`;
+
+  switch (emailKey) {
+    case 'founding_welcome':
+      return { firstName, orgName: r.orgName, setupUrl };
+
+    case 'founding_checkin': {
+      const [orgRes, tourneyRes] = await Promise.all([
+        supabaseAdmin.from('organizations').select('created_at').eq('id', r.orgId).single(),
+        supabaseAdmin.from('tournaments').select('id').eq('organization_id', r.orgId),
+      ]);
+      const createdAt = orgRes.data?.created_at ? new Date(orgRes.data.created_at as string) : new Date();
+      const weeksActive = Math.floor((Date.now() - createdAt.getTime()) / (7 * 24 * 60 * 60 * 1000));
+      const tournamentIds = (tourneyRes.data ?? []).map(t => t.id as string);
+      const tournamentCount = tournamentIds.length;
+      let gameCount = 0;
+      if (tournamentIds.length > 0) {
+        const { count } = await supabaseAdmin
+          .from('games')
+          .select('*', { count: 'exact', head: true })
+          .in('tournament_id', tournamentIds);
+        gameCount = count ?? 0;
+      }
+      return {
+        firstName, orgName: r.orgName, setupUrl,
+        weeksPhrase: `${weeksActive} week${weeksActive !== 1 ? 's' : ''}`,
+        hasActivity: tournamentCount > 0 ? '1' : '',
+        tournamentsPhrase: `${tournamentCount} tournament${tournamentCount !== 1 ? 's' : ''}`,
+        gamesPhrase: `${gameCount} game${gameCount !== 1 ? 's' : ''}`,
+        gameCount,
+      };
+    }
+
+    case 'founding_renewal': {
+      const [activeRes, allRes] = await Promise.all([
+        supabaseAdmin.from('tournaments').select('id').eq('organization_id', r.orgId).eq('is_active', true),
+        supabaseAdmin.from('tournaments').select('id').eq('organization_id', r.orgId),
+      ]);
+      const activeTournamentCount = activeRes.data?.length ?? 0;
+      const pastTournamentCount = (allRes.data?.length ?? 0) - activeTournamentCount;
+      return {
+        firstName, orgName: r.orgName, billingUrl,
+        planCompareUrl: `${SITE_URL}/pricing`,
+        hasHistory: (activeTournamentCount > 0 || pastTournamentCount > 0) ? '1' : '',
+        hasActive: activeTournamentCount > 0 ? '1' : '',
+        activePhrase: `${activeTournamentCount} active tournament${activeTournamentCount !== 1 ? 's' : ''}`,
+        hasPast: pastTournamentCount > 0 ? '1' : '',
+        pastPhrase: `${pastTournamentCount} past tournament${pastTournamentCount !== 1 ? 's' : ''}`,
+      };
+    }
+
+    case 'founding_final':
+      // Stripe not yet live — always the "add a payment method" branch (hasCard falsy).
+      return { firstName, hasCard: '', billingUrl };
+
+    case 'spotlight_club':
+    case 'spotlight_league':
+    case 'spotlight_club_last':
+      return { firstName, orgName: r.orgName, setupUrl: `${SITE_URL}/pricing` };
+
+    case 'spotlight_coaches_org':
+      return { firstName, coachShareUrl: `${SITE_URL}/for-coaches`, interestUrl: `${SITE_URL}/for-coaches` };
+
+    case 'spotlight_coaches_coach':
+      return { firstName, interestUrl: `${SITE_URL}/for-coaches` };
+
+    case 'spotlight_full_picture':
+      return { firstName, shareUrl: SITE_URL, billingUrl };
+
+    default:
+      return { firstName, orgName: r.orgName };
+  }
+}
+
 export const POST = withObservability(async (request: NextRequest) => {
   const auth = await requirePlatformAreaApi('email', 'write');
   if (auth.response) return auth.response;
@@ -227,16 +299,17 @@ export const POST = withObservability(async (request: NextRequest) => {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
-  if (!emailKey || !TEMPLATE_REGISTRY[emailKey]) {
+  if (!emailKey || !CAMPAIGN_KEYS.has(emailKey)) {
     return NextResponse.json({ error: `Unknown email key: ${emailKey}` }, { status: 400 });
   }
 
-  const templateConfig = TEMPLATE_REGISTRY[emailKey];
-
-  if (!templateConfig.built) {
+  // Load the campaign's editable content (subject + body markup). This is the single
+  // source for both send and preview; if it's missing the migration hasn't been applied.
+  const template = await resolvePlatformTemplate(emailKey);
+  if (!template) {
     return NextResponse.json(
-      { error: `Template for "${emailKey}" is not yet built. Build it in a follow-up session.` },
-      { status: 501 }
+      { error: `Campaign content for "${emailKey}" not found. Ensure migration 179 (marketing email templates) has been applied.` },
+      { status: 500 },
     );
   }
 
@@ -264,7 +337,7 @@ export const POST = withObservability(async (request: NextRequest) => {
 
   const batchId = await createEmailBatch({
     emailKey,
-    subject: templateConfig.subject,
+    subject: template.subject,
     triggeredBy: `platform_admin:${auth.user.email}`,
     recipientCount: recipients.length,
   });
@@ -276,122 +349,18 @@ export const POST = withObservability(async (request: NextRequest) => {
   let sent = 0, suppressed = 0, failed = 0;
 
   for (const recipient of recipients) {
-    let html: string;
-
-    if (emailKey === 'founding_welcome') {
-      const unsubscribeUrl = buildUnsubscribeUrl(recipient.orgId);
-      html = foundingWelcomeHtml({
-        orgName: recipient.orgName,
-        firstName: recipient.ownerName ?? undefined,
-        setupUrl: `${SITE_URL}/${recipient.orgId}/admin/tournaments`,
-        unsubscribeUrl,
-      });
-
-    } else if (emailKey === 'founding_checkin') {
-      // Per-org enrichment: weeks active, tournament count, game count
-      const [orgRes, tourneyRes] = await Promise.all([
-        supabaseAdmin.from('organizations').select('created_at').eq('id', recipient.orgId).single(),
-        supabaseAdmin.from('tournaments').select('id').eq('organization_id', recipient.orgId),
-      ]);
-      const createdAt = orgRes.data?.created_at ? new Date(orgRes.data.created_at as string) : new Date();
-      const weeksActive = Math.floor((Date.now() - createdAt.getTime()) / (7 * 24 * 60 * 60 * 1000));
-      const tournamentIds = (tourneyRes.data ?? []).map(t => t.id as string);
-      const tournamentCount = tournamentIds.length;
-      let gameCount = 0;
-      if (tournamentIds.length > 0) {
-        const { count } = await supabaseAdmin
-          .from('games')
-          .select('*', { count: 'exact', head: true })
-          .in('tournament_id', tournamentIds);
-        gameCount = count ?? 0;
-      }
-      html = foundingCheckinHtml({
-        orgName: recipient.orgName,
-        firstName: recipient.ownerName ?? undefined,
-        weeksActive,
-        tournamentCount,
-        gameCount,
-        setupUrl: `${SITE_URL}/${recipient.orgId}/admin/tournaments`,
-      });
-
-    } else if (emailKey === 'founding_renewal') {
-      const [activeRes, allRes] = await Promise.all([
-        supabaseAdmin.from('tournaments').select('id').eq('organization_id', recipient.orgId).eq('is_active', true),
-        supabaseAdmin.from('tournaments').select('id').eq('organization_id', recipient.orgId),
-      ]);
-      const activeTournamentCount = activeRes.data?.length ?? 0;
-      const pastTournamentCount = (allRes.data?.length ?? 0) - activeTournamentCount;
-      html = foundingRenewalHtml({
-        orgName: recipient.orgName,
-        firstName: recipient.ownerName ?? undefined,
-        activeTournamentCount,
-        pastTournamentCount,
-        billingUrl: `${SITE_URL}/${recipient.orgId}/admin/org/billing`,
-        planCompareUrl: `${SITE_URL}/pricing`,
-      });
-
-    } else if (emailKey === 'founding_final') {
-      html = foundingFinalHtml({
-        orgName: recipient.orgName,
-        firstName: recipient.ownerName ?? undefined,
-        hasPaymentMethod: false, // Stripe Phase G not yet live — always no-card branch
-        billingUrl: `${SITE_URL}/${recipient.orgId}/admin/org/billing`,
-      });
-
-    } else if (emailKey === 'spotlight_club') {
-      html = spotlightClubHtml({
-        orgName: recipient.orgName,
-        firstName: recipient.ownerName ?? undefined,
-        setupUrl: `${SITE_URL}/pricing`,
-      });
-
-    } else if (emailKey === 'spotlight_league') {
-      html = spotlightLeagueHtml({
-        orgName: recipient.orgName,
-        firstName: recipient.ownerName ?? undefined,
-        setupUrl: `${SITE_URL}/pricing`,
-      });
-
-    } else if (emailKey === 'spotlight_coaches_org') {
-      html = spotlightCoachesOrgHtml({
-        orgName: recipient.orgName,
-        firstName: recipient.ownerName ?? undefined,
-        coachShareUrl: `${SITE_URL}/for-coaches`,
-        interestUrl: `${SITE_URL}/for-coaches`,
-      });
-
-    } else if (emailKey === 'spotlight_coaches_coach') {
-      html = spotlightCoachesCoachHtml({
-        firstName: recipient.ownerName ?? undefined,
-        interestUrl: `${SITE_URL}/for-coaches`,
-      });
-
-    } else if (emailKey === 'spotlight_club_last') {
-      html = spotlightClubLastHtml({
-        orgName: recipient.orgName,
-        firstName: recipient.ownerName ?? undefined,
-        setupUrl: `${SITE_URL}/pricing`,
-      });
-
-    } else if (emailKey === 'spotlight_full_picture') {
-      html = spotlightFullPictureHtml({
-        firstName: recipient.ownerName ?? undefined,
-        shareUrl: SITE_URL,
-        billingUrl: `${SITE_URL}/${recipient.orgId}/admin/org/billing`,
-      });
-
-    } else {
-      // Safety net — should not reach here given built: true guards above
-      failed++;
-      continue;
-    }
+    // Fill the campaign's tokens with this org's values, then render subject + branded
+    // HTML through the shared resolver — the SAME render used by the preview. The
+    // unsubscribe footer is injected downstream by sendMarketingEmail (opt-out path).
+    const vars = await buildVars(emailKey, recipient);
+    const { subject, html } = renderTemplateEmail(template, vars);
 
     const result = await sendMarketingEmail({
       emailKey,
       orgId: recipient.orgId,
       toEmail: recipient.ownerEmail,
       toName: recipient.ownerName ?? undefined,
-      subject: templateConfig.subject,
+      subject,
       html,
       batchId,
       skipOptOutCheck: false, // Batch sends always check opt-out
