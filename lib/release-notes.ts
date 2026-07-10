@@ -71,6 +71,10 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
         category: 'improved',
         text: 'The dashboard guidance panel now collapses before your event starts too (not just after), and mobile text no longer gets cut off.',
       },
+      {
+        category: 'fixed',
+        text: 'Fixed a bug where the keyboard could hide earlier messages in your tournament chat on mobile — you can now scroll up to see the full conversation while typing.',
+      },
     ],
   },
   {
