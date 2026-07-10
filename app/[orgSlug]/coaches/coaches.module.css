@@ -652,34 +652,65 @@
 .wltInsightsLink { display: inline-block; margin-top: 0.55rem; color: var(--blueprint-blue); font-size: 0.78rem; font-weight: 600; text-decoration: none; }
 .wltInsightsLink:hover { text-decoration: underline; }
 
-/* ── Insights hub dashboard grid ───────────────────────────────────────────
-   Owner rule (2026-07-09): page scroll is for ONE long homogeneous list —
-   never for travelling between domains. Each Insights domain is a compact
-   side-by-side card (the Overview snapshot idiom); depth is on demand
-   INSIDE a card (expandable rows) or one tap deeper (link cards). */
-.insightsGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1rem; align-items: start; }
-.insightsCard {
-  background: var(--white-8);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm), var(--highlight-top);
-  padding: 1rem 1.1rem 1.1rem;
-  min-width: 0;
-}
-.insightsCardKicker {
-  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
-  color: var(--white-45); margin: 0 0 0.8rem;
-}
-.insightsLinkCard { display: block; text-decoration: none; color: inherit; transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.12s; }
-.insightsLinkCard:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
-  background: var(--white-10);
-  box-shadow: var(--glow-sm), var(--shadow-sm), var(--highlight-top);
-  transform: translateY(-1px);
-}
-.insightsLinkBody { display: flex; align-items: center; gap: 0.8rem; }
-.insightsCompareHead { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 0.35rem 0.6rem; margin-bottom: 0.9rem; }
-.insightsSubLabel { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--white-35); margin: 1.15rem 0 0.5rem; }
+/* ── Insights V3 — "Scoreboard + What stands out" (design log 2026-07-09) ──
+   Region 1: borderless scoreboard band (blocks omit without data, re-wrap).
+   Region 2: findings strip — the centerpiece (lime-tinted top border).
+   Region 3: question-titled doorway tiles → full report pages (never expand).
+   Season-over-season comparisons retired; every signal is within-season. */
+.insightsBand { display: flex; flex-wrap: wrap; gap: 0.9rem 0; border-top: 1px solid rgba(255,255,255,0.09); border-bottom: 1px solid rgba(255,255,255,0.09); padding: 0.9rem 0; margin-bottom: 1.2rem; }
+.insightsStat { flex: 1 1 auto; min-width: 118px; padding: 0 1.1rem; border-right: 1px solid rgba(255,255,255,0.07); min-height: 40px; }
+.insightsStat:last-child { border-right: 0; }
+.insightsStatLbl { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--white-40); margin: 0 0 0.3rem; }
+.insightsStatVal { font-family: var(--font-display); font-weight: 800; font-size: 1.65rem; line-height: 1; color: var(--white-90); font-variant-numeric: tabular-nums; margin: 0; }
+.insightsStatVal small { font-size: 0.95rem; color: var(--white-55); font-weight: 700; }
+.insightsStatVal[data-pos="true"] { color: var(--success); }
+.insightsStatVal[data-pos="false"] { color: var(--danger); }
+.insightsStatCap { font-size: 0.68rem; color: var(--white-45); margin: 0.3rem 0 0; }
+.insightsSegBar { display: block; height: 6px; max-width: 130px; border-radius: 3px; background: rgba(255,255,255,0.13); overflow: hidden; margin-top: 0.4rem; }
+.insightsSegBar i { display: block; height: 100%; background: var(--logic-lime); border-radius: 3px 0 0 3px; }
+.insightsCalm { color: var(--white-45); font-size: 0.85rem; padding: 0.9rem 0.1rem; border-top: 1px solid rgba(255,255,255,0.09); border-bottom: 1px solid rgba(255,255,255,0.09); margin-bottom: 1.2rem; }
+/* What stands out — the one lime-TINTED frame on the page (a highlight, not an action). */
+.insightsCallouts { border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25); border-top: 2px solid rgba(var(--logic-lime-rgb), 0.45); border-radius: var(--radius); background: var(--white-8); box-shadow: var(--shadow-sm), var(--highlight-top); padding: 0.95rem 1rem 0.55rem; margin-bottom: 1.25rem; }
+.insightsCo { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.5rem 0.4rem; border-radius: 10px; text-decoration: none; color: inherit; min-height: 40px; }
+.insightsCo:hover { background: rgba(255,255,255,0.05); }
+.insightsCoDot { flex: none; width: 9px; height: 9px; border-radius: 50%; margin-top: 0.42rem; }
+.insightsCoDot[data-tone="warn"] { background: var(--warning); box-shadow: 0 0 8px rgba(var(--warning-rgb), 0.45); }
+.insightsCoDot[data-tone="info"] { background: var(--blueprint-blue); }
+.insightsCoDot[data-tone="good"] { background: var(--success); }
+.insightsCoText { flex: 1; font-size: 0.92rem; color: var(--white-90); line-height: 1.45; }
+.insightsCoChip { flex: none; font-size: 0.68rem; font-weight: 600; color: var(--blueprint-blue); white-space: nowrap; margin-top: 0.3rem; }
+.insightsCoQuiet { color: var(--white-45); font-size: 0.85rem; padding: 0.35rem 0.4rem 0.6rem; margin: 0; }
+/* Question-titled doorway tiles. Sparse data = softened (visible, teaching);
+   a permission-gated tile is simply absent (never rendered). */
+.insightsDoors { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.85rem; }
+.insightsDoor { display: block; text-decoration: none; color: inherit; background: var(--white-8); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3); border-radius: var(--radius); box-shadow: var(--shadow-sm), var(--highlight-top); padding: 0.85rem 0.95rem; transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.12s; min-width: 0; }
+.insightsDoor:hover { border-color: rgba(var(--blueprint-blue-rgb), 0.6); background: var(--white-10); box-shadow: var(--glow-sm), var(--shadow-sm), var(--highlight-top); transform: translateY(-1px); }
+.insightsDoorQ { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-weight: 800; font-size: 0.95rem; color: var(--white-90); margin-bottom: 0.3rem; }
+.insightsDoorQ span { color: rgba(var(--blueprint-blue-rgb), 0.75); font-weight: 400; }
+.insightsDoorSum { font-size: 0.78rem; color: var(--white-55); }
+.insightsDoorSoft { opacity: 0.65; }
+.insightsDoorSoft .insightsDoorSum { font-style: italic; }
+/* Report pages — real tables, never accordions. */
+.insightsBasis { color: var(--white-45); font-size: 0.8rem; margin: -0.35rem 0 1rem; }
+.insightsTableWrap { overflow-x: auto; }
+.insightsTable { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.insightsTable th { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white-35); text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.12); white-space: nowrap; }
+.insightsTable td { padding: 0.55rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.06); color: var(--white-90); }
+.insightsNum { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.insightsFieldBar { display: inline-block; vertical-align: middle; height: 5px; width: 64px; background: rgba(255,255,255,0.12); border-radius: 3px; margin-left: 0.5rem; overflow: hidden; }
+.insightsFieldBar i { display: block; height: 100%; background: rgba(var(--blueprint-blue-rgb), 0.75); }
+.insightsFlagWarn { color: var(--warning); font-size: 0.75rem; font-weight: 700; }
+.insightsRecGood { color: var(--success); }
+.insightsQuietText { color: var(--white-45); font-size: 0.85rem; margin: 0; }
+.insightsOpsLink { display: inline-block; margin-top: 1rem; color: var(--blueprint-blue); font-size: 0.8rem; font-weight: 600; text-decoration: none; }
+.insightsOpsLink:hover { text-decoration: underline; }
+.mutedInline { color: var(--white-45); font-weight: 400; }
+.insightsSeasonStatLbl { font-size: 0.72rem; color: var(--white-35); }
+/* Overview safety-tier bridge line (the one finding that crosses dashboards). */
+.insightsBridge { display: flex; align-items: baseline; gap: 0.4rem; font-size: 0.82rem; color: var(--white-55); margin: 0.6rem 0 0; }
+.insightsBridgeIcon { color: var(--warning); flex-shrink: 0; }
+.insightsBridge a { color: var(--blueprint-blue); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.insightsBridge a:hover { text-decoration: underline; }
 /* Past seasons — one compact line per year, expandable for the detail stats. */
 .insightsSeasonRow { border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; margin-bottom: 0.4rem; background: rgba(255,255,255,0.03); }
 .insightsSeasonRow summary { list-style: none; display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.7rem; cursor: pointer; min-height: 40px; }
@@ -728,6 +759,8 @@
   /* Touch targets (2026-06-29 mobile conventions): tabs ≥40px, chips bumped to ≥36px. */
   .lineupTabs .segBtn { min-height: 40px; }
   .lineupFilterChip { min-height: 36px; padding: 0.3rem 0.72rem; }
+  /* Insights scoreboard band wraps to a 2-up grid of stat blocks on phones. */
+  .insightsStat { flex: 1 1 45%; border-right: 0; padding: 0.45rem 0.8rem; }
   .lastSeasonStats { font-size: 0.75rem; }
 }
 

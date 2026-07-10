@@ -116,6 +116,9 @@ export default function TeamOverviewPage({
   const [orgInvite, setOrgInvite] = useState<{ orgName: string } | null>(null);
   // Last-season preview tile (record + dues + expenses) — money-gated, links into Past Seasons.
   const [lastSeason, setLastSeason] = useState<{ name: string; record: string | null; duesCollected: number; totalExpenses: number } | null>(null);
+  // Safety-tier Insights bridge: the ONE finding category that shouldn't wait for a couch
+  // session (a pitcher over their arm-care cap) echoes as a single quiet line here.
+  const [armCareFlag, setArmCareFlag] = useState<{ name: string; overCapGames: number } | null>(null);
 
   const loadSetup = useCallback(async () => {
     setSetupLoading(true);
@@ -365,6 +368,24 @@ export default function TeamOverviewPage({
           duesCollected: y.accounting?.duesCollected ?? 0,
           totalExpenses: y.accounting?.totalExpenses ?? 0,
         });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [loading, orgSlug, teamId, assignments]);
+
+  // Safety bridge (design log 2026-07-09): surface an over-cap pitcher as one quiet line
+  // linking into Insights. Lineups-gated; fail-silent (Overview never blocks on analytics).
+  useEffect(() => {
+    if (loading) return;
+    const a = assignments.find(x => x.teamId === teamId);
+    if (!a || !a.capabilities.lineups) return; // never fetched ⇒ flag stays null
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-analytics`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(json => {
+        if (cancelled) return;
+        const over = (json?.analytics?.armCare ?? []).find((r: { overCapGames: number }) => r.overCapGames > 0);
+        setArmCareFlag(over ? { name: over.name, overCapGames: over.overCapGames } : null);
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -989,6 +1010,16 @@ export default function TeamOverviewPage({
       {/* Season record — moved UP to sit under the anchor (was stranded at page bottom).
           Self-hides until a finalized game exists (pre-season shows nothing). */}
       <SeasonRecordWidget events={seasonGames} teamId={teamId} insightsHref={`${base}/history`} />
+
+      {/* Safety-tier bridge from Insights — the only finding category that crosses over (CP-1
+          safe: a quiet blueprint link, never lime). */}
+      {armCareFlag && (
+        <p className={styles.insightsBridge}>
+          <span className={styles.insightsBridgeIcon} aria-hidden>⚠</span>
+          Worth a look: {armCareFlag.name} went over the pitching cap in {armCareFlag.overCapGames} game{armCareFlag.overCapGames === 1 ? '' : 's'}.{' '}
+          <Link href={`${base}/history/playing-time`}>Season insights →</Link>
+        </p>
+      )}
 
       {/* Your team at a glance — run-mode snapshot of real data (replaces the old
           quick-links grid, which just duplicated the sidebar). */}

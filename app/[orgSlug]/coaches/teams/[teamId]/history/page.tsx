@@ -1,158 +1,155 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Archive, TrendingUp, TrendingDown, Minus, BarChart3, CalendarCheck, DollarSign, ChevronDown, ChevronRight } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
-import { winPct, compareValues, formatWinPct, type TrendDirection } from '@/lib/season-compare';
+import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { isNeverPaidPlayer } from '@/lib/dues-status';
+import {
+  computeInsightFindings, ATTENDANCE_MIN_KNOWN, ATTENDANCE_FLAG_BELOW,
+  type InsightFinding, type InsightReport, type FindingsGameSummary,
+} from '@/lib/insight-findings';
 import styles from '../../../coaches.module.css';
-import type { RepTeamHistoryYear } from '@/lib/types';
+import type { RepTeamEvent } from '@/lib/types';
 import type { SeasonLineupAnalytics } from '@/lib/lineup-season-analytics';
 
-interface SeasonAccounting {
-  duesCollected: number;
-  duesOutstanding: number;
-  totalExpenses: number;
+// ─────────────────────────────────────────────────────────────────────────────
+// Insights V3 — "Scoreboard + What stands out" (design log 2026-07-09).
+// Three regions, one direction, nothing ever expands in place:
+//   1. Scoreboard band — the numbers a coach recites (blocks omit without data).
+//   2. "What stands out" — the findings engine reads the reports FOR the coach.
+//   3. Question-titled doorway tiles → full report pages (depth = navigation).
+// Season-over-season comparisons are RETIRED (owner 2026-07-09) — every signal
+// here is within-season. Gated sections vanish; sparse sections soften.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
+// Same categories + defaults + storage key as SeasonRecordWidget, so the band's
+// record can never disagree with the Overview's record glance.
+const WLT_DEFAULT: Record<string, boolean> = { league_game: true, tournament_game: true, scrimmage: false };
+const WLT_LABEL: Record<string, string> = { league_game: 'League', tournament_game: 'Tournament', scrimmage: 'Scrimmage' };
+
+interface AttendanceRow {
+  playerId: string;
+  playerFirstName: string;
+  playerLastName: string;
+  games: { attended: number; known: number };
+  practices: { attended: number; known: number };
+}
+interface DuesStats { outstandingTotal: number; overdueCount: number; neverPaidCount: number }
+interface HistorySummary { pastSeasons: number; duesCollected: number | null; duesOutstanding: number | null }
+
+function recStr(r: { w: number; l: number; t: number }) {
+  return `${r.w}-${r.l}${r.t ? `-${r.t}` : ''}`;
+}
+function tally(list: RepTeamEvent[]) {
+  return {
+    w: list.filter(e => e.result === 'win').length,
+    l: list.filter(e => e.result === 'loss').length,
+    t: list.filter(e => e.result === 'tie').length,
+  };
 }
 
-interface HistoryYear extends RepTeamHistoryYear {
-  accounting: SeasonAccounting | null;
-}
-
-interface CurrentSeason {
-  id: string;
-  name: string;
-  year: number;
-  status: string;
-  rosterCount: number;
-  wins: number;
-  losses: number;
-  ties: number;
-  tryoutTotal: number;
-  tryoutAccepted: number;
-  accounting: SeasonAccounting | null;
-}
-
-function fmt(n: number) {
-  return `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-function acceptanceRate(total: number, accepted: number): string {
-  if (!total) return '—';
-  return `${Math.round((accepted / total) * 100)}%`;
-}
-
-function recordText(r: { wins: number; losses: number; ties: number }): string | null {
-  return r.wins || r.losses || r.ties ? `${r.wins}W – ${r.losses}L – ${r.ties}T` : null;
-}
-
-// ── "This season vs last" comparison ──────────────────────────────────────────
-
-// One metric in the comparison panel: a headline value + how it moved vs last season.
-function TrendStat({
-  label, valueText, direction, deltaText, judged,
-}: {
-  label: string;
-  valueText: string;
-  direction: TrendDirection;
-  deltaText: string | null;
-  // 'good-up' → up is green / down is red; 'neutral' → arrow shown but never coloured good/bad.
-  judged: 'good-up' | 'neutral';
-}) {
-  const color =
-    direction === 'na' || direction === 'flat' || judged === 'neutral'
-      ? 'rgba(255,255,255,0.45)'
-      : direction === 'up'
-        ? '#4ade80'
-        : '#f87171';
-  const Icon = direction === 'up' ? TrendingUp : direction === 'down' ? TrendingDown : Minus;
-  return (
-    <div style={{ minWidth: 120 }}>
-      <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.4)', marginBottom: '0.2rem' }}>
-        {label}
-      </div>
-      <div style={{ fontWeight: 700, fontSize: '1.15rem', fontVariantNumeric: 'tabular-nums' }}>{valueText}</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.15rem', fontSize: '0.75rem', color }}>
-        {direction !== 'na' && <Icon size={13} aria-hidden />}
-        <span>{direction === 'na' ? '— not enough yet to compare' : deltaText}</span>
-      </div>
-    </div>
-  );
-}
-
-// The one Review-rubric destination (design log 2026-07-08 "Insights" consolidation), laid out as a
-// DASHBOARD GRID (owner rule 2026-07-09): each domain is one compact side-by-side card — results,
-// playing time, attendance, money — all visible in a desktop viewport. Page scroll is never how you
-// travel between domains; depth is on demand INSIDE a card (expandable rows) or one tap deeper.
-// Sections whose capability fails never render; money analytics stay in the Money hub.
-export default function CoachesHistoryPage({
+export default function CoachesInsightsPage({
   params: paramsPromise,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
-  const params = use(paramsPromise);
-  const { orgSlug, teamId } = params;
+  const { orgSlug, teamId } = use(paramsPromise);
   const { assignments, loading: ctxLoading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+  const sportPack = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT);
+  const periodsWord = sportPack.periodLabelPlural.toLowerCase();
+  const scoreUnitWord = sportPack.score.unit.toLowerCase();
 
-  const [history, setHistory] = useState<HistoryYear[]>([]);
-  const [current, setCurrent] = useState<CurrentSeason | null>(null);
-  const [canViewMoney, setCanViewMoney] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  // Playing time & lineups card (fails closed until the assignment resolves; the server enforces
-  // the lineups capability on the analytics route regardless).
   const canLineups = !!assignment?.capabilities.lineups;
   const canRoster = !!assignment && assignment.capabilities.roster !== 'off';
-  const [analytics, setAnalytics] = useState<SeasonLineupAnalytics | null>(null);
-  const [analyticsLoading, setAnalyticsLoading] = useState(true);
-  const [analyticsError, setAnalyticsError] = useState('');
-  const [analyticsDenied, setAnalyticsDenied] = useState(false);
+  const canMoney = !!assignment && assignment.capabilities.money !== 'off';
 
-  const load = useCallback(async () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [events, setEvents] = useState<RepTeamEvent[]>([]);
+  const [historySummary, setHistorySummary] = useState<HistorySummary>({ pastSeasons: 0, duesCollected: null, duesOutstanding: null });
+  const [analytics, setAnalytics] = useState<SeasonLineupAnalytics | null>(null);
+  const [attendanceRows, setAttendanceRows] = useState<AttendanceRow[] | null>(null);
+  const [duesStats, setDuesStats] = useState<DuesStats | null>(null);
+  // A capability-permitted fetch that genuinely FAILED (network/500) must not read as
+  // "no data yet" — its tile shows a quiet error instead of teach copy (honesty).
+  const [srcErrors, setSrcErrors] = useState({ lineups: false, attendance: false, dues: false });
+  // Guards the stale-team flash: the body renders as loading until data belongs to THIS team.
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  // Record scope mirrors the Overview widget's remembered per-team choice.
+  const [included, setIncluded] = useState<Record<string, boolean>>(WLT_DEFAULT);
+
+  // ONE coordinated load → ONE paint (no staggered pop-in). Each source degrades
+  // independently: a failed/denied fetch just means its blocks/tiles don't render.
+  const load = useCallback(async (caps: { lineups: boolean; roster: boolean; money: boolean }) => {
     setLoading(true);
     setError('');
+    // Record scope: the Overview widget's remembered per-team choice (read here, inside the
+    // async load, so the band and the Overview glance can never disagree).
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/history`);
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
-      const data = await res.json();
-      setHistory(data.history ?? []);
-      setCurrent(data.current ?? null);
-      setCanViewMoney(!!data.canViewMoney);
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to load history.');
-    } finally {
-      setLoading(false);
+      const raw = localStorage.getItem(`flhq.coachWlt.${teamId}`);
+      if (raw) setIncluded({ ...WLT_DEFAULT, ...JSON.parse(raw) });
+    } catch { /* ignore unreadable storage */ }
+    const api = `/api/coaches/${orgSlug}/teams/${teamId}`;
+    const get = async (path: string) => {
+      const res = await fetch(`${api}${path}`);
+      if (!res.ok) throw new Error(String(res.status));
+      return res.json();
+    };
+    const [ev, hi, an, at, du] = await Promise.allSettled([
+      get('/events'),
+      get('/history'),
+      caps.lineups ? get('/lineup-analytics') : Promise.reject(new Error('skipped')),
+      caps.roster ? get('/attendance') : Promise.reject(new Error('skipped')),
+      caps.money ? get('/dues') : Promise.reject(new Error('skipped')),
+    ]);
+    if (ev.status === 'fulfilled') setEvents(ev.value.events ?? []);
+    if (hi.status === 'fulfilled') {
+      const acct = hi.value.current?.accounting ?? null;
+      setHistorySummary({
+        pastSeasons: (hi.value.history ?? []).length,
+        duesCollected: acct ? acct.duesCollected : null,
+        duesOutstanding: acct ? acct.duesOutstanding : null,
+      });
     }
+    if (an.status === 'fulfilled') setAnalytics(an.value.analytics ?? null);
+    if (at.status === 'fulfilled') setAttendanceRows(at.value.players ?? []);
+    if (du.status === 'fulfilled') {
+      const players: { outstanding?: number; installments?: { paidAt: string | null; dueDate: string }[] | null }[] = du.value.players ?? [];
+      // Midnight truncation matches the Overview dues tile — an installment due TODAY is not
+      // overdue yet, and the two surfaces must never disagree on the same day.
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      setDuesStats({
+        outstandingTotal: Math.round(players.reduce((s, p) => s + (p.outstanding ?? 0), 0)),
+        overdueCount: players.reduce((n, p) => n + (p.installments ?? []).filter(i => !i.paidAt && new Date(`${i.dueDate}T00:00:00`) < today).length, 0),
+        neverPaidCount: players.filter(isNeverPaidPlayer).length,
+      });
+    }
+    // A permitted-but-failed source is an ERROR state, not an honest empty (a 'skipped'
+    // rejection is the capability gate, not a failure).
+    const realFailure = (r: PromiseSettledResult<unknown>, wanted: boolean) =>
+      wanted && r.status === 'rejected' && (r.reason as Error | undefined)?.message !== 'skipped';
+    setSrcErrors({
+      lineups: realFailure(an, caps.lineups),
+      attendance: realFailure(at, caps.roster),
+      dues: realFailure(du, caps.money),
+    });
+    // Only a total blackout is a page error — partial data renders what it can.
+    if (ev.status === 'rejected' && hi.status === 'rejected') {
+      setError('Insights couldn’t be loaded — refresh to try again.');
+    }
+    setLoadedFor(teamId);
+    setLoading(false);
   }, [orgSlug, teamId]);
 
-  const loadAnalytics = useCallback(async () => {
-    setAnalyticsLoading(true);
-    setAnalyticsError('');
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-analytics`);
-      if (res.status === 403) {
-        // Stale client capabilities — the server says no lineup visibility; hide the card
-        // rather than showing an error inside a card this coach shouldn't see.
-        setAnalyticsDenied(true);
-        return;
-      }
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setAnalytics(data.analytics ?? null);
-    } catch {
-      setAnalyticsError('Season analytics couldn’t be loaded — refresh to try again.');
-    } finally {
-      setAnalyticsLoading(false);
-    }
-  }, [orgSlug, teamId]);
-
-  useEffect(() => { load(); }, [load]);
   useEffect(() => {
-    if (ctxLoading || !canLineups) return;
-    void Promise.resolve().then(loadAnalytics);
-  }, [ctxLoading, canLineups, loadAnalytics]);
+    if (ctxLoading || !assignment) return;
+    void Promise.resolve().then(() => load({ lineups: canLineups, roster: canRoster, money: canMoney }));
+  }, [ctxLoading, assignment, canLineups, canRoster, canMoney, load]);
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
   if (!assignment) {
@@ -164,9 +161,91 @@ export default function CoachesHistoryPage({
     );
   }
 
-  // The comparison pairs the current season against the most recent past season (history is
-  // returned newest-first). Only shown when there IS a current season.
-  const previous = history.length ? history[0] : null;
+  // ── Scoreboard math (within-season only; unscored games never count) ──
+  const finalized = events
+    .filter(e => GAME_EVENT_TYPES.includes(e.eventType) && e.status !== 'cancelled' && e.result)
+    .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
+  const scoped = finalized.filter(e => included[e.eventType]);
+  const record = tally(scoped);
+  const scopedGames = record.w + record.l + record.t;
+  const activeLabels = GAME_EVENT_TYPES.filter(t => included[t]).map(t => WLT_LABEL[t]);
+  const scopeCaption = activeLabels.length === 0
+    ? 'No categories selected'
+    : activeLabels.length === GAME_EVENT_TYPES.length ? 'All games' : activeLabels.join(' + ');
+
+  const last5 = scoped.slice(0, 5).reverse(); // oldest → newest
+  let streakCount = 0;
+  const streakType = (scoped[0]?.result ?? null) as 'win' | 'loss' | 'tie' | null;
+  for (const g of scoped) { if (g.result === streakType) streakCount += 1; else break; }
+  const streakLabel = streakType && streakCount > 0
+    ? `${streakType === 'win' ? 'Won' : streakType === 'loss' ? 'Lost' : 'Tied'} ${streakCount}${streakCount > 1 ? ' straight' : ''}`
+    : '';
+
+  const scoredGames = scoped.filter(e => e.teamScore != null && e.opponentScore != null);
+  const scoredFor = scoredGames.reduce((s, e) => s + (e.teamScore ?? 0), 0);
+  const scoredAgainst = scoredGames.reduce((s, e) => s + (e.opponentScore ?? 0), 0);
+  const diff = scoredFor - scoredAgainst;
+
+  const close = tally(scoredGames.filter(e => Math.abs((e.teamScore ?? 0) - (e.opponentScore ?? 0)) === 1));
+  const closeTotal = close.w + close.l + close.t;
+
+  const knownSide = scoped.filter(e => e.homeAway === 'home' || e.homeAway === 'away');
+  const homeGames = knownSide.filter(e => e.homeAway === 'home');
+  const homeRec = tally(homeGames);
+  const gamesSummary: FindingsGameSummary = {
+    wins: record.w, losses: record.l, ties: record.t,
+    streakType, streakCount,
+    home: knownSide.length > 0 ? { wins: homeRec.w, losses: homeRec.l, ties: homeRec.t, games: homeGames.length } : null,
+    awayLosses: knownSide.filter(e => e.homeAway === 'away' && e.result === 'loss').length,
+  };
+
+  // ── Attendance rollup (known excludes no-reply upstream; 0/0 never judged; the team %
+  // needs the same minimum sample the findings engine demands — one session isn't a rate) ──
+  const attTotals = (attendanceRows ?? []).reduce(
+    (acc, r) => ({
+      attended: acc.attended + r.games.attended + r.practices.attended,
+      known: acc.known + r.games.known + r.practices.known,
+    }),
+    { attended: 0, known: 0 },
+  );
+  const attendancePct = attTotals.known >= ATTENDANCE_MIN_KNOWN ? Math.round((attTotals.attended / attTotals.known) * 100) : null;
+  // Same 60% bar as the findings engine (shared constant) so the tile and the strip agree.
+  const attendanceBelow = (attendanceRows ?? [])
+    .map(r => ({ known: r.games.known + r.practices.known, attended: r.games.attended + r.practices.attended }))
+    .filter(r => r.known >= ATTENDANCE_MIN_KNOWN && r.attended / r.known < ATTENDANCE_FLAG_BELOW).length;
+  const attendanceBarPct = Math.round(ATTENDANCE_FLAG_BELOW * 100);
+
+  // ── Dues headline (server-computed season totals; money-gated upstream) ──
+  const duesDenom = (historySummary.duesCollected ?? 0) + (historySummary.duesOutstanding ?? 0);
+  const duesPct = historySummary.duesCollected != null && duesDenom > 0
+    ? Math.round((historySummary.duesCollected / duesDenom) * 100)
+    : null;
+  const fmtMoney = (n: number) => `$${Math.round(n).toLocaleString('en-CA')}`;
+
+  // ── The findings ──
+  const findings: InsightFinding[] = computeInsightFindings({
+    vocab: { periodsWord, scoreUnitWord },
+    analytics,
+    games: scopedGames > 0 ? gamesSummary : null,
+    attendance: attendanceRows?.map(r => ({
+      name: `${r.playerFirstName} ${r.playerLastName}`.trim(),
+      attended: r.games.attended + r.practices.attended,
+      known: r.games.known + r.practices.known,
+    })) ?? null,
+    dues: duesStats,
+  });
+  const REPORT_HREF: Record<InsightReport, string> = {
+    'playing-time': `${base}/history/playing-time`,
+    results: `${base}/history/results`,
+    attendance: `${base}/attendance`,
+    money: `${base}/accounting`,
+  };
+  const REPORT_CHIP: Record<InsightReport, string> = {
+    'playing-time': 'Playing time', results: 'Results', attendance: 'Attendance', money: 'Money',
+  };
+
+  const overCapCount = analytics ? analytics.armCare.filter(r => r.overCapGames > 0).length : 0;
+  const hasBand = scopedGames > 0 || last5.length > 0 || scoredGames.length > 0 || attendancePct != null || duesPct != null;
 
   return (
     <div className={styles.page}>
@@ -175,291 +254,143 @@ export default function CoachesHistoryPage({
           <div className={styles.headerIcon}><BarChart3 size={22} /></div>
           <div>
             <h1 className={styles.pageTitle}>Insights</h1>
-            <p className={styles.pageSub}>{assignment.teamName} — results, playing time, attendance &amp; past seasons</p>
+            <p className={styles.pageSub}>{assignment.teamName} — how your season is going</p>
           </div>
         </div>
       </div>
 
-      {loading ? (
+      {loading || loadedFor !== teamId ? (
         <div className={styles.loadingState}>Loading insights…</div>
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : (
-        <div className={styles.insightsGrid}>
-          {/* ── Results & records ── */}
-          <section className={styles.insightsCard} aria-labelledby="insights-results">
-            <p className={styles.insightsCardKicker} id="insights-results">Results &amp; records</p>
-
-            {current && (
-              <>
-                <div className={styles.insightsCompareHead}>
-                  <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>This season vs last</div>
-                  <div style={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.4)' }}>
-                    {current.name} (in progress)
-                    {previous && <span> · vs {previous.name}</span>}
-                  </div>
+        <>
+          {/* ── 1 · Season scoreboard band ── */}
+          {hasBand ? (
+            <div className={styles.insightsBand}>
+              {scopedGames > 0 && (
+                <div className={styles.insightsStat}>
+                  <p className={styles.insightsStatLbl}>Record</p>
+                  <p className={styles.insightsStatVal}>{recStr(record)}</p>
+                  <p className={styles.insightsStatCap}>{scopeCaption}</p>
                 </div>
-
-                {!previous ? (
-                  <p className={styles.muted} style={{ fontSize: '0.85rem', margin: 0 }}>
-                    This is your first season — once a season wraps, next year&apos;s Insights will show how you&apos;re trending.
-                  </p>
-                ) : (
-                  <div style={{ display: 'flex', gap: '1.25rem 1.75rem', flexWrap: 'wrap' }}>
-                    {(() => {
-                      const curPct = winPct(current);
-                      const prevPct = winPct(previous);
-                      const t = compareValues(curPct, prevPct);
-                      const deltaPts = t.delta == null ? null : `${t.delta >= 0 ? '+' : ''}${Math.round(t.delta * 100)} pts vs last`;
-                      return (
-                        <TrendStat
-                          label="Winning %"
-                          valueText={`${formatWinPct(curPct)}${recordText(current) ? ` · ${recordText(current)}` : ''}`}
-                          direction={t.direction}
-                          deltaText={deltaPts}
-                          judged="good-up"
-                        />
-                      );
-                    })()}
-
-                    {(() => {
-                      const t = compareValues(current.rosterCount, previous.rosterCount);
-                      return (
-                        <TrendStat
-                          label="Roster size"
-                          valueText={`${current.rosterCount}`}
-                          direction={t.direction}
-                          deltaText={t.delta == null ? null : `${t.delta >= 0 ? '+' : ''}${t.delta} vs last`}
-                          judged="good-up"
-                        />
-                      );
-                    })()}
-
-                    {canViewMoney && current.accounting && previous.accounting && (() => {
-                      const t = compareValues(current.accounting!.duesCollected, previous.accounting!.duesCollected);
-                      return (
-                        <TrendStat
-                          label="Dues collected"
-                          valueText={fmt(current.accounting!.duesCollected)}
-                          direction={t.direction}
-                          deltaText={t.delta == null ? null : `${t.delta >= 0 ? '+' : '−'}${fmt(t.delta)} vs last`}
-                          judged="good-up"
-                        />
-                      );
-                    })()}
-
-                    {canViewMoney && current.accounting && previous.accounting && (() => {
-                      const t = compareValues(current.accounting!.totalExpenses, previous.accounting!.totalExpenses);
-                      return (
-                        <TrendStat
-                          label="Expenses"
-                          valueText={fmt(current.accounting!.totalExpenses)}
-                          direction={t.direction}
-                          deltaText={t.delta == null ? null : `${t.delta >= 0 ? '+' : '−'}${fmt(t.delta)} vs last`}
-                          judged="neutral"
-                        />
-                      );
-                    })()}
-                  </div>
-                )}
-              </>
-            )}
-
-            <p className={styles.insightsSubLabel}>Past seasons</p>
-            {history.length === 0 ? (
-              <p className={styles.muted} style={{ fontSize: '0.82rem', margin: 0 }}>
-                <Archive size={14} style={{ verticalAlign: '-2px', marginRight: '0.35rem', opacity: 0.5 }} aria-hidden />
-                None yet — completed and archived seasons will appear here.
-              </p>
-            ) : (
-              history.map(y => {
-                const record = recordText(y);
-                const acct = y.accounting;
-                return (
-                  <details key={y.id} className={styles.insightsSeasonRow}>
-                    <summary>
-                      <span className={styles.insightsSeasonName}>{y.name}</span>
-                      <span className={styles.insightsSeasonMeta}>{record ?? '—'}</span>
-                      <span
-                        className={styles.insightsSeasonChip}
-                        style={{
-                          background: y.status === 'archived' ? 'rgba(255,255,255,0.06)' : 'rgba(74,222,128,0.1)',
-                          color: y.status === 'archived' ? 'rgba(255,255,255,0.35)' : '#4ade80',
-                        }}
-                      >
-                        {y.status === 'archived' ? 'Archived' : 'Completed'}
+              )}
+              {last5.length > 0 && (
+                <div className={styles.insightsStat}>
+                  <p className={styles.insightsStatLbl}>Form</p>
+                  <span className={styles.wltFormPips} aria-label="Recent form, oldest to newest">
+                    {last5.map((g, i) => (
+                      <span key={i} className={styles.wltPip} data-r={g.result ?? undefined}>
+                        {g.result === 'win' ? 'W' : g.result === 'loss' ? 'L' : 'T'}
                       </span>
-                      <ChevronDown size={14} className={styles.insightsSeasonCaret} aria-hidden />
-                    </summary>
-                    <div className={styles.insightsSeasonBody}>
-                      <div>
-                        <div style={{ fontWeight: 600 }}>{y.rosterCount}</div>
-                        <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)' }}>Players</div>
-                      </div>
-                      {y.tryoutTotal > 0 && (
-                        <div>
-                          <div style={{ fontWeight: 600 }}>{acceptanceRate(y.tryoutTotal, y.tryoutAccepted)}</div>
-                          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)' }}>Tryout acceptance</div>
-                        </div>
-                      )}
-                      {acct && (
-                        <>
-                          <div>
-                            <div style={{ fontWeight: 600, color: '#4ade80' }}>{fmt(acct.duesCollected)}</div>
-                            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)' }}>Dues collected</div>
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 600, color: acct.duesOutstanding > 0 ? '#f87171' : 'rgba(255,255,255,0.5)' }}>
-                              {fmt(acct.duesOutstanding)}
-                            </div>
-                            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)' }}>Outstanding</div>
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 600 }}>{fmt(acct.totalExpenses)}</div>
-                            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)' }}>Expenses</div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </details>
-                );
-              })
+                    ))}
+                  </span>
+                  {streakLabel && <p className={styles.insightsStatCap}>{streakLabel}</p>}
+                </div>
+              )}
+              {scoredGames.length > 0 && (
+                <div className={styles.insightsStat}>
+                  <p className={styles.insightsStatLbl}>{sportPack.score.diff}</p>
+                  <p className={styles.insightsStatVal} data-pos={diff >= 0 ? 'true' : 'false'}>{diff >= 0 ? `+${diff}` : diff}</p>
+                  <span className={styles.insightsSegBar} aria-hidden><i style={{ width: `${Math.round((scoredFor / Math.max(1, scoredFor + scoredAgainst)) * 100)}%` }} /></span>
+                  <p className={styles.insightsStatCap}>{scoredFor} scored · {scoredAgainst} allowed</p>
+                </div>
+              )}
+              {closeTotal > 0 && (
+                <div className={styles.insightsStat}>
+                  <p className={styles.insightsStatLbl}>Close games</p>
+                  <p className={styles.insightsStatVal}>{recStr(close)}</p>
+                  <p className={styles.insightsStatCap}>in one-{scoreUnitWord} games</p>
+                </div>
+              )}
+              {attendancePct != null && (
+                <div className={styles.insightsStat}>
+                  <p className={styles.insightsStatLbl}>Attendance</p>
+                  <p className={styles.insightsStatVal}>{attendancePct}<small>%</small></p>
+                  <p className={styles.insightsStatCap}>games + practices</p>
+                </div>
+              )}
+              {duesPct != null && (
+                <div className={styles.insightsStat}>
+                  <p className={styles.insightsStatLbl}>Dues</p>
+                  <p className={styles.insightsStatVal}>{duesPct}<small>%</small></p>
+                  <span className={styles.insightsSegBar} aria-hidden><i style={{ width: `${duesPct}%` }} /></span>
+                  <p className={styles.insightsStatCap}>{fmtMoney(historySummary.duesCollected ?? 0)} of {fmtMoney(duesDenom)} collected</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className={styles.insightsCalm}>Play a few games and your season scoreboard shows up here — record, form, {scoreUnitWord} difference and more.</p>
+          )}
+
+          {/* ── 2 · What stands out ── */}
+          <section className={styles.insightsCallouts} aria-labelledby="insights-standout">
+            <p className={styles.sectionKicker} id="insights-standout" style={{ margin: '0 0 0.6rem' }}>What stands out</p>
+            {findings.length === 0 ? (
+              <p className={styles.insightsCoQuiet}>Nothing stands out yet — as you log games, lineups and attendance, this is where we&apos;ll flag what&apos;s worth knowing.</p>
+            ) : (
+              findings.map((f, i) => (
+                <Link key={i} href={REPORT_HREF[f.report]} className={styles.insightsCo}>
+                  <span className={styles.insightsCoDot} data-tone={f.tone} aria-hidden />
+                  <span className={styles.insightsCoText}>{f.text}</span>
+                  <span className={styles.insightsCoChip}>{REPORT_CHIP[f.report]} →</span>
+                </Link>
+              ))
             )}
           </section>
 
-          {/* ── Playing time & lineups (moved from the Lineups page, 2026-07-08) ── */}
-          {canLineups && !analyticsDenied && (
-            <section className={styles.insightsCard} aria-labelledby="insights-lineups">
-              <p className={styles.insightsCardKicker} id="insights-lineups">Playing time &amp; lineups</p>
-              {analyticsLoading ? (
-                <div className={styles.loadingState}>Loading analytics…</div>
-              ) : analyticsError ? (
-                <p className={styles.errorText}>{analyticsError}</p>
-              ) : !analytics || analytics.gamesWithLineup === 0 ? (
-                <p className={styles.muted} style={{ fontSize: '0.82rem', margin: 0 }}>
-                  <BarChart3 size={14} style={{ verticalAlign: '-2px', marginRight: '0.35rem', opacity: 0.5 }} aria-hidden />
-                  No season trends yet — save a lineup for a few games and your fair-play, position, arm-care and lineup-record trends will show up here.
-                </p>
-              ) : (
-                <>
-                  <p className={styles.lineupAnalyticsBasis}>Based on the {analytics.gamesWithLineup} game{analytics.gamesWithLineup === 1 ? '' : 's'} you&apos;ve saved a lineup for.</p>
-
-                  <details className={styles.lineupAnalyticsCard}>
-                    <summary className={styles.lineupAnalyticsSummary}>Fair playing time <ChevronDown size={16} className={styles.lineupAnalyticsCaret} aria-hidden /></summary>
-                    <div className={styles.lineupAnalyticsBody}>
-                      {analytics.fairPlay.map(r => {
-                        const total = r.fieldInnings + r.benchInnings;
-                        const pct = total > 0 ? Math.round((r.fieldInnings / total) * 100) : 0;
-                        return (
-                          <div key={r.playerId} className={styles.lineupAnalyticsRow}>
-                            <span className={styles.lineupAnalyticsName}>{r.name}</span>
-                            <span className={styles.lineupAnalyticsBar}><i style={{ width: `${pct}%` }} /></span>
-                            <span className={styles.lineupAnalyticsVal}>{r.fieldInnings} on · {r.benchInnings} bench</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </details>
-
-                  <details className={styles.lineupAnalyticsCard}>
-                    <summary className={styles.lineupAnalyticsSummary}>Bench balance <ChevronDown size={16} className={styles.lineupAnalyticsCaret} aria-hidden /></summary>
-                    <div className={styles.lineupAnalyticsBody}>
-                      {analytics.benchBalance.map(r => (
-                        <div key={r.playerId} className={styles.lineupAnalyticsRow}>
-                          <span className={styles.lineupAnalyticsName}>{r.name}</span>
-                          <span className={styles.lineupAnalyticsVal}>
-                            {r.benchInnings} bench inning{r.benchInnings === 1 ? '' : 's'}
-                            {r.backToBackGames > 0 && <em className={styles.lineupAnalyticsFlag}> · {r.backToBackGames} back-to-back</em>}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-
-                  <details className={styles.lineupAnalyticsCard}>
-                    <summary className={styles.lineupAnalyticsSummary}>Position variety <ChevronDown size={16} className={styles.lineupAnalyticsCaret} aria-hidden /></summary>
-                    <div className={styles.lineupAnalyticsBody}>
-                      {analytics.positionVariety.map(r => (
-                        <div key={r.playerId} className={styles.lineupAnalyticsRow}>
-                          <span className={styles.lineupAnalyticsName}>{r.name}</span>
-                          <span className={styles.lineupAnalyticsVal}>
-                            <strong>{r.count}</strong> · {r.positions.length ? r.positions.join(', ') : '—'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-
-                  {analytics.armCare.length > 0 && (
-                    <details className={styles.lineupAnalyticsCard}>
-                      <summary className={styles.lineupAnalyticsSummary}>Arm-care / pitching load <ChevronDown size={16} className={styles.lineupAnalyticsCaret} aria-hidden /></summary>
-                      <div className={styles.lineupAnalyticsBody}>
-                        {analytics.armCare.map(r => (
-                          <div key={r.playerId} className={styles.lineupAnalyticsRow}>
-                            <span className={styles.lineupAnalyticsName}>{r.name}</span>
-                            <span className={styles.lineupAnalyticsVal}>
-                              {r.inningsPitched} IP · {r.gamesPitched} game{r.gamesPitched === 1 ? '' : 's'}
-                              {r.perGameCap != null && <> · cap {r.perGameCap}/g</>}
-                              {r.overCapGames > 0 && <em className={styles.lineupAnalyticsFlag}> · ⚠ {r.overCapGames} over cap</em>}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </details>
-                  )}
-
-                  <details className={styles.lineupAnalyticsCard}>
-                    <summary className={styles.lineupAnalyticsSummary}>Records by reused lineup <ChevronDown size={16} className={styles.lineupAnalyticsCaret} aria-hidden /></summary>
-                    <div className={styles.lineupAnalyticsBody}>
-                      {analytics.reusedLineups.length === 0 ? (
-                        <p className={styles.lineupAnalyticsEmpty}>No batting order has been reused across multiple games yet.</p>
-                      ) : analytics.reusedLineups.map((r, i) => (
-                        <div key={i} className={styles.lineupAnalyticsRow}>
-                          <span className={styles.lineupAnalyticsName}>{r.label}</span>
-                          <span className={styles.lineupAnalyticsVal}>
-                            {r.scoredGames > 0
-                              ? <><b className={styles.lineupAnalyticsRec}>{r.wins}-{r.losses}{r.ties ? `-${r.ties}` : ''}</b> · {r.games} game{r.games === 1 ? '' : 's'}{r.scoredGames < r.games ? ` (${r.scoredGames} scored)` : ''}</>
-                              : <>{r.games} games · no scores yet</>}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-                </>
-              )}
-            </section>
-          )}
-
-          {/* ── Attendance & reliability (whole-card link) ── */}
-          {canRoster && (
-            <Link href={`${base}/attendance`} className={`${styles.insightsCard} ${styles.insightsLinkCard}`} aria-labelledby="insights-attendance">
-              <p className={styles.insightsCardKicker} id="insights-attendance">Attendance &amp; reliability</p>
-              <span className={styles.insightsLinkBody}>
-                <span className={styles.moneyCardIcon}><CalendarCheck size={18} /></span>
-                <span className={styles.moneyCardBody}>
-                  <p className={styles.moneyCardTitle}>Season attendance</p>
-                  <p className={styles.moneyCardDesc}>Who&apos;s been making it out — per-player games and practices attended.</p>
-                </span>
-                <ChevronRight size={16} className={styles.moneyCardChevron} aria-hidden />
+          {/* ── 3 · Report doorways (depth is always a page, never an expansion) ── */}
+          <div className={styles.insightsDoors}>
+            <Link href={`${base}/history/results`} className={`${styles.insightsDoor} ${finalized.length === 0 ? styles.insightsDoorSoft : ''}`}>
+              <span className={styles.insightsDoorQ}>How are we doing?<span aria-hidden>→</span></span>
+              <span className={styles.insightsDoorSum}>
+                {/* Scoped record only when the scope actually holds results — otherwise a real
+                    count, never a fabricated "0-0" (results may exist outside the record scope). */}
+                {scopedGames > 0
+                  ? `${recStr(record)} this season · ${historySummary.pastSeasons} past season${historySummary.pastSeasons === 1 ? '' : 's'} on file`
+                  : finalized.length > 0
+                    ? `${finalized.length} result${finalized.length === 1 ? '' : 's'} this season · ${historySummary.pastSeasons} past season${historySummary.pastSeasons === 1 ? '' : 's'} on file`
+                    : 'First season under way — your first result shows up here'}
               </span>
             </Link>
-          )}
-
-          {/* ── Money reports (cross-link only — reports live with money operations in Money) ── */}
-          {canViewMoney && (
-            <Link href={`${base}/accounting`} className={`${styles.insightsCard} ${styles.insightsLinkCard}`} aria-labelledby="insights-money">
-              <p className={styles.insightsCardKicker} id="insights-money">Money reports</p>
-              <span className={styles.insightsLinkBody}>
-                <span className={styles.moneyCardIcon}><DollarSign size={18} /></span>
-                <span className={styles.moneyCardBody}>
-                  <p className={styles.moneyCardTitle}>Budget vs. actual &amp; player dues</p>
-                  <p className={styles.moneyCardDesc}>Spending against plan, who&apos;s paid, expenses and fundraisers — in Money.</p>
+            {canLineups && (
+              <Link href={`${base}/history/playing-time`} className={`${styles.insightsDoor} ${!analytics || analytics.gamesWithLineup === 0 ? styles.insightsDoorSoft : ''}`}>
+                <span className={styles.insightsDoorQ}>Is playing time fair?<span aria-hidden>→</span></span>
+                <span className={styles.insightsDoorSum}>
+                  {srcErrors.lineups
+                    ? 'Couldn’t load — refresh to try again'
+                    : analytics && analytics.gamesWithLineup > 0
+                      ? `${analytics.gamesWithLineup} lineup${analytics.gamesWithLineup === 1 ? '' : 's'} saved${overCapCount > 0 ? ` · ${overCapCount} arm-care flag${overCapCount === 1 ? '' : 's'}` : ''}`
+                      : 'Save your first lineup to start tracking playing time'}
                 </span>
-                <ChevronRight size={16} className={styles.moneyCardChevron} aria-hidden />
-              </span>
-            </Link>
-          )}
-        </div>
+              </Link>
+            )}
+            {canRoster && (
+              <Link href={`${base}/attendance`} className={`${styles.insightsDoor} ${attendancePct == null ? styles.insightsDoorSoft : ''}`}>
+                <span className={styles.insightsDoorQ}>Who shows up?<span aria-hidden>→</span></span>
+                <span className={styles.insightsDoorSum}>
+                  {srcErrors.attendance
+                    ? 'Couldn’t load — refresh to try again'
+                    : attendancePct != null
+                      ? `${attendancePct}% team rate${attendanceBelow > 0 ? ` · ${attendanceBelow} player${attendanceBelow === 1 ? '' : 's'} below ${attendanceBarPct}%` : ''}`
+                      : 'Take attendance at a practice or game to start'}
+                </span>
+              </Link>
+            )}
+            {canMoney && (
+              <Link href={`${base}/accounting`} className={`${styles.insightsDoor} ${duesPct == null ? styles.insightsDoorSoft : ''}`}>
+                <span className={styles.insightsDoorQ}>Where&apos;s the money?<span aria-hidden>→</span></span>
+                <span className={styles.insightsDoorSum}>
+                  {srcErrors.dues
+                    ? 'Couldn’t load — refresh to try again'
+                    : duesPct != null
+                      ? `${duesPct}% collected${duesStats && duesStats.neverPaidCount > 0 ? ` · ${duesStats.neverPaidCount} never paid` : ''} — in Money`
+                      : 'Set up dues in Money to track collections'}
+                </span>
+              </Link>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

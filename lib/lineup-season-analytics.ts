@@ -1,7 +1,10 @@
 // Pure, testable season roll-up of a team's SAVED lineups. No I/O, no React. Every figure is
 // derived only from lineups the coach actually saved (games without a saved lineup, or players who
 // never appear, simply don't contribute) — so the UI can present it honestly with no invented rows.
-import { analyzeLineup } from '@/lib/lineup-analysis';
+// Relative WITH the .ts extension (not `@/`) so the unit tests can run under plain
+// `node --test`, which resolves neither the tsconfig path alias nor extension-less
+// ESM specifiers (tsconfig has allowImportingTsExtensions).
+import { analyzeLineup } from './lineup-analysis.ts';
 
 export interface SeasonLineupInput {
   eventId: string;
