@@ -10,7 +10,8 @@ import {
 } from '@/lib/team-checkout';
 import { completeOrgTeamAddonBillingFromMetadata } from '@/lib/team-org-billing';
 import { PLAN_RANK } from '@/lib/plan-features';
-import { sendEmail, trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
+import { trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { cancelScheduledEmail } from '@/lib/email-sender';
 import { notify } from '@/lib/notify';
 import type { OrgPlan } from '@/lib/types';
@@ -199,16 +200,18 @@ export const POST = withObservability(async (req: Request) => {
                   .then(r => r.data),
               ]);
               if (wsOwnerEmail && wsOrg) {
-                await sendEmail(
-                  wsOwnerEmail,
-                  `Welcome back — ${wsOrg.name}`,
-                  welcomeBackHtml({
+                await sendTransactionalEmail({
+                  key: 'welcome_back',
+                  to: wsOwnerEmail,
+                  vars: { orgName: wsOrg.name, planLabel: 'Team', dashboardUrl: `${SITE_URL}/${wsOrg.slug}/coaches` },
+                  defaultSubject: `Welcome back — ${wsOrg.name}`,
+                  defaultHtml: welcomeBackHtml({
                     orgName: wsOrg.name,
                     planLabel: 'Team',
                     restoredTournaments: 0,
                     dashboardUrl: `${SITE_URL}/${wsOrg.slug}/coaches`,
                   }),
-                );
+                });
               }
             }
           }
@@ -297,16 +300,18 @@ export const POST = withObservability(async (req: Request) => {
               if (ownerEmail) {
                 const planLabel = PLAN_CONFIG[planKey]?.label ?? planKey;
                 const dashboardUrl = `${SITE_URL}/${updatedOrg.slug}/admin`;
-                await sendEmail(
-                  ownerEmail,
-                  `Welcome back to FieldLogicHQ — ${updatedOrg.name}`,
-                  welcomeBackHtml({
+                await sendTransactionalEmail({
+                  key: 'welcome_back',
+                  to: ownerEmail,
+                  vars: { orgName: updatedOrg.name, planLabel, dashboardUrl },
+                  defaultSubject: `Welcome back to FieldLogicHQ — ${updatedOrg.name}`,
+                  defaultHtml: welcomeBackHtml({
                     orgName: updatedOrg.name,
                     planLabel,
                     restoredTournaments: restoreResult.restoredCount,
                     dashboardUrl,
                   }),
-                );
+                });
               }
             }
           }
@@ -352,14 +357,16 @@ export const POST = withObservability(async (req: Request) => {
               .then(r => r.data),
           ]);
           if (wsOwnerEmail && wsOrg) {
-            await sendEmail(
-              wsOwnerEmail,
-              `Your ${wsOrg.name} Coaches Portal has been cancelled`,
-              teamWorkspaceCancelledHtml({
+            await sendTransactionalEmail({
+              key: 'team_workspace_cancelled',
+              to: wsOwnerEmail,
+              vars: { workspaceName: wsOrg.name, resubscribeUrl: `${SITE_URL}/coaches/start` },
+              defaultSubject: `Your ${wsOrg.name} Coaches Portal has been cancelled`,
+              defaultHtml: teamWorkspaceCancelledHtml({
                 workspaceName: wsOrg.name,
                 resubscribeUrl: `${SITE_URL}/coaches/start`,
               }),
-            );
+            });
           }
         }
         break;
@@ -600,11 +607,13 @@ export const POST = withObservability(async (req: Request) => {
         : 'soon';
       const billingUrl = `${SITE_URL}/${org.slug}/admin/org/billing`;
 
-      await sendEmail(
-        ownerEmail,
-        `Your ${planLabel} trial ends ${trialEndDate}`,
-        trialEndingHtml({ orgName: org.name, planLabel, trialEndDate, billingUrl }),
-      );
+      await sendTransactionalEmail({
+        key: 'trial_ending',
+        to: ownerEmail,
+        vars: { orgName: org.name, planLabel, trialEndDate, billingUrl },
+        defaultSubject: `Your ${planLabel} trial ends ${trialEndDate}`,
+        defaultHtml: trialEndingHtml({ orgName: org.name, planLabel, trialEndDate, billingUrl }),
+      });
       break;
     }
   }

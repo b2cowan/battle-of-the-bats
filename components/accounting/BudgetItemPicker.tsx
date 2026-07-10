@@ -22,6 +22,9 @@ interface Props {
   // For admin route the endpoint needs [catId] in the path; for coach it's a body field.
   // Specify which pattern to use.
   createItemMode: 'admin' | 'coach';
+  // Coach mode only: allow creating a new top-level category inline (posts
+  // { newCategoryName } to createItemEndpoint). Owner decision 2026-07-09.
+  allowCreateCategory?: boolean;
   disabled?: boolean;
 }
 
@@ -31,6 +34,7 @@ export default function BudgetItemPicker({
   onChange,
   createItemEndpoint,
   createItemMode,
+  allowCreateCategory = false,
   disabled = false,
 }: Props) {
   const [selectedCatId, setSelectedCatId] = useState<string>(value?.categoryId ?? '');
@@ -42,6 +46,11 @@ export default function BudgetItemPicker({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [catSaving, setCatSaving] = useState(false);
+  const [catError, setCatError] = useState('');
+
   // Local categories list that can be extended after a custom item is created
   const [localCategories, setLocalCategories] = useState<BudgetCategoryWithItems[]>(categories);
 
@@ -51,6 +60,13 @@ export default function BudgetItemPicker({
   const itemsForCat: BudgetItem[] = selectedCat?.items ?? [];
 
   function handleCatChange(catId: string) {
+    if (catId === '__addcat__') {
+      setAddingCategory(true);
+      setNewCatName('');
+      setCatError('');
+      return;
+    }
+    setAddingCategory(false);
     setSelectedCatId(catId);
     setSelectedItemId('__misc__');
     setAddingItem(false);
@@ -144,6 +160,40 @@ export default function BudgetItemPicker({
     }
   }
 
+  async function handleSaveCustomCategory() {
+    const name = newCatName.trim();
+    if (!name) return;
+    setCatSaving(true);
+    setCatError('');
+
+    try {
+      const res = await fetch(createItemEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newCategoryName: name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to create category');
+
+      const newCat: BudgetCategoryWithItems = data.category;
+      setLocalCategories(prev => [...prev, newCat]);
+      setAddingCategory(false);
+      setSelectedCatId(newCat.id);
+      setSelectedItemId('__misc__');
+      onChange({
+        categoryId:      newCat.id,
+        categoryName:    newCat.name,
+        itemId:          null,
+        itemName:        newCat.name, // no items yet — the category name is the honest fallback label
+        suggestedAmount: null,
+      });
+    } catch (e: unknown) {
+      setCatError(e instanceof Error ? e.message : 'Failed to create category');
+    } finally {
+      setCatSaving(false);
+    }
+  }
+
   return (
     <div className={styles.picker}>
       {/* Category select */}
@@ -152,7 +202,7 @@ export default function BudgetItemPicker({
           <label className={styles.label}>Category</label>
           <select
             className={styles.select}
-            value={selectedCatId}
+            value={addingCategory ? '__addcat__' : selectedCatId}
             onChange={e => handleCatChange(e.target.value)}
             disabled={disabled}
           >
@@ -160,6 +210,7 @@ export default function BudgetItemPicker({
             {localCategories.map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
+            {allowCreateCategory && <option value="__addcat__">+ Add custom category…</option>}
           </select>
         </div>
 
@@ -181,6 +232,49 @@ export default function BudgetItemPicker({
           </div>
         )}
       </div>
+
+      {/* Inline custom-category form */}
+      {addingCategory && (
+        <div className={styles.addForm}>
+          <div className={styles.addFormRow}>
+            <div className={styles.field} style={{ flex: 1 }}>
+              <label className={styles.label}>Category name</label>
+              <input
+                className={styles.input}
+                type="text"
+                value={newCatName}
+                onChange={e => setNewCatName(e.target.value.slice(0, 80))}
+                placeholder="e.g. Sponsorships"
+                maxLength={80}
+                autoFocus
+                disabled={catSaving}
+              />
+            </div>
+          </div>
+          {catError && <p className={styles.error}>{catError}</p>}
+          <div className={styles.addFormActions}>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => { setAddingCategory(false); setCatError(''); }}
+              disabled={catSaving}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn btn-lime"
+              onClick={handleSaveCustomCategory}
+              disabled={catSaving || !newCatName.trim()}
+            >
+              {catSaving ? 'Saving…' : 'Add Category'}
+            </button>
+          </div>
+          <p className={styles.hint}>
+            This category will be saved to your org&apos;s library and become selectable for all coaches.
+          </p>
+        </div>
+      )}
 
       {/* Inline custom-item form */}
       {addingItem && selectedCat && (
@@ -225,7 +319,7 @@ export default function BudgetItemPicker({
             </button>
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn btn-lime"
               onClick={handleSaveCustomItem}
               disabled={saving || !newItemName.trim()}
             >

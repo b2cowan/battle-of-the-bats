@@ -36,7 +36,10 @@
 .tableWrap { overflow-x: auto; }
 
 .table {
-  width: 100%;
+  /* Size to content, don't stretch to 100% of the container — stretching dumped the extra width
+     into the text columns (huge Superuser/Org gaps) and pushed the table off-screen. The
+     .tableWrap scrolls if the content is genuinely wider than the viewport. */
+  width: max-content;
   border-collapse: collapse;
   font-family: var(--font-data);
   font-size: 0.72rem;
@@ -149,10 +152,14 @@
 
 .dimText {
   color: var(--data-gray);
+  font-size: 0.65rem;
 }
 
 .valueDetails {
-  max-width: 290px;
+  /* Two value columns at 290 pushed the 7-column table past the page width. Trim so the whole
+     table fits on a normal wide screen; full value is one click away via the expander, and the
+     .tableWrap still scrolls on genuinely narrow viewports. */
+  max-width: 180px;
 }
 
 .valueDetails summary {

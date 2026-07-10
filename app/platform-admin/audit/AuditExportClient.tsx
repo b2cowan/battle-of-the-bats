@@ -1,12 +1,13 @@
 'use client';
 
+import ExportMenu from '@/components/admin/ExportMenu';
+
 /**
  * AuditExportClient.tsx
- * Thin client component that renders the ExportMenu for the platform admin
- * audit log. The audit page is a server component, so export actions are
- * server-side downloads via the /api/platform-admin/audit/export route.
- * This component accepts the current filter params and builds the correct
- * download URLs, then triggers them as navigation on click.
+ * Thin client component that renders the shared ExportMenu dropdown (Excel on primary click, CSV in
+ * the menu) for the platform-admin audit log. The audit page is a server component, so export
+ * actions are server-side downloads via /api/platform-admin/audit/export. This builds the correct
+ * download URL from the current filters and triggers it on click.
  */
 
 interface AuditExportClientProps {
@@ -29,28 +30,21 @@ function buildExportUrl(filters: AuditExportClientProps, format: 'xlsx' | 'csv')
   return `/api/platform-admin/audit/export${qs ? `?${qs}` : ''}`;
 }
 
-export default function AuditExportClient(props: AuditExportClientProps) {
-  const xlsxUrl = buildExportUrl(props, 'xlsx');
-  const csvUrl  = buildExportUrl(props, 'csv');
+function triggerDownload(url: string) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
 
+export default function AuditExportClient(props: AuditExportClientProps) {
   return (
-    <div style={{ display: 'flex', gap: '0.5rem' }}>
-      <a
-        href={xlsxUrl}
-        className="btn btn-outline btn-sm"
-        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
-        download
-      >
-        ↓ Export XLSX
-      </a>
-      <a
-        href={csvUrl}
-        className="btn btn-outline btn-sm"
-        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
-        download
-      >
-        CSV
-      </a>
-    </div>
+    <ExportMenu
+      formats={['xlsx', 'csv']}
+      onExportXLSX={() => triggerDownload(buildExportUrl(props, 'xlsx'))}
+      onExportCSV={() => triggerDownload(buildExportUrl(props, 'csv'))}
+    />
   );
 }

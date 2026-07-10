@@ -327,8 +327,13 @@
   color: var(--data-gray);
   text-decoration: none;
   padding: 0.4rem 0.5rem;
+  /* Reset native <button> chrome so it reads like the text link it replaced. */
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 .filterClear:hover { color: var(--fl-text); }
+.filterClear:disabled { opacity: 0.5; cursor: default; }
 
 /* ── Table ──────────────────────────────────────────────────────────────── */
 .tableWrap { overflow-x: auto; }

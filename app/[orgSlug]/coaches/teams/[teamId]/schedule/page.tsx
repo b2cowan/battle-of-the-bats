@@ -17,6 +17,7 @@ import ExportMenu from '@/components/admin/ExportMenu';
 import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import { playerDisplayName } from '@/lib/coach-roster-name';
+import TagManagerModal from '@/components/coaches/TagManagerModal';
 import styles from '../../../coaches.module.css';
 import type {
   RepAttendanceStatus,
@@ -30,6 +31,7 @@ import type {
   RepProgramYear,
   RepEventType,
   RepEventResource,
+  RepTeamTag,
 } from '@/lib/types';
 
 // ── Export definition ─────────────────────────────────────────────────────────
@@ -168,6 +170,7 @@ interface EventForm {
   resources: RepEventResource[];
   opponent: string;
   homeAway: string;
+  tagIds: string[];
   parentEventId: string;
   isRecurring: boolean;
   dayOfWeek: string;
@@ -205,6 +208,7 @@ const BLANK_FORM: EventForm = {
   resources: [],
   opponent: '',
   homeAway: '',
+  tagIds: [],
   parentEventId: '',
   isRecurring: false,
   dayOfWeek: '1',
@@ -538,6 +542,14 @@ export default function CoachesSchedulePage({
   // Game event ids whose saved lineup disagrees with attendance (server-computed) — badges the list.
   const [mismatchIds, setMismatchIds] = useState<Set<string>>(new Set());
   const [lineupLoading, setLineupLoading] = useState(false);
+  // Coach Tags (Phase 1, game tags only): the team's tag library + which tags each event already
+  // carries, both returned alongside the events fetch (no per-event round trip).
+  const [teamTags, setTeamTags] = useState<RepTeamTag[]>([]);
+  const [tagsByEventId, setTagsByEventId] = useState<Record<string, string[]>>({});
+  const [tagInput, setTagInput] = useState('');
+  const [tagCreating, setTagCreating] = useState(false);
+  const [tagError, setTagError] = useState('');
+  const [tagManagerOpen, setTagManagerOpen] = useState(false);
   const confirm = useConfirm();
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -553,6 +565,8 @@ export default function CoachesSchedulePage({
       const data = await res.json();
       setEvents(data.events ?? []);
       setMismatchIds(new Set<string>(data.lineupMismatchEventIds ?? []));
+      setTeamTags(data.tags ?? []);
+      setTagsByEventId(data.tagsByEventId ?? {});
       // Tryout sessions are projected onto the calendar as read-only markers. Non-fatal: if this
       // fails the schedule still works, tryout dates just won't show.
       try {
@@ -569,6 +583,11 @@ export default function CoachesSchedulePage({
   useEffect(() => {
     void Promise.resolve().then(fetchEvents);
   }, [fetchEvents]);
+
+  // Tag ids on the open form that still exist in the library — recomputed on every render (not
+  // synced into state) so a Tag Manager delete/merge while the form is open can never leave a
+  // selected chip silently pointing at a vanished tag, without a setState-in-effect anti-pattern.
+  const validFormTagIds = form.tagIds.filter(id => teamTags.some(t => t.id === id));
 
   // Open a deep-linked event once events have loaded (client-only param read — no Suspense needed).
   // Runs once; the coach can freely close or switch events afterwards.
@@ -710,7 +729,7 @@ export default function CoachesSchedulePage({
   function changeEventType(next: RepEventType) {
     setForm(f => {
       const out: EventForm = { ...f, eventType: next };
-      if (!needsOpponent(next)) { out.opponent = ''; out.homeAway = ''; out.uniform = ''; }
+      if (!needsOpponent(next)) { out.opponent = ''; out.homeAway = ''; out.uniform = ''; out.tagIds = []; }
       else if (!out.homeAway) { out.homeAway = 'home'; }
       if (!needsRecurrence(next)) { out.isRecurring = false; }
       if (next !== 'tournament_game') { out.parentEventId = ''; }
@@ -746,6 +765,39 @@ export default function CoachesSchedulePage({
     setForm(f => ({ ...f, resources: f.resources.filter((_, i) => i !== index) }));
   }
 
+  // ── Game tags (autocomplete-or-create) ───────────────────────────────────────
+
+  function toggleFormTag(tagId: string) {
+    setForm(f => ({
+      ...f,
+      tagIds: f.tagIds.includes(tagId) ? f.tagIds.filter(id => id !== tagId) : [...f.tagIds, tagId],
+    }));
+  }
+
+  async function createAndApplyTag(name: string) {
+    setTagError('');
+    setTagCreating(true);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tags`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(d.error ?? 'Could not create tag');
+      }
+      const { tag } = await res.json();
+      setTeamTags(t => [...t, tag]);
+      setForm(f => ({ ...f, tagIds: [...f.tagIds, tag.id] }));
+      setTagInput('');
+    } catch (e: unknown) {
+      setTagError(errorMessage(e, 'Could not create tag'));
+    } finally {
+      setTagCreating(false);
+    }
+  }
+
   /** Name to persist: the coach's text, or a friendly default so a blank name never blocks a save. */
   function eventNameForSave(f: EventForm): string {
     return f.name.trim() || deriveGameName(f.eventType, f.opponent) || EVENT_NAME_PREFIX[f.eventType];
@@ -761,7 +813,7 @@ export default function CoachesSchedulePage({
   }
 
   function openEditForm(event: RepTeamEvent) {
-    const f = eventToForm(event);
+    const f = { ...eventToForm(event), tagIds: tagsByEventId[event.id] ?? [] };
     setForm(f);
     setFormBaseline(JSON.stringify(f));
     setEditingEventId(event.id);
@@ -920,6 +972,7 @@ export default function CoachesSchedulePage({
           resources: form.resources,
           opponent: form.opponent.trim() || null,
           homeAway: form.homeAway || null,
+          tagIds: needsOpponent(form.eventType) ? validFormTagIds : undefined,
         }),
       });
       if (!res.ok) {
@@ -962,6 +1015,11 @@ export default function CoachesSchedulePage({
         homeAway: form.homeAway || null,
         parentEventId: form.parentEventId || null,
       };
+      // Tags apply to a specific one-off game only — never sent on a recurring series create
+      // (a coach tags an occurrence later, from its own edit form).
+      if (needsOpponent(form.eventType) && !(needsRecurrence(form.eventType) && form.isRecurring)) {
+        body.tagIds = validFormTagIds;
+      }
 
       if (needsRecurrence(form.eventType) && form.isRecurring) {
         body.isRecurring = true;
@@ -1654,6 +1712,16 @@ export default function CoachesSchedulePage({
               </div>
             )}
 
+            {/* Applied tags — read-only here; the picker/manager live in "Edit details". */}
+            {(tagsByEventId[selectedEvent.id] ?? []).length > 0 && (
+              <div className={styles.lineupChips}>
+                {(tagsByEventId[selectedEvent.id] ?? []).map(tagId => {
+                  const tag = teamTags.find(t => t.id === tagId);
+                  return tag ? <span key={tagId} className={styles.lineupChip}>{tag.name}</span> : null;
+                })}
+              </div>
+            )}
+
             {selectedEvent.description && (
               <p className={styles.slideOverNotes}>{selectedEvent.description}</p>
             )}
@@ -2199,6 +2267,63 @@ export default function CoachesSchedulePage({
                 </section>
               )}
 
+              {/* TAGS — a coach's own vocabulary ("Rivalry", "Top in the province"); games only.
+                  Autocomplete-or-create: type to filter existing tags, tap to toggle, or create a
+                  brand-new one on the spot. Pays off later in Season Review's "vs tag" report. */}
+              {needsOpponent(form.eventType) && (
+                <section className={styles.formSection}>
+                  <h4 className={styles.formSectionTitle}>Tags <span className={styles.labelOptional}>optional</span></h4>
+                  <div className={styles.tagPickerRow}>
+                    <input
+                      className={styles.input}
+                      value={tagInput}
+                      onChange={e => setTagInput(e.target.value)}
+                      placeholder="e.g. Rivalry, Top in the province"
+                      maxLength={40}
+                      onKeyDown={e => {
+                        if (e.key !== 'Enter') return;
+                        e.preventDefault();
+                        const q = tagInput.trim();
+                        if (!q) return;
+                        const match = teamTags.find(t => t.name.toLowerCase() === q.toLowerCase());
+                        if (match) toggleFormTag(match.id);
+                        else void createAndApplyTag(q);
+                      }}
+                    />
+                  </div>
+                  <div className={styles.tagChips}>
+                    {teamTags
+                      .filter(t => !tagInput.trim() || t.name.toLowerCase().includes(tagInput.trim().toLowerCase()))
+                      .map(t => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          className={`${styles.tagChip} ${form.tagIds.includes(t.id) ? styles.tagChipActive : ''}`}
+                          onClick={() => toggleFormTag(t.id)}
+                        >
+                          {t.name}
+                        </button>
+                      ))}
+                    {tagInput.trim() && !teamTags.some(t => t.name.toLowerCase() === tagInput.trim().toLowerCase()) && (
+                      <button
+                        type="button"
+                        className={styles.tagChipCreate}
+                        disabled={tagCreating}
+                        onClick={() => void createAndApplyTag(tagInput.trim())}
+                      >
+                        + Create &ldquo;{tagInput.trim()}&rdquo;
+                      </button>
+                    )}
+                  </div>
+                  {tagError && <p className={styles.errorText}>{tagError}</p>}
+                  {teamTags.length > 0 && (
+                    <button type="button" className={styles.tagManageLink} onClick={() => setTagManagerOpen(true)}>
+                      Manage tags
+                    </button>
+                  )}
+                </section>
+              )}
+
               {/* LINKS / RESOURCES — labelled URLs (drill video, rules, field map, flyer). */}
               <section className={styles.formSection}>
                 <h4 className={styles.formSectionTitle}>Links <span className={styles.labelOptional}>optional</span></h4>
@@ -2294,6 +2419,16 @@ export default function CoachesSchedulePage({
             )}
           </div>
         </div>
+      )}
+
+      {tagManagerOpen && (
+        <TagManagerModal
+          orgSlug={orgSlug}
+          teamId={teamId}
+          tags={teamTags}
+          onClose={() => setTagManagerOpen(false)}
+          onChanged={() => { void fetchEvents(); }}
+        />
       )}
     </div>
   );

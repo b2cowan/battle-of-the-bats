@@ -2,7 +2,8 @@ import 'server-only';
 
 import { PLAN_CONFIG } from './plan-config';
 import { getOrgOwnerEmail, supabaseAdmin } from './supabase-admin';
-import { billingRetentionWarningHtml, sendEmail, SITE_URL } from './email';
+import { billingRetentionWarningHtml, SITE_URL } from './email';
+import { sendTransactionalEmail } from './platform-email-templates';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import type { Organization, OrgPlan } from './types';
 import type { Capability } from './roles';
@@ -334,12 +335,18 @@ async function sendRetentionEmail(
   if (!ownerEmail) return false;
 
   const first = records[0];
-  await sendEmail(
-    ownerEmail,
-    isPendingPurge
+  await sendTransactionalEmail({
+    key: 'billing_retention_warning',
+    to: ownerEmail,
+    vars: {
+      orgName,
+      retentionUrl: `${SITE_URL}/${orgSlug}/admin/org/billing`,
+      daysUntilExpiry: daysUntil(first.retention_until),
+    },
+    defaultSubject: isPendingPurge
       ? `Retention window expired for ${orgName}`
       : `Retention window ending soon for ${orgName}`,
-    billingRetentionWarningHtml({
+    defaultHtml: billingRetentionWarningHtml({
       orgName,
       records: records.map(r => ({
         displayName: r.display_name,
@@ -350,7 +357,7 @@ async function sendRetentionEmail(
       daysUntilExpiry: daysUntil(first.retention_until),
       isPendingPurge,
     }),
-  );
+  });
   return true;
 }
 

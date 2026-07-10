@@ -13,6 +13,7 @@ import {
 import { fmtAbsoluteDateTime } from '@/lib/format-date';
 import CallsVsErrorsChart from './CallsVsErrorsChart';
 import IssuesExportClient from './IssuesExportClient';
+import IssuesFilterBar from './IssuesFilterBar';
 import styles from './observability.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -185,11 +186,11 @@ export default async function ObservabilityDashboardPage({
 
       {/* ── Metric cards ───────────────────────────────────────────────── */}
       <section className={styles.metricGrid} aria-label="Headline metrics">
-        <MetricCard label={`Errors · ${OBS_WINDOWS[params.window].label}`} value={data.totalErrors} Icon={AlertOctagon} />
+        <MetricCard label={`Captured errors · ${OBS_WINDOWS[params.window].label}`} value={data.totalErrors} sub="all sources" Icon={AlertOctagon} />
         <MetricCard
           label="Error rate"
           value={data.errorRatePct === null ? '—' : `${data.errorRatePct.toFixed(2)}%`}
-          sub="instrumented routes"
+          sub="instrumented traffic only"
           Icon={Activity}
         />
         <MetricCard label="Open issues" value={data.openIssues} sub={`${data.newIssues} new in window`} Icon={FolderOpen} />
@@ -197,9 +198,11 @@ export default async function ObservabilityDashboardPage({
       </section>
 
       <p className={styles.coverageNote}>
-        The calls-vs-errors chart and error rate are computed from instrumented (wrapped) routes only; issue counts and the
-        breakdowns below come from global error capture, so the issue list is more complete than the chart. Open issues
-        include snoozed issues whose snooze has expired.
+        Two different measures on purpose: the <strong>error rate</strong> (and the calls-vs-errors chart) covers only
+        instrumented (wrapped) routes, so it can show a true failures-÷-requests rate; <strong>captured errors</strong> and
+        the issue list come from global error capture across all sources, so they are more complete. A 0% instrumented error
+        rate can therefore sit alongside captured errors from routes not yet wrapped (coverage expands in later phases). Open
+        issues include snoozed issues whose snooze has expired.
         {data.eventsCapped && ' The breakdowns and the Affected-orgs count reflect only the most recent 5,000 events in this window.'}
       </p>
 
@@ -286,27 +289,22 @@ export default async function ObservabilityDashboardPage({
         body="Each row is one distinct error fingerprint — a flood of identical failures collapses into a single triable issue. This dashboard shows this environment's errors (production on the live site, dev on the dev site). Use the filters to narrow by severity, status, route, or org. Click an issue to read scrubbed samples and resolve / ignore / snooze it."
       />
 
-      <form method="GET" action="/platform-admin/observability" className={styles.filterBar}>
-        {/* Preserve window across a filter submit */}
-        {params.window !== '24h' && <input type="hidden" name="window" value={params.window} />}
-        <input type="search" name="q" defaultValue={params.q} placeholder="Search title / error / route…" className={styles.filterInput} />
-        <select name="severity" defaultValue={params.severity} className={styles.filterSelect} aria-label="Severity">
-          <option value="">All severities</option>
-          {SEVERITY_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <select name="status" defaultValue={params.status} className={styles.filterSelect} aria-label="Status">
-          <option value="all">All statuses</option>
-          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <input type="text" name="route" defaultValue={params.route} placeholder="Route…" className={styles.filterInput} style={{ maxWidth: 160 }} />
-        <input type="text" name="org" defaultValue={params.org} placeholder="Org slug…" className={styles.filterInput} style={{ maxWidth: 140 }} />
-        <button type="submit" className={styles.filterBtn}>Filter</button>
+      <IssuesFilterBar
+        windowKey={params.window}
+        severity={params.severity}
+        status={params.status}
+        route={params.route}
+        org={params.org}
+        q={params.q}
+        severityOptions={SEVERITY_OPTIONS}
+        statusOptions={STATUS_OPTIONS}
+        hasFilters={hasFilters}
+      >
         <IssuesExportClient
           filters={{ severity: params.severity, status: params.status, route: params.route, org: params.org, q: params.q }}
           disabled={issues.rows.length === 0}
         />
-        {hasFilters && <Link href={buildHref({ ...params, severity: '', status: 'all', route: '', org: '', q: '', offset: 0 })} className={styles.filterClear}>Clear</Link>}
-      </form>
+      </IssuesFilterBar>
 
       <div className={styles.tableWrap}>
         <table className={styles.table}>

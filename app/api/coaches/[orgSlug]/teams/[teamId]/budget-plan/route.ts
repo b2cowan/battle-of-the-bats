@@ -112,5 +112,7 @@ export const GET = withObservability(async (_req: Request,
     rosterCount:     rosterCount ?? 0,
   };
 
-  return NextResponse.json({ plan });
+  // The optional single "season total" (rep_program_years.budget_amount) rides along so
+  // the planner can reconcile it against the itemized sum (non-itemized buffer display).
+  return NextResponse.json({ plan, seasonBudgetAmount: programYear.budgetAmount ?? null });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan' });

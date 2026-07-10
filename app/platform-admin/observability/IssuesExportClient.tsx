@@ -1,12 +1,12 @@
 'use client';
 
-import type { CSSProperties } from 'react';
+import ExportMenu from '@/components/admin/ExportMenu';
 
 /**
- * Exports the FULL filtered issue set (not just the current page) to CSV / XLSX.
- * The list page is a server component, so — like AuditExportClient — this renders
- * download links to the server export route, carrying the current filters. The route
- * re-runs the same filtered query without pagination (capped at 5,000 rows).
+ * Exports the FULL filtered issue set (not just the current page) to Excel / CSV via the shared
+ * ExportMenu dropdown (Excel on primary click, CSV in the menu). The list page is a server
+ * component, so this builds the server export URL — carrying the current filters — and triggers
+ * it as a download. The route re-runs the same filtered query without pagination (capped 5,000).
  */
 
 interface ExportFilters {
@@ -28,19 +28,22 @@ function buildUrl(f: ExportFilters, format: 'xlsx' | 'csv'): string {
   return `/api/platform-admin/observability/issues/export?${p.toString()}`;
 }
 
+function triggerDownload(url: string) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 export default function IssuesExportClient({ filters, disabled }: { filters: ExportFilters; disabled?: boolean }) {
-  const linkStyle: CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none',
-    ...(disabled ? { pointerEvents: 'none', opacity: 0.45 } : {}),
-  };
   return (
-    <div style={{ display: 'flex', gap: '0.5rem' }}>
-      <a href={buildUrl(filters, 'xlsx')} className="btn btn-outline btn-sm" style={linkStyle} download aria-disabled={disabled}>
-        ↓ Export XLSX
-      </a>
-      <a href={buildUrl(filters, 'csv')} className="btn btn-outline btn-sm" style={linkStyle} download aria-disabled={disabled}>
-        CSV
-      </a>
-    </div>
+    <ExportMenu
+      formats={['xlsx', 'csv']}
+      onExportXLSX={() => triggerDownload(buildUrl(filters, 'xlsx'))}
+      onExportCSV={() => triggerDownload(buildUrl(filters, 'csv'))}
+      disabled={disabled}
+    />
   );
 }

@@ -85,7 +85,9 @@ export default function PlatformAdminNav({ sessionEmail, role }: { sessionEmail:
 
   function isActive(href: string) {
     if (href === '/platform-admin') return pathname === '/platform-admin';
-    return pathname.startsWith(href);
+    // Match on a path boundary so a shorter route isn't also flagged active on a sibling
+    // (e.g. `/platform-admin/email` must NOT light up on `/platform-admin/email-templates`).
+    return pathname === href || pathname.startsWith(href + '/');
   }
 
   return (

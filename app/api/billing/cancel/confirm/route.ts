@@ -7,7 +7,8 @@ import {
 import { writePlatformEvent } from '@/lib/platform-events';
 import { stripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { sendEmail, cancellationConfirmationHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
+import { cancellationConfirmationHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import type { OrgPlan } from '@/lib/types';
@@ -195,14 +196,16 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     if (actorEmail) {
-      await sendEmail(
-        actorEmail,
-        `Your ${ctx.org.name} Coaches Portal has been cancelled`,
-        teamWorkspaceCancelledHtml({
+      await sendTransactionalEmail({
+        key: 'team_workspace_cancelled',
+        to: actorEmail,
+        vars: { workspaceName: ctx.org.name, resubscribeUrl: `${SITE_URL}/coaches/start` },
+        defaultSubject: `Your ${ctx.org.name} Coaches Portal has been cancelled`,
+        defaultHtml: teamWorkspaceCancelledHtml({
           workspaceName: ctx.org.name,
           resubscribeUrl: `${SITE_URL}/coaches/start`,
         }),
-      );
+      });
     }
 
     return Response.json({
@@ -345,17 +348,19 @@ export const POST = withObservability(async (req: Request) => {
       year: 'numeric', month: 'long', day: 'numeric',
     });
     const resubscribeUrl = `${SITE_URL}/${ctx.org.slug}/admin/org/billing`;
-    await sendEmail(
-      actorEmail,
-      `Your ${ctx.org.name} subscription has been cancelled`,
-      cancellationConfirmationHtml({
+    await sendTransactionalEmail({
+      key: 'cancellation_confirmation',
+      to: actorEmail,
+      vars: { orgName: ctx.org.name, planLabel, retentionUntil: retentionDate, resubscribeUrl },
+      defaultSubject: `Your ${ctx.org.name} subscription has been cancelled`,
+      defaultHtml: cancellationConfirmationHtml({
         orgName: ctx.org.name,
         planLabel,
         retentionUntil: retentionDate,
         retainedTournaments: preflight.tournaments.length,
         resubscribeUrl,
       }),
-    );
+    });
   }
 
   return Response.json({

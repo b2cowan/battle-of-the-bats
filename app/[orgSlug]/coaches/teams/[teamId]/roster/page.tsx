@@ -678,7 +678,7 @@ export default function RosterPage({
               <button type="button" className="btn btn-ghost" onClick={requestCloseAdd}>Cancel</button>
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-lime"
                 onClick={handleAdd}
                 disabled={adding || !addForm.playerFirstName.trim()}
               >

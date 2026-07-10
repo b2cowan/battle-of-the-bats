@@ -4,7 +4,7 @@ import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from 
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
@@ -6167,6 +6167,34 @@ export async function getRepTeamLineupAttendanceMismatchEventIds(programYearId: 
   return mismatch;
 }
 
+// Event ids (within a program year) whose saved lineup actually places at least one player in an
+// inning — the same "lineup is set" definition the Lineups front door's readiness chips use.
+// Bulk (two queries) so list surfaces can flag every game without per-game lineup probes.
+export async function getRepTeamLineupSetEventIds(programYearId: string): Promise<string[]> {
+  const { data: lineups, error: lErr } = await supabaseAdmin
+    .from('rep_team_lineups')
+    .select('id, event_id')
+    .eq('program_year_id', programYearId);
+  if (lErr) throw lErr;
+  if (!lineups || lineups.length === 0) return [];
+  const eventByLineup = new Map<string, string>(lineups.map(l => [l.id as string, l.event_id as string]));
+
+  const { data: entries, error: eErr } = await supabaseAdmin
+    .from('rep_team_lineup_entries')
+    .select('lineup_id, inning_positions')
+    .in('lineup_id', lineups.map(l => l.id));
+  if (eErr) throw eErr;
+
+  const set = new Set<string>();
+  for (const row of entries ?? []) {
+    const eventId = eventByLineup.get(row.lineup_id as string);
+    if (!eventId || set.has(eventId)) continue;
+    const positions = (row.inning_positions ?? {}) as Record<string, string>;
+    if (Object.values(positions).some(Boolean)) set.add(eventId);
+  }
+  return [...set];
+}
+
 export async function upsertRepTeamLineup(fields: {
   eventId: string;
   programYearId: string;
@@ -6352,6 +6380,128 @@ export async function updateRepTeamLineupTemplate(id: string, teamId: string, fi
     .maybeSingle();
   if (error) throw error;
   return data ? mapRepTeamLineupTemplate(data) : null;
+}
+
+// Coach Tags (Coach Tags & Player Awards, Phase 1 — game tags; 'expense' reserved for Phase 3)
+
+function mapRepTeamTag(r: any): RepTeamTag {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    teamId: r.team_id,
+    kind: r.kind,
+    name: r.name,
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepTeamTags(teamId: string, kind: RepTagKind = 'game'): Promise<RepTeamTag[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tags')
+    .select('*')
+    .eq('team_id', teamId)
+    .eq('kind', kind)
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamTag);
+}
+
+export async function createRepTeamTag(fields: {
+  orgId: string;
+  teamId: string;
+  kind: RepTagKind;
+  name: string;
+  createdBy?: string | null;
+}): Promise<RepTeamTag> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tags')
+    .insert({
+      org_id: fields.orgId,
+      team_id: fields.teamId,
+      kind: fields.kind,
+      name: fields.name.trim(),
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamTag(data);
+}
+
+/** Scoped rename (team_id guards against cross-team edits even if RLS is bypassed). */
+export async function renameRepTeamTag(id: string, teamId: string, name: string): Promise<RepTeamTag | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tags')
+    .update({ name: name.trim() })
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamTag(data) : null;
+}
+
+/** Scoped delete. Drops the tag's `rep_team_event_tags` links via FK cascade with NO re-pointing —
+ *  merging (below) is the history-preserving path; this is for a tag that was never really used. */
+export async function deleteRepTeamTag(id: string, teamId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_team_tags')
+    .delete()
+    .eq('id', id)
+    .eq('team_id', teamId);
+  if (error) throw error;
+}
+
+/** Atomically re-points every event-tag link from the loser tag to the winner, then deletes the
+ *  loser (Postgres function `merge_rep_team_tags` — migration 181). Both tags must belong to
+ *  `teamId`, checked here so a cross-team id can't even reach the RPC (the function itself also
+ *  guards same-team/same-kind as a defense-in-depth backstop). */
+export async function mergeRepTeamTags(winnerId: string, loserId: string, teamId: string): Promise<void> {
+  const [winner, loser] = await Promise.all([
+    supabaseAdmin.from('rep_team_tags').select('id, team_id').eq('id', winnerId).maybeSingle(),
+    supabaseAdmin.from('rep_team_tags').select('id, team_id').eq('id', loserId).maybeSingle(),
+  ]);
+  if (winner.error) throw winner.error;
+  if (loser.error) throw loser.error;
+  if (!winner.data || winner.data.team_id !== teamId) throw new Error('Tag not found');
+  if (!loser.data || loser.data.team_id !== teamId) throw new Error('Tag not found');
+
+  const { error } = await supabaseAdmin.rpc('merge_rep_team_tags', {
+    p_winner_tag_id: winnerId,
+    p_loser_tag_id: loserId,
+  });
+  if (error) throw error;
+}
+
+/** event_id -> tag_id[] for a set of events (e.g. a team's whole season) — one query instead of
+ *  per-event lookups, mirroring the lineup-flag batching on the events GET. */
+export async function getRepTeamEventTagsMap(eventIds: string[]): Promise<Record<string, string[]>> {
+  if (eventIds.length === 0) return {};
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_event_tags')
+    .select('event_id, tag_id')
+    .in('event_id', eventIds);
+  if (error) throw error;
+  const map: Record<string, string[]> = {};
+  for (const row of data ?? []) {
+    (map[row.event_id] ??= []).push(row.tag_id);
+  }
+  return map;
+}
+
+/** Replace-on-save: sets the full tag set for one event (delete then insert) — same convenience
+ *  convention as a lineup's entries. Caller must have already validated tagIds belong to this
+ *  team's tag library (this function trusts its input). */
+export async function setRepTeamEventTags(eventId: string, tagIds: string[]): Promise<void> {
+  const { error: delError } = await supabaseAdmin.from('rep_team_event_tags').delete().eq('event_id', eventId);
+  if (delError) throw delError;
+  if (tagIds.length === 0) return;
+  const { error: insError } = await supabaseAdmin
+    .from('rep_team_event_tags')
+    .insert(tagIds.map(tagId => ({ event_id: eventId, tag_id: tagId })));
+  if (insError) throw insError;
 }
 
 // Document Templates

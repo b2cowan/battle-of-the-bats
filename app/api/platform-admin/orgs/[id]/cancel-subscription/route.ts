@@ -7,7 +7,8 @@ import {
   retentionDeadline,
 } from '@/lib/billing-retention';
 import { stripe } from '@/lib/stripe';
-import { sendEmail, cancellationConfirmationHtml, SITE_URL } from '@/lib/email';
+import { cancellationConfirmationHtml, SITE_URL } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { PLAN_CONFIG, getEffectiveTeamLimit } from '@/lib/plan-config';
 import type { OrgPlan, Organization } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
@@ -250,17 +251,19 @@ export const POST = withObservability(async (req: NextRequest,
       const retentionDate = new Date(retentionUntil).toLocaleDateString('en-CA', {
         year: 'numeric', month: 'long', day: 'numeric',
       });
-      await sendEmail(
-        ownerEmail,
-        `Your ${orgRow.name} subscription has been cancelled`,
-        cancellationConfirmationHtml({
+      await sendTransactionalEmail({
+        key: 'cancellation_confirmation',
+        to: ownerEmail,
+        vars: { orgName: orgRow.name, planLabel, retentionUntil: retentionDate, resubscribeUrl: `${SITE_URL}/${orgRow.slug}/admin/org/billing` },
+        defaultSubject: `Your ${orgRow.name} subscription has been cancelled`,
+        defaultHtml: cancellationConfirmationHtml({
           orgName: orgRow.name,
           planLabel,
           retentionUntil: retentionDate,
           retainedTournaments: preflight.tournaments.length,
           resubscribeUrl: `${SITE_URL}/${orgRow.slug}/admin/org/billing`,
         }),
-      );
+      });
     }
   }
 

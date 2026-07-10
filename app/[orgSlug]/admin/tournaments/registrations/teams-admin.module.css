@@ -510,6 +510,11 @@
   border-style: dashed;
 }
 
+.attentionBucket:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
 .attentionBucketCount {
   min-width: 1.65rem;
   font-family: var(--font-data);
@@ -620,6 +625,217 @@
 
 .attentionMobileSummary {
   display: none;
+}
+
+/* ─── Registration Health panel — 1:1 mirror of Schedule Health's card
+   (schedule-admin.module.css .healthPanel family) so the two pages read as
+   the same product language, not two different designs. ─────────────────── */
+.regHealthPanel {
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 0;
+  margin: 0.65rem 0 0.85rem;
+}
+
+.regHealthSummary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.62rem 0.75rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.regHealthSummary::-webkit-details-marker { display: none; }
+
+.regHealthHeader {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.regHealthHeader h4 {
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--white-85);
+}
+
+.regHealthHeader p {
+  margin: 0.15rem 0 0;
+  color: var(--white-50);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.regHealthScore {
+  min-width: 70px;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.14rem;
+  border-radius: 4px;
+  border: 1px solid currentColor;
+  background: var(--white-5);
+  font-family: var(--font-data);
+  padding: 0.22rem 0.5rem;
+}
+
+.regHealthScore span { font-size: 1.05rem; font-weight: 900; line-height: 1; }
+.regHealthScore small { font-size: 0.56rem; color: var(--white-50); line-height: 1; transform: translateY(0.08rem); }
+
+.regHealthScoreGood { color: var(--success); background: rgba(var(--success-rgb), 0.08); }
+.regHealthScoreWarning { color: var(--warning); background: rgba(var(--warning-rgb), 0.08); }
+.regHealthScoreDanger { color: var(--danger); background: rgba(var(--danger-rgb), 0.08); }
+.regHealthScoreNeutral { color: var(--white-50); }
+
+.regHealthToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.24rem;
+  color: rgba(var(--logic-lime-rgb), 0.72);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.regHealthToggle svg { transition: transform 0.15s ease; }
+.regHealthPanel[open] .regHealthToggle svg { transform: rotate(180deg); }
+
+.regHealthBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+  padding: 0 0.75rem 0.72rem;
+}
+
+.regHealthKpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.regHealthKpi {
+  position: relative;
+  min-width: 0;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.16);
+  background: var(--white-5);
+  border-radius: 4px;
+  padding: 0.45rem 0.55rem;
+  text-align: left;
+  cursor: default;
+}
+
+button.regHealthKpi { cursor: pointer; }
+button.regHealthKpi:hover:not(:disabled) { border-color: rgba(var(--logic-lime-rgb), 0.4); }
+button.regHealthKpi:disabled { cursor: default; opacity: 1; }
+
+.regHealthKpi span,
+.regHealthKpi small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.regHealthKpi span {
+  color: var(--white-45);
+  font-family: var(--font-data);
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.regHealthKpi strong {
+  display: block;
+  color: var(--white-90);
+  font-size: 1rem;
+  line-height: 1.15;
+  margin-top: 0.12rem;
+}
+
+.regHealthKpi small {
+  color: var(--white-50);
+  font-size: 0.62rem;
+  margin-top: 0.08rem;
+}
+
+.regHealthKpi[data-tone="good"] strong { color: var(--success); }
+.regHealthKpi[data-tone="warning"] strong { color: var(--warning); }
+.regHealthKpi[data-tone="danger"] strong { color: var(--danger); }
+
+.regHealthKpiLock {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.45rem;
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.regHealthIssues {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.regHealthIssue {
+  display: flex;
+  align-items: center;
+  gap: 0.38rem;
+  border-radius: 4px;
+  padding: 0.34rem 0.5rem;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--white-70);
+  text-align: left;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  background: transparent;
+}
+
+.regHealthIssue:disabled { cursor: default; }
+.regHealthIssue strong { color: var(--white-85); }
+.regHealthIssue svg { flex: 0 0 auto; }
+
+.regHealthIssue[data-tone="danger"] { color: #f87171; background: rgba(var(--danger-rgb), 0.08); border: 1px solid rgba(var(--danger-rgb), 0.26); }
+.regHealthIssue[data-tone="warning"] { color: #fbbf24; background: rgba(var(--warning-rgb), 0.08); border: 1px solid rgba(var(--warning-rgb), 0.24); }
+.regHealthIssue[data-tone="neutral"] { color: var(--blueprint-blue); background: rgba(var(--blueprint-blue-rgb), 0.08); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2); }
+
+.regHealthGood {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.38rem;
+  border-radius: 4px;
+  padding: 0.34rem 0.5rem;
+  color: var(--success);
+  background: rgba(var(--success-rgb), 0.08);
+  border: 1px solid rgba(var(--success-rgb), 0.22);
+  font-size: 0.68rem;
+}
+
+@media (max-width: 640px) {
+  .regHealthPanel { margin-top: 0.55rem; }
+  .regHealthSummary { padding: 0.58rem 0.65rem; }
+  .regHealthToggle span { display: none; }
+  .regHealthScore { min-width: 66px; }
+  .regHealthBody { padding: 0 0.65rem 0.65rem; }
+  .regHealthKpiGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ─── Expanded Row Details ────────────────────────────────────────────────── */
@@ -749,18 +965,18 @@
   font-style: italic;
 }
 
-/* No-pools-at-all nudge (Pools view on a division with pools off) */
+/* No-pools-at-all note (Pools view on a division with pools off) */
 .poolEmptyState {
-  padding: 1.25rem 1rem;
-  font-size: 0.85rem;
-  color: var(--white-60, rgba(255, 255, 255, 0.6));
-  text-align: center;
-  line-height: 1.5;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.78rem;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+  text-align: left;
+  line-height: 1.45;
 }
 
 .poolEmptyState a {
   color: var(--logic-lime);
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: underline;
 }
 

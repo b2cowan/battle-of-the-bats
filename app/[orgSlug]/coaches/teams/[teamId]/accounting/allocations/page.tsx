@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Building2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Building2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import styles from '../../../../coaches.module.css';
 import type { RepAllocationInstallment } from '@/lib/types';
@@ -110,19 +110,13 @@ export default function CoachesAllocationsPage({
 
   return (
     <div className={styles.page}>
+      <Link href={`${base}/accounting`} className={styles.backLink}>
+        <ArrowLeft size={14} aria-hidden /> Back to Money
+      </Link>
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><Building2 size={22} /></div>
           <div>
-            <nav className={styles.breadcrumb}>
-              <Link href={`/${orgSlug}/coaches`}>Portal</Link>
-              <span>/</span>
-              <Link href={base}>{assignment.teamName}</Link>
-              <span>/</span>
-              <Link href={`${base}/accounting`}>Money</Link>
-              <span>/</span>
-              <span>Org Allocations</span>
-            </nav>
             <h1 className={styles.pageTitle}>Org Allocations</h1>
             <p className={styles.pageSub}>{assignment.programYearName}</p>
           </div>

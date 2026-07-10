@@ -988,7 +988,7 @@ export default function TeamOverviewPage({
 
       {/* Season record — moved UP to sit under the anchor (was stranded at page bottom).
           Self-hides until a finalized game exists (pre-season shows nothing). */}
-      <SeasonRecordWidget events={seasonGames} teamId={teamId} />
+      <SeasonRecordWidget events={seasonGames} teamId={teamId} insightsHref={`${base}/history`} />
 
       {/* Your team at a glance — run-mode snapshot of real data (replaces the old
           quick-links grid, which just duplicated the sidebar). */}

@@ -302,13 +302,24 @@ export const GET = withObservability(async (_req: Request,
   });
 
   // ── 9. Headroom ───────────────────────────────────────────────────────
+  // Effective budget reconciles the optional season total (rep_program_years.
+  // budget_amount) with the itemized sum: the larger wins, and a season total above
+  // the itemized sum is exposed as a non-itemized "buffer" (owner decision 2026-07-08).
+  // Headroom is measured against the EFFECTIVE budget so this report, the Money hub,
+  // and the budget planner always agree.
   const totalActual  = Math.round(categoryResults.reduce((s, c) => s + c.categoryActual, 0) * 100) / 100;
   const unbudgeted   = Math.round(unbudgetedActuals.reduce((s, u) => s + u.amount, 0) * 100) / 100;
-  const headroom     = Math.round((totalBudget - totalActual - unbudgeted) * 100) / 100;
+  const seasonTotal  = programYear.budgetAmount ?? null;
+  const effectiveBudget = Math.max(totalBudget, seasonTotal ?? 0);
+  const buffer       = seasonTotal != null && seasonTotal > totalBudget ? seasonTotal - totalBudget : 0;
+  const headroom     = Math.round((effectiveBudget - totalActual - unbudgeted) * 100) / 100;
 
   return NextResponse.json({
     headroom,
-    totalBudget:   Math.round(totalBudget * 100) / 100,
+    totalBudget:     Math.round(totalBudget * 100) / 100,
+    seasonTotal:     seasonTotal == null ? null : Math.round(seasonTotal * 100) / 100,
+    effectiveBudget: Math.round(effectiveBudget * 100) / 100,
+    buffer:          Math.round(buffer * 100) / 100,
     totalActual:   Math.round((totalActual + unbudgeted) * 100) / 100,
     categories:    categoryResults,
     unbudgetedActuals,

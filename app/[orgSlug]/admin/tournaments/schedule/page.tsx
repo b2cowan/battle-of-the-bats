@@ -918,12 +918,16 @@ export default function AdminSchedulePage() {
       tournament: currentTournament,
       divisionId: filterGroup,
       includePlayoffs: viewMode === 'playoff',
+      // Playoffs only: lets a "Seed #N" bracket slot resolve against LIVE round-robin standings
+      // when the organizer never typed a seed number in Teams admin (the common case). Needs the
+      // tournament's full, unfiltered game list — divisionGames above is already view-scoped.
+      standingsGames: viewMode === 'playoff' ? games : undefined,
       // Draft rules drive the live preview as the organizer adjusts them.
       maxGamesPerDay: healthRules.maxGamesPerDay,
       minRestMinutes: healthRules.minRestMinutes,
       expectedGamesPerParticipant: healthRules.targetGamesPerTeam ?? undefined,
     });
-  }, [currentTournament, viewMode, filterGroup, divisionGames, teams, divisions, venues, healthRules]);
+  }, [currentTournament, viewMode, filterGroup, divisionGames, games, teams, divisions, venues, healthRules]);
 
   // Re-seed the rules editor from the tournament's saved settings when the tournament changes.
   useEffect(() => {
@@ -1641,7 +1645,7 @@ export default function AdminSchedulePage() {
           metrics={savedScheduleMetrics}
           subtitle={`${activeDivision?.name ?? 'Division'} · ${viewMode === 'playoff' ? 'Saved playoffs' : 'Saved round robin'}`}
           defaultOpen={false}
-          sticky
+          showTeamTable
           onJumpToConflict={() => {
             document.getElementById('schedule-first-conflict')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }}

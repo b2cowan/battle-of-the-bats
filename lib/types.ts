@@ -1382,6 +1382,21 @@ export interface RepTeamLineupTemplate {
   updatedAt: string;
 }
 
+// Coach Tags (Coach Tags & Player Awards, Phase 1). 'expense' is reserved for Phase 3 — no app
+// code creates expense-kind tags yet.
+export type RepTagKind = 'game' | 'expense';
+
+export interface RepTeamTag {
+  id: string;
+  orgId: string;
+  teamId: string;
+  kind: RepTagKind;
+  name: string;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface RepDocumentTemplate {
   id: string;
   orgId: string;

@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Receipt, Plus, X, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Receipt, Plus, X, CheckCircle2, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
 import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
 import styles from '../../../../coaches.module.css';
-import type { RepTeamExpense } from '@/lib/types';
+import type { RepTeamExpense, BudgetCategoryWithItems, RepBudgetPlan } from '@/lib/types';
 
 function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -59,6 +59,12 @@ export default function CoachesExpensesPage({
   const [error, setError] = useState('');
   const [tab, setTab] = useState<ExpenseTab>('expenses');
 
+  // Structured categories (owner decision 2026-07-08: free-text retired). The picker
+  // shares the budget taxonomy so Budget vs. Actual's name-match join can't misfire.
+  const [categories, setCategories] = useState<BudgetCategoryWithItems[]>([]);
+  const [budgetedCategories, setBudgetedCategories] = useState<Set<string>>(new Set());
+  const [hasBudgetPlan, setHasBudgetPlan] = useState(false);
+
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showAddPayable, setShowAddPayable] = useState(false);
   const [expenseForm, setExpenseForm] = useState(BLANK_EXPENSE);
@@ -76,10 +82,29 @@ export default function CoachesExpensesPage({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses`);
+      const [res, catRes, planRes] = await Promise.all([
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses`),
+        fetch(`/api/coaches/${orgSlug}/budget-items`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`),
+      ]);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       setExpenses(data.expenses ?? []);
+      if (catRes.ok) {
+        const catData = await catRes.json();
+        setCategories(catData.categories ?? []);
+      }
+      if (planRes.ok) {
+        const planData = await planRes.json();
+        const plan = planData.plan as RepBudgetPlan | undefined;
+        const budgeted = new Set<string>(
+          (plan?.lines ?? [])
+            .map(l => (l.categoryName ?? '').toLowerCase())
+            .filter(Boolean),
+        );
+        setBudgetedCategories(budgeted);
+        setHasBudgetPlan((plan?.lines.length ?? 0) > 0);
+      }
     } catch (e: any) {
       setError(e.message ?? 'Failed to load expenses.');
     } finally {
@@ -176,6 +201,35 @@ export default function CoachesExpensesPage({
     }
   }
 
+  // Structured category picker (shared budget taxonomy) + an entry-time honesty hint:
+  // anything that won't match a budget line is flagged BEFORE it silently lands in
+  // "Unbudgeted" on Budget vs. Actual.
+  function categoryField(value: string, onChange: (v: string) => void) {
+    const unmatched = hasBudgetPlan && value !== '' && !budgetedCategories.has(value.toLowerCase());
+    const uncategorized = hasBudgetPlan && value === '';
+    return (
+      <div className={styles.field}>
+        <label className={styles.label}>Category</label>
+        <select className={styles.select} value={value} onChange={e => onChange(e.target.value)}>
+          <option value="">— No category —</option>
+          {categories.map(c => (
+            <option key={c.id} value={c.name}>{c.name}</option>
+          ))}
+        </select>
+        {(unmatched || uncategorized) && (
+          <p style={{ margin: '0.3rem 0 0', fontSize: '0.75rem', color: 'var(--warning)', display: 'flex', alignItems: 'flex-start', gap: '0.3rem' }}>
+            <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 1 }} aria-hidden />
+            <span>
+              {unmatched
+                ? 'Not in your budget plan — this will show as Unbudgeted in Budget vs. Actual.'
+                : 'Uncategorized spending shows as Unbudgeted in Budget vs. Actual.'}
+            </span>
+          </p>
+        )}
+      </div>
+    );
+  }
+
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
   if (!assignment) {
     return (
@@ -191,19 +245,13 @@ export default function CoachesExpensesPage({
 
   return (
     <div className={styles.page}>
+      <Link href={`${base}/accounting`} className={styles.backLink}>
+        <ArrowLeft size={14} aria-hidden /> Back to Money
+      </Link>
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><Receipt size={22} /></div>
           <div>
-            <nav className={styles.breadcrumb}>
-              <Link href={`/${orgSlug}/coaches`}>Portal</Link>
-              <span>/</span>
-              <Link href={base}>{assignment.teamName}</Link>
-              <span>/</span>
-              <Link href={`${base}/accounting`}>Money</Link>
-              <span>/</span>
-              <span>Expenses</span>
-            </nav>
             <h1 className={styles.pageTitle}>Expenses &amp; Tournament Payables</h1>
             <p className={styles.pageSub}>{assignment.programYearName}</p>
           </div>
@@ -377,10 +425,7 @@ export default function CoachesExpensesPage({
                 <label className={styles.label}>Description *</label>
                 <input className={styles.input} value={expenseForm.description} onChange={e => setExpenseForm(f => ({ ...f, description: e.target.value }))} placeholder="e.g. Diamond rental" />
               </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Category</label>
-                <input className={styles.input} value={expenseForm.category} onChange={e => setExpenseForm(f => ({ ...f, category: e.target.value }))} placeholder="e.g. Ice time" />
-              </div>
+              {categoryField(expenseForm.category, v => setExpenseForm(f => ({ ...f, category: v })))}
               <div className={styles.field}>
                 <label className={styles.label}>Amount *</label>
                 <input className={styles.input} type="number" min={0} step="0.01" value={expenseForm.amount} onChange={e => setExpenseForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" />
@@ -425,10 +470,7 @@ export default function CoachesExpensesPage({
                 <label className={styles.label}>Description *</label>
                 <input className={styles.input} value={payableForm.description} onChange={e => setPayableForm(f => ({ ...f, description: e.target.value }))} placeholder="e.g. Spring Tournament 2025" />
               </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Category</label>
-                <input className={styles.input} value={payableForm.category} onChange={e => setPayableForm(f => ({ ...f, category: e.target.value }))} placeholder="Tournament Fees" />
-              </div>
+              {categoryField(payableForm.category, v => setPayableForm(f => ({ ...f, category: v })))}
               <div className={styles.field}>
                 <label className={styles.label}>Total Amount *</label>
                 <input className={styles.input} type="number" min={0} step="0.01" value={payableForm.amount} onChange={e => setPayableForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" />

@@ -3,9 +3,9 @@ import {
   acceptanceHtml,
   paymentConfirmationHtml,
   rejectionHtml,
-  sendEmail,
-  coachEmailEnabled, resolveCoachRecipient, acceptanceFeeLine,
+  coachEmailEnabled, resolveCoachRecipient, acceptanceFeeLine, coachPortalUrl,
 } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
@@ -168,17 +168,35 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
         tournament: { depositAmount: tournament.deposit_amount, depositDueDate: tournament.deposit_due_date, totalFeeAmount: tournament.total_fee_amount, totalFeeDueDate: tournament.total_fee_due_date },
         division: div ? { depositAmount: div.deposit_amount, depositDueDate: div.deposit_due_date, totalFeeAmount: div.total_fee_amount, totalFeeDueDate: div.total_fee_due_date } : null,
       });
-      await sendEmail(recipient, `Your Team Has Been Accepted - ${team.name}`, acceptanceHtml({ ...payload, paymentInstructions, feeLine }));
+      await sendTransactionalEmail({
+        key: 'tournament_registration_accepted',
+        to: recipient,
+        vars: { coachName: payload.coachName, teamName: payload.teamName, ageGroupName: payload.divisionName, tournamentName: payload.tournamentName, profileUrl: coachPortalUrl({ registrationId: payload.teamId, email: payload.coachEmail }) },
+        defaultSubject: `Your Team Has Been Accepted - ${team.name}`,
+        defaultHtml: acceptanceHtml({ ...payload, paymentInstructions, feeLine }),
+      });
     }
     if (action === 'reject' && team.status !== 'rejected') {
       if (coachEmailEnabled(coachSettings, 'rejection')) {
-        await sendEmail(recipient, `Registration Update - ${team.name}`, rejectionHtml(payload));
+        await sendTransactionalEmail({
+          key: 'tournament_registration_rejected',
+          to: recipient,
+          vars: { coachName: payload.coachName, teamName: payload.teamName, ageGroupName: payload.divisionName, tournamentName: payload.tournamentName },
+          defaultSubject: `Registration Update - ${team.name}`,
+          defaultHtml: rejectionHtml(payload),
+        });
       }
       // 5m: a rejected team is no longer playing — cancel any scheduled game-day reminder.
       if (orgId) await cancelScheduledEmailForRecipient(orgId, COACH_GAME_DAY_REMINDER_EMAIL_KEY, recipient);
     }
     if (action === 'mark_paid' && team.payment_status !== 'paid' && coachEmailEnabled(coachSettings, 'payment')) {
-      await sendEmail(recipient, `Payment Recorded - ${team.name}`, paymentConfirmationHtml(payload));
+      await sendTransactionalEmail({
+        key: 'tournament_payment_recorded',
+        to: recipient,
+        vars: { coachName: payload.coachName, teamName: payload.teamName, ageGroupName: payload.divisionName, tournamentName: payload.tournamentName },
+        defaultSubject: `Payment Recorded - ${team.name}`,
+        defaultHtml: paymentConfirmationHtml(payload),
+      });
     }
   }
 }

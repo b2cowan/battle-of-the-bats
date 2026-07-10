@@ -8,7 +8,8 @@ import { getStripePriceId } from '@/lib/stripe-prices';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { isRecoveryTransition, writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { sendEmail, welcomeBackHtml, tournamentPlusWelcomeHtml, SITE_URL } from '@/lib/email';
+import { welcomeBackHtml, tournamentPlusWelcomeHtml, SITE_URL } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { sendMarketingEmail, cancelScheduledEmail } from '@/lib/email-sender';
 import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
 import type { OrgPlan } from '@/lib/types';
@@ -177,16 +178,18 @@ export const POST = withObservability(async (req: Request) => {
       if (auth.org.subscriptionStatus === 'canceled' && auth.user.email) {
         const planLabel = PLAN_CONFIG[planKey]?.label ?? planKey;
         const dashboardUrl = `${SITE_URL}/${auth.org.slug}/admin`;
-        await sendEmail(
-          auth.user.email,
-          `Welcome back to FieldLogicHQ — ${auth.org.name}`,
-          welcomeBackHtml({
+        await sendTransactionalEmail({
+          key: 'welcome_back',
+          to: auth.user.email,
+          vars: { orgName: auth.org.name, planLabel, dashboardUrl },
+          defaultSubject: `Welcome back to FieldLogicHQ — ${auth.org.name}`,
+          defaultHtml: welcomeBackHtml({
             orgName: auth.org.name,
             planLabel,
             restoredTournaments: restoreResult.restoredCount,
             dashboardUrl,
           }),
-        );
+        });
       }
     }
 

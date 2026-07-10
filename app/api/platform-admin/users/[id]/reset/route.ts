@@ -22,8 +22,11 @@ export const POST = withObservability(async (req: NextRequest,
   const { data, error } = await supabaseAdmin.auth.admin.generateLink({
     type: 'recovery',
     email,
+    // Land on the dedicated set-password page (which catches the recovery token in the URL and
+    // shows the "Set New Password" form). Pointing at /auth/login dead-ends the customer on the
+    // sign-in screen. Matches the customer-facing forgot-password flow.
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/auth/login`,
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/auth/reset-password`,
     },
   });
 

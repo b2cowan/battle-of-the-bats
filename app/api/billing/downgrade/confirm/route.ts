@@ -12,7 +12,8 @@ import { stripe } from '@/lib/stripe';
 import { getPlanFromPriceId, getStripePriceId } from '@/lib/stripe-prices';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformEvent } from '@/lib/platform-events';
-import { sendEmail, planDowngradedHtml, SITE_URL } from '@/lib/email';
+import { planDowngradedHtml, SITE_URL } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import type { OrgPlan } from '@/lib/types';
 import { captureError, withObservability } from '@/lib/observability';
 
@@ -227,10 +228,12 @@ export const POST = withObservability(async (req: Request) => {
       year: 'numeric', month: 'long', day: 'numeric',
     });
     const billingUrl = `${SITE_URL}/${ctx.org.slug}/admin/org/billing`;
-    await sendEmail(
-      actorEmail,
-      `Your ${ctx.org.name} plan has been updated`,
-      planDowngradedHtml({
+    await sendTransactionalEmail({
+      key: 'plan_downgraded',
+      to: actorEmail,
+      vars: { orgName: ctx.org.name, fromPlanLabel, toPlanLabel, billingUrl },
+      defaultSubject: `Your ${ctx.org.name} plan has been updated`,
+      defaultHtml: planDowngradedHtml({
         orgName: ctx.org.name,
         fromPlanLabel,
         toPlanLabel,
@@ -238,7 +241,7 @@ export const POST = withObservability(async (req: Request) => {
         retentionUntil: retentionDate,
         billingUrl,
       }),
-    );
+    });
   }
 
   return Response.json({

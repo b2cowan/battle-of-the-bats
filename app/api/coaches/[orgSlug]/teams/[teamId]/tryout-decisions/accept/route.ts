@@ -9,7 +9,8 @@ import {
   TryoutAcceptError,
 } from '@/lib/db';
 import { deriveStandardDuesSchedule, validateAcceptDues, normalizeAcceptDues } from '@/lib/tryout-fees';
-import { sendEmail, tryoutAcceptedHtml } from '@/lib/email';
+import { tryoutAcceptedHtml } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import type { RepProgramYear } from '@/lib/types';
@@ -101,10 +102,18 @@ export const POST = withObservability(async (req: Request,
   try {
     const { registration, player } = await acceptTryoutAndAddToRoster(reg.id, { roster, dues });
     // Same welcome email the admin accept sends (fire-and-forget).
-    sendEmail(
-      reg.guardianEmail,
-      `${r.team!.name} — Welcome to the Team!`,
-      tryoutAcceptedHtml({
+    sendTransactionalEmail({
+      key: 'tryout_offer_accepted',
+      to: reg.guardianEmail,
+      vars: {
+        guardianFirstName: reg.guardianFirstName,
+        playerFirstName: reg.playerFirstName,
+        playerLastName: reg.playerLastName,
+        teamName: r.team!.name,
+        yearName: r.programYear.name,
+      },
+      defaultSubject: `${r.team!.name} — Welcome to the Team!`,
+      defaultHtml: tryoutAcceptedHtml({
         guardianFirstName: reg.guardianFirstName,
         playerFirstName: reg.playerFirstName,
         playerLastName: reg.playerLastName,
@@ -112,7 +121,7 @@ export const POST = withObservability(async (req: Request,
         yearName: r.programYear.name,
         contactEmail: r.contactEmail,
       }),
-    ).catch(e => console.error('[email] tryout accepted (coach):', e));
+    }).catch(e => console.error('[email] tryout accepted (coach):', e));
     return NextResponse.json({ registrationId: registration.id, status: registration.status, player });
   } catch (e) {
     if (e instanceof TryoutAcceptError) {

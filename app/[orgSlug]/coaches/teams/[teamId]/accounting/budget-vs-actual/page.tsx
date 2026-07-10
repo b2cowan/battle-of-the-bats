@@ -1,10 +1,19 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
+import { TrendingUp, ChevronDown, ChevronRight, X, ArrowLeft } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { useOrg } from '@/lib/org-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import ExportMenu from '@/components/admin/ExportMenu';
+import {
+  downloadXLSX, generateCSV, downloadCSVBlob,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
+  downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+} from '@/lib/export';
+import type { BudgetCategoryWithItems } from '@/lib/types';
 import styles from './bva.module.css';
+import shared from '../../../../coaches.module.css';
 
 interface PeriodResult {
   label: string;
@@ -53,13 +62,23 @@ interface MonthlyPoint {
 
 interface BvaData {
   headroom: number;
-  totalBudget: number;
+  totalBudget: number;      // itemized line-item sum
+  seasonTotal: number | null;
+  effectiveBudget: number;  // max(itemized, season total)
+  buffer: number;           // season total not yet itemized
   totalActual: number;
   categories: CategoryResult[];
   unbudgetedActuals: UnbudgetedActual[];
   duesCollection: DuesCollection;
   monthlyChart: MonthlyPoint[];
 }
+
+const BVA_EXPORT_COLS: ExportColumnDef[] = [
+  { label: 'Item',     key: 'item',     format: 'text' },
+  { label: 'Budgeted', key: 'budgeted', format: 'currency' },
+  { label: 'Actual',   key: 'actual',   format: 'currency' },
+  { label: 'Variance', key: 'variance', format: 'currency' },
+];
 
 function fmt(n: number) {
   return `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -158,6 +177,7 @@ export default function BudgetVsActualPage({
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
+  const { currentOrg } = useOrg();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   const [data,    setData]    = useState<BvaData | null>(null);
@@ -167,15 +187,33 @@ export default function BudgetVsActualPage({
   const [expandedCats,  setExpandedCats]  = useState<Set<string>>(new Set());
   const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set());
 
+  // Recategorize fix-it for unbudgeted expenses (money-write only)
+  const [taxonomy, setTaxonomy] = useState<BudgetCategoryWithItems[]>([]);
+  const [recatTarget, setRecatTarget] = useState<UnbudgetedActual | null>(null);
+  const [recatCategory, setRecatCategory] = useState('');
+  const [recatSaving, setRecatSaving] = useState(false);
+  const [recatError, setRecatError] = useState('');
+
+  // PDF settings — fetched once on mount; used in handleExportPDF
+  const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
+
   const assignment = assignments.find(a => a.teamId === teamId);
+  const moneyCanWrite = assignment?.capabilities.money === 'write';
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-vs-actual`);
+      const [res, catRes] = await Promise.all([
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-vs-actual`),
+        fetch(`/api/coaches/${orgSlug}/budget-items`),
+      ]);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       setData(await res.json());
+      if (catRes.ok) {
+        const catData = await catRes.json();
+        setTaxonomy(catData.categories ?? []);
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
@@ -184,6 +222,101 @@ export default function BudgetVsActualPage({
   }, [orgSlug, teamId]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`)
+      .then(r => r.ok ? r.json() : {})
+      .then(d => setPdfSettings(d as OrgPdfSettings))
+      .catch(() => setPdfSettings(null));
+  }, [orgSlug]);
+
+  async function saveRecategorize() {
+    if (!recatTarget) return;
+    setRecatError('');
+    setRecatSaving(true);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${recatTarget.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: recatCategory || null }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
+      setRecatTarget(null);
+      await load();
+    } catch (e: unknown) {
+      setRecatError(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setRecatSaving(false);
+    }
+  }
+
+  // ── Export helpers ─────────────────────────────────────────────────────────
+  function buildExportRows() {
+    if (!data) return [];
+    const rows: Array<{ item: string; budgeted: number | ''; actual: number | ''; variance: number | '' }> = [];
+    for (const cat of data.categories) {
+      rows.push({ item: cat.categoryName, budgeted: cat.categoryEstimated, actual: cat.categoryActual, variance: cat.categoryVariance });
+      for (const line of cat.lines) {
+        rows.push({ item: `  — ${line.description}`, budgeted: line.totalEstimated, actual: '', variance: '' });
+      }
+    }
+    if (data.buffer > 0) {
+      rows.push({ item: 'Non-itemized buffer', budgeted: data.buffer, actual: '', variance: '' });
+    }
+    for (const u of data.unbudgetedActuals) {
+      rows.push({ item: `Unbudgeted — ${u.description}${u.category ? ` (${u.category})` : ''}`, budgeted: '', actual: u.amount, variance: '' });
+    }
+    rows.push({ item: 'Total', budgeted: data.effectiveBudget, actual: data.totalActual, variance: data.headroom });
+    return rows;
+  }
+
+  function exportMeta() {
+    return { org: currentOrg?.slug ?? orgSlug, dataset: 'budget-vs-actual', scope: assignment?.programYearName ?? teamId };
+  }
+
+  async function handleExportXLSX() {
+    const src = buildExportRows();
+    if (!src.length) return;
+    await downloadXLSX(
+      buildFilename(exportMeta(), 'xlsx'),
+      serializeHeaders(BVA_EXPORT_COLS), serializeRows(src, BVA_EXPORT_COLS), 'Budget vs Actual',
+    );
+  }
+
+  function handleExportCSV() {
+    const src = buildExportRows();
+    if (!src.length) return;
+    downloadCSVBlob(
+      buildFilename(exportMeta(), 'csv'),
+      generateCSV(serializeHeaders(BVA_EXPORT_COLS), serializeRows(src, BVA_EXPORT_COLS)),
+    );
+  }
+
+  async function handleExportPDF() {
+    const src = buildExportRows();
+    if (!src.length) return;
+    const settings: OrgPdfSettings = {
+      ...DEFAULT_PDF_SETTINGS,
+      ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}),
+    };
+    const teamName = assignment?.teamName ?? teamId;
+    const programYearName = assignment?.programYearName ?? '';
+    const pdfHeaders = ['Item', 'Budgeted', 'Actual', 'Variance'];
+    const pdfRows = src.map(r => [
+      r.item,
+      r.budgeted !== '' ? fmt(Number(r.budgeted)) : '—',
+      r.actual   !== '' ? fmt(Number(r.actual))   : '—',
+      r.variance !== '' ? fmt(Number(r.variance)) : '—',
+    ]);
+    await downloadPDF(
+      buildFilename(exportMeta(), 'pdf'),
+      'Budget vs. Actual',
+      `${teamName} — ${programYearName}`,
+      pdfHeaders,
+      pdfRows,
+      settings,
+    );
+  }
 
   function toggleCat(name: string) {
     setExpandedCats(prev => {
@@ -215,30 +348,33 @@ export default function BudgetVsActualPage({
 
   return (
     <div className={styles.page}>
+      <Link href={`${base}/accounting`} className={shared.backLink}>
+        <ArrowLeft size={14} aria-hidden /> Back to Money
+      </Link>
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><TrendingUp size={22} /></div>
           <div>
-            <nav className={styles.breadcrumb}>
-              <Link href={`/${orgSlug}/coaches`}>Portal</Link>
-              <span>/</span>
-              <Link href={base}>{assignment.teamName}</Link>
-              <span>/</span>
-              <Link href={`${base}/accounting`}>Money</Link>
-              <span>/</span>
-              <span>Budget vs. Actual</span>
-            </nav>
             <h1 className={styles.pageTitle}>Budget vs. Actual</h1>
             <p className={styles.pageSub}>{assignment.programYearName}</p>
           </div>
         </div>
+        <ExportMenu
+          formats={['xlsx', 'csv', 'pdf']}
+          onExportXLSX={handleExportXLSX}
+          onExportCSV={handleExportCSV}
+          onExportPDF={handleExportPDF}
+          planId={currentOrg?.planId}
+          pdfFeatureKey="pdf_exports"
+          disabled={!data || (data.effectiveBudget === 0 && data.totalActual === 0)}
+        />
       </div>
 
       {loading ? (
         <p className={styles.muted}>Loading…</p>
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
-      ) : !data || data.totalBudget === 0 ? (
+      ) : !data || data.effectiveBudget === 0 ? (
         <CoachEmptyState
           icon={<TrendingUp size={22} aria-hidden />}
           eyebrow="Budget vs. actual"
@@ -265,7 +401,10 @@ export default function BudgetVsActualPage({
             <div className={styles.summaryDivider} />
             <div className={styles.summaryItem}>
               <span className={styles.summaryLabel}>Total Budget</span>
-              <span className={styles.summaryValue}>{fmt(data.totalBudget)}</span>
+              <span className={styles.summaryValue}>{fmt(data.effectiveBudget)}</span>
+              {data.buffer > 0 && (
+                <span className={styles.summaryHint}>incl. {fmt(data.buffer)} non-itemized</span>
+              )}
             </div>
             <div className={styles.summaryItem}>
               <span className={styles.summaryLabel}>Total Actual</span>
@@ -420,9 +559,24 @@ export default function BudgetVsActualPage({
                 ))}
               </div>
 
+              {/* Non-itemized buffer — season-total dollars not yet covered by lines */}
+              {data.buffer > 0 && (
+                <div className={styles.categoryGroup}>
+                  <div className={styles.categoryHeader} style={{ cursor: 'default' }}>
+                    <div className={styles.catHeaderInner}>
+                      <span className={styles.expandIcon} />
+                      <span className={styles.categoryName}>Non-itemized buffer</span>
+                    </div>
+                    <span className={styles.catNum}>{fmt(data.buffer)}</span>
+                    <span className={styles.catNum} style={{ color: 'rgba(255,255,255,0.25)' }}>—</span>
+                    <span className={styles.catNum} style={{ color: 'rgba(255,255,255,0.25)' }}>—</span>
+                  </div>
+                </div>
+              )}
+
               <div className={styles.grandTotal}>
                 <span>Total</span>
-                <span className={styles.grandNum}>{fmt(data.totalBudget)}</span>
+                <span className={styles.grandNum}>{fmt(data.effectiveBudget)}</span>
                 <span className={styles.grandNum}>{fmt(data.totalActual - unbudgetedTotal)}</span>
                 <span
                   className={styles.grandNum}
@@ -441,6 +595,7 @@ export default function BudgetVsActualPage({
               <p className={styles.sectionTitle}>Unbudgeted Expenses</p>
               <p className={styles.sectionSub}>
                 These paid expenses don&apos;t match any budget category and reduce your headroom.
+                {moneyCanWrite ? ' Recategorize them to count against the right budget line.' : ''}
               </p>
               {data.unbudgetedActuals.map(u => (
                 <div key={u.id} className={styles.unbudgetedRow}>
@@ -456,6 +611,16 @@ export default function BudgetVsActualPage({
                     </span>
                   )}
                   <span className={styles.unbudgetedAmount}>{fmt(u.amount)}</span>
+                  {moneyCanWrite && (
+                    <button
+                      type="button"
+                      className={shared.btnSecondary}
+                      style={{ fontSize: '0.72rem', padding: '0.2rem 0.55rem', flexShrink: 0 }}
+                      onClick={() => { setRecatTarget(u); setRecatCategory(''); setRecatError(''); }}
+                    >
+                      Recategorize
+                    </button>
+                  )}
                 </div>
               ))}
               <div className={styles.unbudgetedTotal}>
@@ -465,6 +630,51 @@ export default function BudgetVsActualPage({
             </div>
           )}
         </>
+      )}
+
+      {/* Recategorize modal — moves an unbudgeted expense onto a real category so it
+          matches (or deliberately doesn't match) the budget plan. */}
+      {recatTarget && (
+        <div className={shared.modalOverlay} onClick={() => setRecatTarget(null)}>
+          <div className={shared.modal} style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+            <div className={shared.modalHeader}>
+              <h3 className={shared.modalTitle}>Recategorize Expense</h3>
+              <button className={shared.modalCloseBtn} onClick={() => setRecatTarget(null)}><X size={16} /></button>
+            </div>
+            <p className={shared.muted} style={{ margin: '0 0 0.9rem', fontSize: '0.85rem' }}>
+              “{recatTarget.description}” — {fmt(recatTarget.amount)}
+              {recatTarget.category ? <> · currently “{recatTarget.category}”</> : null}
+            </p>
+            <div className={shared.field}>
+              <label className={shared.label}>Category</label>
+              <select
+                className={shared.select}
+                value={recatCategory}
+                onChange={e => setRecatCategory(e.target.value)}
+              >
+                <option value="">— select category —</option>
+                {taxonomy.map(c => {
+                  const inBudget = data?.categories.some(bc => bc.categoryName.toLowerCase() === c.name.toLowerCase());
+                  return (
+                    <option key={c.id} value={c.name}>
+                      {c.name}{inBudget ? ' (in budget)' : ''}
+                    </option>
+                  );
+                })}
+              </select>
+              <p className={shared.muted} style={{ margin: '0.35rem 0 0', fontSize: '0.75rem' }}>
+                Pick a category marked “(in budget)” to count this against your plan.
+              </p>
+            </div>
+            {recatError && <p className={shared.errorText} style={{ marginTop: '0.6rem' }}>{recatError}</p>}
+            <div className={shared.modalFooter}>
+              <button type="button" className={shared.btnGhost} onClick={() => setRecatTarget(null)}>Cancel</button>
+              <button type="button" className={shared.btnPrimary} disabled={recatSaving || !recatCategory} onClick={saveRecategorize}>
+                {recatSaving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

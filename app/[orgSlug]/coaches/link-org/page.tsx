@@ -240,7 +240,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
               disabled={submitting}
             />
           </label>
-          <button type="submit" className="btn btn-primary" disabled={submitting || !target.trim()}>
+          <button type="submit" className="btn btn-lime" disabled={submitting || !target.trim()}>
             {submitting ? 'Sending...' : 'Send Request'}
           </button>
         </form>
@@ -284,7 +284,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
                     <div className="flex gap-2 mt-4 flex-wrap">
                       <button
                         type="button"
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-lime btn-sm"
                         onClick={() => respondToInvite(link.id, 'accept')}
                         disabled={workingId === link.id}
                       >
@@ -316,7 +316,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
                     <div className="flex gap-2 mt-4 flex-wrap">
                       <button
                         type="button"
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-lime btn-sm"
                         onClick={() => ownershipAction(link.id, 'accept_ownership')}
                         disabled={workingId === link.id}
                       >

@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-07-07 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-07-10 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-07-07
+# DB Schema Reference — 2026-07-10
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -180,6 +180,10 @@ id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uu
 id (uuid), event_id (uuid) → rep_team_events.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, status, note, updated_by (uuid), created_at, updated_at
 - Indexes: rep_team_event_attendance_event_id_player_id_key, rep_team_event_attendance_event_idx, rep_team_event_attendance_player_idx, rep_team_event_attendance_team_idx
 
+### rep_team_event_tags
+event_id (uuid) → rep_team_events.id NOT NULL, tag_id (uuid) → rep_team_tags.id NOT NULL, created_at
+- Indexes: rep_team_event_tags_tag_idx
+
 ### rep_team_events
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, team_score (integer), opponent_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid), arrival_time, field_number, uniform, location_address, resources (jsonb)
 - Indexes: rep_team_events_parent_idx, rep_team_events_src_basic_event_uq, rep_team_events_year_idx
@@ -207,6 +211,10 @@ id (uuid), event_id (uuid) → rep_team_events.id NOT NULL, program_year_id (uui
 ### rep_team_payment_requests
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, request_type NOT NULL, amount (numeric) NOT NULL, description NOT NULL, payment_method, notes, status, denial_reason, budget_line_id (uuid) → org_budget_lines.id, accounting_entry_id (uuid) → accounting_entries.id, created_by (uuid) NOT NULL, reviewed_by (uuid), reviewed_at, created_at, updated_at
 - Indexes: rep_team_payment_requests_org_status_idx, rep_team_payment_requests_team_status_idx
+
+### rep_team_tags
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, kind NOT NULL, name NOT NULL, created_by (uuid), created_at, updated_at
+- Indexes: rep_team_tags_name_uniq, rep_team_tags_org_idx, rep_team_tags_team_idx
 
 ### rep_teams
 id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id
@@ -385,7 +393,7 @@ id (uuid), request_type NOT NULL, title NOT NULL, description, status, priority,
 - Indexes: idx_platform_catalog_change_requests_effective, idx_platform_catalog_change_requests_status_time
 
 ### platform_email_templates
-key NOT NULL, label NOT NULL, description NOT NULL, subject NOT NULL, heading NOT NULL, body NOT NULL, cta_label, cta_url_pattern, variables (jsonb), category, is_customised (boolean), updated_at, updated_by
+key NOT NULL, label NOT NULL, description NOT NULL, subject NOT NULL, heading NOT NULL, body NOT NULL, cta_label, cta_url_pattern, variables (jsonb), category, is_customised (boolean), updated_at, updated_by, planned_send_date
 
 ### platform_events
 id (uuid), event_type NOT NULL, source, source_event_id, org_id (uuid) → organizations.id, actor_user_id (uuid), actor_email, previous_plan_id, plan_id, previous_subscription_status, subscription_status, metadata (jsonb), occurred_at, created_at
@@ -525,11 +533,11 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) →
 
 ## Tables by count
 
-Total: **126 tables** across 10 modules.
+Total: **128 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 32 tables
+- Rep Teams: 34 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables

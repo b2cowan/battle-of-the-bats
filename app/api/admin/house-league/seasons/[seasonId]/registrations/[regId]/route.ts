@@ -19,8 +19,8 @@ import {
   leagueAdminWaitlistedHtml,
   leagueWaitlistPromotedHtml,
   leagueRegistrationDeclinedHtml,
-  sendEmail,
 } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
@@ -232,11 +232,19 @@ export const PATCH = withObservability(async (req: Request,
 
     void (async () => {
       try {
-        await sendEmail(
-          reg.guardianEmail,
-          `Registration approved — ${season.name}`,
-          leagueAdminApprovedHtml({ ...emailBase, divisionName }),
-        );
+        await sendTransactionalEmail({
+          key: 'league_registration_approved',
+          to: reg.guardianEmail,
+          vars: {
+            guardianFirstName: reg.guardianFirstName,
+            playerFirstName:   reg.playerFirstName,
+            playerLastName:    reg.playerLastName,
+            seasonName:        season.name,
+            divisionName,
+          },
+          defaultSubject: `Registration approved — ${season.name}`,
+          defaultHtml: leagueAdminApprovedHtml({ ...emailBase, divisionName }),
+        });
       } catch (e) { console.error('[email] leagueAdminApprovedHtml failed', e); }
     })();
 
@@ -268,11 +276,20 @@ export const PATCH = withObservability(async (req: Request,
 
     void (async () => {
       try {
-        await sendEmail(
-          reg.guardianEmail,
-          `Waitlist update — ${season.name}`,
-          leagueAdminWaitlistedHtml({ ...emailBase, divisionName, waitlistPosition: newPos }),
-        );
+        await sendTransactionalEmail({
+          key: 'league_registration_waitlisted',
+          to: reg.guardianEmail,
+          vars: {
+            guardianFirstName: reg.guardianFirstName,
+            playerFirstName:   reg.playerFirstName,
+            playerLastName:    reg.playerLastName,
+            seasonName:        season.name,
+            divisionName,
+            waitlistPosition:  newPos,
+          },
+          defaultSubject: `Waitlist update — ${season.name}`,
+          defaultHtml: leagueAdminWaitlistedHtml({ ...emailBase, divisionName, waitlistPosition: newPos }),
+        });
       } catch (e) { console.error('[email] leagueAdminWaitlistedHtml failed', e); }
     })();
 
@@ -286,11 +303,19 @@ export const PATCH = withObservability(async (req: Request,
 
     void (async () => {
       try {
-        await sendEmail(
-          reg.guardianEmail,
-          `Registration update — ${season.name}`,
-          leagueRegistrationDeclinedHtml({ ...emailBase, divisionName }),
-        );
+        await sendTransactionalEmail({
+          key: 'league_registration_declined',
+          to: reg.guardianEmail,
+          vars: {
+            guardianFirstName: reg.guardianFirstName,
+            playerFirstName:   reg.playerFirstName,
+            playerLastName:    reg.playerLastName,
+            seasonName:        season.name,
+            divisionName,
+          },
+          defaultSubject: `Registration update — ${season.name}`,
+          defaultHtml: leagueRegistrationDeclinedHtml({ ...emailBase, divisionName }),
+        });
       } catch (e) { console.error('[email] leagueRegistrationDeclinedHtml failed', e); }
     })();
 
@@ -308,10 +333,18 @@ export const PATCH = withObservability(async (req: Request,
         const promotedDivisionName = divisionName;
         void (async () => {
           try {
-            await sendEmail(
-              next.guardianEmail,
-              `You're off the waitlist — ${season.name}`,
-              leagueWaitlistPromotedHtml({
+            await sendTransactionalEmail({
+              key: 'league_waitlist_promoted',
+              to: next.guardianEmail,
+              vars: {
+                guardianFirstName: next.guardianFirstName,
+                playerFirstName:   next.playerFirstName,
+                playerLastName:    next.playerLastName,
+                seasonName:        season.name,
+                divisionName:      promotedDivisionName,
+              },
+              defaultSubject: `You're off the waitlist — ${season.name}`,
+              defaultHtml: leagueWaitlistPromotedHtml({
                 playerFirstName:  next.playerFirstName,
                 playerLastName:   next.playerLastName,
                 guardianFirstName: next.guardianFirstName,
@@ -319,7 +352,7 @@ export const PATCH = withObservability(async (req: Request,
                 divisionName:     promotedDivisionName,
                 registrationId:   next.id,
               }),
-            );
+            });
           } catch (e) { console.error('[email] leagueWaitlistPromotedHtml failed', e); }
         })();
 
@@ -347,10 +380,18 @@ export const PATCH = withObservability(async (req: Request,
 
         void (async () => {
           try {
-            await sendEmail(
-              next.guardianEmail,
-              `You're off the waitlist — ${season.name}`,
-              leagueWaitlistPromotedHtml({
+            await sendTransactionalEmail({
+              key: 'league_waitlist_promoted',
+              to: next.guardianEmail,
+              vars: {
+                guardianFirstName: next.guardianFirstName,
+                playerFirstName:   next.playerFirstName,
+                playerLastName:    next.playerLastName,
+                seasonName:        season.name,
+                divisionName,
+              },
+              defaultSubject: `You're off the waitlist — ${season.name}`,
+              defaultHtml: leagueWaitlistPromotedHtml({
                 playerFirstName:  next.playerFirstName,
                 playerLastName:   next.playerLastName,
                 guardianFirstName: next.guardianFirstName,
@@ -358,7 +399,7 @@ export const PATCH = withObservability(async (req: Request,
                 divisionName,
                 registrationId:   next.id,
               }),
-            );
+            });
           } catch (e) { console.error('[email] leagueWaitlistPromotedHtml failed', e); }
         })();
 

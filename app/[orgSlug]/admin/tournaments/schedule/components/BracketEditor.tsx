@@ -133,8 +133,12 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
       }
       return map;
     }
-    // Loaded tiers: derive each tier's range from the Seed #N placeholders present.
-    const rows = preview.length ? preview : templatePreview;
+    // Loaded tiers: derive each tier's range from the Seed #N placeholders present in the
+    // STABLE loaded snapshot, not the live/editable canvas — `preview` shrinks as the organizer
+    // clears a slot, which would otherwise permanently drop that seed from its own tier's
+    // picker the moment its last remaining reference is cleared (it could never be re-added
+    // without leaving and reopening the bracket).
+    const rows = templatePreview;
     if (!rows.some(r => r.pool)) return undefined;
     const out: Record<string, Set<number>> = {};
     for (const r of rows) {
@@ -150,7 +154,7 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
       map[pool] = [...seeds].sort((a, b) => a - b).map(n => `Seed #${n}`);
     }
     return map;
-  }, [tiers, preview, templatePreview]);
+  }, [tiers, templatePreview]);
 
   const onPreviewChange = useCallback((p: PreviewRow[]) => setPreview(p), []);
 

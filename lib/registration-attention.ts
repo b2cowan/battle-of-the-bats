@@ -4,7 +4,8 @@ export type RegistrationAttentionKey =
   | 'unpaid'
   | 'past_due'
   | 'missing_intake'
-  | 'unplaced';
+  | 'unplaced'
+  | 'missing_email';
 
 export type RegistrationAttentionTone = 'neutral' | 'primary' | 'warning' | 'danger' | 'success';
 
@@ -33,6 +34,7 @@ export type RegistrationAttentionTeam = {
   slotId?: string | null;
   waitlistPosition?: number | null;
   customAnswers?: RegistrationAttentionAnswer[];
+  email?: string | null;
 };
 
 export type RegistrationAttentionDivision = {
@@ -143,6 +145,17 @@ export const REGISTRATION_ATTENTION_BUCKETS: BucketDefinition[] = [
     description: 'Accepted teams not assigned into configured pool or bracket slots.',
     actionLabel: 'Place teams',
   },
+  {
+    key: 'missing_email',
+    // Not plusOnly — a missing contact email is a base-tier data-hygiene gap
+    // (it blocks payment reminders, dashboard links, and Tournament Plus/League
+    // chat invites alike), not a paid feature.
+    label: 'Missing email',
+    shortLabel: 'No email',
+    tone: 'danger',
+    description: 'Teams with no email on file — they can’t be reached or invited to sign up.',
+    actionLabel: 'Add emails',
+  },
 ];
 
 const ATTENTION_KEY_SET = new Set(REGISTRATION_ATTENTION_BUCKETS.map(bucket => bucket.key));
@@ -223,6 +236,13 @@ export function teamMatchesRegistrationAttentionKey(
       && Boolean(team.divisionId && slotConfiguredDivisionIds.has(team.divisionId))
       && !team.slotId
       && team.waitlistPosition == null;
+  }
+
+  if (key === 'missing_email') {
+    // Mirrors the tournament dashboard's chat-adoption "nonRejected" scope: a
+    // rejected or null-status registration was never a real participant, so an
+    // absent email there isn't an actionable gap.
+    return team.status != null && status !== 'rejected' && !(team.email ?? '').trim();
   }
 
   if (status !== 'accepted') return false;

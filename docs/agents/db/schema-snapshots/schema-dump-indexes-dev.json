@@ -1400,6 +1400,16 @@
     "indexdef": "CREATE INDEX rep_team_event_attendance_team_idx ON public.rep_team_event_attendance USING btree (team_id, program_year_id)"
   },
   {
+    "tablename": "rep_team_event_tags",
+    "indexname": "rep_team_event_tags_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_event_tags_pkey ON public.rep_team_event_tags USING btree (event_id, tag_id)"
+  },
+  {
+    "tablename": "rep_team_event_tags",
+    "indexname": "rep_team_event_tags_tag_idx",
+    "indexdef": "CREATE INDEX rep_team_event_tags_tag_idx ON public.rep_team_event_tags USING btree (tag_id)"
+  },
+  {
     "tablename": "rep_team_events",
     "indexname": "rep_team_events_parent_idx",
     "indexdef": "CREATE INDEX rep_team_events_parent_idx ON public.rep_team_events USING btree (parent_event_id)"
@@ -1523,6 +1533,26 @@
     "tablename": "rep_team_payment_requests",
     "indexname": "rep_team_payment_requests_team_status_idx",
     "indexdef": "CREATE INDEX rep_team_payment_requests_team_status_idx ON public.rep_team_payment_requests USING btree (team_id, status)"
+  },
+  {
+    "tablename": "rep_team_tags",
+    "indexname": "rep_team_tags_name_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_tags_name_uniq ON public.rep_team_tags USING btree (team_id, kind, lower(btrim(name)))"
+  },
+  {
+    "tablename": "rep_team_tags",
+    "indexname": "rep_team_tags_org_idx",
+    "indexdef": "CREATE INDEX rep_team_tags_org_idx ON public.rep_team_tags USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_team_tags",
+    "indexname": "rep_team_tags_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_tags_pkey ON public.rep_team_tags USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_tags",
+    "indexname": "rep_team_tags_team_idx",
+    "indexdef": "CREATE INDEX rep_team_tags_team_idx ON public.rep_team_tags USING btree (team_id, kind)"
   },
   {
     "tablename": "rep_teams",

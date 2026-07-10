@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Gift, Settings, X, Check } from 'lucide-react';
+import { Gift, Settings, X, Check, ArrowLeft } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import styles from '../../../../../coaches.module.css';
 
@@ -211,21 +211,13 @@ export default function FundraiserDetailPage({
 
   return (
     <div className={styles.page}>
+      <Link href={`${base}/accounting/fundraisers`} className={styles.backLink}>
+        <ArrowLeft size={14} aria-hidden /> Back to Fundraisers
+      </Link>
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><Gift size={22} /></div>
           <div>
-            <nav className={styles.breadcrumb}>
-              <Link href={`/${orgSlug}/coaches`}>Portal</Link>
-              <span>/</span>
-              <Link href={base}>{assignment.teamName}</Link>
-              <span>/</span>
-              <Link href={`${base}/accounting`}>Money</Link>
-              <span>/</span>
-              <Link href={`${base}/accounting/fundraisers`}>Fundraisers</Link>
-              <span>/</span>
-              <span>{fundraiser?.name ?? '…'}</span>
-            </nav>
             <h1 className={styles.pageTitle}>{fundraiser?.name ?? 'Fundraiser'}</h1>
             {fundraiser && (
               <p className={styles.pageSub}>

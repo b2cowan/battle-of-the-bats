@@ -24,7 +24,7 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { wrap } from '@/lib/email';
+import { wrap, sendEmail, type SendEmailResult } from '@/lib/email';
 import {
   renderHeadingAndBody,
   fillSubjectTokens,
@@ -154,4 +154,32 @@ export async function renderResolvedEmail(opts: {
   });
   const subject = fillSubjectTokens(row.subject, vars);
   return { subject, html, source: row.is_customised ? 'customised' : 'template' };
+}
+
+/**
+ * Drop-in replacement for a transactional `sendEmail(to, subject, defaultHtml)` call that
+ * applies the operator's saved override when the template is customised, and otherwise
+ * sends the caller's default (the hardcoded lib/email.ts builder output) BYTE-FOR-BYTE.
+ *
+ * At a send site:
+ *   await sendEmail(to, subject, someBuilderHtml(p));
+ * becomes:
+ *   await sendTransactionalEmail({ key, to, vars, defaultSubject: subject, defaultHtml: someBuilderHtml(p) });
+ *
+ * `vars` must use the template's declared token names (see the migration-083 seed's
+ * `variables` array), which occasionally differ from the builder's param names.
+ */
+export async function sendTransactionalEmail(opts: {
+  key: string;
+  to: string;
+  vars: EmailVars;
+  defaultSubject: string;
+  defaultHtml: string;
+}): Promise<SendEmailResult> {
+  const { subject, html } = await renderResolvedEmail({
+    key: opts.key,
+    vars: opts.vars,
+    fallback: { subject: opts.defaultSubject, html: opts.defaultHtml },
+  });
+  return sendEmail(opts.to, subject, html);
 }

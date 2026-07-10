@@ -2117,6 +2117,48 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_team_lineup_templates.created_by -->
 **`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who saved the template.
 
+### `rep_team_tags`
+<!-- dict:table:rep_team_tags -->
+
+**Purpose:** a coach's own per-team vocabulary stuck onto games (`kind='game'`) so Season Review/Insights can answer "how do we do against the top teams?" later — e.g. "Rivalry", "Top in the province". Added by migration 181 (Coach Tags & Player Awards Phase 1). **⚠ DEV-ONLY / PROD-PENDING at author time.** `kind='expense'` is reserved for the Phase 3 money-tags slice — the column/CHECK exist now but no app code writes `'expense'` rows yet.
+
+**Gotchas (read first):**
+1. **Per-team library, NOT per-season** — unlike `rep_team_lineup_templates`, there is no `program_year_id`; a tag persists across seasons so a coach's vocabulary doesn't reset at rollover. Reports aggregate by season through the tagged event's own `program_year_id`, not the tag row.
+2. **One name per team+kind, case-insensitive** — expression-based unique index `rep_team_tags_name_uniq (team_id, kind, lower(btrim(name)))`; a duplicate name → 409 (app-friendly message). App caps tags at **50 per team+kind** (enforced in-process at the create route, not a DB constraint — same benign TOCTOU as `rep_team_lineup_templates`).
+3. **Merging is the only delete path history should take** — `merge_rep_team_tags(winner, loser)` (a `SECURITY DEFINER` function, mig 181) atomically re-points every `rep_team_event_tags` row from the loser to the winner then deletes the loser, so a rename-away-from-drift ("Top teams" vs "top in province") never silently loses game history. A plain `DELETE` on this table (via the delete-tag route) does NOT re-point anything — the FK cascade on `rep_team_event_tags` just drops those links.
+4. **Coach-managed via service role** (`supabaseAdmin`) behind the coach-team auth guard (`capabilities.schedule`, same gate as the schedule/events routes); RLS write policies (mirroring mig 071/159: coaches on assigned teams + org admins, `WITH CHECK`) are a defense-in-depth backstop.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_tags.org_id -->
+<!-- dict:col:rep_team_tags.team_id -->
+**`org_id` / `team_id`** (FK, NOT NULL, CASCADE) — scope; sourced from the URL/context, not the request body. Indexed: `_team_idx (team_id, kind)` for the list query, `_org_idx (org_id)` for RLS.
+
+<!-- dict:col:rep_team_tags.kind -->
+**`kind`** (text, NOT NULL; CHECK `game|expense`) — Phase 1 only creates `'game'` rows; `'expense'` is schema-ready for Phase 3.
+
+<!-- dict:col:rep_team_tags.name -->
+**`name`** (text, NOT NULL; CHECK `1 ≤ char_length(btrim(name)) ≤ 40`) — the coach-chosen label; unique per team+kind case-insensitively (gotcha 2).
+
+<!-- dict:col:rep_team_tags.created_by -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who created the tag.
+
+### `rep_team_event_tags`
+<!-- dict:table:rep_team_event_tags -->
+
+**Purpose:** many-to-many join between `rep_team_tags` and `rep_team_events` — which tags are applied to a given game. Added by migration 181 alongside `rep_team_tags`. **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **No `id`, `org_id`, or `team_id` column** — the primary key is the pair `(event_id, tag_id)` itself, and RLS reaches tenancy through `tag_id` via an `EXISTS` subquery against `rep_team_tags` (mirrors migration 071's `rep_team_lineup_entries` pattern) rather than duplicating scope columns on the join row.
+2. **Set/replace-on-save, not incremental add/remove** — the app layer writes an event's full tag set in one call (delete-then-insert), the same convenience convention as `rep_team_lineups`' entries.
+3. **Both FKs CASCADE** — deleting the event or the tag silently drops the link row; deleting a *tag* this way (rather than merging it into another tag, gotcha 3 on `rep_team_tags`) loses that tag's game history with no re-pointing.
+
+**Fields** (boilerplate `created_at` omitted; no `id`/`updated_at` — see gotcha 1):
+
+<!-- dict:col:rep_team_event_tags.event_id -->
+<!-- dict:col:rep_team_event_tags.tag_id -->
+**`event_id` / `tag_id`** (FK, NOT NULL, CASCADE, composite PK) — the game and the tag applied to it. `tag_id` is indexed (`_tag_idx`) for the Season Review "vs tag" aggregation (all events for one tag); `event_id` is covered by the PK for the events-GET tag lookup (all tags for one event).
+
 ### `rep_tryout_registrations`
 <!-- dict:table:rep_tryout_registrations -->
 
@@ -4661,7 +4703,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 - **`notifications.event_type` name-collides with `platform_events.event_type` but is a DISJOINT union.** `NotificationEventType` ([lib/types.ts](../../../lib/types.ts), 14 values incl. `chat_message` + `chat_mention`, both emitters, both default push-ON) shares zero values with `PlatformEventType` ([lib/platform-events.ts:3](../../../lib/platform-events.ts#L3)) — e.g. `payment_failed` exists only in the notification union. Never conflate the two. **5 values still have NO emitter** (dead enum values — see the table). `chat_mention` is intentionally NOT in the settings-UI sections (`NOTIFICATION_SECTIONS`), so it has no user toggle and always delivers — that's how an @mention reaches a coach who muted general `chat_message`.
 - **No DB triggers or CHECKs anywhere in this domain** — every `updated_at` is code-maintained, and every "enum" (`event_type`, `email_batches.status`, `email_sends.status`/`suppression_reason`, the template `category`) is a TS union/string convention.
 - **Two push tables, by design — different identity models.** `push_subscriptions` = authenticated member (`user_id`, **globally-unique endpoint** → one row per browser, follows the logged-in member across orgs); `fan_push_subscriptions` = anonymous public fan (**no `user_id`**, scoped to `(tournament_id, team_id)`, **`UNIQUE(endpoint, tournament_id)`** → the same browser can follow many tournaments, one row each). Both are **EMPTY in dev AND prod** (built, zero live subscriptions). `sendWebPush` is shared and **no-ops when VAPID keys are unset**.
-- **The DB email-template registry is now PARTLY the source of sends (mig 179).** `platform_email_templates` `marketing` rows drive the real send + preview via the resolver in `lib/platform-email-templates.ts` (`renderResolvedEmail`/`renderTemplateEmail` — the loader the migration-083 comment referenced, now built). Transactional/system rows are **still** hardcoded `lib/email.ts` at send time until each send site is wired; editing them changes preview/test-send only, for now.
+- **The DB email-template registry IS the source of sends now (mig 179 + Batch D wiring).** `platform_email_templates` `marketing` rows drive the real send + preview via the resolver in `lib/platform-email-templates.ts` (`renderResolvedEmail`/`renderTemplateEmail` — the loader the migration-083 comment referenced, now built). ALL ~24 transactional/system rows are now applied at send time too: every send site calls `sendTransactionalEmail()`, which uses the operator's saved override when `is_customised`, else sends the hardcoded `lib/email.ts` builder output BYTE-FOR-BYTE (safety property). Editing any template now affects real sends, not just preview/test-send.
 - **Dev/prod:** all 8 column/constraint-identical (zero structural drift). Divergence is **content** (row counts above) + **grants** (prod anon full DML; dev `REFERENCES/TRIGGER/TRUNCATE`) only; the 2 `notifications` policies are identical across envs.
 
 ---
@@ -4888,7 +4930,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 **`category`** (text, NN, default `'system'`, **no CHECK**) — admin grouping bucket; observed domain `marketing | auth | billing | tournament | rep_teams | house_league | system`; `marketing` selects the markup-native send/preview path; unknown values fall through to raw display.
 
 <!-- dict:col:platform_email_templates.is_customised -->
-**`is_customised`** (bool, NN, default false) — `true` if an admin saved an override; PUT→true, DELETE→false. **Functional for `marketing`** (send + preview always render from the row, so this only toggles the badge/reset there). For transactional rows it gates the override **once that send site is wired** through `renderResolvedEmail()` (`true` ⇒ apply stored copy, `false` ⇒ hardcoded default); still decorative for keys not yet wired.
+**`is_customised`** (bool, NN, default false) — `true` if an admin saved an override; PUT→true, DELETE→false. **Functional everywhere now.** For `marketing` the send + preview always render from the row (so this just toggles the badge/reset). For transactional/system rows it gates the override at the send site via `sendTransactionalEmail()`/`renderResolvedEmail()`: `true` ⇒ apply the stored copy, `false` ⇒ the hardcoded `lib/email.ts` builder output byte-for-byte.
 
 <!-- dict:col:platform_email_templates.planned_send_date -->
 **`planned_send_date`** (date, nullable — **mig 180**, P2 of Editable Email Campaigns) — the operator-editable **planned send date** for a `marketing` campaign. A **planning reminder only** — it drives the Email Dashboard's "upcoming" / "past due" lists; **nothing auto-sends on it** (sends are still manual). NULL for the two event-triggered campaigns (`founding_welcome` = at signup, `founding_checkin` = ~day 60), whose timing is system-defined; also NULL for all non-marketing rows. Edited via `POST /api/admin/email/schedule` (which rejects the trigger keys). Seeded with the founding-season dates.
@@ -4987,7 +5029,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 - **`sendWebPush`** ([lib/web-push.ts:58](../../../lib/web-push.ts#L58)) — the shared single-subscription sender for **both** push tables; VAPID configured once at module load; 24h TTL; **no-ops when VAPID env is unset**; throws `WebPushError` statusCode 410 on expired endpoints (the cleanup signal).
 - **`notifyFansForGame(gameId, status)`** ([lib/fan-notify.ts:20](../../../lib/fan-notify.ts#L20)) — the sole reader/writer of `fan_push_subscriptions` for sending: early-returns unless `submitted`/`completed`, re-checks the `fan_score_alerts` plan gate, selects by `(tournament_id, team_id ∈ [home, away])`, dedupes by endpoint, refreshes `last_used_at`, deletes by endpoint on 410/404. Sole production caller = the scoring-service `onScored` hook ([lib/tournament-scoring-service.ts:167](../../../lib/tournament-scoring-service.ts#L167)).
 - **Email send pipeline** ([lib/email-sender.ts](../../../lib/email-sender.ts)) — `createEmailBatch` (header, status `'running'`, `started_at=now`) → per recipient `logSend` (INSERT, returns id) → Resend POST (with optional native `scheduled_at`) → `updateSend` (`sent`/`failed` + `resend_message_id`/`sent_at`) → `incrementBatchCounter` (non-atomic) → `finalizeBatch` (`complete`/`failed` + `completed_at`). `cancelScheduledEmail` cancels still-scheduled Resend messages on upgrade. The actual HTML/subjects come from the hardcoded `lib/email.ts` builders + the route `TEMPLATE_REGISTRY` — **not** from `platform_email_templates`.
-- **`renderResolvedEmail()` / `renderTemplateEmail()`** ([lib/platform-email-templates.ts](../../../lib/platform-email-templates.ts)) — the DB-template loader the migration-083 comment referenced, now built. Reads `platform_email_templates` and renders via the `lib/email-markup.ts` block-markup renderer. Consumed at send time by the `marketing` campaigns today; the transactional send sites are wired incrementally.
+- **`renderResolvedEmail()` / `renderTemplateEmail()` / `sendTransactionalEmail()`** ([lib/platform-email-templates.ts](../../../lib/platform-email-templates.ts)) — the DB-template loader the migration-083 comment referenced, now built. Reads `platform_email_templates` and renders via the `lib/email-markup.ts` block-markup renderer. `sendTransactionalEmail()` is the drop-in `sendEmail` wrapper used at every transactional send site (auth, billing incl. the Stripe webhook, tournament/tryout/league registration flows). Consumed at send time by BOTH the `marketing` campaigns and all transactional/system templates.
 
 ---
 

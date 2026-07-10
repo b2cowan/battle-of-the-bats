@@ -2704,6 +2704,38 @@
     "foreign_column": null
   },
   {
+    "table_name": "rep_team_event_tags",
+    "constraint_name": "rep_team_event_tags_event_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "event_id",
+    "foreign_table": "rep_team_events",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_event_tags",
+    "constraint_name": "rep_team_event_tags_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "event_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_event_tags",
+    "constraint_name": "rep_team_event_tags_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "tag_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_event_tags",
+    "constraint_name": "rep_team_event_tags_tag_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tag_id",
+    "foreign_table": "rep_team_tags",
+    "foreign_column": "id"
+  },
+  {
     "table_name": "rep_team_events",
     "constraint_name": "rep_team_events_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -3018,6 +3050,38 @@
   {
     "table_name": "rep_team_payment_requests",
     "constraint_name": "rep_team_payment_requests_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_tags",
+    "constraint_name": "rep_team_tags_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_tags",
+    "constraint_name": "rep_team_tags_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_tags",
+    "constraint_name": "rep_team_tags_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_tags",
+    "constraint_name": "rep_team_tags_team_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_teams",

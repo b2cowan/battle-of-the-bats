@@ -10,7 +10,8 @@ import type { TournamentStatus } from '@/lib/types';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
 import { hasPlanFeature } from '@/lib/plan-features';
-import { sendEmail, SITE_URL, tournamentResultsFinalizedHtml, resolveCoachRecipient, coachEmailsPaused } from '@/lib/email';
+import { SITE_URL, tournamentResultsFinalizedHtml, resolveCoachRecipient, coachEmailsPaused } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { ROSTER_WAIVER_TEXT_MAX_LENGTH } from '@/lib/roster-requirements';
 import { isProvinceCode } from '@/lib/canadian-provinces';
@@ -212,10 +213,12 @@ async function sendCompletionResultsNotification(input: {
     // Dedup key stays teams.email (the claim key — keeps the footer's claim link correct); the
     // actual recipient prefers the assigned coach (teams.coach_email) — the 6th coach-facing send
     // now matches the other 5 (Phase 5m, folds the 5l carry-forward).
-    await sendEmail(
-      resolveCoachRecipient(recipient),
-      `Final Results Posted - ${tournament.name}`,
-      tournamentResultsFinalizedHtml({
+    await sendTransactionalEmail({
+      key: 'tournament_results_finalized',
+      to: resolveCoachRecipient(recipient),
+      vars: { coachName: recipient.coach || recipient.name, tournamentName: tournament.name, resultsUrl },
+      defaultSubject: `Final Results Posted - ${tournament.name}`,
+      defaultHtml: tournamentResultsFinalizedHtml({
         tournamentName: tournament.name,
         coachName: recipient.coach || recipient.name,
         resultsUrl,
@@ -227,7 +230,7 @@ async function sendCompletionResultsNotification(input: {
         registrationId: recipient.id,
         coachEmail: recipient.email ?? undefined,
       }),
-    );
+    });
     sent++;
   }
 

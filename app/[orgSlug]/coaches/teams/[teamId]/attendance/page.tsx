@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { CalendarCheck, ChevronRight } from 'lucide-react';
+import { CalendarCheck } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import styles from '../../../coaches.module.css';
 
@@ -86,15 +86,9 @@ export default function CoachesAttendancePage({
 
   return (
     <div className={styles.page}>
-      <div className={styles.breadcrumb}>
-        <Link href={`/${orgSlug}/coaches`}>Coaches Portal</Link>
-        <span><ChevronRight size={12} /></span>
-        <Link href={base}>{assignment.teamName}</Link>
-        <span><ChevronRight size={12} /></span>
-        <Link href={`${base}/roster`}>Roster</Link>
-        <span><ChevronRight size={12} /></span>
-        <span>Attendance</span>
-      </div>
+      {/* Drill-in sub-page back-link (the coach breadcrumb is globally hidden — 2026-07-08 rule).
+          IA parent = the Insights hub; the Roster page keeps its own in-context button here. */}
+      <Link href={`${base}/history`} className={styles.lineupBackLink}>← Insights</Link>
 
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>

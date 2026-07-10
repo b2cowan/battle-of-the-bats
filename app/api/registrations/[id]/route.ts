@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createClient } from '@supabase/supabase-js';
 import {
-  sendEmail,
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml,
-  coachEmailEnabled, resolveCoachRecipient, acceptanceFeeLine,
+  coachEmailEnabled, resolveCoachRecipient, acceptanceFeeLine, coachPortalUrl,
 } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
 import { getAuthContext, unauthorized } from '@/lib/api-auth';
 import { getOrgOwnerEmail } from '@/lib/supabase-admin';
@@ -95,10 +95,22 @@ export const PATCH = withObservability(async (req: NextRequest, props: { params:
       } : null,
     });
     if (status === 'accepted' && current.status !== 'accepted' && coachEmailEnabled(coachSettings, 'acceptance')) {
-      await sendEmail(recipient, `Your Team Has Been Accepted — ${current.name}`, acceptanceHtml({ ...p, paymentInstructions, feeLine }));
+      await sendTransactionalEmail({
+        key: 'tournament_registration_accepted',
+        to: recipient,
+        vars: { coachName: p.coachName, teamName: p.teamName, ageGroupName: p.divisionName, tournamentName: p.tournamentName, profileUrl: coachPortalUrl({ registrationId: p.teamId, email: p.coachEmail }) },
+        defaultSubject: `Your Team Has Been Accepted — ${current.name}`,
+        defaultHtml: acceptanceHtml({ ...p, paymentInstructions, feeLine }),
+      });
     }
     if (status === 'rejected' && current.status !== 'rejected' && coachEmailEnabled(coachSettings, 'rejection')) {
-      await sendEmail(recipient, `Registration Update — ${current.name}`, rejectionHtml(p));
+      await sendTransactionalEmail({
+        key: 'tournament_registration_rejected',
+        to: recipient,
+        vars: { coachName: p.coachName, teamName: p.teamName, ageGroupName: p.divisionName, tournamentName: p.tournamentName },
+        defaultSubject: `Registration Update — ${current.name}`,
+        defaultHtml: rejectionHtml(p),
+      });
     }
     // 5m: a newly-rejected team is no longer playing — cancel any scheduled game-day reminder
     // (independent of the rejection-email toggle). Best-effort; never throws.
@@ -106,7 +118,13 @@ export const PATCH = withObservability(async (req: NextRequest, props: { params:
       await cancelScheduledEmailForRecipient(orgOwnerId, COACH_GAME_DAY_REMINDER_EMAIL_KEY, recipient);
     }
     if (payment_status === 'paid' && current.payment_status !== 'paid' && coachEmailEnabled(coachSettings, 'payment')) {
-      await sendEmail(recipient, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
+      await sendTransactionalEmail({
+        key: 'tournament_payment_recorded',
+        to: recipient,
+        vars: { coachName: p.coachName, teamName: p.teamName, ageGroupName: p.divisionName, tournamentName: p.tournamentName },
+        defaultSubject: `Payment Recorded — ${current.name}`,
+        defaultHtml: paymentConfirmationHtml(p),
+      });
     }
 
     return NextResponse.json({ ok: true });

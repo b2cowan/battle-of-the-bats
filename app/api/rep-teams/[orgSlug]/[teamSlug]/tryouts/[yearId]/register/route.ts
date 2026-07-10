@@ -5,7 +5,8 @@ import {
   getRepProgramYear,
   createRepTryoutRegistration,
 } from '@/lib/db';
-import { sendEmail, tryoutRegistrationConfirmationHtml } from '@/lib/email';
+import { tryoutRegistrationConfirmationHtml } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { withObservability } from '@/lib/observability';
 import { clientIpFrom } from '@/lib/rate-limit';
 
@@ -112,11 +113,19 @@ export const POST = withObservability(async (req: Request,
         yearName:          programYear.name,
         registrationId:    registration.id,
       });
-      await sendEmail(
-        guardianEmail!,
-        `Tryout application received — ${team.name} ${programYear.name}`,
-        html,
-      );
+      await sendTransactionalEmail({
+        key: 'tryout_application_received',
+        to: guardianEmail!,
+        vars: {
+          guardianFirstName: guardianFirst!,
+          playerFirstName:   playerFirstName!,
+          playerLastName:    playerLastName!,
+          teamName:          team.name,
+          yearName:          programYear.name,
+        },
+        defaultSubject: `Tryout application received — ${team.name} ${programYear.name}`,
+        defaultHtml: html,
+      });
     } catch (e) {
       console.error('[tryout-register] email send failed:', e);
     }

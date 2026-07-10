@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, ArrowDownLeft, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, X, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import styles from '../../../../coaches.module.css';
 
@@ -191,19 +191,13 @@ export default function PaymentRequestsPage({
 
   return (
     <div className={styles.page}>
+      <Link href={`${base}/accounting`} className={styles.backLink}>
+        <ArrowLeft size={14} aria-hidden /> Back to Money
+      </Link>
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><ArrowUpRight size={22} /></div>
           <div>
-            <nav className={styles.breadcrumb}>
-              <Link href={`/${orgSlug}/coaches`}>Portal</Link>
-              <span>/</span>
-              <Link href={base}>{assignment.teamName}</Link>
-              <span>/</span>
-              <Link href={`${base}/accounting`}>Money</Link>
-              <span>/</span>
-              <span>Payment Requests</span>
-            </nav>
             <h1 className={styles.pageTitle}>Payment Requests</h1>
             <p className={styles.pageSub}>{assignment.programYearName}</p>
           </div>

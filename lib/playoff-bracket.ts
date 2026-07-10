@@ -1139,6 +1139,56 @@ export function computeBracketColumns(games: BracketColumnGame[]): Map<string, B
   return applyLabels();
 }
 
+const WINNER_REF_RE = /^winner\s+(.+)$/i;
+
+export interface WinnerFeedGame {
+  bracketCode?: string | null;
+  homePlaceholder?: string | null;
+  awayPlaceholder?: string | null;
+}
+
+export interface WinnerFeedStep {
+  code: string;
+  /** Which side of the downstream game references `Winner <fromCode>` — i.e. which side the
+   *  advancing team lands on, so a caller can keep tracking "their" side across further rounds. */
+  side: 'home' | 'away';
+}
+
+/**
+ * The single downstream game whose Home/Away references `Winner <fromCode>` —
+ * i.e. where the team occupying `fromCode` lands next IF they win it — plus
+ * which side they land on. Returns null once `fromCode` feeds nothing further
+ * (it's the final, or an unwired game). Deliberately ignores `Loser <code>`
+ * refs: a team that loses is out in a single-elimination bracket, and only
+ * `isStandardSingleEliminationBracket` callers should ever reach for this, so
+ * a loser-bracket path is never a concern here.
+ */
+export function nextBracketCodeViaWinner(games: WinnerFeedGame[], fromCode: string): WinnerFeedStep | null {
+  const target = fromCode.trim().toUpperCase();
+  for (const g of games) {
+    if (!g.bracketCode) continue;
+    const homeMatch = WINNER_REF_RE.exec((g.homePlaceholder ?? '').trim());
+    if (homeMatch && homeMatch[1].trim().toUpperCase() === target) return { code: g.bracketCode, side: 'home' };
+    const awayMatch = WINNER_REF_RE.exec((g.awayPlaceholder ?? '').trim());
+    if (awayMatch && awayMatch[1].trim().toUpperCase() === target) return { code: g.bracketCode, side: 'away' };
+  }
+  return null;
+}
+
+/**
+ * True when this bracket is a plain single-elimination structure — every
+ * `bracketCode` present is either absent or NOT one of the multi-section
+ * codes (`WB`/`LB`/`GF`/`CON`/`PL`/`P3`/`3RD`, the same `SECTION_CODE_RE`
+ * signal `computeBracketColumns` uses to detect double-elim/consolation/
+ * placement structure). Double-elim, consolation, and placement brackets let
+ * a seed legitimately land in either the winner or loser branch, so "if this
+ * seed keeps winning" can't be derived the same way there — callers should
+ * only project a seed's forward schedule when this returns true.
+ */
+export function isStandardSingleEliminationBracket(games: { bracketCode?: string | null }[]): boolean {
+  return games.some(g => !!g.bracketCode) && !games.some(g => SECTION_CODE_RE.test(g.bracketCode || ''));
+}
+
 /**
  * Generate a complete bracket for `seedCount` teams.
  * Returns matchups in creation order with abstract participant references.

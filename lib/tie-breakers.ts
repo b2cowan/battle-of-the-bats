@@ -1,4 +1,4 @@
-import type { Team, Game, PlayoffConfig, TournamentSettings } from './types';
+import type { PlayoffConfig, TournamentSettings } from './types';
 
 /**
  * Shared tie-breaker vocabulary for tournament standings + playoff seeding.
@@ -134,6 +134,31 @@ export interface DivisionStandingRow {
 }
 
 /**
+ * The minimal team/game shape the standings engine actually reads — deliberately
+ * looser than the full `Team`/`Game` domain types so a caller holding a lighter
+ * projection (e.g. lib/schedule-metrics.ts's `ScheduleMetricTeam`/`ScheduleMetricGame`)
+ * can call this without constructing full domain objects. `Team[]`/`Game[]` still
+ * satisfy these structurally, so every existing caller is unaffected.
+ */
+export interface StandingsTeamInput {
+  id: string;
+  name: string;
+  divisionId: string;
+  status?: string | null;
+  poolId?: string | null;
+}
+
+export interface StandingsGameInput {
+  divisionId: string;
+  status?: string | null;
+  isPlayoff?: boolean | null;
+  homeTeamId?: string | null;
+  awayTeamId?: string | null;
+  homeScore?: number | null;
+  awayScore?: number | null;
+}
+
+/**
  * Pure round-robin standings + tie-break ranking for ONE division. Filters the
  * supplied teams/games by division (+ accepted / completed|submitted / non-playoff)
  * then ranks them. Lives here (no runtime imports) so the tie-break engine is
@@ -143,8 +168,8 @@ export interface DivisionStandingRow {
  */
 export function computeTournamentStandings(
   divisionId: string,
-  teams: Team[],
-  games: Game[],
+  teams: StandingsTeamInput[],
+  games: StandingsGameInput[],
   config?: PlayoffConfig,
   tournamentSettings?: TournamentSettings,
 ): DivisionStandingRow[] {

@@ -2,7 +2,7 @@
 import { Fragment } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, Users, UserCog, Calendar, ClipboardList, Megaphone, DollarSign, FileText, History, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered } from 'lucide-react';
+import { ArrowLeft, Users, UserCog, Calendar, ClipboardList, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useCoaches } from '@/lib/coaches-context';
 import { isCoachNavItemVisible } from '@/lib/coach-nav-visibility';
@@ -31,6 +31,7 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
   ] },
   { label: 'Season', items: [
     { label: 'Schedule',    href: '/schedule',    icon: Calendar },
+    { label: 'Insights',    href: '/history',     icon: BarChart3 },
     { label: 'Tournaments', href: '/tournaments', icon: Trophy, conditional: 'tournaments' },
   ] },
   { label: 'Money', items: [
@@ -43,7 +44,6 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
   { label: 'Team admin', items: [
     { label: 'Staff',         href: '/staff',       icon: UserCog },
     { label: 'Documents',     href: '/documents',   icon: FileText },
-    { label: 'Season Review', href: '/history',     icon: History },
     { label: 'Settings',      href: '/settings',    icon: Settings },
   ] },
 ];

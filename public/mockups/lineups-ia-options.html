@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lineups IA mockup — Option B (chosen) + game filters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c14; --surface:rgba(255,255,255,.05); --surface-2:rgba(255,255,255,.08);
+    --border:rgba(96,125,255,.18); --border-strong:rgba(96,125,255,.34);
+    --white-90:rgba(255,255,255,.9); --white-70:rgba(255,255,255,.7); --white-55:rgba(255,255,255,.55); --white-45:rgba(255,255,255,.45);
+    --lime:#D9F99D; --ink:#0f1123; --blue-link:#8FA8FF; --primary:#2743a6;
+    --warn:#FbbF24; --ok:#34D399; --radius:12px;
+    --display:'Barlow Condensed','Arial Narrow',sans-serif; --sans:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg) linear-gradient(rgba(30,58,138,.10) 1px,transparent 1px),
+               var(--bg) linear-gradient(90deg,rgba(30,58,138,.10) 1px,transparent 1px);
+    background-size:38px 38px; background-color:var(--bg);
+    color:var(--white-90); font-family:var(--sans); min-height:100vh; padding:1.25rem;
+  }
+  /* ── mockup chrome (not part of the design) ─────────────────────── */
+  .mockbar{max-width:960px;margin:0 auto 1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+  .mockbar h1{font-family:var(--display);font-weight:700;font-size:1.3rem;letter-spacing:.02em;margin-right:auto}
+  .mockbar .note{flex-basis:100%;color:var(--white-45);font-size:.78rem}
+  .switch{display:flex;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:999px;padding:3px}
+  .switch button{border:0;background:transparent;color:var(--white-55);font:600 .8rem var(--sans);padding:.4rem .85rem;border-radius:999px;cursor:pointer}
+  .switch button.on{background:var(--primary);color:#fff}
+  /* ── frame ──────────────────────────────────────────────────────── */
+  .frame{max-width:960px;margin:0 auto;border:1px solid var(--border-strong);border-radius:18px;background:rgba(10,12,20,.92);box-shadow:0 18px 50px rgba(0,0,0,.5);overflow:hidden;transition:max-width .25s}
+  body[data-width="phone"] .frame{max-width:398px}
+  .screen{padding:1.4rem 1.5rem 4.6rem;position:relative;min-height:640px}
+  body[data-width="phone"] .screen{padding:1rem .9rem 4.6rem}
+  .caption{background:rgba(39,67,166,.18);border-bottom:1px solid var(--border);padding:.5rem .9rem;font-size:.75rem;color:var(--white-55)}
+  .caption b{color:var(--white-90)}
+  .bottomnav{position:absolute;left:0;right:0;bottom:0;display:none;background:#0b0e18;border-top:1px solid var(--border);padding:.55rem 0 .7rem;justify-content:space-around;font-size:.6rem;letter-spacing:.08em;color:var(--white-45);text-transform:uppercase}
+  .bottomnav span.on{color:var(--blue-link)}
+  body[data-width="phone"] .bottomnav{display:flex}
+  /* ── coach page primitives ──────────────────────────────────────── */
+  .pageHeader{display:flex;align-items:center;gap:.85rem;margin-bottom:1.2rem}
+  .headerIcon{width:44px;height:44px;border-radius:12px;background:rgba(39,67,166,.35);border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;font-size:1.15rem}
+  .pageTitle{font-family:var(--display);font-weight:800;font-size:1.9rem;letter-spacing:.01em;line-height:1}
+  body[data-width="phone"] .pageTitle{font-size:1.35rem}
+  .pageSub{color:var(--white-55);font-size:.85rem;margin-top:.2rem}
+  .kicker{font-size:.68rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--white-45);margin:1.35rem 0 .55rem}
+  .row{display:flex;align-items:center;gap:.8rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.7rem .85rem;margin-bottom:.55rem;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+  .dateBlk{width:44px;text-align:center;flex:none}
+  .dateBlk b{display:block;font-family:var(--display);font-weight:800;font-size:1.25rem;line-height:1}
+  .dateBlk span{font-size:.6rem;letter-spacing:.12em;color:var(--white-45)}
+  .rowBody{min-width:0;flex:1}
+  .rowTitle{font-weight:700;font-size:.95rem}
+  .rowMeta{color:var(--white-55);font-size:.78rem;margin-top:.15rem}
+  .chip{display:inline-flex;align-items:center;gap:.3rem;font-size:.68rem;font-weight:600;padding:.16rem .5rem;border-radius:999px;border:1px solid;white-space:nowrap}
+  .chip.warn{color:var(--warn);border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.08)}
+  .chip.ok{color:var(--ok);border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+  .btnLime{flex:none;background:var(--lime);color:var(--ink);border:0;border-radius:10px;font:700 .8rem var(--sans);padding:.5rem .8rem;cursor:pointer;white-space:nowrap}
+  .btnOutline{flex:none;background:transparent;color:var(--white-70);border:1px solid rgba(255,255,255,.25);border-radius:10px;font:600 .78rem var(--sans);padding:.42rem .75rem;cursor:pointer;white-space:nowrap}
+  .quiet{color:var(--blue-link);font-size:.8rem;font-weight:600;text-decoration:none;cursor:pointer;background:none;border:0;font-family:var(--sans)}
+  .linkRow{display:flex;gap:1.1rem;margin:.35rem 0 0 .2rem;flex-wrap:wrap}
+  .arrow{color:var(--blue-link);flex:none}
+  body[data-width="phone"] .actionLabel{display:none}
+  .hint{color:var(--white-45);font-size:.75rem;margin-top:.3rem}
+  /* filter bar v2 — worded SCOPE chips (select-one, lime-tint active per WLT check-chips)
+     + ONE amber "Needs lineup" TOGGLE (status-tint per attendance chips). Never solid primary
+     (that's the tab control's state — chips must read as a lighter species). */
+  .filterChips{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin:1.05rem 0 .5rem}
+  .fchip{flex:none;display:inline-flex;align-items:center;gap:.3rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);color:var(--white-55);border-radius:999px;padding:.3rem .66rem;font:600 .74rem var(--sans);cursor:pointer;min-height:30px}
+  .fchip .ck{display:none;font-size:.68rem}
+  .fchip.on{background:rgba(217,249,157,.13);border-color:rgba(217,249,157,.45);color:var(--lime)}
+  .fchip.on .ck{display:inline}
+  .fNeeds{margin-left:auto;color:var(--white-55)}
+  .fNeeds i{font-style:normal;color:var(--warn);font-size:.72rem}
+  .fNeeds b{font-weight:800;color:var(--white-70);margin-left:.15rem}
+  .fNeeds.on{background:rgba(251,191,36,.14);border-color:rgba(251,191,36,.55);color:var(--warn)}
+  .fNeeds.on b{color:var(--warn)}
+  body[data-width="phone"] .filterChips{gap:.35rem}
+  body[data-width="phone"] .fNeeds{margin-left:0}
+  .noMatch{display:none;color:var(--white-45);font-size:.8rem;padding:.6rem .2rem}
+  /* templates strip (Option A) */
+  .tplStrip{display:flex;flex-direction:column;gap:.45rem}
+  .tplChip{display:flex;align-items:center;gap:.7rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.55rem .8rem}
+  .tplChip .rowTitle{font-size:.88rem}
+  /* segmented tabs */
+  .seg{display:flex;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:12px;padding:3px;margin:0 0 1.1rem;max-width:340px}
+  .seg button{flex:1;border:0;background:transparent;color:var(--white-55);font:600 .82rem var(--sans);padding:.5rem .4rem;border-radius:9px;cursor:pointer}
+  .seg button.on{background:var(--primary);color:#fff}
+  /* sub-page card (Option A, one tap deeper) */
+  .subScreen{margin-top:2rem;border:1px dashed var(--border-strong);border-radius:14px;padding:1rem 1.1rem 1.2rem;background:rgba(0,0,0,.25)}
+  .subScreenTag{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--blue-link);margin-bottom:.7rem}
+  .backLink{color:var(--blue-link);font-size:.8rem;font-weight:600;display:inline-block;margin-bottom:.5rem;text-decoration:none}
+  .subHead{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:.8rem}
+  .subTitle{font-family:var(--display);font-weight:800;font-size:1.4rem}
+  .iconBtn{background:transparent;border:1px solid rgba(255,255,255,.2);color:var(--white-55);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:.8rem}
+  .hidden{display:none}
+  body[data-option="a"] #optB{display:none}
+  body[data-option="b"] #optA{display:none}
+</style>
+</head>
+<body data-option="b" data-width="desktop">
+
+<div class="mockbar">
+  <h1>Lineups page — Option B (chosen) + game filters</h1>
+  <div class="switch" id="optSwitch">
+    <button data-opt="a">Option A · reference</button>
+    <button class="on" data-opt="b">Option B · Tabs (chosen)</button>
+  </div>
+  <div class="switch" id="widthSwitch">
+    <button class="on" data-w="desktop">Desktop</button>
+    <button data-w="phone">Phone</button>
+  </div>
+  <div class="note">Throwaway planning mockup (delete once the build ships). Sample data. <b style="color:var(--white-70)">Option B chosen 2026-07-08.</b> Two tabs — the season read-outs move to the approved <b style="color:var(--white-70)">Season → Insights</b> hub, linked from the Games tab. NEW: tap the filter chips on the Games tab.</div>
+</div>
+
+<!-- ══════════ OPTION B — CHOSEN ══════════ -->
+<div class="frame" id="optB">
+  <div class="caption"><b>Option B (chosen) · filter bar v2 after /design pass.</b> Scope chips (All / League / Tournament / Scrimmage — pick one) + a separate amber <b>Needs lineup</b> toggle with a live count. They stack: try Tournament + Needs lineup. Types with zero games would hide automatically. Everything's tappable.</div>
+  <div class="screen">
+    <div class="pageHeader">
+      <div class="headerIcon">≡</div>
+      <div>
+        <div class="pageTitle">Lineups</div>
+        <div class="pageSub">Build game lineups and reusable templates for your team.</div>
+      </div>
+    </div>
+
+    <div class="seg" id="tabs">
+      <button class="on" data-tab="games">Games</button>
+      <button data-tab="templates">Templates</button>
+    </div>
+
+    <div id="tab-games">
+      <div class="filterChips" id="chips">
+        <button class="fchip on" data-f="all"><span class="ck">✓</span>All</button>
+        <button class="fchip" data-f="league"><span class="ck">✓</span>League</button>
+        <button class="fchip" data-f="tournament"><span class="ck">✓</span>Tournament</button>
+        <button class="fchip" data-f="scrimmage"><span class="ck">✓</span>Scrimmage</button>
+        <button class="fchip fNeeds" id="needsChip"><i>⚠</i> Needs lineup<b id="needsCount">2</b></button>
+      </div>
+
+      <div class="kicker" data-group="up">Upcoming games</div>
+      <div class="row gameRow" data-type="tournament" data-set="no" data-group="up">
+        <div class="dateBlk"><b>12</b><span>JUL</span></div>
+        <div class="rowBody"><div class="rowTitle">vs Hawks <span class="chip warn">⚠ Not set</span></div><div class="rowMeta">Tournament · Sat, Jul 12 · 9:00 a.m.</div></div>
+        <button class="btnLime">Build lineup</button>
+      </div>
+      <div class="row gameRow" data-type="league" data-set="yes" data-group="up">
+        <div class="dateBlk"><b>20</b><span>JUL</span></div>
+        <div class="rowBody"><div class="rowTitle">@ Renegades <span class="chip ok">✓ Lineup set</span></div><div class="rowMeta">League · Sun, Jul 20 · 11:30 a.m.</div></div>
+        <span class="quiet"><span class="actionLabel">Open lineup </span><span class="arrow">→</span></span>
+      </div>
+
+      <div class="kicker" data-group="rec">Recent games</div>
+      <div class="row gameRow" data-type="league" data-set="yes" data-group="rec">
+        <div class="dateBlk"><b>29</b><span>JUN</span></div>
+        <div class="rowBody"><div class="rowTitle">League Game <span class="chip ok">✓ Lineup set</span></div><div class="rowMeta">League · Mon, Jun 29 · 2:00 p.m.</div></div>
+        <span class="quiet"><span class="actionLabel">Open lineup </span><span class="arrow">→</span></span>
+      </div>
+      <div class="row gameRow" data-type="scrimmage" data-set="no" data-group="rec">
+        <div class="dateBlk"><b>16</b><span>JUN</span></div>
+        <div class="rowBody"><div class="rowTitle">@ Lady Jays <span class="chip warn">⚠ Not set</span></div><div class="rowMeta">Scrimmage · Tue, Jun 16 · 4:00 a.m.</div></div>
+        <span class="quiet"><span class="actionLabel">Open lineup </span><span class="arrow">→</span></span>
+      </div>
+      <div class="noMatch" id="noMatch">No games match this filter.</div>
+
+      <div class="linkRow" style="margin-top:1rem">
+        <button class="quiet">Season insights → <span style="color:var(--white-45);font-weight:400">playing time, arm care &amp; lineup records, in Season → Insights</span></button>
+      </div>
+      <div class="hint">Filtering to “⚠ Not set” also surfaces past games missing a lineup — saving those grows your Insights basis (“Based on the N games…”).</div>
+    </div>
+
+    <div id="tab-templates" class="hidden">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:.7rem"><button class="btnLime">+ New template</button></div>
+      <div class="row">
+        <div class="rowBody"><div class="rowTitle">Gold-medal order</div><div class="rowMeta">Everyone bats · 6 innings · 11 players</div></div>
+        <button class="btnOutline">Apply</button><button class="iconBtn" title="Rename">✎</button><button class="iconBtn" title="Delete">🗑</button>
+      </div>
+      <div class="row">
+        <div class="rowBody"><div class="rowTitle">Rain-day rotation</div><div class="rowMeta">9 player ball · 5 innings · 10 players</div></div>
+        <button class="btnOutline">Apply</button><button class="iconBtn" title="Rename">✎</button><button class="iconBtn" title="Delete">🗑</button>
+      </div>
+    </div>
+
+    <div class="bottomnav"><span>Overview</span><span>Schedule</span><span>Chat</span><span>Roster</span><span class="on">More</span></div>
+  </div>
+</div>
+
+<!-- ══════════ OPTION A — kept for reference (not chosen) ══════════ -->
+<div class="frame" id="optA">
+  <div class="caption"><b>Option A (reference — not chosen).</b> Game-day front door: templates as an Apply strip, full manager one tap deeper.</div>
+  <div class="screen">
+    <div class="pageHeader">
+      <div class="headerIcon">≡</div>
+      <div>
+        <div class="pageTitle">Lineups</div>
+        <div class="pageSub">Build game lineups for your team.</div>
+      </div>
+    </div>
+
+    <div class="kicker">Upcoming games</div>
+    <div class="row">
+      <div class="dateBlk"><b>12</b><span>JUL</span></div>
+      <div class="rowBody"><div class="rowTitle">vs Hawks <span class="chip warn">⚠ Not set</span></div><div class="rowMeta">Sat, Jul 12 · 9:00 a.m.</div></div>
+      <button class="btnLime">Build lineup</button>
+    </div>
+    <div class="row">
+      <div class="dateBlk"><b>20</b><span>JUL</span></div>
+      <div class="rowBody"><div class="rowTitle">@ Renegades <span class="chip ok">✓ Lineup set</span></div><div class="rowMeta">Sun, Jul 20 · 11:30 a.m.</div></div>
+      <span class="quiet"><span class="actionLabel">Open lineup </span><span class="arrow">→</span></span>
+    </div>
+    <div class="linkRow">
+      <button class="quiet">Show all upcoming (4) ▸</button>
+      <button class="quiet" id="recentToggle">Recent games ▸</button>
+    </div>
+    <div id="recentList" class="hidden">
+      <div class="kicker">Recent games</div>
+      <div class="row">
+        <div class="dateBlk"><b>29</b><span>JUN</span></div>
+        <div class="rowBody"><div class="rowTitle">League Game</div><div class="rowMeta">Mon, Jun 29 · 2:00 p.m.</div></div>
+        <span class="quiet"><span class="actionLabel">Open lineup </span><span class="arrow">→</span></span>
+      </div>
+      <div class="row">
+        <div class="dateBlk"><b>16</b><span>JUN</span></div>
+        <div class="rowBody"><div class="rowTitle">@ Lady Jays</div><div class="rowMeta">Tue, Jun 16 · 4:00 a.m.</div></div>
+        <span class="quiet"><span class="actionLabel">Open lineup </span><span class="arrow">→</span></span>
+      </div>
+    </div>
+
+    <div class="kicker">Templates</div>
+    <div class="tplStrip">
+      <div class="tplChip">
+        <div class="rowBody"><div class="rowTitle">Gold-medal order</div><div class="rowMeta">Everyone bats · 6 innings · 11 players</div></div>
+        <button class="btnOutline">Apply</button>
+      </div>
+      <div class="tplChip">
+        <div class="rowBody"><div class="rowTitle">Rain-day rotation</div><div class="rowMeta">9 player ball · 5 innings · 10 players</div></div>
+        <button class="btnOutline">Apply</button>
+      </div>
+    </div>
+    <div class="linkRow"><button class="quiet">Manage templates →</button></div>
+
+    <div class="subScreen">
+      <div class="subScreenTag">One tap deeper — the Templates manager (its own page)</div>
+      <a class="backLink">← Lineups</a>
+      <div class="subHead">
+        <div class="subTitle">Templates</div>
+        <button class="btnLime">+ New template</button>
+      </div>
+      <div class="row">
+        <div class="rowBody"><div class="rowTitle">Gold-medal order</div><div class="rowMeta">Everyone bats · 6 innings · 11 players</div></div>
+        <button class="btnOutline">Apply</button><button class="iconBtn" title="Rename">✎</button><button class="iconBtn" title="Delete">🗑</button>
+      </div>
+    </div>
+
+    <div class="bottomnav"><span>Overview</span><span>Schedule</span><span>Chat</span><span>Roster</span><span class="on">More</span></div>
+  </div>
+</div>
+
+<script>
+  const body=document.body;
+  document.getElementById('optSwitch').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    body.dataset.option=b.dataset.opt;
+    document.querySelectorAll('#optSwitch button').forEach(x=>x.classList.toggle('on',x===b));
+  });
+  document.getElementById('widthSwitch').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    body.dataset.width=b.dataset.w;
+    document.querySelectorAll('#widthSwitch button').forEach(x=>x.classList.toggle('on',x===b));
+  });
+  document.getElementById('tabs').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+    ['games','templates'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));
+  });
+  let fType='all', fNeeds=false;
+  const applyFilters=()=>{
+    let anyUp=false,anyRec=false,any=false,needsN=0;
+    document.querySelectorAll('.gameRow').forEach(r=>{
+      const typeOk = fType==='all' || r.dataset.type===fType;
+      if(typeOk && r.dataset.set==='no') needsN++;
+      const show = typeOk && (!fNeeds || r.dataset.set==='no');
+      r.style.display=show?'':'none';
+      if(show){any=true; if(r.dataset.group==='up')anyUp=true; else anyRec=true;}
+    });
+    document.querySelector('[data-group="up"].kicker').style.display=anyUp?'':'none';
+    document.querySelector('[data-group="rec"].kicker').style.display=anyRec?'':'none';
+    const nm=document.getElementById('noMatch');
+    nm.style.display=any?'none':'block';
+    nm.textContent=fNeeds?'All caught up — every game here has a lineup.':'No games match this filter.';
+    document.getElementById('needsCount').textContent=needsN;
+    document.getElementById('needsChip').classList.toggle('on',fNeeds);
+  };
+  document.getElementById('chips').addEventListener('click',e=>{
+    const c=e.target.closest('.fchip'); if(!c)return;
+    if(c.id==='needsChip'){ fNeeds=!fNeeds; }
+    else{
+      fType=c.dataset.f;
+      document.querySelectorAll('#chips .fchip:not(.fNeeds)').forEach(x=>x.classList.toggle('on',x===c));
+    }
+    applyFilters();
+  });
+  const rt=document.getElementById('recentToggle');
+  if(rt) rt.addEventListener('click',()=>{
+    const l=document.getElementById('recentList');
+    const open=l.classList.toggle('hidden');
+    rt.textContent=open?'Recent games ▸':'Recent games ▾';
+  });
+</script>
+</body>
+</html>

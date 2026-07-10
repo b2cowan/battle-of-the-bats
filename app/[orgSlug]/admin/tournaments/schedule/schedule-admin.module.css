@@ -1047,6 +1047,17 @@
   color: var(--logic-lime);
 }
 
+.healthProjectedNote {
+  margin: 0.5rem 0 0;
+  color: var(--white-45);
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.healthProjectedNote strong {
+  color: var(--warning);
+}
+
 .healthTeamTableWrap {
   margin-top: 0.55rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.16);
@@ -1082,6 +1093,41 @@
 .healthTeamTable td {
   color: var(--white-75);
   font-size: 0.78rem;
+}
+
+.healthSeedBasisTag {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.4rem;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--info);
+  background: rgba(var(--info-rgb), 0.1);
+  border: 1px solid rgba(var(--info-rgb), 0.35);
+  white-space: nowrap;
+}
+
+/* Flags a team row whose numbers include a hypothetical ("if they keep winning") round —
+   distinct tone from .healthSeedBasisTag so a projected conflict is never mistaken for a
+   real, locked-in one. */
+.healthProjectedTag {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.4rem;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.1);
+  border: 1px solid rgba(var(--warning-rgb), 0.35);
+  white-space: nowrap;
 }
 
 .facilityResolveBanner {
@@ -3941,24 +3987,6 @@
     -webkit-overflow-scrolling: touch;
     scroll-padding-left: 1rem;
     min-width: 0;
-  }
-}
-
-/* ── Sticky Schedule Health bar (C4 revision) ────────────────
-   Pins the full-width panel under the chrome as you scroll; default-collapsed
-   so it rides as a slim bar. `.healthPanel` already has an opaque bg so game
-   rows scroll under it cleanly. The mobile top bar is fixed (48px) outside the
-   .adminMain scroll container, so the bar must clear it on mobile. */
-.healthPanelSticky {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
-}
-
-@media (max-width: 900px) {
-  .healthPanelSticky {
-    top: calc(48px + env(safe-area-inset-top));
   }
 }
 

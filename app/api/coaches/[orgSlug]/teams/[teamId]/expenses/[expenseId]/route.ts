@@ -53,7 +53,13 @@ export const PATCH = withObservability(async (req: Request,
 
   const patch: Parameters<typeof updateRepTeamExpense>[1] = {};
   if (description !== undefined) patch.description = description.trim();
-  if (category !== undefined) patch.category = category?.trim() || null;
+  if (category !== undefined) {
+    const trimmed = typeof category === 'string' ? category.trim() : '';
+    if (trimmed.length > 80) {
+      return NextResponse.json({ error: 'Category must be 80 characters or fewer' }, { status: 400 });
+    }
+    patch.category = trimmed || null;
+  }
   if (notes !== undefined) patch.notes = notes?.trim() || null;
 
   const ledger = await getOrCreateRepTeamLedger(team.orgId, team.id, team.name);

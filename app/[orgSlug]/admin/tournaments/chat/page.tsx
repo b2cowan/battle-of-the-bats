@@ -365,7 +365,7 @@ export default function AdminTournamentChatPage() {
   }
 
   return (
-    <div className={styles.chatPage}>
+    <div className={styles.chatPage} data-chat-fullbleed-mobile>
       <UpgradeGate feature="tournament_chat" label="Tournament Chat">
         <ChatRoomsManager tournamentId={tournamentId} orgParam={orgParam} />
       </UpgradeGate>

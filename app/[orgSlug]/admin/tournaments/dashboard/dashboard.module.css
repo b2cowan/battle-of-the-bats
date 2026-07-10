@@ -1970,6 +1970,24 @@
   margin: 0;
 }
 
+.chatWarnLink {
+  color: var(--warning);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+
+.chatWarnLink:hover { color: var(--logic-lime); }
+
+.chatExplainLink {
+  color: var(--white-60);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+
+.chatExplainLink:hover { color: var(--logic-lime); }
+
 .chatRemindBtn {
   align-self: flex-start;
   display: inline-flex;

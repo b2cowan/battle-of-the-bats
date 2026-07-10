@@ -430,14 +430,14 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Teams & Registration',
       heading: 'Review and accept teams',
       summary: 'Approve, waitlist, reject, and track payment readiness for teams.',
-      keywords: ['review teams', 'approve registration', 'waitlist team', 'payment status', 'accepted teams'],
-      searchText: 'review team registrations approve accept waitlist reject pending payment deposit paid paid in full schedule eligibility selected teams bulk actions',
+      keywords: ['review teams', 'approve registration', 'waitlist team', 'payment status', 'accepted teams', 'registration health'],
+      searchText: 'review team registrations approve accept waitlist reject pending payment deposit paid paid in full schedule eligibility selected teams bulk actions registration health score health score missing email no email on file needs action capacity filled percent filled add team email edit team email',
       links: [
         { label: 'Registrations', href: '../tournaments/registrations' },
       ],
       content: (
         <>
-          <p>Review teams regularly while registration is open so schedule planning starts from a clean accepted-team list.</p>
+          <p>Review teams regularly while registration is open so schedule planning starts from a clean accepted-team list. The <strong>Registration Health</strong> card at the top of the Teams page gives you a one-glance score for exactly this — expand it any time to see what needs a look.</p>
           <ol>
             <li>Open <strong>Registrations</strong> from tournament admin.</li>
             <li>Filter by division or status if the list is large.</li>
@@ -450,6 +450,29 @@ const tournamentsHelp: HelpPageContent = {
         </>
       ),
       faqs: [
+        {
+          id: 'faq-registration-health-score',
+          question: 'What does the Registration Health score tell me?',
+          answerText: 'The Registration Health card at the top of the Teams page gives a 0-100 score for your tournament\'s registrations, plus four tiles — Teams, Missing email, Payments, and Needs action — and a list of specific issues. It starts collapsed; click Show to expand it. Each tile and issue is clickable and jumps straight to the matching filtered team list, so you go straight from "12 teams missing an email" to those exact 12 teams. The Payments tile requires Tournament Plus; on the free Tournament plan it shows a Plus badge instead of numbers. A full waitlist never lowers the score — it isn\'t a problem to fix.',
+          keywords: ['registration health', 'health score', 'health card', 'needs action', 'missing email tile', 'capacity filled', 'percent filled', '/100'],
+          popular: true,
+          answer: (
+            <>
+              <p>The <strong>Registration Health</strong> card at the top of the <strong>Teams</strong> page gives you a 0&ndash;100 score for your tournament&rsquo;s registrations, plus four tiles &mdash; <strong>Teams</strong>, <strong>Missing email</strong>, <strong>Payments</strong>, and <strong>Needs action</strong> &mdash; and a list of specific issues underneath. It starts collapsed; tap <strong>Show</strong> to expand it.</p>
+              <p>Every tile and issue is clickable and jumps straight to the matching filtered team list &mdash; so &ldquo;3 teams missing an email&rdquo; takes you directly to those 3 teams instead of making you hunt through the full roster.</p>
+              <p>The <strong>Payments</strong> tile needs <strong>Tournament Plus</strong> (it tracks unpaid and past-due fees); on the free Tournament plan it shows a small <strong>Plus</strong> badge instead of numbers. A full waitlist never counts against the score &mdash; it isn&rsquo;t something you need to fix.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-add-team-email',
+          question: 'How do I add or fix a team\'s email address?',
+          answerText: 'Open Registrations, expand the team\'s row, and click the pencil (Edit) icon to add or change its email. If the Registration Health card or the dashboard flags teams with no email on file, click that flag to jump straight to the affected teams instead of searching the full list.',
+          keywords: ['add team email', 'edit team email', 'fix email', 'no email on file', 'missing email', 'coach email'],
+          answer: (
+            <p>Open <strong>Registrations</strong>, expand the team&rsquo;s row, and click the pencil (<strong>Edit</strong>) icon &mdash; the email field is there along with the team name and coach name. If the <strong>Registration Health</strong> card or the dashboard&rsquo;s <strong>Coach Sign-ups &amp; Chat</strong> panel flags teams with no email on file, click that flag instead of searching manually &mdash; it jumps straight to the exact teams that need one.</p>
+          ),
+        },
         {
           id: 'faq-team-missing-schedule',
           question: 'Why is a team missing from the schedule builder?',
@@ -613,8 +636,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Playoffs',
       heading: 'Build a playoff bracket',
       summary: 'Manual bracket building for all plans — inline bracket editor, tiers (Gold/Silver), and the Playoff Wizard.',
-      keywords: ['schedule', 'playoffs', 'bracket', 'seeds', 'manual bracket', 'bracket builder', 'tiers', 'split into tiers', 'gold silver bracket', 'playoff picture', 'playoffs are set', 'seeding summary', 'champions', 'champions page', 'champions crowned', 'final results'],
-      searchText: 'playoff bracket manual build add game bracket view playoff wizard auto generate seeds single elimination consolation double elimination placement crossover reseed tiers split into tiers gold silver tier bracket separate brackets overall standings tiered bracket public bracket fans tap click bracket card game details directions field diamond on bracket card public standings bracket playoff picture seeding summary playoffs are set announcement notification alert home hero takeover countdown first playoff game shareable share seeds matchups top seed',
+      keywords: ['schedule', 'playoffs', 'bracket', 'seeds', 'manual bracket', 'bracket builder', 'tiers', 'split into tiers', 'gold silver bracket', 'playoff picture', 'playoffs are set', 'seeding summary', 'champions', 'champions page', 'champions crowned', 'final results', 'schedule health', 'current tag', 'projected tag'],
+      searchText: 'playoff bracket manual build add game bracket view playoff wizard auto generate seeds single elimination consolation double elimination placement crossover reseed tiers split into tiers gold silver tier bracket separate brackets overall standings tiered bracket public bracket fans tap click bracket card game details directions field diamond on bracket card public standings bracket playoff picture seeding summary playoffs are set announcement notification alert home hero takeover countdown first playoff game shareable share seeds matchups top seed schedule health team detail back-to-back max per day rest current projected if this seed keeps winning',
       links: [
         { label: 'Schedule', href: '../tournaments/schedule' },
       ],
@@ -739,6 +762,23 @@ const tournamentsHelp: HelpPageContent = {
                 <li>Editing a tiered bracket — such as adding a venue or time — keeps every tier intact.</li>
               </ul>
               <p>Building tiers by hand is free on every plan. Tournament Plus, League Plus, and Club can also generate tiers in one click from the Playoff Wizard.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-playoffs-current-projected-tags',
+          question: 'What do the "Current" and "Projected" tags mean on the Playoffs schedule health card?',
+          answerText: 'On the Playoffs stage, the Schedule Health card\'s Team Detail table shows every seed\'s rest, back-to-back, and games-per-day numbers, plus how many games in a row they\'d play if they kept winning all the way to the final — since every round\'s date, time, and venue is already fixed the moment the bracket is built, only the opponent is unknown. A seed still shows as "Seed #N" until its real team is known. A "Current" tag means the team name came from live round-robin standings, which can still shift before round robin ends (once at least one round-robin game has been played). A "Projected" tag means some of that row\'s games have not actually happened yet — it assumes that seed keeps winning through the final. Projected rounds are always tagged so a hypothetical scheduling conflict is never mistaken for one that\'s already locked in.',
+          keywords: ['schedule health', 'health card', 'team detail', 'current tag', 'projected tag', 'seed number', 'back-to-back', 'max per day', 'rest', 'if this seed keeps winning', 'single elimination', 'standings resolved'],
+          popular: true,
+          answer: (
+            <>
+              <p>On the <strong>Playoffs</strong> stage, the <strong>Schedule Health</strong> card&rsquo;s <strong>Team Detail</strong> table shows every seed&rsquo;s rest, back-to-back, and games-per-day numbers — including rounds they haven&rsquo;t reached yet, since every round&rsquo;s date, time, and venue is already fixed the moment the bracket is built, only the opponent is unknown. Until a seed&rsquo;s real team is known, the row is simply labelled <strong>&ldquo;Seed #N&rdquo;</strong> — same numbers either way.</p>
+              <ul>
+                <li><strong>Current</strong> — the team name was resolved from live round-robin standings (once at least one round-robin game has been played), which can still shift before round robin ends.</li>
+                <li><strong>Projected</strong> — some of that row&rsquo;s games haven&rsquo;t actually happened yet; it assumes that team or seed wins every remaining game and reaches the final. It&rsquo;s a heads-up, not a locked-in schedule conflict.</li>
+              </ul>
+              <p>This projection only appears for a standard single-elimination bracket — double-elimination, consolation, and tiered crossover formats don&rsquo;t show it, since a team could legitimately land in either path there.</p>
             </>
           ),
         },
@@ -997,13 +1037,13 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-tournament-chat-signups',
           question: 'How do I see how many coaches have signed up — and remind the rest?',
-          answerText: 'Your tournament dashboard has a Coach Sign-ups & Chat panel that tracks it for you: how many of your teams have a coach signed up for their portal, how many are in the chat, and how many have not yet joined. When teams are still missing, use Remind teams to sign up to email everyone who has not joined a link to set up their portal — in one click, instead of chasing them one at a time. Any teams with no coach email on file are flagged so you can add one. Signing up is what puts a coach in the chat, so this is also the fastest way to fill the room. On the free Tournament plan the panel shows the Tournament Plus upgrade instead.',
-          keywords: ['coach sign-ups', 'coaches signed up', 'how many coaches signed up', 'remind teams to sign up', 'remind coaches to sign up', 'chat adoption', 'dashboard chat panel', 'coach sign-up tracker', 'who has signed up', 'no coach email', 'not yet joined'],
+          answerText: 'Your tournament dashboard has a Coach Sign-ups & Chat panel that tracks it for you: how many of your teams have a coach signed up for their portal, how many are in the chat, and how many have not yet joined. When teams are still missing, use Remind teams to sign up to email everyone who has not joined a link to set up their portal — in one click, instead of chasing them one at a time. Any teams with no coach email on file are flagged with a link straight to those teams on the Teams page, so you can add an email and try again. Signing up is what puts a coach in the chat, so this is also the fastest way to fill the room. On the free Tournament plan the panel shows the Tournament Plus upgrade instead.',
+          keywords: ['coach sign-ups', 'coaches signed up', 'how many coaches signed up', 'remind teams to sign up', 'remind coaches to sign up', 'chat adoption', 'dashboard chat panel', 'coach sign-up tracker', 'who has signed up', 'no coach email', 'not yet joined', 'add coach email', 'missing email'],
           popular: true,
           answer: (
             <>
               <p>Your tournament <strong>dashboard</strong> has a <strong>Coach Sign-ups &amp; Chat</strong> panel that tracks it for you: how many of your teams have a coach <strong>signed up</strong> for their portal, how many are <strong>in the chat</strong>, and how many have <strong>not yet joined</strong>.</p>
-              <p>When teams are still missing, use <strong>Remind teams to sign up</strong> to email everyone who hasn&rsquo;t joined a link to set up their portal — in one click, instead of chasing them one at a time. Any teams with <strong>no coach email on file</strong> are flagged so you can add one first. Because signing up is what puts a coach in the chat, this is also the fastest way to fill the room.</p>
+              <p>When teams are still missing, use <strong>Remind teams to sign up</strong> to email everyone who hasn&rsquo;t joined a link to set up their portal — in one click, instead of chasing them one at a time. Any teams with <strong>no coach email on file</strong> are flagged with a link that jumps straight to those teams on the <strong>Teams</strong> page — open a team and add an email from there, then send the reminder again. Because signing up is what puts a coach in the chat, this is also the fastest way to fill the room.</p>
               <p>On the free Tournament plan the panel shows the Tournament Plus upgrade option instead.</p>
             </>
           ),

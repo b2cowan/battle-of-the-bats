@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { sendEmail, platformPasswordResetHtml } from '@/lib/email';
+import { platformPasswordResetHtml } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { withObservability } from '@/lib/observability';
 
 export const POST = withObservability(async (req: NextRequest) => {
@@ -34,7 +35,16 @@ export const POST = withObservability(async (req: NextRequest) => {
   const confirmUrl = `${origin}/auth/reset-confirm?link=${encodeURIComponent(data.properties.action_link)}`;
 
   try {
-    await sendEmail(email, 'Reset your FieldLogicHQ password', platformPasswordResetHtml(confirmUrl));
+    // Operator override applies when customised; otherwise the built-in reset email
+    // sends unchanged. (Wires the previously-orphaned `password_reset` template to the
+    // live reset flow.)
+    await sendTransactionalEmail({
+      key: 'password_reset',
+      to: email,
+      vars: { resetLink: confirmUrl },
+      defaultSubject: 'Reset your FieldLogicHQ password',
+      defaultHtml: platformPasswordResetHtml(confirmUrl),
+    });
     console.log(`[forgot-password] reset email sent to ${email}`);
   } catch (emailErr) {
     console.error('[forgot-password] sendEmail error:', emailErr);

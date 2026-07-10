@@ -58,7 +58,9 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 function actionLabel(action: string) {
-  return ACTION_LABELS[action] ?? action.replace(/_/g, ' ');
+  // Curated label when we have one; otherwise a clean Title Case fallback (never the raw snake_case key).
+  return ACTION_LABELS[action]
+    ?? action.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function orgNameFromJoin(value: AuditLogRow['organizations']) {
@@ -219,9 +221,11 @@ export default async function AuditLogPage({
         />
         <select name="action" defaultValue={filters.action} className={styles.filterSelect}>
           <option value="">All actions</option>
-          {actions.map(a => (
-            <option key={a} value={a}>{a}</option>
-          ))}
+          {[...actions]
+            .sort((a, b) => actionLabel(a).localeCompare(actionLabel(b)))
+            .map(a => (
+              <option key={a} value={a}>{actionLabel(a)}</option>
+            ))}
         </select>
         {filters.orgId && <input type="hidden" name="orgId" value={filters.orgId} />}
         <button type="submit" className={styles.filterBtn}>Filter</button>

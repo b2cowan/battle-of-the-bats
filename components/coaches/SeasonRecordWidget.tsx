@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Check } from 'lucide-react';
 import type { RepTeamEvent, RepEventType } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -36,7 +37,7 @@ function formLabel(e: RepTeamEvent): string {
  * Lives on the team Overview (moved off the Schedule 2026-06-29). Renders nothing until at
  * least one finalized game exists.
  */
-export default function SeasonRecordWidget({ events, teamId }: { events: RepTeamEvent[]; teamId: string }) {
+export default function SeasonRecordWidget({ events, teamId, insightsHref }: { events: RepTeamEvent[]; teamId: string; insightsHref?: string }) {
   const storageKey = `flhq.coachWlt.${teamId}`;
   const [included, setIncluded] = useState<Record<string, boolean>>(WLT_DEFAULT);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
@@ -171,6 +172,9 @@ export default function SeasonRecordWidget({ events, teamId }: { events: RepTeam
             );
           })}
         </div>
+      )}
+      {insightsHref && (
+        <Link href={insightsHref} className={styles.wltInsightsLink}>Season insights →</Link>
       )}
     </div>
   );

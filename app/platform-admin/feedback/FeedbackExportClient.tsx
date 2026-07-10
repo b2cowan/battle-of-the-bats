@@ -1,8 +1,11 @@
 'use client';
 
+import ExportMenu from '@/components/admin/ExportMenu';
+
 /**
- * Thin client export control for the feedback triage page (server component). Builds the filtered
- * download URLs and triggers them as plain <a download> navigation, mirroring AuditExportClient.
+ * Thin client export control for the feedback triage page (server component). Uses the shared
+ * ExportMenu dropdown (Excel on primary click, CSV in the menu). Builds the filtered download URL
+ * and triggers it on click, mirroring AuditExportClient / IssuesExportClient.
  */
 interface FeedbackExportClientProps {
   type: string;
@@ -20,28 +23,21 @@ function buildExportUrl(filters: FeedbackExportClientProps, format: 'xlsx' | 'cs
   return `/api/platform-admin/feedback/export${qs ? `?${qs}` : ''}`;
 }
 
-export default function FeedbackExportClient(props: FeedbackExportClientProps) {
-  const xlsxUrl = buildExportUrl(props, 'xlsx');
-  const csvUrl = buildExportUrl(props, 'csv');
+function triggerDownload(url: string) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
 
+export default function FeedbackExportClient(props: FeedbackExportClientProps) {
   return (
-    <div style={{ display: 'flex', gap: '0.5rem' }}>
-      <a
-        href={xlsxUrl}
-        className="btn btn-outline btn-sm"
-        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
-        download
-      >
-        ↓ Export XLSX
-      </a>
-      <a
-        href={csvUrl}
-        className="btn btn-outline btn-sm"
-        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
-        download
-      >
-        CSV
-      </a>
-    </div>
+    <ExportMenu
+      formats={['xlsx', 'csv']}
+      onExportXLSX={() => triggerDownload(buildExportUrl(props, 'xlsx'))}
+      onExportCSV={() => triggerDownload(buildExportUrl(props, 'csv'))}
+    />
   );
 }

@@ -71,6 +71,7 @@ type TeamPaymentRow = {
   waitlist_position: number | null;
   registered_at: string | null;
   check_in_status: string | null;
+  seed: number | null;
 };
 
 type DivPayCounts = { paid: number; depositPaid: number; pending: number; pastDue: number; total: number };
@@ -168,7 +169,7 @@ export const GET = withObservability(async (req: Request) => {
       .is('deleted_at', null),
     supabaseAdmin
       .from('teams')
-      .select('id, name, email, division_id, status, deposit_paid, total_paid, slot_id, waitlist_position, registered_at, check_in_status')
+      .select('id, name, email, division_id, status, deposit_paid, total_paid, slot_id, waitlist_position, registered_at, check_in_status, seed')
       .eq('tournament_id', tournamentId),
     supabaseAdmin
       .from('pool_slots')
@@ -492,6 +493,7 @@ export const GET = withObservability(async (req: Request) => {
       name: team.name ?? 'Team',
       divisionId: team.division_id,
       status: team.status,
+      seed: team.seed ?? null,
     })),
     gameDurationMinutes: positiveNumber(tSettings.game_duration_minutes),
     bufferMinutes: positiveNumber(tSettings.buffer_minutes),
@@ -616,6 +618,7 @@ export const GET = withObservability(async (req: Request) => {
       slotId: team.slot_id,
       waitlistPosition: team.waitlist_position,
       customAnswers: answersByRegistration.get(team.id) ?? [],
+      email: team.email,
     })),
     {
       divisions: divisions.map(group => ({

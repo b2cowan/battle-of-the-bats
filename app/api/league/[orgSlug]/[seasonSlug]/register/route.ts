@@ -7,11 +7,11 @@ import {
 } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import {
-  sendEmail,
   leagueRegistrationApprovedHtml,
   leagueRegistrationPendingHtml,
   leagueRegistrationWaitlistHtml,
 } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { withObservability } from '@/lib/observability';
 
 export const dynamic = 'force-dynamic';
@@ -167,19 +167,36 @@ export const POST = withObservability(async (req: Request,
 
   void (async () => {
     try {
+      let key: string;
       let subject: string;
       let html: string;
+      const vars = {
+        guardianFirstName: guardianFirst!,
+        playerFirstName:   playerFirstName!,
+        playerLastName:    playerLastName!,
+        seasonName:        season.name,
+        divisionName:      division.name,
+      };
       if (regStatus === 'active') {
+        key     = 'league_registration_approved';
         subject = `Registration approved — ${season.name}`;
         html    = leagueRegistrationApprovedHtml(emailParams);
       } else if (regStatus === 'waitlisted') {
+        key     = 'league_registration_waitlisted';
         subject = `You're on the waitlist — ${season.name}`;
         html    = leagueRegistrationWaitlistHtml({ ...emailParams, waitlistPosition: waitlistPosition! });
       } else {
+        key     = 'league_registration_pending';
         subject = `Registration received — ${season.name}`;
         html    = leagueRegistrationPendingHtml(emailParams);
       }
-      await sendEmail(guardianEmail!, subject, html);
+      await sendTransactionalEmail({
+        key,
+        to: guardianEmail!,
+        vars: regStatus === 'waitlisted' ? { ...vars, waitlistPosition: waitlistPosition! } : vars,
+        defaultSubject: subject,
+        defaultHtml: html,
+      });
     } catch (e) {
       console.error('[league-register] email send failed:', e);
     }

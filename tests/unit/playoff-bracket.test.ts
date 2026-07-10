@@ -17,6 +17,8 @@ import {
   nextManualBracketCode,
   computeBracketColumns,
   resolvePlayoffWinner,
+  nextBracketCodeViaWinner,
+  isStandardSingleEliminationBracket,
   type GeneratedMatchup,
 } from '../../lib/playoff-bracket.ts';
 
@@ -894,5 +896,59 @@ describe('computeBracketColumns (feed-graph layout)', () => {
 
   it('empty input returns an empty map', () => {
     assert.equal(computeBracketColumns([]).size, 0);
+  });
+});
+
+describe('nextBracketCodeViaWinner', () => {
+  const games = [
+    { bracketCode: 'QF1', homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #8' },
+    { bracketCode: 'QF2', homePlaceholder: 'Seed #4', awayPlaceholder: 'Seed #5' },
+    { bracketCode: 'SF1', homePlaceholder: 'Winner QF1', awayPlaceholder: 'Winner QF2' },
+    { bracketCode: 'FIN', homePlaceholder: 'Winner SF1', awayPlaceholder: 'Winner SF2' },
+  ];
+
+  it('finds the game whose Home/Away references Winner <code>, and which side', () => {
+    assert.deepEqual(nextBracketCodeViaWinner(games, 'QF1'), { code: 'SF1', side: 'home' });
+    assert.deepEqual(nextBracketCodeViaWinner(games, 'QF2'), { code: 'SF1', side: 'away' });
+    assert.deepEqual(nextBracketCodeViaWinner(games, 'SF1'), { code: 'FIN', side: 'home' });
+  });
+
+  it('is case/whitespace-insensitive on the code', () => {
+    assert.deepEqual(nextBracketCodeViaWinner(games, '  qf1  '), { code: 'SF1', side: 'home' });
+  });
+
+  it('returns null once the code feeds nothing further (the final)', () => {
+    assert.equal(nextBracketCodeViaWinner(games, 'FIN'), null);
+  });
+
+  it('ignores Loser refs entirely', () => {
+    const withLoser = [
+      ...games,
+      { bracketCode: 'CON1', homePlaceholder: 'Loser QF1', awayPlaceholder: 'Loser QF2' },
+    ];
+    assert.deepEqual(nextBracketCodeViaWinner(withLoser, 'QF1'), { code: 'SF1', side: 'home' }); // not CON1
+  });
+});
+
+describe('isStandardSingleEliminationBracket', () => {
+  it('true for a plain QF/SF/FIN bracket', () => {
+    const games = [
+      { bracketCode: 'QF1' }, { bracketCode: 'QF2' }, { bracketCode: 'SF1' }, { bracketCode: 'FIN' },
+    ];
+    assert.equal(isStandardSingleEliminationBracket(games), true);
+  });
+
+  it('true for a manually renamed / legacy-coded bracket with no section codes', () => {
+    assert.equal(isStandardSingleEliminationBracket([{ bracketCode: 'test' }, { bracketCode: 'G4' }]), true);
+  });
+
+  it('false when any multi-section code is present (double-elim/consolation/placement)', () => {
+    assert.equal(isStandardSingleEliminationBracket([{ bracketCode: 'WB1-1' }, { bracketCode: 'LB1-1' }]), false);
+    assert.equal(isStandardSingleEliminationBracket([{ bracketCode: 'QF1' }, { bracketCode: 'CON1-1' }]), false);
+    assert.equal(isStandardSingleEliminationBracket([{ bracketCode: 'SF1' }, { bracketCode: 'P3' }]), false);
+  });
+
+  it('false when no game carries a bracketCode at all (nothing to project)', () => {
+    assert.equal(isStandardSingleEliminationBracket([{ bracketCode: null }, { bracketCode: undefined }]), false);
   });
 });

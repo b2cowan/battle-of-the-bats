@@ -2,7 +2,8 @@ import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTo
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
-import { sendEmail, schedulePublishedHtml, gameDayReminderHtml, resolveCoachRecipient, coachPortalUrl, coachEmailEnabled, SITE_URL } from '@/lib/email';
+import { schedulePublishedHtml, gameDayReminderHtml, resolveCoachRecipient, coachPortalUrl, coachEmailEnabled, SITE_URL } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { sendMarketingEmail, cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
 import { hasPlanFeature } from '@/lib/plan-features';
 import type { OrgPlan } from '@/lib/types';
@@ -116,7 +117,13 @@ export const POST = withObservability(async (req: Request) => {
           registrationId: team.id,
           coachEmail: team.email ?? undefined,
         });
-        await sendEmail(recipient, `Schedule Published — ${tournament.name}`, html);
+        await sendTransactionalEmail({
+          key: 'schedule_published',
+          to: recipient,
+          vars: { coachName: team.coach || team.name, tournamentName: tournament.name, scheduleUrl },
+          defaultSubject: `Schedule Published — ${tournament.name}`,
+          defaultHtml: html,
+        });
         notified++;
       }
     }

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
-import { sendEmail, signupVerificationHtml } from '@/lib/email';
+import { signupVerificationHtml } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { captureError, withObservability } from '@/lib/observability';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { findPendingInviteByEmail } from '@/lib/invite-reconciliation';
@@ -184,12 +185,14 @@ export const POST = withObservability(async (req: Request) => {
         userId = linkData.user.id;
 
         const verifyUrl = `${origin}/auth/signup-confirm?link=${encodeURIComponent(linkData.properties.action_link)}`;
-        await sendEmail(
-          normalizedEmail,
-          'Verify your FieldLogicHQ email',
-          // No orgName — account-only verification uses neutral copy.
-          signupVerificationHtml({ verifyUrl, firstName: normalizedFirstName }),
-        );
+        await sendTransactionalEmail({
+          key: 'signup_verification',
+          to: normalizedEmail,
+          // Account-only verification: neutral orgName so a customised {{orgName}} reads sensibly.
+          vars: { verifyUrl, orgName: 'your account' },
+          defaultSubject: 'Verify your FieldLogicHQ email',
+          defaultHtml: signupVerificationHtml({ verifyUrl, firstName: normalizedFirstName }),
+        });
 
         return NextResponse.json({
           success: true,
@@ -344,11 +347,13 @@ export const POST = withObservability(async (req: Request) => {
       }
 
       const verifyUrl = `${origin}/auth/signup-confirm?link=${encodeURIComponent(actionLink)}`;
-      await sendEmail(
-        normalizedEmail,
-        'Verify your FieldLogicHQ email',
-        signupVerificationHtml({ orgName: normalizedOrgName, verifyUrl, firstName: normalizedFirstName })
-      );
+      await sendTransactionalEmail({
+        key: 'signup_verification',
+        to: normalizedEmail,
+        vars: { orgName: normalizedOrgName, verifyUrl },
+        defaultSubject: 'Verify your FieldLogicHQ email',
+        defaultHtml: signupVerificationHtml({ orgName: normalizedOrgName, verifyUrl, firstName: normalizedFirstName }),
+      });
 
       return NextResponse.json({
         success: true,

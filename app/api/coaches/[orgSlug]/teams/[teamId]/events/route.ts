@@ -7,11 +7,16 @@ import {
   getActiveRepProgramYear,
   getRepTeamEvents,
   getRepTeamLineupAttendanceMismatchEventIds,
+  getRepTeamLineupSetEventIds,
   createRepTeamEvent,
   createRepTeamEvents,
+  getRepTeamTags,
+  getRepTeamEventTagsMap,
+  setRepTeamEventTags,
 } from '@/lib/db';
 import type { RepEventType } from '@/lib/types';
 import { sanitizeResources } from '@/lib/rep-event-resources';
+import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { withObservability } from '@/lib/observability';
 import { denyUnless } from '@/lib/coach-capabilities';
 
@@ -78,12 +83,33 @@ export const GET = withObservability(async (req: Request,
   const type = url.searchParams.get('type') as RepEventType | undefined ?? undefined;
 
   const events = await getRepTeamEvents(programYear.id, { from, to, type });
-  // Game events whose saved lineup disagrees with attendance — only surfaced to coaches who can
-  // see lineups (the ⚠ is only actionable for them).
-  const lineupMismatchEventIds = assignment.capabilities.lineups
-    ? await getRepTeamLineupAttendanceMismatchEventIds(programYear.id)
-    : [];
-  return NextResponse.json({ events, programYear, lineupMismatchEventIds });
+  // Lineup flags, only for coaches who can see lineups (they're only actionable for them):
+  // mismatch = saved lineup disagrees with attendance; set = the game has a real saved lineup
+  // (powers the Lineups page's readiness chips + "Needs lineup" filter without N+1 probes).
+  const [lineupMismatchEventIds, lineupSetEventIds] = assignment.capabilities.lineups
+    ? await Promise.all([
+        getRepTeamLineupAttendanceMismatchEventIds(programYear.id),
+        getRepTeamLineupSetEventIds(programYear.id),
+      ])
+    : [[], null];
+  // Tags: the team's game-tag library (for the chip picker) + which tags each returned event
+  // already carries (for chip display without a per-event fetch). Both gate on the same
+  // `schedule` capability already required for this whole route.
+  const [tags, tagsByEventId] = await Promise.all([
+    getRepTeamTags(teamId, 'game'),
+    getRepTeamEventTagsMap(events.map(e => e.id)),
+  ]);
+  // lineupSetEventIds is OMITTED (not []) when the caller can't see lineups, so a client with a
+  // stale capability cache can tell "no lineup visibility" apart from "no lineups saved" and
+  // render no readiness badges instead of a false "Not set" on every game.
+  return NextResponse.json({
+    events,
+    programYear,
+    lineupMismatchEventIds,
+    tags,
+    tagsByEventId,
+    ...(lineupSetEventIds ? { lineupSetEventIds } : {}),
+  });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events' });
 
 export const POST = withObservability(async (req: Request,
@@ -186,6 +212,16 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'startsAt is required' }, { status: 400 });
   }
 
+  // Game tags — a one-off (non-recurring) event only; the recurring bulk-create wizard doesn't
+  // collect per-occurrence tags (a coach tags a specific game later, from its own edit form).
+  let tagIds: string[] | null = [];
+  if (body.tagIds !== undefined) {
+    tagIds = await resolveValidTagIds(teamId, body.tagIds);
+    if (tagIds === null) {
+      return NextResponse.json({ error: 'tagIds must be an array of this team’s existing tag ids' }, { status: 400 });
+    }
+  }
+
   const event = await createRepTeamEvent({
     programYearId: programYear.id,
     teamId: team.id,
@@ -205,6 +241,10 @@ export const POST = withObservability(async (req: Request,
     homeAway: homeAway || null,
     parentEventId: parentEventId || null,
   });
+
+  if (tagIds.length > 0) {
+    await setRepTeamEventTags(event.id, tagIds);
+  }
 
   return NextResponse.json({ event }, { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events' });

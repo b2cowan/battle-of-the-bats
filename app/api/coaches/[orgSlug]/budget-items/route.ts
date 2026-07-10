@@ -73,8 +73,10 @@ export const GET = withObservability(async (_req: Request,
 }, { route: '/api/coaches/[orgSlug]/budget-items' });
 
 // POST /api/coaches/[orgSlug]/budget-items
-// Lets a coach add a custom item to any accessible category.
-// The item is saved org-wide so it becomes reusable by all coaches in the org.
+// Lets a coach add a custom item to any accessible category — or, with
+// `newCategoryName`, create a whole new top-level category (owner decision
+// 2026-07-09: coaches can create categories just like items). Both are saved
+// org-wide so they become reusable by all coaches in the org.
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string }> },) => {
   const { orgSlug } = await params;
@@ -85,6 +87,50 @@ export const POST = withObservability(async (req: Request,
   if (denied) return denied;
 
   const body = await req.json();
+
+  // ── Create a new category ────────────────────────────────────────────────
+  const newCategoryName: string = typeof body.newCategoryName === 'string' ? body.newCategoryName.trim() : '';
+  if (newCategoryName) {
+    if (newCategoryName.length > 80) {
+      return NextResponse.json({ error: 'Category name must be 80 characters or fewer' }, { status: 400 });
+    }
+    // No DB unique constraint exists on category names — enforce case-insensitive
+    // uniqueness here so "Uniforms" can't be created a dozen times.
+    const { data: existing } = await supabaseAdmin
+      .from('budget_categories')
+      .select('id, name')
+      .or(`org_id.is.null,org_id.eq.${ctx.org.id}`)
+      .ilike('name', newCategoryName);
+    if ((existing ?? []).some(c => (c.name as string).toLowerCase() === newCategoryName.toLowerCase())) {
+      return NextResponse.json({ error: 'A category with this name already exists' }, { status: 409 });
+    }
+    const { data: cat, error: catError } = await supabaseAdmin
+      .from('budget_categories')
+      .insert({ org_id: ctx.org.id, name: newCategoryName, scope: 'team', is_default: false })
+      .select('*, budget_items(*)')
+      .single();
+
+    if (catError) {
+      if (catError.code === '23505') {
+        return NextResponse.json({ error: 'A category with this name already exists' }, { status: 409 });
+      }
+      return NextResponse.json({ error: catError.message }, { status: 500 });
+    }
+
+    const category: BudgetCategoryWithItems = {
+      id:        cat.id as string,
+      orgId:     cat.org_id as string | null,
+      name:      cat.name as string,
+      scope:     cat.scope as 'org' | 'team' | 'both',
+      sortOrder: cat.sort_order as number,
+      isDefault: cat.is_default as boolean,
+      createdAt: cat.created_at as string,
+      items:     [],
+    };
+    return NextResponse.json({ category }, { status: 201 });
+  }
+
+  // ── Create a new item in an existing category ────────────────────────────
   const catId: string = typeof body.categoryId === 'string' ? body.categoryId.trim() : '';
   const name: string  = typeof body.name === 'string' ? body.name.trim() : '';
   const suggestedAmount: number | null =

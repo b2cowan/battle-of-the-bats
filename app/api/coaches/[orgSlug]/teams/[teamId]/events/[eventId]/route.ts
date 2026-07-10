@@ -9,8 +9,10 @@ import {
   updateRepTeamEventSeries,
   deleteRepTeamEvent,
   deleteRepTeamEventsByRecurrenceParent,
+  setRepTeamEventTags,
 } from '@/lib/db';
 import { sanitizeResources } from '@/lib/rep-event-resources';
+import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { withObservability } from '@/lib/observability';
 import { denyUnless } from '@/lib/coach-capabilities';
 
@@ -113,7 +115,20 @@ export const PATCH = withObservability(async (req: Request,
     fields.status = s;
   }
 
+  // Game tags — full replace-on-save, same as the create route. Not offered on the series-scope
+  // edit above (a coach tags one specific game, not a whole recurring run at once).
+  let tagIds: string[] | null = null;
+  if (body.tagIds !== undefined) {
+    tagIds = await resolveValidTagIds(teamId, body.tagIds);
+    if (tagIds === null) {
+      return NextResponse.json({ error: 'tagIds must be an array of this team’s existing tag ids' }, { status: 400 });
+    }
+  }
+
   const updated = await updateRepTeamEvent(eventId, fields);
+  if (tagIds !== null) {
+    await setRepTeamEventTags(eventId, tagIds);
+  }
   return NextResponse.json({ event: updated });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]' });
 

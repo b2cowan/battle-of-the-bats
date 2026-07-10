@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendEmail, registrationConfirmationHtml, waitlistConfirmationHtml, adminNotificationHtml, ADMIN_EMAIL, coachEmailEnabled } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { getTournamentRegistrationFields, saveTournamentRegistrationFieldAnswers } from '@/lib/db';
 import { hasPlanFeature } from '@/lib/plan-features';
@@ -512,13 +513,15 @@ export const POST = withObservability(async (req: NextRequest) => {
     ];
     if (coachEmailEnabled(tournament.settings, 'confirmation')) {
       emailSends.push(
-        sendEmail(
-          email,
-          isWaitlist ? `Waitlist Confirmation - ${teamName}` : `Registration Received - ${teamName}`,
-          isWaitlist
+        sendTransactionalEmail({
+          key: isWaitlist ? 'tournament_registration_waitlist' : 'tournament_registration_confirmation',
+          to: email,
+          vars: { coachName, teamName, ageGroupName: divisionName, tournamentName },
+          defaultSubject: isWaitlist ? `Waitlist Confirmation - ${teamName}` : `Registration Received - ${teamName}`,
+          defaultHtml: isWaitlist
             ? waitlistConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, registrationId: data?.id, coachEmail: email })
-            : registrationConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, coachEmail: email, registrationId: data?.id })
-        )
+            : registrationConfirmationHtml({ teamName, coachName, divisionName, tournamentName, contactEmail: footerContactEmail, coachEmail: email, registrationId: data?.id }),
+        })
       );
     }
     await Promise.allSettled(emailSends);

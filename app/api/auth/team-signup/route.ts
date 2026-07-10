@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { sendEmail, signupVerificationHtml } from '@/lib/email';
+import { signupVerificationHtml } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { COACHES_START_PATH, normalizeCoachPortalNext } from '@/lib/coaches-portal-routes';
 import { captureError, withObservability } from '@/lib/observability';
 
@@ -90,11 +91,13 @@ export const POST = withObservability(async (req: Request) => {
       }
 
       const verifyUrl = `${origin}/auth/signup-confirm?link=${encodeURIComponent(actionLink)}`;
-      await sendEmail(
-        normalizedEmail,
-        'Verify your FieldLogicHQ email',
-        signupVerificationHtml({ orgName: 'your Coaches Portal', verifyUrl }),
-      );
+      await sendTransactionalEmail({
+        key: 'signup_verification',
+        to: normalizedEmail,
+        vars: { orgName: 'your Coaches Portal', verifyUrl },
+        defaultSubject: 'Verify your FieldLogicHQ email',
+        defaultHtml: signupVerificationHtml({ orgName: 'your Coaches Portal', verifyUrl }),
+      });
 
       return NextResponse.json({
         success: true,

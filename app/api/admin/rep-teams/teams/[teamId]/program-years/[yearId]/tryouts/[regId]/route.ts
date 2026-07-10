@@ -12,7 +12,8 @@ import {
 } from '@/lib/db';
 import { deriveStandardDuesSchedule, validateAcceptDues, normalizeAcceptDues } from '@/lib/tryout-fees';
 import { applyTryoutDecisionSideEffects } from '@/lib/tryout-notifications';
-import { sendEmail, tryoutAcceptedHtml } from '@/lib/email';
+import { tryoutAcceptedHtml } from '@/lib/email';
+import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import type { RepTryoutRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
@@ -138,11 +139,19 @@ export const PATCH = withObservability(async (req: Request,
 
     try {
       const { registration, player } = await acceptTryoutAndAddToRoster(reg.id, { roster, dues });
-      sendEmail(
-        reg.guardianEmail,
-        `${team.name} — Welcome to the Team!`,
-        tryoutAcceptedHtml(emailParams),
-      ).catch(e => console.error('[email] tryout accepted:', e));
+      sendTransactionalEmail({
+        key: 'tryout_offer_accepted',
+        to: reg.guardianEmail,
+        vars: {
+          guardianFirstName: emailParams.guardianFirstName,
+          playerFirstName: emailParams.playerFirstName,
+          playerLastName: emailParams.playerLastName,
+          teamName: emailParams.teamName,
+          yearName: emailParams.yearName,
+        },
+        defaultSubject: `${team.name} — Welcome to the Team!`,
+        defaultHtml: tryoutAcceptedHtml(emailParams),
+      }).catch(e => console.error('[email] tryout accepted:', e));
       return NextResponse.json({ registration, player });
     } catch (e) {
       if (e instanceof TryoutAcceptError) {

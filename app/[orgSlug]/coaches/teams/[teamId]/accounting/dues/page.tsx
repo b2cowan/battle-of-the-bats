@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Users, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, ChevronDown } from 'lucide-react';
+import { Users, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, ChevronDown, Bell, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import HelpTooltip from '@/components/help/HelpTooltip';
@@ -170,6 +170,13 @@ export default function CoachesDuesPage({
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
   const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : false;
 
+  // Automatic Dues Reminders toggle (moved here from the Money hub — it belongs with
+  // dues) + budget-plan awareness for the "generate from your budget" cross-link.
+  const [autoReminders, setAutoReminders] = useState<boolean | null>(null);
+  const [autoRemindersSaving, setAutoRemindersSaving] = useState(false);
+  const [hasBudgetLines, setHasBudgetLines] = useState(false);
+  const [budgetHasInstallments, setBudgetHasInstallments] = useState(false);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -193,6 +200,36 @@ export default function CoachesDuesPage({
       .then(d => setPdfSettings(d as OrgPdfSettings))
       .catch(() => setPdfSettings(null));
   }, [orgSlug]);
+
+  useEffect(() => {
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setAutoReminders(d.autoRemindersEnabled ?? true); })
+      .catch(() => {});
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d?.plan) return;
+        setHasBudgetLines((d.plan.lines?.length ?? 0) > 0);
+        setBudgetHasInstallments(!!d.plan.hasInstallments);
+      })
+      .catch(() => {});
+  }, [orgSlug, teamId]);
+
+  async function toggleAutoReminders(enabled: boolean) {
+    setAutoRemindersSaving(true);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ autoRemindersEnabled: enabled }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      setAutoReminders(enabled);
+    } finally {
+      setAutoRemindersSaving(false);
+    }
+  }
 
   // ── Export helpers ───────────────────────────────────────────────────────────
 
@@ -515,19 +552,13 @@ export default function CoachesDuesPage({
   return (
     <div className={styles.page}>
       {/* Header */}
+      <Link href={`${base}/accounting`} className={styles.backLink}>
+        <ArrowLeft size={14} aria-hidden /> Back to Money
+      </Link>
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><Users size={22} /></div>
           <div>
-            <nav className={styles.breadcrumb}>
-              <Link href={`/${orgSlug}/coaches`}>Portal</Link>
-              <span>/</span>
-              <Link href={base}>{assignment.teamName}</Link>
-              <span>/</span>
-              <Link href={`${base}/accounting`}>Money</Link>
-              <span>/</span>
-              <span>Player Dues</span>
-            </nav>
             <h1 className={styles.pageTitle}>Player Dues</h1>
             <p className={styles.pageSub}>{assignment.programYearName}</p>
           </div>
@@ -581,6 +612,32 @@ export default function CoachesDuesPage({
         <div className={styles.emptyState}>No active roster players found.</div>
       ) : (
         <>
+          {/* Budget cross-link — the schedule generator (the fastest path to dues) lives
+              on the Budget page; surface it here where coaches actually look first. */}
+          {moneyCanWrite && !players.some(p => p.schedule) && (
+            <div className={styles.detailSection} style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <p style={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)', margin: 0, fontSize: '0.92rem' }}>
+                  {hasBudgetLines && !budgetHasInstallments
+                    ? 'Generate everyone’s schedule from your budget'
+                    : 'Fastest way to set dues: start with a budget'}
+                </p>
+                <p className={styles.muted} style={{ margin: '0.2rem 0 0', fontSize: '0.8rem' }}>
+                  {hasBudgetLines && !budgetHasInstallments
+                    ? 'Your Season Budget Plan can create every player’s installment schedule in one step — same dates and amounts for the whole roster.'
+                    : 'Build a Season Budget Plan and it can generate every player’s installment schedule in one click — or set dues for all players manually here.'}
+                </p>
+              </div>
+              <Link
+                href={`${base}/accounting/budget${hasBudgetLines && !budgetHasInstallments ? '?generate=1' : ''}`}
+                className="btn btn-lime btn-sm"
+                style={{ flexShrink: 0 }}
+              >
+                {hasBudgetLines && !budgetHasInstallments ? 'Generate installments' : 'Open budget plan'} <ArrowRight size={14} />
+              </Link>
+            </div>
+          )}
+
           {/* "Haven't paid anything yet" — the coach's who-do-I-chase list, with one-tap nudges.
               Count mirrors the Overview "N unpaid" badge (shared isNeverPaidPlayer predicate). */}
           {neverPaid.length > 0 && (
@@ -844,6 +901,31 @@ export default function CoachesDuesPage({
               </div>
             )}
           </div>
+
+          {/* Automatic Dues Reminders — team-level toggle (moved from the Money hub). */}
+          {autoReminders !== null && (
+            <div className={styles.detailSection} style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <Bell size={20} style={{ color: 'rgba(255,255,255,0.5)', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Automatic Dues Reminders</p>
+                <p className={styles.muted} style={{ margin: 0, fontSize: '0.82rem' }}>
+                  {autoReminders
+                    ? 'On — guardians receive email reminders at 30 days and 7 days before each installment due date.'
+                    : 'Off — no automatic reminder emails will be sent for this team.'}
+                </p>
+              </div>
+              {moneyCanWrite && (
+                <button
+                  className={autoReminders ? styles.btnPrimary : styles.btnGhost}
+                  disabled={autoRemindersSaving}
+                  onClick={() => toggleAutoReminders(!autoReminders)}
+                  style={{ flexShrink: 0, fontSize: '0.8rem', padding: '0.35rem 0.9rem' }}
+                >
+                  {autoRemindersSaving ? '…' : autoReminders ? 'Enabled' : 'Disabled'}
+                </button>
+              )}
+            </div>
+          )}
         </>
       )}
 

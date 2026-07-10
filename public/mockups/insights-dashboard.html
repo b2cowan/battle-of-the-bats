@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Insights dashboard mockup — Scoreboard + What stands out</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c14; --card:rgba(255,255,255,.05); --card2:rgba(255,255,255,.08);
+    --border:rgba(96,125,255,.18); --border-strong:rgba(96,125,255,.34);
+    --w90:rgba(255,255,255,.9); --w70:rgba(255,255,255,.7); --w55:rgba(255,255,255,.55); --w45:rgba(255,255,255,.45); --w35:rgba(255,255,255,.35);
+    --lime:#D9F99D; --ink:#0f1123; --blue:#8FA8FF; --primary:#2743a6;
+    --warn:#FbbF24; --ok:#34D399; --danger:#f87171;
+    --display:'Barlow Condensed','Arial Narrow',sans-serif; --sans:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg) linear-gradient(rgba(30,58,138,.10) 1px,transparent 1px),
+               var(--bg) linear-gradient(90deg,rgba(30,58,138,.10) 1px,transparent 1px);
+    background-size:38px 38px;background-color:var(--bg);
+    color:var(--w90);font-family:var(--sans);min-height:100vh;padding:1.25rem;
+  }
+  /* mock chrome */
+  .mockbar{max-width:1060px;margin:0 auto 1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+  .mockbar h1{font-family:var(--display);font-weight:700;font-size:1.3rem;margin-right:auto}
+  .mockbar .note{flex-basis:100%;color:var(--w45);font-size:.78rem}
+  .switch{display:flex;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:999px;padding:3px}
+  .switch button{border:0;background:transparent;color:var(--w55);font:600 .8rem var(--sans);padding:.4rem .85rem;border-radius:999px;cursor:pointer}
+  .switch button.on{background:var(--primary);color:#fff}
+  .frame{max-width:1060px;margin:0 auto;border:1px solid var(--border-strong);border-radius:18px;background:rgba(10,12,20,.93);box-shadow:0 18px 50px rgba(0,0,0,.5);overflow:hidden;transition:max-width .25s}
+  body[data-width="phone"] .frame{max-width:400px}
+  .screen{padding:1.35rem 1.5rem 2rem;min-height:620px}
+  body[data-width="phone"] .screen{padding:1rem .95rem 2rem}
+  /* page header */
+  .pageHeader{display:flex;align-items:center;gap:.85rem;margin-bottom:1.15rem}
+  .headerIcon{width:44px;height:44px;border-radius:12px;background:rgba(39,67,166,.35);border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+  .pageTitle{font-family:var(--display);font-weight:800;font-size:1.9rem;line-height:1}
+  body[data-width="phone"] .pageTitle{font-size:1.35rem}
+  .pageSub{color:var(--w55);font-size:.85rem;margin-top:.2rem}
+  /* ── scoreboard band ── */
+  .band{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09);padding:.9rem 0;margin-bottom:1.15rem}
+  .stat{flex:1 1 auto;min-width:118px;padding:0 1.1rem;border-right:1px solid rgba(255,255,255,.07)}
+  .stat:last-child{border-right:0}
+  .stat .lbl{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--w35);margin-bottom:.25rem}
+  .stat .val{font-family:var(--display);font-weight:800;font-size:1.7rem;line-height:1;font-variant-numeric:tabular-nums}
+  .stat .val small{font-size:.95rem;color:var(--w55);font-weight:700}
+  .stat .cap{font-size:.68rem;color:var(--w45);margin-top:.3rem}
+  .pips{display:flex;gap:.28rem;margin:.35rem 0 .1rem}
+  .pip{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800}
+  .pip.w{background:rgba(52,211,153,.18);color:var(--ok);border:1px solid rgba(52,211,153,.4)}
+  .pip.l{background:rgba(248,113,113,.14);color:var(--danger);border:1px solid rgba(248,113,113,.35)}
+  .segbar{height:6px;border-radius:3px;background:rgba(255,255,255,.13);overflow:hidden;margin-top:.4rem;width:100%;max-width:120px}
+  .segbar i{display:block;height:100%;background:var(--lime);border-radius:3px 0 0 3px}
+  .up{color:var(--ok);font-weight:700}
+  body[data-width="phone"] .band{border-radius:0}
+  body[data-width="phone"] .stat{flex:1 1 45%;padding:.45rem .8rem;border-right:0}
+  /* ── what stands out ── */
+  .callouts{border:1px solid var(--border);border-top:2px solid rgba(217,249,157,.45);border-radius:14px;background:var(--card);padding:1rem 1.1rem 0.6rem;margin-bottom:1.25rem}
+  .kicker{font-size:.68rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--w45);margin-bottom:.7rem}
+  .co{display:flex;align-items:flex-start;gap:.65rem;padding:.55rem .4rem;border-radius:10px;cursor:pointer;text-decoration:none;color:inherit}
+  .co:hover{background:rgba(255,255,255,.05)}
+  .co .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:.42rem}
+  .dot.warn{background:var(--warn);box-shadow:0 0 8px rgba(251,191,36,.45)}
+  .dot.info{background:var(--blue)}
+  .dot.good{background:var(--ok)}
+  .co .txt{flex:1;font-size:.92rem;color:var(--w90);line-height:1.45}
+  .co .txt b{font-weight:700}
+  .co .chip{flex:none;font-size:.68rem;font-weight:600;color:var(--blue);white-space:nowrap;margin-top:.28rem}
+  .co.quiet{cursor:default;color:var(--w45);font-size:.85rem;padding:.4rem}
+  /* ── report doorway tiles ── */
+  .doors{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.85rem}
+  .door{display:block;text-decoration:none;color:inherit;background:var(--card2);border:1px solid rgba(96,125,255,.3);border-radius:12px;padding:.85rem .95rem;transition:border-color .15s,transform .12s,background .15s;cursor:pointer}
+  .door:hover{border-color:rgba(96,125,255,.6);background:rgba(255,255,255,.1);transform:translateY(-1px)}
+  .door .q{font-weight:800;font-size:.95rem;margin-bottom:.3rem;display:flex;justify-content:space-between;gap:.5rem;align-items:baseline}
+  .door .q span:last-child{color:rgba(96,125,255,.7);font-weight:400}
+  .door .sum{font-size:.78rem;color:var(--w55)}
+  .door.soft{opacity:.65}
+  .door.soft .sum{font-style:italic}
+  /* calm empty line */
+  .calm{color:var(--w45);font-size:.85rem;padding:.9rem .2rem;border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09);margin-bottom:1.15rem}
+  /* ── report page ── */
+  .backLink{color:var(--blue);font-size:.8rem;font-weight:600;text-decoration:none;display:inline-block;margin-bottom:.6rem;cursor:pointer}
+  .basis{color:var(--w45);font-size:.8rem;margin:-.5rem 0 1rem}
+  table{width:100%;border-collapse:collapse;font-size:.86rem}
+  th{font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--w35);text-align:left;padding:.45rem .6rem;border-bottom:1px solid rgba(255,255,255,.12)}
+  td{padding:.55rem .6rem;border-bottom:1px solid rgba(255,255,255,.06);color:var(--w90)}
+  td.num{font-variant-numeric:tabular-nums}
+  td .fieldbar{display:inline-block;vertical-align:middle;height:5px;width:70px;background:rgba(255,255,255,.12);border-radius:3px;margin-left:.5rem;overflow:hidden}
+  td .fieldbar i{display:block;height:100%;background:rgba(96,125,255,.75)}
+  .flag{color:var(--warn);font-size:.75rem;font-weight:700}
+  .muted{color:var(--w45)}
+  .tableWrap{overflow-x:auto}
+  .sectionGap{margin-top:1.6rem}
+  .opsLink{display:inline-block;margin-top:.9rem;color:var(--blue);font-size:.8rem;font-weight:600;text-decoration:none}
+  .hidden{display:none}
+</style>
+</head>
+<body data-width="desktop" data-team="mid" data-view="dash">
+
+<div class="mockbar">
+  <h1>Insights — “Scoreboard + What stands out”</h1>
+  <div class="switch" id="teamSwitch">
+    <button class="on" data-team="mid">Mid-season team</button>
+    <button data-team="new">Brand-new team</button>
+  </div>
+  <div class="switch" id="widthSwitch">
+    <button class="on" data-w="desktop">Desktop</button>
+    <button data-w="phone">Phone</button>
+  </div>
+  <div class="note">Throwaway planning mockup. <b style="color:var(--w70)">Everything is tappable:</b> the findings and the question-tiles open the “Is playing time fair?” report page (the depth model — a real table, no accordions). Toggle “Brand-new team” to see the honest sparse state. Sample data.</div>
+</div>
+
+<div class="frame">
+  <div class="screen">
+    <!-- ═════════ DASHBOARD ═════════ -->
+    <div id="viewDash">
+      <div class="pageHeader">
+        <div class="headerIcon">📊</div>
+        <div>
+          <div class="pageTitle">Insights</div>
+          <div class="pageSub">toronto blue jays5 — how your season is going</div>
+        </div>
+      </div>
+
+      <!-- scoreboard band (mid-season) -->
+      <div class="band" data-only="mid">
+        <div class="stat">
+          <div class="lbl">Record</div>
+          <div class="val">8-3-1</div>
+          <div class="cap">League + Tournament</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Form</div>
+          <div class="pips"><span class="pip w">W</span><span class="pip w">W</span><span class="pip l">L</span><span class="pip w">W</span><span class="pip w">W</span></div>
+          <div class="cap">Won 2 straight</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Run diff</div>
+          <div class="val up">+14</div>
+          <div class="segbar" title="Scored 71 / Allowed 57"><i style="width:55%"></i></div>
+          <div class="cap">71 scored · 57 allowed</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Close games</div>
+          <div class="val">3-1</div>
+          <div class="cap">in one-run games</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Attendance</div>
+          <div class="val">91<small>%</small></div>
+          <div class="cap">games + practices</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Dues</div>
+          <div class="val">80<small>%</small></div>
+          <div class="segbar"><i style="width:80%"></i></div>
+          <div class="cap">$1,840 of $2,300 collected</div>
+        </div>
+      </div>
+      <!-- scoreboard (brand-new) -->
+      <p class="calm hidden" data-only="new">Play a few games and your season scoreboard shows up here — record, form, run diff and trends.</p>
+
+      <!-- what stands out (mid-season) -->
+      <div class="callouts" data-only="mid">
+        <div class="kicker">What stands out</div>
+        <a class="co openReport"><span class="dot warn"></span><span class="txt"><b>Riley P.</b> is 1 inning over his pitching cap (14 IP vs a 13-inning cap).</span><span class="chip">Playing time →</span></a>
+        <a class="co"><span class="dot warn"></span><span class="txt"><b>3 players</b> haven’t paid anything yet — <b>$420</b> outstanding.</span><span class="chip">Money →</span></a>
+        <a class="co openReport"><span class="dot warn"></span><span class="txt"><b>Avery M.</b> has sat the bench most — 8 innings, 2 games back-to-back.</span><span class="chip">Playing time →</span></a>
+        <a class="co"><span class="dot info"></span><span class="txt"><b>Jordan K.</b> missed 4 of the last 5 practices.</span><span class="chip">Attendance →</span></a>
+        <a class="co"><span class="dot info"></span><span class="txt">All <b>3 losses</b> have come on the road — you’re 6-0-1 at home.</span><span class="chip">Results →</span></a>
+        <a class="co openReport"><span class="dot good"></span><span class="txt">Your <b>“Gold-medal order”</b> is 3-0 in the games you’ve used it.</span><span class="chip">Playing time →</span></a>
+      </div>
+      <!-- what stands out (brand-new) -->
+      <div class="callouts hidden" data-only="new">
+        <div class="kicker">What stands out</div>
+        <div class="co quiet">Nothing stands out yet — as you log games, lineups and attendance, this is where we’ll flag what’s worth knowing.</div>
+      </div>
+
+      <!-- report doorways (mid-season) -->
+      <div class="doors" data-only="mid">
+        <a class="door">
+          <div class="q"><span>How are we doing?</span><span>→</span></div>
+          <div class="sum">8-3-1 this season · 1 past season on file</div>
+        </a>
+        <a class="door openReport">
+          <div class="q"><span>Is playing time fair?</span><span>→</span></div>
+          <div class="sum">6 lineups saved · 1 arm-care flag</div>
+        </a>
+        <a class="door">
+          <div class="q"><span>Who shows up?</span><span>→</span></div>
+          <div class="sum">91% team rate · 1 player below 70%</div>
+        </a>
+        <a class="door">
+          <div class="q"><span>Where’s the money?</span><span>→</span></div>
+          <div class="sum">80% collected · 3 never paid — in Money</div>
+        </a>
+      </div>
+      <!-- report doorways (brand-new): sparse = visible but softened; a permission-gated tile would vanish entirely -->
+      <div class="doors hidden" data-only="new">
+        <a class="door soft">
+          <div class="q"><span>How are we doing?</span><span>→</span></div>
+          <div class="sum">First season under way — your first result shows up here</div>
+        </a>
+        <a class="door soft">
+          <div class="q"><span>Is playing time fair?</span><span>→</span></div>
+          <div class="sum">Save your first lineup to start tracking playing time</div>
+        </a>
+        <a class="door soft">
+          <div class="q"><span>Who shows up?</span><span>→</span></div>
+          <div class="sum">Take attendance at a practice or game to start</div>
+        </a>
+        <a class="door soft">
+          <div class="q"><span>Where’s the money?</span><span>→</span></div>
+          <div class="sum">Set up dues in Money to track collections</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- ═════════ REPORT PAGE: Is playing time fair? ═════════ -->
+    <div id="viewReport" class="hidden">
+      <a class="backLink" id="backToDash">← Insights</a>
+      <div class="pageHeader" style="margin-bottom:.9rem">
+        <div class="headerIcon">⚖️</div>
+        <div>
+          <div class="pageTitle">Is playing time fair?</div>
+          <div class="pageSub">One row per player, from your saved lineups</div>
+        </div>
+      </div>
+      <p class="basis">Based on the 6 games you’ve saved a lineup for.</p>
+
+      <div class="tableWrap">
+        <table>
+          <thead><tr><th>Player</th><th>On field</th><th>Bench</th><th>Back-to-back</th><th>Positions</th><th>Pitching</th></tr></thead>
+          <tbody>
+            <tr><td>Avery M.</td><td class="num">14 inn<span class="fieldbar"><i style="width:64%"></i></span></td><td class="num">8</td><td class="num">2</td><td>C, 1B</td><td class="muted">—</td></tr>
+            <tr><td>Riley P.</td><td class="num">16 inn<span class="fieldbar"><i style="width:73%"></i></span></td><td class="num">6</td><td class="num">1</td><td>P, 3B</td><td class="num">14 IP <span class="flag">⚠ cap 13</span></td></tr>
+            <tr><td>Kai W.</td><td class="num">15 inn<span class="fieldbar"><i style="width:68%"></i></span></td><td class="num">7</td><td class="num">1</td><td>2B, RF</td><td class="muted">—</td></tr>
+            <tr><td>Noor H.</td><td class="num">16 inn<span class="fieldbar"><i style="width:73%"></i></span></td><td class="num">6</td><td class="num">—</td><td>LF, CF, RF</td><td class="muted">—</td></tr>
+            <tr><td>Devon P.</td><td class="num">17 inn<span class="fieldbar"><i style="width:77%"></i></span></td><td class="num">5</td><td class="num">—</td><td>1B, LF</td><td class="num">4 IP</td></tr>
+            <tr><td>Sam O.</td><td class="num">18 inn<span class="fieldbar"><i style="width:82%"></i></span></td><td class="num">4</td><td class="num">—</td><td>3B, SS</td><td class="muted">—</td></tr>
+            <tr><td>Jordan K.</td><td class="num">18 inn<span class="fieldbar"><i style="width:82%"></i></span></td><td class="num">4</td><td class="num">—</td><td>SS, 2B, LF</td><td class="muted">—</td></tr>
+            <tr><td>Maya S.</td><td class="num">19 inn<span class="fieldbar"><i style="width:86%"></i></span></td><td class="num">3</td><td class="num">—</td><td>CF, RF</td><td class="muted">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sectionGap">
+        <div class="kicker">Which lineup wins?</div>
+        <div class="tableWrap">
+          <table>
+            <thead><tr><th>Batting order</th><th>Record</th><th>Times used</th></tr></thead>
+            <tbody>
+              <tr><td>Gold-medal order</td><td class="num"><b style="color:var(--ok)">3-0</b></td><td class="num">3</td></tr>
+              <tr><td>Maya · Jordan · Sam …</td><td class="num">2-1</td><td class="num">4 <span class="muted">(3 scored)</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="basis" style="margin-top:.5rem">Records count only games with a score entered.</p>
+      </div>
+
+      <a class="opsLink">Manage lineups →</a>
+    </div>
+
+    <div class="calm" style="border:0;margin-top:1.4rem;padding-bottom:0" data-only="mid">
+      Depth model: nothing on the dashboard expands — findings and tiles open full report pages like this one. Money numbers here are headlines; full money reports stay in Money.
+    </div>
+  </div>
+</div>
+
+<script>
+  const body=document.body;
+  document.getElementById('widthSwitch').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    body.dataset.width=b.dataset.w;
+    document.querySelectorAll('#widthSwitch button').forEach(x=>x.classList.toggle('on',x===b));
+  });
+  document.getElementById('teamSwitch').addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    body.dataset.team=b.dataset.team;
+    document.querySelectorAll('#teamSwitch button').forEach(x=>x.classList.toggle('on',x===b));
+    document.querySelectorAll('[data-only]').forEach(el=>el.classList.toggle('hidden',el.dataset.only!==b.dataset.team));
+    showDash();
+  });
+  const showDash=()=>{document.getElementById('viewDash').classList.remove('hidden');document.getElementById('viewReport').classList.add('hidden');};
+  const showReport=()=>{document.getElementById('viewDash').classList.add('hidden');document.getElementById('viewReport').classList.remove('hidden');};
+  document.querySelectorAll('.openReport').forEach(el=>el.addEventListener('click',ev=>{ev.preventDefault();showReport();}));
+  document.getElementById('backToDash').addEventListener('click',ev=>{ev.preventDefault();showDash();});
+</script>
+</body>
+</html>

@@ -297,6 +297,27 @@ body:has([data-chat-fullbleed]) {
   overflow: hidden;
 }
 
+/* Admin tournament chat — same page-scroll-lock bug as data-chat-fullbleed above, but MOBILE-ONLY: the
+   admin shell already pins itself to 100dvh/overflow:hidden on mobile, and desktop admin chat resolves
+   its own height via `.chatPage`'s calc(100dvh - 4rem), so only the outer html/body/#main-content
+   chain needs neutralizing here, and only below the admin shell's mobile breakpoint. Without this,
+   body's min-height:100vh can exceed the dynamic viewport, giving the on-screen keyboard's
+   "scroll focused input into view" behavior just enough page-scroll room to shift the fixed
+   conversation panel with no way to scroll it back — most visible with a short message list, which has
+   no internal overflow of its own to absorb the shift. */
+@media (max-width: 900px) {
+  html:has([data-chat-fullbleed-mobile]),
+  body:has([data-chat-fullbleed-mobile]) {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  #main-content:has([data-chat-fullbleed-mobile]) {
+    height: 100dvh;
+    padding-bottom: 0;
+    overflow: hidden;
+  }
+}
+
 /* ─── FieldLogic Platform Tokens (additive — do not replace existing tokens) ─── */
 :root {
   /* FieldLogic palette */

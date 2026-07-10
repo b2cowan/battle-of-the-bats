@@ -17,12 +17,15 @@ import {
   type RegistrationAttentionField,
   type RegistrationAttentionKey,
 } from '@/lib/registration-attention';
+import { buildRegistrationHealth, type RegistrationHealthCapacityGap } from '@/lib/registration-health';
+import { calendarDaysBetween } from '@/lib/timezone';
 import { Division } from '@/lib/types';
 import { buildFilename, downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
 import s from '../../admin-common.module.css';
 import styles from './teams-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
 import ExportMenu from '@/components/admin/ExportMenu';
+import RegistrationHealthPanel from './components/RegistrationHealthPanel';
 import TeamAvatar from '@/components/TeamAvatar';
 import FieldHint from '@/components/help/FieldHint';
 import {
@@ -1208,11 +1211,60 @@ export default function UnifiedTeamsPage() {
       slotId: team.slotId,
       waitlistPosition: team.waitlistPosition,
       customAnswers: team.customAnswers,
+      email: team.email,
     })),
     attentionContext,
   ), [attentionContext, regs]);
   const activeAttentionBucket = activeAttentionKey ? getRegistrationAttentionBucket(attentionSummary, activeAttentionKey) : null;
   const activeAttentionLocked = Boolean(activeAttentionBucket?.plusOnly && !commandCenterAvailable);
+
+  // ── Registration Health (tournament-wide, independent of the selected division) ──
+  const registrationHealthCapacity = useMemo(() => {
+    const acceptedByDivision = new Map<string, number>();
+    for (const team of regs) {
+      if (team.status !== 'accepted' || !team.division_id) continue;
+      acceptedByDivision.set(team.division_id, (acceptedByDivision.get(team.division_id) ?? 0) + 1);
+    }
+    const daysUntilStart = currentTournament?.startDate
+      ? calendarDaysBetween(new Date(), new Date(`${currentTournament.startDate}T12:00:00`))
+      : null;
+    const gaps: RegistrationHealthCapacityGap[] = [];
+    // Fill ratio across only the divisions that HAVE a capacity set — an uncapped
+    // division has no ceiling to be "against", so it's excluded from the ratio
+    // rather than counted as either full or empty.
+    let capacityTotal = 0;
+    let capacityAccepted = 0;
+    for (const division of divisions) {
+      if (division.capacity == null || division.capacity <= 0) continue;
+      const accepted = acceptedByDivision.get(division.id) ?? 0;
+      capacityTotal += division.capacity;
+      capacityAccepted += accepted;
+      if (accepted >= division.capacity) continue;
+      if (division.isClosed) {
+        gaps.push({ divisionId: division.id, divisionName: division.name, accepted, capacity: division.capacity, reason: 'closed_under' });
+      } else if (daysUntilStart != null && daysUntilStart <= 3) {
+        gaps.push({ divisionId: division.id, divisionName: division.name, accepted, capacity: division.capacity, reason: 'soon_under' });
+      }
+    }
+    return { gaps, capacityTotal, capacityAccepted };
+  }, [regs, divisions, currentTournament?.startDate]);
+
+  const registrationHealth = useMemo(() => {
+    let teamsTotal = 0;
+    let accepted = 0;
+    for (const team of regs) {
+      if (!team.status || team.status === 'rejected') continue;
+      teamsTotal++;
+      if (team.status === 'accepted') accepted++;
+    }
+    return buildRegistrationHealth({
+      attention: attentionSummary,
+      teamsTotal,
+      accepted,
+      paymentsTracked: commandCenterAvailable,
+      capacityGaps: registrationHealthCapacity.gaps,
+    });
+  }, [attentionSummary, regs, commandCenterAvailable, registrationHealthCapacity]);
 
   const slotsByPool = useMemo(() => {
     if (!selectedGroup?.pools) return [];
@@ -1362,6 +1414,7 @@ export default function UnifiedTeamsPage() {
       slotId: r.slotId,
       waitlistPosition: r.waitlistPosition,
       customAnswers: r.customAnswers,
+      email: r.email,
     }, activeAttentionKey, attentionContext);
     return matchesStatus && matchesSearch && matchesPayment && matchesAttention;
   });
@@ -1464,6 +1517,13 @@ export default function UnifiedTeamsPage() {
     setActiveAttentionKey(null);
     setSelectedStatuses(['pending', 'accepted', 'waitlist']);
     setPaymentFilters([]);
+  }, []);
+
+  const jumpToDivision = useCallback((divisionId: string) => {
+    setActiveAttentionKey(null);
+    setSelectedDivisionId(divisionId);
+    setSwapMode(false);
+    setSwapFirstSlotId(null);
   }, []);
 
   const attentionParam = searchParams.get('attention');
@@ -1643,7 +1703,7 @@ export default function UnifiedTeamsPage() {
         locked={isLocked}
         help={{
           module: 'tournaments',
-          sectionIds: ['registrations-and-teams', 'assign-teams-to-pools'],
+          sectionIds: ['registrations-and-teams', 'recipe-review-tournament-teams', 'assign-teams-to-pools'],
           fullGuideHref: currentOrg ? `/${currentOrg.slug}/admin/help/tournaments#registrations-and-teams` : undefined,
         }}
         actions={(
@@ -1701,7 +1761,6 @@ export default function UnifiedTeamsPage() {
           <button className="btn btn-ghost btn-xs" onClick={() => load()} style={{ marginLeft: 'auto' }}>Retry</button>
         </div>
       )}
-
 
       <TournamentAdminToolbar ariaLabel="Registration controls" className={styles.registrationToolbar}>
         {/* ── Row 1: controls + end actions ── */}
@@ -1855,6 +1914,18 @@ export default function UnifiedTeamsPage() {
           </ToolbarGroup>
         )}
       </TournamentAdminToolbar>
+
+      {currentTournament && !isLocked && (
+        <RegistrationHealthPanel
+          metrics={registrationHealth}
+          capacityTotal={registrationHealthCapacity.capacityTotal}
+          capacityAccepted={registrationHealthCapacity.capacityAccepted}
+          defaultOpen={false}
+          onJumpToBucket={key => focusAttentionBucket(key)}
+          onJumpToCapacity={jumpToDivision}
+          onUpgrade={showCommandCenterUpgrade}
+        />
+      )}
 
       {/* ── Division capacity + registration status strip (single row) ─── */}
       {currentTournament && selectedGroup && !isLocked && (() => {
@@ -2189,6 +2260,38 @@ export default function UnifiedTeamsPage() {
         </>
       )}
 
+      {/* ── Active attention filter banner (arrived via a dashboard "?attention=" deep link) ── */}
+      {activeAttentionKey && activeAttentionBucket && (
+        <div className={styles.attentionPanel}>
+          <div className={styles.attentionStrip}>
+            <AlertCircle size={16} className={styles.attentionStripIcon} aria-hidden />
+            <div className={styles.attentionStripBody}>
+              {activeAttentionLocked ? (
+                <>
+                  <h2>{activeAttentionBucket.label} — Tournament Plus</h2>
+                  <p>{activeAttentionBucket.description}</p>
+                </>
+              ) : (
+                <>
+                  <h2>Showing: {activeAttentionBucket.label} ({activeAttentionBucket.count})</h2>
+                  <p>{activeAttentionBucket.description}</p>
+                </>
+              )}
+            </div>
+            <div className={styles.attentionHeaderActions}>
+              {activeAttentionLocked && (
+                <button type="button" className={styles.attentionUpgradeLink} onClick={showCommandCenterUpgrade}>
+                  Upgrade
+                </button>
+              )}
+              <button type="button" className={styles.attentionClearButton} onClick={clearAttentionFocus}>
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── SLOT BOARD (divisions with pool slots configured) ─────────────────── */}
       {slotConfigured && !activeAttentionKey ? (
         <div className={styles.slotBoard}>
@@ -2439,32 +2542,36 @@ export default function UnifiedTeamsPage() {
 
                     return (
                       <>
-                        {/* No pools yet — nudge to Divisions, but STILL list the teams below
-                            (they all sit under Unassigned) so they're never hidden. */}
-                        {pools.length === 0 && (
-                          <div className={styles.poolEmptyState}>
-                            <strong>No pools yet.</strong>{' '}
-                            Turn on pools for this division in{' '}
-                            {currentOrg
-                              ? <Link href={`/${currentOrg.slug}/admin/tournaments/divisions`}>Divisions</Link>
-                              : 'Divisions'}
-                            , then assign teams here.
-                          </div>
-                        )}
-                        {sections.map(sec => (
-                          <div key={sec.id} className={s.poolSubSection} style={{ marginTop: 0 }}>
-                            <div className={s.poolSubHeader}>
-                              <div className={s.poolDot} style={{ background: sec.isUnassigned ? 'var(--danger-light, #f87171)' : 'var(--logic-lime)' }} />
-                              <span className={s.poolSubLabel} style={{ color: sec.isUnassigned ? 'var(--danger-light, #f87171)' : undefined }}>
-                                {sec.isUnassigned ? 'Unassigned' : formatPoolName(sec.name)}
-                              </span>
-                              <span className={s.poolSubCount}>({sec.teams.length})</span>
+                        {pools.length === 0 ? (
+                          /* Division has pools off — flat by design. Keep a quiet note so
+                             the Pools toggle's no-op is explained, but drop the "Unassigned"
+                             header and just list the teams plainly. */
+                          <>
+                            <div className={styles.poolEmptyState}>
+                              Pools aren&apos;t turned on for this division —{' '}
+                              {currentOrg
+                                ? <Link href={`/${currentOrg.slug}/admin/tournaments/divisions`}>enable pools in Divisions</Link>
+                                : 'enable pools in Divisions'}
+                              {' '}to group teams.
                             </div>
-                            {sec.teams.length > 0
-                              ? sec.teams.map(r => renderFlatRow(r))
-                              : <div className={styles.poolSectionEmpty}>No teams yet — set a team&apos;s pool from its row, or select teams and use &ldquo;Move to pool.&rdquo;</div>}
-                          </div>
-                        ))}
+                            {flatDisplay.map(r => renderFlatRow(r))}
+                          </>
+                        ) : (
+                          sections.map(sec => (
+                            <div key={sec.id} className={s.poolSubSection} style={{ marginTop: 0 }}>
+                              <div className={s.poolSubHeader}>
+                                <div className={s.poolDot} style={{ background: sec.isUnassigned ? 'var(--danger-light, #f87171)' : 'var(--logic-lime)' }} />
+                                <span className={s.poolSubLabel} style={{ color: sec.isUnassigned ? 'var(--danger-light, #f87171)' : undefined }}>
+                                  {sec.isUnassigned ? 'Unassigned' : formatPoolName(sec.name)}
+                                </span>
+                                <span className={s.poolSubCount}>({sec.teams.length})</span>
+                              </div>
+                              {sec.teams.length > 0
+                                ? sec.teams.map(r => renderFlatRow(r))
+                                : <div className={styles.poolSectionEmpty}>No teams yet — set a team&apos;s pool from its row, or select teams and use &ldquo;Move to pool.&rdquo;</div>}
+                            </div>
+                          ))
+                        )}
                       </>
                     );
                   })()

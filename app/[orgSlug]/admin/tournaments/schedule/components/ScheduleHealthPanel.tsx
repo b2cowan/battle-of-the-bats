@@ -27,7 +27,6 @@ interface ScheduleHealthPanelProps {
   subtitle?: string;
   showTeamTable?: boolean;
   defaultOpen?: boolean;
-  sticky?: boolean;
   /** When provided and conflicts exist, the summary shows a tappable jump chip. */
   onJumpToConflict?: () => void;
   // ── Organizer-defined rules editor (all optional; omit to hide the editor) ──
@@ -52,7 +51,6 @@ export default function ScheduleHealthPanel({
   subtitle,
   showTeamTable = false,
   defaultOpen = true,
-  sticky = false,
   onJumpToConflict,
   rules,
   canEditRules = false,
@@ -75,7 +73,7 @@ export default function ScheduleHealthPanel({
 
   return (
     <details
-      className={`${styles.healthPanel} ${sticky ? styles.healthPanelSticky : ''}`}
+      className={styles.healthPanel}
       open={expanded}
       onToggle={event => setExpanded(event.currentTarget.open)}
     >
@@ -239,6 +237,13 @@ export function ScheduleHealthContent({
       {showTeamTable && metrics.teamMetrics.length > 0 && (
         <details className={styles.healthDetails}>
           <summary className={styles.healthDetailsSummary}>Team detail</summary>
+          {metrics.teamMetrics.some(team => team.projectedGameCount > 0) && (
+            <p className={styles.healthProjectedNote}>
+              <strong>Projected</strong> rows assume that team/seed wins every remaining game and
+              reaches the final — showing the fullest possible schedule exposure, not a
+              prediction of who will actually advance.
+            </p>
+          )}
           <div className={styles.healthTeamTableWrap}>
             <table className={styles.healthTeamTable}>
               <thead>
@@ -255,7 +260,25 @@ export function ScheduleHealthContent({
               <tbody>
                 {metrics.teamMetrics.map(team => (
                   <tr key={team.participantKey}>
-                    <td>{team.label}</td>
+                    <td>
+                      {team.label}
+                      {team.seedBasis === 'currentStandings' && (
+                        <span
+                          className={styles.healthSeedBasisTag}
+                          title="Resolved from current round-robin standings — may still change before round robin ends"
+                        >
+                          Current
+                        </span>
+                      )}
+                      {team.projectedGameCount > 0 && (
+                        <span
+                          className={styles.healthProjectedTag}
+                          title={`Includes ${team.projectedGameCount} projected round${team.projectedGameCount === 1 ? '' : 's'} — assumes this team/seed wins every remaining game and reaches the final, not a locked-in schedule`}
+                        >
+                          Projected
+                        </span>
+                      )}
+                    </td>
                     <td>{team.gameCount}</td>
                     <td>{team.maxGamesInDay}</td>
                     <td>{team.backToBackCount}</td>
@@ -306,7 +329,10 @@ function IssueRow({ issue }: { issue: ScheduleIssue }) {
 function formatGameRange(metrics: ScheduleMetrics): string {
   if (metrics.participantCount === 0) return 'No teams';
   if (metrics.expectedGamesPerParticipant) {
-    return `${metrics.teamsAtTarget}/${metrics.participantCount} at target`;
+    // teamsAtTarget is a count over teamMetrics (only teams with a resolvable game so far), so
+    // the ratio's denominator matches it — not the headline participantCount, which on Playoffs
+    // can be the bracket's full seed count (including seeds with no resolvable game yet).
+    return `${metrics.teamsAtTarget}/${metrics.teamMetrics.length} at target`;
   }
   if (metrics.minGamesPerParticipant === metrics.maxGamesPerParticipant) {
     return `${metrics.minGamesPerParticipant} each`;

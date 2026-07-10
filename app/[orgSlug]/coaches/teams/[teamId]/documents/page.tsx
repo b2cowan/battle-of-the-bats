@@ -181,7 +181,7 @@ export default function TeamDocumentsPage({
         </div>
         <button
           type="button"
-          className="btn btn-primary"
+          className="btn btn-lime"
           style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem' }}
           onClick={() => { setUploadOpen(true); setUploadError(''); }}
         >
@@ -276,7 +276,7 @@ export default function TeamDocumentsPage({
               </button>
               <button
                 type="button"
-                className="btn btn-primary"
+                className="btn btn-lime"
                 disabled={!uploadFile || !uploadName.trim() || uploading}
                 onClick={handleUpload}
               >

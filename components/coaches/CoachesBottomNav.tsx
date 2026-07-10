@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Calendar, MessageSquare, Trophy,
-  Users, UserCog, Megaphone, DollarSign, FileText, History,
+  Users, UserCog, Megaphone, DollarSign, FileText, BarChart3,
   MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, ListOrdered,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
@@ -33,6 +33,7 @@ const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
     { key: '/tryouts',       icon: ClipboardList, label: 'Tryouts', conditional: 'tryouts' },
   ] },
   { header: 'Season', items: [
+    { key: '/history',       icon: BarChart3,     label: 'Insights' },
     { key: '/tournaments',   icon: Trophy,        label: 'Tournaments', conditional: 'tournaments' },
   ] },
   { header: 'Money', items: [
@@ -44,7 +45,6 @@ const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
   { header: 'Team admin', items: [
     { key: '/staff',         icon: UserCog,       label: 'Staff' },
     { key: '/documents',     icon: FileText,      label: 'Documents' },
-    { key: '/history',       icon: History,       label: 'Season Review' },
     { key: '/settings',      icon: Settings,      label: 'Settings' },
   ] },
 ];
