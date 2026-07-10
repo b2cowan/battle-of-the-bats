@@ -44,6 +44,36 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-09',
+    title: 'Two health checks that catch problems early — and a rebuilt Money section for coaches',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Your Registrations page now opens with a quick health check — missing coach emails, payment issues, backlog, and capacity all flagged at a glance, so nothing slips through before your tournament starts.',
+      },
+      {
+        category: 'new',
+        text: 'Your Playoffs tab now looks ahead: rest days and back-to-back games are tracked through bracket rounds that haven’t been decided yet, not just the ones already locked in.',
+      },
+      {
+        category: 'new',
+        text: 'In the Premium Coaches Portal, the Money section has been rebuilt around your season’s real cash position — clear totals for money in, out, and on hand, a Plan → Collect → Spend → Review flow, and a Budget vs. Actual export.',
+      },
+      {
+        category: 'new',
+        text: 'Also in the Premium Coaches Portal, you can now tag games with your own labels — like "Top in the province" — to organize and track your season your way.',
+      },
+      {
+        category: 'new',
+        text: 'Also in the Premium Coaches Portal, the Lineups tool adds season-long stats and a standalone lineup builder that reconciles automatically with attendance.',
+      },
+      {
+        category: 'improved',
+        text: 'The dashboard guidance panel now collapses before your event starts too (not just after), and mobile text no longer gets cut off.',
+      },
+    ],
+  },
+  {
     date: '2026-07-07',
     title: 'Move a rained-out day in one tap — and a sharper Coaches Portal',
     highlights: [
