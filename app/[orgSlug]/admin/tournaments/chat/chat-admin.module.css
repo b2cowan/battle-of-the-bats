@@ -44,12 +44,18 @@
      z-index stays below the top bar (250) and nav (300) so the chrome always wins. */
   .chatPage {
     position: fixed;
-    inset:
-      calc(48px + env(safe-area-inset-top) + 0.5rem)
-      0
-      calc(70px + env(safe-area-inset-bottom) + var(--admin-strip-h, 0px))
-      0;
-    height: auto;
+    /* top/height (not a bottom inset) driven off --vvh/--vv-offset-top: the on-screen keyboard
+       shrinks and pans the VISUAL viewport, not the layout viewport those custom properties would
+       otherwise be missing from — a fixed `bottom: 0` would keep chasing the (unchanged) layout
+       viewport's bottom edge and get covered by the keyboard, with no way to scroll back to the
+       header/history above it. Falls back to 100dvh when JS hasn't set the vars yet (SSR/first paint). */
+    top: calc(var(--vv-offset-top, 0px) + 48px + env(safe-area-inset-top) + 0.5rem);
+    left: 0;
+    right: 0;
+    height: calc(
+      var(--vvh, 100dvh) - 48px - env(safe-area-inset-top) - 0.5rem
+        - 70px - env(safe-area-inset-bottom) - var(--admin-strip-h, 0px)
+    );
     margin-inline: 0;
     overflow: hidden;
     z-index: 1;

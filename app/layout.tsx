@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, Barlow_Condensed, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import SiteChrome from '@/components/SiteChrome';
@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import BottomNav from '@/components/BottomNav';
 import { OrgNavProvider } from '@/components/OrgNavContext';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
+import ViewportKeyboardVars from '@/components/ViewportKeyboardVars';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -35,6 +36,17 @@ export const metadata: Metadata = {
   // They are added only in the layouts/pages that mount InstallAppPrompt
   // (admin, scorekeeper, coaches, /home, auth) so that the browser's native
   // install prompt does NOT fire on the public marketing pages.
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  // Without this, Chrome/Android leaves the layout viewport (and any 100dvh /
+  // position:fixed inset) unchanged when the on-screen keyboard opens — it only
+  // pans the visual viewport, sliding fixed content off-screen with no way to
+  // scroll back to it. This asks the browser to shrink the layout viewport
+  // instead, the same way it already does for its own toolbar.
+  interactiveWidget: 'resizes-content',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -84,6 +96,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             marketing root no longer shows an install banner. */}
         {/* Service worker registration — browser-only, renders nothing */}
         <ServiceWorkerRegistration />
+        {/* Keeps --vvh / --vv-offset-top in sync with the real visual viewport — browser-only, renders nothing */}
+        <ViewportKeyboardVars />
       </body>
     </html>
   );
