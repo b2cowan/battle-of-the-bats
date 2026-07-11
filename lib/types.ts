@@ -446,7 +446,7 @@ export interface PlayoffConfig {
    * Per-division tie-breaker priority order (overrides the tournament order when set).
    * May be a SUBSET and may include 'coin'. See lib/tie-breakers.ts.
    */
-  tieBreakers: import('./tie-breakers').TieBreaker[];
+  tieBreakers?: import('./tie-breakers').TieBreaker[];
   /**
    * Per-division override for the run-diff-per-game cap. A positive integer caps
    * each game's Run Diff contribution; null/absent = inherit the tournament-level

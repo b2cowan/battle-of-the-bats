@@ -191,6 +191,10 @@ export default function DivisionsPage() {
       if (!isNaN(gd) && gd > 0) divSettings.game_duration_minutes = gd;
       if (!isNaN(buf) && buf >= 0) divSettings.buffer_minutes = buf;
     }
+    // Only persist a per-division tie-breaker override when the tournament scope
+    // actually allows one — otherwise a stale value from a prior scope silently
+    // resurfaces if the org later switches to 'allow_override'.
+    const submittedTieBreakerScope = currentTournament?.settings?.tie_breaker_scope ?? null;
 
     const data: DivisionFormPayload = {
       tournamentId: currentTournament.id,
@@ -206,7 +210,7 @@ export default function DivisionsPage() {
       requiresPoolSelection: form.requiresPoolSelection,
       playoffConfig: {
         ...(editing?.playoffConfig || { type: 'single', crossover: 'reseed', hasThirdPlace: false, teamsQualifying: 4 }),
-        tieBreakers: normalizeTieBreakers(form.tieBreakers),
+        tieBreakers: submittedTieBreakerScope === 'tournament' ? undefined : normalizeTieBreakers(form.tieBreakers),
         // null = inherit the tournament-level cap (TournamentSettings.max_run_diff_per_game)
         maxRunDiffPerGame: clampRunDiffCap(form.runDiffCap),
       },

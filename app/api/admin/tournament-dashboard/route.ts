@@ -8,6 +8,7 @@ import {
   computeTournamentStandings,
 } from '@/lib/db';
 import type { TournamentSettings } from '@/lib/types';
+import { resolveTieBreakers } from '@/lib/tie-breakers';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { buildRegistrationAttentionSummary } from '@/lib/registration-attention';
 import { hasCapability } from '@/lib/roles';
@@ -664,7 +665,7 @@ export const GET = withObservability(async (req: Request) => {
         getDivisions(tournamentId, { admin: true }),
       ]);
       for (const d of domainDivisions) {
-        const effectiveBreakers = d.playoffConfig?.tieBreakers ?? tSettings.tie_breakers;
+        const effectiveBreakers = resolveTieBreakers(d.playoffConfig, tSettings as TournamentSettings);
         if (!Array.isArray(effectiveBreakers) || !effectiveBreakers.includes('coin')) continue;
         const rows = computeTournamentStandings(d.id, domainTeams, domainGames, d.playoffConfig, tSettings as TournamentSettings);
         const flagged = rows.filter(r => r.needsCoinToss).map(r => r.teamName);

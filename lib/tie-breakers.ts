@@ -50,6 +50,25 @@ export function isTieBreaker(v: unknown): v is TieBreaker {
 }
 
 /**
+ * Resolve the tie-breaker order that actually governs a division, respecting
+ * `tie_breaker_scope`. When scope is 'tournament', a division's own
+ * playoffConfig.tieBreakers is ignored even if present (e.g. a stale value
+ * left over from before the scope was set) — only the tournament-wide order
+ * applies. Otherwise (allow_override / per_division / unset) the division's
+ * value wins when present, per the documented contract in lib/types.ts.
+ */
+export function resolveTieBreakers(
+  config: PlayoffConfig | undefined,
+  tournamentSettings: TournamentSettings | undefined,
+): TieBreaker[] {
+  const scope = tournamentSettings?.tie_breaker_scope ?? null;
+  const source = scope === 'tournament'
+    ? tournamentSettings?.tie_breakers
+    : (config?.tieBreakers || tournamentSettings?.tie_breakers);
+  return normalizeTieBreakers(source);
+}
+
+/**
  * Coerce stored/posted data into a valid, de-duplicated breaker list.
  * Allows a SUBSET (organizers can remove breakers) and preserves order.
  * Falls back to the default order only when nothing valid remains (guard ≥1).
@@ -249,7 +268,7 @@ export function computeTournamentStandings(
 
   // Tie-breaker priority: division playoffConfig → tournament settings → default.
   // normalizeTieBreakers allows a subset (organizer can remove breakers) + 'coin'.
-  const breakers = normalizeTieBreakers(config?.tieBreakers || tournamentSettings?.tie_breakers);
+  const breakers = resolveTieBreakers(config, tournamentSettings);
   // Admin-recorded coin-toss results (per-division), keyed by the sorted tied set.
   const coinTossResults: Record<string, string[]> = config?.coinTossResults || {};
 

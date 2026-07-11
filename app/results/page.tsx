@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Trophy } from 'lucide-react';
 import { getGames, getTeams, getDivisions, getVenues, getTournaments, getStandings } from '@/lib/db';
-import { normalizeTieBreakers } from '@/lib/tie-breakers';
+import { resolveTieBreakers } from '@/lib/tie-breakers';
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
 import LocationLink from '@/components/LocationLink';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
@@ -140,7 +140,7 @@ export default function ResultsPage() {
                           </h2>
                         </div>
                         <div className={styles.rulesInfo} title="Tie-Breaker Hierarchy">
-                          Tie Breaker: {normalizeTieBreakers(currentGroup?.playoffConfig?.tieBreakers || selectedTournament?.settings?.tie_breakers).map(b => b === 'coin' ? 'COIN TOSS' : b.toUpperCase()).join(' → ')}
+                          Tie Breaker: {resolveTieBreakers(currentGroup?.playoffConfig, selectedTournament?.settings).map(b => b === 'coin' ? 'COIN TOSS' : b.toUpperCase()).join(' → ')}
                         </div>
                       </div>
                     </div>

@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Calendar, CheckCircle, ChevronDown, Clock, Star, Trophy } from 'lucide-react';
 import CoinTossRecorder from '@/components/admin/CoinTossRecorder';
-import { normalizeTieBreakers, BREAKER_LABELS } from '@/lib/tie-breakers';
+import { resolveTieBreakers, BREAKER_LABELS } from '@/lib/tie-breakers';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { Division, Game, PublicTeam, Tournament, Venue } from '@/lib/types';
@@ -589,7 +589,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                     const maxAbsRd = Math.max(1, ...poolStandings.map(s => Math.abs(s.rdRaw ?? s.rd)));
                     // Mirror getStandings exactly (division override → tournament default → legacy,
                     // coin pinned last) so the displayed order matches the order actually applied.
-                    const tieBreakerOrder = normalizeTieBreakers(currentGroup?.playoffConfig?.tieBreakers || selectedTournament?.settings?.tie_breakers)
+                    const tieBreakerOrder = resolveTieBreakers(currentGroup?.playoffConfig, selectedTournament?.settings)
                       .map(b => BREAKER_LABELS[b]);
                     const activeRunDiffCap = poolStandings.find(s => s.runDiffCap)?.runDiffCap ?? null;
                     // Tied groups awaiting a coin toss (admin only), keyed by coinTossGroupKey.
