@@ -44,6 +44,20 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-10',
+    title: 'See what stands out in your season — and a tie-breaker fix for standings',
+    highlights: [
+      {
+        category: 'new',
+        text: 'In the Premium Coaches Portal, the Insights tab has been rebuilt into a season dashboard: your record, streak, run differential, close games, attendance, and dues at a glance, plus a ranked list of what stands out about your season and two new reports — a full game log and a fairness check on playing time.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed a bug where standings on some tournaments could rank teams using the wrong tie-breaker order instead of the one set in Event Settings.',
+      },
+    ],
+  },
+  {
     date: '2026-07-09',
     title: 'Two health checks that catch problems early — and a rebuilt Money section for coaches',
     highlights: [
