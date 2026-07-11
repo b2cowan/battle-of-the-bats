@@ -820,7 +820,7 @@ export default function CoachesDuesPage({
                         />
                       </div>
                       <div style={{ flex: 1, minWidth: '200px' }}>
-                        <label className={styles.label}>Notes <span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.3)' }}>(optional)</span></label>
+                        <label className={styles.label}>Notes</label>
                         <input
                           className={styles.input}
                           placeholder="e.g. End of 2025 season"
@@ -1070,9 +1070,12 @@ export default function CoachesDuesPage({
                           background: 'rgba(255,255,255,0.03)', borderRadius: 8,
                           border: '1px solid rgba(255,255,255,0.08)',
                         }}>
+                          <p className={styles.formHint} style={{ marginBottom: '0.6rem' }}>
+                            <span className={styles.labelRequired}>*</span> Required
+                          </p>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
                             <div>
-                              <label className={styles.label}>Amount *</label>
+                              <label className={styles.label}>Amount <span className={styles.labelRequired}>*</span></label>
                               <input
                                 className={styles.input}
                                 type="number"
@@ -1084,7 +1087,7 @@ export default function CoachesDuesPage({
                               />
                             </div>
                             <div>
-                              <label className={styles.label}>Date *</label>
+                              <label className={styles.label}>Date <span className={styles.labelRequired}>*</span></label>
                               <input
                                 className={styles.input}
                                 type="date"
@@ -1094,7 +1097,7 @@ export default function CoachesDuesPage({
                             </div>
                           </div>
                           <div style={{ marginBottom: '0.6rem' }}>
-                            <label className={styles.label}>Description *</label>
+                            <label className={styles.label}>Description <span className={styles.labelRequired}>*</span></label>
                             <input
                               className={styles.input}
                               placeholder="e.g. Player bat contribution"
@@ -1116,7 +1119,7 @@ export default function CoachesDuesPage({
                               </select>
                             </div>
                             <div>
-                              <label className={styles.label}>Notes <span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.3)' }}>(optional)</span></label>
+                              <label className={styles.label}>Notes</label>
                               <input
                                 className={styles.input}
                                 placeholder="Optional notes"

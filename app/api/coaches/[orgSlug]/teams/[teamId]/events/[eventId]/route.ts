@@ -78,6 +78,18 @@ export const PATCH = withObservability(async (req: Request,
       startTime,
       endTime,
     });
+
+    // Tags are per-occurrence by design (a coach tags one specific game, not a whole recurring
+    // run) — apply only to THIS event id even on a "this & future"/"all" scoped save, rather than
+    // silently dropping the edit (updateRepTeamEventSeries has no tagIds concept at all).
+    if (body.tagIds !== undefined) {
+      const tagIds = await resolveValidTagIds(teamId, body.tagIds);
+      if (tagIds === null) {
+        return NextResponse.json({ error: 'tagIds must be an array of this team’s existing tag ids' }, { status: 400 });
+      }
+      await setRepTeamEventTags(eventId, tagIds);
+    }
+
     const refreshed = await getRepTeamEventById(eventId);
     return NextResponse.json({ event: refreshed });
   }

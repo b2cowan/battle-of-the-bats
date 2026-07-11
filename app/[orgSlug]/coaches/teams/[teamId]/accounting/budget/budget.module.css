@@ -378,9 +378,21 @@
   margin-bottom: 0.4rem;
 }
 
-.optional {
-  font-weight: 400;
-  color: var(--white-40, rgba(255,255,255,0.4));
+/* Required-field marker inline in a field label, paired with the "* Required" legend near
+   the top of the form. Replaces the old per-field "optional" tag — most fields on this form
+   are optional, so flagging the few that actually block Save reads cleaner than flagging
+   everything else. */
+.labelRequired {
+  color: var(--danger);
+  font-weight: 700;
+  margin-left: 0.2rem;
+}
+
+.formHint {
+  margin: 0 0 1rem;
+  font-size: 0.72rem;
+  color: var(--white-45, rgba(255,255,255,0.45));
+  line-height: 1.4;
 }
 
 .input, .select {

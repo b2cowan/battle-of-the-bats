@@ -86,20 +86,22 @@ export default function CoachStartInterest({ defaultName = '', defaultEmail = ''
           commitment, and your free Coaches Portal stays free.
         </p>
 
+        <p className={styles.formHint}><span className={styles.labelRequired}>*</span> Required</p>
+
         <label className={styles.field}>
-          <span className={styles.label}>Your name</span>
+          <span className={styles.label}>Your name <span className={styles.labelRequired}>*</span></span>
           <input className={styles.input} type="text" value={name} maxLength={120} onChange={e => { setName(e.target.value); setSaved(false); }} />
         </label>
         <label className={styles.field}>
-          <span className={styles.label}>Email</span>
+          <span className={styles.label}>Email <span className={styles.labelRequired}>*</span></span>
           <input className={styles.input} type="email" inputMode="email" autoComplete="email" value={email} onChange={e => { setEmail(e.target.value); setSaved(false); }} />
         </label>
         <label className={styles.field}>
-          <span className={styles.label}>Team or club name</span>
+          <span className={styles.label}>Team or club name <span className={styles.labelRequired}>*</span></span>
           <input className={styles.input} type="text" value={orgName} maxLength={160} onChange={e => setOrgName(e.target.value)} />
         </label>
         <label className={styles.field}>
-          <span className={styles.label}>What would help your team? <span className={styles.optional}>(optional)</span></span>
+          <span className={styles.label}>What would help your team?</span>
           <textarea className={styles.textarea} rows={3} value={notes} maxLength={1200} onChange={e => setNotes(e.target.value)} placeholder="e.g. lineups, dues tracking, documents…" />
         </label>
 

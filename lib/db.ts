@@ -6445,13 +6445,17 @@ export async function renameRepTeamTag(id: string, teamId: string, name: string)
 
 /** Scoped delete. Drops the tag's `rep_team_event_tags` links via FK cascade with NO re-pointing —
  *  merging (below) is the history-preserving path; this is for a tag that was never really used. */
-export async function deleteRepTeamTag(id: string, teamId: string): Promise<void> {
-  const { error } = await supabaseAdmin
+/** Returns true if a row was actually deleted, false on a no-op (wrong id, or a cross-team id
+ *  scoped out by the team_id match) — so the route can 404 instead of a false-success `{ok:true}`. */
+export async function deleteRepTeamTag(id: string, teamId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
     .from('rep_team_tags')
     .delete()
     .eq('id', id)
-    .eq('team_id', teamId);
+    .eq('team_id', teamId)
+    .select('id');
   if (error) throw error;
+  return (data ?? []).length > 0;
 }
 
 /** Atomically re-points every event-tag link from the loser tag to the winner, then deletes the

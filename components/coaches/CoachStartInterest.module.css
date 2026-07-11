@@ -46,9 +46,16 @@
   color: var(--white);
 }
 
-.optional {
-  font-weight: 500;
-  color: var(--white-40);
+.formHint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--white-60);
+}
+
+.labelRequired {
+  color: var(--danger);
+  font-weight: 700;
+  margin-left: 0.2rem;
 }
 
 .input,

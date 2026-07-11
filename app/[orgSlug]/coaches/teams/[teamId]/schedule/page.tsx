@@ -2056,6 +2056,10 @@ export default function CoachesSchedulePage({
             </div>
 
             <div className={styles.formBody}>
+              {/* Legend for the per-field <span className={styles.labelRequired}>*</span> markers below —
+                  most fields on this form are optional, so only the few that block Save are flagged. */}
+              <p className={styles.formHint}><span className={styles.labelRequired}>*</span> Required</p>
+
               {/* Type — changeable on add (keeps shared fields); fixed once an event exists. */}
               {!editingEventId && (
                 <div className={styles.field}>
@@ -2084,7 +2088,7 @@ export default function CoachesSchedulePage({
                     </div>
                   ) : (
                     <div className={styles.field}>
-                      <label className={styles.label}>Which tournament?</label>
+                      <label className={styles.label}>Which tournament? <span className={styles.labelRequired}>*</span></label>
                       <select className={styles.select} value={form.parentEventId} onChange={e => selectParentTournament(e.target.value)}>
                         <option value="">Select a tournament…</option>
                         {tournamentOptions.map(t => (
@@ -2121,7 +2125,7 @@ export default function CoachesSchedulePage({
                 {form.eventType === 'external_tournament' ? (
                   <>
                     <div className={styles.field}>
-                      <label className={styles.label}>Start date</label>
+                      <label className={styles.label}>Start date <span className={styles.labelRequired}>*</span></label>
                       <input className={styles.input} type="date" value={form.startsAt.slice(0, 10)} onChange={e => setForm(f => ({ ...f, startsAt: e.target.value ? `${e.target.value}T00:00` : '' }))} />
                     </div>
                     <div className={styles.field}>
@@ -2139,7 +2143,7 @@ export default function CoachesSchedulePage({
                         </select>
                       </div>
                       <div className={styles.field}>
-                        <label className={styles.label}>Start time</label>
+                        <label className={styles.label}>Start time <span className={styles.labelRequired}>*</span></label>
                         <input className={styles.input} type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} />
                       </div>
                       <div className={styles.field}>
@@ -2147,15 +2151,15 @@ export default function CoachesSchedulePage({
                         <input className={styles.input} type="time" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} />
                       </div>
                       <div className={styles.field}>
-                        <label className={styles.label}>Arrival time <span className={styles.labelOptional}>optional</span></label>
+                        <label className={styles.label}>Arrival time</label>
                         <input className={styles.input} type="time" value={form.arrivalTime} onChange={e => setForm(f => ({ ...f, arrivalTime: e.target.value }))} />
                       </div>
                       <div className={styles.field}>
-                        <label className={styles.label}>First date</label>
+                        <label className={styles.label}>First date <span className={styles.labelRequired}>*</span></label>
                         <input className={styles.input} type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
                       </div>
                       <div className={styles.field}>
-                        <label className={styles.label}>Last date</label>
+                        <label className={styles.label}>Last date <span className={styles.labelRequired}>*</span></label>
                         <input className={styles.input} type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
                       </div>
                     </div>
@@ -2164,7 +2168,7 @@ export default function CoachesSchedulePage({
                 ) : (
                   <>
                     <div className={styles.field}>
-                      <label className={styles.label}>Starts</label>
+                      <label className={styles.label}>Starts <span className={styles.labelRequired}>*</span></label>
                       <input className={styles.input} type="datetime-local" value={form.startsAt} onChange={e => setStartsAt(e.target.value)} />
                     </div>
                     <div className={styles.field}>
@@ -2172,7 +2176,7 @@ export default function CoachesSchedulePage({
                       <input className={styles.input} type="datetime-local" value={form.endsAt} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))} />
                     </div>
                     <div className={styles.field}>
-                      <label className={styles.label}>Arrival / call time <span className={styles.labelOptional}>optional</span></label>
+                      <label className={styles.label}>Arrival / call time</label>
                       <input className={styles.input} type="time" value={form.arrivalTime} onChange={e => setForm(f => ({ ...f, arrivalTime: e.target.value }))} />
                       <p className={styles.formHint}>A &ldquo;be there by&rdquo; time before the start — shows on the event and the calendar export.</p>
                     </div>
@@ -2195,7 +2199,7 @@ export default function CoachesSchedulePage({
                     />
                   </div>
                   <div className={styles.field}>
-                    <label className={styles.label}>Field / Diamond # <span className={styles.labelOptional}>optional</span></label>
+                    <label className={styles.label}>Field / Diamond #</label>
                     <input
                       className={styles.input}
                       value={form.fieldNumber}
@@ -2205,7 +2209,7 @@ export default function CoachesSchedulePage({
                   </div>
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Address <span className={styles.labelOptional}>optional</span></label>
+                  <label className={styles.label}>Address</label>
                   <input
                     className={styles.input}
                     value={form.locationAddress}
@@ -2256,7 +2260,7 @@ export default function CoachesSchedulePage({
                     <p className={styles.formHint}>Sets your dugout printout (&ldquo;@&rdquo; vs &ldquo;vs&rdquo;) and which side your win/loss counts on.</p>
                   </div>
                   <div className={styles.field}>
-                    <label className={styles.label}>Uniform <span className={styles.labelOptional}>optional</span></label>
+                    <label className={styles.label}>Uniform</label>
                     <input
                       className={styles.input}
                       value={form.uniform}
@@ -2272,7 +2276,7 @@ export default function CoachesSchedulePage({
                   brand-new one on the spot. Pays off later in Season Review's "vs tag" report. */}
               {needsOpponent(form.eventType) && (
                 <section className={styles.formSection}>
-                  <h4 className={styles.formSectionTitle}>Tags <span className={styles.labelOptional}>optional</span></h4>
+                  <h4 className={styles.formSectionTitle}>Tags</h4>
                   <div className={styles.tagPickerRow}>
                     <input
                       className={styles.input}
@@ -2326,7 +2330,7 @@ export default function CoachesSchedulePage({
 
               {/* LINKS / RESOURCES — labelled URLs (drill video, rules, field map, flyer). */}
               <section className={styles.formSection}>
-                <h4 className={styles.formSectionTitle}>Links <span className={styles.labelOptional}>optional</span></h4>
+                <h4 className={styles.formSectionTitle}>Links</h4>
                 {form.resources.length === 0 && (
                   <p className={styles.formHint}>Attach labelled links — a drill video, rules page, field map, or doc. They open in a new tab.</p>
                 )}
@@ -2369,7 +2373,7 @@ export default function CoachesSchedulePage({
               {/* NAME — demoted from the headline: games (and the rest) auto-name from their
                   type + opponent, so a custom label is an optional override, not a title field. */}
               <div className={styles.field}>
-                <label className={styles.label}>Name <span className={styles.labelOptional}>optional</span></label>
+                <label className={styles.label}>Name</label>
                 <input
                   className={styles.input}
                   value={form.name}

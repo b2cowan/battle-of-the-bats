@@ -1,11 +1,11 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Trophy, Archive, ChevronDown } from 'lucide-react';
+import { Trophy, Archive, ChevronDown, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import styles from '../../../../coaches.module.css';
-import type { RepTeamEvent, RepTeamHistoryYear } from '@/lib/types';
+import type { RepTeamEvent, RepTeamHistoryYear, RepTeamTag } from '@/lib/types';
 
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
 const TYPE_LABEL: Record<string, string> = { league_game: 'League', tournament_game: 'Tournament', scrimmage: 'Scrimmage' };
@@ -58,6 +58,11 @@ export default function CoachesResultsReportPage({
   const [error, setError] = useState('');
   // Guards the stale-team flash on client-side team switches (page doesn't remount).
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  // Coach Tags: the team's game-tag library + which tags each event carries (both already
+  // returned by the events GET — this report is the first consumer of them).
+  const [teamTags, setTeamTags] = useState<RepTeamTag[]>([]);
+  const [tagsByEventId, setTagsByEventId] = useState<Record<string, string[]>>({});
+  const [activeTagId, setActiveTagId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -70,6 +75,8 @@ export default function CoachesResultsReportPage({
       if (!evRes.ok) throw new Error();
       const ev = await evRes.json();
       setEvents(ev.events ?? []);
+      setTeamTags(ev.tags ?? []);
+      setTagsByEventId(ev.tagsByEventId ?? {});
       if (hiRes.ok) {
         const hi = await hiRes.json();
         setHistory(hi.history ?? []);
@@ -108,6 +115,31 @@ export default function CoachesResultsReportPage({
   const close = tally(scored.filter(e => Math.abs((e.teamScore ?? 0) - (e.opponentScore ?? 0)) === 1));
   const closeGames = close.w + close.l + close.t;
 
+  // Coach Tags — "vs tag" filter. Chips are built from finalized games only (this report's own
+  // scope), so a chip's count always matches how many rows selecting it will show; a tag with zero
+  // finalized games simply never gets a chip (self-hides per the plan). Derived every render
+  // (not synced via an effect) so a tag deleted/merged elsewhere just quietly stops matching.
+  const tagChips = teamTags
+    .map(tag => ({ tag, count: finalized.filter(e => (tagsByEventId[e.id] ?? []).includes(tag.id)).length }))
+    .filter(c => c.count > 0)
+    .sort((a, b) => a.tag.name.localeCompare(b.tag.name));
+  const activeTag = tagChips.find(c => c.tag.id === activeTagId)?.tag ?? null;
+  const visibleGames = activeTag
+    ? finalized.filter(e => (tagsByEventId[e.id] ?? []).includes(activeTag.id))
+    : finalized;
+  const tagRecord = activeTag ? tally(visibleGames) : null;
+  // Result and score are independent nullable fields (a coach can log a W/L/T with no score
+  // entered) — sum only games that actually HAVE both numbers, same guard as `scored` above,
+  // so an unscored result can't silently fold into the total as a phantom 0–0.
+  const tagRuns = activeTag
+    ? visibleGames
+        .filter(e => e.teamScore != null && e.opponentScore != null)
+        .reduce((acc, e) => ({
+          rf: acc.rf + (e.teamScore ?? 0),
+          ra: acc.ra + (e.opponentScore ?? 0),
+        }), { rf: 0, ra: 0 })
+    : null;
+
   return (
     <div className={styles.page}>
       <Link href={`${base}/history`} className={styles.lineupBackLink}>← Insights</Link>
@@ -135,15 +167,48 @@ export default function CoachesResultsReportPage({
             </div>
           ) : (
             <>
-              <p className={styles.insightsBasis}>
-                {byType.map((r, i) => `${i > 0 ? ' · ' : ''}${TYPE_LABEL[r.type]} ${recStr(r)}`).join('')}
-                {closeGames > 0 && <> · {recStr(close)} in one-{scoreUnit} games</>}
-              </p>
+              {activeTag ? (
+                <div className={styles.insightsTagSummary}>
+                  <span className={styles.insightsTagSummaryLbl}>vs {activeTag.name}:</span>
+                  <span className={styles.insightsTagSummaryRec}>{recStr(tagRecord!)}</span>
+                  <span className={styles.insightsTagSummaryRuns}>{tagRuns!.rf} {scoreUnit} for, {tagRuns!.ra} against</span>
+                </div>
+              ) : (
+                <p className={styles.insightsBasis}>
+                  {byType.map((r, i) => `${i > 0 ? ' · ' : ''}${TYPE_LABEL[r.type]} ${recStr(r)}`).join('')}
+                  {closeGames > 0 && <> · {recStr(close)} in one-{scoreUnit} games</>}
+                </p>
+              )}
+
+              {tagChips.length > 0 && (
+                <div className={styles.lineupFilterBar} role="group" aria-label="Filter by tag">
+                  <button
+                    type="button"
+                    aria-pressed={!activeTag}
+                    className={`${styles.lineupFilterChip} ${!activeTag ? styles.lineupFilterChipActive : ''}`}
+                    onClick={() => setActiveTagId(null)}
+                  >
+                    {!activeTag && <Check size={12} aria-hidden />} All
+                  </button>
+                  {tagChips.map(c => (
+                    <button
+                      key={c.tag.id}
+                      type="button"
+                      aria-pressed={activeTag?.id === c.tag.id}
+                      className={`${styles.lineupFilterChip} ${activeTag?.id === c.tag.id ? styles.lineupFilterChipActive : ''}`}
+                      onClick={() => setActiveTagId(c.tag.id)}
+                    >
+                      {activeTag?.id === c.tag.id && <Check size={12} aria-hidden />} {c.tag.name} <b className={styles.lineupFilterCount}>{c.count}</b>
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <div className={styles.insightsTableWrap}>
                 <table className={styles.insightsTable}>
-                  <thead><tr><th>Date</th><th>Game</th><th>Type</th><th>Result</th><th>Score</th></tr></thead>
+                  <thead><tr><th>Date</th><th>Game</th><th>Type</th><th>Result</th><th>Score</th>{tagChips.length > 0 && <th>Tags</th>}</tr></thead>
                   <tbody>
-                    {finalized.map(e => (
+                    {visibleGames.map(e => (
                       <tr key={e.id}>
                         <td className={styles.insightsNum}>{new Date(e.startsAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</td>
                         <td>{gameTitle(e)}</td>
@@ -152,6 +217,20 @@ export default function CoachesResultsReportPage({
                         <td className={styles.insightsNum}>
                           {e.teamScore != null && e.opponentScore != null ? `${e.teamScore}–${e.opponentScore}` : '—'}
                         </td>
+                        {tagChips.length > 0 && (
+                          <td>
+                            {(tagsByEventId[e.id] ?? []).length > 0 ? (
+                              <div className={styles.lineupChips}>
+                                {(tagsByEventId[e.id] ?? []).map(tagId => {
+                                  const tag = teamTags.find(t => t.id === tagId);
+                                  return tag ? <span key={tagId} className={styles.lineupChip}>{tag.name}</span> : null;
+                                })}
+                              </div>
+                            ) : (
+                              <span className={styles.mutedInline}>—</span>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>

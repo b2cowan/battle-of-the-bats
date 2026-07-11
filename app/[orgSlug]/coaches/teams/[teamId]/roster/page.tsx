@@ -584,10 +584,14 @@ export default function RosterPage({
               <button className={styles.modalCloseBtn} onClick={requestCloseAdd}><X size={16} /></button>
             </div>
 
+            {/* Legend for the per-field <span className={styles.labelRequired}>*</span> markers below —
+                most fields on this form are optional, so only the few that block Save are flagged. */}
+            <p className={styles.formHint}><span className={styles.labelRequired}>*</span> Required</p>
+
             <div className={styles.formGrid}>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-pfn">
-                  First Name <span style={{ color: '#f87171' }}>*</span>
+                  First Name <span className={styles.labelRequired}>*</span>
                 </label>
                 <input id="add-pfn" className={styles.input} type="text" autoFocus
                   value={addForm.playerFirstName}
@@ -596,7 +600,7 @@ export default function RosterPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-pln">
-                  Last Name <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>(optional)</span>
+                  Last Name
                 </label>
                 <input id="add-pln" className={styles.input} type="text"
                   value={addForm.playerLastName}
@@ -632,7 +636,7 @@ export default function RosterPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-gfn">
-                  Guardian First Name <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>(optional)</span>
+                  Guardian First Name
                 </label>
                 <input id="add-gfn" className={styles.input} type="text"
                   value={addForm.guardianFirstName}
@@ -641,7 +645,7 @@ export default function RosterPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-gln">
-                  Guardian Last Name <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>(optional)</span>
+                  Guardian Last Name
                 </label>
                 <input id="add-gln" className={styles.input} type="text"
                   value={addForm.guardianLastName}
@@ -650,7 +654,7 @@ export default function RosterPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-gem">
-                  Guardian Email <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 400 }}>(optional)</span>
+                  Guardian Email
                 </label>
                 <input id="add-gem" className={styles.input} type="email"
                   value={addForm.guardianEmail}

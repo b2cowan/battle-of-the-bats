@@ -67,6 +67,7 @@ export const DELETE = withObservability(async (_req: Request,
   const resolved = await resolveTagContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
   // Scoped by team_id, so a tag can only be removed by a coach of its own team.
-  await deleteRepTeamTag(tagId, teamId);
+  const deleted = await deleteRepTeamTag(tagId, teamId);
+  if (!deleted) return NextResponse.json({ error: 'Tag not found' }, { status: 404 });
   return NextResponse.json({ ok: true });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tags/[tagId]' });

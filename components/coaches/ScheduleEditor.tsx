@@ -343,6 +343,8 @@ function EventForm({
         ))}
       </div>
 
+      <p className={styles.formHint}><span className={styles.labelRequired}>*</span> Required</p>
+
       <input
         className={styles.input}
         placeholder={form.eventType === 'game' ? 'Game title (e.g. League game)' : 'Title (e.g. Practice)'}
@@ -354,7 +356,7 @@ function EventForm({
       />
 
       <label className={styles.fieldLabel}>
-        Starts{' '}
+        Starts <span className={styles.labelRequired}>*</span>{' '}
         <input
           className={styles.input}
           type="datetime-local"
@@ -365,7 +367,7 @@ function EventForm({
       </label>
 
       <label className={styles.fieldLabel}>
-        Ends (optional){' '}
+        Ends{' '}
         <input
           className={styles.input}
           type="datetime-local"

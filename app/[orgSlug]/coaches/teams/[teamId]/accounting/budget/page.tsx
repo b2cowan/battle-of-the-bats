@@ -474,7 +474,7 @@ export default function BudgetPlannerPage({
               <span className={styles.summaryValue}>{fmt(effectiveTotal)}</span>
             </div>
             <div className={styles.summaryItem}>
-              <span className={styles.summaryLabel}>Season Total <span className={styles.optional}>(optional)</span></span>
+              <span className={styles.summaryLabel}>Season Total</span>
               {editingSeason ? (
                 <span style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                   <input
@@ -695,6 +695,8 @@ export default function BudgetPlannerPage({
               <button className={styles.modalCloseBtn} onClick={() => setModalOpen(false)}><X size={16} /></button>
             </div>
 
+            <p className={styles.formHint}><span className={styles.labelRequired}>*</span> Required</p>
+
             {/* Item picker */}
             <div className={styles.field}>
               <label className={styles.label}>Category &amp; Item</label>
@@ -725,7 +727,7 @@ export default function BudgetPlannerPage({
 
             {/* Description override */}
             <div className={styles.field}>
-              <label className={styles.label}>Description <span className={styles.optional}>(optional override)</span></label>
+              <label className={styles.label}>Description</label>
               <input
                 className={styles.input}
                 type="text"
@@ -739,7 +741,7 @@ export default function BudgetPlannerPage({
             {/* Total amount + period toggle */}
             <div className={styles.formRow}>
               <div className={styles.field} style={{ flex: 1 }}>
-                <label className={styles.label}>Total Amount ($)</label>
+                <label className={styles.label}>Total Amount ($) <span className={styles.labelRequired}>*</span></label>
                 <input
                   className={styles.input}
                   type="number"
@@ -867,7 +869,7 @@ export default function BudgetPlannerPage({
 
             {/* Notes */}
             <div className={styles.field}>
-              <label className={styles.label}>Notes <span className={styles.optional}>(optional)</span></label>
+              <label className={styles.label}>Notes</label>
               <input
                 className={styles.input}
                 type="text"

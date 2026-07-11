@@ -692,6 +692,22 @@
 .insightsDoorSoft .insightsDoorSum { font-style: italic; }
 /* Report pages — real tables, never accordions. */
 .insightsBasis { color: var(--white-45); font-size: 0.8rem; margin: -0.35rem 0 1rem; }
+/* "vs {tag}" record — replaces .insightsBasis (not alongside it) while a tag filter is active,
+   so the page never states two competing "the record is X" claims at once. */
+.insightsTagSummary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.5rem;
+  background: rgba(var(--logic-lime-rgb), 0.07);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  margin: -0.1rem 0 1rem;
+}
+.insightsTagSummaryLbl { font-size: 0.8rem; color: var(--white-55); }
+.insightsTagSummaryRec { font-weight: 800; font-size: 0.95rem; color: var(--white-90); font-variant-numeric: tabular-nums; }
+.insightsTagSummaryRuns { font-size: 0.78rem; color: var(--white-45); font-variant-numeric: tabular-nums; }
 .insightsTableWrap { overflow-x: auto; }
 .insightsTable { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
 .insightsTable th { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white-35); text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.12); white-space: nowrap; }
@@ -1713,14 +1729,14 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-/* Quiet "optional" hint inline in a field label. */
-.labelOptional {
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--white-35);
-  font-size: 0.72rem;
-  margin-left: 0.3rem;
+/* Required-field marker inline in a field/section label, paired with the "* Required" legend
+   at the top of the event form. Replaces the old per-field "optional" tag — most fields on this
+   form are optional, so flagging the few that actually block Save reads cleaner than flagging
+   everything else. */
+.labelRequired {
+  color: var(--danger);
+  font-weight: 700;
+  margin-left: 0.2rem;
 }
 
 .input, .select, .textarea {
