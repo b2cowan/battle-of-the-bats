@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
+import { isReservedOrgSlug } from '@/lib/reserved-slugs';
 import { captureError, withObservability } from '@/lib/observability';
 
 function slugify(name: string) {
@@ -14,6 +15,8 @@ function slugify(name: string) {
 }
 
 async function isSlugAvailable(slug: string) {
+  // Never hand out a slug that collides with a top-level app route (it would shadow the org's pages).
+  if (isReservedOrgSlug(slug)) return false;
   const { data, error } = await supabaseAdmin
     .from('organizations')
     .select('id')

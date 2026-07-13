@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
+import { isReservedOrgSlug } from '@/lib/reserved-slugs';
 import { signupVerificationHtml } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { captureError, withObservability } from '@/lib/observability';
@@ -30,6 +31,8 @@ function shouldRequireEmailVerification() {
 }
 
 async function isSlugAvailable(slug: string) {
+  // Never hand out a slug that collides with a top-level app route (it would shadow the org's pages).
+  if (isReservedOrgSlug(slug)) return false;
   const { data, error } = await supabaseAdmin
     .from('organizations')
     .select('id')
