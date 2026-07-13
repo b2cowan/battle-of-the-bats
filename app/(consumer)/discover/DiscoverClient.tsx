@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Search, Calendar, Users, Trophy, ArrowRight,
-  Layers, LayoutGrid, List, MapPin,
+  Layers, LayoutGrid, List, MapPin, SlidersHorizontal,
 } from 'lucide-react';
 import type { DirectoryItem, DirectoryFacets, DirectoryResult, Timeframe } from '@/lib/directory';
 import styles from './page.module.css';
@@ -120,6 +120,11 @@ export default function DiscoverClient({ initial }: { initial: DirectoryResult }
   const [timeframe,   setTimeframe]   = useState<TimeframeFilter>('current');
   const [viewMode,    setViewMode]    = useState<ViewMode>('grid');
 
+  // Sport/region selects collapse behind a "Filters" toggle on mobile so the sticky
+  // bar doesn't eat the screen before the visitor has scrolled to a single card —
+  // desktop always shows them inline (see .moreFilters `display: contents` base rule).
+  const [moreOpen, setMoreOpen] = useState(false);
+
   // Debounce the search box → server query.
   useEffect(() => {
     const id = setTimeout(() => setDebouncedQ(searchInput.trim()), 300);
@@ -210,74 +215,73 @@ export default function DiscoverClient({ initial }: { initial: DirectoryResult }
               <input
                 type="text"
                 aria-label="Search tournaments"
-                placeholder="Search by tournament or organization…"
+                placeholder="Search tournaments…"
                 value={searchInput}
                 onChange={e => setSearchInput(e.target.value)}
                 className={styles.searchInput}
               />
             </div>
 
-            {/* Sport */}
-            {facets.sports.length > 0 && (
-              <select
-                className={styles.filterSelect}
-                value={sport}
-                onChange={e => setSport(e.target.value)}
-                aria-label="Filter by sport"
-              >
-                <option value="">All sports</option>
-                {facets.sports.map(s => (
-                  <option key={s.id} value={s.id}>{s.label}</option>
-                ))}
-              </select>
-            )}
-
-            {/* Province */}
-            {facets.provinces.length > 0 && (
-              <select
-                className={styles.filterSelect}
-                value={province}
-                onChange={e => setProvince(e.target.value)}
-                aria-label="Filter by region"
-              >
-                <option value="">All regions</option>
-                {facets.provinces.map(p => (
-                  <option key={p.code} value={p.code}>{p.name}</option>
-                ))}
-              </select>
-            )}
-
-            {/* Timeframe */}
-            <div className={styles.filters}>
-              {TIMEFRAME_FILTERS.map(t => (
-                <button
-                  key={t.value}
-                  onClick={() => setTimeframe(t.value)}
-                  className={`${styles.filterBtn} ${timeframe === t.value ? styles.filterActive : ''}`}
+            <div className={`${styles.moreFilters} ${moreOpen ? styles.moreFiltersOpen : ''}`}>
+              {/* Sport */}
+              {facets.sports.length > 0 && (
+                <select
+                  className={styles.filterSelect}
+                  value={sport}
+                  onChange={e => setSport(e.target.value)}
+                  aria-label="Filter by sport"
                 >
-                  {t.label}
-                </button>
-              ))}
+                  <option value="">All sports</option>
+                  {facets.sports.map(s => (
+                    <option key={s.id} value={s.id}>{s.label}</option>
+                  ))}
+                </select>
+              )}
+
+              {/* Province */}
+              {facets.provinces.length > 0 && (
+                <select
+                  className={styles.filterSelect}
+                  value={province}
+                  onChange={e => setProvince(e.target.value)}
+                  aria-label="Filter by region"
+                >
+                  <option value="">All regions</option>
+                  {facets.provinces.map(p => (
+                    <option key={p.code} value={p.code}>{p.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
-            {/* View toggle */}
-            <div className={styles.viewToggle}>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
-                title="Grid view"
-                aria-label="Grid view"
-              >
-                <LayoutGrid size={15} />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
-                title="List view"
-                aria-label="List view"
-              >
-                <List size={15} />
-              </button>
+            {/* Timeframe + (mobile) sport/region toggle share one row */}
+            <div className={styles.filterRow}>
+              <div className={styles.filters}>
+                {TIMEFRAME_FILTERS.map(t => (
+                  <button
+                    key={t.value}
+                    onClick={() => setTimeframe(t.value)}
+                    className={`${styles.filterBtn} ${timeframe === t.value ? styles.filterActive : ''}`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sport/region toggle — mobile only; desktop shows the selects inline above */}
+              {(facets.sports.length > 0 || facets.provinces.length > 0) && (
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen(o => !o)}
+                  className={`${styles.moreFiltersToggle} ${sport || province ? styles.moreFiltersToggleActive : ''}`}
+                  aria-expanded={moreOpen}
+                  aria-label="Filters"
+                >
+                  <SlidersHorizontal size={14} />
+                  <span className={styles.moreFiltersLabel}>Filters</span>
+                  {(sport || province) && <span className={styles.filterDot} />}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -310,6 +314,27 @@ export default function DiscoverClient({ initial }: { initial: DirectoryResult }
                     `${total} tournament${total !== 1 ? 's' : ''}`
                   )}
                 </p>
+
+                {/* View toggle — a display preference for the results, so it lives with them
+                    rather than in the sticky filter bar above. */}
+                <div className={styles.viewToggle}>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
+                    title="Grid view"
+                    aria-label="Grid view"
+                  >
+                    <LayoutGrid size={15} />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
+                    title="List view"
+                    aria-label="List view"
+                  >
+                    <List size={15} />
+                  </button>
+                </div>
               </div>
 
               {/* Cards */}

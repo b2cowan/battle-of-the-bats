@@ -6,7 +6,74 @@
   padding: 1.25rem 1rem 2rem;
 }
 
+/* Account tab: same centered column as .page, but a flex column that fills the
+   viewport so the quiet organizer note can pin to the bottom (.pinBottom) instead
+   of floating mid-screen above a void. Relies on the shell's .content being a
+   flex column (ConsumerShell.module.css). */
+.accountPage {
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2rem;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
 .header { margin-bottom: 1.25rem; }
+
+/* ── Identity block (Account tab) ─────────────────────────────────────────── */
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--hud-surface, rgba(255, 255, 255, 0.02));
+}
+.identityAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--primary-rgb), 0.12);
+  color: var(--primary-light);
+  font-family: var(--font-data, monospace);
+  font-weight: 700;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+.identityMeta { display: flex; flex-direction: column; min-width: 0; gap: 0.2rem; }
+.identityLabel {
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white-45);
+}
+.identityValue {
+  font-family: var(--font-data, monospace);
+  font-size: 0.9rem;
+  color: var(--fl-text);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.accountActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+/* Full-width block variant of the shell CTAs (Account tab). */
+.blockBtn {
+  width: 100%;
+  justify-content: center;
+}
 
 .title {
   font-family: var(--font-display, sans-serif);
@@ -143,12 +210,16 @@
   line-height: 1.5;
 }
 
+/* Shell CTAs — reconciled to the app's rounded-rect button language (--radius),
+   matching the shell's own cards; the earlier 999px full-pill was the one shape
+   that drifted from the rest of the app. Primary = --primary fill + --on-primary
+   text (same as the global .btn-primary); secondary = quiet --border outline. */
 .cta {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.6rem 1.1rem;
-  border-radius: 999px;
+  padding: 0.7rem 1.1rem;
+  border-radius: var(--radius);
   background: var(--primary);
   color: var(--on-primary);
   font-family: var(--font-data, monospace);
@@ -157,16 +228,16 @@
   letter-spacing: 0.03em;
   text-transform: uppercase;
   text-decoration: none;
-  transition: opacity 0.2s ease;
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
 }
-.cta:hover { opacity: 0.88; }
+.cta:hover { filter: brightness(1.08); box-shadow: var(--glow-sm); }
 
 .ctaGhost {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.6rem 1.1rem;
-  border-radius: 999px;
+  padding: 0.7rem 1.1rem;
+  border-radius: var(--radius);
   border: 1px solid var(--border);
   color: var(--fl-text);
   font-family: var(--font-data, monospace);
@@ -175,9 +246,9 @@
   letter-spacing: 0.03em;
   text-transform: uppercase;
   text-decoration: none;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
-.ctaGhost:hover { border-color: rgba(var(--primary-rgb), 0.5); }
+.ctaGhost:hover { border-color: rgba(var(--primary-rgb), 0.5); background: rgba(var(--primary-rgb), 0.05); }
 
 .actions {
   display: flex;
@@ -195,3 +266,13 @@
   padding-top: 1.25rem;
   border-top: 1px solid var(--border);
 }
+.noteLink {
+  color: var(--primary-light);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.noteLink:hover { text-decoration: underline; }
+
+/* Pins the note to the bottom of the flex-column account page, filling the void. */
+.pinBottom { margin-top: auto; }

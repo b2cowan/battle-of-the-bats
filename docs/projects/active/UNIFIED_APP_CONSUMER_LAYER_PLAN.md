@@ -128,3 +128,12 @@ Each phase ships standalone user value; there is no big-bang cutover. Standard w
 4. A parent reaches team chat + practice schedule only via an approved family link; audit shows no authed HTML in the offline cache.
 5. `/discover` is the app's logged-out start; directory SEO unchanged or improved.
 6. Free-tier events show a legible "alerts not offered" state; Plus events deliver follow alerts — the gate reads as organizer value, not fan punishment.
+
+## 8. Deferred — scope before project close (not a Phase 0/1 fix)
+
+### Return-to-directory navigation (flagged 2026-07-13, owner testing Phase 0/1)
+Once a fan drills into a tournament or team page from `/discover` or `/scores`, there is currently no in-app path back to the directory. The tournament's own nav (News/Schedule/Standings/Teams/Rules) fully replaces the consumer bottom nav on entry — by design, so there are never two nav bars stacked — but nothing in the tournament/team chrome points back to Discover. The only way back today is the browser/device back gesture, which won't be obvious once this is an installed app with no visible browser chrome around it.
+
+**Deliberately not hacked in now** — owner flagged that a fix here touches the navigation of every pre-existing tournament/team page (today the top-bar wordmark always means "this tournament's home"; making it sometimes mean "back to the directory" depending on how the visitor arrived is a real navigation-model decision, not a one-line link). Wants dedicated design thought, not a quick patch riding on top of Phase 0/1 testing feedback.
+
+**Revisit at the end of this project** — natural point is after Phase 3 ("One-home connective tissue," the view-flip + switcher-home navigation work), once the full picture of app-wide navigation (fan/coach/admin, directory ⇄ tournament ⇄ home) is in place and a return-path can be designed holistically rather than per-surface.

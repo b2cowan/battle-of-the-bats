@@ -1,11 +1,12 @@
 /* ── Page shell ──────────────────────────────────────────────────────── */
+/* Rendered inside the consumer shell (which supplies its own sticky top bar),
+   so NO extra top offset here — that offset was what left a black band. */
 .page {
   min-height: 100vh;
-  padding-top: var(--nav-height);
 }
 
 .header {
-  padding: 3.5rem 0 2.5rem;
+  padding: 2.25rem 0 1.5rem;
   border-bottom: 1px solid rgba(30,58,138,0.3);
   background: linear-gradient(to bottom, rgba(30,58,138,0.08) 0%, transparent 100%);
 }
@@ -105,6 +106,47 @@
   border-color: var(--blueprint-blue);
 }
 
+/* Sport/region wrapper — plain pass-through on desktop (selects stay direct flex
+   children of .controls); mobile hides it behind the Filters toggle below. */
+.moreFilters { display: contents; }
+
+/* Mobile-only toggle for the wrapper above; hidden on desktop where selects show inline. */
+.moreFiltersToggle {
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid rgba(30,58,138,0.4);
+  background: var(--hud-surface);
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.moreFiltersToggle.moreFiltersToggleActive {
+  border-color: var(--blueprint-blue);
+  color: var(--fl-text);
+}
+.filterDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--logic-lime);
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  /* Toggle sits snug after the chips (one filter cluster), not anchored to the
+     far edge — it expands MORE filters, so it reads as part of the group. */
+  justify-content: flex-start;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .filters {
   display: flex;
   gap: 0.375rem;
@@ -137,7 +179,7 @@
   color: var(--fl-text);
 }
 
-/* ── View toggle ─────────────────────────────────────────────────────── */
+/* ── View toggle (lives in .bodyMeta, next to the result count) ────────── */
 .viewToggle {
   display: flex;
   gap: 2px;
@@ -145,7 +187,7 @@
   border-radius: 0;
   padding: 2px;
   background: var(--hud-surface);
-  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .viewBtn {
@@ -170,13 +212,15 @@
 }
 
 /* ── Sticky filter bar ───────────────────────────────────────────────── */
+/* Sticks flush under the consumer shell's top bar (falls back to the marketing
+   nav height if ever rendered outside the shell). */
 .filterBar {
   position: sticky;
-  top: var(--nav-height);
+  top: var(--consumer-top-h, var(--nav-height));
   z-index: 10;
   background: rgba(10,10,10,0.9);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(30,58,138,0.3);
   padding: 0.875rem 0;
 }
@@ -302,7 +346,7 @@
 }
 
 .statusActive   { background: rgba(217,249,157,0.08); color: var(--logic-lime); border: 1px solid rgba(217,249,157,0.3); }
-.statusUpcoming { background: rgba(30,58,138,0.15);   color: #93C5FD;            border: 1px solid rgba(30,58,138,0.5); }
+.statusUpcoming { background: rgba(var(--info-rgb),0.12); color: var(--info);     border: 1px solid rgba(var(--info-rgb),0.35); }
 .statusDone     { background: transparent;             color: var(--data-gray);   border: 1px solid rgba(255,255,255,0.1); }
 
 .statusDot {
@@ -505,12 +549,43 @@
 }
 
 @media (max-width: 640px) {
+  /* Compact hero so a card peeks above the fold instead of a full-screen header. */
+  .header { padding: 1.25rem 0 1rem; }
+  .body   { padding: 1.5rem 0 4rem; }
+
   .controls {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.6rem;
   }
 
   .searchWrap { max-width: none; }
   .filters    { flex-wrap: wrap; }
-  .viewToggle { margin-left: 0; }
+
+  /* 16px input text so iOS Safari doesn't auto-zoom the page on focus;
+     44px min-height = consumer touch-target floor. */
+  .searchInput  { font-size: 1rem; min-height: 44px; }
+  .filterSelect { font-size: 1rem; min-height: 44px; }
+
+  /* Touch-target floor + tighter x-padding/tracking so all three timeframe chips
+     share one row with the (icon-only) Filters toggle down to 360px viewports.
+     Chips FLEX to fill the row edge-to-edge (owner call) — no dead space; the
+     icon toggle stays fixed-width at the end. */
+  .filters   { flex: 1 1 auto; }
+  .filterBtn { flex: 1 1 auto; min-height: 44px; padding: 0.5rem 0.55rem; letter-spacing: 0.07em; }
+  .viewBtn   { width: 44px; height: 44px; }
+
+  /* Sport/region collapse behind the Filters toggle, sharing a row with the
+     timeframe pills (.filterRow) instead of taking its own row. */
+  .moreFiltersToggle {
+    display: inline-flex;
+    flex-shrink: 0;
+    min-height: 44px;
+    min-width: 44px;
+    justify-content: center;
+  }
+  /* Icon-only on mobile (platform action-button pattern); aria-label carries the name. */
+  .moreFiltersLabel { display: none; }
+  .moreFilters { display: none; flex-direction: column; gap: 0.6rem; }
+  .moreFilters.moreFiltersOpen { display: flex; }
 }

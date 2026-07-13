@@ -7,6 +7,10 @@
   background: var(--bg);
   display: flex;
   flex-direction: column;
+  /* Height of the sticky top bar — descendants (e.g. the directory's sticky
+     search bar) offset their own sticky position by this so they sit flush
+     beneath it. Custom properties cascade regardless of CSS-module scoping. */
+  --consumer-top-h: calc(3rem + env(safe-area-inset-top, 0px));
 }
 
 /* ── Top bar (all sizes): wordmark left; inline links right on desktop ─────────── */
@@ -14,19 +18,29 @@
   position: sticky;
   top: 0;
   z-index: 200;
+  box-sizing: border-box;
+  height: var(--consumer-top-h);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.65rem 1rem;
-  padding-top: max(0.65rem, env(safe-area-inset-top));
+  padding: env(safe-area-inset-top, 0px) 1rem 0;
   background: var(--nav-mobile-bg);
-  backdrop-filter: blur(var(--blur-bar));
+  /* -webkit- BEFORE standard: the CSS minifier dedupes aliased properties keeping
+     the LAST one — standard-last is what actually ships (and applies). */
   -webkit-backdrop-filter: blur(var(--blur-bar));
+  backdrop-filter: blur(var(--blur-bar));
   border-bottom: 1px solid var(--border);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .topbar { background: var(--bg); }
+}
+
+.topLeft {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  min-width: 0;
 }
 
 .wordmark {
@@ -36,6 +50,7 @@
   letter-spacing: -0.02em;
   text-decoration: none;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 .wm1 { color: var(--fl-text); }
 .wm2 { color: var(--primary-light); }
@@ -45,6 +60,47 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
+}
+
+/* Desktop-only organizer/utility affordances on the right of the header. */
+.topUtil {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-shrink: 0;
+}
+.utilLink {
+  font-family: var(--font-data, monospace);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--white-45);
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+.utilLink:hover { color: var(--fl-text); }
+.utilCta {
+  font-family: var(--font-data, monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--fl-text);
+  white-space: nowrap;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+.utilCta:hover {
+  border-color: rgba(var(--primary-rgb), 0.6);
+  color: var(--primary-light);
+}
+@media (max-width: 900px) {
+  .topUtil { display: none; }
 }
 .topLink {
   font-family: var(--font-data, monospace);
@@ -65,8 +121,12 @@
 }
 
 /* ── Content: reserve room for the fixed bottom nav on mobile ─────────────────── */
+/* Flex column so a full-height tab (the Account page) can grow to fill and pin its
+   footer to the bottom; content-sized tabs (Discover/Scores/Following) are unaffected. */
 .content {
   flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
 }
 @media (max-width: 900px) {
   .content {
@@ -86,8 +146,8 @@
     right: 0;
     z-index: 200;
     background: var(--nav-mobile-bg);
-    backdrop-filter: blur(var(--blur-bar));
     -webkit-backdrop-filter: blur(var(--blur-bar));
+    backdrop-filter: blur(var(--blur-bar));
     border-top: 1px solid var(--border);
     padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
     justify-content: space-around;

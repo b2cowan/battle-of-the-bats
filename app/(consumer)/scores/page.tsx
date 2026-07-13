@@ -25,6 +25,11 @@ export const metadata: Metadata = {
 export default async function ScoresPage() {
   const live = await getDirectoryListings({ timeframe: 'live', limit: DIRECTORY_MAX_LIMIT, offset: 0 });
 
+  // Keys of the tournaments live right now — the followed-teams strip filters against
+  // these so it only surfaces your teams that are actually in a live event (otherwise
+  // it would just duplicate the Following tab).
+  const liveKeys = live.items.map((t) => `${t.orgSlug}/${t.tournamentSlug}`);
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -34,8 +39,8 @@ export default async function ScoresPage() {
         </p>
       </div>
 
-      {/* Device's followed teams, surfaced first (anonymous per-device follows). */}
-      <FollowedTeamsStrip />
+      {/* Your followed teams, narrowed to ones whose tournament is live right now. */}
+      <FollowedTeamsStrip liveKeys={liveKeys} />
 
       {live.items.length > 0 ? (
         <>
