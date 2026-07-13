@@ -541,11 +541,14 @@ id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, division_id (uuid) 
 id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, team_id (uuid) → teams.id NOT NULL, name NOT NULL, jersey_number, date_of_birth, position, notes, source, created_by_user_id (uuid), created_at, updated_at, source_player_id (uuid) → basic_coach_team_players.id
 - Indexes: idx_tournament_roster_players_org, idx_tournament_roster_players_team, idx_tournament_roster_players_tournament
 
+### user_marketing_opt_outs
+user_id (uuid) NOT NULL, opted_out_at
+
 ---
 
 ## Tables by count
 
-Total: **131 tables** across 10 modules.
+Total: **132 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -556,4 +559,4 @@ Total: **131 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 22 tables
+- Other: 23 tables

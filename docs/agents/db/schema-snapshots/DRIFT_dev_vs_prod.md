@@ -2,27 +2,28 @@
 
 **Generated:** 2026-07-13 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 113 divergence(s)** across dev/prod.
+**⚠️ 119 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 3 | 0 | — |
-| Columns | 25 | 3 | 24 |
-| Indexes | 20 | 3 | 0 |
-| Constraints | 21 | 9 | — |
+| Tables | 4 | 0 | — |
+| Columns | 27 | 3 | 24 |
+| Indexes | 21 | 3 | 0 |
+| Constraints | 23 | 9 | — |
 | RLS / CHECK | 4 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (3)
+### Only in DEV (4)
 - `rep_player_awards`
 - `rep_team_award_types`
 - `rep_team_expense_tags`
+- `user_marketing_opt_outs`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (25)
+### Only in DEV (27)
 - `rep_player_awards.award_type_id`
 - `rep_player_awards.awarded_at`
 - `rep_player_awards.created_at`
@@ -48,6 +49,8 @@ _none_
 - `rep_team_expense_tags.created_at`
 - `rep_team_expense_tags.expense_id`
 - `rep_team_expense_tags.tag_id`
+- `user_marketing_opt_outs.opted_out_at`
+- `user_marketing_opt_outs.user_id`
 
 ### Only in PROD (3)
 - `resources.created_at`
@@ -81,7 +84,7 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (20)
+### Only in DEV (21)
 - `league_practices_recurrence_idx`
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
@@ -102,6 +105,7 @@ _none_
 - `rep_team_expense_tags_tag_idx`
 - `rep_team_tags_org_name_uniq`
 - `rep_team_tags_org_shared_idx`
+- `user_marketing_opt_outs_pkey`
 
 ### Only in PROD (3)
 - `league_practices_recurrence_group_id_idx`
@@ -112,7 +116,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (21)
+### Only in DEV (23)
 - `announcements.announcements_tournament_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
@@ -134,6 +138,8 @@ _none_
 - `rep_team_expense_tags.rep_team_expense_tags_pkey`
 - `rep_team_expense_tags.rep_team_expense_tags_tag_id_fkey`
 - `teams.teams_tournament_id_fkey`
+- `user_marketing_opt_outs.user_marketing_opt_outs_pkey`
+- `user_marketing_opt_outs.user_marketing_opt_outs_user_id_fkey`
 
 ### Only in PROD (9)
 - `announcements.fk_announcements_tournament`

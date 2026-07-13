@@ -58,3 +58,33 @@ export function buildUnsubscribeUrl(orgId: string): string {
   const token = generateUnsubscribeToken(orgId);
   return `${base}/unsubscribe?org=${encodeURIComponent(orgId)}&token=${encodeURIComponent(token)}`;
 }
+
+// ── Per-USER unsubscribe (CASL fix — coach-audience campaigns) ─────────────────
+// An email sent to an individual (a coach) must unsubscribe THAT PERSON, not the org it
+// happens to be attributed to. A distinct HMAC message suffix keeps user tokens and org
+// tokens non-interchangeable, so a user token can never flip an org's opt-out and vice versa.
+
+export function generateUserUnsubscribeToken(userId: string): string {
+  const secret = getSecret();
+  return createHmac('sha256', secret)
+    .update(`${userId}:unsubscribe-user`)
+    .digest('hex')
+    .slice(0, 32);
+}
+
+export function verifyUserUnsubscribeToken(userId: string, token: string): boolean {
+  if (!userId || !token) return false;
+  const expected = generateUserUnsubscribeToken(userId);
+  if (expected.length !== token.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < expected.length; i++) {
+    mismatch |= expected.charCodeAt(i) ^ token.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
+export function buildUserUnsubscribeUrl(userId: string): string {
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
+  const token = generateUserUnsubscribeToken(userId);
+  return `${base}/unsubscribe?user=${encodeURIComponent(userId)}&token=${encodeURIComponent(token)}`;
+}

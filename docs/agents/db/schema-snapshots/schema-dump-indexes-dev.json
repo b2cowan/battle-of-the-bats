@@ -2085,6 +2085,11 @@
     "indexdef": "CREATE UNIQUE INDEX tournaments_pkey ON public.tournaments USING btree (id)"
   },
   {
+    "tablename": "user_marketing_opt_outs",
+    "indexname": "user_marketing_opt_outs_pkey",
+    "indexdef": "CREATE UNIQUE INDEX user_marketing_opt_outs_pkey ON public.user_marketing_opt_outs USING btree (user_id)"
+  },
+  {
     "tablename": "venue_facilities",
     "indexname": "venue_facilities_pkey",
     "indexdef": "CREATE UNIQUE INDEX venue_facilities_pkey ON public.venue_facilities USING btree (id)"

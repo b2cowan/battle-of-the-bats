@@ -144,9 +144,10 @@ async function getFoundingSeasonRecipientsNotOnClub(): Promise<
 }
 
 // Coach recipients: coaches who participated in founding season tournaments.
-// Uses the founding org's ID for opt-out suppression (V1 simplification).
+// `orgId` is the founding org (used only for send LOGGING). Opt-out + unsubscribe are
+// per-person via `userId` (CASL fix) — a coach's choice never touches the org's opt-out.
 async function getCoachRecipients(): Promise<
-  Array<{ orgId: string; orgName: string; ownerEmail: string; ownerName: string | null }>
+  Array<{ orgId: string; orgName: string; ownerEmail: string; ownerName: string | null; userId: string }>
 > {
   const { data: overrides } = await supabaseAdmin
     .from('org_overrides')
@@ -193,12 +194,13 @@ async function getCoachRecipients(): Promise<
           orgName: orgNameMap[coach.organization_id as string] ?? '',
           ownerEmail: email,
           ownerName: name,
+          userId: coach.user_id as string,
         };
       })
   );
 
   return results.filter(Boolean) as Array<{
-    orgId: string; orgName: string; ownerEmail: string; ownerName: string | null;
+    orgId: string; orgName: string; ownerEmail: string; ownerName: string | null; userId: string;
   }>;
 }
 
@@ -314,7 +316,7 @@ export const POST = withObservability(async (request: NextRequest) => {
   }
 
   // Select audience based on email key
-  type Recipient = { orgId: string; orgName: string; ownerEmail: string; ownerName: string | null };
+  type Recipient = { orgId: string; orgName: string; ownerEmail: string; ownerName: string | null; userId?: string };
   let recipients: Recipient[];
 
   if (emailKey === 'spotlight_coaches_coach') {
@@ -364,6 +366,9 @@ export const POST = withObservability(async (request: NextRequest) => {
       html,
       batchId,
       skipOptOutCheck: false, // Batch sends always check opt-out
+      // Coach-audience sends opt out the PERSON, not the org (CASL fix). Non-coach
+      // recipients carry no userId, so they stay on the org-scoped path.
+      recipientUserId: recipient.userId,
     });
 
     if (result === 'sent') sent++;

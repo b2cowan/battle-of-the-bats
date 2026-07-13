@@ -18,7 +18,7 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
+import { buildUnsubscribeUrl, buildUserUnsubscribeUrl } from '@/lib/unsubscribe-token';
 
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <hello@fieldlogichq.ca>';
@@ -44,8 +44,7 @@ function htmlToText(html: string): string {
  * Appends a CASL-compliant unsubscribe footer to outgoing marketing email HTML.
  * Injected before the closing </body> or at the end of the HTML string.
  */
-function injectUnsubscribeFooter(html: string, orgId: string): string {
-  const unsubscribeUrl = buildUnsubscribeUrl(orgId);
+function injectUnsubscribeFooter(html: string, unsubscribeUrl: string): string {
   const footer = `
 <div style="margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid rgba(217,249,157,0.1);font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;">
   <p style="margin:0 0 0.4rem;color:rgba(241,245,249,0.3);font-size:0.72rem;line-height:1.55;">
@@ -79,6 +78,12 @@ export interface SendEmailOptions {
    */
   skipOptOutCheck?: boolean;
   /**
+   * Set for emails targeted at an INDIVIDUAL (a coach), not an org. When present, opt-out is
+   * checked against that person's own opt-out and the unsubscribe footer opts out THAT PERSON
+   * — never the org the send is attributed to (CASL fix). `orgId` is still used for logging.
+   */
+  recipientUserId?: string;
+  /**
    * Optional ISO 8601 timestamp (or Resend natural-language string like "in 1 day")
    * to schedule the send for later via Resend's native `scheduled_at`. When omitted
    * the email sends immediately. Used for the post-plan-selection welcome / upsell
@@ -103,22 +108,33 @@ export async function sendMarketingEmail(opts: SendEmailOptions): Promise<SendRe
     html,
     batchId,
     skipOptOutCheck = false,
+    recipientUserId,
     scheduledAt,
   } = opts;
 
-  // ── 1. Opt-out check ───────────────────────────────────────────────────────
+  // ── 1. Opt-out check — per-person for individual (coach) sends, else per-org ──
   if (!skipOptOutCheck) {
-    const { data: org, error: orgErr } = await supabaseAdmin
-      .from('organizations')
-      .select('email_marketing_opt_out')
-      .eq('id', orgId)
-      .maybeSingle();
+    let optedOut = false;
 
-    if (orgErr) {
-      console.error('[email-sender] Opt-out check error:', orgErr);
+    if (recipientUserId) {
+      const { data: row, error: userErr } = await supabaseAdmin
+        .from('user_marketing_opt_outs')
+        .select('user_id')
+        .eq('user_id', recipientUserId)
+        .maybeSingle();
+      if (userErr) console.error('[email-sender] User opt-out check error:', userErr);
+      optedOut = !!row;
+    } else {
+      const { data: org, error: orgErr } = await supabaseAdmin
+        .from('organizations')
+        .select('email_marketing_opt_out')
+        .eq('id', orgId)
+        .maybeSingle();
+      if (orgErr) console.error('[email-sender] Opt-out check error:', orgErr);
+      optedOut = org?.email_marketing_opt_out === true;
     }
 
-    if (org?.email_marketing_opt_out === true) {
+    if (optedOut) {
       await logSend({
         emailKey, orgId, toEmail, toName, subject, batchId,
         status: 'suppressed',
@@ -129,8 +145,11 @@ export async function sendMarketingEmail(opts: SendEmailOptions): Promise<SendRe
     }
   }
 
-  // ── 2. Inject unsubscribe footer (all marketing emails) ───────────────────
-  const htmlWithFooter = skipOptOutCheck ? html : injectUnsubscribeFooter(html, orgId);
+  // ── 2. Inject unsubscribe footer — opts out the person for individual sends ──
+  const unsubscribeUrl = recipientUserId
+    ? buildUserUnsubscribeUrl(recipientUserId)
+    : buildUnsubscribeUrl(orgId);
+  const htmlWithFooter = skipOptOutCheck ? html : injectUnsubscribeFooter(html, unsubscribeUrl);
 
   // ── 3. Insert queued send record ──────────────────────────────────────────
   const sendId = await logSend({

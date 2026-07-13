@@ -5114,6 +5114,17 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 <!-- dict:col:email_sends.sent_at -->
 **`sent_at`** (tstz, nullable) — when the row reached `'sent'`; code-maintained (no trigger); reset to null if the row is updated to `'failed'`. The `cancelScheduledEmail` order key.
 
+### `user_marketing_opt_outs`
+<!-- dict:table:user_marketing_opt_outs -->
+
+**Added by migration 185 (2026-07-13 — applied to DEV; ⚠ PROD-PENDING).** Per-person marketing-email opt-out (CASL fix, Notification Settings Phase 2). Fixes the wrong-party unsubscribe: the `spotlight_coaches_coach` campaign emails an INDIVIDUAL coach, but the unsubscribe footer was org-scoped, so a coach's "Unsubscribe" flipped `organizations.email_marketing_opt_out` (cross-identity) instead of their own. **Presence of a row = this user opted out of individual marketing email.** Written by the user-scoped `/unsubscribe?user=…` path ([app/unsubscribe/route.ts](../../../app/unsubscribe/route.ts)); read by `sendMarketingEmail` for `recipientUserId` (coach-audience) sends ([lib/email-sender.ts](../../../lib/email-sender.ts)). **RLS ENABLED, ZERO policies** — service-role only (prod `anon` carries a default SELECT grant, so RLS is what walls it off; see [[reference_supabase_rls_grants]]). Distinct from `organizations.email_marketing_opt_out` (org-level); NOT the parked general per-recipient/guardian suppression system.
+
+<!-- dict:col:user_marketing_opt_outs.user_id -->
+**`user_id`** (uuid, PK; FK→`auth.users(id)` ON DELETE CASCADE) — the person who opted out. The row's presence IS the opt-out fact; a resubscribe deletes the row (no UI exposes that in V1).
+
+<!-- dict:col:user_marketing_opt_outs.opted_out_at -->
+**`opted_out_at`** (tstz, NN, default `now()`) — when they opted out (audit).
+
 ### Functions & mechanics (not tables — not coverage-checked, documented for completeness)
 
 - **`notify()`** ([lib/notify.ts:87](../../../lib/notify.ts#L87)) — the fan-out hub: resolve recipients (all org members, or an explicit `userIds` list forced to `role='member'`) → **Layer 2** tournament opt-out (only if `tournamentId` passed) → **Layer 1** global channel prefs (falling back to `systemDefaults`) → write bell row (`channel_bell`) → fan Web Push (`channel_push` → `push_subscriptions` → `sendWebPush`, 410-delete) → send email (`channel_email` → `notificationEmailHtml` → `sendEmail`). Fire-and-forget; the whole body never throws to the caller.
@@ -5124,7 +5135,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 
 ---
 
-*End of Notifications & Push (Phase 10 — 8 tables across 3 sub-systems: in-app bell + the global/per-tournament preference layers, the member-vs-fan web-push split, and the Resend send-log + mirror template registry. `notify()` is the fan-out hub; only `notifications` carries RLS policies (vestigial for data paths); the two push tables and the DB template registry are built-but-unexercised. Cross-references — not redocuments — `auth.users`, `organizations`, `tournaments`, `teams`, `org_member_tournament_assignments` (Org core), `platform_events.PlatformEventType` (the name-collision), and [[project_email_stack]] / [[project_public_tournament_wow]].)*
+*End of Notifications & Push (Phase 10 — 9 tables across 3 sub-systems (incl. `user_marketing_opt_outs`, mig 185): in-app bell + the global/per-tournament preference layers, the member-vs-fan web-push split, and the Resend send-log + mirror template registry. `notify()` is the fan-out hub; only `notifications` carries RLS policies (vestigial for data paths); the two push tables and the DB template registry are built-but-unexercised. Cross-references — not redocuments — `auth.users`, `organizations`, `tournaments`, `teams`, `org_member_tournament_assignments` (Org core), `platform_events.PlatformEventType` (the name-collision), and [[project_email_stack]] / [[project_public_tournament_wow]].)*
 
 ---
 

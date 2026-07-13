@@ -4112,6 +4112,22 @@
     "foreign_column": null
   },
   {
+    "table_name": "user_marketing_opt_outs",
+    "constraint_name": "user_marketing_opt_outs_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "user_marketing_opt_outs",
+    "constraint_name": "user_marketing_opt_outs_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
     "table_name": "venue_facilities",
     "constraint_name": "venue_facilities_pkey",
     "constraint_type": "PRIMARY KEY",
