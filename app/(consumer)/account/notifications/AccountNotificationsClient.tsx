@@ -12,11 +12,13 @@
  */
 
 import { useEffect, useMemo, useRef } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ChevronRight } from 'lucide-react';
 import PushDeviceTester from '@/components/notifications/PushDeviceTester';
 import PreferencesTable, { type PreferenceSection } from '@/components/notifications/PreferencesTable';
+import PreferenceGroups, { type PreferenceGroup } from '@/components/notifications/PreferenceGroups';
 import { useOrgPreferences } from '@/components/notifications/useOrgPreferences';
-import { NOTIFICATION_SECTIONS, COACH_SETTINGS_SECTIONS } from '@/lib/notification-labels';
+import { NOTIFICATION_SECTIONS, simpleGroupsFor } from '@/lib/notification-labels';
+import type { NotificationEventType } from '@/lib/types';
 import styles from './AccountNotifications.module.css';
 
 export type NotificationCard = {
@@ -30,6 +32,8 @@ export type NotificationCard = {
   subtitle: string;
   /** Reserved module capabilities the org holds (org card only) — gates optional sections. */
   modules: string[];
+  /** Coach card only (rule R4): false hides the tryout row for an assistant without tryouts access. */
+  canReceiveTryouts?: boolean;
 };
 
 function initials(name: string): string {
@@ -53,6 +57,32 @@ function CardHeader({ card }: { card: NotificationCard }) {
   );
 }
 
+/** Shared collapsible that holds the full per-event grid — the source of truth the
+ *  Simple-view rollups summarize. Children stay mounted (native details), so the grid's
+ *  save/push state survives collapsing. */
+function CustomizeGrid({ sections, p }: { sections: PreferenceSection[]; p: ReturnType<typeof useOrgPreferences> }) {
+  return (
+    <details className={styles.customize}>
+      <summary className={styles.customizeSummary}>
+        <ChevronRight size={15} className={styles.customizeChev} aria-hidden />
+        Customize individual notifications
+      </summary>
+      <div className={styles.customizeBody}>
+        <PreferencesTable
+          sections={sections}
+          prefs={p.prefs}
+          systemDefaultFor={p.systemDefaultFor}
+          onToggle={p.handleToggle}
+          loading={false}
+          saving={p.saving}
+          pushSupported={p.pushSupported}
+          enablingPush={p.enablingPush}
+        />
+      </div>
+    </details>
+  );
+}
+
 function OrgCard({ card }: { card: NotificationCard }) {
   const sections: PreferenceSection[] = useMemo(
     () =>
@@ -62,6 +92,8 @@ function OrgCard({ card }: { card: NotificationCard }) {
     [card.modules],
   );
   const eventTypes = useMemo(() => sections.flatMap(s => s.eventTypes), [sections]);
+  const groups = useMemo<PreferenceGroup[]>(() => simpleGroupsFor(eventTypes), [eventTypes]);
+  const hasChat = eventTypes.includes('chat_message');
 
   const p = useOrgPreferences({ orgSlug: card.orgSlug, role: card.role, eventTypes });
 
@@ -72,37 +104,60 @@ function OrgCard({ card }: { card: NotificationCard }) {
         {p.error && (
           <div className={styles.errorBanner}><AlertCircle size={14} />{p.error}</div>
         )}
-        <PreferencesTable
-          sections={sections}
-          prefs={p.prefs}
-          systemDefaultFor={p.systemDefaultFor}
-          onToggle={p.handleToggle}
-          loading={p.loading}
-          saving={p.saving}
-          pushSupported={p.pushSupported}
-          enablingPush={p.enablingPush}
-        />
-        <p className={styles.footNote}>
-          Bell is on for every event. Push is on for the time-sensitive alerts and off for the rest —
-          it only reaches devices you&apos;ve turned on above. Email is off except{' '}
-          <strong>Payment failed</strong> (owners and admins).
-        </p>
+        {p.loading ? (
+          <PreferencesTable
+            sections={sections} prefs={p.prefs} systemDefaultFor={p.systemDefaultFor}
+            onToggle={p.handleToggle} loading saving={p.saving}
+            pushSupported={p.pushSupported} enablingPush={p.enablingPush}
+          />
+        ) : (
+          <>
+            <PreferenceGroups
+              groups={groups} prefs={p.prefs} systemDefaultFor={p.systemDefaultFor}
+              onGroupToggle={p.handleGroupToggle} pushSupported={p.pushSupported} enablingPush={p.enablingPush}
+            />
+            {hasChat && (
+              <p className={styles.chatPointer}>
+                Chat notifications are managed in the <strong>Chat</strong> tab — and @mentions always reach you.
+              </p>
+            )}
+            <CustomizeGrid sections={sections} p={p} />
+            <p className={styles.footNote}>
+              Bell is on for every event. Push is on for the time-sensitive alerts and off for the rest —
+              it only reaches devices you&apos;ve turned on above. Email is off except{' '}
+              <strong>Payment failed</strong> (owners and admins).
+            </p>
+          </>
+        )}
       </div>
     </>
   );
 }
 
 function CoachCard({ card }: { card: NotificationCard }) {
-  const sections: PreferenceSection[] = useMemo(
-    () =>
-      COACH_SETTINGS_SECTIONS.map(s => ({
-        label: s.label,
-        eventTypes: s.eventTypes,
-        lead: s.label === 'Weekly summary', // rule R1 — digest control never buried
-      })),
-    [],
+  // Rule R4: hide the tryout row for an assistant coach who can't receive it.
+  const canTryouts = card.canReceiveTryouts !== false;
+  const nonDigest = useMemo<NotificationEventType[]>(
+    () => (canTryouts ? ['tryout_offer_response'] : []),
+    [canTryouts],
   );
-  const eventTypes = useMemo(() => sections.flatMap(s => s.eventTypes), [sections]);
+  const eventTypes = useMemo<NotificationEventType[]>(
+    () => ['coach_insights_digest', ...nonDigest],
+    [nonDigest],
+  );
+  // Digest leads as an always-visible control (R1); everything else rolls up by category.
+  const groups = useMemo<PreferenceGroup[]>(
+    () => [
+      {
+        label: 'Weekly summary',
+        blurb: 'Your Sunday “week in review.” Turn Push off to stop the weekly phone alert.',
+        eventTypes: ['coach_insights_digest'],
+        lead: true,
+      },
+      ...simpleGroupsFor(nonDigest),
+    ],
+    [nonDigest],
+  );
 
   const p = useOrgPreferences({ orgSlug: card.orgSlug, role: card.role, eventTypes });
 
@@ -113,19 +168,27 @@ function CoachCard({ card }: { card: NotificationCard }) {
         {p.error && (
           <div className={styles.errorBanner}><AlertCircle size={14} />{p.error}</div>
         )}
-        <PreferencesTable
-          sections={sections}
-          prefs={p.prefs}
-          systemDefaultFor={p.systemDefaultFor}
-          onToggle={p.handleToggle}
-          loading={p.loading}
-          saving={p.saving}
-          pushSupported={p.pushSupported}
-          enablingPush={p.enablingPush}
-        />
-        <p className={styles.chatPointer}>
-          Chat notifications are managed in the <strong>Chat</strong> tab — and @mentions always reach you.
-        </p>
+        {p.loading ? (
+          <PreferencesTable
+            sections={[{ label: 'Weekly summary', eventTypes, lead: true }]}
+            prefs={p.prefs} systemDefaultFor={p.systemDefaultFor}
+            onToggle={p.handleToggle} loading saving={p.saving}
+            pushSupported={p.pushSupported} enablingPush={p.enablingPush}
+          />
+        ) : (
+          <>
+            <PreferenceGroups
+              groups={groups} prefs={p.prefs} systemDefaultFor={p.systemDefaultFor}
+              onGroupToggle={p.handleGroupToggle} pushSupported={p.pushSupported} enablingPush={p.enablingPush}
+            />
+            <p className={styles.chatPointer}>
+              Chat notifications are managed in the <strong>Chat</strong> tab — and @mentions always reach you.
+            </p>
+            {!canTryouts && (
+              <p className={styles.filteredNote}>You&apos;re seeing only the notifications your access includes.</p>
+            )}
+          </>
+        )}
       </div>
     </>
   );

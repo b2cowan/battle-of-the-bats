@@ -1,6 +1,6 @@
 # Platform-Wide Notification Settings — Implementation Plan
 
-> **Status:** Phase 1 BUILT on dev 2026-07-13 (uncommitted; typecheck + focused lint green). Direction APPROVED — all 7 sign-off decisions LOCKED by owner 2026-07-13 (see §Sign-off decisions). Phase 2+ pending. ⚠ prod-promotion coupling: this must ride the same promotion as the consumer shell + the digest's Sunday schedule (see Sequencing).
+> **Status:** Phase 1 COMMITTED to dev 2026-07-13 (`d6137c02`). Phase 2 BUILT on dev 2026-07-13 (uncommitted at time of writing; typecheck + lint + 4-lens /review green). Direction APPROVED — all 7 sign-off decisions LOCKED by owner 2026-07-13. Phase 3 (fan Following card) still gated on Unified App Phase 2. ⚠ prod-promotion coupling: must ride the same promotion as the consumer shell + the digest's Sunday schedule; **⚠ Phase 2 adds migration 185 (`user_marketing_opt_outs`) — DEV-ONLY, apply to prod before promoting.**
 > **Created:** 2026-07-13
 > **Branch:** dev
 > **Companion:** docs/projects/active/NOTIFICATION_SETTINGS_PM_BRIEF.md · visual decision pack: https://claude.ai/code/artifact/f84fbc06-0753-47e7-a796-26f764fd4366
@@ -176,12 +176,14 @@ Remaining build-time note (locked recommendation, owner may veto at mockup revie
 
 ## Phase 2 — Simple views, capability scoping, reach + hygiene
 
-- [ ] Simple/Advanced default view per card: plain-language groups from `NOTIFICATION_CATEGORY` ("Needs your attention" / "What's happening") with tri-state per-channel rollups per rule R2 (mixed state + "applies to N notification types" caption); full per-event grid inside a `CollapsibleCard` "Customize individual notifications" expansion
-- [ ] Assistant-coach capability filtering (rule R4) if not landed in Phase 1 — UI visibility only
-- [ ] Basic (free) coach reach: "Notification settings" entry in `CoachPortalShell`'s "More" sheet → `/account/notifications`; their card needs a small account-scoped API path (basic coaches aren't org members, so the org-membership route won't authorize their card) — no schema change; sw.js check for any new route (constraint 9)
-- [ ] `/home` workspace cards gain a "Notification settings" secondary action deep-linking `/account/notifications?focus=…`
-- [ ] **CASL unsubscribe mis-scoping bugfix** (locked D7; standalone commit, `/review` required): the coach-campaign unsubscribe link must not flip the org's opt-out; narrowest correct fix, explicitly NOT a new suppression system
-- [ ] `/docs` sync for all new/changed surfaces
+**BUILT 2026-07-13 (dev). Two commits: (A) settings UI + (B) the CASL fix standalone. Typecheck + lint + 4-lens /review green (only fix folded: group-save stale-write hardening; CASL clean).**
+
+- [x] Simple default view per card: plain-language groups (`simpleGroupsFor` over `NOTIFICATION_CATEGORY` → "Needs your attention" / "What's happening") with tri-state per-channel rollups per rule R2 (mixed state + "tap to turn all N on" caption; tapping mixed/off → all on, on → all off); full per-event grid inside a native "Customize individual notifications" expander (`PreferenceGroups.tsx` + the group-batch handler in `useOrgPreferences`). Coach digest stays the always-visible lead group (R1)
+- [x] Assistant-coach capability filtering (rule R4): coach card resolves `canReceiveTryouts` server-side (`getCoachingAssignmentsForUser(orgId,userId).some(a => a.capabilities.tryouts)` — head coaches always true) and hides the tryout row for an assistant without tryouts access; the digest is never hidden
+- [x] ~~Basic (free) coach reach~~ **DEFERRED (owner call 2026-07-13):** the audit showed free coaches receive almost nothing engine-routed (chat only; no bell, no push-enrolment, email off/gated) and `notification_preferences.org_id` is NOT NULL with no canonical org — a card would be near-empty or dishonest (R2/R3). Folded into the parked `notify()` recipient-scoping/coverage project (locked D4); add a real card when they actually receive controllable notifications
+- [x] `/home` workspace cards gain a "Notification settings" secondary action deep-linking `/account/notifications?focus=…` (org + coaches_premium cards only)
+- [x] **CASL unsubscribe mis-scoping bugfix** (locked D7; **standalone commit B, /review passed**): OWNER CHOSE the proper per-coach fix over the "no schema change" goal — migration **185** adds a minimal per-user opt-out (`user_marketing_opt_outs`, RLS-walled), a user-scoped unsubscribe token + `/unsubscribe?user=` branch, and coach-audience sends now check/opt-out the PERSON (never the org). ⚠ mig 185 DEV-ONLY, prod-pending. NOT the parked general guardian suppression system
+- [x] `/docs` sync (coach guide grouped-view note); the digest/settings surfaces from Phase 1 already documented
 
 ## Phase 3 — Fan "Following" card (trigger: Unified App Phase 2 kickoff)
 

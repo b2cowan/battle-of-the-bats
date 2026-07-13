@@ -146,6 +146,44 @@
 }
 .chatPointer strong { color: var(--fl-text, #f1f5f9); }
 
+.filteredNote {
+  font-size: 0.75rem;
+  color: var(--white-30, rgba(255, 255, 255, 0.3));
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── "Customize individual notifications" expander (the full per-event grid) ──── */
+
+.customize {
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.09));
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.customizeSummary {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--white-70, rgba(255, 255, 255, 0.7));
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.customizeSummary::-webkit-details-marker { display: none; }
+
+.customizeChev {
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+.customize[open] .customizeChev { transform: rotate(90deg); }
+
+.customizeBody { padding: 0 0.85rem 0.85rem; }
+
 /* ── Error banner ────────────────────────────────────────────────────────────── */
 
 .errorBanner {

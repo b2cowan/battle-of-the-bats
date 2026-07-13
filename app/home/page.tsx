@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import {
   ArrowRight,
+  Bell,
   Building2,
   ClipboardCheck,
   LayoutGrid,
@@ -132,7 +133,15 @@ export default async function UserHomePage({
 
 function ContextCard({ context }: { context: UserAccessContext }) {
   const Icon = ICONS[context.kind];
-  return (
+
+  // Only the hats that have a card on /account/notifications get the shortcut (Phase 2:
+  // org owners/admins/staff + rep/premium coaches). Deep-link to that hat's card.
+  const focusKey =
+    context.orgSlug && context.kind === 'organization'    ? `org-${context.orgSlug}`
+    : context.orgSlug && context.kind === 'coaches_premium' ? `coach-${context.orgSlug}`
+    : null;
+
+  const card = (
     <Link href={context.destination} className={styles.contextItem}>
       <div className={styles.contextIcon} data-kind={context.kind}>
         <Icon size={20} strokeWidth={1.8} aria-hidden />
@@ -152,6 +161,17 @@ function ContextCard({ context }: { context: UserAccessContext }) {
         <ArrowRight size={16} strokeWidth={2.4} aria-hidden />
       </span>
     </Link>
+  );
+
+  if (!focusKey) return card;
+
+  return (
+    <div className={styles.contextRow}>
+      {card}
+      <Link href={`/account/notifications?focus=${focusKey}`} className={styles.contextNotif}>
+        <Bell size={13} aria-hidden /> Notification settings
+      </Link>
+    </div>
   );
 }
 

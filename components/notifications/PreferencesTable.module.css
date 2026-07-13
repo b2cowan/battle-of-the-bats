@@ -195,6 +195,111 @@
   cursor: not-allowed;
 }
 
+/* Tri-state (Simple-view group rollup): some events on, some off. Reads as an
+   indeterminate control — muted accent, knob centred, a dash — distinct from on/off. */
+.toggleMixed {
+  background: rgba(217, 249, 157, 0.26);
+  border-color: rgba(217, 249, 157, 0.5);
+}
+.toggleMixed::after {
+  background: #0e131b;
+  transform: translateX(8px);
+}
+.toggleMixed::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  left: 8px;
+  width: 6px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--logic-lime, #d9f99d);
+  z-index: 2;
+}
+
+/* ── Simple-view group rollups (Phase 2) ─────────────────────────────────────── */
+
+.groupsWrap {
+  border-radius: 2px;
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  overflow: hidden;
+}
+
+.groupsHead {
+  display: grid;
+  grid-template-columns: 1fr 54px 54px 54px;
+  padding: 0.6rem 1rem 0.4rem;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255,255,255,0.4));
+}
+.groupsHead span:not(:first-child) { text-align: center; }
+
+.group {
+  display: grid;
+  grid-template-columns: 1fr 54px 54px 54px;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border-top: 1px solid var(--border, rgba(255,255,255,0.05));
+}
+.group:first-of-type { border-top: none; }
+
+/* Lead group (rule R1) — the always-visible default-ON control (the coach digest). */
+.groupLead { background: rgba(217, 249, 157, 0.05); }
+
+.groupLabelWrap { min-width: 0; }
+
+.groupLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--white-90, #f0f0f0);
+}
+
+.groupCount {
+  font-family: var(--font-data, monospace);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--white-30, rgba(255,255,255,0.35));
+  border: 1px solid var(--border, rgba(255,255,255,0.14));
+  border-radius: 20px;
+  padding: 0.05rem 0.4rem;
+}
+
+.groupBlurb {
+  font-size: 0.77rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  margin-top: 0.15rem;
+  line-height: 1.4;
+}
+
+.triCell { display: flex; justify-content: center; }
+
+.groupCaption {
+  grid-column: 1 / -1;
+  margin-top: 0.55rem;
+  font-size: 0.73rem;
+  color: var(--logic-lime, #d9f99d);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  line-height: 1.4;
+}
+.groupCaption .capDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--logic-lime, #d9f99d);
+  flex-shrink: 0;
+}
+
 /* ── Skeleton ────────────────────────────────────────────────────────────────── */
 
 .skeletonRow td {

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getUserAccessContexts } from '@/lib/user-contexts';
+import { getCoachingAssignmentsForUser } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import type { Capability } from '@/lib/roles';
 import type { Organization } from '@/lib/types';
@@ -88,15 +89,21 @@ export default async function AccountNotificationsPage({
         modules:    await resolveOrgModules(ctx.orgId ?? ''),
       });
     } else if (ctx.kind === 'coaches_premium') {
+      // Rule R4: show the tryout row only if this coach can actually receive tryout
+      // notifications in this org — a head coach always can; an assistant only if granted
+      // 'tryouts' on any of their teams. OR across the coach's assignments (card is per-org).
+      const assignments = ctx.orgId ? await getCoachingAssignmentsForUser(ctx.orgId, user.id) : [];
+      const canReceiveTryouts = assignments.some(a => a.capabilities.tryouts);
       cards.push({
-        kind:       'coaches_premium',
-        focusKey:   `coach-${ctx.orgSlug}`,
-        orgSlug:    ctx.orgSlug,
-        orgName:    ctx.title,
-        role:       ctx.role ?? 'coach',
-        badgeLabel: ctx.badgeLabel,
-        subtitle:   'Coaches Portal',
-        modules:    [],
+        kind:              'coaches_premium',
+        focusKey:          `coach-${ctx.orgSlug}`,
+        orgSlug:           ctx.orgSlug,
+        orgName:           ctx.title,
+        role:              ctx.role ?? 'coach',
+        badgeLabel:        ctx.badgeLabel,
+        subtitle:          'Coaches Portal',
+        modules:           [],
+        canReceiveTryouts,
       });
     }
   }

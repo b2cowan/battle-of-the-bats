@@ -68,6 +68,28 @@
   gap: 0.85rem;
 }
 
+/* A workspace card that also carries a secondary "Notification settings" link stacks
+   the two — the card keeps its whole-surface click; the link sits just beneath it. */
+.contextRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.contextNotif {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.2rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.72rem;
+  color: rgba(147, 197, 253, 0.85);
+  text-decoration: none;
+}
+.contextNotif:hover { color: #fff; text-decoration: underline; }
+
 .contextItem {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;

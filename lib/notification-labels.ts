@@ -243,3 +243,38 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCa
 export function notificationCategory(eventType: string): NotificationCategory {
   return (NOTIFICATION_CATEGORY as Record<string, NotificationCategory>)[eventType] ?? 'know';
 }
+
+// ── Simple-view groups (Notification Settings Phase 2) ─────────────────────────
+
+export interface SimpleGroup {
+  label: string;
+  blurb: string;
+  category: NotificationCategory;
+  eventTypes: NotificationEventType[];
+}
+
+/**
+ * The plain-language groups the Simple (default) view rolls events into, in order.
+ * 'talk' (chat) is deliberately absent — chat keeps its own surface (constraint 3),
+ * so a card shows a pointer, never a chat rollup.
+ */
+const SIMPLE_GROUP_META: { category: NotificationCategory; label: string; blurb: string }[] = [
+  { category: 'act',  label: 'Needs your attention', blurb: 'The things that want a decision from you.' },
+  { category: 'know', label: 'What’s happening',      blurb: 'Activity updates as they happen.' },
+];
+
+/**
+ * Group a card's event types into the two Simple-view groups (act / know), preserving
+ * order and dropping empty groups. Chat ('talk') and any lead events the caller pulls
+ * out first (e.g. the coach digest — rule R1) are simply not passed in.
+ */
+export function simpleGroupsFor(eventTypes: NotificationEventType[]): SimpleGroup[] {
+  return SIMPLE_GROUP_META
+    .map(meta => ({
+      label:      meta.label,
+      blurb:      meta.blurb,
+      category:   meta.category,
+      eventTypes: eventTypes.filter(et => notificationCategory(et) === meta.category),
+    }))
+    .filter(g => g.eventTypes.length > 0);
+}

@@ -111,23 +111,25 @@ export function useOrgPreferences({
     return () => { cancelled = true; };
   }, [orgSlug, role, eventTypes]);
 
-  // ── Save a single preference row ────────────────────────────────────────────
-  const savePref = useCallback(async (pref: NotificationPreference) => {
-    if (!orgSlug) return;
-    setSaving(prev => new Set(prev).add(pref.eventType));
+  // ── Save one or many preference rows (the API upserts an array in one call) ──
+  const savePrefsMany = useCallback(async (list: NotificationPreference[]) => {
+    if (!orgSlug || list.length === 0) return;
+    setSaving(prev => { const n = new Set(prev); for (const p of list) n.add(p.eventType); return n; });
     try {
       const res = await fetch(`/api/admin/org/notification-preferences?orgSlug=${orgSlug}`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ preferences: [pref] }),
+        body:    JSON.stringify({ preferences: list }),
       });
       if (!res.ok) throw new Error('Save failed.');
     } catch {
-      setError('Failed to save preference. Please try again.');
+      setError('Failed to save preferences. Please try again.');
     } finally {
-      setSaving(prev => { const n = new Set(prev); n.delete(pref.eventType); return n; });
+      setSaving(prev => { const n = new Set(prev); for (const p of list) n.delete(p.eventType); return n; });
     }
   }, [orgSlug]);
+
+  const savePref = useCallback((pref: NotificationPreference) => savePrefsMany([pref]), [savePrefsMany]);
 
   // ── Optimistic toggle handler ────────────────────────────────────────────────
   const handleToggle = useCallback((
@@ -184,6 +186,75 @@ export function useOrgPreferences({
     debounceRefs.current.set(eventType, t);
   }, [role, savePref]);
 
+  // ── Group (rollup) toggle — set one channel across many events at once ───────
+  // Bulk action from the Simple view's group switch (R2). Applies optimistically with a
+  // FUNCTIONAL updater (builds on the latest committed state) and saves each row read from
+  // prefsRef at fire time — identical safety to the single toggle, so rapid taps across
+  // channels/groups can never persist a stale value (the exact hardening handleToggle has).
+  const handleGroupToggle = useCallback((
+    eventTypes: NotificationEventType[],
+    channel: Channel,
+    value: boolean,
+  ) => {
+    if (eventTypes.length === 0) return;
+
+    const applyAll = () =>
+      setPrefs(prev => {
+        const next = new Map(prev);
+        for (const et of eventTypes) {
+          const current = next.get(et) ?? orgSystemDefault(et, role);
+          next.set(et, { ...current, [channel]: value });
+        }
+        return next;
+      });
+    const saveAll = () => {
+      const rows = eventTypes
+        .map(et => prefsRef.current.get(et))
+        .filter((p): p is NotificationPreference => !!p);
+      savePrefsMany(rows);
+    };
+
+    // Turning Push ON for the group registers THIS device once, then saves all rows.
+    if (channel === 'channelPush' && value === true) {
+      setError(null);
+      applyAll(); // optimistic ON for the whole group
+      setEnablingPush(true);
+      enablePushOnThisDevice()
+        .then(saveAll)
+        .catch((e: unknown) => {
+          setPrefs(prev => {
+            const next = new Map(prev);
+            for (const et of eventTypes) {
+              const cur = next.get(et);
+              if (cur) next.set(et, { ...cur, channelPush: false });
+            }
+            return next;
+          });
+          const reason = e instanceof PushPermissionError ? e.reason : 'failed';
+          setError(
+            reason === 'denied'
+              ? 'Notifications are blocked for this site. Turn them on in your browser or phone settings, then try again.'
+            : reason === 'unsupported'
+              ? 'This browser doesn’t support push notifications. On iPhone, add the app to your Home Screen first (iOS 16.4+).'
+            : reason === 'unconfigured'
+              ? 'Push isn’t set up on the server yet. Please try again later.'
+            : (e instanceof Error ? e.message : 'Could not enable push notifications.'),
+          );
+        })
+        .finally(() => setEnablingPush(false));
+      return;
+    }
+
+    applyAll();
+    // Debounce a single group save keyed on the group; by fire time the optimistic commit has
+    // synced prefsRef, so saveAll persists the up-to-date rows regardless of tap speed.
+    const key = eventTypes[0];
+    const existing = debounceRefs.current.get(key);
+    if (existing) clearTimeout(existing);
+    const t = setTimeout(saveAll, 300);
+    debounceRefs.current.set(key, t);
+  }, [role, savePrefsMany]);
+
   return {
     prefs,
     loading,
@@ -193,6 +264,7 @@ export function useOrgPreferences({
     enablingPush,
     systemDefaultFor,
     handleToggle,
+    handleGroupToggle,
     setError,
   };
 }
