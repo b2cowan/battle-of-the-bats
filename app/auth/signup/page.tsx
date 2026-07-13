@@ -287,7 +287,6 @@ function SignupForm() {
             <InstallAppPrompt
               appName="FieldLogicHQ"
               subtitle="Your teams, schedules and scores — one tap away."
-              dismissKey="flhq-install-member"
             />
           </>
         ) : (

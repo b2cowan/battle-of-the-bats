@@ -5,6 +5,7 @@ import {
   getCoachingAssignmentsForUser,
   getRepTeam,
   getRepTeamTags,
+  getRepTeamTagLibrary,
   createRepTeamTag,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
@@ -40,12 +41,12 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveTeamCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { assignment } = resolved;
+  const { ctx, assignment } = resolved;
   const denied = denyUnless(assignment.capabilities.schedule, 'You do not have access to the schedule.');
   if (denied) return denied;
 
-  // Phase 1 only exposes game tags — 'expense' (Phase 3) isn't read here yet.
-  const tags = await getRepTeamTags(teamId, 'game');
+  // Game-tag library = the team's own tags + the org's shared game tags (Phase 3).
+  const tags = await getRepTeamTagLibrary(teamId, 'game', ctx.org.id);
   return NextResponse.json({ tags });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tags' });
 

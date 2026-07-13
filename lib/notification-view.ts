@@ -32,6 +32,7 @@ export const EVENT_ICONS: Record<string, string> = {
   playoffs_set:                      '🥊',
   champions_crowned:                 '👑',
   tournament_announcement:           '📢',
+  coach_insights_digest:             '📊',
 };
 
 export function iconFor(eventType: string): string {

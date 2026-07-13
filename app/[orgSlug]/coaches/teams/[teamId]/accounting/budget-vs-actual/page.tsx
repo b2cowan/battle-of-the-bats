@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { TrendingUp, ChevronDown, ChevronRight, X, ArrowLeft } from 'lucide-react';
+import { TrendingUp, ChevronDown, ChevronRight, X, ArrowLeft, Tag } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -11,7 +11,7 @@ import {
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
   downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
-import type { BudgetCategoryWithItems } from '@/lib/types';
+import type { BudgetCategoryWithItems, RepTeamTag } from '@/lib/types';
 import styles from './bva.module.css';
 import shared from '../../../../coaches.module.css';
 
@@ -71,6 +71,8 @@ interface BvaData {
   unbudgetedActuals: UnbudgetedActual[];
   duesCollection: DuesCollection;
   monthlyChart: MonthlyPoint[];
+  expenseTags: RepTeamTag[];
+  activeTagId: string | null;
 }
 
 const BVA_EXPORT_COLS: ExportColumnDef[] = [
@@ -187,6 +189,9 @@ export default function BudgetVsActualPage({
   const [expandedCats,  setExpandedCats]  = useState<Set<string>>(new Set());
   const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set());
 
+  // Money-tag filter (Phase 3): scope the actuals to expenses carrying a tag (server-side).
+  const [filterTagId, setFilterTagId] = useState<string | null>(null);
+
   // Recategorize fix-it for unbudgeted expenses (money-write only)
   const [taxonomy, setTaxonomy] = useState<BudgetCategoryWithItems[]>([]);
   const [recatTarget, setRecatTarget] = useState<UnbudgetedActual | null>(null);
@@ -205,7 +210,7 @@ export default function BudgetVsActualPage({
     setError('');
     try {
       const [res, catRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-vs-actual`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-vs-actual${filterTagId ? `?tagId=${filterTagId}` : ''}`),
         fetch(`/api/coaches/${orgSlug}/budget-items`),
       ]);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
@@ -219,7 +224,7 @@ export default function BudgetVsActualPage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, filterTagId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -384,6 +389,38 @@ export default function BudgetVsActualPage({
         />
       ) : (
         <>
+          {/* Money-tag filter chip row — scopes the actuals to one tag's spending (self-hides at
+              zero tagged expenses). Blue = org-shared, lime = team's own. */}
+          {data.expenseTags.length > 0 && (
+            <>
+              <div className={shared.moneyFilterBar}>
+                <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
+                <span style={{ fontSize: '0.72rem', color: 'var(--white-40)', marginRight: '0.1rem' }}>Filter by tag:</span>
+                {data.expenseTags.map(t => {
+                  const isOrg = t.teamId === null;
+                  const active = filterTagId === t.id;
+                  const cls = `${shared.moneyFilterChip} ${active ? shared.moneyFilterChipActive : ''} ${isOrg ? (active ? shared.moneyFilterChipOrgActive : shared.moneyFilterChipOrg) : ''}`;
+                  return (
+                    <button key={t.id} className={cls} onClick={() => setFilterTagId(active ? null : t.id)}>{t.name}</button>
+                  );
+                })}
+              </div>
+              <div className={shared.tagComboLegend} style={{ margin: '-0.2rem 0 0.7rem' }}>
+                <span className={shared.tagComboLegendItem}>
+                  <span className={shared.tagComboLegendDot} style={{ background: 'rgba(var(--blueprint-blue-rgb),0.55)', border: '1px solid rgba(var(--blueprint-blue-rgb),0.7)' }} /> Org tag
+                </span>
+                <span className={shared.tagComboLegendItem}>
+                  <span className={shared.tagComboLegendDot} style={{ background: 'rgba(var(--logic-lime-rgb),0.55)', border: '1px solid rgba(var(--logic-lime-rgb),0.7)' }} /> Team tag
+                </span>
+              </div>
+            </>
+          )}
+          {filterTagId && (
+            <div className={shared.moneyTagSummary}>
+              vs <strong>{data.expenseTags.find(t => t.id === filterTagId)?.name ?? 'tag'}</strong>: <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(data.totalActual)}</span> spent (budget plan shown in full)
+            </div>
+          )}
+
           {/* Headroom summary */}
           <div className={styles.summaryBanner}>
             <div className={styles.summaryItem}>

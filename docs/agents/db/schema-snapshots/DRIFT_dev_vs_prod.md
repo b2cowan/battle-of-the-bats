@@ -1,34 +1,60 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-07-10 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-07-13 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 50 divergence(s)** across dev/prod.
+**⚠️ 113 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 0 | 0 | — |
-| Columns | 0 | 3 | 23 |
-| Indexes | 4 | 3 | 0 |
-| Constraints | 7 | 9 | — |
-| RLS / CHECK | 0 | 1 | 0 (RLS state) |
+| Tables | 3 | 0 | — |
+| Columns | 25 | 3 | 24 |
+| Indexes | 20 | 3 | 0 |
+| Constraints | 21 | 9 | — |
+| RLS / CHECK | 4 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (0)
-_none_
+### Only in DEV (3)
+- `rep_player_awards`
+- `rep_team_award_types`
+- `rep_team_expense_tags`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (0)
-_none_
+### Only in DEV (25)
+- `rep_player_awards.award_type_id`
+- `rep_player_awards.awarded_at`
+- `rep_player_awards.created_at`
+- `rep_player_awards.created_by`
+- `rep_player_awards.event_id`
+- `rep_player_awards.id`
+- `rep_player_awards.note`
+- `rep_player_awards.org_id`
+- `rep_player_awards.player_id`
+- `rep_player_awards.team_id`
+- `rep_player_awards.tournament_label`
+- `rep_player_awards.updated_at`
+- `rep_team_award_types.created_at`
+- `rep_team_award_types.created_by`
+- `rep_team_award_types.emoji`
+- `rep_team_award_types.id`
+- `rep_team_award_types.is_active`
+- `rep_team_award_types.name`
+- `rep_team_award_types.org_id`
+- `rep_team_award_types.sort_order`
+- `rep_team_award_types.team_id`
+- `rep_team_award_types.updated_at`
+- `rep_team_expense_tags.created_at`
+- `rep_team_expense_tags.expense_id`
+- `rep_team_expense_tags.tag_id`
 
 ### Only in PROD (3)
 - `resources.created_at`
 - `rule_items.created_at`
 - `rules.created_at`
 
-### Type/nullability/default changed (23)
+### Type/nullability/default changed (24)
 - `announcements.body` — dev: `text|text|YES|` | prod: `text|text|NO|`
 - `announcements.published_at` — dev: `timestamp with time zone|timestamptz|NO|now()` | prod: `timestamp with time zone|timestamptz|NO|`
 - `diamonds.address` — dev: `text|text|YES|` | prod: `text|text|NO|`
@@ -38,6 +64,7 @@ _none_
 - `divisions.requires_pool_selection` — dev: `boolean|bool|NO|false` | prod: `boolean|bool|YES|false`
 - `games.is_playoff` — dev: `boolean|bool|NO|false` | prod: `boolean|bool|YES|false`
 - `games.location` — dev: `text|text|YES|` | prod: `text|text|NO|`
+- `rep_team_tags.team_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 - `resources.display_order` — dev: `integer|int4|NO|0` | prod: `integer|int4|YES|0`
 - `resources.id` — dev: `uuid|uuid|NO|gen_random_uuid()` | prod: `uuid|uuid|NO|uuid_generate_v4()`
 - `rule_items.display_order` — dev: `integer|int4|NO|0` | prod: `integer|int4|YES|0`
@@ -54,11 +81,27 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (4)
+### Only in DEV (20)
 - `league_practices_recurrence_idx`
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
 - `league_practices_team_idx`
+- `rep_player_awards_event_idx`
+- `rep_player_awards_org_idx`
+- `rep_player_awards_pkey`
+- `rep_player_awards_player_idx`
+- `rep_player_awards_team_idx`
+- `rep_player_awards_type_idx`
+- `rep_team_award_types_name_uniq`
+- `rep_team_award_types_org_idx`
+- `rep_team_award_types_org_name_uniq`
+- `rep_team_award_types_org_shared_idx`
+- `rep_team_award_types_pkey`
+- `rep_team_award_types_team_idx`
+- `rep_team_expense_tags_pkey`
+- `rep_team_expense_tags_tag_idx`
+- `rep_team_tags_org_name_uniq`
+- `rep_team_tags_org_shared_idx`
 
 ### Only in PROD (3)
 - `league_practices_recurrence_group_id_idx`
@@ -69,13 +112,27 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (7)
+### Only in DEV (21)
 - `announcements.announcements_tournament_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
 - `games.games_age_group_id_fkey`
 - `games.games_away_team_id_fkey`
 - `games.games_tournament_id_fkey`
+- `rep_player_awards.rep_player_awards_award_type_id_fkey`
+- `rep_player_awards.rep_player_awards_created_by_fkey`
+- `rep_player_awards.rep_player_awards_event_id_fkey`
+- `rep_player_awards.rep_player_awards_org_id_fkey`
+- `rep_player_awards.rep_player_awards_pkey`
+- `rep_player_awards.rep_player_awards_player_id_fkey`
+- `rep_player_awards.rep_player_awards_team_id_fkey`
+- `rep_team_award_types.rep_team_award_types_created_by_fkey`
+- `rep_team_award_types.rep_team_award_types_org_id_fkey`
+- `rep_team_award_types.rep_team_award_types_pkey`
+- `rep_team_award_types.rep_team_award_types_team_id_fkey`
+- `rep_team_expense_tags.rep_team_expense_tags_expense_id_fkey`
+- `rep_team_expense_tags.rep_team_expense_tags_pkey`
+- `rep_team_expense_tags.rep_team_expense_tags_tag_id_fkey`
 - `teams.teams_tournament_id_fkey`
 
 ### Only in PROD (9)
@@ -93,8 +150,11 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (0)
-_none_
+### CHECK only in DEV (4)
+- `rep_player_awards.rep_player_awards_note_check`
+- `rep_player_awards.rep_player_awards_tournament_label_check`
+- `rep_team_award_types.rep_team_award_types_emoji_check`
+- `rep_team_award_types.rep_team_award_types_name_check`
 
 ### CHECK only in PROD (1)
 - `tournaments.tournaments_status_check`

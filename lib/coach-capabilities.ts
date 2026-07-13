@@ -122,6 +122,9 @@ export const canWriteMoney = (c: CoachCapabilities) => c.money === 'write';
 export const canViewDocuments = (c: CoachCapabilities) => c.documents !== 'off';
 export const canManageDocuments = (c: CoachCapabilities) => c.documents === 'manage';
 export const canViewRoster = (c: CoachCapabilities) => c.roster !== 'off';
+// Player Awards (Phase 2): "roster/schedule access" per the locked scope — either surface
+// already implies enough context to know the players and games awards attach to.
+export const canManageAwards = (c: CoachCapabilities) => c.schedule || c.roster !== 'off';
 
 const MONEY_VALUES: MoneyAccess[] = ['off', 'read', 'write'];
 const DOCS_VALUES: DocsAccess[] = ['off', 'view', 'manage'];

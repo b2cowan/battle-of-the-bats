@@ -1865,6 +1865,35 @@
 }
 .tagManagerActions button:hover { color: var(--white-90); background: rgba(255,255,255,0.08); }
 
+/* Award icon picker (Coach Tags & Player Awards Phase 2) — trigger button + choice grid,
+   reused by the award-type manager and the give-award form's "+ New" inline create row. */
+.awardEmojiPickBtn {
+  flex: none;
+  width: 2.7rem;
+  height: 2.4rem;
+  font-size: 1.15rem;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.awardEmojiPickBtn:hover { border-color: var(--primary); }
+.awardEmojiGrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.4rem; }
+.awardEmojiOpt {
+  font-size: 1.3rem;
+  background: var(--white-05);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 8px;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  text-align: center;
+}
+.awardEmojiOpt:hover { background: rgba(255,255,255,0.09); }
+.awardEmojiOptSelected, .awardEmojiOptSelected:hover {
+  border-color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.16);
+}
+
 .formHint { margin: 0; font-size: 0.72rem; color: var(--white-45); line-height: 1.4; }
 .formCheck {
   display: inline-flex;
@@ -3757,3 +3786,79 @@
   text-decoration: none;
 }
 .backLink:hover { color: var(--white-90); }
+
+/* ── Tag search combobox (Coach Tags & Player Awards, Phase 3) ──────────────
+   ADO-style type-ahead: a search box + filtered dropdown of the already-loaded
+   tag library; only the SELECTED tags render as chips, so a large money-tag
+   library never floods the form. Colour distinguishes org-shared (blue) from
+   the team's own (lime), with a small legend — no per-chip "ORG" stamp. */
+.tagCombo { position: relative; }
+.tagComboChips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.4rem; }
+.tagComboChip {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  border-radius: 999px; padding: 0.18rem 0.5rem;
+  font-size: 0.75rem; font-weight: 600; white-space: nowrap;
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  color: var(--logic-lime);
+}
+.tagComboChipOrg {
+  background: rgba(var(--blueprint-blue-rgb), 0.18);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.45);
+  color: #a9bdf5;
+}
+.tagComboChipX { cursor: pointer; opacity: 0.7; font-weight: 700; line-height: 1; background: none; border: none; color: inherit; padding: 0; }
+.tagComboChipX:hover { opacity: 1; }
+.tagComboDropdown {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px);
+  background: var(--card-bg); border: 1px solid var(--border-2);
+  border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  max-height: 220px; overflow: auto; z-index: 30;
+}
+.tagComboOpt {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  padding: 0.45rem 0.6rem; font-size: 0.83rem; cursor: pointer; width: 100%;
+  background: none; border: none; color: var(--white-90); text-align: left;
+}
+.tagComboOpt:hover, .tagComboOptActive { background: rgba(var(--logic-lime-rgb), 0.1); }
+.tagComboOptName { display: inline-flex; align-items: center; gap: 0.45rem; }
+.tagComboDot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.tagComboDotOrg { background: rgba(var(--blueprint-blue-rgb), 0.6); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.75); }
+.tagComboDotOwn { background: rgba(var(--logic-lime-rgb), 0.6); border: 1px solid rgba(var(--logic-lime-rgb), 0.75); }
+.tagComboCount { color: var(--white-40); font-size: 0.72rem; flex-shrink: 0; }
+.tagComboCreate { color: var(--logic-lime); border-top: 1px solid var(--border-2); font-weight: 600; }
+.tagComboEmpty { padding: 0.45rem 0.6rem; font-size: 0.8rem; color: var(--white-40); }
+.tagComboLegend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.72rem; color: var(--white-40); margin-top: 0.5rem; align-items: center; }
+.tagComboLegendItem { display: inline-flex; align-items: center; gap: 0.35rem; }
+.tagComboLegendDot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+/* Read-only money-tag chips on the expense list rows (colour = org vs team). */
+.moneyTagChip {
+  display: inline-flex; align-items: center; font-size: 0.68rem;
+  border-radius: 999px; padding: 0.05rem 0.4rem;
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
+  color: #c9e89a;
+}
+.moneyTagChipOrg {
+  background: rgba(var(--blueprint-blue-rgb), 0.16);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.4);
+  color: #a9bdf5;
+}
+
+/* Filter chip row shared by the expense list + Budget vs. Actual (money tags). */
+.moneyFilterBar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; align-items: center; }
+.moneyFilterChip {
+  background: var(--white-8); border: 1px solid var(--border-2); color: var(--white-55);
+  border-radius: 999px; padding: 0.25rem 0.6rem; font-size: 0.75rem; cursor: pointer;
+  display: inline-flex; gap: 0.35rem; align-items: center;
+}
+.moneyFilterChipActive { background: var(--logic-lime); color: var(--pitch-black); border-color: var(--logic-lime); font-weight: 700; }
+.moneyFilterChipOrg { border-color: rgba(var(--blueprint-blue-rgb), 0.45); color: #a9bdf5; }
+.moneyFilterChipOrgActive { background: #7aa2f7; border-color: #7aa2f7; color: var(--pitch-black); font-weight: 700; }
+.moneyFilterCount { opacity: 0.6; font-size: 0.68rem; }
+.moneyTagSummary {
+  background: rgba(var(--logic-lime-rgb), 0.07); border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
+  border-radius: 10px; padding: 0.65rem 0.85rem; margin-bottom: 0.9rem; font-size: 0.85rem;
+}
+.moneyTagSummary strong { color: var(--logic-lime); }

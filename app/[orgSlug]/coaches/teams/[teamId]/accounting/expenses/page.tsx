@@ -1,12 +1,14 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Receipt, Plus, X, CheckCircle2, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Receipt, Plus, X, CheckCircle2, AlertTriangle, ArrowLeft, Tag, Settings2 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
 import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
+import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
+import TagManagerModal from '@/components/coaches/TagManagerModal';
 import styles from '../../../../coaches.module.css';
-import type { RepTeamExpense, BudgetCategoryWithItems, RepBudgetPlan } from '@/lib/types';
+import type { RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan } from '@/lib/types';
 
 function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -75,8 +77,24 @@ export default function CoachesExpensesPage({
   const [saveError, setSaveError] = useState('');
   const [marking, setMarking] = useState<Record<string, boolean>>({});
 
+  // Money tags (Phase 3): the team + org-shared expense-tag library, which tags each expense
+  // carries, per-form selections, a filter chip, inline re-tag, and the manager modal.
+  const [expenseTags, setExpenseTags] = useState<RepTeamTag[]>([]);
+  const [tagsByExpenseId, setTagsByExpenseId] = useState<Record<string, string[]>>({});
+  const [expenseFormTags, setExpenseFormTags] = useState<string[]>([]);
+  const [payableFormTags, setPayableFormTags] = useState<string[]>([]);
+  const [filterTagId, setFilterTagId] = useState<string | null>(null);
+  const [tagManagerOpen, setTagManagerOpen] = useState(false);
+  const [editingTagsFor, setEditingTagsFor] = useState<string | null>(null);
+  const [editTagIds, setEditTagIds] = useState<string[]>([]);
+  const [savingTags, setSavingTags] = useState(false);
+
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+  const canWriteMoney = assignment?.capabilities.money === 'write';
+  // The team's OWN money tags (org-shared ones are managed by the org admin, not here).
+  const ownMoneyTags = expenseTags.filter(t => t.teamId !== null);
+  const tagById = new Map(expenseTags.map(t => [t.id, t]));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -90,6 +108,8 @@ export default function CoachesExpensesPage({
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       setExpenses(data.expenses ?? []);
+      setExpenseTags(data.expenseTags ?? []);
+      setTagsByExpenseId(data.tagsByExpenseId ?? {});
       if (catRes.ok) {
         const catData = await catRes.json();
         setCategories(catData.categories ?? []);
@@ -114,6 +134,29 @@ export default function CoachesExpensesPage({
 
   useEffect(() => { load(); }, [load]);
 
+  // Create a new money tag on the fly from the combobox; returns the new tag so the picker can
+  // select it immediately. Adds it to the loaded library so it shows up without a full reload.
+  async function createMoneyTag(name: string): Promise<RepTeamTag | null> {
+    setSaveError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expense-tags`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        setSaveError((await res.json().catch(() => ({}))).error ?? 'Could not create tag');
+        return null;
+      }
+      const { tag } = await res.json();
+      setExpenseTags(prev => [...prev, tag]);
+      return tag as RepTeamTag;
+    } catch {
+      setSaveError('Could not create tag');
+      return null;
+    }
+  }
+
   async function addExpense() {
     setSaveError('');
     setSaving(true);
@@ -133,11 +176,13 @@ export default function CoachesExpensesPage({
           paymentMethod: expenseForm.paymentMethod.trim() || null,
           payeeId:       expensePayee?.payeeId ?? null,
           payeePayer:    expensePayee?.displayName ?? null,
+          tagIds:        expenseFormTags,
         }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
       setShowAddExpense(false);
       setExpenseForm(BLANK_EXPENSE);
+      setExpenseFormTags([]);
       setExpensePayee(null);
       await load();
     } catch (e: any) {
@@ -170,11 +215,13 @@ export default function CoachesExpensesPage({
           paymentMethod:  payableForm.paymentMethod.trim() || null,
           payeeId:        payablePayee?.payeeId ?? null,
           payeePayer:     payablePayee?.displayName ?? null,
+          tagIds:         payableFormTags,
         }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Save failed');
       setShowAddPayable(false);
       setPayableForm(BLANK_PAYABLE);
+      setPayableFormTags([]);
       setPayablePayee(null);
       await load();
     } catch (e: any) {
@@ -199,6 +246,49 @@ export default function CoachesExpensesPage({
     } finally {
       setMarking(prev => ({ ...prev, [expenseId + action]: false }));
     }
+  }
+
+  function startEditTags(expenseId: string) {
+    setEditingTagsFor(expenseId);
+    setEditTagIds(tagsByExpenseId[expenseId] ?? []);
+  }
+
+  async function saveExpenseTags(expenseId: string) {
+    setSavingTags(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses/${expenseId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tagIds: editTagIds }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not save tags');
+      setTagsByExpenseId(prev => ({ ...prev, [expenseId]: editTagIds }));
+      setEditingTagsFor(null);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setSavingTags(false);
+    }
+  }
+
+  // Read-only chip row for an expense's tags (colour distinguishes org-shared from team-own).
+  function tagChips(expenseId: string) {
+    const ids = tagsByExpenseId[expenseId] ?? [];
+    if (ids.length === 0) return null;
+    return (
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.3rem' }}>
+        {ids.map(id => {
+          const tag = tagById.get(id);
+          if (!tag) return null;
+          return (
+            <span key={id} className={`${styles.moneyTagChip} ${tag.teamId === null ? styles.moneyTagChipOrg : ''}`}>
+              {tag.name}
+            </span>
+          );
+        })}
+      </div>
+    );
   }
 
   // Structured category picker (shared budget taxonomy) + an entry-time honesty hint:
@@ -240,8 +330,24 @@ export default function CoachesExpensesPage({
     );
   }
 
-  const independentExpenses = expenses.filter(e => e.expenseType === 'expense');
-  const tournamentPayables = expenses.filter(e => e.expenseType === 'tournament_payable');
+  const allIndependent = expenses.filter(e => e.expenseType === 'expense');
+  const allPayables = expenses.filter(e => e.expenseType === 'tournament_payable');
+  const tagMatch = (e: RepTeamExpense) => !filterTagId || (tagsByExpenseId[e.id] ?? []).includes(filterTagId);
+  const independentExpenses = allIndependent.filter(tagMatch);
+  const tournamentPayables = allPayables.filter(tagMatch);
+
+  // Filter chip row: tags actually used by the current tab's expenses, with counts (mirrors the
+  // game "vs tag" report). Selecting one narrows the list + shows a tag total.
+  const activeAll = tab === 'expenses' ? allIndependent : allPayables;
+  const tagCounts = new Map<string, number>();
+  for (const e of activeAll) for (const id of (tagsByExpenseId[e.id] ?? [])) tagCounts.set(id, (tagCounts.get(id) ?? 0) + 1);
+  const usedTagIds = [...tagCounts.keys()]
+    .map(id => tagById.get(id))
+    .filter((t): t is RepTeamTag => !!t)
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const filteredActive = tab === 'expenses' ? independentExpenses : tournamentPayables;
+  const filterTotal = filterTagId ? filteredActive.reduce((s, e) => s + e.amount, 0) : 0;
+  const filterTag = filterTagId ? tagById.get(filterTagId) : null;
 
   return (
     <div className={styles.page}>
@@ -257,24 +363,61 @@ export default function CoachesExpensesPage({
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button className={styles.btnSecondary} onClick={() => { setShowAddExpense(true); setExpenseForm(BLANK_EXPENSE); setExpensePayee(null); setSaveError(''); }}>
+          <button className={styles.btnSecondary} onClick={() => { setShowAddExpense(true); setExpenseForm(BLANK_EXPENSE); setExpenseFormTags([]); setExpensePayee(null); setSaveError(''); }}>
             <Plus size={14} /> Add Expense
           </button>
-          <button className={styles.btnSecondary} onClick={() => { setShowAddPayable(true); setPayableForm(BLANK_PAYABLE); setPayablePayee(null); setSaveError(''); }}>
+          <button className={styles.btnSecondary} onClick={() => { setShowAddPayable(true); setPayableForm(BLANK_PAYABLE); setPayableFormTags([]); setPayablePayee(null); setSaveError(''); }}>
             <Plus size={14} /> Add Payable
           </button>
+          {canWriteMoney && ownMoneyTags.length > 0 && (
+            <button className={styles.btnGhost} onClick={() => setTagManagerOpen(true)} title="Rename, merge, or delete your money tags">
+              <Settings2 size={14} /> Manage tags
+            </button>
+          )}
         </div>
       </div>
 
       {/* Tab toggle */}
       <div className={styles.viewToggle} style={{ marginBottom: '1.5rem' }}>
         <button className={`${styles.viewToggleBtn} ${tab === 'expenses' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('expenses')}>
-          Expenses ({independentExpenses.length})
+          Expenses ({allIndependent.length})
         </button>
         <button className={`${styles.viewToggleBtn} ${tab === 'payables' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('payables')}>
-          Tournament Payables ({tournamentPayables.length})
+          Tournament Payables ({allPayables.length})
         </button>
       </div>
+
+      {/* Money-tag filter chip row (self-hides when the current tab has no tagged expenses) */}
+      {usedTagIds.length > 0 && (
+        <>
+          <div className={styles.moneyFilterBar}>
+            <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
+            {usedTagIds.map(t => {
+              const isOrg = t.teamId === null;
+              const active = filterTagId === t.id;
+              const cls = `${styles.moneyFilterChip} ${active ? styles.moneyFilterChipActive : ''} ${isOrg ? (active ? styles.moneyFilterChipOrgActive : styles.moneyFilterChipOrg) : ''}`;
+              return (
+                <button key={t.id} className={cls} onClick={() => setFilterTagId(active ? null : t.id)}>
+                  {t.name} <span className={styles.moneyFilterCount}>{tagCounts.get(t.id)}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className={styles.tagComboLegend} style={{ margin: '-0.2rem 0 0.7rem' }}>
+            <span className={styles.tagComboLegendItem}>
+              <span className={styles.tagComboLegendDot} style={{ background: 'rgba(var(--blueprint-blue-rgb),0.55)', border: '1px solid rgba(var(--blueprint-blue-rgb),0.7)' }} /> Org tag
+            </span>
+            <span className={styles.tagComboLegendItem}>
+              <span className={styles.tagComboLegendDot} style={{ background: 'rgba(var(--logic-lime-rgb),0.55)', border: '1px solid rgba(var(--logic-lime-rgb),0.7)' }} /> Team tag
+            </span>
+          </div>
+        </>
+      )}
+      {filterTag && (
+        <div className={styles.moneyTagSummary}>
+          vs <strong>{filterTag.name}</strong>: {filteredActive.length} {tab === 'expenses' ? 'expense' : 'payable'}{filteredActive.length !== 1 ? 's' : ''}, <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(filterTotal)}</span> total
+        </div>
+      )}
 
       {loading ? (
         <p className={styles.muted}>Loading…</p>
@@ -298,7 +441,30 @@ export default function CoachesExpensesPage({
               <tbody>
                 {independentExpenses.map(e => (
                   <tr key={e.id} className={styles.tr}>
-                    <td className={styles.td}>{e.description}</td>
+                    <td className={styles.td}>
+                      {e.description}
+                      {editingTagsFor === e.id ? (
+                        <div style={{ marginTop: '0.45rem', maxWidth: 340 }}>
+                          <TagSearchCombobox library={expenseTags} selectedIds={editTagIds} onChange={setEditTagIds} onCreate={createMoneyTag} showLegend={false} placeholder="Add money tags…" />
+                          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
+                            <button className={styles.btnSecondary} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }} disabled={savingTags} onClick={() => saveExpenseTags(e.id)}>{savingTags ? 'Saving…' : 'Save tags'}</button>
+                            <button className={styles.btnGhost} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }} disabled={savingTags} onClick={() => setEditingTagsFor(null)}>Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {tagChips(e.id)}
+                          {canWriteMoney && (
+                            <button
+                              onClick={() => startEditTags(e.id)}
+                              style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.3rem', cursor: 'pointer', fontSize: '0.68rem', color: 'var(--blueprint-blue, #7f9cf5)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
+                            >
+                              <Tag size={10} /> {(tagsByExpenseId[e.id] ?? []).length ? 'Edit tags' : 'Add tags'}
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </td>
                     <td className={styles.td} style={{ color: 'rgba(255,255,255,0.5)' }}>{e.category ?? '—'}</td>
                     <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(e.amount)}</td>
                     <td className={styles.td}>
@@ -405,6 +571,28 @@ export default function CoachesExpensesPage({
                   </div>
 
                   {e.notes && <p className={styles.muted} style={{ margin: '0.75rem 0 0', fontSize: '0.78rem' }}>{e.notes}</p>}
+
+                  {editingTagsFor === e.id ? (
+                    <div style={{ marginTop: '0.6rem', maxWidth: 360 }}>
+                      <TagSearchCombobox library={expenseTags} selectedIds={editTagIds} onChange={setEditTagIds} onCreate={createMoneyTag} showLegend={false} placeholder="Add money tags…" />
+                      <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem' }}>
+                        <button className={styles.btnSecondary} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }} disabled={savingTags} onClick={() => saveExpenseTags(e.id)}>{savingTags ? 'Saving…' : 'Save tags'}</button>
+                        <button className={styles.btnGhost} style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem' }} disabled={savingTags} onClick={() => setEditingTagsFor(null)}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: '0.6rem' }}>
+                      {tagChips(e.id)}
+                      {canWriteMoney && (
+                        <button
+                          onClick={() => startEditTags(e.id)}
+                          style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.3rem', cursor: 'pointer', fontSize: '0.68rem', color: 'var(--blueprint-blue, #7f9cf5)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
+                        >
+                          <Tag size={10} /> {(tagsByExpenseId[e.id] ?? []).length ? 'Edit tags' : 'Add tags'}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -446,6 +634,10 @@ export default function CoachesExpensesPage({
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label}>Notes</label>
                 <textarea className={styles.textarea} rows={2} value={expenseForm.notes} onChange={e => setExpenseForm(f => ({ ...f, notes: e.target.value }))} />
+              </div>
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                <label className={styles.label}>Tags</label>
+                <TagSearchCombobox library={expenseTags} selectedIds={expenseFormTags} onChange={setExpenseFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" />
               </div>
             </div>
             {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
@@ -508,6 +700,10 @@ export default function CoachesExpensesPage({
                 <label className={styles.label}>Notes</label>
                 <textarea className={styles.textarea} rows={2} value={payableForm.notes} onChange={e => setPayableForm(f => ({ ...f, notes: e.target.value }))} />
               </div>
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                <label className={styles.label}>Tags</label>
+                <TagSearchCombobox library={expenseTags} selectedIds={payableFormTags} onChange={setPayableFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" />
+              </div>
             </div>
             {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
             <div className={styles.modalFooter}>
@@ -516,6 +712,20 @@ export default function CoachesExpensesPage({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Money-tag manager (rename / merge / delete the team's OWN money tags) */}
+      {tagManagerOpen && (
+        <TagManagerModal
+          orgSlug={orgSlug}
+          teamId={teamId}
+          tags={ownMoneyTags}
+          basePath={`/api/coaches/${orgSlug}/teams/${teamId}/expense-tags`}
+          title="Manage money tags"
+          itemNoun="expense"
+          onClose={() => setTagManagerOpen(false)}
+          onChanged={load}
+        />
       )}
     </div>
   );

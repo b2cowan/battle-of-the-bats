@@ -1,10 +1,13 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import styles from './page.module.css';
 import AnimateIn from '@/components/AnimateIn';
 import PricingSection from '@/components/PricingSection';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import { createClient } from '@/lib/supabase-server';
+import { getAuthDestination } from '@/lib/auth-destination';
 
 const MODULE_CARDS = [
   {
@@ -150,7 +153,28 @@ const PERSONAS = [
   },
 ];
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ source?: string }>;
+}) {
+  // Unified-app entry router (Phase 0). This page is BOTH the public marketing
+  // homepage (browser visits — unchanged) AND the installed app's start_url.
+  // The manifest launches the app at `/?source=pwa`, so only an app launch
+  // carries that marker; organic/crawler traffic never does and always gets the
+  // marketing page below (SEO/canonical/OG intact). On an app launch we route:
+  // signed-in → their workspace (fail-closed via getAuthDestination), anonymous
+  // → the public directory front door (browsing is free — no wall).
+  const { source } = await searchParams;
+  if (source === 'pwa') {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email) {
+      redirect(await getAuthDestination());
+    }
+    redirect('/discover');
+  }
+
   const gatingMap = await getPlanGatingMap();
   return (
     <>

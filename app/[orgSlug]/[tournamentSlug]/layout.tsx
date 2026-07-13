@@ -29,10 +29,8 @@ export async function generateMetadata({
   params: Promise<{ orgSlug: string; tournamentSlug: string }>;
 }): Promise<Metadata> {
   const { orgSlug, tournamentSlug } = await params;
-  const base = `/${orgSlug}/${tournamentSlug}`;
 
-  // Resolve a friendly label for the iOS home-screen icon; fall back gracefully.
-  let appleTitle = 'Tournament';
+  // Resolve social-share title/description; fall back gracefully.
   let ogTitle = 'Tournament';
   let ogDescription = 'Live scores, schedule and standings on FieldLogicHQ.';
   try {
@@ -40,9 +38,6 @@ export async function generateMetadata({
     if (org && org.subscriptionStatus !== 'canceled') {
       const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
       if (tournament) {
-        // iOS home-screen label: organizer's custom app name if set, else the event name.
-        // Plus-gated (matches the logo/theme read-gating) so a downgraded org reverts.
-        appleTitle = (canUseAdvancedTournamentBranding(org) && tournament.appName?.trim()) || tournament.name;
         ogTitle = tournament.name;
         ogDescription = `Live scores, schedule and standings · Hosted by ${org.name} on FieldLogicHQ.`;
       }
@@ -58,15 +53,15 @@ export async function generateMetadata({
     // segment (event card), overridden by nested routes (game score card, team card).
     openGraph: { title: ogTitle, description: ogDescription, type: 'website' },
     twitter: { card: 'summary_large_image', title: ogTitle, description: ogDescription },
-    // Per-tournament PWA manifest — an installed app opens straight to this event.
-    manifest: `${base}/manifest.webmanifest`,
-    // `other` replaces the root value for tournament pages — keep the base PWA
-    // flags and set the iOS home-screen label to the event name.
+    // Unified-app identity (Phase 0): one FieldLogicHQ install, scope '/', so an
+    // installed app captures this tournament's links. Per-event install icons are
+    // retired (G1) — the home-screen label is the platform name for everyone.
+    manifest: '/manifest.json',
     other: {
       'mobile-web-app-capable': 'yes',
       'apple-mobile-web-app-capable': 'yes',
       'apple-mobile-web-app-status-bar-style': 'black-translucent',
-      'apple-mobile-web-app-title': appleTitle,
+      'apple-mobile-web-app-title': 'FieldLogicHQ',
     },
   };
 }
@@ -238,14 +233,12 @@ export default async function TournamentLayout({
           (no live scores/alerts left to follow — J6-054). */}
       {!effectivelyFinished && (
         <InstallAppPrompt
-          appName={tournament.name}
+          appName="FieldLogicHQ"
           subtitle={
             hasPlanFeature(org.planId, 'fan_score_alerts')
               ? 'Live scores, schedule & alerts — add to your home screen.'
               : 'Live scores & schedule — add to your home screen.'
           }
-          dismissKey={`flhq-install-fan-${tournament.slug}`}
-          iconUrl={canUseAdvancedBranding ? tournament.logoUrl ?? org.logoUrl ?? null : null}
           orgSlug={orgSlug}
           tournamentSlug={tournament.slug}
         />

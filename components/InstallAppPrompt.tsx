@@ -1,17 +1,19 @@
 'use client';
 /**
  * components/InstallAppPrompt.tsx
- * Dismissible "add to home screen" prompt. Used in two contexts (see callers):
- *  - Fan app  — mounted on public tournament pages (per-tournament manifest).
- *  - Member app — mounted in authenticated shells (root /home-scoped manifest).
+ * Dismissible "add to home screen" prompt for the ONE FieldLogicHQ app
+ * (unified-app Phase 0 — single install identity at scope '/'). Mounted on public
+ * tournament pages and in every authenticated shell; every surface installs the
+ * same app, so the prompt uses one shared dismissal key by default — dismissing it
+ * anywhere quiets it everywhere (no re-nagging across the fan/coach/admin surfaces).
  *
  * iOS has no install API, so it shows manual instructions; Android Chromium
  * captures `beforeinstallprompt` and offers a one-tap Install button. Desktop
  * Chromium fires the same event but is deliberately suppressed — an
  * add-to-home-screen prompt is a phone/tablet affordance (see the pointer gate
  * in the effect below).
- * The installed app's name/icon/start_url come from whichever <link rel="manifest">
- * the host page declares — this component only renders the prompt.
+ * The installed app's name/icon/start_url come from the unified /manifest.json —
+ * this component only renders the prompt.
  */
 import { useState, useEffect } from 'react';
 import { X, Download } from 'lucide-react';
@@ -48,7 +50,11 @@ interface Props {
   appName?: string;
   /** One-line value prop shown on Android. */
   subtitle?: string;
-  /** localStorage key so different contexts dismiss independently. */
+  /**
+   * localStorage dismissal key. Defaults to the shared unified-app key so a
+   * dismissal on any surface suppresses the prompt everywhere (one app). Override
+   * only if a surface genuinely needs an independent dismissal lifecycle.
+   */
   dismissKey?: string;
   /** Branded icon for the prompt (e.g. the tournament logo); falls back to the FLHQ PWA icon. */
   iconUrl?: string | null;
@@ -67,7 +73,7 @@ const ENGAGE_DELAY_MS = 30_000;
 export default function InstallAppPrompt({
   appName = 'FieldLogicHQ',
   subtitle = 'Add it to your home screen for one-tap access.',
-  dismissKey = 'flhq-install-dismissed',
+  dismissKey = 'flhq-install',
   iconUrl = null,
   orgSlug,
   tournamentSlug,

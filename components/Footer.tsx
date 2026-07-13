@@ -2,9 +2,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { isCoachPortalShellPath } from '@/lib/coaches-portal-routes';
+import { isConsumerShellPath } from '@/lib/consumer-routes';
 
 // Static top-level routes that live outside the org-slug space and should show the footer.
-const STATIC_ROOTS = new Set(['discover', 'pricing', 'auth', 'coaches', 'blog', 'changelog']);
+// (Consumer-shell routes like /discover are handled earlier via isConsumerShellPath.)
+const STATIC_ROOTS = new Set(['pricing', 'auth', 'coaches', 'blog', 'changelog']);
 
 // Footer link columns. Each group renders as a labelled column; the link for the
 // page you're currently on is filtered out, and a column with no remaining links
@@ -32,14 +34,16 @@ export default function Footer() {
   const pathname = usePathname();
   const firstSegment = pathname.split('/')[1] ?? '';
 
-  // Always hide on admin shells, platform-admin, the /home context-switcher, and the
-  // authenticated coach-portal routes (which render their own shell chrome).
+  // Always hide on admin shells, platform-admin, the /home context-switcher, the
+  // authenticated coach-portal routes, and the consumer shell (which render their
+  // own chrome — the consumer shell uses a bottom nav instead of the marketing footer).
   if (
     /^\/[^/]+\/admin(\/|$)/.test(pathname) ||
     pathname.startsWith('/admin') ||
     pathname.startsWith('/platform-admin') ||
     pathname.startsWith('/home') ||
-    isCoachPortalShellPath(pathname)
+    isCoachPortalShellPath(pathname) ||
+    isConsumerShellPath(pathname)
   ) return null;
 
   // Hide on all org-slug pages (/{orgSlug}/...) — public tournament pages, coaches portal,

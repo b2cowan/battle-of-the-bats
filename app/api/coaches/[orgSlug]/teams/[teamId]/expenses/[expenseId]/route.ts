@@ -8,7 +8,9 @@ import {
   updateRepTeamExpense,
   getOrCreateRepTeamLedger,
   createEntry,
+  setRepTeamExpenseTags,
 } from '@/lib/db';
+import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
 
@@ -50,6 +52,20 @@ export const PATCH = withObservability(async (req: Request,
 
   const body = await req.json();
   const { action, description, category, notes } = body;
+
+  // Inline re-tag from the expense list (a tags-only PATCH is valid — no action/field needed).
+  // Validated against the team's expense-tag library (own + org-shared) before writing.
+  let tagsUpdated = false;
+  let appliedTagIds: string[] = [];
+  if (body.tagIds !== undefined) {
+    const tagIds = await resolveValidTagIds(team.id, ctx!.org.id, 'expense', body.tagIds);
+    if (tagIds === null) {
+      return NextResponse.json({ error: 'tagIds must be an array of this team’s existing money-tag ids' }, { status: 400 });
+    }
+    await setRepTeamExpenseTags(expenseId, tagIds);
+    appliedTagIds = tagIds;
+    tagsUpdated = true;
+  }
 
   const patch: Parameters<typeof updateRepTeamExpense>[1] = {};
   if (description !== undefined) patch.description = description.trim();
@@ -129,10 +145,10 @@ export const PATCH = withObservability(async (req: Request,
     patch.balancePaidAt = now;
   }
 
-  if (!Object.keys(patch).length) {
+  if (!Object.keys(patch).length && !tagsUpdated) {
     return NextResponse.json({ error: 'No valid action or fields provided' }, { status: 400 });
   }
 
-  const updated = await updateRepTeamExpense(expenseId, patch);
-  return NextResponse.json({ expense: updated });
+  const updated = Object.keys(patch).length ? await updateRepTeamExpense(expenseId, patch) : expense;
+  return NextResponse.json({ expense: updated, ...(tagsUpdated ? { tagIds: appliedTagIds } : {}) });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/expenses/[expenseId]' });

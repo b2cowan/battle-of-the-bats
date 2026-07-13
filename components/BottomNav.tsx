@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { Home, Calendar, Trophy, Users, Megaphone, ScrollText } from 'lucide-react';
 import { useOrgNav } from './OrgNavContext';
+import { isConsumerShellPath } from '@/lib/consumer-routes';
 import type { PublicPageKey } from '@/lib/public-pages';
 import styles from './BottomNav.module.css';
 
@@ -37,7 +38,8 @@ export default function BottomNav({ basePath, hiddenPages }: BottomNavProps = {}
   // in the URL. Preview usage: an explicit basePath is passed, so bypass the admin
   // guard (the preview lives under /…/admin/…) and link inside the preview.
   const isAdmin = /^\/[^/]+\/admin(\/|$)/.test(pathname) || pathname.startsWith('/admin');
-  const isMarketing = pathname === '/' || pathname.startsWith('/discover') || pathname.startsWith('/auth');
+  // Consumer shell (/discover, /scores, /following, /account) has its own bottom nav.
+  const isMarketing = pathname === '/' || pathname.startsWith('/auth') || isConsumerShellPath(pathname);
   if (!basePath && (isAdmin || isMarketing || pathname.startsWith('/platform-admin') || !tournamentSlug)) return null;
 
   const homeHref = basePath ?? `/${orgSlug}/${tournamentSlug}`;

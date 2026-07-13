@@ -1,0 +1,101 @@
+import { NextResponse } from 'next/server';
+import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
+import {
+  getActiveRepProgramYear,
+  getCoachingAssignmentsForUser,
+  getRepTeam,
+  getRepTeamTags,
+  getRepTeamTagLibrary,
+  createRepTeamTag,
+} from '@/lib/db';
+import { withObservability } from '@/lib/observability';
+import { denyUnless, canViewMoney, canWriteMoney } from '@/lib/coach-capabilities';
+
+// Money tags (Coach Tags & Player Awards, Phase 3). Same rep_team_tags machinery as game tags,
+// but kind='expense' and gated on the MONEY capability (not schedule) — the one deliberate
+// capability difference from game tags. The picker gets its library from the expenses GET (like
+// the schedule picker gets game tags from the events GET); this route provides create + the
+// manager's list, sibling to the game-tags routes.
+
+const MAX_TAGS_PER_KIND = 50;
+
+async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
+  if (!ctx) return { error: unauthorized() };
+  if (ctx.org.slug !== orgSlug) return { error: forbidden() };
+
+  const team = await getRepTeam(teamId);
+  if (!team || team.orgId !== ctx.org.id) {
+    return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
+  }
+
+  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { error: forbidden() };
+
+  const programYear = await getActiveRepProgramYear(teamId);
+  if (!programYear) {
+    return { error: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
+  }
+
+  return { ctx, team, assignment, programYear };
+}
+
+export const GET = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
+  const { orgSlug, teamId } = await params;
+  const resolved = await resolveTeamCoachContext(orgSlug, teamId);
+  if ('error' in resolved) return resolved.error!;
+  const { ctx, assignment } = resolved;
+  const denied = denyUnless(canViewMoney(assignment.capabilities), 'You do not have access to team finances.');
+  if (denied) return denied;
+
+  // Money-tag library = the team's own expense tags + the org's shared expense tags.
+  const tags = await getRepTeamTagLibrary(teamId, 'expense', ctx.org.id);
+  return NextResponse.json({ tags });
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/expense-tags' });
+
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
+  const { orgSlug, teamId } = await params;
+  const resolved = await resolveTeamCoachContext(orgSlug, teamId);
+  if ('error' in resolved) return resolved.error!;
+  const { ctx, assignment } = resolved;
+  const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have permission to change team finances.');
+  if (denied) return denied;
+
+  const body = await req.json();
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  if (name.length < 1 || name.length > 40) {
+    return NextResponse.json({ error: 'Tag name must be 1–40 characters' }, { status: 400 });
+  }
+
+  // Cap counts the team's OWN expense tags only — org-shared tags don't eat a team's cap.
+  const existing = await getRepTeamTags(teamId, 'expense');
+  if (existing.length >= MAX_TAGS_PER_KIND) {
+    return NextResponse.json(
+      { error: `You can keep up to ${MAX_TAGS_PER_KIND} money tags. Delete or merge one to add another.` },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const tag = await createRepTeamTag({
+      orgId: ctx.org.id,
+      teamId,
+      kind: 'expense',
+      name,
+      createdBy: ctx.user.id,
+    });
+    return NextResponse.json({ tag });
+  } catch (error: unknown) {
+    const code = (error as { code?: string })?.code;
+    if (code === '23505') {
+      return NextResponse.json({ error: `A tag named “${name}” already exists` }, { status: 409 });
+    }
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Could not save tag' },
+      { status: 400 },
+    );
+  }
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/expense-tags' });

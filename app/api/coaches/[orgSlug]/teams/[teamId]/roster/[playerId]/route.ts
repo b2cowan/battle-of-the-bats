@@ -8,6 +8,7 @@ import {
   updateRepRosterPlayer,
   getRepPlayerAttendanceSummary,
   getRepPlayerDuesSummary,
+  getRepPlayerAwardsSummary,
 } from '@/lib/db';
 import type { RepRosterStatus, LineupProfile } from '@/lib/types';
 import { BATS_OPTIONS, THROWS_OPTIONS, JERSEY_SIZE_OPTIONS, normalizeOption } from '@/lib/rep-roster-options';
@@ -58,15 +59,17 @@ export const GET = withObservability(async (_req: Request,
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const [attendance, dues] = await Promise.all([
+  const [attendance, dues, awards] = await Promise.all([
     getRepPlayerAttendanceSummary(playerId, resolved.programYear.id),
     getRepPlayerDuesSummary(playerId, resolved.programYear.id),
+    getRepPlayerAwardsSummary(playerId),
   ]);
 
   return NextResponse.json({
     player: redactRosterPlayer(player, assignment.capabilities),
     attendance,
     dues: canViewMoney(assignment.capabilities) ? dues : null,
+    awards,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]' });
 

@@ -103,7 +103,6 @@ export default async function CheckInVolunteerLayout({
       <InstallAppPrompt
         appName="FieldLogicHQ"
         subtitle="Check teams in at the gate — one tap away."
-        dismissKey="flhq-install-checkin"
       />
     </div>
   );

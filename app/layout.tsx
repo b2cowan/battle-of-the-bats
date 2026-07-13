@@ -7,6 +7,7 @@ import BottomNav from '@/components/BottomNav';
 import { OrgNavProvider } from '@/components/OrgNavContext';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import ViewportKeyboardVars from '@/components/ViewportKeyboardVars';
+import LegacyInstallBanner from '@/components/LegacyInstallBanner';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -94,6 +95,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Install prompts are mounted per-context, not globally: the fan prompt on
             tournament pages and the member prompt in authenticated shells. The
             marketing root no longer shows an install banner. */}
+        {/* Soft "get the new app" nudge — self-gates to legacy per-tournament/
+            scorekeeper PWA installs (unified-app Phase 0); renders nothing otherwise. */}
+        <LegacyInstallBanner />
         {/* Service worker registration — browser-only, renders nothing */}
         <ServiceWorkerRegistration />
         {/* Keeps --vvh / --vv-offset-top in sync with the real visual viewport — browser-only, renders nothing */}

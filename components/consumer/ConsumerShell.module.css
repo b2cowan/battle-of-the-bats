@@ -1,0 +1,151 @@
+/* Consumer shell (unified-app Phase 1) — app-like chrome around the directory and
+   its sibling tabs. Dark-first broadcast register, consistent with public pages. */
+
+.shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Top bar (all sizes): wordmark left; inline links right on desktop ─────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1rem;
+  padding-top: max(0.65rem, env(safe-area-inset-top));
+  background: var(--nav-mobile-bg);
+  backdrop-filter: blur(var(--blur-bar));
+  -webkit-backdrop-filter: blur(var(--blur-bar));
+  border-bottom: 1px solid var(--border);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .topbar { background: var(--bg); }
+}
+
+.wordmark {
+  font-family: var(--font-data, monospace);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.wm1 { color: var(--fl-text); }
+.wm2 { color: var(--primary-light); }
+.wm3 { color: var(--white-45); }
+
+.topNav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.topLink {
+  font-family: var(--font-data, monospace);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--white-45);
+  transition: color 0.2s ease;
+}
+.topLink:hover { color: var(--fl-text); }
+.topLink.active { color: var(--primary-light); }
+
+/* Below 900px the top links give way to the bottom nav (matches the site pattern). */
+@media (max-width: 900px) {
+  .topNav { display: none; }
+}
+
+/* ── Content: reserve room for the fixed bottom nav on mobile ─────────────────── */
+.content {
+  flex: 1 1 auto;
+}
+@media (max-width: 900px) {
+  .content {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* ── Bottom nav (mobile only, ≤900px) ─────────────────────────────────────────── */
+.bottomNav { display: none; }
+
+@media (max-width: 900px) {
+  .bottomNav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: var(--nav-mobile-bg);
+    backdrop-filter: blur(var(--blur-bar));
+    -webkit-backdrop-filter: blur(var(--blur-bar));
+    border-top: 1px solid var(--border);
+    padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
+    justify-content: space-around;
+    align-items: flex-start;
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .bottomNav { background: var(--bg); }
+  }
+
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1;
+    padding: 0.25rem 0.2rem;
+    text-decoration: none;
+    color: var(--white-45);
+    transition: color 0.2s ease, transform 0.12s ease;
+    min-width: 0;
+  }
+  .tab.active { color: var(--primary-light); }
+  .tab:active { opacity: 0.7; transform: scale(0.94); }
+
+  .iconWrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 32px;
+  }
+  .tab.active .iconWrap {
+    background: rgba(var(--primary-rgb), 0.18);
+    border-radius: 999px;
+  }
+
+  .activeDot {
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    box-shadow: 0 0 6px var(--primary-light);
+  }
+
+  .label {
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+}

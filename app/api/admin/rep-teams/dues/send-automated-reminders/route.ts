@@ -1,7 +1,13 @@
 // POST /api/admin/rep-teams/dues/send-automated-reminders
-// Called by the cron scheduler (AWS EventBridge / Vercel cron) or manually by an org admin.
+// Manual org-admin wave button ("30-day wave" / "7-day wave" on the org Accounting page).
 // Scans ALL active teams in the org, respects per-team auto_reminders_enabled toggle,
 // and sends 30-day or 7-day reminder waves based on the `window` body param.
+// The SCHEDULED daily equivalent is the platform-wide sweep (lib/dues-reminders.ts via
+// POST /api/platform-admin/dues-reminders, pg_cron mig 183) — same candidates, same stamps,
+// same copy. Across DAYS they never double-send (the sent-stamp + 7-day cooldown dedupe both
+// callers). The read→send→stamp sequence is NOT atomic, so firing this button at the exact
+// moment the daily tick runs the same team could send one duplicate email — bounded to that
+// single installment and self-limited by the cooldown. Accepted (pre-existing on this route).
 
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
@@ -80,7 +86,6 @@ export const POST = withObservability(async (req: Request) => {
     for (const [email, items] of byGuardian) {
       const first = items[0];
       const guardianFirst = first.guardianFirstName ?? 'there';
-      const windowLabel = window === 30 ? 'in approximately 30 days' : 'in about one week';
 
       const rows = items
         .map(
@@ -95,7 +100,7 @@ export const POST = withObservability(async (req: Request) => {
       const html = `
 <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:2rem;">
   <p>Hi ${guardianFirst},</p>
-  <p>This is a friendly reminder that the following dues installments are due ${windowLabel} for your player(s) on <strong>${team.name}</strong>:</p>
+  <p>This is a friendly reminder that the following dues installments are coming due for your player(s) on <strong>${team.name}</strong>:</p>
   <ul style="padding-left:1.25rem;">${rows}</ul>
   <p>To view your full payment schedule or if you have already submitted payment, please contact your coach directly.</p>
   <p style="color:rgba(0,0,0,0.5);font-size:0.85rem;margin-top:2rem;">FieldLogicHQ</p>

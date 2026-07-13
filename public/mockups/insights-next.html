@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Insights next — weekly digest + new finding rules</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c14; --card:rgba(255,255,255,.05); --card2:rgba(255,255,255,.08);
+    --border:rgba(96,125,255,.18); --border-strong:rgba(96,125,255,.34);
+    --w90:rgba(255,255,255,.9); --w70:rgba(255,255,255,.7); --w55:rgba(255,255,255,.55); --w45:rgba(255,255,255,.45); --w35:rgba(255,255,255,.35);
+    --lime:#D9F99D; --ink:#0f1123; --blue:#8FA8FF; --primary:#2743a6;
+    --warn:#FbbF24; --ok:#34D399; --danger:#f87171;
+    --display:'Barlow Condensed','Arial Narrow',sans-serif; --sans:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg) linear-gradient(rgba(30,58,138,.10) 1px,transparent 1px),
+               var(--bg) linear-gradient(90deg,rgba(30,58,138,.10) 1px,transparent 1px);
+    background-size:38px 38px;background-color:var(--bg);
+    color:var(--w90);font-family:var(--sans);min-height:100vh;padding:1.25rem;
+  }
+  .mockbar{max-width:1020px;margin:0 auto 1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+  .mockbar h1{font-family:var(--display);font-weight:700;font-size:1.3rem;margin-right:auto}
+  .mockbar .note{flex-basis:100%;color:var(--w45);font-size:.78rem}
+  .wrap{max-width:1020px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:1.25rem;align-items:start}
+  .panel{border:1px solid var(--border-strong);border-radius:18px;background:rgba(10,12,20,.93);box-shadow:0 18px 50px rgba(0,0,0,.5);overflow:hidden}
+  .panelHead{background:rgba(39,67,166,.18);border-bottom:1px solid var(--border);padding:.6rem .95rem;font-size:.78rem;color:var(--w55)}
+  .panelHead b{color:var(--w90)}
+  .panelBody{padding:1.15rem 1.2rem 1.35rem}
+  .kicker{font-size:.68rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--w45);margin:0 0 .65rem}
+  .subnote{color:var(--w45);font-size:.75rem;margin:.55rem 0 1.2rem}
+  /* ── phone push notification ── */
+  .phone{max-width:360px;margin:0 auto 1rem;border:1px solid rgba(255,255,255,.14);border-radius:26px;padding:1.1rem .8rem 1.2rem;background:linear-gradient(180deg,#12203f 0%,#0a0c14 90%)}
+  .phoneTime{text-align:center;font-family:var(--display);font-weight:700;font-size:2.4rem;color:rgba(255,255,255,.85)}
+  .phoneDate{text-align:center;font-size:.75rem;color:var(--w45);margin-bottom:1rem}
+  .push{background:rgba(28,32,48,.92);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:.7rem .8rem;backdrop-filter:blur(6px)}
+  .pushTop{display:flex;align-items:center;gap:.45rem;margin-bottom:.35rem}
+  .pushIcon{width:20px;height:20px;border-radius:5px;background:#0a0a0f;border:1px solid #1E3A8A;display:flex;align-items:center;justify-content:center;font-size:.6rem;color:#D9F99D;font-weight:800}
+  .pushApp{font-size:.68rem;color:var(--w55);letter-spacing:.02em}
+  .pushWhen{margin-left:auto;font-size:.66rem;color:var(--w35)}
+  .pushTitle{font-size:.85rem;font-weight:700;margin-bottom:.15rem}
+  .pushBody{font-size:.8rem;color:var(--w70);line-height:1.45}
+  /* ── bell entry ── */
+  .bellCard{border:1px solid var(--border);border-radius:12px;background:var(--card2);padding:.7rem .8rem;display:flex;gap:.65rem;align-items:flex-start}
+  .bellIcon{flex:none;width:34px;height:34px;border-radius:9px;background:rgba(39,67,166,.35);border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;font-size:.95rem}
+  .bellTitle{font-size:.86rem;font-weight:700}
+  .bellBody{font-size:.78rem;color:var(--w55);margin-top:.15rem;line-height:1.45}
+  .bellWhen{font-size:.66rem;color:var(--w35);margin-top:.3rem}
+  .roleTag{display:inline-block;font-size:.64rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);border:1px solid rgba(96,125,255,.4);border-radius:999px;padding:.12rem .5rem;margin-bottom:.45rem}
+  /* ── findings strip (matches the live Insights page) ── */
+  .callouts{border:1px solid var(--border);border-top:2px solid rgba(217,249,157,.45);border-radius:14px;background:var(--card);padding:1rem 1.05rem .6rem}
+  .co{display:flex;align-items:flex-start;gap:.65rem;padding:.5rem .4rem;border-radius:10px;text-decoration:none;color:inherit}
+  .co:hover{background:rgba(255,255,255,.05)}
+  .co .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:.42rem}
+  .dot.warn{background:var(--warn);box-shadow:0 0 8px rgba(251,191,36,.45)}
+  .dot.info{background:var(--blue)}
+  .dot.good{background:var(--ok)}
+  .co .txt{flex:1;font-size:.9rem;color:var(--w90);line-height:1.45}
+  .co .chip{flex:none;font-size:.66rem;font-weight:600;color:var(--blue);white-space:nowrap;margin-top:.28rem}
+  .newTag{display:inline-block;font-size:.6rem;font-weight:800;letter-spacing:.08em;color:var(--ink);background:var(--lime);border-radius:4px;padding:.08rem .3rem;margin-right:.4rem;vertical-align:1px}
+  .capNote{color:var(--w35);font-size:.74rem;padding:.55rem .4rem .5rem;border-top:1px dashed rgba(255,255,255,.1);margin-top:.35rem}
+</style>
+</head>
+<body>
+
+<div class="mockbar">
+  <h1>Insights — the next step: weekly digest + smarter findings</h1>
+  <div class="note">Throwaway planning mockup, sample data. Left: the Sunday-evening digest as a phone push and as its bell entry — including how an assistant's copy differs by permission. Right: the same "What stands out" strip you have today, with the proposed NEW rules firing — the page's shape never changes, the triage just gets smarter.</div>
+</div>
+
+<div class="wrap">
+  <!-- ══════════ 1 · WEEKLY DIGEST ══════════ -->
+  <div class="panel">
+    <div class="panelHead"><b>1 · Weekly digest.</b> Sent Sunday evening, only when something fired that week — a quiet week sends nothing. Tapping anywhere opens Insights.</div>
+    <div class="panelBody">
+      <p class="kicker">On the coach's phone</p>
+      <div class="phone">
+        <div class="phoneTime">7:02</div>
+        <div class="phoneDate">Sunday, July 12</div>
+        <div class="push">
+          <div class="pushTop">
+            <span class="pushIcon">FL</span>
+            <span class="pushApp">FieldLogicHQ · toronto blue jays5</span>
+            <span class="pushWhen">now</span>
+          </div>
+          <div class="pushTitle">Your week in review</div>
+          <div class="pushBody">Won 3 straight 🔥 · ⚠ Riley P. is 1 inning over his pitching cap · 3 families haven’t paid — $420 outstanding. Tap for the full picture.</div>
+        </div>
+      </div>
+      <p class="subnote">The push carries the top findings by the same ladder the page uses (safety first, then money). It never says anything the coach can’t verify one tap away.</p>
+
+      <p class="kicker">The same digest in the notification bell</p>
+      <div class="bellCard" style="margin-bottom:1rem">
+        <span class="bellIcon">📊</span>
+        <span>
+          <span class="roleTag">Head coach</span>
+          <div class="bellTitle">Your week in review — toronto blue jays5</div>
+          <div class="bellBody">Won 3 straight · ⚠ Riley P. over his pitching cap · 3 families haven’t paid ($420) · Jordan K. missed 4 of 5 practices. <span style="color:var(--blue);font-weight:600">Open Insights →</span></div>
+          <div class="bellWhen">Sunday 7:00 p.m.</div>
+        </span>
+      </div>
+      <div class="bellCard">
+        <span class="bellIcon">📊</span>
+        <span>
+          <span class="roleTag">Assistant · no money access</span>
+          <div class="bellTitle">Your week in review — toronto blue jays5</div>
+          <div class="bellBody">Won 3 straight · ⚠ Riley P. over his pitching cap · Jordan K. missed 4 of 5 practices. <span style="color:var(--blue);font-weight:600">Open Insights →</span></div>
+          <div class="bellWhen">Sunday 7:00 p.m.</div>
+        </span>
+      </div>
+      <p class="subnote">Each person’s digest is built from what <em>they’re</em> allowed to see — the assistant’s copy simply has no money line. Coaches can turn the digest off in notification settings like any other event type.</p>
+    </div>
+  </div>
+
+  <!-- ══════════ 2 · NEW FINDING RULES ══════════ -->
+  <div class="panel">
+    <div class="panelHead"><b>2 · Smarter findings.</b> Same strip, same six slots — the proposed rules (tagged NEW) just compete for them. Nothing about the page layout changes.</div>
+    <div class="panelBody">
+      <p class="kicker">What stands out — a busy mid-season week</p>
+      <div class="callouts">
+        <a class="co"><span class="dot warn"></span><span class="txt"><b>Riley P.</b> went over his pitching cap in 1 game (14 IP vs a 13-inning cap).</span><span class="chip">Playing time →</span></a>
+        <a class="co"><span class="dot warn"></span><span class="txt"><span class="newTag">NEW</span>Next dues installment is due <b>Friday</b> — 5 players unpaid ($700).</span><span class="chip">Money →</span></a>
+        <a class="co"><span class="dot warn"></span><span class="txt"><span class="newTag">NEW</span>Game attendance is <b>95%</b>, but practices are at <b>61%</b>.</span><span class="chip">Attendance →</span></a>
+        <a class="co"><span class="dot warn"></span><span class="txt"><b>Avery M.</b> has sat the bench most — 8 innings, 2 games back-to-back.</span><span class="chip">Playing time →</span></a>
+        <a class="co"><span class="dot info"></span><span class="txt"><span class="newTag">NEW</span>Only <b>Avery M.</b> has played catcher this season — one absence from a gap.</span><span class="chip">Playing time →</span></a>
+        <a class="co"><span class="dot good"></span><span class="txt"><span class="newTag">NEW</span>Won <b>5 of your last 6</b> — and that was win #10 of the season.</span><span class="chip">Results →</span></a>
+        <div class="capNote">1 more finding didn’t make the six-slot cut this week (“Gold-medal order is 3-0”) — the ladder keeps what matters most: safety, then money, then attendance, then fairness, then good news.</div>
+      </div>
+      <p class="subnote">Every NEW rule reads from data the product already has: dues due-dates, practice vs game attendance, position history crossed with your depth chart, and game results. Each is a few lines in the rule registry plus a unit test — no page changes, and each links to the report that proves it.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

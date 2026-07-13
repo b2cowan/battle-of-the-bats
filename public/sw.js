@@ -15,7 +15,7 @@
 
 /* ── Cache config ──────────────────────────────────────────────────────────── */
 
-const CACHE_VERSION = 'v2'; // v2: refreshed push badge (transparent chevron) + clean maskable icon
+const CACHE_VERSION = 'v3'; // v3: unified-app Phase 0 — clean refresh of pages that referenced old per-tournament/scorekeeper manifests
 const SHELL_CACHE = 'flhq-shell-' + CACHE_VERSION; // precache + content-hashed static
 const PAGES_CACHE = 'flhq-pages-' + CACHE_VERSION; // last-good public tournament pages
 const DATA_CACHE  = 'flhq-data-'  + CACHE_VERSION; // last-good anonymous public API JSON
@@ -31,9 +31,12 @@ const PRECACHE_URLS = [OFFLINE_URL, '/icons/pwa-192.png', '/icons/badge-72.png']
 // coaches, team, start, home, my, auth, platform-admin, api. ⚠ If you add a NEW
 // authed top-level route, add it here — the page cache would otherwise store its
 // HTML and serve it offline to the next person on a shared device.
+// `/account` reflects sign-in state; `/following` is device-personal — both stay
+// off the shared cache (unified-app Phase 1 consumer shell). `/discover` and
+// `/scores` are anonymous/public and may be cached normally.
 const NEVER_CACHE_PREFIXES = [
   '/api/', '/auth', '/platform-admin', '/home', '/dashboard', '/my',
-  '/coaches', '/team', '/start',
+  '/coaches', '/team', '/start', '/account', '/following',
 ];
 // Org sub-sections that are operator/authed surfaces (/{org}/{section}/...).
 const PRIVATE_ORG_SECTIONS = ['admin', 'coaches', 'scorekeeper', 'check-in', 'official', 'league'];

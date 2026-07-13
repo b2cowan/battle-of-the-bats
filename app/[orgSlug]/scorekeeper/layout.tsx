@@ -18,8 +18,9 @@ export async function generateMetadata({
   const org = await getOrganizationBySlug(orgSlug);
   return {
     title: org?.name ? `${org.name} Scorekeeper` : 'Scorekeeper',
-    // J8-004: scorekeeper-scoped manifest so an installed PWA opens the scoring screen, not /home.
-    manifest: `/${orgSlug}/scorekeeper/manifest.webmanifest`,
+    // Unified-app identity (Phase 0): one FieldLogicHQ install; the apple title now
+    // matches the unified manifest name (was the old per-org "Scorekeeper" drift).
+    manifest: '/manifest.json',
     other: {
       'mobile-web-app-capable': 'yes',
       'apple-mobile-web-app-capable': 'yes',
@@ -130,7 +131,6 @@ export default async function ScorekeeperLayout({
       <InstallAppPrompt
         appName="FieldLogicHQ"
         subtitle="Your teams, schedules and scores — one tap away."
-        dismissKey="flhq-install-member"
       />
     </div>
   );

@@ -15,6 +15,7 @@ metadata:
 - **Club repriced (decided 2026-06-22, not yet built):** two capacity bands (≤15 ~$219, 15–30 ~$379, custom >30), whole coaching staff portals included, per-team $19 meter retired, all team types count equally (no select discount). Standard Club price moved off $179 via the lower band; flat-$179 founding lock dormant (no founding clubs).
 - **Monetization direction (decided):** facilitated payments scoped Q4 2026, launch H1 2027 (take-rate/who-pays/processor still Proposed).
 - **GTM:** acquisition focus = mid-size dual-stream club (~8–14 teams); pricing still serves all sizes.
+- **Family features packaging (decided 2026-07-11, not yet built):** family team-chat basics included with ANY Coaches Portal; practice-schedule visibility + richer family features = Premium Coaches Portal inclusion. No new SKU/price. Org "fan pass" = Proposed only. Also 2026-07-11: unified app ratified — per-tournament install identities retired; `advanced_tournament_branding` reframes to "branded space + QR on-ramp" (copy-only at build).
 - **Coaches Portal tryout/evaluation = bundled, no per-player fee (decided 2026-06-29, not yet built):** the full tryout & player-evaluation suite is included in the Premium Coaches Portal ($29/mo per team standalone / whole-staff under Club) — no per-player or per-tryout fee, no add-on, no price change. Bundling vs per-player competitors ($4–$10/player/yr) is the deliberate wedge.
 
 > If you need a number, open the Facts doc — do not trust a number written anywhere else without reconciling it there.

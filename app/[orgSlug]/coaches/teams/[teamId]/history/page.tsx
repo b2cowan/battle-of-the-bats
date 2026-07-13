@@ -4,14 +4,15 @@ import Link from 'next/link';
 import { BarChart3 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
-import { isNeverPaidPlayer } from '@/lib/dues-status';
 import {
-  computeInsightFindings, ATTENDANCE_MIN_KNOWN, ATTENDANCE_FLAG_BELOW,
-  type InsightFinding, type InsightReport, type FindingsGameSummary,
+  computeInsightFindings, summarizeDuesForFindings, ATTENDANCE_MIN_KNOWN, ATTENDANCE_FLAG_BELOW,
+  type InsightFinding, type InsightReport, type FindingsGameSummary, type FindingsDuesSummary,
+  type FindingsDuesRow,
 } from '@/lib/insight-findings';
 import styles from '../../../coaches.module.css';
-import type { RepTeamEvent } from '@/lib/types';
+import type { RepTeamEvent, RepPlayerAward } from '@/lib/types';
 import type { SeasonLineupAnalytics } from '@/lib/lineup-season-analytics';
+import { canManageAwards } from '@/lib/coach-capabilities';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Insights V3 — "Scoreboard + What stands out" (design log 2026-07-09).
@@ -36,7 +37,6 @@ interface AttendanceRow {
   games: { attended: number; known: number };
   practices: { attended: number; known: number };
 }
-interface DuesStats { outstandingTotal: number; overdueCount: number; neverPaidCount: number }
 interface HistorySummary { pastSeasons: number; duesCollected: number | null; duesOutstanding: number | null }
 
 function recStr(r: { w: number; l: number; t: number }) {
@@ -66,6 +66,29 @@ export default function CoachesInsightsPage({
   const canLineups = !!assignment?.capabilities.lineups;
   const canRoster = !!assignment && assignment.capabilities.roster !== 'off';
   const canMoney = !!assignment && assignment.capabilities.money !== 'off';
+  const canAwards = !!assignment && canManageAwards(assignment.capabilities);
+
+  // "Who's earning it?" tile summary — a small self-contained fetch (not folded into the
+  // scoreboard's load() below) so this addition can't disturb that orchestration's data shape.
+  const [awardsSummary, setAwardsSummary] = useState<{ total: number; leaderName: string | null; leaderCount: number } | null>(null);
+  useEffect(() => {
+    if (!canAwards) return;
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (cancelled || !data) return;
+        const awards: RepPlayerAward[] = data.awards ?? [];
+        const counts = new Map<string, number>();
+        for (const a of awards) counts.set(a.playerId, (counts.get(a.playerId) ?? 0) + 1);
+        let leaderId: string | null = null, leaderCount = 0;
+        for (const [pid, c] of counts) if (c > leaderCount) { leaderId = pid; leaderCount = c; }
+        const leader = leaderId ? awards.find(a => a.playerId === leaderId) : undefined;
+        setAwardsSummary({ total: awards.length, leaderName: leader?.playerName ?? null, leaderCount });
+      })
+      .catch(() => { /* non-fatal — the tile just shows its sparse state */ });
+    return () => { cancelled = true; };
+  }, [canAwards, orgSlug, teamId]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -73,7 +96,9 @@ export default function CoachesInsightsPage({
   const [historySummary, setHistorySummary] = useState<HistorySummary>({ pastSeasons: 0, duesCollected: null, duesOutstanding: null });
   const [analytics, setAnalytics] = useState<SeasonLineupAnalytics | null>(null);
   const [attendanceRows, setAttendanceRows] = useState<AttendanceRow[] | null>(null);
-  const [duesStats, setDuesStats] = useState<DuesStats | null>(null);
+  const [duesStats, setDuesStats] = useState<FindingsDuesSummary | null>(null);
+  // Local calendar date (not UTC) — feeds the dues-deadline rule's window math.
+  const [todayISO, setTodayISO] = useState('');
   // A capability-permitted fetch that genuinely FAILED (network/500) must not read as
   // "no data yet" — its tile shows a quiet error instead of teach copy (honesty).
   const [srcErrors, setSrcErrors] = useState({ lineups: false, attendance: false, dues: false });
@@ -118,16 +143,13 @@ export default function CoachesInsightsPage({
     if (an.status === 'fulfilled') setAnalytics(an.value.analytics ?? null);
     if (at.status === 'fulfilled') setAttendanceRows(at.value.players ?? []);
     if (du.status === 'fulfilled') {
-      const players: { outstanding?: number; installments?: { paidAt: string | null; dueDate: string }[] | null }[] = du.value.players ?? [];
-      // Midnight truncation matches the Overview dues tile — an installment due TODAY is not
-      // overdue yet, and the two surfaces must never disagree on the same day.
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      setDuesStats({
-        outstandingTotal: Math.round(players.reduce((s, p) => s + (p.outstanding ?? 0), 0)),
-        overdueCount: players.reduce((n, p) => n + (p.installments ?? []).filter(i => !i.paidAt && new Date(`${i.dueDate}T00:00:00`) < today).length, 0),
-        neverPaidCount: players.filter(isNeverPaidPlayer).length,
-      });
+      const players: FindingsDuesRow[] = du.value.players ?? [];
+      // Local calendar date (never UTC) — summarizeDuesForFindings is the ONE shared shaping
+      // (dashboard + weekly digest), midnight-truncated so a due-today installment isn't overdue.
+      const now = new Date();
+      const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      setTodayISO(localToday);
+      setDuesStats(summarizeDuesForFindings(players, localToday));
     }
     // A permitted-but-failed source is an ERROR state, not an honest empty (a 'skipped'
     // rejection is the capability gate, not a failure).
@@ -197,6 +219,7 @@ export default function CoachesInsightsPage({
     streakType, streakCount,
     home: knownSide.length > 0 ? { wins: homeRec.w, losses: homeRec.l, ties: homeRec.t, games: homeGames.length } : null,
     awayLosses: knownSide.filter(e => e.homeAway === 'away' && e.result === 'loss').length,
+    recentResults: scoped.slice(0, 10).map(e => e.result as 'win' | 'loss' | 'tie'),
   };
 
   // ── Attendance rollup (known excludes no-reply upstream; 0/0 never judged; the team %
@@ -229,10 +252,11 @@ export default function CoachesInsightsPage({
     games: scopedGames > 0 ? gamesSummary : null,
     attendance: attendanceRows?.map(r => ({
       name: `${r.playerFirstName} ${r.playerLastName}`.trim(),
-      attended: r.games.attended + r.practices.attended,
-      known: r.games.known + r.practices.known,
+      games: { attended: r.games.attended, known: r.games.known },
+      practices: { attended: r.practices.attended, known: r.practices.known },
     })) ?? null,
     dues: duesStats,
+    todayISO: todayISO || undefined,
   });
   const REPORT_HREF: Record<InsightReport, string> = {
     'playing-time': `${base}/history/playing-time`,
@@ -386,6 +410,16 @@ export default function CoachesInsightsPage({
                     : duesPct != null
                       ? `${duesPct}% collected${duesStats && duesStats.neverPaidCount > 0 ? ` · ${duesStats.neverPaidCount} never paid` : ''} — in Money`
                       : 'Set up dues in Money to track collections'}
+                </span>
+              </Link>
+            )}
+            {canAwards && (
+              <Link href={`${base}/history/awards`} className={`${styles.insightsDoor} ${!awardsSummary || awardsSummary.total === 0 ? styles.insightsDoorSoft : ''}`}>
+                <span className={styles.insightsDoorQ}>Who&apos;s earning it?<span aria-hidden>→</span></span>
+                <span className={styles.insightsDoorSum}>
+                  {awardsSummary && awardsSummary.total > 0
+                    ? `${awardsSummary.total} award${awardsSummary.total === 1 ? '' : 's'} given${awardsSummary.leaderName ? ` · ${awardsSummary.leaderName.split(' ')[0]} leads with ${awardsSummary.leaderCount}` : ''}`
+                    : 'Give your first award after a game to start the leaderboard'}
                 </span>
               </Link>
             )}

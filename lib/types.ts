@@ -1382,19 +1382,60 @@ export interface RepTeamLineupTemplate {
   updatedAt: string;
 }
 
-// Coach Tags (Coach Tags & Player Awards, Phase 1). 'expense' is reserved for Phase 3 — no app
-// code creates expense-kind tags yet.
+// Coach Tags (Coach Tags & Player Awards, Phase 1 game tags + Phase 3 expense tags).
 export type RepTagKind = 'game' | 'expense';
 
 export interface RepTeamTag {
   id: string;
   orgId: string;
-  teamId: string;
+  // null = org-authored shared tag (visible to every team in the org); a UUID = a team's own
+  // private tag. Widened to nullable in migration 184 for the org shared library (Phase 3).
+  teamId: string | null;
   kind: RepTagKind;
   name: string;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// Player Awards (Coach Tags & Player Awards, Phase 2). No merge tool (unlike tags) — a coach
+// picks from a short curated library rather than free-typing per game, so rename + retire is
+// sufficient. Retiring flips isActive; every past award keeps resolving the type's current
+// name/emoji at render time, same as a rename does.
+export interface RepTeamAwardType {
+  id: string;
+  orgId: string;
+  // null = org-authored shared award type (visible to every team); a UUID = a team's own.
+  // Widened to nullable in migration 184 for the org shared library (Phase 3).
+  teamId: string | null;
+  name: string;
+  emoji: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// event_id and tournamentLabel are mutually optional — a row can carry neither, meaning a
+// general/season recognition not tied to any single occasion.
+export interface RepPlayerAward {
+  id: string;
+  orgId: string;
+  teamId: string;
+  playerId: string;
+  awardTypeId: string;
+  eventId: string | null;
+  tournamentLabel: string | null;
+  awardedAt: string;
+  note: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // Denormalized for list/report reads (joined at query time, not persisted columns).
+  awardType?: RepTeamAwardType;
+  playerName?: string;
+  eventOpponent?: string | null;
 }
 
 export interface RepDocumentTemplate {
@@ -1734,7 +1775,11 @@ export type NotificationEventType =
   // posted with the notify intent. Reaches org staff + Coaches-Portal coach members (bell + push);
   // anonymous fans get it via the separate fan-push channel, external team coaches via email.
   // Defaults push ON — day-of, action-worthy. TS-union change only (no DB CHECK on event_type).
-  | 'tournament_announcement';
+  | 'tournament_announcement'
+  // Insights weekly digest — the Sunday "week in review" sent to a rep team's coaches, built
+  // per-recipient from what that coach's capabilities allow (quiet week ⇒ no send). Defaults
+  // push ON. TS-union change only (no DB CHECK on event_type).
+  | 'coach_insights_digest';
 
 export interface AppNotification {
   id: string;

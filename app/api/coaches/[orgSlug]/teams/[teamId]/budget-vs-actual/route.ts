@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
+import {
+  getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear,
+  getRepTeamTagLibrary, getRepTeamExpenseTagsMap,
+} from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
@@ -39,14 +42,18 @@ function toMonthKey(dateStr: string | null): string | null {
 // Actuals are matched to budget categories by expense.category name (case-insensitive).
 // Period actuals are assigned by comparing expense.expense_paid_at to period_date ranges.
 // Unbudgeted actuals are expenses whose category doesn't match any budget category name.
-export const GET = withObservability(async (_req: Request,
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { assignment, programYear } = resolved;
+  const { ctx, assignment, programYear } = resolved;
   const denied = denyUnless(canViewMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
+
+  // Optional money-tag filter (Phase 3): when ?tagId= is present, the actuals are scoped to
+  // expenses carrying that tag (the budget plan stays whole) — a "spend by tag" cut of the report.
+  const filterTagId = new URL(req.url).searchParams.get('tagId');
 
   // ── 1. Load budget lines + periods ──────────────────────────────────────
   const { data: linesRaw } = await supabaseAdmin
@@ -64,7 +71,17 @@ export const GET = withObservability(async (_req: Request,
     .eq('program_year_id', programYear.id)
     .order('created_at');
 
-  const expenses = (expensesRaw ?? []) as Array<Record<string, unknown>>;
+  const allExpenses = (expensesRaw ?? []) as Array<Record<string, unknown>>;
+
+  // Money-tag library (team + org-shared) for the filter chip row, and which tags each expense
+  // carries. When a tag filter is active, the actuals-side of the report only sees tagged expenses.
+  const [expenseTags, tagsByExpenseId] = await Promise.all([
+    getRepTeamTagLibrary(teamId, 'expense', ctx.org.id),
+    getRepTeamExpenseTagsMap(allExpenses.map(e => e.id as string)),
+  ]);
+  const expenses = filterTagId
+    ? allExpenses.filter(e => (tagsByExpenseId[e.id as string] ?? []).includes(filterTagId))
+    : allExpenses;
 
   // Compute the "paid amount" for each expense:
   // - simple expense → amount when expense_paid_at IS NOT NULL
@@ -325,5 +342,8 @@ export const GET = withObservability(async (_req: Request,
     unbudgetedActuals,
     duesCollection,
     monthlyChart,
+    // Only tags actually used by this year's expenses head the filter row (not the whole library).
+    expenseTags: expenseTags.filter(t => new Set(Object.values(tagsByExpenseId).flat()).has(t.id)),
+    activeTagId: filterTagId,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual' });

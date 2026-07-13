@@ -6,7 +6,11 @@ import {
   getActiveRepProgramYear,
   getRepTeamExpenses,
   createRepTeamExpense,
+  getRepTeamTagLibrary,
+  getRepTeamExpenseTagsMap,
+  setRepTeamExpenseTags,
 } from '@/lib/db';
+import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney } from '@/lib/coach-capabilities';
 
@@ -37,12 +41,18 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { assignment, programYear } = resolved;
+  const { ctx, assignment, programYear } = resolved;
   const denied = denyUnless(canViewMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
   const expenses = await getRepTeamExpenses(programYear.id);
-  return NextResponse.json({ expenses });
+  // Money-tag library (team + org-shared) for the picker + which tags each expense carries, so the
+  // list renders chips and the filter chip-row without a per-expense fetch (mirrors events GET).
+  const [expenseTags, tagsByExpenseId] = await Promise.all([
+    getRepTeamTagLibrary(teamId, 'expense', ctx.org.id),
+    getRepTeamExpenseTagsMap(expenses.map(e => e.id)),
+  ]);
+  return NextResponse.json({ expenses, expenseTags, tagsByExpenseId });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/expenses' });
 
 export const POST = withObservability(async (req: Request,
@@ -81,6 +91,17 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'amount must be a positive number' }, { status: 400 });
   }
 
+  // Optional money tags — validated against this team's expense-tag library (own + org-shared)
+  // before anything is written, so a stray/cross-team id can't be linked.
+  let tagIds: string[] = [];
+  if (body.tagIds !== undefined) {
+    const resolvedTags = await resolveValidTagIds(team.id, ctx!.org.id, 'expense', body.tagIds);
+    if (resolvedTags === null) {
+      return NextResponse.json({ error: 'tagIds must be an array of this team’s existing money-tag ids' }, { status: 400 });
+    }
+    tagIds = resolvedTags;
+  }
+
   const expense = await createRepTeamExpense({
     programYearId:  programYear.id,
     teamId:         team.id,
@@ -101,5 +122,9 @@ export const POST = withObservability(async (req: Request,
     createdBy:      ctx!.user.id,
   });
 
-  return NextResponse.json({ expense }, { status: 201 });
+  if (tagIds.length > 0) {
+    await setRepTeamExpenseTags(expense.id, tagIds);
+  }
+
+  return NextResponse.json({ expense, tagIds }, { status: 201 });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/expenses' });

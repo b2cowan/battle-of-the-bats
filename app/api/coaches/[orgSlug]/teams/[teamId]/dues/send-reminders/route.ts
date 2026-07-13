@@ -104,7 +104,7 @@ export const POST = withObservability(async (req: Request,
     const html = `
 <div style="font-family:Inter,sans-serif;max-width:600px;margin:0 auto;padding:2rem;">
   <p>Hi ${guardianFirst},</p>
-  <p>This is a friendly reminder that the following dues installments are ${window === 30 ? 'coming up in approximately 30 days' : window === 7 ? 'due in about one week' : 'coming up'} for your player(s) on <strong>${team.name}</strong>:</p>
+  <p>This is a friendly reminder that the following dues installments are coming due for your player(s) on <strong>${team.name}</strong>:</p>
   <ul style="padding-left:1.25rem;">${rows}</ul>
   <p>To view your full payment schedule or if you have already submitted payment, please contact your coach directly.</p>
   <p style="color:rgba(0,0,0,0.5);font-size:0.85rem;margin-top:2rem;">FieldLogicHQ</p>

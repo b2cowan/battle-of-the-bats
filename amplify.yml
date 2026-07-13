@@ -22,6 +22,16 @@ frontend:
         - echo "NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY" >> .env.production
         - echo "VAPID_PRIVATE_KEY=$VAPID_PRIVATE_KEY" >> .env.production
         - echo "VAPID_EMAIL=$VAPID_EMAIL" >> .env.production
+        # Scheduler machine-auth (mig 183 pg_cron ticks): must MATCH the Vault
+        # app_cron_secret in this environment's Supabase project. Unset ⇒ the
+        # machine path on the trigger routes is disabled (fail-closed).
+        - echo "CRON_SECRET=$CRON_SECRET" >> .env.production
+        # NOTE: UNSUBSCRIBE_SECRET is deliberately NOT echoed here. The console var is set
+        # (all-branches + dev), but production has been signing links with the insecure code
+        # fallback because it was never on this copy list. Activating the console value flips
+        # the effective secret and breaks unsubscribe links already sent — so that fix is
+        # decoupled from the scheduler work and will ship as its own deliberate change (ideally
+        # paired with a fresh email send so live links go out re-signed). See SCHEDULED_JOBS plan.
         # Webpack production build (next build --webpack) uses far more heap than the
         # Turbopack default and OOMs the build worker on the 8GiB Standard instance.
         # NODE_OPTIONS is inherited by Next's build workers; raise the old-space limit.

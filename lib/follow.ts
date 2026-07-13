@@ -19,8 +19,51 @@ export interface FollowedTeam {
   divisionId?: string;
 }
 
+const FOLLOW_KEY_PREFIX = 'fl_follow_team_';
+
 export function followKey(orgSlug: string, tournamentSlug: string): string {
-  return `fl_follow_team_${orgSlug}_${tournamentSlug}`;
+  return `${FOLLOW_KEY_PREFIX}${orgSlug}_${tournamentSlug}`;
+}
+
+/** A followed team plus the tournament it belongs to (for cross-tournament lists). */
+export interface FollowedTeamEntry extends FollowedTeam {
+  orgSlug: string;
+  tournamentSlug: string;
+}
+
+/**
+ * Every team this device follows, across all tournaments — powers the consumer
+ * shell's Following / Scores tabs (unified-app Phase 1). Reads the same
+ * `fl_follow_team_${orgSlug}_${tournamentSlug}` keys the per-tournament follow
+ * uses; org/tournament slugs are kebab-case (no underscores), so the first
+ * underscore after the prefix is the org/tournament separator.
+ */
+export function readAllFollowedTeams(): FollowedTeamEntry[] {
+  if (typeof window === 'undefined') return [];
+  const out: FollowedTeamEntry[] = [];
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (!key || !key.startsWith(FOLLOW_KEY_PREFIX)) continue;
+      const rest = key.slice(FOLLOW_KEY_PREFIX.length);
+      const sep = rest.indexOf('_');
+      if (sep <= 0) continue;
+      const orgSlug = rest.slice(0, sep);
+      const tournamentSlug = rest.slice(sep + 1);
+      if (!orgSlug || !tournamentSlug) continue;
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem(key) ?? '') as Partial<FollowedTeam>;
+        if (parsed.id) {
+          out.push({ id: parsed.id, name: parsed.name ?? '', divisionId: parsed.divisionId, orgSlug, tournamentSlug });
+        }
+      } catch {
+        /* skip a malformed entry */
+      }
+    }
+  } catch {
+    /* storage unavailable */
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export function readFollowedTeam(orgSlug: string, tournamentSlug: string): FollowedTeam | null {
@@ -95,6 +138,30 @@ export function useFollowedTeam(orgSlug: string, tournamentSlug: string) {
   }, [orgSlug, tournamentSlug]);
 
   return { followedTeamId, follow, unfollow } as const;
+}
+
+/**
+ * Hook wrapper around every followed team on this device. Hydrates after first
+ * paint (browser-only storage) and stays in sync across tabs (`storage`) and
+ * within the tab (`fl-follow-change`). `ready` distinguishes "still hydrating"
+ * from "genuinely following nothing" so the UI doesn't flash an empty state.
+ */
+export function useAllFollowedTeams() {
+  const [teams, setTeams] = useState<FollowedTeamEntry[]>([]);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const sync = () => { setTeams(readAllFollowedTeams()); setReady(true); };
+    sync();
+    window.addEventListener('storage', sync);
+    window.addEventListener('fl-follow-change', sync);
+    return () => {
+      window.removeEventListener('storage', sync);
+      window.removeEventListener('fl-follow-change', sync);
+    };
+  }, []);
+
+  return { teams, ready } as const;
 }
 
 /**

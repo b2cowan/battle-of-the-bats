@@ -1,0 +1,1034 @@
+<title>Player Awards — Phase 2 Clickable Mockup</title>
+<style>
+  :root {
+    --bg: #0A0A0A;
+    --white-90: rgba(255,255,255,0.9);
+    --white-75: rgba(255,255,255,0.75);
+    --white-70: rgba(255,255,255,0.7);
+    --white-55: rgba(255,255,255,0.55);
+    --white-45: rgba(255,255,255,0.45);
+    --white-40: rgba(255,255,255,0.4);
+    --white-35: rgba(255,255,255,0.35);
+    --white-25: rgba(255,255,255,0.25);
+    --white-14: rgba(255,255,255,0.14);
+    --white-10: rgba(255,255,255,0.1);
+    --white-8: rgba(255,255,255,0.08);
+    --white-5: rgba(255,255,255,0.05);
+    --white-03: rgba(255,255,255,0.03);
+    --text: #F1F5F9;
+    --blueprint: #1E3A8A;
+    --blueprint-rgb: 30,58,138;
+    --lime: #D9F99D;
+    --lime-rgb: 217,249,157;
+    --success: #22C55E;
+    --success-rgb: 34,197,94;
+    --warning: #F59E0B;
+    --warning-rgb: 245,158,11;
+    --danger: #EF4444;
+    --danger-rgb: 239,68,68;
+    --border-2: rgba(255,255,255,0.08);
+    --radius-sm: 6px;
+    --radius: 12px;
+    --radius-lg: 20px;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.4);
+    --shadow: 0 4px 24px rgba(0,0,0,0.5);
+    --glow-sm: 0 0 16px rgba(217,249,157,0.28);
+    --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-data: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  .pa-shell { min-height: 100vh; padding-bottom: 3rem; }
+
+  /* ── Top bar ─────────────────────────────────────────── */
+  .pa-topbar {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(10,10,10,0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-2);
+    padding: 0.85rem 1.25rem 0;
+  }
+  .pa-brand-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.85rem; flex-wrap: wrap; }
+  .pa-brand { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.01em; }
+  .pa-phase-pill {
+    font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;
+    background: var(--white-8); border: 1px solid var(--border-2); color: var(--white-55);
+    padding: 0.22rem 0.55rem; border-radius: 999px;
+  }
+  .pa-brand-note { margin-left: auto; font-size: 0.72rem; color: var(--white-35); }
+  .pa-tabs { display: flex; gap: 0.35rem; overflow-x: auto; padding-bottom: 0.7rem; -ms-overflow-style: none; scrollbar-width: none; }
+  .pa-tabs::-webkit-scrollbar { display: none; }
+  .pa-tab {
+    flex: none; display: inline-flex; align-items: center; gap: 0.4rem;
+    background: transparent; border: 1px solid transparent; border-radius: 999px;
+    padding: 0.5rem 0.95rem; font-size: 0.84rem; font-weight: 700; color: var(--white-45);
+    cursor: pointer; white-space: nowrap; transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .pa-tab:hover { color: var(--white-75); background: var(--white-5); }
+  .pa-tab.active { color: #0f1123; background: var(--lime); border-color: var(--lime); }
+  .pa-tab-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lime); display: inline-block; }
+  .pa-tab.active .pa-tab-dot { background: #0f1123; }
+
+  .pa-canvas { max-width: 980px; margin: 0 auto; padding: 1.5rem 1.25rem 2rem; }
+  .pa-screen { display: none; }
+  .pa-screen.active { display: block; animation: pa-fade 0.18s ease; }
+  @keyframes pa-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .pa-h1 { font-size: 1.3rem; font-weight: 800; margin: 0 0 0.2rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .pa-eyebrow { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--white-40); margin: 0 0 0.4rem; }
+  .pa-new-pill {
+    font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
+    background: rgba(var(--lime-rgb), 0.16); color: var(--lime); border: 1px solid rgba(var(--lime-rgb), 0.4);
+    padding: 0.16rem 0.42rem; border-radius: 5px; vertical-align: middle;
+  }
+  .pa-basis { color: var(--white-45); font-size: 0.82rem; margin: 0 0 1.1rem; }
+
+  /* ── Insights hub tiles ──────────────────────────────── */
+  .pa-doors { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.85rem; }
+  .pa-door {
+    display: block; text-align: left; width: 100%; text-decoration: none; cursor: pointer;
+    background: var(--white-8); border: 1px solid rgba(var(--blueprint-rgb), 0.3); border-radius: var(--radius);
+    box-shadow: var(--shadow-sm); padding: 0.9rem 1rem; transition: border-color 0.15s, background 0.15s, transform 0.12s;
+  }
+  .pa-door:hover { border-color: rgba(var(--blueprint-rgb), 0.6); background: var(--white-10); transform: translateY(-1px); }
+  .pa-door-new { border-color: rgba(var(--lime-rgb), 0.45); }
+  .pa-door-new:hover { border-color: var(--lime); box-shadow: var(--glow-sm); }
+  .pa-door-q { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-weight: 800; font-size: 0.96rem; color: var(--white-90); margin-bottom: 0.35rem; }
+  .pa-door-q span.pa-arrow { color: rgba(var(--blueprint-rgb), 0.8); font-weight: 400; }
+  .pa-door-sum { font-size: 0.79rem; color: var(--white-55); }
+
+  /* ── Cards / sections ────────────────────────────────── */
+  .pa-section {
+    background: var(--white-03); border: 1px solid rgba(var(--blueprint-rgb), 0.16); border-radius: 10px;
+    padding: 1.1rem 1.15rem; margin-bottom: 1rem;
+  }
+  .pa-section-title {
+    font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--white-40);
+    margin: 0 0 0.75rem; display: flex; align-items: center; gap: 0.45rem;
+  }
+  .pa-quiet { color: var(--white-40); font-size: 0.85rem; margin: 0; }
+
+  /* ── Buttons ─────────────────────────────────────────── */
+  .pa-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+    border-radius: var(--radius-sm); font-weight: 700; font-size: 0.83rem; letter-spacing: 0.01em;
+    padding: 0.55rem 1rem; cursor: pointer; border: 1px solid transparent; transition: filter 0.12s, background 0.12s, transform 0.1s;
+  }
+  .pa-btn-primary { background: var(--lime); color: #0f1123; box-shadow: var(--glow-sm); }
+  .pa-btn-primary:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  .pa-btn-ghost { background: var(--white-10); border-color: var(--border-2); color: var(--text); }
+  .pa-btn-ghost:hover { background: var(--white-14); }
+  .pa-btn-danger { background: rgba(var(--danger-rgb), 0.14); border-color: rgba(var(--danger-rgb), 0.32); color: var(--danger); }
+  .pa-btn-danger:hover { background: rgba(var(--danger-rgb), 0.24); }
+  .pa-btn-sm { padding: 0.36rem 0.7rem; font-size: 0.74rem; }
+  .pa-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .pa-actions-row { display: flex; gap: 0.55rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.1rem; }
+
+  /* ── Filter chips ────────────────────────────────────── */
+  .pa-chip-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.1rem; }
+  .pa-chip {
+    display: inline-flex; align-items: center; gap: 0.3rem; background: var(--white-5); border: 1px solid var(--border-2);
+    border-radius: 999px; color: var(--white-55); padding: 0.3rem 0.7rem; min-height: 30px; font-size: 0.76rem; font-weight: 700; cursor: pointer;
+  }
+  .pa-chip:hover { background: var(--white-10); }
+  .pa-chip.active { background: rgba(var(--lime-rgb), 0.16); border-color: var(--lime); color: var(--lime); }
+  .pa-chip-count { font-variant-numeric: tabular-nums; opacity: 0.8; }
+  .pa-chip-create { border-style: dashed; }
+
+  /* ── Leaderboard ─────────────────────────────────────── */
+  .pa-leaderboard-row {
+    display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 0.15rem; border-bottom: 1px solid var(--white-5);
+  }
+  .pa-leaderboard-row:last-child { border-bottom: 0; }
+  .pa-rank {
+    flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--white-8); border: 1px solid var(--border-2);
+    display: flex; align-items: center; justify-content: center; font-family: var(--font-data); font-size: 0.75rem; font-weight: 700; color: var(--white-55);
+  }
+  .pa-leaderboard-row:nth-child(1) .pa-rank { background: rgba(var(--lime-rgb), 0.18); border-color: var(--lime); color: var(--lime); }
+  .pa-lb-name { font-weight: 700; color: var(--white-90); font-size: 0.92rem; }
+  .pa-lb-num { color: var(--white-35); font-family: var(--font-data); font-size: 0.76rem; margin-left: 0.3rem; }
+  .pa-lb-breakdown { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; }
+  .pa-breakdown-chip { font-size: 0.7rem; font-weight: 700; color: var(--white-70); background: var(--white-5); border: 1px solid var(--border-2); border-radius: 5px; padding: 0.1rem 0.4rem; }
+  .pa-lb-total { margin-left: auto; text-align: right; flex: none; }
+  .pa-lb-total-val { font-family: var(--font-data); font-weight: 800; font-size: 1.15rem; color: var(--white-90); }
+  .pa-lb-total-lbl { font-size: 0.62rem; color: var(--white-35); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* ── History table ───────────────────────────────────── */
+  .pa-table-scroll { overflow-x: auto; }
+  .pa-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 560px; }
+  .pa-table th { font-size: 0.63rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--white-35); text-align: left; padding: 0.4rem 0.55rem; border-bottom: 1px solid var(--white-14); white-space: nowrap; }
+  .pa-table td { padding: 0.55rem 0.55rem; border-bottom: 1px solid var(--white-5); color: var(--white-90); vertical-align: top; }
+  .pa-table td.pa-note-cell { color: var(--white-45); font-size: 0.8rem; max-width: 260px; }
+
+  /* ── Schedule list ───────────────────────────────────── */
+  .pa-gamelist { display: flex; flex-direction: column; gap: 0.55rem; }
+  .pa-gamerow {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; cursor: pointer;
+    background: var(--white-03); border: 1px solid var(--border-2); border-radius: 10px; padding: 0.85rem 1rem;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .pa-gamerow:hover { border-color: rgba(var(--blueprint-rgb), 0.4); background: var(--white-5); }
+  .pa-gamerow-opp { font-weight: 700; color: var(--white-90); font-size: 0.92rem; }
+  .pa-gamerow-date { color: var(--white-40); font-size: 0.78rem; margin-left: 0.5rem; }
+  .pa-gamerow-side { display: flex; align-items: center; gap: 0.55rem; flex: none; }
+  .pa-badge { font-family: var(--font-data); font-size: 0.76rem; font-weight: 800; padding: 0.24rem 0.55rem; border-radius: 5px; letter-spacing: 0.02em; }
+  .pa-badge-win { background: rgba(var(--success-rgb), 0.14); color: var(--success); }
+  .pa-badge-loss { background: rgba(var(--danger-rgb), 0.14); color: var(--danger); }
+  .pa-badge-upcoming { background: var(--white-8); color: var(--white-45); }
+  .pa-trophy-chip { font-size: 0.76rem; font-weight: 700; color: var(--lime); background: rgba(var(--lime-rgb), 0.12); border: 1px solid rgba(var(--lime-rgb), 0.3); border-radius: 999px; padding: 0.18rem 0.5rem; }
+
+  /* ── Overlays (slide-over + modal) ───────────────────── */
+  .pa-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+    z-index: 100; padding: 1.25rem; align-items: flex-start; justify-content: center; overflow-y: auto;
+  }
+  .pa-overlay.open { display: flex; }
+  .pa-overlay.pa-align-right { justify-content: flex-end; }
+  .pa-panel {
+    background: #0F1420; border: 1px solid rgba(var(--blueprint-rgb), 0.35); border-radius: var(--radius);
+    box-shadow: var(--shadow); width: 100%; max-width: 520px; padding: 1.35rem; max-height: 92vh; overflow-y: auto;
+  }
+  .pa-panel-wide { max-width: 640px; }
+  .pa-panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+  .pa-panel-title { font-size: 1.1rem; font-weight: 800; color: var(--white-90); margin: 0; }
+  .pa-panel-sub { font-size: 0.8rem; color: var(--white-45); margin: 0.25rem 0 0; }
+  .pa-close-btn {
+    flex: none; background: var(--white-8); border: 1px solid var(--border-2); border-radius: 999px; width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--white-60); font-size: 1rem; line-height: 1;
+  }
+  .pa-close-btn:hover { background: var(--white-14); }
+
+  /* ── Forms ───────────────────────────────────────────── */
+  .pa-field { margin-bottom: 0.95rem; }
+  .pa-label { display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--white-40); margin-bottom: 0.4rem; }
+  .pa-input, .pa-select, .pa-textarea {
+    width: 100%; background: #0B0F19; border: 1px solid rgba(var(--blueprint-rgb), 0.35); border-radius: var(--radius-sm);
+    color: var(--text); padding: 0.6rem 0.75rem; font-size: 0.88rem;
+  }
+  .pa-input:focus, .pa-select:focus, .pa-textarea:focus { outline: none; border-color: var(--lime); box-shadow: 0 0 0 3px rgba(var(--lime-rgb), 0.18); }
+  .pa-textarea { resize: vertical; min-height: 60px; }
+  .pa-char-count { text-align: right; font-size: 0.68rem; color: var(--white-35); margin-top: 0.25rem; }
+  .pa-inline-add { display: flex; gap: 0.4rem; align-items: center; margin-top: 0.5rem; }
+  .pa-inline-add .pa-input { flex: 1; }
+  .pa-emoji-input { width: 3.4rem !important; flex: none !important; text-align: center; }
+  .pa-emoji-pick-btn {
+    flex: none; width: 3.4rem; height: 2.6rem; font-size: 1.2rem; background: #0B0F19;
+    border: 1px solid rgba(var(--blueprint-rgb), 0.35); border-radius: var(--radius-sm); cursor: pointer;
+  }
+  .pa-emoji-pick-btn:hover { border-color: var(--lime); }
+  .pa-emoji-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.4rem; }
+  .pa-emoji-opt {
+    font-size: 1.3rem; background: var(--white-5); border: 1px solid var(--border-2); border-radius: 8px;
+    padding: 0.5rem 0; cursor: pointer; text-align: center; transition: background 0.12s, border-color 0.12s;
+  }
+  .pa-emoji-opt:hover { background: var(--white-10); }
+  .pa-emoji-opt.selected { border-color: var(--lime); background: rgba(var(--lime-rgb), 0.16); }
+
+  /* ── Give-award "tied to" context banner ─────────────── */
+  .pa-context-banner { font-size: 0.8rem; color: var(--white-55); background: var(--white-5); border: 1px solid var(--border-2); border-radius: 8px; padding: 0.55rem 0.75rem; margin-bottom: 0.9rem; }
+  .pa-context-banner b { color: var(--white-90); }
+
+  /* ── Manage-types rows ───────────────────────────────── */
+  .pa-manage-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.1rem; border-bottom: 1px solid var(--white-5); }
+  .pa-manage-row:last-child { border-bottom: 0; }
+  .pa-manage-emoji { font-size: 1.05rem; flex: none; }
+  .pa-manage-name { flex: 1; font-weight: 700; color: var(--white-90); font-size: 0.88rem; }
+  .pa-manage-name.retired { color: var(--white-40); text-decoration: line-through; font-weight: 600; }
+  .pa-manage-actions { display: flex; gap: 0.35rem; flex: none; }
+  .pa-cap-note { font-size: 0.74rem; color: var(--white-35); margin: 0.6rem 0 0; }
+  .pa-retired-toggle { background: none; border: none; padding: 0; margin-top: 0.9rem; font-size: 0.78rem; font-weight: 700; color: var(--blueprint); cursor: pointer; }
+  .pa-retired-toggle:hover { text-decoration: underline; }
+  .pa-retired-list { display: none; margin-top: 0.4rem; }
+  .pa-retired-list.open { display: block; }
+
+  /* ── Award rows (slide-over + profile) ───────────────── */
+  .pa-award-row { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid var(--white-5); cursor: pointer; }
+  .pa-award-row:last-child { border-bottom: 0; }
+  .pa-award-emoji { font-size: 1.1rem; flex: none; }
+  .pa-award-main { flex: 1; min-width: 0; }
+  .pa-award-title { font-weight: 700; font-size: 0.86rem; color: var(--white-90); }
+  .pa-award-meta { font-size: 0.75rem; color: var(--white-40); margin-top: 0.1rem; }
+  .pa-award-note { font-size: 0.78rem; color: var(--white-55); margin-top: 0.35rem; display: none; font-style: italic; }
+  .pa-award-note.open { display: block; }
+
+  /* ── Slide-over specific ─────────────────────────────── */
+  .pa-score-line { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
+  .pa-score-value { font-size: 1.25rem; font-weight: 800; color: var(--white-90); font-variant-numeric: tabular-nums; }
+  .pa-score-edit-hint { font-size: 0.76rem; color: var(--white-35); text-decoration: underline; }
+  .pa-tag-chip { display: inline-flex; align-items: center; font-size: 0.76rem; font-weight: 600; color: var(--white-70); background: var(--white-5); border: 1px solid var(--white-14); border-radius: 999px; padding: 0.2rem 0.6rem; }
+
+  /* ── Player profile ──────────────────────────────────── */
+  .pa-profile-header { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 1.1rem; flex-wrap: wrap; }
+  .pa-profile-name { font-size: 1.25rem; font-weight: 800; }
+  .pa-profile-meta { font-size: 0.85rem; color: var(--white-45); font-family: var(--font-data); }
+  .pa-back-link { display: inline-block; font-size: 0.78rem; color: var(--blueprint); text-decoration: none; margin-bottom: 0.7rem; font-weight: 600; }
+  .pa-back-link:hover { text-decoration: underline; }
+  .pa-stat-row { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+  .pa-stat-box { min-width: 100px; padding: 0.6rem 0.85rem; background: var(--white-5); border: 1px solid var(--border-2); border-radius: 10px; }
+  .pa-stat-box-val { font-family: var(--font-data); font-size: 1.15rem; font-weight: 800; color: var(--white-90); }
+  .pa-stat-box-lbl { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--white-40); margin-top: 0.15rem; }
+
+  /* ── Toast ───────────────────────────────────────────── */
+  .pa-toast {
+    display: none; align-items: center; gap: 0.4rem; background: rgba(var(--success-rgb), 0.14); border: 1px solid rgba(var(--success-rgb), 0.35);
+    color: var(--success); border-radius: 8px; padding: 0.55rem 0.75rem; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.9rem;
+  }
+  .pa-toast.show { display: flex; }
+  .pa-error-text { color: var(--danger); font-size: 0.76rem; margin-top: 0.3rem; display: none; }
+  .pa-error-text.show { display: block; }
+
+  .pa-footer-note {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 15; text-align: center; font-size: 0.7rem; color: var(--white-35);
+    background: rgba(10,10,10,0.85); backdrop-filter: blur(6px); border-top: 1px solid var(--border-2); padding: 0.5rem 1rem;
+  }
+
+  @media (max-width: 600px) {
+    .pa-panel { max-width: 100%; }
+    .pa-lb-total { text-align: right; }
+    .pa-brand-note { display: none; }
+  }
+</style>
+
+<div class="pa-shell">
+  <div class="pa-topbar">
+    <div class="pa-brand-row">
+      <span class="pa-brand">🏆 Player Awards</span>
+      <span class="pa-phase-pill">Phase 2 · Clickable mockup</span>
+      <span class="pa-brand-note">Sample data only — nothing here is saved</span>
+    </div>
+    <nav class="pa-tabs">
+      <button class="pa-tab active" data-tab="hub"><span class="pa-tab-dot"></span>Insights Hub</button>
+      <button class="pa-tab" data-tab="schedule">Schedule &amp; game detail</button>
+      <button class="pa-tab" data-tab="report">Who's earning it? <span class="pa-tab-dot"></span></button>
+      <button class="pa-tab" data-tab="profile">Player profile</button>
+    </nav>
+  </div>
+
+  <div class="pa-canvas">
+
+    <!-- ══════════════ SCREEN: Insights Hub ══════════════ -->
+    <section class="pa-screen active" id="screen-hub">
+      <p class="pa-eyebrow">Season Review</p>
+      <h1 class="pa-h1">Insights</h1>
+      <p class="pa-basis">Existing 4 report doorways, unchanged — plus one new one.</p>
+      <div class="pa-doors" id="hub-doors"><!-- rendered by JS --></div>
+    </section>
+
+    <!-- ══════════════ SCREEN: Schedule ══════════════ -->
+    <section class="pa-screen" id="screen-schedule">
+      <p class="pa-eyebrow">Team Toronto Blue Jays 5</p>
+      <h1 class="pa-h1">Schedule</h1>
+      <p class="pa-basis">Tap a game to open it — final score, tags, and (new) awards given all live in the same panel. Games with an award show a trophy count right in the list.</p>
+      <div class="pa-gamelist" id="game-list"><!-- rendered by JS --></div>
+    </section>
+
+    <!-- ══════════════ SCREEN: Awards report ══════════════ -->
+    <section class="pa-screen" id="screen-report">
+      <p class="pa-eyebrow">Season Review · new 5th tile</p>
+      <h1 class="pa-h1">Who's earning it? <span class="pa-new-pill">New</span></h1>
+      <p class="pa-basis" id="report-basis"></p>
+
+      <div class="pa-actions-row">
+        <button class="pa-btn pa-btn-primary" id="btn-give-general">🏆 Give an award</button>
+        <button class="pa-btn pa-btn-ghost" id="btn-manage-types">Manage award types</button>
+      </div>
+
+      <div class="pa-chip-row" id="report-filter-chips"><!-- rendered by JS --></div>
+
+      <div class="pa-section">
+        <p class="pa-section-title">Leaderboard</p>
+        <div id="leaderboard-body"><!-- rendered by JS --></div>
+      </div>
+
+      <div class="pa-section">
+        <p class="pa-section-title">All awards this season</p>
+        <div class="pa-table-scroll">
+          <table class="pa-table">
+            <thead>
+              <tr><th>Player</th><th>Award</th><th>For</th><th>Date</th><th>Note</th></tr>
+            </thead>
+            <tbody id="history-body"><!-- rendered by JS --></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ SCREEN: Player profile ══════════════ -->
+    <section class="pa-screen" id="screen-profile">
+      <a class="pa-back-link" href="#" onclick="return false;">&larr; Back to roster</a>
+      <div class="pa-profile-header">
+        <span class="pa-profile-name">Ethan Brar</span>
+        <span class="pa-profile-meta">#7 · SS / 2B</span>
+      </div>
+
+      <div class="pa-section">
+        <p class="pa-section-title">Attendance</p>
+        <div class="pa-stat-row">
+          <div class="pa-stat-box"><div class="pa-stat-box-val">92%</div><div class="pa-stat-box-lbl">Rate</div></div>
+          <div class="pa-stat-box"><div class="pa-stat-box-val">11 / 12</div><div class="pa-stat-box-lbl">Games</div></div>
+        </div>
+      </div>
+
+      <div class="pa-section">
+        <p class="pa-section-title">Awards <span class="pa-new-pill">New</span></p>
+        <p class="pa-quiet" id="profile-awards-headline" style="margin-bottom:0.6rem;"></p>
+        <div id="profile-awards-list"><!-- rendered by JS --></div>
+      </div>
+
+      <div class="pa-section">
+        <p class="pa-section-title">Dues</p>
+        <p class="pa-quiet">Paid in full · $450 of $450</p>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="pa-footer-note">This is a design mockup for sign-off, not the live app — every screen and click here is simulated with sample data.</div>
+</div>
+
+<!-- ══════════════ OVERLAY: game detail slide-over ══════════════ -->
+<div class="pa-overlay pa-align-right" id="overlay-slideover">
+  <div class="pa-panel pa-panel-wide" id="slideover-panel"><!-- rendered by JS --></div>
+</div>
+
+<!-- ══════════════ OVERLAY: give-award modal ══════════════ -->
+<div class="pa-overlay" id="overlay-give">
+  <div class="pa-panel" id="give-panel">
+    <div class="pa-panel-header">
+      <div>
+        <p class="pa-panel-title">Give an award</p>
+        <p class="pa-panel-sub">Takes about ten seconds. Save resets the form so you can give another right away.</p>
+      </div>
+      <button class="pa-close-btn" data-close="overlay-give">&times;</button>
+    </div>
+
+    <div class="pa-toast" id="give-toast"></div>
+
+    <div class="pa-field">
+      <label class="pa-label" for="give-context-select">Tied to</label>
+      <select class="pa-select" id="give-context-select"></select>
+    </div>
+    <div class="pa-field" id="give-tournament-field" style="display:none;">
+      <input class="pa-input" id="give-tournament-input" type="text" placeholder="Tournament or occasion, e.g. Milton Slo-Pitch Classic (optional)" maxlength="80" />
+    </div>
+
+    <div class="pa-field">
+      <label class="pa-label" for="give-player-select">Player</label>
+      <select class="pa-select" id="give-player-select"></select>
+    </div>
+
+    <div class="pa-field">
+      <label class="pa-label">Award</label>
+      <div class="pa-chip-row" id="give-type-chips" style="margin-bottom:0.3rem;"><!-- rendered by JS --></div>
+      <div class="pa-inline-add" id="give-new-type-row" style="display:none;">
+        <button type="button" class="pa-emoji-pick-btn" id="give-new-type-emoji-btn">🏅</button>
+        <input class="pa-input" id="give-new-type-name" maxlength="40" placeholder="New award name" />
+        <button class="pa-btn pa-btn-ghost pa-btn-sm" id="give-new-type-add">Add</button>
+      </div>
+      <p class="pa-error-text" id="give-type-error">Pick an award.</p>
+    </div>
+
+    <div class="pa-field">
+      <label class="pa-label" for="give-note">Note (optional)</label>
+      <textarea class="pa-textarea" id="give-note" maxlength="200" placeholder="e.g. Diving catch to end the game"></textarea>
+      <p class="pa-char-count"><span id="give-note-count">0</span>/200</p>
+    </div>
+    <p class="pa-error-text" id="give-player-error">Pick a player.</p>
+
+    <div class="pa-actions-row" style="margin-top:0.4rem;">
+      <button class="pa-btn pa-btn-primary" id="give-save">Save</button>
+      <button class="pa-btn pa-btn-ghost" data-close="overlay-give">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ OVERLAY: manage award types modal ══════════════ -->
+<div class="pa-overlay" id="overlay-manage">
+  <div class="pa-panel">
+    <div class="pa-panel-header">
+      <div>
+        <p class="pa-panel-title">Manage award types</p>
+        <p class="pa-panel-sub">Edit the name or icon, or retire a type entirely — retiring keeps every past award exactly as given, it just drops off the picker.</p>
+      </div>
+      <button class="pa-close-btn" data-close="overlay-manage">&times;</button>
+    </div>
+
+    <div id="manage-active-list"><!-- rendered by JS --></div>
+    <p class="pa-cap-note" id="manage-cap-note"></p>
+
+    <div class="pa-inline-add">
+      <button type="button" class="pa-emoji-pick-btn" id="manage-new-emoji-btn">🏅</button>
+      <input class="pa-input" id="manage-new-name" maxlength="40" placeholder="e.g. Golden Glove" />
+      <button class="pa-btn pa-btn-ghost pa-btn-sm" id="manage-new-add">+ Add</button>
+    </div>
+
+    <button class="pa-retired-toggle" id="manage-retired-toggle">Retired (<span id="manage-retired-count">0</span>) &#9662;</button>
+    <div class="pa-retired-list" id="manage-retired-list"><!-- rendered by JS --></div>
+  </div>
+</div>
+
+<!-- ══════════════ OVERLAY: icon picker (shared by both modals above) ══════════════ -->
+<div class="pa-overlay" id="overlay-emoji">
+  <div class="pa-panel" style="max-width:380px;">
+    <div class="pa-panel-header">
+      <div>
+        <p class="pa-panel-title">Choose an icon</p>
+        <p class="pa-panel-sub">Tap one below, or type your own.</p>
+      </div>
+      <button class="pa-close-btn" data-close="overlay-emoji">&times;</button>
+    </div>
+    <div class="pa-emoji-grid" id="emoji-grid"><!-- rendered by JS --></div>
+    <div class="pa-field" style="margin-top:1.1rem;margin-bottom:0;">
+      <label class="pa-label" for="emoji-custom-input">Or type your own</label>
+      <div class="pa-inline-add" style="margin-top:0;">
+        <input class="pa-input pa-emoji-input" id="emoji-custom-input" maxlength="4" placeholder="🥎" />
+        <button class="pa-btn pa-btn-ghost pa-btn-sm" id="emoji-custom-use">Use this</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ── Sample data ──────────────────────────────────────────────────────
+  var players = [
+    { id: "p1", num: 7, name: "Ethan Brar" },
+    { id: "p2", num: 12, name: "Marcus Chen" },
+    { id: "p3", num: 3, name: "Liam O'Reilly" },
+    { id: "p4", num: 22, name: "Noah Singh" },
+    { id: "p5", num: 9, name: "Owen Fitzgerald" },
+    { id: "p6", num: 15, name: "Aiden Costa" },
+    { id: "p7", num: 4, name: "Jayden Wu" },
+    { id: "p8", num: 18, name: "Mason Delacroix" },
+    { id: "p9", num: 11, name: "Caleb Nguyen" },
+    { id: "p10", num: 6, name: "Tyler Bianchi" }
+  ].sort(function (a, b) { return a.num - b.num; });
+
+  var awardTypes = [
+    { id: "t1", emoji: "🏆", name: "MVP", active: true },
+    { id: "t2", emoji: "💪", name: "Best Hitter", active: true },
+    { id: "t3", emoji: "🔥", name: "Hustle Award", active: true },
+    { id: "t4", emoji: "🧤", name: "Golden Glove", active: true },
+    { id: "t5", emoji: "🦾", name: "Iron Man", active: false }
+  ];
+
+  var games = [
+    { id: "g1", opp: "Mississauga Thunder", date: "Jul 6", status: "final", result: "W", score: "8–4", tags: ["Rivalry"] },
+    { id: "g2", opp: "Brampton Blaze", date: "Jul 3", status: "final", result: "L", score: "3–5", tags: [] },
+    { id: "g3", opp: "Oakville Storm", date: "Jun 29", status: "final", result: "W", score: "11–2", tags: ["Top in the province"] },
+    { id: "g4", opp: "Milton Bats", date: "Jun 22", status: "final", result: "W", score: "6–5", tags: ["Rivalry"] },
+    { id: "g5", opp: "Vaughan Vipers", date: "Jul 12", status: "upcoming", result: null, score: null, tags: [] }
+  ];
+
+  var awards = [
+    { id: "a1", playerId: "p1", typeId: "t1", gameId: "g1", tournament: null, date: "Jul 6", note: "Two home runs, drove in five." },
+    { id: "a2", playerId: "p2", typeId: "t3", gameId: "g1", tournament: null, date: "Jul 6", note: "Beat out a bunt for extra bases nobody else would've tried." },
+    { id: "a3", playerId: "p3", typeId: "t2", gameId: "g2", tournament: null, date: "Jul 3", note: "3-for-4 even in the loss." },
+    { id: "a4", playerId: "p1", typeId: "t4", gameId: "g3", tournament: null, date: "Jun 29", note: "Diving catch to end the 5th." },
+    { id: "a5", playerId: "p5", typeId: "t1", gameId: "g3", tournament: null, date: "Jun 29", note: "Complete game, two hits allowed." },
+    { id: "a6", playerId: "p2", typeId: "t2", gameId: "g3", tournament: null, date: "Jun 29", note: "" },
+    { id: "a7", playerId: "p1", typeId: "t1", gameId: null, tournament: "Milton Slo-Pitch Classic", date: "Jun 20", note: "Tournament MVP across all four games." }
+  ];
+  var nextAwardNum = 8, nextTypeNum = 6;
+
+  var reportFilterTypeId = null; // null = "All"
+  var currentSlideoverGameId = null;
+  var giveContext = {}; // { gameId } or {} for general
+  var giveNewTypeEmoji = "🏅";
+  var manageNewEmoji = "🏅";
+
+  var EMOJI_LIBRARY = ["🏆","🥇","🥈","🥉","🏅","🎖️","💪","🔥","⚡","🎯","👑","💯","⚾","🥎","🧤","🛡️","🏃","🦾","🌟","⭐","✅","🙌","👏","🚀","🎉","🐐","💎","🎗️"];
+  var emojiPickerCallback = null;
+
+  function openEmojiPicker(current, onSelect) {
+    emojiPickerCallback = onSelect;
+    document.getElementById("emoji-grid").innerHTML = EMOJI_LIBRARY.map(function (e) {
+      return '<button type="button" class="pa-emoji-opt' + (e === current ? " selected" : "") + '" data-emoji="' + e + '">' + e + "</button>";
+    }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll("#emoji-grid .pa-emoji-opt"), function (btn) {
+      btn.addEventListener("click", function () {
+        if (emojiPickerCallback) emojiPickerCallback(btn.getAttribute("data-emoji"));
+        document.getElementById("overlay-emoji").classList.remove("open");
+      });
+    });
+    document.getElementById("emoji-custom-input").value = "";
+    document.getElementById("overlay-emoji").classList.add("open");
+  }
+
+  document.getElementById("emoji-custom-use").addEventListener("click", function () {
+    var val = document.getElementById("emoji-custom-input").value.trim();
+    if (!val) return;
+    if (emojiPickerCallback) emojiPickerCallback(val);
+    document.getElementById("overlay-emoji").classList.remove("open");
+  });
+
+  // ── Helpers ──────────────────────────────────────────────────────────
+  function byId(arr, id) { for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
+  function playerName(id) { var p = byId(players, id); return p ? p.name : "Unknown player"; }
+  function playerNum(id) { var p = byId(players, id); return p ? p.num : ""; }
+  function typeById(id) { return byId(awardTypes, id); }
+  function gameById(id) { return byId(games, id); }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function awardsForGame(gameId) { return awards.filter(function (a) { return a.gameId === gameId; }); }
+  function awardWhereLabel(a) {
+    if (a.gameId) { var g = gameById(a.gameId); return g ? ("vs " + g.opp) : "—"; }
+    return a.tournament ? a.tournament : "General";
+  }
+
+  function typeCounts() {
+    var counts = {};
+    awards.forEach(function (a) { counts[a.typeId] = (counts[a.typeId] || 0) + 1; });
+    return counts;
+  }
+
+  function leaderboardData(filterTypeId) {
+    var byPlayer = {};
+    awards.forEach(function (a) {
+      if (filterTypeId && a.typeId !== filterTypeId) return;
+      if (!byPlayer[a.playerId]) byPlayer[a.playerId] = { playerId: a.playerId, total: 0, byType: {} };
+      byPlayer[a.playerId].total += 1;
+      byPlayer[a.playerId].byType[a.typeId] = (byPlayer[a.playerId].byType[a.typeId] || 0) + 1;
+    });
+    return Object.keys(byPlayer).map(function (k) { return byPlayer[k]; }).sort(function (a, b) { return b.total - a.total; });
+  }
+
+  // ── Render: Insights hub ────────────────────────────────────────────
+  function renderHub() {
+    var counts = typeCounts();
+    var total = awards.length;
+    var lb = leaderboardData(null);
+    var leaderText = lb.length ? (playerName(lb[0].playerId).split(" ")[0] + " leads with " + lb[0].total) : "no awards given yet";
+    var tiles = [
+      { q: "How are we doing?", sum: "8-3-1 this season, on a 3-game win streak", isNew: false },
+      { q: "Is playing time fair?", sum: "Everyone's within 2 innings of even", isNew: false },
+      { q: "Who shows up?", sum: "91% attendance across 12 games", isNew: false },
+      { q: "Where's the money?", sum: "$2,140 collected of $2,600 budgeted", isNew: false },
+      { q: "Who's earning it?", sum: total + " award" + (total === 1 ? "" : "s") + " given · " + leaderText, isNew: true }
+    ];
+    document.getElementById("hub-doors").innerHTML = tiles.map(function (t) {
+      return '<button class="pa-door' + (t.isNew ? " pa-door-new" : "") + '" data-goto="' + (t.isNew ? "report" : "hub") + '">' +
+        '<div class="pa-door-q">' + esc(t.q) + (t.isNew ? ' <span class="pa-new-pill">New</span>' : '') + ' <span class="pa-arrow">&rarr;</span></div>' +
+        '<div class="pa-door-sum">' + esc(t.sum) + "</div>" +
+        "</button>";
+    }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll("#hub-doors [data-goto]"), function (btn) {
+      btn.addEventListener("click", function () { switchTab(btn.getAttribute("data-goto")); });
+    });
+  }
+
+  // ── Render: Schedule list ───────────────────────────────────────────
+  function renderSchedule() {
+    document.getElementById("game-list").innerHTML = games.map(function (g) {
+      var badge = g.status === "upcoming"
+        ? '<span class="pa-badge pa-badge-upcoming">Upcoming</span>'
+        : '<span class="pa-badge ' + (g.result === "W" ? "pa-badge-win" : "pa-badge-loss") + '">' + g.result + " " + g.score + "</span>";
+      var count = awardsForGame(g.id).length;
+      var trophy = count > 0 ? '<span class="pa-trophy-chip">🏆 ' + count + "</span>" : "";
+      return '<div class="pa-gamerow" data-game="' + g.id + '">' +
+        '<div><span class="pa-gamerow-opp">vs ' + esc(g.opp) + '</span><span class="pa-gamerow-date">' + g.date + "</span></div>" +
+        '<div class="pa-gamerow-side">' + badge + trophy + "</div>" +
+        "</div>";
+    }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll("#game-list .pa-gamerow"), function (row) {
+      row.addEventListener("click", function () { openSlideover(row.getAttribute("data-game")); });
+    });
+  }
+
+  // ── Render: game detail slide-over ──────────────────────────────────
+  function openSlideover(gameId) {
+    currentSlideoverGameId = gameId;
+    renderSlideover();
+    document.getElementById("overlay-slideover").classList.add("open");
+  }
+
+  function renderSlideover() {
+    var g = gameById(currentSlideoverGameId);
+    if (!g) return;
+    var scoreBlock;
+    if (g.status === "final") {
+      scoreBlock = '<div class="pa-score-line">' +
+        '<span class="pa-badge ' + (g.result === "W" ? "pa-badge-win" : "pa-badge-loss") + '">' + g.result + "</span>" +
+        '<span class="pa-score-value">' + g.score + "</span>" +
+        '<span class="pa-score-edit-hint">Edit score</span>' +
+        "</div>";
+    } else {
+      scoreBlock = '<div class="pa-score-line"><button class="pa-btn pa-btn-ghost pa-btn-sm" disabled>+ Add final score</button></div>';
+    }
+
+    var tagsBlock = "";
+    if (g.tags.length) {
+      tagsBlock = '<div class="pa-field"><p class="pa-label" style="margin-bottom:0.5rem;">Tags</p>' +
+        g.tags.map(function (t) { return '<span class="pa-tag-chip">' + esc(t) + "</span>"; }).join(" ") + "</div>";
+    }
+
+    var gameAwards = awardsForGame(g.id);
+    var awardsList = gameAwards.length
+      ? gameAwards.map(function (a) {
+          var t = typeById(a.typeId);
+          return '<div class="pa-award-row" data-award="' + a.id + '">' +
+            '<span class="pa-award-emoji">' + (t ? t.emoji : "🏅") + "</span>" +
+            '<div class="pa-award-main"><div class="pa-award-title">' + (t ? esc(t.name) : "Award") + " — " + esc(playerName(a.playerId)) + "</div>" +
+            (a.note ? '<div class="pa-award-note">' + esc(a.note) + "</div>" : "") +
+            "</div></div>";
+        }).join("")
+      : '<p class="pa-quiet">No awards given for this game yet.</p>';
+
+    var giveBlock = g.status === "final"
+      ? '<button class="pa-btn pa-btn-primary" id="slideover-give-btn">🏆 Give an award</button>'
+      : '<p class="pa-quiet">Enter a final score to unlock awards for this game.</p>';
+
+    document.getElementById("slideover-panel").innerHTML =
+      '<div class="pa-panel-header"><div><p class="pa-panel-title">vs ' + esc(g.opp) + '</p><p class="pa-panel-sub">' + g.date + "</p></div>" +
+      '<button class="pa-close-btn" data-close="overlay-slideover">&times;</button></div>' +
+      scoreBlock + tagsBlock +
+      '<div class="pa-section" style="margin-top:0.9rem;">' +
+      '<p class="pa-section-title">Awards given <span class="pa-new-pill">New</span></p>' +
+      '<div style="margin-bottom:0.85rem;">' + awardsList + "</div>" +
+      giveBlock +
+      "</div>";
+
+    var btn = document.getElementById("slideover-give-btn");
+    if (btn) btn.addEventListener("click", function () { openGiveModal({ gameId: g.id }); });
+    Array.prototype.forEach.call(document.querySelectorAll("#slideover-panel .pa-award-row"), function (row) {
+      row.addEventListener("click", function () {
+        var note = row.querySelector(".pa-award-note");
+        if (note) note.classList.toggle("open");
+      });
+    });
+    bindCloseButtons();
+  }
+
+  // ── Render: Awards report screen ────────────────────────────────────
+  function renderReport() {
+    var counts = typeCounts();
+    var typeIds = Object.keys(counts);
+
+    var chipsHtml = '<button class="pa-chip' + (reportFilterTypeId === null ? " active" : "") + '" data-filter="">All</button>';
+    typeIds.forEach(function (tid) {
+      var t = typeById(tid);
+      if (!t) return;
+      chipsHtml += '<button class="pa-chip' + (reportFilterTypeId === tid ? " active" : "") + '" data-filter="' + tid + '">' +
+        t.emoji + " " + esc(t.name) + ' <span class="pa-chip-count">' + counts[tid] + "</span></button>";
+    });
+    document.getElementById("report-filter-chips").innerHTML = chipsHtml;
+    Array.prototype.forEach.call(document.querySelectorAll("#report-filter-chips .pa-chip"), function (chip) {
+      chip.addEventListener("click", function () {
+        reportFilterTypeId = chip.getAttribute("data-filter") || null;
+        renderReport();
+      });
+    });
+
+    if (reportFilterTypeId) {
+      var t = typeById(reportFilterTypeId);
+      document.getElementById("report-basis").innerHTML =
+        '<span style="color:var(--lime);font-weight:700;">' + t.emoji + " " + esc(t.name) + ":</span> " + counts[reportFilterTypeId] + " given this season";
+    } else {
+      document.getElementById("report-basis").textContent = awards.length + " awards given this season across " + typeIds.length + " award types.";
+    }
+
+    var lb = leaderboardData(reportFilterTypeId);
+    document.getElementById("leaderboard-body").innerHTML = lb.length ? lb.map(function (row, i) {
+      var breakdown = Object.keys(row.byType).map(function (tid) {
+        var t = typeById(tid);
+        return '<span class="pa-breakdown-chip">' + (t ? t.emoji : "🏅") + " " + row.byType[tid] + "×</span>";
+      }).join("");
+      return '<div class="pa-leaderboard-row">' +
+        '<span class="pa-rank">' + (i + 1) + "</span>" +
+        '<div style="flex:1;min-width:0;"><span class="pa-lb-name">' + esc(playerName(row.playerId)) + '</span><span class="pa-lb-num">#' + playerNum(row.playerId) + "</span>" +
+        '<div class="pa-lb-breakdown">' + breakdown + "</div></div>" +
+        '<div class="pa-lb-total"><div class="pa-lb-total-val">' + row.total + '</div><div class="pa-lb-total-lbl">' + (row.total === 1 ? "award" : "awards") + "</div></div>" +
+        "</div>";
+    }).join("") : '<p class="pa-quiet">No awards given yet — hand out the first one above.</p>';
+
+    var rows = awards.filter(function (a) { return !reportFilterTypeId || a.typeId === reportFilterTypeId; });
+    document.getElementById("history-body").innerHTML = rows.length ? rows.map(function (a) {
+      var t = typeById(a.typeId);
+      return "<tr><td>" + esc(playerName(a.playerId)) + "</td><td>" + (t ? t.emoji + " " + esc(t.name) : "—") + "</td>" +
+        "<td>" + esc(awardWhereLabel(a)) + "</td><td>" + a.date + '</td><td class="pa-note-cell">' + esc(a.note || "—") + "</td></tr>";
+    }).join("") : '<tr><td colspan="5" class="pa-quiet" style="padding:0.9rem 0.55rem;">Nothing to show for this filter.</td></tr>';
+  }
+
+  // ── Render: Player profile awards ───────────────────────────────────
+  function renderProfile() {
+    var mine = awards.filter(function (a) { return a.playerId === "p1"; });
+    var counts = {};
+    mine.forEach(function (a) { counts[a.typeId] = (counts[a.typeId] || 0) + 1; });
+    var summary = Object.keys(counts).map(function (tid) {
+      var t = typeById(tid);
+      return counts[tid] + "× " + (t ? t.name : "Award");
+    }).join(", ");
+    document.getElementById("profile-awards-headline").innerHTML = mine.length
+      ? "🏆 " + mine.length + " award" + (mine.length === 1 ? "" : "s") + " this season: " + esc(summary)
+      : "No awards yet this season.";
+    document.getElementById("profile-awards-list").innerHTML = mine.map(function (a) {
+      var t = typeById(a.typeId);
+      return '<div class="pa-award-row" data-award="' + a.id + '">' +
+        '<span class="pa-award-emoji">' + (t ? t.emoji : "🏅") + "</span>" +
+        '<div class="pa-award-main"><div class="pa-award-title">' + (t ? esc(t.name) : "Award") + "</div>" +
+        '<div class="pa-award-meta">' + esc(awardWhereLabel(a)) + " · " + a.date + "</div>" +
+        (a.note ? '<div class="pa-award-note">' + esc(a.note) + "</div>" : "") +
+        "</div></div>";
+    }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll("#profile-awards-list .pa-award-row"), function (row) {
+      row.addEventListener("click", function () {
+        var note = row.querySelector(".pa-award-note");
+        if (note) note.classList.toggle("open");
+      });
+    });
+  }
+
+  // ── Give-award modal ─────────────────────────────────────────────────
+  function openGiveModal(context) {
+    giveContext = context || {};
+    document.getElementById("give-toast").classList.remove("show");
+    document.getElementById("give-type-error").classList.remove("show");
+    document.getElementById("give-player-error").classList.remove("show");
+    document.getElementById("give-note").value = "";
+    document.getElementById("give-note-count").textContent = "0";
+    document.getElementById("give-new-type-row").style.display = "none";
+    giveNewTypeEmoji = "🏅";
+    document.getElementById("give-new-type-emoji-btn").textContent = "🏅";
+    document.getElementById("give-new-type-name").value = "";
+    renderGiveContextSelect();
+    renderGiveTypeChips(null);
+    renderGivePlayerSelect();
+    document.getElementById("overlay-give").classList.add("open");
+  }
+
+  function renderGiveContextSelect() {
+    var sel = document.getElementById("give-context-select");
+    var finalGames = games.filter(function (g) { return g.status === "final"; });
+    var opts = '<option value="">— Not tied to a specific game —</option>';
+    finalGames.forEach(function (g) {
+      opts += '<option value="' + g.id + '">vs ' + esc(g.opp) + " — " + g.date + "</option>";
+    });
+    sel.innerHTML = opts;
+    sel.value = giveContext.gameId || "";
+    document.getElementById("give-tournament-field").style.display = sel.value ? "none" : "block";
+    sel.onchange = function () {
+      document.getElementById("give-tournament-field").style.display = sel.value ? "none" : "block";
+    };
+  }
+
+  function renderGivePlayerSelect() {
+    var sel = document.getElementById("give-player-select");
+    sel.innerHTML = '<option value="">Choose a player…</option>' + players.map(function (p) {
+      return '<option value="' + p.id + '">#' + p.num + " " + esc(p.name) + "</option>";
+    }).join("");
+  }
+
+  var giveSelectedType = null;
+  function renderGiveTypeChips(selectAfterCreate) {
+    var wrap = document.getElementById("give-type-chips");
+    var active = awardTypes.filter(function (t) { return t.active; });
+    giveSelectedType = selectAfterCreate || giveSelectedType;
+    wrap.innerHTML = active.map(function (t) {
+      return '<button type="button" class="pa-chip' + (giveSelectedType === t.id ? " active" : "") + '" data-type="' + t.id + '">' + t.emoji + " " + esc(t.name) + "</button>";
+    }).join("") + '<button type="button" class="pa-chip pa-chip-create" id="give-type-create-btn">+ New</button>';
+
+    Array.prototype.forEach.call(wrap.querySelectorAll("[data-type]"), function (chip) {
+      chip.addEventListener("click", function () {
+        giveSelectedType = chip.getAttribute("data-type");
+        document.getElementById("give-type-error").classList.remove("show");
+        renderGiveTypeChips();
+      });
+    });
+    document.getElementById("give-type-create-btn").addEventListener("click", function () {
+      document.getElementById("give-new-type-row").style.display = "flex";
+      document.getElementById("give-new-type-name").focus();
+    });
+  }
+
+  document.getElementById("give-new-type-emoji-btn").addEventListener("click", function () {
+    var btn = this;
+    openEmojiPicker(giveNewTypeEmoji, function (e) { giveNewTypeEmoji = e; btn.textContent = e; });
+  });
+
+  document.getElementById("give-new-type-add").addEventListener("click", function () {
+    var name = document.getElementById("give-new-type-name").value.trim();
+    if (!name) return;
+    var id = "t" + (nextTypeNum++);
+    awardTypes.push({ id: id, emoji: giveNewTypeEmoji, name: name, active: true });
+    document.getElementById("give-new-type-name").value = "";
+    giveNewTypeEmoji = "🏅";
+    document.getElementById("give-new-type-emoji-btn").textContent = "🏅";
+    document.getElementById("give-new-type-row").style.display = "none";
+    renderGiveTypeChips(id);
+  });
+
+  document.getElementById("give-note").addEventListener("input", function (e) {
+    document.getElementById("give-note-count").textContent = String(e.target.value.length);
+  });
+
+  document.getElementById("give-save").addEventListener("click", function () {
+    var playerId = document.getElementById("give-player-select").value;
+    var typeId = giveSelectedType;
+    var playerOk = !!playerId, typeOk = !!typeId;
+    document.getElementById("give-player-error").classList.toggle("show", !playerOk);
+    document.getElementById("give-type-error").classList.toggle("show", !typeOk);
+    if (!playerOk || !typeOk) return;
+
+    var gameId = document.getElementById("give-context-select").value || null;
+    var tournament = gameId ? null : (document.getElementById("give-tournament-input").value.trim() || null);
+    var g = gameId ? gameById(gameId) : null;
+    var date = g ? g.date : "Today";
+
+    var id = "a" + (nextAwardNum++);
+    awards.unshift({ id: id, playerId: playerId, typeId: typeId, gameId: gameId, tournament: tournament, date: date, note: document.getElementById("give-note").value.trim() });
+
+    var t = typeById(typeId);
+    var toast = document.getElementById("give-toast");
+    toast.textContent = "✓ " + t.emoji + " " + t.name + " given to " + playerName(playerId) + ".";
+    toast.classList.add("show");
+
+    document.getElementById("give-player-select").value = "";
+    document.getElementById("give-note").value = "";
+    document.getElementById("give-note-count").textContent = "0";
+
+    renderHub(); renderSchedule(); renderReport(); renderProfile();
+    if (currentSlideoverGameId) renderSlideover();
+  });
+
+  document.getElementById("btn-give-general").addEventListener("click", function () { openGiveModal({}); });
+
+  // ── Manage award types modal ─────────────────────────────────────────
+  function openManageModal() {
+    renderManage();
+    document.getElementById("manage-retired-list").classList.remove("open");
+    document.getElementById("overlay-manage").classList.add("open");
+  }
+
+  function renderManage() {
+    var active = awardTypes.filter(function (t) { return t.active; });
+    var retired = awardTypes.filter(function (t) { return !t.active; });
+
+    document.getElementById("manage-active-list").innerHTML = active.map(function (t) {
+      return '<div class="pa-manage-row" data-type="' + t.id + '">' +
+        '<span class="pa-manage-emoji">' + t.emoji + "</span>" +
+        '<span class="pa-manage-name">' + esc(t.name) + "</span>" +
+        '<div class="pa-manage-actions">' +
+        '<button class="pa-btn pa-btn-ghost pa-btn-sm" data-action="rename" data-type="' + t.id + '">Edit</button>' +
+        '<button class="pa-btn pa-btn-ghost pa-btn-sm" data-action="retire" data-type="' + t.id + '">Retire</button>' +
+        "</div></div>";
+    }).join("");
+
+    document.getElementById("manage-cap-note").textContent = active.length + " of 30 award types used.";
+    document.getElementById("manage-retired-count").textContent = retired.length;
+    document.getElementById("manage-retired-list").innerHTML = retired.length ? retired.map(function (t) {
+      return '<div class="pa-manage-row">' +
+        '<span class="pa-manage-emoji">' + t.emoji + "</span>" +
+        '<span class="pa-manage-name retired">' + esc(t.name) + "</span>" +
+        '<div class="pa-manage-actions"><button class="pa-btn pa-btn-ghost pa-btn-sm" data-action="restore" data-type="' + t.id + '">Restore</button></div>' +
+        "</div>";
+    }).join("") : '<p class="pa-quiet">Nothing retired.</p>';
+
+    Array.prototype.forEach.call(document.querySelectorAll("#overlay-manage [data-action]"), function (btn) {
+      btn.addEventListener("click", function () {
+        var action = btn.getAttribute("data-action");
+        var t = typeById(btn.getAttribute("data-type"));
+        if (!t) return;
+        if (action === "retire") { t.active = false; renderManage(); renderReport(); }
+        else if (action === "restore") { t.active = true; renderManage(); renderReport(); }
+        else if (action === "rename") { startRename(t); }
+      });
+    });
+  }
+
+  function startRename(t) {
+    var row = document.querySelector('#manage-active-list .pa-manage-row[data-type="' + t.id + '"]');
+    if (!row) return;
+    var editEmoji = t.emoji;
+    row.innerHTML = '<button type="button" class="pa-emoji-pick-btn" id="rename-emoji-btn">' + t.emoji + '</button>' +
+      '<input class="pa-input" id="rename-input" value="' + esc(t.name) + '" maxlength="40" style="flex:1;" />' +
+      '<div class="pa-manage-actions">' +
+      '<button class="pa-btn pa-btn-primary pa-btn-sm" id="rename-save">Save</button>' +
+      '<button class="pa-btn pa-btn-ghost pa-btn-sm" id="rename-cancel">Cancel</button>' +
+      "</div>";
+    document.getElementById("rename-input").focus();
+    document.getElementById("rename-emoji-btn").addEventListener("click", function () {
+      var btn = this;
+      openEmojiPicker(editEmoji, function (e) { editEmoji = e; btn.textContent = e; });
+    });
+    document.getElementById("rename-save").addEventListener("click", function () {
+      var name = document.getElementById("rename-input").value.trim();
+      if (name) t.name = name;
+      t.emoji = editEmoji;
+      renderManage(); renderReport();
+    });
+    document.getElementById("rename-cancel").addEventListener("click", renderManage);
+  }
+
+  document.getElementById("manage-new-emoji-btn").addEventListener("click", function () {
+    var btn = this;
+    openEmojiPicker(manageNewEmoji, function (e) { manageNewEmoji = e; btn.textContent = e; });
+  });
+
+  document.getElementById("manage-new-add").addEventListener("click", function () {
+    var name = document.getElementById("manage-new-name").value.trim();
+    if (!name) return;
+    awardTypes.push({ id: "t" + (nextTypeNum++), emoji: manageNewEmoji, name: name, active: true });
+    document.getElementById("manage-new-name").value = "";
+    manageNewEmoji = "🏅";
+    document.getElementById("manage-new-emoji-btn").textContent = "🏅";
+    renderManage(); renderReport();
+  });
+
+  document.getElementById("manage-retired-toggle").addEventListener("click", function () {
+    document.getElementById("manage-retired-list").classList.toggle("open");
+  });
+
+  document.getElementById("btn-manage-types").addEventListener("click", openManageModal);
+
+  // ── Tabs + overlay close plumbing ───────────────────────────────────
+  function switchTab(name) {
+    Array.prototype.forEach.call(document.querySelectorAll(".pa-tab"), function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-tab") === name);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".pa-screen"), function (sec) {
+      sec.classList.toggle("active", sec.id === "screen-" + name);
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".pa-tab"), function (btn) {
+    btn.addEventListener("click", function () { switchTab(btn.getAttribute("data-tab")); });
+  });
+
+  function bindCloseButtons() {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-close]"), function (btn) {
+      btn.onclick = function () { document.getElementById(btn.getAttribute("data-close")).classList.remove("open"); };
+    });
+  }
+  bindCloseButtons();
+  Array.prototype.forEach.call(document.querySelectorAll(".pa-overlay"), function (ov) {
+    ov.addEventListener("click", function (e) { if (e.target === ov) ov.classList.remove("open"); });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      var open = document.querySelectorAll(".pa-overlay.open");
+      if (open.length) open[open.length - 1].classList.remove("open");
+    }
+  });
+
+  // ── Initial paint ───────────────────────────────────────────────────
+  renderHub();
+  renderSchedule();
+  renderReport();
+  renderProfile();
+})();
+</script>

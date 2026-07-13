@@ -2256,6 +2256,62 @@
     "foreign_column": "id"
   },
   {
+    "table_name": "rep_player_awards",
+    "constraint_name": "rep_player_awards_award_type_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "award_type_id",
+    "foreign_table": "rep_team_award_types",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_awards",
+    "constraint_name": "rep_player_awards_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_player_awards",
+    "constraint_name": "rep_player_awards_event_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "event_id",
+    "foreign_table": "rep_team_events",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_awards",
+    "constraint_name": "rep_player_awards_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_awards",
+    "constraint_name": "rep_player_awards_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_player_awards",
+    "constraint_name": "rep_player_awards_player_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "player_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_awards",
+    "constraint_name": "rep_player_awards_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
     "table_name": "rep_player_documents",
     "constraint_name": "rep_player_documents_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -2576,6 +2632,38 @@
     "foreign_column": "id"
   },
   {
+    "table_name": "rep_team_award_types",
+    "constraint_name": "rep_team_award_types_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_award_types",
+    "constraint_name": "rep_team_award_types_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_award_types",
+    "constraint_name": "rep_team_award_types_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_award_types",
+    "constraint_name": "rep_team_award_types_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
     "table_name": "rep_team_coaches",
     "constraint_name": "rep_team_coaches_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -2781,6 +2869,38 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_expense_tags",
+    "constraint_name": "rep_team_expense_tags_expense_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "expense_id",
+    "foreign_table": "rep_team_expenses",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_expense_tags",
+    "constraint_name": "rep_team_expense_tags_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "expense_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_expense_tags",
+    "constraint_name": "rep_team_expense_tags_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "tag_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_expense_tags",
+    "constraint_name": "rep_team_expense_tags_tag_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tag_id",
+    "foreign_table": "rep_team_tags",
     "foreign_column": "id"
   },
   {

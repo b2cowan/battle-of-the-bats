@@ -43,7 +43,7 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId, eventId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { assignment, programYear } = resolved;
+  const { ctx, assignment, programYear } = resolved;
   const denied = denyUnless(assignment.capabilities.schedule, 'You do not have access to the schedule.');
   if (denied) return denied;
 
@@ -83,7 +83,7 @@ export const PATCH = withObservability(async (req: Request,
     // run) — apply only to THIS event id even on a "this & future"/"all" scoped save, rather than
     // silently dropping the edit (updateRepTeamEventSeries has no tagIds concept at all).
     if (body.tagIds !== undefined) {
-      const tagIds = await resolveValidTagIds(teamId, body.tagIds);
+      const tagIds = await resolveValidTagIds(teamId, ctx.org.id, 'game', body.tagIds);
       if (tagIds === null) {
         return NextResponse.json({ error: 'tagIds must be an array of this team’s existing tag ids' }, { status: 400 });
       }
@@ -131,7 +131,7 @@ export const PATCH = withObservability(async (req: Request,
   // edit above (a coach tags one specific game, not a whole recurring run at once).
   let tagIds: string[] | null = null;
   if (body.tagIds !== undefined) {
-    tagIds = await resolveValidTagIds(teamId, body.tagIds);
+    tagIds = await resolveValidTagIds(teamId, ctx.org.id, 'game', body.tagIds);
     if (tagIds === null) {
       return NextResponse.json({ error: 'tagIds must be an array of this team’s existing tag ids' }, { status: 400 });
     }

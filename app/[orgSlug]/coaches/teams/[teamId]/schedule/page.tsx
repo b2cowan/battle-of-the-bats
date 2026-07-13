@@ -18,6 +18,7 @@ import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, Clipbo
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
+import GiveAwardModal from '@/components/coaches/GiveAwardModal';
 import styles from '../../../coaches.module.css';
 import type {
   RepAttendanceStatus,
@@ -32,6 +33,8 @@ import type {
   RepEventType,
   RepEventResource,
   RepTeamTag,
+  RepTeamAwardType,
+  RepPlayerAward,
 } from '@/lib/types';
 
 // ── Export definition ─────────────────────────────────────────────────────────
@@ -423,7 +426,7 @@ function TryoutChip({ session, href }: { session: RepTryoutSession; href: string
   );
 }
 
-function EventChip({ event, onClick, dayKey, mismatch }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean }) {
+function EventChip({ event, onClick, dayKey, mismatch, awardCount }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
   const cancelled = event.status === 'cancelled';
@@ -465,6 +468,11 @@ function EventChip({ event, onClick, dayKey, mismatch }: { event: RepTeamEvent; 
           <span className={styles.eventChipResult} style={{ color: '#f59e0b' }}>CANCELLED</span>
         ) : (
           <>
+            {!!awardCount && (
+              <span className={styles.eventChipResult} title={`${awardCount} award${awardCount === 1 ? '' : 's'} given`} style={{ color: 'var(--logic-lime)' }}>
+                🏆 {awardCount}
+              </span>
+            )}
             {hasScore && <span className={styles.eventChipScore}>{event.teamScore}–{event.opponentScore}</span>}
             {!span && event.result && (
               <span className={styles.eventChipResult} style={{
@@ -550,6 +558,14 @@ export default function CoachesSchedulePage({
   const [tagCreating, setTagCreating] = useState(false);
   const [tagError, setTagError] = useState('');
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
+  // Player Awards (Phase 2): the team's award-type library, every award given this season
+  // (filtered client-side per event for the slide-over), a minimal PII-free player list for the
+  // give-award picker, and per-event counts for the schedule list's trophy badge.
+  const [awardTypes, setAwardTypes] = useState<RepTeamAwardType[]>([]);
+  const [teamAwards, setTeamAwards] = useState<RepPlayerAward[]>([]);
+  const [awardPlayers, setAwardPlayers] = useState<{ id: string; name: string; number: string | null }[]>([]);
+  const [awardCountByEventId, setAwardCountByEventId] = useState<Record<string, number>>({});
+  const [giveAwardOpen, setGiveAwardOpen] = useState(false);
   const confirm = useConfirm();
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -567,6 +583,7 @@ export default function CoachesSchedulePage({
       setMismatchIds(new Set<string>(data.lineupMismatchEventIds ?? []));
       setTeamTags(data.tags ?? []);
       setTagsByEventId(data.tagsByEventId ?? {});
+      setAwardCountByEventId(data.awardCountByEventId ?? {});
       // Tryout sessions are projected onto the calendar as read-only markers. Non-fatal: if this
       // fails the schedule still works, tryout dates just won't show.
       try {
@@ -580,9 +597,28 @@ export default function CoachesSchedulePage({
     }
   }, [orgSlug, teamId]);
 
+  // Player Awards data — separate from fetchEvents (own endpoints), but loaded alongside it so
+  // the give-award picker and the slide-over's "Awards given" section are ready without a
+  // second round trip when a coach opens a game.
+  const fetchAwardData = useCallback(async () => {
+    try {
+      const [typesRes, awardsRes] = await Promise.all([
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards`),
+      ]);
+      if (typesRes.ok) setAwardTypes((await typesRes.json()).awardTypes ?? []);
+      if (awardsRes.ok) {
+        const awardsData = await awardsRes.json();
+        setTeamAwards(awardsData.awards ?? []);
+        setAwardPlayers(awardsData.players ?? []);
+      }
+    } catch { /* non-fatal — the schedule still works without award data */ }
+  }, [orgSlug, teamId]);
+
   useEffect(() => {
     void Promise.resolve().then(fetchEvents);
-  }, [fetchEvents]);
+    void Promise.resolve().then(fetchAwardData);
+  }, [fetchEvents, fetchAwardData]);
 
   // Tag ids on the open form that still exist in the library — recomputed on every render (not
   // synced into state) so a Tag Manager delete/merge while the form is open can never leave a
@@ -926,6 +962,10 @@ export default function CoachesSchedulePage({
     setRsvpEditId(null);
     setDaySheet(null);
     setSelectedEvent(event);
+    // Defensive: a stale true here would pop GiveAwardModal back open on the newly-opened
+    // event, uninvited (not reachable via normal clicks today since the modal blocks
+    // interaction with the slide-over underneath it, but cheap to guard against directly).
+    setGiveAwardOpen(false);
   }
 
   // "+N more" in a month cell (and any future day tap): a single event opens its detail
@@ -1069,6 +1109,7 @@ export default function CoachesSchedulePage({
     setSaveError('');
     setLineupRows([]);
     setLineupEntryIds(new Set());
+    setGiveAwardOpen(false);
   }
 
   // Auto-save means closing should FLUSH any pending edits, not prompt to discard. Only if a
@@ -1353,7 +1394,7 @@ export default function CoachesSchedulePage({
           <div className={styles.calMonthLabel}>{label}</div>
           <div className={styles.calEventList}>
             {(grouped[mk] ?? []).map(e => (
-              <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} />
+              <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} />
             ))}
             {trys.map(s => (
               <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} />
@@ -1388,7 +1429,7 @@ export default function CoachesSchedulePage({
                   : (
                     <>
                       {dayEvents.map(e => (
-                        <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} mismatch={mismatchIds.has(e.id)} />
+                        <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} />
                       ))}
                       {dayTryouts.map(s => (
                         <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} />
@@ -1594,7 +1635,7 @@ export default function CoachesSchedulePage({
             </div>
             <div className={styles.calEventList}>
               {sortDayEvents(daySheet.events).map(e => (
-                <EventChip key={e.id} event={e} dayKey={daySheet.dateKey} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} />
+                <EventChip key={e.id} event={e} dayKey={daySheet.dateKey} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} />
               ))}
             </div>
           </div>
@@ -1719,6 +1760,34 @@ export default function CoachesSchedulePage({
                   const tag = teamTags.find(t => t.id === tagId);
                   return tag ? <span key={tagId} className={styles.lineupChip}>{tag.name}</span> : null;
                 })}
+              </div>
+            )}
+
+            {/* Awards given — the "same visit" give-award moment (Coach Tags & Player Awards
+                Phase 2). Gated on a final score, same as the tags/score UI above it. */}
+            {isGameEvent && (
+              <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
+                <h4 className={styles.formSectionTitle}>Awards given</h4>
+                {selectedEvent.status === 'cancelled' ? (
+                  <p className={styles.formHint}>This game was cancelled.</p>
+                ) : selectedEvent.teamScore == null || selectedEvent.opponentScore == null ? (
+                  <p className={styles.formHint}>Enter a final score to unlock awards for this game.</p>
+                ) : (
+                  <>
+                    {teamAwards.filter(a => a.eventId === selectedEvent.id).length === 0 ? (
+                      <p className={styles.formHint}>No awards given for this game yet.</p>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.6rem' }}>
+                        {teamAwards.filter(a => a.eventId === selectedEvent.id).map(a => (
+                          <div key={a.id} style={{ fontSize: '0.85rem', color: 'var(--white-90)' }}>
+                            {a.awardType?.emoji ? `${a.awardType.emoji} ` : ''}{a.awardType?.name ?? 'Award'} — {a.playerName}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <button className={styles.btnSecondary} onClick={() => setGiveAwardOpen(true)}>🏆 Give an award</button>
+                  </>
+                )}
               </div>
             )}
 
@@ -2429,11 +2498,26 @@ export default function CoachesSchedulePage({
         <TagManagerModal
           orgSlug={orgSlug}
           teamId={teamId}
-          tags={teamTags}
+          /* Only the team's OWN tags are manageable here — org-shared tags (teamId null, added to
+             the library in Phase 3) are curated by the org admin, not editable from a team. */
+          tags={teamTags.filter(t => t.teamId !== null)}
           onClose={() => setTagManagerOpen(false)}
           onChanged={() => { void fetchEvents(); }}
         />
       )}
+
+      {giveAwardOpen && selectedEvent && (
+        <GiveAwardModal
+          orgSlug={orgSlug}
+          teamId={teamId}
+          players={awardPlayers}
+          awardTypes={awardTypes}
+          eventContext={{ id: selectedEvent.id, label: `vs ${selectedEvent.opponent ?? 'opponent'} — ${shortDate(selectedEvent.startsAt.slice(0, 10))}` }}
+          onClose={() => setGiveAwardOpen(false)}
+          onChanged={() => { void fetchAwardData(); }}
+        />
+      )}
+
     </div>
   );
 }

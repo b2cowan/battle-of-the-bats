@@ -2120,25 +2120,26 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 ### `rep_team_tags`
 <!-- dict:table:rep_team_tags -->
 
-**Purpose:** a coach's own per-team vocabulary stuck onto games (`kind='game'`) so Season Review/Insights can answer "how do we do against the top teams?" later — e.g. "Rivalry", "Top in the province". Added by migration 181 (Coach Tags & Player Awards Phase 1). **⚠ DEV-ONLY / PROD-PENDING at author time.** `kind='expense'` is reserved for the Phase 3 money-tags slice — the column/CHECK exist now but no app code writes `'expense'` rows yet.
+**Purpose:** a coach's own per-team vocabulary stuck onto games (`kind='game'`) so Season Review/Insights can answer "how do we do against the top teams?" later — e.g. "Rivalry", "Top in the province" — and onto expenses (`kind='expense'`, Phase 3) for money-report slicing. Added by migration 181 (Phase 1 game tags); `kind='expense'` went live in migration 184 (Phase 3 money tags). **⚠ DEV-ONLY / PROD-PENDING at author time.**
 
 **Gotchas (read first):**
 1. **Per-team library, NOT per-season** — unlike `rep_team_lineup_templates`, there is no `program_year_id`; a tag persists across seasons so a coach's vocabulary doesn't reset at rollover. Reports aggregate by season through the tagged event's own `program_year_id`, not the tag row.
-2. **One name per team+kind, case-insensitive** — expression-based unique index `rep_team_tags_name_uniq (team_id, kind, lower(btrim(name)))`; a duplicate name → 409 (app-friendly message). App caps tags at **50 per team+kind** (enforced in-process at the create route, not a DB constraint — same benign TOCTOU as `rep_team_lineup_templates`).
-3. **Merging is the only delete path history should take** — `merge_rep_team_tags(winner, loser)` (a `SECURITY DEFINER` function, mig 181) atomically re-points every `rep_team_event_tags` row from the loser to the winner then deletes the loser, so a rename-away-from-drift ("Top teams" vs "top in province") never silently loses game history. A plain `DELETE` on this table (via the delete-tag route) does NOT re-point anything — the FK cascade on `rep_team_event_tags` just drops those links.
-4. **Coach-managed via service role** (`supabaseAdmin`) behind the coach-team auth guard (`capabilities.schedule`, same gate as the schedule/events routes); RLS write policies (mirroring mig 071/159: coaches on assigned teams + org admins, `WITH CHECK`) are a defense-in-depth backstop.
+2. **`team_id` is NULLABLE — NULL = org-authored SHARED tag** (widened in mig 184 for the org shared library, Phase 3). A shared tag (team_id NULL, org_id set) surfaces in **every** team's picker in that org, alongside each team's own private tags; `getRepTeamTagLibrary(team, kind, org)` returns `team_id = team OR (team_id IS NULL AND org_id = org)`. Shared tags are authored/managed only from the admin Shared Library screen (owner/admin); a coach's team_id-scoped rename/delete is a no-op on them.
+3. **Two uniqueness indexes, both case-insensitive** — `rep_team_tags_name_uniq (team_id, kind, lower(btrim(name)))` for team tags (NULLs are distinct, so it does NOT constrain shared rows) + partial `rep_team_tags_org_name_uniq (org_id, kind, lower(btrim(name))) WHERE team_id IS NULL` for shared tags. A duplicate → 409. App caps tags at **50 per team+kind** (team-only count) and **50 per org+kind** shared (in-process, benign TOCTOU).
+4. **Merging is the only delete path history should take** — `merge_rep_team_tags(winner, loser)` (a `SECURITY DEFINER` function, mig 181; extended in mig 184 to re-point **both** `rep_team_event_tags` AND `rep_team_expense_tags`, and to treat two shared tags' NULL team_ids as same-scope via `IS DISTINCT FROM`) atomically re-points every link from the loser to the winner then deletes the loser. A plain `DELETE` does NOT re-point — the FK cascades just drop the links.
+5. **Coach-managed (team tags) + admin-managed (shared tags), via service role** (`supabaseAdmin`). Game-tag routes gate on `capabilities.schedule`; money-tag routes gate on `capabilities.money` (view/write) — the one deliberate capability difference. Shared tags gate on owner/admin + `module_rep_teams`. RLS write policies (coaches on assigned teams + org admins, `WITH CHECK`) are a defense-in-depth backstop; the org-admin policies already cover the team_id-NULL rows.
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
 <!-- dict:col:rep_team_tags.org_id -->
 <!-- dict:col:rep_team_tags.team_id -->
-**`org_id` / `team_id`** (FK, NOT NULL, CASCADE) — scope; sourced from the URL/context, not the request body. Indexed: `_team_idx (team_id, kind)` for the list query, `_org_idx (org_id)` for RLS.
+**`org_id`** (FK, NOT NULL, CASCADE) / **`team_id`** (FK, **NULLABLE**, CASCADE — NULL = org-shared, gotcha 2) — scope; sourced from the URL/context, not the request body. Indexed: `_team_idx (team_id, kind)` for the list query, `_org_idx (org_id)` for RLS, `_org_shared_idx (org_id, kind) WHERE team_id IS NULL` for the shared-library list.
 
 <!-- dict:col:rep_team_tags.kind -->
-**`kind`** (text, NOT NULL; CHECK `game|expense`) — Phase 1 only creates `'game'` rows; `'expense'` is schema-ready for Phase 3.
+**`kind`** (text, NOT NULL; CHECK `game|expense`) — `'game'` tags apply to `rep_team_events` (schedule); `'expense'` tags apply to `rep_team_expenses` (money) via `rep_team_expense_tags` (both live as of mig 184).
 
 <!-- dict:col:rep_team_tags.name -->
-**`name`** (text, NOT NULL; CHECK `1 ≤ char_length(btrim(name)) ≤ 40`) — the coach-chosen label; unique per team+kind case-insensitively (gotcha 2).
+**`name`** (text, NOT NULL; CHECK `1 ≤ char_length(btrim(name)) ≤ 40`) — the coach-chosen label; unique per team+kind (and per org+kind for shared) case-insensitively (gotcha 3).
 
 <!-- dict:col:rep_team_tags.created_by -->
 **`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who created the tag.
@@ -2158,6 +2159,96 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_team_event_tags.event_id -->
 <!-- dict:col:rep_team_event_tags.tag_id -->
 **`event_id` / `tag_id`** (FK, NOT NULL, CASCADE, composite PK) — the game and the tag applied to it. `tag_id` is indexed (`_tag_idx`) for the Season Review "vs tag" aggregation (all events for one tag); `event_id` is covered by the PK for the events-GET tag lookup (all tags for one event).
+
+### `rep_team_expense_tags`
+<!-- dict:table:rep_team_expense_tags -->
+
+**Purpose:** many-to-many join between `rep_team_tags` (`kind='expense'`) and `rep_team_expenses` — which money tags are applied to a given expense/payable. Added by migration 184 (Coach Tags & Player Awards Phase 3). The event-tags join couldn't be reused because it FKs specifically to `rep_team_events`. **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **RLS reaches tenancy through the EXPENSE, not the tag** (deliberately different from `rep_team_event_tags`, which reaches through the tag). A money tag may be org-SHARED (`rep_team_tags.team_id` NULL), so scoping the link through the tag would drop it out of a coach's own reach — the expense's `team_id`/`org_id` are the true owners of the link. Policies `EXISTS` against `rep_team_expenses`.
+2. **Set/replace-on-save** — the app writes an expense's full tag set in one call (delete-then-insert), same as `rep_team_event_tags`.
+3. **Both FKs CASCADE**; the composite PK is `(expense_id, tag_id)`. Merging a tag re-points these links via `merge_rep_team_tags` (mig 184); a plain tag `DELETE` drops them.
+
+**Fields** (boilerplate `created_at` omitted; no `id`/`updated_at` — like `rep_team_event_tags`):
+
+<!-- dict:col:rep_team_expense_tags.expense_id -->
+<!-- dict:col:rep_team_expense_tags.tag_id -->
+**`expense_id` / `tag_id`** (FK, NOT NULL, CASCADE, composite PK) — the expense and the money tag applied to it. `tag_id` is indexed (`_tag_idx`) for the "spend by tag" aggregation (Budget vs. Actual filter); `expense_id` is covered by the PK for the expenses-GET tag lookup.
+
+### `rep_team_award_types`
+<!-- dict:table:rep_team_award_types -->
+
+**Purpose:** a coach's own per-team award library (MVP, Best Hitter, Hustle Award to start — seeded on first read, fully editable) that `rep_player_awards` records point at. Added by migration 182 (Coach Tags & Player Awards Phase 2). **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **Never hard-deleted.** No DELETE route/policy exists — "retire" is a plain `is_active=false` UPDATE. Every past `rep_player_awards` row keeps resolving the type's current `name`/`emoji` at render time (same as a rename does), so retiring or renaming never rewrites history, it just drops the type from the picker for new awards. "Restore" is the inverse UPDATE.
+2. **No merge tool, unlike `rep_team_tags`.** A coach picks from a short curated list rather than free-typing per game, so name drift isn't the same risk — rename + retire is the full curation surface (owner-confirmed, not re-litigated).
+3. **One ACTIVE name per team, case-insensitive** — the unique index is partial (`WHERE is_active`), so a retired name can be reused by a new type later; a duplicate active name → 409. Shared types (team_id NULL) get their own partial unique `rep_team_award_types_org_name_uniq (org_id, lower(btrim(name))) WHERE is_active AND team_id IS NULL` (mig 184).
+4. **`team_id` is NULLABLE — NULL = org-authored SHARED award type** (widened in mig 184, Phase 3). A shared type surfaces in every team's give-award picker alongside the team's own; `getRepTeamAwardTypeLibrary(team, org)` returns team types + org-shared active types. Shared types are managed only from the admin Shared Library screen; `rep_player_awards` from any team may reference one.
+5. **Seeded on first touch, not migration-time.** `ensureRepTeamAwardTypesSeeded` ([lib/db.ts](../../../lib/db.ts)) inserts MVP 🏆 / Best Hitter 💪 / Hustle Award 🔥 the first time a **team's** award-types GET finds zero rows (team seeding only — shared types are authored by the admin, never seeded). A migration can't backfill future teams, so the GET route seeds lazily instead.
+6. **Coach-managed (team types) + admin-managed (shared types), via service role** (`supabaseAdmin`). Coach gate: `canManageAwards` (`capabilities.schedule || capabilities.roster !== 'off'`); shared-type gate: owner/admin + `module_rep_teams`. RLS write policies (coaches on assigned teams + org admins, `WITH CHECK`) are a defense-in-depth backstop; the org-admin policies already cover the team_id-NULL rows.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_award_types.org_id -->
+<!-- dict:col:rep_team_award_types.team_id -->
+**`org_id`** (FK, NOT NULL, CASCADE) / **`team_id`** (FK, **NULLABLE**, CASCADE — NULL = org-shared, gotcha 4) — scope; sourced from the URL/context, not the request body.
+
+<!-- dict:col:rep_team_award_types.name -->
+**`name`** (text, NOT NULL; CHECK `1 ≤ char_length(btrim(name)) ≤ 40`) — the coach-chosen label; unique per team while active (gotcha 3).
+
+<!-- dict:col:rep_team_award_types.emoji -->
+**`emoji`** (text, nullable; CHECK `char_length(emoji) ≤ 8`) — the icon shown wherever the award appears. App-side, a coach picks from a curated ~28-icon gallery or types a custom character; the column itself accepts any short string (no app-enforced vocabulary, unlike `bats`/`throws`).
+
+<!-- dict:col:rep_team_award_types.sort_order -->
+**`sort_order`** (int, NOT NULL, default 0) — display order in the picker; not yet reorderable app-side (all seeded/created types currently land in creation order).
+
+<!-- dict:col:rep_team_award_types.is_active -->
+**`is_active`** (bool, NOT NULL, default true) — retire/restore flag (gotcha 1).
+
+<!-- dict:col:rep_team_award_types.created_by -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who created the type.
+
+### `rep_player_awards`
+<!-- dict:table:rep_player_awards -->
+
+**Purpose:** the award record itself — one row per "MVP to Ethan Brar for the Jul 6 game." Added by migration 182 alongside `rep_team_award_types`. **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **`event_id` and `tournament_label` are mutually optional, not a pair.** A row can carry an `event_id` (tied to a specific played game), a `tournament_label` (free text — a tournament weekend or occasion not reducible to one game), or **neither** (a general/season recognition). The give-award API nulls `tournament_label` whenever `event_id` is set, so a row is never ambiguously "for" two things at once.
+2. **`award_type_id` is `ON DELETE RESTRICT`, not `CASCADE`** — deliberately different from `rep_team_event_tags`' cascade-on-delete-the-parent-tag. This row IS the historical record (not a disposable link), and the app never hard-deletes a type (retire only, gotcha 1 on `rep_team_award_types`), so `RESTRICT` backstops that invariant at the DB level in case it ever tried to.
+3. **A game must be scored before it can carry an award.** The give-award API rejects `event_id` for a game whose `teamScore`/`opponentScore` aren't both set yet (mirrors the schedule page's own gating — the "Give an award" button is hidden until a final score is entered). `awarded_at` is derived from the event's date when `event_id` is set, or an explicit/defaulted date otherwise.
+4. **No `program_year_id` column, and none is needed.** `player_id` is inherently season-scoped already — season rollover mints a **new** `rep_roster_players` row per player (see that table's gotchas), so every award reachable from a given `player_id` already belongs to that one season. The player-profile summary (`getRepPlayerAwardsSummary`) relies on this instead of filtering by season.
+5. **Hard-deletable, unlike an award TYPE.** The `/awards/[awardId]` DELETE route removes a single mis-given record outright (undo a mis-click) — this is a different concern from retiring a *type*, which never deletes.
+6. **Direct `team_id`/`org_id` RLS (not a join-through-parent EXISTS).** Mirrors `rep_team_lineup_templates` (mig 159) rather than `rep_team_event_tags` (mig 181) — this row is a first-class record with its own denormalized scope columns, not a pure link table.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_player_awards.org_id -->
+<!-- dict:col:rep_player_awards.team_id -->
+**`org_id` / `team_id`** (FK, NOT NULL, CASCADE) — scope; sourced from the URL/context, not the request body.
+
+<!-- dict:col:rep_player_awards.player_id -->
+**`player_id`** (FK → `rep_roster_players.id` CASCADE) — the recipient; must be an active roster player at award time (app-enforced, no DB CHECK).
+
+<!-- dict:col:rep_player_awards.award_type_id -->
+**`award_type_id`** (FK → `rep_team_award_types.id` RESTRICT) — which award (gotcha 2); must be an ACTIVE type at award time (a retired type can't be picked for a new award, though it keeps resolving for past ones).
+
+<!-- dict:col:rep_player_awards.event_id -->
+**`event_id`** (FK → `rep_team_events.id` ON DELETE SET NULL, nullable) — the specific game, when tied to one (gotcha 1, gotcha 3). `SET NULL` (not CASCADE) so deleting the game degrades the award to "general" rather than deleting the record.
+
+<!-- dict:col:rep_player_awards.tournament_label -->
+**`tournament_label`** (text, nullable; CHECK `≤ 80` chars) — free-text occasion when not tied to a single game (gotcha 1).
+
+<!-- dict:col:rep_player_awards.awarded_at -->
+**`awarded_at`** (date, NOT NULL) — derived from the event's date when `event_id` is set, else client-supplied or defaulted to `tournamentToday()` (gotcha 3).
+
+<!-- dict:col:rep_player_awards.note -->
+**`note`** (text, nullable; CHECK `≤ 200` chars) — the coach's one-line note ("Diving catch to end the game").
+
+<!-- dict:col:rep_player_awards.created_by -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who gave the award.
 
 ### `rep_tryout_registrations`
 <!-- dict:table:rep_tryout_registrations -->
@@ -5355,6 +5446,8 @@ The platform-admin **error-tracking + in-app feedback** store (the "notification
 - Both job functions: **SECURITY DEFINER** (owner `postgres`; needed so the service-role manual sweep can prune `cron.job_run_details`), `search_path = ''`, **EXECUTE revoked from PUBLIC/anon/authenticated** (verified live: anon → `42501`), granted to `service_role` (the `/api/platform-admin/observability/sweep` fallback, super_admin-gated). Neither ever raises — failures land in the heartbeat + the returned jsonb.
 - **`obs_severity_rank(text) → int`** — immutable `critical=4 … info=1` ranking used by the severity-escalation `CASE` in `record_error_event`.
 - **Cron jobs (`cron.job`, scheduled as `postgres`, GMT):** `observability-metrics-fold` `*/5 * * * *` · `observability-retention-sweep` `15 8 * * *` (≈3–4 am Eastern). `cron.schedule(name, …)` is a named upsert → re-applying 122 is idempotent (but it does NOT re-activate a job deactivated via `cron.alter_job(active:=false)`). pg_cron never runs the same job concurrently with itself.
+- **`app_cron_http_tick(p_job_name text, p_path text) → void`** (mig 183) — the scheduled-HTTP bridge: reads `app_cron_base_url` + `app_cron_secret` from **Supabase Vault** (`vault.decrypted_secrets`), `pg_net` `net.http_post`s `{base}{path}` with an `x-cron-secret` header (matching the app's `CRON_SECRET`), and heartbeats into `observability_cron_heartbeat` (same `last_run_at`-only-on-success discipline as the obs jobs). **`status='ok'` means "HTTP dispatched", NOT "sweep succeeded"** — pg_net is fire-and-forget; the app-side truth is the platform audit log (`insights_digest_sweep` / `dues_reminders_sweep` rows). If either Vault secret is unset the tick no-ops with a visible `status='error'` heartbeat. SECURITY DEFINER, `search_path=''`, EXECUTE revoked from PUBLIC/anon/authenticated, granted `postgres`+`service_role`. Uses `pg_net` (installed by mig 183; `pg_cron` came from mig 122).
+- **Cron jobs added by mig 183 (`cron.job`, `postgres`, GMT):** `insights-digest-weekly` `0 23 * * 0` (Sun 23:00 UTC ≈ 6–7pm Toronto) + `insights-digest-catchup` `0 13 * * 1` (Mon 13:00 UTC — a lost-Sunday retry; the digest's 6-day dedupe means only missed teams get served, never a duplicate) · `dues-reminders-daily` `30 13 * * *` (13:30 UTC ≈ 8:30–9:30am Toronto). All three call `app_cron_http_tick(...)`. Idempotent named upserts. ⚠️ Table-free DDL — the `check:migrations` column-diff gate is BLIND to prod missing mig 183 (same caveat as 122); track PROD-PENDING in the plan doc and apply deliberately.
 - **Request-metrics buffer/flush** — `lib/observability/metrics.ts`: an in-process per-route `Map` tally (`recordRequest` increments `call`, and `error` when `isError` = HTTP ≥500 or a throw), flushed by the lazy `maybeFlush` (60 s / 200 calls) as one `request_metrics_raw` row per route via `supabaseAdmin`. Fed by `withObservability` (the route wrapper, working-tree). Only `org-context` + `notifications` are wrapped today, so the metrics see a narrow slice of traffic.
 - **Mechanism A — the `request_id` thread (working-tree, uncommitted)** — `proxy.ts` mints `crypto.randomUUID()` and stamps `x-request-id` on the forwarded request + response → `with-observability.ts` adopts a valid incoming id (else mints), seeds AsyncLocalStorage, re-stamps the response → `onRequestError` reads it off the request headers (no ALS on that path) and passes `opts.requestId` → `capture.ts` writes it to `error_events.request_id` (and copies it into `request_context`). The browser (`lib/observability/client-request-id.ts`) stashes the response id; the feedback widget submits it as `context.requestId`; the triage page joins it back to the error group.
 - **Feedback ingest + redaction (working-tree, uncommitted)** — `app/api/feedback/route.ts` (all-personas POST, `runtime='nodejs'` so it can use the service-role key): validates via `lib/feedback-shared.ts`, scrubs `title`/`body` with `scrubEmails`, `redactContext`s the `context` blob, best-effort per-Lambda-instance throttles (returns a 202 soft-success, not 429), then `supabaseAdmin`-inserts and fires an awaited admin-notify + a fire-and-forget submitter-confirmation email (`lib/feedback-email.ts`, reusing `lib/email.ts`'s `wrap`/`escapeHtml`). Triage = `app/platform-admin/feedback/*` + the formula-neutralized CSV/XLSX export, both gated by the **observability platform-area view** (`super_admin`/`product`/`support`); the `[id]/status` PATCH additionally requires `manage_product`.

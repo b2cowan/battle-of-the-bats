@@ -4,7 +4,7 @@ import { getEffectiveTournamentLimit, getEffectiveTeamLimit, PLAN_CONFIG } from 
 import { createClient as createBrowserSupabaseClient } from './supabase-browser';
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
@@ -4138,6 +4138,110 @@ export async function getRepTeamCoaches(programYearId: string): Promise<RepTeamC
   return (data ?? []).map(mapRepTeamCoach);
 }
 
+// ── Insights weekly digest sweep helpers ────────────────────────────────────────
+
+export interface InsightsDigestTeam {
+  programYearId: string;
+  teamId: string;
+  teamName: string;
+  sport: string | null;
+  orgId: string;
+  orgSlug: string;
+  seasonPitcherCap: number | null;
+  /** Per-program-year coach toggle (rep_program_years.auto_reminders_enabled). The dues
+   *  sweep honors it; the Insights digest deliberately ignores it (different consent). */
+  autoRemindersEnabled: boolean;
+}
+
+/**
+ * Every rep team with a CURRENT program year, across all orgs — the weekly Insights digest's
+ * sweep list. "Current" mirrors getActiveRepProgramYear exactly: status draft OR active
+ * (draft is the DB default — a never-promoted season is fully live for its coaches), newest
+ * created_at wins when a team somehow has both. Three plain queries composed in JS (no
+ * cross-table join dependency); optional filters narrow a manual/test run to one org or team.
+ */
+export async function getInsightsDigestTeams(filter?: { orgId?: string; teamId?: string }): Promise<InsightsDigestTeam[]> {
+  let yearQuery = supabaseAdmin
+    .from('rep_program_years')
+    .select('id, team_id, lineup_settings, created_at, auto_reminders_enabled')
+    .in('status', ['draft', 'active']);
+  if (filter?.teamId) yearQuery = yearQuery.eq('team_id', filter.teamId);
+  const { data: allYears, error } = await yearQuery;
+  if (error) throw error;
+  if (!allYears || allYears.length === 0) return [];
+
+  // One program year per team — the newest current year, same tiebreak as
+  // getActiveRepProgramYear, so the digest reads exactly the season the portal shows.
+  const newestByTeam = new Map<string, (typeof allYears)[number]>();
+  for (const y of allYears) {
+    const prev = newestByTeam.get(y.team_id as string);
+    if (!prev || (y.created_at as string) > (prev.created_at as string)) {
+      newestByTeam.set(y.team_id as string, y);
+    }
+  }
+  const years = [...newestByTeam.values()];
+
+  const teamIds = [...new Set(years.map(y => y.team_id as string))];
+  const { data: teams, error: tErr } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id, name, sport, org_id')
+    .in('id', teamIds);
+  if (tErr) throw tErr;
+  const teamById = new Map((teams ?? []).map(t => [t.id as string, t]));
+
+  const orgIds = [...new Set((teams ?? []).map(t => t.org_id as string))];
+  const { data: orgs, error: oErr } = orgIds.length
+    ? await supabaseAdmin.from('organizations').select('id, slug').in('id', orgIds)
+    : { data: [], error: null };
+  if (oErr) throw oErr;
+  const orgById = new Map((orgs ?? []).map(o => [o.id as string, o]));
+
+  const out: InsightsDigestTeam[] = [];
+  for (const y of years) {
+    const t = teamById.get(y.team_id as string);
+    if (!t) continue;
+    if (filter?.orgId && (t.org_id as string) !== filter.orgId) continue;
+    const o = orgById.get(t.org_id as string);
+    if (!o) continue;
+    out.push({
+      programYearId: y.id as string,
+      teamId: t.id as string,
+      teamName: ((t.name as string) ?? '').trim() || 'Your team',
+      sport: (t.sport as string | null) ?? null,
+      orgId: t.org_id as string,
+      orgSlug: o.slug as string,
+      seasonPitcherCap: (y.lineup_settings as { pitcherMaxInningsDefault?: number } | null)?.pitcherMaxInningsDefault ?? null,
+      // Same null-coercion as mapRepProgramYear so the sweep and the org-admin wave
+      // route can never disagree about whether a team's toggle is on.
+      autoRemindersEnabled: (y.auto_reminders_enabled as boolean | null) ?? true,
+    });
+  }
+  return out;
+}
+
+/**
+ * True when a notification of this event type, whose metadata contains the given keys, exists
+ * for the org since the given time — the digest's no-migration weekly dedupe (skip a team if
+ * one was created within the lookback window).
+ */
+export async function hasRecentNotification(
+  orgId: string,
+  eventType: string,
+  metadataContains: Record<string, unknown>,
+  sinceISO: string,
+): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('notifications')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('event_type', eventType)
+    .contains('metadata', metadataContains)
+    .gte('created_at', sinceISO)
+    .limit(1);
+  if (error) throw error;
+  return !!data && data.length > 0;
+}
+
 export async function addRepTeamCoach(
   programYearId: string,
   teamId: string,
@@ -6508,6 +6612,455 @@ export async function setRepTeamEventTags(eventId: string, tagIds: string[]): Pr
   if (insError) throw insError;
 }
 
+// ── Tag library + org-authored shared tags (Coach Tags & Player Awards, Phase 3) ──
+
+/** The full tag library a team sees for a kind: its OWN tags (team_id = teamId) plus the org's
+ *  shared, admin-authored tags (team_id NULL, org_id = orgId). The picker/report consumers use this;
+ *  the create-cap check keeps using getRepTeamTags (team-only) so shared tags don't eat a team's cap. */
+export async function getRepTeamTagLibrary(teamId: string, kind: RepTagKind, orgId: string): Promise<RepTeamTag[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tags')
+    .select('*')
+    .eq('kind', kind)
+    .or(`team_id.eq.${teamId},and(team_id.is.null,org_id.eq.${orgId})`)
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamTag);
+}
+
+/** Single tag by id — the coach [tagId]/merge routes load this to resolve the tag's kind (→ which
+ *  capability gates the edit) and ownership (a team_id-NULL shared tag can't be edited by a coach). */
+export async function getRepTagById(id: string): Promise<RepTeamTag | null> {
+  const { data, error } = await supabaseAdmin.from('rep_team_tags').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamTag(data) : null;
+}
+
+/** Org-authored shared tags of a kind (team_id NULL) — the admin Shared Library screen. */
+export async function getOrgSharedTags(orgId: string, kind: RepTagKind): Promise<RepTeamTag[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tags')
+    .select('*')
+    .eq('org_id', orgId)
+    .is('team_id', null)
+    .eq('kind', kind)
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamTag);
+}
+
+export async function createOrgSharedTag(fields: {
+  orgId: string; kind: RepTagKind; name: string; createdBy?: string | null;
+}): Promise<RepTeamTag> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tags')
+    .insert({
+      org_id: fields.orgId,
+      team_id: null,
+      kind: fields.kind,
+      name: fields.name.trim(),
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamTag(data);
+}
+
+/** Scoped rename of a shared tag (org_id + team_id IS NULL guards against touching a team tag). */
+export async function renameOrgSharedTag(id: string, orgId: string, name: string): Promise<RepTeamTag | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tags')
+    .update({ name: name.trim(), updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('org_id', orgId)
+    .is('team_id', null)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamTag(data) : null;
+}
+
+/** Scoped delete of a shared tag. Returns true if a row was removed (false → 404). Any expense/event
+ *  links drop via FK cascade (un-sharing an unused-ish tag; merge is the history-preserving path). */
+export async function deleteOrgSharedTag(id: string, orgId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tags')
+    .delete()
+    .eq('id', id)
+    .eq('org_id', orgId)
+    .is('team_id', null)
+    .select('id');
+  if (error) throw error;
+  return (data ?? []).length > 0;
+}
+
+/** Atomic merge of two shared tags (both team_id NULL, same org, same kind) — same RPC as the team
+ *  path (migration 184 made it re-point expense links too and treat NULL=NULL as same-scope). */
+export async function mergeOrgSharedTags(winnerId: string, loserId: string, orgId: string): Promise<void> {
+  const [winner, loser] = await Promise.all([
+    supabaseAdmin.from('rep_team_tags').select('id, org_id, team_id').eq('id', winnerId).maybeSingle(),
+    supabaseAdmin.from('rep_team_tags').select('id, org_id, team_id').eq('id', loserId).maybeSingle(),
+  ]);
+  if (winner.error) throw winner.error;
+  if (loser.error) throw loser.error;
+  if (!winner.data || winner.data.org_id !== orgId || winner.data.team_id !== null) throw new Error('Tag not found');
+  if (!loser.data || loser.data.org_id !== orgId || loser.data.team_id !== null) throw new Error('Tag not found');
+
+  const { error } = await supabaseAdmin.rpc('merge_rep_team_tags', {
+    p_winner_tag_id: winnerId,
+    p_loser_tag_id: loserId,
+  });
+  if (error) throw error;
+}
+
+// ── Expense tags (Coach Tags & Player Awards, Phase 3) — mirrors the event-tag helpers ──
+
+/** expense_id -> tag_id[] for a set of expenses (one query, mirrors getRepTeamEventTagsMap). */
+export async function getRepTeamExpenseTagsMap(expenseIds: string[]): Promise<Record<string, string[]>> {
+  if (expenseIds.length === 0) return {};
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_expense_tags')
+    .select('expense_id, tag_id')
+    .in('expense_id', expenseIds);
+  if (error) throw error;
+  const map: Record<string, string[]> = {};
+  for (const row of data ?? []) {
+    (map[row.expense_id] ??= []).push(row.tag_id);
+  }
+  return map;
+}
+
+/** Replace-on-save: sets the full tag set for one expense (delete then insert). Caller must have
+ *  validated tagIds belong to this team's expense-tag library (this function trusts its input). */
+export async function setRepTeamExpenseTags(expenseId: string, tagIds: string[]): Promise<void> {
+  const { error: delError } = await supabaseAdmin.from('rep_team_expense_tags').delete().eq('expense_id', expenseId);
+  if (delError) throw delError;
+  if (tagIds.length === 0) return;
+  const { error: insError } = await supabaseAdmin
+    .from('rep_team_expense_tags')
+    .insert(tagIds.map(tagId => ({ expense_id: expenseId, tag_id: tagId })));
+  if (insError) throw insError;
+}
+
+// Player Awards (Coach Tags & Player Awards, Phase 2)
+
+function mapRepTeamAwardType(r: any): RepTeamAwardType {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    teamId: r.team_id,
+    name: r.name,
+    emoji: r.emoji ?? null,
+    sortOrder: r.sort_order,
+    isActive: r.is_active,
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+const STARTER_AWARD_TYPES: { name: string; emoji: string }[] = [
+  { name: 'MVP', emoji: '🏆' },
+  { name: 'Best Hitter', emoji: '💪' },
+  { name: 'Hustle Award', emoji: '🔥' },
+];
+
+export async function getRepTeamAwardTypes(
+  teamId: string, opts?: { includeRetired?: boolean },
+): Promise<RepTeamAwardType[]> {
+  let q = supabaseAdmin.from('rep_team_award_types').select('*').eq('team_id', teamId);
+  if (!opts?.includeRetired) q = q.eq('is_active', true);
+  const { data, error } = await q.order('sort_order', { ascending: true }).order('name', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamAwardType);
+}
+
+/** Seeds the starter library (MVP / Best Hitter / Hustle Award) the first time a team's award
+ *  types are read with zero rows — an editable starting point, not a fixed default, so it's
+ *  seeded on first touch rather than backfilled at migration time (which can't reach future
+ *  teams). Returns the active types either way. */
+export async function ensureRepTeamAwardTypesSeeded(orgId: string, teamId: string): Promise<RepTeamAwardType[]> {
+  const existing = await getRepTeamAwardTypes(teamId, { includeRetired: true });
+  if (existing.length > 0) return existing.filter(t => t.isActive);
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_award_types')
+    .insert(STARTER_AWARD_TYPES.map((t, i) => ({
+      org_id: orgId, team_id: teamId, name: t.name, emoji: t.emoji, sort_order: i,
+    })))
+    .select();
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamAwardType);
+}
+
+export async function createRepTeamAwardType(fields: {
+  orgId: string; teamId: string; name: string; emoji?: string | null; createdBy?: string | null;
+}): Promise<RepTeamAwardType> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_award_types')
+    .insert({
+      org_id: fields.orgId,
+      team_id: fields.teamId,
+      name: fields.name.trim(),
+      emoji: fields.emoji?.trim() || null,
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamAwardType(data);
+}
+
+/** Scoped update — bundles rename + icon change as one "Edit" action, and doubles as
+ *  retire/restore via isActive. team_id guards against cross-team edits even if RLS is
+ *  bypassed. Never a delete — award types are only ever soft-retired (migration 182). */
+export async function updateRepTeamAwardType(
+  id: string, teamId: string,
+  fields: { name?: string; emoji?: string | null; isActive?: boolean },
+): Promise<RepTeamAwardType | null> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.name !== undefined) patch.name = fields.name.trim();
+  if (fields.emoji !== undefined) patch.emoji = fields.emoji?.trim() || null;
+  if (fields.isActive !== undefined) patch.is_active = fields.isActive;
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_award_types')
+    .update(patch)
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamAwardType(data) : null;
+}
+
+// ── Award-type library + org-authored shared award types (Phase 3) ──
+
+/** The full award-type library a team sees: its OWN types plus the org's shared, admin-authored
+ *  types (team_id NULL). Shared types are always active-only (a retired shared type is gone for
+ *  everyone); team types honor includeRetired for the team's own manager modal. */
+export async function getRepTeamAwardTypeLibrary(
+  teamId: string, orgId: string, opts?: { includeRetired?: boolean },
+): Promise<RepTeamAwardType[]> {
+  const [teamTypes, orgTypes] = await Promise.all([
+    getRepTeamAwardTypes(teamId, { includeRetired: opts?.includeRetired }),
+    getOrgSharedAwardTypes(orgId, { includeRetired: false }),
+  ]);
+  // Shared first so they head the picker, then the team's own.
+  return [...orgTypes, ...teamTypes];
+}
+
+export async function getOrgSharedAwardTypes(
+  orgId: string, opts?: { includeRetired?: boolean },
+): Promise<RepTeamAwardType[]> {
+  let q = supabaseAdmin.from('rep_team_award_types').select('*').eq('org_id', orgId).is('team_id', null);
+  if (!opts?.includeRetired) q = q.eq('is_active', true);
+  const { data, error } = await q.order('sort_order', { ascending: true }).order('name', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamAwardType);
+}
+
+export async function createOrgSharedAwardType(fields: {
+  orgId: string; name: string; emoji?: string | null; createdBy?: string | null;
+}): Promise<RepTeamAwardType> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_award_types')
+    .insert({
+      org_id: fields.orgId,
+      team_id: null,
+      name: fields.name.trim(),
+      emoji: fields.emoji?.trim() || null,
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamAwardType(data);
+}
+
+/** Scoped update of a shared award type (org_id + team_id IS NULL) — rename/icon/retire/restore,
+ *  same bundled shape as updateRepTeamAwardType. */
+export async function updateOrgSharedAwardType(
+  id: string, orgId: string,
+  fields: { name?: string; emoji?: string | null; isActive?: boolean },
+): Promise<RepTeamAwardType | null> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.name !== undefined) patch.name = fields.name.trim();
+  if (fields.emoji !== undefined) patch.emoji = fields.emoji?.trim() || null;
+  if (fields.isActive !== undefined) patch.is_active = fields.isActive;
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_award_types')
+    .update(patch)
+    .eq('id', id)
+    .eq('org_id', orgId)
+    .is('team_id', null)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamAwardType(data) : null;
+}
+
+function mapRepPlayerAward(r: any): RepPlayerAward {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    teamId: r.team_id,
+    playerId: r.player_id,
+    awardTypeId: r.award_type_id,
+    eventId: r.event_id ?? null,
+    tournamentLabel: r.tournament_label ?? null,
+    awardedAt: r.awarded_at,
+    note: r.note ?? null,
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepTeamPlayerAwards(teamId: string): Promise<RepPlayerAward[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_awards')
+    .select('*')
+    .eq('team_id', teamId)
+    .order('awarded_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerAward);
+}
+
+/** Team awards joined with the award type (incl. retired, so history still resolves a name/
+ *  emoji) and the player's display name, plus the opponent for event-linked awards — the
+ *  single fetch the "Who's earning it?" report page needs (leaderboard + history table). */
+export async function getRepTeamPlayerAwardsHydrated(teamId: string, orgId: string): Promise<RepPlayerAward[]> {
+  const [awards, types] = await Promise.all([
+    getRepTeamPlayerAwards(teamId),
+    // Include org-shared types (team_id NULL) so an award given with a shared type still resolves
+    // its name/emoji, not just the team's own types.
+    getRepTeamAwardTypeLibrary(teamId, orgId, { includeRetired: true }),
+  ]);
+  if (awards.length === 0) return [];
+
+  const playerIds = Array.from(new Set(awards.map(a => a.playerId)));
+  const eventIds = Array.from(new Set(awards.map(a => a.eventId).filter((id): id is string => !!id)));
+  const [playersRes, eventsRes] = await Promise.all([
+    supabaseAdmin.from('rep_roster_players').select('id, player_first_name, player_last_name').in('id', playerIds),
+    eventIds.length
+      ? supabaseAdmin.from('rep_team_events').select('id, opponent').in('id', eventIds)
+      : Promise.resolve({ data: [] as { id: string; opponent: string | null }[], error: null }),
+  ]);
+  if (playersRes.error) throw playersRes.error;
+  if (eventsRes.error) throw eventsRes.error;
+
+  const typeById = new Map(types.map(t => [t.id, t]));
+  const nameById = new Map((playersRes.data ?? []).map(p =>
+    [p.id, [p.player_first_name, p.player_last_name].filter(Boolean).join(' ')]));
+  const opponentById = new Map((eventsRes.data ?? []).map(e => [e.id, e.opponent]));
+
+  return awards.map(a => ({
+    ...a,
+    awardType: typeById.get(a.awardTypeId),
+    playerName: nameById.get(a.playerId) ?? 'Unknown player',
+    eventOpponent: a.eventId ? (opponentById.get(a.eventId) ?? null) : null,
+  }));
+}
+
+export async function getRepPlayerAwardsForPlayer(playerId: string): Promise<RepPlayerAward[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_awards')
+    .select('*')
+    .eq('player_id', playerId)
+    .order('awarded_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerAward);
+}
+
+/** event_id -> award count for a set of events (schedule list's trophy badge) — mirrors
+ *  getRepTeamEventTagsMap's batching. */
+export async function getRepEventAwardCountsMap(eventIds: string[]): Promise<Record<string, number>> {
+  if (eventIds.length === 0) return {};
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_awards')
+    .select('event_id')
+    .in('event_id', eventIds);
+  if (error) throw error;
+  const map: Record<string, number> = {};
+  for (const row of data ?? []) {
+    if (!row.event_id) continue;
+    map[row.event_id] = (map[row.event_id] ?? 0) + 1;
+  }
+  return map;
+}
+
+export async function createRepPlayerAward(fields: {
+  orgId: string; teamId: string; playerId: string; awardTypeId: string;
+  eventId?: string | null; tournamentLabel?: string | null; awardedAt: string;
+  note?: string | null; createdBy?: string | null;
+}): Promise<RepPlayerAward> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_awards')
+    .insert({
+      org_id: fields.orgId,
+      team_id: fields.teamId,
+      player_id: fields.playerId,
+      award_type_id: fields.awardTypeId,
+      event_id: fields.eventId ?? null,
+      // Mutually exclusive by construction (see rep_player_awards gotcha 1) — enforced here,
+      // not just by the give-award route's own if/else, so any future caller can't accidentally
+      // persist both at once.
+      tournament_label: fields.eventId ? null : (fields.tournamentLabel?.trim() || null),
+      awarded_at: fields.awardedAt,
+      note: fields.note?.trim() || null,
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepPlayerAward(data);
+}
+
+/** Scoped delete — undoes a mis-click. Returns true if a row was actually deleted, false on a
+ *  no-op (wrong id, or a cross-team id scoped out by the team_id match). */
+export async function deleteRepPlayerAward(id: string, teamId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_awards')
+    .delete()
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .select('id');
+  if (error) throw error;
+  return (data ?? []).length > 0;
+}
+
+export interface RepPlayerAwardsSummary {
+  total: number;
+  byType: { awardTypeId: string; name: string; emoji: string | null; count: number }[];
+}
+
+/** No program-year filter needed — playerId itself is season-scoped (rollover mints a new
+ *  player_id each season), so every award returned here already belongs to this season. */
+export async function getRepPlayerAwardsSummary(playerId: string): Promise<RepPlayerAwardsSummary> {
+  const awards = await getRepPlayerAwardsForPlayer(playerId);
+  if (awards.length === 0) return { total: 0, byType: [] };
+
+  const typeIds = Array.from(new Set(awards.map(a => a.awardTypeId)));
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_award_types')
+    .select('id, name, emoji')
+    .in('id', typeIds);
+  if (error) throw error;
+  const typeById = new Map((data ?? []).map(t => [t.id, t]));
+
+  const counts = new Map<string, number>();
+  for (const a of awards) counts.set(a.awardTypeId, (counts.get(a.awardTypeId) ?? 0) + 1);
+
+  const byType = Array.from(counts.entries())
+    .map(([awardTypeId, count]) => {
+      const t = typeById.get(awardTypeId);
+      return { awardTypeId, name: t?.name ?? 'Award', emoji: t?.emoji ?? null, count };
+    })
+    .sort((a, b) => b.count - a.count);
+
+  return { total: awards.length, byType };
+}
+
 // Document Templates
 
 function mapRepDocumentTemplate(r: any): RepDocumentTemplate {
@@ -7017,6 +7570,19 @@ export async function getRepPlayerDuesInstallments(scheduleId: string): Promise<
     .from('rep_player_dues_installments')
     .select('*')
     .eq('schedule_id', scheduleId)
+    .order('installment_number');
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerDuesInstallment);
+}
+
+/** Installments for MANY schedules in one query — the digest sweep's batched fetch (the
+ *  per-schedule getRepPlayerDuesInstallments would be an N+1 across a whole-platform run). */
+export async function getRepDuesInstallmentsBySchedules(scheduleIds: string[]): Promise<RepPlayerDuesInstallment[]> {
+  if (scheduleIds.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_dues_installments')
+    .select('*')
+    .in('schedule_id', scheduleIds)
     .order('installment_number');
   if (error) throw error;
   return (data ?? []).map(mapRepPlayerDuesInstallment);

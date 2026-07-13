@@ -10,9 +10,10 @@ import {
   getRepTeamLineupSetEventIds,
   createRepTeamEvent,
   createRepTeamEvents,
-  getRepTeamTags,
+  getRepTeamTagLibrary,
   getRepTeamEventTagsMap,
   setRepTeamEventTags,
+  getRepEventAwardCountsMap,
 } from '@/lib/db';
 import type { RepEventType } from '@/lib/types';
 import { sanitizeResources } from '@/lib/rep-event-resources';
@@ -73,7 +74,7 @@ export const GET = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { assignment, programYear } = resolved;
+  const { ctx, assignment, programYear } = resolved;
   const denied = denyUnless(assignment.capabilities.schedule, 'You do not have access to the schedule.');
   if (denied) return denied;
 
@@ -95,9 +96,10 @@ export const GET = withObservability(async (req: Request,
   // Tags: the team's game-tag library (for the chip picker) + which tags each returned event
   // already carries (for chip display without a per-event fetch). Both gate on the same
   // `schedule` capability already required for this whole route.
-  const [tags, tagsByEventId] = await Promise.all([
-    getRepTeamTags(teamId, 'game'),
+  const [tags, tagsByEventId, awardCountByEventId] = await Promise.all([
+    getRepTeamTagLibrary(teamId, 'game', ctx.org.id),
     getRepTeamEventTagsMap(events.map(e => e.id)),
+    getRepEventAwardCountsMap(events.map(e => e.id)),
   ]);
   // lineupSetEventIds is OMITTED (not []) when the caller can't see lineups, so a client with a
   // stale capability cache can tell "no lineup visibility" apart from "no lineups saved" and
@@ -108,6 +110,7 @@ export const GET = withObservability(async (req: Request,
     lineupMismatchEventIds,
     tags,
     tagsByEventId,
+    awardCountByEventId,
     ...(lineupSetEventIds ? { lineupSetEventIds } : {}),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events' });
@@ -216,7 +219,7 @@ export const POST = withObservability(async (req: Request,
   // collect per-occurrence tags (a coach tags a specific game later, from its own edit form).
   let tagIds: string[] | null = [];
   if (body.tagIds !== undefined) {
-    tagIds = await resolveValidTagIds(teamId, body.tagIds);
+    tagIds = await resolveValidTagIds(teamId, ctx.org.id, 'game', body.tagIds);
     if (tagIds === null) {
       return NextResponse.json({ error: 'tagIds must be an array of this team’s existing tag ids' }, { status: 400 });
     }

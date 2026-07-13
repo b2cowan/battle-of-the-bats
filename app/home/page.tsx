@@ -125,7 +125,6 @@ export default async function UserHomePage({
       <InstallAppPrompt
         appName="FieldLogicHQ"
         subtitle="Your teams, schedules and scores — one tap away."
-        dismissKey="flhq-install-member"
       />
     </div>
   );

@@ -203,6 +203,33 @@ const repTeamsHelp: HelpPageContent = {
       ),
     },
     {
+      id: 'shared-library',
+      group: 'Org-level tools',
+      heading: 'Shared tags & awards library',
+      summary: 'Curate game tags, money tags, and award types that every team shares — so your whole club or league speaks one vocabulary.',
+      keywords: ['shared library', 'shared tags', 'shared awards', 'org tags', 'org award types', 'standardize tags', 'organization wide tags', 'game tags', 'money tags', 'award types'],
+      searchText: 'shared library shared tags shared awards org tags organization wide tags money tags game tags award types standardize vocabulary across teams provincials rivalry winter dome mvp hustle blue chip curate rename merge retire admin owner shared tag every team picker',
+      content: (
+        <>
+          <p>Coaches build their own <strong>tags</strong> (labels on games and expenses) and <strong>award types</strong> (MVP, Hustle, etc.) team by team. If you&apos;d rather every team use the same vocabulary — one &ldquo;Provincials&rdquo; game tag, one &ldquo;Winter dome&rdquo; money tag, one league-wide &ldquo;MVP&rdquo; award — curate them once in the <strong>Shared library</strong>.</p>
+          <p>Open <strong>Rep Teams → Shared Library</strong>. Three lists sit side by side: <strong>Game tags</strong>, <strong>Money tags</strong>, and <strong>Award types</strong>. Add, rename, merge, or delete tags; add award types (with an icon), edit them, and retire or restore them — the same tools a coach has for their own, but applied org-wide.</p>
+          <p>Whatever you add here appears in <strong>every team&apos;s</strong> picker in <strong>blue</strong> (each team&apos;s own private tags stay green, with a small legend). Coaches can <strong>apply</strong> shared tags and hand out shared awards, but they can&apos;t rename or remove them — that stays with you. A team&apos;s own tags keep working exactly as before, right alongside the shared ones.</p>
+          <p>Managing the shared library is limited to <strong>owners and admins</strong>. It replaces the idea of a coach &ldquo;promoting&rdquo; their own tag — instead of collecting tags from many teams, you author the shared set from one place.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-shared-library',
+          question: 'How do I make one set of tags or awards for every team?',
+          answer: (
+            <p>Go to <strong>Rep Teams → Shared Library</strong> and add them under <strong>Game tags</strong>, <strong>Money tags</strong>, or <strong>Award types</strong>. Anything you add shows in every team&apos;s picker in <strong>blue</strong>; coaches can apply it but only you (an owner or admin) can rename, merge, retire, or remove it. Each team&apos;s own tags still work alongside the shared ones. This is the org-wide alternative to each team inventing its own near-duplicate labels.</p>
+          ),
+          answerText: 'Go to Rep Teams then Shared Library and add them under Game tags, Money tags, or Award types. Anything you add shows in every team\'s picker in blue; coaches can apply it but only an owner or admin can rename, merge, retire, or remove it. Each team\'s own tags still work alongside the shared ones. This is the org-wide alternative to each team inventing its own near-duplicate labels. Managing the shared library is limited to owners and admins.',
+          keywords: ['shared library', 'org wide tags', 'standardize tags', 'shared awards', 'every team same tags', 'promote tag'],
+        },
+      ],
+    },
+    {
       id: 'cost-allocations',
       group: 'Org-level tools',
       heading: 'Cost allocations',

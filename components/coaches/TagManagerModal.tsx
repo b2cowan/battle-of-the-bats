@@ -17,15 +17,23 @@ export default function TagManagerModal({
   tags,
   onClose,
   onChanged,
+  // Phase 3: money tags reuse this manager against the sibling expense-tags routes. Defaults keep
+  // the committed game-tag behavior unchanged.
+  basePath,
+  title = 'Manage game tags',
+  itemNoun = 'game',
 }: {
   orgSlug: string;
   teamId: string;
   tags: RepTeamTag[];
   onClose: () => void;
   onChanged: () => void;
+  basePath?: string;
+  title?: string;
+  itemNoun?: string;
 }) {
   const confirm = useConfirm();
-  const base = `/api/coaches/${orgSlug}/teams/${teamId}/tags`;
+  const base = basePath ?? `/api/coaches/${orgSlug}/teams/${teamId}/tags`;
 
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
@@ -70,7 +78,7 @@ export default function TagManagerModal({
   async function handleDelete(tag: RepTeamTag) {
     const ok = await confirm({
       title: 'Delete tag?',
-      message: `Delete "${tag.name}"? Any games tagged with it will just lose that tag — if you'd rather keep their history under a different tag, use Merge instead.`,
+      message: `Delete "${tag.name}"? Any ${itemNoun}s tagged with it will just lose that tag — if you'd rather keep their history under a different tag, use Merge instead.`,
       confirmText: 'Delete',
       cancelText: 'Cancel',
       tone: 'danger',
@@ -104,7 +112,7 @@ export default function TagManagerModal({
     if (!winner) return;
     const ok = await confirm({
       title: 'Merge tags?',
-      message: `Every game tagged "${loser.name}" will be tagged "${winner.name}" instead, and "${loser.name}" will be removed. This can't be undone.`,
+      message: `Every ${itemNoun} tagged "${loser.name}" will be tagged "${winner.name}" instead, and "${loser.name}" will be removed. This can't be undone.`,
       confirmText: 'Merge',
       cancelText: 'Cancel',
       tone: 'danger',
@@ -135,13 +143,13 @@ export default function TagManagerModal({
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={`${styles.modal} ${styles.sheetOnMobile}`} onClick={e => e.stopPropagation()}>
         <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>Manage game tags</h3>
+          <h3 className={styles.modalTitle}>{title}</h3>
           <button className={styles.modalCloseBtn} onClick={onClose}><X size={16} /></button>
         </div>
 
         <div className={styles.formBody}>
           {sorted.length === 0 ? (
-            <p className={styles.formHint}>No tags yet. Add one from a game&rsquo;s edit screen — it&rsquo;ll show up here to rename, merge, or delete.</p>
+            <p className={styles.formHint}>No tags yet. Add one while adding a {itemNoun} — it&rsquo;ll show up here to rename, merge, or delete.</p>
           ) : (
             sorted.map(tag => (
               <div key={tag.id} className={styles.tagManagerRow}>

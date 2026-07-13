@@ -15,7 +15,7 @@ import {
 } from '@/lib/rep-roster-options';
 import styles from '../../../../coaches.module.css';
 import type { RepRosterPlayer } from '@/lib/types';
-import type { RepPlayerAttendanceSummary, RepPlayerDuesSummary } from '@/lib/db';
+import type { RepPlayerAttendanceSummary, RepPlayerDuesSummary, RepPlayerAwardsSummary } from '@/lib/db';
 
 const ATTN_CHIP: Record<string, string> = {
   attending: styles.badgeActive,
@@ -134,6 +134,7 @@ export default function PlayerDetailPage({
   const [form, setForm] = useState<EditForm | null>(null);
   const [attendance, setAttendance] = useState<RepPlayerAttendanceSummary | null>(null);
   const [dues, setDues] = useState<RepPlayerDuesSummary | null>(null);
+  const [awards, setAwards] = useState<RepPlayerAwardsSummary | null>(null);
   const [fetching, setFetching] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -159,6 +160,7 @@ export default function PlayerDetailPage({
       setForm(playerToForm(data.player, pitcherPos));
       setAttendance(data.attendance ?? null);
       setDues(data.dues ?? null);
+      setAwards(data.awards ?? null);
     } catch (e: unknown) {
       showFeedback('danger', errorMessage(e, 'Failed to load.'));
     } finally {
@@ -559,6 +561,28 @@ export default function PlayerDetailPage({
                 </ul>
               </>
             )}
+          </>
+        )}
+      </div>
+
+      {/* Awards */}
+      <div className={styles.detailSection}>
+        <p className={styles.detailSectionTitle}>Awards</p>
+        {!awards || awards.total === 0 ? (
+          <p className={styles.detailPlaceholder}>No awards yet this season.</p>
+        ) : (
+          <>
+            <p className={styles.miniListLabel} style={{ marginTop: 0 }}>
+              🏆 {awards.total} award{awards.total === 1 ? '' : 's'} this season
+            </p>
+            <ul className={styles.miniList}>
+              {awards.byType.map(t => (
+                <li key={t.awardTypeId} className={styles.miniRow}>
+                  <span className={styles.miniRowMain}>{t.emoji ? `${t.emoji} ` : ''}{t.name}</span>
+                  <span className={styles.miniRowMeta}>{t.count}×</span>
+                </li>
+              ))}
+            </ul>
           </>
         )}
       </div>

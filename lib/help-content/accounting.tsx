@@ -251,7 +251,7 @@ const accountingHelp: HelpPageContent = {
       heading: 'Automated reminders and planning tools',
       summary: 'Send dues and allocation reminders, and open the Org Budget and Budget vs. Actual tools.',
       keywords: ['reminders', 'dues reminders', 'allocation reminders', 'org budget', 'budget vs actual', 'planning'],
-      searchText: 'automated reminders dues reminders 30-day 7-day wave guardians allocation reminders org budget budget vs actual planning tools owner treasurer send reminders',
+      searchText: 'automated reminders dues reminders 30-day 7-day wave guardians allocation reminders org budget budget vs actual planning tools owner treasurer send reminders automatic daily send now runs on its own do i have to click',
       content: (
         <>
           <p>The Accounting Overview gives owners and treasurers two planning tools and two reminder actions.</p>
@@ -260,9 +260,10 @@ const accountingHelp: HelpPageContent = {
             <li><strong>Org Budget</strong> — plan the season&apos;s budget by category and line, and allocate costs to teams.</li>
             <li><strong>Budget vs. Actual</strong> — track allocation and team collection status (see below).</li>
           </ul>
-          <p><strong>Automated Reminders</strong> (owners and treasurers only):</p>
+          <p><strong>Dues Reminders</strong> now go out <strong>automatically</strong>. Each day, guardians of players with an upcoming installment receive a reminder email — one about a week ahead and one about a month ahead — for any team whose <strong>Automatic Dues Reminders</strong> toggle is on (each coach controls their own team&apos;s toggle on the Player Dues page). A guardian is never emailed twice in the same week for the same installment, and quiet days send nothing. You don&apos;t have to do anything to keep this running.</p>
+          <p><strong>Manual actions</strong> (owners and treasurers only) — for when you want to act now rather than wait for the daily send:</p>
           <ul>
-            <li><strong>Dues Reminders</strong> — send a 30-day or 7-day wave of reminder emails to guardians for upcoming rep-team dues installments. This respects each coach&apos;s per-team reminder toggle.</li>
+            <li><strong>Dues Reminders — Send now</strong> — fire a 30-day or 7-day wave immediately to every team that has the toggle on. Same emails as the automatic send.</li>
             <li><strong>Allocation Reminders</strong> — email yourself a list of all team allocation installments due within the next 30 days.</li>
           </ul>
         </>

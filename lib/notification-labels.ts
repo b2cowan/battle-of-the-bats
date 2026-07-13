@@ -29,6 +29,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   playoffs_set:                      'Playoff bracket set',
   champions_crowned:                 'Champions crowned',
   tournament_announcement:           'Tournament announcement',
+  coach_insights_digest:             'Weekly team insights',
 };
 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
@@ -52,6 +53,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   playoffs_set:                      'The playoff bracket is set for a tournament — the seeding is locked and the knockout stage is on.',
   champions_crowned:                 'A tournament’s playoffs are complete — the champion(s) are crowned and the final results are in.',
   tournament_announcement:           'An organizer posts a day-of announcement (like a rain delay or schedule shift) with the notify option on.',
+  coach_insights_digest:             'Your team’s Sunday week-in-review — the top Insights findings, only when something stood out.',
 };
 
 // ── Section groups (org-level preferences page) ────────────────────────────────
@@ -103,6 +105,9 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
   // NOTE: 'assistant_coach_joined' + 'assistant_coach_approval_requested' are INTENTIONALLY not
   // listed here (like 'chat_mention') — they're targeted lifecycle bells (to the head coach / org
   // admins), not general per-user-configurable events, so they don't get a preferences-UI row.
+  // NOTE: 'coach_insights_digest' is also not listed — it targets a rep team's coaches, who have
+  // no settings surface of their own yet (the org preferences page is admin-shell). Known gap:
+  // when a coach-facing notification-settings surface ships, give the digest a row there.
 ];
 
 /** All event types in display order — derived from NOTIFICATION_SECTIONS. Single source of truth. */
@@ -140,6 +145,9 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   'playoffs_set',
   'champions_crowned',
   'tournament_announcement',
+  // The weekly digest's whole point is reach — push ON by default, weekly cadence, and it is
+  // only ever sent when something actually fired (quiet weeks send nothing).
+  'coach_insights_digest',
 ]);
 
 /**
@@ -200,6 +208,7 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCa
   registration_deadline_approaching:  'know',
   assistant_coach_joined:             'know',
   house_league_registration_new:      'know',
+  coach_insights_digest:              'know',
   // Talk — conversation (moves to the Chat tab in P3)
   chat_message:                       'talk',
   chat_mention:                       'talk',

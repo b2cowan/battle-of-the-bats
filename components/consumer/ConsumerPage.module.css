@@ -1,0 +1,197 @@
+/* Shared content styling for the consumer shell tabs (Scores / Following / Account). */
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2rem;
+}
+
+.header { margin-bottom: 1.25rem; }
+
+.title {
+  font-family: var(--font-display, sans-serif);
+  font-weight: 800;
+  font-size: 1.6rem;
+  letter-spacing: -0.01em;
+  color: var(--fl-text);
+  margin: 0;
+}
+
+.subtitle {
+  font-family: var(--font-data, monospace);
+  font-size: 0.8rem;
+  color: var(--white-45);
+  margin: 0.35rem 0 0;
+  line-height: 1.5;
+}
+
+.sectionLabel {
+  font-family: var(--font-data, monospace);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white-45);
+  margin: 1.5rem 0 0.65rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--hud-surface, rgba(255, 255, 255, 0.02));
+  text-decoration: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.card:hover {
+  border-color: rgba(var(--primary-rgb), 0.5);
+  background: rgba(var(--primary-rgb), 0.05);
+}
+
+.cardLogo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.cardLogoFallback {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--primary-rgb), 0.12);
+  color: var(--primary-light);
+  font-family: var(--font-data, monospace);
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.cardBody { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+
+.cardName {
+  font-family: var(--font-data, monospace);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--fl-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cardMeta {
+  font-family: var(--font-data, monospace);
+  font-size: 0.72rem;
+  color: var(--white-45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 0.15rem;
+}
+
+.livePill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary-light);
+}
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  box-shadow: 0 0 8px var(--primary-light);
+}
+
+/* Empty / hydrating states */
+.empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+}
+.emptyTitle {
+  font-family: var(--font-data, monospace);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--fl-text);
+  margin: 0 0 0.4rem;
+}
+.emptyText {
+  font-family: var(--font-data, monospace);
+  font-size: 0.78rem;
+  color: var(--white-45);
+  margin: 0 0 1.1rem;
+  line-height: 1.5;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: var(--font-data, monospace);
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+.cta:hover { opacity: 0.88; }
+
+.ctaGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--fl-text);
+  font-family: var(--font-data, monospace);
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: border-color 0.2s ease;
+}
+.ctaGhost:hover { border-color: rgba(var(--primary-rgb), 0.5); }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.note {
+  font-family: var(--font-data, monospace);
+  font-size: 0.74rem;
+  color: var(--white-45);
+  line-height: 1.6;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}

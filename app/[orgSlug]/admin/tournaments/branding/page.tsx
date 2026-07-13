@@ -487,7 +487,7 @@ export default function TournamentBrandingPage() {
             <h2 className={styles.sectionTitle}>App Icon</h2>
             <span className={styles.lockedBadge}>Locked</span>
           </div>
-          <p className={styles.lockedHint}>Customize the home-screen icon fans get when they add this event to their phone.</p>
+          <p className={styles.lockedHint}>Give your event its own branded icon, colours, and name inside the one FieldLogicHQ app fans use.</p>
         </div>
       ) : (
         <div className={styles.card}>
@@ -502,7 +502,7 @@ export default function TournamentBrandingPage() {
           </button>
           <div className={styles.accordionBody} data-open={openSections.appIcon || undefined}>
             <p className={styles.compactNote}>
-              How this event looks when a fan adds it to their phone&apos;s home screen. We match the background to your logo automatically — override it below for a different colour or a border, and use the slider to size your logo. Changes apply to new home-screen installs (phones keep the icon they already saved), so use the preview here as your guide.
+              Your event&apos;s branded icon and short name — its identity inside the one FieldLogicHQ app fans use. We match the background to your logo automatically — override it below for a different colour or a border, and use the slider to size your logo. Fans install a single FieldLogicHQ app now, so this sets how your event looks inside it rather than a separate home-screen icon — use the preview here as your guide.
             </p>
             <div className={styles.iconLayout}>
               <div className={styles.iconPreview}>

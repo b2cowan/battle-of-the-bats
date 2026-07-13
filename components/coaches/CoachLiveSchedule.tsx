@@ -130,9 +130,8 @@ export default function CoachLiveSchedule({
               event, so it's retired in the result phase (5m). */}
           {!isResult && (
             <InstallAppPrompt
-              appName="Coaches Portal"
+              appName="FieldLogicHQ"
               subtitle="Add it to your home screen for live game updates."
-              dismissKey="flhq-coach-install-dismissed"
             />
           )}
           <div className={styles.controls}>

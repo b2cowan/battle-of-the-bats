@@ -289,7 +289,7 @@ const tournamentsHelp: HelpPageContent = {
       content: (
         <>
           <p>Use <strong>Event Settings</strong> and <strong>Branding</strong> for tournament-specific administration after the core setup is in place.</p>
-          <p><strong>Branding</strong> controls the tournament public appearance. Free tournaments use the default FieldLogicHQ look; Tournament Plus and above can give a tournament its own identity — a custom logo, colours, hero banner, fonts, and a custom <strong>App Icon</strong> (the icon and name fans see when they add the event to their phone&rsquo;s home screen).</p>
+          <p><strong>Branding</strong> controls the tournament public appearance. Free tournaments use the default FieldLogicHQ look; Tournament Plus and above can give a tournament its own identity — a custom logo, colours, hero banner, fonts, and a custom <strong>App Icon</strong> (your event&rsquo;s branded icon and name inside the one FieldLogicHQ app fans use).</p>
           <p><strong>Event Settings</strong> controls dates, fee scope, score finalization, tie-breaker rules, game timing, whether the tournament is listed in the public tournament directory, and the Plus-only post-event results notification. When enabled, accepted team contacts receive the public results links once when the tournament is marked completed.</p>
           <p><strong>Members</strong> helps you review who can administer tournament work. Keep access limited to people who need to manage setup, registrations, schedule, results, or communications.</p>
           <p><strong>Subscription</strong> stays inside tournament admin for Tournament and Tournament Plus users, so upgrade prompts do not send tournament-only organizers into organization admin billing pages.</p>
@@ -332,16 +332,16 @@ const tournamentsHelp: HelpPageContent = {
         },
         {
           id: 'faq-app-icon',
-          question: 'Can I change the app icon and name fans see on their phone?',
-          answerText: 'Yes, on Tournament Plus and above. In Branding, the App Icon section shows a live preview of your home-screen icon. The background is matched to your logo automatically; you can override it with White, Dark, your Brand colour, or any custom colour — a colour that contrasts with your logo shows as a border, and Auto matches seamlessly. Use the Logo size slider to make your logo larger or smaller in the icon (zoom), with a live preview and a Reset to default; on Android the icon is kept slightly smaller automatically so its rounded shape never crops the logo. You can also set a short app name that appears under the icon; it defaults to the event name, and about 12 characters fit on a phone, so initials work well for a long name (for example BoB for Battle of the Bats). The full event name still shows in the install prompt and the browser tab. These settings apply to new home-screen installs — a phone that already saved the icon keeps it until the fan removes and re-adds it, so use the live preview as your guide.',
-          keywords: ['app icon', 'home screen icon', 'icon background', 'icon colour', 'icon color', 'border', 'app name', 'short name', 'initials', 'home screen name', 'pwa icon', 'logo size', 'logo zoom', 'zoom logo', 'resize logo', 'bigger logo', 'smaller logo', 'logo scale'],
+          question: 'Can I give my event its own branded icon and name?',
+          answerText: 'Yes, on Tournament Plus and above. Fans now install one FieldLogicHQ app, and your event gets its own branded space inside it. In Branding, the App Icon section shows a live preview of your event\'s branded icon and name. The background is matched to your logo automatically; you can override it with White, Dark, your Brand colour, or any custom colour — a colour that contrasts with your logo shows as a border, and Auto matches seamlessly. Use the Logo size slider to make your logo larger or smaller in the icon (zoom), with a live preview and a Reset to default. You can also set a short name for your event; about 12 characters read best, so initials work well for a long name (for example BoB for Battle of the Bats). The full event name still shows on your public pages and the browser tab.',
+          keywords: ['app icon', 'branded icon', 'event icon', 'icon background', 'icon colour', 'icon color', 'border', 'app name', 'short name', 'initials', 'branded space', 'pwa icon', 'logo size', 'logo zoom', 'zoom logo', 'resize logo', 'bigger logo', 'smaller logo', 'logo scale'],
           answer: (
             <>
-              <p>Yes — on <strong>Tournament Plus and above</strong>. Open <strong>Branding</strong> and find <strong>App Icon</strong>. A live preview shows how your event looks once a fan adds it to their home screen.</p>
+              <p>Yes — on <strong>Tournament Plus and above</strong>. Fans now install <strong>one</strong> FieldLogicHQ app, and your event gets its own branded space inside it. Open <strong>Branding</strong> and find <strong>App Icon</strong> — a live preview shows your event&rsquo;s branded icon and name.</p>
               <p><strong>Background.</strong> The icon background is matched to your logo automatically. To change it, choose <strong>White</strong>, <strong>Dark</strong>, your <strong>Brand</strong> colour, or any custom colour — a colour that contrasts with your logo shows as a border, and &ldquo;Auto&rdquo; matches seamlessly.</p>
-              <p><strong>Logo size.</strong> Drag the <strong>Logo size</strong> slider to make your logo sit larger or smaller in the icon — the preview updates as you go, and &ldquo;Reset&rdquo; returns it to the default. On Android, the icon is kept a touch smaller automatically so its rounded shape never crops your logo.</p>
-              <p><strong>App name.</strong> Set the short label that appears under the icon. It defaults to your event name; about 12 characters fit on a phone, so initials work well for a long name (for example &ldquo;BoB&rdquo; for Battle of the Bats). The full event name still shows in the install prompt and the browser tab.</p>
-              <p>One thing to know: these settings apply to <strong>new</strong> home-screen installs. A phone that already saved the icon keeps the version it has until the fan removes and re-adds it — so use the live preview here as your guide.</p>
+              <p><strong>Logo size.</strong> Drag the <strong>Logo size</strong> slider to make your logo sit larger or smaller in the icon — the preview updates as you go, and &ldquo;Reset&rdquo; returns it to the default.</p>
+              <p><strong>App name.</strong> Set the short label for your event — about 12 characters read best, so initials work well for a long name (for example &ldquo;BoB&rdquo; for Battle of the Bats). The full event name still shows on your public pages and the browser tab.</p>
+              <p>One thing to know: fans install a single FieldLogicHQ app now, so these settings brand your event&rsquo;s space inside that app rather than adding a separate home-screen icon for each event.</p>
             </>
           ),
         },
@@ -1123,7 +1123,7 @@ const tournamentsHelp: HelpPageContent = {
           answer: (
             <>
               <p>Yes — on <strong>Tournament Plus and above</strong>. A fan follows a team on the public tournament site, then taps <strong>Get score alerts</strong> and allows notifications. They get a push when that team&rsquo;s game goes live and a &ldquo;Final&rdquo; when it ends.</p>
-              <p>Following a team, live public scores, and adding the tournament to the home screen are included on <strong>every plan</strong>. Score alerts are available on Tournament Plus and above. No fan account is required — alerts are tied to that person&rsquo;s device.</p>
+              <p>Following a team, live public scores, and adding the FieldLogicHQ app to the home screen are included on <strong>every plan</strong>. Score alerts are available on Tournament Plus and above. No fan account is required — alerts are tied to that person&rsquo;s device.</p>
             </>
           ),
         },
@@ -1135,7 +1135,7 @@ const tournamentsHelp: HelpPageContent = {
           answer: (
             <>
               <p>On iPhone and iPad, Apple only allows these alerts <strong>after the page is added to the home screen</strong>. Until then, the alerts control shows an &ldquo;add to home screen for alerts&rdquo; prompt instead of a button that wouldn&rsquo;t work.</p>
-              <p>Once a fan adds the tournament to their home screen and opens it from there, the <strong>Get score alerts</strong> button works normally, with a one-time reminder to switch alerts on. Android shows the alerts button directly — no install step needed.</p>
+              <p>Once a fan adds it to their home screen from the tournament page and opens it from there, the <strong>Get score alerts</strong> button works normally, with a one-time reminder to switch alerts on. Android shows the alerts button directly — no install step needed.</p>
             </>
           ),
         },

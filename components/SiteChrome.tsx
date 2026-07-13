@@ -1,6 +1,7 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import { isCoachPortalShellPath } from '@/lib/coaches-portal-routes';
+import { isConsumerShellPath } from '@/lib/consumer-routes';
 import Navbar from './Navbar';
 
 export default function SiteChrome() {
@@ -20,7 +21,10 @@ export default function SiteChrome() {
     pathname.startsWith('/home') ||
     isVolunteerShell ||
     isOrgCoachShell ||
-    isCoachPortalShellPath(pathname)
+    isCoachPortalShellPath(pathname) ||
+    // Consumer shell (/discover, /scores, /following, /account) renders its own
+    // top bar + bottom nav — the marketing Navbar would double up.
+    isConsumerShellPath(pathname)
   ) return null;
   return <Navbar />;
 }
