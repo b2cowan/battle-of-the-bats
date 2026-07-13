@@ -603,7 +603,7 @@ export default function CoachesExpensesPage({
       {/* Add Expense modal */}
       {showAddExpense && (
         <div className={styles.modalOverlay} onClick={() => setShowAddExpense(false)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+          <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Add Expense</h3>
               <button className={styles.modalCloseBtn} onClick={() => setShowAddExpense(false)}><X size={16} /></button>
@@ -652,7 +652,7 @@ export default function CoachesExpensesPage({
       {/* Add Payable modal */}
       {showAddPayable && (
         <div className={styles.modalOverlay} onClick={() => setShowAddPayable(false)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+          <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Add Tournament Payable</h3>
               <button className={styles.modalCloseBtn} onClick={() => setShowAddPayable(false)}><X size={16} /></button>

@@ -241,6 +241,10 @@
 
 /* ── Page layout ────────────────────────────────────────────────────────── */
 .page { max-width: 960px; }
+/* Week/Month calendar grids are structured layouts that benefit from extra width
+   (wider day cells, less wrapping); List is a scannable text column that doesn't
+   need to stretch as wide. Applied only on the schedule page via view state. */
+.pageWide { max-width: 1200px; }
 
 .pageHeader {
   display: flex;
@@ -1691,9 +1695,20 @@
 
 /* Event form modal — a touch wider so the date/time pickers have room. Drop the modal's
    bottom padding so the sticky Save footer sits flush to the bottom edge (no gap showing
-   form content beneath the strip); zero the footer's own bottom bleed to match. */
+   form content beneath the strip); zero the footer's own bottom bleed to match.
+   Centered like every other dialog (owner decision 2026-07-13: all pop-up modals open
+   centered for consistency — previously this one docked right to sit over the event detail
+   slide-over, which read as modals "jumping" between center and right). */
 .eventFormModal { max-width: 600px; padding-bottom: 0; }
 .eventFormModal .modalFooter { margin-bottom: 0; }
+
+/* Scrolling-body modal (Add Expense / Add Payable): when the form is taller than the window, the
+   FIELDS scroll and the footer stays pinned BELOW them, so the last field (Tags) never hides
+   behind the sticky action bar. Scoped modifier — other modals keep their default layout. */
+.modalScrollBody { display: flex; flex-direction: column; overflow: hidden; }
+.modalScrollBody > .modalHeader { flex-shrink: 0; }
+.modalScrollBody > .formGrid { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+.modalScrollBody > .modalFooter { position: static; margin-top: 1rem; flex-shrink: 0; }
 
 /* Recurring-series save scope chooser — replaces the footer when editing a repeating event. */
 .editScope {
@@ -2443,14 +2458,27 @@
 .eventChipScore { font-size: 0.82rem; font-weight: 700; color: var(--white-90); font-variant-numeric: tabular-nums; }
 .eventChipResult { font-size: 0.7rem; font-weight: 700; }
 
-.calWeekGrid { display: grid; grid-template-columns: repeat(7,1fr); gap: 0.5rem; overflow-x: auto; }
+.calWeekGrid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 0.5rem; overflow-x: auto; }
 .calWeekDay {
   background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; min-width: 110px;
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; min-width: 110px; overflow: hidden;
 }
 .calWeekDayLabel { font-size: 0.72rem; font-weight: 700; color: var(--white-35); padding: 0.5rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
 .calWeekDayEvents { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.4rem; min-height: 60px; }
 .calWeekEmpty { font-size: 0.78rem; color: rgba(255,255,255,0.15); padding: 0.25rem 0; }
+
+/* Week-view day columns are as narrow as the mobile list even on desktop — reuse the same
+   wrap layout (time -> trail -> full-width name) instead of one rigid row. */
+.calWeekDayEvents .eventChip { flex-wrap: wrap; align-items: center; row-gap: 0.15rem; }
+.calWeekDayEvents .eventChipTime { order: 1; min-width: 0; }
+.calWeekDayEvents .eventChipTrail { order: 2; }
+.calWeekDayEvents .eventChipName {
+  order: 3;
+  flex-basis: 100%;
+  white-space: normal;
+  overflow: visible;
+  line-height: 1.3;
+}
 
 /* Mobile: the 7-col week grid reflows to a vertical day-stack (header + its
    event rows; empty days collapse to a thin "—") — no silent sideways scroll. */
@@ -2528,7 +2556,7 @@
   background: var(--card-bg);
   border: 1px solid rgba(var(--blueprint-blue-rgb),0.3);
   border-radius: var(--radius); padding: 1.5rem;
-  width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; margin-left: auto;
+  width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto;
 }
 /* Lineup tab needs room to show all innings without horizontal scroll on desktop */
 .slideOverWide { max-width: min(1180px, 96vw); }
@@ -3815,6 +3843,9 @@
   border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   max-height: 220px; overflow: auto; z-index: 30;
 }
+/* Flip above the input when there's no room below (last field in a scrollable modal) so the
+   menu isn't clipped by the modal's scroll area or hidden behind the sticky footer. */
+.tagComboDropdownUp { top: auto; bottom: calc(100% + 4px); box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5); }
 .tagComboOpt {
   display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
   padding: 0.45rem 0.6rem; font-size: 0.83rem; cursor: pointer; width: 100%;

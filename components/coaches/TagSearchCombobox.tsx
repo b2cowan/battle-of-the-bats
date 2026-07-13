@@ -34,9 +34,22 @@ export default function TagSearchCombobox({
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [creating, setCreating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Open the dropdown, flipping it ABOVE the input when there isn't room below (e.g. the Tags
+  // field at the bottom of a scrollable modal, where a downward menu would be clipped by the
+  // modal's scroll area / hidden behind the sticky footer).
+  function openDropdown() {
+    const el = inputRef.current;
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      setDropUp(window.innerHeight - rect.bottom < 250 && rect.top > 260);
+    }
+    setOpen(true);
+  }
 
   const byId = useMemo(() => new Map(library.map(t => [t.id, t])), [library]);
   const q = query.trim().toLowerCase();
@@ -82,7 +95,7 @@ export default function TagSearchCombobox({
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setOpen(true);
+      if (!open) openDropdown();
       setActiveIdx(i => Math.min(i + 1, optionCount - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
@@ -132,13 +145,13 @@ export default function TagSearchCombobox({
             value={query}
             placeholder={placeholder}
             autoComplete="off"
-            onChange={e => { setQuery(e.target.value); setOpen(true); setActiveIdx(-1); }}
-            onFocus={() => setOpen(true)}
+            onChange={e => { setQuery(e.target.value); openDropdown(); setActiveIdx(-1); }}
+            onFocus={openDropdown}
             onBlur={() => setTimeout(() => setOpen(false), 150)}
             onKeyDown={onKeyDown}
           />
           {open && (query.length > 0 || matches.length > 0) && (
-            <div className={styles.tagComboDropdown}>
+            <div className={`${styles.tagComboDropdown} ${dropUp ? styles.tagComboDropdownUp : ''}`}>
               {matches.map((t, i) => {
                 const isOrg = t.teamId === null;
                 const n = countById?.[t.id];
