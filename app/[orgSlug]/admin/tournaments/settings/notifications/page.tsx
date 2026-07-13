@@ -1,14 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Bell, BellOff, AlertCircle, Smartphone, Mail } from 'lucide-react';
+import Link from 'next/link';
+import { Bell, BellOff, AlertCircle, Info } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
-import { TOURNAMENT_EVENT_TYPES, NOTIFICATION_EVENT_LABELS, NOTIFICATION_EVENT_DESCRIPTIONS, PUSH_DEFAULT_ON_EVENTS } from '@/lib/notification-labels';
+import { TOURNAMENT_EVENT_TYPES, NOTIFICATION_EVENT_LABELS, NOTIFICATION_EVENT_DESCRIPTIONS } from '@/lib/notification-labels';
 import { hasPlanFeature } from '@/lib/plan-features';
-import { enablePushOnThisDevice, PushPermissionError } from '@/lib/push-client';
-import PushDeviceTester from '@/components/notifications/PushDeviceTester';
-import type { NotificationEventType, NotificationPreference } from '@/lib/types';
+import type { NotificationEventType } from '@/lib/types';
 import styles from './notifications.module.css';
 
 const CHAT_EVENT: NotificationEventType = 'chat_message';
@@ -18,16 +17,6 @@ const CHAT_EVENT: NotificationEventType = 'chat_message';
 interface TournamentPref {
   eventType: NotificationEventType;
   optedOut:  boolean;
-}
-
-// Push defaults on for the tournament channel because several tournament event
-// types are in PUSH_DEFAULT_ON_EVENTS. Derived from module constants → stable.
-const TOURNAMENT_PUSH_DEFAULT_ON = TOURNAMENT_EVENT_TYPES.some(et => PUSH_DEFAULT_ON_EVENTS.has(et));
-
-interface Channels {
-  bell:  boolean;
-  push:  boolean;
-  email: boolean;
 }
 
 // ── Toggle ────────────────────────────────────────────────────────────────────
@@ -57,6 +46,12 @@ function Toggle({
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
+//
+// Notification Settings Phase 1 (locked D1): this page is MUTE-ONLY. The old "Receive via
+// Bell / Push / Email" block was removed — it looked tournament-scoped but silently batch-wrote
+// the ORG-level channel rows across every tournament event type (the honesty bug this project
+// fixes). What a channel is set to lives on the universal /account/notifications page; here you
+// can only silence this one tournament. Rule R3 copy states that boundary verbatim.
 
 export default function TournamentNotificationPreferencesPage() {
   const { currentTournament } = useTournament();
@@ -65,31 +60,21 @@ export default function TournamentNotificationPreferencesPage() {
   const tournamentId = currentTournament?.id;
   const orgSlug      = currentOrg?.slug;
 
-  // Tournament chat is a Tournament Plus+ feature. Only surface its notification
-  // control (and fold it into the channel/mute batches) when the org has chat.
+  // Tournament chat is a Tournament Plus+ feature. Only surface its mute row (and fold it into
+  // the mute batches) when the org has chat.
   const chatEnabled = currentOrg ? hasPlanFeature(currentOrg.planId, 'tournament_chat') : false;
-  // The event types this page manages: tournament ops events + chat when enabled.
-  // Memoized so effect/callback deps stay stable across renders.
+  // The event types this page can mute: tournament ops events + chat when enabled. Memoized so
+  // effect/callback deps stay stable across renders.
   const eventTypes = useMemo<NotificationEventType[]>(
     () => (chatEnabled ? [...TOURNAMENT_EVENT_TYPES, CHAT_EVENT] : [...TOURNAMENT_EVENT_TYPES]),
     [chatEnabled],
   );
 
-  // ── Per-event opt-out state ───────────────────────────────────────────────
-  const [prefs, setPrefs]   = useState<Map<NotificationEventType, boolean>>(new Map());
+  // ── Per-event opt-out (veto) state ────────────────────────────────────────
+  const [prefs, setPrefs]     = useState<Map<NotificationEventType, boolean>>(new Map());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]   = useState(false);
   const [error, setError]     = useState<string | null>(null);
-
-  // ── Global channel state (bell / push / email) ────────────────────────────
-  // Derived from org-level notification preferences; treated as uniform across
-  // all tournament event types.  System defaults: bell on, email off; push on
-  // (several tournament events default push-on — see PUSH_DEFAULT_ON_EVENTS).
-  const [channels, setChannels]         = useState<Channels>({ bell: true, push: TOURNAMENT_PUSH_DEFAULT_ON, email: false });
-  const [channelsLoading, setChannelsLoading] = useState(true);
-  const [channelsSaving, setChannelsSaving]   = useState(false);
-  // True while turning Push on registers THIS device (OS permission + subscribe).
-  const [enablingPush, setEnablingPush]       = useState(false);
 
   // ── Computed: are ALL event types opted out? → muted ───────────────────────
   const isMuted = eventTypes.every(et => prefs.get(et) === true);
@@ -122,42 +107,6 @@ export default function TournamentNotificationPreferencesPage() {
     load();
   }, [tournamentId]);
 
-  // ── Load global channel prefs (org-level) ────────────────────────────────
-
-  useEffect(() => {
-    if (!orgSlug) return;
-    async function loadChannels() {
-      setChannelsLoading(true);
-      try {
-        const res = await fetch(`/api/admin/org/notification-preferences?orgSlug=${orgSlug}`);
-        if (!res.ok) return;
-        const { preferences } = await res.json() as { preferences: NotificationPreference[] };
-
-        // Derive global channel state from saved tournament-event preferences.
-        // Bell: on unless the user explicitly saved bell=false for all of them.
-        // Push / Email: on if any tournament event type has it enabled.
-        const tournamentPrefs = preferences.filter(p =>
-          eventTypes.includes(p.eventType)
-        );
-        if (tournamentPrefs.length === 0) {
-          // No saved rows — use system defaults (push defaults on for the key events)
-          setChannels({ bell: true, push: TOURNAMENT_PUSH_DEFAULT_ON, email: false });
-        } else {
-          setChannels({
-            bell:  !tournamentPrefs.every(p => p.channelBell  === false),
-            push:  tournamentPrefs.some(p  => p.channelPush  === true),
-            email: tournamentPrefs.some(p  => p.channelEmail === true),
-          });
-        }
-      } catch {
-        // Non-fatal — channels fall back to system defaults
-      } finally {
-        setChannelsLoading(false);
-      }
-    }
-    loadChannels();
-  }, [orgSlug, eventTypes]);
-
   // ── Save per-tournament opt-out prefs ────────────────────────────────────
 
   const save = useCallback(async (updated: Map<NotificationEventType, boolean>) => {
@@ -182,30 +131,6 @@ export default function TournamentNotificationPreferencesPage() {
     }
   }, [tournamentId, eventTypes]);
 
-  // ── Save global channel prefs (batch-saves all tournament event types) ────
-
-  const saveChannels = useCallback(async (next: Channels) => {
-    if (!orgSlug) return;
-    setChannelsSaving(true);
-    try {
-      const preferences = eventTypes.map(et => ({
-        eventType:    et,
-        channelBell:  next.bell,
-        channelPush:  next.push,
-        channelEmail: next.email,
-      }));
-      await fetch(`/api/admin/org/notification-preferences?orgSlug=${orgSlug}`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ preferences }),
-      });
-    } catch {
-      // Non-fatal
-    } finally {
-      setChannelsSaving(false);
-    }
-  }, [orgSlug, eventTypes]);
-
   // ── Master mute toggle ──────────────────────────────────────────────────────
 
   function handleMuteAll(mute: boolean) {
@@ -221,43 +146,6 @@ export default function TournamentNotificationPreferencesPage() {
     const next = new Map(prefs).set(et, optedOut);
     setPrefs(next);
     save(next);
-  }
-
-  // ── Channel toggle ─────────────────────────────────────────────────────────
-
-  async function handleChannelToggle(channel: keyof Channels, value: boolean) {
-    const next = { ...channels, [channel]: value };
-
-    // Turning Push ON must also register THIS device — otherwise the preference
-    // saves but no device is subscribed and nothing is ever delivered (the exact
-    // "toggle green but no devices registered" trap). Mirrors the org-level page.
-    if (channel === 'push' && value === true) {
-      setChannels(next); // optimistic
-      setError(null);
-      setEnablingPush(true);
-      try {
-        await enablePushOnThisDevice();
-        saveChannels(next);
-      } catch (e) {
-        setChannels(prev => ({ ...prev, push: false })); // revert on failure
-        const reason = e instanceof PushPermissionError ? e.reason : 'failed';
-        setError(
-          reason === 'denied'
-            ? 'Notifications are blocked for this app. Turn them on in your phone or browser settings, then try again.'
-          : reason === 'unsupported'
-            ? 'This device doesn’t support push. On iPhone, add the app to your Home Screen first (iOS 16.4+).'
-          : reason === 'unconfigured'
-            ? 'Push isn’t set up on the server yet. Please try again later.'
-          : 'Couldn’t turn on notifications on this device. Please try again.',
-        );
-      } finally {
-        setEnablingPush(false);
-      }
-      return;
-    }
-
-    setChannels(next);
-    saveChannels(next);
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -281,8 +169,7 @@ export default function TournamentNotificationPreferencesPage() {
           <div>
             <h1 className={styles.pageTitle}>Tournament Notifications</h1>
             <p className={styles.pageSub}>
-              Control which notifications you receive for <strong>{currentTournament?.name}</strong>.
-              These settings are personal — they only affect your account.
+              Mute notifications for <strong>{currentTournament?.name}</strong>. Personal to your account.
             </p>
           </div>
         </div>
@@ -295,38 +182,22 @@ export default function TournamentNotificationPreferencesPage() {
         </div>
       )}
 
-      {/* Global channel section */}
-      <div className={styles.channelCard}>
-        <div className={styles.channelTop}>
-          <div className={styles.channelCardLabel}>Receive via</div>
-          <div className={styles.channelRow}>
-            {([
-              { key: 'bell'  as const, Icon: Bell,       label: 'Bell'  },
-              { key: 'push'  as const, Icon: Smartphone,  label: 'Push'  },
-              { key: 'email' as const, Icon: Mail,        label: 'Email' },
-            ]).map(({ key, Icon, label }) => (
-              <label key={key} className={styles.channelItem}>
-                <Toggle
-                  checked={channels[key]}
-                  onChange={v => handleChannelToggle(key, v)}
-                  label={`${label} notifications`}
-                  disabled={channelsLoading || channelsSaving || (key === 'push' && enablingPush)}
-                />
-                <span className={styles.channelItemLabel}>
-                  <Icon size={13} />
-                  {label}
-                </span>
-              </label>
-            ))}
-          </div>
-        </div>
-        <p className={styles.channelNote}>
-          Applies to all notifications on this page. Push requires your browser to grant notification permission.
-        </p>
+      {/* Scope model (rule R3) — verbatim everywhere this boundary is shown. */}
+      <div className={styles.scopeNote}>
+        <Info size={16} />
+        <span>
+          <strong>Org settings decide what you receive. Tournament settings can only mute — they can&rsquo;t
+          turn a channel back on.</strong>
+        </span>
       </div>
 
-      {/* Registered devices + send-test control */}
-      <PushDeviceTester />
+      {/* Door to the real controls (channels, push devices) — the universal page. */}
+      <p className={styles.manageRow}>
+        Want push on, or a channel changed?{' '}
+        <Link href={`/account/notifications?focus=org-${orgSlug ?? ''}`} className={styles.manageLink}>
+          Manage what you receive →
+        </Link>
+      </p>
 
       {/* Master mute card */}
       <div className={`${styles.muteCard} ${isMuted ? styles.muteCardActive : ''}`}>
@@ -392,7 +263,7 @@ export default function TournamentNotificationPreferencesPage() {
       </div>
 
       {/* Messaging — only when the org has Tournament Chat. @mentions are always
-          delivered (not user-mutable), so only the general chat-message stream has a toggle. */}
+          delivered (not user-mutable), so only the general chat-message stream has a mute. */}
       {chatEnabled && (
         <>
           <div className={styles.sectionLabel}>Messaging</div>

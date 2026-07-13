@@ -1,9 +1,9 @@
 # Platform-Wide Notification Settings — Implementation Plan
 
-> **Status:** Planning — awaiting owner sign-off on direction (no code until approved)
+> **Status:** Phase 1 BUILT on dev 2026-07-13 (uncommitted; typecheck + focused lint green). Direction APPROVED — all 7 sign-off decisions LOCKED by owner 2026-07-13 (see §Sign-off decisions). Phase 2+ pending. ⚠ prod-promotion coupling: this must ride the same promotion as the consumer shell + the digest's Sunday schedule (see Sequencing).
 > **Created:** 2026-07-13
 > **Branch:** dev
-> **Companion:** docs/projects/active/NOTIFICATION_SETTINGS_PM_BRIEF.md
+> **Companion:** docs/projects/active/NOTIFICATION_SETTINGS_PM_BRIEF.md · visual decision pack: https://claude.ai/code/artifact/f84fbc06-0753-47e7-a796-26f764fd4366
 
 ## Goal
 
@@ -147,9 +147,52 @@ Three independent designs were produced and scored by three judges (persona-simp
 
 ---
 
-# Part 3 — Phases
+## Sign-off decisions — LOCKED (owner, 2026-07-13)
 
-## Phase 1 — Coach surface + honesty fixes (no migration, no schema change)
+1. **D1+D5 — Direction (REVISED at sign-off): the universal page ships as Phase 1.** The staged "shell doors now, container later" recommendation was weighted toward cutover safety for live users; the owner confirmed the platform has **no live coaches or customer orgs**, so that rationale didn't apply. Locked: `/account/notifications` is built first; every shell's bell gear deep-links into it (`?focus=` opens the card you came from); the tournament settings page becomes mute-only; the old org settings page folds in and redirects. The fan "Following" card still waits for Unified App Phase 2 kickoff — the page holds its reserved slot. This supersedes the staged phasing in Part 2's original recommendation (kept below for the record).
+2. **D2 — Coach settings are a separate destination**, not a tab on their feed — satisfied by the universal page reached via the gear (feed and settings never share a screen).
+3. **D3 — The 5 dead event toggles are removed outright** (no "coming soon" chips). Saved rows are preserved and honored if a trigger ever ships.
+4. **D4 — The `notify()` recipient-scoping fix is ticketed now** as its own project (TODO.md line added 2026-07-13); build still deferred per the parked table.
+5. **D6 — Assistant lifecycle bells stay invisible** in settings (no read-only "Always on" rows). Every row on the page is actionable.
+6. **D7 — CASL: fix the bug, park the project.** The org-keyed unsubscribe mis-scoping bug is fixed in Phase 2 (standalone reviewed commit); per-person guardian email opt-out stays parked with named triggers — owner explicitly accepted the interim risk.
+
+Remaining build-time note (locked recommendation, owner may veto at mockup review): rule R2's mixed state renders as a tri-state control; tapping a mixed rollup evens the whole group ON with an "applies to N notification types" caption — no confirm dialog.
+
+# Part 3 — Phases (rewritten to the locked direction)
+
+## Phase 1 — The universal page + honesty fixes (no migration, no schema change)
+
+**BUILT 2026-07-13 (dev, uncommitted).** New files: `app/(consumer)/account/notifications/{page.tsx,AccountNotificationsClient.tsx,AccountNotifications.module.css}`, `components/notifications/{PreferencesTable.tsx,PreferencesTable.module.css,useOrgPreferences.ts}`. Modified: `lib/notification-labels.ts`, `lib/billing-urls.ts`, admin/coaches bell mounts, `NotificationsPageContent.tsx`, the tournament + old-org notification pages. Typecheck + focused lint green. `/review` + `/docs` offered at handoff (not yet run). Dev-server restart required before browser testing (new files + shared modules).
+
+- [x] `/account/notifications` under `app/(consumer)/account/`: one card per context via `getUserAccessContexts()` (org-membership hats first: owner/admin/staff + rep/team-workspace coach); each card renders the shared `PreferencesTable` grid scoped to that context; shared push-device block (`PushDeviceTester` — devices are user-global); `?focus=` deep-link so each bell lands on the card it came from. sw.js: `/account` prefix already denylisted — VERIFIED in `public/sw.js` `NEVER_CACHE_PREFIXES` (constraint 9, no change needed). Card-list resolved server-side from `getUserAccessContexts()` (no `/api/me` needed); module gating computed server-side via `hasModuleEntitlement`
+- [x] Extract shared `components/notifications/PreferencesTable.tsx` from the two existing near-duplicate grids — presentational grid + declarative section contract (label, eventTypes, lead); load/save/toggle/push state lifted into the shared `useOrgPreferences` hook
+- [x] Coach card leads with **"Weekly summary"**: `coach_insights_digest` toggles always visible (rule R1) in a lead-styled section; "Team activity" row (`tryout_offer_response`); pointer "Chat notifications are managed in the Chat tab" (constraint 3). Assistant lifecycle bells stay hidden (locked D6). Assistant capability filtering (rule R4) DEFERRED to Phase 2 (UI-visibility only; noted below)
+- [x] Bell gears everywhere → the universal page: retired `getNotificationSettingsHref`'s tier branch in favor of `/account/notifications?focus=org-<slug>` (admin sidebar + mobile top bar); wired the coaches bell's unused `settingsHref` prop → `?focus=coach-<slug>` (its first settings link ever); added a "Notification settings" affordance atop the `/coaches/notifications` feed page (via a new opt-in `settingsHref` prop on the shared `NotificationsPageContent`)
+- [x] Tournament settings page becomes **mute-only**: kept the honest veto toggles + "Mute all"; REMOVED the misleading org-wide channel block (and the now-redundant device tester — its home is the universal page), replaced by a "Manage what you receive →" link; rule R3 copy verbatim under an Info callout. (Full removal — no live Tournament-tier customers; locked D1)
+- [x] Old `/{orgSlug}/admin/org/notifications` page folds in: server redirect to `/account/notifications?focus=org-<slug>` (one grid implementation, zero drift)
+- [x] `lib/notification-labels.ts`: added `COACH_SETTINGS_SECTIONS` (digest + coach events — the coach card's model, kept OUT of the org grid per R4); removed the 5 dead event types from `NOTIFICATION_SECTIONS` (locked D3; the `NotificationEventType` union, labels, and `NOTIFICATION_CATEGORY` total map untouched — preserves the Notification Center Rework typecheck drift guard)
+- [x] API: the existing org-membership-scoped preferences route covers all Phase 1 cards (rep + team-workspace coaches ARE org members); no `/api/me` endpoint needed — no schema change
+- [x] Update `COACH_INSIGHTS_DIGEST_PLAN.md` + PM brief (opt-out gap closed). `/docs` (coaches + admin guides) + `/review` offered at handoff; dev-server restart before handoff (new files + shared modules)
+
+## Phase 2 — Simple views, capability scoping, reach + hygiene
+
+- [ ] Simple/Advanced default view per card: plain-language groups from `NOTIFICATION_CATEGORY` ("Needs your attention" / "What's happening") with tri-state per-channel rollups per rule R2 (mixed state + "applies to N notification types" caption); full per-event grid inside a `CollapsibleCard` "Customize individual notifications" expansion
+- [ ] Assistant-coach capability filtering (rule R4) if not landed in Phase 1 — UI visibility only
+- [ ] Basic (free) coach reach: "Notification settings" entry in `CoachPortalShell`'s "More" sheet → `/account/notifications`; their card needs a small account-scoped API path (basic coaches aren't org members, so the org-membership route won't authorize their card) — no schema change; sw.js check for any new route (constraint 9)
+- [ ] `/home` workspace cards gain a "Notification settings" secondary action deep-linking `/account/notifications?focus=…`
+- [ ] **CASL unsubscribe mis-scoping bugfix** (locked D7; standalone commit, `/review` required): the coach-campaign unsubscribe link must not flip the org's opt-out; narrowest correct fix, explicitly NOT a new suppression system
+- [ ] `/docs` sync for all new/changed surfaces
+
+## Phase 3 — Fan "Following" card (trigger: Unified App Phase 2 kickoff)
+
+- [ ] The "Following" card lands on the already-shipped universal page: per-followed-team 3-state (all / game-day only / mute) exactly per the Unified App plan's own Phase 2 model — this plan contributes the container only; fan preference storage/model belongs to that project (zero pre-build, locked D1+D5)
+- [ ] Anonymous fan device flow unchanged forever (two systems by design; reconciliation stays explicit per the Unified App plan)
+
+## Superseded original phasing (pre-sign-off, for the record)
+
+<details><summary>The staged "shell doors first, container later" phasing this plan originally recommended — superseded by locked D1</summary>
+
+### Original Phase 1 — Coach surface + honesty fixes (no migration, no schema change)
 
 - [ ] Extract shared `components/notifications/PreferencesTable.tsx` from the two existing near-duplicate grids (`app/[orgSlug]/admin/org/notifications/page.tsx`, `app/[orgSlug]/admin/tournaments/settings/notifications/page.tsx`) — pure refactor, no behavior change; adopt the declarative `PreferenceRow` contract (eventType, sectionLabel, visible, channels, channelsEditable, tournamentScoped)
 - [ ] New rep-coach settings page `app/[orgSlug]/coaches/notifications/settings/page.tsx` (sibling of the read-only feed): top section **"Weekly summary"** with the `coach_insights_digest` Bell/Push toggles always visible (rule R1); below, "Team activity" rows for coach-relevant events (`tryout_offer_response`); one-line pointer "Chat notification settings live in Chat →" (constraint 3). Whether the assistant lifecycle bells (`assistant_coach_joined`/`assistant_coach_approval_requested`) appear as informational non-toggleable rows or stay fully hidden as today is an owner decision (see Open Questions). Reuses `PushDeviceTester` for device enrollment (first push-enrollment UI coaches have ever had)
@@ -160,7 +203,7 @@ Three independent designs were produced and scored by three judges (persona-simp
 - [ ] Verify sw.js denylist coverage for the new route (nested under `/coaches` — already covered; confirm) 
 - [ ] Update `COACH_INSIGHTS_DIGEST_PLAN.md` (opt-out gap closed) + offer `/docs` (coaches guide: how to manage notifications; digest FAQ) + offer `/review`
 
-## Phase 2 — Simple views, capability scoping, reach + hygiene
+### Original Phase 2 — Simple views, capability scoping, reach + hygiene
 
 - [ ] Simple/Advanced view on the admin org page + coach page: default view = plain-language groups from `NOTIFICATION_CATEGORY` ("Needs your attention" / "What's happening") with tri-state per-channel rollups per rule R2; full per-event grid demoted into a `CollapsibleCard` "Customize individual notifications" expansion
 - [ ] Assistant-coach capability filtering (rule R4): coach page rows filtered by resolved capability grants (e.g. no tryouts capability ⇒ no tryout toggle) — UI visibility only
@@ -170,19 +213,36 @@ Three independent designs were produced and scored by three judges (persona-simp
 - [ ] **CASL unsubscribe mis-scoping bugfix** (standalone commit, `/review` required): the coach-campaign unsubscribe link must not flip the org's opt-out; narrowest correct fix, explicitly NOT a new suppression system
 - [ ] `/docs` sync for all new/changed surfaces
 
-## Phase 3 — The universal container (trigger: Unified App Phase 2 kickoff, or owner priority)
+### Original Phase 3 — The universal container (trigger: Unified App Phase 2 kickoff, or owner priority)
 
 - [ ] `/account/notifications` under `app/(consumer)/account/`: one card per context via `getUserAccessContexts()`, each card = the same `PreferencesTable` scoped to that context; shared push-device block (devices are user-global); `?focus=` deep-link support; confirm `public/sw.js` denylist coverage in the same change (`/account` prefix is already listed — verify, constraint 9). Note: Unified App Phase 2 also extends `getUserAccessContexts()` (adds a `fan` context kind) — cross-coordinate any change to that helper
 - [ ] Shell doors stay primary; doors + `/home` link to the container for 2+ context users ("See all your notification settings")
 - [ ] Reserved "Following" card slot for Unified App Phase 2 fan follows (container only — fan prefs keep their own per-follow 3-state model and storage; zero pre-build)
 - [ ] Decide then whether admin bells re-point here (default: no — doors stay primary)
 
+</details>
+
+## Sequencing with the Unified App project (agreed 2026-07-13)
+
+Unified App status (verified against git 2026-07-13): Phases 0+1 BUILT and **COMMITTED to dev in `104c2ea3` (2026-07-13)** — the consumer shell (`app/(consumer)/` with the Account tab) that this plan's Phase 1 builds inside, bundled with the Insights digest, Scheduled Jobs Wiring (mig 183 dev-only), and Tags/Awards P2+P3. Remaining there: the owner device-coexistence spike (Phase 0 validation — gates the next PROD promotion, not dev work), then Phase 2 fan accounts + follows.
+
+Interleaved delivery order:
+
+1. **Owner gates (no build work; gate the next PROD promotion, not dev builds):** (a) the Unified App Phase 0 device-coexistence spike on a dev deploy — validates the install identity on real phones; (b) the Android prod push diagnosis ("Test this device" tool, already on prod) — both projects put more weight on push, and a settings page must not show Push ON where delivery is broken (rule: channel honesty).
+2. ~~Commit Unified App Phases 0+1~~ **DONE 2026-07-13 (`104c2ea3`)** — the consumer-shell foundation is landed; this plan's Phase 1 is unblocked on the build side.
+3. **This plan Phase 1** (universal page, digest off-switch, tournament mute-only, dead-toggle removal, bell rewiring). No dependency on Unified App Phase 2 — fills the gap while that phase is pending. NOTE: the working tree currently carries small in-progress edits to consumer-shell files from a concurrent session — re-check `git status` on those paths before building on them.
+4. **This plan Phase 2** (simple views, capability filtering, free-coach entry, CASL unsubscribe bugfix) — independent; can overlap with Unified App Phase 2's build.
+5. **Unified App Phase 2 (fan accounts + follows)** — at kickoff, agree the shared user-contexts contract (it adds a `fan` context kind to the same helper this page uses for its cards); its per-follow 3-state prefs render as…
+6. **This plan Phase 3 = the "Following" card**, built with/immediately after Unified App Phase 2, landing on the already-live page. Zero container rework by design.
+7. **Prod-promotion coupling:** the coach digest's automatic Sunday schedule (Scheduled Jobs Wiring, mig 183 dev-only) must NOT go live on prod before this plan's Phase 1 is in the same promotion — the default-ON weekly push ships with or after its off-switch, never before. Also: this plan's Phase 1 can only ride a promotion that includes the consumer shell (same tree — naturally bundled; stated to prevent a partial cherry-pick).
+8. **One legal review, two unlocks:** when the PIPEDA/CASL review gating Unified App Phase 4 (family) runs, scope it to also cover guardian email consent — it's the named trigger for this plan's parked guardian email opt-out project. Run once, unpark both.
+
 ## Explicitly parked (each with a trigger — do not build here)
 
 | Parked item | Why | Unpark trigger |
 |---|---|---|
 | **Guardian email opt-out / per-person suppression (CASL)** | guardians have no account/user_id; a half-fix inside a settings pass creates a second parallel prefs system | Unified App Phase 4 (family accounts + PIPEDA/CASL review) kickoff, or owner/legal urgency — then its own plan + PM brief |
-| **`notify()` recipient-scoping fixes** (coach org-wide over-notification; capability-blind tryout fan-out; approval-request over-broadcast) | shared-dispatch logic change touching every event's fan-out; needs its own review + tests | next deliberate touch of `lib/notify.ts`, or coach noise complaints — ticket now, build separately |
+| **`notify()` recipient-scoping fixes** (coach org-wide over-notification; capability-blind tryout fan-out; approval-request over-broadcast) — **TICKETED 2026-07-13 (locked D4, TODO.md line added)** | shared-dispatch logic change touching every event's fan-out; needs its own review + tests | next deliberate touch of `lib/notify.ts`, or coach noise complaints — build separately |
 | **Fan account notification settings** | Unified App Phase 2 owns `fan_follows` + per-follow prefs | Phase 2 kickoff (lands as a card in this plan's Phase 3 container) |
 | **Per-tournament channel granularity** (nullable `tournament_id` on `notification_preferences`) | unforced migration; the current problem is labeling, fixed in Phase 1 | genuine demand for different channel mixes per tournament → dedicated `/db`-reviewed project |
 | **Platform-admin ops alert routing** (6-role `platform_users` table vs one hardcoded inbox) | no persona/engine overlap; single-operator reality today | platform staff headcount > 1 |
@@ -190,23 +250,16 @@ Three independent designs were produced and scored by three judges (persona-simp
 
 ## Architectural decisions
 
-- **Decision:** Shell-native doors + one shared component now; universal `/account/notifications` container in Phase 3. **Rationale:** persona findability (coaches look in their shell, not /account) + zero big-bang bell rewiring, while still committing to the one-human-one-page endgame the multi-hat audit demands; the container doubles as the landing spot for Unified App Phase 2 fan cards.
+- **Decision (SUPERSEDED at sign-off — see locked D1):** ~~Shell-native doors + one shared component now; universal `/account/notifications` container in Phase 3.~~ The staged approach's rationale was cutover safety for live users; the owner confirmed no live coaches/customer orgs exist, so the universal page ships as Phase 1 instead — with bell-gear deep links (`?focus=`) preserving per-shell findability. **Rationale for the revision:** the engineering panel already rated the one-page architecture highest; its only material weaknesses were live-user cutover risks that don't currently exist. Building the end-state directly avoids building interim shell pages that would later be demoted.
 - **Decision:** No schema changes in any phase of this plan. **Rationale:** every identified fix is achievable against the existing two preference tables; the only tempting migration (per-tournament channels) solves a problem that is actually a mislabeled UI.
 - **Decision:** Rules R1–R4 locked (default-ON never buried; no silent batch writes — tri-state + blast-radius caption; the two-sentence scope copy verbatim; capability/module filtering of visible rows). **Rationale:** direct answers to the judged fatal-flaws; R2 specifically prevents reintroducing the tournament-page bug class at rollup grain.
 - **Decision:** Digest defaults stay push-ON; the fix is a first-class off switch, not a default flip. **Rationale:** reach is the digest's point (quiet weeks already send nothing); the compliance problem was the missing off switch, and `PUSH_DEFAULT_ON_EVENTS` stays authoritative (constraint 6).
 - **Decision:** Dead event types come out of the settings UI (labels/union stay). **Rationale:** a settings page must not promise controls over notifications that cannot fire; reinstating a row when a trigger ships is one line.
 - **Decision:** Chat preferences stay out of these pages (pointer only). **Rationale:** owner-locked chat-off-bell decision; chat's surface is the Chat tab.
 
-## Open questions (owner decisions needed at sign-off)
+## Open questions
 
-- [ ] Approve the converged direction (Option C sequencing toward Option B's container) — or prefer pure per-shell (never build the container) / pure one-page (bells re-point to `/account/notifications` on day one)?
-- [ ] Coach settings placement: sibling route `/coaches/notifications/settings` (recommended) vs a tab inside the existing feed page?
-- [ ] Dead toggles: remove outright (recommended) vs keep with a "coming soon" tag?
-- [ ] Confirm rule R2's mixed-state behavior: clicking a mixed rollup sets the whole group ON, with the "applies to N types" caption and the grid reflecting it immediately (recommended) vs a confirm dialog?
-- [ ] Ticket the `notify()` recipient-scoping project now (recommended — it's a confirmed over-notification, just not this project's build)?
-- [ ] Phase 3 timing: at Unified App Phase 2 kickoff (recommended) vs immediately after Phase 2 here?
-- [ ] Assistant lifecycle bells on the coach page: show as informational non-toggleable rows, or stay fully hidden as today (recommended: hidden — surfacing previously-invisible lifecycle events is a product change, not a settings fix)?
-- [ ] Confirm the guardian-email CASL parking: acceptable at current volume to defer per-person email opt-out to its own project (recommended, with the narrow unsubscribe-bug fix still landing in Phase 2), or does compliance exposure warrant expediting it ahead of Phases 1–3?
+All eight sign-off questions were answered by the owner on 2026-07-13 — see **§Sign-off decisions (LOCKED)** above. (D1 was answered with a revision: universal page as Phase 1, given no live users. R2's mixed-state behavior stands as the locked recommendation, vetoable at mockup review.) No open questions remain before build.
 
 ## Success criteria
 

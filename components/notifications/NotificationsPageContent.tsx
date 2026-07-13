@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { BellOff, CheckCheck, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
+import { BellOff, CheckCheck, ChevronRight, Settings } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import type { AppNotification } from '@/lib/types';
@@ -22,7 +23,7 @@ type ZoneFilter = 'all' | 'needs' | 'activity';
  *
  * Chat is already excluded server-side (P3), so it never appears here either.
  */
-export default function NotificationsPageContent() {
+export default function NotificationsPageContent({ settingsHref }: { settingsHref?: string } = {}) {
   const { currentOrg } = useOrg();
   usePageTitle('Notifications');
   const orgId = currentOrg?.id;
@@ -187,11 +188,18 @@ export default function NotificationsPageContent() {
           <h1 className={styles.title}>Notifications</h1>
           <p className={styles.sub}>Everything from this organization, newest first.</p>
         </div>
-        {anyUnread && (
-          <button type="button" className={styles.markAllBtn} onClick={markAllRead}>
-            <CheckCheck size={15} /> Mark all read
-          </button>
-        )}
+        <div className={styles.headerActions}>
+          {settingsHref && (
+            <Link href={settingsHref} className={styles.markAllBtn}>
+              <Settings size={14} /> Notification settings
+            </Link>
+          )}
+          {anyUnread && (
+            <button type="button" className={styles.markAllBtn} onClick={markAllRead}>
+              <CheckCheck size={15} /> Mark all read
+            </button>
+          )}
+        </div>
       </div>
 
       <div className={styles.toolbar}>

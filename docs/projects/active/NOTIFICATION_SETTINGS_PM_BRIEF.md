@@ -1,7 +1,9 @@
 # PM Brief — Platform-Wide Notification Settings
 
-> Companion plan: docs/projects/active/NOTIFICATION_SETTINGS_PLAN.md
-> Status: awaiting owner sign-off on direction — nothing is built yet.
+> Companion plan: docs/projects/active/NOTIFICATION_SETTINGS_PLAN.md · visual decision pack: https://claude.ai/code/artifact/f84fbc06-0753-47e7-a796-26f764fd4366
+> Status: **direction approved — all 7 decisions locked by the owner 2026-07-13.** Nothing built yet; build starts on owner go.
+>
+> **What was decided:** Because the platform has no live coaches or customer orgs yet, the owner chose the stronger end-state directly: **one "All your notification settings" page ships first**, and every portal's bell links straight into it, opened on the section you came from. The tournament screen becomes purely "mute this tournament." Dead toggles are removed outright. The engine over-notification fix is ticketed as its own project. Behind-the-scenes pings stay invisible in settings. The wrong-party unsubscribe bug gets fixed in Phase 2 while the full parent-email opt-out is parked as its own project (risk explicitly accepted).
 
 **What it does:** Gives every kind of user one findable, honest place to control what the platform sends them — the bell, phone push, and email — built on the notification engine we already have. Today only org admins have any controls; coaches, fans, and parents have none.
 
@@ -22,11 +24,11 @@
 
 **The recommendation (after weighing three options):** Don't build one giant settings page, and don't scatter one-off toggles. Build **one shared settings panel used everywhere**: each audience gets a door in the shell they already live in (bell icon → settings, same as admins have today), and later one "all my notification settings" page collects every hat a person wears — which is also exactly where fan-account settings will land when that project ships. Three rules lock the experience: anything that's on by default gets an always-visible off switch (never buried); no control ever silently changes more than it says it does; and one plain sentence explains scope everywhere: "Org settings decide what you receive; tournament settings can only mute."
 
-**What ships when:**
-- **Phase 1 (the urgent one):** Coaches get a settings page — the weekly digest gets a prominent off switch (fixing the promise already made in the digest's brief) — and the misleading tournament screen gets honest labels. Dead toggles disappear. No database changes.
-- **Phase 2:** A simpler default view for everyone (two plain-language groups instead of a 17-row grid, with full detail one tap away), assistant coaches only see toggles for things they can actually receive, settings doors for standalone and free coaches, and a fix for an unsubscribe-link bug that opts out the wrong party.
-- **Phase 3 (timed with the fan-accounts project):** the "all my settings" page for multi-hat people, which the fan project plugs into.
-- **Explicitly parked, each with a named trigger:** parent/guardian email opt-out (its own compliance project — needs more than a settings screen), the engine's over-notification fixes, and internal ops-alert routing.
+**What ships when (as decided):**
+- **Phase 1:** The "All your notification settings" page — one card per role you hold, with the coach card leading with the weekly digest's off switch (fixing the promise already made in the digest's brief). Every bell across the product links into it. The misleading tournament screen becomes honestly mute-only, and the five dead toggles disappear. No database changes.
+- **Phase 2:** The simpler default view (two plain-language groups instead of a 17-row grid, full detail one tap away), assistant coaches only see toggles for things they can actually receive, an entry point for free coaches, and the fix for the unsubscribe-link bug that opts out the wrong party.
+- **Phase 3 (at fan-accounts kickoff):** the fan "Following" card lands on the already-shipped page — per-team alert choices (all / game-day only / mute).
+- **Explicitly parked, each with a named trigger:** parent/guardian email opt-out (its own compliance project — needs more than a settings screen), the engine's over-notification fixes (now ticketed), and internal ops-alert routing.
 
 **Priority:** High. The digest is already live on dev heading to prod with no off switch, and the coaches audience is the platform's most engaged. The tournament-screen honesty fix protects trust with our core paying customers.
 
@@ -36,11 +38,11 @@
 - No settings toggle exists for a notification that can't actually fire, and no control changes more than it claims to.
 - The fan-accounts project lands its settings into this structure without rework.
 
-**Decisions needed from the owner (sign-off gate):**
-1. Approve the overall direction (shared panel + per-shell doors now, one aggregate page later)?
-2. Coach settings as its own page next to their notifications feed (recommended) or a tab on it?
-3. Remove dead toggles outright (recommended) or label them "coming soon"?
-4. Ticket the engine over-notification fix now as a separate project (recommended)?
-5. Build the aggregate "all my settings" page when fan accounts start (recommended) or sooner?
-6. Should coaches see read-only entries for behind-the-scenes events (like "an assistant joined your team") on their new settings page, or keep those invisible as they are today (recommended: keep invisible)?
-7. Confirm parking the parent/guardian email opt-out as its own later project (recommended — the one live unsubscribe bug still gets fixed in Phase 2), or expedite it now for compliance?
+**Decisions made (owner, 2026-07-13):**
+1. Direction: **the aggregate page ships first** (revised from "doors now, page later" once the owner confirmed no live coaches/customer orgs exist to disrupt); every bell links into it.
+2. Coach settings stay a separate destination from their activity feed. ✓
+3. Dead toggles removed outright. ✓
+4. Engine over-notification fix ticketed now as its own project. ✓
+5. The fan "Following" card joins the page at fan-accounts kickoff. ✓
+6. Behind-the-scenes events stay invisible in settings. ✓
+7. Parent-email opt-out parked as its own project; the wrong-party unsubscribe bug is fixed in Phase 2. ✓ (interim risk explicitly accepted)

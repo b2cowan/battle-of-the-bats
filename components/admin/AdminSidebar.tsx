@@ -268,7 +268,7 @@ export default function AdminSidebar() {
             <div className="flex items-center gap-1 ml-auto self-start shrink-0">
               <NotificationBell
                 orgId={currentOrg.id}
-                settingsHref={getNotificationSettingsHref(currentOrg.slug, currentOrg.planId)}
+                settingsHref={getNotificationSettingsHref(currentOrg.slug)}
                 seeAllHref={`/${currentOrg.slug}/admin/notifications`}
               />
             </div>

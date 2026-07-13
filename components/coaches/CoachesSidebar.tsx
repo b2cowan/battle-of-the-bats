@@ -112,6 +112,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
             <div className="flex items-center gap-1 ml-auto">
               <NotificationBell
                 orgId={currentOrg.id}
+                settingsHref={`/account/notifications?focus=coach-${currentOrg.slug ?? orgSlug}`}
                 seeAllHref={`/${currentOrg.slug}/coaches/notifications`}
               />
             </div>

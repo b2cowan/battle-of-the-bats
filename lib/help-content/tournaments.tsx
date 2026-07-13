@@ -279,8 +279,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Define the structure',
       heading: 'Branding, scoring, and event settings',
       summary: 'Review tournament-specific controls that affect public appearance, scoring rules, billing visibility, and who can help administer the event.',
-      keywords: ['settings', 'branding', 'scoring', 'subscription', 'members', 'access', 'scorekeepers', 'tie-breaker', 'game timing', 'app icon', 'public directory', 'discover tournaments'],
-      searchText: 'settings access members branding logo hero banner scoring finalization subscription plan tournament settings scorekeeper score finalization role members permissions public appearance tie-breaker tiebreaker ranking standings head to head run differential coin toss game timing game length duration buffer turnaround app icon home screen icon icon background colour color border app name custom short name initials add to home screen pwa icon logo size logo zoom resize logo make logo bigger smaller new installs public directory discover discovery list tournament publicly tournament directory find tournaments browse tournaments province region opt in listing',
+      keywords: ['settings', 'branding', 'scoring', 'subscription', 'members', 'access', 'scorekeepers', 'tie-breaker', 'game timing', 'app icon', 'public directory', 'discover tournaments', 'notifications', 'notification settings', 'mute tournament', 'my notifications'],
+      searchText: 'settings access members branding logo hero banner scoring finalization subscription plan tournament settings scorekeeper score finalization role members permissions public appearance tie-breaker tiebreaker ranking standings head to head run differential coin toss game timing game length duration buffer turnaround app icon home screen icon icon background colour color border app name custom short name initials add to home screen pwa icon logo size logo zoom resize logo make logo bigger smaller new installs public directory discover discovery list tournament publicly tournament directory find tournaments browse tournaments province region opt in listing my notification settings personal notifications manage notifications notification settings link in the bell mute one tournament mute all per tournament notifications mute only manage what you receive turn off notifications push email bell channels',
       links: [
         { label: 'Event Settings', href: '../tournaments/settings/event' },
         { label: 'Branding', href: '../tournaments/branding' },
@@ -374,6 +374,18 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['game timing', 'game length', 'duration', 'buffer', 'turnaround', 'schedule timing'],
           answer: (
             <p><strong>Game timing</strong> sets the default game length and the buffer between games — FieldLogicHQ uses these when it builds the schedule. The default is 90-minute games with a 15-minute turnaround, applied tournament-wide. Open <strong>Event Settings</strong> to change it before building the schedule; individual games can still be adjusted afterward.</p>
+          ),
+        },
+        {
+          id: 'faq-my-notification-settings',
+          question: 'Where do I set my own notifications, or mute one tournament?',
+          answerText: 'Your personal notification settings live on one page, opened from the Notification settings link in the bell — a card per organization (and any team you coach), each with bell, push, and email switches per kind of event, plus your phones in one place. The per-tournament Notifications screen under a tournament\'s settings is now mute-only: it silences that one tournament for you (Mute all, or event by event) and can only mute — org settings decide what you actually receive, and a tournament can never turn a channel back on. Use its "Manage what you receive" link to jump to your full settings.',
+          keywords: ['notification settings', 'my notifications', 'personal notifications', 'mute tournament', 'mute notifications', 'turn off notifications', 'per-tournament notifications', 'manage notifications', 'push settings', 'email notifications', 'stop notifications for a tournament', 'notification preferences'],
+          answer: (
+            <>
+              <p>Your <strong>personal notification settings</strong> live on one page — open <strong>Notification settings</strong> from the <strong>bell</strong>. It shows a card for each organization (and any team you coach), each with <strong>bell</strong>, <strong>push</strong>, and <strong>email</strong> switches per kind of event, plus your phones managed in one place.</p>
+              <p>The per-tournament <strong>Notifications</strong> screen (under a tournament&rsquo;s settings) is now <strong>mute-only</strong>: it silences that one tournament for you — <strong>Mute all</strong>, or event by event. As it says there, <em>org settings decide what you receive; a tournament can only mute, never turn a channel back on</em>. Use its <strong>Manage what you receive&nbsp;&rarr;</strong> link to jump to your full settings.</p>
+            </>
           ),
         },
       ],

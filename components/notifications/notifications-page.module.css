@@ -17,6 +17,15 @@
   margin-bottom: 1rem;
 }
 
+/* Right-side header actions (optional "Notification settings" link + Mark all read). */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.headerActions a.markAllBtn { text-decoration: none; }
+
 .title {
   font-family: var(--font-display, inherit);
   font-size: 1.35rem;

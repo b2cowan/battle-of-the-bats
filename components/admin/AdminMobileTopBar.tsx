@@ -59,7 +59,7 @@ export default function AdminMobileTopBar() {
         <div className={`${styles.bellSlot} flex items-center gap-1`}>
           <NotificationBell
             orgId={currentOrg.id}
-            settingsHref={getNotificationSettingsHref(currentOrg.slug, currentOrg.planId)}
+            settingsHref={getNotificationSettingsHref(currentOrg.slug)}
             seeAllHref={`/${currentOrg.slug}/admin/notifications`}
           />
         </div>

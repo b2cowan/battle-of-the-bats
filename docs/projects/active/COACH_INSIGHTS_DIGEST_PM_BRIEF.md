@@ -6,7 +6,7 @@
 
 **Why it matters:** Insights only works when a coach thinks to open it. The digest flips that — the insights come to the coach at the moment of the week they're most reflective, building a weekly habit around the page. The new rules deepen the page's core promise (the system reads the reports so the coach doesn't have to) using data the product already holds.
 
-**Who benefits:** Premium Coaches Portal head coaches and assistants. Each person's digest is built only from what they're allowed to see — an assistant without money access simply never gets a money line. The digest is switchable off per-person like any other notification type. No plan or pricing change.
+**Who benefits:** Premium Coaches Portal head coaches and assistants. Each person's digest is built only from what they're allowed to see — an assistant without money access simply never gets a money line. The digest is switchable off per-person like any other notification type — as of 2026-07-13 that promise is real: Notification Settings Phase 1 gave coaches their first settings surface (the universal notification-settings page), where the weekly digest leads with an always-visible off switch. No plan or pricing change.
 
 **Expected impact:** Weekly engaged-return visits to Insights without any prompting from us; earlier warnings on money and arm-care issues; the "smarter every season" story becomes visible — the page's shape never changes while its judgment improves.
 

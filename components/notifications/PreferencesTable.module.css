@@ -1,96 +1,12 @@
-/* ── Page shell ─────────────────────────────────────────────────────────────── */
-
-.page {
-  max-width: 780px;
-}
-
-.pageHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.75rem;
-}
-
-.headerLeft {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.headerIcon {
-  width: 48px;
-  height: 48px;
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  color: var(--logic-lime);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.pageTitle {
-  font-size: 1.75rem;
-  font-weight: 900;
-  font-family: var(--font-data);
-  margin: 0;
-  color: var(--white-90, #f0f0f0);
-  line-height: 1.1;
-}
-
-.pageSub {
-  margin: 0.25rem 0 0;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  font-size: 0.9rem;
-}
-
-/* ── Banners ─────────────────────────────────────────────────────────────────── */
-
-.errorBanner {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: 2px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #fca5a5;
-  font-size: 0.875rem;
-  margin-bottom: 1.25rem;
-}
-
-.pushCallout {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.625rem;
-  padding: 0.75rem 1rem;
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  color: var(--white-60, rgba(255,255,255,0.6));
-  font-size: 0.82rem;
-  line-height: 1.55;
-  margin-bottom: 1.25rem;
-}
-
-.pushCallout svg {
-  flex-shrink: 0;
-  margin-top: 0.15rem;
-  color: var(--logic-lime);
-}
-
-.pushCallout strong {
-  color: var(--white-90);
-}
-
-/* ── Table ───────────────────────────────────────────────────────────────────── */
+/* Shared notification-preferences grid (Notification Settings Phase 1).
+   Extracted verbatim from the org preferences page's table styling so every
+   surface — org card, coach card, and later the universal container — renders
+   one identical grid. */
 
 .tableWrap {
   border-radius: 2px;
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   overflow: hidden;
-  margin-bottom: 1rem;
 }
 
 .table {
@@ -104,8 +20,8 @@
 }
 
 .table th {
-  padding: 0.65rem 1rem;
-  font-size: 0.7rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -118,7 +34,7 @@
 }
 
 .thChannel {
-  min-width: 90px;
+  min-width: 62px;
   text-align: center !important;
 }
 
@@ -128,9 +44,9 @@
   gap: 0.3rem;
 }
 
-/* Shown in Push column header when browser doesn't support Web Push */
+/* Shown in Push column header when the browser doesn't support Web Push. */
 .unsupportedNote {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   color: var(--white-30, rgba(255,255,255,0.3));
@@ -144,18 +60,27 @@
   background: rgba(255,255,255,0.025);
 }
 
-/* Extra top border to visually separate sections (skipped for the first one) */
 .sectionHeaderRowBorder {
   border-top: 1px solid var(--border, rgba(255,255,255,0.1));
 }
 
 .sectionHeaderCell {
   padding: 0.5rem 1rem;
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--white-40, rgba(255,255,255,0.4));
+}
+
+/* The lead section (rule R1) — a default-ON control (the digest) that must read as
+   prominent, never buried. Tinted with the accent so it stands apart from the grid. */
+.sectionHeaderLead {
+  color: var(--logic-lime, #d9f99d) !important;
+}
+
+.leadRow {
+  background: rgba(217, 249, 157, 0.045);
 }
 
 /* ── Rows ────────────────────────────────────────────────────────────────────── */
@@ -178,13 +103,13 @@
 }
 
 .tdEvent {
-  padding: 0.85rem 1rem;
+  padding: 0.8rem 1rem;
   vertical-align: middle;
 }
 
 .eventLabel {
   display: block;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: var(--white-90, #f0f0f0);
   margin-bottom: 0.2rem;
@@ -195,7 +120,7 @@
   align-items: flex-start;
   gap: 0.3rem;
   color: var(--white-40, rgba(255,255,255,0.4));
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   cursor: default;
   position: relative;
 }
@@ -206,15 +131,20 @@
 }
 
 .descText {
-  /* Visible inline below the label */
   display: block;
   line-height: 1.45;
 }
 
 .tdChannel {
-  padding: 0.85rem 1rem;
+  padding: 0.8rem 1rem;
   text-align: center;
   vertical-align: middle;
+}
+
+/* An unavailable channel cell (a channel not offered for this row) reads as a quiet dash. */
+.cellNa {
+  color: var(--white-20, rgba(255,255,255,0.2));
+  font-size: 0.9rem;
 }
 
 /* ── Toggle ─────────────────────────────────────────────────────────────────── */
@@ -268,14 +198,14 @@
 /* ── Skeleton ────────────────────────────────────────────────────────────────── */
 
 .skeletonRow td {
-  padding: 0.85rem 1rem;
+  padding: 0.8rem 1rem;
 }
 
 .skeletonLabel {
   height: 14px;
   border-radius: 2px;
   background: rgba(255,255,255,0.06);
-  width: 60%;
+  width: 55%;
   animation: shimmer 1.4s ease-in-out infinite;
 }
 
@@ -291,17 +221,4 @@
 @keyframes shimmer {
   0%, 100% { opacity: 0.5; }
   50%       { opacity: 1;   }
-}
-
-/* ── Footer note ─────────────────────────────────────────────────────────────── */
-
-.footNote {
-  font-size: 0.8rem;
-  color: var(--white-30, rgba(255,255,255,0.3));
-  line-height: 1.55;
-  margin: 0;
-}
-
-.footNote strong {
-  color: var(--white-50, rgba(255,255,255,0.5));
 }

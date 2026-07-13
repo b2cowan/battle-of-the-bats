@@ -18,13 +18,13 @@ export function getBillingHref(orgSlug: string, planId: OrgPlan | string | undef
 }
 
 /**
- * Returns the correct notification-settings URL for an org.
- * Tournament and Tournament Plus users have no org admin concept — the /admin/org
- * area (incl. the global notification-preferences page) is walled off for them,
- * so their notification settings live on the per-tournament notifications page.
+ * Returns the notification-settings URL for an org's admin bell.
+ *
+ * Notification Settings Phase 1 (locked D1): every bell across the product deep-links
+ * into the ONE universal page (`/account/notifications`) — the tier branch is retired.
+ * `?focus=org-<slug>` lands the reader on this org's card. Consumer-shell route, so it
+ * never violates the "Tournament tiers stay out of /admin/org/*" rule.
  */
-export function getNotificationSettingsHref(orgSlug: string, planId: OrgPlan | string | undefined | null): string {
-  return isTournamentTier(planId)
-    ? `/${orgSlug}/admin/tournaments/settings/notifications`
-    : `/${orgSlug}/admin/org/notifications`;
+export function getNotificationSettingsHref(orgSlug: string): string {
+  return `/account/notifications?focus=org-${orgSlug}`;
 }

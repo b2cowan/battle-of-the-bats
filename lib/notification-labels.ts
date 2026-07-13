@@ -73,9 +73,6 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
       'registration_new',
       'registration_status_changed',
       'score_submitted',
-      'score_disputed',
-      'registration_deadline_approaching',
-      'waitlist_opened',
       'team_no_show',
       'playoffs_set',
       'champions_crowned',
@@ -90,7 +87,7 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
   {
     label: 'Coaches Portal',
     module: 'module_rep_teams',
-    eventTypes: ['roster_change_requested', 'coach_access_requested', 'tryout_offer_response'],
+    eventTypes: ['tryout_offer_response'],
   },
   {
     label: 'House League',
@@ -102,12 +99,40 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
     module: null,
     eventTypes: ['chat_message'],
   },
+  // Notification Settings Phase 1 (D3): the 5 DEAD event types — 'score_disputed',
+  // 'registration_deadline_approaching', 'waitlist_opened', 'roster_change_requested',
+  // 'coach_access_requested' — were removed from the sections above. They have zero live call
+  // sites (nothing ever fires them), so a settings page must not advertise a toggle for them.
+  // The NotificationEventType union, labels/descriptions, and NOTIFICATION_CATEGORY total map are
+  // deliberately LEFT intact (drift guard) — reinstating a row when a trigger ships is one line.
+  //
   // NOTE: 'assistant_coach_joined' + 'assistant_coach_approval_requested' are INTENTIONALLY not
   // listed here (like 'chat_mention') — they're targeted lifecycle bells (to the head coach / org
   // admins), not general per-user-configurable events, so they don't get a preferences-UI row.
-  // NOTE: 'coach_insights_digest' is also not listed — it targets a rep team's coaches, who have
-  // no settings surface of their own yet (the org preferences page is admin-shell). Known gap:
-  // when a coach-facing notification-settings surface ships, give the digest a row there.
+  // NOTE: 'coach_insights_digest' + 'tryout_offer_response' get their coach-facing rows via
+  // COACH_SETTINGS_SECTIONS below (the universal /account/notifications coach card), NOT here —
+  // an org admin doesn't receive the per-coach digest, so it must not render on the org grid (R4).
+];
+
+/**
+ * Sections for a rep/team-workspace coach's card on the universal /account/notifications page
+ * (Notification Settings Phase 1). Distinct from NOTIFICATION_SECTIONS (the org-admin grid): a
+ * coach receives a different, smaller set, and the weekly digest leads (rule R1 — a default-ON
+ * notification gets an always-visible control on the default view, never buried in an accordion).
+ * Chat prefs are intentionally absent (owner-locked: chat's surface is the Chat tab; the card
+ * shows a pointer instead).
+ */
+export const COACH_SETTINGS_SECTIONS: NotificationSection[] = [
+  {
+    label: 'Weekly summary',
+    module: null,
+    eventTypes: ['coach_insights_digest'],
+  },
+  {
+    label: 'Team activity',
+    module: null,
+    eventTypes: ['tryout_offer_response'],
+  },
 ];
 
 /** All event types in display order — derived from NOTIFICATION_SECTIONS. Single source of truth. */

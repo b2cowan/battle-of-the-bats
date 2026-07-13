@@ -73,6 +73,48 @@
   margin-bottom: 1.25rem;
 }
 
+/* ── Scope note (rule R3) + manage-what-you-receive link ─────────────────────── */
+
+.scopeNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.8rem 1rem;
+  border-radius: 2px;
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  color: var(--white-70, rgba(255,255,255,0.7));
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.scopeNote svg {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: var(--logic-lime);
+}
+
+.scopeNote strong { color: var(--white-90); font-weight: 700; }
+
+.manageRow {
+  margin: 0 0 1.5rem;
+  font-size: 0.82rem;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  line-height: 1.5;
+}
+
+.manageLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  text-decoration: none;
+}
+
+.manageLink:hover { text-decoration: underline; }
+
 /* ── Global channel card ─────────────────────────────────────────────────────── */
 
 .channelCard {

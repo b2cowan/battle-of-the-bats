@@ -1,0 +1,185 @@
+/* Universal notification-settings page (Notification Settings Phase 1).
+   Lives in the consumer shell; uses consumer tokens with safe fallbacks so the
+   dark grid reads correctly regardless of the active theme. */
+
+.page {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.header { margin-bottom: 0.25rem; }
+
+.title {
+  font-family: var(--font-display, sans-serif);
+  font-weight: 800;
+  font-size: 1.6rem;
+  letter-spacing: -0.01em;
+  color: var(--fl-text, #f1f5f9);
+  margin: 0;
+}
+
+.subtitle {
+  font-family: var(--font-data, monospace);
+  font-size: 0.8rem;
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  margin: 0.35rem 0 0;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────────────── */
+
+.cardsWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.card {
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.09));
+  border-radius: 12px;
+  background: var(--hud-surface, rgba(255, 255, 255, 0.02));
+  overflow: hidden;
+  scroll-margin-top: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* The card a bell deep-linked to (?focus=) — highlighted so the reader lands oriented. */
+.cardFocused {
+  border-color: rgba(217, 249, 157, 0.55);
+  box-shadow: 0 0 0 1px rgba(217, 249, 157, 0.22), 0 10px 34px -14px rgba(0, 0, 0, 0.6);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.07));
+}
+
+.badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-data, monospace);
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.badgeCoach {
+  background: rgba(217, 249, 157, 0.12);
+  color: var(--logic-lime, #d9f99d);
+  border: 1px solid rgba(217, 249, 157, 0.3);
+}
+
+.badgeOrg {
+  background: rgba(var(--blueprint-blue-rgb, 30, 58, 138), 0.18);
+  color: #93b4ff;
+  border: 1px solid rgba(var(--blueprint-blue-rgb, 30, 58, 138), 0.45);
+}
+
+.cardHeaderText { min-width: 0; }
+
+.cardName {
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.15;
+  color: var(--fl-text, #f1f5f9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardKind {
+  font-family: var(--font-data, monospace);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  margin-top: 0.15rem;
+}
+
+.roleTag {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: var(--font-data, monospace);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 4px;
+  padding: 0.2rem 0.45rem;
+}
+
+.cardBody {
+  padding: 0.9rem 1.1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+/* ── Notes ───────────────────────────────────────────────────────────────────── */
+
+.footNote {
+  font-size: 0.78rem;
+  color: var(--white-30, rgba(255, 255, 255, 0.3));
+  line-height: 1.55;
+  margin: 0;
+}
+.footNote strong { color: var(--white-50, rgba(255, 255, 255, 0.5)); }
+
+.chatPointer {
+  font-size: 0.8rem;
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  line-height: 1.5;
+  margin: 0;
+}
+.chatPointer strong { color: var(--fl-text, #f1f5f9); }
+
+/* ── Error banner ────────────────────────────────────────────────────────────── */
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  font-size: 0.83rem;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────────── */
+
+.emptyState {
+  text-align: center;
+  padding: 2.5rem 1.25rem;
+  border: 1px dashed var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 14px;
+}
+.emptyTitle {
+  font-family: var(--font-data, monospace);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--fl-text, #f1f5f9);
+  margin: 0 0 0.4rem;
+}
+.emptyText {
+  font-family: var(--font-data, monospace);
+  font-size: 0.78rem;
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  margin: 0 auto;
+  max-width: 44ch;
+  line-height: 1.55;
+}
