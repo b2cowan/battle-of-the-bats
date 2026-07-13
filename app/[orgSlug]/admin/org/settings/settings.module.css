@@ -662,8 +662,8 @@
 .cardPreview_glass {
   background: rgba(26, 21, 48, 0.45);
   border: 1px solid rgba(255,255,255,0.12);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 .cardPreview_outlined {

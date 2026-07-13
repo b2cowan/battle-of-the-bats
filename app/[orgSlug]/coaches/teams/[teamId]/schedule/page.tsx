@@ -1520,7 +1520,7 @@ export default function CoachesSchedulePage({
 
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page}${view !== 'list' ? ` ${styles.pageWide}` : ''}`}>
       {/* Header */}
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>

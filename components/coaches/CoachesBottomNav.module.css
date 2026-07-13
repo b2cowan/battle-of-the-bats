@@ -10,8 +10,8 @@
     right: 0;
     z-index: 300;
     background: rgba(13, 17, 26, 0.97);
-    backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
     border-top: 1px solid rgba(79, 163, 224, 0.25);
     padding: 0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom));
     justify-content: space-around;

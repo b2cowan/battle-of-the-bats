@@ -11,8 +11,8 @@
 
 .nav.scrolled {
   background: var(--nav-bg-scrolled);
-  backdrop-filter: blur(var(--blur-bar));
   -webkit-backdrop-filter: blur(var(--blur-bar));
+  backdrop-filter: blur(var(--blur-bar));
   box-shadow: 0 1px 0 var(--border), 0 4px 32px rgba(0,0,0,0.3);
 }
 
@@ -163,8 +163,8 @@
   right: 0;
   z-index: 50;
   background: var(--nav-mobile-bg);
-  backdrop-filter: blur(var(--blur-bar));
   -webkit-backdrop-filter: blur(var(--blur-bar));
+  backdrop-filter: blur(var(--blur-bar));
   border-top: 1px solid var(--border);
   padding-bottom: env(safe-area-inset-bottom);
 }

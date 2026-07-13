@@ -276,8 +276,8 @@
   padding: 0 1rem;
   background: var(--nav-mobile-bg, var(--surface));
   border-bottom: 1px solid var(--border-2);
-  backdrop-filter: blur(var(--blur-bar));
   -webkit-backdrop-filter: blur(var(--blur-bar));
+  backdrop-filter: blur(var(--blur-bar));
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -498,8 +498,8 @@
   grid-auto-columns: 1fr;
   background: var(--nav-mobile-bg, var(--surface));
   border-top: 1px solid var(--border-2);
-  backdrop-filter: blur(var(--blur-bar));
   -webkit-backdrop-filter: blur(var(--blur-bar));
+  backdrop-filter: blur(var(--blur-bar));
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {

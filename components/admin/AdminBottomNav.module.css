@@ -11,8 +11,8 @@
     z-index: 300;
     /* var(--hud-surface) = #111827 = rgb(17,24,39) at 97% — preserves backdrop-filter frosted glass */
     background: rgba(17, 24, 39, 0.97);
-    backdrop-filter: blur(var(--blur-bar));
     -webkit-backdrop-filter: blur(var(--blur-bar));
+    backdrop-filter: blur(var(--blur-bar));
     border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
     padding: 0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom));
     justify-content: space-around;

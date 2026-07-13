@@ -46,8 +46,8 @@
   border-radius: var(--radius) var(--radius) 0 0;
   border-bottom: 1px solid var(--border-2);
   background: color-mix(in srgb, var(--surface) 85%, transparent);
-  backdrop-filter: blur(var(--blur-bar));
   -webkit-backdrop-filter: blur(var(--blur-bar));
+  backdrop-filter: blur(var(--blur-bar));
   font-family: var(--font-data);
   font-size: 0.62rem;
   font-weight: 800;

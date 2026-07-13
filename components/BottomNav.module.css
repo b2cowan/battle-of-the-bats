@@ -16,8 +16,8 @@
     z-index: 200;
     /* Token background flips for light mode; single --blur-bar source for frost. */
     background: var(--nav-mobile-bg);
-    backdrop-filter: blur(var(--blur-bar));
     -webkit-backdrop-filter: blur(var(--blur-bar));
+    backdrop-filter: blur(var(--blur-bar));
     border-top: 1px solid var(--border);
     padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
     justify-content: space-around;
