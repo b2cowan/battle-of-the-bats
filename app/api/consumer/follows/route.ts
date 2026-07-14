@@ -12,32 +12,8 @@
  */
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
-import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getOrganizationBySlug, getPublicTournamentBySlug } from '@/lib/db';
-import { followEntity, unfollowEntity } from '@/lib/fan-follows';
+import { followEntity, unfollowEntity, teamBelongsToTournament, UUID_RE } from '@/lib/fan-follows';
 import { withObservability } from '@/lib/observability';
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** True only if `teamId` is a real team in the tournament named by the slugs (public, live org). */
-export async function teamBelongsToTournament(
-  orgSlug: string,
-  tournamentSlug: string,
-  teamId: string,
-): Promise<boolean> {
-  if (!UUID_RE.test(teamId)) return false;
-  const org = await getOrganizationBySlug(orgSlug);
-  if (!org || org.subscriptionStatus === 'canceled') return false;
-  const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
-  if (!tournament) return false;
-  const { data } = await supabaseAdmin
-    .from('teams')
-    .select('id')
-    .eq('id', teamId)
-    .eq('tournament_id', tournament.id)
-    .maybeSingle();
-  return !!data;
-}
 
 export const POST = withObservability(async (req: Request) => {
   const user = await getAuthenticatedUser();

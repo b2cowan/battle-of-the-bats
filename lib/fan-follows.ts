@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
+import { getOrganizationBySlug, getPublicTournamentBySlug } from './db';
 
 /**
  * lib/fan-follows.ts — server-side data layer for account-linked fan follows
@@ -11,6 +12,29 @@ import { supabaseAdmin } from './supabase-admin';
 
 export type FanFollowEntityType = 'tournament' | 'team' | 'org';
 export type FanFollowSource = 'manual' | 'directory' | 'qr' | 'device_reconcile' | 'registration';
+
+/** Matches a canonical UUID (case-insensitive). */
+export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** True only if `teamId` is a real team in the tournament named by the slugs (public, live org). */
+export async function teamBelongsToTournament(
+  orgSlug: string,
+  tournamentSlug: string,
+  teamId: string,
+): Promise<boolean> {
+  if (!UUID_RE.test(teamId)) return false;
+  const org = await getOrganizationBySlug(orgSlug);
+  if (!org || org.subscriptionStatus === 'canceled') return false;
+  const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
+  if (!tournament) return false;
+  const { data } = await supabaseAdmin
+    .from('teams')
+    .select('id')
+    .eq('id', teamId)
+    .eq('tournament_id', tournament.id)
+    .maybeSingle();
+  return !!data;
+}
 
 export interface FanFollow {
   id: string;

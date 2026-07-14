@@ -15,9 +15,8 @@
  */
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
-import { followEntity } from '@/lib/fan-follows';
+import { followEntity, teamBelongsToTournament } from '@/lib/fan-follows';
 import { withObservability } from '@/lib/observability';
-import { teamBelongsToTournament } from '../route';
 
 interface ClaimItem { teamId?: string; orgSlug?: string; tournamentSlug?: string; }
 
