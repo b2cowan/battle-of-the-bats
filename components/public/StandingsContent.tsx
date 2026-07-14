@@ -281,6 +281,10 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
   const followedRank = followedStanding
     ? followedDivisionRows.findIndex(row => row.teamId === followedTeam?.id) + 1
     : null;
+  // TODO: this live/next/final selection duplicates lib/game-status.ts's selectTeamGames()
+  // (added for the cross-tournament Following feed, unified-app Phase 2 Slice 2), which
+  // also fixes a gap here — `latestFollowedScore` below only checks completed/submitted,
+  // missing forfeited games. Left un-migrated for now (blast radius on this verified page).
   const followedGames = followedTeam
     ? games
         .filter(game => game.status !== 'cancelled')
@@ -322,6 +326,8 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
     const v = n % 100;
     return `${n}${suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]}`;
   }
+  // TODO: duplicates lib/utils.ts's relativeDayLabel() — same "Today/Tomorrow/short
+  // date" logic, extracted for the Following feed (unified-app Phase 2 Slice 2).
   function myTeamDateLabel(date: string): string {
     if (date === today) return 'Today';
     const tmrw = new Date(today + 'T12:00:00');

@@ -19,6 +19,7 @@
  * required, not live) → upcoming.
  */
 import { zonedWallClockToUtc } from './timezone';
+import type { Game } from './types';
 
 /** Minutes after a game's scheduled end during which it still reads LIVE — covers
  *  extra innings / clock overruns before it settles into its score state. */
@@ -109,4 +110,53 @@ export function publicGameStatusLabel(state: PublicGameState): string {
     case 'cancelled': return 'Cancelled';
     default: return 'Upcoming';
   }
+}
+
+export interface TeamGameSelection {
+  live: Game | null;
+  next: Game | null;
+  lastResult: Game | null;
+}
+
+/**
+ * For one team's games in a tournament, pick the single most relevant game per
+ * bucket — live now, next scheduled, most recent result — mirroring the "my
+ * team" precedence (live > next > final) already used on the Schedule/Standings
+ * pages, so a followed team never reads a different state on one surface than
+ * another (J6-013 in cross-tournament form). `lastResult` includes forfeited
+ * games (any terminal, scored state), not just `completed`/`submitted`.
+ */
+export function selectTeamGames(
+  games: Game[],
+  teamId: string,
+  today: string,
+  now: Date = new Date(),
+): TeamGameSelection {
+  const teamGames = games
+    .filter(g => g.status !== 'cancelled' && (g.homeTeamId === teamId || g.awayTeamId === teamId))
+    .sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return (a.time || '').localeCompare(b.time || '');
+    });
+
+  const live = teamGames.find(
+    g => isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES, now),
+  ) ?? null;
+
+  const next = teamGames.find(
+    g => g.status === 'scheduled' && (gameStartMs(g) == null ? g.date >= today : isGameUpcoming(g, now)),
+  ) ?? null;
+
+  // teamGames is already sorted ascending — the last match in filtered order
+  // is the most recent result, no second (descending) sort needed.
+  const lastResult = teamGames
+    .filter(g =>
+      g.status !== 'scheduled' &&
+      g.homeScore != null &&
+      g.awayScore != null &&
+      !isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES, now),
+    )
+    .at(-1) ?? null;
+
+  return { live, next, lastResult };
 }

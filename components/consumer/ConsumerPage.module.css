@@ -277,6 +277,48 @@
 /* Pins the note to the bottom of the flex-column account page, filling the void. */
 .pinBottom { margin-top: auto; }
 
+/* ── Following feed card (live/next/recent state, right-hand block) ────────── */
+.feedRight {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+.feedScore {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  font-family: var(--font-data, monospace);
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--fl-text);
+}
+.feedScoreDash { color: var(--white-45); font-weight: 500; }
+.feedNextDate {
+  font-family: var(--font-data, monospace);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white-45);
+}
+.feedNextTime {
+  font-family: var(--font-data, monospace);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--fl-text);
+}
+.feedFinalTag {
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-45);
+}
+.feedGoQuiet { color: var(--white-45); }
+
 /* "Claim your device follows" offer (Following tab, signed-in) — explicit, never silent. */
 .claim {
   border: 1px solid rgba(var(--primary-rgb), 0.4);

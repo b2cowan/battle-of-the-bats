@@ -2,22 +2,31 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAllFollowedTeams, type FollowedTeamEntry } from '@/lib/follow';
+import { useAllFollowedTeams } from '@/lib/follow';
+import { useFollowFeed } from '@/lib/hooks/useFollowFeed';
 import type { FollowedTeamAccount } from '@/lib/fan-follows';
+import type { FollowFeedEntry } from '@/lib/follow-feed';
 import FollowCardList from './FollowCardList';
+import FollowFeed from './FollowFeed';
 import styles from './ConsumerPage.module.css';
 
 /**
- * The Following tab (unified-app Phase 2). Signed out → the device's local follow list.
- * Signed in → the ACCOUNT follow list (travels across devices), plus an explicit,
- * never-silent offer to CLAIM any teams this device follows that aren't on the account
- * yet — the shared-device safeguard (mirrors the invite-reconciliation consent pattern).
+ * The Following tab (unified-app Phase 2, Slice 2). Signed out → the device's local
+ * follow list, enriched client-side into a live game-day feed. Signed in → the
+ * ACCOUNT follow list (travels across devices), seeded server-side with the same
+ * enrichment and kept fresh, plus an explicit, never-silent offer to CLAIM any teams
+ * this device follows that aren't on the account yet — the shared-device safeguard
+ * (mirrors the invite-reconciliation consent pattern). Slice 1 shipped the flat list;
+ * this adds the live/next/recent grouping (see lib/follow-feed.ts).
  */
 export default function FollowingList({
   accountFollows,
+  feedEntries,
   signedIn,
 }: {
   accountFollows: FollowedTeamAccount[];
+  /** Server-computed feed for accountFollows — empty/ignored when signed out. */
+  feedEntries: FollowFeedEntry[];
   signedIn: boolean;
 }) {
   const router = useRouter();
@@ -25,16 +34,18 @@ export default function FollowingList({
   const [claiming, setClaiming] = useState(false);
   const [claimHidden, setClaimHidden] = useState(false);
 
-  // Account follows mapped into the card shape shared with the device list.
-  const accountAsEntries: FollowedTeamEntry[] = accountFollows.map(a => ({
-    id: a.teamId,
-    name: a.teamName,
-    orgSlug: a.orgSlug,
-    tournamentSlug: a.tournamentSlug,
-  }));
   const accountTeamIds = new Set(accountFollows.map(a => a.teamId));
   // Teams this device follows that aren't on the account yet → the claim offer.
   const deviceOnly = deviceTeams.filter(t => !accountTeamIds.has(t.id));
+
+  // Signed-in → account follows (server-seeded, no first-paint flash); signed-out →
+  // the device's follow list, fetched purely client-side.
+  const feed = useFollowFeed({
+    teams: signedIn
+      ? accountFollows.map(a => ({ teamId: a.teamId, teamName: a.teamName, orgSlug: a.orgSlug, tournamentSlug: a.tournamentSlug }))
+      : deviceTeams.map(t => ({ teamId: t.id, teamName: t.name, orgSlug: t.orgSlug, tournamentSlug: t.tournamentSlug })),
+    initialEntries: signedIn ? feedEntries : undefined,
+  });
 
   async function claim() {
     setClaiming(true);
@@ -54,7 +65,7 @@ export default function FollowingList({
     }
   }
 
-  // ── Signed-out: device follows only (Phase 1 behavior) ──────────────────────
+  // ── Signed-out: device follows only, enriched into the live feed ────────────
   if (!signedIn) {
     if (!ready) return <div className={styles.page} />;
     return (
@@ -74,7 +85,7 @@ export default function FollowingList({
             <Link href="/discover" className={styles.cta}>Browse tournaments →</Link>
           </div>
         ) : (
-          <FollowCardList teams={deviceTeams} />
+          <FollowFeed entries={feed.entries} loading={feed.loading} />
         )}
       </div>
     );
@@ -116,7 +127,7 @@ export default function FollowingList({
       {accountFollows.length > 0 ? (
         <>
           {showClaim && <p className={styles.sectionLabel}>On your account</p>}
-          <FollowCardList teams={accountAsEntries} />
+          <FollowFeed entries={feed.entries} loading={feed.loading} />
         </>
       ) : nothingYet ? (
         <div className={styles.empty}>

@@ -179,6 +179,10 @@ export default function TeamProfilePage({
   });
 
   // Next game
+  // TODO: this live/next selection + gameDay() duplicate lib/game-status.ts's
+  // selectTeamGames() and lib/utils.ts's relativeDayLabel() (added for the
+  // cross-tournament Following feed, unified-app Phase 2 Slice 2). Left
+  // un-migrated for now (blast radius on this verified page).
   const today = tournamentToday();
   const todayDate = new Date(today + 'T12:00:00');
   todayDate.setDate(todayDate.getDate() + 1);

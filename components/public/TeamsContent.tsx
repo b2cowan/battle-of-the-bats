@@ -118,6 +118,10 @@ function TeamCard({
   const poolName = division.pools?.find(p => p.id === team.poolId)?.name ?? null;
 
   // Live / next game
+  // TODO: this live/next selection + gameDay() duplicate lib/game-status.ts's
+  // selectTeamGames() and lib/utils.ts's relativeDayLabel() (added for the
+  // cross-tournament Following feed, unified-app Phase 2 Slice 2). Left
+  // un-migrated for now (blast radius on this verified page).
   const durationMin = getGameDuration(division, tournament);
   const teamGames = games.filter(g => g.homeTeamId === team.id || g.awayTeamId === team.id);
   // Per-game duration override wins over the division/tournament default, so the live

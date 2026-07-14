@@ -63,7 +63,7 @@ export function formatTime(timeStr: string): string {
   if (!timeStr) return '';
   // Handle formats like "18:00", "18:00:00", or "6:00 PM" (if already formatted)
   if (timeStr.includes('AM') || timeStr.includes('PM')) return timeStr;
-  
+
   const parts = timeStr.split(':');
   let h = parseInt(parts[0], 10);
   const m = parts[1] || '00';
@@ -71,4 +71,15 @@ export function formatTime(timeStr: string): string {
   h = h % 12;
   h = h ? h : 12; // the hour '0' should be '12'
   return `${h}:${m} ${ampm}`;
+}
+
+/** "Today" / "Tomorrow" / short date (e.g. "Jul 16"), relative to a given
+ *  YYYY-MM-DD reference date — the "next game" day label used across the
+ *  fan-facing followed-team surfaces. */
+export function relativeDayLabel(date: string, today: string): string {
+  if (date === today) return 'Today';
+  const tomorrow = new Date(`${today}T12:00:00`);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (date === tomorrow.toISOString().slice(0, 10)) return 'Tomorrow';
+  return new Date(`${date}T12:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
 }
