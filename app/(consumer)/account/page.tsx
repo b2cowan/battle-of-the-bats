@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { User } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
+import AccountSignOutButton from '@/components/consumer/AccountSignOutButton';
 import styles from '@/components/consumer/ConsumerPage.module.css';
 
 // Reflects sign-in state — dynamic and not for indexing.
@@ -40,10 +41,13 @@ export default async function AccountPage() {
       {/* Primary + secondary actions, full-width block buttons. */}
       <div className={styles.accountActions}>
         {signedIn ? (
+          /* Account things ONLY (owner direction 2026-07-14): the tabs already carry
+             Discover/Following, and Your FieldLogicHQ is the one door to every
+             workspace (incl. the coaches hub) — no duplicate destination rows here. */
           <>
-            <Link href="/following" className={`${styles.cta} ${styles.blockBtn}`}>Your followed teams →</Link>
-            <Link href="/home" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Open your workspaces</Link>
-            <Link href="/discover" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Browse tournaments</Link>
+            <Link href="/home" className={`${styles.cta} ${styles.blockBtn}`}>Your FieldLogicHQ →</Link>
+            <Link href="/account/notifications" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Notification settings</Link>
+            <AccountSignOutButton />
           </>
         ) : (
           <>

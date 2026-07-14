@@ -85,6 +85,10 @@ export default async function TournamentLayout({
   const isFreeTournamentPlan = org.planId === 'tournament';
   const authCtx = await getAuthContext({ orgSlug }).catch(() => null);
   const showAcquisitionBanner = isFreeTournamentPlan && (!authCtx || authCtx.org.id !== org.id);
+  // NB (Phase 3): the account chip's viewer/hats are deliberately NOT resolved here —
+  // the service worker offline-caches this page's HTML as anonymous content, so the
+  // chip fetches its identity client-side via /api/public/tournament-viewer instead
+  // (see TournamentAccountSheet). Do not thread per-user data into this layout.
   const effectiveColorMode = canUseAdvancedBranding ? tournament.colorMode ?? 'dark' : 'dark';
   // Free public tournament pages always use the FieldLogicHQ default theme, even if old branding values exist.
   const hasTournamentTheme = canUseAdvancedBranding

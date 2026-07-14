@@ -24,7 +24,16 @@ const TABS = [
   { href: '/account', label: 'Account', icon: User },
 ] as const;
 
-export default function ConsumerNav({ signedIn = false }: { signedIn?: boolean }) {
+export default function ConsumerNav({
+  signedIn = false,
+  isCoach = false,
+}: {
+  signedIn?: boolean;
+  /** Account has a coach context (Basic or Premium) — surfaces the coaches hub
+   *  in the desktop utility area (Phase 3). Mobile stays four tabs; the Account
+   *  tab carries the same door there. */
+  isCoach?: boolean;
+}) {
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
@@ -56,9 +65,12 @@ export default function ConsumerNav({ signedIn = false }: { signedIn?: boolean }
 
         <div className={styles.topUtil}>
           <Link href="/start" className={styles.utilLink}>Run a tournament</Link>
+          {signedIn && isCoach && (
+            <Link href="/coaches" className={styles.utilCoach}>Coaches Portal</Link>
+          )}
           {signedIn ? (
             <Link href="/home" className={styles.utilCta}>Your workspaces</Link>
-          ) : (
+          ) : pathname.startsWith('/auth') ? null : ( // no "Sign in" button ON the sign-in pages
             <Link href="/auth/login" className={styles.utilCta}>Sign in</Link>
           )}
         </div>

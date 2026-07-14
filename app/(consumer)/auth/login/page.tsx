@@ -98,7 +98,8 @@ function LoginForm() {
           </svg>
         </div>
         <h1 className={styles.title}>Sign In</h1>
-        <p className={styles.sub}>FieldLogicHQ — Tournament Management Platform</p>
+        {/* Brand canon: never "tournament management platform" (memory/project_brand_name). */}
+        <p className={styles.sub}>FieldLogicHQ</p>
       </div>
 
       <form onSubmit={handleSubmit} className={styles.form}>
@@ -154,9 +155,21 @@ function LoginForm() {
       </form>
 
       <div className={styles.footer}>
+        {/* Fans/parents are the default audience here — plain account signup first
+            (carrying `next` so they land back where they were headed). The organizer
+            path is the labeled exception, via the /start front door. */}
         <p className={styles.footerText}>
-          New organization?{' '}
-          <Link href="/auth/signup" className={styles.footerLink}>Create account</Link>
+          New here?{' '}
+          <Link
+            href={`/auth/signup?account=1${searchParams.get('next') ? `&next=${encodeURIComponent(searchParams.get('next')!)}` : ''}`}
+            className={styles.footerLink}
+          >
+            Create a free account
+          </Link>
+        </p>
+        <p className={styles.footerText} style={{ marginTop: '0.4rem' }}>
+          Organizing an event?{' '}
+          <Link href="/start" className={styles.footerLink}>Run a tournament →</Link>
         </p>
         <p className={styles.footerText} style={{ marginTop: '0.4rem' }}>
           Invited by an organization? Finish setup using the link in your

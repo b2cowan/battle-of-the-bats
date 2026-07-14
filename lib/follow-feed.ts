@@ -17,6 +17,39 @@ import type { Game, PublicTeam } from './types';
 
 export type FollowFeedGroup = 'live' | 'upcoming' | 'recent' | 'none';
 
+/** Canonical display order for feed groups (live floats first). NB: FollowFeed.tsx's
+ *  GROUPS array encodes the same order with per-group labels — keep them in step. */
+export const FOLLOW_FEED_GROUP_ORDER: Record<FollowFeedGroup, number> = {
+  live: 0,
+  upcoming: 1,
+  recent: 2,
+  none: 3,
+};
+
+/** One-line status text for a feed entry (compact surfaces: the switcher home's
+ *  Following rows). FollowFeedCard derives the same vocabulary for its richer DOM
+ *  (rolling score, meta line) — if wording changes here, change it there too. */
+export function followStatusText(entry: FollowFeedEntry): { text: string; live: boolean } {
+  const score =
+    entry.myScore !== null && entry.oppScore !== null
+      ? `${entry.myScore}–${entry.oppScore}`
+      : null;
+  switch (entry.group) {
+    case 'live':
+      return { text: score ? `${score} · Live` : 'Live now', live: true };
+    case 'upcoming': {
+      const when = [entry.dateLabel, entry.timeLabel].filter(Boolean).join(' · ');
+      return { text: when || 'Upcoming', live: false };
+    }
+    case 'recent': {
+      const label = entry.isFinal ? 'Final' : 'Unofficial';
+      return { text: score ? `${score} · ${label}` : label, live: false };
+    }
+    default:
+      return { text: 'No games yet', live: false };
+  }
+}
+
 export interface FollowFeedEntry {
   teamId: string;
   teamName: string;

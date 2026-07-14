@@ -9,6 +9,7 @@ import type { PublicPageKey } from '@/lib/public-pages';
 import TournamentNavStatus from '@/components/public/TournamentNavStatus';
 import SharePageButton from '@/components/public/SharePageButton';
 import FanNotificationBell from '@/components/public/FanNotificationBell';
+import TournamentAccountSheet from '@/components/public/TournamentAccountSheet';
 import styles from './Navbar.module.css';
 
 const MARKETING_NAV_LINKS = [
@@ -211,6 +212,9 @@ export default function Navbar() {
               />
             </span>
           )}
+          {/* Signed-in account chip → the "hats you own here" sheet (Phase 3).
+              Self-gates: renders nothing when the viewer is anonymous. */}
+          <TournamentAccountSheet />
         </div>
       </div>
     </nav>

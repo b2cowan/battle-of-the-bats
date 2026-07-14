@@ -6,7 +6,9 @@ import { isConsumerShellPath } from '@/lib/consumer-routes';
 
 // Static top-level routes that live outside the org-slug space and should show the footer.
 // (Consumer-shell routes like /discover are handled earlier via isConsumerShellPath.)
-const STATIC_ROOTS = new Set(['pricing', 'auth', 'coaches', 'blog', 'changelog']);
+// /auth deliberately absent: focused sign-in/signup cards, no marketing chrome —
+// the footer stack is what forced the mobile login page to scroll.
+const STATIC_ROOTS = new Set(['pricing', 'coaches', 'blog', 'changelog']);
 
 // Footer link columns. Each group renders as a labelled column; the link for the
 // page you're currently on is filtered out, and a column with no remaining links

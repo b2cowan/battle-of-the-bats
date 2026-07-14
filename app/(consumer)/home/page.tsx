@@ -2,10 +2,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import {
   ArrowRight,
-  Bell,
   Building2,
   ClipboardCheck,
-  LayoutGrid,
   Star,
   Trophy,
   Users,
@@ -15,19 +13,17 @@ import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { getUserAccessContexts, type UserAccessContext } from '@/lib/user-contexts';
 import { reconcilePendingInvitesForUser, listPendingInvitesForUser } from '@/lib/invite-reconciliation';
+import { getFollowedTeamsForUser } from '@/lib/fan-follows';
+import { getFollowFeed, followStatusText, FOLLOW_FEED_GROUP_ORDER, type FollowFeedEntry } from '@/lib/follow-feed';
 import PendingInvitationsCard from '@/components/home/PendingInvitationsCard';
-import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from './home.module.css';
 
+// Lives inside the (consumer) shell (owner direction 2026-07-14): the switcher keeps
+// the FieldLogicHQ top bar + bottom tabs so navigation persists until a workspace is
+// entered. URL stays /home — the route group adds chrome, not a path segment; the
+// shell layout carries the manifest/install metadata and the install prompt.
 export const metadata = {
-  title: 'Home - FieldLogicHQ',
-  manifest: '/manifest.json',
-  other: {
-    'mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-status-bar-style': 'black-translucent',
-    'apple-mobile-web-app-title': 'FieldLogicHQ',
-  },
+  title: 'Your FieldLogicHQ',
 };
 
 const ICONS: Record<UserAccessContext['kind'], LucideIcon> = {
@@ -99,37 +95,95 @@ export default async function UserHomePage({
     redirect(contexts[0].destination);
   }
 
+  // Phase 3 (one-home connective tissue): the fan hat renders as a real Following
+  // section — followed teams with their live/next/recent state (same resolver the
+  // Following tab uses) — instead of a bare card that says nothing about today.
+  // Only resolved AFTER the single-context redirect above so auto-skipped users
+  // never pay for the feed fetch.
+  const fanContext = contexts.find(context => context.kind === 'fan');
+  const workspaceContexts = contexts.filter(context => context.kind !== 'fan');
+
+  let feedEntries: FollowFeedEntry[] = [];
+  if (fanContext) {
+    const follows = await getFollowedTeamsForUser(user.id);
+    if (follows.length > 0) {
+      feedEntries = await getFollowFeed(
+        follows.map(f => ({
+          teamId: f.teamId,
+          teamName: f.teamName,
+          orgSlug: f.orgSlug,
+          tournamentSlug: f.tournamentSlug,
+        })),
+      );
+    }
+    feedEntries.sort((a, b) => FOLLOW_FEED_GROUP_ORDER[a.group] - FOLLOW_FEED_GROUP_ORDER[b.group]);
+  }
+
   return (
     <div className={styles.page}>
-      <div className={styles.container}>
         <header className={styles.header}>
-          <div className={styles.iconWrap}>
-            <LayoutGrid size={21} strokeWidth={1.8} aria-hidden />
-          </div>
-          <h1 className={styles.title}>Home</h1>
-          <p className={styles.sub}>
-            {contexts.length > 0
-              ? `${contexts.length} access ${contexts.length === 1 ? 'area' : 'areas'} for ${user.email}`
-              : `Signed in as ${user.email}`}
-          </p>
+          <h1 className={styles.title}>Your FieldLogicHQ</h1>
+          {/* Email appears once, in the footer — not duplicated here (owner tweak). */}
+          <p className={styles.sub}>Every hat, one home</p>
         </header>
 
         <PendingInvitationsCard invitations={pendingInvites} />
 
         <div className={styles.contextList}>
-          {contexts.map(context => (
+          {workspaceContexts.map(context => (
             <ContextCard key={context.id} context={context} />
           ))}
         </div>
 
+        {/* Always present (mockup-approved shape): live rows when the account follows
+            teams, an honest hand-off when follows are non-team entities, and a
+            discover nudge when there are none — so admins/coaches meet Following here. */}
+        <section className={styles.followSection} aria-label="Following">
+          <div className={styles.followHeader}>
+            <span>Following</span>
+            <Link href="/following" className={styles.followAll}>
+              All following <ArrowRight size={11} strokeWidth={2.4} aria-hidden />
+            </Link>
+          </div>
+          {feedEntries.length > 0 ? (
+            feedEntries.map(entry => (
+              <Link
+                key={`${entry.orgSlug}/${entry.tournamentSlug}/${entry.teamId}`}
+                href={entry.href}
+                className={styles.followRow}
+              >
+                <span className={styles.followInfo}>
+                  <span className={styles.followTeam}>{entry.teamName}</span>
+                  <span className={styles.followEvent}>{entry.tournamentName}</span>
+                </span>
+                <FollowStatusChip entry={entry} />
+              </Link>
+            ))
+          ) : fanContext ? (
+            <Link href="/following" className={styles.followRow}>
+              <span className={styles.followInfo}>
+                {/* Neutral copy — follows can be tournaments/orgs, not only teams. */}
+                <span className={styles.followTeam}>Everything you follow</span>
+                <span className={styles.followEvent}>{fanContext.subtitle}</span>
+              </span>
+              <span className={styles.followChip}>View</span>
+            </Link>
+          ) : (
+            <Link href="/discover" className={styles.followRow}>
+              <span className={styles.followInfo}>
+                <span className={styles.followTeam}>Follow teams you care about</span>
+                <span className={styles.followEvent}>Live scores &amp; next games land here</span>
+              </span>
+              <span className={styles.followChip}>Browse</span>
+            </Link>
+          )}
+        </section>
+
+        {/* Notification settings lives on the Account tab (owner direction) —
+            no duplicate entry here. */}
         <footer className={styles.footer}>
-          Signed in as {user.email}
+          <span>Signed in as {user.email}</span>
         </footer>
-      </div>
-      <InstallAppPrompt
-        appName="FieldLogicHQ"
-        subtitle="Your teams, schedules and scores — one tap away."
-      />
     </div>
   );
 }
@@ -137,14 +191,9 @@ export default async function UserHomePage({
 function ContextCard({ context }: { context: UserAccessContext }) {
   const Icon = ICONS[context.kind];
 
-  // Only the hats that have a card on /account/notifications get the shortcut (Phase 2:
-  // org owners/admins/staff + rep/premium coaches). Deep-link to that hat's card.
-  const focusKey =
-    context.orgSlug && context.kind === 'organization'    ? `org-${context.orgSlug}`
-    : context.orgSlug && context.kind === 'coaches_premium' ? `coach-${context.orgSlug}`
-    : null;
-
-  const card = (
+  // Per-card notification shortcuts removed (owner direction 2026-07-14): they all
+  // land on the same hub, so ONE quiet footer link carries that job for the page.
+  return (
     <Link href={context.destination} className={styles.contextItem}>
       <div className={styles.contextIcon} data-kind={context.kind}>
         <Icon size={20} strokeWidth={1.8} aria-hidden />
@@ -165,16 +214,16 @@ function ContextCard({ context }: { context: UserAccessContext }) {
       </span>
     </Link>
   );
+}
 
-  if (!focusKey) return card;
-
+// One compact status chip per followed team — the wording comes from the shared
+// followStatusText helper so this stays in step with the Following tab.
+function FollowStatusChip({ entry }: { entry: FollowFeedEntry }) {
+  const status = followStatusText(entry);
   return (
-    <div className={styles.contextRow}>
-      {card}
-      <Link href={`/account/notifications?focus=${focusKey}`} className={styles.contextNotif}>
-        <Bell size={13} aria-hidden /> Notification settings
-      </Link>
-    </div>
+    <span className={status.live ? `${styles.followChip} ${styles.followChipLive}` : styles.followChip}>
+      {status.text}
+    </span>
   );
 }
 

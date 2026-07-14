@@ -12,7 +12,7 @@ import { deriveCoachLifecycleChip, lifecycleChipClassKey } from '@/lib/coach-tou
 import { teamColor, teamInitials } from '@/lib/team-color';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import TeamSectionShell from '@/components/coaches/TeamSectionShell';
-import { Trophy } from 'lucide-react';
+import { Trophy, ExternalLink } from 'lucide-react';
 import portalStyles from '../../../coaches-portal.module.css';
 import styles from './tournaments.module.css';
 
@@ -56,28 +56,40 @@ export default async function CoachTeamTournamentsPage({ params }: RouteParams) 
             const withDot = chip.state === 'live' || chip.state === 'game_day';
             const name = tournament?.name ?? registration.name;
             return (
-              <Link key={registration.id} href={`${COACHES_TOURNAMENTS_PATH}/${registration.id}`} className={styles.card}>
-                <span className={styles.cardMono} style={{ background: teamColor(name), color: '#0f1123' }} aria-hidden>
-                  {teamInitials(name)}
-                </span>
-                <div className={styles.cardMain}>
-                  <span className={styles.cardTitle}>{name}</span>
-                  <span className={styles.cardMeta}>
-                    {org?.name}
-                    {!isLive && <> · {registrationStatusLabel(registration.status)}</>}
+              <div key={registration.id} className={styles.entry}>
+                <Link href={`${COACHES_TOURNAMENTS_PATH}/${registration.id}`} className={styles.card}>
+                  <span className={styles.cardMono} style={{ background: teamColor(name), color: '#0f1123' }} aria-hidden>
+                    {teamInitials(name)}
                   </span>
-                </div>
-                {hasChip ? (
-                  <span className={`${portalStyles.coachLifecycleChip} ${portalStyles[`coachLifecycleChip${chipKey}`]}`}>
-                    {withDot && <span className={portalStyles.coachLifecycleChipDot} aria-hidden />}
-                    {chip.label}
-                  </span>
-                ) : (
-                  <span className={`badge ${registrationStatusBadge(registration.status)}`}>
-                    {registrationStatusLabel(registration.status)}
-                  </span>
+                  <div className={styles.cardMain}>
+                    <span className={styles.cardTitle}>{name}</span>
+                    <span className={styles.cardMeta}>
+                      {org?.name}
+                      {!isLive && <> · {registrationStatusLabel(registration.status)}</>}
+                    </span>
+                  </div>
+                  {hasChip ? (
+                    <span className={`${portalStyles.coachLifecycleChip} ${portalStyles[`coachLifecycleChip${chipKey}`]}`}>
+                      {withDot && <span className={portalStyles.coachLifecycleChipDot} aria-hidden />}
+                      {chip.label}
+                    </span>
+                  ) : (
+                    <span className={`badge ${registrationStatusBadge(registration.status)}`}>
+                      {registrationStatusLabel(registration.status)}
+                    </span>
+                  )}
+                </Link>
+                {/* Fan view — the round trip back to the event's public space (Phase 3
+                    connective tissue): schedules, live scores, standings as fans see them.
+                    Only for publicly-visible lifecycles — the public route 404s draft
+                    and archived tournaments (getPublicTournamentBySlug status filter). */}
+                {org?.slug && tournament?.slug &&
+                  (tournament.status === 'active' || tournament.status === 'completed') && (
+                  <Link href={`/${org.slug}/${tournament.slug}`} className={styles.fanView}>
+                    <ExternalLink size={12} strokeWidth={2.2} aria-hidden /> Fan view — public schedule &amp; live scores
+                  </Link>
                 )}
-              </Link>
+              </div>
             );
           })}
         </div>

@@ -6,7 +6,10 @@ import { teamColor, teamInitials } from '@/lib/team-color';
 import type { FollowFeedEntry } from '@/lib/follow-feed';
 import styles from './ConsumerPage.module.css';
 
-/** vs {opponent} / "no games yet" / recent-result sentence, per group. */
+/** vs {opponent} / "no games yet" / recent-result sentence, per group.
+ *  TODO: lib/follow-feed.ts followStatusText() is the shared compact vocabulary for
+ *  feed entries (used by the switcher home) — if this card's wording changes, keep
+ *  the two in step (or converge on the helper). */
 function metaLine(entry: FollowFeedEntry): string | null {
   if (entry.group === 'none') return 'No games yet';
   if (entry.group === 'recent' && entry.myScore != null && entry.oppScore != null) {

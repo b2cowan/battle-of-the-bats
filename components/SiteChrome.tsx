@@ -19,6 +19,10 @@ export default function SiteChrome() {
     pathname === '/dev' ||
     pathname.startsWith('/dev/') ||
     pathname.startsWith('/home') ||
+    // Auth pages (/auth/login, signup, reset…) are focused, self-branded cards —
+    // the marketing Navbar is a jarring context switch for fans/coaches arriving
+    // mid-flow from app surfaces, and it pushes the form below the fold on phones.
+    pathname.startsWith('/auth') ||
     isVolunteerShell ||
     isOrgCoachShell ||
     isCoachPortalShellPath(pathname) ||

@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { getCoachingAssignmentsForUser, type CoachingAssignment } from './db';
 import { supabaseAdmin } from './supabase-admin';
 import { getBasicCoachTournamentSummary, countClaimableRegistrationsForUser } from './basic-coach-teams';
@@ -544,4 +545,18 @@ export async function getUserAccessContexts(user: {
     if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
     return a.title.localeCompare(b.title);
   });
+}
+
+/** Per-request memoized variant — server components that each need the contexts in the
+ *  same render tree (e.g. the consumer shell layout AND the /account page) share one
+ *  resolution instead of running the multi-query aggregate twice. Keyed on primitives
+ *  (React cache() compares arguments by identity). */
+export const getUserAccessContextsCached = cache(
+  (userId: string, email: string) => getUserAccessContexts({ id: userId, email }),
+);
+
+/** The one definition of "this account coaches something" (Basic or Premium —
+ *  claimable email-matched teams count via the coaches_basic context). */
+export function hasCoachAccess(contexts: UserAccessContext[]): boolean {
+  return contexts.some(c => c.kind === 'coaches_basic' || c.kind === 'coaches_premium');
 }

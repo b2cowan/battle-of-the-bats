@@ -5,7 +5,6 @@ import { Eye, EyeOff, MailCheck } from 'lucide-react';
 import Link from 'next/link';
 import { signIn } from '@/lib/auth';
 import { safeNextPath } from '@/lib/safe-redirect';
-import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from '../auth.module.css';
 
 function slugify(name: string) {
@@ -287,12 +286,8 @@ function SignupForm() {
                 <Link href="/auth/login" className={styles.footerLink}>Sign in</Link>
               </p>
             </div>
-            {/* Post-signup nudge: invite the new account holder to install the
-                member app while they go verify their email. */}
-            <InstallAppPrompt
-              appName="FieldLogicHQ"
-              subtitle="Your teams, schedules and scores — one tap away."
-            />
+            {/* Install nudge now comes from the consumer shell layout (auth pages
+                live inside it) — no page-level duplicate. */}
           </>
         ) : (
         <form onSubmit={handleSubmit} className={styles.form}>

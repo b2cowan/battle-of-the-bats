@@ -1,16 +1,11 @@
 /* ── Page shell ──────────────────────────────────────────────────────────── */
+/* Lives inside the consumer shell (owner direction 2026-07-14): the shell owns
+   the top bar + bottom tabs + background — the card sits top-aligned in the
+   content area so it fits one phone viewport with the tabs visible. */
 .page {
-  min-height: 100vh;
   display: flex;
-  align-items: center;
   justify-content: center;
-  position: relative;
-  background: var(--pitch-black);
-  background-image:
-    linear-gradient(to right, rgba(30,58,138,0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(30,58,138,0.06) 1px, transparent 1px);
-  background-size: 40px 40px;
-  padding: calc(var(--nav-height) + 2.5rem) 1.5rem 2.5rem;
+  padding: 1.75rem 1.25rem 2.5rem;
 }
 
 /* Legacy orb divs — neutralized */
@@ -19,36 +14,34 @@
 .orb2 { display: none; }
 
 /* ── Card ────────────────────────────────────────────────────────────────── */
+/* Flat, borderless (owner direction 2026-07-14, matching the switcher): the shell
+   is the frame — no boxed panel, and the form fits one phone viewport unscrolled. */
 .card {
   position: relative;
   z-index: 1;
   width: 100%;
   max-width: 420px;
-  background: var(--hud-surface);
-  border: 1px solid rgba(30,58,138,0.5);
-  border-radius: 0;
-  padding: 2.5rem;
-  box-shadow: 0 0 0 1px rgba(30,58,138,0.15), 0 0 24px rgba(30,58,138,0.08);
+  padding: 0.75rem 0 0;
 }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
 .header {
   text-align: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.15rem;
   border-bottom: 1px solid rgba(30,58,138,0.3);
 }
 
 .iconWrap {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: 0;
   background: rgba(30,58,138,0.1);
   border: 1px solid rgba(30,58,138,0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1.25rem;
+  margin: 0 auto 0.9rem;
   color: var(--data-gray);
 }
 
@@ -335,3 +328,13 @@
 }
 
 .footerLink:hover { color: #fff; }
+
+/* Small phones: the whole card must fit one viewport without scrolling.
+   The decorative shield goes — the shell's wordmark already brands the page. */
+@media (max-width: 640px) {
+  .page { padding: 0.75rem 1rem 1.25rem; }
+  .card { padding: 0.25rem 0 0; }
+  .iconWrap { display: none; }
+  .header { margin-bottom: 1rem; padding-bottom: 0.8rem; }
+  .form { gap: 0.9rem; }
+}

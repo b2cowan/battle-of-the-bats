@@ -3,6 +3,7 @@ import ConsumerNav from '@/components/consumer/ConsumerNav';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from '@/components/consumer/ConsumerShell.module.css';
 import { createClient } from '@/lib/supabase-server';
+import { getUserAccessContextsCached, hasCoachAccess } from '@/lib/user-contexts';
 
 /**
  * Consumer shell layout (unified-app Phase 1). Wraps the logged-out front door —
@@ -33,9 +34,20 @@ export default async function ConsumerLayout({ children }: { children: React.Rea
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Phase 3: surface the coaches hub inside the fan shell for accounts that coach.
+  // Rides the access-context source of truth so claimable (email-matched, unclaimed)
+  // teams count too — those coaches land on the hub's claim flow. Signed-out visitors
+  // and crawlers never pay for this lookup; the /account page shares this resolution
+  // via the per-request cache.
+  let isCoach = false;
+  if (user?.email) {
+    const contexts = await getUserAccessContextsCached(user.id, user.email).catch(() => []);
+    isCoach = hasCoachAccess(contexts);
+  }
+
   return (
     <div className={styles.shell}>
-      <ConsumerNav signedIn={!!user?.email} />
+      <ConsumerNav signedIn={!!user?.email} isCoach={isCoach} />
       <div className={styles.content}>{children}</div>
       <InstallAppPrompt subtitle="Follow your teams and get live scores — add it to your home screen." />
     </div>

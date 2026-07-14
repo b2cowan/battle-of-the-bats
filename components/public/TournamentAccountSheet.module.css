@@ -1,0 +1,160 @@
+/* Account chip in the tournament top bar + the sheet rows it opens (Phase 3).
+   Token-only (public ratchet): all colors ride the theme tokens so the chip and
+   sheet survive per-org theming and the light color mode. */
+
+.chip {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--white-05);
+  border: 1px solid var(--white-20);
+  color: var(--white-80);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s;
+}
+.chip:hover {
+  color: var(--white-90);
+  border-color: rgba(var(--logic-lime-rgb), 0.55);
+}
+.chip:focus-visible {
+  outline: 2px solid var(--logic-lime);
+  outline-offset: 2px;
+}
+
+.context {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-50);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 0.8rem;
+  color: inherit;
+  text-decoration: none;
+  background: var(--white-03);
+  border: 1px solid var(--white-10);
+  border-radius: 10px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.row:hover {
+  background: var(--white-05);
+  border-color: var(--white-20);
+}
+.row:focus-visible {
+  outline: 2px solid var(--logic-lime);
+  outline-offset: 2px;
+}
+
+/* Hat rows carry their capacity's accent — lime coach, blue admin, amber official
+   (blueprint-blue family for ops per the design rules; lime stays the fan CTA). */
+.row[data-kind='coach'] {
+  border-color: rgba(var(--logic-lime-rgb), 0.3);
+  background: rgba(var(--logic-lime-rgb), 0.05);
+}
+.row[data-kind='admin'] {
+  border-color: rgba(var(--info-rgb), 0.3);
+  background: rgba(var(--info-rgb), 0.06);
+}
+.row[data-kind='official'] {
+  border-color: rgba(var(--warning-rgb), 0.3);
+  background: rgba(var(--warning-rgb), 0.06);
+}
+
+.rowIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--white-05);
+  border: 1px solid var(--white-10);
+  color: var(--white-60);
+  flex-shrink: 0;
+}
+
+.rowText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.eyebrow {
+  font-family: var(--font-data);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white-50);
+}
+.row[data-kind='coach'] .eyebrow { color: rgba(var(--logic-lime-rgb), 0.85); }
+.row[data-kind='admin'] .eyebrow { color: var(--info-strong); }
+.row[data-kind='official'] .eyebrow { color: var(--warning-strong); }
+
+.label {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--white-90);
+  overflow-wrap: anywhere;
+}
+
+.sub {
+  font-size: 0.7rem;
+  color: var(--white-50);
+}
+
+.action {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.65rem;
+  border-radius: 4px;
+}
+.row[data-kind='coach'] .action {
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+}
+.row[data-kind='admin'] .action {
+  color: var(--info-strong);
+  background: rgba(var(--info-rgb), 0.12);
+  border: 1px solid rgba(var(--info-rgb), 0.35);
+}
+.row[data-kind='official'] .action {
+  color: var(--warning-strong);
+  background: rgba(var(--warning-rgb), 0.12);
+  border: 1px solid rgba(var(--warning-rgb), 0.35);
+}
+
+.chev {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--white-40);
+  display: inline-flex;
+}
