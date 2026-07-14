@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, MailCheck } from 'lucide-react';
 import Link from 'next/link';
 import { signIn } from '@/lib/auth';
+import { safeNextPath } from '@/lib/safe-redirect';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from '../auth.module.css';
 
@@ -23,6 +24,10 @@ function SignupForm() {
   // an account, verifies, lands on /home, and accepts their pending invite there. The
   // default (no ?account) is the owner path: org name field + org created at signup.
   const accountOnly = searchParams.get('account') === '1';
+  // Fan / account-only signups can carry a return path (e.g. /discover or /following) so they
+  // don't land on the org-oriented /home. Validated to a same-origin relative path so it can
+  // never become an open redirect (safeNextPath handles tab/backslash/protocol-relative smuggling).
+  const safeNext = safeNextPath(searchParams.get('next'), null);
   const [orgName, setOrgName]   = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName]   = useState('');
@@ -77,7 +82,7 @@ function SignupForm() {
         password,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        ...(accountOnly ? {} : { orgName }),
+        ...(accountOnly ? (safeNext ? { next: safeNext } : {}) : { orgName }),
       }),
     });
 
@@ -124,7 +129,7 @@ function SignupForm() {
     // Account-only (dev / verification-off): land on /home, where reconciliation +
     // the pending-invite card take over.
     if (accountOnly) {
-      router.push('/home');
+      router.push(safeNext ?? '/home');
       router.refresh();
       return;
     }

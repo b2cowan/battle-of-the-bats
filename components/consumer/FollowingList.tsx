@@ -82,7 +82,10 @@ export default function FollowingList({
 
   // ── Signed-in: account follows (+ claim offer) ──────────────────────────────
   const showClaim = ready && !claimHidden && deviceOnly.length > 0;
-  const nothingYet = accountFollows.length === 0 && (!ready || deviceOnly.length === 0);
+  // Only declare "nothing followed" once localStorage has hydrated (`ready`) — otherwise a
+  // signed-in user with device-only follows briefly flashes the empty state before the claim
+  // card appears. Account follows still render immediately (they come from the server prop).
+  const nothingYet = ready && accountFollows.length === 0 && deviceOnly.length === 0;
 
   return (
     <div className={styles.page}>

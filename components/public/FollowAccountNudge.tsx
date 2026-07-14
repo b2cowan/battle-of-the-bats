@@ -12,12 +12,11 @@
 import { useEffect, useState } from 'react';
 import { Star } from 'lucide-react';
 import { readFollowedTeam, type FollowedTeam } from '@/lib/follow';
-import { signIn } from '@/lib/auth';
+import { getSession, signIn } from '@/lib/auth';
 import BottomSheet from '@/components/admin/BottomSheet';
 import styles from './FollowAccountNudge.module.css';
 
 interface Props {
-  signedIn: boolean;
   orgSlug: string;
   tournamentSlug: string;
 }
@@ -26,7 +25,7 @@ const DISMISS_KEY = 'fl_follow_account_nudge_dismissed';
 const DISMISS_MS = 30 * 24 * 60 * 60 * 1000; // 30 days — offer again occasionally, don't nag
 const RETURN_TO = '/following';
 
-export default function FollowAccountNudge({ signedIn, orgSlug, tournamentSlug }: Props) {
+export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
   const [team, setTeam] = useState<FollowedTeam | null>(null);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
@@ -37,8 +36,7 @@ export default function FollowAccountNudge({ signedIn, orgSlug, tournamentSlug }
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (signedIn) return; // already has an account — their follows sync automatically
-    const evaluate = () => {
+    const evaluate = async () => {
       let dismissed = false;
       try {
         const raw = localStorage.getItem(DISMISS_KEY);
@@ -47,6 +45,13 @@ export default function FollowAccountNudge({ signedIn, orgSlug, tournamentSlug }
       if (dismissed) return;
       const followed = readFollowedTeam(orgSlug, tournamentSlug);
       if (!followed) return;
+      // Only offer an account to signed-OUT visitors. Checked LAZILY here (only after a follow
+      // fires), so a normal tournament-page view costs no auth call at all — a cheap client
+      // cookie-session read, not a server round trip on every render.
+      try {
+        const session = await getSession();
+        if (session?.user) return; // already signed in — their follow syncs automatically
+      } catch { /* treat as signed out; the follow already saved locally regardless */ }
       setTeam(followed);
       setOpen(true);
     };
@@ -58,7 +63,7 @@ export default function FollowAccountNudge({ signedIn, orgSlug, tournamentSlug }
       window.removeEventListener('fl-follow-change', evaluate);
       window.removeEventListener('storage', evaluate);
     };
-  }, [signedIn, orgSlug, tournamentSlug]);
+  }, [orgSlug, tournamentSlug]);
 
   function dismiss() {
     try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch { /* ignore */ }
@@ -94,7 +99,7 @@ export default function FollowAccountNudge({ signedIn, orgSlug, tournamentSlug }
     }
   }
 
-  if (signedIn || !open || !team) return null;
+  if (!open || !team) return null;
 
   const loginHref = `/auth/login?next=${encodeURIComponent(RETURN_TO)}`;
 

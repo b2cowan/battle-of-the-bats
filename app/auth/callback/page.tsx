@@ -3,6 +3,7 @@
 import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
+import { safeNextPath } from '@/lib/safe-redirect';
 
 function CallbackHandler() {
   const router = useRouter();
@@ -11,15 +12,12 @@ function CallbackHandler() {
   useEffect(() => {
     const supabase = createClient();
 
-    // Open-redirect guard: only navigate to internal, absolute-path destinations. A raw
-    // `next` from the URL could be an external URL (https://evil.com), protocol-relative
-    // (//evil.com), or a `\`-smuggled target (/\evil.com, /./\evil.com — some URL parsers
-    // normalize these to //) — after a real auth step on our own origin, that's a
-    // convincing phishing bounce. Require a leading "/" whose next char is NEITHER "/" nor
-    // "\": one check that blocks every protocol-relative / backslash variant, and stays
-    // safe even if the navigation primitive ever changes from router.replace to location.*.
-    const rawNext = searchParams.get('next') ?? '/';
-    const next = /^\/(?![/\\])/.test(rawNext) ? rawNext : '/';
+    // Open-redirect guard: after a real auth step on our own origin, a raw `next` from the URL
+    // could bounce the user to an external phishing target — as an absolute URL, protocol-relative
+    // (//evil.com), backslash-smuggled (/\evil.com), or control-char-smuggled (/<tab>//evil.com,
+    // which URL parsers strip into //evil.com). safeNextPath resolves the value with real URL
+    // semantics and only allows a same-origin relative path.
+    const next = safeNextPath(searchParams.get('next'), '/');
 
     async function handle() {
       // PKCE flow: Supabase redirects with ?code=... (standard OAuth/invite flow)

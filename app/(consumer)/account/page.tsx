@@ -48,7 +48,7 @@ export default async function AccountPage() {
         ) : (
           <>
             <Link href="/auth/login" className={`${styles.cta} ${styles.blockBtn}`}>Sign in</Link>
-            <Link href="/auth/signup" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Create free account</Link>
+            <Link href="/auth/signup?account=1&next=/discover" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Create free account</Link>
           </>
         )}
       </div>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
+import { safeNextPath } from '@/lib/safe-redirect';
 import { signupVerificationHtml } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { captureError, withObservability } from '@/lib/observability';
@@ -101,12 +102,9 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     // Account-only (fan) signups can pass a return path — e.g. the Follows feed or the
-    // tournament page they were on — instead of the org-oriented /home. Allowlist to internal
-    // relative paths only (leading single slash) so this can never become an open redirect.
-    const safeNext =
-      accountOnly && typeof next === 'string' && next.startsWith('/') && !next.startsWith('//')
-        ? next
-        : '/home';
+    // tournament page they were on — instead of the org-oriented /home. Validated to a
+    // same-origin relative path (safeNextPath) so it can never become an open redirect.
+    const safeNext = accountOnly ? safeNextPath(next, '/home') : '/home';
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });

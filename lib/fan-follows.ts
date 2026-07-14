@@ -183,19 +183,20 @@ export async function getFollowedTeamsForUser(userId: string): Promise<FollowedT
   const teams = teamRows ?? [];
   if (teams.length === 0) return [];
 
+  // Guard every .in() against an empty array — postgrest serializes `in.()` as a malformed
+  // filter (not a safe no-op), so an orphaned follow whose team/tournament row is gone must
+  // short-circuit rather than throw and 500 the whole Follows feed (mirrors lib/basic-coach-teams).
   const tournamentIds = Array.from(new Set(teams.map(t => t.tournament_id).filter(Boolean)));
-  const { data: tournRows, error: tournErr } = await supabaseAdmin
-    .from('tournaments')
-    .select('id, name, slug, org_id')
-    .in('id', tournamentIds);
+  const { data: tournRows, error: tournErr } = tournamentIds.length > 0
+    ? await supabaseAdmin.from('tournaments').select('id, name, slug, org_id').in('id', tournamentIds)
+    : { data: [], error: null };
   if (tournErr) throw tournErr;
   const tournById = new Map((tournRows ?? []).map(t => [t.id, t]));
 
   const orgIds = Array.from(new Set((tournRows ?? []).map(t => t.org_id).filter(Boolean)));
-  const { data: orgRows, error: orgErr } = await supabaseAdmin
-    .from('organizations')
-    .select('id, slug, subscription_status')
-    .in('id', orgIds);
+  const { data: orgRows, error: orgErr } = orgIds.length > 0
+    ? await supabaseAdmin.from('organizations').select('id, slug, subscription_status').in('id', orgIds)
+    : { data: [], error: null };
   if (orgErr) throw orgErr;
   const orgById = new Map((orgRows ?? []).map(o => [o.id, o]));
 

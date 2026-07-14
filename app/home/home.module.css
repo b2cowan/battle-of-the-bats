@@ -140,6 +140,12 @@
   background: rgba(251, 191, 36, 0.07);
 }
 
+.contextIcon[data-kind='fan'] {
+  color: #f9a8d4;
+  border-color: rgba(249, 168, 212, 0.28);
+  background: rgba(249, 168, 212, 0.07);
+}
+
 .contextInfo {
   min-width: 0;
 }
@@ -191,6 +197,12 @@
   color: #fbbf24;
   border-color: rgba(251, 191, 36, 0.35);
   background: rgba(251, 191, 36, 0.08);
+}
+
+.badge[data-kind='fan'] {
+  color: #f9a8d4;
+  border-color: rgba(249, 168, 212, 0.35);
+  background: rgba(249, 168, 212, 0.08);
 }
 
 .contextTitle {
