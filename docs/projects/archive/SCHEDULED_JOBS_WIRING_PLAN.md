@@ -1,7 +1,8 @@
 # Scheduled Jobs Wiring — Insights Digest + Automatic Dues Reminders — Implementation Plan
 
-> **Status:** In Progress — owner approved the scheduler proposal 2026-07-12 ("sounds good, go for it").
-> **Branch:** `dev` · **Migration:** yes (pg_cron + pg_net schedule entries; no app-table changes expected).
+> **Status:** COMPLETE ON DEV + COMMITTED (2026-07-13) — device-tested (digest push landed; previews correct). **Archived.**
+> **⚠ REMAINING = PRODUCTION PROMOTION ONLY (deferred to the unified-app release window).** Ship as ONE bundle: apply migs **183** (pg_cron schedules) + **187** (notifications realtime badge) to prod, set prod Supabase Vault (`app_cron_base_url`, `app_cron_secret` = the prod `CRON_SECRET` already in Amplify), and promote alongside the digest + the coach opt-out off-switch (built by the notification-settings project). Both migs are column-blind to `check:migrations` — apply deliberately. Tracked in memory `project_scheduled_jobs_wiring.md`.
+> **Branch:** `dev` · **Migration:** migs 183 (schedules) + 187 (notifications realtime, renumbered from a working 184 after a concurrent-chat collision).
 > **PM brief:** [SCHEDULED_JOBS_WIRING_PM_BRIEF.md](SCHEDULED_JOBS_WIRING_PM_BRIEF.md)
 > **Related:** [COACH_INSIGHTS_DIGEST_PLAN.md](COACH_INSIGHTS_DIGEST_PLAN.md) (open decision #1 → resolved by this plan).
 
