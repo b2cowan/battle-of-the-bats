@@ -34,7 +34,6 @@ export interface MyCardStandingRow {
 interface Props {
   orgSlug: string;
   tournamentSlug: string;
-  tournamentId: string;
   tournamentName: string;
   teams: PublicTeam[];
   games: Game[];
@@ -73,7 +72,6 @@ function formatCountdown(ms: number): string {
 export default function MyTournamentCard({
   orgSlug,
   tournamentSlug,
-  tournamentId,
   tournamentName,
   teams,
   games,
@@ -253,7 +251,6 @@ export default function MyTournamentCard({
           <FollowAlertsToggle
             orgSlug={orgSlug}
             tournamentSlug={tournamentSlug}
-            tournamentId={tournamentId}
             team={{ id: team.id, name: team.name }}
           />
         )}

@@ -5001,6 +5001,31 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 <!-- dict:col:fan_follows.updated_at -->
 **`updated_at`** (tstz, NN, DEFAULT now()) — bumped on upsert; code-maintained.
 
+### `fan_alert_prefs`
+<!-- dict:table:fan_alert_prefs -->
+
+**Purpose:** account-level fan alert preferences (unified-app Phase 2 Slice 3, mig 188; Business Decisions Log 2026-07-14 "alerts require a signed-in account") — exactly **two global switches per user** covering ALL followed teams: `game_alerts` and `event_news`. **Absent row = both TRUE** (defaults); a row is written only when the user changes something. Read/written via `supabaseAdmin` in [lib/fan-alert-prefs.ts](../../../lib/fan-alert-prefs.ts); surfaced as the "Followed teams" card on `/account/notifications`; consulted at dispatch time by [lib/fan-notify.ts](../../../lib/fan-notify.ts) (account path: `fan_follows` → this table → `push_subscriptions` endpoints). **EMPTY in dev AND prod** (new).
+
+**Gotchas (read first):**
+1. **Service-role only** — RLS enabled with ZERO policies (same posture as `fan_follows`); verified live on dev 2026-07-14 (anon = permission denied). Verify RLS live, not from the migration comment.
+2. **Absent row means BOTH TRUE** — dispatch must treat a missing row as opted-in, not opted-out; only an explicit `false` suppresses a category.
+3. **Global, not per-team/per-event** — per-team overrides were explicitly deferred (Slice 3 rev 3); do not add scoping columns without a logged decision.
+4. **NOT the anonymous path** — `fan_push_subscriptions` (endpoint-keyed, no `user_id`) is the legacy anonymous channel, closed to new opt-ins at Slice 3 but still dispatched for existing rows.
+
+**Fields** (boilerplate `created_at` omitted — DB-default-only):
+
+<!-- dict:col:fan_alert_prefs.user_id -->
+**`user_id`** (uuid, PK; FK→`auth.users(id)` ON DELETE CASCADE) — the account holding the preference; one row per user.
+
+<!-- dict:col:fan_alert_prefs.game_alerts -->
+**`game_alerts`** (bool, NN, DEFAULT true) — push when a followed team's game goes live / finishes, plus the playoffs-set / champions moments (parity with the anonymous path's `notify_scores` semantics).
+
+<!-- dict:col:fan_alert_prefs.event_news -->
+**`event_news`** (bool, NN, DEFAULT true) — push for announcements from events the user's followed teams are in (parity with the anonymous path's `notify_messages`).
+
+<!-- dict:col:fan_alert_prefs.updated_at -->
+**`updated_at`** (tstz, NN, DEFAULT now()) — bumped on upsert; code-maintained.
+
 ## Email (Resend)
 
 > The email layer: a per-recipient **send log** (`email_sends`) under campaign **batch headers** (`email_batches`), both written by [lib/email-sender.ts](../../../lib/email-sender.ts) around the Resend API; plus a platform-admin **template registry** (`platform_email_templates`) that is an editing **mirror only**, not a send-time source. Forward-links — not redocuments — [[project_email_stack]] (Resend via `fieldlogichq.ca`, the two send patterns, the CloudWatch `[email]` log path), [[project_founding_season_email]], and [[project_signup_flow_fixes]].

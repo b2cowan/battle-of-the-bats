@@ -506,6 +506,9 @@ id (uuid), group_id (uuid) → error_groups.id NOT NULL, occurred_at, env, sourc
 id (uuid), fingerprint NOT NULL, title, error_name, route, http_method, severity, status, env, first_seen_at, last_seen_at, occurrence_count (bigint), distinct_org_count (integer), resolved_at, resolved_by, snooze_until, sample_stack, sample_context (jsonb), created_at
 - Indexes: error_groups_fingerprint_key, idx_error_groups_env_last_seen, idx_error_groups_status_severity
 
+### fan_alert_prefs
+user_id (uuid) NOT NULL, game_alerts (boolean), event_news (boolean), created_at, updated_at
+
 ### fan_follows
 id (uuid), user_id (uuid) NOT NULL, entity_type NOT NULL, entity_id (uuid) NOT NULL, source, created_at, updated_at
 - Indexes: fan_follows_entity_idx, fan_follows_user_entity_unique
@@ -552,7 +555,7 @@ user_id (uuid) NOT NULL, opted_out_at
 
 ## Tables by count
 
-Total: **133 tables** across 10 modules.
+Total: **134 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -563,4 +566,4 @@ Total: **133 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 24 tables
+- Other: 25 tables

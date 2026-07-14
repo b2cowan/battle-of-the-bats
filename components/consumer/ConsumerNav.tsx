@@ -30,7 +30,7 @@ export default function ConsumerNav({ signedIn = false }: { signedIn?: boolean }
 
   return (
     <>
-      <header className={styles.topbar}>
+      <header id="consumer-topbar" className={styles.topbar}>
         <div className={styles.topLeft}>
           <Link href="/discover" className={styles.wordmark} aria-label="FieldLogicHQ home">
             <span className={styles.wm1}>FIELD</span>

@@ -195,11 +195,7 @@ export default function Navbar() {
           {/* Team-independent notification opt-in — every public tab, Plus tournaments only,
               hidden once the event is over. Sits left of Share as a matched icon pair. */}
           {tournamentSlug && tournamentId && fanAlertsEnabled && !tournamentFinished && (
-            <FanNotificationBell
-              orgSlug={orgSlug}
-              tournamentSlug={tournamentSlug}
-              tournamentId={tournamentId}
-            />
+            <FanNotificationBell />
           )}
           {/* Persistent, consistent share — the SAME icon in the SAME spot on every
               page; it shares the page you're on (each public route has its own OG

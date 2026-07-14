@@ -47,7 +47,7 @@
   border-radius: 12px;
   background: var(--hud-surface, rgba(255, 255, 255, 0.02));
   overflow: hidden;
-  scroll-margin-top: 1rem;
+  scroll-margin-top: calc(var(--consumer-top-h, 3rem) + 1rem);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 

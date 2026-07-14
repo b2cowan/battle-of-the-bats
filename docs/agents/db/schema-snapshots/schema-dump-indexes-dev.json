@@ -485,6 +485,11 @@
     "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
   },
   {
+    "tablename": "fan_alert_prefs",
+    "indexname": "fan_alert_prefs_pkey",
+    "indexdef": "CREATE UNIQUE INDEX fan_alert_prefs_pkey ON public.fan_alert_prefs USING btree (user_id)"
+  },
+  {
     "tablename": "fan_follows",
     "indexname": "fan_follows_entity_idx",
     "indexdef": "CREATE INDEX fan_follows_entity_idx ON public.fan_follows USING btree (entity_type, entity_id)"

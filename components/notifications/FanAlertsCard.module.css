@@ -1,0 +1,67 @@
+/* The "Followed teams" fan card on the unified notifications page (Phase 2 Slice 3).
+   The card anatomy (header/badge/body/footNote/errorBanner) comes from the page's
+   own AccountNotifications.module.css via cross-import in the component — only the
+   fan-specific pieces live here. */
+
+/* Fan badge tint — composes with the page module's .badge base. */
+.badgeFan {
+  font-size: 0.88rem;
+  background: rgba(var(--primary-rgb, 30, 58, 138), 0.14);
+  color: var(--primary-light, #d9f99d);
+  border: 1px solid rgba(var(--primary-rgb, 30, 58, 138), 0.4);
+}
+
+/* ── Switch rows ─────────────────────────────────────────────────────────────── */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+.row + .row {
+  border-top: 1px solid var(--border-2, rgba(255, 255, 255, 0.08));
+  padding-top: 0.85rem;
+}
+
+.rowText { flex: 1 1 auto; min-width: 0; }
+
+.rowLabel {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--fl-text, #f1f5f9);
+}
+
+.rowBlurb {
+  font-family: var(--font-data, monospace);
+  font-size: 0.7rem;
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  margin-top: 0.15rem;
+  line-height: 1.45;
+}
+
+/* ── Notes ───────────────────────────────────────────────────────────────────── */
+
+/* The honest gate — names followed events whose plan doesn't offer alerts. */
+.gateNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin: 0;
+  padding-top: 0.85rem;
+  border-top: 1px dashed var(--white-10, rgba(255, 255, 255, 0.1));
+  font-family: var(--font-data, monospace);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+}
+.gateNote svg { flex-shrink: 0; margin-top: 2px; color: var(--white-30, rgba(255, 255, 255, 0.3)); }
+.gateNote strong { color: var(--white-45, rgba(255, 255, 255, 0.45)); font-weight: 700; }
+
+/* Device-level caveat after a save (account pref stored; this device can't receive). */
+.deviceNote {
+  margin: 0;
+  font-family: var(--font-data, monospace);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--warning, #f59e0b);
+}

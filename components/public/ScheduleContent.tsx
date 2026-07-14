@@ -827,7 +827,6 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                     <FollowAlertsToggle
                       orgSlug={orgSlug}
                       tournamentSlug={tournamentSlug}
-                      tournamentId={selectedTournament.id}
                       team={{ id: followedTeam.id, name: followedTeam.name }}
                       variant="pill"
                     />
@@ -1327,7 +1326,6 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                   <FollowAlertsToggle
                     orgSlug={orgSlug}
                     tournamentSlug={tournamentSlug}
-                    tournamentId={selectedTournament.id}
                     team={{ id: followedTeam.id, name: followedTeam.name }}
                   />
                 )}

@@ -347,7 +347,6 @@ export default async function TournamentHomeContent({
             <MyTournamentCard
               orgSlug={orgSlug}
               tournamentSlug={tournamentSlug}
-              tournamentId={tournament.id}
               tournamentName={tournament.name}
               teams={teams}
               games={allGames}

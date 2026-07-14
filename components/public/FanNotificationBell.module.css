@@ -84,7 +84,6 @@
 .rowText { display: flex; flex-direction: column; gap: 0.1rem; flex: 1; min-width: 0; }
 .rowLabel { font-size: 0.84rem; font-weight: 600; color: var(--white-90); }
 .rowDesc { font-size: 0.72rem; color: var(--white-55); }
-.rowHint { font-size: 0.7rem; color: var(--logic-lime); margin-top: 0.1rem; }
 
 /* Toggle switch (local pattern, references the tryout .switch/.switchOn idiom). */
 .switch {
@@ -109,7 +108,9 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fff;
+  /* Constant white in both themes (content-on-colored-fill token) — the thumb
+     sits on the lime/neutral track, never on the page background. */
+  background: var(--on-primary);
   transition: transform 0.15s ease;
 }
 .switchOn .thumb { transform: translateX(16px); }

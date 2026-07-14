@@ -214,7 +214,6 @@ export default async function TournamentLayout({
       <MyTeamDock
         orgSlug={orgSlug}
         tournamentSlug={tournament.slug}
-        tournamentId={tournament.id}
         inProgress={tournamentInProgress}
         fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
       />
@@ -226,7 +225,6 @@ export default async function TournamentLayout({
         <AlertsNudge
           orgSlug={orgSlug}
           tournamentSlug={tournament.slug}
-          tournamentId={tournament.id}
           enabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
         />
       )}

@@ -2,18 +2,19 @@
 
 **Generated:** 2026-07-14 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 134 divergence(s)** across dev/prod.
+**⚠️ 143 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 5 | 0 | — |
-| Columns | 34 | 3 | 24 |
-| Indexes | 24 | 3 | 0 |
-| Constraints | 25 | 9 | — |
+| Tables | 6 | 0 | — |
+| Columns | 39 | 3 | 24 |
+| Indexes | 25 | 3 | 0 |
+| Constraints | 27 | 9 | — |
 | RLS / CHECK | 6 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (5)
+### Only in DEV (6)
+- `fan_alert_prefs`
 - `fan_follows`
 - `rep_player_awards`
 - `rep_team_award_types`
@@ -24,7 +25,12 @@
 _none_
 
 ## Columns
-### Only in DEV (34)
+### Only in DEV (39)
+- `fan_alert_prefs.created_at`
+- `fan_alert_prefs.event_news`
+- `fan_alert_prefs.game_alerts`
+- `fan_alert_prefs.updated_at`
+- `fan_alert_prefs.user_id`
 - `fan_follows.created_at`
 - `fan_follows.entity_id`
 - `fan_follows.entity_type`
@@ -92,7 +98,8 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (24)
+### Only in DEV (25)
+- `fan_alert_prefs_pkey`
 - `fan_follows_entity_idx`
 - `fan_follows_pkey`
 - `fan_follows_user_entity_unique`
@@ -127,10 +134,12 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (25)
+### Only in DEV (27)
 - `announcements.announcements_tournament_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
+- `fan_alert_prefs.fan_alert_prefs_pkey`
+- `fan_alert_prefs.fan_alert_prefs_user_id_fkey`
 - `fan_follows.fan_follows_pkey`
 - `fan_follows.fan_follows_user_id_fkey`
 - `games.games_age_group_id_fkey`

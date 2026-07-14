@@ -94,7 +94,7 @@ export default function DesktopMyTeamRailCard() {
         <div className={styles.row}><span className={styles.nextVal}>No upcoming games</span></div>
       )}
       {alertsEnabled && tournamentId && !tournamentCompleted && (
-        <FollowAlertsToggle orgSlug={orgSlug} tournamentSlug={tournamentSlug} tournamentId={tournamentId} team={{ id: team.id, name: team.name }} />
+        <FollowAlertsToggle orgSlug={orgSlug} tournamentSlug={tournamentSlug} team={{ id: team.id, name: team.name }} />
       )}
       <Link href={scheduleHref} className={styles.link}>View schedule</Link>
     </div>

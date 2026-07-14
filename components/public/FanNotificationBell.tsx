@@ -2,43 +2,42 @@
 /**
  * components/public/FanNotificationBell.tsx
  *
- * The public tournament's team-INDEPENDENT notification opt-in — a bell in the Navbar
- * right-actions group (every public tab, mobile + desktop). Lets an anonymous fan turn on
- * tournament notifications WITHOUT first following a team. Opens a panel (desktop popover /
- * mobile bottom-sheet) with per-category switches:
- *   • Tournament messages — organizer announcements / rain delays (tournament-wide)
- *   • Score alerts        — game scores for the team the fan follows
+ * The public tournament's notification bell — Navbar right-actions group (every
+ * public tab, mobile + desktop). Slice 3 (Business Decisions Log 2026-07-14):
+ * alerts require a signed-in account, so the panel is:
+ *   • Signed out — a "sign in to get score alerts" pitch (returns to this page).
+ *   • Signed in  — the two ACCOUNT-level switches (Game alerts / Event news —
+ *     shared state with the Followed teams card and the per-team toggle via
+ *     lib/fan-alert-prefs-client, so they can never diverge) plus an honest
+ *     THIS-DEVICE state: the account switches say what you want, the device row
+ *     says whether this phone/browser is registered to receive it.
  *
- * Shares the SAME server row + localStorage state as the per-team FollowAlertsToggle
- * (via lib/fan-alerts + the `fl-fan-alerts-change` event), so the two never diverge.
- *
- * Only mounted when the tournament includes fan push (Tournament Plus+) — the parent decides.
- * Mirrors FollowAlertsToggle's honesty states: iOS-needs-install, permission-blocked,
- * unsupported (renders nothing).
+ * Only mounted when the tournament includes fan push (Tournament Plus+) — the
+ * parent decides. Mirrors FollowAlertsToggle's honesty states: iOS-needs-install,
+ * permission-blocked, unsupported (renders nothing).
  */
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Bell, BellRing, BellOff, BellPlus, X, Loader2, Check } from 'lucide-react';
-import { isPushSupported, PushPermissionError } from '@/lib/push-client';
-import { isIOSLike, isStandalonePWA } from '@/lib/device';
-import { readFollowedTeam, type FollowedTeam } from '@/lib/follow';
+import { usePathname, useRouter } from 'next/navigation';
+import { Bell, BellRing, BellOff, BellPlus, X, Loader2, Check, Settings } from 'lucide-react';
 import {
-  fanAlertsKey,
-  readFanAlertsState,
-  subscribeFanAlerts,
-  verifyFanAlertsLive,
-} from '@/lib/fan-alerts';
+  isPushSupported,
+  enablePushOnThisDevice,
+  getCurrentPushEndpoint,
+  PushPermissionError,
+} from '@/lib/push-client';
+import { isIOSLike, isStandalonePWA } from '@/lib/device';
+import { useFanAlertPrefs, saveFanAlertPref } from '@/lib/fan-alert-prefs-client';
+import type { FanAlertPrefs } from '@/lib/fan-alert-prefs';
 import styles from './FanNotificationBell.module.css';
 
-interface Props {
-  orgSlug: string;
-  tournamentSlug: string;
-  tournamentId: string;
-}
-
-export default function FanNotificationBell({ orgSlug, tournamentSlug, tournamentId }: Props) {
+// No props: the switches are ACCOUNT-level (org/tournament-agnostic), and the
+// mount gate (Plus plan, tournament not finished) lives in the Navbar.
+export default function FanNotificationBell() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const router = useRouter();
   // Desktop popover coords (computed from the bell rect on open). null = mobile bottom-sheet
   // (CSS positions it); the panel is portaled to <body> so it clears the bottom nav / other bars.
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
@@ -48,19 +47,17 @@ export default function FanNotificationBell({ orgSlug, tournamentSlug, tournamen
   const [blocked, setBlocked] = useState(false);
 
   const [open, setOpen] = useState(false);
-  const [subscribed, setSubscribed] = useState(false);
-  // Switch positions. Default both ON so a first-time fan sees the "you'll get everything" preview.
-  const [messages, setMessages] = useState(true);
-  const [scores, setScores] = useState(true);
-  const [team, setTeam] = useState<FollowedTeam | null>(null);
+  const prefs = useFanAlertPrefs();
+  // Optimistic overlay for a save in flight — the switch flips immediately and
+  // reverts on failure, instead of freezing for the whole network round trip.
+  const [optimistic, setOptimistic] = useState<Partial<FanAlertPrefs>>({});
+  // Whether THIS browser holds a live push subscription (account switches say what
+  // you want; this says whether this device can receive it).
+  const [deviceReady, setDeviceReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  // Mirrors `busy` synchronously so the sync() effect can skip re-reading state while a user
-  // change is in flight — otherwise a verify/event callback could clobber the pending change
-  // (same guard the per-team FollowAlertsToggle uses via its stateRef).
-  const busyRef = useRef(false);
 
-  // ── Environment + live-state sync ─────────────────────────────────────────
+  // ── Environment + device state ────────────────────────────────────────────
   useEffect(() => {
     // iPhone/iPad in a normal browser tab: push needs Add-to-Home-Screen (iOS 16.4+, standalone).
     if (isIOSLike() && !isStandalonePWA()) {
@@ -75,47 +72,13 @@ export default function FanNotificationBell({ orgSlug, tournamentSlug, tournamen
     if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
       setBlocked(true);
     }
-
-    const sync = () => {
-      // A user change is mid-flight (applyCategories) — it owns the final state. Skip so a
-      // stale verify/event doesn't revert the switches the user is actively setting.
-      if (busyRef.current) return;
-      setTeam(readFollowedTeam(orgSlug, tournamentSlug));
-      const stored = readFanAlertsState(orgSlug, tournamentSlug);
-      if (!stored) {
-        setSubscribed(false);
-        setMessages(true);
-        setScores(true);
-        return;
-      }
-      setSubscribed(true);
-      setMessages(stored.notifyMessages);
-      setScores(stored.notifyScores);
-      // Verify the subscription is still live; drop to unsubscribed if it silently died.
-      void (async () => {
-        const live = await verifyFanAlertsLive(stored);
-        if (!live && !busyRef.current) {
-          setSubscribed(false);
-          setMessages(true);
-          setScores(true);
-        }
-      })();
-    };
-    sync();
-    // Filter the storage event to this tournament's key so unrelated localStorage writes don't
-    // trigger a needless re-sync + verify (matches FollowAlertsToggle).
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === fanAlertsKey(orgSlug, tournamentSlug)) sync();
-    };
-    window.addEventListener('fl-fan-alerts-change', sync);
-    window.addEventListener('fl-follow-change', sync);
-    window.addEventListener('storage', onStorage);
-    return () => {
-      window.removeEventListener('fl-fan-alerts-change', sync);
-      window.removeEventListener('fl-follow-change', sync);
-      window.removeEventListener('storage', onStorage);
-    };
-  }, [orgSlug, tournamentSlug]);
+    let cancelled = false;
+    void getCurrentPushEndpoint().then(endpoint => {
+      if (cancelled) return;
+      setDeviceReady(!!endpoint && typeof Notification !== 'undefined' && Notification.permission === 'granted');
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   // ── Close on outside click / Esc ──────────────────────────────────────────
   useEffect(() => {
@@ -149,53 +112,49 @@ export default function FanNotificationBell({ orgSlug, tournamentSlug, tournamen
     setOpen(o => !o);
   }
 
-  // ── Apply a category combination to the shared subscription ────────────────
-  async function applyCategories(nextMessages: boolean, nextScores: boolean) {
-    // Remember the committed switch positions so a failed write can revert the optimistic flip.
-    const prevMessages = messages;
-    const prevScores = scores;
-    busyRef.current = true;
+  // ── Save one account switch (registering this device when turning ON) ──────
+  async function applyPref(key: keyof FanAlertPrefs, next: boolean) {
+    setBusy(true);
+    setError('');
+    setOptimistic(o => ({ ...o, [key]: next })); // flip immediately; revert below on failure
+    const result = await saveFanAlertPref(key, next);
+    if (result.ok) {
+      if (next && !result.deviceIssue) setDeviceReady(true);
+      if (result.deviceReason === 'denied') setBlocked(true);
+    } else if (result.deviceReason === 'denied') {
+      setBlocked(true);
+    } else if (result.error) {
+      setError(result.error);
+    }
+    // Success: the shared cache/event now carries the new value; failure: server
+    // truth stands. Either way the overlay has served its purpose.
+    setOptimistic(o => {
+      const rest = { ...o };
+      delete rest[key];
+      return rest;
+    });
+    setBusy(false);
+  }
+
+  // Register this browser for push without touching the account switches.
+  async function enableDevice() {
     setBusy(true);
     setError('');
     try {
-      await subscribeFanAlerts({
-        orgSlug,
-        tournamentSlug,
-        tournamentId,
-        team: team ? { id: team.id, name: team.name } : null,
-        notifyMessages: nextMessages,
-        notifyScores: nextScores,
-      });
-      setMessages(nextMessages);
-      setScores(nextScores);
-      setSubscribed(nextMessages || nextScores);
+      await enablePushOnThisDevice();
+      setDeviceReady(true);
     } catch (err) {
-      // Roll the switches back to their last-saved positions so the UI matches reality.
-      setMessages(prevMessages);
-      setScores(prevScores);
-      const reason = err instanceof PushPermissionError ? err.reason : 'failed';
-      if (reason === 'denied') setBlocked(true);
-      else setError(err instanceof Error ? err.message : 'Could not update notifications.');
+      if (err instanceof PushPermissionError && err.reason === 'denied') setBlocked(true);
+      else setError(err instanceof Error ? err.message : 'Could not turn on this device.');
     } finally {
-      busyRef.current = false;
       setBusy(false);
     }
   }
 
-  function toggleMessages() {
-    const next = !messages;
-    setMessages(next);
-    if (subscribed) void applyCategories(next, scores);
-  }
-  function toggleScores() {
-    const next = !scores;
-    setScores(next);
-    if (subscribed) void applyCategories(messages, next);
-  }
-
   if (!supported) return null;
 
-  const bellOn = subscribed && !blocked;
+  const ready = prefs.state === 'ready';
+  const bellOn = ready && deviceReady && (prefs.prefs.gameAlerts || prefs.prefs.eventNews) && !blocked;
   const BellIcon = blocked ? BellOff : iosInstall ? BellPlus : bellOn ? BellRing : Bell;
 
   return (
@@ -224,7 +183,7 @@ export default function FanNotificationBell({ orgSlug, tournamentSlug, tournamen
           >
             <div className={styles.head}>
               <BellRing size={16} className={styles.headIcon} aria-hidden />
-              <span className={styles.headTitle}>Tournament alerts</span>
+              <span className={styles.headTitle}>Score alerts</span>
               <button type="button" className={styles.close} onClick={() => setOpen(false)} aria-label="Close">
                 <X size={16} />
               </button>
@@ -249,25 +208,39 @@ export default function FanNotificationBell({ orgSlug, tournamentSlug, tournamen
                   Notifications are blocked — turn them on in your browser settings, then reopen this.
                 </p>
               </div>
+            ) : prefs.state === 'signedOut' ? (
+              <div className={styles.explain}>
+                <p className={styles.explainText}>
+                  Following and live scores work without an account. <strong>Score alerts are what
+                  signing in gets you</strong> — a push when your teams&rsquo; games go live, on every
+                  device you sign in on.
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-lime btn-sm"
+                  onClick={() => router.push(`/auth/login?next=${encodeURIComponent(pathname || '/')}`)}
+                >
+                  Sign in
+                </button>
+              </div>
             ) : (
               <>
-                <p className={styles.sub}>Get a heads-up on your phone.</p>
+                <p className={styles.sub}>For every team you follow, on every event.</p>
 
                 <div className={styles.rows}>
                   <Row
-                    label="Tournament messages"
-                    desc="Rain delays & day-of updates"
-                    on={messages}
-                    disabled={busy}
-                    onToggle={toggleMessages}
+                    label="Game alerts"
+                    desc="Live scores & finals for your teams"
+                    on={optimistic.gameAlerts ?? (ready && prefs.prefs.gameAlerts)}
+                    disabled={busy || !ready}
+                    onToggle={() => ready && applyPref('gameAlerts', !prefs.prefs.gameAlerts)}
                   />
                   <Row
-                    label="Score alerts"
-                    desc="For teams you follow"
-                    on={scores}
-                    disabled={busy}
-                    onToggle={toggleScores}
-                    hint={!team ? 'Follow a team to start these' : undefined}
+                    label="Event news"
+                    desc="Rain delays & day-of updates"
+                    on={optimistic.eventNews ?? (ready && prefs.prefs.eventNews)}
+                    disabled={busy || !ready}
+                    onToggle={() => ready && applyPref('eventNews', !prefs.prefs.eventNews)}
                   />
                 </div>
 
@@ -276,23 +249,25 @@ export default function FanNotificationBell({ orgSlug, tournamentSlug, tournamen
                 <div className={styles.foot}>
                   {busy ? (
                     <span className={styles.working}><Loader2 size={14} className={styles.spin} /> Working…</span>
-                  ) : subscribed ? (
-                    <>
-                      <span className={styles.onNote}><Check size={14} /> Notifications on</span>
-                      <button type="button" className={styles.linkBtn} onClick={() => applyCategories(false, false)}>
-                        Turn all off
-                      </button>
-                    </>
+                  ) : deviceReady ? (
+                    <span className={styles.onNote}><Check size={14} /> This device receives alerts</span>
                   ) : (
                     <button
                       type="button"
                       className={`btn btn-lime btn-sm ${styles.cta}`}
-                      onClick={() => applyCategories(messages, scores)}
-                      disabled={!messages && !scores}
+                      onClick={enableDevice}
+                      disabled={!ready}
                     >
-                      Turn on notifications
+                      Turn on for this device
                     </button>
                   )}
+                  <button
+                    type="button"
+                    className={styles.linkBtn}
+                    onClick={() => router.push('/account/notifications?focus=fan')}
+                  >
+                    <Settings size={12} aria-hidden /> All settings
+                  </button>
                 </div>
               </>
             )}
@@ -306,21 +281,19 @@ export default function FanNotificationBell({ orgSlug, tournamentSlug, tournamen
 
 // ── Category row with a switch ───────────────────────────────────────────────
 function Row({
-  label, desc, on, disabled, onToggle, hint,
+  label, desc, on, disabled, onToggle,
 }: {
   label: string;
   desc: string;
   on: boolean;
   disabled: boolean;
   onToggle: () => void;
-  hint?: string;
 }) {
   return (
     <div className={styles.row}>
       <div className={styles.rowText}>
         <span className={styles.rowLabel}>{label}</span>
         <span className={styles.rowDesc}>{desc}</span>
-        {hint && <span className={styles.rowHint}>{hint}</span>}
       </div>
       <button
         type="button"

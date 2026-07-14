@@ -320,12 +320,13 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-public-directory',
           question: 'How do I list my tournament in the public directory?',
-          answerText: 'Open Event Settings and turn on "List in public tournament directory". It is off by default and available on every plan. When it is on, pick a province so people can find your event by region. Listing adds your tournament to the public FieldLogicHQ directory, which shows your event name, dates, sport, and live scores and links to your existing public pages — player information always stays private. Your listing only appears once the tournament is Active or Completed; a draft stays hidden even with the toggle on. Turn it off any time to remove the tournament from the directory.',
-          keywords: ['public directory', 'discover', 'discovery', 'list tournament', 'tournament directory', 'find tournaments', 'browse tournaments', 'public listing', 'province', 'region', 'opt in'],
+          answerText: 'Open Event Settings and turn on "List in public tournament directory". It is off by default and available on every plan. When it is on, pick a province so people can find your event by region. Listing adds your tournament to the public FieldLogicHQ directory, which shows your event name, dates, sport, and live scores and links to your existing public pages — player information always stays private. A listed, live tournament also surfaces on the app-wide Scores tab, the live board every visitor sees. Your listing only appears once the tournament is Active or Completed; a draft stays hidden even with the toggle on. Turn it off any time to remove the tournament from the directory.',
+          keywords: ['public directory', 'discover', 'discovery', 'list tournament', 'tournament directory', 'find tournaments', 'browse tournaments', 'public listing', 'province', 'region', 'opt in', 'scores tab', 'live board'],
           answer: (
             <>
               <p>Open <strong>Event Settings</strong> and turn on <strong>List in public tournament directory</strong>. It&rsquo;s <strong>off by default</strong> and available on every plan, so a tournament is only listed when you choose to list it.</p>
               <p>When it&rsquo;s on, pick a <strong>province</strong> so people can find your event by region. Listing adds your tournament to the public FieldLogicHQ directory, which shows your event name, dates, sport, and live scores and links to your existing public pages. <strong>Player information always stays private.</strong></p>
+              <p>A listed tournament that&rsquo;s currently underway also surfaces on the app&rsquo;s <strong>Scores</strong> tab — the platform-wide live board every visitor sees, whether or not they follow your event.</p>
               <p>Your listing only appears once the tournament is <strong>Active</strong> or <strong>Completed</strong> — a draft stays hidden even with the toggle on. Turn the toggle off any time to remove the tournament from the directory.</p>
             </>
           ),
@@ -984,13 +985,13 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-push-to-fans',
           question: 'Can I send a push notification to fans?',
-          answerText: 'Yes, on Tournament Plus and higher. Turn on "Push to fans" when posting a message to send a phone notification to everyone following a team in this tournament who has turned on alerts. It requires "Post to site" because the notification opens the public News page, and it is ideal for rain delays and day-of updates. Fans opt in themselves by following a team and enabling alerts on their device, so early on you may see "no fans have alerts on yet." On the free plan the option is locked.',
+          answerText: 'Yes, on Tournament Plus and higher. Turn on "Push to fans" when posting a message to send a phone notification to everyone following a team in this tournament who has turned on alerts. It requires "Post to site" because the notification opens the public News page, and it is ideal for rain delays and day-of updates. Fans opt in themselves by following a team, signing in with a free account, and enabling alerts, so early on you may see "no fans have alerts on yet." On the free plan the option is locked.',
           keywords: ['push', 'push notification', 'push to fans', 'notify fans', 'phone alert', 'fan alerts', 'buzz phone', 'opt in'],
           popular: true,
           answer: (
             <>
               <p><strong>Yes — on Tournament Plus and higher.</strong> When you write a message, turn on <strong>Push to fans</strong> to send a phone notification to everyone following a team in this tournament who has turned on alerts. Because the notification opens the tournament&rsquo;s public <strong>News</strong> page, <strong>Post to site</strong> stays on whenever you push.</p>
-              <p>It&rsquo;s ideal for rain delays and urgent day-of updates — pin the post and it also appears as the banner on the public <strong>Schedule</strong>. Fans opt in themselves by following a team and turning on alerts on their device, so early in an event you may see &ldquo;no fans have alerts on yet.&rdquo; On the free plan this option is locked.</p>
+              <p>It&rsquo;s ideal for rain delays and urgent day-of updates — pin the post and it also appears as the banner on the public <strong>Schedule</strong>. Fans opt in themselves by following a team, signing in, and turning on alerts, so early in an event you may see &ldquo;no fans have alerts on yet.&rdquo; On the free plan this option is locked.</p>
             </>
           ),
         },
@@ -1105,9 +1106,9 @@ const tournamentsHelp: HelpPageContent = {
       id: 'public-site-preview',
       group: 'Communicate & Publish',
       heading: 'The public tournament site, fan following, and preview',
-      summary: 'What teams and fans see online — following a team, score alerts, the home-screen app — and how to preview it.',
-      keywords: ['public site', 'preview', 'public tournament page', 'teams see', 'public schedule', 'standings', 'follow a team', 'score alerts', 'add to home screen', 'install app', 'offline', 'playoff picture', 'playoffs are set', 'champions', 'champions page', 'champions crowned', 'final results'],
-      searchText: 'public tournament site preview schedule standings results teams rules news registration public page what teams see preview site before activation fans follow a team my team score alerts push notification final alert add to home screen install the app home screen icon fan app works offline last scores branded icon iphone android consistent standings rank same rank everywhere team card team profile tie-breaker head-to-head app icon background colour color app name short name initials border branding playoff picture playoffs are set seeding summary bracket countdown home finished wrap-up automatically finished without marking complete shareable champions crowned champions page final results winners celebration recap top tier',
+      summary: 'What teams and fans see online — following a team, the Following tab, score alerts, the home-screen app — and how to preview it.',
+      keywords: ['public site', 'preview', 'public tournament page', 'teams see', 'public schedule', 'standings', 'follow a team', 'following tab', 'score alerts', 'add to home screen', 'install app', 'offline', 'playoff picture', 'playoffs are set', 'champions', 'champions page', 'champions crowned', 'final results'],
+      searchText: 'public tournament site preview schedule standings results teams rules news registration public page what teams see preview site before activation fans follow a team my team score alerts push notification final alert add to home screen install the app home screen icon fan app works offline last scores branded icon iphone android consistent standings rank same rank everywhere team card team profile tie-breaker head-to-head app icon background colour color app name short name initials border branding playoff picture playoffs are set seeding summary bracket countdown home finished wrap-up automatically finished without marking complete shareable champions crowned champions page final results winners celebration recap top tier following tab my teams account follows cross tournament game day feed live now coming up recent result scores tab live board discover tab',
       links: [
         { label: 'Preview Site', href: '../tournaments/dashboard' },
       ],
@@ -1117,8 +1118,8 @@ const tournamentsHelp: HelpPageContent = {
           <p>The public tournament site can include registration, schedule, standings, results, teams, rules, resources, and news depending on tournament setup and status.</p>
           <p>Preview is always available to admins regardless of tournament status. Share the preview link internally to review the public experience before you activate.</p>
           <p><strong>Consistent standings.</strong> A team&rsquo;s rank is the same everywhere it appears — the standings table, the Teams page cards, and the team&rsquo;s own page all rank by your tie-breaker rules (head-to-head, then run differential, and so on). So a team that wins a tie on head-to-head shows the same position to every fan, on every screen.</p>
-          <p><strong>Following a team.</strong> Fans can follow a team on the public site — no account needed — to get a personalized &ldquo;my team&rdquo; view: next game, live score, and current standing, front and centre. Following, live public scores, and the home-screen app are included on every plan.</p>
-          <p><strong>Score alerts.</strong> On Tournament Plus and above, fans who follow a team can turn on <strong>score alerts</strong> — a push notification when their team&rsquo;s game goes live and a &ldquo;Final&rdquo; when it ends. Tapping an alert opens that game, and on a branded event the notification carries your tournament logo.</p>
+          <p><strong>Following a team.</strong> Fans can follow a team on the public site — no account needed — to get a personalized &ldquo;my team&rdquo; view: next game, live score, and current standing, front and centre. They can also sign in with a free account so their follows travel to every device; either way, the app&rsquo;s <strong>Following</strong> tab becomes a personal game-day feed — every team they follow, across every tournament, sorted into <strong>Live now</strong>, <strong>Coming up</strong>, and <strong>Recent</strong> results, with anything live always shown first. Following, live public scores, and the home-screen app are included on every plan.</p>
+          <p><strong>Score alerts.</strong> On Tournament Plus and above, fans who follow a team and <strong>sign in with a free FieldLogicHQ account</strong> can turn on <strong>score alerts</strong> — a push notification when their team&rsquo;s game goes live and a &ldquo;Final&rdquo; when it ends. The setting lives under <strong>Account → Notifications</strong> and covers every team they follow, on every device they sign in on. Tapping an alert opens that game, and on a branded event the notification carries your tournament logo.</p>
           <p><strong>The playoff moment.</strong> When you set the playoff bracket, the public home page turns into a <strong>Playoffs</strong> view — a badge, a countdown to the first playoff game, and a link to a shareable <strong>Playoff Picture</strong> that lays out the seeding and the opening matchups. Fans with score alerts on also get a one-time &ldquo;Playoffs are set&rdquo; push.</p>
           <p><strong>The champions moment.</strong> When the whole playoffs finish and the champion is decided, the public home page switches to its <strong>finished wrap-up</strong> &mdash; the champions (every tier, including Gold and Silver) and the final standings, with the live &ldquo;next game&rdquo; sections retired. Fans with score alerts on also get a one-time &ldquo;Champions crowned&rdquo; push, and a shareable <strong>Champions</strong> page headlines the winning team and lists every tier&rsquo;s winner alongside the final standings. It all happens off the scores you already enter &mdash; there&rsquo;s no extra step, and you don&rsquo;t need to mark the tournament complete first.</p>
           <p><strong>Add to home screen (the fan app).</strong> Fans can add the tournament to their phone&rsquo;s home screen and open it like an app — straight to your event. On iPhone, alerts only work once the page has been added to the home screen (Apple&rsquo;s rule), so the alerts button there shows an &ldquo;add to home screen for alerts&rdquo; prompt first, with a one-time reminder after they install. On Tournament Plus events the home-screen icon and app name carry your tournament branding — you set the icon background colour and a short app name under <strong>Branding → App Icon</strong>; free events use the default FieldLogicHQ icon.</p>
@@ -1129,13 +1130,26 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-fan-score-alerts',
           question: 'Can fans get a notification when their team scores?',
-          answerText: 'Yes, on Tournament Plus and above. Fans follow a team on the public site, then turn on score alerts to get a push when the game goes live and a Final when it ends. Following, live public scores, and the home-screen app are free on every plan; score alerts are Tournament Plus and above. No fan account is needed — it is per device.',
-          keywords: ['score alerts', 'fan alerts', 'push notification', 'follow a team', 'live score', 'Tournament Plus'],
+          answerText: 'Yes, on Tournament Plus and above. A fan follows a team on the public site, signs in with a free FieldLogicHQ account, and turns on score alerts — a push when the game goes live and a Final when it ends. The setting lives under Account → Notifications, covers every team they follow, and works on every device they sign in on. Following, live public scores, and the home-screen app stay free on every plan and never need an account — alerts are what signing in gets you.',
+          keywords: ['score alerts', 'fan alerts', 'push notification', 'follow a team', 'live score', 'Tournament Plus', 'sign in', 'fan account'],
           popular: true,
           answer: (
             <>
-              <p>Yes — on <strong>Tournament Plus and above</strong>. A fan follows a team on the public tournament site, then taps <strong>Get score alerts</strong> and allows notifications. They get a push when that team&rsquo;s game goes live and a &ldquo;Final&rdquo; when it ends.</p>
-              <p>Following a team, live public scores, and adding the FieldLogicHQ app to the home screen are included on <strong>every plan</strong>. Score alerts are available on Tournament Plus and above. No fan account is required — alerts are tied to that person&rsquo;s device.</p>
+              <p>Yes — on <strong>Tournament Plus and above</strong>. A fan follows a team on the public tournament site, <strong>signs in with a free FieldLogicHQ account</strong>, and taps <strong>Get score alerts</strong>. They get a push when that team&rsquo;s game goes live and a &ldquo;Final&rdquo; when it ends. The setting lives under <strong>Account → Notifications</strong>, covers every team they follow, and works on every device they sign in on.</p>
+              <p>Following a team, live public scores, and adding the FieldLogicHQ app to the home screen are included on <strong>every plan</strong> and never need an account — <strong>alerts are what signing in gets you</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-following-tab',
+          question: 'What does a fan&rsquo;s Following tab show?',
+          answerText: 'The Following tab in the FieldLogicHQ app is a fan’s personal game-day feed — every team they follow, across every tournament, in one place. Teams are grouped into Live now (score, always shown first), Coming up (next game time and field), and Recent (latest result). A team with nothing scheduled yet shows a quiet "no games yet." This is separate from the Scores tab, which is a platform-wide live board of every tournament underway right now, not just the fan’s own teams.',
+          keywords: ['following tab', 'my teams', 'live now', 'coming up', 'recent result', 'game-day feed', 'scores tab', 'account follows', 'cross tournament'],
+          popular: true,
+          answer: (
+            <>
+              <p>The <strong>Following</strong> tab in the FieldLogicHQ app is a fan&rsquo;s personal game-day feed — every team they follow, across every tournament, in one place. Teams are grouped into <strong>Live now</strong> (score, always shown first), <strong>Coming up</strong> (next game time and field), and <strong>Recent</strong> (latest result). A team with nothing scheduled yet shows a quiet &ldquo;no games yet.&rdquo;</p>
+              <p>This is separate from the <strong>Scores</strong> tab, which is a platform-wide live board of every tournament underway right now — not just the fan&rsquo;s own teams. Following is personal; Scores is discovery.</p>
             </>
           ),
         },

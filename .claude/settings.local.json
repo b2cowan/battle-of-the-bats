@@ -50,7 +50,8 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "WebFetch",
-      "Bash(git diff *)"
+      "Bash(git diff *)",
+      "Bash(node scripts/apply-migration-api.mjs \"C:\\\\Users\\\\b2cow\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-b2cow-Documents-tournament-website\\\\69ef77fc-06fe-41dd-add9-ec4245c0cfc3\\\\scratchpad\\\\verify-digest.sql\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\Robert Cowan\\Documents\\tournament-website\\app\\[orgSlug]\\admin\\org"

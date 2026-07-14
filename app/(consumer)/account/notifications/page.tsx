@@ -5,8 +5,10 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getUserAccessContexts } from '@/lib/user-contexts';
 import { getCoachingAssignmentsForUser } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { getFanAlertOverview } from '@/lib/fan-alert-prefs';
 import type { Capability } from '@/lib/roles';
 import type { Organization } from '@/lib/types';
+import type { FanCardData } from '@/components/notifications/FanAlertsCard';
 import consumerStyles from '@/components/consumer/ConsumerPage.module.css';
 import AccountNotificationsClient, { type NotificationCard } from './AccountNotificationsClient';
 
@@ -56,13 +58,13 @@ export default async function AccountNotificationsPage({
           <p className={consumerStyles.subtitle}>Sign in to manage what the platform sends you.</p>
         </div>
         <div className={consumerStyles.actions}>
-          <Link href="/auth/login" className={consumerStyles.cta}>Sign in</Link>
+          <Link href="/auth/login?next=%2Faccount%2Fnotifications" className={consumerStyles.cta}>Sign in</Link>
           <Link href="/discover" className={consumerStyles.ctaGhost}>Browse tournaments</Link>
         </div>
         <p className={consumerStyles.note}>
-          You don&rsquo;t need an account to follow teams and get live scores — following works on this
-          device right away, and its alert settings live on the follow itself. Notification settings here
-          are for organizers, coaches, and staff.
+          You don&rsquo;t need an account to follow teams and watch live scores — following works on
+          this device right away. <strong>Score alerts are what signing in gets you</strong> — a push
+          when your teams&rsquo; games go live, on every device you sign in on.
         </p>
       </div>
     );
@@ -108,7 +110,20 @@ export default async function AccountNotificationsPage({
     }
   }
 
+  // The fan card (Slice 3): global alert switches + the honest per-event gate line.
+  // Rendered whenever the account follows at least one team — a pure fan with no
+  // org/coach hats sees just this card.
+  const overview = await getFanAlertOverview(user.id);
+  const fanCard: FanCardData | null = overview
+    ? {
+        teamCount: overview.teamCount,
+        gameAlerts: overview.prefs.gameAlerts,
+        eventNews: overview.prefs.eventNews,
+        noAlertEvents: overview.noAlertEvents,
+      }
+    : null;
+
   return (
-    <AccountNotificationsClient cards={cards} userEmail={user.email} focus={focus ?? null} />
+    <AccountNotificationsClient cards={cards} fanCard={fanCard} userEmail={user.email} focus={focus ?? null} />
   );
 }

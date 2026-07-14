@@ -121,8 +121,8 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
             <div>
               <p className={styles.title}>Following {team.name}</p>
               <p className={styles.sub}>
-                Create a free account so your teams follow you on every device — scores, schedules,
-                and alerts in one place.
+                Create a free account to get <strong>score alerts</strong> — a push when your teams&rsquo;
+                games go live — and keep your follows on every device.
               </p>
             </div>
           </div>

@@ -32,7 +32,6 @@ import styles from './MyTeamDock.module.css';
 interface Props {
   orgSlug: string;
   tournamentSlug: string;
-  tournamentId: string;
   /** Computed server-side from the tournament window; gates all work. */
   inProgress: boolean;
   /** Whether the plan includes fan push score alerts (Tournament Plus+). */
@@ -50,7 +49,7 @@ function formatCountdown(ms: number): string {
   return `${Math.max(mins, 1)}m`;
 }
 
-export default function MyTeamDock({ orgSlug, tournamentSlug, tournamentId, inProgress, fanAlertsEnabled = false }: Props) {
+export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAlertsEnabled = false }: Props) {
   const { followedTeamId, unfollow } = useFollowedTeam(orgSlug, tournamentSlug);
   const [teams, setTeams] = useState<PublicTeam[]>([]);
   const [games, setGames] = useState<Game[]>([]);
@@ -202,7 +201,6 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, tournamentId, inPr
               <FollowAlertsToggle
                 orgSlug={orgSlug}
                 tournamentSlug={tournamentSlug}
-                tournamentId={tournamentId}
                 team={{ id: team.id, name: team.name }}
               />
             </div>

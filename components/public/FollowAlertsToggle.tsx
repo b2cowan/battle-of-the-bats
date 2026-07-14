@@ -1,37 +1,31 @@
 'use client';
 /**
  * components/public/FollowAlertsToggle.tsx
- * Anonymous fan opt-in for push score alerts on the team they follow. Only
- * rendered when the tournament's plan includes `fan_score_alerts` (Tournament
- * Plus+). Subscribes the browser to push and registers a row keyed to
- * (endpoint, tournamentId) via the anonymous fan-push API.
+ * The in-context "score alerts" control on public tournament pages. Only rendered
+ * when the tournament's plan includes `fan_score_alerts` (Tournament Plus+).
  *
- * Three honesty fixes live here:
+ * Slice 3 (Business Decisions Log 2026-07-14): alerts require a signed-in
+ * account. Signed out, this is a "Sign in for score alerts" pitch that returns
+ * to this page after login. Signed in, it drives the ACCOUNT-level game-alerts
+ * switch (global across every followed team — the same switch as the Followed
+ * teams card on /account/notifications, via the shared lib/fan-alert-prefs-client
+ * state) and registers THIS device for push in the same gesture.
+ *
+ * Honesty carry-overs:
  *  - J6-048: on a normal iPhone tab (push needs Add-to-Home-Screen on iOS 16.4+),
  *    show an explainer instead of a blank/dead button.
- *  - J6-050: "Alerts on" reflects the LIVE subscription + permission, not just a
- *    stale localStorage flag.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { Bell, BellRing, BellOff, BellPlus, Loader2 } from 'lucide-react';
-import { isPushSupported, PushPermissionError } from '@/lib/push-client';
+import { isPushSupported, getCurrentPushEndpoint } from '@/lib/push-client';
 import { isIOSLike, isStandalonePWA } from '@/lib/device';
-import {
-  clearFanAlertsOptIn,
-  disableFanAlerts,
-  enableFanAlerts,
-  fanAlertsKey,
-  notifyFanAlertsChange,
-  readFanAlertsState,
-  subscribeFanAlerts,
-  verifyFanAlertsLive,
-} from '@/lib/fan-alerts';
+import { useFanAlertPrefs, saveFanAlertPref } from '@/lib/fan-alert-prefs-client';
 import styles from './FollowAlertsToggle.module.css';
 
 interface Props {
   orgSlug: string;
   tournamentSlug: string;
-  tournamentId: string;
   team: { id: string; name: string };
   /**
    * 'pill' renders the toggle as a compact pill matching the sibling
@@ -42,11 +36,11 @@ interface Props {
   variant?: 'default' | 'pill';
 }
 
-type State = 'off' | 'pending' | 'on' | 'error';
-
-export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournamentId, team, variant = 'default' }: Props) {
+export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, variant = 'default' }: Props) {
   const pill = variant === 'pill';
   const iconSize = pill ? 12 : 14;
+  const pathname = usePathname();
+  const router = useRouter();
   // Shorter label in the compact pill row so three actions fit inline on a phone.
   const offLabel = pill ? 'Score alerts' : 'Get score alerts';
   // In pill mode use ONLY the local pill class (the global `btn` padding/colour
@@ -60,14 +54,13 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournament
   // of rendering nothing (J6-048).
   const [iosInstall, setIosInstall] = useState(false);
   const [iosHint, setIosHint] = useState(false);
-  const [state, setState] = useState<State>('off');
+  const prefs = useFanAlertPrefs();
+  // Whether THIS browser holds a live push subscription. The account pref
+  // defaults ON, so "Alerts on" must also require the device to actually be
+  // receiving — never a confident "on" while pushes silently can't arrive (J6-050).
+  const [deviceReady, setDeviceReady] = useState(false);
+  const [pending, setPending] = useState(false);
   const [msg, setMsg] = useState('');
-  // Mirror state into a ref so the effect's sync() can read the LIVE value without
-  // re-subscribing — used to skip work while an enable()/disable() is in flight.
-  const stateRef = useRef<State>(state);
-  useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
 
   useEffect(() => {
     // iPhone/iPad in a normal browser tab: push is unavailable until the page is
@@ -84,92 +77,50 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournament
       setSupported(false);
       return;
     }
-    const sync = () => {
-      // An enable()/disable() is mid-flight (it owns the final state). Skip — its
-      // own success path dispatches fl-fan-alerts-change, and acting here would
-      // prematurely clear the pending spinner / launch a spurious verify.
-      if (stateRef.current === 'pending') return;
-      const stored = readFanAlertsState(orgSlug, tournamentSlug);
-      // This toggle represents SCORE alerts specifically — treat it as OFF unless the shared
-      // state has the scores category on (the fan may have messages-only via the bell).
-      if (!stored || !stored.notifyScores) {
-        setState(prev => (prev === 'on' ? 'off' : prev));
-        return;
-      }
-      // Optimistically show ON from the stored opt-in (no flicker for the common,
-      // valid case)…
-      setState('on');
-      // …then verify against the LIVE subscription + permission and drop back to
-      // OFF if it no longer holds, so we never show a confident "Alerts on" while
-      // pushes have silently stopped (J6-050).
-      void (async () => {
-        const live = await verifyFanAlertsLive(stored);
-        if (!live) {
-          clearFanAlertsOptIn(orgSlug, tournamentSlug);
-          notifyFanAlertsChange();
-          setState('off');
-          return;
-        }
-        // The followed team changed while alerts were on — move the server row.
-        if (stored.teamId && stored.teamId !== team.id) {
-          try {
-            await enableFanAlerts({ orgSlug, tournamentSlug, tournamentId, team });
-          } catch {
-            /* best-effort re-point; the toggle stays usable */
-          }
-        }
-      })();
-    };
-    sync();
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === fanAlertsKey(orgSlug, tournamentSlug)) sync();
-    };
-    window.addEventListener('storage', onStorage);
-    window.addEventListener('fl-fan-alerts-change', sync);
-    return () => {
-      window.removeEventListener('storage', onStorage);
-      window.removeEventListener('fl-fan-alerts-change', sync);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgSlug, tournamentSlug, tournamentId, team.id]);
+    let cancelled = false;
+    void getCurrentPushEndpoint().then(endpoint => {
+      if (cancelled) return;
+      setDeviceReady(!!endpoint && typeof Notification !== 'undefined' && Notification.permission === 'granted');
+    });
+    return () => { cancelled = true; };
+  }, []);
 
-  async function enable() {
-    setState('pending');
-    setMsg('');
-    try {
-      await enableFanAlerts({ orgSlug, tournamentSlug, tournamentId, team });
-      setState('on');
-    } catch (err) {
-      const reason = err instanceof PushPermissionError ? err.reason : 'failed';
-      setMsg(
-        reason === 'denied'
-          ? 'Notifications are blocked — enable them in your browser settings.'
-          : err instanceof Error
-            ? err.message
-            : 'Could not enable alerts.',
-      );
-      setState('error');
-    }
+  // Best-effort: make sure THIS team's follow is on the account (a device-only
+  // follow made while signed out wouldn't be) — idempotent.
+  function mirrorFollowToAccount() {
+    void fetch('/api/consumer/follows', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'follow', teamId: team.id, orgSlug, tournamentSlug }),
+    }).catch(() => {});
   }
 
-  async function disable() {
-    setState('pending');
-    try {
-      const existing = readFanAlertsState(orgSlug, tournamentSlug);
-      if (existing?.notifyMessages) {
-        // The fan still wants tournament messages — keep the subscription, just turn OFF scores.
-        await subscribeFanAlerts({ orgSlug, tournamentSlug, tournamentId, team, notifyMessages: true, notifyScores: false });
-      } else {
-        // Scores were the only thing on — fully unsubscribe.
-        await disableFanAlerts({ orgSlug, tournamentSlug, tournamentId });
-      }
-      setState('off');
-    } catch {
-      // Even if the network call fails, treat it as off locally.
-      clearFanAlertsOptIn(orgSlug, tournamentSlug);
-      notifyFanAlertsChange();
-      setState('off');
+  async function turnOn() {
+    setPending(true);
+    setMsg('');
+    // Always write the account switch, even when the cached prefs SAY it's on —
+    // the cached read can be a fail-open default after a transient API error, and
+    // the POST is idempotent, so this never silently skips a needed write. The
+    // in-context button should also get THIS device working — a device
+    // registration failure is a hard error, not a quiet account-only save.
+    const result = await saveFanAlertPref('gameAlerts', true, { strictDevice: true });
+    if (result.ok) {
+      setDeviceReady(true);
+      mirrorFollowToAccount();
+    } else {
+      setMsg(result.error ?? 'Could not update alerts.');
     }
+    setPending(false);
+  }
+
+  async function turnOff() {
+    setPending(true);
+    setMsg('');
+    // Account-wide off — the same global switch as the Followed teams card
+    // (one setting, everywhere; per-team levels were deliberately deferred).
+    const result = await saveFanAlertPref('gameAlerts', false);
+    if (!result.ok) setMsg(result.error ?? 'Could not update alerts.');
+    setPending(false);
   }
 
   // iPhone in a normal tab: an honest "add to home screen first" explainer so the
@@ -191,28 +142,47 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, tournament
 
   if (!supported) return null;
 
-  if (state === 'pending') {
+  if (prefs.state === 'checking' || pending) {
     return (
       <button type="button" className={btnClass('btn-ghost')} disabled>
-        <Loader2 size={iconSize} /> Working…
+        <Loader2 size={iconSize} /> {pending ? 'Working…' : offLabel}
       </button>
     );
   }
 
-  if (state === 'on') {
+  if (prefs.state === 'signedOut') {
     return (
-      <button type="button" className={btnClass('btn-lime')} onClick={disable}>
-        <BellRing size={iconSize} /> Alerts on
+      <button
+        type="button"
+        className={btnClass('btn-ghost')}
+        onClick={() => router.push(`/auth/login?next=${encodeURIComponent(pathname || '/')}`)}
+      >
+        <Bell size={iconSize} /> {pill ? 'Score alerts' : 'Sign in for score alerts'}
       </button>
+    );
+  }
+
+  // "Alerts on" only when the account wants them AND this device can receive them.
+  if (prefs.prefs.gameAlerts && deviceReady) {
+    return (
+      <>
+        <button type="button" className={btnClass('btn-lime')} onClick={turnOff}>
+          <BellRing size={iconSize} /> Alerts on
+        </button>
+        {/* A failed turn-OFF lands back here — surface its error instead of a silent no-op. */}
+        {msg && (
+          <span style={{ fontSize: '0.7rem', color: 'var(--white-55)', flexBasis: '100%' }}>{msg}</span>
+        )}
+      </>
     );
   }
 
   return (
     <>
-      <button type="button" className={btnClass('btn-ghost')} onClick={enable}>
-        {state === 'error' ? <BellOff size={iconSize} /> : <Bell size={iconSize} />} {offLabel}
+      <button type="button" className={btnClass('btn-ghost')} onClick={turnOn}>
+        {msg ? <BellOff size={iconSize} /> : <Bell size={iconSize} />} {offLabel}
       </button>
-      {state === 'error' && msg && (
+      {msg && (
         <span style={{ fontSize: '0.7rem', color: 'var(--white-55)', flexBasis: '100%' }}>{msg}</span>
       )}
     </>

@@ -3078,6 +3078,51 @@
     "ordinal_position": 19
   },
   {
+    "table_name": "fan_alert_prefs",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "fan_alert_prefs",
+    "column_name": "game_alerts",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "fan_alert_prefs",
+    "column_name": "event_news",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "fan_alert_prefs",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "fan_alert_prefs",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 5
+  },
+  {
     "table_name": "fan_follows",
     "column_name": "id",
     "data_type": "uuid",

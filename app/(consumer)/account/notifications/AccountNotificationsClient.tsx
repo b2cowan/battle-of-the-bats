@@ -11,11 +11,13 @@
  * the card they came from (admin bell → org card; coaches bell → coach card).
  */
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { AlertCircle, ChevronRight } from 'lucide-react';
+import { isStandalonePWA } from '@/lib/device';
 import PushDeviceTester from '@/components/notifications/PushDeviceTester';
 import PreferencesTable, { type PreferenceSection } from '@/components/notifications/PreferencesTable';
 import PreferenceGroups, { type PreferenceGroup } from '@/components/notifications/PreferenceGroups';
+import FanAlertsCard, { type FanCardData } from '@/components/notifications/FanAlertsCard';
 import { useOrgPreferences } from '@/components/notifications/useOrgPreferences';
 import { NOTIFICATION_SECTIONS, simpleGroupsFor } from '@/lib/notification-labels';
 import type { NotificationEventType } from '@/lib/types';
@@ -196,23 +198,38 @@ function CoachCard({ card }: { card: NotificationCard }) {
 
 export default function AccountNotificationsClient({
   cards,
+  fanCard,
   userEmail,
   focus,
 }: {
   cards: NotificationCard[];
+  /** The Followed-teams card (Slice 3) — null when the account follows nothing. */
+  fanCard: FanCardData | null;
   userEmail: string;
   focus: string | null;
 }) {
-  const scrolled = useRef(false);
-
   // Deep-link: land on the card the bell came from. Scroll once on mount.
+  //
+  // Deliberately NOT `el.scrollIntoView({behavior:'smooth'})`: WebKit (iOS Safari,
+  // and especially standalone/home-screen PWAs, which this app is) has a
+  // long-standing bug where firing a smooth scrollIntoView before the page has
+  // finished settling locks in an unwanted zoom + scroll offset that the user
+  // can't recover from (no URL bar in standalone mode to reset it). Deferring a
+  // frame + using window.scrollTo with an explicit offset avoids the WebKit
+  // anchor confusion; standalone mode additionally skips the smooth animation
+  // since that's the specific trigger there.
   useEffect(() => {
-    if (!focus || scrolled.current) return;
-    const el = document.getElementById(focus);
-    if (el) {
-      scrolled.current = true;
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    if (!focus) return;
+    const raf = requestAnimationFrame(() => {
+      const el = document.getElementById(focus);
+      if (!el) return;
+      const standalone = isStandalonePWA();
+      // Clear the sticky consumer-shell top bar (id set in ConsumerNav) + a little breathing room.
+      const topbarHeight = document.getElementById('consumer-topbar')?.getBoundingClientRect().height ?? 0;
+      const top = el.getBoundingClientRect().top + window.scrollY - topbarHeight - 16;
+      window.scrollTo({ top, behavior: standalone ? 'auto' : 'smooth' });
+    });
+    return () => cancelAnimationFrame(raf);
   }, [focus]);
 
   return (
@@ -225,18 +242,26 @@ export default function AccountNotificationsClient({
         </p>
       </div>
 
-      {cards.length === 0 ? (
+      {cards.length === 0 && !fanCard ? (
         <div className={styles.emptyState}>
           <p className={styles.emptyTitle}>Nothing to manage here yet</p>
           <p className={styles.emptyText}>
-            Notification settings appear once you join an organization or coach a team. Following a
-            team for live scores is set on the follow itself — no account settings needed.
+            Notification settings appear once you follow a team, join an organization, or coach a
+            team. Follow a team on any tournament&rsquo;s public site and its alerts show up here.
           </p>
         </div>
       ) : (
         <>
           <PushDeviceTester />
           <div className={styles.cardsWrap}>
+            {fanCard && (
+              <section
+                id="fan"
+                className={`${styles.card} ${focus === 'fan' ? styles.cardFocused : ''}`}
+              >
+                <FanAlertsCard data={fanCard} />
+              </section>
+            )}
             {cards.map(card => (
               <section
                 key={card.focusKey}

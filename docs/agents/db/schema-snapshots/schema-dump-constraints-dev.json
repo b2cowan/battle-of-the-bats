@@ -728,6 +728,22 @@
     "foreign_column": null
   },
   {
+    "table_name": "fan_alert_prefs",
+    "constraint_name": "fan_alert_prefs_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "fan_alert_prefs",
+    "constraint_name": "fan_alert_prefs_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
     "table_name": "fan_follows",
     "constraint_name": "fan_follows_pkey",
     "constraint_type": "PRIMARY KEY",

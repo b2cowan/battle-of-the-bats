@@ -3080,6 +3080,51 @@
         "column_default": "now()"
       },
       {
+        "table_name": "fan_alert_prefs",
+        "pos": 1,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "fan_alert_prefs",
+        "pos": 2,
+        "column_name": "game_alerts",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "table_name": "fan_alert_prefs",
+        "pos": 3,
+        "column_name": "event_news",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "table_name": "fan_alert_prefs",
+        "pos": 4,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "fan_alert_prefs",
+        "pos": 5,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "fan_follows",
         "pos": 1,
         "column_name": "id",
@@ -14455,6 +14500,13 @@
         "constraint_name": "error_events_org_id_fkey"
       },
       {
+        "table_name": "fan_alert_prefs",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "fan_alert_prefs_user_id_fkey"
+      },
+      {
         "table_name": "fan_follows",
         "column_name": "user_id",
         "foreign_table": null,
@@ -16804,6 +16856,11 @@
         "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
       },
       {
+        "tablename": "fan_alert_prefs",
+        "indexname": "fan_alert_prefs_pkey",
+        "indexdef": "CREATE UNIQUE INDEX fan_alert_prefs_pkey ON public.fan_alert_prefs USING btree (user_id)"
+      },
+      {
         "tablename": "fan_follows",
         "indexname": "fan_follows_entity_idx",
         "indexdef": "CREATE INDEX fan_follows_entity_idx ON public.fan_follows USING btree (entity_type, entity_id)"
@@ -18803,6 +18860,12 @@
       {
         "kind": "RLS",
         "table_name": "error_groups",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "fan_alert_prefs",
         "detail": "ENABLED",
         "check_clause": null
       },
