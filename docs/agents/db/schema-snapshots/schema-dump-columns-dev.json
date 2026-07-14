@@ -3078,6 +3078,69 @@
     "ordinal_position": 19
   },
   {
+    "table_name": "fan_follows",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "fan_follows",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "fan_follows",
+    "column_name": "entity_type",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "fan_follows",
+    "column_name": "entity_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "fan_follows",
+    "column_name": "source",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'manual'::text",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "fan_follows",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "fan_follows",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 7
+  },
+  {
     "table_name": "fan_push_subscriptions",
     "column_name": "id",
     "data_type": "uuid",

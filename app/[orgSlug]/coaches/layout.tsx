@@ -46,7 +46,7 @@ export default async function CoachesLayout({
     const { name: orgName, contactEmail } = authCtx.org;
     const isTeamWorkspace = isTeamWorkspaceOrg(authCtx.org);
     return (
-      <OrgProvider>
+      <OrgProvider initialOrg={authCtx.org}>
         <div className={styles.notAssigned}>
           <h2>{isTeamWorkspace ? 'Coaches Portal not ready' : 'Not assigned to any teams'}</h2>
           <p>
@@ -70,7 +70,11 @@ export default async function CoachesLayout({
   }
 
   return (
-    <OrgProvider>
+    // Seed the workspace identity from the SSR-resolved, auth-checked org (matches the admin
+    // layout). Without this, OrgProvider fetches /api/org-context with no slug and a multi-org
+    // user resolves to their DEFAULT org, not this team workspace — which mislabeled the sidebar
+    // and scoped the notification bell to the wrong org (found 2026-07-13).
+    <OrgProvider initialOrg={authCtx.org}>
       <CoachesProvider orgSlug={orgSlug}>
         {/* Hosts the in-context "?" help slide-over for the team work pages (drawer +
             guide content load lazily on first click — no bundle cost until used). */}

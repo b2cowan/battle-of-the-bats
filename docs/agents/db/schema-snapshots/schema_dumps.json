@@ -3080,6 +3080,69 @@
         "column_default": "now()"
       },
       {
+        "table_name": "fan_follows",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "fan_follows",
+        "pos": 2,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "fan_follows",
+        "pos": 3,
+        "column_name": "entity_type",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "fan_follows",
+        "pos": 4,
+        "column_name": "entity_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "fan_follows",
+        "pos": 5,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'manual'::text"
+      },
+      {
+        "table_name": "fan_follows",
+        "pos": 6,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "fan_follows",
+        "pos": 7,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "fan_push_subscriptions",
         "pos": 1,
         "column_name": "id",
@@ -14392,6 +14455,13 @@
         "constraint_name": "error_events_org_id_fkey"
       },
       {
+        "table_name": "fan_follows",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "fan_follows_user_id_fkey"
+      },
+      {
         "table_name": "fan_push_subscriptions",
         "column_name": "team_id",
         "foreign_table": "teams",
@@ -16734,6 +16804,21 @@
         "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
       },
       {
+        "tablename": "fan_follows",
+        "indexname": "fan_follows_entity_idx",
+        "indexdef": "CREATE INDEX fan_follows_entity_idx ON public.fan_follows USING btree (entity_type, entity_id)"
+      },
+      {
+        "tablename": "fan_follows",
+        "indexname": "fan_follows_pkey",
+        "indexdef": "CREATE UNIQUE INDEX fan_follows_pkey ON public.fan_follows USING btree (id)"
+      },
+      {
+        "tablename": "fan_follows",
+        "indexname": "fan_follows_user_entity_unique",
+        "indexdef": "CREATE UNIQUE INDEX fan_follows_user_entity_unique ON public.fan_follows USING btree (user_id, entity_type, entity_id)"
+      },
+      {
         "tablename": "fan_push_subscriptions",
         "indexname": "fan_push_subscriptions_endpoint_idx",
         "indexdef": "CREATE INDEX fan_push_subscriptions_endpoint_idx ON public.fan_push_subscriptions USING btree (endpoint)"
@@ -18718,6 +18803,24 @@
       {
         "kind": "RLS",
         "table_name": "error_groups",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "fan_follows",
+        "detail": "fan_follows_entity_type_check",
+        "check_clause": "(entity_type = ANY (ARRAY['tournament'::text, 'team'::text, 'org'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "fan_follows",
+        "detail": "fan_follows_source_check",
+        "check_clause": "(source = ANY (ARRAY['manual'::text, 'directory'::text, 'qr'::text, 'device_reconcile'::text, 'registration'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "fan_follows",
         "detail": "ENABLED",
         "check_clause": null
       },

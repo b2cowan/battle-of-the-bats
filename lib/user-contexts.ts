@@ -1,6 +1,7 @@
 import { getCoachingAssignmentsForUser, type CoachingAssignment } from './db';
 import { supabaseAdmin } from './supabase-admin';
 import { getBasicCoachTournamentSummary, countClaimableRegistrationsForUser } from './basic-coach-teams';
+import { getFanFollowSummary } from './fan-follows';
 import { COACHES_HOME_PATH, COACHES_TOURNAMENTS_PATH, coachTeamPath } from './coaches-portal-routes';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import type { OrgAccountKind, OrgPlan } from './types';
@@ -29,7 +30,8 @@ export type UserAccessContextKind =
   | 'organization'
   | 'tournament_official'
   | 'coaches_basic'
-  | 'coaches_premium';
+  | 'coaches_premium'
+  | 'fan';
 
 export type UserAccessContext = {
   id: string;
@@ -331,6 +333,25 @@ function buildTournamentRegistrationContext(summary: TournamentRegistrationSumma
 }
 
 /**
+ * Unified-app Phase 2: a signed-in account that follows any team/tournament/org gets a
+ * "Following" context routing to the Follows feed. Follows cross orgs freely and are NOT
+ * org memberships (no single-org constraint). Null when the account follows nothing.
+ */
+function buildFanContext(summary: { followCount: number }): UserAccessContext | null {
+  if (summary.followCount === 0) return null;
+  return {
+    id: 'fan:following',
+    kind: 'fan',
+    title: 'Following',
+    subtitle: 'Teams you follow',
+    detail: summary.followCount === 1 ? '1 team' : `${summary.followCount} teams`,
+    badgeLabel: 'Fan',
+    destination: '/following',
+    sortOrder: 50,
+  };
+}
+
+/**
  * A coach with no linked teams/registrations but with admin-added / imported registrations
  * waiting to be claimed by email. Routes them to the portal hub (where the claim prompt
  * lives) instead of the zero-context /start front door — closing the empty-portal gap.
@@ -459,9 +480,10 @@ export async function getUserAccessContexts(user: {
   id: string;
   email?: string | null;
 }): Promise<UserAccessContext[]> {
-  const [members, registrationSummary] = await Promise.all([
+  const [members, registrationSummary, fanSummary] = await Promise.all([
     getActiveMembershipRows(user.id),
     getBasicCoachTournamentSummary({ userId: user.id, email: user.email }),
+    getFanFollowSummary(user.id),
   ]);
 
   const assignmentEntries = await Promise.all(
@@ -511,6 +533,12 @@ export async function getUserAccessContexts(user: {
     const claimableContext = buildClaimableContext(claimableCount);
     if (claimableContext) contexts.push(claimableContext);
   }
+
+  // Fan-follows are a peer relationship (cross-org, not a membership) — surfaced after the
+  // operator contexts + the zero-context claimable scan, so it coexists with any coach/admin
+  // hats and a fan-only account still lands on /following via the single-context redirect.
+  const fanContext = buildFanContext(fanSummary);
+  if (fanContext) contexts.push(fanContext);
 
   return contexts.sort((a, b) => {
     if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;

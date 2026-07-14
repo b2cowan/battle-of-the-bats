@@ -143,6 +143,33 @@ export async function enablePushOnThisDevice(): Promise<string> {
   return sub.endpoint;
 }
 
+/**
+ * Turn a registered device OFF: delete its server-side subscription so notify() stops
+ * reaching it, and — if it's THIS browser's active subscription — unsubscribe it locally too.
+ * Best-effort on the local unsubscribe; the server delete is the authoritative "off".
+ */
+export async function removePushDevice(endpoint: string): Promise<void> {
+  try {
+    if (isPushSupported()) {
+      const registration = await navigator.serviceWorker.ready;
+      const sub = await registration.pushManager.getSubscription();
+      if (sub && sub.endpoint === endpoint) await sub.unsubscribe();
+    }
+  } catch {
+    // Local unsubscribe is best-effort; the server delete below is what stops delivery.
+  }
+
+  const res = await fetch('/api/notifications/push/unsubscribe', {
+    method:  'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ endpoint }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({} as { error?: string }));
+    throw new Error(data.error ?? 'Failed to turn off notifications on this device.');
+  }
+}
+
 /** The current browser push endpoint, if any (used to unsubscribe a fan row). */
 export async function getCurrentPushEndpoint(): Promise<string | null> {
   if (!isPushSupported()) return null;

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAuthContext } from '@/lib/api-auth';
+import { createClient } from '@/lib/supabase-server';
 import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams } from '@/lib/db';
 import { getRegistrationState } from '@/lib/registration-state';
 import { isPlayoffOnly } from '@/lib/tournament-phase';
@@ -17,6 +18,7 @@ import InstallAppPrompt from '@/components/InstallAppPrompt';
 import MyTeamDock from '@/components/public/MyTeamDock';
 import FollowDeepLinkPrompt from '@/components/public/FollowDeepLinkPrompt';
 import AlertsNudge from '@/components/public/AlertsNudge';
+import FollowAccountNudge from '@/components/public/FollowAccountNudge';
 import TournamentSideRail from '@/components/public/TournamentSideRail';
 import railStyles from '@/components/public/TournamentSideRail.module.css';
 import ScoreTicker from '@/components/public/ScoreTicker';
@@ -84,6 +86,10 @@ export default async function TournamentLayout({
   const isFreeTournamentPlan = org.planId === 'tournament';
   const authCtx = await getAuthContext({ orgSlug }).catch(() => null);
   const showAcquisitionBanner = isFreeTournamentPlan && (!authCtx || authCtx.org.id !== org.id);
+  // Is the visitor signed in AT ALL (any account — a fan need not be an org member, so authCtx
+  // is null for them)? Drives the "create an account to follow everywhere" sheet (Phase 2).
+  const { data: { user: sessionUser } } = await (await createClient()).auth.getUser();
+  const signedIn = !!sessionUser?.email;
   const effectiveColorMode = canUseAdvancedBranding ? tournament.colorMode ?? 'dark' : 'dark';
   // Free public tournament pages always use the FieldLogicHQ default theme, even if old branding values exist.
   const hasTournamentTheme = canUseAdvancedBranding
@@ -243,6 +249,10 @@ export default async function TournamentLayout({
           tournamentSlug={tournament.slug}
         />
       )}
+      {/* "Create an account to follow everywhere" — offered (never forced) to signed-out
+          visitors right after they follow a team. The follow already saved locally; this is
+          a non-blocking upsell with a "just this device" escape (unified-app Phase 2). */}
+      <FollowAccountNudge signedIn={signedIn} orgSlug={orgSlug} tournamentSlug={tournament.slug} />
     </>
   );
 }

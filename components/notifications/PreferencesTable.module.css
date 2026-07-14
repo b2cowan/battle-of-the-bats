@@ -227,7 +227,7 @@
 
 .groupsHead {
   display: grid;
-  grid-template-columns: 1fr 54px 54px 54px;
+  grid-template-columns: minmax(0, 1fr) 54px 54px 54px;
   padding: 0.6rem 1rem 0.4rem;
   background: rgba(255,255,255,0.03);
   border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
@@ -241,7 +241,7 @@
 
 .group {
   display: grid;
-  grid-template-columns: 1fr 54px 54px 54px;
+  grid-template-columns: minmax(0, 1fr) 54px 54px 54px;
   align-items: center;
   padding: 0.85rem 1rem;
   border-top: 1px solid var(--border, rgba(255,255,255,0.05));
@@ -298,6 +298,18 @@
   border-radius: 50%;
   background: var(--logic-lime, #d9f99d);
   flex-shrink: 0;
+}
+
+/* ── Narrow screens: tighten columns + padding so the grid never overflows ───── */
+@media (max-width: 480px) {
+  .groupsHead,
+  .group { grid-template-columns: minmax(0, 1fr) 46px 46px 46px; }
+  .group { padding: 0.85rem 0.7rem; }
+  .groupsHead { padding: 0.6rem 0.7rem 0.4rem; }
+  .thChannel { min-width: 44px; }
+  .table th,
+  .tdEvent,
+  .tdChannel { padding-left: 0.6rem; padding-right: 0.6rem; }
 }
 
 /* ── Skeleton ────────────────────────────────────────────────────────────────── */

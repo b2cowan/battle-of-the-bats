@@ -6,6 +6,7 @@ import {
   Building2,
   ClipboardCheck,
   LayoutGrid,
+  Star,
   Trophy,
   Users,
   type LucideIcon,
@@ -34,6 +35,7 @@ const ICONS: Record<UserAccessContext['kind'], LucideIcon> = {
   tournament_official: ClipboardCheck,
   coaches_basic: Trophy,
   coaches_premium: Users,
+  fan: Star,
 };
 
 const KIND_LABELS: Record<UserAccessContext['kind'], string> = {
@@ -41,6 +43,7 @@ const KIND_LABELS: Record<UserAccessContext['kind'], string> = {
   tournament_official: 'Tournament',
   coaches_basic: 'Coaches Portal',
   coaches_premium: 'Coaches Portal',
+  fan: 'Following',
 };
 
 export default async function UserHomePage({

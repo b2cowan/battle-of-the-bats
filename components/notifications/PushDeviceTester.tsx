@@ -14,11 +14,12 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Smartphone, Send, CheckCircle2, AlertTriangle, XCircle, RefreshCw, BellRing } from 'lucide-react';
+import { Smartphone, Send, CheckCircle2, AlertTriangle, XCircle, RefreshCw, BellRing, PowerOff } from 'lucide-react';
 import {
   isPushSupported,
   getCurrentPushEndpoint,
   enablePushOnThisDevice,
+  removePushDevice,
   PushPermissionError,
 } from '@/lib/push-client';
 import styles from './PushDeviceTester.module.css';
@@ -55,6 +56,7 @@ export default function PushDeviceTester() {
   const [loadError, setLoadError]   = useState<string | null>(null);
   const [currentEndpoint, setCurrentEndpoint] = useState<string | null>(null);
   const [testingId, setTestingId]   = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
   const [results, setResults]       = useState<Map<string, TestResult>>(new Map());
   const [enabling, setEnabling]     = useState(false);
   const [enableError, setEnableError] = useState<string | null>(null);
@@ -143,6 +145,24 @@ export default function PushDeviceTester() {
     }
   }
 
+  // Turn a device OFF — stop notifications reaching it (and un-register this browser if it's the one).
+  async function turnOff(device: Device) {
+    setRemovingId(device.id);
+    setResults(prev => { const n = new Map(prev); n.delete(device.id); return n; });
+    try {
+      await removePushDevice(device.endpoint);
+      if (device.endpoint === currentEndpoint) setCurrentEndpoint(null);
+      await load();
+    } catch (e) {
+      setResults(prev => new Map(prev).set(device.id, {
+        status: 'error',
+        message: e instanceof Error ? e.message : 'Could not turn off notifications on this device.',
+      }));
+    } finally {
+      setRemovingId(null);
+    }
+  }
+
   if (supported === false) return null; // Push column already explains unsupported browsers.
 
   // "This device" counts as registered only if the browser's active subscription
@@ -206,6 +226,7 @@ export default function PushDeviceTester() {
             const isCurrent = !!currentEndpoint && device.endpoint === currentEndpoint;
             const result    = results.get(device.id);
             const busy      = testingId === device.id;
+            const removing  = removingId === device.id;
             return (
               <li key={device.id} className={styles.device}>
                 <div className={styles.deviceTop}>
@@ -218,15 +239,27 @@ export default function PushDeviceTester() {
                       {device.lastUsedAt ? `Last used ${relativeTime(device.lastUsedAt)}` : 'Never used'}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    className={`${styles.testBtn} ${isCurrent ? styles.testBtnPrimary : ''}`}
-                    onClick={() => sendTest(device)}
-                    disabled={busy}
-                  >
-                    <Send size={13} />
-                    {busy ? 'Sending…' : isCurrent ? 'Test this device' : 'Send test'}
-                  </button>
+                  <div className={styles.deviceActions}>
+                    <button
+                      type="button"
+                      className={`${styles.testBtn} ${isCurrent ? styles.testBtnPrimary : ''}`}
+                      onClick={() => sendTest(device)}
+                      disabled={busy || removing}
+                    >
+                      <Send size={13} />
+                      {busy ? 'Sending…' : isCurrent ? 'Test this device' : 'Send test'}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.removeBtn}
+                      onClick={() => turnOff(device)}
+                      disabled={busy || removing}
+                      aria-label={`Turn off notifications on ${device.deviceLabel || 'this device'}`}
+                    >
+                      <PowerOff size={13} />
+                      {removing ? 'Turning off…' : 'Turn off'}
+                    </button>
+                  </div>
                 </div>
 
                 {result && (

@@ -69,7 +69,7 @@ function domainOf(t) {
   if (t.startsWith('league_')) return 'League / house-league';
   if (t.startsWith('basic_coach_')) return 'Coaches / basic-teams';
   if (t.startsWith('stripe_')) return 'Stripe / Billing';
-  if (['notifications', 'notification_preferences', 'tournament_notification_preferences', 'push_subscriptions', 'fan_push_subscriptions', 'platform_email_templates', 'email_batches', 'email_sends'].includes(t))
+  if (['notifications', 'notification_preferences', 'tournament_notification_preferences', 'push_subscriptions', 'fan_push_subscriptions', 'fan_follows', 'platform_email_templates', 'email_batches', 'email_sends'].includes(t))
     return 'Notifications & Push';
   if (t.startsWith('platform_') || t.startsWith('plan_') || ['import_batches', 'import_batch_rows'].includes(t))
     return 'Platform admin';

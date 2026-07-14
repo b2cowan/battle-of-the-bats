@@ -1,19 +1,20 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-07-13 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-07-14 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 119 divergence(s)** across dev/prod.
+**⚠️ 134 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 4 | 0 | — |
-| Columns | 27 | 3 | 24 |
-| Indexes | 21 | 3 | 0 |
-| Constraints | 23 | 9 | — |
-| RLS / CHECK | 4 | 1 | 0 (RLS state) |
+| Tables | 5 | 0 | — |
+| Columns | 34 | 3 | 24 |
+| Indexes | 24 | 3 | 0 |
+| Constraints | 25 | 9 | — |
+| RLS / CHECK | 6 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (4)
+### Only in DEV (5)
+- `fan_follows`
 - `rep_player_awards`
 - `rep_team_award_types`
 - `rep_team_expense_tags`
@@ -23,7 +24,14 @@
 _none_
 
 ## Columns
-### Only in DEV (27)
+### Only in DEV (34)
+- `fan_follows.created_at`
+- `fan_follows.entity_id`
+- `fan_follows.entity_type`
+- `fan_follows.id`
+- `fan_follows.source`
+- `fan_follows.updated_at`
+- `fan_follows.user_id`
 - `rep_player_awards.award_type_id`
 - `rep_player_awards.awarded_at`
 - `rep_player_awards.created_at`
@@ -84,7 +92,10 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (21)
+### Only in DEV (24)
+- `fan_follows_entity_idx`
+- `fan_follows_pkey`
+- `fan_follows_user_entity_unique`
 - `league_practices_recurrence_idx`
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
@@ -116,10 +127,12 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (23)
+### Only in DEV (25)
 - `announcements.announcements_tournament_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
+- `fan_follows.fan_follows_pkey`
+- `fan_follows.fan_follows_user_id_fkey`
 - `games.games_age_group_id_fkey`
 - `games.games_away_team_id_fkey`
 - `games.games_tournament_id_fkey`
@@ -156,7 +169,9 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (4)
+### CHECK only in DEV (6)
+- `fan_follows.fan_follows_entity_type_check`
+- `fan_follows.fan_follows_source_check`
 - `rep_player_awards.rep_player_awards_note_check`
 - `rep_player_awards.rep_player_awards_tournament_label_check`
 - `rep_team_award_types.rep_team_award_types_emoji_check`

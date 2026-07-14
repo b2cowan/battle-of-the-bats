@@ -13,6 +13,7 @@
  * per-event grid (PreferencesTable, behind "Customize") stays the source of truth.
  */
 
+import { NOTIFICATION_EVENT_LABELS } from '@/lib/notification-labels';
 import type { NotificationEventType, NotificationPreference } from '@/lib/types';
 import styles from './PreferencesTable.module.css';
 
@@ -106,6 +107,10 @@ export default function PreferenceGroups({
           state: rollup(group.eventTypes, c.key, prefs, systemDefaultFor),
         }));
         const mixed = states.filter(s => s.state === 'mixed');
+        // Name the actual notifications the group covers (the lead digest keeps its own blurb).
+        const description = group.lead
+          ? group.blurb
+          : group.eventTypes.map(et => NOTIFICATION_EVENT_LABELS[et]).join(', ');
         return (
           <div key={group.label} className={`${styles.group} ${group.lead ? styles.groupLead : ''}`}>
             <div className={styles.groupLabelWrap}>
@@ -113,7 +118,7 @@ export default function PreferenceGroups({
                 {group.label}
                 {!group.lead && <span className={styles.groupCount}>{n} {n === 1 ? 'type' : 'types'}</span>}
               </div>
-              <div className={styles.groupBlurb}>{group.blurb}</div>
+              <div className={styles.groupBlurb}>{description}</div>
             </div>
             {states.map(({ key, label, state }) => (
               <div key={key} className={styles.triCell}>

@@ -485,6 +485,21 @@
     "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
   },
   {
+    "tablename": "fan_follows",
+    "indexname": "fan_follows_entity_idx",
+    "indexdef": "CREATE INDEX fan_follows_entity_idx ON public.fan_follows USING btree (entity_type, entity_id)"
+  },
+  {
+    "tablename": "fan_follows",
+    "indexname": "fan_follows_pkey",
+    "indexdef": "CREATE UNIQUE INDEX fan_follows_pkey ON public.fan_follows USING btree (id)"
+  },
+  {
+    "tablename": "fan_follows",
+    "indexname": "fan_follows_user_entity_unique",
+    "indexdef": "CREATE UNIQUE INDEX fan_follows_user_entity_unique ON public.fan_follows USING btree (user_id, entity_type, entity_id)"
+  },
+  {
     "tablename": "fan_push_subscriptions",
     "indexname": "fan_push_subscriptions_endpoint_idx",
     "indexdef": "CREATE INDEX fan_push_subscriptions_endpoint_idx ON public.fan_push_subscriptions USING btree (endpoint)"

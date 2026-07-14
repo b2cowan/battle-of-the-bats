@@ -250,8 +250,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1px;
-  background: rgba(30,58,138,0.15);
-  border: 1px solid rgba(30,58,138,0.3);
+  /* Seam colour = the 1px gaps between cells show this bg through. Kept strong
+     enough to read as a blueprint-grid hairline against the #111827 cells —
+     at 0.15 the seam composited to ~the same colour as the cells and vanished. */
+  background: rgba(30,58,138,0.55);
+  border: 1px solid rgba(30,58,138,0.55);
 }
 
 /* ── List view ───────────────────────────────────────────────────────── */
@@ -259,8 +262,8 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  background: rgba(30,58,138,0.15);
-  border: 1px solid rgba(30,58,138,0.3);
+  background: rgba(30,58,138,0.55);
+  border: 1px solid rgba(30,58,138,0.55);
 }
 
 /* ── Tournament card (shared base) ──────────────────────────────────── */
@@ -278,7 +281,7 @@
 }
 
 .card:hover {
-  background: rgba(30,58,138,0.08);
+  background: rgba(30,58,138,0.16);
 }
 
 /* Grid card inner layout */

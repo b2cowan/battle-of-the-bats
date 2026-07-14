@@ -207,6 +207,31 @@
 }
 .testBtnPrimary:hover:not(:disabled) { opacity: 0.88; }
 
+.deviceActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.removeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 2px;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  background: transparent;
+  color: rgba(252, 165, 165, 0.9);
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.removeBtn:hover:not(:disabled) { border-color: rgba(248, 113, 113, 0.6); color: #fca5a5; }
+.removeBtn:disabled { opacity: 0.55; cursor: default; }
+
 .result {
   margin-top: 0.55rem;
   display: flex;
@@ -236,5 +261,7 @@
 
 @media (max-width: 560px) {
   .deviceTop { flex-wrap: wrap; }
-  .testBtn { width: 100%; justify-content: center; }
+  .deviceActions { width: 100%; }
+  .testBtn,
+  .removeBtn { flex: 1; justify-content: center; }
 }

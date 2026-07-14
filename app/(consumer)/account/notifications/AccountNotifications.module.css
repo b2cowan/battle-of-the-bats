@@ -9,6 +9,9 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  /* The page body must never scroll sideways on mobile — clip any stray horizontal
+     overflow while the grids/header below are also sized to fit. */
+  overflow-x: hidden;
 }
 
 .header { margin-bottom: 0.25rem; }
@@ -87,7 +90,7 @@
   border: 1px solid rgba(var(--blueprint-blue-rgb, 30, 58, 138), 0.45);
 }
 
-.cardHeaderText { min-width: 0; }
+.cardHeaderText { flex: 1 1 auto; min-width: 0; }
 
 .cardName {
   font-weight: 700;
@@ -97,6 +100,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .cardKind {

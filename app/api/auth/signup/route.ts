@@ -83,7 +83,7 @@ export const POST = withObservability(async (req: Request) => {
   let orgId: string | null = null;
 
   try {
-    const { email, password, orgName, orgSlug, firstName, lastName } = await req.json();
+    const { email, password, orgName, orgSlug, firstName, lastName, next } = await req.json();
 
     // Account-only mode (signup/org decoupling): when the orgName KEY is omitted entirely,
     // this creates the auth user WITHOUT an org or membership. The decoupled invited-user
@@ -99,6 +99,14 @@ export const POST = withObservability(async (req: Request) => {
     if (orgNameProvided && !(typeof orgName === 'string' && orgName.trim())) {
       return NextResponse.json({ error: 'Enter an organization name.' }, { status: 400 });
     }
+
+    // Account-only (fan) signups can pass a return path — e.g. the Follows feed or the
+    // tournament page they were on — instead of the org-oriented /home. Allowlist to internal
+    // relative paths only (leading single slash) so this can never become an open redirect.
+    const safeNext =
+      accountOnly && typeof next === 'string' && next.startsWith('/') && !next.startsWith('//')
+        ? next
+        : '/home';
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
@@ -176,7 +184,7 @@ export const POST = withObservability(async (req: Request) => {
           password: normalizedPassword,
           options: {
             data: userMetadata,
-            redirectTo: `${origin}/auth/callback?next=${encodeURIComponent('/home')}`,
+            redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
           },
         });
 
@@ -219,7 +227,7 @@ export const POST = withObservability(async (req: Request) => {
       }
 
       userId = authData.user.id;
-      return NextResponse.json({ success: true, requiresEmailVerification: false, accountOnly: true });
+      return NextResponse.json({ success: true, requiresEmailVerification: false, accountOnly: true, next: safeNext });
     }
 
     // ── Sign-up Invite Guard (owner branch) ───────────────────────────────────────

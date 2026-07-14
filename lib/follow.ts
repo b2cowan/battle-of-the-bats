@@ -82,6 +82,30 @@ export function readFollowedTeamId(orgSlug: string, tournamentSlug: string): str
   return readFollowedTeam(orgSlug, tournamentSlug)?.id ?? null;
 }
 
+/**
+ * Fire-and-forget: mirror a follow/unfollow onto the signed-in account (fan_follows) so
+ * it travels across devices (unified-app Phase 2). The device localStorage write above is
+ * the source of truth and always happens first; this is purely additive and never blocks.
+ * The server no-ops (returns { linked: false }) for anonymous callers, so this is safe to
+ * call unconditionally — the account link only happens when there IS an account.
+ */
+function syncFollowToAccount(
+  action: 'follow' | 'unfollow',
+  params: { teamId: string; orgSlug: string; tournamentSlug: string },
+): void {
+  if (typeof window === 'undefined') return;
+  try {
+    void fetch('/api/consumer/follows', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ...params }),
+      keepalive: true,
+    }).catch(() => { /* device follow already saved; account sync is best-effort */ });
+  } catch {
+    /* ignore */
+  }
+}
+
 export function saveFollowedTeam(
   orgSlug: string,
   tournamentSlug: string,
@@ -94,12 +118,16 @@ export function saveFollowedTeam(
   );
   // Notify same-tab listeners (the native `storage` event only fires cross-tab).
   window.dispatchEvent(new CustomEvent('fl-follow-change'));
+  syncFollowToAccount('follow', { teamId: team.id, orgSlug, tournamentSlug });
 }
 
 export function clearFollowedTeam(orgSlug: string, tournamentSlug: string): void {
   if (typeof window === 'undefined') return;
+  // Read the team id before removing so we can mirror the unfollow to the account.
+  const prev = readFollowedTeam(orgSlug, tournamentSlug);
   window.localStorage.removeItem(followKey(orgSlug, tournamentSlug));
   window.dispatchEvent(new CustomEvent('fl-follow-change'));
+  if (prev?.id) syncFollowToAccount('unfollow', { teamId: prev.id, orgSlug, tournamentSlug });
 }
 
 /**

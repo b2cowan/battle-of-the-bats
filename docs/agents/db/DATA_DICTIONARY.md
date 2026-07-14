@@ -4809,10 +4809,10 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 **Purpose:** the in-app notification bell store — one row per (recipient, event) when the bell channel is enabled. Written **exclusively** by `notify()` ([lib/notify.ts:197](../../../lib/notify.ts#L197), service-role INSERT); read/mapped by [app/api/notifications/route.ts](../../../app/api/notifications/route.ts) (GET list + unread count) into `AppNotification` ([lib/types.ts:1391](../../../lib/types.ts#L1391)); rendered by [NotificationPanel.tsx](../../../components/notifications/NotificationPanel.tsx) + the badge in [NotificationBell.tsx](../../../components/notifications/NotificationBell.tsx).
 
 **Gotchas (read first):**
-1. **The 2 RLS policies are vestigial for the bell.** GET (count + list) and POST (mark-read / mark-all-read) all go through `supabaseAdmin` ([route.ts:41](../../../app/api/notifications/route.ts#L41)), so `own notifications select/update` are never evaluated; ownership is enforced in code by `.eq('user_id', user.id)`. Only the `NotificationBell` Realtime INSERT subscription (filtered `user_id=eq.<self>`, [NotificationBell.tsx:59](../../../components/notifications/NotificationBell.tsx#L59)) may rely on the SELECT policy for server-side broadcast filtering.
+1. **The SELECT policy is load-bearing for the live badge (mig 184); UPDATE policy is vestigial.** GET (count + list) and POST (mark-read / mark-all-read) go through `supabaseAdmin` ([route.ts:41](../../../app/api/notifications/route.ts#L41)), so `own notifications update` is never evaluated (ownership enforced in code by `.eq('user_id', user.id)`). But **`notifications` is in the `supabase_realtime` publication as of mig 187** — the `NotificationBell` INSERT subscription (filtered `user_id=eq.<self>`, [NotificationBell.tsx:59](../../../components/notifications/NotificationBell.tsx#L59)) authorizes against `own notifications select` (auth.uid() = user_id), so each browser receives ONLY its own inserts and the unread badge bumps live. **Before mig 187 the table was never published**, so the subscription silently received nothing and the badge only updated on page load — the platform's second RLS-enabled realtime table (after `chat_messages`). Default replica identity is sufficient: the bell listens to INSERT only, whose payload always carries the full new row (no REPLICA IDENTITY FULL, unlike the games/chat UPDATE cases).
 2. **Mark-read is a POST with an `action` body — there is NO PATCH verb** ([route.ts:76](../../../app/api/notifications/route.ts#L76); actions `mark-read` / `mark-all-read`). `read_at` is set to the request-time ISO string ([:93](../../../app/api/notifications/route.ts#L93)); unread = `read_at IS NULL`.
 3. **The unread badge is a separate `head:true` count query** ([route.ts:41](../../../app/api/notifications/route.ts#L41)), independent of the list — the badge stays accurate even when the bell fetches only 1 row.
-4. **`event_type` is a name-collision + has 5 dead values** (see the column). **`metadata` is effectively dead** — `notify()` writes `opts.metadata ?? {}` but no call site passes one, and no UI reads it.
+4. **`event_type` is a name-collision + has 5 dead values** (see the column). **`metadata` is no longer dead** — the `coach_insights_digest` weekly digest writes `{ teamId }` and the sweep queries it (jsonb `.contains`) for its no-migration 6-day dedupe ([lib/insights-digest.ts](../../../lib/insights-digest.ts)); still unread by any UI.
 5. **`link` navigation is a hard reload** — `NotificationPanel` assigns `window.location.href = notification.link` ([:82](../../../components/notifications/NotificationPanel.tsx#L82)), not the Next router; links are relative app paths.
 
 **Fields** (boilerplate `id` + `created_at` omitted — `created_at` is DB-default `now()`, the newest-first sort + relative-time label; no `updated_at` column):
@@ -4971,6 +4971,35 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 
 <!-- dict:col:fan_push_subscriptions.last_used_at -->
 **`last_used_at`** (tstz, nullable) — stamped on subscribe + refreshed after each successful fan send ([lib/fan-notify.ts:89](../../../lib/fan-notify.ts#L89)); code-maintained. **Write-only** — no reader, no sweep.
+
+### `fan_follows`
+<!-- dict:table:fan_follows -->
+
+**Purpose:** the signed-in **account** follow list (unified-app Phase 2, mig 186) — one row per (user, entity) a fan follows, so a follow travels across every device. **A row IS the authorization** for "is this user following X" (presence = the gate; mirrors `basic_coach_team_users`). Written/read via `supabaseAdmin` in [lib/fan-follows.ts](../../../lib/fan-follows.ts); synced from the follow button ([POST /api/consumer/follows](../../../app/api/consumer/follows/route.ts)) and claimed from device localStorage ([POST /api/consumer/follows/claim](../../../app/api/consumer/follows/claim/route.ts)). Surfaced on the Follows feed (`/following`) and as a `fan` access context ([lib/user-contexts.ts](../../../lib/user-contexts.ts)). **EMPTY in dev AND prod** (new). Distinct from `fan_push_subscriptions` (anonymous, endpoint-keyed, no `user_id`) and `lib/follow.ts` (device localStorage) — all three coexist deliberately.
+
+**Gotchas (read first):**
+1. **Service-role only** — RLS enabled with ZERO policies; `supabaseAdmin` bypasses, anon/authenticated resolve to 0 rows. Never expose to the anon client (a follow list is per-user PII). Verify RLS live, not from the migration comment.
+2. **Polymorphic `(entity_type, entity_id)` — no FK.** Postgres can't express a polymorphic FK, so integrity is enforced app-side (`teamBelongsToTournament` validates before insert). Slice 1 only writes `entity_type='team'`.
+3. **NOT an org membership** — follows cross organizations freely (no single-org constraint, no `organization_members` involvement). Do not reuse org-membership status semantics here.
+4. **Idempotent** — `UNIQUE(user_id, entity_type, entity_id)`; follows upsert (ignore-duplicates), so a re-follow is a no-op.
+5. **`device_reconcile` rows come only from an EXPLICIT claim** (the "add your device follows?" offer), never silently on login — the shared-device safeguard.
+
+**Fields** (boilerplate `id` + `created_at` omitted — DB-default-only):
+
+<!-- dict:col:fan_follows.user_id -->
+**`user_id`** (uuid, NN; FK→`auth.users(id)` ON DELETE CASCADE) — the account that holds the follow; every read filters on it.
+
+<!-- dict:col:fan_follows.entity_type -->
+**`entity_type`** (text, NN; CHECK in `tournament|team|org`) — what is followed. Slice 1 writes only `team`.
+
+<!-- dict:col:fan_follows.entity_id -->
+**`entity_id`** (uuid, NN) — the followed row id (`teams.id` when `entity_type='team'`). No FK (polymorphic); validated in `lib/fan-follows.ts`.
+
+<!-- dict:col:fan_follows.source -->
+**`source`** (text, NN, DEFAULT 'manual'; CHECK in `manual|directory|qr|device_reconcile|registration`) — how the follow was created. `manual` = a signed-in follow tap; `device_reconcile` = claimed from device localStorage.
+
+<!-- dict:col:fan_follows.updated_at -->
+**`updated_at`** (tstz, NN, DEFAULT now()) — bumped on upsert; code-maintained.
 
 ## Email (Resend)
 

@@ -121,7 +121,7 @@ export async function getDirectoryListings(params: DirectoryParams): Promise<Dir
   // ── Hard-filtered fetch (SQL): opted-in + public + not-canceled, plus sport/province/date-range. ──
   let query = supabaseAdmin
     .from('tournaments')
-    .select('id, name, slug, sport, status, start_date, end_date, directory_province, org_id')
+    .select('id, name, slug, sport, status, start_date, end_date, directory_province, org_id, logo_url')
     .eq('list_in_directory', true)
     .in('status', ['active', 'completed']);
   if (canceledIds.length) query = query.not('org_id', 'in', `(${canceledIds.join(',')})`);
@@ -167,7 +167,10 @@ export async function getDirectoryListings(params: DirectoryParams): Promise<Dir
         tournamentSlug: r.slug as string,
         orgName: org.name as string,
         orgSlug: org.slug as string,
-        logoUrl: (org.logo_url ?? null) as string | null,
+        // Prefer the tournament's own event logo (matches the rest of the app, where
+        // tournaments.logo_url overrides the org logo); fall back to the org logo, then
+        // the client renders a lettered monogram when both are null.
+        logoUrl: ((r.logo_url ?? org.logo_url) ?? null) as string | null,
         sport: getSportPack(r.sport).id,
         sportLabel: getSportPack(r.sport).label,
         startDate: r.start_date as string | null,

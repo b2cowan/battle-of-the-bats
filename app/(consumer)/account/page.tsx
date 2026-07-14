@@ -41,7 +41,8 @@ export default async function AccountPage() {
       <div className={styles.accountActions}>
         {signedIn ? (
           <>
-            <Link href="/home" className={`${styles.cta} ${styles.blockBtn}`}>Open your workspaces →</Link>
+            <Link href="/following" className={`${styles.cta} ${styles.blockBtn}`}>Your followed teams →</Link>
+            <Link href="/home" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Open your workspaces</Link>
             <Link href="/discover" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Browse tournaments</Link>
           </>
         ) : (
@@ -54,8 +55,8 @@ export default async function AccountPage() {
 
       {/* Quiet organizer note, pinned to the bottom of the viewport. */}
       <p className={`${styles.note} ${styles.pinBottom}`}>
-        You don&rsquo;t need an account to follow teams and get live scores — following works on this
-        device right away. An account is for organizers, coaches, and staff who run events.{' '}
+        Following works on this device without an account — sign in to keep your teams on every
+        device you use. Organizing an event?{' '}
         <Link href="/start" className={styles.noteLink}>Run a tournament →</Link>
       </p>
     </div>
