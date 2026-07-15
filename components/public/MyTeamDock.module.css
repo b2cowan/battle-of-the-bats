@@ -70,10 +70,17 @@
   display: flex;
   align-items: center;
   gap: 0.3rem;
+  min-width: 0;
   font-family: var(--font-data);
   font-size: 0.82rem;
   font-weight: 900;
   color: var(--white);
+}
+
+/* Ellipsis lives on a nested text span — text-overflow is inert on a
+   multi-child flex container, so the name used to hard-clip mid-word. */
+.dockNameText {
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -106,7 +113,7 @@
   border: 1px solid rgba(var(--danger-rgb), 0.5);
   border-radius: 2px;
   background: rgba(var(--danger-rgb), 0.15);
-  color: var(--danger);
+  color: var(--danger-strong);
   font-family: var(--font-data);
   font-size: 0.5rem;
   font-weight: 900;

@@ -68,6 +68,15 @@
   --info:        #3B82F6;
   --info-rgb:    59, 130, 246;
 
+  /* Status colours as TEXT/GLYPH (the --gold-strong precedent): identical to
+     the base token on dark; deepened on light (see the [data-color-mode="light"]
+     override beside --gold-strong) so small status text/icons clear ~4.5:1 on
+     white. Fills/tints/borders keep the base tokens + -rgb pairs. */
+  --success-strong: var(--success);
+  --warning-strong: var(--warning);
+  --danger-strong:  var(--danger);
+  --info-strong:    var(--info);
+
   --radius-sm:   6px;
   --radius:      12px;
   --radius-xs:   4px;
@@ -118,6 +127,12 @@
   --admin-control-h:  28px;
   --admin-tap-min:    44px;
 
+  /* Public touch floor — minimum hit-area for interactive elements on fan-facing
+     pages (mirrors --admin-tap-min). Consume it from public module classes only;
+     NEVER attach it to the bare global .btn-sm/.form-select, which the admin
+     shell's compact-density system shares. */
+  --tap-min: 44px;
+
   /* Opacity-alpha text tokens used by some component CSS */
 }
 
@@ -129,65 +144,19 @@
 }
 
 /* ─── Light Mode Token Overrides ────────────────────────────────────────────── */
+/* ONE authority for light-mode base tokens: buildPublicLightModeCssVars()
+   (lib/public-tournament-theme.ts), injected at :root by the public/preview
+   layouts. This block must NEVER re-declare a token the builder also sets —
+   because it matches the wrapper/nav elements directly, its values would win
+   over the :root injection and silently shadow the builder (that's exactly how
+   the boosted muted-text tokens regressed to ~2.6:1). Only alias/derived
+   tokens the builder does not know about may live here. */
 [data-color-mode="light"] {
-  --bg:          #F5F7FC;
-  --bg-2:        #EEF1F8;
-  --bg-3:        #E5E9F2;
-  --surface:     #FFFFFF;
-  --surface-2:   #F0F3FA;
-  --bg-surface:  var(--surface);
   --bg-raised:   #FFFFFF;
-  --bracket-card: #FFFFFF;
   --bg-inset:    rgba(15, 17, 35, 0.04);
-  --bg-card:     var(--bg-surface);
-
-  --white:       #0F1123;
-  --white-90:    rgba(15, 17, 35, 0.9);
-  --white-85:    rgba(15, 17, 35, 0.85);
-  --white-80:    rgba(15, 17, 35, 0.8);
-  --white-75:    rgba(15, 17, 35, 0.75);
-  --white-70:    rgba(15, 17, 35, 0.7);
-  --white-65:    rgba(15, 17, 35, 0.65);
-  --white-60:    rgba(15, 17, 35, 0.6);
-  --white-55:    rgba(15, 17, 35, 0.55);
-  --white-50:    rgba(15, 17, 35, 0.5);
-  --white-45:    rgba(15, 17, 35, 0.45);
-  --white-40:    rgba(15, 17, 35, 0.4);
-  --white-35:    rgba(15, 17, 35, 0.35);
-  --white-30:    rgba(15, 17, 35, 0.3);
-  --white-20:    rgba(15, 17, 35, 0.2);
-  --white-10:    rgba(15, 17, 35, 0.07);
-  --white-8:     rgba(15, 17, 35, 0.06);
-  --white-5:     rgba(15, 17, 35, 0.04);
-  --white-05:    var(--white-5);
-  --white-03:    rgba(15, 17, 35, 0.025);
-
-  --black-10:    rgba(15, 17, 35, 0.03);
-  --black-20:    rgba(15, 17, 35, 0.04);
-  --black-30:    rgba(15, 17, 35, 0.06);
-  --black-40:    rgba(15, 17, 35, 0.08);
-
-  --border-2:    rgba(15, 17, 35, 0.1);
-  --border-subtle: var(--border-2);
-
-  --text-primary:   var(--white);
-  --text-secondary: var(--white-60);
-  --text-tertiary:  var(--white-40);
-
-  --shadow-sm:   0 2px 8px rgba(0,0,0,0.1);
-  --shadow:      0 4px 24px rgba(0,0,0,0.12);
-  --shadow-lg:   0 8px 48px rgba(0,0,0,0.16);
 
   /* Light-mode card highlight reads as a faint dark hairline, not a white glow */
   --highlight-top: inset 0 1px 0 rgba(15, 17, 35, 0.04);
-
-  --fl-text:     #0F1123;
-  --data-gray:   #4B5563;
-  --hud-surface: #FFFFFF;
-
-  /* Nav backgrounds */
-  --nav-bg-scrolled: rgba(245, 247, 252, 0.95);
-  --nav-mobile-bg:   rgba(245, 247, 252, 0.99);
 }
 
 /* Light-mode: public site wrapper text + background */
@@ -358,6 +327,12 @@ body:has([data-chat-fullbleed]) {
    --gold / --gold-rgb (fills, borders, tints) are unchanged — only the TEXT/GLYPH value. */
 [data-color-mode="light"] {
   --gold-strong: #856611;
+  /* Status TEXT/GLYPH values deepened for light surfaces (~4.5:1+ on white);
+     base --success/--warning/--danger/--info (fills/tints/borders) unchanged. */
+  --success-strong: #15803D;
+  --warning-strong: #A16207;
+  --danger-strong:  #B91C1C;
+  --info-strong:    #1D4ED8;
 }
 
 /* ─── FieldLogic HUD Utilities ──────────────────────────────────────────────── */
@@ -688,7 +663,10 @@ h1, h2, h3, h4, h5, h6 {
    light surfaces need the darker primary for readable buttons, badges, and links. */
 [data-color-mode] .btn-primary {
   background: var(--primary);
-  color: #FFFFFF;
+  /* The theme system already computes a readable on-primary text colour per org
+     (white vs near-black by luminance, lib/themes.ts) — consume it, never
+     hardcode white, or pale org primaries ship white-on-pale buttons. */
+  color: var(--on-primary);
   box-shadow: 0 10px 24px rgba(var(--primary-rgb), 0.22);
 }
 

@@ -182,7 +182,7 @@
 }
 
 .championMeta strong {
-  color: var(--success);
+  color: var(--success-strong);
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
 }
@@ -275,8 +275,8 @@
 }
 
 .rankRd    { color: var(--white-50); }
-.rankRdPos { color: var(--success); }
-.rankRdNeg { color: var(--danger); }
+.rankRdPos { color: var(--success-strong); }
+.rankRdNeg { color: var(--danger-strong); }
 
 /* ── Footer actions ───────────────────────────────────────────────────────── */
 .footerActions {

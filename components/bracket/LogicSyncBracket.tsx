@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Trophy, Minus, Plus, Maximize } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
 import { formatPoolName, formatTime } from '@/lib/utils';
+import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import type { Game, PublicTeam, Venue } from '@/lib/types';
 import type { BracketNode } from '@/lib/types/bracket';
 import { resolveGameFieldLabel } from '@/lib/venue-label';
@@ -103,7 +104,10 @@ function makeNode(game: Game, round: number, position: number, teams: PublicTeam
     awayScore: as,
     winnerId,
     bracketCode: game.bracketCode ?? '',
-    isLive: false,
+    // Never LIVE while either slot is an unresolved Winner/Loser ref — a later
+    // round's window can open before its feeders finish (same guard as winnerId).
+    isLive: isReal(game.homeTeamId) && isReal(game.awayTeamId) &&
+      isGameLive(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES),
     date: game.date ?? '',
     time: game.time ?? '',
     status: (game.status ?? 'scheduled') as BracketNode['status'],
@@ -141,6 +145,10 @@ function TrophyIcon({ x, y, size = 12, color = 'var(--primary-light)' }: {
   );
 }
 
+/** Char-count clip for SVG text (no canvas to measure) — '…' marks the cut. */
+const truncName = (name: string, max: number) =>
+  name.length > max ? `${name.slice(0, max - 1).trimEnd()}…` : name;
+
 // ── SVG sub-components — use org CSS variables, not FieldLogic tokens ────────
 
 function MatchNode({
@@ -167,15 +175,18 @@ function MatchNode({
     : '';
   const timeText = node.time ? formatTime(node.time) : '';
 
-  // status badge
+  // status badge — a game in its live window says LIVE (danger, pulsing dot,
+  // matching the ticker's chip language), never amber "Pending".
   const statusLabel =
-    node.status === 'completed' ? 'Final'
+    node.isLive ? 'LIVE'
+    : node.status === 'completed' ? 'Final'
     : node.status === 'submitted' ? (requireFinalization ? 'Pending' : 'Final')
     : node.status === 'cancelled' ? 'Cancelled'
     : null;
   const statusColor =
-    statusLabel === 'Final'     ? 'var(--success)'
-    : statusLabel === 'Pending'   ? 'var(--warning)'
+    statusLabel === 'LIVE'      ? 'var(--danger-strong)'
+    : statusLabel === 'Final'     ? 'var(--success-strong)'
+    : statusLabel === 'Pending'   ? 'var(--warning-strong)'
     : statusLabel === 'Cancelled' ? 'var(--white-35)'
     : null;
 
@@ -186,9 +197,10 @@ function MatchNode({
   const metaText = [dateText, timeText, (fieldText && !statusLabel) ? fieldText : '']
     .filter(Boolean).join(' · ');
 
-  // team name truncation (shorter when trophy icon precedes)
-  const homeName = (node.homeTeam?.name ?? 'TBD').slice(0, isHomeWin ? 17 : 20);
-  const awayName = (node.awayTeam?.name ?? 'TBD').slice(0, isAwayWin ? 17 : 20);
+  // team name truncation (shorter when trophy icon precedes) — an ellipsis marks
+  // the cut so a clipped name never reads as the full name.
+  const homeName = truncName(node.homeTeam?.name ?? 'TBD', isHomeWin ? 17 : 20);
+  const awayName = truncName(node.awayTeam?.name ?? 'TBD', isAwayWin ? 17 : 20);
   const TROPHY_W = 14; // horizontal space reserved for the trophy icon
 
   // Followed-team spotlight is PURELY additive: every game renders at full
@@ -230,10 +242,16 @@ function MatchNode({
       )}
       {/* meta: status badge */}
       {statusLabel && (
-        <text x={NODE_WIDTH - 9} y={META_H - 4} fontSize="8.5" fontWeight="700" textAnchor="end"
-          style={{ fill: statusColor ?? undefined, fontFamily: 'var(--font-sans)' }}>
-          {statusLabel}
-        </text>
+        <>
+          {statusLabel === 'LIVE' && (
+            <circle className={styles.liveDot} cx={NODE_WIDTH - 36} cy={META_H - 7} r={2.5}
+              style={{ fill: 'var(--danger)' }} />
+          )}
+          <text x={NODE_WIDTH - 9} y={META_H - 4} fontSize="8.5" fontWeight="700" textAnchor="end"
+            style={{ fill: statusColor ?? undefined, fontFamily: 'var(--font-sans)' }}>
+            {statusLabel}
+          </text>
+        </>
       )}
 
       {/* meta separator */}
@@ -484,7 +502,6 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
   // render, so calling it at component body level and including it in useEffect deps causes
   // infinite re-subscription loops. useRef ensures one instance per component mount.
   const supabase   = useRef(createClient()).current;
-  const liveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const [columns, setColumns] = useState<{ title: string; games: Game[] }[]>([]);
   const [nodes, setNodes]     = useState<BracketNode[]>([]);
@@ -512,7 +529,9 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
     const naturalW = s.getBoundingClientRect().width / (zoomRef.current || 1);
     const avail = c.clientWidth - 8;
     if (naturalW <= 4 || avail <= 0) return null;
-    return Math.max(0.4, Math.min(1, avail / naturalW));
+    // First-paint floor stays legible (~0.55 keeps names ≥ ~9px); the manual
+    // Zoom Out button can still step down to 0.4 (stepZoom's own floor).
+    return Math.max(0.55, Math.min(1, avail / naturalW));
   };
   const stepZoom = (dir: 1 | -1) => setZoom(z => {
     const steps = [0.4, 0.5, 0.65, 0.8, 1, 1.25, 1.5];
@@ -616,24 +635,31 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
           setNodes(prev =>
             prev.map(n =>
               n.id === g.id
-                ? { ...n, homeScore: hs, awayScore: as, winnerId, isLive: true, status: g.status as BracketNode['status'] }
+                ? {
+                    ...n,
+                    homeScore: hs,
+                    awayScore: as,
+                    winnerId,
+                    // isLive is a real time-window signal now (not the old 5s
+                    // flash): recompute from the node's schedule + fresh status
+                    // so a mid-game score update never strands the card on
+                    // "Pending", and an unresolved slot never dresses as LIVE.
+                    // (Duration default only — the poll-driven rebuild restores
+                    // any per-game override within a cycle.)
+                    isLive:
+                      isReal(g.home_team_id) && isReal(g.away_team_id) &&
+                      isGameLive({ status: g.status, date: n.date, time: n.time }, DEFAULT_GAME_DURATION_MINUTES),
+                    status: g.status as BracketNode['status'],
+                  }
                 : n
             )
           );
-
-          if (liveTimers.current[g.id]) clearTimeout(liveTimers.current[g.id]);
-          liveTimers.current[g.id] = setTimeout(() => {
-            setNodes(prev => prev.map(n => n.id === g.id ? { ...n, isLive: false } : n));
-            delete liveTimers.current[g.id];
-          }, 5000);
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
-      Object.values(liveTimers.current).forEach(clearTimeout);
-      liveTimers.current = {};
     };
   }, [tournamentId]); // supabase is stable via useRef — intentionally omitted from deps
 
@@ -794,10 +820,10 @@ export function LogicSyncBracket({ games, teams, tournamentId, highlightTeamId, 
     <div className="py-4" ref={zoomContainerRef}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 2, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm, 6px)', padding: 2 }}>
-          <button type="button" onClick={() => stepZoom(-1)} aria-label="Zoom out" title="Zoom out" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 26, background: 'transparent', border: 'none', color: 'var(--white-60)', borderRadius: 4, cursor: 'pointer' }}><Minus size={15} /></button>
-          <button type="button" onClick={() => setZoom(1)} title="Reset to 100%" style={{ minWidth: 46, textAlign: 'center', background: 'transparent', border: 'none', color: 'var(--white-80)', fontFamily: 'var(--font-data)', fontSize: '0.72rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums', cursor: 'pointer' }}>{Math.round(zoom * 100)}%</button>
-          <button type="button" onClick={() => stepZoom(1)} aria-label="Zoom in" title="Zoom in" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 26, background: 'transparent', border: 'none', color: 'var(--white-60)', borderRadius: 4, cursor: 'pointer' }}><Plus size={15} /></button>
-          <button type="button" onClick={() => { const f = computeFitZoom(); if (f != null) setZoom(f); }} aria-label="Fit bracket" title="Fit bracket" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 26, background: 'transparent', border: 'none', color: 'var(--white-60)', borderRadius: 4, cursor: 'pointer' }}><Maximize size={15} /></button>
+          <button type="button" onClick={() => stepZoom(-1)} aria-label="Zoom out" title="Zoom out" className={styles.zoomBtn}><Minus size={15} /></button>
+          <button type="button" onClick={() => setZoom(1)} title="Reset to 100%" className={styles.zoomReset}>{Math.round(zoom * 100)}%</button>
+          <button type="button" onClick={() => stepZoom(1)} aria-label="Zoom in" title="Zoom in" className={styles.zoomBtn}><Plus size={15} /></button>
+          <button type="button" onClick={() => { const f = computeFitZoom(); if (f != null) setZoom(f); }} aria-label="Fit bracket" title="Fit bracket" className={styles.zoomBtn}><Maximize size={15} /></button>
         </div>
       </div>
       {championName && (

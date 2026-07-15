@@ -47,3 +47,11 @@
   background: rgba(var(--logic-lime-rgb), 0.85);
   border-color: rgba(var(--logic-lime-rgb), 0.85);
 }
+
+/* Touch floor on mobile — the compact look stays, the hit area grows (this was
+   the sub-44 blocker noted on the pill variant in the mobile-polish review). */
+@media (max-width: 640px) {
+  .pill {
+    min-height: var(--tap-min, 44px);
+  }
+}

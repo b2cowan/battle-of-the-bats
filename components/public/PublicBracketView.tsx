@@ -3,8 +3,11 @@ import { Trophy } from 'lucide-react';
 import { Game, PublicTeam } from '@/lib/types';
 import { teamInitials, teamColorFromName } from '@/lib/teamBadge';
 import { formatTime } from '@/lib/utils';
+import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { bracketRoundInfo, computeBracketColumns } from '@/lib/playoff-bracket';
 import styles from '@/app/[orgSlug]/standings/standings.module.css';
+// Canonical soft LIVE chip — same classes the schedule + game-detail pages use.
+import liveStyles from '@/app/[orgSlug]/schedule/schedule.module.css';
 
 interface Props {
   games: Game[];
@@ -44,6 +47,10 @@ function teamName(teams: PublicTeam[], id?: string | null): string {
   return teams.find(t => t.id === id)?.name ?? 'TBD';
 }
 
+// Unassigned-slot sentinel — same convention as ScheduleContent/game-detail.
+const NIL_UUID = '00000000-0000-0000-0000-000000000000';
+const isRealTeam = (id?: string | null) => !!id && id !== NIL_UUID;
+
 function getOutcome(g: Game): 'home' | 'away' | 'tie' | null {
   if (g.homeScore == null || g.awayScore == null) return null;
   if (g.homeScore > g.awayScore) return 'home';
@@ -51,7 +58,10 @@ function getOutcome(g: Game): 'home' | 'away' | 'tie' | null {
   return 'tie';
 }
 
-function statusLabel(g: Game, requireFinalization: boolean) {
+function statusLabel(g: Game, requireFinalization: boolean, isLive: boolean) {
+  // A game in its live window is LIVE — never amber "Pending" beside a red
+  // LIVE ticker on the same screen (isGameLive is already false once completed).
+  if (isLive) return 'Live';
   if (g.status === 'completed') return 'Final';
   if (g.status === 'submitted') return requireFinalization ? 'Pending' : 'Final';
   return null;
@@ -72,7 +82,11 @@ function MatchupCard({
 }) {
   const outcome = getOutcome(game);
   const scored = outcome !== null;
-  const label = statusLabel(game, requireFinalization);
+  // Never LIVE while either slot is an unresolved bracket ref — a later round's
+  // window can open before its feeders finish (same guard as the ticker/bracket).
+  const isLive = isRealTeam(game.homeTeamId) && isRealTeam(game.awayTeamId) &&
+    isGameLive(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES);
+  const label = statusLabel(game, requireFinalization, isLive);
 
   const homeName = game.homeTeamId ? teamName(teams, game.homeTeamId) : (game.homePlaceholder ?? 'TBD');
   const awayName = game.awayTeamId ? teamName(teams, game.awayTeamId) : (game.awayPlaceholder ?? 'TBD');
@@ -86,7 +100,11 @@ function MatchupCard({
     <div className={`${styles.bracketMatchup} ${compact ? styles.bracketMatchupCompact : ''}`}>
       {label && (
         <div className={styles.bracketMatchupStatus}>
-          <span className={`badge ${label === 'Final' ? 'badge-success' : 'badge-warning'}`}>{label}</span>
+          {label === 'Live' ? (
+            <span className={liveStyles.liveBadge}><span className={liveStyles.liveDot} />LIVE</span>
+          ) : (
+            <span className={`badge ${label === 'Final' ? 'badge-success' : 'badge-warning'}`}>{label}</span>
+          )}
           {game.date && <span className={styles.bracketMatchupDate}>{game.date.slice(5).replace('-', '/')}</span>}
           {game.time && <span className={styles.bracketMatchupDate}>{formatTime(game.time)}</span>}
         </div>

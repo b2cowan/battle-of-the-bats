@@ -15,8 +15,9 @@
  * The installed app's name/icon/start_url come from the unified /manifest.json —
  * this component only renders the prompt.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Download } from 'lucide-react';
+import { followKey, useFollowedTeam } from '@/lib/follow';
 import styles from './InstallAppPrompt.module.css';
 
 const DISMISS_MS = 90 * 24 * 60 * 60 * 1000;
@@ -80,6 +81,10 @@ export default function InstallAppPrompt({
 }: Props) {
   const [mode, setMode] = useState<Mode>('hidden');
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
+  // True while the visible banner came from the explicit "Download app" trigger —
+  // that ask bypasses the follow-suppression gates, so the follow-hide below
+  // must not yank it either.
+  const manualShowRef = useRef(false);
 
   // Always capture the native install event — independent of dismissal/standalone —
   // so a manual "Download app" tap (see the flhq:show-install listener below) can fire
@@ -123,9 +128,9 @@ export default function InstallAppPrompt({
     // If the user follows a team for this tournament, suppress the banner entirely.
     // The My-Team dock takes priority on game day (J6-045), and an engaged follower
     // doesn't need an install nudge on this visit.
-    const followKey =
-      orgSlug && tournamentSlug ? `fl_follow_team_${orgSlug}_${tournamentSlug}` : null;
-    if (followKey && localStorage.getItem(followKey)) return;
+    const followStorageKey =
+      orgSlug && tournamentSlug ? followKey(orgSlug, tournamentSlug) : null;
+    if (followStorageKey && localStorage.getItem(followStorageKey)) return;
 
     // iOS has no install API — show manual Add-to-Home-Screen instructions.
     if (/iPhone|iPad|iPod/i.test(ua)) {
@@ -134,9 +139,9 @@ export default function InstallAppPrompt({
       // dock/content show first (J6-005), and re-check the follow key at fire time so a
       // follow made mid-session still suppresses it (J6-045). Other shells
       // (member/admin/signup) keep the immediate prompt — no behaviour change there.
-      if (followKey) {
+      if (followStorageKey) {
         const timer = window.setTimeout(() => {
-          if (localStorage.getItem(followKey)) return;
+          if (localStorage.getItem(followStorageKey)) return;
           setMode(iosMode);
         }, ENGAGE_DELAY_MS);
         return () => window.clearTimeout(timer);
@@ -159,6 +164,17 @@ export default function InstallAppPrompt({
     if (deferred) setMode('android');
   }, [mode, deferred, dismissKey, orgSlug, tournamentSlug]);
 
+  // A follow made mid-session hides an already-visible auto banner — the My-Team
+  // dock takes over as the engaged-fan surface (J6-045). The auto-show gate above
+  // is one-shot, so it never re-evaluates the follow key; the shared hook covers
+  // same-tab (fl-follow-change) AND cross-tab (storage) changes. Effect fires only
+  // when the followed team CHANGES, so a manual "Download app" trigger made while
+  // already following stays visible (the explicit ask keeps its bypass).
+  const { followedTeamId } = useFollowedTeam(orgSlug ?? '', tournamentSlug ?? '');
+  useEffect(() => {
+    if (followedTeamId && !manualShowRef.current) setMode('hidden');
+  }, [followedTeamId]);
+
   // Manual trigger (e.g. the admin "More → Download app" item). Force-shows the prompt,
   // bypassing the dismissal/follow/engagement gates since the user explicitly asked for
   // it. Standalone is still respected — there's nothing to install inside the app.
@@ -166,6 +182,7 @@ export default function InstallAppPrompt({
     function onShow() {
       if ((window.navigator as { standalone?: boolean }).standalone === true) return;
       if (window.matchMedia?.('(display-mode: standalone)')?.matches) return;
+      manualShowRef.current = true;
       const ua = navigator.userAgent;
       if (/iPhone|iPad|iPod/i.test(ua)) {
         setMode(/CriOS/i.test(ua) ? 'ios-chrome' : 'ios');
@@ -187,6 +204,7 @@ export default function InstallAppPrompt({
 
   function dismiss() {
     localStorage.setItem(dismissKey, String(Date.now()));
+    manualShowRef.current = false;
     setMode('hidden');
   }
 
@@ -202,6 +220,7 @@ export default function InstallAppPrompt({
       /* event already used / unavailable — nothing to do */
     }
     setDeferred(null);
+    manualShowRef.current = false;
     setMode('hidden');
   }
 
@@ -221,7 +240,7 @@ export default function InstallAppPrompt({
           ) : mode === 'ios-chrome' ? (
             <>Tap <strong>⋯</strong> in the top-right, then <strong>Add to Home Screen</strong></>
           ) : (
-            <>Tap <strong>Share</strong> <ShareIcon /> below, then <strong>Add to Home Screen</strong></>
+            <>Tap <strong>Share</strong> <ShareIcon /> in Safari&apos;s toolbar, then <strong>Add to Home Screen</strong></>
           )}
         </p>
       </div>

@@ -19,6 +19,8 @@ import { formatTime, formatPoolName } from '@/lib/utils';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import SharePageButton from '@/components/public/SharePageButton';
 import styles from '@/components/public/PlayoffPicture.module.css';
+// Canonical soft LIVE chip — same classes the schedule + game-detail pages use.
+import liveStyles from '@/app/[orgSlug]/schedule/schedule.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -220,19 +222,23 @@ export default async function PlayoffsPage({
                   <div className={styles.matchupBlock}>
                     <h3 className={styles.blockTitle}>Opening matchups</h3>
                     <div className={styles.matchupGrid}>
-                      {div.matchups.map(m => (
+                      {div.matchups.map(m => {
+                        // While live: running score stays, winner/loser verdicts wait for the final.
+                        const decided = !m.isLive;
+                        return (
                         <div key={m.key} className={styles.matchupCard}>
                           <div className={styles.matchupTop}>
                             <span className="badge badge-primary">{m.bracketLabel ? `${m.bracketLabel} · ${m.roundLabel}` : m.roundLabel}</span>
+                            {m.isLive && <span className={liveStyles.liveBadge}><span className={liveStyles.liveDot} />LIVE</span>}
                             {m.status === 'completed' && <span className={styles.matchupFinal}>Final</span>}
                           </div>
                           <div className={styles.matchupTeams}>
-                            <div className={`${styles.matchupTeam} ${m.away.isWinner ? styles.matchupWin : m.home.isWinner ? styles.matchupLose : ''}`}>
+                            <div className={`${styles.matchupTeam} ${decided && m.away.isWinner ? styles.matchupWin : decided && m.home.isWinner ? styles.matchupLose : ''}`}>
                               {m.away.seed != null && <span className={styles.matchupSeed}>{m.away.seed}</span>}
                               <span className={styles.matchupName}>{m.away.name}</span>
                               {m.away.score != null && <span className={styles.matchupScore}>{m.away.score}</span>}
                             </div>
-                            <div className={`${styles.matchupTeam} ${m.home.isWinner ? styles.matchupWin : m.away.isWinner ? styles.matchupLose : ''}`}>
+                            <div className={`${styles.matchupTeam} ${decided && m.home.isWinner ? styles.matchupWin : decided && m.away.isWinner ? styles.matchupLose : ''}`}>
                               {m.home.seed != null && <span className={styles.matchupSeed}>{m.home.seed}</span>}
                               <span className={styles.matchupName}>{m.home.name}</span>
                               {m.home.score != null && <span className={styles.matchupScore}>{m.home.score}</span>}
@@ -245,7 +251,8 @@ export default async function PlayoffsPage({
                             </div>
                           )}
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}

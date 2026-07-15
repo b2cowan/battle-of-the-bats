@@ -283,27 +283,31 @@
   flex: 1;
 }
 
-/* Live badge */
+/* Live badge — the platform's one soft LIVE chip (ticker/schedule/game detail):
+   danger-tinted fill, danger text, data face. Never a solid red banner. */
 .liveBadge {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: var(--danger);
-  color: #fff;
-  font-size: 0.7rem;
-  font-weight: 800;
+  background: rgba(var(--danger-rgb), 0.15);
+  border: 1px solid rgba(var(--danger-rgb), 0.4);
+  color: var(--danger-strong);
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 900;
   letter-spacing: 0.06em;
-  padding: 0.2rem 0.5rem;
-  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
   text-transform: uppercase;
 }
 
 .liveDot {
   width: 6px;
   height: 6px;
-  background: #fff;
+  background: var(--danger);
   border-radius: 50%;
-  animation: pulse 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+  animation: pulse 1.4s ease-in-out infinite;
 }
 
 @keyframes pulse {
@@ -399,8 +403,14 @@
   }
 
   .followBtn {
-    min-height: 40px;
+    min-height: var(--tap-min, 44px);
     padding: 0.4rem 0.75rem;
+  }
+
+  /* Touch floor for the division dropdown — scoped through the wrapper, never
+     the bare global .form-select (admin compact density shares it). */
+  .divisionSelect select {
+    min-height: var(--tap-min, 44px);
   }
 }
 

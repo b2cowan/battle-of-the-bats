@@ -11,7 +11,7 @@
  * so non-followers and off-days incur zero work. Mobile-only (≤900px) — desktop
  * surfaces the same info in the schedule rail.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Star, ChevronUp } from 'lucide-react';
 import type { Game, PublicTeam, Venue } from '@/lib/types';
@@ -122,8 +122,38 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAle
       }) ?? null
     : null;
   const game = liveGame ?? nextGame;
+  const dockVisible = active && loaded && !!team && !!game;
 
-  if (!active || !loaded || !team || !game) return null;
+  // Publish the dock's viewport clearance (bottom of screen → dock top) as a
+  // CSS var — the ticker's own --ticker-h pattern — so other bottom-anchored
+  // chrome (the install banner) stacks above the dock instead of covering it.
+  // Desktop hides the dock via CSS (zero-height box) → nothing is published.
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!dockVisible) return;
+    const root = document.documentElement;
+    const publish = () => {
+      const el = wrapRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.height > 0) {
+        root.style.setProperty('--dock-clearance', `${Math.ceil(window.innerHeight - rect.top) + 6}px`);
+      } else {
+        root.style.removeProperty('--dock-clearance');
+      }
+    };
+    publish();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(publish) : null;
+    if (ro && wrapRef.current) ro.observe(wrapRef.current);
+    window.addEventListener('resize', publish);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', publish);
+      root.style.removeProperty('--dock-clearance');
+    };
+  }, [dockVisible]);
+
+  if (!dockVisible || !team || !game) return null;
 
   const opponentId = game.homeTeamId === team.id ? game.awayTeamId : game.homeTeamId;
   const opponentName = teams.find(t => t.id === opponentId)?.name
@@ -156,7 +186,7 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAle
   const shareVenueLabel = shareGame ? resolveGameVenueLabel(shareGame, venues) : '';
 
   return (
-    <div className={styles.dockWrap} data-expanded={expanded ? 'true' : 'false'}>
+    <div ref={wrapRef} className={styles.dockWrap} data-expanded={expanded ? 'true' : 'false'}>
       {expanded && (
         <div className={styles.expandPanel}>
           <div className={styles.expandRow}>
@@ -231,7 +261,7 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAle
         <span className={styles.dockMain}>
           <span className={styles.dockName}>
             <Star size={10} fill="currentColor" className={styles.dockStar} />
-            {team.name}
+            <span className={styles.dockNameText}>{team.name}</span>
           </span>
           <span className={styles.dockSub}>{liveGame ? `vs ${opponentName}` : `Next · vs ${opponentName}`}</span>
         </span>

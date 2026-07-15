@@ -36,6 +36,13 @@
   color: var(--logic-lime);
 }
 
+/* Touch floor on mobile — full-width row trigger, so only the height grows. */
+@media (max-width: 900px) {
+  .trigger {
+    min-height: var(--tap-min, 44px);
+  }
+}
+
 .panel {
   position: absolute;
   left: 0;

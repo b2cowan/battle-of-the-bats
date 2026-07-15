@@ -59,3 +59,59 @@
 .clickableNode:focus-visible .hoverRing {
   opacity: 1;
 }
+
+/* Zoom controls — compact on desktop; 44px touch floor on mobile (Theme B).
+ * Icons keep their 15px size, only the hit areas grow. */
+.zoomBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 26px;
+  background: transparent;
+  border: none;
+  color: var(--white-60);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.zoomReset {
+  min-width: 46px;
+  text-align: center;
+  background: transparent;
+  border: none;
+  color: var(--white-80);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .zoomBtn {
+    width: var(--tap-min, 44px);
+    height: var(--tap-min, 44px);
+  }
+
+  .zoomReset {
+    min-height: var(--tap-min, 44px);
+  }
+}
+
+/* LIVE status dot in the node's meta strip — same pulse cadence as the ticker's
+ * chip dot so "live" reads identically across surfaces. */
+.liveDot {
+  animation: lsbLivePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes lsbLivePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liveDot {
+    animation: none;
+  }
+}

@@ -23,7 +23,27 @@
 }
 .bellBtn:hover { color: var(--white-90); border-color: var(--border-2, var(--border)); }
 .bellBtn:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
-.bellOn { color: var(--logic-lime); border-color: rgba(var(--logic-lime-rgb), 0.4); }
+
+/* Touch floor on mobile — the icon keeps its size, the hit area grows. */
+@media (max-width: 900px) {
+  .bellBtn {
+    width: var(--tap-min, 44px);
+    height: var(--tap-min, 44px);
+  }
+}
+/* "Alerts on" — solid lime fill + ink glyph (the FollowAlertsToggle pillOn
+   precedent): a tinted lime glyph reads fine on the dark shell but is
+   near-invisible on the public light theme (--logic-lime never remaps). */
+.bellOn {
+  background: var(--logic-lime);
+  border-color: var(--logic-lime);
+  color: var(--pitch-black);
+}
+.bellOn:hover {
+  background: rgba(var(--logic-lime-rgb), 0.85);
+  border-color: rgba(var(--logic-lime-rgb), 0.85);
+  color: var(--pitch-black);
+}
 
 /* Mobile-only dimmer behind the bottom sheet. Hidden on desktop (popover needs no backdrop). */
 .backdrop { display: none; }
@@ -152,7 +172,7 @@
 .spin { animation: fnb-spin 0.8s linear infinite; }
 @keyframes fnb-spin { to { transform: rotate(360deg); } }
 
-.error { margin: 0.4rem 0 0; font-size: 0.72rem; color: var(--danger); }
+.error { margin: 0.4rem 0 0; font-size: 0.72rem; color: var(--danger-strong); }
 
 /* ── iOS-install / blocked explainer ────────────────────────────────────── */
 .explain { display: flex; flex-direction: column; gap: 0.6rem; }

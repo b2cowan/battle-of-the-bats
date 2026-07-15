@@ -21,6 +21,21 @@
   transform: scale(0.9);
 }
 
+/* Following — solid lime chip behind an ink glyph (the pillOn precedent):
+   a raw lime glyph is ~1.17:1 on the public light theme. */
 .active {
-  color: var(--logic-lime);
+  background: var(--logic-lime);
+  color: var(--pitch-black);
+}
+
+.active:hover {
+  color: var(--pitch-black);
+}
+
+/* Touch floor on mobile — the 15px star stays 15px, the button box grows. */
+@media (max-width: 640px) {
+  .star {
+    min-width: var(--tap-min, 44px);
+    min-height: var(--tap-min, 44px);
+  }
 }

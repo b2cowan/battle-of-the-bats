@@ -84,7 +84,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.dateProgress[data-complete="true"] { color: var(--success); }
+.dateProgress[data-complete="true"] { color: var(--success-strong); }
 
 .todayBadge {
   display: inline-flex;
@@ -264,8 +264,8 @@ a.gameRow { cursor: pointer; }
 
 /* Winner bright with a green score + trophy; loser dims. */
 .matchWin { color: var(--white); }
-.matchWin .matchScore { color: var(--success); }
-.matchWin .matchWinSlot { color: var(--success); }
+.matchWin .matchScore { color: var(--success-strong); }
+.matchWin .matchWinSlot { color: var(--success-strong); }
 .matchLose { color: var(--white-40); }
 
 .statusCell {
@@ -291,7 +291,7 @@ a.gameRow { cursor: pointer; }
 .statusCell :global(.badge-success) {
   border-color: rgba(var(--success-rgb), 0.3);
   background: rgba(var(--success-rgb), 0.12);
-  color: var(--success);
+  color: var(--success-strong);
 }
 
 .statusCell :global(.badge-warning) {
@@ -391,8 +391,26 @@ a.gameRow { cursor: pointer; }
   margin: 0 auto;
 }
 
+/* The tournament shell renders no <main>, so globals' automatic bottom-nav
+   padding never reaches this route — reserve the clearance here (same formula
+   as the schedule list's .dateGroup:last-child and team-detail's .profile),
+   so nothing (e.g. Get Directions) hides under the fixed bottom nav. */
+@media (max-width: 900px) {
+  .gameDetailShell {
+    padding-bottom: calc(var(--bottom-nav-height, 72px) + 3.5rem + env(safe-area-inset-bottom));
+  }
+}
+
 .detailBack {
   margin-bottom: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  /* Touch floor — scoped to the module class riding on the global .btn-sm,
+     never the bare .btn-sm itself (admin compact density shares it). */
+  .detailBack {
+    min-height: var(--tap-min, 44px);
+  }
 }
 
 .gameDetailCard {
@@ -542,13 +560,13 @@ a.gameRow { cursor: pointer; }
 .detailScoreCol span[data-outcome="W"] {
   background: rgba(var(--success-rgb), 0.12);
   border: 1px solid rgba(var(--success-rgb), 0.3);
-  color: var(--success);
+  color: var(--success-strong);
 }
 
 .detailScoreCol span[data-outcome="T"] {
   background: rgba(var(--warning-rgb), 0.1);
   border: 1px solid rgba(var(--warning-rgb), 0.3);
-  color: var(--warning);
+  color: var(--warning-strong);
 }
 
 .detailScoreCol span[data-outcome="L"] {
@@ -686,6 +704,13 @@ a.gameRow { cursor: pointer; }
 .detailDirectionsBtn:hover {
   filter: brightness(1.08);
   box-shadow: var(--glow-sm);
+}
+
+/* Touch floor on mobile — the en-route action of the whole page. */
+@media (max-width: 640px) {
+  .detailDirectionsBtn {
+    min-height: var(--tap-min, 44px);
+  }
 }
 
 .detailDirectionsExt {
@@ -951,7 +976,7 @@ a.gameRow { cursor: pointer; }
 }
 
 .winIcon {
-  color: var(--warning);
+  color: var(--warning-strong);
   flex-shrink: 0;
 }
 
@@ -1218,6 +1243,15 @@ a.gameRow { cursor: pointer; }
 .mobileDivisionSelect {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* Touch floor for the division dropdowns — scoped through the wrappers, never
+   the bare global .form-select (admin compact density shares it). */
+@media (max-width: 768px) {
+  .divisionSelect select,
+  .mobileDivisionSelect select {
+    min-height: var(--tap-min, 44px);
+  }
 }
 
 .mobileDivisionPill {
@@ -1578,7 +1612,7 @@ a.gameRow { cursor: pointer; }
 
   .segmentButton {
     flex: 1;
-    min-height: 40px;
+    min-height: var(--tap-min, 44px);
     font-size: 0.72rem;
     padding-inline: 0.65rem;
   }
@@ -1665,6 +1699,13 @@ a.gameRow { cursor: pointer; }
   border-color: rgba(var(--primary-rgb), 0.5);
 }
 
+/* Touch floor on mobile — compact look stays, hit area grows. */
+@media (max-width: 640px) {
+  .myGamesLink {
+    min-height: var(--tap-min, 44px);
+  }
+}
+
 /* My Team Games active banner */
 .myTeamBanner {
   display: flex;
@@ -1722,7 +1763,7 @@ a.gameRow { cursor: pointer; }
 }
 
 .myTeamBannerClear:hover {
-  color: var(--danger);
+  color: var(--danger-strong);
   border-color: rgba(var(--danger-rgb), 0.4);
   background: rgba(var(--danger-rgb), 0.1);
 }
@@ -1737,7 +1778,7 @@ a.gameRow { cursor: pointer; }
   border: 1px solid rgba(var(--danger-rgb), 0.5);
   border-radius: 2px;
   background: rgba(var(--danger-rgb), 0.15);
-  color: var(--danger);
+  color: var(--danger-strong);
   font-family: var(--font-data);
   font-size: 0.5rem;
   font-weight: 900;
@@ -1752,6 +1793,14 @@ a.gameRow { cursor: pointer; }
   background: var(--danger);
   flex-shrink: 0;
   animation: scorebugPulse 1.4s ease-in-out infinite;
+}
+
+/* The dot's declared blink — the keyframe was missing (dangling animation-name,
+   silently ignored), so the canonical chip's dot never actually pulsed. Same
+   cadence as the ticker's dot. */
+@keyframes scorebugPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 
 /* Brighter, "alive" pulsing glow on LIVE badges (additive — does not override
@@ -2022,7 +2071,7 @@ a.broadcastCard { cursor: pointer; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 34px;
+  min-height: var(--tap-min, 44px);
   padding: 0 0.7rem;
   border: 0;
   background: transparent;
@@ -2154,7 +2203,7 @@ a.broadcastCard { cursor: pointer; }
 }
 
 .stopFollowingBtn:hover {
-  color: var(--danger);
+  color: var(--danger-strong);
   border-color: rgba(var(--danger-rgb), 0.5);
   background: rgba(var(--danger-rgb), 0.08);
 }
@@ -2276,7 +2325,7 @@ a.broadcastCard { cursor: pointer; }
   }
 
   .mobileWinIcon {
-    color: var(--success);
+    color: var(--success-strong);
     flex-shrink: 0;
   }
 
@@ -2301,8 +2350,10 @@ a.broadcastCard { cursor: pointer; }
   }
 
   .mobileBracketInline .segmentButton {
-    min-height: 38px;
-    min-width: 38px;
+    /* Touch floor — icon-only List/Bracket toggle (only visible on the
+       Playoffs stage, so it must clear 44px like its stage-button siblings). */
+    min-height: var(--tap-min, 44px);
+    min-width: var(--tap-min, 44px);
     padding: 0.3rem 0.5rem;
   }
 }

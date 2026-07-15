@@ -237,8 +237,12 @@ export default async function PublicGameDetailsPage({
   // Resolve real (non-placeholder) teams so fans can follow either side inline (J6-011).
   const awayTeam = game.awayTeamId && game.awayTeamId !== NIL_UUID ? data.teams.find(t => t.id === game.awayTeamId) ?? null : null;
   const homeTeam = game.homeTeamId && game.homeTeamId !== NIL_UUID ? data.teams.find(t => t.id === game.homeTeamId) ?? null : null;
-  const awayOutcome = !hasScore ? null : winner === 'tie' ? 'T' : winner === 'away' ? 'W' : 'L';
-  const homeOutcome = !hasScore ? null : winner === 'tie' ? 'T' : winner === 'home' ? 'W' : 'L';
+  const liveWindowMinutes = game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES;
+  const isLiveGame = isGameLive(game, liveWindowMinutes);
+  // No verdicts mid-game: W/L/T chips (and the loser-dimming below) wait until
+  // the live window closes — a live 3–5 is a running score, not a result.
+  const awayOutcome = !hasScore || isLiveGame ? null : winner === 'tie' ? 'T' : winner === 'away' ? 'W' : 'L';
+  const homeOutcome = !hasScore || isLiveGame ? null : winner === 'tie' ? 'T' : winner === 'home' ? 'W' : 'L';
   let gameType = 'Pool Play';
   if (game.isPlayoff) {
     gameType = game.bracketCode ? bracketRoundLabel(game.bracketCode) : 'Playoff';
@@ -253,9 +257,6 @@ export default async function PublicGameDetailsPage({
   const liveEnabled = Boolean(
     t.status === 'active' && t.startDate && t.endDate && today >= t.startDate && today <= t.endDate,
   );
-  const liveWindowMinutes = game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES;
-  const isLiveGame = isGameLive(game, liveWindowMinutes);
-
   // One public status, one fan vocabulary — never "PENDING" on a share artifact (J6-015/J6-019).
   const shareStatusLabel = publicGameStatusLabel(
     publicGameStatus(game, liveWindowMinutes, requireFinalization),
@@ -316,7 +317,7 @@ export default async function PublicGameDetailsPage({
 
               <div className={styles.detailMatchup}>
                 <div className={styles.detailTeams}>
-                  <div className={`${styles.detailTeam} ${styles.detailAway} ${winner === 'home' ? styles.detailTeamLost : ''}`}>
+                  <div className={`${styles.detailTeam} ${styles.detailAway} ${winner === 'home' && !isLiveGame ? styles.detailTeamLost : ''}`}>
                     <span className={styles.detailTeamSide}>Away</span>
                     <strong className={styles.detailTeamName}>{awayName}</strong>
                     {awayTeam && <TeamFollowStar orgSlug={orgSlug} tournamentSlug={tournamentSlug} team={awayTeam} />}
@@ -324,7 +325,7 @@ export default async function PublicGameDetailsPage({
 
                   <span className={styles.detailVs}>VS</span>
 
-                  <div className={`${styles.detailTeam} ${styles.detailHome} ${winner === 'away' ? styles.detailTeamLost : ''}`}>
+                  <div className={`${styles.detailTeam} ${styles.detailHome} ${winner === 'away' && !isLiveGame ? styles.detailTeamLost : ''}`}>
                     <span className={styles.detailTeamSide}>Home</span>
                     <strong className={styles.detailTeamName}>{homeName}</strong>
                     {homeTeam && <TeamFollowStar orgSlug={orgSlug} tournamentSlug={tournamentSlug} team={homeTeam} />}

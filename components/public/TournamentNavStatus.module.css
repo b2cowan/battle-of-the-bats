@@ -44,7 +44,7 @@
 .pillLive {
   background: rgba(var(--danger-rgb), 0.15);
   border: 1px solid rgba(var(--danger-rgb), 0.5);
-  color: var(--danger);
+  color: var(--danger-strong);
 }
 
 .liveDot {

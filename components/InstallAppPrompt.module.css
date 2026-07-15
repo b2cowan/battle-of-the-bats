@@ -1,6 +1,12 @@
 .banner {
   position: fixed;
-  bottom: calc(var(--bottom-nav-height, 0px) + var(--admin-strip-h, 0px));
+  /* Clear the bottom nav / admin strip — and the My Team dock when it's up
+     (--dock-clearance is the dock's own published viewport clearance, which
+     already includes the nav + safe area beneath it). */
+  bottom: max(
+    calc(var(--bottom-nav-height, 0px) + var(--admin-strip-h, 0px)),
+    var(--dock-clearance, 0px)
+  );
   left: 0;
   right: 0;
   z-index: 400;
@@ -93,8 +99,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  /* Touch floor — a mis-tapped dismiss is a mis-tapped install banner. */
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
   border-radius: 50%;
   border: none;
   background: var(--white-8);

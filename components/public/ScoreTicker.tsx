@@ -17,6 +17,7 @@ import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import { formatTime } from '@/lib/utils';
 import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
+import { bracketRoundLabel } from '@/lib/playoff-bracket';
 import type { Game, PublicTeam } from '@/lib/types';
 import styles from './ScoreTicker.module.css';
 
@@ -24,6 +25,10 @@ function teamShort(id: string | null | undefined, placeholder: string | null | u
   const n = teams.find(t => t.id === id)?.name ?? placeholder ?? 'TBD';
   return n.replace(/\s*\([^)]*\)\s*/g, '').trim() || n;
 }
+
+// Unassigned-slot sentinel — same convention as ScheduleContent/game-detail.
+const NIL_UUID = '00000000-0000-0000-0000-000000000000';
+const unresolvedSlot = (id: string | null | undefined) => !id || id === NIL_UUID;
 
 export default function ScoreTicker() {
   const params = useParams();
@@ -39,6 +44,10 @@ export default function ScoreTicker() {
 
   const [teams, setTeams] = useState<PublicTeam[]>([]);
   const [games, setGames] = useState<Game[]>([]);
+  // Touch-hold pauses the marquee — the finger-down equivalent of the existing
+  // hover/focus pause (CSS alone can't persist a hold across pointer events).
+  const [touching, setTouching] = useState(false);
+  const stopTouch = () => setTouching(false);
 
   // Per-tournament minimize preference — persists until the fan restores it.
   const minimizeKey = tournamentSlug ? `flhq-ticker-min-${tournamentSlug}` : '';
@@ -119,6 +128,12 @@ export default function ScoreTicker() {
 
   const items = todayGames.map(g => {
     const scored = g.homeScore != null && g.awayScore != null;
+    // A playoff slot whose BOTH sides are still bracket refs ("Winner SF2") reads
+    // as jargon — and its time window can open before the feeders finish, so it
+    // must never dress as LIVE. Show the round + time instead until teams resolve
+    // (resolution = a real team id in the slot, the platform-wide sentinel test).
+    const pending = (g.isPlayoff || !!g.bracketCode) &&
+      unresolvedSlot(g.awayTeamId) && unresolvedSlot(g.homeTeamId);
     return {
       id: g.id,
       href: `/${orgSlug}/${tournamentSlug}/schedule/${g.id}`,
@@ -127,7 +142,9 @@ export default function ScoreTicker() {
       awayScore: g.awayScore,
       homeScore: g.homeScore,
       scored,
-      isLive: isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES),
+      pending,
+      round: pending ? bracketRoundLabel(g.bracketCode) : null,
+      isLive: !pending && isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES),
       isFinal: g.status === 'completed' && scored,
       time: g.time,
     };
@@ -136,7 +153,16 @@ export default function ScoreTicker() {
   const loop = [...items, ...items];
 
   return (
-    <div className={styles.ticker} role="region" aria-label="Today's games">
+    <div
+      className={styles.ticker}
+      role="region"
+      aria-label="Today's games"
+      data-touching={touching ? 'true' : undefined}
+      onPointerDown={() => setTouching(true)}
+      onPointerUp={stopTouch}
+      onPointerCancel={stopTouch}
+      onPointerLeave={stopTouch}
+    >
       <div className={styles.track}>
         {loop.map((it, i) => (
           <Link
@@ -146,20 +172,30 @@ export default function ScoreTicker() {
             aria-hidden={i >= items.length ? true : undefined}
             tabIndex={i >= items.length ? -1 : undefined}
           >
-            {it.isLive && <span className={styles.live}><span className={styles.dot} />LIVE</span>}
-            {it.isFinal && <span className={styles.final}>FINAL</span>}
-            {!it.scored && !it.isLive && <span className={styles.time}>{it.time ? formatTime(it.time) : 'TBD'}</span>}
-            <span className={styles.team}>{it.away}</span>
-            {it.scored ? (
+            {it.pending ? (
               <>
-                <span className={styles.score}>{it.awayScore}</span>
-                <span className={styles.dash}>–</span>
-                <span className={styles.score}>{it.homeScore}</span>
+                <span className={styles.team}>{it.round}</span>
+                <span className={styles.dash}>·</span>
+                <span className={styles.time}>{it.time ? formatTime(it.time) : 'TBD'}</span>
               </>
             ) : (
-              <span className={styles.vs}>vs</span>
+              <>
+                {it.isLive && <span className={styles.live}><span className={styles.dot} />LIVE</span>}
+                {it.isFinal && <span className={styles.final}>FINAL</span>}
+                {!it.scored && !it.isLive && <span className={styles.time}>{it.time ? formatTime(it.time) : 'TBD'}</span>}
+                <span className={styles.team}>{it.away}</span>
+                {it.scored ? (
+                  <>
+                    <span className={styles.score}>{it.awayScore}</span>
+                    <span className={styles.dash}>–</span>
+                    <span className={styles.score}>{it.homeScore}</span>
+                  </>
+                ) : (
+                  <span className={styles.vs}>vs</span>
+                )}
+                <span className={styles.team}>{it.home}</span>
+              </>
             )}
-            <span className={styles.team}>{it.home}</span>
           </Link>
         ))}
       </div>

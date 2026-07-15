@@ -47,6 +47,14 @@ const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 type ScheduleStage = 'pool' | 'playoff';
 type BracketLayout = 'list' | 'bracket';
 
+/** The division the page opens on: saved preference by name, else the first. */
+function resolveInitialDivision(divisions: Division[] | undefined, orgSlug: string): Division | null {
+  const groups = divisions ?? [];
+  if (groups.length === 0) return null;
+  const pref = getDivisionPref(orgSlug);
+  return (pref ? groups.find(g => g.name === pref) : null) ?? groups[0];
+}
+
 // ── Scorebug helpers ──────────────────────────────────────────────────────────
 
 function calcTeamRecord(teamId: string, allGames: Game[]) {
@@ -112,14 +120,23 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   const [dismissedAnnIds, setDismissedAnnIds] = useState<Set<string>>(() => new Set());
   const [allTournaments, setAllTournaments] = useState<Tournament[]>(() => initialData?.tournaments ?? []);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(() => initialData?.tournament ?? null);
-  const [activeGroup, setActiveGroup]     = useState<string>(() => {
-    const groups = initialData?.divisions ?? [];
-    if (groups.length === 0) return '';
-    const pref = getDivisionPref(orgSlug);
-    const preferred = pref ? groups.find(g => g.name === pref) : null;
-    return (preferred ?? groups[0]).id;
+  const [activeGroup, setActiveGroup]     = useState<string>(() =>
+    resolveInitialDivision(initialData?.divisions, orgSlug)?.id ?? ''
+  );
+  const [viewMode, setViewMode]           = useState<ScheduleStage>(() => {
+    if (resolveIsPlayoffOnly(initialData?.tournament)) return 'playoff';
+    // On playoff day the body should open on the playoff stage — a playoff game
+    // live right now (or on today's card) outranks day-one pool results. The
+    // manual toggle below still switches freely; this only picks the default.
+    const initialDivision = resolveInitialDivision(initialData?.divisions, orgSlug);
+    const today = tournamentToday();
+    const playoffDay = (initialData?.games ?? []).some(g =>
+      g.isPlayoff &&
+      (!initialDivision || g.divisionId === initialDivision.id) &&
+      (g.date === today || isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES))
+    );
+    return playoffDay ? 'playoff' : 'pool';
   });
-  const [viewMode, setViewMode]           = useState<ScheduleStage>(() => resolveIsPlayoffOnly(initialData?.tournament) ? 'playoff' : 'pool');
   const [bracketLayout, setBracketLayout] = useState<BracketLayout>(() => resolveIsPlayoffOnly(initialData?.tournament) ? 'bracket' : 'list');
   const [loading, setLoading]             = useState(!initialData);
   const [requireFinalization, setRequireFinalization] = useState(
@@ -139,6 +156,24 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   useEffect(() => {
     if (isPlayoffOnly && viewMode === 'pool') setViewMode('playoff');
   }, [isPlayoffOnly, viewMode]);
+
+  // Playoff-day default, client-fetch path: the live fan route mounts with no
+  // initialData (games arrive async), so the lazy initializer above can't see
+  // them. Decide ONCE when the first data lands, then never touch viewMode
+  // again — the manual toggle stays fully in charge afterwards.
+  const autoStagedRef = useRef(false);
+  useEffect(() => {
+    if (autoStagedRef.current || games.length === 0 || !activeGroup) return;
+    autoStagedRef.current = true;
+    if (isPlayoffOnly || viewMode !== 'pool') return;
+    const today = tournamentToday();
+    const playoffDay = games.some(g =>
+      g.isPlayoff &&
+      g.divisionId === activeGroup &&
+      (g.date === today || isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES))
+    );
+    if (playoffDay) setViewMode('playoff');
+  }, [games, activeGroup, isPlayoffOnly, viewMode]);
 
   useEffect(() => {
     // Browser-local preference hydrates after the public page renders — and must

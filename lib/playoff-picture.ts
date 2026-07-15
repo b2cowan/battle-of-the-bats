@@ -11,6 +11,7 @@
 import type { Division, Game, PublicTeam, Tournament, PlayoffConfig } from './types';
 import type { DivisionStandingRow } from './tie-breakers';
 import { bracketRoundLabel } from './playoff-bracket';
+import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from './game-status';
 
 export interface PlayoffSeed {
   seed: number;
@@ -45,6 +46,8 @@ export interface PlayoffMatchup {
   time?: string;
   venueLabel?: string;
   status: string;
+  /** In its live window right now — scores are running, not a decided result. */
+  isLive?: boolean;
   home: PlayoffMatchupSide;
   away: PlayoffMatchupSide;
 }
@@ -176,6 +179,7 @@ function buildDivisionPicture(
       time: g.time || undefined,
       venueLabel: venueLabelFor(g) || undefined,
       status: g.status,
+      isLive: isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES),
       home, away,
     });
   }

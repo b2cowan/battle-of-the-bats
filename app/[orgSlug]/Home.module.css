@@ -305,6 +305,7 @@
   margin-top: 4rem;
   padding: 1.75rem 2.5rem;
   background: rgba(0,0,0,0.4);
+  -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -673,8 +674,8 @@
 }
 
 .finalWin { color: var(--white); }
-.finalWin .finalScore { color: var(--success); }
-.finalWin .finalWinIconSlot { color: var(--success); }
+.finalWin .finalScore { color: var(--success-strong); }
+.finalWin .finalWinIconSlot { color: var(--success-strong); }
 .finalLose { color: var(--white-40); }
 
 .finalMeta {
@@ -754,7 +755,7 @@
   border: 1px solid rgba(var(--danger-rgb), 0.5);
   border-radius: 2px;
   background: rgba(var(--danger-rgb), 0.15);
-  color: var(--danger);
+  color: var(--danger-strong);
   font-family: var(--font-data);
   font-size: 0.58rem;
   font-weight: 900;
@@ -1001,7 +1002,7 @@
 }
 
 .championTierMeta strong {
-  color: var(--success);
+  color: var(--success-strong);
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
 }

@@ -92,4 +92,10 @@
   .actions {
     justify-content: flex-start;
   }
+
+  /* Touch floor — the action links carry only global .btn classes, so the
+     hit-area rule scopes through this wrapper (never the bare .btn-sm). */
+  .actions > a {
+    min-height: var(--tap-min, 44px);
+  }
 }

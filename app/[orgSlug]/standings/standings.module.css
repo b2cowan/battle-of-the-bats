@@ -171,7 +171,7 @@
 }
 
 .followMain svg {
-  color: var(--warning);
+  color: var(--warning-strong);
   flex-shrink: 0;
 }
 
@@ -296,7 +296,7 @@
 }
 
 .topIcon {
-  color: var(--warning);
+  color: var(--warning-strong);
   flex-shrink: 0;
 }
 
@@ -311,8 +311,8 @@
   animation: rankArrowPop 0.5s ease-out;
 }
 
-.rankArrow[data-dir="up"]   { color: var(--success); }
-.rankArrow[data-dir="down"] { color: var(--danger); }
+.rankArrow[data-dir="up"]   { color: var(--success-strong); }
+.rankArrow[data-dir="down"] { color: var(--danger-strong); }
 
 @keyframes rankArrowPop {
   0%   { transform: translateY(3px); opacity: 0; }
@@ -339,11 +339,11 @@
 }
 
 .rdPositive {
-  color: var(--success);
+  color: var(--success-strong);
 }
 
 .rdNegative {
-  color: var(--danger);
+  color: var(--danger-strong);
 }
 
 /* Seeding-capped run differential, shown in brackets beside the true value when a
@@ -465,7 +465,7 @@
   border: 1px solid rgba(var(--warning-rgb), 0.35);
   border-radius: var(--radius-sm);
   background: rgba(var(--warning-rgb), 0.12);
-  color: var(--warning);
+  color: var(--warning-strong);
   font-size: 0.68rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -482,7 +482,7 @@
   border: 1px solid rgba(var(--success-rgb), 0.3);
   border-radius: var(--radius-sm);
   background: rgba(var(--success-rgb), 0.08);
-  color: var(--success);
+  color: var(--success-strong);
   font-family: var(--font-data);
   font-size: 0.78rem;
   font-weight: 700;
@@ -492,7 +492,7 @@
    clashes with the gold 1st-place or the followed-team row accents. */
 .advancingIcon {
   flex-shrink: 0;
-  color: var(--success);
+  color: var(--success-strong);
 }
 
 .standingsFooter {
@@ -647,8 +647,8 @@
    back. One "dim-the-loser" language shared with the schedule rows and the
    game-detail scoreboard. */
 .scoreWinner { color: var(--white); }
-.scoreWinner .scoreNum { color: var(--success); }
-.scoreWinner .scoreWinIconSlot { color: var(--success); }
+.scoreWinner .scoreNum { color: var(--success-strong); }
+.scoreWinner .scoreWinIconSlot { color: var(--success-strong); }
 .scoreLoser  { color: var(--white-40); }
 
 .tieTag {
@@ -954,7 +954,7 @@
 }
 
 .raceHeaderIcon {
-  color: var(--warning);
+  color: var(--warning-strong);
   flex-shrink: 0;
 }
 
@@ -1041,7 +1041,7 @@
 }
 
 .podiumTrophy {
-  color: var(--warning);
+  color: var(--warning-strong);
   margin-top: -0.2rem;
 }
 
@@ -1227,7 +1227,7 @@
   font-family: var(--font-data);
   font-size: 0.65rem;
   font-weight: 900;
-  color: var(--danger);
+  color: var(--danger-strong);
 }
 
 .playoffCutoffLabel {
@@ -1236,7 +1236,7 @@
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--danger);
+  color: var(--danger-strong);
 }
 
 .playoffCutoffCount {
@@ -1245,7 +1245,7 @@
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--success);
+  color: var(--success-strong);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1281,7 +1281,7 @@
   border-radius: var(--radius-sm);
   background: rgba(var(--warning-rgb), 0.15);
   border: 1px solid rgba(var(--warning-rgb), 0.3);
-  color: var(--warning);
+  color: var(--warning-strong);
   font-family: var(--font-data);
   font-size: 0.72rem;
   font-weight: 900;
@@ -1313,14 +1313,14 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--success);
+  color: var(--success-strong);
 }
 
 .followFinalRank {
   font-family: var(--font-data);
   font-size: 1.1rem;
   font-weight: 900;
-  color: var(--success);
+  color: var(--success-strong);
   line-height: 1;
 }
 
@@ -1375,7 +1375,7 @@
 }
 
 .bracketChampionIcon {
-  color: var(--warning);
+  color: var(--warning-strong);
   flex-shrink: 0;
   filter: drop-shadow(0 0 10px rgba(var(--warning-rgb), 0.4));
 }
@@ -1393,7 +1393,7 @@
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--warning);
+  color: var(--warning-strong);
 }
 
 .bracketChampionName {

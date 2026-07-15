@@ -59,7 +59,7 @@
 .error {
   font-family: var(--font-data);
   font-size: 0.74rem;
-  color: var(--danger);
+  color: var(--danger-strong);
   margin: 0;
 }
 

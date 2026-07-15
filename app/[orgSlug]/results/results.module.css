@@ -84,7 +84,7 @@
   text-shadow: 0 0 20px rgba(var(--primary-rgb), 0.5);
 }
 
-.winIcon { color: var(--warning); flex-shrink: 0; }
+.winIcon { color: var(--warning-strong); flex-shrink: 0; }
 
 .scoreDash {
   font-family: var(--font-data);

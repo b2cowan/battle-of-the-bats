@@ -24,6 +24,13 @@
 .trigger:hover { background: var(--white-8); }
 .trigger:active { transform: scale(0.98); }
 
+/* Touch floor on mobile — type stays compact, the hit area grows. */
+@media (max-width: 640px) {
+  .trigger {
+    min-height: var(--tap-min, 44px);
+  }
+}
+
 /* Popover menu */
 .menu {
   position: absolute;

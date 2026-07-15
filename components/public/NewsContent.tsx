@@ -128,7 +128,14 @@ export default function NewsContent({
                   : 'Tournament announcements will appear here when the organizer posts them.'
               }
               contactEmail={contactEmail}
-              actions={isFiltering ? [{ href: `/${orgSlug}/${tournamentSlug}/news?view=all`, label: 'View All News', variant: 'ghost' as const }] : []}
+              actions={isFiltering
+                ? [{ href: `/${orgSlug}/${tournamentSlug}/news?view=all`, label: 'View All News', variant: 'ghost' as const }]
+                : [
+                    // Not a dead end — route fans to the surfaces that do have content
+                    // (same Home-empty-state pattern, same ghost weight).
+                    { href: `/${orgSlug}/${tournamentSlug}/schedule`, label: 'View Schedule', variant: 'ghost' as const },
+                    { href: `/${orgSlug}/${tournamentSlug}/standings`, label: 'View Standings', variant: 'ghost' as const },
+                  ]}
             />
           ) : (
             <>

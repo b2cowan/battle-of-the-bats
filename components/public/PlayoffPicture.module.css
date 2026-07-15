@@ -64,6 +64,15 @@
   margin-top: 1.5rem;
 }
 
+/* Touch floor on mobile — the CTAs carry only global .btn classes, so the
+   hit-area rule scopes through this wrapper (never the bare .btn-sm). */
+@media (max-width: 640px) {
+  .heroActions > a,
+  .heroActions > button {
+    min-height: var(--tap-min, 44px);
+  }
+}
+
 /* ── Division stack ───────────────────────────────────────────────────────── */
 .divisionStack {
   display: flex;
@@ -279,8 +288,8 @@
 }
 
 .seedRd    { color: var(--white-50); }
-.seedRdPos { color: var(--success); }
-.seedRdNeg { color: var(--danger); }
+.seedRdPos { color: var(--success-strong); }
+.seedRdNeg { color: var(--danger-strong); }
 
 /* Playoff cut divider between the last qualifier and the first team out. */
 .cutLine {
@@ -298,7 +307,7 @@
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--warning);
+  color: var(--warning-strong);
 }
 
 /* ── Opening matchups ─────────────────────────────────────────────────────── */
@@ -386,7 +395,7 @@
 }
 
 .matchupWin { color: var(--white); }
-.matchupWin .matchupScore { color: var(--success); }
+.matchupWin .matchupScore { color: var(--success-strong); }
 .matchupWin .matchupSeed { background: var(--primary); color: var(--on-primary); }
 .matchupLose { color: var(--white-40); }
 

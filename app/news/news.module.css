@@ -100,5 +100,6 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   box-shadow: var(--shadow);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }

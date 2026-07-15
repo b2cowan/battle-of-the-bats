@@ -30,11 +30,13 @@
   will-change: transform;
 }
 
-/* Pause on hover, and on keyboard focus only — `:focus-visible` (not
+/* Pause on hover, on keyboard focus only — `:focus-visible` (not
    `:focus-within`) so a mouse click on a game doesn't leave the marquee frozen
-   after navigation (the clicked link keeps DOM focus, but not focus-visible). */
+   after navigation (the clicked link keeps DOM focus, but not focus-visible) —
+   and on touch-hold (data-touching, set by pointer handlers on the ticker). */
 .ticker:hover .track,
-.ticker:has(:focus-visible) .track {
+.ticker:has(:focus-visible) .track,
+.ticker[data-touching='true'] .track {
   animation-play-state: paused;
 }
 
@@ -83,7 +85,7 @@
   letter-spacing: 0.06em;
 }
 
-.live { color: var(--danger); background: rgba(var(--danger-rgb), 0.15); border: 1px solid rgba(var(--danger-rgb), 0.4); }
+.live { color: var(--danger-strong); background: rgba(var(--danger-rgb), 0.15); border: 1px solid rgba(var(--danger-rgb), 0.4); }
 .final { color: var(--white-50); background: var(--white-8); }
 
 .dot {
