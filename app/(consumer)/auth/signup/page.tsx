@@ -203,7 +203,9 @@ function SignupForm() {
             {isInvited
               ? 'FieldLogicHQ — accept your invitation'
               : accountOnly
-                ? 'FieldLogicHQ — make an account to accept your invitation'
+                // Fans are this mode's main audience now (conversion sweep 2026-07-14,
+                // Journey B finding 3) — no invitation is implied.
+                ? 'FieldLogicHQ — your teams, scores & alerts in one place'
                 : 'FieldLogicHQ — run your tournament, league, or club'}
           </p>
         </div>
@@ -277,7 +279,9 @@ function SignupForm() {
             </div>
             <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)', lineHeight: 1.6, marginTop: '1rem' }}>
               {accountOnly
-                ? 'After you confirm, FieldLogicHQ will take you to your home screen, where you can accept your invitation.'
+                // Neutral for both audiences of account-only signup: fans (the common
+                // case) and invited users — /home surfaces any pending invitation.
+                ? 'After you confirm, FieldLogicHQ signs you in and takes you to your home screen — any pending invitations will be waiting there.'
                 : 'After you confirm, FieldLogicHQ will bring you back to start on the free Tournament plan or choose an upgrade.'}
             </p>
             <div className={styles.footer}>

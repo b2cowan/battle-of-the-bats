@@ -8,7 +8,7 @@ import {
   COACHES_TOURNAMENTS_PATH,
   normalizeCoachPortalNext,
 } from '@/lib/coaches-portal-routes';
-import styles from '../../auth/auth.module.css';
+import styles from '../../(consumer)/auth/auth.module.css';
 
 type BasicCoachTeamOption = {
   id: string;

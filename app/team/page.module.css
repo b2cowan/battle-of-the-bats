@@ -631,7 +631,12 @@
 }
 
 @media (max-width: 980px) {
-  .signupSurface {
+  /* The [data-warm] attribute selector outranks the bare class, so the mobile
+     collapse must name it too — without this, the warm-upgrade checkout kept its
+     440px-minimum desktop column on phones and overflowed unreadably (conversion
+     sweep 2026-07-14, Journey E finding M1 — the paid funnel's terminal step). */
+  .signupSurface,
+  .signupSurface[data-warm='true'] {
     grid-template-columns: 1fr;
     gap: 2.25rem;
   }

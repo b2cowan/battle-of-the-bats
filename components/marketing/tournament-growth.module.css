@@ -158,11 +158,6 @@
     left: 1rem;
     right: 1rem;
     justify-content: center;
-    bottom: 0.75rem;
-  }
-
-  .poweredByWithBanner {
-    bottom: 7.75rem;
   }
 
   .banner,
@@ -181,5 +176,27 @@
   .dismissBtn {
     grid-column: 3;
     grid-row: 1;
+  }
+}
+
+/* The tournament mobile tab bar (BottomNav, ≤900px, z-index 200) owns the bottom
+   edge — lift the fixed growth chrome clear of it or its CTAs are untappable
+   (conversion sweep 2026-07-14, Journey F finding 1: "Run an event" sat under
+   the tab bar and real taps could not land). */
+@media (max-width: 900px) {
+  .poweredBy,
+  .banner {
+    bottom: calc(4.25rem + env(safe-area-inset-bottom));
+  }
+
+  .poweredByWithBanner {
+    bottom: calc(8.5rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* ≤720px the banner's CTAs stack, so it's taller — badge needs more clearance. */
+@media (max-width: 720px) {
+  .poweredByWithBanner {
+    bottom: calc(11rem + env(safe-area-inset-bottom));
   }
 }

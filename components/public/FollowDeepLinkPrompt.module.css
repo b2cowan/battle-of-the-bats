@@ -9,7 +9,10 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  max-width: min(92vw, 460px);
+  /* Real width, not just a cap — as a shrink-to-fit fixed flex row, max-width alone
+     let long team names crush the text column to ~76px and wrap 7 lines (conversion
+     sweep 2026-07-14, Journey A finding B). */
+  width: min(92vw, 460px);
   padding: 0.6rem 0.7rem 0.6rem 0.85rem;
   border: 1px solid var(--logic-lime);
   border-radius: var(--radius);

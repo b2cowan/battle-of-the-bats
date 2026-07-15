@@ -104,6 +104,8 @@ export default function TournamentAcquisitionBanner({
         onClick={() => {
           localStorage.setItem(dismissKey, '1');
           setDismissed(true);
+          // Same-page listeners (the Powered-by badge's offset) react immediately.
+          window.dispatchEvent(new Event('flhq-acq-banner-dismissed'));
         }}
         aria-label="Dismiss"
       >
