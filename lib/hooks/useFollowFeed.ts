@@ -41,6 +41,9 @@ export function useFollowFeed({ teams, intervalMs = 30_000, idleIntervalMs = 5 *
   const hasTeams = teams.length > 0;
   const [entries, setEntries] = useState<FollowFeedEntry[]>(initialEntries ?? []);
   const [loading, setLoading] = useState(!initialEntries);
+  // S2: when the last successful fetch landed — feeds the quiet "updated Xs ago"
+  // hint so live-poll freshness is visible. Null until the first client fetch.
+  const [updatedAt, setUpdatedAt] = useState<number | null>(null);
   // Stable key so the fetch effect only re-runs when the actual team set changes,
   // not on every re-render of the parent (teams is a fresh array each render).
   const teamsKey = teams.map(t => `${t.orgSlug}/${t.tournamentSlug}/${t.teamId}`).sort().join(',');
@@ -57,9 +60,11 @@ export function useFollowFeed({ teams, intervalMs = 30_000, idleIntervalMs = 5 *
       // A fresh server-computed seed for THIS exact team set (e.g. right after
       // claiming device follows onto the account, which re-renders with new
       // `initialEntries`) can be shown immediately with no flash; otherwise
-      // clear so a stale prior team's data can't render mid-fetch.
+      // clear so a stale prior team's data can't render mid-fetch. updatedAt
+      // resets too — the old team set's poll time must not caption the new one.
       setEntries(initialEntries ?? []);
       setLoading(!initialEntries);
+      setUpdatedAt(null);
     }
     renderedKeyRef.current = teamsKey;
 
@@ -79,6 +84,7 @@ export function useFollowFeed({ teams, intervalMs = 30_000, idleIntervalMs = 5 *
       if (!cancelled && seq === requestSeq) {
         if (data) {
           setEntries(data);
+          setUpdatedAt(Date.now());
           lastHadLive = data.some(e => e.group === 'live');
         }
         if (showLoading) setLoading(false);
@@ -110,6 +116,6 @@ export function useFollowFeed({ teams, intervalMs = 30_000, idleIntervalMs = 5 *
     // eslint-disable-next-line react-hooks/exhaustive-deps -- teamsKey (derived from teams) and initialEntries are the intentional deps; the effect re-closes over fresh values whenever teamsKey actually changes
   }, [teamsKey, hasTeams, intervalMs, idleIntervalMs]);
 
-  if (!hasTeams) return { entries: [] as FollowFeedEntry[], loading: false };
-  return { entries, loading };
+  if (!hasTeams) return { entries: [] as FollowFeedEntry[], loading: false, updatedAt: null };
+  return { entries, loading, updatedAt };
 }

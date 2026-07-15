@@ -532,6 +532,19 @@
   transition: color 0.15s, transform 0.12s;
 }
 
+/* S6: rail placeholder while team contexts resolve — slots for the shared
+   AdminSkeleton shimmer blocks (icon square + label bar per tab). */
+.bottomTabSkeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+.bottomTabSkeletonIcon {
+  border-radius: 6px;
+}
+
 .bottomTab:active {
   transform: scale(0.94);
 }

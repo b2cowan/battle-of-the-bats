@@ -85,7 +85,7 @@ export default function FollowingList({
             <Link href="/discover" className={styles.cta}>Browse tournaments →</Link>
           </div>
         ) : (
-          <FollowFeed entries={feed.entries} loading={feed.loading} />
+          <FollowFeed entries={feed.entries} loading={feed.loading} updatedAt={feed.updatedAt} />
         )}
       </div>
     );
@@ -127,7 +127,7 @@ export default function FollowingList({
       {accountFollows.length > 0 ? (
         <>
           {showClaim && <p className={styles.sectionLabel}>On your account</p>}
-          <FollowFeed entries={feed.entries} loading={feed.loading} />
+          <FollowFeed entries={feed.entries} loading={feed.loading} updatedAt={feed.updatedAt} />
         </>
       ) : nothingYet ? (
         <div className={styles.empty}>

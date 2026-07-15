@@ -35,6 +35,10 @@ export interface ViewerHat {
   /** What the row names: the coached team, or the org for admin/official rows. */
   label: string;
   href: string;
+  /** Coach hats only: the tournament registration (`teams.id`) on THIS event —
+   *  powers the sheet's one-tap own-team alerts row (N3b). Never derive this from
+   *  `href` (an upgraded team's href points at a Premium slug, not the team id). */
+  teamId?: string;
 }
 
 export interface TournamentViewer {
@@ -75,6 +79,7 @@ export async function getTournamentViewer(params: {
     kind: 'coach',
     label: team.name,
     href: premiumSlugs[i] ? `/${premiumSlugs[i]}/coaches` : coachTeamPath(team.id),
+    teamId: team.registrations.find(reg => reg.tournamentId === params.tournamentId)?.id,
   }));
 
   if (staffCtx && staffCtx.org.id === params.orgId) {

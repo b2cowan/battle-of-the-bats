@@ -15,7 +15,7 @@
 | Plan (public name) | Monthly | Annual | Capacity | Purchasable today? | Status of current numbers |
 |---|---|---|---|---|---|
 | **Tournament** (free) | Free | Free | 1 tournament · 3 staff seats | Yes (self-serve) | Live |
-| **Tournament Plus** | $39 | $390 | Unlimited | Yes (self-serve) | Live |
+| **Tournament Plus** | $39 *(Founding Season: $0 — see Promotions)* | $390 | Unlimited | Yes (self-serve) | Live |
 | **League** (free floor) | Free | Free | 1 season / 1 division / 8 teams | No — **Held** for launch | Built, internal key `free_floor='league_starter'` |
 | **League Plus** | $89 | $890 | Unlimited | No — early-access / express-interest | Live (app label is "League Plus") |
 | **Club** | **$219** *(was $179)* | **$2,190** | **Up to 15 teams** | No — early-access | **Built dev 2026-06-22** (app config repriced; Stripe live prices = owner step) · price = Target/anchor |
@@ -23,6 +23,10 @@
 | **Premium Coaches Portal** (standalone) | $29 | $290 | One team | No — early-access | Live |
 
 **Annual convention:** ≈ 2 months free (pay for 10). $219→$2,190 and $379→$3,790 follow it.
+
+## Promotions (live)
+
+- **Founding Season — Tournament Plus free until 2027-01-01.** Runtime: `lib/plan-config.ts` `FOUNDING_SEASON_END` (env-overridable via `NEXT_PUBLIC_FOUNDING_SEASON_END`), `isFoundingSeasonActive()`. This is a **promo, not a repricing** — the $39/$390 list price stands and is what post-promo billing anchors to. Customer-facing framing lives in `PRICING_PAGE_COPY.md` §16. *(Line added 2026-07-14 — drift repair: this doc was the one place the live promo wasn't recorded, flagged by the Free App Conversion sweep.)*
 
 ---
 

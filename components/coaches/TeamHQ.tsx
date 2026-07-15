@@ -5,6 +5,7 @@ import Countdown from '@/components/public/Countdown';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import type { CoachTournamentStatus } from '@/lib/coach-status-model';
 import type { CoachTournamentPhase } from '@/lib/coach-tournament-phase';
+import type { BasicCoachRegistrationGame } from '@/lib/basic-coach-teams';
 import styles from './TeamHQ.module.css';
 
 // Shared Team HQ shell (slice 5g). Source-agnostic: callers pass already-computed
@@ -18,6 +19,10 @@ type StandaloneTeamHQProps = {
   variant: 'standalone';
   rosterCount: number;
   nextEvent: { title: string; startsAt: string } | null;
+  /** C5: registration-fed fallback for the schedule tile — a freshly-claimed team's
+   *  Overview said "Schedule: None" during a live tournament. Only consulted when
+   *  `nextEvent` is null (the coach's own entries always win the tile). */
+  registrationGame?: BasicCoachRegistrationGame | null;
   unpaidTotal: number;
   unpaidCount: number;
   recipientCount: number;
@@ -96,12 +101,27 @@ function formatDateOnly(value: string | null): string | null {
 function StandaloneTeamHQ({
   rosterCount,
   nextEvent,
+  registrationGame,
   unpaidTotal,
   unpaidCount,
   recipientCount,
   historyCount,
   latestHistoryLabel,
 }: StandaloneTeamHQProps) {
+  // C5: with no self-entered events, borrow the live/next game from the team's
+  // tournament registration instead of claiming "None" mid-event.
+  const regGame = nextEvent ? null : registrationGame ?? null;
+  const regGameScore = regGame && regGame.myScore !== null && regGame.oppScore !== null
+    ? `${regGame.myScore}–${regGame.oppScore}`
+    : null;
+  const regGameSub = regGame
+    ? [
+        regGame.dateLabel,
+        regGame.timeLabel,
+        regGame.location,
+        regGame.tournamentName ? `from ${regGame.tournamentName}` : null,
+      ].filter(Boolean).join(' · ')
+    : null;
   return (
     <section className={styles.hqStrip} aria-label="Team HQ">
       <div className={styles.hqItem}>
@@ -112,18 +132,35 @@ function StandaloneTeamHQ({
           <p>{rosterCount === 1 ? '1 player' : `${rosterCount} players`}</p>
         </div>
       </div>
-      <div className={styles.hqItem}>
+      <div className={`${styles.hqItem}${regGame ? ` ${styles.hqItemReg}` : ''}`}>
         <div className={styles.hqIcon}><CalendarClock size={17} aria-hidden /></div>
         <div>
           <span className={styles.hqLabel}>Schedule</span>
-          <strong>{nextEvent ? 'Next' : 'None'}</strong>
-          <p>
-            {nextEvent ? (
-              <>
-                {nextEvent.title} - <LocalDateTime value={nextEvent.startsAt} />
-              </>
-            ) : 'No upcoming events'}
-          </p>
+          {regGame ? (
+            <>
+              <strong>
+                vs {regGame.opponentName}
+                {regGame.isLive && regGameScore ? ` · ${regGameScore}` : ''}
+                {regGame.isLive && (
+                  <span className={styles.hqLive}>
+                    <span className={styles.hqLiveDot} aria-hidden />LIVE
+                  </span>
+                )}
+              </strong>
+              <p>{regGameSub}</p>
+            </>
+          ) : (
+            <>
+              <strong>{nextEvent ? 'Next' : 'None'}</strong>
+              <p>
+                {nextEvent ? (
+                  <>
+                    {nextEvent.title} - <LocalDateTime value={nextEvent.startsAt} />
+                  </>
+                ) : 'No upcoming events'}
+              </p>
+            </>
+          )}
         </div>
       </div>
       <div className={styles.hqItem}>

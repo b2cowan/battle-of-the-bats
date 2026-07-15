@@ -16,10 +16,13 @@ import styles from './ScopeShelf.module.css';
  * has real content (the caller gates it).
  */
 
-type Section = 'roster' | 'schedule' | 'fees' | 'announcements';
+type ContentSection = 'roster' | 'schedule' | 'fees' | 'announcements';
+/** 'overview' (conversion sweep C4) = the team-level catch-all on the Overview page —
+ *  one whole-team line instead of a per-section value phrase. Same shelf, same gate. */
+type Section = ContentSection | 'overview';
 
 // Per-section value phrase + a whole-team teaser (de-duped per section so nothing repeats).
-const COPY: Record<Section, { value: string; teaser: string }> = {
+const COPY: Record<ContentSection, { value: string; teaser: string }> = {
   roster: {
     value: 'positions, availability, attendance & game lineups',
     teaser: 'plus a season budget and documents for your whole team',
@@ -38,7 +41,7 @@ const COPY: Record<Section, { value: string; teaser: string }> = {
   },
 };
 
-const SECTION_LABEL: Record<Section, string> = {
+const SECTION_LABEL: Record<ContentSection, string> = {
   roster: 'roster',
   schedule: 'schedule',
   fees: 'fees',
@@ -46,7 +49,6 @@ const SECTION_LABEL: Record<Section, string> = {
 };
 
 export default async function ScopeShelf({ basicTeamId, section }: { basicTeamId: string; section: Section }) {
-  const copy = COPY[section];
   // The upgrade link follows the SAME server-side checkout gate as /coaches/start: open in dev
   // (team plan ungated) → the real checkout; gated in prod → the info/express-interest explainer.
   // The gate lives in each environment's own DB and fails closed, so a prod deploy can never flip it.
@@ -60,7 +62,13 @@ export default async function ScopeShelf({ basicTeamId, section }: { basicTeamId
     <footer className={styles.footer}>
       <p className={styles.footerEyebrow}>Premium Coaches Portal</p>
       <p className={styles.footerBody}>
-        On {SECTION_LABEL[section]}: {copy.value} — {copy.teaser}. Your free tools stay free.
+        {section === 'overview' ? (
+          <>For this team: game lineups, attendance, dues automation, documents &amp; a season budget.</>
+        ) : (
+          <>On {SECTION_LABEL[section]}: {COPY[section].value} — {COPY[section].teaser}.</>
+        )}
+        {/* Price stated before the tap on every pitch surface (conversion sweep C3). */}
+        {' '}Your free tools stay free. Premium is $29/month per team.
       </p>
       <Link href={href} className={styles.footerLink}>{linkLabel}</Link>
     </footer>

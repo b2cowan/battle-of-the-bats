@@ -39,7 +39,8 @@
   bottom: 1rem;
   z-index: 75;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  /* icon · body · single CTA · dismiss (C6a: one audience, one CTA per impression) */
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 0.85rem;
   width: min(760px, calc(100vw - 2rem));
@@ -61,6 +62,18 @@
   background: rgba(255,255,255,0.045);
   border-color: rgba(var(--blueprint-blue-rgb), 0.28);
   box-shadow: none;
+}
+
+/* C6a organizer-framed impression — blue accent (the coach impression keeps the
+   lime base). Matches the approved mockup's banner.blue treatment. */
+.bannerOrganizer {
+  border-color: rgba(var(--info-rgb), 0.3);
+}
+
+.bannerIconBlue {
+  color: #93c5fd;
+  background: rgba(var(--info-rgb), 0.12);
+  border-color: rgba(var(--info-rgb), 0.3);
 }
 
 .bannerIcon,
@@ -98,7 +111,7 @@
 }
 
 .bannerCta,
-.bannerSecondaryCta,
+.bannerCtaGhostBlue,
 .confirmationLink {
   display: inline-flex;
   align-items: center;
@@ -114,14 +127,15 @@
   white-space: nowrap;
 }
 
-.bannerSecondaryCta {
+/* C6a organizer CTA — blue ghost, one visual voice per audience. */
+.bannerCtaGhostBlue {
   background: transparent;
-  color: var(--logic-lime, #d9f99d);
-  border: 1px solid rgba(217,249,157,0.4);
+  color: #93c5fd;
+  border: 1px solid rgba(var(--info-rgb), 0.4);
 }
 
 .bannerCta:hover,
-.bannerSecondaryCta:hover,
+.bannerCtaGhostBlue:hover,
 .confirmationLink:hover {
   filter: brightness(0.96);
 }
@@ -167,7 +181,7 @@
   }
 
   .bannerCta,
-  .bannerSecondaryCta,
+  .bannerCtaGhostBlue,
   .confirmationLink {
     grid-column: 1 / -1;
     width: 100%;

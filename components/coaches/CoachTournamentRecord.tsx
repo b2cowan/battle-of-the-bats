@@ -2,7 +2,12 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
-import { canUserAccessTournamentRegistration, findLinkedBasicTeamForRegistration } from '@/lib/basic-coach-teams';
+import {
+  canUserAccessTournamentRegistration,
+  findLinkedBasicTeamForRegistration,
+  formatGameDateLabel,
+  formatGameTimeLabel,
+} from '@/lib/basic-coach-teams';
 import {
   registrationStatusBadge,
   registrationStatusLabel,
@@ -211,12 +216,8 @@ export default async function CoachTournamentRecord({
     return {
       id: g.id,
       href: canLinkPublic ? `/${org!.slug}/${tournament!.slug}/schedule/${g.id}` : null,
-      dateLabel: g.game_date
-        ? new Date(g.game_date + 'T00:00:00').toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })
-        : 'TBD',
-      timeLabel: g.game_time
-        ? new Date(`1970-01-01T${g.game_time}`).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })
-        : null,
+      dateLabel: formatGameDateLabel(g.game_date),
+      timeLabel: formatGameTimeLabel(g.game_time),
       date: g.game_date,
       isHome,
       opponentName,

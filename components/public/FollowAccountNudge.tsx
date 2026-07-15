@@ -11,7 +11,7 @@
  */
 import { useEffect, useState } from 'react';
 import { Star } from 'lucide-react';
-import { readFollowedTeam, type FollowedTeam } from '@/lib/follow';
+import { readFollowedTeam, syncFollowToAccount, type FollowedTeam } from '@/lib/follow';
 import { getSession, signIn } from '@/lib/auth';
 import BottomSheet from '@/components/admin/BottomSheet';
 import styles from './FollowAccountNudge.module.css';
@@ -23,7 +23,19 @@ interface Props {
 
 const DISMISS_KEY = 'fl_follow_account_nudge_dismissed';
 const DISMISS_MS = 30 * 24 * 60 * 60 * 1000; // 30 days — offer again occasionally, don't nag
-const RETURN_TO = '/following';
+const FALLBACK_RETURN = '/following';
+
+// Land back on the page the fan was watching (their intent), not a different tab
+// (conversion sweep S4). The sign-in link already honors `next`; this keeps the
+// signup path on the same rule. Client-only by construction — the sheet never
+// renders during SSR, so window is always available here.
+function returnPath(): string {
+  try {
+    return window.location.pathname + window.location.search;
+  } catch {
+    return FALLBACK_RETURN;
+  }
+}
 
 export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
   const [team, setTeam] = useState<FollowedTeam | null>(null);
@@ -36,6 +48,7 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let pendingShow: number | undefined;
     const evaluate = async () => {
       let dismissed = false;
       try {
@@ -52,14 +65,22 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
         const session = await getSession();
         if (session?.user) return; // already signed in — their follow syncs automatically
       } catch { /* treat as signed out; the follow already saved locally regardless */ }
-      setTeam(followed);
-      setOpen(true);
+      // Let the follow LAND first — the sheet on the same tap read as an instant
+      // signup wall (conversion sweep C1). A beat later, the ask feels like a
+      // follow-up, not a toll. Timer is cleared if the visitor navigates away;
+      // a rapid second follow replaces (never stacks) the pending timer.
+      window.clearTimeout(pendingShow);
+      pendingShow = window.setTimeout(() => {
+        setTeam(followed);
+        setOpen(true);
+      }, 1600);
     };
     // Only react to a NEW follow, not on mount (avoid popping for someone who followed
     // long ago and returns) — so we listen for the change event, not the initial state.
     window.addEventListener('fl-follow-change', evaluate);
     window.addEventListener('storage', evaluate);
     return () => {
+      window.clearTimeout(pendingShow);
       window.removeEventListener('fl-follow-change', evaluate);
       window.removeEventListener('storage', evaluate);
     };
@@ -72,6 +93,9 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Synchronous re-entrancy guard — the button's disabled={busy} only takes
+    // effect after a re-render, so a fast double-Enter could double-POST without it.
+    if (busy) return;
     setError(null);
     if (password.length < 8) { setError('Use a password of at least 8 characters.'); return; }
     setBusy(true);
@@ -79,19 +103,25 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
       const parts = name.trim().split(/\s+/).filter(Boolean);
       const firstName = parts[0] || 'Fan';
       const lastName = parts.slice(1).join(' ') || firstName;
+      const next = returnPath();
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // orgName OMITTED → account-only (no org, no role). next → back to the Follows feed.
-        body: JSON.stringify({ email: email.trim(), password, firstName, lastName, next: RETURN_TO }),
+        // orgName OMITTED → account-only (no org, no role). next → the page they were on.
+        body: JSON.stringify({ email: email.trim(), password, firstName, lastName, next }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setError(data.error ?? 'Could not create your account. Please try again.'); return; }
       if (data.requiresEmailVerification) { setStage('check-email'); return; }
       // Dev / no-verification: the account exists but the browser has no session yet — sign in,
-      // then land on the Follows feed where the "claim your device follows" step runs.
+      // then land back where they were following along.
       try { await signIn(email.trim(), password); } catch { /* fall through to redirect anyway */ }
-      window.location.href = data.next || RETURN_TO;
+      // The nudge promised "keep this follow" — attach the team that triggered it to the
+      // fresh account (conversion sweep C2; THIS entry point only, the general claim flow
+      // stays explicit). The shared mirror is keepalive'd, so it survives the redirect
+      // below; anonymous no-op if sign-in fell through.
+      if (team) syncFollowToAccount('follow', { teamId: team.id, orgSlug, tournamentSlug });
+      window.location.href = data.next || next;
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -101,7 +131,7 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
 
   if (!open || !team) return null;
 
-  const loginHref = `/auth/login?next=${encodeURIComponent(RETURN_TO)}`;
+  const loginHref = `/auth/login?next=${encodeURIComponent(returnPath())}`;
 
   return (
     <BottomSheet open={open} onClose={dismiss} ariaLabel="Create an account to follow across devices">

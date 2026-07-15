@@ -82,8 +82,10 @@ export default async function CoachesPortalPage() {
       : hasStandalone
         ? {
             // standalone-only → premium upsell (ghost; lower-priority secondary action)
+            // Canon (PLAN_PRICING_FACTS coach bridge, /strategy 2026-07-14): the portal is
+            // absorbed at CLUB tier only — never imply any paid org plan carries it.
             title: 'Take your team further',
-            body: 'Premium adds the serious-operator tools — lineup builder, dues automation, team budget, and document storage. It carries over automatically if your organization joins FieldLogicHQ.',
+            body: 'Premium adds the serious-operator tools — lineup builder, dues automation, team budget, and document storage. If your organization joins FieldLogicHQ on the Club plan, your portal is included — you stop paying for it.',
             href: COACHES_START_PATH,
             label: 'Express interest',
             primary: false,
@@ -247,6 +249,30 @@ export default async function CoachesPortalPage() {
             <Link href={pitch.href} className={pitch.primary ? 'btn btn-lime btn-sm' : 'btn btn-ghost btn-sm'}>
               {pitch.label}
             </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Organizer cross-sell (conversion sweep C6c) — coaches are a high-intent
+          audience for running their own event, and this hub had zero doors to it.
+          Same demoted ruled-banner weight as the pitch above (CP-4: never a card
+          at the coach's-own-content weight), ghost CTA, always low-pressure.
+          CP-10 gating: suppressed while a claim is pending (the claim prompt is
+          the action — no competing CTA) and on the truly-empty hub (the empty
+          state owns that moment). It DOES show for Premium/has-both coaches —
+          unlike the team-tools pitch above, running an event is orthogonal to
+          what they already have. */}
+      {claimable.length === 0 && !isEmpty && (
+        <div className={styles.pitchBanner}>
+          <div className={styles.pitchBannerText}>
+            <p className={styles.pitchBannerTitle}>Run your own event</p>
+            <p className={styles.pitchBannerBody}>
+              Tournaments with live scores, standings &amp; brackets — like the ones your teams
+              play in. Free to start.
+            </p>
+          </div>
+          <div className={styles.pitchBannerActions}>
+            <Link href="/start/tournament" className="btn btn-ghost btn-sm">Run an event</Link>
           </div>
         </div>
       )}

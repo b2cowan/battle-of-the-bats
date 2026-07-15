@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Trophy, X } from 'lucide-react';
+import { ClipboardList, Trophy, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { readFollowedTeam } from '@/lib/follow';
 import { buildTeamWorkspaceAcquisitionHref, buildTournamentAcquisitionHref, trackTournamentAcquisition } from './tournament-acquisition';
 import styles from './tournament-growth.module.css';
 
@@ -13,6 +14,18 @@ type TournamentAcquisitionBannerProps = {
   tournamentName: string;
 };
 
+type BannerVariant = 'coach' | 'organizer';
+
+// C6a: one audience per impression. The old single banner spoke to coaches in the
+// headline and organizers in the CTA at the same time. Variant pick (documented
+// heuristic, client-only — the SW offline-caches this page's HTML as anonymous
+// content, so identity can never be server-rendered here):
+//   1. The device follows a team in THIS tournament → team-affiliated visitor
+//      (parent/coach) → coach-framed.
+//   2. Otherwise alternate per impression via a device-wide rotor key, so an
+//      anonymous returning visitor sees both pitches over time.
+const VARIANT_ROTOR_KEY = 'flhq-acq-banner-variant';
+
 export default function TournamentAcquisitionBanner({
   orgSlug,
   tournamentSlug,
@@ -20,9 +33,10 @@ export default function TournamentAcquisitionBanner({
 }: TournamentAcquisitionBannerProps) {
   const pathname = usePathname();
   const [dismissed, setDismissed] = useState(true);
+  const [variant, setVariant] = useState<BannerVariant | null>(null);
   const dismissKey = `flhq-acq-dismiss-public_tournament_banner-${orgSlug}-${tournamentSlug}`;
   const hiddenForFlow = pathname?.endsWith('/register') || pathname?.includes('/official');
-  const href = useMemo(() => buildTournamentAcquisitionHref({
+  const organizerHref = useMemo(() => buildTournamentAcquisitionHref({
     source: 'public_tournament_banner',
     orgSlug,
     tournamentSlug,
@@ -36,13 +50,31 @@ export default function TournamentAcquisitionBanner({
   }), [orgSlug, tournamentSlug]);
 
   useEffect(() => {
-    window.setTimeout(() => {
-      setDismissed(localStorage.getItem(dismissKey) === '1');
+    // Deferred a tick so SSR/CSR never mismatch (both render the dismissed=true null).
+    // Timer is cleared on dep change/unmount so a stale tournament's pick can't land
+    // after an SPA navigation (and dev StrictMode doesn't double-advance the rotor).
+    const timer = window.setTimeout(() => {
+      const isDismissed = localStorage.getItem(dismissKey) === '1';
+      setDismissed(isDismissed);
+      if (isDismissed) return;
+      let picked: BannerVariant = 'coach';
+      try {
+        if (readFollowedTeam(orgSlug, tournamentSlug)) {
+          picked = 'coach';
+        } else {
+          picked = localStorage.getItem(VARIANT_ROTOR_KEY) === 'coach' ? 'organizer' : 'coach';
+        }
+        localStorage.setItem(VARIANT_ROTOR_KEY, picked);
+      } catch { /* storage unavailable → coach default */ }
+      setVariant(picked);
     }, 0);
-  }, [dismissKey]);
+    return () => window.clearTimeout(timer);
+  }, [dismissKey, orgSlug, tournamentSlug]);
+
+  const activeHref = variant === 'organizer' ? organizerHref : teamHref;
 
   useEffect(() => {
-    if (dismissed || hiddenForFlow) return;
+    if (dismissed || hiddenForFlow || !variant) return;
     const key = `flhq-acq-view-public_tournament_banner-${orgSlug}-${tournamentSlug}`;
     if (sessionStorage.getItem(key) === '1') return;
     sessionStorage.setItem(key, '1');
@@ -53,24 +85,38 @@ export default function TournamentAcquisitionBanner({
       orgSlug,
       tournamentSlug,
       currentPath: window.location.pathname,
-      ctaHref: href,
+      ctaHref: activeHref,
     });
-  }, [dismissed, hiddenForFlow, href, orgSlug, tournamentSlug]);
+  }, [dismissed, hiddenForFlow, variant, activeHref, orgSlug, tournamentSlug]);
 
-  if (dismissed || hiddenForFlow) return null;
+  if (dismissed || hiddenForFlow || !variant) return null;
+
+  const isCoach = variant === 'coach';
 
   return (
-    <aside className={styles.banner} aria-label="Run your own tournament">
-      <div className={styles.bannerIcon}>
-        <Trophy size={18} />
+    <aside
+      className={isCoach ? styles.banner : `${styles.banner} ${styles.bannerOrganizer}`}
+      aria-label={isCoach ? 'Set up your team on FieldLogicHQ' : 'Run your own event on FieldLogicHQ'}
+    >
+      <div className={isCoach ? styles.bannerIcon : `${styles.bannerIcon} ${styles.bannerIconBlue}`}>
+        {isCoach ? <Trophy size={18} /> : <ClipboardList size={18} />}
       </div>
       <div className={styles.bannerBody}>
-        <strong>Keep teams organized after {tournamentName}</strong>
-        <span>Coaches can upgrade their free tournament records into a season workspace; organizers can still start their own event free.</span>
+        {isCoach ? (
+          <>
+            <strong>Keep this team organized after {tournamentName}</strong>
+            <span>Roster, schedule &amp; fees in a free team home.</span>
+          </>
+        ) : (
+          <>
+            <strong>Run your own event on FieldLogicHQ</strong>
+            <span>Free to start · live scores &amp; brackets like this one.</span>
+          </>
+        )}
       </div>
       <Link
-        href={teamHref}
-        className={styles.bannerSecondaryCta}
+        href={activeHref}
+        className={isCoach ? styles.bannerCta : styles.bannerCtaGhostBlue}
         onClick={() => trackTournamentAcquisition({
           eventType: 'tournament_plus_acquisition_cta_clicked',
           acquisitionSource: 'public_tournament_banner',
@@ -78,25 +124,10 @@ export default function TournamentAcquisitionBanner({
           orgSlug,
           tournamentSlug,
           currentPath: window.location.pathname,
-          ctaHref: teamHref,
+          ctaHref: activeHref,
         })}
       >
-        Coaches Portal
-      </Link>
-      <Link
-        href={href}
-        className={styles.bannerCta}
-        onClick={() => trackTournamentAcquisition({
-          eventType: 'tournament_plus_acquisition_cta_clicked',
-          acquisitionSource: 'public_tournament_banner',
-          surface: 'public_home',
-          orgSlug,
-          tournamentSlug,
-          currentPath: window.location.pathname,
-          ctaHref: href,
-        })}
-      >
-        Run an event
+        {isCoach ? 'Set up your team — free' : 'Run an event — free'}
       </Link>
       <button
         type="button"

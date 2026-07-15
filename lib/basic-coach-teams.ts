@@ -3,6 +3,7 @@ import { isPlatformAdminEmail } from './platform-auth';
 import { deriveCoachLifecycleChip } from './coach-tournament-lifecycle';
 import { buildCoachTournamentStatus } from './coach-status-model';
 import { excludeActivePremiumUpgrades } from './coach-team-page';
+import { tournamentNow } from './timezone';
 
 export type BasicCoachTeam = {
   id: string;
@@ -894,6 +895,165 @@ export async function getBasicCoachTournamentHistoryForTeam(
       };
     })
     .sort((a, b) => b.registration.registeredAt.localeCompare(a.registration.registeredAt));
+}
+
+/** The Overview schedule tile's registration-fed game (conversion sweep C5): what the
+ *  tile shows when the coach's self-entered schedule is empty but the team is in a
+ *  tournament — their live game right now, else the next scheduled one. */
+export type BasicCoachRegistrationGame = {
+  opponentName: string;
+  myScore: number | null;
+  oppScore: number | null;
+  isLive: boolean;
+  /** "Today" or a short calendar label like "Sat, Jul 18". */
+  dateLabel: string;
+  /** Local start time — upcoming games only (a live game is on right now). */
+  timeLabel: string | null;
+  location: string | null;
+  tournamentName: string;
+};
+
+// Empty-slot sentinel some games use instead of NULL for an unassigned team
+// (matches the tournament record / public game page resolution).
+const NIL_GAME_TEAM_UUID = '00000000-0000-0000-0000-000000000000';
+
+/** Short calendar label for a game date ("Sat, Jul 18"); 'TBD' when unscheduled.
+ *  Shared by the tournament record and the Overview tile so the two never drift. */
+export function formatGameDateLabel(gameDate: string | null): string {
+  return gameDate
+    ? new Date(gameDate + 'T00:00:00').toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })
+    : 'TBD';
+}
+
+/** Local start-time label ("9:00 a.m."); null when no time is set. */
+export function formatGameTimeLabel(gameTime: string | null): string | null {
+  return gameTime
+    ? new Date(`1970-01-01T${gameTime}`).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })
+    : null;
+}
+
+/**
+ * Live-now (else next-scheduled) game across a team's ACCEPTED tournament registrations,
+ * for the standalone Overview's schedule tile (C5). Takes the already-loaded history
+ * (the page fetches it anyway); its three narrow queries (division visibility, games,
+ * accepted-opponent names) run concurrently — games/names fetch for ALL accepted
+ * registrations and the published-division reveal rule filters in memory. Honors the
+ * same reveal rules as the tournament record: only divisions with a PUBLISHED schedule
+ * surface games, and opponent names resolve only from accepted teams (else placeholder).
+ * "Live" mirrors CoachLiveSchedule: a submitted score on a game dated today, in the
+ * tournament timezone (never raw UTC — the J6-056 rollover trap).
+ */
+export async function getNextRegistrationGameForTeam(
+  history: BasicCoachTournamentHistoryEntry[],
+): Promise<BasicCoachRegistrationGame | null> {
+  const accepted = history.filter(
+    entry => entry.registration.status === 'accepted' && entry.tournament && entry.registration.tournamentId,
+  );
+  if (accepted.length === 0) return null;
+
+  const divisionIds = [...new Set(
+    accepted.map(entry => entry.registration.divisionId).filter(Boolean),
+  )] as string[];
+  if (divisionIds.length === 0) return null;
+
+  const acceptedRegistrationIds = accepted.map(entry => entry.registration.id);
+  const tournamentIds = [...new Set(accepted.map(entry => entry.registration.tournamentId))] as string[];
+  const registrationIdList = acceptedRegistrationIds.join(',');
+
+  const [
+    { data: divisions, error: divisionError },
+    { data: games, error: gamesError },
+    { data: acceptedTeams, error: teamsError },
+  ] = await Promise.all([
+    supabaseAdmin
+      .from('divisions')
+      .select('id, schedule_visibility')
+      .in('id', divisionIds),
+    supabaseAdmin
+      .from('games')
+      .select('game_date, game_time, location, home_team_id, away_team_id, home_score, away_score, status, tournament_id, home_placeholder, away_placeholder')
+      .in('tournament_id', tournamentIds)
+      .or(`home_team_id.in.(${registrationIdList}),away_team_id.in.(${registrationIdList})`)
+      .order('game_date', { ascending: true })
+      .order('game_time', { ascending: true }),
+    // Opponent names resolve from the accepted set only (same honest-reveal rule as the
+    // tournament record — never names a pending/waitlisted team).
+    supabaseAdmin
+      .from('teams')
+      .select('id, name')
+      .in('tournament_id', tournamentIds)
+      .eq('status', 'accepted'),
+  ]);
+  if (divisionError) throw divisionError;
+  if (gamesError) throw gamesError;
+  if (teamsError) throw teamsError;
+
+  const publishedDivisions = new Set(
+    ((divisions ?? []) as Array<{ id: string; schedule_visibility: string | null }>)
+      .filter(division => division.schedule_visibility === 'published')
+      .map(division => division.id),
+  );
+  const entries = accepted.filter(
+    entry => entry.registration.divisionId && publishedDivisions.has(entry.registration.divisionId),
+  );
+  if (entries.length === 0) return null;
+  const registrationIdSet = new Set(entries.map(entry => entry.registration.id));
+
+  type GameRow = {
+    game_date: string | null;
+    game_time: string | null;
+    location: string | null;
+    home_team_id: string | null;
+    away_team_id: string | null;
+    home_score: number | null;
+    away_score: number | null;
+    status: string;
+    tournament_id: string;
+    home_placeholder: string | null;
+    away_placeholder: string | null;
+  };
+  // The games query covered every accepted registration; the published-division
+  // reveal rule applies here, in memory.
+  const rows = ((games ?? []) as GameRow[]).filter(g =>
+    (g.home_team_id !== null && registrationIdSet.has(g.home_team_id)) ||
+    (g.away_team_id !== null && registrationIdSet.has(g.away_team_id)),
+  );
+  const { date: today, time: nowTime } = tournamentNow();
+
+  const liveGame = rows.find(g => g.status === 'submitted' && g.game_date === today) ?? null;
+  const upcomingGame = rows.find(g =>
+    g.status === 'scheduled' &&
+    g.game_date !== null &&
+    (g.game_date > today || (g.game_date === today && (!g.game_time || g.game_time >= nowTime))),
+  ) ?? null;
+  const game = liveGame ?? upcomingGame;
+  if (!game) return null;
+
+  const isHome = game.home_team_id !== null && registrationIdSet.has(game.home_team_id);
+  const opponentId = isHome ? game.away_team_id : game.home_team_id;
+  const teamNameById = new Map(
+    ((acceptedTeams ?? []) as Array<{ id: string; name: string }>).map(t => [t.id, t.name] as const),
+  );
+  const opponentName =
+    (opponentId && opponentId !== NIL_GAME_TEAM_UUID ? teamNameById.get(opponentId) : undefined)
+      ?? (isHome ? game.away_placeholder : game.home_placeholder)
+      ?? 'TBD';
+
+  // The games query guarantees one side is ours, so this lookup always succeeds.
+  const myRegistrationId = isHome ? game.home_team_id : game.away_team_id;
+  const entry = entries.find(e => e.registration.id === myRegistrationId);
+
+  const isLive = game === liveGame;
+  return {
+    opponentName,
+    myScore: isHome ? game.home_score : game.away_score,
+    oppScore: isHome ? game.away_score : game.home_score,
+    isLive,
+    dateLabel: game.game_date === today ? 'Today' : formatGameDateLabel(game.game_date),
+    timeLabel: isLive ? null : formatGameTimeLabel(game.game_time),
+    location: game.location,
+    tournamentName: entry?.tournament?.name ?? '',
+  };
 }
 
 export async function getBasicCoachTournamentSummary(params: {

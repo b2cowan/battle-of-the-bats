@@ -43,25 +43,29 @@ export default async function AccountPage() {
         {signedIn ? (
           /* Account things ONLY (owner direction 2026-07-14): the tabs already carry
              Discover/Following, and Your FieldLogicHQ is the one door to every
-             workspace (incl. the coaches hub) — no duplicate destination rows here. */
+             workspace (incl. the coaches hub) — no duplicate destination rows here.
+             The organizer door below is the one deliberate exception (C6b): mobile
+             had no organizer entry outside a dismissible banner. */
           <>
             <Link href="/home" className={`${styles.cta} ${styles.blockBtn}`}>Your FieldLogicHQ →</Link>
             <Link href="/account/notifications" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Notification settings</Link>
+            <Link href="/start" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Run a tournament</Link>
             <AccountSignOutButton />
           </>
         ) : (
           <>
             <Link href="/auth/login" className={`${styles.cta} ${styles.blockBtn}`}>Sign in</Link>
             <Link href="/auth/signup?account=1&next=/discover" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Create free account</Link>
+            <Link href="/start" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Run a tournament</Link>
           </>
         )}
       </div>
 
-      {/* Quiet organizer note, pinned to the bottom of the viewport. */}
+      {/* Quiet device-vs-account note, pinned to the bottom of the viewport. (C6b
+          promoted the organizer footnote link into the ghost row above.) */}
       <p className={`${styles.note} ${styles.pinBottom}`}>
         Following works on this device without an account — sign in to keep your teams on every
-        device you use. Organizing an event?{' '}
-        <Link href="/start" className={styles.noteLink}>Run a tournament →</Link>
+        device you use.
       </p>
     </div>
   );

@@ -25,7 +25,7 @@
  */
 import { useState } from 'react';
 import Link from 'next/link';
-import { Heart } from 'lucide-react';
+import { Pin } from 'lucide-react';
 import RollingNumber from '@/components/public/RollingNumber';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
@@ -134,6 +134,10 @@ export default function CoachLiveSchedule({
               subtitle="Add it to your home screen for live game updates."
             />
           )}
+          {/* N3a: this is the anonymous DEVICE highlight, not alerts — a coach reading
+              "Follow this team" reasonably believed they'd enabled notifications. The
+              label + hint now say exactly what it does; own-team alerts live in the
+              account sheet on the public page (N3b). */}
           <div className={styles.controls}>
             <button
               type="button"
@@ -145,15 +149,15 @@ export default function CoachLiveSchedule({
               }
               aria-pressed={isFollowing}
             >
-              <Heart size={14} fill={isFollowing ? 'currentColor' : 'none'} aria-hidden />
-              {isFollowing ? 'Following' : 'Follow this team'}
+              <Pin size={14} fill={isFollowing ? 'currentColor' : 'none'} aria-hidden />
+              {isFollowing ? 'Highlighted' : 'Highlight my team'}
             </button>
             <span className={styles.followHint}>
               {isResult
                 ? 'Highlighted on the public schedule on this device.'
                 : isFollowing
-                  ? 'Highlighted on the public schedule & live scorebug on this device.'
-                  : 'Highlight your team on the public schedule & live scorebug.'}
+                  ? 'Pinned on this device’s public schedule & live scorebug.'
+                  : 'Pins your team on this device’s public schedule & live scorebug — it doesn’t send alerts.'}
             </span>
           </div>
         </>

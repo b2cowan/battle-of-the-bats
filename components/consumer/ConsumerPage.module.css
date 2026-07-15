@@ -102,6 +102,15 @@
   margin: 1.5rem 0 0.65rem;
 }
 
+/* S2: quiet freshness hint beside the "Live now" label while polling. */
+.updatedAgo {
+  margin-left: 0.6rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-weight: 500;
+  color: var(--white-40);
+}
+
 .list {
   display: flex;
   flex-direction: column;

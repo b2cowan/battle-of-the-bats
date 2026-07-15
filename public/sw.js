@@ -15,7 +15,11 @@
 
 /* ── Cache config ──────────────────────────────────────────────────────────── */
 
-const CACHE_VERSION = 'v3'; // v3: unified-app Phase 0 — clean refresh of pages that referenced old per-tournament/scorekeeper manifests
+// v4: purge DATA_CACHE copies of /api/public/tournament-viewer — per-user identity
+//     had been cached in the shared data cache (/review 2026-07-15).
+// v3: unified-app Phase 0 — clean refresh of pages that referenced old
+//     per-tournament/scorekeeper manifests.
+const CACHE_VERSION = 'v4';
 const SHELL_CACHE = 'flhq-shell-' + CACHE_VERSION; // precache + content-hashed static
 const PAGES_CACHE = 'flhq-pages-' + CACHE_VERSION; // last-good public tournament pages
 const DATA_CACHE  = 'flhq-data-'  + CACHE_VERSION; // last-good anonymous public API JSON
@@ -62,7 +66,13 @@ function isNeverCache(pathname) {
 }
 
 // Anonymous public API JSON — the only /api/ path we cache (last-good scores).
+// ⚠ tournament-viewer is carved OUT: it lives under /api/public/ for routing but
+// returns PER-USER identity (the account chip's hats). Cached in the shared
+// DATA_CACHE it would replay one user's identity to the next person on a shared
+// device offline (/review 2026-07-15) — excluded here it falls through to the
+// '/api/' never-cache rule and goes straight to network.
 function isPublicApi(pathname) {
+  if (pathname.indexOf('/api/public/tournament-viewer') === 0) return false;
   return pathname.indexOf('/api/public/') === 0;
 }
 

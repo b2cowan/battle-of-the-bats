@@ -35,7 +35,9 @@ export default async function CoachesTeamWorkspacesPage() {
           <div style={{ marginBottom: '1rem', color: 'var(--logic-lime)' }}>
             <Users size={28} />
           </div>
-          <p>Premium adds the serious-operator tools — a lineup builder, dues automation, team budget, and document storage. It carries over automatically if your organization joins FieldLogicHQ.</p>
+          {/* Canon (PLAN_PRICING_FACTS coach bridge, /strategy 2026-07-14): the portal is
+              absorbed at CLUB tier only — never imply any paid org plan carries it. */}
+          <p>Premium adds the serious-operator tools — a lineup builder, dues automation, team budget, and document storage. If your organization joins FieldLogicHQ on the Club plan, your portal is included — you stop paying for it.</p>
           <Link href={COACHES_START_PATH} className="btn btn-ghost btn-sm">Express interest</Link>
         </div>
       ) : (

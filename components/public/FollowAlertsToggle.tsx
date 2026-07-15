@@ -21,6 +21,7 @@ import { Bell, BellRing, BellOff, BellPlus, Loader2 } from 'lucide-react';
 import { isPushSupported, getCurrentPushEndpoint } from '@/lib/push-client';
 import { isIOSLike, isStandalonePWA } from '@/lib/device';
 import { useFanAlertPrefs, saveFanAlertPref } from '@/lib/fan-alert-prefs-client';
+import { syncFollowToAccount } from '@/lib/follow';
 import styles from './FollowAlertsToggle.module.css';
 
 interface Props {
@@ -86,13 +87,9 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, vari
   }, []);
 
   // Best-effort: make sure THIS team's follow is on the account (a device-only
-  // follow made while signed out wouldn't be) — idempotent.
+  // follow made while signed out wouldn't be) — the shared mirror is idempotent.
   function mirrorFollowToAccount() {
-    void fetch('/api/consumer/follows', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'follow', teamId: team.id, orgSlug, tournamentSlug }),
-    }).catch(() => {});
+    syncFollowToAccount('follow', { teamId: team.id, orgSlug, tournamentSlug });
   }
 
   async function turnOn() {

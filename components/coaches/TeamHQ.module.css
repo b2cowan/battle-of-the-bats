@@ -74,6 +74,45 @@
   -webkit-line-clamp: 2;
 }
 
+/* ── C5: registration-fed schedule tile ───────────────────────────────────────
+   When the coach's self-entered schedule is empty but the team has a live/next
+   tournament game, the tile borrows it (approved mockup: lime-tinted border on
+   the fed tile; red LIVE badge matching the public live-badge convention). */
+.hqItemReg {
+  border-color: rgba(var(--logic-lime-rgb), 0.3);
+}
+
+.hqLive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.45rem;
+  color: var(--danger-strong);
+  font-family: var(--font-data, monospace);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  vertical-align: 0.12em;
+}
+
+.hqLiveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger-strong);
+  animation: hqLivePulse 1.6s ease-out infinite;
+}
+
+@keyframes hqLivePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(var(--danger-rgb), 0.55); }
+  70%  { box-shadow: 0 0 0 6px rgba(var(--danger-rgb), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--danger-rgb), 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hqLiveDot { animation: none; }
+}
+
 @media (max-width: 700px) {
   .hqStrip {
     grid-template-columns: 1fr;

@@ -21,6 +21,7 @@ import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdPr
 import { useHasMultipleWorkspaces } from '@/lib/use-has-multiple-workspaces';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
+import { SkeletonBlock } from '@/components/admin/AdminSkeleton';
 import styles from './CoachPortalShell.module.css';
 
 /** Rich per-team context from /api/coaches/basic-teams?context=1 (lib/basic-coach-teams CoachTeamContext). */
@@ -72,6 +73,10 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
   const isHelp = pathname === COACHES_HELP_PATH;
 
   const [teamContexts, setTeamContexts] = useState<TeamContext[]>([]);
+  // S6: true only until the FIRST context fetch settles — the bottom rail shows a
+  // skeleton instead of flashing a bare "Home" tab for the ~seconds after the
+  // fan→coach flip. Later refetches (every soft-nav) never re-raise it.
+  const [contextsLoading, setContextsLoading] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
   // The mobile "More" overflow sheet (team switcher + overflow sections + account utilities).
   const [moreOpen, setMoreOpen] = useState(false);
@@ -113,6 +118,8 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
         setTeamContexts(data.teamContexts ?? []);
       } catch {
         /* shell still renders, just without the team switcher */
+      } finally {
+        if (!cancelled) setContextsLoading(false);
       }
     })();
     return () => {
@@ -378,6 +385,18 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
               <span>More</span>
             </button>
           </>
+        ) : contextsLoading ? (
+          /* S6: contexts still resolving — placeholder tabs (the shared shimmer
+             primitive), not a misleading bare "Home" that swaps to the real rail
+             seconds later. A literal 5 (4 primary tabs + More): the real counts
+             derive from currentTeam, which is null for exactly as long as this
+             skeleton shows — primarySections is always empty here. */
+          Array.from({ length: 5 }, (_, i) => (
+            <span key={i} className={styles.bottomTabSkeleton} aria-hidden>
+              <SkeletonBlock w="20px" h="20px" className={styles.bottomTabSkeletonIcon} />
+              <SkeletonBlock w="34px" h="8px" />
+            </span>
+          ))
         ) : (
           <Link href={COACHES_HOME_PATH} className={styles.bottomTab}>
             <Home size={20} aria-hidden /><span>Home</span>

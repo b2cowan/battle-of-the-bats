@@ -88,8 +88,13 @@ export function readFollowedTeamId(orgSlug: string, tournamentSlug: string): str
  * the source of truth and always happens first; this is purely additive and never blocks.
  * The server no-ops (returns { linked: false }) for anonymous callers, so this is safe to
  * call unconditionally — the account link only happens when there IS an account.
+ *
+ * Exported as THE one mirror call — every surface that attaches a follow to the account
+ * (follow buttons via saveFollowedTeam, the alerts toggles, the signup nudge) goes through
+ * here so the endpoint contract and `keepalive` (survives an imminent navigation) are
+ * decided once. Idempotent server-side.
  */
-function syncFollowToAccount(
+export function syncFollowToAccount(
   action: 'follow' | 'unfollow',
   params: { teamId: string; orgSlug: string; tournamentSlug: string },
 ): void {

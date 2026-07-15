@@ -5,6 +5,7 @@ import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import {
   getBasicCoachTeamForUser,
   getBasicCoachTournamentHistoryForTeam,
+  getNextRegistrationGameForTeam,
 } from '@/lib/basic-coach-teams';
 import { getBasicCoachTeamPlayers } from '@/lib/basic-coach-roster';
 import { getBasicCoachTeamEvents } from '@/lib/basic-coach-schedule';
@@ -22,7 +23,8 @@ import HelpButton from '@/components/help/HelpButton';
 import TeamHQ from '@/components/coaches/TeamHQ';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachOverviewInvite from '@/components/coaches/CoachOverviewInvite';
-import { Rocket, Users, CalendarDays, Megaphone } from 'lucide-react';
+import ScopeShelf from '@/components/coaches/ScopeShelf';
+import { Rocket, Users, CalendarDays, Megaphone, ExternalLink } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import { registrationStatusBadge, registrationStatusLabel } from '@/lib/coaches-status';
@@ -97,13 +99,26 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
     redirect(`/${premiumSlug}/coaches`);
   }
 
-  const [history, players, events, fees, announcements, announcementRecipientSummary] = await Promise.all([
-    getBasicCoachTournamentHistoryForTeam(basicTeamId),
+  // C5: an empty self-entered schedule during a tournament said "None" while the team's
+  // game was live two taps away — borrow the registration's live/next game for the tile.
+  // Chained off only the two fetches it actually needs, inside the same Promise.all, so
+  // its queries overlap the other four instead of running after all six settle.
+  const historyPromise = getBasicCoachTournamentHistoryForTeam(basicTeamId);
+  const eventsPromise = getBasicCoachTeamEvents(basicTeamId);
+  const registrationGamePromise = Promise.all([historyPromise, eventsPromise]).then(
+    ([teamHistory, teamEvents]) =>
+      !findNextEvent(teamEvents) && teamHistory.length > 0
+        ? getNextRegistrationGameForTeam(teamHistory)
+        : null,
+  );
+  const [history, players, events, fees, announcements, announcementRecipientSummary, registrationGame] = await Promise.all([
+    historyPromise,
     getBasicCoachTeamPlayers(basicTeamId),
-    getBasicCoachTeamEvents(basicTeamId),
+    eventsPromise,
     getBasicCoachTeamFees(basicTeamId),
     getBasicCoachTeamAnnouncements(basicTeamId),
     getBasicCoachTeamAnnouncementRecipientSummary(basicTeamId),
+    registrationGamePromise,
   ]);
 
   const metaParts = [team.primaryCoachName, team.sport, team.ageGroup].filter(Boolean) as string[];
@@ -114,6 +129,14 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
   const latestHistoryLabel = latestHistory
     ? `${registrationStatusLabel(latestHistory.registration.status)} - ${latestHistory.tournament?.name ?? latestHistory.registration.name}`
     : 'No tournaments yet';
+
+  // S5: quiet round trip to the public event from the Overview (mirrors the Tournaments
+  // tab's Fan view link) — the latest publicly-visible registration; the public route
+  // 404s draft and archived tournaments.
+  const fanViewEntry = history.find(
+    entry => entry.org?.slug && entry.tournament?.slug &&
+      (entry.tournament.status === 'active' || entry.tournament.status === 'completed'),
+  ) ?? null;
 
   // First-run banner: a brand-new team with nothing entered yet. Falls away on
   // its own once the coach adds anything (no persisted dismiss state needed).
@@ -151,6 +174,7 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         variant="standalone"
         rosterCount={players.length}
         nextEvent={nextEvent ? { title: nextEvent.title, startsAt: nextEvent.startsAt } : null}
+        registrationGame={registrationGame}
         unpaidTotal={unpaidTotal}
         unpaidCount={unpaidFees.length}
         recipientCount={announcementRecipientSummary.recipientCount}
@@ -211,6 +235,7 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
             <p>This team isn&apos;t in any tournaments yet. When you register it for one, the registration and schedule show up here.</p>
           </div>
         ) : (
+          <>
           <div className={styles.historyList}>
             {history.map(entry => {
               const badge = registrationStatusBadge(entry.registration.status);
@@ -238,8 +263,28 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
               );
             })}
           </div>
+          {/* S5: Fan view — the same round trip the Tournaments tab offers, surfaced at
+              the Overview so a mid-event coach can jump to the public space in one tap. */}
+          {fanViewEntry && (
+            <Link
+              href={`/${fanViewEntry.org!.slug}/${fanViewEntry.tournament!.slug}`}
+              className={styles.fanView}
+            >
+              <ExternalLink size={12} strokeWidth={2.2} aria-hidden /> Fan view — public schedule &amp; live scores
+            </Link>
+          )}
+          </>
         )}
       </section>
+
+      {/* C4: ONE light Premium hook on the Overview once any section has real content —
+          before this, a new/light coach only ever saw pitches on the Explore tab. The
+          per-section shelves still gate on their own section's content; this is the
+          team-level catch-all. Never rendered on the tournament variant (game day
+          stays pitch-free — locked decision). */}
+      {(players.length > 0 || events.length > 0 || fees.length > 0 || announcements.length > 0) && (
+        <ScopeShelf basicTeamId={basicTeamId} section="overview" />
+      )}
     </div>
   );
 }

@@ -232,6 +232,15 @@ export default function AccountNotificationsClient({
     return () => cancelAnimationFrame(raf);
   }, [focus]);
 
+  const fanSection = fanCard ? (
+    <section
+      id="fan"
+      className={`${styles.card} ${focus === 'fan' ? styles.cardFocused : ''}`}
+    >
+      <FanAlertsCard data={fanCard} />
+    </section>
+  ) : null;
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -252,16 +261,18 @@ export default function AccountNotificationsClient({
         </div>
       ) : (
         <>
+          {/* S3: a fan-only account (zero org/coach cards) leads with what they came
+              for — their Followed teams — and the device-plumbing tester follows.
+              Accounts WITH workspace cards keep the tester first (device health is
+              the setup step those users are usually here to debug). */}
+          {/* Reaching this branch with zero cards proves fanCard is set (the empty
+              state above owns cards-and-fan-both-empty), so fanSection is non-null. */}
+          {cards.length === 0 && (
+            <div className={styles.cardsWrap}>{fanSection}</div>
+          )}
           <PushDeviceTester />
           <div className={styles.cardsWrap}>
-            {fanCard && (
-              <section
-                id="fan"
-                className={`${styles.card} ${focus === 'fan' ? styles.cardFocused : ''}`}
-              >
-                <FanAlertsCard data={fanCard} />
-              </section>
-            )}
+            {cards.length > 0 && fanSection}
             {cards.map(card => (
               <section
                 key={card.focusKey}
