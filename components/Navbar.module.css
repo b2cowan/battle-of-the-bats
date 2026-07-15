@@ -153,6 +153,103 @@
   display: inline-flex;
   align-items: center;
 }
+.bellSlot {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ── Tournament actions cluster (bell · share · account chip) ──
+   Nav-level absolute so bell/sheet portals mount exactly once across widths:
+   vertically centred in the 72px bar on tablet/desktop, pinned to the top-right
+   of the mobile event header. */
+.navActions {
+  position: absolute;
+  top: 0;
+  right: 1rem;
+  height: var(--nav-height);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  z-index: 2;
+}
+
+/* ── Mobile unified event header (G3) ──
+   One header owns the event identity: org eyebrow · title · one mono meta line
+   with a phase pill. Hidden >900px (tablet keeps the classic bar; desktop's
+   side rail owns identity). The nav grows to fit; Navbar.tsx publishes the
+   measured heights as --nav-event-h / --nav-visual-h for page padding, the
+   ticker and sticky day labels. */
+.eventHead {
+  display: none;
+}
+
+.ehOrg {
+  display: block;
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--white-70);
+  /* Clear the floating actions cluster (up to bell + share + chip). */
+  padding-right: 9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 1.2rem;
+  transition: max-height 0.25s ease, opacity 0.25s ease, margin 0.25s ease;
+}
+
+.ehTitle {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: var(--white);
+  margin-top: 0.15rem;
+  transition: font-size 0.25s ease;
+}
+
+.ehMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
+  max-height: 2.6rem;
+  transition: max-height 0.25s ease, opacity 0.25s ease, margin 0.25s ease;
+}
+
+.ehRange {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--white-70);
+}
+
+/* Phase pill = the global .badge family (one chip system) + this compact size
+   modifier for the slim meta line. Gold "Final" is the one variant the global
+   family lacks (gold = champion, per the token conventions). */
+.ehPill {
+  gap: 0.3rem;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  padding: 0.1rem 0.45rem;
+}
+.ehPillDone {
+  color: var(--gold-strong, var(--gold));
+  background: rgba(var(--gold-rgb), 0.13);
+  border: 1px solid rgba(var(--gold-rgb), 0.35);
+}
 
 /* Bottom nav (marketing pages, mobile only) */
 .bottomNav {
@@ -198,6 +295,12 @@
 }
 
 /* Responsive */
+@media (min-width: 901px) {
+  /* The tournament actions cluster is nav-level absolute (single mount for the
+     bell/sheet portals) — reserve its lane so status text / links stay clear. */
+  .hasEventHead .inner { padding-right: 10rem; }
+}
+
 @media (max-width: 900px) {
   .links { display: none; }
   .bottomNav { display: flex; }
@@ -213,6 +316,70 @@
     min-height: var(--tap-min, 44px);
     min-width: var(--tap-min, 44px);
     justify-content: center;
+  }
+
+  /* ── Unified event header takes over the tournament bar (G3) ── */
+  .hasEventHead { height: auto; min-height: var(--nav-height); }
+  /* G5: mobile notifications live in the More sheet — the header keeps only Share. */
+  .bellSlot { display: none; }
+  .hasEventHead .inner { display: none; }
+  .hasEventHead .eventHead {
+    display: block;
+    padding: 0.7rem 1rem 0.65rem;
+    /* Org colour present but fading fast — content reads on the page ground. */
+    background: linear-gradient(160deg, rgba(var(--primary-rgb), 0.45) 0%, rgba(var(--primary-rgb), 0.08) 62%, transparent 100%);
+    border-bottom: 1px solid var(--border-2, var(--white-10));
+  }
+  /* At rest the nav itself stays transparent (the header paints its own ground);
+     the existing .scrolled frost covers the condensed state. */
+  .hasEventHead .navActions {
+    top: 0.35rem;
+    height: auto;
+    right: 0.75rem;
+  }
+
+  /* Condensed on scroll: eyebrow + meta fold away, the title slims to one line —
+     a plain pinned bar (title + actions) with the ticker riding up beneath.
+     The bar hugs its content (drop the 72px floor) and centres the title so it
+     lines up with the floating Share icon. */
+  .hasEventHead.scrolled { min-height: 0; }
+  .hasEventHead.scrolled .eventHead {
+    background: none;
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  /* The Share button condenses with the bar: its box chrome dissolves to a bare
+     icon. The hit area NEVER shrinks — the 44px floor is padding, not paint. */
+  .hasEventHead.scrolled .navShare button {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+  .hasEventHead .navShare button { transition: background 0.25s ease, border-color 0.25s ease; }
+  /* Condensed bar: the actions centre on the (single) title line instead of
+     hanging from the expanded header's top edge. */
+  .hasEventHead.scrolled .navActions {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .hasEventHead .navActions { transition: top 0.25s ease, transform 0.25s ease; }
+  .hasEventHead.scrolled .ehOrg,
+  .hasEventHead.scrolled .ehMeta {
+    max-height: 0;
+    opacity: 0;
+    margin: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .hasEventHead.scrolled .ehTitle {
+    font-size: 1.05rem;
+    -webkit-line-clamp: 1;
+    margin-top: 0;
+    padding-right: 9rem;
   }
 }
 

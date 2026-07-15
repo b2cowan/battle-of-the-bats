@@ -19,7 +19,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, BellRing, BellOff, BellPlus, X, Loader2, Check, Settings } from 'lucide-react';
+import { Bell, BellRing, BellOff, BellPlus, X, Loader2, Check, Settings, ChevronRight } from 'lucide-react';
 import {
   isPushSupported,
   enablePushOnThisDevice,
@@ -31,9 +31,12 @@ import { useFanAlertPrefs, saveFanAlertPref } from '@/lib/fan-alert-prefs-client
 import type { FanAlertPrefs } from '@/lib/fan-alert-prefs';
 import styles from './FanNotificationBell.module.css';
 
-// No props: the switches are ACCOUNT-level (org/tournament-agnostic), and the
-// mount gate (Plus plan, tournament not finished) lives in the Navbar.
-export default function FanNotificationBell() {
+// The switches are ACCOUNT-level (org/tournament-agnostic), and the mount gate
+// (Plus plan, tournament not finished) lives in the caller. Two trigger shapes:
+// `icon` (the desktop top-bar bell) and `row` (a full-width row inside the
+// tournament More sheet — G5 moved mobile notifications in there). The panel
+// itself is identical and portals above either trigger.
+export default function FanNotificationBell({ variant = 'icon' }: { variant?: 'icon' | 'row' } = {}) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -157,8 +160,34 @@ export default function FanNotificationBell() {
   const bellOn = ready && deviceReady && (prefs.prefs.gameAlerts || prefs.prefs.eventNews) && !blocked;
   const BellIcon = blocked ? BellOff : iosInstall ? BellPlus : bellOn ? BellRing : Bell;
 
+  const rowSub = blocked
+    ? 'Blocked in browser settings'
+    : iosInstall
+      ? 'Add to Home Screen to enable'
+      : bellOn
+        ? 'On for this device'
+        : 'Score alerts & event news';
+
   return (
-    <div ref={wrapRef} className={styles.wrap}>
+    <div ref={wrapRef} className={variant === 'row' ? styles.wrapRow : styles.wrap}>
+      {variant === 'row' ? (
+        <button
+          type="button"
+          className={styles.rowTrigger}
+          onClick={toggleOpen}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+        >
+          <span className={`${styles.rowTriggerIcon} ${bellOn ? styles.bellOn : ''}`}>
+            <BellIcon size={15} />
+          </span>
+          <span className={styles.rowTriggerText}>
+            <span className={styles.rowTriggerLabel}>Notifications</span>
+            <span className={styles.rowTriggerSub}>{rowSub}</span>
+          </span>
+          <ChevronRight size={14} className={styles.rowTriggerChev} aria-hidden />
+        </button>
+      ) : (
       <button
         type="button"
         className={`${styles.bellBtn} ${bellOn ? styles.bellOn : ''}`}
@@ -170,6 +199,7 @@ export default function FanNotificationBell() {
       >
         <BellIcon size={16} />
       </button>
+      )}
 
       {open && typeof document !== 'undefined' && createPortal(
         <>

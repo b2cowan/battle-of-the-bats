@@ -506,6 +506,18 @@ export function bracketRoundInfo(code: string): BracketRoundInfo {
  * public surfaces; keep bracketRoundInfo for grouping a bracket into columns.
  * Falls back to the raw code (or "Playoff") for anything it doesn't recognise.
  */
+/**
+ * Fan-facing round name: identical to bracketRoundLabel except the deciding
+ * game reads "Championship" — on public surfaces a "Final" chip beside an
+ * unplayed game reads as a finished STATUS, not a round name (Tournament
+ * Mobile Polish, owner-accepted fan language 2026-07-15). Admin/structural
+ * surfaces keep bracketRoundLabel's canonical "Final".
+ */
+export function fanRoundLabel(code: string | null | undefined): string {
+  const label = bracketRoundLabel(code);
+  return label === 'Final' ? 'Championship' : label;
+}
+
 export function bracketRoundLabel(code: string | null | undefined): string {
   const c = (code || '').toUpperCase();
   if (!c) return 'Playoff';

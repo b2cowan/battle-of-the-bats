@@ -13,6 +13,13 @@
   margin-bottom: 1.25rem;
 }
 
+/* The unified event header (G3) owns identity on mobile — the in-page "Teams"
+   title would double the header there. Scoped to the live shell; the admin
+   preview (no event header) keeps it. Division counts stay in the picker. */
+@media (max-width: 900px) {
+  [data-live-chrome] .pageHeading { display: none; }
+}
+
 .pageTitle {
   display: flex;
   align-items: center;

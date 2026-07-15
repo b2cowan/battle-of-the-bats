@@ -203,6 +203,10 @@ export default async function TournamentLayout({
       {tournamentCssVars && (
         <style dangerouslySetInnerHTML={{ __html: `:root { ${tournamentCssVars} }` }} />
       )}
+      {/* Mobile unified event header (G3): pre-seed the expanded-header height so
+          SSR page padding is right on first paint; the Navbar measures and
+          corrects the real value (long titles wrap) after hydration. */}
+      <style dangerouslySetInnerHTML={{ __html: `@media (max-width: 900px) { :root { --nav-event-h: 116px; } }` }} />
       {lightModeVars && (
         <style dangerouslySetInnerHTML={{ __html: `:root { ${lightModeVars} }` }} />
       )}
@@ -210,7 +214,10 @@ export default async function TournamentLayout({
       <TournamentSideRail />
       {/* Broadcast score ticker — self-gates to game day (reserves --ticker-h). */}
       <ScoreTicker />
-      <div className={railStyles.shell} data-card-style={cardStyle} data-color-mode={effectiveColorMode}>
+      {/* data-live-chrome scopes mobile-chrome CSS (retired page titles/hero) to the
+          LIVE shell only — the admin preview has no unified event header to hand
+          identity to, so it keeps the in-page titles (preview↔public parity). */}
+      <div className={railStyles.shell} data-card-style={cardStyle} data-color-mode={effectiveColorMode} data-live-chrome="">
         {children}
       </div>
       {/* Game-day "now playing" dock for the followed team (self-gates: followers

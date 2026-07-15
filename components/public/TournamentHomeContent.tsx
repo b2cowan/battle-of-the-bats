@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Calendar, Trophy, ChevronRight, Megaphone, Star, Eye, Clock, MapPin, CheckCircle, Crown } from 'lucide-react';
+import { Calendar, Trophy, ChevronRight, Megaphone, Star, Eye, Clock, CheckCircle, Crown } from 'lucide-react';
 import { getAnnouncements, getGames, getTeams, getDivisions, getVenues, getStandings, resolveTournamentContactEmail } from '@/lib/db';
 import type { Game, Organization, Tournament } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
@@ -9,7 +9,8 @@ import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { getRegistrationState } from '@/lib/registration-state';
 import { tournamentToday } from '@/lib/timezone';
 import { deriveTierChampions, tierBadgeLabel, isTournamentPlayoffsComplete } from '@/lib/champions';
-import { bracketRoundLabel } from '@/lib/playoff-bracket';
+import { fanRoundLabel } from '@/lib/playoff-bracket';
+import { isGameLive, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import SharePageButton from '@/components/public/SharePageButton';
 import LocationLink from '@/components/LocationLink';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
@@ -18,7 +19,6 @@ import { toPublicTeam } from '@/lib/public-tournament-data';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import CountUp from '@/components/public/CountUp';
 import Countdown from '@/components/public/Countdown';
-import GetAppLink from '@/components/public/GetAppLink';
 import styles from '@/app/[orgSlug]/Home.module.css';
 
 export default async function TournamentHomeContent({
@@ -248,8 +248,7 @@ export default async function TournamentHomeContent({
     const hScore = game.homeScore;
     const winner = aScore == null || hScore == null ? null
       : hScore > aScore ? 'home' : aScore > hScore ? 'away' : 'tie';
-    const awayName = game.awayTeamId ? getTeamName(game.awayTeamId) : (game.awayPlaceholder ?? 'TBD');
-    const homeName = game.homeTeamId ? getTeamName(game.homeTeamId) : (game.homePlaceholder ?? 'TBD');
+    const { away: awayName, home: homeName } = liveRowNames(game);
     return (
       <Link key={game.id} href={href} className={styles.finalRow}>
         <div className={styles.finalMatch}>
@@ -269,8 +268,110 @@ export default async function TournamentHomeContent({
     );
   }
 
+  // ── Live Now (A1): games genuinely inside their live window lead the page body.
+  // Server-rendered snapshot (the page is force-dynamic); the ticker + My Team card
+  // carry the realtime pulse. "Up next" keeps today's remaining games visible —
+  // including a championship whose sides are still unresolved feeder refs (A7),
+  // rendered in fan language, never raw "Winner SF2" jargon (A9).
+  const nowMs = Date.now();
+  const liveNowGames = !isFinished
+    ? sortedGames.filter(g => isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES))
+    : [];
+  // "Up next" = today's genuinely-future games only: a scheduled game already in
+  // its live window belongs to the live list (never both), and a past-due
+  // unreported game must not pin as NEXT all day (the dock's J6-039 rule).
+  const upNextToday = !isFinished
+    ? sortedGames
+        .filter(g => {
+          if (g.status !== 'scheduled' || g.date !== now) return false;
+          if (isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES)) return false;
+          // No start time → no honest "up next at …" caption; the schedule page
+          // still lists it. Past-due unstarted games don't pin either (J6-039).
+          const start = gameStartMs(g);
+          return start != null && start > nowMs;
+        })
+        .slice(0, 2)
+    : [];
+
+  // Fan-friendly placeholder: "Winner SF2" (bracket shorthand) reads as jargon
+  // in a matchup line — "Winner of SF2" reads as English (A9, incl. the
+  // partially-resolved case where only one feeder has decided).
+  function friendlyPlaceholder(placeholder: string | null | undefined): string {
+    if (!placeholder) return 'TBD';
+    return placeholder.replace(/^(Winner|Loser)\s+(?!of\b)/i, '$1 of ');
+  }
+
+  function liveRowNames(game: Game): { away: string; home: string } {
+    return {
+      away: game.awayTeamId ? getTeamName(game.awayTeamId) : friendlyPlaceholder(game.awayPlaceholder),
+      home: game.homeTeamId ? getTeamName(game.homeTeamId) : friendlyPlaceholder(game.homePlaceholder),
+    };
+  }
+
+  /** Fan-facing context label: round name for playoff games, division otherwise. */
+  function roundOrDivisionLabel(game: Game): string {
+    return game.isPlayoff && game.bracketCode ? fanRoundLabel(game.bracketCode) : getDivisionName(game.divisionId);
+  }
+
+  function liveRowContext(game: Game): string {
+    const where = resolveGameVenueLabel(game, venues);
+    return [roundOrDivisionLabel(game), where].filter(Boolean).join(' · ');
+  }
+
+  function renderLiveRow(game: Game) {
+    const { away, home } = liveRowNames(game);
+    const a = game.awayScore ?? 0;
+    const h = game.homeScore ?? 0;
+    const leader: 'away' | 'home' | null = a > h ? 'away' : h > a ? 'home' : null;
+    return (
+      <Link key={game.id} href={getGameHref(game.id)} className={styles.liveNowRow}>
+        <div className={styles.liveNowWho}>
+          <span className={`${styles.liveNowName} ${leader === 'away' ? styles.liveNowLeading : ''}`}>{away}</span>
+          <span className={`${styles.liveNowName} ${leader === 'home' ? styles.liveNowLeading : ''}`}>{home}</span>
+          <span className={styles.liveNowContext}>{liveRowContext(game)}</span>
+        </div>
+        <div className={styles.liveNowScore}>
+          <span className={styles.liveNowDigits}>{game.awayScore}–{game.homeScore}</span>
+          <span className={styles.liveNowCaption}><span className="live-dot" /> Live</span>
+        </div>
+      </Link>
+    );
+  }
+
+  function renderUpNextRow(game: Game) {
+    const bothUnresolved = !game.awayTeamId && !game.homeTeamId;
+    const round = roundOrDivisionLabel(game);
+    // Fan-friendly matchup for unresolved feeders: "Winners of SF1 & SF2".
+    const feederCodes = [game.awayPlaceholder, game.homePlaceholder]
+      .map(p => p?.match(/^Winner\s+(.+)$/i)?.[1])
+      .filter((c): c is string => !!c);
+    const { away, home } = liveRowNames(game);
+    const matchLine = bothUnresolved && feederCodes.length === 2
+      ? `Winners of ${feederCodes[0]} & ${feederCodes[1]}`
+      : `${away} vs ${home}`;
+    return (
+      <Link key={game.id} href={getGameHref(game.id)} className={`${styles.liveNowRow} ${styles.liveNowUpcoming}`}>
+        <div className={styles.liveNowWho}>
+          <span className={`${styles.liveNowName} ${styles.liveNowLeading}`}>{bothUnresolved ? round || 'Up next' : matchLine}</span>
+          <span className={styles.liveNowContext}>
+            {[bothUnresolved ? matchLine : round, resolveGameVenueLabel(game, venues)].filter(Boolean).join(' · ')}
+          </span>
+        </div>
+        <div className={styles.liveNowScore}>
+          <span className={styles.liveNowDigitsFaint}>–</span>
+          <span className={styles.liveNowCaptionQuiet}>{formatTime(game.time)}</span>
+        </div>
+      </Link>
+    );
+  }
+
   const heroBanner = canUseAdvancedTournamentBranding(org)
     ? tournament.heroBannerUrl ?? org.heroBannerUrl ?? null
+    : null;
+  // Same branding gate the chrome used to apply — the logo's home is now the
+  // pre-event brand card (the mobile header is deliberately text-only).
+  const eventLogo = canUseAdvancedTournamentBranding(org)
+    ? tournament.logoUrl ?? org.logoUrl ?? null
     : null;
 
   const todayGames = sortedGames
@@ -329,6 +430,127 @@ export default async function TournamentHomeContent({
     return `${scheduleHref}/${gameId}`;
   }
 
+  // ── Live Now leads the body whenever a game is genuinely in progress (A1). ──
+  const liveNowSection = !isFinished && showSchedulePage && liveNowGames.length > 0 ? (
+    <section className={`section ${styles.liveNowSection}`} id="live-now">
+      <div className="container">
+        <div className={styles.liveNowHeader}>
+          <span className={styles.liveNowKicker}>
+            <span className="live-dot" /> Live now
+          </span>
+          <span className={styles.liveNowCount}>
+            {liveNowGames.length} game{liveNowGames.length === 1 ? '' : 's'}
+          </span>
+        </div>
+        <div className={styles.liveNowList}>
+          {liveNowGames.slice(0, 4).map(renderLiveRow)}
+          {upNextToday.map(renderUpNextRow)}
+        </div>
+        {playoffsSet && showStandingsPage && (
+          <div className={styles.liveNowMore}>
+            <Link href={`${publicBase}/playoffs`} className="btn btn-ghost btn-sm">
+              Playoff picture <ChevronRight size={14} />
+            </Link>
+          </div>
+        )}
+      </div>
+    </section>
+  ) : null;
+
+  // Total team capacity across divisions — a number that is never private
+  // (unlike registration counts, which follow the team list's own visibility:
+  // if the Teams page is public the count is already public; if it's hidden,
+  // the home page must not leak it — owner direction 2026-07-15).
+  const totalCapacity =
+    divisions.length > 0 && divisions.every(d => d.capacity != null && d.capacity > 0)
+      ? divisions.reduce((s, d) => s + (d.capacity ?? 0), 0)
+      : null;
+  // The concrete date matters most to arriving teams — it rides with the
+  // countdown, formatted by the same helpers every other date/time on this
+  // page uses (one format spec, no drift).
+  const firstPitchDateLabel = !firstPitchISO
+    ? null
+    : firstScheduledGame?.date
+      ? `${formatDate(firstScheduledGame.date)}${firstScheduledGame.time ? ` · ${formatTime(firstScheduledGame.time)}` : ''}`
+      : startDate
+        ? formatDate(startDate)
+        : null;
+
+  // ── Mobile pre-event panel: the hero retires below 900px (the unified event
+  // header owns identity — G3), so the pre-event jobs the hero carried live here:
+  // countdown, the one Register CTA (capacity-honest, lifecycle-gated), and the
+  // event facts. Desktop keeps the hero and hides this. ──
+  const preEventPanel = !isInProgress && !isFinished ? (
+    <section className={`section ${styles.preEventPanel}`} id="pre-event">
+      <div className="container">
+        {/* Brand moment (owner 2026-07-15): an uploaded event/org logo takes the
+            lead card — the header already carries the dates + starts-in line, so
+            the countdown card only renders when there's no logo to show. */}
+        {eventLogo ? (
+          <div className={styles.preLogoCard}>
+            <img src={eventLogo} alt={`${tournament.name} logo`} className={styles.preLogoImg} />
+          </div>
+        ) : isPreEvent && firstPitchISO ? (
+          <div className={styles.preCountdownCard}>
+            <span className={styles.preCountdownLabel}>First pitch in</span>
+            <span className={styles.preCountdownValue}>
+              <Countdown target={firstPitchISO} whenPast="Under way" />
+            </span>
+            {firstPitchDateLabel && <span className={styles.preCountdownDate}>{firstPitchDateLabel}</span>}
+          </div>
+        ) : null}
+        {!isPreview && registration.cta && (
+          <div className={styles.preCtaWrap}>
+            <Link href={`${primaryBase}/register`} className={`btn btn-primary btn-lg ${styles.preCtaBtn}`} id="mobile-register-btn">
+              {registration.cta === 'waitlist' ? 'Join Waitlist' : 'Register a Team'}
+            </Link>
+            <span className={styles.preCtaDetail}>{registration.label} · {registration.detail}</span>
+          </div>
+        )}
+        {!isPreview && !registration.cta && (
+          <div className={styles.preCtaWrap}>
+            <span className={styles.preCtaDetail}>{registration.label} · {registration.detail}</span>
+          </div>
+        )}
+        <div className={`card ${styles.dayCard}`}>
+          <div className={styles.statusList}>
+            <div className={styles.statusItem}>
+              <span>{divisions.length ? sortedDivisions.map(d => d.name).slice(0, 4).join(' · ') : 'TBA'}</span>
+              <strong>Divisions</strong>
+            </div>
+            {/* Registration COUNTS follow the team list's visibility; capacity is
+                never private. Hidden team list + no caps → no row at all. */}
+            {(showTeamsPage || totalCapacity != null) && (
+              <div className={styles.statusItem}>
+                <span>
+                  {showTeamsPage
+                    ? (teams.length ? `${teams.length}${totalCapacity ? ` of ${totalCapacity} spots` : ' accepted'}` : 'TBA')
+                    : `${totalCapacity} team spots`}
+                </span>
+                <strong>Teams</strong>
+              </div>
+            )}
+            {venues.length > 0 && (
+              <div className={styles.statusItem}>
+                <span>
+                  <LocationLink location={venues[0].name} venue={venues[0]} size="sm" />
+                  {venues.length > 1 && <span className={styles.preFactMore}>+{venues.length - 1} more</span>}
+                </span>
+                <strong>Where</strong>
+              </div>
+            )}
+            {showRulesPage && (
+              <div className={styles.statusItem}>
+                <span><Link href={`${primaryBase}/rules`} className={styles.preFactLink}>Format &amp; rules</Link></span>
+                <strong>Rules</strong>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  ) : null;
+
   const tournamentDayPanel = hasTournamentDayPanel ? (
     <section className={`section ${styles.dayPanelSection}`} id="today">
       <div className="container">
@@ -378,25 +600,6 @@ export default async function TournamentHomeContent({
 
           <div className={`card ${styles.dayCard}`}>
             <div className={styles.dayCardHeader}>
-              <div className={styles.dayCardIcon}><MapPin size={16} /></div>
-              <div>
-                <span className={styles.dayCardKicker}>Venues</span>
-                <h3>Field Shortcuts</h3>
-              </div>
-            </div>
-            {venueShortcuts.length === 0 ? (
-              <p className={styles.dayCardSub}>Venue shortcuts will appear when today&apos;s games are published.</p>
-            ) : (
-              <div className={styles.venueShortcutList}>
-                {venueShortcuts.map(item => (
-                  <LocationLink key={item.key} location={item.label} venue={item.venue} size="sm" />
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className={`card ${styles.dayCard}`}>
-            <div className={styles.dayCardHeader}>
               <div className={styles.dayCardIcon}><CheckCircle size={16} /></div>
               <div>
                 <span className={styles.dayCardKicker}>Status</span>
@@ -416,6 +619,14 @@ export default async function TournamentHomeContent({
                 <span>{latestResults.length > 0 ? `${latestResults.length} recent` : 'No results yet'}</span>
                 <strong>Results</strong>
               </div>
+              {/* Field shortcuts fold in here (C6) — a lone venue link no longer
+                  costs a whole card of chrome. */}
+              {venueShortcuts.slice(0, 2).map(item => (
+                <div key={item.key} className={styles.statusItem}>
+                  <span><LocationLink location={item.label} venue={item.venue} size="sm" /></span>
+                  <strong>Fields</strong>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -498,9 +709,12 @@ export default async function TournamentHomeContent({
           {/* The Champions recap inherits Standings visibility (it shows final
               results/standings), so only offer it when Standings is public — same
               gate as the pre-complete hero takeover. */}
+          {/* Differentiated from the record panel's primary "Full Standings" (C5):
+              this is the recap/story page, so it wears the outline weight and a
+              name that doesn't echo "Final ___". */}
           {showStandingsPage && (
-            <Link href={`${publicBase}/champions`} className="btn btn-primary btn-sm">
-              <Trophy size={16} /> Final Results
+            <Link href={`${publicBase}/champions`} className="btn btn-outline btn-sm">
+              <Trophy size={16} /> Champions Recap
             </Link>
           )}
           <SharePageButton
@@ -530,7 +744,7 @@ export default async function TournamentHomeContent({
           <div className={styles.recordActions}>
             {showStandingsPage && (
               <Link href={`${primaryBase}/standings`} className="btn btn-primary btn-sm">
-                Final Standings <ChevronRight size={14} />
+                Full Standings <ChevronRight size={14} />
               </Link>
             )}
             {showSchedulePage && (
@@ -645,7 +859,7 @@ export default async function TournamentHomeContent({
               <div key={game.id} className={`card ${styles.gameCard}`}>
                 <div className={styles.gameHeader}>
                   <span className="badge badge-primary">
-                    {game.isPlayoff && game.bracketCode ? bracketRoundLabel(game.bracketCode) : getDivisionName(game.divisionId)}
+                    {roundOrDivisionLabel(game)}
                   </span>
                   <span className={styles.gameDate}>{formatDate(game.date)} - {formatTime(game.time)}</span>
                 </div>
@@ -707,9 +921,12 @@ export default async function TournamentHomeContent({
                   <Trophy size={16} /> Playoff Picture
                 </Link>
               )}
+              {/* One lead CTA (C4): the Playoff Picture carries the seeding story;
+                  the raw bracket demotes to a quiet link (it's also one tap away
+                  inside both Standings and the Playoff Picture itself). */}
               {showStandingsPage && (
-                <Link href={`${primaryBase}/standings`} className="btn btn-outline btn-lg">
-                  See the Bracket <ChevronRight size={16} />
+                <Link href={`${primaryBase}/standings`} className="btn btn-ghost btn-sm">
+                  See the bracket <ChevronRight size={14} />
                 </Link>
               )}
             </div>
@@ -771,12 +988,8 @@ export default async function TournamentHomeContent({
               : ' View tournament details and updates in one place.'}
           </p>
 
-          {/* Mobile-only (re)install entry point — the install prompt is only
-              mounted for non-completed events (tournament layout), and preview
-              has no prompt to trigger, so match those conditions here. */}
-          {!isPreview && !isFinished && (
-            <GetAppLink className={styles.getAppLink} />
-          )}
+          {/* "Get the app" lives in the More sheet now (owner 2026-07-15) —
+              mobile-gated there; the desktop hero never showed it anyway. */}
 
           {!isInProgress && !isFinished && (
             <div className={styles.registrationStatus}>
@@ -804,11 +1017,15 @@ export default async function TournamentHomeContent({
                 <span className={styles.statLabel}>Divisions</span>
               </div>
               <div className={styles.statDivider} />
+              {/* Same privacy rule as the mobile facts card: registration counts
+                  follow the team list's visibility; capacity is never private. */}
               <div className={styles.stat}>
                 <span className={styles.statNum}>
-                  {teams.length ? <CountUp value={teams.length} /> : 'TBA'}
+                  {showTeamsPage
+                    ? (teams.length ? <CountUp value={teams.length} /> : 'TBA')
+                    : (totalCapacity != null ? <CountUp value={totalCapacity} /> : 'TBA')}
                 </span>
-                <span className={styles.statLabel}>Teams</span>
+                <span className={styles.statLabel}>{showTeamsPage ? 'Teams' : 'Team Spots'}</span>
               </div>
               <div className={styles.statDivider} />
               <div className={styles.stat}>
@@ -825,6 +1042,8 @@ export default async function TournamentHomeContent({
       </section>
       )}
 
+      {liveNowSection}
+      {preEventPanel}
       {championBanner}
       {completedRecordPanel}
       {tournamentDayPanel}
@@ -891,7 +1110,7 @@ export default async function TournamentHomeContent({
           not a mobile bottom-nav tab) is reachable from the Overview in every state
           (J6-006 / J6-034). Gated per-link on page visibility. */}
       {(showSchedulePage || showStandingsPage || showTeamsPage || showRulesPage || showNewsPage) && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', margin: '2.5rem 0 0.5rem' }}>
+        <div className={styles.exploreRow}>
           {showSchedulePage && <Link href={`${primaryBase}/schedule`} className="btn btn-ghost btn-sm">Schedule</Link>}
           {showStandingsPage && <Link href={`${primaryBase}/standings`} className="btn btn-ghost btn-sm">Standings</Link>}
           {showTeamsPage && <Link href={`${primaryBase}/teams`} className="btn btn-ghost btn-sm">Teams</Link>}

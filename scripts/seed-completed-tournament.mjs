@@ -78,6 +78,9 @@ const newT = { ...srcT,
   id: newTid, slug: NEW_SLUG, name: NEW_NAME,
   status: 'completed', is_active: false,
   start_date: newStartISO, end_date: newEndISO,
+  // QA fixtures must appear on /discover (under the Completed filter) — the
+  // draft source is unlisted.
+  list_in_directory: true, directory_province: srcT.directory_province ?? 'ON',
 };
 delete newT.created_at; delete newT.results_notified_at; delete newT.results_notification_sent_count;
 await chk('insert tournament', await db.from('tournaments').insert(newT));

@@ -40,6 +40,11 @@
     color: var(--white-45);
     transition: color 0.2s ease, transform 0.12s ease;
     min-width: 0;
+    /* The More tab is a <button> — neutralise button chrome so all tabs match. */
+    background: none;
+    border: none;
+    font: inherit;
+    cursor: pointer;
   }
 
   .tab.active {

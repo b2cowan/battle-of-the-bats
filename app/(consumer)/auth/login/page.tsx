@@ -4,14 +4,17 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, getUser } from '@/lib/auth';
+import { safeNextPath } from '@/lib/safe-redirect';
 import { HudSkeleton } from '@/components/ui/HudSkeleton';
 import styles from '../auth.module.css';
 
 /**
- * Resolve the post-login destination. Honors `next` ONLY when the resolver lands the user in a
- * real workspace (/home or /platform-admin); a recovery destination (/auth/suspended, /start)
- * always wins over a `next` the session can't reach. Shared by the submit handler and the
- * already-authenticated guard so both break the J8-018 / J10-019 login loops the same way.
+ * Resolve the post-login destination. Honors `next` ONLY when it is a same-origin
+ * path (safeNextPath — CWE-601, the same hardening signup/callback got in 696bc794)
+ * AND the resolver lands the user in a real workspace (/home or /platform-admin);
+ * a recovery destination (/auth/suspended, /start) always wins over a `next` the
+ * session can't reach. Shared by the submit handler and the already-authenticated
+ * guard so both break the J8-018 / J10-019 login loops the same way.
  */
 async function resolveLoginDestination(next: string | null): Promise<string> {
   let destination = '/home';
@@ -22,7 +25,8 @@ async function resolveLoginDestination(next: string | null): Promise<string> {
     destination = '/home';
   }
   const resolverIsWorkspace = destination === '/home' || destination === '/platform-admin';
-  return next && resolverIsWorkspace ? next : destination;
+  const safeNext = safeNextPath(next, null);
+  return safeNext && resolverIsWorkspace ? safeNext : destination;
 }
 
 const AUTH_ERRORS: Record<string, string> = {

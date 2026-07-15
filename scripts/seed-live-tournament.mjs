@@ -120,6 +120,9 @@ const newT = { ...srcT,
   id: newTid, slug: NEW_SLUG, name: NEW_NAME,
   status: 'active', is_active: false,   // is_active stays false so dev-tournament-2026 keeps the org's active flag
   start_date: newStartISO, end_date: todayISO,
+  // The QA matrix walks /discover too — the source tournament is draft/unlisted,
+  // so force the directory opt-in or every re-seed drops live-demo off Discover.
+  list_in_directory: true, directory_province: srcT.directory_province ?? 'ON',
 };
 delete newT.created_at; delete newT.results_notified_at; delete newT.results_notification_sent_count;
 await chk('insert tournament', await db.from('tournaments').insert(newT));

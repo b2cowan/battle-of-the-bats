@@ -1,12 +1,19 @@
 'use client';
 /**
- * components/public/TournamentAccountSheet.tsx — Phase 3 "one-home connective tissue."
+ * components/public/TournamentAccountSheet.tsx — Phase 3 "one-home connective tissue,"
+ * reshaped by Tournament Mobile Polish G5 (owner decision 2026-07-14).
  *
- * The account chip in a tournament's public top bar (signed-in visitors only) and the
- * bottom sheet it opens: the hats this account owns on THIS event (coach / admin /
- * official rows) plus the two universal destinations, Following and Your FieldLogicHQ.
- * Deliberately pull-not-push (rev 2 owner direction): no persistent banner — one chip,
- * zero content real estate. Anonymous visitors render nothing.
+ * TWO doors, one sheet:
+ *   • Desktop (>900px): the signed-in account chip in the top bar (Phase 3, unchanged).
+ *   • Mobile (≤900px): the bottom-nav "More" tab dispatches `flhq:open-tournament-sheet`
+ *     — the chip hides (the header keeps only Share).
+ *
+ * The sheet now serves EVERY visitor, never empty (G5):
+ *   • Signed in — the hats this account owns on THIS event (coach / admin / official),
+ *     Following, Your FieldLogicHQ.
+ *   • Signed out — a sign-in row plus this device's followed team.
+ *   • Everyone — THIS EVENT: Notifications (the fan bell, relocated from the mobile
+ *     header), News and Rules (their tab-bar slots moved here).
  *
  * Identity is fetched CLIENT-SIDE via /api/public/tournament-viewer, never
  * server-rendered into the page: the service worker offline-caches public tournament
@@ -15,20 +22,27 @@
  * — the session check is a local read, no network. Auth transitions are SPA
  * navigations, so the chip re-resolves on sign-in/out (fan-alert-prefs precedent).
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
-import { ArrowRight, Star, LayoutGrid } from 'lucide-react';
+import { ArrowRight, Star, LayoutGrid, LogIn, Megaphone, ScrollText, Bell, BellRing, Download } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import { getSession } from '@/lib/auth';
 import { createClient } from '@/lib/supabase-browser';
+import { readFollowedTeam, syncFollowToAccount } from '@/lib/follow';
+import { isInstallEligibleBrowser } from '@/lib/device';
+import { saveFanAlertPref } from '@/lib/fan-alert-prefs-client';
+import type { PublicPageKey } from '@/lib/public-pages';
 import BottomSheet from '@/components/admin/BottomSheet';
+import FanNotificationBell from '@/components/public/FanNotificationBell';
 import styles from './TournamentAccountSheet.module.css';
 
 interface ViewerHat {
   kind: 'coach' | 'admin' | 'official';
   label: string;
   href: string;
+  /** Coach hats only: the tournament registration id — powers the alerts row (N3b). */
+  teamId?: string;
 }
 interface TournamentViewer {
   initials: string;
@@ -42,12 +56,104 @@ const HAT_META: Record<ViewerHat['kind'], { eyebrow: string; action: string }> =
   official: { eyebrow: 'You officiate here', action: 'Scorekeeper' },
 };
 
+/** BottomNav's More tab opens the sheet through this event (single mount here). */
+export const OPEN_TOURNAMENT_SHEET_EVENT = 'flhq:open-tournament-sheet';
+
+/** One standard sheet row — icon · label/sub · chevron. Link when href is given,
+ *  button otherwise. The hat rows (eyebrow + action) and CoachAlertsRow keep
+ *  their own richer anatomy. */
+function SheetRow({ icon, label, sub, href, onClick }: {
+  icon: React.ReactNode;
+  label: string;
+  sub: string;
+  href?: string;
+  onClick?: () => void;
+}) {
+  const body = (
+    <>
+      <span className={styles.rowIcon}>{icon}</span>
+      <span className={styles.rowText}>
+        <span className={styles.label}>{label}</span>
+        <span className={styles.sub}>{sub}</span>
+      </span>
+      <span className={styles.chev}><ArrowRight size={14} strokeWidth={2.2} aria-hidden /></span>
+    </>
+  );
+  return href ? (
+    <Link href={href} className={styles.row} onClick={onClick}>{body}</Link>
+  ) : (
+    <button type="button" className={`${styles.row} ${styles.rowBtn}`} onClick={onClick}>{body}</button>
+  );
+}
+
+/**
+ * N3b: one-tap own-team alerts for a signed-in coach — the platform's highest-intent
+ * alerts user finally gets a bridge. Mirrors FollowAlertsToggle's signed-in turn-on:
+ * the account-level gameAlerts switch + THIS device's push registration in one gesture
+ * (strictDevice — a device failure is a hard error, never a quiet account-only save),
+ * then the idempotent fire-and-forget follow mirror so the team is on the account.
+ */
+function CoachAlertsRow({ teamId, teamName, orgSlug, tournamentSlug }: {
+  teamId: string;
+  teamName: string;
+  orgSlug: string;
+  tournamentSlug: string;
+}) {
+  const [state, setState] = useState<'idle' | 'pending' | 'done'>('idle');
+  const [msg, setMsg] = useState('');
+
+  async function enable() {
+    if (state !== 'idle') return;
+    setState('pending');
+    setMsg('');
+    const result = await saveFanAlertPref('gameAlerts', true, { strictDevice: true });
+    if (!result.ok) {
+      setMsg(result.error ?? 'Could not turn on alerts.');
+      setState('idle');
+      return;
+    }
+    // Alerts are on; the shared account mirror is best-effort + idempotent.
+    syncFollowToAccount('follow', { teamId, orgSlug, tournamentSlug });
+    setState('done');
+  }
+
+  const done = state === 'done';
+  return (
+    <button
+      type="button"
+      className={`${styles.row} ${styles.rowBtn}`}
+      data-kind="coach"
+      onClick={enable}
+      disabled={state !== 'idle'}
+      aria-live="polite"
+    >
+      <span className={styles.rowIcon}>
+        {done
+          ? <BellRing size={15} strokeWidth={1.8} aria-hidden />
+          : <Bell size={15} strokeWidth={1.8} aria-hidden />}
+      </span>
+      <span className={styles.rowText}>
+        <span className={styles.label}>
+          {done ? 'Alerts on for your team' : state === 'pending' ? 'Turning on…' : 'Get alerts for your team'}
+        </span>
+        <span className={msg && !done ? `${styles.sub} ${styles.subError}` : styles.sub}>
+          {done
+            ? `A push hits this device when ${teamName}'s games go live`
+            : msg || `Score alerts for ${teamName} — one tap`}
+        </span>
+      </span>
+      {!done && <span className={styles.chev}><ArrowRight size={14} strokeWidth={2.2} aria-hidden /></span>}
+    </button>
+  );
+}
+
 export default function TournamentAccountSheet() {
-  const { tournamentSlug, tournamentName } = useOrgNav();
+  const { tournamentSlug, tournamentName, tournamentHiddenPages, tournamentId, fanAlertsEnabled, tournamentFinished } = useOrgNav();
   const params = useParams<{ orgSlug?: string }>();
   const orgSlug = typeof params?.orgSlug === 'string' ? params.orgSlug : null;
   const pathname = usePathname();
   const [viewer, setViewer] = useState<TournamentViewer | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
   // The sheet records WHERE it was opened; any route change (tab tap, browser back)
   // derives it closed — it must never sit open, holding the body scroll lock, over a
   // page the user navigated to underneath it. No effect needed: open is derived state.
@@ -66,6 +172,17 @@ export default function TournamentAccountSheet() {
     return () => data.subscription.unsubscribe();
   }, []);
 
+  // Mobile More tab → open here (the sheet mounts exactly once, in the Navbar).
+  // Registered once; the handler reads the CURRENT pathname through a ref so the
+  // listener isn't torn down and re-added on every navigation.
+  const pathnameRef = useRef(pathname);
+  useEffect(() => { pathnameRef.current = pathname; }, [pathname]);
+  useEffect(() => {
+    const onOpen = () => setOpenedAtPath(pathnameRef.current);
+    window.addEventListener(OPEN_TOURNAMENT_SHEET_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_TOURNAMENT_SHEET_EVENT, onOpen);
+  }, []);
+
   useEffect(() => {
     // No slugs → nothing to resolve; the render gate below keeps any previous
     // viewer from showing (the Navbar unmounts this component off tournament routes).
@@ -76,9 +193,10 @@ export default function TournamentAccountSheet() {
         // Local cookie/session read — anonymous visitors never hit the network.
         const session = await getSession();
         if (!session?.user) {
-          if (!cancelled) setViewer(null);
+          if (!cancelled) { setViewer(null); setSignedIn(false); }
           return;
         }
+        if (!cancelled) setSignedIn(true);
         const res = await fetch(
           `/api/public/tournament-viewer?org=${encodeURIComponent(orgSlug)}&tournament=${encodeURIComponent(tournamentSlug)}`,
         );
@@ -97,23 +215,47 @@ export default function TournamentAccountSheet() {
     };
   }, [orgSlug, tournamentSlug, authTick]);
 
-  if (!viewer || !orgSlug || !tournamentSlug) return null;
+  if (!orgSlug || !tournamentSlug) return null;
   const close = () => setOpenedAtPath(null);
+
+  const publicBase = `/${orgSlug}/${tournamentSlug}`;
+  const hidden = (key: PublicPageKey) => tournamentHiddenPages.includes(key);
+  // N3b: the first coach hat drives the labeled chip + the one-tap alerts row.
+  const coachHat = viewer?.hats.find(hat => hat.kind === 'coach') ?? null;
+  // Device-level follow (anonymous fans). Read lazily at render — the sheet body
+  // only exists after a user gesture, so there is no SSR/hydration surface here.
+  const deviceFollow = open && !signedIn ? readFollowedTeam(orgSlug, tournamentSlug) : null;
+  const showBell = !!tournamentId && fanAlertsEnabled && !tournamentFinished;
+  // "Get the app" (owner 2026-07-15): phone/tablet BROWSERS only — nothing to
+  // install on desktop or inside the installed app (one shared eligibility
+  // rule in lib/device). Finished events don't mount the install prompt, so
+  // the row hides there too. Evaluated on open (post-gesture).
+  const showGetApp = open && !tournamentFinished && isInstallEligibleBrowser();
 
   return (
     <>
-      <button
-        type="button"
-        className={styles.chip}
-        onClick={() => setOpenedAtPath(pathname)}
-        aria-label="Your account on this event"
-      >
-        {viewer.initials}
-      </button>
-      <BottomSheet open={open} onClose={close} title={viewer.displayName || 'Signed in'}>
-        {tournamentName && <p className={styles.context}>At {tournamentName}</p>}
+      {/* Desktop-only account chip (Phase 3). Hidden ≤900px by CSS — the More tab
+          is mobile's door. Anonymous visitors have no chip on any width. */}
+      {viewer && (
+        <button
+          type="button"
+          className={coachHat ? `${styles.chip} ${styles.chipCoach}` : styles.chip}
+          onClick={() => setOpenedAtPath(pathname)}
+          aria-label={coachHat ? 'Your account on this event — you coach here' : 'Your account on this event'}
+        >
+          {viewer.initials}
+          {/* N3b: the chip earns its space by saying WHY it's there (approved mockup:
+              initials + role, desktop only — the chip is already hidden ≤900px). */}
+          {coachHat && <span className={styles.chipRole}>· Coach</span>}
+        </button>
+      )}
+      <BottomSheet open={open} onClose={close} title={viewer?.displayName || (signedIn ? 'Signed in' : 'More')}>
+        {/* The "At {event}" line exists to scope the HAT rows ("you coach HERE").
+            Without hats it read as a second group header fighting THIS EVENT —
+            owner feedback 2026-07-15 — so it only renders when hats do. */}
+        {tournamentName && (viewer?.hats.length ?? 0) > 0 && <p className={styles.context}>At {tournamentName}</p>}
         <div className={styles.rows}>
-          {viewer.hats.map(hat => (
+          {viewer?.hats.map(hat => (
             <Link
               key={`${hat.kind}:${hat.href}`}
               href={hat.href}
@@ -128,23 +270,108 @@ export default function TournamentAccountSheet() {
               <span className={styles.action}>{HAT_META[hat.kind].action}</span>
             </Link>
           ))}
-          <Link href="/following" className={styles.row} onClick={close}>
-            <span className={styles.rowIcon}><Star size={15} strokeWidth={1.8} aria-hidden /></span>
-            <span className={styles.rowText}>
-              <span className={styles.label}>Following</span>
-              <span className={styles.sub}>Your followed teams</span>
-            </span>
-            <span className={styles.chev}><ArrowRight size={14} strokeWidth={2.2} aria-hidden /></span>
-          </Link>
-          <Link href="/home" className={styles.row} onClick={close}>
-            <span className={styles.rowIcon}><LayoutGrid size={15} strokeWidth={1.8} aria-hidden /></span>
-            <span className={styles.rowText}>
-              <span className={styles.label}>Your FieldLogicHQ</span>
-              <span className={styles.sub}>All workspaces &amp; following</span>
-            </span>
-            <span className={styles.chev}><ArrowRight size={14} strokeWidth={2.2} aria-hidden /></span>
-          </Link>
+          {/* N3b: one-tap own-team alerts, directly under the coach hat (approved
+              mockup) — rides the account-alerts model, no new plumbing. */}
+          {coachHat?.teamId && (
+            <CoachAlertsRow
+              teamId={coachHat.teamId}
+              teamName={coachHat.label}
+              orgSlug={orgSlug}
+              tournamentSlug={tournamentSlug}
+            />
+          )}
+          {!signedIn && (
+            <SheetRow
+              icon={<LogIn size={15} strokeWidth={1.8} aria-hidden />}
+              label="Sign in"
+              sub="Follow everywhere & get score alerts"
+              href={`/auth/login?next=${encodeURIComponent(pathname || publicBase)}`}
+              onClick={close}
+            />
+          )}
+          {signedIn && (
+            <SheetRow
+              icon={<Star size={15} strokeWidth={1.8} aria-hidden />}
+              label="Following"
+              sub="Your followed teams"
+              href="/following"
+              onClick={close}
+            />
+          )}
+          {signedIn && (
+            <SheetRow
+              icon={<LayoutGrid size={15} strokeWidth={1.8} aria-hidden />}
+              label="Your FieldLogicHQ"
+              sub="All workspaces & following"
+              href="/home"
+              onClick={close}
+            />
+          )}
+          {/* Platform-level, not event-level (owner 2026-07-15): ONE universal
+              FieldLogicHQ app since Phase 0 — so the install door sits with the
+              other platform rows, not under "This event". Dispatch force-shows
+              the shared install prompt (bypasses its dismissal gates). */}
+          {showGetApp && (
+            <SheetRow
+              icon={<Download size={15} strokeWidth={1.8} aria-hidden />}
+              label="Get the app"
+              sub="FieldLogicHQ on your home screen"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('flhq:show-install'));
+                close();
+              }}
+            />
+          )}
         </div>
+
+        {/* ── This event: the device-level follow, notifications, and the pages
+            that left the tab bar (G5). A signed-out fan's follow is event-scoped,
+            so it lives HERE — the top group is purely "you" (owner 2026-07-15). ── */}
+        {(showBell || !signedIn || !hidden('news') || !hidden('rules')) && (
+          <>
+            <p className={styles.sectionKicker}>This event</p>
+            <div className={styles.rows}>
+              {/* Both follow rows honor the organizer's hidden-Teams choice — the
+                  sheet must not advertise a page the nav deliberately hides. */}
+              {!signedIn && !hidden('teams') && (deviceFollow ? (
+                <SheetRow
+                  icon={<Star size={15} strokeWidth={1.8} aria-hidden />}
+                  label={deviceFollow.name || 'Your team'}
+                  sub="Following on this device"
+                  href={`${publicBase}/teams/${deviceFollow.id}`}
+                  onClick={close}
+                />
+              ) : (
+                <SheetRow
+                  icon={<Star size={15} strokeWidth={1.8} aria-hidden />}
+                  label="Follow a team"
+                  sub="Pin its score & next game — no account needed"
+                  href={`${publicBase}/teams`}
+                  onClick={close}
+                />
+              ))}
+              {showBell && <FanNotificationBell variant="row" />}
+              {!hidden('news') && (
+                <SheetRow
+                  icon={<Megaphone size={15} strokeWidth={1.8} aria-hidden />}
+                  label="News & announcements"
+                  sub="Latest from the organizer"
+                  href={`${publicBase}/news`}
+                  onClick={close}
+                />
+              )}
+              {!hidden('rules') && (
+                <SheetRow
+                  icon={<ScrollText size={15} strokeWidth={1.8} aria-hidden />}
+                  label="Rules"
+                  sub="Format & tie-breakers"
+                  href={`${publicBase}/rules`}
+                  onClick={close}
+                />
+              )}
+            </div>
+          </>
+        )}
       </BottomSheet>
     </>
   );

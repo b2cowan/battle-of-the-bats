@@ -1,6 +1,8 @@
 .ticker {
   position: fixed;
-  top: var(--nav-height);
+  /* --nav-visual-h tracks the mobile event header's live height (expanded ↔
+     condensed on scroll); unset elsewhere, so this falls back to the bar. */
+  top: var(--nav-visual-h, var(--nav-height));
   left: 0;
   right: 0;
   height: 40px;
@@ -12,6 +14,9 @@
   border-bottom: 1px solid var(--border-2);
   -webkit-backdrop-filter: blur(var(--blur-bar));
   backdrop-filter: blur(var(--blur-bar));
+  /* No transition on top: --nav-visual-h already animates frame-by-frame with
+     the header's collapse (ResizeObserver-fed), so a CSS ease here would fight
+     it — two smoothing mechanisms retargeting each other every tick. */
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -133,7 +138,7 @@
 /* ── Minimized restore bar — slim, static, same position as the full ticker. ── */
 .tickerMin {
   position: fixed;
-  top: var(--nav-height);
+  top: var(--nav-visual-h, var(--nav-height));
   left: 0;
   right: 0;
   height: 24px;

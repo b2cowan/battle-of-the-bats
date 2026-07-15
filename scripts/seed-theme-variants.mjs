@@ -102,6 +102,8 @@ async function seedVariant(v) {
     status: v.live ? 'active' : srcT.status, is_active: false,
     start_date: v.live ? todayISO : srcT.start_date,
     end_date: v.live ? shiftDate(srcT.end_date, delta) : srcT.end_date,
+    // QA fixtures must appear on /discover — the draft source is unlisted.
+    list_in_directory: true, directory_province: srcT.directory_province ?? 'ON',
   };
   delete newT.created_at; delete newT.results_notified_at; delete newT.results_notification_sent_count;
   await chk('insert tournament', await db.from('tournaments').insert(newT));

@@ -134,7 +134,7 @@ export default function RulesContent({
                 {displayRules.map(section => {
                   const Icon = ICON_MAP[section.icon || 'Shield'] || Shield;
                   return (
-                    <div key={section.id} id={ruleAnchor(section.title)} className={`card ${styles.ruleCard}`} style={{ scrollMarginTop: 'calc(var(--nav-height) + var(--ticker-h, 0px) + 1rem)' }}>
+                    <div key={section.id} id={ruleAnchor(section.title)} className={`card ${styles.ruleCard}`} style={{ scrollMarginTop: 'calc(var(--chrome-top-h) + 1rem)' }}>
                       <div className={styles.ruleCardHeader}>
                         <div className={styles.ruleIcon}>
                           <Icon size={20} />

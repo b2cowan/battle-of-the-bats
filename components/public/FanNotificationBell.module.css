@@ -209,3 +209,66 @@
   .panel { animation: none; }
   .thumb { transition: none; }
 }
+
+/* ── Row trigger (G5): the bell as a full-width row inside the tournament More
+   sheet — mobile's home for notifications now that the header keeps only Share.
+   The panel it opens is unchanged and portals above the sheet. ── */
+.wrapRow {
+  display: block;
+  width: 100%;
+}
+
+.rowTrigger {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  padding: 0.55rem 0.7rem;
+  background: var(--white-5);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition);
+}
+.rowTrigger:hover { background: var(--white-8); }
+
+.rowTriggerIcon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--white-8);
+  color: var(--white-70);
+}
+
+.rowTriggerText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.rowTriggerLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--white-90);
+}
+
+.rowTriggerSub {
+  font-size: 0.68rem;
+  color: var(--white-45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rowTriggerChev {
+  flex: 0 0 auto;
+  color: var(--white-30);
+}

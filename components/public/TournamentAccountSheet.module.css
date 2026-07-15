@@ -30,6 +30,23 @@
   outline-offset: 2px;
 }
 
+/* N3b: a coach at their own event gets a labeled pill chip — identity, then the
+   offer (approved mockup). Desktop-only by construction: the chip itself is
+   hidden ≤900px (G5), so no extra breakpoint is needed here. */
+.chipCoach {
+  width: auto;
+  gap: 0.3rem;
+  padding: 0 0.75rem;
+  border-radius: 17px;
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.55);
+}
+.chipRole {
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
 .context {
   margin: 0 0 0.75rem;
   font-family: var(--font-data);
@@ -125,6 +142,21 @@
   color: var(--white-50);
 }
 
+/* N3b: the alerts row is a BUTTON wearing the shared .row look. */
+.rowBtn {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rowBtn:disabled {
+  cursor: default;
+}
+
+.subError {
+  color: var(--danger-strong);
+}
+
 .action {
   margin-left: auto;
   flex-shrink: 0;
@@ -157,4 +189,20 @@
   flex-shrink: 0;
   color: var(--white-40);
   display: inline-flex;
+}
+
+/* G5: mobile's door is the bottom-nav More tab — the chip is desktop-only. */
+@media (max-width: 900px) {
+  .chip { display: none; }
+}
+
+/* Quiet mono kicker between the YOU rows and the THIS EVENT rows (G4 convention). */
+.sectionKicker {
+  margin: 0.9rem 0 0.4rem;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--white-40);
 }

@@ -17,7 +17,7 @@
 
 /* Offset for the fixed nav when auto-scrolling to today's games on load. */
 .todayGroup {
-  scroll-margin-top: calc(var(--nav-height) + var(--ticker-h, 0px) + 1rem);
+  scroll-margin-top: calc(var(--chrome-top-h) + 1rem);
   border-color: rgba(var(--primary-rgb), 0.45);
   box-shadow: var(--glow-sm);
 }
@@ -37,7 +37,7 @@
    with a done/total progress count on the right. */
 .dateLabel {
   position: sticky;
-  top: calc(var(--nav-height) + var(--ticker-h, 0px));
+  top: var(--chrome-top-h);
   z-index: 5;
   display: flex;
   align-items: center;
@@ -1545,11 +1545,28 @@ a.gameRow { cursor: pointer; }
   }
 
   .mobileScheduleControls {
+    /* One comfortable row (C3): division picker + stage toggle share the line;
+       search keeps its own full-width row beneath. Wraps cleanly when the stage
+       toggle is absent or the viewport is very narrow. */
     display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 
   .mobileControlBar {
     gap: 0.45rem;
+    flex: 1 1 130px;
+    min-width: 0;
+  }
+
+  .mobileStageRow {
+    flex: 1.3 1 180px;
+    min-width: 0;
+  }
+
+  .mobileSearchRow {
+    flex: 1 1 100%;
   }
 
   .mobileFilterSummary {
@@ -1643,16 +1660,18 @@ a.gameRow { cursor: pointer; }
    Scorebug — mobile strip
 ───────────────────────────────────────────────────────────────────────────── */
 
+/* Not-following picker — one slim pill row (C3), not a banner card. Keeps the
+   44px tap floor via min-height; the picker trigger fills the row. */
 .scorebugBar {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.62rem 0.9rem;
-  margin-bottom: 0.85rem;
+  gap: 0.6rem;
+  padding: 0.3rem 0.95rem;
+  margin-bottom: 0.7rem;
   border: 1px solid rgba(var(--primary-rgb), 0.3);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   background: rgba(var(--primary-rgb), 0.07);
-  min-height: 60px;
+  min-height: 48px;
 }
 
 /* The followed-team scorebug card styles (avatar/body/name/meta/opp/right/live/
@@ -2111,7 +2130,9 @@ a.broadcastCard { cursor: pointer; }
   flex-direction: column;
   gap: 0.75rem;
   position: sticky;
-  top: calc(var(--nav-height, 60px) + 1rem);
+  /* Live chrome composition — the 641–900px band runs the taller mobile event
+     header, so a bare --nav-height would tuck the rail under it. */
+  top: calc(var(--chrome-top-h) + 1rem);
 }
 
 /* ── Right rail card ─────────────────────────────────────────────────────── */
@@ -2232,7 +2253,11 @@ a.broadcastCard { cursor: pointer; }
       col 1: time (64px — fits "12:30 PM" at 0.72rem)
       col 2: team name (fills remaining space; away over home)
       col 3: score (auto — sized by content)
+      row 3: venue/diamond context line (F2), aligned with the names
     */
+    /* Two explicit rows; the venue line (when present) claims an implicit third
+       row via grid-row placement — so rows WITHOUT a venue don't pay an empty
+       track's row-gap. */
     grid-template-areas:
       "time name-a score-a"
       "time name-h score-h";
@@ -2240,9 +2265,9 @@ a.broadcastCard { cursor: pointer; }
     grid-template-rows: auto auto;
     align-items: center;
     column-gap: 0.4rem;
-    row-gap: 0.32rem;
+    row-gap: 0.24rem;
     min-height: 54px;
-    padding: 0.5rem 0.65rem 0.5rem 0.85rem;
+    padding: 0.4rem 0.65rem 0.4rem 0.85rem;
   }
 
   .mobileTimeCol {
@@ -2259,25 +2284,28 @@ a.broadcastCard { cursor: pointer; }
     white-space: nowrap;
   }
 
+  /* Venue/diamond context (F2) — one quiet mono line under the matchup. */
   .mobileVenueLine {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    grid-row: 3;
+    grid-column: 2 / -1;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
     font-family: var(--font-data);
     font-size: 0.58rem;
     font-weight: 600;
-    color: var(--white-30);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--white-40);
     line-height: 1.2;
-    margin-top: 0.1rem;
   }
 
-  /* Team name — 2-line clamp, same binding pattern as matchup rows */
+  /* Team name — 2-line clamp; identity reads in the body sans (D6), the data
+     face stays reserved for times/scores/context. */
   .mobileNameAway,
   .mobileNameHome {
-    font-family: var(--font-data);
-    font-size: 0.76rem;
-    font-weight: 700;
+    font-size: 0.82rem;
+    font-weight: 650;
     color: var(--white-85);
     line-height: 1.25;
     overflow: hidden;
@@ -2322,11 +2350,6 @@ a.broadcastCard { cursor: pointer; }
     font-size: 0.92rem;
     font-weight: 900;
     line-height: 1;
-  }
-
-  .mobileWinIcon {
-    color: var(--success-strong);
-    flex-shrink: 0;
   }
 
   .mobileRowStatus {

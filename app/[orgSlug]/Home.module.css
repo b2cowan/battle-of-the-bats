@@ -6,6 +6,14 @@
   color: var(--white);
 }
 
+/* Below 900px the hero (which reserved the fixed chrome) retires — the page
+   itself clears the unified event header + ticker instead. */
+@media (max-width: 900px) {
+  .page {
+    padding-top: var(--chrome-top-static-h);
+  }
+}
+
 /* Tabular numerals — hero stats, countdowns, live scores and record figures
    stay aligned and don't reflow as values change. */
 .statNum,
@@ -208,32 +216,8 @@
 
 .heroSub strong { color: var(--primary-light); }
 
-/* Subtle mobile-only "Get the app" link tucked under the hero sub-line.
-   Quiet by design — Register stays the hero's primary action. */
-.getAppLink {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  width: fit-content;
-  margin: -1.5rem auto 0.25rem;
-  padding: 0.35rem 0.5rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--primary-light);
-  opacity: 0.85;
-  transition: opacity 0.15s ease;
-  animation: fadeInUp 0.7s ease 0.25s both;
-}
-.getAppLink:hover { opacity: 1; text-decoration: underline; }
-
-[data-color-mode="light"] .getAppLink { color: var(--primary); }
+/* "Get the app" moved into the More sheet (2026-07-15) — its hero link styles
+   retired with it. */
 
 .draftPublicNotice {
   display: inline-flex;
@@ -1498,4 +1482,263 @@
   margin-left: auto;
   color: var(--white-30);
   flex-shrink: 0;
+}
+
+/* ── Live Now (A1) — games in their live window lead the page body. ─────────── */
+.liveNowSection {
+  padding-top: 1.1rem;
+  padding-bottom: 0.4rem;
+}
+
+.liveNowHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 0.15rem 0.35rem;
+}
+
+.liveNowKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--danger-strong, var(--danger));
+}
+
+.liveNowCount {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-40);
+}
+
+/* Live dot: the shared global .live-dot glyph (one definition, no drift). */
+
+.liveNowList {
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm), var(--highlight-top);
+  overflow: hidden;
+}
+
+.liveNowRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--white-5);
+  transition: var(--transition);
+}
+.liveNowRow:last-child { border-bottom: 0; }
+.liveNowRow:hover { background: var(--white-5); }
+
+.liveNowWho { flex: 1; min-width: 0; }
+
+.liveNowName {
+  display: block;
+  font-size: 0.92rem;
+  line-height: 1.3;
+  color: var(--white-60);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.liveNowLeading {
+  color: var(--white);
+  font-weight: 680;
+}
+
+.liveNowContext {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white-40);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.liveNowScore {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.liveNowDigits {
+  display: block;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--white);
+}
+.liveNowDigitsFaint {
+  display: block;
+  font-family: var(--font-data);
+  font-size: 1rem;
+  line-height: 1.1;
+  color: var(--white-30);
+}
+
+.liveNowCaption {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--danger-strong, var(--danger));
+}
+.liveNowCaption :global(.live-dot) { width: 5px; height: 5px; }
+
+.liveNowCaptionQuiet {
+  display: block;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-40);
+}
+
+.liveNowUpcoming .liveNowName { color: var(--white-80); }
+
+.liveNowMore {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.5rem;
+}
+
+/* ── Mobile pre-event panel — carries the hero's pre-event jobs below 900px ──── */
+.preEventPanel {
+  display: none;
+  padding-top: 1.1rem;
+  padding-bottom: 0.4rem;
+}
+
+.preCountdownCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm), var(--highlight-top);
+}
+
+.preCountdownLabel {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--white-40);
+}
+
+.preCountdownValue {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.preCtaWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+
+.preCtaBtn { width: 100%; justify-content: center; }
+
+.preCtaDetail {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white-45);
+  text-align: center;
+}
+
+.preFactLink {
+  color: var(--primary-light);
+  text-decoration: none;
+}
+.preFactLink:hover { text-decoration: underline; }
+
+/* ── G3: the unified event header owns identity on mobile — the marketing hero
+   retires below 900px (its pre-event jobs move to .preEventPanel above). Scoped
+   to the live shell; the admin preview (no event header) keeps its hero. ────── */
+@media (max-width: 900px) {
+  [data-live-chrome] .hero { display: none; }
+  [data-live-chrome] .preEventPanel { display: block; }
+}
+
+/* Explore links (every public page reachable from the Overview — J6-006). */
+.exploreRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 2.5rem 0 0.5rem;
+}
+@media (max-width: 768px) {
+  .exploreRow :global(.btn) {
+    min-height: var(--tap-min, 44px);
+  }
+}
+
+.preCountdownDate {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white-60);
+  margin-top: 0.1rem;
+}
+
+.preFactMore {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: var(--white-40);
+  margin-left: 0.4rem;
+  white-space: nowrap;
+}
+
+/* Pre-event brand moment — the uploaded event/org logo floats free (no card
+   box, owner 2026-07-15); a soft org-colour glow is its only staging. The
+   header carries the dates, so no info is lost to the brand moment. */
+.preLogoCard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0 0.9rem;
+  background: radial-gradient(ellipse 60% 80% at center, rgba(var(--primary-rgb), 0.18) 0%, transparent 70%);
+}
+
+.preLogoImg {
+  /* No ring, no box — uploaded marks carry their own shape; the soft glow is
+     the only staging. Gentle corner rounding so an upload with a baked-in
+     opaque background reads as a tile, not a hard-edged rectangle. */
+  width: 116px;
+  height: 116px;
+  object-fit: contain;
+  border-radius: 10px;
 }

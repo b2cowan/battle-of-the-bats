@@ -10,13 +10,14 @@ import YearSelector from '@/components/YearSelector';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
 import { TieredBracket } from '@/components/bracket/TieredBracket';
-import { bracketRoundInfo, bracketRoundLabel, inferGamePool } from '@/lib/playoff-bracket';
+import { bracketRoundInfo, fanRoundLabel, inferGamePool } from '@/lib/playoff-bracket';
 import { computePlacementStandings } from '@/lib/playoff-standings';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { readFollowedTeamId, clearFollowedTeam, isTournamentInProgress, followKey } from '@/lib/follow';
 import { isGameLive, gameStartMs, isGameUpcoming, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { resolveGameFieldLabel } from '@/lib/venue-label';
 import { tournamentToday } from '@/lib/timezone';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { downloadTeamScheduleICS } from '@/lib/team-calendar';
@@ -354,9 +355,10 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
 
   function formatDividerDate(d: string) {
     if (!d) return 'TBD';
+    // Weekday-led (G4): fans plan by day name on a weekend event — "TUESDAY · JUL 14".
     return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', {
-      month: 'short', day: 'numeric',
-    }).toUpperCase();
+      weekday: 'long', month: 'short', day: 'numeric',
+    }).replace(', ', ' · ').toUpperCase();
   }
 
   function formatRowDate(d?: string) {
@@ -560,14 +562,15 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     const awayName = getTeamDisplay(game, false);
     const homeName = getTeamDisplay(game, true);
 
-    // Mobile rows mirror the Recent-Scores cards: winner score green, loser dimmed
-    // (not red), tie gold; the winning side also gets a trophy.
+    // Mobile rows: winner carries weight, not paint (A10) — full-white score and
+    // name for the winner, dimmed loser, no trophy spam. Colour stays reserved
+    // for the one live signal (red) so finished days read calm.
     const mobileScoreStyle = (side: 'home' | 'away') =>
-      !hasScore ? { color: 'var(--white-75)' }
-      : winner === 'tie' ? { color: 'var(--warning)' }
-      : { color: winner === side ? 'var(--success)' : 'var(--white-40)' };
+      !hasScore || winner === 'tie' ? { color: 'var(--white-75)' }
+      : { color: winner === side ? 'var(--white)' : 'var(--white-40)' };
     const mobileNameStyle = (side: 'home' | 'away') =>
       hasScore && winner !== 'tie' && winner !== side ? { color: 'var(--white-40)' } : undefined;
+    const mobileFieldLabel = resolveGameFieldLabel(game, venues);
 
     const isLive = isGameLive(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES);
     const statusBadge =
@@ -631,7 +634,6 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
           </span>
           {/* col 4: away score (winner: trophy + green) */}
           <span className={styles.mobileScoreAway} style={mobileScoreStyle('away')}>
-            {hasScore && winner === 'away' && <Trophy size={12} className={styles.mobileWinIcon} aria-label="Winner" />}
             {hasScore ? game.awayScore : ''}
           </span>
           {/* home row: name · score + status badge */}
@@ -641,11 +643,14 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
           {/* col 4: home score + status badge */}
           <div className={styles.mobileScoreHome}>
             <span className={styles.mobileScoreNum} style={mobileScoreStyle('home')}>
-              {hasScore && winner === 'home' && <Trophy size={12} className={styles.mobileWinIcon} aria-label="Winner" />}
               {hasScore ? game.homeScore : ''}
             </span>
             <span className={styles.mobileRowStatus}>{statusBadge ?? typeLabel}</span>
           </div>
+          {/* Venue/diamond context (F2) — the data was always loaded, now it shows. */}
+          {mobileFieldLabel && (
+            <span className={styles.mobileVenueLine}>{mobileFieldLabel}</span>
+          )}
         </div>
       </>
     );
@@ -1296,7 +1301,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                                 {poolDateGroups[date].map(game => renderGameCard(
                                   game,
                                   styles.playoffRow,
-                                  <span className="badge badge-primary">{bracketRoundLabel(game.bracketCode)}</span>
+                                  <span className="badge badge-primary">{fanRoundLabel(game.bracketCode)}</span>
                                 ))}
                               </div>
                             </div>
@@ -1317,7 +1322,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                       game,
                       game.isPlayoff ? styles.playoffRow : '',
                       game.isPlayoff
-                        ? <span className="badge badge-primary">{bracketRoundLabel(game.bracketCode)}</span>
+                        ? <span className="badge badge-primary">{fanRoundLabel(game.bracketCode)}</span>
                         : null
                     ))}
                   </div>

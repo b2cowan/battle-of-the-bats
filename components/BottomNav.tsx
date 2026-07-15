@@ -1,22 +1,30 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
-import { Home, Calendar, Trophy, Users, Megaphone, ScrollText } from 'lucide-react';
+import { Home, Calendar, Trophy, Users, Megaphone, ScrollText, Ellipsis } from 'lucide-react';
 import { useOrgNav } from './OrgNavContext';
 import { isConsumerShellPath } from '@/lib/consumer-routes';
+import { OPEN_TOURNAMENT_SHEET_EVENT } from '@/components/public/TournamentAccountSheet';
 import type { PublicPageKey } from '@/lib/public-pages';
 import styles from './BottomNav.module.css';
 
-// Mobile primary tabs, in section order. Rules sits at the END (reference material
-// fans hunt for once the tournament starts) — it used to be omitted, but fans
-// couldn't find it. To keep the bar at its 5-tab max, Home is dropped when every
-// page is enabled (see showHome below); the top-nav logo still returns to Overview.
+// Mobile primary tabs (G5, owner decision 2026-07-14): Home leads, More closes —
+// the More SHEET carries News + Rules (their old tab slots) plus notifications
+// and the signed-in doors, mirroring the main app's bottom-right "everything
+// else" corner. News/Rules pages still exist; only their bar slots moved.
 const PAGE_TABS = [
-  { key: 'news',     icon: Megaphone,  label: 'News'     },
-  { key: 'schedule', icon: Calendar,   label: 'Schedule' },
-  { key: 'standings', icon: Trophy,    label: 'Standings' },
-  { key: 'teams',    icon: Users,      label: 'Teams'    },
-  { key: 'rules',    icon: ScrollText, label: 'Rules'    },
+  { key: 'schedule',  icon: Calendar, label: 'Schedule'  },
+  { key: 'standings', icon: Trophy,   label: 'Standings' },
+  { key: 'teams',     icon: Users,    label: 'Teams'     },
+];
+
+// Admin tournament PREVIEW keeps the classic five page tabs (News/Rules join
+// the shared trio): the More sheet is live-site chrome (account/identity
+// resolution) that doesn't exist in preview.
+const PREVIEW_TABS = [
+  { key: 'news', icon: Megaphone, label: 'News' },
+  ...PAGE_TABS,
+  { key: 'rules', icon: ScrollText, label: 'Rules' },
 ];
 
 type BottomNavProps = {
@@ -43,13 +51,12 @@ export default function BottomNav({ basePath, hiddenPages }: BottomNavProps = {}
   if (!basePath && (isAdmin || isMarketing || pathname.startsWith('/platform-admin') || !tournamentSlug)) return null;
 
   const homeHref = basePath ?? `/${orgSlug}/${tournamentSlug}`;
-  const pageTabs = PAGE_TABS.filter(tab => !(hiddenPages ?? tournamentHiddenPages).includes(tab.key as PublicPageKey));
-
-  // Cap the bar at five tabs. Home leads whenever there's room, but when every page
-  // is enabled (five page tabs) we drop it so Rules stays visible at the end — the
-  // top-nav logo/name still returns to Overview. This also preserves the J6-057
-  // safeguard: with fewer page tabs Home is always shown, so the bar is never empty.
-  const showHome = pageTabs.length < 5;
+  const isPreviewBar = !!basePath;
+  const pageTabs = (isPreviewBar ? PREVIEW_TABS : PAGE_TABS)
+    .filter(tab => !(hiddenPages ?? tournamentHiddenPages).includes(tab.key as PublicPageKey));
+  // Live bar: Home + up to 3 page tabs + More = 5 max. Preview keeps the classic
+  // five page tabs (Home only when a page is hidden — J6-057 safeguard intact).
+  const showHome = isPreviewBar ? pageTabs.length < 5 : true;
 
   return (
     <nav className={styles.bottomNav} aria-label="Mobile navigation">
@@ -87,6 +94,23 @@ export default function BottomNav({ basePath, hiddenPages }: BottomNavProps = {}
           </Link>
         );
       })}
+
+      {/* More (G5) — opens the tournament sheet (mounted once in the Navbar):
+          your doors + notifications + news + rules. A button, not a route. */}
+      {!isPreviewBar && (
+        <button
+          type="button"
+          className={styles.tab}
+          id="bottom-nav-more"
+          onClick={() => window.dispatchEvent(new CustomEvent(OPEN_TOURNAMENT_SHEET_EVENT))}
+          aria-haspopup="dialog"
+        >
+          <span className={styles.iconWrap}>
+            <Ellipsis size={22} strokeWidth={1.8} />
+          </span>
+          <span className={styles.label}>More</span>
+        </button>
+      )}
     </nav>
   );
 }

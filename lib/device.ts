@@ -41,3 +41,18 @@ export function isStandalonePWA(): boolean {
     window.matchMedia?.('(display-mode: standalone)')?.matches === true
   );
 }
+
+/**
+ * True when a "Get the app" affordance makes sense: a phone/tablet BROWSER —
+ * not desktop (nothing to install) and not the installed app itself. The ONE
+ * definition of install eligibility (More-sheet row, and any future entry
+ * point) so the gating rule can never drift between surfaces.
+ */
+export function isInstallEligibleBrowser(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (isStandalonePWA()) return false;
+  return (
+    window.matchMedia?.('(pointer: coarse)')?.matches === true ||
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+  );
+}
