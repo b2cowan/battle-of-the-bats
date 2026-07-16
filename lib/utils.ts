@@ -44,6 +44,17 @@ export function formatPoolName(name: string): string {
   return `${bare} Pool`;
 }
 
+/** Split a trailing parenthetical qualifier off a team name —
+ *  "Halton Hawks U11 Jr (Johnstone)" → { base: "Halton Hawks U11 Jr", qualifier: "Johnstone" }.
+ *  Organizers commonly bake a coach/color disambiguator into the name itself; fan surfaces
+ *  render it as a quiet second line instead of letting it wrap at full name weight (D3).
+ *  Only a qualifier at the very END splits, and only when a non-empty base remains — a name
+ *  that IS a parenthetical, or has one mid-name, passes through unchanged. */
+export function splitTeamQualifier(name: string): { base: string; qualifier: string | null } {
+  const m = name.match(/^(.*\S)\s*\(([^()]+)\)\s*$/);
+  return m ? { base: m[1], qualifier: m[2].trim() || null } : { base: name, qualifier: null };
+}
+
 export function copiedSummary(copied?: CloneCopiedCounts | null): string[] {
   if (!copied) return ['Setup copied with safe defaults.'];
   const rows = [

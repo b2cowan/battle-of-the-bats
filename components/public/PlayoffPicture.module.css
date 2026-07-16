@@ -73,6 +73,29 @@
   }
 }
 
+/* Mobile stand-in for the retired hero (C2): quiet mono page kicker under the
+   unified event header. Hidden wherever the hero still renders. */
+.pageKicker {
+  display: none;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 1.15rem;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-45);
+}
+
+@media (max-width: 900px) {
+  /* The unified event header (G3) owns identity on the mobile LIVE shell — this
+     poster hero replayed Home's exact headline one tap later (C2). Same retirement
+     rule as the per-page title blocks (globals.css); desktop/tablet keep the hero. */
+  [data-live-chrome] .hero { display: none; }
+  [data-live-chrome] .pageKicker { display: inline-flex; }
+}
+
 /* ── Division stack ───────────────────────────────────────────────────────── */
 .divisionStack {
   display: flex;
@@ -185,6 +208,14 @@
   overflow-wrap: anywhere;
 }
 
+/* Quiet inline "(Coach)" suffix — kept (it can be the only thing distinguishing
+   two same-named teams) but never at full identity weight. */
+.nameQualifier {
+  color: var(--white-45);
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
 .calloutValue {
   font-family: var(--font-data);
   font-size: 0.76rem;
@@ -255,18 +286,27 @@
 .seedName {
   min-width: 0;
   display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.1rem;
   color: var(--white);
   font-weight: 700;
-  overflow-wrap: anywhere;
 }
 
-.seedPool {
-  color: var(--white-40);
-  font-size: 0.72rem;
-  font-weight: 600;
+.seedTeam {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+/* Coach qualifier + pool as ONE quiet context line (D3/G4) — the "(Johnstone)"
+   suffix no longer wraps the row at full name weight. */
+.seedSub {
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--white-45);
 }
 
 .seedRecord {
@@ -399,6 +439,30 @@
 .matchupWin .matchupSeed { background: var(--primary); color: var(--on-primary); }
 .matchupLose { color: var(--white-40); }
 
+/* Today's still-undecided round (A7) — an honest "pending" card: real time and
+   place, feeder description in words, flips to a normal matchup once decided. */
+.matchupPending {
+  background:
+    linear-gradient(160deg, rgba(var(--primary-rgb), 0.10), transparent 70%),
+    var(--bg-card);
+}
+
+.pendingTime {
+  font-family: var(--font-data);
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+
+.pendingFeeds {
+  margin: 0;
+  color: var(--white-70);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+/* Context line wears the data face like every other row-context line (D13/G4). */
 .matchupMeta {
   display: flex;
   flex-wrap: wrap;
@@ -406,7 +470,10 @@
   padding-top: 0.5rem;
   border-top: 1px solid var(--border-2);
   color: var(--white-50);
-  font-size: 0.74rem;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .matchupMeta span {
@@ -430,5 +497,12 @@
   .hero { padding: 2rem 0 1.75rem; }
   .divisionStack { gap: 1.75rem; }
   .seedRow { grid-template-columns: 1.75rem minmax(0, 1fr) auto auto; gap: 0.5rem; padding: 0.6rem 0.75rem; }
-  .calloutGrid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+
+  /* R2-2: the stat cards compress to ONE strip — same three facts, ~1/10 the
+     height the stacked cards spent repeating a wrapped team name at 360. */
+  .calloutGrid { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 0.5rem; }
+  .calloutCard { padding: 0.55rem 0.65rem; }
+  .calloutIcon { display: none; }
+  .calloutTeam { font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .calloutValue { font-size: 0.68rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }

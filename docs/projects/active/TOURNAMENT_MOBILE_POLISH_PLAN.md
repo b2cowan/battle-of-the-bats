@@ -325,7 +325,31 @@ sheet (Round 1's More tab reuses it), then the Round 1 build proceeds in the rev
 (4) More tab + sheet relocation last. Round 2 mockups (Standings + Bracket) run in parallel in
 a dedicated chat — kickoff prompt: TOURNAMENT_MOBILE_ROUND2_MOCKUPS_PROMPT.md.**
 
-### Round 2 decisions — ALL THREE ACCEPTED 2026-07-14 (at the recommendations)
+### Round 2 decisions — ALL THREE ACCEPTED 2026-07-14 · BUILT on dev 2026-07-15 (uncommitted)
+
+**Build status 2026-07-15 (Round 2 chat):** both clusters built as accepted and Playwright-verified
+(390/360/desktop/light; pool-play AND playoff-day states; live-demo restored to game day after).
+Files: `components/public/StandingsContent.tsx` + `app/[orgSlug]/standings/standings.module.css`
+(D8 chips, D9 headers, D3 second line, D4 data face, R2-3 dual column sets, R2-1 `<details>`
+disclosure), `app/[orgSlug]/[tournamentSlug]/playoffs/page.tsx` +
+`components/public/PlayoffPicture.module.css` (C2 hero retirement ≤900px via `data-live-chrome`
++ "Seeding & Matchups" kicker, R2-2 strip compression, A7 pending card, D13 mono meta),
+`lib/playoff-picture.ts` (one-line narrative, `pending` stub list — today-only, honest feeder
+copy via numbered `bracketRoundLabel`), `lib/utils.ts` (`splitTeamQualifier`, shared with
+Round 3's Teams surfaces). Desktop keeps all seven columns + its hero; verify:changed/typecheck
+green. **Owner phone pass DONE 2026-07-15/16 (game day + pool play + capped-RD completed-demo)
+with 3 test-driven refinements (mobile pending clock, 10rem name col + stacked capped RD,
+full-width chips). /simplify DONE 2026-07-16 (7 fixes: chips compose the global badge family,
+disclosure composes .bracketSection, feeder labels via new lib/playoff-bracket.bracketGameLabel,
+pending dayLabel as data, resolveSide reuse, IIFE + O(n²) hoists; 4 noted skips). /review DONE
+2026-07-16 (high-risk funnel, 5 lenses, 9 findings → 6 CONFIRMED FIXED incl. [High] decided
+finals never graduated into the matchup list — the championship vanished the moment it went
+live (teamId-aware unresolved gate; matchup chips now fanRoundLabel), stale mobile header
+override, closed-details first-open measure → bracket mounts on first reveal (per-division,
+keyed), ambiguous non-QF/SF feeder labels (", Game N"), division-switch disclosure reset,
+rank-flash wrap hardening; 2 intended (D4 desktop data-face, bracketOnTop remount), 1 accepted
+narrow risk. /docs DONE 2026-07-16 (faq-public-playoff-bracket + faq-playoff-picture updated +
+search terms). Pending: owner commit OK.**
 
 *Mockups: `claude.ai/code/artifact/a92fc65c-60a0-4439-a7f7-f388c929241c` (Round 2 — Standings +
 Bracket / Playoff Picture; fresh captures on the re-lit live-demo, two semis live). Owner
@@ -356,6 +380,65 @@ Consume Round 1's shared conventions (D1 badge font, G4 kicker rule) — don't r
    horizontal scroll at 360; RF/RA stay behind the existing swipe; desktop keeps all seven
    columns. (The stat-legend code already anticipated a mobile REC view — J6-031.)
    *Recommendation: approve the REC merge.*
+
+### Round 3 decisions — ALL FOUR ACCEPTED by owner 2026-07-16 (in the Round 3 mockup chat, as recommended; G1 = option (b) auto-minimize)
+
+*Mockups: `claude.ai/code/artifact/0d4161cc-0583-4167-9bc6-78683508e3b9` (Round 3 — Teams + team
+detail + chrome; fresh captures on the re-lit live-demo, two semis live, 390/360/light incl. a
+one-off branded-light Teams capture). Scope was re-verified against the working tree before
+mocking: Track A already landed the soft LIVE chips (A6) and tap floors on both Teams and team
+detail — those are NOT re-proposed; D5 is half-landed on Teams (`.cardRecord` already has the
+mono face/size, `tabular-nums` still missing); C7 / D7 / D10 / F4 all still hold; **D11 checked
+per the kickoff prompt — Round 1's nav rebuild did NOT put the labels in the data face, so D11
+stays live scope and rides with R3-2** (one-line fix). Capture-harness side-find, flagged NOT
+Round 3 scope: the schedule page lays out at a **448px mobile layout viewport** on a 390px
+device (some element wider than 390 forces mobile zoom-out ~13%; also why the dock/bottom-nav
+sit below the schedule screenshots' crop) — relay to the Round 1 review chat / Round 4 schedule
+work. Owner accepted all four 2026-07-16; the decision cards on the artifact are stamped
+accepted.*
+
+**Post-acceptance status (2026-07-16):** NOT built — the mockup chat's charter writes no code.
+**Build sequencing:** Round 3's build queues behind the Round 2 commit (Round 2 is built but
+uncommitted in this shared working copy, awaiting owner commit OK + phone pass) — and R3-2's
+coach-qualifier line **consumes `splitTeamQualifier`, which is part of Round 2's uncommitted
+diff in `lib/utils.ts`**, so Round 3 must not start until Round 2 lands. Owner triggers the
+build in the review/build chat. **⚠ Design-log debt:** the review chat owes `/design` decisions-log
+entries for R2-1/2/3 (still outstanding) and now also G1 + R3-1/2/3 + the "Recent results"
+rename — log them together when the build starts.
+
+1. **G1 — dock overlap policy (deferred from Round 1; the headline).** Both options mocked on
+   the followed team page (dock's LIVE 5–3 sits directly over the form card's identical live
+   row; Schedule's pinned card duplicates it the same way). (a) keep the full 52px bar
+   everywhere; (b) on Schedule + team detail ONLY, auto-minimize to a 44px pill (the ticker's
+   existing minimize-to-pill idiom) — tap restores the full bar; full dock everywhere else;
+   expand panel (share/alerts/venue/unfollow) untouched. Build honesty on the artifact: today's
+   dock has exactly ONE form (bar + expand panel; `expanded` is plain component state, no
+   persistence) — option (b)'s slim state is new-but-tiny. *Recommendation: (b), as on record
+   since the review.*
+2. **R3-1 — team-detail header shape (C7 + F4).** Identity row + ONE ≥44px action row — Follow
+   stays labeled (the page's primary act), Calendar/Share become icon-only circles per the
+   icon-only-mobile convention (aria-labels), and the score-alerts bell JOINS the row (F4) —
+   the same `FollowAlertsToggle` the dock's expand panel already mounts, finally on the team
+   page. Stat strip, playoff chip, back link unchanged. Schedule content reaches screen one.
+   *Recommendation: approve.*
+3. **R3-2 — Teams tab type system (D5 + D7 + D11).** `tabular-nums` completes the record
+   convention; pool headings become G4 mono kickers; rank · pts + next-game lines join the data
+   face; the coach qualifier renders as the quiet mono second line via the shared
+   `splitTeamQualifier` helper (Round 2's D3 convention reused — no second convention; today
+   `TeamsContent` strips the qualifier with a local regex). D11 rides along: bottom-nav labels
+   get `--font-data`. No bell per team card — F4's entry lives on team detail (R3-1).
+   *Recommendation: approve.*
+4. **R3-3 — team-detail Schedule & Results rows (D10).** Re-skin to the schedule tab's built
+   row language: mono context line (date · time · diamond), sans opponent, tabular mono score,
+   soft outcome chips gated to finished games (a live 5–3 shows LIVE, never W), live row first
+   with its running score. ~112px cards → ~64px rows (~1.7× more games per screen). Nothing
+   dropped: every date, venue, result survives. *Recommendation: approve.*
+
+**Copy rider — DECIDED by owner 2026-07-16 (in the Round 3 mockup chat):** the team page's
+"FORM" card label renames to **"Recent results"** — "form" is soccer/broadcast jargon the
+softball/baseball audience may not read; the W/L pips themselves are unchanged. Label-only,
+ships with the Round 3 build (the card lives on the team-detail page, R3-1's surface). Artifact
+frames already depict the new label. Log with the other Round 3 decisions when they're accepted.
 
 ## 5. Execution split (owner-approved 2026-07-14)
 

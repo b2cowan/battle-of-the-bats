@@ -11,7 +11,7 @@ import YearSelector from '@/components/YearSelector';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import { TieredBracket } from '@/components/bracket/TieredBracket';
 import { bracketRoundLabel } from '@/lib/playoff-bracket';
-import { formatPoolName, formatTime } from '@/lib/utils';
+import { formatPoolName, formatTime, splitTeamQualifier } from '@/lib/utils';
 import styles from '@/app/[orgSlug]/standings/standings.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
@@ -63,11 +63,13 @@ function formatShortDate(date: string) {
 
 /** Column abbreviations explained beneath each standings table. `vis` mirrors the
  *  table column's own responsive visibility so the legend only defines columns the
- *  current breakpoint actually shows (mobile = REC/RD/PTS; desktop = W/L/T/RF/RA/RD/PTS) — J6-031. */
+ *  current breakpoint actually shows (mobile = REC/RD/PTS + RF/RA behind the swipe;
+ *  desktop = W/L/T/RF/RA/RD/PTS) — J6-031, R2-3. */
 const STAT_LEGEND: { abbr: string; label: string; vis?: 'mobile' | 'desktop' }[] = [
-  { abbr: 'W',   label: 'Wins' },
-  { abbr: 'L',   label: 'Losses' },
-  { abbr: 'T',   label: 'Ties' },
+  { abbr: 'REC', label: 'Record (W-L-T)', vis: 'mobile' },
+  { abbr: 'W',   label: 'Wins', vis: 'desktop' },
+  { abbr: 'L',   label: 'Losses', vis: 'desktop' },
+  { abbr: 'T',   label: 'Ties', vis: 'desktop' },
   { abbr: 'RF',  label: 'Runs For' },
   { abbr: 'RA',  label: 'Runs Against' },
   { abbr: 'RD',  label: 'Run Differential' },
@@ -103,6 +105,9 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
   const [loaded, setLoaded] = useState(() => !!initialData);
   // Transient ▲/▼ markers when a live result changes a team's pool rank.
   const [rankChanges, setRankChanges] = useState<Map<string, 'up' | 'down'>>(() => new Map());
+  // Divisions whose collapsed bracket disclosure has been opened at least once —
+  // the bracket mounts on first reveal (see bracketDisclosure) and then stays.
+  const [revealedBrackets, setRevealedBrackets] = useState<Set<string>>(() => new Set());
   const prevRanksRef = useRef<Map<string, number>>(new Map());
 
   // Admin coin-toss: optimistically reorder the (contiguous) tied block by the
@@ -457,24 +462,59 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
   }
 
   // ── Bracket section (shared by both views) ─────────────────────────────────
+  const tieredBracket = hasPlayoffGames ? (
+    <TieredBracket
+      games={activeGames.filter(g => g.isPlayoff)}
+      teams={teams}
+      pools={pools}
+      tournamentId={selectedTournament!.id}
+      orgSlug={orgSlug}
+      tournamentSlug={tournamentSlug ?? ''}
+      venues={venues}
+      highlightTeamId={followedTeamId ?? undefined}
+      requireFinalization={requireFinalization}
+    />
+  ) : null;
+
+  // Playoff day / completed: the bracket is the headline — expanded on top, as shipped.
   const bracketSection = hasPlayoffGames ? (
     <div className={styles.bracketSection}>
       <div className={styles.bracketSectionHeader}>
         <Trophy size={16} className={styles.bracketSectionIcon} />
         <span className={styles.bracketSectionTitle}>PLAYOFF BRACKET</span>
       </div>
-      <TieredBracket
-        games={activeGames.filter(g => g.isPlayoff)}
-        teams={teams}
-        pools={pools}
-        tournamentId={selectedTournament!.id}
-        orgSlug={orgSlug}
-        tournamentSlug={tournamentSlug ?? ''}
-        venues={venues}
-        highlightTeamId={followedTeamId ?? undefined}
-        requireFinalization={requireFinalization}
-      />
+      {tieredBracket}
     </div>
+  ) : null;
+
+  // Pool play: the same bracket folds behind a one-row disclosure (R2-1) so the
+  // tables and recent scores aren't pushed below a wall of unplayed placeholders.
+  // The bracket mounts on FIRST open (per division): mounting inside a closed
+  // <details> would measure a zero-width box for the fit-zoom, and ResizeObserver's
+  // display:none→visible transition isn't reliable on every engine. Once revealed
+  // it stays mounted, so zoom state survives later collapses. Keyed per division so
+  // each division starts at the documented collapsed default.
+  const bracketDisclosure = hasPlayoffGames ? (
+    <details
+      key={activeGroup}
+      className={`${styles.bracketSection} ${styles.bracketDetails}`}
+      onToggle={e => {
+        if ((e.target as HTMLDetailsElement).open) {
+          setRevealedBrackets(prev => (prev.has(activeGroup) ? prev : new Set(prev).add(activeGroup)));
+        }
+      }}
+    >
+      <summary className={styles.bracketSummary}>
+        <Trophy size={16} className={styles.bracketSectionIcon} />
+        <span className={styles.bracketSectionTitle}>PLAYOFF BRACKET</span>
+        <span className={styles.bracketSummaryHint}>
+          <span className={styles.hintClosed}>Set · tap to preview</span>
+          <span className={styles.hintOpen}>Tap to collapse</span>
+        </span>
+        <ChevronDown size={16} className={styles.bracketSummaryChevron} aria-hidden="true" />
+      </summary>
+      {revealedBrackets.has(activeGroup) ? tieredBracket : null}
+    </details>
   ) : null;
 
   return (
@@ -544,10 +584,12 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
           )}
 
           {activeGroup && (
+            /* Result chips speak the badge language with per-meaning colors (D8):
+               final = settled green, pending = amber, remaining = quiet neutral. */
             <div className={styles.resultsSummaryLine}>
-              <span><CheckCircle size={13} /> <strong>{finalGames.length}</strong> final</span>
-              <span><Clock size={13} /> <strong>{pendingReviewGames.length}</strong> {requireFinalization ? 'pending' : 'submitted'}</span>
-              <span><Calendar size={13} /> <strong>{unscoredGames.length}</strong> remaining</span>
+              <span className={`badge ${styles.summaryChipFinal}`}><CheckCircle size={13} /> <strong>{finalGames.length}</strong> final</span>
+              <span className={`badge ${styles.summaryChipPending}`}><Clock size={13} /> <strong>{pendingReviewGames.length}</strong> {requireFinalization ? 'pending' : 'submitted'}</span>
+              <span className="badge badge-neutral"><Calendar size={13} /> <strong>{unscoredGames.length}</strong> remaining</span>
             </div>
           )}
 
@@ -590,6 +632,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                     if (poolStandings.length === 0) return null;
 
                     const hasPendingStandings = poolStandings.some(s => s.hasPendingGame);
+                    const gStarted = poolStandings.some(s => s.gp > 0);
                     // Bar scales off the TRUE differential (the headline number), so the
                     // longest bar matches the biggest real margin — not the capped one.
                     const maxAbsRd = Math.max(1, ...poolStandings.map(s => Math.abs(s.rdRaw ?? s.rd)));
@@ -615,7 +658,7 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                             <div className={styles.summaryTitle}>
                               <Trophy size={18} />
                               <h2>
-                                Standings{pools.length >= 2 ? ` - ${formatPoolName(pool.name)}` : ''}
+                                Standings{pools.length >= 2 ? ` · ${formatPoolName(pool.name)}` : ''}
                               </h2>
                             </div>
                           </div>
@@ -624,20 +667,28 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                         <div className={`table-wrap ${styles.tableFrame}`}>
                           <table className={styles.standingsTable}>
                             <thead>
+                              {/* Two column sets share one DOM order (R2-3). Phones show
+                                  TEAM · REC · RD · PTS with no sideways scroll — the ranking
+                                  columns stay on screen; RF/RA sit behind the existing swipe.
+                                  Desktop keeps all seven columns exactly as before. */}
                               <tr>
                                 <th className={styles.stickyCol}>Team</th>
-                                <th className={styles.statCenter}>W</th>
-                                <th className={styles.statCenter}>L</th>
-                                <th className={styles.statCenter}>T</th>
-                                <th className={styles.statCenter}>RF</th>
-                                <th className={styles.statCenter}>RA</th>
-                                <th className={styles.statCenter}>RD</th>
-                                <th className={`${styles.ptsCol} ${styles.statCenter}`}>PTS</th>
+                                <th className={`${styles.statCenter} ${styles.mobileOnly}`}>REC</th>
+                                <th className={`${styles.statCenter} ${styles.mobileOnly}`}>RD</th>
+                                <th className={`${styles.ptsCol} ${styles.statCenter} ${styles.mobileOnly}`}>PTS</th>
+                                <th className={`${styles.statCenter} ${styles.desktopOnly}`}>W</th>
+                                <th className={`${styles.statCenter} ${styles.desktopOnly}`}>L</th>
+                                <th className={`${styles.statCenter} ${styles.desktopOnly}`}>T</th>
+                                <th className={`${styles.statCenter} ${styles.desktopOnly}`}>RF</th>
+                                <th className={`${styles.statCenter} ${styles.desktopOnly}`}>RA</th>
+                                <th className={`${styles.statCenter} ${styles.desktopOnly}`}>RD</th>
+                                <th className={`${styles.ptsCol} ${styles.statCenter} ${styles.desktopOnly}`}>PTS</th>
+                                <th className={`${styles.statCenter} ${styles.mobileOnly}`}>RF</th>
+                                <th className={`${styles.statCenter} ${styles.mobileOnly}`}>RA</th>
                               </tr>
                             </thead>
                             <tbody>
                               {poolStandings.map((team, idx) => {
-                                const gStarted  = poolStandings.some(s => s.gp > 0);
                                 const isFirst   = idx === 0 && gStarted && poolStandings.length > 1 && team.w >= team.l;
                                 const isFollowed = !isPreview && team.id === followedTeamId;
                                 const isInPlayoffSpot = advancingTeamIds.has(team.teamId);
@@ -645,6 +696,48 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                                   isFirst ? styles.topRow : '',
                                   isFollowed ? styles.followedTeamRow : '',
                                 ].filter(Boolean).join(' ');
+                                // Trailing "(Coach)" qualifier drops to a quiet second line so
+                                // rows stop wrapping at full name weight (D3).
+                                const nameParts = splitTeamQualifier(team.name);
+                                // RD + PTS cell contents render in BOTH column sets (R2-3) —
+                                // one element reused so the two can never drift.
+                                const rdCell = (
+                                  <>
+                                    {(() => {
+                                      // Headline = TRUE run differential; the seeding-capped value
+                                      // rides in brackets only when a cap is active AND it differs.
+                                      const trueRd = team.rdRaw ?? team.rd;
+                                      const showCapped = team.runDiffCap != null && team.runDiffCap > 0 && team.rd !== trueRd;
+                                      return (
+                                        <span className={styles.rdValue}>
+                                          <span className={trueRd > 0 ? styles.rdPositive : trueRd < 0 ? styles.rdNegative : ''}>
+                                            {trueRd > 0 ? `+${trueRd}` : trueRd}
+                                          </span>
+                                          {showCapped && (
+                                            <span
+                                              className={styles.rdCapped}
+                                              title={`Playoff-seeding differential — capped at ±${team.runDiffCap} per game`}
+                                            >
+                                              ({team.rd > 0 ? `+${team.rd}` : team.rd})
+                                            </span>
+                                          )}
+                                        </span>
+                                      );
+                                    })()}
+                                    {/* The diverging bar only means something once a game's been played —
+                                       hide the empty track on a not-yet-started pool. */}
+                                    {gStarted && (
+                                      <span className={`${styles.rdBar} ${styles.desktopOnly}`} aria-hidden="true">
+                                        <span
+                                          className={styles.rdBarFill}
+                                          data-dir={(team.rdRaw ?? team.rd) >= 0 ? 'pos' : 'neg'}
+                                          style={{ width: `${(Math.abs(team.rdRaw ?? team.rd) / maxAbsRd) * 50}%` }}
+                                        />
+                                      </span>
+                                    )}
+                                  </>
+                                );
+                                const ptsCell = <span className="badge badge-primary">{team.pts}</span>;
                                 return (
                                   <tr key={team.id} className={rowClass}>
                                     <td className={styles.stickyCol}>
@@ -656,53 +749,35 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                                             {rankChanges.get(team.id) === 'up' ? '▲' : '▼'}
                                           </span>
                                         )}
-                                        <span>{team.name}</span>
+                                        <span className={styles.teamNameWrap}>
+                                          {nameParts.base}
+                                          {nameParts.qualifier && <span className={styles.teamQualifier}>{nameParts.qualifier}</span>}
+                                        </span>
                                         {isInPlayoffSpot && <CheckCircle size={12} className={styles.advancingIcon} aria-label="In a playoff spot" />}
-                                        {team.hasPendingGame ? <span className={styles.pendingTeamBadge}>Pending</span> : null}
+                                        {/* Pending marker: full pill on desktop; on phones it compacts to the
+                                            amber clock glyph (the "N pending" chip's own icon+color, so the
+                                            meaning stays linked) — the pill was wrapping long names to 4 lines
+                                            inside the sticky column. */}
+                                        {team.hasPendingGame ? (
+                                          <>
+                                            <span className={styles.pendingTeamBadge}>Pending</span>
+                                            <Clock size={13} className={styles.pendingTeamIcon} aria-label="Includes an unofficial score" />
+                                          </>
+                                        ) : null}
                                       </div>
                                     </td>
-                                    <td className={`${styles.statValue} ${styles.statCenter}`}>{team.w}</td>
-                                    <td className={`${styles.statValue} ${styles.statCenter}`}>{team.l}</td>
-                                    <td className={`${styles.statValue} ${styles.statCenter}`}>{team.t}</td>
-                                    <td className={styles.statCenter}>{team.rf}</td>
-                                    <td className={styles.statCenter}>{team.ra}</td>
-                                    <td className={styles.statCenter}>
-                                      {(() => {
-                                        // Headline = TRUE run differential; the seeding-capped value
-                                        // rides in brackets only when a cap is active AND it differs.
-                                        const trueRd = team.rdRaw ?? team.rd;
-                                        const showCapped = team.runDiffCap != null && team.runDiffCap > 0 && team.rd !== trueRd;
-                                        return (
-                                          <span className={styles.rdValue}>
-                                            <span className={trueRd > 0 ? styles.rdPositive : trueRd < 0 ? styles.rdNegative : ''}>
-                                              {trueRd > 0 ? `+${trueRd}` : trueRd}
-                                            </span>
-                                            {showCapped && (
-                                              <span
-                                                className={styles.rdCapped}
-                                                title={`Playoff-seeding differential — capped at ±${team.runDiffCap} per game`}
-                                              >
-                                                ({team.rd > 0 ? `+${team.rd}` : team.rd})
-                                              </span>
-                                            )}
-                                          </span>
-                                        );
-                                      })()}
-                                      {/* The diverging bar only means something once a game's been played —
-                                         hide the empty track on a not-yet-started pool. */}
-                                      {gStarted && (
-                                        <span className={`${styles.rdBar} ${styles.desktopOnly}`} aria-hidden="true">
-                                          <span
-                                            className={styles.rdBarFill}
-                                            data-dir={(team.rdRaw ?? team.rd) >= 0 ? 'pos' : 'neg'}
-                                            style={{ width: `${(Math.abs(team.rdRaw ?? team.rd) / maxAbsRd) * 50}%` }}
-                                          />
-                                        </span>
-                                      )}
-                                    </td>
-                                    <td className={`${styles.ptsCol} ${styles.statCenter}`}>
-                                      <span className="badge badge-primary">{team.pts}</span>
-                                    </td>
+                                    <td className={`${styles.statValue} ${styles.statCenter} ${styles.mobileOnly}`}>{team.w}-{team.l}-{team.t}</td>
+                                    <td className={`${styles.statValue} ${styles.statCenter} ${styles.mobileOnly}`}>{rdCell}</td>
+                                    <td className={`${styles.ptsCol} ${styles.statCenter} ${styles.mobileOnly}`}>{ptsCell}</td>
+                                    <td className={`${styles.statValue} ${styles.statCenter} ${styles.desktopOnly}`}>{team.w}</td>
+                                    <td className={`${styles.statValue} ${styles.statCenter} ${styles.desktopOnly}`}>{team.l}</td>
+                                    <td className={`${styles.statValue} ${styles.statCenter} ${styles.desktopOnly}`}>{team.t}</td>
+                                    <td className={`${styles.statValue} ${styles.statCenter} ${styles.desktopOnly}`}>{team.rf}</td>
+                                    <td className={`${styles.statValue} ${styles.statCenter} ${styles.desktopOnly}`}>{team.ra}</td>
+                                    <td className={`${styles.statValue} ${styles.statCenter} ${styles.desktopOnly}`}>{rdCell}</td>
+                                    <td className={`${styles.ptsCol} ${styles.statCenter} ${styles.desktopOnly}`}>{ptsCell}</td>
+                                    <td className={`${styles.statValue} ${styles.statCenter} ${styles.mobileOnly}`}>{team.rf}</td>
+                                    <td className={`${styles.statValue} ${styles.statCenter} ${styles.mobileOnly}`}>{team.ra}</td>
                                   </tr>
                                 );
                               })}
@@ -752,9 +827,10 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
                     );
                   })}
 
-                  {/* Playoff bracket — below the pool tables during pool play; moves
-                      above them once the knockout stage starts (see bracketOnTop). */}
-                  {!bracketOnTop && bracketSection}
+                  {/* Playoff bracket — collapsed disclosure below the pool tables during
+                      pool play (R2-1); moves above them, expanded, once the knockout
+                      stage starts (see bracketOnTop). */}
+                  {!bracketOnTop && bracketDisclosure}
               </>
 
               {loaded && standings.length === 0 && (

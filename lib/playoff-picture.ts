@@ -10,8 +10,10 @@
  */
 import type { Division, Game, PublicTeam, Tournament, PlayoffConfig } from './types';
 import type { DivisionStandingRow } from './tie-breakers';
-import { bracketRoundLabel } from './playoff-bracket';
+import { bracketGameLabel, fanRoundLabel } from './playoff-bracket';
 import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from './game-status';
+import { splitTeamQualifier, relativeDayLabel } from './utils';
+import { tournamentToday } from './timezone';
 
 export interface PlayoffSeed {
   seed: number;
@@ -58,6 +60,26 @@ export interface PlayoffStatCallout {
   value: string;
 }
 
+/**
+ * A TODAY game whose sides are still "Winner/Loser <code>" feeders — invisible in the
+ * matchup list (its teams aren't decided) yet it's the game fans most want the time and
+ * place for while its feeders play (A7). Copy stays honest: round names via fanRoundLabel
+ * ("Championship"), feeder description in words, never raw bracket codes.
+ */
+export interface PlayoffPendingMatchup {
+  key: string;
+  roundLabel: string;
+  bracketLabel?: string | null;
+  date?: string;
+  time?: string;
+  venueLabel?: string;
+  /** Fan wording for the game's day ("Today") — derived from the same `today`
+   *  the pending filter uses, so copy can never desync from the filter window. */
+  dayLabel: string;
+  /** e.g. "Winner of Semifinal 1 vs Winner of Semifinal 2". */
+  feedsFrom: string;
+}
+
 export interface DivisionPlayoffPicture {
   divisionId: string;
   divisionName: string;
@@ -66,6 +88,8 @@ export interface DivisionPlayoffPicture {
   gamesStarted: boolean;
   seeds: PlayoffSeed[];
   matchups: PlayoffMatchup[];
+  /** Today's still-undecided games (unresolved feeders) — rendered after the matchups. */
+  pending: PlayoffPendingMatchup[];
   narrative: string[];
   callouts: PlayoffStatCallout[];
 }
@@ -107,6 +131,7 @@ function buildDivisionPicture(
   playoffGames: Game[],
   teamName: (id?: string | null) => string,
   venueLabelFor: (g: Game) => string,
+  today: string,
 ): DivisionPlayoffPicture | null {
   if (playoffGames.length === 0) return null;
 
@@ -159,9 +184,47 @@ function buildDivisionPicture(
     return null; // winner/loser feeder → not an opening matchup
   };
 
+  // A feeder side in words: whatever resolveSide can name (locked team / resolved
+  // seed), else "Winner of Semifinal 1" via the canonical per-game label.
+  const feederSideLabel = (teamId: string | null, placeholder: string | null): string => {
+    const side = resolveSide(teamId, placeholder);
+    if (side) return side.name;
+    const m = (placeholder ?? '').match(/^\s*(winner|loser)\s+(.+?)\s*$/i);
+    if (m) {
+      const kind = m[1].toLowerCase() === 'loser' ? 'Loser' : 'Winner';
+      return `${kind} of ${bracketGameLabel(m[2])}`;
+    }
+    return placeholder || 'TBD';
+  };
+
   const matchups: PlayoffMatchup[] = [];
+  const pending: PlayoffPendingMatchup[] = [];
   for (const g of playoffGames) {
-    if (isWinnerLoserRef(g.homePlaceholder) || isWinnerLoserRef(g.awayPlaceholder)) continue;
+    // A side is unresolved only while it has NO team AND a Winner/Loser feeder ref.
+    // Placeholder strings are never cleared when advancement fills the team ids
+    // (lib/db.ts), so gating on the placeholder alone would keep a decided
+    // championship out of the matchup list forever — it must graduate the moment
+    // its feeders resolve.
+    const homeUnresolved = !g.homeTeamId && isWinnerLoserRef(g.homePlaceholder);
+    const awayUnresolved = !g.awayTeamId && isWinnerLoserRef(g.awayPlaceholder);
+    if (homeUnresolved || awayUnresolved) {
+      // Undecided feeders drop out of the matchup list — but a TODAY game still gets an
+      // honest "pending" stub so the final isn't invisible while its feeders play (A7).
+      // Scores present would mean the ref is stale, not a real pending game — skip those.
+      if (g.date === today && g.homeScore == null && g.awayScore == null) {
+        pending.push({
+          key: g.id,
+          roundLabel: g.bracketCode ? fanRoundLabel(g.bracketCode) : 'Playoff',
+          bracketLabel: g.bracketLabel ?? null,
+          date: g.date || undefined,
+          time: g.time || undefined,
+          venueLabel: venueLabelFor(g) || undefined,
+          dayLabel: relativeDayLabel(g.date, today),
+          feedsFrom: `${feederSideLabel(g.awayTeamId ?? null, g.awayPlaceholder ?? null)} vs ${feederSideLabel(g.homeTeamId ?? null, g.homePlaceholder ?? null)}`,
+        });
+      }
+      continue;
+    }
     const home = resolveSide(g.homeTeamId ?? null, g.homePlaceholder ?? null);
     const away = resolveSide(g.awayTeamId ?? null, g.awayPlaceholder ?? null);
     if (!home || !away) continue;
@@ -173,7 +236,9 @@ function buildDivisionPicture(
     }
     matchups.push({
       key: g.id,
-      roundLabel: g.bracketCode ? bracketRoundLabel(g.bracketCode) : 'Playoff',
+      // Fan wording — a decided final's chip must read "Championship", not "Final"
+      // beside the Final status caption (this is a fan surface, fanRoundLabel rule).
+      roundLabel: g.bracketCode ? fanRoundLabel(g.bracketCode) : 'Playoff',
       bracketLabel: g.bracketLabel ?? null,
       date: g.date || undefined,
       time: g.time || undefined,
@@ -183,9 +248,10 @@ function buildDivisionPicture(
       home, away,
     });
   }
-  matchups.sort((a, b) =>
-    (a.date || '').localeCompare(b.date || '') || (a.time || '').localeCompare(b.time || ''),
-  );
+  const byDateTime = (a: { date?: string; time?: string }, b: { date?: string; time?: string }) =>
+    (a.date || '').localeCompare(b.date || '') || (a.time || '').localeCompare(b.time || '');
+  matchups.sort(byDateTime);
+  pending.sort(byDateTime);
 
   // Key-stat callouts — drawn from the qualifying field when known, else all seeds.
   const pool = seeds.filter(s => (teamsQualifying > 0 ? s.qualified : true));
@@ -201,21 +267,13 @@ function buildDivisionPicture(
     if (hottest && hottest.teamId !== top.teamId) callouts.push({ label: 'Best differential', teamName: hottest.teamName, value: `${fmtRd(hottest.rdRaw)} run diff` });
   }
 
-  // Short template narrative (no AI).
-  const narrative: string[] = [];
-  narrative.push(
-    `The ${division.name} playoffs are set — ${formatLabel(cfg)}${teamsQualifying > 0 ? `, top ${teamsQualifying} advancing` : ''}.`,
-  );
-  if (top && gamesStarted) {
-    narrative.push(
-      `${top.teamName} enter as the #1 seed at ${top.w}-${top.l}-${top.t} with a ${fmtRd(top.rdRaw)} run differential.`,
-    );
-  }
-  if (matchups.length > 0) {
-    narrative.push(
-      `${matchups.length} opening matchup${matchups.length === 1 ? '' : 's'} ${matchups.length === 1 ? 'is' : 'are'} locked — see the full bracket below.`,
-    );
-  }
+  // ONE-line template narrative (no AI). R2-2: the old three-paragraph version repeated
+  // the record the stat cards already carry; the seed list below says the rest.
+  const narrative: string[] = [
+    top && gamesStarted
+      ? `${formatLabel(cfg)}${teamsQualifying > 0 ? `, top ${teamsQualifying} advancing` : ''} — ${splitTeamQualifier(top.teamName).base} enter as the #1 seed.`
+      : `The ${division.name} playoffs are set — ${formatLabel(cfg)}${teamsQualifying > 0 ? `, top ${teamsQualifying} advancing` : ''}.`,
+  ];
 
   return {
     divisionId: division.id,
@@ -225,6 +283,7 @@ function buildDivisionPicture(
     gamesStarted,
     seeds,
     matchups,
+    pending,
     narrative,
     callouts,
   };
@@ -238,13 +297,15 @@ export function buildPlayoffPicture(
   standingsByDivision: Record<string, DivisionStandingRow[]>,
   teamName: (id?: string | null) => string,
   venueLabelFor: (g: Game) => string,
+  /** Injectable for tests; defaults to the tournament-timezone "today" (never raw UTC). */
+  today: string = tournamentToday(),
 ): PlayoffPicture {
   const out: DivisionPlayoffPicture[] = [];
   for (const division of divisions) {
     const playoffGames = games.filter(g => g.divisionId === division.id && g.isPlayoff && g.status !== 'cancelled');
     if (playoffGames.length === 0) continue;
     const rows = standingsByDivision[division.id] ?? [];
-    const pic = buildDivisionPicture(division, rows, playoffGames, teamName, venueLabelFor);
+    const pic = buildDivisionPicture(division, rows, playoffGames, teamName, venueLabelFor, today);
     if (pic) out.push(pic);
   }
   return { hasPlayoffs: out.length > 0, divisions: out };

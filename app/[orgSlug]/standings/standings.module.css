@@ -83,25 +83,30 @@
   line-height: 1.35;
 }
 
+/* Result chips ARE badges (D8): the global .badge supplies the data face/shape
+   (+ .badge-neutral for "remaining"); these classes add only the per-meaning
+   colors, on the -strong tokens so status-as-text stays legible on light. */
 .resultsSummaryLine span {
-  display: inline-flex;
-  align-items: center;
   gap: 0.25rem;
   min-height: 28px;
-  padding: 0.24rem 0.5rem;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  background: var(--white-5);
-}
-
-.resultsSummaryLine svg {
-  color: var(--primary-light);
 }
 
 .resultsSummaryLine strong {
-  color: var(--white);
-  font-family: var(--font-data);
+  color: inherit;
+  font-variant-numeric: tabular-nums;
   font-size: 0.9rem;
+}
+
+.summaryChipFinal {
+  background: rgba(var(--success-rgb), 0.10);
+  border: 1px solid rgba(var(--success-rgb), 0.3);
+  color: var(--success-strong);
+}
+
+.summaryChipPending {
+  background: rgba(var(--warning-rgb), 0.10);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
+  color: var(--warning-strong);
 }
 
 .resultsSummaryGrid {
@@ -249,11 +254,16 @@
   flex-shrink: 0;
 }
 
+/* ONE card-header idiom (D9): the pool tables wear the same mono kicker as the
+   bracket card's "PLAYOFF BRACKET" — two header voices in one stack was the bug. */
 .summaryTitle h2 {
   margin: 0;
   color: var(--white);
-  font-size: 1.1rem;
-  font-weight: 800;
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   overflow-wrap: anywhere;
 }
 
@@ -471,6 +481,14 @@
   text-transform: uppercase;
 }
 
+/* Phone-width stand-in for the pill (see the swap in the 640px block): the
+   summary chips' own amber clock, so row ↔ chip ↔ footer note read as one story. */
+.pendingTeamIcon {
+  display: none;
+  color: var(--warning-strong);
+  flex-shrink: 0;
+}
+
 /* ── Playoff advancement (J6-027) ──────────────────────────────────────────── */
 
 .playoffAdvanceNote {
@@ -673,6 +691,30 @@
   font-family: var(--font-data);
   font-weight: 800;
   color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Two-line team cell (D3): base name at identity weight, the trailing "(Coach)"
+   qualifier as a quiet mono context line — rows hold one height instead of
+   wrapping 23→92px when a long name meets a coach suffix. */
+.teamNameWrap {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  /* Own wrap rule — the cell's span:first-of-type rule mistargets the transient
+     rank-change arrow span while it flashes, so don't rely on it. */
+  overflow-wrap: anywhere;
+}
+
+.teamQualifier {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--white-45);
+  line-height: 1.3;
 }
 
 .poolLabel {
@@ -742,7 +784,12 @@
     font-size: 0.72rem;
   }
 
+  /* Chips fill the row edge-to-edge on phones (the discover filter-chip
+     convention) so the block sits flush with the division select above and
+     the advance note below — no ragged right edge. */
   .resultsSummaryLine span {
+    flex: 1 1 auto;
+    justify-content: center;
     min-height: 24px;
     padding: 0.18rem 0.38rem;
   }
@@ -805,7 +852,8 @@
   }
   .standingsTable td { font-size: 0.9rem; }
   .summaryHeader { padding: 0.75rem 0.85rem; }
-  .summaryTitle h2 { font-size: 1rem; }
+  /* (No mobile font-size override — the D9 mono card-header size is universal;
+     the old 1rem override would now ENLARGE the title past its 0.82rem base.) */
   .standingsFooter { padding: 0.55rem 0.75rem 0.65rem; }
   .tieBreakerNote,
   .pendingNote {
@@ -826,8 +874,11 @@
   /* Pinned Team column: fixed, readable width so names wrap at spaces to ~2 lines
      instead of collapsing, and the stat columns are pushed off-screen to scroll. */
   .stickyCol {
-    min-width: 9.5rem;
-    max-width: 9.5rem;
+    /* 10rem (was 9.5): with REC merged (R2-3) the ranking columns still fit at
+       360 — capped-RD tournaments included — while long names drop a wrap line.
+       The extra room comes out of the behind-the-swipe RF/RA columns. */
+    min-width: 10rem;
+    max-width: 10rem;
   }
 
   .teamCell {
@@ -841,10 +892,18 @@
     overflow-wrap: normal;
     word-break: normal;
   }
-  .pendingTeamBadge {
-    min-height: 20px;
-    padding: 0.15rem 0.35rem;
-    font-size: 0.62rem;
+  /* The pill eats the sticky column's width and wraps long names to 4 lines —
+     swap it for the compact amber clock on phones. */
+  .pendingTeamBadge { display: none; }
+  .pendingTeamIcon { display: inline-block; }
+
+  /* Capped-differential tournaments: "(+11)" stacks UNDER "+14" on phones so the
+     RD column stays narrow and PTS keeps its no-scroll seat (R2-3). */
+  .rdValue {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0;
+    line-height: 1.25;
   }
 
   .scoreSectionHeader {
@@ -1334,6 +1393,56 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
+}
+
+/* ── Collapsed bracket disclosure (R2-1, pool play only) ──────────────────────
+   Composes .bracketSection for the card chrome (one source of truth); this class
+   only hooks the <details> open-state rules. The bracket stays mounted while
+   closed (native details); on playoff day the expanded bracket-on-top path
+   renders instead — this never appears there. */
+
+.bracketSummary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0.85rem 1.5rem;
+  background: rgba(var(--primary-rgb), 0.05);
+  cursor: pointer;
+  list-style: none;
+}
+
+.bracketSummary::-webkit-details-marker { display: none; }
+
+.bracketDetails[open] .bracketSummary {
+  border-bottom: 1px solid var(--border);
+}
+
+.bracketSummaryHint {
+  margin-left: auto;
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white-45);
+  text-align: right;
+}
+
+.hintOpen { display: none; }
+.bracketDetails[open] .hintClosed { display: none; }
+.bracketDetails[open] .hintOpen { display: inline; }
+
+.bracketSummaryChevron {
+  flex-shrink: 0;
+  color: var(--white-45);
+  transition: transform 0.18s ease;
+}
+
+.bracketDetails[open] .bracketSummaryChevron { transform: rotate(180deg); }
+
+@media (max-width: 640px) {
+  .bracketSummary { padding: 0.75rem 1rem; }
 }
 
 .bracketSectionHeader {

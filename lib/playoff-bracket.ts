@@ -518,6 +518,26 @@ export function fanRoundLabel(code: string | null | undefined): string {
   return label === 'Final' ? 'Championship' : label;
 }
 
+/**
+ * Unambiguous fan label for ONE bracket game. bracketRoundLabel deliberately
+ * drops the game number (QF2 → "Quarterfinal"), which is right for round
+ * headers but ambiguous in feeder references — "Winner of Semifinal" doesn't
+ * say which semifinal. This restores the number where the code carries one.
+ */
+export function bracketGameLabel(code: string): string {
+  const label = bracketRoundLabel(code);
+  const c = code.trim().toUpperCase();
+  // QF2/SF1 read naturally as "Semifinal 1".
+  const qfsf = c.match(/^(?:QF|SF)(\d+)$/);
+  if (qfsf) return `${label} ${parseInt(qfsf[1], 10)}`;
+  // Other families carry the game number after a dash (R2-3, WB2-1, CON1-2…) —
+  // without it, two same-round feeders read identically ("Winner of Round 2
+  // vs Winner of Round 2"), which defeats the reference.
+  const dashed = c.match(/^[A-Z]+\d*-(\d+)$/);
+  if (dashed) return `${label}, Game ${parseInt(dashed[1], 10)}`;
+  return label;
+}
+
 export function bracketRoundLabel(code: string | null | undefined): string {
   const c = (code || '').toUpperCase();
   if (!c) return 'Playoff';
