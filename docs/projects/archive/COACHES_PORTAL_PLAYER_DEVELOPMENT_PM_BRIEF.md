@@ -1,7 +1,7 @@
 # Player Development — PM Brief
 
-> Companion to [COACHES_PORTAL_PLAYER_DEVELOPMENT_PLAN.md](COACHES_PORTAL_PLAYER_DEVELOPMENT_PLAN.md) · PLANNED rev 2, 2026-07-17 (Evaluation Sessions + Development hub added at owner direction)
-> Mockups (round 2): https://claude.ai/code/artifact/01f4f7a8-410b-4b68-b521-f9888a9d9d8e
+> Companion to [COACHES_PORTAL_PLAYER_DEVELOPMENT_PLAN.md](COACHES_PORTAL_PLAYER_DEVELOPMENT_PLAN.md) · ✅ **COMPLETE ON DEV + ARCHIVED 2026-07-17** — all four slices (3A `ae48ead6` · 3B `8bc62990` · 3C `22f1cb41` · 3D `c7a6806f`) + both pre-ship gates (D2 privacy sign-off + D6 marketing copy, `f7efdd36`) committed. Tail = prod promotion of migs 189–192 (via /release) + the D3 retention follow-up. Originally PLANNED rev 2, 2026-07-17 (Evaluation Sessions + Development hub added at owner direction).
+> Mockups (round 2, accepted — binding visual spec): https://claude.ai/code/artifact/01f4f7a8-410b-4b68-b521-f9888a9d9d8e
 
 ## What coaches get
 
