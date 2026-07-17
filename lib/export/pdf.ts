@@ -373,8 +373,10 @@ export async function downloadDevelopmentSummary(filename: string, opts: Develop
     });
   }
   if (opts.measurables.length > 0) {
+    // Parent-facing labels (D6 /marketing pass): the printed handout uses "Test results"
+    // and "Result" — plainer than the in-app coach term "Measurables"/"Reading".
     groups.push({
-      label: 'Measurables', headers: ['Test', 'Reading', 'Date', 'Note'],
+      label: 'Test results', headers: ['Test', 'Result', 'Date', 'Note'],
       rows: opts.measurables.map(m => [m.test, m.reading, m.date, m.note]),
     });
   }

@@ -299,7 +299,7 @@ export default function TryoutRegisterForm({
               onChange={e => setConsentField('data', e.target.checked)}
             />
             <span className={styles.consentText}>
-              I agree to {orgName} collecting and using this player&apos;s information to run tryouts and manage the team
+              I agree to {orgName} collecting and using this player&apos;s information to run tryouts, manage the team, and keep coaching and development records
               {privacyPolicyHref ? (
                 <>
                   , as described in their{' '}
