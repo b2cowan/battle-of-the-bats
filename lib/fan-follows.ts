@@ -16,6 +16,18 @@ export type FanFollowSource = 'manual' | 'directory' | 'qr' | 'device_reconcile'
 /** Matches a canonical UUID (case-insensitive). */
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** The one public-visibility gate for slug-addressed tournaments: live (non-canceled)
+ *  org + publicly-visible tournament (active|completed via getPublicTournamentBySlug).
+ *  Shared by every follow read/write so the gate can never drift between them. */
+async function resolvePublicTournament(
+  orgSlug: string,
+  tournamentSlug: string,
+): Promise<{ id: string } | null> {
+  const org = await getOrganizationBySlug(orgSlug);
+  if (!org || org.subscriptionStatus === 'canceled') return null;
+  return await getPublicTournamentBySlug(org.id, tournamentSlug);
+}
+
 /** True only if `teamId` is a real team in the tournament named by the slugs (public, live org). */
 export async function teamBelongsToTournament(
   orgSlug: string,
@@ -23,9 +35,7 @@ export async function teamBelongsToTournament(
   teamId: string,
 ): Promise<boolean> {
   if (!UUID_RE.test(teamId)) return false;
-  const org = await getOrganizationBySlug(orgSlug);
-  if (!org || org.subscriptionStatus === 'canceled') return false;
-  const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
+  const tournament = await resolvePublicTournament(orgSlug, tournamentSlug);
   if (!tournament) return false;
   const { data } = await supabaseAdmin
     .from('teams')
@@ -162,6 +172,64 @@ export async function unfollowEntity(
     .eq('entity_type', entityType)
     .eq('entity_id', entityId);
   if (error) throw error;
+}
+
+/** One account follow scoped to a single tournament (N2 — public-page hydration).
+ *  divisionId rides along so a seeded device pin can drive division-scoped surfaces. */
+export interface TournamentAccountFollow {
+  teamId: string;
+  teamName: string;
+  divisionId: string | null;
+}
+
+/**
+ * This user's account follows WITHIN one public tournament, newest-first (N2).
+ * Backs GET /api/consumer/follows so signed-in public pages can display merged
+ * account+device follow state. Resolves the tournament through the same public
+ * gates as teamBelongsToTournament (live org, active|completed tournament) — a
+ * draft/hidden tournament returns [] rather than leaking team rows.
+ */
+export async function getAccountFollowsForTournament(
+  userId: string,
+  orgSlug: string,
+  tournamentSlug: string,
+): Promise<TournamentAccountFollow[]> {
+  // The user's follow list is independent of the org→tournament resolution chain —
+  // run them concurrently. The 500 cap is a guardrail, not a product limit (this
+  // fetches the user's follows across ALL tournaments to filter down to one).
+  const [tournament, { data: follows, error: followErr }] = await Promise.all([
+    resolvePublicTournament(orgSlug, tournamentSlug),
+    supabaseAdmin
+      .from('fan_follows')
+      .select('entity_id, created_at')
+      .eq('user_id', userId)
+      .eq('entity_type', 'team')
+      .order('created_at', { ascending: false })
+      .limit(500),
+  ]);
+  if (followErr) throw followErr;
+  if (!tournament) return [];
+
+  const followedIds = (follows ?? []).map(f => f.entity_id);
+  if (followedIds.length === 0) return [];
+
+  const { data: teams, error: teamErr } = await supabaseAdmin
+    .from('teams')
+    .select('id, name, division_id')
+    .eq('tournament_id', tournament.id)
+    .in('id', followedIds);
+  if (teamErr) throw teamErr;
+
+  const teamById = new Map(
+    ((teams ?? []) as Array<{ id: string; name: string; division_id: string | null }>).map(t => [t.id, t] as const),
+  );
+  // Preserve the newest-first follow order from fan_follows.
+  const out: TournamentAccountFollow[] = [];
+  for (const id of followedIds) {
+    const team = teamById.get(id);
+    if (team) out.push({ teamId: team.id, teamName: team.name, divisionId: team.division_id });
+  }
+  return out;
 }
 
 /**

@@ -9,12 +9,16 @@
 import { useEffect, useState } from 'react';
 import { Star, X } from 'lucide-react';
 import type { PublicTeam } from '@/lib/types';
-import { saveFollowedTeam, readFollowedTeamId } from '@/lib/follow';
+import { saveFollowedTeam, readFollowedTeamId, useAccountFollowedTeamIds } from '@/lib/follow';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import styles from './FollowDeepLinkPrompt.module.css';
 
 export default function FollowDeepLinkPrompt({ orgSlug, tournamentSlug }: { orgSlug: string; tournamentSlug: string }) {
   const [team, setTeam] = useState<PublicTeam | null>(null);
+  // N2: the account hydration can land AFTER this prompt's mount-time check —
+  // without this, a signed-in fan opening her own team's share link on a fresh
+  // device gets a redundant "Follow?" ask for a team the account already follows.
+  const accountFollowIds = useAccountFollowedTeamIds(orgSlug, tournamentSlug);
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('follow');
@@ -30,6 +34,18 @@ export default function FollowDeepLinkPrompt({ orgSlug, tournamentSlug }: { orgS
     });
     return () => { cancelled = true; };
   }, [orgSlug, tournamentSlug]);
+
+  // Self-dismiss if the linked team turns out to be followed after all — the
+  // device pin was seeded, or the account set hydrated with it (either can
+  // resolve after the prompt is already up).
+  useEffect(() => {
+    if (!team) return;
+    if (accountFollowIds.has(team.id) || readFollowedTeamId(orgSlug, tournamentSlug) === team.id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reconciling against async external state
+      setTeam(null);
+      stripParam();
+    }
+  }, [team, accountFollowIds, orgSlug, tournamentSlug]);
 
   function stripParam() {
     const url = new URL(window.location.href);

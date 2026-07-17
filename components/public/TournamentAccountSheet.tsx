@@ -25,7 +25,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
-import { ArrowRight, Star, LayoutGrid, LogIn, Megaphone, ScrollText, Bell, BellRing, Download } from 'lucide-react';
+import { ArrowRight, Star, LayoutGrid, LogIn, Megaphone, ScrollText, Bell, BellRing, Download, Compass, Radio } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import { getSession } from '@/lib/auth';
 import { createClient } from '@/lib/supabase-browser';
@@ -372,6 +372,28 @@ export default function TournamentAccountSheet() {
             </div>
           </>
         )}
+
+        {/* ── FieldLogicHQ: the app-level EXITS (N1, ratified §8 decision — rides
+            this sheet per mockup Option B). Every nav link inside a tournament
+            points inward; a QR/share arrival in the installed app had NO way out.
+            These two rows serve EVERYONE, signed in or not. ── */}
+        <p className={styles.sectionKicker}>FieldLogicHQ</p>
+        <div className={styles.rows}>
+          <SheetRow
+            icon={<Compass size={15} strokeWidth={1.8} aria-hidden />}
+            label="Browse tournaments"
+            sub="FieldLogicHQ Discover"
+            href="/discover"
+            onClick={close}
+          />
+          <SheetRow
+            icon={<Radio size={15} strokeWidth={1.8} aria-hidden />}
+            label="Live scores"
+            sub="Everything on right now"
+            href="/scores"
+            onClick={close}
+          />
+        </div>
       </BottomSheet>
     </>
   );

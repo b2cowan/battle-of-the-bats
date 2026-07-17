@@ -9,7 +9,7 @@ import { teamColor, teamInitials } from '@/lib/team-color';
 import SharePageButton from '@/components/public/SharePageButton';
 import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
 import { useOrgNav } from '@/components/OrgNavContext';
-import { useFollowedTeam } from '@/lib/follow';
+import { useFollowedTeam, useAccountFollowedTeamIds, unfollowTeamEverywhere } from '@/lib/follow';
 import { isGameLive, gameStartMs, isGameUpcoming } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import styles from '../../../../teams/[id]/team-profile.module.css';
@@ -74,7 +74,9 @@ export default function TeamProfilePage({
   const [data, setData]       = useState<TeamProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
-  const { followedTeamId, follow, unfollow } = useFollowedTeam(orgSlug, tournamentSlug);
+  const { followedTeamId, follow } = useFollowedTeam(orgSlug, tournamentSlug);
+  // N2: a signed-in fan's ACCOUNT follows count too — her own team never shows "Follow".
+  const accountFollowIds = useAccountFollowedTeamIds(orgSlug, tournamentSlug);
   // Plan gate for the score-alerts bell (F4) — same source + honesty gate as the
   // More sheet's bell: fan_score_alerts plan feature, hidden once the event ends.
   const { fanAlertsEnabled, tournamentFinished } = useOrgNav();
@@ -140,16 +142,13 @@ export default function TeamProfilePage({
   const cleanedName = cleanName(team.name);
   const initials = teamInitials(cleanedName);
   const color = teamColor(cleanedName);
-  const isFollowed = followedTeamId === team.id;
+  const isFollowed = followedTeamId === team.id || accountFollowIds.has(team.id);
 
   const teamsHref = `/${orgSlug}/${tournamentSlug}/teams`;
 
   function toggleFollow() {
-    if (isFollowed) {
-      unfollow();
-    } else {
-      follow({ id: team.id, name: team.name, divisionId: team.divisionId });
-    }
+    if (isFollowed) unfollowTeamEverywhere(orgSlug, tournamentSlug, team.id);
+    else follow({ id: team.id, name: team.name, divisionId: team.divisionId });
   }
 
   function handleAddToCalendar() {

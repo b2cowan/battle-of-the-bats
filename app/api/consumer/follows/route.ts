@@ -1,19 +1,43 @@
 /**
- * POST /api/consumer/follows
+ * /api/consumer/follows
  *
- * Syncs a fan's follow to their ACCOUNT (fan_follows) so it travels across devices.
- * The follow button always writes device localStorage first (lib/follow.ts) and then
- * fire-and-forgets here — so this is additive, never a gate on the follow itself.
- * Anonymous callers get { linked: false } (200, not an error): their follow stays
- * device-only, which is the permanent anonymous path.
+ * POST — syncs a fan's follow to their ACCOUNT (fan_follows) so it travels across
+ * devices. The follow button always writes device localStorage first (lib/follow.ts)
+ * and then fire-and-forgets here — so this is additive, never a gate on the follow
+ * itself. Anonymous callers get { linked: false } (200, not an error): their follow
+ * stays device-only, which is the permanent anonymous path.
  *
  * Body: { action: 'follow' | 'unfollow', teamId, orgSlug?, tournamentSlug? }
  *   - follow requires orgSlug + tournamentSlug (to validate the team belongs there)
+ *
+ * GET ?orgSlug=&tournamentSlug= — this account's follows WITHIN that tournament,
+ * newest-first (N2): lets signed-in PUBLIC pages display merged account+device
+ * follow state client-side. Never SW-cached (the /api/ lane is network-only) and
+ * never server-rendered into public HTML — same identity rule as the account chip.
+ * Anonymous → { linked: false, follows: [] } (200).
  */
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
-import { followEntity, unfollowEntity, teamBelongsToTournament, UUID_RE } from '@/lib/fan-follows';
+import { followEntity, unfollowEntity, teamBelongsToTournament, getAccountFollowsForTournament, UUID_RE } from '@/lib/fan-follows';
 import { withObservability } from '@/lib/observability';
+
+export const GET = withObservability(async (req: Request) => {
+  const user = await getAuthenticatedUser();
+  if (!user) return NextResponse.json({ linked: false, follows: [] });
+
+  const url = new URL(req.url);
+  const orgSlug = url.searchParams.get('orgSlug');
+  const tournamentSlug = url.searchParams.get('tournamentSlug');
+  if (!orgSlug || !tournamentSlug) {
+    return NextResponse.json({ error: 'Missing orgSlug or tournamentSlug.' }, { status: 400 });
+  }
+
+  const follows = await getAccountFollowsForTournament(user.id, orgSlug, tournamentSlug);
+  return NextResponse.json(
+    { linked: true, follows },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
+}, { route: '/api/consumer/follows' });
 
 export const POST = withObservability(async (req: Request) => {
   const user = await getAuthenticatedUser();

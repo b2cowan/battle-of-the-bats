@@ -11,7 +11,7 @@ import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '@/app/[orgSlug]/teams/teams.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
-import { readFollowedTeamId, saveFollowedTeam, clearFollowedTeam, isTournamentInProgress } from '@/lib/follow';
+import { useFollowedTeam, useAccountFollowedTeamIds, unfollowTeamEverywhere, isTournamentInProgress } from '@/lib/follow';
 import { isGameLive, gameStartMs, isGameUpcoming } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
@@ -97,7 +97,7 @@ function TeamCard({
   orgSlug: string;
   tournamentSlug: string;
   onFollow: (team: PublicTeam) => void;
-  onUnfollow: () => void;
+  onUnfollow: (team: PublicTeam) => void;
 }) {
   // Shared qualifier split (D3 convention, same helper as standings/seeding) —
   // the trailing "(…)" leaves the name and becomes the quiet second line below.
@@ -231,7 +231,7 @@ function TeamCard({
             <button
               type="button"
               className={`${styles.followBtn} ${isFollowed ? styles.followBtnActive : ''}`}
-              onClick={() => isFollowed ? onUnfollow() : onFollow(team)}
+              onClick={() => isFollowed ? onUnfollow(team) : onFollow(team)}
               aria-pressed={isFollowed}
             >
               <Star size={12} fill={isFollowed ? 'currentColor' : 'none'} />
@@ -266,15 +266,14 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
     return preferred?.id ?? groups[0]?.id ?? '';
   });
   const [search, setSearch]         = useState('');
-  const [followedTeamId, setFollowedTeamId] = useState<string | null>(null);
+  // Canonical follow state (replaces a mount-time read that missed later changes —
+  // e.g. the N2 account seeding — because it never subscribed to fl-follow-change).
+  const { followedTeamId, follow } = useFollowedTeam(orgSlug, tournamentSlug);
+  // N2: teams the ACCOUNT follows beyond the pin still read "Following".
+  const accountFollowIds = useAccountFollowedTeamIds(orgSlug, tournamentSlug);
   const [standingsByDivision, setStandingsByDivision] = useState<Record<string, DivisionStandingRow[]>>(
     () => initialData?.standingsByDivision ?? {},
   );
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setFollowedTeamId(readFollowedTeamId(orgSlug, tournamentSlug));
-  }, [orgSlug, tournamentSlug]);
 
   useEffect(() => {
     if (initialData) return;
@@ -362,17 +361,15 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
   const showSchedulePage = Boolean(selectedTournament && isPublicPageEnabled(selectedTournament, 'schedule'));
 
   function followTeam(team: PublicTeam) {
-    saveFollowedTeam(orgSlug, tournamentSlug, team);
-    setFollowedTeamId(team.id);
+    follow(team);
     if (team.divisionId) {
       setActiveDivisionId(team.divisionId);
       setDivisionPref(orgSlug, divisions.find(g => g.id === team.divisionId)?.name ?? '');
     }
   }
 
-  function stopFollowing() {
-    clearFollowedTeam(orgSlug, tournamentSlug);
-    setFollowedTeamId(null);
+  function stopFollowing(team: PublicTeam) {
+    unfollowTeamEverywhere(orgSlug, tournamentSlug, team.id);
   }
 
   if (selectedTournament && !isPublicPageEnabled(selectedTournament, 'teams')) {
@@ -516,7 +513,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
                       <TeamCard
                         key={team.id}
                         team={team}
-                        isFollowed={followedTeamId === team.id}
+                        isFollowed={followedTeamId === team.id || accountFollowIds.has(team.id)}
                         {...teamCardProps}
                         division={activeDivision}
                       />

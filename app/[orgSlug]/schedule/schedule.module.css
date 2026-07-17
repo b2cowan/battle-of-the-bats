@@ -2023,11 +2023,13 @@ a.broadcastCard { cursor: pointer; }
   gap: 0.4rem;
 }
 
-/* Distribute the follow-actions evenly across the row — equal-width columns
-   that span the full width. Adapts to 2 or 3 buttons automatically (the
-   "My Games" filter button is hidden when already filtered). */
+/* Distribute the follow-actions across the row. flex-basis auto (not 0): each
+   pill first claims its label's natural width, then leftover space is shared —
+   forced equal thirds clipped the longest label ("Sign in for alerts", S1) at
+   360px while the three labels comfortably fit the row at natural widths.
+   Adapts to 2 or 3 buttons automatically ("My Games" hides when filtered). */
 .followQuickActions > button {
-  flex: 1 1 0;
+  flex: 1 1 auto;
   min-width: 0;
   justify-content: center;
   white-space: nowrap;

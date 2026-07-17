@@ -7,7 +7,7 @@
  */
 import { Star } from 'lucide-react';
 import type { PublicTeam } from '@/lib/types';
-import { useFollowedTeam } from '@/lib/follow';
+import { useFollowedTeam, useAccountFollowedTeamIds, unfollowTeamEverywhere } from '@/lib/follow';
 import styles from './TeamFollowStar.module.css';
 
 interface Props {
@@ -18,13 +18,21 @@ interface Props {
 }
 
 export default function TeamFollowStar({ orgSlug, tournamentSlug, team, size = 15 }: Props) {
-  const { followedTeamId, follow, unfollow } = useFollowedTeam(orgSlug, tournamentSlug);
-  const isFollowed = followedTeamId === team.id;
+  const { followedTeamId, follow } = useFollowedTeam(orgSlug, tournamentSlug);
+  // N2: a signed-in fan's ACCOUNT follows count too — her own team never shows "Follow".
+  const accountIds = useAccountFollowedTeamIds(orgSlug, tournamentSlug);
+  const isFollowed = followedTeamId === team.id || accountIds.has(team.id);
+
+  function toggle() {
+    if (isFollowed) unfollowTeamEverywhere(orgSlug, tournamentSlug, team.id);
+    else follow(team);
+  }
+
   return (
     <button
       type="button"
       className={`${styles.star} ${isFollowed ? styles.active : ''}`}
-      onClick={() => (isFollowed ? unfollow() : follow(team))}
+      onClick={toggle}
       aria-pressed={isFollowed}
       aria-label={isFollowed ? `Unfollow ${team.name}` : `Follow ${team.name}`}
       title={isFollowed ? 'Following — tap to unfollow' : `Follow ${team.name}`}

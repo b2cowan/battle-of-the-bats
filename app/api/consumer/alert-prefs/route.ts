@@ -20,7 +20,9 @@ export const GET = withObservability(async () => {
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.json({ linked: false });
   const prefs = await getFanAlertPrefs(user.id);
-  return NextResponse.json({ linked: true, ...prefs });
+  // Per-user payload — belt-and-suspenders against any intermediary caching
+  // (matches the sibling /api/consumer/follows GET).
+  return NextResponse.json({ linked: true, ...prefs }, { headers: { 'Cache-Control': 'no-store' } });
 }, { route: '/api/consumer/alert-prefs' });
 
 export const POST = withObservability(async (req: Request) => {

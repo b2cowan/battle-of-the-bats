@@ -15,7 +15,7 @@ import { formatPoolName, formatTime, splitTeamQualifier } from '@/lib/utils';
 import styles from '@/app/[orgSlug]/standings/standings.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
-import { readFollowedTeamId, isTournamentInProgress } from '@/lib/follow';
+import { useFollowedTeam, isTournamentInProgress } from '@/lib/follow';
 import { isGameLive, isGameUpcoming, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import MyTeamCard, { type MyTeamCardStatus } from '@/components/public/MyTeamCard';
@@ -96,7 +96,9 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
     const preferred = pref ? groups.find(g => g.name === pref) : null;
     return (preferred ?? groups[0]).id;
   });
-  const [followedTeamId, setFollowedTeamId] = useState<string | null>(null);
+  // Canonical follow state — subscribes to fl-follow-change, so the N2 account
+  // seeding (which can land after mount) highlights the row without a reload.
+  const { followedTeamId } = useFollowedTeam(orgSlug, tournamentSlug);
   const [standingsByDivision, setStandingsByDivision] = useState<Record<string, StandingResult[]>>(
     () => (initialData?.standingsByDivision as Record<string, StandingResult[]>) ?? {}
   );
@@ -157,10 +159,6 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
     const timer = window.setTimeout(() => setRankChanges(new Map()), 2400);
     return () => window.clearTimeout(timer);
   }, [standingsByDivision, activeGroup, divisions]);
-
-  useEffect(() => {
-    setFollowedTeamId(readFollowedTeamId(orgSlug, tournamentSlug));
-  }, [orgSlug, tournamentSlug]);
 
   useEffect(() => {
     if (initialData) return;

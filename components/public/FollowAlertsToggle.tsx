@@ -177,7 +177,10 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, vari
         onClick={() => router.push(`/auth/login?next=${encodeURIComponent(pathname || '/')}`)}
         {...labelProps('Sign in for score alerts')}
       >
-        <Bell size={iconSize} /> {labelSpan(pill ? 'Score alerts' : 'Sign in for score alerts')}
+        {/* S1: the sign-in ask must be VISIBLE in the pill too — with only aria/title
+            carrying it, the signed-out pill was pixel-identical to the signed-in
+            alerts-off state and read as a broken button. Shortened for pill width. */}
+        <Bell size={iconSize} /> {labelSpan(pill ? 'Sign in for alerts' : 'Sign in for score alerts')}
       </button>
     );
   }

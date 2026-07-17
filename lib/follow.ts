@@ -10,6 +10,7 @@
  * existing followers carry over.
  */
 import { useCallback, useEffect, useState } from 'react';
+import { getSession } from './auth';
 import { tournamentToday } from './timezone';
 import type { Team, Tournament } from './types';
 
@@ -17,6 +18,11 @@ export interface FollowedTeam {
   id: string;
   name: string;
   divisionId?: string;
+  /** N2: pin auto-seeded from the ACCOUNT (never explicitly followed on this
+   *  device). Seeded pins are reconciled by the account sync — cleared on
+   *  sign-out (shared-device hygiene) and replaced if the account stops
+   *  following the team. An explicit on-device follow never carries this. */
+  seeded?: boolean;
 }
 
 const FOLLOW_KEY_PREFIX = 'fl_follow_team_';
@@ -72,7 +78,9 @@ export function readFollowedTeam(orgSlug: string, tournamentSlug: string): Follo
     const raw = window.localStorage.getItem(followKey(orgSlug, tournamentSlug));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<FollowedTeam>;
-    return parsed.id ? { id: parsed.id, name: parsed.name ?? '', divisionId: parsed.divisionId } : null;
+    return parsed.id
+      ? { id: parsed.id, name: parsed.name ?? '', divisionId: parsed.divisionId, seeded: parsed.seeded === true || undefined }
+      : null;
   } catch {
     return null;
   }
@@ -114,12 +122,15 @@ export function syncFollowToAccount(
 export function saveFollowedTeam(
   orgSlug: string,
   tournamentSlug: string,
-  team: Pick<Team, 'id' | 'name' | 'divisionId'>,
+  team: Pick<Team, 'id' | 'name' | 'divisionId'> & { seeded?: boolean },
 ): void {
   if (typeof window === 'undefined') return;
+  invalidateAccountSync();
   window.localStorage.setItem(
     followKey(orgSlug, tournamentSlug),
-    JSON.stringify({ id: team.id, name: team.name, divisionId: team.divisionId }),
+    // `seeded` only persists when true (explicit follows stay unmarked — and an
+    // explicit follow OVERWRITING a seeded pin correctly un-marks it).
+    JSON.stringify({ id: team.id, name: team.name, divisionId: team.divisionId, ...(team.seeded ? { seeded: true } : {}) }),
   );
   // Notify same-tab listeners (the native `storage` event only fires cross-tab).
   window.dispatchEvent(new CustomEvent('fl-follow-change'));
@@ -128,11 +139,17 @@ export function saveFollowedTeam(
 
 export function clearFollowedTeam(orgSlug: string, tournamentSlug: string): void {
   if (typeof window === 'undefined') return;
+  invalidateAccountSync();
   // Read the team id before removing so we can mirror the unfollow to the account.
   const prev = readFollowedTeam(orgSlug, tournamentSlug);
   window.localStorage.removeItem(followKey(orgSlug, tournamentSlug));
   window.dispatchEvent(new CustomEvent('fl-follow-change'));
-  if (prev?.id) syncFollowToAccount('unfollow', { teamId: prev.id, orgSlug, tournamentSlug });
+  if (prev?.id) {
+    syncFollowToAccount('unfollow', { teamId: prev.id, orgSlug, tournamentSlug });
+    // N2: keep the hydrated account set honest too, so follow buttons for this
+    // team flip immediately instead of waiting for the next hydration.
+    pruneAccountFollow(orgSlug, tournamentSlug, prev.id);
+  }
 }
 
 /**
@@ -195,6 +212,192 @@ export function useAllFollowedTeams() {
   }, []);
 
   return { teams, ready } as const;
+}
+
+/* ── N2 — account follows on public pages ─────────────────────────────────────
+   A signed-in fan's ACCOUNT follows, hydrated client-side per tournament so the
+   public pages stop being identity-blind ("Follow" on her own team; no My Team
+   pin on a new device). Identity is NEVER server-rendered into public tournament
+   HTML (the SW caches it as anonymous content) — same rule as the account chip:
+   local session read first (anonymous visitors never hit the network), then one
+   GET /api/consumer/follows for the signed-in few.
+
+   Merge model: the device pin stays the single "my team" per tournament. When
+   the device has NO pin and the account follows team(s) here, the most recent
+   account follow is seeded AS the device pin — every pin surface (dock,
+   scorebug, standings highlight, teams sort) lights up with zero re-plumbing.
+   Teams the account follows beyond the pin surface as "Following" on their
+   buttons via useAccountFollowedTeamIds. Nothing here ever WRITES to the
+   account except an explicit unfollow — the device→account claim flow stays
+   explicit (locked decision). */
+
+export interface AccountFollow {
+  teamId: string;
+  teamName: string;
+  divisionId: string | null;
+}
+
+const ACCOUNT_FOLLOWS_EVENT = 'fl-account-follows-change';
+
+/** Staleness guard for account hydration (/review 2026-07-17). Bumped when a new
+ *  sync starts AND on every local follow mutation — an in-flight response older
+ *  than either must be discarded, never applied: a stale snapshot once re-seeded
+ *  (and server-side re-followed) a team the user had just explicitly unfollowed,
+ *  and a slow signed-in response could land after a sign-out's empty hydration. */
+let accountSyncGeneration = 0;
+
+function invalidateAccountSync(): void {
+  accountSyncGeneration++;
+}
+
+/** Module-level cache of the CURRENT tournament's account-followed team ids (one
+ *  tournament on screen at a time; re-hydrated by AccountFollowSync on nav/auth
+ *  change). Ids only — the full follow objects are consumed at hydration time
+ *  (pin seeding) and never needed again. The Set reference is shared with every
+ *  hook consumer so unchanged hydrations bail out of re-renders via Object.is. */
+let accountFollows: { key: string; teamIds: Set<string> } | null = null;
+
+function accountKey(orgSlug: string, tournamentSlug: string): string {
+  return `${orgSlug}/${tournamentSlug}`;
+}
+
+function setAccountFollows(orgSlug: string, tournamentSlug: string, teamIds: Set<string>): void {
+  accountFollows = { key: accountKey(orgSlug, tournamentSlug), teamIds };
+  window.dispatchEvent(new CustomEvent(ACCOUNT_FOLLOWS_EVENT));
+}
+
+/** Drop one team from the hydrated account set (after an unfollow that already
+ *  mirrored server-side) so button state flips without a refetch. */
+function pruneAccountFollow(orgSlug: string, tournamentSlug: string, teamId: string): void {
+  if (accountFollows?.key !== accountKey(orgSlug, tournamentSlug)) return;
+  if (!accountFollows.teamIds.has(teamId)) return;
+  const next = new Set(accountFollows.teamIds);
+  next.delete(teamId);
+  setAccountFollows(orgSlug, tournamentSlug, next);
+}
+
+/**
+ * Fetch the signed-in account's follows for this tournament and reconcile them
+ * onto the device — the "follows travel with you" moment. Anonymous sessions
+ * resolve to an empty set with no network call. Called by AccountFollowSync on
+ * mount and on auth transitions.
+ *
+ * Reconciliation rules (/review 2026-07-17):
+ *  - No pin + account follows here → seed the pin from the NEWEST follow,
+ *    marked `seeded` (an auto-pin, distinct from an explicit on-device follow).
+ *  - No session → clear a SEEDED pin (it must never outlive its session on a
+ *    shared device) and empty the account set. Explicit pins are untouched.
+ *  - Session but the account no longer follows the seeded pin (unfollowed on
+ *    another device, or a different account signed in) → replace or clear it.
+ *  - Transient fetch failure while signed in → keep whatever state we had; an
+ *    error blip must not flip "Following" buttons or touch the pin.
+ *  - A response that raced a newer sync or ANY local follow mutation is stale —
+ *    discarded wholesale (see accountSyncGeneration).
+ */
+export async function syncAccountFollowsToDevice(orgSlug: string, tournamentSlug: string): Promise<void> {
+  if (typeof window === 'undefined') return;
+  const generation = ++accountSyncGeneration;
+
+  let signedIn = false;
+  let fetched = false;
+  let list: AccountFollow[] = [];
+  try {
+    const session = await getSession().catch(() => null);
+    signedIn = !!session?.user;
+    if (signedIn) {
+      const res = await fetch(
+        `/api/consumer/follows?orgSlug=${encodeURIComponent(orgSlug)}&tournamentSlug=${encodeURIComponent(tournamentSlug)}`,
+      );
+      if (res.ok) {
+        const data = (await res.json()) as { follows?: AccountFollow[] };
+        if (Array.isArray(data.follows)) {
+          list = data.follows;
+          fetched = true;
+        }
+      }
+    }
+  } catch { /* account layer is additive — the device experience stands alone */ }
+
+  // Stale response — a newer sync started or the user acted while this was in
+  // flight. Their intent is fresher than this snapshot; apply nothing.
+  if (generation !== accountSyncGeneration) return;
+
+  const pin = readFollowedTeam(orgSlug, tournamentSlug);
+
+  if (!signedIn) {
+    setAccountFollows(orgSlug, tournamentSlug, new Set());
+    // Shared-device hygiene: an account-seeded pin never outlives its session
+    // (also self-heals a leftover seeded pin on any later anonymous visit).
+    if (pin?.seeded) clearFollowedTeam(orgSlug, tournamentSlug);
+    return;
+  }
+
+  if (!fetched) return; // transient failure — keep the last good state
+
+  setAccountFollows(orgSlug, tournamentSlug, new Set(list.map(f => f.teamId)));
+
+  const seedPin = (follow: AccountFollow) =>
+    saveFollowedTeam(orgSlug, tournamentSlug, {
+      id: follow.teamId,
+      name: follow.teamName,
+      divisionId: follow.divisionId ?? '',
+      seeded: true,
+    });
+
+  if (!pin) {
+    if (list.length > 0) seedPin(list[0]);
+  } else if (pin.seeded && !list.some(f => f.teamId === pin.id)) {
+    // The account walked away from the seeded pin — follow it: replace with the
+    // newest account follow, or clear when the account follows nothing here.
+    if (list.length > 0) seedPin(list[0]);
+    else clearFollowedTeam(orgSlug, tournamentSlug);
+  }
+}
+
+/**
+ * The team ids this ACCOUNT follows in this tournament (empty set when anonymous
+ * or not yet hydrated). Follow buttons OR this with the device pin so every
+ * account-followed team reads "Following", not just the pinned one.
+ */
+export function useAccountFollowedTeamIds(orgSlug: string, tournamentSlug: string): Set<string> {
+  const [ids, setIds] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => {
+    const sync = () => {
+      setIds(accountFollows?.key === accountKey(orgSlug, tournamentSlug)
+        ? accountFollows.teamIds
+        : new Set());
+    };
+    sync();
+    window.addEventListener(ACCOUNT_FOLLOWS_EVENT, sync);
+    return () => window.removeEventListener(ACCOUNT_FOLLOWS_EVENT, sync);
+  }, [orgSlug, tournamentSlug]);
+
+  return ids;
+}
+
+/**
+ * Unfollow a team on the ACCOUNT (fire-and-forget, idempotent) and update the
+ * local account set so buttons flip immediately. Used for account-followed teams
+ * that are NOT this device's pin — the pin's own unfollow (clearFollowedTeam)
+ * already mirrors to the account.
+ */
+function unfollowAccountTeam(orgSlug: string, tournamentSlug: string, teamId: string): void {
+  invalidateAccountSync();
+  pruneAccountFollow(orgSlug, tournamentSlug, teamId);
+  syncFollowToAccount('unfollow', { teamId, orgSlug, tournamentSlug });
+}
+
+/**
+ * THE one unfollow rule for merged follow state (N2): if this team is the device
+ * pin, clear the pin (which mirrors its own account unfollow); otherwise it's an
+ * account-only follow — unfollow it there. Every follow surface calls this so
+ * the pin-vs-account decision can never drift between them. clearFollowedTeam's
+ * fl-follow-change dispatch keeps each surface's useFollowedTeam state in sync.
+ */
+export function unfollowTeamEverywhere(orgSlug: string, tournamentSlug: string, teamId: string): void {
+  if (readFollowedTeamId(orgSlug, tournamentSlug) === teamId) clearFollowedTeam(orgSlug, tournamentSlug);
+  else unfollowAccountTeam(orgSlug, tournamentSlug, teamId);
 }
 
 /**

@@ -18,6 +18,7 @@ import MyTeamDock from '@/components/public/MyTeamDock';
 import FollowDeepLinkPrompt from '@/components/public/FollowDeepLinkPrompt';
 import AlertsNudge from '@/components/public/AlertsNudge';
 import FollowAccountNudge from '@/components/public/FollowAccountNudge';
+import AccountFollowSync from '@/components/public/AccountFollowSync';
 import TournamentSideRail from '@/components/public/TournamentSideRail';
 import railStyles from '@/components/public/TournamentSideRail.module.css';
 import ScoreTicker from '@/components/public/ScoreTicker';
@@ -258,6 +259,10 @@ export default async function TournamentLayout({
           a non-blocking upsell with a "just this device" escape (unified-app Phase 2). It
           self-gates (checks sign-in lazily, only after a follow), so no auth call per view. */}
       <FollowAccountNudge orgSlug={orgSlug} tournamentSlug={tournament.slug} />
+      {/* N2: hydrates the signed-in account's follows into the client follow layer
+          (pin seeding + "Following" buttons). Client-only identity — never SSR'd
+          into this SW-cached layout (see the account-chip note above). */}
+      <AccountFollowSync orgSlug={orgSlug} tournamentSlug={tournament.slug} />
     </>
   );
 }
