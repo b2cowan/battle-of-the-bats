@@ -196,10 +196,13 @@ a.gameRow { cursor: pointer; }
   white-space: nowrap;
 }
 
+/* Quiet mono context line under the desktop time cell — carries the D1 pool tag. */
 .gameVenueLine {
   font-family: var(--font-data);
   font-size: 0.62rem;
   font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--white-50);
   white-space: nowrap;
   overflow: hidden;
@@ -314,9 +317,13 @@ a.gameRow { cursor: pointer; }
 
 @media (max-width: 768px) {
   .dateGroup:last-child {
-    /* Clear the bottom nav + MyTeamDock (game day) stack. Dock is ~50px parked
-       above the nav, so we budget for both: nav-height var + dock + breathing room. */
-    margin-bottom: calc(var(--bottom-nav-height, 72px) + 3.5rem + env(safe-area-inset-bottom));
+    /* Clear the fixed bottom chrome. The dock publishes its live-measured
+       --dock-clearance (full bar, or the smaller minimized pill on this route),
+       so prefer that over a static dock guess — anonymous visits (no dock) fall
+       back to just the bottom nav. (R3 review follow-up: the old static
+       3.5rem dock budget over-reserved ~10px in pill state and ~56px when no
+       dock was mounted at all.) */
+    margin-bottom: max(var(--dock-clearance, 0px), calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom) + 1rem));
   }
 
   .dateLabel {
@@ -392,12 +399,13 @@ a.gameRow { cursor: pointer; }
 }
 
 /* The tournament shell renders no <main>, so globals' automatic bottom-nav
-   padding never reaches this route — reserve the clearance here (same formula
-   as the schedule list's .dateGroup:last-child and team-detail's .profile),
-   so nothing (e.g. Get Directions) hides under the fixed bottom nav. */
+   padding never reaches this route — reserve the clearance here (same live
+   formula as the schedule list's .dateGroup:last-child: prefer the dock's
+   published --dock-clearance, fall back to nav + breathing room), so nothing
+   (e.g. Get Directions) hides under the fixed bottom nav. */
 @media (max-width: 900px) {
   .gameDetailShell {
-    padding-bottom: calc(var(--bottom-nav-height, 72px) + 3.5rem + env(safe-area-inset-bottom));
+    padding-bottom: max(var(--dock-clearance, 0px), calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom) + 1rem));
   }
 }
 
@@ -1560,8 +1568,14 @@ a.gameRow { cursor: pointer; }
     min-width: 0;
   }
 
+  /* Basis must be `auto` (true content size), not a fixed guess — wrap decisions
+     use the basis, and a 180px basis let the row "fit" beside the division picker
+     while its real content (stage toggle + playoff List/Bracket toggle) measured
+     ~300px and overflowed the device edge. That overflow forced mobile browsers
+     to lay the whole page out at a 448px viewport and zoom out ~13% (§3b). With
+     an honest basis the stage row wraps to its own full-width line instead. */
   .mobileStageRow {
-    flex: 1.3 1 180px;
+    flex: 1.3 1 auto;
     min-width: 0;
   }
 
@@ -2413,4 +2427,228 @@ a.broadcastCard { cursor: pointer; }
     padding: 0.5rem 0.7rem;
     font-size: 0.72rem;
   }
+}
+
+/* ── Day selector (Round 4) ──────────────────────────────────────────────────
+   One selector, two presentations (D8): roomy weekday chips while the whole
+   event fits on screen (≤ ROOMY_DAY_CHIP_MAX distinct game dates), a compact
+   swipeable date rail beyond. Chips clear the --tap-min floor at every size. */
+
+.dayStrip {
+  position: relative; /* anchors the desktop jump dropdown */
+  display: flex;
+  align-items: stretch;
+  gap: 0.45rem;
+  margin-bottom: 1.1rem;
+}
+
+/* Edge month label (rail presentation) */
+.dayRailMonth {
+  flex: 0 0 auto;
+  align-self: center;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-45);
+}
+
+.dayChipRow {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Roomy presentation: chips share the row edge-to-edge (the fill convention). */
+.dayStrip:not(.dayStripRail) .dayChip {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.dayChip {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.12rem;
+  min-height: var(--tap-min, 44px);
+  min-width: var(--tap-min, 44px);
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  background: var(--white-5);
+  color: var(--white-60);
+  font-family: var(--font-data);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.dayChip:hover { color: var(--white); }
+.dayChip:active { transform: scale(0.97); }
+
+.dayChipActive,
+.dayChipActive:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.35);
+}
+
+.dayChipWk {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dayChipDate {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dayChipAll {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Today marker — dotted even when the day isn't selected (D8). */
+.dayChipDot {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.35rem;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--primary-light);
+}
+
+.dayChipActive .dayChipDot { background: var(--on-primary); }
+
+/* Rail presentation — narrow snap cells, ~7 visible at 390px, hidden scrollbar. */
+.dayStripRail .dayChipRow {
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dayStripRail .dayChipRow::-webkit-scrollbar { display: none; }
+
+.dayStripRail .dayChip {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  padding: 0.3rem 0.45rem;
+}
+
+/* Jump cell — pinned at the rail's edge, opens the week-grouped date list. */
+.dayJumpBtn {
+  flex: 0 0 auto;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dayJumpBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 240;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.dayJumpPanel {
+  z-index: 250;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+}
+
+.dayJumpWeek {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.6rem;
+}
+
+.dayJumpWeek:last-child { margin-bottom: 0; }
+
+.dayJumpWeekLabel {
+  padding: 0.3rem 0.35rem;
+  font-family: var(--font-data);
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-40);
+}
+
+.dayJumpDay {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0.4rem 0.55rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--white-75);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dayJumpDay:hover {
+  background: var(--white-5);
+  color: var(--white);
+}
+
+.dayJumpDayActive {
+  background: rgba(var(--primary-rgb), 0.15);
+  color: var(--primary-light);
+}
+
+/* Phones: the jump list is a bottom sheet above the nav (z 200). */
+@media (max-width: 640px) {
+  .dayJumpPanel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 70vh;
+    overflow-y: auto;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-bottom: 0;
+    padding: 0.9rem 1rem calc(0.9rem + env(safe-area-inset-bottom, 0px));
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* Desktop: a dropdown panel anchored under the strip's right edge. */
+@media (min-width: 641px) {
+  .dayJumpPanel {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    width: 20rem;
+    max-height: 24rem;
+    overflow-y: auto;
+    border-radius: var(--radius-md);
+    padding: 0.75rem 0.85rem;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .dayJumpBackdrop { background: transparent; }
 }

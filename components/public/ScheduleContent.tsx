@@ -10,7 +10,7 @@ import YearSelector from '@/components/YearSelector';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
 import { TieredBracket } from '@/components/bracket/TieredBracket';
-import { bracketRoundInfo, fanRoundLabel, inferGamePool } from '@/lib/playoff-bracket';
+import { bracketRoundInfo, fanGameLabel, fanSlotLabel, inferGamePool, inferGamePoolSides } from '@/lib/playoff-bracket';
 import { computePlacementStandings } from '@/lib/playoff-standings';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
@@ -101,6 +101,56 @@ function ordinal(n: number): string {
   return `${n}th`;
 }
 
+// ── Day-selector label helpers (Round 4) ──────────────────────────────────────
+// Labels only — landing math stays on tournament-timezone date strings, never
+// Date arithmetic.
+
+/** YYYY-MM-DD from a Date's LOCAL calendar parts. toISOString is UTC and
+    shifts a calendar day for fans at offsets beyond ±12 (e.g. NZ) — label-space
+    only, but the label would name the wrong day. */
+function localISODate(dt: Date): string {
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
+
+/** '' (dateless → the "TBD" heading) sorts after every real date. */
+function compareDateKeys(a: string, b: string): number {
+  return a === '' ? 1 : b === '' ? -1 : a.localeCompare(b);
+}
+
+function formatRowDate(d?: string) {
+  if (!d) return 'TBD';
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', {
+    month: 'short', day: 'numeric',
+  });
+}
+
+function dayChipParts(d: string) {
+  const dt = new Date(d + 'T12:00:00');
+  return {
+    wk: dt.toLocaleDateString('en-CA', { weekday: 'short' }),
+    md: formatRowDate(d),
+    dayNum: dt.toLocaleDateString('en-CA', { day: 'numeric' }),
+    mon: dt.toLocaleDateString('en-CA', { month: 'short' }),
+  };
+}
+
+/** Group ISO dates by their week (Sunday start) for the D8 jump list. */
+function groupDatesByWeek(dates: string[]): { label: string; days: string[] }[] {
+  const weeks: { label: string; days: string[] }[] = [];
+  let curWeekKey = '';
+  for (const d of dates) {
+    const start = new Date(d + 'T12:00:00');
+    start.setDate(start.getDate() - start.getDay());
+    const weekKey = localISODate(start);
+    if (weekKey !== curWeekKey) {
+      curWeekKey = weekKey;
+      weeks.push({ label: `Week of ${formatRowDate(weekKey)}`, days: [] });
+    }
+    weeks[weeks.length - 1].days.push(d);
+  }
+  return weeks;
+}
+
 // ── component ─────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -150,6 +200,14 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   const [fanAlertsEnabled, setFanAlertsEnabled] = useState<boolean>(() => initialData?.fanAlertsEnabled ?? false);
   const [followedTeamId, setFollowedTeamId] = useState<string | null>(null);
   const [followedFilterApplied, setFollowedFilterApplied] = useState(false);
+  // Day-first schedule (Round 4): the selected day chip. null = smart landing
+  // (first game date ≥ today, tournament timezone); 'all' = the full-event view.
+  // An explicit pick that doesn't exist in the current division/stage falls back
+  // to the landing rule at render time (division switch keeps the day when it
+  // can, re-lands when it can't) without clobbering the user's stored choice.
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [dayJumpOpen, setDayJumpOpen] = useState(false);
+  const dayStripRowRef = useRef<HTMLDivElement | null>(null);
 
   // Bracket-only tournaments have no round-robin stage — never sit on the empty
   // pool stage, and the pool/playoff toggle is hidden below.
@@ -265,11 +323,13 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     const id = isHome ? game.homeTeamId : game.awayTeamId;
     const ph = isHome ? game.homePlaceholder : game.awayPlaceholder;
     // Published schedules always show real team names (mig 129). Fall back to the
-    // placeholder only for a genuinely unassigned slot (bye / unseeded bracket spot).
+    // placeholder only for a genuinely unassigned slot (bye / unseeded bracket
+    // spot) — rendered fan-facing ("Winner SF1" → "Winner of Semifinal 1");
+    // custom organizer text passes through untouched.
     if (id && id !== NIL_UUID) {
-      return teams.find(t => t.id === id)?.name ?? ph ?? 'TBD';
+      return teams.find(t => t.id === id)?.name ?? (ph ? fanSlotLabel(ph) : 'TBD');
     }
-    return ph ?? 'TBD';
+    return ph ? fanSlotLabel(ph) : 'TBD';
   };
 
   function getWinner(game: Game): 'home' | 'away' | 'tie' | null {
@@ -287,17 +347,56 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     !!g.isPlayoff
   );
 
-  const filtered = games
-    .filter(g =>
+  const today = tournamentToday();
+
+  const activeG = divisions.find(g => g.id === activeGroup);
+  const pools   = activeG?.pools || [];
+  const activeVisibility = activeG?.scheduleVisibility ?? 'unpublished';
+
+  // ── Stage list + per-row pool identity (Round 4, D1) ───────────────────────
+  // Pool tags come from the shared per-side attribution
+  // (lib/playoff-bracket.inferGamePoolSides): self-hidden when the division has
+  // < 2 pools, when neither side resolves, or when the matchup crosses pools —
+  // directly (A #1 vs B #2) or via feeds (a final fed by cross-pool semis).
+  // Memoized off the stage list: the feed-chain walk must not re-run on every
+  // search keystroke or live-poll re-render.
+  const { stageGames, poolTagById, filtered } = useMemo(() => {
+    const stagePools: { id: string; name: string }[] =
+      divisions.find(g => g.id === activeGroup)?.pools ?? [];
+    const stageGames = games.filter(g =>
       g.divisionId === activeGroup &&
       (viewMode === 'playoff' ? g.isPlayoff : !g.isPlayoff)
-    )
-    .sort((a, b) => {
+    );
+    const poolNameByPoolId = new Map(stagePools.map(p => [p.id, p.name]));
+    const teamPoolNameById = new Map<string, string>();
+    for (const t of teams) {
+      const name = t.poolId ? poolNameByPoolId.get(t.poolId) : undefined;
+      if (name) teamPoolNameById.set(t.id, name);
+    }
+    const poolTagById = new Map<string, string | null>();
+    if (stagePools.length >= 2) {
+      for (const g of stageGames) {
+        poolTagById.set(g.id, inferGamePoolSides(g, stageGames, stagePools, teamPoolNameById));
+      }
+    }
+    // Within a day: playoffs keep bracket-round order; pool play is strict
+    // start-time order (D3) with pool-name → id tiebreaks so React keys stay
+    // stable across live polls (the entrance animation must not replay).
+    const filtered = [...stageGames].sort((a, b) => {
       if (a.date !== b.date) return (a.date || '').localeCompare(b.date || '');
-      const pd = bracketPriority(a.bracketCode) - bracketPriority(b.bracketCode);
+      if (viewMode === 'playoff') {
+        const pd = bracketPriority(a.bracketCode) - bracketPriority(b.bracketCode);
+        if (pd !== 0) return pd;
+        return (a.time || '').localeCompare(b.time || '');
+      }
+      const td = (a.time || '').localeCompare(b.time || '');
+      if (td !== 0) return td;
+      const pd = (poolTagById.get(a.id) ?? '').localeCompare(poolTagById.get(b.id) ?? '');
       if (pd !== 0) return pd;
-      return (a.time || '').localeCompare(b.time || '');
-  });
+      return a.id.localeCompare(b.id);
+    });
+    return { stageGames, poolTagById, filtered };
+  }, [games, teams, divisions, activeGroup, viewMode]);
 
   const teamMap = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
   const followedTeam = followedTeamId ? teams.find(t => t.id === followedTeamId) ?? null : null;
@@ -349,7 +448,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     if (date === today) return 'Today';
     const tmrw = new Date(today + 'T12:00:00');
     tmrw.setDate(tmrw.getDate() + 1);
-    if (date === tmrw.toISOString().slice(0, 10)) return 'Tomorrow';
+    if (date === localISODate(tmrw)) return 'Tomorrow';
     return new Date(date + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
   }
 
@@ -361,31 +460,106 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     }).replace(', ', ' · ').toUpperCase();
   }
 
-  function formatRowDate(d?: string) {
-    if (!d) return 'TBD';
-    return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', {
-      month: 'short', day: 'numeric',
-    });
-  }
+
+  // ── Day selector (Round 4) ─────────────────────────────────────────────────
+  // Entries = the stage's DISTINCT GAME DATES (D8) — never the calendar span.
+  // Built pre-search so the strip doesn't shrink while typing; search and
+  // My Games expand to the whole event below (D6).
+  const stageDates = useMemo(
+    () => [...new Set(filtered.map(g => g.date).filter(Boolean))].sort(),
+    [filtered]
+  );
+  const dayChipPartsByDate = useMemo(
+    () => new Map(stageDates.map(d => [d, dayChipParts(d)])),
+    [stageDates]
+  );
+  const dayJumpWeeks = useMemo(() => groupDatesByWeek(stageDates), [stageDates]);
+
+  // Smart landing — "most recent date that has not passed", tournament timezone:
+  // pre-event → first day; event day → today; gap day → next date with games;
+  // post-event → last day. (Replaces the old scroll-to-today.)
+  const smartLandingDay = stageDates.find(d => d >= today) ?? stageDates[stageDates.length - 1] ?? null;
+
+  // Shared gate: division published + not the bracket diagram (where a game
+  // list, search, and day strip are all meaningless).
+  const stageContentVisible =
+    activeVisibility !== 'unpublished' &&
+    !(viewMode === 'playoff' && bracketLayout === 'bracket');
+
+  const dayStripVisible = stageDates.length > 1 && stageContentVisible && !teamSearch;
+
+  // D8: one selector, two presentations — roomy weekday chips while the whole
+  // event fits on screen, the compact swipeable date rail beyond. Tuning constant.
+  const ROOMY_DAY_CHIP_MAX = 5;
+  const dayRailMode = stageDates.length > ROOMY_DAY_CHIP_MAX;
+
+  const effectiveDay: string =
+    teamSearch || stageDates.length <= 1 ? 'all'
+    : selectedDay === 'all' ? 'all'
+    : selectedDay && stageDates.includes(selectedDay) ? selectedDay
+    : smartLandingDay ?? 'all';
+
+  // Dateless (TBD) games belong to no chip — they ride along in EVERY day view
+  // (trailing "TBD" group) so an unscheduled final never vanishes behind the
+  // day filter; pre-day-view they were always visible.
+  const dayFiltered = effectiveDay === 'all'
+    ? teamFiltered
+    : teamFiltered.filter(g => g.date === effectiveDay || !g.date);
 
   const byDate: Record<string, Game[]> = {};
-  teamFiltered.forEach(g => {
-    if (!byDate[g.date]) byDate[g.date] = [];
-    byDate[g.date].push(g);
+  dayFiltered.forEach(g => {
+    const dateKey = g.date || '';
+    if (!byDate[dateKey]) byDate[dateKey] = [];
+    byDate[dateKey].push(g);
   });
-  const sortedDates = Object.keys(byDate).sort();
-
-  const today = tournamentToday();
-
-  const activeG = divisions.find(g => g.id === activeGroup);
-  const pools   = activeG?.pools || [];
-  const activeVisibility = activeG?.scheduleVisibility ?? 'unpublished';
+  const sortedDates = Object.keys(byDate).sort(compareDateKeys);
   const allUnpublished = divisions.length > 0 && divisions.every(g => (g.scheduleVisibility ?? 'unpublished') === 'unpublished');
   const homeHref = `/${orgSlug}/${tournamentSlug}`;
   const registerHref = `/${orgSlug}/${tournamentSlug}/register`;
   const teamsHref = `/${orgSlug}/${tournamentSlug}/teams`;
   const canRegister = Boolean(selectedTournament && isPublicPageEnabled(selectedTournament, 'register'));
   const showTeamsPage = Boolean(selectedTournament && isPublicPageEnabled(selectedTournament, 'teams'));
+
+  // Rail presentation (D8): keep the landed/selected day cell centered in the
+  // strip. dayStripVisible is a dep so the centering re-runs when the strip
+  // REMOUNTS with an unchanged day (e.g. List → Bracket → List round-trip
+  // recreates the row at scrollLeft 0).
+  useEffect(() => {
+    if (!dayStripVisible || !dayRailMode || effectiveDay === 'all') return;
+    const row = dayStripRowRef.current;
+    const cell = row?.querySelector<HTMLElement>(`[data-day="${effectiveDay}"]`);
+    if (!row || !cell) return;
+    row.scrollLeft = cell.offsetLeft - (row.clientWidth - cell.offsetWidth) / 2;
+  }, [dayStripVisible, dayRailMode, effectiveDay]);
+
+  // The jump sheet only exists in rail presentation — close it if the strip
+  // leaves rail mode (division switch) or hides (search/bracket view).
+  useEffect(() => {
+    if (!dayJumpOpen) return;
+    if (!dayRailMode || !dayStripVisible) {
+      // Guarded one-shot close, mirrors the strip's visibility — intentional.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDayJumpOpen(false);
+      return;
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setDayJumpOpen(false); };
+    window.addEventListener('keydown', onKey);
+    // Phones present the jump list as a bottom sheet — lock body scroll behind
+    // it (the desktop dropdown leaves scrolling alone). Tracked live so a
+    // rotation/resize across the breakpoint mid-open keeps lock and
+    // presentation in sync.
+    const mql = window.matchMedia('(max-width: 640px)');
+    const prevOverflow = document.body.style.overflow;
+    const syncLock = () => { document.body.style.overflow = mql.matches ? 'hidden' : prevOverflow; };
+    syncLock();
+    mql.addEventListener('change', syncLock);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      mql.removeEventListener('change', syncLock);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [dayJumpOpen, dayRailMode, dayStripVisible]);
+
   // ── Scorebug derived data ─────────────────────────────────────────────────
 
   const followedRecord = useMemo(
@@ -438,12 +612,13 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   const followedOpponentTeam = followedOpponentRawId
     ? (teams.find(t => t.id === followedOpponentRawId) ?? null)
     : null;
+  const followedOpponentRawPlaceholder = followedContextGame
+    ? (followedContextGame.homeTeamId === followedTeamId
+        ? followedContextGame.awayPlaceholder
+        : followedContextGame.homePlaceholder) ?? null
+    : null;
   const followedOpponentName = followedOpponentTeam?.name ??
-    (followedContextGame
-      ? (followedContextGame.homeTeamId === followedTeamId
-          ? followedContextGame.awayPlaceholder
-          : followedContextGame.homePlaceholder) ?? null
-      : null);
+    (followedOpponentRawPlaceholder ? fanSlotLabel(followedOpponentRawPlaceholder) : null);
 
   const divisionStandings = useMemo(
     () => (followedTeam ? calcDivisionStandings(followedTeam.divisionId, games, teams) : []),
@@ -572,6 +747,11 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
       hasScore && winner !== 'tie' && winner !== side ? { color: 'var(--white-40)' } : undefined;
     const mobileFieldLabel = resolveGameFieldLabel(game, venues);
 
+    // Pool identity (D1) — a quiet mono tag in the row's meta line; self-hides
+    // for single-pool divisions, unknown attribution, and cross-pool matchups.
+    const poolTag = poolTagById.get(game.id) ?? null;
+    const poolTagLabel = poolTag ? formatPoolName(poolTag) : null;
+
     const isLive = isGameLive(game, game.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES);
     const statusBadge =
       isLive ? <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
@@ -599,6 +779,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
             <span className={styles.gameDateText}>{formatRowDate(game.date)}</span>
             <span className={styles.gameTimeText}>{game.time ? `- ${formatTime(game.time)}` : '- TBD'}</span>
           </div>
+          {poolTagLabel && <span className={styles.gameVenueLine}>{poolTagLabel}</span>}
         </div>
 
         <div className={styles.matchupCell}>
@@ -647,9 +828,13 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
             </span>
             <span className={styles.mobileRowStatus}>{statusBadge ?? typeLabel}</span>
           </div>
-          {/* Venue/diamond context (F2) — the data was always loaded, now it shows. */}
-          {mobileFieldLabel && (
-            <span className={styles.mobileVenueLine}>{mobileFieldLabel}</span>
+          {/* Venue/diamond context (F2) + pool tag (D1) — one quiet mono line. */}
+          {(mobileFieldLabel || poolTagLabel) && (
+            <span className={styles.mobileVenueLine}>
+              {mobileFieldLabel}
+              {mobileFieldLabel && poolTagLabel ? ' · ' : ''}
+              {poolTagLabel}
+            </span>
           )}
         </div>
       </>
@@ -671,6 +856,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
           <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
           <span className={styles.bcTime}>{game.time ? formatTime(game.time) : 'TBD'}</span>
           {typeLabel && <span className={styles.bcType}>{typeLabel}</span>}
+          {!typeLabel && poolTagLabel && <span className={styles.bcType}>{poolTagLabel}</span>}
           {isFollowedGame && <Star size={14} fill="currentColor" className={styles.bcStar} aria-label="Followed team game" />}
         </div>
         <div className={styles.bcBody}>
@@ -969,7 +1155,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
             {/* Search on its own full-width row. Plain free-text filter — no native
                 datalist, so it reads as a search box, not a dropdown. Hidden in the
                 bracket diagram (search is useless against it). */}
-            {activeVisibility !== 'unpublished' && !(viewMode === 'playoff' && bracketLayout === 'bracket') && (
+            {stageContentVisible && (
               <div className={`${styles.teamFilter} ${styles.mobileTeamFilter} ${styles.mobileSearchRow}`}>
                 <Search size={14} className={styles.teamFilterIcon} />
                 <input
@@ -1050,7 +1236,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
 
             <div className={styles.secondaryControls}>
               {/* Search is useless in the bracket diagram → hide it there. */}
-              {activeVisibility !== 'unpublished' && !(viewMode === 'playoff' && bracketLayout === 'bracket') && (
+              {stageContentVisible && (
                 <div className={styles.teamFilter}>
                   <Search size={14} className={styles.teamFilterIcon} />
                   <input
@@ -1067,6 +1253,86 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
               )}
             </div>
           </div>
+
+          {/* ── Day selector (Round 4) — one day at a time behind smart landing.
+              Roomy weekday chips at the 3–4-day norm; compact swipeable date rail
+              past ROOMY_DAY_CHIP_MAX distinct game dates (D8). Hidden while a
+              search filter expands the list to the whole event (D6). ── */}
+          {dayStripVisible && (
+            <div className={`${styles.dayStrip} ${dayRailMode ? styles.dayStripRail : ''}`}>
+              {dayRailMode && effectiveDay !== 'all' && (
+                <span className={styles.dayRailMonth} aria-hidden="true">{dayChipPartsByDate.get(effectiveDay)?.mon}</span>
+              )}
+              <div className={styles.dayChipRow} role="group" aria-label="Schedule day" ref={dayStripRowRef}>
+                <button
+                  type="button"
+                  className={`${styles.dayChip} ${styles.dayChipAll} ${effectiveDay === 'all' ? styles.dayChipActive : ''}`}
+                  aria-pressed={effectiveDay === 'all'}
+                  onClick={() => setSelectedDay('all')}
+                >
+                  All
+                </button>
+                {stageDates.map(d => {
+                  const parts = dayChipPartsByDate.get(d)!;
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      data-day={d}
+                      className={`${styles.dayChip} ${effectiveDay === d ? styles.dayChipActive : ''}`}
+                      aria-pressed={effectiveDay === d}
+                      onClick={() => setSelectedDay(d)}
+                    >
+                      <span className={styles.dayChipWk}>{parts.wk}</span>
+                      <span className={styles.dayChipDate}>{dayRailMode ? parts.dayNum : parts.md}</span>
+                      {d === today && <span className={styles.dayChipDot} aria-hidden="true" />}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Jump cell — pinned outside the scroll row so it's always reachable. */}
+              {dayRailMode && (
+                <button
+                  type="button"
+                  className={`${styles.dayChip} ${styles.dayJumpBtn}`}
+                  aria-label="Jump to a date"
+                  aria-expanded={dayJumpOpen}
+                  onClick={() => setDayJumpOpen(o => !o)}
+                >
+                  ⋯
+                </button>
+              )}
+
+              {/* Long-event jump list (D8) — plain date list grouped by week:
+                  bottom sheet on phones, dropdown panel on desktop. */}
+              {dayRailMode && dayJumpOpen && (
+                <>
+                  <div className={styles.dayJumpBackdrop} onClick={() => setDayJumpOpen(false)} />
+                  <div className={styles.dayJumpPanel} role="dialog" aria-label="Jump to date">
+                    {dayJumpWeeks.map(week => (
+                      <div key={week.label} className={styles.dayJumpWeek}>
+                        <span className={styles.dayJumpWeekLabel}>{week.label}</span>
+                        {week.days.map(d => {
+                          const parts = dayChipPartsByDate.get(d)!;
+                          return (
+                            <button
+                              key={d}
+                              type="button"
+                              className={`${styles.dayJumpDay} ${effectiveDay === d ? styles.dayJumpDayActive : ''}`}
+                              onClick={() => { setSelectedDay(d); setDayJumpOpen(false); }}
+                            >
+                              <span>{parts.wk} · {parts.md}</span>
+                              {d === today && <span className={styles.todayBadge}>Today</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {/* My Team Games banner — shown when filtering to followed team's games */}
           {isMyTeamFilter && followedTeam && (
@@ -1184,7 +1450,12 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                 </div>
               ))}
             </div>
-          ) : sortedDates.length === 0 && !(viewMode === 'playoff' && bracketLayout === 'bracket') && !(viewMode === 'pool' && pools.length >= 2) && !(viewMode === 'playoff' && hasPoolPlaceholders) ? (
+          ) : sortedDates.length === 0 && !(viewMode === 'playoff' && bracketLayout === 'bracket') ? (
+            /* No list rows to render → the empty/search state. The playoff
+               pool-split branch renders from the same dayFiltered list, so an
+               exclusion for it here would just render a BLANK page (that was a
+               real bug for zero-match searches on the Playoffs stage). Only the
+               bracket diagram renders independently of the list. */
             <PublicTournamentState
               icon={<Calendar size={40} />}
               eyebrow="Schedule"
@@ -1228,69 +1499,27 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                 );
               }
 
-              // ── LIST VIEW — pool play split ───────────────────────────────
-              if (viewMode === 'pool' && pools.length >= 2) {
-                // Attribution for dedup so a cross-pool game renders in exactly one section:
-                // the HOME slot's pool wins (by team or placeholder); the away slot only
-                // claims a game when the home slot belongs to no pool (J6-016).
-                const teamPoolId = new Map(teams.filter(t => t.poolId).map(t => [t.id, t.poolId!] as [string, string]));
-                const allPoolTags = pools.map(p => `Pool ${p.name.replace(/^Pool\s+/i, '').trim()}`);
-                return pools.map(pool => {
-                  const bare = pool.name.replace(/^Pool\s+/i, '').trim();
-                  const tag  = `Pool ${bare}`;
-                  const poolGames = teamFiltered.filter(g => {
-                    const homeInPool = !!g.homePlaceholder?.includes(tag);
-                    const awayInPool = !!g.awayPlaceholder?.includes(tag);
-                    if (homeInPool || awayInPool) {
-                      // Home placeholder's pool wins; away claims it only when the home
-                      // placeholder isn't tied to any pool — so a cross-pool seeded game
-                      // (home "Pool A #1", away "Pool B #2") renders once, under A.
-                      if (homeInPool) return true;
-                      const homeInAnyPool = allPoolTags.some(t2 => g.homePlaceholder?.includes(t2));
-                      return awayInPool && !homeInAnyPool;
-                    }
-                    const homePool = g.homeTeamId ? teamPoolId.get(g.homeTeamId) : undefined;
-                    const awayPool = g.awayTeamId ? teamPoolId.get(g.awayTeamId) : undefined;
-                    if (homePool) return homePool === pool.id;
-                    if (awayPool) return awayPool === pool.id;
-                    return false;
-                  });
-                  if (poolGames.length === 0) return null;
-                  const poolDateGroups: Record<string, Game[]> = {};
-                  poolGames.forEach(g => {
-                    if (!poolDateGroups[g.date]) poolDateGroups[g.date] = [];
-                    poolDateGroups[g.date].push(g);
-                  });
-                  const poolSortedDates = Object.keys(poolDateGroups).sort();
-                  return (
-                    <div key={pool.id} className={styles.poolSection} style={{ marginBottom: '3rem' }}>
-                      <PoolHeader name={formatPoolName(pool.name)} />
-                      {poolSortedDates.map(date => (
-                        <div key={date} id={date === today ? 'schedule-today' : undefined} className={`${styles.dateGroup} ${date === today ? styles.todayGroup : ''}`}>
-                          {renderDateLabel(date, poolDateGroups[date])}
-                          <div className={styles.gamesList}>
-                            {poolDateGroups[date].map(game => renderGameCard(game, '', null))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                });
-              }
+              // Multi-pool Pool Play routes through the same date-first render
+              // as everything else (Round 4 / F1): all pools share one timeline
+              // per day, pool identity rides on each row as the D1 meta tag.
 
               // ── LIST VIEW — playoff split by pool ─────────────────────────
               if (viewMode === 'playoff' && hasPoolPlaceholders) {
                 return (
                   <>
                     {pools.map(pool => {
-                      const poolGames = teamFiltered.filter(g => inferPool(g, teamFiltered) === pool.name);
+                      // Section membership resolves against the FULL stage list —
+                      // a day- or search-filtered list can hide the feed game a
+                      // Winner/Loser placeholder needs for attribution.
+                      const poolGames = dayFiltered.filter(g => inferPool(g, stageGames) === pool.name);
                       if (poolGames.length === 0) return null;
                       const poolDateGroups: Record<string, Game[]> = {};
                       poolGames.forEach(g => {
-                        if (!poolDateGroups[g.date]) poolDateGroups[g.date] = [];
-                        poolDateGroups[g.date].push(g);
+                        const dateKey = g.date || '';
+                        if (!poolDateGroups[dateKey]) poolDateGroups[dateKey] = [];
+                        poolDateGroups[dateKey].push(g);
                       });
-                      const poolSortedDates = Object.keys(poolDateGroups).sort();
+                      const poolSortedDates = Object.keys(poolDateGroups).sort(compareDateKeys);
                       return (
                         <div key={pool.id} style={{ marginBottom: '3rem' }}>
                           <PoolHeader name={`${formatPoolName(pool.name)} Playoffs`} />
@@ -1301,7 +1530,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                                 {poolDateGroups[date].map(game => renderGameCard(
                                   game,
                                   styles.playoffRow,
-                                  <span className="badge badge-primary">{fanRoundLabel(game.bracketCode)}</span>
+                                  <span className="badge badge-primary">{fanGameLabel(game.bracketCode)}</span>
                                 ))}
                               </div>
                             </div>
@@ -1322,7 +1551,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                       game,
                       game.isPlayoff ? styles.playoffRow : '',
                       game.isPlayoff
-                        ? <span className="badge badge-primary">{fanRoundLabel(game.bracketCode)}</span>
+                        ? <span className="badge badge-primary">{fanGameLabel(game.bracketCode)}</span>
                         : null
                     ))}
                   </div>

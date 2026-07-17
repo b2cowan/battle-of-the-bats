@@ -8,7 +8,7 @@ import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import type { Game, PublicTeam, Venue } from '@/lib/types';
 import type { BracketNode } from '@/lib/types/bracket';
 import { resolveGameFieldLabel } from '@/lib/venue-label';
-import { bracketRoundInfo, computeBracketColumns, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
+import { bracketRoundInfo, computeBracketColumns, displayBracketRefs, displayRoundTitle, fanSlotLabel } from '@/lib/playoff-bracket';
 import styles from './LogicSyncBracket.module.css';
 
 // draw-day reveal timing
@@ -79,10 +79,14 @@ function cleanPlaceholder(text: string): string {
 }
 
 function makeNode(game: Game, round: number, position: number, teams: PublicTeam[], venues: Venue[]): BracketNode {
+  // Unresolved Winner/Loser refs read fan-facing, compact form ("Semifinal 1
+  // winner" — identity first so card truncation can't cut the number; dashed
+  // multi-round codes stay codes, their kickers carry the mapping).
   const resolveName = (id: string, placeholder: string | undefined) =>
     isReal(id)
-      ? (teams.find(t => t.id === id)?.name ?? (displayBracketRefs(placeholder) || 'TBD'))
-      : cleanPlaceholder(displayBracketRefs(placeholder ?? 'TBD'));
+      ? (teams.find(t => t.id === id)?.name ??
+          (placeholder ? fanSlotLabel(displayBracketRefs(placeholder), { compact: true }) : 'TBD'))
+      : fanSlotLabel(cleanPlaceholder(displayBracketRefs(placeholder ?? 'TBD')), { compact: true });
 
   const homeName = resolveName(game.homeTeamId, game.homePlaceholder);
   const awayName = resolveName(game.awayTeamId, game.awayPlaceholder);

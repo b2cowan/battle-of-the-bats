@@ -470,6 +470,22 @@ softball/baseball audience may not read; the W/L pips themselves are unchanged. 
 ships with the Round 3 build (the card lives on the team-detail page, R3-1's surface). Artifact
 frames already depict the new label. Log with the other Round 3 decisions when they're accepted.
 
+### Round 4 — Day-First Schedule (F1/G2, the last build) — BUILT + VERIFIED 2026-07-17 (uncommitted)
+
+Built in a dedicated chat exactly to the accepted D1–D8 spec (see
+docs/projects/active/DAY_FIRST_SCHEDULE_TIMELINE_PLAN.md for the full build + verification
+record): day selector + smart landing + single-day view with the "All" overview, per-row
+pool tag with per-side cross-pool detection, multi-pool Pool Play routed through the shared
+date-first render, and the **§3b viewport fix** — root cause was `.mobileStageRow`'s fixed
+180px flex-basis letting the C3 control row overflow the device edge on the playoff stage,
+which latched a 448px mobile layout viewport (~13% zoom-out); basis is now `auto` so the
+row wraps honestly. Harness re-run: every schedule capture reports vw/vh = device viewport
+(390/844, 360/800), overflowX false, all day-selector targets ≥44px. Also rode along: the
+schedule list's bottom clearance now prefers the dock's live `--dock-clearance` (closes the
+Round 3 review's deferred pill-state padding note). Remaining: owner phone pass + commit OK;
+on commit this plan + PM brief pair and the day-first pair move to docs/projects/archive/
+and TODO.md flips complete.
+
 ## 5. Execution split (owner-approved 2026-07-14)
 
 Two parallel tracks replace a strict phase sequence:

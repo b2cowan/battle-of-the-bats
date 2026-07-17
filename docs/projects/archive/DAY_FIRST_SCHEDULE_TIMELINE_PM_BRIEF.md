@@ -1,5 +1,9 @@
 # PM Brief — Day-First Schedule Timeline (Tournament Mobile Polish, Round 4) — rev 2
 
+**Status (2026-07-17): BUILT + verified on dev, uncommitted — awaiting your phone pass and
+commit OK.** Every success criterion below was met, including the ride-along zoom-out fix
+(the schedule now renders at true size on phones, confirmed by the measurement harness).
+
 **One-liner:** The schedule opens on the day that matters — today during the event, the
 first day before it, the last day after — showing just that day's games across all pools in
 time order, with every other day one tap away.

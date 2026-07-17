@@ -1,7 +1,15 @@
 # Day-First Schedule Timeline — Tournament Mobile Polish, Round 4
 
-**Status:** ✅ FULLY DECIDED (rev 2.2) — all 8 owner decisions accepted 2026-07-14;
-**builds AFTER Rounds 1–3** (owner sequencing, 2026-07-14). No backend, no migrations.
+**Status:** ✅ BUILT + VERIFIED on dev 2026-07-17 (uncommitted; awaiting owner phone pass +
+commit OK — on commit this plan + PM brief archive per the docs convention). All phases
+P1–P4 + the §3b ride-along landed in one pass; §6 verification complete — every schedule
+capture reports vw/vh equal to the device viewport (the §3b acceptance), the landing-rule
+matrix passes computed + E2E, day chips clear 44px, each date renders once in "All".
+§3b root cause: `.mobileStageRow`'s fixed 180px flex-basis let the stage row share the C3
+control row while its real playoff-stage content (~300px) overflowed the device edge —
+mobile Chrome latched a 448px layout viewport; basis is now `auto` so the row wraps.
+*(Previously: FULLY DECIDED rev 2.2 — all 8 owner decisions accepted 2026-07-14;
+built after Rounds 1–3 per owner sequencing.)* No backend, no migrations.
 **Rev 2 (2026-07-14):** owner feedback from the two test tournaments ("on game day there was a
 lot of scrolling to find the games that mattered — they only cared about that day's games")
 promotes a **day selector + single-day view** to the core interaction. The rev-1 day-first

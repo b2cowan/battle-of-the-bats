@@ -519,6 +519,41 @@ export function fanRoundLabel(code: string | null | undefined): string {
 }
 
 /**
+ * Numbered fan label for ONE game — bracketGameLabel plus the fan-facing
+ * Final → Championship rename. "SF1" → "Semifinal 1", so a "Winner of
+ * Semifinal 1" reference has a findable target on the same screen.
+ */
+export function fanGameLabel(code: string | null | undefined): string {
+  if (!code) return bracketRoundLabel(code);
+  const label = bracketGameLabel(code);
+  return label === 'Final' ? 'Championship' : label;
+}
+
+/**
+ * Fan-facing text for a raw bracket slot placeholder: "Winner SF1" →
+ * "Semifinal 1 winner". Anything not matching the strict Winner/Loser-code
+ * shape (custom organizer text, "Pool A #1") passes through untouched.
+ *
+ * ONE wording everywhere (owner, 2026-07-17): the game identity LEADS
+ * ("Semifinal 1 winner") so tail truncation on narrow bracket cards can never
+ * cut the number into ambiguity, and list rows read identically. Dashed
+ * multi-round families (WB2-1 → "Winners Bracket, Game 1") are references,
+ * not names: `compact` surfaces (bracket cards) keep the raw code — their
+ * card kickers carry the mapping and the long label wouldn't fit — while
+ * roomy surfaces read "Winner of Winners Bracket, Game 1".
+ */
+export function fanSlotLabel(placeholder: string, opts?: { compact?: boolean }): string {
+  const m = placeholder.trim().match(/^(winner|loser) ([\w-]+)$/i);
+  if (!m) return placeholder;
+  const label = fanGameLabel(m[2]);
+  const kind = m[1].toLowerCase();
+  if (label.includes(', Game ')) {
+    return opts?.compact ? placeholder : `${kind[0].toUpperCase()}${kind.slice(1)} of ${label}`;
+  }
+  return `${label} ${kind}`;
+}
+
+/**
  * Unambiguous fan label for ONE bracket game. bracketRoundLabel deliberately
  * drops the game number (QF2 → "Quarterfinal"), which is right for round
  * headers but ambiguous in feeder references — "Winner of Semifinal" doesn't
@@ -861,6 +896,11 @@ export interface PoolInferableGame {
   awayPlaceholder?: string;
 }
 
+/** The `Pool X` fragment a pool's name contributes to bracket placeholders. */
+function poolPlaceholderTag(poolName: string): string {
+  return `Pool ${poolName.replace(/^Pool\s+/i, '').trim()}`;
+}
+
 /**
  * Attribute a playoff game to the pool it descends from, by walking its
  * `Pool X` / `Winner <code>` / `Loser <code>` placeholders (and, as a last
@@ -875,8 +915,7 @@ export function inferGamePool<G extends PoolInferableGame>(
   pools: { name: string }[],
 ): string | null {
   for (const pool of pools) {
-    const bare = pool.name.replace(/^Pool\s+/i, '').trim();
-    const tag = `Pool ${bare}`;
+    const tag = poolPlaceholderTag(pool.name);
     if (game.homePlaceholder?.includes(tag) || game.awayPlaceholder?.includes(tag)) return pool.name;
   }
   const ph = game.homePlaceholder || game.awayPlaceholder || '';
@@ -892,12 +931,86 @@ export function inferGamePool<G extends PoolInferableGame>(
     for (const sibling of allGames) {
       if (sibling.id === game.id || sibling.bracketId !== game.bracketId || !sibling.isPlayoff) continue;
       for (const pool of pools) {
-        const bare = pool.name.replace(/^Pool\s+/i, '').trim();
-        if (sibling.homePlaceholder?.includes(`Pool ${bare}`) || sibling.awayPlaceholder?.includes(`Pool ${bare}`)) return pool.name;
+        const tag = poolPlaceholderTag(pool.name);
+        if (sibling.homePlaceholder?.includes(tag) || sibling.awayPlaceholder?.includes(tag)) return pool.name;
       }
     }
   }
   return null;
+}
+
+/** PoolInferableGame plus the resolved team slots per-side attribution reads. */
+export interface SidePoolInferableGame extends PoolInferableGame {
+  homeTeamId?: string | null;
+  awayTeamId?: string | null;
+}
+
+/** Internal per-side result: a pool name, "sides cross pools" (MIXED), or no evidence. */
+const MIXED_POOL: unique symbol = Symbol('mixed-pool');
+type SidePoolResult = string | typeof MIXED_POOL | null;
+
+function mergeSidePools(home: SidePoolResult, away: SidePoolResult): SidePoolResult {
+  if (home === MIXED_POOL || away === MIXED_POOL) return MIXED_POOL;
+  if (home && away) return home === away ? home : MIXED_POOL;
+  return home ?? away;
+}
+
+/**
+ * Per-side pool attribution with cross-pool detection — the display variant of
+ * `inferGamePool`. Each slot resolves independently (seeded team's pool via
+ * `teamPoolNameById`, then the placeholder's `Pool X` tag, then up the
+ * Winner/Loser feed chain), and the sides merge: same pool → that pool; sides
+ * in different pools — directly, or via feeds ("winner could be either") →
+ * null; no evidence at all → null. Unlike `inferGamePool`, this never files a
+ * cross-pool matchup (or a final fed by cross-pool semis) under one side's
+ * pool — use it where the answer is DISPLAYED per game (schedule row tags);
+ * `inferGamePool` remains the section-bucketing attribution, where every game
+ * must land in exactly one section.
+ */
+export function inferGamePoolSides<G extends SidePoolInferableGame>(
+  game: G,
+  allGames: G[],
+  pools: { name: string }[],
+  teamPoolNameById: Map<string, string>,
+): string | null {
+  // Per-PATH visited set: cycle-proof against malformed/self-referencing feed
+  // chains at any depth (not just the root), while sibling branches may still
+  // legitimately traverse the same source game. A blocked revisit yields null
+  // (evidence weakens — the tag hides), never a wrong pool.
+  function side(
+    teamId: string | null | undefined,
+    placeholder: string | null | undefined,
+    bracketId: string | undefined,
+    visited: ReadonlySet<string>,
+  ): SidePoolResult {
+    if (teamId) {
+      const byTeam = teamPoolNameById.get(teamId);
+      if (byTeam) return byTeam;
+    }
+    if (!placeholder) return null;
+    for (const p of pools) {
+      if (placeholder.includes(poolPlaceholderTag(p.name))) return p.name;
+    }
+    const feedCode = placeholder.match(/(?:Winner|Loser) ([\w-]+)/)?.[1];
+    if (!feedCode) return null;
+    const src = allGames.find(g =>
+      g.bracketCode === feedCode && g.isPlayoff && !visited.has(g.id) &&
+      (bracketId ? g.bracketId === bracketId : true),
+    );
+    if (!src) return null;
+    const nextVisited = new Set(visited);
+    nextVisited.add(src.id);
+    return mergeSidePools(
+      side(src.homeTeamId, src.homePlaceholder, src.bracketId, nextVisited),
+      side(src.awayTeamId, src.awayPlaceholder, src.bracketId, nextVisited),
+    );
+  }
+  const rootVisited = new Set([game.id]);
+  const merged = mergeSidePools(
+    side(game.homeTeamId, game.homePlaceholder, game.bracketId, rootVisited),
+    side(game.awayTeamId, game.awayPlaceholder, game.bracketId, rootVisited),
+  );
+  return merged === MIXED_POOL ? null : merged;
 }
 
 export interface BracketTimingGame {
