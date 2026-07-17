@@ -22,9 +22,12 @@ type Props = {
   className?: string;
   /** Icon-only (no visible label) — for tight spots like the mobile header. */
   compact?: boolean;
+  /** Class for the label span so callers can hide it responsively (icon-only
+   *  mobile) without reaching into this component's markup blindly. */
+  labelClassName?: string;
 };
 
-export default function SharePageButton({ url, title, text, label = 'Share', className, compact = false }: Props) {
+export default function SharePageButton({ url, title, text, label = 'Share', className, compact = false, labelClassName }: Props) {
   const [state, setState] = useState<'idle' | 'busy' | 'shared' | 'copied'>('idle');
 
   async function handle() {
@@ -50,7 +53,7 @@ export default function SharePageButton({ url, title, text, label = 'Share', cla
       aria-label={`Share ${title}`}
     >
       {state === 'copied' || state === 'shared' ? <Check size={16} /> : <Share2 size={16} />}
-      {!compact && txt}
+      {!compact && <span className={labelClassName}>{txt}</span>}
     </button>
   );
 }

@@ -7,6 +7,8 @@ import type { Game, PublicTeam, Division } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import SharePageButton from '@/components/public/SharePageButton';
+import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
+import { useOrgNav } from '@/components/OrgNavContext';
 import { useFollowedTeam } from '@/lib/follow';
 import { isGameLive, gameStartMs, isGameUpcoming } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
@@ -73,6 +75,9 @@ export default function TeamProfilePage({
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
   const { followedTeamId, follow, unfollow } = useFollowedTeam(orgSlug, tournamentSlug);
+  // Plan gate for the score-alerts bell (F4) — same source + honesty gate as the
+  // More sheet's bell: fan_score_alerts plan feature, hidden once the event ends.
+  const { fanAlertsEnabled, tournamentFinished } = useOrgNav();
 
   useEffect(() => {
     let cancelled = false;
@@ -165,18 +170,38 @@ export default function TeamProfilePage({
     });
   }
 
-  // Form: pool play + playoffs, sorted chronologically
-  const completedGames = games.filter(
-    g => (g.status === 'completed' || g.status === 'submitted') && !isGameLive(g, gameDurationMinutes),
-  );
-  const formBubbles = completedGames.slice(-5).map(g => {
+  // One liveness pass — isGameLive does timezone math (two Intl formatter
+  // constructions per call) and this page re-renders on a 30s poll, so each
+  // game's status is computed exactly once per render.
+  type TeamGame = TeamProfileData['games'][number];
+  const liveById = new Map<string, boolean>(games.map(g => [g.id, isGameLive(g, gameDurationMinutes)]));
+  const isLive = (g: TeamGame) => liveById.get(g.id) === true;
+  // Team-perspective score — one definition serves the form pips, the
+  // Recent-results row and the game list.
+  const teamPov = (g: TeamGame) => {
     const isHome = g.homeTeamId === team.id;
-    const myScore = isHome ? (g.homeScore ?? 0) : (g.awayScore ?? 0);
-    const oppScore = isHome ? (g.awayScore ?? 0) : (g.homeScore ?? 0);
-    if (myScore > oppScore) return 'W';
-    if (myScore < oppScore) return 'L';
-    return 'T';
-  });
+    return { isHome, my: isHome ? g.homeScore : g.awayScore, opp: isHome ? g.awayScore : g.homeScore };
+  };
+
+  // Form: pool play + playoffs, sorted chronologically. Forfeits are decided
+  // games everywhere else in the app (standings, tie-breakers, champions) —
+  // they count as played here too, or "N played" contradicts the RECORD stat.
+  const completedGames = games.filter(
+    g => (g.status === 'completed' || g.status === 'submitted' || g.status === 'forfeit') && !isLive(g),
+  );
+  // Pips only for games with an actual score — a scoreless forfeit must not
+  // render as a fake 0-0 tie.
+  const formBubbles = completedGames
+    .filter(g => g.homeScore != null && g.awayScore != null)
+    .slice(-5)
+    .map(g => {
+      const { my, opp } = teamPov(g);
+      const myScore = my ?? 0;
+      const oppScore = opp ?? 0;
+      if (myScore > oppScore) return 'W';
+      if (myScore < oppScore) return 'L';
+      return 'T';
+    });
 
   // Next game
   // TODO: this live/next selection + gameDay() duplicate lib/game-status.ts's
@@ -192,7 +217,7 @@ export default function TeamProfilePage({
     if (date === tomorrow) return 'Tomorrow';
     return new Date(date + 'T12:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
   }
-  const liveGame = games.find(g => isGameLive(g, gameDurationMinutes));
+  const liveGame = games.find(isLive);
   const nextGame = !liveGame
     ? games.find(g => g.status === 'scheduled' && (gameStartMs(g) == null ? g.date >= today : isGameUpcoming(g)))
     : null;
@@ -205,6 +230,18 @@ export default function TeamProfilePage({
     : null;
 
   const runDiffStr = standings.rd >= 0 ? `+${standings.rd}` : `${standings.rd}`;
+
+  // R3-3 ordering: live first (with its running score on the row), then upcoming
+  // soonest-first, then finished most-recent-first — the broadcast read of a
+  // team's weekend instead of a flat oldest-first list. Sort keys precomputed
+  // once per game, not per comparison.
+  const chron = (a: TeamGame, b: TeamGame) =>
+    a.date.localeCompare(b.date) || (a.time ?? '').localeCompare(b.time ?? '');
+  const displayGames = games
+    .map(g => ({ g, bucket: isLive(g) ? 0 : g.status === 'scheduled' ? 1 : 2 }))
+    .sort((a, b) => (a.bucket - b.bucket) || (a.bucket === 2 ? chron(b.g, a.g) : chron(a.g, b.g)))
+    .map(x => x.g);
+  const liveCount = [...liveById.values()].filter(Boolean).length;
 
   return (
     <div className="page-content">
@@ -247,6 +284,9 @@ export default function TeamProfilePage({
                   </span>
                 )}
               </div>
+              {/* One ≥44px action row (R3-1): Follow stays labeled; calendar/alerts/
+                  share go icon-only on phones (labels stay on desktop, per the
+                  icon+label-desktop / icon-only-mobile convention). */}
               <div className={styles.heroActions}>
                 <button
                   type="button"
@@ -260,20 +300,31 @@ export default function TeamProfilePage({
                 {games.length > 0 && (
                   <button
                     type="button"
-                    className={styles.followHeroBtn}
+                    className={`${styles.followHeroBtn} ${styles.iconableBtn}`}
                     onClick={handleAddToCalendar}
                     aria-label="Add schedule to calendar"
+                    title="Add schedule to calendar"
                   >
                     <CalendarPlus size={14} />
-                    Calendar
+                    <span className={styles.btnLabel}>Calendar</span>
                   </button>
+                )}
+                {fanAlertsEnabled && !tournamentFinished && (
+                  <FollowAlertsToggle
+                    orgSlug={orgSlug}
+                    tournamentSlug={tournamentSlug}
+                    team={{ id: team.id, name: cleanedName }}
+                    className={styles.alertsBtn}
+                    labelClassName={styles.btnLabel}
+                  />
                 )}
                 <SharePageButton
                   url={`/${orgSlug}/${tournamentSlug}/teams/${id}?follow=${id}`}
                   title={cleanedName}
                   text={`Follow ${cleanedName} on FieldLogicHQ`}
                   label="Share team"
-                  className={styles.followHeroBtn}
+                  className={`${styles.followHeroBtn} ${styles.iconableBtn}`}
+                  labelClassName={styles.btnLabel}
                 />
               </div>
             </div>
@@ -318,7 +369,8 @@ export default function TeamProfilePage({
             <div className={styles.formCard}>
               {formBubbles.length > 0 && (
                 <div className={styles.formRow}>
-                  <span className={styles.formLabel}>FORM</span>
+                  {/* "Form" is soccer jargon — owner renamed it 2026-07-16 (Round 3). */}
+                  <span className={styles.formLabel}>Recent results</span>
                   <div className={styles.formBubbles}>
                     {formBubbles.map((result, i) => (
                       <span
@@ -348,7 +400,12 @@ export default function TeamProfilePage({
                   </div>
                   <div className={styles.nextGameDetails}>
                     <span className={styles.nextGameOpponent}>vs {focusOpponent}</span>
-                    {!liveGame && (
+                    {liveGame ? (
+                      /* Running score, team-first — the page's own live teller (G1). */
+                      <span className={styles.nextGameScore}>
+                        {teamPov(liveGame).my ?? 0}–{teamPov(liveGame).opp ?? 0}
+                      </span>
+                    ) : (
                       <span className={styles.nextGameTime}>
                         {gameDay(focusGame.date)}{focusGame.time ? ` · ${formatTime(focusGame.time)}` : ''}
                       </span>
@@ -362,17 +419,20 @@ export default function TeamProfilePage({
           {/* Schedule & Results */}
           {games.length > 0 && (
             <div className={`card ${styles.scheduleCard}`}>
-              <h3 className={styles.sectionTitle}>Schedule &amp; Results</h3>
+              <h3 className={styles.sectionTitle}>
+                <span>Schedule &amp; Results</span>
+                <span className={styles.sectionCount}>
+                  {completedGames.length} played{liveCount > 0 ? ` · ${liveCount} live` : ''}
+                </span>
+              </h3>
               <div className={styles.gameList}>
-                {games.map(g => {
-                  const isHome = g.homeTeamId === team.id;
+                {displayGames.map(g => {
+                  const { isHome, my: myScore, opp: oppScore } = teamPov(g);
                   const opponent = isHome ? cleanName(g.awayTeamName) : cleanName(g.homeTeamName);
                   const hasResult = g.homeScore != null && g.awayScore != null;
-                  const myScore = isHome ? g.homeScore : g.awayScore;
-                  const oppScore = isHome ? g.awayScore : g.homeScore;
                   const won = hasResult && myScore! > oppScore!;
                   const lost = hasResult && myScore! < oppScore!;
-                  const live = isGameLive(g, gameDurationMinutes);
+                  const live = isLive(g);
 
                   return (
                     <Link
@@ -404,9 +464,14 @@ export default function TeamProfilePage({
 
                       <div className={styles.gameResult}>
                         {live && (
-                          <span className={styles.liveBadge}>
-                            <span className={styles.liveDot} /> LIVE
-                          </span>
+                          <div className={styles.resultBadge}>
+                            <span className={styles.liveBadge}>
+                              <span className={styles.liveDot} /> LIVE
+                            </span>
+                            {/* Running score, team-first — matches the dock/ticker.
+                                A live game before its first run shows 0 – 0. */}
+                            <strong>{myScore ?? 0} – {oppScore ?? 0}</strong>
+                          </div>
                         )}
                         {!live && hasResult && (
                           <div className={styles.resultBadge}>

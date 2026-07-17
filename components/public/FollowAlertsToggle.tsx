@@ -35,9 +35,16 @@ interface Props {
    * anywhere else) keeps the inline `btn` form.
    */
   variant?: 'default' | 'pill';
+  /** Extra classes appended to the default-variant button — caller theming
+   *  (e.g. the team page collapses it to a 44px icon circle on phones). */
+  className?: string;
+  /** Class for the label span so callers can hide it responsively; the label
+   *  always also rides in aria-label/title, so an icon-collapsed button keeps
+   *  its accessible name. */
+  labelClassName?: string;
 }
 
-export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, variant = 'default' }: Props) {
+export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, variant = 'default', className, labelClassName }: Props) {
   const pill = variant === 'pill';
   const iconSize = pill ? 12 : 14;
   const pathname = usePathname();
@@ -49,7 +56,9 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, vari
   const btnClass = (color: string) =>
     pill
       ? [styles.pill, color === 'btn-lime' ? styles.pillOn : ''].filter(Boolean).join(' ')
-      : ['btn', color, 'btn-sm'].filter(Boolean).join(' ');
+      : ['btn', color, 'btn-sm', className].filter(Boolean).join(' ');
+  const labelProps = (label: string) => ({ 'aria-label': label, title: label });
+  const labelSpan = (label: string) => <span className={labelClassName}>{label}</span>;
   const [supported, setSupported] = useState(true);
   // iOS push only works once the app is on the home screen — surface that instead
   // of rendering nothing (J6-048).
@@ -83,7 +92,19 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, vari
       if (cancelled) return;
       setDeviceReady(!!endpoint && typeof Notification !== 'undefined' && Notification.permission === 'granted');
     });
-    return () => { cancelled = true; };
+    // deviceReady is per-instance state seeded at mount — when a SIBLING mounted
+    // instance registers this device (e.g. the page-row bell while the dock's
+    // panel bell is open), it broadcasts so every instance flips to "on"
+    // together instead of drifting until reload. (The account pref already
+    // syncs via useFanAlertPrefs; this covers the device half of the gate.)
+    const onDeviceChange = (e: Event) => {
+      setDeviceReady((e as CustomEvent<boolean>).detail === true);
+    };
+    window.addEventListener('fl-push-device-change', onDeviceChange);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('fl-push-device-change', onDeviceChange);
+    };
   }, []);
 
   // Best-effort: make sure THIS team's follow is on the account (a device-only
@@ -103,6 +124,7 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, vari
     const result = await saveFanAlertPref('gameAlerts', true, { strictDevice: true });
     if (result.ok) {
       setDeviceReady(true);
+      window.dispatchEvent(new CustomEvent<boolean>('fl-push-device-change', { detail: true }));
       mirrorFollowToAccount();
     } else {
       setMsg(result.error ?? 'Could not update alerts.');
@@ -125,8 +147,8 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, vari
   if (iosInstall) {
     return (
       <>
-        <button type="button" className={btnClass('btn-ghost')} onClick={() => setIosHint(v => !v)}>
-          <BellPlus size={iconSize} /> {offLabel}
+        <button type="button" className={btnClass('btn-ghost')} onClick={() => setIosHint(v => !v)} {...labelProps(offLabel)}>
+          <BellPlus size={iconSize} /> {labelSpan(offLabel)}
         </button>
         {iosHint && (
           <span style={{ display: 'block', width: '100%', fontSize: '0.7rem', color: 'var(--white-55)' }}>
@@ -141,8 +163,8 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, vari
 
   if (prefs.state === 'checking' || pending) {
     return (
-      <button type="button" className={btnClass('btn-ghost')} disabled>
-        <Loader2 size={iconSize} /> {pending ? 'Working…' : offLabel}
+      <button type="button" className={btnClass('btn-ghost')} disabled {...labelProps(pending ? 'Working…' : offLabel)}>
+        <Loader2 size={iconSize} /> {labelSpan(pending ? 'Working…' : offLabel)}
       </button>
     );
   }
@@ -153,8 +175,9 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, vari
         type="button"
         className={btnClass('btn-ghost')}
         onClick={() => router.push(`/auth/login?next=${encodeURIComponent(pathname || '/')}`)}
+        {...labelProps('Sign in for score alerts')}
       >
-        <Bell size={iconSize} /> {pill ? 'Score alerts' : 'Sign in for score alerts'}
+        <Bell size={iconSize} /> {labelSpan(pill ? 'Score alerts' : 'Sign in for score alerts')}
       </button>
     );
   }
@@ -163,8 +186,8 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, vari
   if (prefs.prefs.gameAlerts && deviceReady) {
     return (
       <>
-        <button type="button" className={btnClass('btn-lime')} onClick={turnOff}>
-          <BellRing size={iconSize} /> Alerts on
+        <button type="button" className={btnClass('btn-lime')} onClick={turnOff} {...labelProps('Score alerts on — turn off')}>
+          <BellRing size={iconSize} /> {labelSpan('Alerts on')}
         </button>
         {/* A failed turn-OFF lands back here — surface its error instead of a silent no-op. */}
         {msg && (
@@ -176,8 +199,8 @@ export default function FollowAlertsToggle({ orgSlug, tournamentSlug, team, vari
 
   return (
     <>
-      <button type="button" className={btnClass('btn-ghost')} onClick={turnOn}>
-        {msg ? <BellOff size={iconSize} /> : <Bell size={iconSize} />} {offLabel}
+      <button type="button" className={btnClass('btn-ghost')} onClick={turnOn} {...labelProps(offLabel)}>
+        {msg ? <BellOff size={iconSize} /> : <Bell size={iconSize} />} {labelSpan(offLabel)}
       </button>
       {msg && (
         <span style={{ fontSize: '0.7rem', color: 'var(--white-55)', flexBasis: '100%' }}>{msg}</span>

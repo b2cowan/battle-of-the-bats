@@ -5,7 +5,7 @@ import { Users, Search, ChevronDown, Star } from 'lucide-react';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
 import { isPublicPageEnabled } from '@/lib/public-pages';
 import { Game, PublicTeam, Division, Tournament } from '@/lib/types';
-import { formatTime } from '@/lib/utils';
+import { formatTime, splitTeamQualifier } from '@/lib/utils';
 import YearSelector from '@/components/YearSelector';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import styles from '@/app/[orgSlug]/teams/teams.module.css';
@@ -27,9 +27,9 @@ interface Props {
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
-function cleanTeamName(name: string) {
-  return name.replace(/\s*\(.*?\)\s*/g, '').trim();
-}
+// One name-cleaning convention (D3): the shared qualifier split, same helper
+// as standings/seeding — not a second local regex.
+const teamBaseName = (name: string) => splitTeamQualifier(name).base;
 
 function ordinal(n: number): string {
   if (n === 1) return '1st';
@@ -99,7 +99,9 @@ function TeamCard({
   onFollow: (team: PublicTeam) => void;
   onUnfollow: () => void;
 }) {
-  const name = cleanTeamName(team.name);
+  // Shared qualifier split (D3 convention, same helper as standings/seeding) —
+  // the trailing "(…)" leaves the name and becomes the quiet second line below.
+  const { base: name, qualifier } = splitTeamQualifier(team.name);
   const stats = standings.find(s => s.teamId === team.id);
   const record = stats ? `${stats.w}-${stats.l}-${stats.t}` : '0-0-0';
 
@@ -193,7 +195,13 @@ function TeamCard({
               </span>
             )}
           </div>
-          {team.coach && <span className={styles.cardCoach}>Coach: {team.coach}</span>}
+          {/* Coach field wins (it's explicit + org-gated); the name qualifier is
+              the fallback and renders raw — it isn't always a coach name. */}
+          {team.coach ? (
+            <span className={styles.cardCoach}>Coach: {team.coach}</span>
+          ) : qualifier ? (
+            <span className={styles.cardCoach}>{qualifier}</span>
+          ) : null}
         </div>
       </div>
 
@@ -205,12 +213,12 @@ function TeamCard({
                 <span className={styles.liveDot} />{' '}
                 LIVE
               </span>
-              <span className={styles.liveOpp}>vs {liveOpponent ? cleanTeamName(liveOpponent) : 'TBD'}</span>
+              <span className={styles.liveOpp}>vs {liveOpponent ? teamBaseName(liveOpponent) : 'TBD'}</span>
             </span>
           )}
           {!liveGame && nextGame && (
             <span className={styles.nextGame}>
-              {gameDay(nextGame.date)}{nextGame.time ? ` · ${formatTime(nextGame.time)}` : ''} vs {nextOpponent ? cleanTeamName(nextOpponent) : 'TBD'}
+              {gameDay(nextGame.date)}{nextGame.time ? ` · ${formatTime(nextGame.time)}` : ''} vs {nextOpponent ? teamBaseName(nextOpponent) : 'TBD'}
             </span>
           )}
           {poolPlayDone && (
@@ -337,7 +345,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
     });
     const base = groupStarted
       ? [...arr].sort((a, b) => (standingRank.get(a.id) ?? 999) - (standingRank.get(b.id) ?? 999))
-      : [...arr].sort((a, b) => cleanTeamName(a.name).localeCompare(cleanTeamName(b.name)));
+      : [...arr].sort((a, b) => teamBaseName(a.name).localeCompare(teamBaseName(b.name)));
     const idx = followedTeamId ? base.findIndex(t => t.id === followedTeamId) : -1;
     if (idx > 0) base.unshift(base.splice(idx, 1)[0]);
     return base;
@@ -498,6 +506,9 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
                   {pg.poolName && (
                     <h2 className={styles.poolHeading}>
                       {pg.poolName.replace(/^Pool\s+/i, '').trim()} Pool
+                      <span className={styles.poolCount}>
+                        {pg.teams.length} {pg.teams.length === 1 ? 'team' : 'teams'}
+                      </span>
                     </h2>
                   )}
                   <div className={styles.teamGrid}>

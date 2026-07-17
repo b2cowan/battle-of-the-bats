@@ -397,14 +397,44 @@ sit below the schedule screenshots' crop) — relay to the Round 1 review chat /
 work. Owner accepted all four 2026-07-16; the decision cards on the artifact are stamped
 accepted.*
 
-**Post-acceptance status (2026-07-16):** NOT built — the mockup chat's charter writes no code.
-**Build sequencing:** Round 3's build queues behind the Round 2 commit (Round 2 is built but
-uncommitted in this shared working copy, awaiting owner commit OK + phone pass) — and R3-2's
-coach-qualifier line **consumes `splitTeamQualifier`, which is part of Round 2's uncommitted
-diff in `lib/utils.ts`**, so Round 3 must not start until Round 2 lands. Owner triggers the
-build in the review/build chat. **⚠ Design-log debt:** the review chat owes `/design` decisions-log
-entries for R2-1/2/3 (still outstanding) and now also G1 + R3-1/2/3 + the "Recent results"
-rename — log them together when the build starts.
+**Post-acceptance status (2026-07-16, updated same day): BUILT on dev (uncommitted, no
+migrations)** — after the Round 2 commit (`94ccc8a1`) unblocked the shared `splitTeamQualifier`
+dependency, the owner directed the build in the Round 3 chat. Shipped as accepted: **G1** dock
+pill (right-anchored ★ + LIVE + score, ≥44px, ticker-min idiom; tap restores; wrap
+`pointer-events:none`; full bar untouched on all other routes); **R3-1** one-row team-page
+header (Follow labeled + icon-only Calendar/Share ≤640px + the score-alerts bell —
+`FollowAlertsToggle` gained `variant="icon"`, lime-fill + ink ON state per pillOn/E3, gated by
+OrgNav's `fanAlertsEnabled && !tournamentFinished`; desktop mounts the labeled variant) + the
+Recent-results live row now carries the running score; **R3-2** Teams tab data face
+(tabular-nums, G4 pool kickers + counts, mono meta/status lines, coach quiet line via the
+shared helper — `team.coach` wins, raw qualifier fallback; D11 nav labels → `--font-data`);
+**R3-3** team rows re-skinned (mono ctx line, tabular scores, soft W/L/T chips both
+breakpoints incl. the Recent-results pips, live-first ordering, ~112→~82px pitch, "N played ·
+N live" kicker); **"FORM" → "Recent results"**. Files: `MyTeamDock.tsx/.module.css`,
+`teams/[id]/page.tsx` + `team-profile.module.css`, `TeamsContent.tsx` + `teams.module.css`,
+`BottomNav.module.css`, `FollowAlertsToggle.tsx/.module.css`, `SharePageButton.tsx` (label
+span for responsive hiding). Verified: typecheck + verify:changed green; Playwright
+computed-style probes at 390/360 + light org + followed/anonymous (pill on schedule+team
+detail, full bar on home; mono faces + tabular-nums computed; zero overflow; action row = one
+44px row). Dev server needed the stop → `.next` purge → restart protocol mid-verify (stale
+jest-worker state predating the build). **✔ Design-log debt CLEARED 2026-07-16** — package
+entries for R2-1/2/3 and G1 + R3-1/2/3 + the rename are in `memory/design_decisions.md`.
+**/simplify DONE 2026-07-17** (4 agents; 7 fixes: single-mount alerts bell w/ `className`/
+`labelClassName` passthrough replacing the icon variant + double mount, one-pass `liveById`
+liveness + precomputed sort keys, shared `teamPov` score helper, shared dock `scoreOrNext`
+cluster + frost recipe, explicit href route-match, named `.btnLabel` spans replacing blind
+descendant selectors, merged `.formW/.resW` chip recipes; 1 skip: cross-file kicker sharing —
+local repetition is the documented chrome-label altitude). **/review DONE 2026-07-17**
+(standard tier, 3 lenses — correctness/regression/state; 3 confirmed FIXED: forfeit games now
+count in "N played" + pips gated to scored games; dock restore keyed to pathname so
+minimize→minimize navigation can't flash the full bar; `fl-push-device-change` broadcast syncs
+`deviceReady` across simultaneously-mounted alert toggles (pre-existing gap widened by the new
+team-page mount); 2 refuted at the rendering: 320px nav labels don't clip, legacy `/teams/[id]`
+is unreachable (proxy rewrites into org scope → 404) so the shared-stylesheet bleed is moot;
+2 documented no-action: pill signed-out aria "Sign in for score alerts" over the shortened
+visible label is intentional + WCAG label-in-name compliant, and the static bottom-clearance
+budgets on schedule/team pages are ~10px oversized while the pill shows — cosmetic, deferred
+to Round 4's schedule rebuild). Gate re-run green. Remaining: owner phone pass + commit OK.
 
 1. **G1 — dock overlap policy (deferred from Round 1; the headline).** Both options mocked on
    the followed team page (dock's LIVE 5–3 sits directly over the form card's identical live

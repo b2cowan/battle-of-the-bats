@@ -84,9 +84,12 @@
   }
 
   .label {
+    /* Data face (D11) — every other chrome label (header meta, ticker, dock)
+       is mono; the nav labels join the same system. */
+    font-family: var(--font-data);
     font-size: 0.62rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     line-height: 1;
     white-space: nowrap;

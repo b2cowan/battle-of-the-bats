@@ -13,6 +13,20 @@
   }
 }
 
+/* Frosted primary-bordered surface — one recipe for the full bar AND the
+   minimized G1 pill. */
+.dockBar,
+.dockPill {
+  border: 1px solid rgba(var(--primary-rgb), 0.4);
+  background: var(--nav-mobile-bg);
+  -webkit-backdrop-filter: blur(var(--blur-bar));
+  backdrop-filter: blur(var(--blur-bar));
+  box-shadow: var(--shadow), var(--highlight-top);
+  color: var(--white);
+  cursor: pointer;
+  animation: dockIn 0.32s var(--ease-spring) both;
+}
+
 .dockBar {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) auto;
@@ -20,23 +34,40 @@
   gap: 0.6rem;
   width: 100%;
   padding: 0.5rem 0.7rem;
-  border: 1px solid rgba(var(--primary-rgb), 0.4);
   border-radius: var(--radius);
-  background: var(--nav-mobile-bg);
-  -webkit-backdrop-filter: blur(var(--blur-bar));
-  backdrop-filter: blur(var(--blur-bar));
-  box-shadow: var(--shadow), var(--highlight-top);
-  color: var(--white);
-  cursor: pointer;
   text-align: left;
   transition: transform 0.12s ease, border-color 0.15s ease;
-  animation: dockIn 0.32s var(--ease-spring) both;
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .dockBar,
+  .dockPill,
   .expandPanel { background: var(--surface); }
 }
+
+/* ── Minimized pill (G1) ──────────────────────────────────────────────────────
+   On Schedule + team pages the dock collapses to a right-anchored ★ + score
+   pill; tap restores the full bar. The wrap stays full-width for the clearance
+   publisher, so it must not swallow taps beside the pill. */
+.dockWrapMin {
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.dockPill {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.85rem;
+  border-radius: 999px;
+}
+
+.dockPill:active { transform: scale(0.98); }
+
+.dockPill .dockScore { font-size: 0.95rem; }
 
 .dockBar:active { transform: scale(0.99); }
 

@@ -13,6 +13,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Star, ChevronUp } from 'lucide-react';
 import type { Game, PublicTeam, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
@@ -58,6 +59,30 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAle
   const [loaded, setLoaded] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
+
+  // G1 (owner-decided 2026-07-16): on the two routes that already tell the same
+  // live story inline — the Schedule (pinned My Team card) and a team page (its
+  // own live row) — the dock auto-minimizes to a compact score pill (the ticker's
+  // minimize idiom). Tap restores the full bar for that visit; navigation resets.
+  // Everywhere else the full bar is unchanged. Matched against explicit hrefs
+  // built from props (the BottomNav idiom) — game detail (/schedule/{id}) and
+  // the teams LIST (/teams) deliberately keep the full bar.
+  const pathname = usePathname();
+  const tournamentBase = `/${orgSlug}/${tournamentSlug}`;
+  const routeMinimized =
+    pathname === `${tournamentBase}/schedule` ||
+    (pathname?.startsWith(`${tournamentBase}/teams/`) ?? false);
+  // Restore is keyed to the pathname it was tapped on — deriving "minimized"
+  // synchronously so navigating minimize-route → minimize-route can never
+  // paint a one-frame full-bar flash before an effect catches up.
+  const [restoredPath, setRestoredPath] = useState<string | null>(null);
+  useEffect(() => {
+    // Close the expand panel on navigation (the bar itself resets via
+    // restoredPath, no effect needed).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setExpanded(false);
+  }, [pathname]);
+  const minimized = routeMinimized && restoredPath !== pathname;
 
   const active = inProgress && !!followedTeamId;
 
@@ -185,6 +210,45 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAle
   const venue = game.venueId ? venues.find(v => v.id === game.venueId) ?? null : null;
   const shareVenueLabel = shareGame ? resolveGameVenueLabel(shareGame, venues) : '';
 
+  // One live/next cluster serves the full bar AND the minimized pill (G1) —
+  // the two renderings must never drift.
+  const scoreOrNext = liveGame ? (
+    <>
+      <span className={styles.dockLive}><span className={styles.dockLiveDot} />LIVE</span>
+      <span className={styles.dockScore}>
+        <RollingNumber value={myScore} />
+        <span className={styles.dockDash}>-</span>
+        <RollingNumber value={oppScore} />
+      </span>
+    </>
+  ) : (
+    <span className={styles.dockNext}>
+      <span className={styles.dockNextLabel}>{countdownMs != null && countdownMs > 0 ? 'IN' : 'NEXT'}</span>
+      <span className={styles.dockNextVal}>
+        {countdownMs != null ? formatCountdown(countdownMs) : (nextGame?.time ? formatTime(nextGame.time) : 'TBD')}
+      </span>
+    </span>
+  );
+
+  // Minimized (G1): a compact ★ + score pill, right-anchored where the bar sat.
+  // Everything the bar offers is one tap away — tap restores the full dock.
+  if (minimized) {
+    return (
+      <div ref={wrapRef} className={`${styles.dockWrap} ${styles.dockWrapMin}`}>
+        <button
+          type="button"
+          className={styles.dockPill}
+          onClick={() => setRestoredPath(pathname ?? null)}
+          aria-label={`Show the ${team.name} game bar`}
+          title={`Show the ${team.name} game bar`}
+        >
+          <Star size={11} fill="currentColor" className={styles.dockStar} />
+          {scoreOrNext}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div ref={wrapRef} className={styles.dockWrap} data-expanded={expanded ? 'true' : 'false'}>
       {expanded && (
@@ -266,23 +330,7 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAle
           <span className={styles.dockSub}>{liveGame ? `vs ${opponentName}` : `Next · vs ${opponentName}`}</span>
         </span>
         <span className={styles.dockRight}>
-          {liveGame ? (
-            <>
-              <span className={styles.dockLive}><span className={styles.dockLiveDot} />LIVE</span>
-              <span className={styles.dockScore}>
-                <RollingNumber value={myScore} />
-                <span className={styles.dockDash}>-</span>
-                <RollingNumber value={oppScore} />
-              </span>
-            </>
-          ) : (
-            <span className={styles.dockNext}>
-              <span className={styles.dockNextLabel}>{countdownMs != null && countdownMs > 0 ? 'IN' : 'NEXT'}</span>
-              <span className={styles.dockNextVal}>
-                {countdownMs != null ? formatCountdown(countdownMs) : (nextGame?.time ? formatTime(nextGame.time) : 'TBD')}
-              </span>
-            </span>
-          )}
+          {scoreOrNext}
           <ChevronUp size={16} className={styles.dockChevron} aria-hidden="true" />
         </span>
       </button>

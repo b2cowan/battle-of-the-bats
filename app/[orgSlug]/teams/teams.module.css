@@ -97,15 +97,29 @@
   gap: 1rem;
 }
 
+/* Quiet mono kicker (G4) — pool headings join the one public label convention;
+   the count sits right-aligned like every other kicker's meta. */
 .poolHeading {
-  font-family: var(--font-display);
-  font-size: 0.8rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--primary-light);
+  color: var(--white-45);
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border);
+}
+
+.poolCount {
+  margin-left: auto;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--white-40);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Team grid ─────────────────────────────────────────────────────────────── */
@@ -232,6 +246,8 @@
   color: var(--white);
   white-space: nowrap;
   flex-shrink: 0;
+  /* Tabular digits — records align digit-for-digit down the card list (D5). */
+  font-variant-numeric: tabular-nums;
 }
 
 /* Faint "go" chevron — signals the whole card is a link; brightens on hover. */
@@ -254,9 +270,14 @@
   flex-wrap: wrap;
 }
 
+/* Card meta joins the data face (D7): quiet mono lines under the sans name —
+   same split as everywhere else (sans = identity, mono = data). */
 .cardCoach {
-  font-size: 0.72rem;
-  font-weight: 500;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--white-45);
   overflow: hidden;
   white-space: nowrap;
@@ -264,15 +285,22 @@
 }
 
 .cardPool {
-  font-size: 0.75rem;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--white-40);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .cardRank {
-  font-size: 0.72rem;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--white-50);
-  font-weight: 600;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   margin-left: auto;
 }
 
@@ -323,15 +351,22 @@
 }
 
 .nextGame {
-  font-size: 0.72rem;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--white-40);
-  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .poolDone {
-  font-size: 0.72rem;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--white-45);
-  font-style: italic;
 }
 
 /* Card action buttons — above the stretched card link so Follow stays clickable. */
@@ -382,8 +417,11 @@
 
 .liveOpp {
   min-width: 0;
-  font-size: 0.72rem;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
   font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   color: var(--white-60);
   white-space: nowrap;
   overflow: hidden;
