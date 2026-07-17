@@ -148,6 +148,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, award_type_id (uuid) → rep_team_award_types.id NOT NULL, event_id (uuid) → rep_team_events.id, tournament_label, awarded_at NOT NULL, note, created_by (uuid), created_at, updated_at
 - Indexes: rep_player_awards_event_idx, rep_player_awards_org_idx, rep_player_awards_player_idx, rep_player_awards_team_idx, rep_player_awards_type_idx
 
+### rep_player_continuity_links
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, current_roster_id (uuid) → rep_roster_players.team_id, current_registration_id (uuid) → rep_tryout_registrations.team_id, prior_roster_id (uuid) → rep_roster_players.team_id, prior_registration_id (uuid) → rep_tryout_registrations.team_id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at
+- Indexes: rep_player_continuity_links_confirmed_uniq, rep_player_continuity_links_org_idx, rep_player_continuity_links_pair_uniq, rep_player_continuity_links_prior_idx, rep_player_continuity_links_team_idx
+
 ### rep_player_development_goals
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, focus_area NOT NULL, note, status, created_by (uuid), created_at, updated_at
 - Indexes: rep_player_development_goals_org_idx, rep_player_development_goals_player_idx, rep_player_development_goals_team_idx
@@ -165,7 +169,7 @@ id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (
 - Indexes: rep_player_dues_schedules_program_year_id_player_id_key
 
 ### rep_player_measurables
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_team_evaluation_sessions.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.id NOT NULL, value (numeric) NOT NULL, unit NOT NULL, recorded_on NOT NULL, note, created_by (uuid), created_at, updated_at, session_id (uuid) → rep_team_evaluation_sessions.team_id
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_team_evaluation_sessions.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.id NOT NULL, value (numeric) NOT NULL, unit NOT NULL, recorded_on NOT NULL, note, created_by (uuid), created_at, updated_at, session_id (uuid) → rep_team_evaluation_sessions.id
 - Indexes: rep_player_measurables_org_idx, rep_player_measurables_player_idx, rep_player_measurables_session_entry_uniq, rep_player_measurables_session_idx, rep_player_measurables_team_idx, rep_player_measurables_type_idx
 
 ### rep_program_years
@@ -174,7 +178,7 @@ id (uuid), team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizat
 
 ### rep_roster_players
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, player_first_name NOT NULL, player_last_name, player_date_of_birth, player_number, guardian_first_name, guardian_last_name, guardian_email, guardian_phone, status, source, tryout_registration_id (uuid) → rep_tryout_registrations.id, notes, admin_notes, created_at, updated_at, primary_position, secondary_position, display_order (integer), source_basic_player_id (uuid), medical_notes, emergency_contact_name, emergency_contact_phone, bats, throws, jersey_size, lineup_profile (jsonb)
-- Indexes: rep_roster_players_email_idx, rep_roster_players_src_basic_player_uq, rep_roster_players_year_idx
+- Indexes: rep_roster_players_email_idx, rep_roster_players_id_team_uniq, rep_roster_players_src_basic_player_uq, rep_roster_players_year_idx
 
 ### rep_season_surplus
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, total_surplus (numeric), notes, created_by (uuid), created_at, updated_at
@@ -254,7 +258,7 @@ id (uuid), tryout_id (uuid) → rep_tryouts.id NOT NULL, program_year_id (uuid) 
 
 ### rep_tryout_registrations
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, admin_notes, submitted_at, updated_at, consent_data_collection (boolean), consent_email_comms (boolean), consent_eligibility (boolean), consent_at, consent_ip, bib_number, is_checked_in (boolean), checked_in_at, offer_token_hash, offer_sent_at, offer_expires_at, offer_response, offer_responded_at
-- Indexes: rep_tryout_registrations_bib_uq, rep_tryout_registrations_email_idx, rep_tryout_registrations_offer_token_uq, rep_tryout_registrations_status_idx, rep_tryout_registrations_year_idx
+- Indexes: rep_tryout_registrations_bib_uq, rep_tryout_registrations_email_idx, rep_tryout_registrations_id_team_uniq, rep_tryout_registrations_offer_token_uq, rep_tryout_registrations_status_idx, rep_tryout_registrations_year_idx
 
 ### rep_tryout_rubrics
 id (uuid), tryout_id (uuid) → rep_tryouts.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, name, scale_max, categories (jsonb), created_at, updated_at
@@ -571,11 +575,11 @@ user_id (uuid) NOT NULL, opted_out_at
 
 ## Tables by count
 
-Total: **138 tables** across 10 modules.
+Total: **139 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 41 tables
+- Rep Teams: 42 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables

@@ -1507,6 +1507,27 @@ export interface RepPlayerDevelopmentGoal {
   updatedAt: string;
 }
 
+// Returning-player continuity (Player Development 3C, mig 191 — DBA Finding #31).
+// One row per (current, prior) pair for its whole lifecycle; a rejected row is the
+// never-re-suggest tombstone. Exactly one FK per side; sides are immutable.
+export type RepContinuityStatus = 'suggested' | 'confirmed' | 'rejected';
+
+export interface RepPlayerContinuityLink {
+  id: string;
+  orgId: string;
+  teamId: string;
+  currentRosterId: string | null;
+  currentRegistrationId: string | null;
+  priorRosterId: string | null;
+  priorRegistrationId: string | null;
+  status: RepContinuityStatus;
+  confidence: 'high' | 'possible';
+  decidedBy: string | null;
+  decidedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface RepDocumentTemplate {
   id: string;
   orgId: string;

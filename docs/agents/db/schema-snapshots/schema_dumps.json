@@ -8912,6 +8912,123 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_player_continuity_links",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "pos": 4,
+        "column_name": "current_roster_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "pos": 5,
+        "column_name": "current_registration_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "pos": 6,
+        "column_name": "prior_roster_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "pos": 7,
+        "column_name": "prior_registration_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "pos": 8,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'suggested'::text"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "pos": 9,
+        "column_name": "confidence",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "pos": 10,
+        "column_name": "decided_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "pos": 11,
+        "column_name": "decided_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "pos": 12,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "pos": 13,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_player_development_goals",
         "pos": 1,
         "column_name": "id",
@@ -15676,6 +15793,139 @@
         "constraint_name": "rep_player_awards_team_id_fkey"
       },
       {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "current_registration_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "current_registration_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "current_roster_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "current_roster_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "decided_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_player_continuity_links_decided_by_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_org_id_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "prior_registration_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "prior_registration_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "prior_roster_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "prior_roster_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_team_id_fkey"
+      },
+      {
         "table_name": "rep_player_development_goals",
         "column_name": "created_by",
         "foreign_table": null,
@@ -15840,14 +16090,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -18199,6 +18449,36 @@
         "indexdef": "CREATE INDEX rep_player_awards_type_idx ON public.rep_player_awards USING btree (award_type_id)"
       },
       {
+        "tablename": "rep_player_continuity_links",
+        "indexname": "rep_player_continuity_links_confirmed_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_player_continuity_links_confirmed_uniq ON public.rep_player_continuity_links USING btree (COALESCE(current_roster_id, current_registration_id)) WHERE (status = 'confirmed'::text)"
+      },
+      {
+        "tablename": "rep_player_continuity_links",
+        "indexname": "rep_player_continuity_links_org_idx",
+        "indexdef": "CREATE INDEX rep_player_continuity_links_org_idx ON public.rep_player_continuity_links USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_player_continuity_links",
+        "indexname": "rep_player_continuity_links_pair_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_player_continuity_links_pair_uniq ON public.rep_player_continuity_links USING btree (COALESCE(current_roster_id, current_registration_id), COALESCE(prior_roster_id, prior_registration_id))"
+      },
+      {
+        "tablename": "rep_player_continuity_links",
+        "indexname": "rep_player_continuity_links_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_player_continuity_links_pkey ON public.rep_player_continuity_links USING btree (id)"
+      },
+      {
+        "tablename": "rep_player_continuity_links",
+        "indexname": "rep_player_continuity_links_prior_idx",
+        "indexdef": "CREATE INDEX rep_player_continuity_links_prior_idx ON public.rep_player_continuity_links USING btree (COALESCE(prior_roster_id, prior_registration_id))"
+      },
+      {
+        "tablename": "rep_player_continuity_links",
+        "indexname": "rep_player_continuity_links_team_idx",
+        "indexdef": "CREATE INDEX rep_player_continuity_links_team_idx ON public.rep_player_continuity_links USING btree (team_id)"
+      },
+      {
         "tablename": "rep_player_development_goals",
         "indexname": "rep_player_development_goals_org_idx",
         "indexdef": "CREATE INDEX rep_player_development_goals_org_idx ON public.rep_player_development_goals USING btree (org_id)"
@@ -18317,6 +18597,11 @@
         "tablename": "rep_roster_players",
         "indexname": "rep_roster_players_email_idx",
         "indexdef": "CREATE INDEX rep_roster_players_email_idx ON public.rep_roster_players USING btree (guardian_email)"
+      },
+      {
+        "tablename": "rep_roster_players",
+        "indexname": "rep_roster_players_id_team_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_roster_players_id_team_uniq ON public.rep_roster_players USING btree (id, team_id)"
       },
       {
         "tablename": "rep_roster_players",
@@ -18682,6 +18967,11 @@
         "tablename": "rep_tryout_registrations",
         "indexname": "rep_tryout_registrations_email_idx",
         "indexdef": "CREATE INDEX rep_tryout_registrations_email_idx ON public.rep_tryout_registrations USING btree (guardian_email)"
+      },
+      {
+        "tablename": "rep_tryout_registrations",
+        "indexname": "rep_tryout_registrations_id_team_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_tryout_registrations_id_team_uniq ON public.rep_tryout_registrations USING btree (id, team_id)"
       },
       {
         "tablename": "rep_tryout_registrations",
@@ -20186,6 +20476,36 @@
       {
         "kind": "RLS",
         "table_name": "rep_player_awards",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_player_continuity_links",
+        "detail": "rep_player_continuity_links_confidence_check",
+        "check_clause": "(confidence = ANY (ARRAY['high'::text, 'possible'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_player_continuity_links",
+        "detail": "rep_player_continuity_links_one_current",
+        "check_clause": "((((current_roster_id IS NOT NULL))::integer + ((current_registration_id IS NOT NULL))::integer) = 1)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_player_continuity_links",
+        "detail": "rep_player_continuity_links_one_prior",
+        "check_clause": "((((prior_roster_id IS NOT NULL))::integer + ((prior_registration_id IS NOT NULL))::integer) = 1)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_player_continuity_links",
+        "detail": "rep_player_continuity_links_status_check",
+        "check_clause": "(status = ANY (ARRAY['suggested'::text, 'confirmed'::text, 'rejected'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_player_continuity_links",
         "detail": "ENABLED",
         "check_clause": null
       },

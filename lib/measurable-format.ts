@@ -16,9 +16,17 @@ export function todayLocal(): string {
   return new Date().toLocaleDateString('en-CA');
 }
 
-/** "Jul 17" — the short date label used by entry logs and the team board. */
+/** "Jul 17" — the short date label for plain DATE strings (recorded_on, session_date).
+ *  NEVER pass a timestamptz here: slicing an instant's UTC date shifts evening times a day. */
 export function formatShortDate(iso: string): string {
   const d = new Date(`${iso.slice(0, 10)}T00:00:00`);
+  return isNaN(d.getTime()) ? iso : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+/** "Jul 17" for a timestamptz INSTANT (decided_at etc.) — parsed as a moment, rendered in
+ *  the viewer's local calendar (the repo's timezone-gotcha rule: no raw UTC date slicing). */
+export function formatShortInstant(iso: string): string {
+  const d = new Date(iso);
   return isNaN(d.getTime()) ? iso : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 

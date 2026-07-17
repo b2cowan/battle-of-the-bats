@@ -1,7 +1,9 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import { ListChecks, Check, EyeOff } from 'lucide-react';
 import TryoutAcceptDrawer, { type AcceptIdentity, type AcceptSuggestedDues, type AcceptPayload } from './TryoutAcceptDrawer';
+import ContinuityCompareCard from '@/components/coaches/ContinuityCompareCard';
+import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
 import styles from './TryoutDayCard.module.css';
 
 type Status = 'pending_review' | 'offered' | 'waitlisted' | 'accepted' | 'declined' | 'withdrawn';
@@ -31,8 +33,16 @@ interface Board {
 interface Props {
   /** Decisions API, e.g. `/api/coaches/{orgSlug}/teams/{teamId}/tryout-decisions`. */
   apiBase: string;
+  /** Returning-player continuity API (Player Development 3C), e.g.
+   *  `/api/coaches/{orgSlug}/teams/{teamId}/development/continuity`. Optional — chips only
+   *  render when provided AND the candidate's name is visible (never in blind mode: a
+   *  prior-season name beside an anonymized bib would break blind integrity). */
+  continuityApiBase?: string;
   onError?: (msg: string) => void;
 }
+
+// Returning-player rows ride the shared useContinuityLinks hook + ContinuityCompareCard
+// (one plumbing + one compare surface across both verify doors — 3C /simplify).
 
 const CHOICES: { key: Decision; label: string; status: Status }[] = [
   { key: 'offer', label: 'Offer', status: 'offered' },
@@ -42,10 +52,15 @@ const CHOICES: { key: Decision; label: string; status: Status }[] = [
 
 interface AcceptTarget { registrationId: string; identity: AcceptIdentity; suggestedDues: AcceptSuggestedDues | null }
 
-export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
+export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onError }: Props) {
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [continuityOpenId, setContinuityOpenId] = useState<string | null>(null);
+  const {
+    byCurrent: continuityByReg, decide: decideContinuityShared, dismiss: dismissContinuity,
+    busy: continuityBusy, error: continuityErr,
+  } = useContinuityLinks(continuityApiBase ?? null, 'registrations');
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [acceptLoadingId, setAcceptLoadingId] = useState<string | null>(null);
   const [acceptTarget, setAcceptTarget] = useState<AcceptTarget | null>(null);
@@ -68,6 +83,9 @@ export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
   }, [apiBase, fail]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Surface the shared hook's decide errors through the board's own error channel.
+  useEffect(() => { if (continuityErr) fail(continuityErr); }, [continuityErr, fail]);
 
   async function decide(c: Candidate, choice: Decision) {
     if (savingId) return;
@@ -204,13 +222,31 @@ export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
       <div className={styles.sessionList}>
         {board.candidates.map((c, i) => {
           const accepted = c.status === 'accepted';
+          // Chips are BLIND-SAFE: only when the candidate's name is already visible —
+          // a prior-season name beside an anonymized bib would break blind integrity.
+          const contRows = c.name ? (continuityByReg[c.registrationId] ?? []) : [];
+          const suggested = contRows.filter(r => r.status === 'suggested');
+          const confirmedRow = contRows.find(r => r.status === 'confirmed');
           return (
-            <div key={c.registrationId} className={styles.scoreRow}>
+            <Fragment key={c.registrationId}>
+            <div className={styles.scoreRow}>
               <div className={styles.rank}>{c.composite != null ? `#${i + 1}` : '—'}</div>
               <div className={styles.scoreMain}>
                 <div className={styles.sessionWhen}>
                   <span className={styles.bib}>#{c.bib ?? '—'}</span>
                   {c.name && <span style={{ marginLeft: '0.5rem' }}>{c.name}</span>}
+                  {suggested.length > 0 && (
+                    <button type="button"
+                      style={{ marginLeft: '0.5rem', background: 'rgba(180,83,9,0.18)', border: '1px solid var(--warning, #b45309)', color: '#fcd34d', fontSize: '0.66rem', fontWeight: 700, padding: '0.14rem 0.5rem', borderRadius: 999, cursor: 'pointer' }}
+                      onClick={() => setContinuityOpenId(id => id === c.registrationId ? null : c.registrationId)}>
+                      Possible returning player — verify
+                    </button>
+                  )}
+                  {confirmedRow && (
+                    <span style={{ marginLeft: '0.5rem', color: 'var(--logic-lime, #a3e635)', fontSize: '0.7rem' }}>
+                      ↩ returning · {confirmedRow.prior.seasonLabel}
+                    </span>
+                  )}
                 </div>
                 <div className={styles.sessionMeta}>
                   {c.composite != null ? <>score {c.composite.toFixed(1)}/{board.scaleMax} · {c.evaluatorCount} eval{c.evaluatorCount === 1 ? '' : 's'}</> : 'not scored yet'}
@@ -263,6 +299,21 @@ export default function TryoutDecisionBoard({ apiBase, onError }: Props) {
                 </div>
               )}
             </div>
+            {continuityOpenId === c.registrationId && suggested.length > 0 && (
+              <div style={{ margin: '0 0 0.6rem 2.2rem' }}>
+                {/* No manual panel-close on reject/dismiss: both remove the row from the
+                    hook map, and the `suggested.length > 0` render gate collapses the
+                    panel when the LAST row goes — other pending rows stay visible
+                    (profile-card parity; 3C review fix). */}
+                {suggested.map(row => (
+                  <ContinuityCompareCard key={row.linkId} row={row} busy={continuityBusy}
+                    onConfirm={() => decideContinuityShared(c.registrationId, row, 'confirm')}
+                    onReject={() => decideContinuityShared(c.registrationId, row, 'reject')}
+                    onDismiss={() => dismissContinuity(c.registrationId, row.linkId)} />
+                ))}
+              </div>
+            )}
+            </Fragment>
           );
         })}
       </div>

@@ -2389,6 +2389,45 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_player_development_goals.created_by -->
 **`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who set it.
 
+### `rep_player_continuity_links`
+<!-- dict:table:rep_player_continuity_links -->
+
+**Purpose:** coach-confirmed identity links between a CURRENT entity (roster row OR tryout registration) and a PRIOR season's entity (roster row OR registration), same team — the "possible returning player — verify" record (Player Development 3C, migration 191; design = DBA Finding #31). **⚠ DEV-ONLY / PROD-PENDING — promote with migs 189+190.**
+
+**Gotchas (read first):**
+1. **One row per (current, prior) PAIR for its whole lifecycle** — `suggested → confirmed | rejected` are status transitions on that single row (pair-unique expression index on the coalesced side ids). A `rejected` row IS the never-re-suggest tombstone, by construction — do NOT delete it to "clean up". Transitions are guarded in the UPDATE itself (`decideContinuityLink`): confirm only from `suggested`, reject from `suggested|confirmed` — a tombstone can never resurrect, even from a stale-tab replay.
+2. **Side-FKs are COMPOSITE `(side_id, team_id) → source(id, team_id)`, ON DELETE CASCADE** — a link's sides must belong to the LINK's OWN team, structurally (a single-column FK would let a direct PostgREST write reference any row platform-wide; mig-190 lesson). Mig 191 adds the backing `UNIQUE (id, team_id)` constraints on `rep_roster_players` + `rep_tryout_registrations`. Exactly one FK per side (CHECKs); uuids are globally unique so coalesce-pairing is collision-safe. CASCADE because a link missing either side is meaningless (SET NULL would violate the CHECKs).
+3. **At most one CONFIRMED link per current entity** (partial unique) — one identity per player; multiple suggested/rejected rows per current stay legal. ⚠ The index can't see that a roster row and its originating registration are the SAME person — the decide API pre-checks across that alias (gotcha 4).
+4. **Sides are IMMUTABLE — reads/writes resolve the accept-boundary ALIAS.** When a current registration is later accepted (roster row minted carrying `tryout_registration_id`), NOTHING rewrites the link. The scan API surfaces registration-keyed links under the roster id, blocks re-suggesting a pair that exists under either id, and the decide API enforces one-confirmed across both ids. No migration job, no drift.
+5. **NEVER any guardian-PII column here** — FK-only + `confidence` + `status` + audit. Unlink = the confirmed→rejected TRANSITION (tombstone remains); nothing is deleted, source rows untouched.
+6. **`decided_by`/`decided_at`** audit BOTH confirmation and rejection (a remembered rejection needs the same audit); NULL while `suggested`. `decided_at` is a **timestamptz instant** — display via `formatShortInstant`, never the DATE-string slicer.
+7. **Head-coach-only writes at BOTH layers** (D1; RLS requires `coach_role='head_coach'`, no org-admin writes, DROP-guarded → re-runnable). Matching (guardian-email + name similarity + exact DOB) is app-side — this table stores only outcomes.
+8. **Suggest writes are plain bulk INSERT + 23505 per-row fallback** (`suggestContinuityLinksBulk`) — PostgREST's `ignoreDuplicates` CANNOT arbitrate on the expression-based pair-unique index (on_conflict takes plain columns only; its default arbiter is the PK, which never collides on generated uuids). Existing pairs are excluded app-side before the insert; the fallback only covers a concurrent-scan race.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_player_continuity_links.org_id -->
+<!-- dict:col:rep_player_continuity_links.team_id -->
+**`org_id` / `team_id`** (FK, NOT NULL, CASCADE) — scope; links are same-team by matcher scope.
+
+<!-- dict:col:rep_player_continuity_links.current_roster_id -->
+<!-- dict:col:rep_player_continuity_links.current_registration_id -->
+**`current_roster_id` / `current_registration_id`** (nullable FKs, CASCADE; exactly one set) — the THIS-season side (gotcha 2).
+
+<!-- dict:col:rep_player_continuity_links.prior_roster_id -->
+<!-- dict:col:rep_player_continuity_links.prior_registration_id -->
+**`prior_roster_id` / `prior_registration_id`** (nullable FKs, CASCADE; exactly one set) — the prior-season side.
+
+<!-- dict:col:rep_player_continuity_links.status -->
+**`status`** (text, NOT NULL, default `'suggested'`; CHECK `suggested|confirmed|rejected`) — the pair's lifecycle (gotcha 1).
+
+<!-- dict:col:rep_player_continuity_links.confidence -->
+**`confidence`** (text, NOT NULL; CHECK `high|possible`) — the matcher's tier at suggestion time (app-computed; display copy says "possible — verify", never a verdict).
+
+<!-- dict:col:rep_player_continuity_links.decided_by -->
+<!-- dict:col:rep_player_continuity_links.decided_at -->
+**`decided_by`** (FK → `auth.users.id` SET NULL) / **`decided_at`** (timestamptz) — who confirmed OR rejected, and when (gotcha 6).
+
 ### `rep_tryout_registrations`
 <!-- dict:table:rep_tryout_registrations -->
 

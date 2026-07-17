@@ -5,7 +5,7 @@ import { createClient as createBrowserSupabaseClient } from './supabase-browser'
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepTeamEvaluationSession, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
@@ -7436,6 +7436,211 @@ export async function deleteRepPlayerDevelopmentGoal(id: string, teamId: string,
     .select('id');
   if (error) throw error;
   return (data ?? []).length > 0;
+}
+
+// ── Returning-player continuity links (slice 3C — migration 191, DBA Finding #31) ──
+
+function mapRepPlayerContinuityLink(r: any): RepPlayerContinuityLink {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    teamId: r.team_id,
+    currentRosterId: r.current_roster_id ?? null,
+    currentRegistrationId: r.current_registration_id ?? null,
+    priorRosterId: r.prior_roster_id ?? null,
+    priorRegistrationId: r.prior_registration_id ?? null,
+    status: r.status as RepContinuityStatus,
+    confidence: r.confidence,
+    decidedBy: r.decided_by ?? null,
+    decidedAt: r.decided_at ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+/** Every link (any status) for a team — pairs are few (one per plausible identity match),
+ *  so the callers filter in JS. Rejected rows are tombstones and MUST be included. */
+export async function getRepTeamContinuityLinks(teamId: string): Promise<RepPlayerContinuityLink[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_continuity_links')
+    .select('*')
+    .eq('team_id', teamId);
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerContinuityLink);
+}
+
+/** Insert fresh SUGGESTED pairs — one bulk round trip on the happy path. PostgREST's
+ *  ignoreDuplicates can't arbitrate on the EXPRESSION-based pair-unique index (on_conflict
+ *  only accepts plain columns; its default arbiter is the PK, which never collides here),
+ *  so a concurrent scan racing the same pair surfaces as a raw 23505 on the bulk insert.
+ *  On that rare race the whole batch rolls back and we retry per-row, swallowing each
+ *  pair-level 23505 — the existing lifecycle row (any status, incl. the rejected tombstone)
+ *  governs. Returns only the rows actually inserted. */
+export async function suggestContinuityLinksBulk(rows: {
+  orgId: string; teamId: string;
+  currentRosterId?: string | null; currentRegistrationId?: string | null;
+  priorRosterId?: string | null; priorRegistrationId?: string | null;
+  confidence: 'high' | 'possible';
+}[]): Promise<RepPlayerContinuityLink[]> {
+  if (rows.length === 0) return [];
+  const payload = rows.map(f => ({
+    org_id: f.orgId,
+    team_id: f.teamId,
+    current_roster_id: f.currentRosterId ?? null,
+    current_registration_id: f.currentRegistrationId ?? null,
+    prior_roster_id: f.priorRosterId ?? null,
+    prior_registration_id: f.priorRegistrationId ?? null,
+    confidence: f.confidence,
+  }));
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_continuity_links')
+    .insert(payload)
+    .select();
+  if (!error) return (data ?? []).map(mapRepPlayerContinuityLink);
+  if ((error as { code?: string }).code !== '23505') throw error;
+
+  // Race with a concurrent scan — retry row-by-row so only the colliding pairs drop.
+  const inserted: RepPlayerContinuityLink[] = [];
+  for (const row of payload) {
+    const { data: one, error: oneError } = await supabaseAdmin
+      .from('rep_player_continuity_links')
+      .insert(row)
+      .select()
+      .single();
+    if (oneError) {
+      if ((oneError as { code?: string }).code === '23505') continue;
+      throw oneError;
+    }
+    inserted.push(mapRepPlayerContinuityLink(one));
+  }
+  return inserted;
+}
+
+/** Confirm or reject a pair — the ONLY legal transitions, guarded in the QUERY:
+ *  confirm only from `suggested`; reject from `suggested` or `confirmed` (the unlink).
+ *  A rejected tombstone can NEVER be resurrected — even by a stale tab replaying an old
+ *  linkId (3C review fix). Returns null when the row is missing OR the transition is
+ *  illegal (callers answer 409/404 accordingly). */
+export async function decideContinuityLink(
+  id: string, teamId: string, status: 'confirmed' | 'rejected', decidedBy: string,
+): Promise<RepPlayerContinuityLink | null> {
+  const allowedFrom = status === 'confirmed' ? ['suggested'] : ['suggested', 'confirmed'];
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_continuity_links')
+    .update({
+      status,
+      decided_by: decidedBy,
+      decided_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .in('status', allowedFrom)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepPlayerContinuityLink(data) : null;
+}
+
+/** The OTHER id that denotes the same person as a link's current side: a roster row's
+ *  originating tryout registration, or the roster row an accepted registration became
+ *  (board decisions pre-date the roster row, so the same human can be link-keyed either
+ *  way — the 3C review's accept-boundary alias). Null when no counterpart exists
+ *  (walk-on roster add; registration never accepted). */
+export async function getContinuityCurrentAlias(
+  current: { rosterId: string | null; registrationId: string | null },
+): Promise<string | null> {
+  if (current.rosterId) {
+    const { data, error } = await supabaseAdmin
+      .from('rep_roster_players')
+      .select('tryout_registration_id')
+      .eq('id', current.rosterId)
+      .maybeSingle();
+    if (error) throw error;
+    return data?.tryout_registration_id ?? null;
+  }
+  if (current.registrationId) {
+    const { data, error } = await supabaseAdmin
+      .from('rep_roster_players')
+      .select('id')
+      .eq('tryout_registration_id', current.registrationId)
+      .limit(1);
+    if (error) throw error;
+    return data?.[0]?.id ?? null;
+  }
+  return null;
+}
+
+/** The matcher's prior-identity pool: every roster row + tryout registration from the
+ *  team's program years BEFORE the current one, in identity-relevant columns only. */
+export async function getPriorContinuityIdentities(
+  teamId: string, currentProgramYearId: string,
+): Promise<{ priorProgramYearIds: string[]; identities: {
+  kind: 'roster' | 'registration'; id: string; programYearId: string;
+  firstName: string; lastName: string | null; dateOfBirth: string | null;
+  guardianEmail: string | null; guardianFirstName: string | null; guardianLastName: string | null;
+}[] }> {
+  const years = await getRepProgramYears(teamId);
+  const current = years.find(y => y.id === currentProgramYearId);
+  const priorYears = years.filter(y =>
+    y.id !== currentProgramYearId && (!current || y.year < current.year));
+  const priorIds = priorYears.map(y => y.id);
+  if (priorIds.length === 0) return { priorProgramYearIds: [], identities: [] };
+
+  const [rosterRes, regRes] = await Promise.all([
+    supabaseAdmin
+      .from('rep_roster_players')
+      .select('id, program_year_id, tryout_registration_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, guardian_first_name, guardian_last_name')
+      .in('program_year_id', priorIds),
+    supabaseAdmin
+      .from('rep_tryout_registrations')
+      .select('id, program_year_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, guardian_first_name, guardian_last_name')
+      .in('program_year_id', priorIds),
+  ]);
+  if (rosterRes.error) throw rosterRes.error;
+  if (regRes.error) throw regRes.error;
+
+  // A prior-year kid who made the team has BOTH a registration and its accepted roster row —
+  // one human, one identity: the roster row wins, its source registration leaves the pool.
+  const acceptedRegIds = new Set((rosterRes.data ?? [])
+    .map(r => r.tryout_registration_id).filter((id: string | null): id is string => !!id));
+  const identities = [
+    ...(rosterRes.data ?? []).map(r => ({ kind: 'roster' as const, ...mapContinuityIdentityRow(r) })),
+    ...(regRes.data ?? [])
+      .filter(r => !acceptedRegIds.has(r.id))
+      .map(r => ({ kind: 'registration' as const, ...mapContinuityIdentityRow(r) })),
+  ];
+  return { priorProgramYearIds: priorIds, identities };
+}
+
+/** Shared row→identity projection for the continuity matcher (top-level per the file's
+ *  mapXxx convention; used by prior-pool and current-cycle getters). */
+function mapContinuityIdentityRow(r: any) {
+  return {
+    id: r.id,
+    programYearId: r.program_year_id,
+    firstName: r.player_first_name ?? '',
+    lastName: r.player_last_name ?? null,
+    dateOfBirth: r.player_date_of_birth ?? null,
+    guardianEmail: r.guardian_email ?? null,
+    guardianFirstName: r.guardian_first_name ?? null,
+    guardianLastName: r.guardian_last_name ?? null,
+  };
+}
+
+/** The current tryout cycle's registrations, in identity-relevant columns (the Decision
+ *  Board scan's CURRENT side). */
+export async function getCurrentCycleContinuityIdentities(programYearId: string): Promise<{
+  id: string; programYearId: string; firstName: string; lastName: string | null;
+  dateOfBirth: string | null; guardianEmail: string | null;
+  guardianFirstName: string | null; guardianLastName: string | null;
+}[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_registrations')
+    .select('id, program_year_id, player_first_name, player_last_name, player_date_of_birth, guardian_email, guardian_first_name, guardian_last_name')
+    .eq('program_year_id', programYearId);
+  if (error) throw error;
+  return (data ?? []).map(mapContinuityIdentityRow);
 }
 
 // Document Templates

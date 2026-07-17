@@ -27,6 +27,23 @@
 
 ---
 
+### [2026-07-17] — Finding #31: Player Development 3C — `rep_player_continuity_links` = dual-nullable REAL-FK sides (roster|registration per side), one row per pair for the whole suggested→confirmed|rejected lifecycle
+
+**Severity:** Advisory (pre-build model confirmation; plan-mandated /dba sign-off — ratified into the 3C build)
+**Finding:** Cross-season identity links need each side to reference EITHER a `rep_roster_players` row OR a `rep_tryout_registrations` row: the Decision-Board verify moment precedes any roster row for the candidate, and a prior-year candidate who never made the team exists only as a registration — so roster-only anchoring (option c) can't represent the primary UX, and polymorphic `(source_type, source_id)` pairs (option b) would leave orphanable, non-FK-guaranteed identity records about minors, contradicting the mig-190 structural-integrity direction.
+**Tables affected:** NEW `rep_player_continuity_links`
+**Recommendation (ratified design):**
+- Columns: `id` · `org_id`/`team_id` (NOT NULL, FK CASCADE, denormalized — 1-hop org rule; links are same-team by matcher scope) · `current_roster_id`/`current_registration_id`/`prior_roster_id`/`prior_registration_id` (all nullable REAL FKs, **ON DELETE CASCADE** — a link missing either side is meaningless; both source tables never hard-delete today so cascade is future-proofing, and SET NULL would violate the exactly-one CHECKs) · CHECK exactly-one-per-side (`(current_roster_id IS NOT NULL)::int + (current_registration_id IS NOT NULL)::int = 1`, same for prior) · `status` CHECK `suggested|confirmed|rejected` default `suggested` · `confidence` CHECK `high|possible` · `decided_by` (FK auth.users SET NULL) + `decided_at` (generalizes the plan's `confirmed_*` — a remembered rejection needs the same audit) · timestamps.
+- **One row per (current, prior) PAIR** — expression unique index on `(coalesce(current_roster_id, current_registration_id), coalesce(prior_roster_id, prior_registration_id))` (uuids are globally unique, so coalesce-pairing is collision-safe). Status transitions UPDATE the row; a rejected row is the never-re-suggest tombstone by construction.
+- **At most one CONFIRMED link per current entity** — partial unique expression index on `coalesce(current_roster_id, current_registration_id)` `WHERE status = 'confirmed'` (one identity per player; multiple suggested/rejected rows per current stay legal).
+- Indexes: the pair-unique covers current-side prefix lookups (chip render); add an expression index on `coalesce(prior_roster_id, prior_registration_id)` (3D reverse walks) + `team_id` + `org_id`.
+- **Sides are IMMUTABLE** — when a current registration is later accepted (roster row minted carrying `tryout_registration_id`), nothing rewrites the link; reads resolve a player's links as `current_roster_id = player.id OR current_registration_id = player.tryout_registration_id`. No migration job, no drift. Document as a dictionary gotcha.
+- RLS: org-member + assigned-coach SELECT; **head-coach-only INSERT/UPDATE/DELETE** (D1 posture, migs 189/190 precedent), DROP-guarded, no org-admin writes. NEVER any guardian-PII column on this table.
+- **Addendum (3C adversarial review, 2026-07-17):** the four side-FKs are **COMPOSITE** `(side_id, team_id) → source(id, team_id)` (backing `UNIQUE (id, team_id)` added on `rep_roster_players` + `rep_tryout_registrations` in the same migration) — single-column FKs would let a direct PostgREST write attach a link to ANY roster/registration row platform-wide (cross-tenant, with CASCADE side effects). Same structural-integrity direction as mig 190. Also ratified: status transitions guarded IN the UPDATE (confirm from `suggested` only; reject from `suggested|confirmed`; a rejected tombstone can never resurrect), and app-side accept-boundary ALIAS resolution (the one-confirmed partial unique can't see that a roster row and its originating registration are the same person — the decide API pre-checks across both ids).
+**Status:** Addressed (built as ratified in mig 191, Player Development 3C)
+
+---
+
 ### [2026-06-30] — Finding #30: Dedicated tryout surface (Phase 2A) — `rep_tryouts` subsystem-root + `rep_tryout_sessions`; calendar by read-time projection; candidate day-of on registrations
 
 **Severity:** Advisory (pre-build model confirmation; owner to ratify in the Phase 2A plan)

@@ -102,7 +102,8 @@ export default function CoachTryoutsPage({
       {/* Stage 3 — Decide */}
       <div className={hidden('decide')} role="tabpanel">
         <PanelIntro text="Offer, waitlist, or pass on each ranked player — families reply from a secure link in their email. (If names are still hidden, reveal them back on the Set up tab first.)" />
-        <TryoutDecisionBoard apiBase={`${base}/tryout-decisions`} onError={fail} />
+        <TryoutDecisionBoard apiBase={`${base}/tryout-decisions`}
+          continuityApiBase={`${base}/development/continuity`} onError={fail} />
       </div>
 
       {/* Stage 4 — Build your team */}

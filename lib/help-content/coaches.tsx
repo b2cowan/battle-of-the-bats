@@ -477,6 +477,18 @@ const coachesHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'faq-premium-returning-players',
+          question: 'How does the app recognize returning players?',
+          answerText: 'When a tryout candidate or a roster player plausibly matches someone from one of your past seasons — same guardian email, matching name, and birth date all participate; a shared family email alone is never enough — the head coach sees a quiet "Possible returning player — verify" prompt: on the Decision Board during tryouts, and on the player\'s profile page. It shows the past record side by side (name, birth date, guardian) and you decide: Confirm, Not the same player, or Not sure yet. Nothing ever links automatically. A confirmed link shows as a plain line ("Linked to your 2025 record — confirmed Jul 17") with an always-visible "Not the same player — unlink" that removes only the association — never any records. Saying "Not the same player" is remembered, so the same wrong pairing never comes back. Only the head coach sees any of this, and prompts never appear while tryout names are hidden in blind mode.',
+          keywords: ['returning player', 'possible returning player', 'verify', 'link player', 'unlink', 'same player', 'previous season', 'played last year', 'recognize player', 'match player', 'continuity'],
+          answer: (
+            <>
+              <p>When a tryout candidate or a roster player plausibly matches someone from one of your past seasons — same guardian email, matching name, and birth date all participate; <strong>a shared family email alone is never enough</strong> — the head coach sees a quiet <strong>&ldquo;Possible returning player — verify&rdquo;</strong> prompt: on the <strong>Decision Board</strong> during tryouts, and on the <strong>player&apos;s profile</strong> page. It shows the past record side by side (name, birth date, guardian) and you decide: <strong>Confirm</strong>, <strong>Not the same player</strong>, or <strong>Not sure yet</strong>. Nothing ever links automatically.</p>
+              <p>A confirmed link shows as a plain line (&ldquo;Linked to your 2025 record — confirmed Jul 17&rdquo;) with an always-visible <strong>&ldquo;Not the same player — unlink&rdquo;</strong> that removes only the association — never any records. Saying &ldquo;Not the same player&rdquo; is remembered, so the same wrong pairing never comes back. Only the <strong>head coach</strong> sees any of this, and prompts never appear while tryout names are hidden in blind mode.</p>
+            </>
+          ),
+        },
+        {
           id: 'faq-premium-depth-chart',
           question: 'Can I set positions for my whole team at once? (the depth chart)',
           popular: true,

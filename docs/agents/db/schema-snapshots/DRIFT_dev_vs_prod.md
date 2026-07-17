@@ -2,21 +2,22 @@
 
 **Generated:** 2026-07-17 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 240 divergence(s)** across dev/prod.
+**⚠️ 276 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 10 | 0 | — |
-| Columns | 81 | 3 | 24 |
-| Indexes | 45 | 3 | 0 |
-| Constraints | 49 | 9 | — |
-| RLS / CHECK | 15 | 1 | 0 (RLS state) |
+| Tables | 11 | 0 | — |
+| Columns | 94 | 3 | 24 |
+| Indexes | 53 | 3 | 0 |
+| Constraints | 59 | 9 | — |
+| RLS / CHECK | 19 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (10)
+### Only in DEV (11)
 - `fan_alert_prefs`
 - `fan_follows`
 - `rep_player_awards`
+- `rep_player_continuity_links`
 - `rep_player_development_goals`
 - `rep_player_measurables`
 - `rep_team_award_types`
@@ -29,7 +30,7 @@
 _none_
 
 ## Columns
-### Only in DEV (81)
+### Only in DEV (94)
 - `fan_alert_prefs.created_at`
 - `fan_alert_prefs.event_news`
 - `fan_alert_prefs.game_alerts`
@@ -54,6 +55,19 @@ _none_
 - `rep_player_awards.team_id`
 - `rep_player_awards.tournament_label`
 - `rep_player_awards.updated_at`
+- `rep_player_continuity_links.confidence`
+- `rep_player_continuity_links.created_at`
+- `rep_player_continuity_links.current_registration_id`
+- `rep_player_continuity_links.current_roster_id`
+- `rep_player_continuity_links.decided_at`
+- `rep_player_continuity_links.decided_by`
+- `rep_player_continuity_links.id`
+- `rep_player_continuity_links.org_id`
+- `rep_player_continuity_links.prior_registration_id`
+- `rep_player_continuity_links.prior_roster_id`
+- `rep_player_continuity_links.status`
+- `rep_player_continuity_links.team_id`
+- `rep_player_continuity_links.updated_at`
 - `rep_player_development_goals.created_at`
 - `rep_player_development_goals.created_by`
 - `rep_player_development_goals.focus_area`
@@ -144,7 +158,7 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (45)
+### Only in DEV (53)
 - `fan_alert_prefs_pkey`
 - `fan_follows_entity_idx`
 - `fan_follows_pkey`
@@ -159,6 +173,12 @@ _none_
 - `rep_player_awards_player_idx`
 - `rep_player_awards_team_idx`
 - `rep_player_awards_type_idx`
+- `rep_player_continuity_links_confirmed_uniq`
+- `rep_player_continuity_links_org_idx`
+- `rep_player_continuity_links_pair_uniq`
+- `rep_player_continuity_links_pkey`
+- `rep_player_continuity_links_prior_idx`
+- `rep_player_continuity_links_team_idx`
 - `rep_player_development_goals_org_idx`
 - `rep_player_development_goals_pkey`
 - `rep_player_development_goals_player_idx`
@@ -170,6 +190,7 @@ _none_
 - `rep_player_measurables_session_idx`
 - `rep_player_measurables_team_idx`
 - `rep_player_measurables_type_idx`
+- `rep_roster_players_id_team_uniq`
 - `rep_team_award_types_name_uniq`
 - `rep_team_award_types_org_idx`
 - `rep_team_award_types_org_name_uniq`
@@ -189,6 +210,7 @@ _none_
 - `rep_team_measurable_types_team_idx`
 - `rep_team_tags_org_name_uniq`
 - `rep_team_tags_org_shared_idx`
+- `rep_tryout_registrations_id_team_uniq`
 - `user_marketing_opt_outs_pkey`
 
 ### Only in PROD (3)
@@ -200,7 +222,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (49)
+### Only in DEV (59)
 - `announcements.announcements_tournament_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
@@ -218,6 +240,14 @@ _none_
 - `rep_player_awards.rep_player_awards_pkey`
 - `rep_player_awards.rep_player_awards_player_id_fkey`
 - `rep_player_awards.rep_player_awards_team_id_fkey`
+- `rep_player_continuity_links.rep_player_continuity_links_current_registration_team_fkey`
+- `rep_player_continuity_links.rep_player_continuity_links_current_roster_team_fkey`
+- `rep_player_continuity_links.rep_player_continuity_links_decided_by_fkey`
+- `rep_player_continuity_links.rep_player_continuity_links_org_id_fkey`
+- `rep_player_continuity_links.rep_player_continuity_links_pkey`
+- `rep_player_continuity_links.rep_player_continuity_links_prior_registration_team_fkey`
+- `rep_player_continuity_links.rep_player_continuity_links_prior_roster_team_fkey`
+- `rep_player_continuity_links.rep_player_continuity_links_team_id_fkey`
 - `rep_player_development_goals.rep_player_development_goals_created_by_fkey`
 - `rep_player_development_goals.rep_player_development_goals_org_id_fkey`
 - `rep_player_development_goals.rep_player_development_goals_pkey`
@@ -230,6 +260,7 @@ _none_
 - `rep_player_measurables.rep_player_measurables_player_id_fkey`
 - `rep_player_measurables.rep_player_measurables_session_team_fkey`
 - `rep_player_measurables.rep_player_measurables_team_id_fkey`
+- `rep_roster_players.rep_roster_players_id_team_uniq`
 - `rep_team_award_types.rep_team_award_types_created_by_fkey`
 - `rep_team_award_types.rep_team_award_types_org_id_fkey`
 - `rep_team_award_types.rep_team_award_types_pkey`
@@ -247,6 +278,7 @@ _none_
 - `rep_team_measurable_types.rep_team_measurable_types_org_id_fkey`
 - `rep_team_measurable_types.rep_team_measurable_types_pkey`
 - `rep_team_measurable_types.rep_team_measurable_types_team_id_fkey`
+- `rep_tryout_registrations.rep_tryout_registrations_id_team_uniq`
 - `teams.teams_tournament_id_fkey`
 - `user_marketing_opt_outs.user_marketing_opt_outs_pkey`
 - `user_marketing_opt_outs.user_marketing_opt_outs_user_id_fkey`
@@ -266,11 +298,15 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (15)
+### CHECK only in DEV (19)
 - `fan_follows.fan_follows_entity_type_check`
 - `fan_follows.fan_follows_source_check`
 - `rep_player_awards.rep_player_awards_note_check`
 - `rep_player_awards.rep_player_awards_tournament_label_check`
+- `rep_player_continuity_links.rep_player_continuity_links_confidence_check`
+- `rep_player_continuity_links.rep_player_continuity_links_one_current`
+- `rep_player_continuity_links.rep_player_continuity_links_one_prior`
+- `rep_player_continuity_links.rep_player_continuity_links_status_check`
 - `rep_player_development_goals.rep_player_development_goals_focus_area_check`
 - `rep_player_development_goals.rep_player_development_goals_note_check`
 - `rep_player_development_goals.rep_player_development_goals_status_check`

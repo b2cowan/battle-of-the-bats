@@ -2344,6 +2344,166 @@
     "foreign_column": "id"
   },
   {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_current_registration_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "current_registration_id",
+    "foreign_table": "rep_tryout_registrations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_current_registration_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "current_registration_id",
+    "foreign_table": "rep_tryout_registrations",
+    "foreign_column": "team_id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_current_registration_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_tryout_registrations",
+    "foreign_column": "team_id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_current_registration_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_tryout_registrations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_current_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "current_roster_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "team_id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_current_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "current_roster_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_current_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_current_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "team_id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_decided_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "decided_by",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "prior_registration_id",
+    "foreign_table": "rep_tryout_registrations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "prior_registration_id",
+    "foreign_table": "rep_tryout_registrations",
+    "foreign_column": "team_id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_tryout_registrations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_tryout_registrations",
+    "foreign_column": "team_id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "prior_roster_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "prior_roster_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "team_id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "team_id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
     "table_name": "rep_player_development_goals",
     "constraint_name": "rep_player_development_goals_created_by_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -2605,7 +2765,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "session_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "team_id"
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_player_measurables",
@@ -2613,7 +2773,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "session_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "id"
+    "foreign_column": "team_id"
   },
   {
     "table_name": "rep_player_measurables",
@@ -2676,6 +2836,22 @@
     "constraint_name": "rep_program_years_team_id_year_key",
     "constraint_type": "UNIQUE",
     "column_name": "year",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_roster_players",
+    "constraint_name": "rep_roster_players_id_team_uniq",
+    "constraint_type": "UNIQUE",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_roster_players",
+    "constraint_name": "rep_roster_players_id_team_uniq",
+    "constraint_type": "UNIQUE",
+    "column_name": "team_id",
     "foreign_table": null,
     "foreign_column": null
   },
@@ -3526,6 +3702,22 @@
     "column_name": "tryout_id",
     "foreign_table": "rep_tryouts",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_tryout_registrations",
+    "constraint_name": "rep_tryout_registrations_id_team_uniq",
+    "constraint_type": "UNIQUE",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_tryout_registrations",
+    "constraint_name": "rep_tryout_registrations_id_team_uniq",
+    "constraint_type": "UNIQUE",
+    "column_name": "team_id",
+    "foreign_table": null,
+    "foreign_column": null
   },
   {
     "table_name": "rep_tryout_registrations",

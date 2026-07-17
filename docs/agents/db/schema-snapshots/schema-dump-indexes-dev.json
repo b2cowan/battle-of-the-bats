@@ -1310,6 +1310,36 @@
     "indexdef": "CREATE INDEX rep_player_awards_type_idx ON public.rep_player_awards USING btree (award_type_id)"
   },
   {
+    "tablename": "rep_player_continuity_links",
+    "indexname": "rep_player_continuity_links_confirmed_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_continuity_links_confirmed_uniq ON public.rep_player_continuity_links USING btree (COALESCE(current_roster_id, current_registration_id)) WHERE (status = 'confirmed'::text)"
+  },
+  {
+    "tablename": "rep_player_continuity_links",
+    "indexname": "rep_player_continuity_links_org_idx",
+    "indexdef": "CREATE INDEX rep_player_continuity_links_org_idx ON public.rep_player_continuity_links USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_player_continuity_links",
+    "indexname": "rep_player_continuity_links_pair_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_continuity_links_pair_uniq ON public.rep_player_continuity_links USING btree (COALESCE(current_roster_id, current_registration_id), COALESCE(prior_roster_id, prior_registration_id))"
+  },
+  {
+    "tablename": "rep_player_continuity_links",
+    "indexname": "rep_player_continuity_links_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_continuity_links_pkey ON public.rep_player_continuity_links USING btree (id)"
+  },
+  {
+    "tablename": "rep_player_continuity_links",
+    "indexname": "rep_player_continuity_links_prior_idx",
+    "indexdef": "CREATE INDEX rep_player_continuity_links_prior_idx ON public.rep_player_continuity_links USING btree (COALESCE(prior_roster_id, prior_registration_id))"
+  },
+  {
+    "tablename": "rep_player_continuity_links",
+    "indexname": "rep_player_continuity_links_team_idx",
+    "indexdef": "CREATE INDEX rep_player_continuity_links_team_idx ON public.rep_player_continuity_links USING btree (team_id)"
+  },
+  {
     "tablename": "rep_player_development_goals",
     "indexname": "rep_player_development_goals_org_idx",
     "indexdef": "CREATE INDEX rep_player_development_goals_org_idx ON public.rep_player_development_goals USING btree (org_id)"
@@ -1428,6 +1458,11 @@
     "tablename": "rep_roster_players",
     "indexname": "rep_roster_players_email_idx",
     "indexdef": "CREATE INDEX rep_roster_players_email_idx ON public.rep_roster_players USING btree (guardian_email)"
+  },
+  {
+    "tablename": "rep_roster_players",
+    "indexname": "rep_roster_players_id_team_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_roster_players_id_team_uniq ON public.rep_roster_players USING btree (id, team_id)"
   },
   {
     "tablename": "rep_roster_players",
@@ -1793,6 +1828,11 @@
     "tablename": "rep_tryout_registrations",
     "indexname": "rep_tryout_registrations_email_idx",
     "indexdef": "CREATE INDEX rep_tryout_registrations_email_idx ON public.rep_tryout_registrations USING btree (guardian_email)"
+  },
+  {
+    "tablename": "rep_tryout_registrations",
+    "indexname": "rep_tryout_registrations_id_team_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_tryout_registrations_id_team_uniq ON public.rep_tryout_registrations USING btree (id, team_id)"
   },
   {
     "tablename": "rep_tryout_registrations",

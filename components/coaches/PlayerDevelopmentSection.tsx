@@ -5,7 +5,9 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import Sparkline from '@/components/charts/Sparkline';
 import TestTypesManager, { NewTypeFields } from '@/components/coaches/TestTypesManager';
-import { formatValue, todayLocal, formatShortDate } from '@/lib/measurable-format';
+import ContinuityCompareCard from '@/components/coaches/ContinuityCompareCard';
+import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
+import { formatValue, todayLocal, formatShortDate, formatShortInstant } from '@/lib/measurable-format';
 import type {
   RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus,
 } from '@/lib/types';
@@ -26,6 +28,9 @@ interface DevelopmentData {
   goals: RepPlayerDevelopmentGoal[];
   context: { fieldInnings: number; benchInnings: number } | null;
 }
+
+// Returning-player continuity (3C) rides the shared useContinuityLinks hook + the
+// ContinuityCompareCard — one plumbing + one compare surface across both verify doors.
 
 interface Props {
   orgSlug: string;
@@ -73,6 +78,17 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
   // silently does nothing is not an answer (owner feedback, 2026-07-17).
   const [goalErr, setGoalErr] = useState('');
   const [logErr, setLogErr] = useState('');
+  // Head coach only (the payload carries prior-season guardian identity) — a null apiBase
+  // disables the hook until canWrite is known true.
+  const {
+    byCurrent: continuityByCurrent, decide: decideContinuity, dismiss: dismissContinuity,
+    busy: continuityBusy, error: continuityErr,
+  } = useContinuityLinks(
+    data?.canWrite ? `/api/coaches/${orgSlug}/teams/${teamId}/development/continuity` : null,
+    'roster',
+    playerId,
+  );
+  const continuity = continuityByCurrent[playerId] ?? [];
   const load = useCallback(async () => {
     try {
       const res = await fetch(base);
@@ -97,6 +113,7 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
   }, []);
   // In-flight status PATCHes per goal — blocks double-taps without freezing the whole card.
   const statusInFlightRef = useRef<Set<string>>(new Set());
+
 
   function flashSaved(created: { kind: 'goal' | 'entry'; id: string } | null) {
     setLastCreated(created);
@@ -386,6 +403,29 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
       </div>
 
       {error && <p className={styles.errorText} role="alert">{error}</p>}
+
+      {/* ── Returning player? (3C — head coach only; name + DOB always shown, never email
+             alone; "Not sure yet" leaves the suggestion for a later visit) ── */}
+      {canWrite && continuity.length > 0 && (
+        <div style={{ marginBottom: '0.9rem' }}>
+          {continuity.map(row => row.status === 'confirmed' ? (
+            <p key={row.linkId} className={styles.devCardNote} style={{ marginBottom: '0.35rem' }}>
+              Linked to your {row.prior.seasonLabel} record
+              {row.decidedAt ? ` — confirmed ${formatShortInstant(row.decidedAt)}` : ''}.{' '}
+              <button type="button" className="btn btn-ghost" style={{ fontSize: '0.72rem', padding: '0.1rem 0.4rem' }}
+                disabled={continuityBusy} onClick={() => decideContinuity(playerId, row, 'reject')}>
+                Not the same player — unlink
+              </button>
+            </p>
+          ) : (
+            <ContinuityCompareCard key={row.linkId} row={row} busy={continuityBusy}
+              onConfirm={() => decideContinuity(playerId, row, 'confirm')}
+              onReject={() => decideContinuity(playerId, row, 'reject')}
+              onDismiss={() => dismissContinuity(playerId, row.linkId)} />
+          ))}
+          {continuityErr && <p className={styles.errorText} role="alert">{continuityErr}</p>}
+        </div>
+      )}
 
       {/* ── Focus areas (IDP) ── */}
       {data.showGoals && (
