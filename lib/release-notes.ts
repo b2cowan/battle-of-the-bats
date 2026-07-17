@@ -44,6 +44,56 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-17',
+    title: 'Follow your team from any device and get score alerts — plus a mobile makeover for tournament pages',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Fans can now create a free FieldLogicHQ account to follow teams across every device and get score alerts — following teams and watching live scores still needs no account at all.',
+      },
+      {
+        category: 'new',
+        text: 'Tournament pages got a full mobile makeover — schedules, standings, brackets, and team pages are easier to read and use on a phone.',
+      },
+      {
+        category: 'new',
+        text: 'In the Premium Coaches Portal, coaches can now track each player’s goals and skill-test results over a season, see a returning player’s history from prior seasons, and print a summary to share with families.',
+      },
+      {
+        category: 'new',
+        text: 'In the Premium Coaches Portal, coaches can now give season awards — MVP, Best Hitter, and more — that show up right on a player’s profile.',
+      },
+      {
+        category: 'new',
+        text: 'Coaches can tag games and expenses and share one tag library across every team.',
+      },
+      {
+        category: 'new',
+        text: 'Notification settings are now in one place — coaches can turn off the weekly Insights email digest, and every account gets a single settings page for what they receive.',
+      },
+      {
+        category: 'new',
+        text: 'FieldLogicHQ now installs as one app everywhere — no more separate icons to install per tournament.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed a bug where a coach unsubscribing from emails could accidentally unsubscribe their whole organization too.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed layout and filtering issues on the Discover, Scores, and Account pages.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed a security issue in the account sign-in flow.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed an issue that could prevent a new organization from choosing certain website addresses.',
+      },
+    ],
+  },
+  {
     date: '2026-07-10',
     title: 'See what stands out in your season — and a tie-breaker fix for standings',
     highlights: [
