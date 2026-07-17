@@ -1438,6 +1438,54 @@ export interface RepPlayerAward {
   eventOpponent?: string | null;
 }
 
+// Player Development (roadmap Phase 3, slice 3A — migration 189)
+
+export interface RepTeamMeasurableType {
+  id: string;
+  orgId: string;
+  teamId: string;
+  name: string;
+  // Free-text unit ("seconds", "mph") — snapshotted onto each entry at log time, so editing
+  // the type's unit never rewrites logged history.
+  unit: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RepPlayerMeasurable {
+  id: string;
+  orgId: string;
+  teamId: string;
+  playerId: string;
+  measurableTypeId: string;
+  value: number;
+  // Unit snapshot (see RepTeamMeasurableType.unit) — render THIS, never re-join to the type.
+  unit: string;
+  recordedOn: string;
+  note: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type RepDevelopmentGoalStatus = 'working' | 'achieved' | 'parked';
+
+export interface RepPlayerDevelopmentGoal {
+  id: string;
+  orgId: string;
+  teamId: string;
+  playerId: string;
+  focusArea: string;
+  note: string | null;
+  status: RepDevelopmentGoalStatus;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface RepDocumentTemplate {
   id: string;
   orgId: string;

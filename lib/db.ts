@@ -5,7 +5,7 @@ import { createClient as createBrowserSupabaseClient } from './supabase-browser'
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
@@ -7063,6 +7063,225 @@ export async function getRepPlayerAwardsSummary(playerId: string): Promise<RepPl
     .sort((a, b) => b.count - a.count);
 
   return { total: awards.length, byType };
+}
+
+// Player Development (roadmap Phase 3, slice 3A — migration 189)
+
+function mapRepTeamMeasurableType(r: any): RepTeamMeasurableType {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    teamId: r.team_id,
+    name: r.name,
+    unit: r.unit,
+    sortOrder: r.sort_order,
+    isActive: r.is_active,
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+/** NOT seeded (unlike award types) — measurables are deliberately coach-defined per team,
+ *  sport-neutral by construction. The empty library renders an honest invitation instead. */
+export async function getRepTeamMeasurableTypes(
+  teamId: string, opts?: { includeRetired?: boolean },
+): Promise<RepTeamMeasurableType[]> {
+  let q = supabaseAdmin.from('rep_team_measurable_types').select('*').eq('team_id', teamId);
+  if (!opts?.includeRetired) q = q.eq('is_active', true);
+  const { data, error } = await q.order('sort_order', { ascending: true }).order('name', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamMeasurableType);
+}
+
+export async function createRepTeamMeasurableType(fields: {
+  orgId: string; teamId: string; name: string; unit: string; createdBy?: string | null;
+}): Promise<RepTeamMeasurableType> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_measurable_types')
+    .insert({
+      org_id: fields.orgId,
+      team_id: fields.teamId,
+      name: fields.name.trim(),
+      unit: fields.unit.trim(),
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamMeasurableType(data);
+}
+
+/** Scoped update — rename/unit-edit/retire/restore. team_id guards cross-team edits even if
+ *  RLS is bypassed. Never a delete — types are only ever soft-retired (migration 189). A unit
+ *  edit only affects FUTURE entries (each entry carries its own unit snapshot). */
+export async function updateRepTeamMeasurableType(
+  id: string, teamId: string,
+  fields: { name?: string; unit?: string; isActive?: boolean },
+): Promise<RepTeamMeasurableType | null> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.name !== undefined) patch.name = fields.name.trim();
+  if (fields.unit !== undefined) patch.unit = fields.unit.trim();
+  if (fields.isActive !== undefined) patch.is_active = fields.isActive;
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_measurable_types')
+    .update(patch)
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamMeasurableType(data) : null;
+}
+
+function mapRepPlayerMeasurable(r: any): RepPlayerMeasurable {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    teamId: r.team_id,
+    playerId: r.player_id,
+    measurableTypeId: r.measurable_type_id,
+    value: Number(r.value),
+    unit: r.unit,
+    recordedOn: r.recorded_on,
+    note: r.note ?? null,
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+/** No program-year filter needed — playerId itself is season-scoped (rollover mints a new
+ *  player_id each season; same reasoning as awards). Newest-first for the entry log. */
+export async function getRepPlayerMeasurablesForPlayer(playerId: string): Promise<RepPlayerMeasurable[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_measurables')
+    .select('*')
+    .eq('player_id', playerId)
+    .order('recorded_on', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerMeasurable);
+}
+
+export async function createRepPlayerMeasurable(fields: {
+  orgId: string; teamId: string; playerId: string; measurableTypeId: string;
+  value: number; unit: string; recordedOn: string; note?: string | null; createdBy?: string | null;
+}): Promise<RepPlayerMeasurable> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_measurables')
+    .insert({
+      org_id: fields.orgId,
+      team_id: fields.teamId,
+      player_id: fields.playerId,
+      measurable_type_id: fields.measurableTypeId,
+      value: fields.value,
+      unit: fields.unit.trim(),
+      recorded_on: fields.recordedOn,
+      note: fields.note?.trim() || null,
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepPlayerMeasurable(data);
+}
+
+/** Scoped delete — undoes a mis-entry. team_id + player_id guard directly in the query
+ *  (awards-route precedent) so callers never need an ownership pre-fetch. */
+export async function deleteRepPlayerMeasurable(id: string, teamId: string, playerId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_measurables')
+    .delete()
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .eq('player_id', playerId)
+    .select('id');
+  if (error) throw error;
+  return (data ?? []).length > 0;
+}
+
+function mapRepPlayerDevelopmentGoal(r: any): RepPlayerDevelopmentGoal {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    teamId: r.team_id,
+    playerId: r.player_id,
+    focusArea: r.focus_area,
+    note: r.note ?? null,
+    status: r.status as RepDevelopmentGoalStatus,
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+/** Oldest-first so the card reads as a stable list (new goals append at the bottom). */
+export async function getRepPlayerDevelopmentGoalsForPlayer(playerId: string): Promise<RepPlayerDevelopmentGoal[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_development_goals')
+    .select('*')
+    .eq('player_id', playerId)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerDevelopmentGoal);
+}
+
+export async function createRepPlayerDevelopmentGoal(fields: {
+  orgId: string; teamId: string; playerId: string; focusArea: string;
+  note?: string | null; status?: RepDevelopmentGoalStatus; createdBy?: string | null;
+}): Promise<RepPlayerDevelopmentGoal> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_development_goals')
+    .insert({
+      org_id: fields.orgId,
+      team_id: fields.teamId,
+      player_id: fields.playerId,
+      focus_area: fields.focusArea.trim(),
+      note: fields.note?.trim() || null,
+      status: fields.status ?? 'working',
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepPlayerDevelopmentGoal(data);
+}
+
+/** Scoped update — edit text/note or move the status pill. team_id + player_id guard
+ *  cross-team AND cross-player edits directly in the query (awards-route precedent), so
+ *  callers never need a separate ownership pre-fetch. */
+export async function updateRepPlayerDevelopmentGoal(
+  id: string, teamId: string, playerId: string,
+  fields: { focusArea?: string; note?: string | null; status?: RepDevelopmentGoalStatus },
+): Promise<RepPlayerDevelopmentGoal | null> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.focusArea !== undefined) patch.focus_area = fields.focusArea.trim();
+  if (fields.note !== undefined) patch.note = fields.note?.trim() || null;
+  if (fields.status !== undefined) patch.status = fields.status;
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_development_goals')
+    .update(patch)
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .eq('player_id', playerId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepPlayerDevelopmentGoal(data) : null;
+}
+
+/** Scoped delete — undoes a mis-entry (archiving is status='parked', not delete). */
+export async function deleteRepPlayerDevelopmentGoal(id: string, teamId: string, playerId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_development_goals')
+    .delete()
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .eq('player_id', playerId)
+    .select('id');
+  if (error) throw error;
+  return (data ?? []).length > 0;
 }
 
 // Document Templates

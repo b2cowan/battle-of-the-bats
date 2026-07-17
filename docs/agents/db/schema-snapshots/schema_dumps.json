@@ -8912,6 +8912,96 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_player_development_goals",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_player_development_goals",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_development_goals",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_development_goals",
+        "pos": 4,
+        "column_name": "player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_development_goals",
+        "pos": 5,
+        "column_name": "focus_area",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_development_goals",
+        "pos": 6,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_development_goals",
+        "pos": 7,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'working'::text"
+      },
+      {
+        "table_name": "rep_player_development_goals",
+        "pos": 8,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_development_goals",
+        "pos": 9,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_player_development_goals",
+        "pos": 10,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_player_documents",
         "pos": 1,
         "column_name": "id",
@@ -9234,6 +9324,114 @@
         "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "pos": 4,
+        "column_name": "player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "pos": 5,
+        "column_name": "measurable_type_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "pos": 6,
+        "column_name": "value",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "pos": 7,
+        "column_name": "unit",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "pos": 8,
+        "column_name": "recorded_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "pos": 9,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "pos": 10,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "pos": 11,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "pos": 12,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
       },
       {
         "table_name": "rep_program_years",
@@ -10926,6 +11124,96 @@
         "udt_name": "jsonb",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 4,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 5,
+        "column_name": "unit",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 6,
+        "column_name": "sort_order",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 7,
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 8,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 9,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "pos": 10,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
       },
       {
         "table_name": "rep_team_payment_requests",
@@ -15298,6 +15586,34 @@
         "constraint_name": "rep_player_awards_team_id_fkey"
       },
       {
+        "table_name": "rep_player_development_goals",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_player_development_goals_created_by_fkey"
+      },
+      {
+        "table_name": "rep_player_development_goals",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_development_goals_org_id_fkey"
+      },
+      {
+        "table_name": "rep_player_development_goals",
+        "column_name": "player_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_development_goals_player_id_fkey"
+      },
+      {
+        "table_name": "rep_player_development_goals",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_development_goals_team_id_fkey"
+      },
+      {
         "table_name": "rep_player_documents",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -15401,6 +15717,41 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "rep_player_dues_schedules_team_id_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_player_measurables_created_by_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "measurable_type_id",
+        "foreign_table": "rep_team_measurable_types",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_measurables_measurable_type_id_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_measurables_org_id_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "player_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_measurables_player_id_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_measurables_team_id_fkey"
       },
       {
         "table_name": "rep_program_years",
@@ -15765,6 +16116,27 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "rep_team_lineups_updated_by_fkey"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_measurable_types_created_by_fkey"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_measurable_types_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_measurable_types",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_measurable_types_team_id_fkey"
       },
       {
         "table_name": "rep_team_payment_requests",
@@ -17681,6 +18053,26 @@
         "indexdef": "CREATE INDEX rep_player_awards_type_idx ON public.rep_player_awards USING btree (award_type_id)"
       },
       {
+        "tablename": "rep_player_development_goals",
+        "indexname": "rep_player_development_goals_org_idx",
+        "indexdef": "CREATE INDEX rep_player_development_goals_org_idx ON public.rep_player_development_goals USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_player_development_goals",
+        "indexname": "rep_player_development_goals_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_player_development_goals_pkey ON public.rep_player_development_goals USING btree (id)"
+      },
+      {
+        "tablename": "rep_player_development_goals",
+        "indexname": "rep_player_development_goals_player_idx",
+        "indexdef": "CREATE INDEX rep_player_development_goals_player_idx ON public.rep_player_development_goals USING btree (player_id, status, created_at)"
+      },
+      {
+        "tablename": "rep_player_development_goals",
+        "indexname": "rep_player_development_goals_team_idx",
+        "indexdef": "CREATE INDEX rep_player_development_goals_team_idx ON public.rep_player_development_goals USING btree (team_id)"
+      },
+      {
         "tablename": "rep_player_documents",
         "indexname": "rep_player_documents_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_player_documents_pkey ON public.rep_player_documents USING btree (id)"
@@ -17729,6 +18121,31 @@
         "tablename": "rep_player_dues_schedules",
         "indexname": "rep_player_dues_schedules_program_year_id_player_id_key",
         "indexdef": "CREATE UNIQUE INDEX rep_player_dues_schedules_program_year_id_player_id_key ON public.rep_player_dues_schedules USING btree (program_year_id, player_id)"
+      },
+      {
+        "tablename": "rep_player_measurables",
+        "indexname": "rep_player_measurables_org_idx",
+        "indexdef": "CREATE INDEX rep_player_measurables_org_idx ON public.rep_player_measurables USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_player_measurables",
+        "indexname": "rep_player_measurables_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_player_measurables_pkey ON public.rep_player_measurables USING btree (id)"
+      },
+      {
+        "tablename": "rep_player_measurables",
+        "indexname": "rep_player_measurables_player_idx",
+        "indexdef": "CREATE INDEX rep_player_measurables_player_idx ON public.rep_player_measurables USING btree (player_id, measurable_type_id, recorded_on DESC)"
+      },
+      {
+        "tablename": "rep_player_measurables",
+        "indexname": "rep_player_measurables_team_idx",
+        "indexdef": "CREATE INDEX rep_player_measurables_team_idx ON public.rep_player_measurables USING btree (team_id, recorded_on DESC)"
+      },
+      {
+        "tablename": "rep_player_measurables",
+        "indexname": "rep_player_measurables_type_idx",
+        "indexdef": "CREATE INDEX rep_player_measurables_type_idx ON public.rep_player_measurables USING btree (measurable_type_id)"
       },
       {
         "tablename": "rep_program_years",
@@ -17979,6 +18396,26 @@
         "tablename": "rep_team_lineups",
         "indexname": "rep_team_lineups_team_idx",
         "indexdef": "CREATE INDEX rep_team_lineups_team_idx ON public.rep_team_lineups USING btree (team_id, program_year_id)"
+      },
+      {
+        "tablename": "rep_team_measurable_types",
+        "indexname": "rep_team_measurable_types_name_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_measurable_types_name_uniq ON public.rep_team_measurable_types USING btree (team_id, lower(btrim(name))) WHERE is_active"
+      },
+      {
+        "tablename": "rep_team_measurable_types",
+        "indexname": "rep_team_measurable_types_org_idx",
+        "indexdef": "CREATE INDEX rep_team_measurable_types_org_idx ON public.rep_team_measurable_types USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_measurable_types",
+        "indexname": "rep_team_measurable_types_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_measurable_types_pkey ON public.rep_team_measurable_types USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_measurable_types",
+        "indexname": "rep_team_measurable_types_team_idx",
+        "indexdef": "CREATE INDEX rep_team_measurable_types_team_idx ON public.rep_team_measurable_types USING btree (team_id, is_active, sort_order)"
       },
       {
         "tablename": "rep_team_payment_requests",
@@ -19573,6 +20010,30 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "rep_player_development_goals",
+        "detail": "rep_player_development_goals_focus_area_check",
+        "check_clause": "((char_length(btrim(focus_area)) >= 1) AND (char_length(btrim(focus_area)) <= 80))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_player_development_goals",
+        "detail": "rep_player_development_goals_note_check",
+        "check_clause": "((note IS NULL) OR (char_length(note) <= 280))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_player_development_goals",
+        "detail": "rep_player_development_goals_status_check",
+        "check_clause": "(status = ANY (ARRAY['working'::text, 'achieved'::text, 'parked'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_player_development_goals",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "rep_player_documents",
         "detail": "rep_player_documents_document_type_check",
         "check_clause": "(document_type = ANY (ARRAY['waiver'::text, 'medical_consent'::text, 'code_of_conduct'::text, 'other'::text]))"
@@ -19610,6 +20071,30 @@
       {
         "kind": "RLS",
         "table_name": "rep_player_dues_schedules",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_player_measurables",
+        "detail": "rep_player_measurables_note_check",
+        "check_clause": "((note IS NULL) OR (char_length(note) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_player_measurables",
+        "detail": "rep_player_measurables_unit_check",
+        "check_clause": "((char_length(btrim(unit)) >= 1) AND (char_length(btrim(unit)) <= 20))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_player_measurables",
+        "detail": "rep_player_measurables_value_check",
+        "check_clause": "((value >= (0)::numeric) AND (value <= (99999)::numeric))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_player_measurables",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -19868,6 +20353,24 @@
       {
         "kind": "RLS",
         "table_name": "rep_team_lineups",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_name_check",
+        "check_clause": "((char_length(btrim(name)) >= 1) AND (char_length(btrim(name)) <= 40))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_measurable_types",
+        "detail": "rep_team_measurable_types_unit_check",
+        "check_clause": "((char_length(btrim(unit)) >= 1) AND (char_length(btrim(unit)) <= 20))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_measurable_types",
         "detail": "ENABLED",
         "check_clause": null
       },

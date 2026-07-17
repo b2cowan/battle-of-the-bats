@@ -2344,6 +2344,46 @@
     "foreign_column": "id"
   },
   {
+    "table_name": "rep_player_development_goals",
+    "constraint_name": "rep_player_development_goals_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_player_development_goals",
+    "constraint_name": "rep_player_development_goals_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_development_goals",
+    "constraint_name": "rep_player_development_goals_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_player_development_goals",
+    "constraint_name": "rep_player_development_goals_player_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "player_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_development_goals",
+    "constraint_name": "rep_player_development_goals_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
     "table_name": "rep_player_documents",
     "constraint_name": "rep_player_documents_org_id_fkey",
     "constraint_type": "FOREIGN KEY",
@@ -2514,6 +2554,54 @@
   {
     "table_name": "rep_player_dues_schedules",
     "constraint_name": "rep_player_dues_schedules_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "constraint_name": "rep_player_measurables_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "constraint_name": "rep_player_measurables_measurable_type_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "measurable_type_id",
+    "foreign_table": "rep_team_measurable_types",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "constraint_name": "rep_player_measurables_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "constraint_name": "rep_player_measurables_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "constraint_name": "rep_player_measurables_player_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "player_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "constraint_name": "rep_player_measurables_team_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_teams",
@@ -3150,6 +3238,38 @@
     "column_name": "updated_by",
     "foreign_table": null,
     "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "constraint_name": "rep_team_measurable_types_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "constraint_name": "rep_team_measurable_types_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "constraint_name": "rep_team_measurable_types_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_measurable_types",
+    "constraint_name": "rep_team_measurable_types_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_team_payment_requests",

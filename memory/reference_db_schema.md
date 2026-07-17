@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-07-14 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-07-17 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-07-14
+# DB Schema Reference — 2026-07-17
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -148,6 +148,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, award_type_id (uuid) → rep_team_award_types.id NOT NULL, event_id (uuid) → rep_team_events.id, tournament_label, awarded_at NOT NULL, note, created_by (uuid), created_at, updated_at
 - Indexes: rep_player_awards_event_idx, rep_player_awards_org_idx, rep_player_awards_player_idx, rep_player_awards_team_idx, rep_player_awards_type_idx
 
+### rep_player_development_goals
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, focus_area NOT NULL, note, status, created_by (uuid), created_at, updated_at
+- Indexes: rep_player_development_goals_org_idx, rep_player_development_goals_player_idx, rep_player_development_goals_team_idx
+
 ### rep_player_documents
 id (uuid), player_id (uuid) → rep_roster_players.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, document_type NOT NULL, storage_path NOT NULL, file_name NOT NULL, file_size (bigint) NOT NULL, template_id (uuid) → rep_document_templates.id, uploaded_by (uuid), created_at
 - Indexes: rep_player_documents_player_idx, rep_player_documents_team_idx
@@ -159,6 +163,10 @@ id (uuid), schedule_id (uuid) → rep_player_dues_schedules.id NOT NULL, player_
 ### rep_player_dues_schedules
 id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, total_amount (numeric) NOT NULL, notes, created_at, updated_at, budget_line_id (uuid) → rep_budget_lines.id
 - Indexes: rep_player_dues_schedules_program_year_id_player_id_key
+
+### rep_player_measurables
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.id NOT NULL, value (numeric) NOT NULL, unit NOT NULL, recorded_on NOT NULL, note, created_by (uuid), created_at, updated_at
+- Indexes: rep_player_measurables_org_idx, rep_player_measurables_player_idx, rep_player_measurables_team_idx, rep_player_measurables_type_idx
 
 ### rep_program_years
 id (uuid), team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, name NOT NULL, year (integer) NOT NULL, status, tryout_open (boolean), tryout_description, budget_amount (numeric), created_at, updated_at, auto_reminders_enabled (boolean), lineup_settings (jsonb)
@@ -219,6 +227,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 ### rep_team_lineups
 id (uuid), event_id (uuid) → rep_team_events.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, lineup_mode, inning_count (integer), notes, updated_by (uuid), created_at, updated_at, rules_override (jsonb)
 - Indexes: rep_team_lineups_event_id_key, rep_team_lineups_event_idx, rep_team_lineups_org_idx, rep_team_lineups_team_idx
+
+### rep_team_measurable_types
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, name NOT NULL, unit NOT NULL, sort_order (integer), is_active (boolean), created_by (uuid), created_at, updated_at
+- Indexes: rep_team_measurable_types_name_uniq, rep_team_measurable_types_org_idx, rep_team_measurable_types_team_idx
 
 ### rep_team_payment_requests
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, request_type NOT NULL, amount (numeric) NOT NULL, description NOT NULL, payment_method, notes, status, denial_reason, budget_line_id (uuid) → org_budget_lines.id, accounting_entry_id (uuid) → accounting_entries.id, created_by (uuid) NOT NULL, reviewed_by (uuid), reviewed_at, created_at, updated_at
@@ -555,11 +567,11 @@ user_id (uuid) NOT NULL, opted_out_at
 
 ## Tables by count
 
-Total: **134 tables** across 10 modules.
+Total: **137 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 37 tables
+- Rep Teams: 40 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables

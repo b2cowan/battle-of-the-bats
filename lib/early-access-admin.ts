@@ -42,6 +42,7 @@ export const EARLY_ACCESS_FEATURE_LABELS: Record<string, string> = {
   team_documents: 'Team documents',
   team_budget: 'Team budget',
   team_dues_automation: 'Team dues automation',
+  team_player_development: 'Player development',
 };
 
 export const EARLY_ACCESS_SELECT = [

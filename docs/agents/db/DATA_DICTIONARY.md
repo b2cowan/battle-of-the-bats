@@ -2250,6 +2250,113 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_player_awards.created_by -->
 **`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who gave the award.
 
+### `rep_team_measurable_types`
+<!-- dict:table:rep_team_measurable_types -->
+
+**Purpose:** a coach's own per-team measurable-test library ("60-yd sprint (seconds)", "Overhand throw velo (mph)") that `rep_player_measurables` entries point at. Added by migration 189 (Player Development, slice 3A). Mirrors `rep_team_award_types` (mig 182) structurally. **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **Never hard-deleted.** No DELETE route/policy — "retire" is `is_active=false`; every logged entry keeps resolving the type's current name at render time. Retiring drops the type from the picker without fragmenting a player's history (the anti-"60yd / Sixty" drift design).
+2. **One ACTIVE name per team, case-insensitive** — partial unique index (`WHERE is_active`); a retired name can be reused; duplicate active name → 409.
+3. **`unit` lives on the type AND is snapshotted onto each entry** at log time (see `rep_player_measurables.unit`) so a later unit edit never silently rewrites history.
+4. **NOT seeded** (unlike award types) — measurables are deliberately coach-defined per team, sport-neutral by construction (no SportPack catalog in V1; a sport-seeded starter set is a listed fast-follow).
+5. **`team_id` NOT NULL** — no org-shared rows in V1 (org-shared libraries are a fast-follow; award types' mig-184 widening is the precedent when that happens).
+6. **Writes are head-coach-only at BOTH layers** (Player Development D1). App routes gate on `canWriteDevelopment` (isHeadCoach) AND the RLS write policies require `rep_team_coaches.coach_role = 'head_coach'` — deliberately TIGHTER than the mig-182 awards posture, so a direct PostgREST call from an assistant's session can't bypass D1 (mig-141 chat-engine lesson; caught + fixed in the 3A adversarial review). No org-admin write policies exist (no admin write surface; future ones would use service-role routes). Applies to all three Player Development tables. Every policy is DROP-IF-EXISTS-guarded → the migration is safely re-runnable.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_measurable_types.org_id -->
+<!-- dict:col:rep_team_measurable_types.team_id -->
+**`org_id` / `team_id`** (FK, NOT NULL, CASCADE) — scope; sourced from the URL/context, not the request body.
+
+<!-- dict:col:rep_team_measurable_types.name -->
+**`name`** (text, NOT NULL; CHECK `1 ≤ char_length(btrim(name)) ≤ 40`) — the test's label; unique per team while active (gotcha 2).
+
+<!-- dict:col:rep_team_measurable_types.unit -->
+**`unit`** (text, NOT NULL; CHECK `1 ≤ char_length(btrim(unit)) ≤ 20`) — free-text unit ("seconds", "mph"); snapshotted onto entries (gotcha 3).
+
+<!-- dict:col:rep_team_measurable_types.sort_order -->
+**`sort_order`** (int, NOT NULL, default 0) — picker display order.
+
+<!-- dict:col:rep_team_measurable_types.is_active -->
+**`is_active`** (bool, NOT NULL, default true) — retire/restore flag (gotcha 1).
+
+<!-- dict:col:rep_team_measurable_types.created_by -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who created the type.
+
+### `rep_player_measurables`
+<!-- dict:table:rep_player_measurables -->
+
+**Purpose:** one dated measurable reading — "Avery ran the 60-yd in 8.42s on Jul 17." Added by migration 189 (Player Development, slice 3A). **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **`measurable_type_id` is `ON DELETE RESTRICT`** — the entry IS the historical record (same reasoning as `rep_player_awards.award_type_id`); types are only ever retired, never deleted.
+2. **`unit` is a SNAPSHOT** of the type's unit at log time — render the entry's own unit, never re-join to the type for it.
+3. **`value` is bounded** (`numeric(8,3)`, CHECK `0 ≤ value ≤ 99999`) — the tryouts-review "unconstrained numeric" lesson applied at DB level.
+4. **No `program_year_id` and none needed** — `player_id` is inherently season-scoped (season rollover mints a new `rep_roster_players` row; same as `rep_player_awards` gotcha 4). Cross-season history arrives via continuity links (slice 3C), not season columns here.
+5. **Hard-deletable** (undo a mis-entry) — a different concern from retiring a *type*.
+6. **UI honesty rules are app-side law:** a trend/sparkline renders only at ≥2 entries of the same type in-season; team-wide lists stay roster-ordered (never sort-by-result). No DB enforcement — flag any violation in review.
+7. **Slice 3B adds a nullable `session_id`** (evaluation-session back-reference) — not present at mig 189.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_player_measurables.org_id -->
+<!-- dict:col:rep_player_measurables.team_id -->
+**`org_id` / `team_id`** (FK, NOT NULL, CASCADE) — scope; sourced from the URL/context, not the request body.
+
+<!-- dict:col:rep_player_measurables.player_id -->
+**`player_id`** (FK → `rep_roster_players.id` CASCADE) — the player measured.
+
+<!-- dict:col:rep_player_measurables.measurable_type_id -->
+**`measurable_type_id`** (FK → `rep_team_measurable_types.id` RESTRICT) — which test (gotcha 1); must be an ACTIVE type at log time (app-enforced).
+
+<!-- dict:col:rep_player_measurables.value -->
+**`value`** (numeric(8,3), NOT NULL; CHECK `0 ≤ value ≤ 99999`) — the reading (gotcha 3).
+
+<!-- dict:col:rep_player_measurables.unit -->
+**`unit`** (text, NOT NULL; CHECK `1–20` chars) — unit snapshot (gotcha 2).
+
+<!-- dict:col:rep_player_measurables.recorded_on -->
+**`recorded_on`** (date, NOT NULL) — when the test was run; client-supplied, defaults to today in the UI (tournament-timezone rules don't apply — it's a coach-chosen calendar date).
+
+<!-- dict:col:rep_player_measurables.note -->
+**`note`** (text, nullable; CHECK `≤ 200` chars) — optional context ("after warm-up, turf").
+
+<!-- dict:col:rep_player_measurables.created_by -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who logged it.
+
+### `rep_player_development_goals`
+<!-- dict:table:rep_player_development_goals -->
+
+**Purpose:** a coach's development focus areas (IDP) for one player — free text + status, deliberately no score/rank/percent. Added by migration 189 (Player Development, slice 3A). **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **Dedicated table, NOT jsonb on `rep_roster_players`** — slice 3D's cross-season carry-forward queries goals across the player-row chain (roster rows are minted fresh every season), which jsonb-on-a-replaced-row can't support.
+2. **`status` is the whole lifecycle:** `working` | `achieved` | `parked` (CHECK). "Archive" is `parked`; hard DELETE exists only to undo a mis-entry.
+3. **View gates on the `notes` capability; writes are head-coach-only** (Player Development D1) — goals are coach-judgment content about a minor, same sensitivity class as `admin_notes`. Content must stay skill/goal-oriented (PIPEDA posture: no behavioral-profiling fields).
+4. **No `program_year_id`** — same season-scoping-via-player_id reasoning as measurables/awards.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_player_development_goals.org_id -->
+<!-- dict:col:rep_player_development_goals.team_id -->
+**`org_id` / `team_id`** (FK, NOT NULL, CASCADE) — scope; sourced from the URL/context, not the request body.
+
+<!-- dict:col:rep_player_development_goals.player_id -->
+**`player_id`** (FK → `rep_roster_players.id` CASCADE) — whose focus area.
+
+<!-- dict:col:rep_player_development_goals.focus_area -->
+**`focus_area`** (text, NOT NULL; CHECK `1–80` chars) — the plain-language focus ("First-step quickness off the bag").
+
+<!-- dict:col:rep_player_development_goals.note -->
+**`note`** (text, nullable; CHECK `≤ 280` chars) — one short note; UI copy nudges "a note the player would be happy to read."
+
+<!-- dict:col:rep_player_development_goals.status -->
+**`status`** (text, NOT NULL, default `'working'`; CHECK `working|achieved|parked`) — the status pill (gotcha 2).
+
+<!-- dict:col:rep_player_development_goals.created_by -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who set it.
+
 ### `rep_tryout_registrations`
 <!-- dict:table:rep_tryout_registrations -->
 

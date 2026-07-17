@@ -15,6 +15,7 @@ export const BASIC_COACH_INTEREST_OPTIONS = [
   'documents',
   'budget',
   'dues_automation',
+  'development',
 ] as const;
 
 export type BasicCoachInterestOption = (typeof BASIC_COACH_INTEREST_OPTIONS)[number];
@@ -42,6 +43,7 @@ const LABELS: Record<BasicCoachInterestOption, string> = {
   documents: 'documents',
   budget: 'budget',
   dues_automation: 'dues automation',
+  development: 'player development',
 };
 
 const FEATURE_VALUES: Record<BasicCoachInterestOption, string> = {
@@ -50,6 +52,7 @@ const FEATURE_VALUES: Record<BasicCoachInterestOption, string> = {
   documents: 'team_documents',
   budget: 'team_budget',
   dues_automation: 'team_dues_automation',
+  development: 'team_player_development',
 };
 
 function normalizeEmail(email: string): string {

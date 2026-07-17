@@ -5,6 +5,8 @@ import { ChevronRight, AlertTriangle, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection';
+import PlayerDevelopmentSection from '@/components/coaches/PlayerDevelopmentSection';
+import { canViewDevelopmentGoals, canViewMeasurables } from '@/lib/coach-capabilities';
 import PositionProfileEditor, { type PositionProfileValue } from '@/components/coaches/PositionProfileEditor';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
@@ -532,6 +534,22 @@ export default function PlayerDetailPage({
           playerId={playerId}
         />
       </div>
+
+      {/* Development (Player Development 3A) — section renders only when this coach can see
+          goals (notes) or measurables (roster view); the API filters server-side regardless. */}
+      {assignment && (canViewDevelopmentGoals(assignment.capabilities) || canViewMeasurables(assignment.capabilities)) && (
+        <div className={styles.detailSection}>
+          {/* key forces a fresh mount per player — no cross-player fetch races or stale drafts */}
+          <PlayerDevelopmentSection
+            key={playerId}
+            orgSlug={orgSlug}
+            teamId={teamId}
+            playerId={playerId}
+            bestPositions={form?.positions.best ?? []}
+            attendancePct={attendance && attnKnown > 0 ? attnRate : null}
+          />
+        </div>
+      )}
 
       {/* Attendance */}
       <div className={styles.detailSection}>

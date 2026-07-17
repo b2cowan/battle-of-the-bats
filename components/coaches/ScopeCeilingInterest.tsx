@@ -26,6 +26,7 @@ const OPTIONS: Array<{ value: BasicCoachInterestOption; label: string }> = [
   { value: 'documents', label: 'Documents' },
   { value: 'budget', label: 'Budget' },
   { value: 'dues_automation', label: 'Dues automation' },
+  { value: 'development', label: 'Player development' },
 ];
 
 export default function ScopeCeilingInterest({ basicTeamId, checkoutOpen = false }: Props) {

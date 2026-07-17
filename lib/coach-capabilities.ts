@@ -125,6 +125,14 @@ export const canViewRoster = (c: CoachCapabilities) => c.roster !== 'off';
 // Player Awards (Phase 2): "roster/schedule access" per the locked scope — either surface
 // already implies enough context to know the players and games awards attach to.
 export const canManageAwards = (c: CoachCapabilities) => c.schedule || c.roster !== 'off';
+// Player Development (Phase 3, D1): goals are coach-judgment content about a minor — same
+// sensitivity class as notes; measurables ride roster visibility; ALL Development writes
+// (goals, entries, the type library) are head-coach-only in V1. No new capability key.
+export const canViewDevelopmentGoals = (c: CoachCapabilities) => c.notes;
+// Distinct NAME kept as a semantic seam (measurable visibility could diverge from roster
+// visibility later); today it IS roster visibility, so alias rather than duplicate the body.
+export const canViewMeasurables = canViewRoster;
+export const canWriteDevelopment = (c: CoachCapabilities) => c.isHeadCoach;
 
 const MONEY_VALUES: MoneyAccess[] = ['off', 'read', 'write'];
 const DOCS_VALUES: DocsAccess[] = ['off', 'view', 'manage'];
