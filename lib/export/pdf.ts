@@ -104,8 +104,10 @@ export function buildTablePDF(
     headers: string[];
     rows: (string | number | null | undefined)[][];
     settings: OrgPdfSettings;
-    /** When provided, renders one autoTable per group (division page breaks). */
-    groups?: { label: string; rows: (string | number | null | undefined)[][] }[];
+    /** When provided, renders one autoTable per group (division page breaks). A group may
+     *  carry its own `headers` (falls back to the top-level `headers` when absent) so one
+     *  document can hold sections with different columns (e.g. a development summary). */
+    groups?: { label: string; headers?: string[]; rows: (string | number | null | undefined)[][] }[];
   },
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any {
@@ -274,10 +276,10 @@ export function buildTablePDF(
       doc.line(MARGIN, startY + 6, pageWidth - MARGIN, startY + 6);
       startY += 10;
 
-      // Table for this group
+      // Table for this group (its own headers when given — mixed-column documents).
       autoTable(doc, {
         ...tableStyles(),
-        head: [headers],
+        head: [group.headers ?? headers],
         body: group.rows.map(r => r.map(c => c ?? '')),
         startY,
         didDrawPage,
@@ -314,7 +316,9 @@ export function buildTablePDF(
  * @param headers  - Column header labels
  * @param rows     - Data rows (used when groups is absent)
  * @param settings - Org PDF settings (falls back to DEFAULT_PDF_SETTINGS)
- * @param groups   - Optional grouped rows (one table per group with a section label)
+ * @param groups   - Optional grouped rows (one table per group with a section label). A group
+ *                   may carry its own `headers` (falls back to the top-level `headers`) for a
+ *                   mixed-column document such as the development summary.
  */
 export async function downloadPDF(
   filename: string,
@@ -323,7 +327,7 @@ export async function downloadPDF(
   headers: string[],
   rows: (string | number | null | undefined)[][],
   settings: OrgPdfSettings = DEFAULT_PDF_SETTINGS,
-  groups?: { label: string; rows: (string | number | null | undefined)[][] }[],
+  groups?: { label: string; headers?: string[]; rows: (string | number | null | undefined)[][] }[],
 ): Promise<void> {
   const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
     import('jspdf'),
@@ -332,6 +336,51 @@ export async function downloadPDF(
 
   const doc = buildTablePDF(jsPDF, autoTable, { title, subtitle, headers, rows, settings, groups });
   doc.save(filename);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  Player Development summary (Player Development 3D)
+//  A one-page, hand-delivered family handout: the player's focus areas and their
+//  dated measurable log. CURRENT SEASON ONLY, player-vs-self only — no deltas, no
+//  percentages, no peer numbers, and never a shareable link (client-side download).
+// ════════════════════════════════════════════════════════════════════════════
+
+export interface DevelopmentSummaryOptions {
+  playerName: string;
+  /** e.g. "#7" — rendered beside the name when present. */
+  playerNumber?: string | null;
+  teamName: string;
+  seasonLabel?: string | null;
+  /** Status pre-labelled by the caller ("Working on it" / "Achieved" / "Parked"). */
+  goals: { focusArea: string; status: string; note: string | null }[];
+  /** One row per reading, grouped by test by the caller, dates pre-formatted. */
+  measurables: { test: string; reading: string; date: string; note: string | null }[];
+  settings: OrgPdfSettings;
+}
+
+/**
+ * Save the one-page development summary — the report title/subtitle is the player identity
+ * and season, the sections are Focus areas + Measurables (each with its own columns). Built
+ * on the shared `downloadPDF`/`buildTablePDF` report engine via its multi-header `groups`
+ * mode, so org header/footer/branding stay in ONE place. Current season only, no deltas.
+ */
+export async function downloadDevelopmentSummary(filename: string, opts: DevelopmentSummaryOptions): Promise<void> {
+  const groups: { label: string; headers: string[]; rows: (string | null)[][] }[] = [];
+  if (opts.goals.length > 0) {
+    groups.push({
+      label: 'Focus areas', headers: ['Focus area', 'Status', 'Note'],
+      rows: opts.goals.map(g => [g.focusArea, g.status, g.note]),
+    });
+  }
+  if (opts.measurables.length > 0) {
+    groups.push({
+      label: 'Measurables', headers: ['Test', 'Reading', 'Date', 'Note'],
+      rows: opts.measurables.map(m => [m.test, m.reading, m.date, m.note]),
+    });
+  }
+  const title = `Development summary — ${opts.playerName}${opts.playerNumber ? `  ${opts.playerNumber}` : ''}`;
+  const subtitle = [opts.teamName, opts.seasonLabel].filter(Boolean).join('  ·  ') || undefined;
+  await downloadPDF(filename, title, subtitle, [], [], opts.settings, groups);
 }
 
 // ════════════════════════════════════════════════════════════════════════════

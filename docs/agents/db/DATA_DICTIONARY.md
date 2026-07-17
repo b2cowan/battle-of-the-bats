@@ -2392,7 +2392,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 ### `rep_player_continuity_links`
 <!-- dict:table:rep_player_continuity_links -->
 
-**Purpose:** coach-confirmed identity links between a CURRENT entity (roster row OR tryout registration) and a PRIOR season's entity (roster row OR registration), same team — the "possible returning player — verify" record (Player Development 3C, migration 191; design = DBA Finding #31). **⚠ DEV-ONLY / PROD-PENDING — promote with migs 189+190.**
+**Purpose:** coach-confirmed identity links between a CURRENT entity (roster row OR tryout registration) and a PRIOR season's entity (roster row OR registration), same team — the "possible returning player — verify" record (Player Development 3C, migration 191; design = DBA Finding #31). Mig 192 (3D) adds the carry-forward decision audit. **⚠ DEV-ONLY / PROD-PENDING — promote with migs 189+190+191+192 (192 ALTERs the table 191 creates, so 191 must apply first).**
 
 **Gotchas (read first):**
 1. **One row per (current, prior) PAIR for its whole lifecycle** — `suggested → confirmed | rejected` are status transitions on that single row (pair-unique expression index on the coalesced side ids). A `rejected` row IS the never-re-suggest tombstone, by construction — do NOT delete it to "clean up". Transitions are guarded in the UPDATE itself (`decideContinuityLink`): confirm only from `suggested`, reject from `suggested|confirmed` — a tombstone can never resurrect, even from a stale-tab replay.
@@ -2403,6 +2403,8 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 6. **`decided_by`/`decided_at`** audit BOTH confirmation and rejection (a remembered rejection needs the same audit); NULL while `suggested`. `decided_at` is a **timestamptz instant** — display via `formatShortInstant`, never the DATE-string slicer.
 7. **Head-coach-only writes at BOTH layers** (D1; RLS requires `coach_role='head_coach'`, no org-admin writes, DROP-guarded → re-runnable). Matching (guardian-email + name similarity + exact DOB) is app-side — this table stores only outcomes.
 8. **Suggest writes are plain bulk INSERT + 23505 per-row fallback** (`suggestContinuityLinksBulk`) — PostgREST's `ignoreDuplicates` CANNOT arbitrate on the expression-based pair-unique index (on_conflict takes plain columns only; its default arbiter is the PK, which never collides on generated uuids). Existing pairs are excluded app-side before the insert; the fallback only covers a concurrent-scan race.
+9. **Carry-forward is a ONE-TIME decision recorded on the LINK row (mig 192)** — `carry_status` NULL = the banner may still show; `'carried'` = the prior season's *working* goals were COPIED into new `rep_player_development_goals` rows on the current player (copies, not moves — the archive keeps the originals); `'fresh'` = declined, banner retired. App rules (not constraints): only ever written on a CONFIRMED link whose current side is a roster row; head-coach-only (covered by the existing UPDATE policy). Measurables are NEVER carried across seasons (fake trend data).
+10. **Season-roll links are minted CONFIRMED at rollover** (`lib/rep-season-rollover.ts`, 3D) — the roll literally copies each roster row, so the pair is factual provenance, not a matcher guess: `confidence='high'`, `status='confirmed'`, `decided_by` = the coach who ran the roll. Best-effort per-row (a failed link mint warns in the roll summary, never fails the roll); the pair-unique index makes re-runs/races safe.
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -2427,6 +2429,11 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_player_continuity_links.decided_by -->
 <!-- dict:col:rep_player_continuity_links.decided_at -->
 **`decided_by`** (FK → `auth.users.id` SET NULL) / **`decided_at`** (timestamptz) — who confirmed OR rejected, and when (gotcha 6).
+
+<!-- dict:col:rep_player_continuity_links.carry_status -->
+<!-- dict:col:rep_player_continuity_links.carry_decided_by -->
+<!-- dict:col:rep_player_continuity_links.carry_decided_at -->
+**`carry_status`** (text, nullable; CHECK `carried|fresh`; **mig 192**) / **`carry_decided_by`** (FK → `auth.users.id` SET NULL) / **`carry_decided_at`** (timestamptz) — the one-time rollover carry-forward answer + its audit (gotcha 9). NULL until the coach answers.
 
 ### `rep_tryout_registrations`
 <!-- dict:table:rep_tryout_registrations -->

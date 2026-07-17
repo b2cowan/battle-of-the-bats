@@ -2345,6 +2345,14 @@
   },
   {
     "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_carry_decided_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "carry_decided_by",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_player_continuity_links",
     "constraint_name": "rep_player_continuity_links_current_registration_team_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "current_registration_id",
@@ -2381,7 +2389,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "current_roster_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id"
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_player_continuity_links",
@@ -2389,7 +2397,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "current_roster_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id"
+    "foreign_column": "team_id"
   },
   {
     "table_name": "rep_player_continuity_links",
@@ -2437,7 +2445,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "id"
+    "foreign_column": "team_id"
   },
   {
     "table_name": "rep_player_continuity_links",
@@ -2445,14 +2453,6 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "team_id"
-  },
-  {
-    "table_name": "rep_player_continuity_links",
-    "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "rep_tryout_registrations",
     "foreign_column": "id"
   },
   {
@@ -2462,6 +2462,14 @@
     "column_name": "team_id",
     "foreign_table": "rep_tryout_registrations",
     "foreign_column": "team_id"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_tryout_registrations",
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_player_continuity_links",

@@ -2,15 +2,15 @@
 
 **Generated:** 2026-07-17 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 276 divergence(s)** across dev/prod.
+**⚠️ 281 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 11 | 0 | — |
-| Columns | 94 | 3 | 24 |
+| Columns | 97 | 3 | 24 |
 | Indexes | 53 | 3 | 0 |
-| Constraints | 59 | 9 | — |
-| RLS / CHECK | 19 | 1 | 0 (RLS state) |
+| Constraints | 60 | 9 | — |
+| RLS / CHECK | 20 | 1 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (11)
@@ -30,7 +30,7 @@
 _none_
 
 ## Columns
-### Only in DEV (94)
+### Only in DEV (97)
 - `fan_alert_prefs.created_at`
 - `fan_alert_prefs.event_news`
 - `fan_alert_prefs.game_alerts`
@@ -55,6 +55,9 @@ _none_
 - `rep_player_awards.team_id`
 - `rep_player_awards.tournament_label`
 - `rep_player_awards.updated_at`
+- `rep_player_continuity_links.carry_decided_at`
+- `rep_player_continuity_links.carry_decided_by`
+- `rep_player_continuity_links.carry_status`
 - `rep_player_continuity_links.confidence`
 - `rep_player_continuity_links.created_at`
 - `rep_player_continuity_links.current_registration_id`
@@ -222,7 +225,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (59)
+### Only in DEV (60)
 - `announcements.announcements_tournament_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
@@ -240,6 +243,7 @@ _none_
 - `rep_player_awards.rep_player_awards_pkey`
 - `rep_player_awards.rep_player_awards_player_id_fkey`
 - `rep_player_awards.rep_player_awards_team_id_fkey`
+- `rep_player_continuity_links.rep_player_continuity_links_carry_decided_by_fkey`
 - `rep_player_continuity_links.rep_player_continuity_links_current_registration_team_fkey`
 - `rep_player_continuity_links.rep_player_continuity_links_current_roster_team_fkey`
 - `rep_player_continuity_links.rep_player_continuity_links_decided_by_fkey`
@@ -298,11 +302,12 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (19)
+### CHECK only in DEV (20)
 - `fan_follows.fan_follows_entity_type_check`
 - `fan_follows.fan_follows_source_check`
 - `rep_player_awards.rep_player_awards_note_check`
 - `rep_player_awards.rep_player_awards_tournament_label_check`
+- `rep_player_continuity_links.rep_player_continuity_links_carry_status_check`
 - `rep_player_continuity_links.rep_player_continuity_links_confidence_check`
 - `rep_player_continuity_links.rep_player_continuity_links_one_current`
 - `rep_player_continuity_links.rep_player_continuity_links_one_prior`

@@ -7,6 +7,7 @@ import {
   createRepRosterPlayer,
   getRepTeamCoaches,
   addRepTeamCoach,
+  suggestContinuityLinksBulk,
 } from './db';
 import { createRepPlayerDuesSchedule, replaceRepDuesInstallments } from './db';
 import type { RepProgramYear } from './types';
@@ -224,6 +225,32 @@ export async function startNextRepSeason(params: {
   }
   if (summary.roster.copied > 0) {
     summary.notes.push('Player waivers and documents are not carried — collect fresh ones for the new season.');
+  }
+
+  // ── Continuity links (Player Development 3D): the roll copied each row itself, so the
+  // (new, old) pair is factual provenance — mint the history links CONFIRMED so every
+  // carried player's profile shows their previous seasons (and the one-time carry-forward
+  // offer) without a redundant "possible returning player — verify" step. Best-effort:
+  // a failed mint warns, never fails the roll; the pair-unique index makes re-runs safe.
+  if (playerIdMap.size > 0) {
+    try {
+      const minted = await suggestContinuityLinksBulk(
+        [...playerIdMap.entries()].map(([oldId, newId]) => ({
+          orgId,
+          teamId,
+          currentRosterId: newId,
+          priorRosterId: oldId,
+          confidence: 'high' as const,
+        })),
+        { status: 'confirmed', decidedBy: initiatorUserId },
+      );
+      if (minted.length > 0) {
+        summary.notes.push('Each carried player’s history is linked to last season — look for the “bring forward” offer on their Development card.');
+      }
+    } catch (e) {
+      summary.warnings.push('Player development history could not be linked automatically — the returning-player check on each profile will offer the link instead.');
+      console.error('[rep-season-rollover] continuity link mint failed (non-blocking):', e);
+    }
   }
 
   // ── Planned budget carry (optional): lines + periods + the legacy budget envelope ──

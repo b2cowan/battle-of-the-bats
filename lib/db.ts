@@ -7453,6 +7453,9 @@ function mapRepPlayerContinuityLink(r: any): RepPlayerContinuityLink {
     confidence: r.confidence,
     decidedBy: r.decided_by ?? null,
     decidedAt: r.decided_at ?? null,
+    carryStatus: r.carry_status ?? null,
+    carryDecidedBy: r.carry_decided_by ?? null,
+    carryDecidedAt: r.carry_decided_at ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -7481,7 +7484,11 @@ export async function suggestContinuityLinksBulk(rows: {
   currentRosterId?: string | null; currentRegistrationId?: string | null;
   priorRosterId?: string | null; priorRegistrationId?: string | null;
   confidence: 'high' | 'possible';
-}[]): Promise<RepPlayerContinuityLink[]> {
+}[], opts?: {
+  /** Season-roll minting (3D): the roll copied the row itself, so the pair is factual
+   *  provenance — insert already CONFIRMED with the rolling coach as the decider. */
+  status: 'confirmed'; decidedBy: string;
+}): Promise<RepPlayerContinuityLink[]> {
   if (rows.length === 0) return [];
   const payload = rows.map(f => ({
     org_id: f.orgId,
@@ -7491,6 +7498,7 @@ export async function suggestContinuityLinksBulk(rows: {
     prior_roster_id: f.priorRosterId ?? null,
     prior_registration_id: f.priorRegistrationId ?? null,
     confidence: f.confidence,
+    ...(opts ? { status: opts.status, decided_by: opts.decidedBy, decided_at: new Date().toISOString() } : {}),
   }));
   const { data, error } = await supabaseAdmin
     .from('rep_player_continuity_links')
@@ -7542,6 +7550,42 @@ export async function decideContinuityLink(
   return data ? mapRepPlayerContinuityLink(data) : null;
 }
 
+/** Record the ONE-TIME rollover carry-forward answer (3D, mig 192) — guarded in the
+ *  UPDATE itself: only a CONFIRMED link that hasn't been answered yet. Returns null when
+ *  the row is missing, not confirmed, or already answered (callers 409/404 honestly). */
+export async function setContinuityCarryDecision(
+  id: string, teamId: string, carryStatus: 'carried' | 'fresh', decidedBy: string,
+): Promise<RepPlayerContinuityLink | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_continuity_links')
+    .update({
+      carry_status: carryStatus,
+      carry_decided_by: decidedBy,
+      carry_decided_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .eq('status', 'confirmed')
+    .is('carry_status', null)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepPlayerContinuityLink(data) : null;
+}
+
+/** Team-scoped bulk roster-row fetch (the archive chain walks prior roster ids). */
+export async function getRepRosterPlayersByIds(ids: string[], teamId: string): Promise<RepRosterPlayer[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('*')
+    .in('id', ids)
+    .eq('team_id', teamId);
+  if (error) throw error;
+  return (data ?? []).map(mapRepRosterPlayer);
+}
+
 /** The OTHER id that denotes the same person as a link's current side: a roster row's
  *  originating tryout registration, or the roster row an accepted registration became
  *  (board decisions pre-date the roster row, so the same human can be link-keyed either
@@ -7575,12 +7619,14 @@ export async function getContinuityCurrentAlias(
  *  team's program years BEFORE the current one, in identity-relevant columns only. */
 export async function getPriorContinuityIdentities(
   teamId: string, currentProgramYearId: string,
+  // Callers that already hold the program-year list pass it to avoid a duplicate round trip.
+  preFetchedYears?: RepProgramYear[],
 ): Promise<{ priorProgramYearIds: string[]; identities: {
   kind: 'roster' | 'registration'; id: string; programYearId: string;
   firstName: string; lastName: string | null; dateOfBirth: string | null;
   guardianEmail: string | null; guardianFirstName: string | null; guardianLastName: string | null;
 }[] }> {
-  const years = await getRepProgramYears(teamId);
+  const years = preFetchedYears ?? await getRepProgramYears(teamId);
   const current = years.find(y => y.id === currentProgramYearId);
   const priorYears = years.filter(y =>
     y.id !== currentProgramYearId && (!current || y.year < current.year));

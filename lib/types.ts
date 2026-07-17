@@ -1524,6 +1524,10 @@ export interface RepPlayerContinuityLink {
   confidence: 'high' | 'possible';
   decidedBy: string | null;
   decidedAt: string | null;
+  // One-time rollover carry-forward answer (3D, mig 192) — null until the coach answers.
+  carryStatus: 'carried' | 'fresh' | null;
+  carryDecidedBy: string | null;
+  carryDecidedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -191,6 +191,15 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
             </span>
           </Link>
 
+          {/* ── Insights door (3D) — deliberately absent until the report existed (no doors
+                 to nowhere); same question as the Insights tile: one phrasing, one destination. ── */}
+          <Link href={`${base}/history/development`} className={styles.insightsDoor}>
+            <span className={styles.insightsDoorQ}>Is everyone getting attention?<span aria-hidden>→</span></span>
+            <span className={styles.insightsDoorSum}>
+              The coverage report in Insights — one row per player: active focus, last evaluation, history linked.
+            </span>
+          </Link>
+
           {/* ── Test types card — the ONE shared manager ── */}
           <div className={styles.detailSection}>
             <p className={styles.detailSectionTitle}>Test types</p>

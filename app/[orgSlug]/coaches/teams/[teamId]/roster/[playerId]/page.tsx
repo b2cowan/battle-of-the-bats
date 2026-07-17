@@ -547,6 +547,10 @@ export default function PlayerDetailPage({
             playerId={playerId}
             bestPositions={form?.positions.best ?? []}
             attendancePct={attendance && attnKnown > 0 ? attnRate : null}
+            playerName={[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}
+            playerNumber={player.playerNumber ? clean(player.playerNumber) : null}
+            teamName={assignment.teamName}
+            seasonName={seasonLabel(assignment.programYearName, assignment.teamName) || null}
           />
         </div>
       )}

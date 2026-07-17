@@ -12,7 +12,7 @@ import {
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvent, RepPlayerAward } from '@/lib/types';
 import type { SeasonLineupAnalytics } from '@/lib/lineup-season-analytics';
-import { canManageAwards } from '@/lib/coach-capabilities';
+import { canManageAwards, canViewMeasurables } from '@/lib/coach-capabilities';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Insights V3 — "Scoreboard + What stands out" (design log 2026-07-09).
@@ -67,6 +67,9 @@ export default function CoachesInsightsPage({
   const canRoster = !!assignment && assignment.capabilities.roster !== 'off';
   const canMoney = !!assignment && assignment.capabilities.money !== 'off';
   const canAwards = !!assignment && canManageAwards(assignment.capabilities);
+  // Sixth doorway tile (3D, D4 Option B — logged ceiling exception): the report lists every
+  // player by name, so it rides the board's identity gate (roster visibility).
+  const canDevelopment = !!assignment && canViewMeasurables(assignment.capabilities);
 
   // "Who's earning it?" tile summary — a small self-contained fetch (not folded into the
   // scoreboard's load() below) so this addition can't disturb that orchestration's data shape.
@@ -89,6 +92,28 @@ export default function CoachesInsightsPage({
       .catch(() => { /* non-fatal — the tile just shows its sparse state */ });
     return () => { cancelled = true; };
   }, [canAwards, orgSlug, teamId]);
+
+  // "Is everyone getting attention?" tile summary — same self-contained-fetch pattern as
+  // the awards tile; rides the board GET (one dataset, several doors). 404 = no active
+  // season → the tile just shows its sparse state.
+  const [devSummary, setDevSummary] = useState<{ rosterCount: number; withMeasurable: number; withFocus: number } | null>(null);
+  useEffect(() => {
+    if (!canDevelopment) return;
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/board`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (cancelled || !data) return;
+        const rows: { goals: { status: string }[]; latest: Record<string, unknown> }[] = data.rows ?? [];
+        setDevSummary({
+          rosterCount: rows.length,
+          withMeasurable: rows.filter(r => Object.keys(r.latest ?? {}).length > 0).length,
+          withFocus: rows.filter(r => (r.goals ?? []).some(g => g.status === 'working')).length,
+        });
+      })
+      .catch(() => { /* non-fatal — the tile just shows its sparse state */ });
+    return () => { cancelled = true; };
+  }, [canDevelopment, orgSlug, teamId]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -256,6 +281,9 @@ export default function CoachesInsightsPage({
       practices: { attended: r.practices.attended, known: r.practices.known },
     })) ?? null,
     dues: duesStats,
+    // FindingsDevelopmentSummary reads only rosterCount + withMeasurable (the extra withFocus
+    // field is harmless); pass the summary straight through.
+    development: canDevelopment ? devSummary : null,
     todayISO: todayISO || undefined,
   });
   const REPORT_HREF: Record<InsightReport, string> = {
@@ -263,9 +291,11 @@ export default function CoachesInsightsPage({
     results: `${base}/history/results`,
     attendance: `${base}/attendance`,
     money: `${base}/accounting`,
+    development: `${base}/history/development`,
   };
   const REPORT_CHIP: Record<InsightReport, string> = {
     'playing-time': 'Playing time', results: 'Results', attendance: 'Attendance', money: 'Money',
+    development: 'Development',
   };
 
   const overCapCount = analytics ? analytics.armCare.filter(r => r.overCapGames > 0).length : 0;
@@ -420,6 +450,18 @@ export default function CoachesInsightsPage({
                   {awardsSummary && awardsSummary.total > 0
                     ? `${awardsSummary.total} award${awardsSummary.total === 1 ? '' : 's'} given${awardsSummary.leaderName ? ` · ${awardsSummary.leaderName.split(' ')[0]} leads with ${awardsSummary.leaderCount}` : ''}`
                     : 'Give your first award after a game to start the leaderboard'}
+                </span>
+              </Link>
+            )}
+            {/* Sixth tile (3D, D4 Option B — owner-sanctioned exception to the 5-tile
+                ceiling, logged in design decisions 2026-07-17). */}
+            {canDevelopment && (
+              <Link href={`${base}/history/development`} className={`${styles.insightsDoor} ${!devSummary || devSummary.withMeasurable === 0 ? styles.insightsDoorSoft : ''}`}>
+                <span className={styles.insightsDoorQ}>Is everyone getting attention?<span aria-hidden>→</span></span>
+                <span className={styles.insightsDoorSum}>
+                  {devSummary && (devSummary.withMeasurable > 0 || devSummary.withFocus > 0)
+                    ? `${devSummary.withMeasurable} of ${devSummary.rosterCount} player${devSummary.rosterCount === 1 ? '' : 's'} have a measurable · ${devSummary.withFocus} with an active focus area`
+                    : 'Run an evaluation session or add a focus area to start the coverage picture'}
                 </span>
               </Link>
             )}

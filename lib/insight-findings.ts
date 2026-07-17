@@ -23,10 +23,10 @@ import type { SeasonLineupAnalytics } from './lineup-season-analytics';
 // same convention as lineup-season-analytics.ts → lineup-analysis.ts).
 import { isNeverPaidPlayer } from './dues-status.ts';
 
-export type InsightTier = 'safety' | 'money' | 'attendance' | 'fairness' | 'good-news';
+export type InsightTier = 'safety' | 'money' | 'attendance' | 'fairness' | 'development' | 'good-news';
 export type InsightTone = 'warn' | 'info' | 'good';
 /** Which report the finding links to (the page maps these to hrefs). */
-export type InsightReport = 'playing-time' | 'results' | 'attendance' | 'money';
+export type InsightReport = 'playing-time' | 'results' | 'attendance' | 'money' | 'development';
 
 export interface InsightFinding {
   tier: InsightTier;
@@ -75,12 +75,20 @@ export interface FindingsVocab {
   scoreUnitWord: string;
 }
 
+/** Development coverage (3D) — counts only, never names: the rule is a coverage nudge,
+ *  not a ranking, so no player is ever singled out by it. */
+export interface FindingsDevelopmentSummary {
+  rosterCount: number;
+  withMeasurable: number;
+}
+
 export interface FindingsInputs {
   vocab: FindingsVocab;
   analytics?: SeasonLineupAnalytics | null;
   games?: FindingsGameSummary | null;
   attendance?: FindingsAttendanceRow[] | null;
   dues?: FindingsDuesSummary | null;
+  development?: FindingsDevelopmentSummary | null;
   /** "Today" as YYYY-MM-DD — passed in (never Date.now() here) so the engine stays pure
    *  and deterministic in tests. Only the dues-deadline rule reads it. */
   todayISO?: string;
@@ -107,8 +115,10 @@ const MOMENTUM_WINDOW = 6;           // "won 5 of your last 6"
 const MOMENTUM_MIN_WINS = 5;
 const MILESTONE_EVERY = 5;           // celebrate win #10, #15, #20…
 const MILESTONE_MIN = 10;
+const DEV_MIN_USAGE = 3;             // development nudge: silent until ≥3 players have a measurable…
+const DEV_MIN_GAP = 2;               // …AND ≥2 players have none (a real gap, not a rounding error)
 
-const TIER_ORDER: InsightTier[] = ['safety', 'money', 'attendance', 'fairness', 'good-news'];
+const TIER_ORDER: InsightTier[] = ['safety', 'money', 'attendance', 'fairness', 'development', 'good-news'];
 
 function plural(n: number, word = 's'): string {
   return n === 1 ? '' : word;
@@ -258,6 +268,22 @@ export function computeInsightFindings(inputs: FindingsInputs): InsightFinding[]
         report: 'playing-time',
         text: `Only ${names[0]} has played ${pos} this season — one absence from a gap` +
           (extra > 0 ? ` (${extra} more position${plural(extra)} ${extra === 1 ? 'has' : 'have'} single coverage).` : '.'),
+      });
+    }
+  }
+
+  // ── DEVELOPMENT — coverage nudge (3D): ONE conservative rule, count-only, silent until
+  // the team genuinely uses evaluations AND a real gap exists. Never names the uncovered
+  // players — the report shows who, in roster order. ──
+  if (inputs.development) {
+    const d = inputs.development;
+    const uncovered = d.rosterCount - d.withMeasurable;
+    if (d.withMeasurable >= DEV_MIN_USAGE && uncovered >= DEV_MIN_GAP) {
+      out.push({
+        tier: 'development',
+        tone: 'info',
+        report: 'development',
+        text: `${uncovered} player${plural(uncovered)} do${uncovered === 1 ? 'es' : ''}n't have a measurable yet this season — one evaluation session covers everyone.`,
       });
     }
   }

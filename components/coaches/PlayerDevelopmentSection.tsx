@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, X, Check, Settings2 } from 'lucide-react';
+import { Plus, X, Check, Settings2, Printer } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import Sparkline from '@/components/charts/Sparkline';
@@ -8,6 +8,9 @@ import TestTypesManager, { NewTypeFields } from '@/components/coaches/TestTypesM
 import ContinuityCompareCard from '@/components/coaches/ContinuityCompareCard';
 import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
 import { formatValue, todayLocal, formatShortDate, formatShortInstant } from '@/lib/measurable-format';
+import {
+  buildFilename, DEFAULT_PDF_SETTINGS, downloadDevelopmentSummary, type OrgPdfSettings,
+} from '@/lib/export';
 import type {
   RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus,
 } from '@/lib/types';
@@ -19,6 +22,15 @@ const STATUS_LABELS: Record<RepDevelopmentGoalStatus, string> = {
 };
 const STATUS_ORDER: RepDevelopmentGoalStatus[] = ['working', 'achieved', 'parked'];
 
+/** One confirmed prior season, display-ready (3D archive — a dated record, never deltas). */
+interface ArchiveSeason {
+  priorRosterId: string;
+  seasonLabel: string;
+  goals: { focusArea: string; status: string; note: string | null }[];
+  tests: { name: string; entries: { value: number; unit: string; recordedOn: string; note: string | null }[] }[];
+  attendancePct: number | null;
+}
+
 interface DevelopmentData {
   canWrite: boolean;
   showGoals: boolean;
@@ -27,6 +39,8 @@ interface DevelopmentData {
   measurables: RepPlayerMeasurable[];
   goals: RepPlayerDevelopmentGoal[];
   context: { fieldInnings: number; benchInnings: number } | null;
+  archive: ArchiveSeason[];
+  carry: { linkId: string; priorRosterId: string; priorSeasonLabel: string; workingCount: number } | null;
 }
 
 // Returning-player continuity (3C) rides the shared useContinuityLinks hook + the
@@ -40,11 +54,18 @@ interface Props {
   bestPositions: string[];
   /** Attendance % of recorded sessions, when any exist — quoted from the page's own data. */
   attendancePct: number | null;
+  /** Identity + season lines for the printable summary (3D) — quoted from the page. */
+  playerName: string;
+  playerNumber: string | null;
+  teamName: string;
+  seasonName: string | null;
 }
 
 // NewTypeFields lives in TestTypesManager.tsx (single home; acyclic import graph).
 
-export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, bestPositions, attendancePct }: Props) {
+export default function PlayerDevelopmentSection({
+  orgSlug, teamId, playerId, bestPositions, attendancePct, playerName, playerNumber, teamName, seasonName,
+}: Props) {
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}/development`;
   const typesBase = `/api/coaches/${orgSlug}/teams/${teamId}/development/measurable-types`;
   const confirm = useConfirm();
@@ -73,6 +94,12 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
   const [manageOpen, setManageOpen] = useState(false);
 
   const [expandedTypeId, setExpandedTypeId] = useState<string | null>(null);
+
+  // ── 3D: previous-seasons archive + the one-time carry-forward offer + print ──
+  const [expandedSeasonId, setExpandedSeasonId] = useState<string | null>(null);
+  const [carryBusy, setCarryBusy] = useState(false);
+  const [carryErr, setCarryErr] = useState('');
+  const [printBusy, setPrintBusy] = useState(false);
 
   // Inline validation shown right beside the button the coach pressed — a button that
   // silently does nothing is not an answer (owner feedback, 2026-07-17).
@@ -332,6 +359,90 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
     }
   }
 
+  /** The one-time carry-forward answer (3D). 'carry' merges the copied focus areas into
+   *  the card; either answer retires the banner. A 409 = answered in another tab — that
+   *  answer stands, so the banner quietly retires without an error. */
+  async function answerCarry(action: 'carry' | 'fresh') {
+    if (carryBusy) return;
+    setCarryBusy(true);
+    setCarryErr('');
+    try {
+      const res = await fetch(`${base}/carry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const json = await res.json().catch(() => null);
+      if (res.status === 409) {
+        setData(d => d ? { ...d, carry: null } : d);
+        return;
+      }
+      if (!res.ok || !json) throw new Error(json?.error ?? "Couldn't save that — try again.");
+      const copied: RepPlayerDevelopmentGoal[] = json.goals ?? [];
+      setData(d => d ? { ...d, carry: null, goals: [...d.goals, ...copied] } : d);
+      if (copied.length > 0) flashSaved(null);
+    } catch (e) {
+      setCarryErr(e instanceof Error ? e.message : "Couldn't save that — try again.");
+    } finally {
+      setCarryBusy(false);
+    }
+  }
+
+  /** "View {season} record" — expands that archive season in place and scrolls to it
+   *  (never a navigation: the prior season's profile page is editable). */
+  function viewOldRecord(priorRosterId: string) {
+    setExpandedSeasonId(priorRosterId);
+    window.setTimeout(() => {
+      document.getElementById(`dev-archive-${priorRosterId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  }
+
+  /** One-page family handout — current season only, no deltas, generated on this device
+   *  (there is deliberately no shareable link). */
+  async function printSummary() {
+    if (printBusy || !data) return;
+    setPrintBusy(true);
+    setError('');
+    try {
+      const settingsRes = await fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`).catch(() => null);
+      const fetched = settingsRes?.ok ? await settingsRes.json().catch(() => null) : null;
+      const settings: OrgPdfSettings = {
+        ...DEFAULT_PDF_SETTINGS,
+        ...(fetched && typeof fetched === 'object' ? fetched : {}),
+      };
+      const measurableRows: { test: string; reading: string; date: string; note: string | null }[] = [];
+      for (const t of data.types) {
+        // Library order; each test's readings oldest→newest — a dated log, never a computed trend.
+        const entries = data.measurables.filter(e => e.measurableTypeId === t.id)
+          .sort((a, b) => a.recordedOn.localeCompare(b.recordedOn) || a.createdAt.localeCompare(b.createdAt));
+        for (const e of entries) {
+          measurableRows.push({
+            test: t.name,
+            reading: `${formatValue(e.value)} ${e.unit}`,
+            date: formatShortDate(e.recordedOn),
+            note: e.note,
+          });
+        }
+      }
+      await downloadDevelopmentSummary(
+        buildFilename({ org: orgSlug, dataset: 'development', scope: playerName }, 'pdf'),
+        {
+          playerName,
+          playerNumber: playerNumber ? `#${playerNumber}` : null,
+          teamName,
+          seasonLabel: seasonName,
+          goals: data.goals.map(g => ({ focusArea: g.focusArea, status: STATUS_LABELS[g.status], note: g.note })),
+          measurables: measurableRows,
+          settings,
+        },
+      );
+    } catch {
+      setError("Couldn't build the PDF — try again.");
+    } finally {
+      setPrintBusy(false);
+    }
+  }
+
   if (!data && !error) {
     return <p className={styles.detailPlaceholder}>Loading development…</p>;
   }
@@ -424,6 +535,34 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
               onDismiss={() => dismissContinuity(playerId, row.linkId)} />
           ))}
           {continuityErr && <p className={styles.errorText} role="alert">{continuityErr}</p>}
+        </div>
+      )}
+
+      {/* ── Carry-forward offer (3D, M5) — one-time, never automatic; blueprint-blue is the
+             offer voice (amber stays reserved for continuity-verify) ── */}
+      {canWrite && data.carry && (
+        <div className={styles.devCarryBanner}>
+          <p style={{ margin: 0, fontSize: '0.85rem' }}>
+            <b>Returning player — bring forward the {data.carry.workingCount} focus area{data.carry.workingCount === 1 ? '' : 's'} they were working on in {data.carry.priorSeasonLabel}?</b>
+          </p>
+          <p className={styles.devCardNote} style={{ marginTop: '0.25rem' }}>
+            They&apos;ll join this season as &ldquo;Working on it&rdquo;. Readings never carry over — last season&apos;s stay in its archive below. You can look first.
+          </p>
+          <div className={styles.devCarryActions}>
+            <button type="button" className="btn btn-ghost" style={{ fontSize: '0.77rem' }} disabled={carryBusy}
+              onClick={() => data.carry && viewOldRecord(data.carry.priorRosterId)}>
+              View {data.carry.priorSeasonLabel} record
+            </button>
+            <button type="button" className="btn btn-lime" style={{ fontSize: '0.77rem' }} disabled={carryBusy}
+              onClick={() => answerCarry('carry')}>
+              Yes, bring forward
+            </button>
+            <button type="button" className="btn btn-ghost" style={{ fontSize: '0.77rem' }} disabled={carryBusy}
+              onClick={() => answerCarry('fresh')}>
+              No, start fresh
+            </button>
+          </div>
+          {carryErr && <p className={styles.errorText} role="alert" style={{ marginTop: '0.4rem' }}>{carryErr}</p>}
         </div>
       )}
 
@@ -677,6 +816,80 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
         </>
       )}
 
+      {/* ── Previous seasons (3D, M5) — a dated scrapbook, oldest→newest; expands in place
+             (never navigates to the prior season's editable profile); NO cross-season
+             deltas anywhere. ── */}
+      {data.archive.length > 0 && (
+        <>
+          <p className={styles.miniListLabel}>Previous seasons</p>
+          <ul className={styles.miniList}>
+            {data.archive.map(season => {
+              const achieved = season.goals.filter(g => g.status === 'achieved').length;
+              const entryCount = season.tests.reduce((n, t) => n + t.entries.length, 0);
+              const summaryParts = [
+                season.goals.length > 0
+                  ? `${season.goals.length} focus area${season.goals.length === 1 ? '' : 's'}${achieved > 0 ? ` (${achieved} achieved)` : ''}`
+                  : null,
+                entryCount > 0 ? `${entryCount} measurable${entryCount === 1 ? '' : 's'}` : null,
+                season.attendancePct != null ? `attendance ${season.attendancePct}%` : null,
+              ].filter(Boolean);
+              const expanded = expandedSeasonId === season.priorRosterId;
+              return (
+                <li key={season.priorRosterId} id={`dev-archive-${season.priorRosterId}`}
+                  className={styles.miniRow} style={{ flexWrap: 'wrap' }}>
+                  <span className={styles.miniRowMain}>
+                    <button type="button"
+                      style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', cursor: 'pointer', textAlign: 'left', fontWeight: 600 }}
+                      title={expanded ? 'Hide this season' : 'Show this season'}
+                      onClick={() => setExpandedSeasonId(id => id === season.priorRosterId ? null : season.priorRosterId)}>
+                      {season.seasonLabel}
+                    </button>
+                    <span className={styles.devCardNote}>
+                      {summaryParts.length > 0 ? summaryParts.join(' · ') : 'no development records that season'}
+                    </span>
+                  </span>
+                  <span className={`${styles.badge} ${styles.badgeDraft}`}>Archive</span>
+                  {expanded && (summaryParts.length > 0 ? (
+                    <div style={{ flexBasis: '100%', marginTop: '0.4rem' }}>
+                      {season.goals.length > 0 && (
+                        <ul className={styles.miniList}>
+                          {season.goals.map((g, i) => (
+                            <li key={i} className={styles.miniRow}>
+                              <span className={styles.miniRowMain}>
+                                {g.focusArea}
+                                {g.note && <span className={styles.devCardNote}>{g.note}</span>}
+                              </span>
+                              <span className={`${styles.badge} ${goalPill(g.status as RepDevelopmentGoalStatus)}`}>
+                                {STATUS_LABELS[g.status as RepDevelopmentGoalStatus] ?? g.status}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {season.tests.length > 0 && (
+                        <ul className={styles.miniList} style={season.goals.length > 0 ? { marginTop: '0.35rem' } : undefined}>
+                          {season.tests.map(t => (
+                            <li key={t.name} className={styles.miniRow} style={{ flexWrap: 'wrap' }}>
+                              <span className={styles.miniRowMain}>{t.name}</span>
+                              <span className={styles.miniRowMeta} style={{ whiteSpace: 'normal', fontVariantNumeric: 'tabular-nums' }}>
+                                {t.entries.map(e => `${formatValue(e.value)} ${e.unit} (${formatShortDate(e.recordedOn)})`).join(' · ')}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ) : null)}
+                </li>
+              );
+            })}
+          </ul>
+          <p className={styles.devCardNote} style={{ margin: '0.35rem 0 1rem' }}>
+            Shown as a record, side by side — never a computed &ldquo;better or worse than last year.&rdquo;
+          </p>
+        </>
+      )}
+
       {/* ── Manage test types (M3) — a centered dialog hosting the ONE shared manager ── */}
       {canWrite && manageOpen && data.showMeasurables && (
         <div className={styles.modalOverlay}>
@@ -711,6 +924,18 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
             ))}
           </ul>
         </>
+      )}
+
+      {/* ── Print summary (3D, M1) — a one-page, hand-delivered handout; current season
+             only, generated on this device (deliberately no shareable link). ── */}
+      {(data.goals.length > 0 || data.measurables.length > 0) && (
+        <div style={{ marginTop: '0.7rem' }}>
+          <button type="button" className="btn btn-ghost"
+            style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+            disabled={printBusy} onClick={printSummary}>
+            <Printer size={13} /> {printBusy ? 'Building PDF…' : 'Print summary (PDF)'}
+          </button>
+        </div>
       )}
     </>
   );
